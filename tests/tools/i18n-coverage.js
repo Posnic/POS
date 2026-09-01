@@ -77,23 +77,45 @@ function jsFiles(dir, found = []) {
  */
 function keysUsed() {
   const used = new Set();
+  /* key -> { english, where } so a translator can be handed the sentence and
+     the screen, not a list of identifiers. */
+  const context = new Map();
+  const remember = (key, english, file) => {
+    used.add(key);
+    if (!context.has(key)) {
+      context.set(key, { english: (english || '').trim(), where: new Set() });
+    }
+    const c = context.get(key);
+    if (!c.english && english) c.english = english.trim();
+    c.where.add(path.basename(file));
+  };
+
   let tags = 0;
   for (const file of htmlFiles(ROOT)) {
     const html = fs.readFileSync(file, 'utf8');
-    for (const m of html.matchAll(/<lang class="([^"]+)">/g)) {
-      used.add(m[1]);
+    for (const m of html.matchAll(/<lang class="([^"]+)">([\s\S]*?)<\/lang>/g)) {
+      remember(m[1], m[2], file);
       tags += 1;
+    }
+    /* Keys the build hoisted onto <title> and <option>. */
+    for (const m of html.matchAll(/data-t="([^"]+)"[^>]*>([^<]*)</g)) {
+      remember(m[1], m[2], file);
     }
   }
   let calls = 0;
   for (const file of jsFiles(path.join(ROOT, 'static', 'script'))) {
     const js = fs.readFileSync(file, 'utf8');
-    for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'/g)) {
-      used.add(m[1]);
+    for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*,\s*'([^']*)'/g)) {
+      remember(m[1], m[2], file);
+      calls += 1;
+    }
+    /* A t() call with no English fallback still uses the key. */
+    for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*\)/g)) {
+      remember(m[1], '', file);
       calls += 1;
     }
   }
-  return { used, tags, calls };
+  return { used, tags, calls, context };
 }
 
 function languages() {
@@ -108,7 +130,7 @@ function languages() {
 }
 
 function report() {
-  const { used, tags, calls } = keysUsed();
+  const { used, tags, calls, context } = keysUsed();
   const rows = [];
   for (const lang of languages()) {
     let dict = {};
@@ -134,7 +156,7 @@ function report() {
       coverage: used.size ? Math.round((answered.length / used.size) * 100) : 0,
     });
   }
-  return { needed: used.size, tags, calls, rows };
+  return { needed: used.size, tags, calls, context, rows };
 }
 
 /* ------------------------------------------------------------------ cli --- */
@@ -159,6 +181,84 @@ if (only) {
   }
   console.log(`${row.missing.length} key(s) the UI uses that ${only} does not answer:`);
   for (const k of row.missing) console.log('  ' + k);
+  process.exit(0);
+}
+
+/*
+ * A file to hand a translator.
+ *
+ * --missing prints identifiers, which is the wrong thing to give a person:
+ * nobody can translate "lang_conversion_factor_title" without knowing it says
+ * "Conversion factor" and sits on the item screen. This writes JSON with the
+ * English and the screen beside every blank, so it can be filled in and handed
+ * straight back - it is already the shape of a language file.
+ */
+const sheet = value('--worksheet');
+if (sheet) {
+  const row = data.rows.find((r) => r.lang === sheet);
+  if (!row) {
+    console.error(`no language file for "${sheet}" in ${LANG_DIR}`);
+    process.exit(1);
+  }
+  const out = {};
+  for (const key of row.missing) {
+    const c = data.context.get(key) || { english: '', where: new Set() };
+    out[key] = {
+      english: c.english,
+      screen: [...c.where].sort().slice(0, 3).join(', '),
+      [sheet]: '',
+    };
+  }
+  const file = value('--out') || `${sheet}-to-translate.json`;
+  fs.writeFileSync(file, JSON.stringify(out, null, 2) + '\n', 'utf8');
+  console.log(`  ${row.missing.length} string(s) written to ${file}`);
+  console.log(`  Fill in the "${sheet}" field on each, then:`);
+  console.log(`    node tests/tools/i18n-coverage.js --merge ${sheet} --out ${file}`);
+  process.exit(0);
+}
+
+/*
+ * Take a filled-in worksheet back.
+ *
+ * Merging by hand is where a language file gets a duplicate key or loses its
+ * sort order. Blank entries are skipped rather than written, because an empty
+ * string counts as untranslated everywhere else and writing one would report
+ * the language as finished while showing the customer nothing.
+ */
+const merge = value('--merge');
+if (merge) {
+  const file = value('--out') || `${merge}-to-translate.json`;
+  if (!fs.existsSync(file)) {
+    console.error(`no worksheet at ${file}`);
+    process.exit(1);
+  }
+  const sheetData = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const target = path.join(LANG_DIR, `${merge}.json`);
+  const dict = JSON.parse(fs.readFileSync(target, 'utf8'));
+
+  let taken = 0;
+  let blank = 0;
+  const suspect = [];
+  for (const [key, entry] of Object.entries(sheetData)) {
+    const value_ = entry && typeof entry === 'object' ? entry[merge] : entry;
+    if (typeof value_ !== 'string' || value_.trim() === '') { blank += 1; continue; }
+    /* The same check the build applies: Latin-1 wreckage where the language
+       should be means the file was saved in the wrong encoding somewhere. */
+    if (/[\u0080-\u00FF]{3,}/.test(value_)) { suspect.push(key); continue; }
+    dict[key] = value_.trim();
+    taken += 1;
+  }
+  if (suspect.length) {
+    console.error(`  REFUSING: ${suspect.length} entr(ies) look like mojibake: ${suspect.slice(0, 5).join(', ')}`);
+    console.error('  Save the worksheet as UTF-8 and try again.');
+    process.exit(1);
+  }
+  const sorted = {};
+  for (const k of Object.keys(dict).sort()) sorted[k] = dict[k];
+  fs.writeFileSync(target, JSON.stringify(sorted, null, 2) + '\n', 'utf8');
+  console.log(`  merged ${taken} translation(s) into ${path.relative(process.cwd(), target)}`
+    + (blank ? `, ${blank} left blank` : ''));
+  console.log('  run this tool with no arguments to see the new coverage.');
   process.exit(0);
 }
 
