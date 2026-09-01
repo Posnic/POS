@@ -527,19 +527,14 @@ PosnicPro = {
         }
 
         if (isKotEditFlow) {
-            (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-                ? $('.changeSalesBtnText').text('புதுப்பி')
-                : $('.changeSalesBtnText').text('Update');
-
+            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         } else {
-            (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
-                ? $('.changeSalesBtnText').text('சேமி')
-                : $('.changeSalesBtnText').text('Save');
+            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         }
 
     },
     defaultSupplierSet: function () {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeReceivingText').text('சேமி') : $('.changeReceivingText').text('Save');
+        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         let defaultsupplier = JSON.parse(PosnicPro.local.get('defaultsupplier'));
         if (!defaultsupplier)
             return;
@@ -4295,9 +4290,68 @@ PosnicPro.i18n = {
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (json) { if (json) PosnicPro.i18n._dict = json; })
             .catch(function () { /* English is already the answer */ });
+    },
+
+    /*
+     * Translate the markup in place.
+     *
+     * Pages are built ONCE now, in English, and carry their keys with them:
+     *
+     *     <lang class="lang_item_name">Item name</lang>
+     *     <title data-t="lang_login_title">Login Here</title>
+     *
+     * The <lang> element stays where the words are ordinary content. Inside
+     * <title> and <option> the parser will not build an element for it, so
+     * the build hoists the key onto the parent instead - both are handled
+     * here, because a caller should not have to know which is which.
+     *
+     * English does nothing at all: the markup is already English, so there is
+     * no work, no flicker and nothing to get wrong.
+     *
+     * Takes a root so markup rendered later - a modal, an AJAX table - can be
+     * translated the moment it exists rather than waiting for a reload.
+     */
+    apply: function (root) {
+        var dict = PosnicPro.i18n._dict;
+        if (!dict) return;
+        var scope = root || document;
+        var set = function (el, key) {
+            if (!key) return;
+            var value = dict[key];
+            /* Missing or blank leaves the English that is already there. */
+            if (typeof value !== 'string' || value.trim() === '') return;
+            el.textContent = value;
+        };
+        var tags = scope.querySelectorAll('lang[class]');
+        for (var i = 0; i < tags.length; i++) {
+            set(tags[i], (tags[i].getAttribute('class') || '').trim());
+        }
+        var marked = scope.querySelectorAll('[data-t]');
+        for (var j = 0; j < marked.length; j++) {
+            set(marked[j], marked[j].getAttribute('data-t'));
+        }
+    },
+
+    /*
+     * Switch language without leaving the page.
+     *
+     * This used to navigate to ta_dashboard.html, because the language WAS the
+     * filename. There is one page now, so switching is a fetch and a redraw -
+     * which is also why it is instant rather than a reload.
+     */
+    change: function (code) {
+        PosnicPro.i18n.select(code === 'en' ? 'dashboard.html' : code + '_dashboard.html');
+        return PosnicPro.i18n.load().then(function () {
+            PosnicPro.i18n.apply();
+        });
     }
 };
-PosnicPro.i18n.load();
+PosnicPro.i18n.load().then(function () { PosnicPro.i18n.apply(); });
+/* Markup that exists before the pack lands still gets translated: this runs
+   again once the DOM is ready, and apply() is idempotent. */
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function () { PosnicPro.i18n.apply(); });
+}
 $(document).ready(function () {
     // Printer and paper are set per machine in Hardware Manager. Pull them in
     // before the first sale so the first receipt is right, not the second.

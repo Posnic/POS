@@ -5,23 +5,17 @@ var path = require('path')
    audit finding. The pages ship readable on purpose; the dependency is gone. */
 const { publicDir, languages, langDir, s, isDir} = require('./config');
 const dir = process.cwd();
-const langContent = [];
 let html = [];
 let taskCount = 0;
 let skipLang = false;
 let pages = {};
 let htmls = [];
-/* Keys a language file lacks, collected across the build and reported once. */
-const missingKeys = new Set();
-
-function readLangJSON() {
-    languages.forEach(lang => {
-       if  (lang === 'en') {
-           return;
-       }
-       langContent[lang] = JSON.parse(fs.readFileSync(`${langDir}${s}${lang}.json`, 'utf8'));
-    });
-}
+/*
+ * Coverage is no longer the build's business. It used to notice missing keys
+ * as a side effect of substituting them; nothing substitutes now, so the
+ * question is answered properly instead - tests/tools/i18n-coverage.js reads
+ * both the HTML and the JS t() calls and reports per language.
+ */
 
 function readPagesAndHtmls() {
     const json = JSON.parse(fs.readFileSync(`pages_html_map.json`, 'utf8'));
@@ -31,7 +25,7 @@ function readPagesAndHtmls() {
 
 function loadAllHtml() {
     for (const [page, file] of Object.entries(pages)) {
-        taskCount = skipLang ? taskCount + 1 : taskCount + languages.length;
+        taskCount += 1;
         langReplace(file, file, file);
     }
 
@@ -40,65 +34,68 @@ function loadAllHtml() {
         const dir = split[0];
         const file = split[1];
         const subItemUrl = item;
-        taskCount = skipLang ? taskCount + 1 : taskCount + languages.length;
+        taskCount += 1;
         langReplace(subItemUrl, dir, file);
     });
 }
 
-function langReplace(url, dir, file) {
-    for (let lang of languages) {
-        // If Lang Skip We will not replace content
-        if (skipLang && lang !=='en') {
-            continue;
-        }
-        fs.readFile(url, 'utf8', function (err, data) {
-            let find = /<lang class="(.*?)">(.*?)<\/lang>/g;
-            if (lang === 'en') {
-                data = data.replace(find, '$2');
-            } else {
-                data = data.replace(find, (match, key, english) => {
-                    const translated = langContent[lang][key];
-                    // A missing key used to interpolate as the literal string
-                    // "undefined" - shipped to customers, in the UI, for
-                    // months. The English the tag already carries is always a
-                    // better answer; the build lists what needs translating.
-                    if (translated === undefined) {
-                        missingKeys.add(`${lang}: ${key}`);
-                        return english;
-                    }
-                    return translated;
-                });
-            }
-            html[lang] = html[lang] ? html[lang] : [];
-            if (dir === file) {
-                html[lang][file] = data;
-            } else {
-                html[lang][dir] = html[lang][dir] ? html[lang][dir] : [];
-                html[lang][dir][file] = data;
-            }
-            taskCount--;
-        });
-    }
+/*
+ * Leave the words where the running app can reach them.
+ *
+ * This used to substitute the translation here and write a COMPLETE SECOND
+ * COPY of every page per language - 2.3MB of duplicated markup to deliver
+ * 43KB of Tamil, and the reason a tenth language would have cost 23MB before
+ * anyone typed a word of the eleventh.
+ *
+ * Now there is one tree. The tag stays in the page carrying its key and its
+ * English, and PosnicPro.i18n swaps the text in at load. English is therefore
+ * not "the default language" but the text physically present - it renders with
+ * no dictionary, offline, on first run, and if every fetch fails.
+ *
+ * TWO PLACES THE TAG CANNOT SURVIVE. Inside <title> and <option> the parser
+ * does not build an element for it: a title would show the customer literal
+ * angle brackets in their tab. There the key is hoisted onto the parent as
+ * data-t, which the same runtime pass understands.
+ */
+function markTranslatable(data) {
+    data = data.replace(
+        /<(title|option)([^>]*)>\s*<lang class="([^"]+)">([\s\S]*?)<\/lang>\s*<\/\1>/gi,
+        (match, tag, attrs, key, english) =>
+            `<${tag}${attrs} data-t="${key}">${english.trim()}</${tag}>`);
+    return data;
 }
 
-function getLinkContent(data, lang) {
+function langReplace(url, dir, file) {
+    fs.readFile(url, 'utf8', function (err, data) {
+        data = markTranslatable(data);
+        if (dir === file) {
+            html[file] = data;
+        } else {
+            html[dir] = html[dir] ? html[dir] : [];
+            html[dir][file] = data;
+        }
+        taskCount--;
+    });
+}
+
+function getLinkContent(data) {
     data = data.replace(/<link type='(.*?)' href='(.*?)' \/>/g, function (match, type, value) {
         let dir = value.split('/');
         let content = ''
         if (type === 'directory') {
             if (dir[1] && dir[1].length > 0) {
-                content = mergeDirectory(html[lang][dir[0]][dir[1]], dir[0]);
+                content = mergeDirectory(html[dir[0]][dir[1]], dir[0]);
             } else {
-                content = mergeDirectory(html[lang][dir[0]], dir[0]);
+                content = mergeDirectory(html[dir[0]], dir[0]);
             }
         }
         if (type === 'file') {
             if (dir[2] && dir[2].length > 0 && dir[1] && dir[1].length > 0) {
-                content = html[lang][dir[0]][dir[1]][dir[2]];
+                content = html[dir[0]][dir[1]][dir[2]];
             } else if (dir[1] && dir[1].length > 0) {
-                content = html[lang][dir[0]][dir[1]];
+                content = html[dir[0]][dir[1]];
             } else {
-                content = html[lang][dir[0]];
+                content = html[dir[0]];
             }
         }
         return content;
@@ -108,36 +105,44 @@ function getLinkContent(data, lang) {
 
 
 function buildAllHtml(cb, skip) {
+    /*
+     * --skipLang used to halve the build by not emitting the Tamil copies.
+     * There are no per-language copies any more, so it has nothing to skip.
+     * Accepted and ignored rather than removed, because it is in scripts and
+     * in people's fingers.
+     */
     skipLang = skip;
-    if (!skipLang) {
-        readLangJSON(); // Loading All Language pairs into Memory
-    }
     readPagesAndHtmls();
-    loadAllHtml(); // Loading All Html's into Memory and language replace
+    loadAllHtml();
     setInterval(function () {
         if (taskCount === 0) {
-            for (let lang of languages) {
-                if (skipLang && lang !=='en') {
-                    continue;
-                }
-                for (let item in html[lang]) {
-                    if (html[lang].hasOwnProperty(item) && typeof html[lang][item] === 'string') {
-                        let content = getLinkContent(html[lang][item], lang);
-                        if (!fs.existsSync(publicDir)) {
-                            fs.mkdirSync(publicDir, {recursive: true});
-                        }
-                        let fileName = lang === 'en' ? item : `${lang}_${item}`;
-                        fs.writeFileSync(`${publicDir}${s}${fileName}`, content, {encoding: 'utf8'})
+            let written = 0;
+            for (let item in html) {
+                if (html.hasOwnProperty(item) && typeof html[item] === 'string') {
+                    let content = getLinkContent(html[item]);
+                    if (!fs.existsSync(publicDir)) {
+                        fs.mkdirSync(publicDir, {recursive: true});
                     }
+                    fs.writeFileSync(`${publicDir}${s}${item}`, content, {encoding: 'utf8'});
+                    written += 1;
                 }
-
             }
-            if (missingKeys.size) {
-                console.warn(
-                    `[i18n] ${missingKeys.size} untranslated key(s) fell back to English:\n  ` +
-                    [...missingKeys].sort().join('\n  ')
-                );
+            /*
+             * Sweep the per-language pages a previous build left behind.
+             * Leaving them would keep 2.3MB of stale Tamil in the output, and
+             * a stale page is worse than a missing one: it still loads, still
+             * looks right, and is frozen at whatever the app said the day the
+             * old build ran.
+             */
+            let removed = 0;
+            for (const stale of fs.readdirSync(publicDir)) {
+                if (/^[a-z]{2}_.+\.html$/.test(stale)) {
+                    fs.unlinkSync(`${publicDir}${s}${stale}`);
+                    removed += 1;
+                }
             }
+            console.log(`[i18n] ${written} page(s), one tree`
+                + (removed ? `, removed ${removed} stale per-language page(s)` : ''));
             cb();
             clearInterval(this);
         }

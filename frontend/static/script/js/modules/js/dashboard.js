@@ -781,16 +781,26 @@ $('#change_language a').click(function () {
 
     // Persist selected language for subsequent loads
     PosnicPro.local.set('language', nav_language);
-    /* select() records the language CODE too, and clears the cached
-       dictionary - without it the app keeps answering in the language the
-       user just left until the next reload. */
-    PosnicPro.i18n.select(nav_id);
 
-    // Stay on the current host (localhost / custom domain / posnic.io) and
-    // only swap the dashboard shell (dashboard.html <-> ta_dashboard.html),
-    // preserving the current hash route (e.g. #/settings).
-    var newPath = window.location.pathname.replace(/[^/]+$/, nav_id);
-    window.location.href = newPath + window.location.hash;
+    /*
+     * No navigation. There used to be a page per language, so switching meant
+     * loading ta_dashboard.html and losing everything on screen. There is one
+     * page now: change() records the code, fetches that language's words and
+     * redraws in place, which is both simpler and instant.
+     *
+     * The menu still carries a filename in data-id; change() takes the code
+     * from it so the markup did not have to be touched in the same breath.
+     */
+    var code = /^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en';
+    PosnicPro.i18n.change(code).then(function () {
+        /* The type sizes below are language-dependent and were previously
+           settled by loading a different page. */
+        $('.report_tab_font').toggleClass('tamil_font14', code === 'ta');
+        $('.vertical-menu').toggleClass('tamil_verticalmenu', code === 'ta');
+        $('.top_sales_tamil').toggleClass('card_tamil_padding', code === 'ta');
+        $('.tamil_qty').toggleClass('sales_tamil_padding', code === 'ta');
+        $('.discount_tamil_right').toggleClass('pull-right', code !== 'ta');
+    });
 });
 jQuery(document).ready(function () {
     console.log('WORKING');
