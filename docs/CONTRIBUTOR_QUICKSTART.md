@@ -224,7 +224,17 @@ adds a new failure, fix that before asking for review.
 
 Before opening a PR:
 
-1. Branch from `main`.
+1. Branch from **`develop`**, and open the pull request against `develop`.
+
+   `develop` is where contributions land and get tested; `main` is released
+   code. If you opened against `main` by mistake, change the base branch with
+   the "Edit" button next to the PR title - the work is fine, only the target
+   is wrong.
+
+   ```bash
+   git fetch origin develop
+   git checkout -b my-change origin/develop
+   ```
 2. Keep one concern per PR.
 3. Link the issue and state which acceptance criteria or PR slice is covered.
 4. Add or update a focused test when code behavior changes.
@@ -236,6 +246,19 @@ Before opening a PR:
    ```
 
 7. Fill in the pull request template with what changed and how you tested it.
+
+## After it is merged
+
+Your change lands on `develop` and is labelled `ready for QA`, and a comment
+says where to try it. Anyone can test it - including you, and including people
+without write access.
+
+If you have a few minutes, testing somebody else's change is genuinely useful
+and needs no permissions. Filter issues by `ready for QA`, try the thing, and
+say what happened. Reporting that something is broken is as valuable as fixing
+it, and much better found there than by a shopkeeper.
+
+The maintainer promotes tested work from `develop` into a release.
 
 For a focused fix, a good PR title looks like:
 
