@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
+const { recordAudit } = require('../utils/audit-trail');
 const { publicPageUrl } = require('../utils/public-url');
 
 class SettingModel extends BaseModel {
@@ -30,10 +31,14 @@ class SettingModel extends BaseModel {
     this.cachedFallbackTax = null;
   }
 
-  setContext({ branchId = null, licenseId = null, user = null } = {}) {
+  setContext({ branchId = null, licenseId = null, user = null, ip = null, userAgent = null } = {}) {
     this.branchId = branchId;
     this.licenseId = licenseId;
     this.user = user;
+    /* Where the request came from. Only the audit trail uses these, and only
+       for the handful of events where "from where" is the whole question. */
+    this.ip = ip;
+    this.userAgent = userAgent;
     this.branchName = null; // Will be loaded lazily when needed
   }
 
@@ -2124,6 +2129,19 @@ class SettingModel extends BaseModel {
       }
 
       if (!oldPasswordValid) {
+        /* Recorded too. Somebody repeatedly failing to change a password is
+           either a person who has forgotten it or somebody working through a
+           list, and the address is what tells those apart. */
+        await recordAudit(await this.getDB().catch(() => null), {
+          event: 'password_change_failed',
+          actor: { id: String(user._id), name: user.email || user.username || '' },
+          target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+          ip: this.ip,
+          userAgent: this.userAgent,
+          branchId: this.branchId,
+          license: this.licenseId,
+          extra: { reason: 'current password did not match' },
+        });
         return { status: false, message: 'Current password is incorrect' };
       }
 
@@ -2150,6 +2168,26 @@ class SettingModel extends BaseModel {
       if (result.modifiedCount === 0) {
         return { status: false, message: 'Failed to update password' };
       }
+
+      /*
+       * The event that could not be answered.
+       *
+       * When a shop was locked out, the only evidence a password had changed
+       * was a timestamp on the user document - no actor, no address, nothing
+       * to tell the owner whether it was them last Tuesday or somebody else.
+       * The password itself is never written here; recordAudit redacts any
+       * field whose name looks like a secret regardless of what is passed.
+       */
+      await recordAudit(await this.getDB().catch(() => null), {
+        event: 'password_changed',
+        actor: { id: String(user._id), name: user.email || user.username || '' },
+        target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+        ip: this.ip,
+        userAgent: this.userAgent,
+        branchId: this.branchId,
+        license: this.licenseId,
+        extra: { method: 'self_service_change_password' },
+      });
 
       return {
         status: true,
