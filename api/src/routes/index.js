@@ -22,6 +22,7 @@ const dashboardRoutes = require('./dashboard.routes');
 const easyTableRoutes = require('./easy-tables.routes');
 const expensesRoutes = require('./expenses.routes');
 const installRoutes = require('./install.routes');
+const invoicesRoutes = require('./invoices.routes');
 const itemsRoutes = require('./items.routes');
 const loyaltyRoutes = require('./loyalty.routes');
 const messagingRoutes = require('./messaging.routes');
@@ -84,6 +85,7 @@ router.use('/dashboard', dashboardRoutes); // Removed /api prefix for consistenc
 router.use('/easy-table', easyTableRoutes);
 router.use('/expenses', expensesRoutes);
 router.use('/install', installRoutes);
+router.use('/invoices', invoicesRoutes);
 router.use('/items', itemsRoutes);
 router.use('/loyalty', loyaltyRoutes);
 router.use('/messaging', messagingRoutes);
