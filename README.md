@@ -39,7 +39,7 @@ shop with a week of sample trading, running the same code as this repository;
 ring up sales, break things freely, and the whole shop is restored on the
 hour. Outbound email, SMS and password changes are switched off there.
 
-[Website](https://posnic.com/) · [Cloud login](https://posnic.io/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.io/) · [Product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -293,7 +293,7 @@ Sponsors are named in releases unless they would rather not be.
 | Sales and licensing | **info@posnic.com** |
 | Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
 | Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
-| Web | [posnic.com](https://posnic.com) · [posnic.io](https://posnic.io/) |
+| Web | [posnic.io](https://posnic.io/) · [posnic.com](https://posnic.com) |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays

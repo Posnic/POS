@@ -14,7 +14,7 @@ abstract: >-
 authors:
   - name: Posnic Innovations Private Limited
 repository-code: https://github.com/Posnic/POS
-url: https://posnic.com/
+url: https://posnic.io/
 license: AGPL-3.0-only
 version: 1.6.1
 keywords:
