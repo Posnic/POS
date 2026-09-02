@@ -5,9 +5,9 @@ make stronger reliability, hardware, security, and deployment claims. It is not
 a promise of dates or a list of marketing features. Priorities can change when
 a reproducible failure, security issue, or shop-blocking problem is reported.
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-09-02
 
-Current public release baseline: [v1.3.0](https://github.com/Posnic/POS/releases/tag/v1.3.0)
+Current public release baseline: [v1.6.1](https://github.com/Posnic/POS/releases/tag/v1.6.1)
 
 ## Status vocabulary
 
