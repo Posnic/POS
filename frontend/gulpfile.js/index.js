@@ -205,9 +205,14 @@ function buildLangPacks(cb) {
          * language meant editing markup as well as adding a file - the last
          * place adding a language was still a code change. The menu is built
          * from this at runtime instead.
+         *
+         * shippedLanguages, not LANGUAGES: a draft translation is one nobody who
+         * speaks the language has read yet, and offering it to a shopkeeper would
+         * be worse than leaving them in English. Build with
+         * POSNIC_DRAFT_LANGUAGES=1 to see them.
          */
-        const { LANGUAGES } = require('./config');
-        fsx.writeFileSync(pathx.join(outDir, 'index.json'), JSON.stringify(LANGUAGES), 'utf8');
+        const { shippedLanguages } = require('./config');
+        fsx.writeFileSync(pathx.join(outDir, 'index.json'), JSON.stringify(shippedLanguages), 'utf8');
         cb();
     } catch (e) { cb(e); }
 }
