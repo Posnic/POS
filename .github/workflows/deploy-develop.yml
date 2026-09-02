@@ -46,13 +46,10 @@ jobs:
       # Built here rather than on the box: a 2 GB machine running mongod and
       # the API should not also be running a gulp build, and building in CI
       # means a broken build never reaches the sandbox at all.
-      # POSNIC_DRAFT_LANGUAGES=1 is the point of this being the sandbox: the
-      # seeded language packs are offered HERE and nowhere else, so somebody who
-      # speaks Malayalam can read it on a real screen and tell us what is wrong.
-      # A default build - every installer - leaves drafts out entirely.
+      # Every language ships in every build now, the unreviewed ones marked
+      # beta in the menu (frontend/gulpfile.js/config.js). Nothing to switch
+      # on here: the sandbox shows exactly what an installer shows.
       - name: Build the frontend
-        env:
-          POSNIC_DRAFT_LANGUAGES: '1'
         run: |
           npm --prefix frontend install --no-audit --no-fund
           cd frontend && npx gulp build

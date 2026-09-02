@@ -127,10 +127,10 @@ try {
   const block = /const LANGUAGES = \[([\s\S]*?)\n\];/.exec(config);
   if (block) {
     const declared = [...block[1].matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]);
-    const drafts = [...block[1].matchAll(/code:\s*'([^']+)'[^\n]*draft:\s*true/g)].map((m) => m[1]);
-    if (drafts.length) {
-      notes.push(`${drafts.length} language(s) are marked draft and are NOT offered to `
-        + `shopkeepers until a speaker reviews them: ${drafts.join(', ')}`);
+    const unreviewed = [...block[1].matchAll(/code:\s*'([^']+)'[^\n]*reviewed:\s*false/g)].map((m) => m[1]);
+    if (unreviewed.length) {
+      notes.push(`${unreviewed.length} language(s) ship marked beta until a speaker reviews `
+        + `them: ${unreviewed.join(', ')}`);
     }
     for (const code of declared) {
       if (code === 'en') continue;
