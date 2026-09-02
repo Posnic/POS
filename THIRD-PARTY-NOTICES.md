@@ -33,7 +33,7 @@ distribution rather than assigning one licence to the complete bundle. This
 notice records technical provenance and is not legal advice.
 
 If you would rather not receive it, the installer can be built without a bundled
-MongoDB and pointed at one you already run; see `download-mongodb.bat` / `download-mongodb.sh` and
+MongoDB and pointed at one you already run; see `download-mongodb.bat`  and
 `MONGODB_URI`.
 
 ## Node.js
@@ -201,4 +201,3 @@ than simply deleting, since ten of them are in use.
 If something is distributed here without its notice, that is a mistake and it
 will be fixed. Open an issue, or write to security@posnic.com if you would rather
 not do so publicly.
-
