@@ -1003,4 +1003,13 @@ describe('invoice_key survives the strict schema', () => {
     expect(Sale.schema.path('invoice_key')).toBeDefined();
     expect(Sale.schema.path('invoice_key').instance).toBe('String');
   });
+
+  /* Same trap, one field over: the sale saved from an invoice carries
+     source_invoice_id, and services/invoice-sync reads it back to mirror the
+     payment state. Stripped by the strict schema, the invoice would never
+     learn it was paid - and nothing would report it. */
+  test('the invoice lineage field survives too', () => {
+    expect(Sale.schema.path('source_invoice_id')).toBeDefined();
+    expect(Sale.schema.path('source_invoice_id').instance).toBe('ObjectId');
+  });
 });

@@ -4,7 +4,7 @@
   "@id": "https://github.com/Posnic/POS",
   "name": "Posnic POS",
   "alternateName": "Posnic Point of Sale",
-  "description": "Free, offline-first point-of-sale software for retail shops and restaurants. Posnic's own source is AGPL-3.0-only; release packages contain separately licensed components, including MongoDB Community Server under SSPL-1.0.",
+  "description": "Free, offline-first point-of-sale software for retail shops and restaurants, with open source POS code and billing workflows. Posnic's own source is AGPL-3.0-only; release packages contain separately licensed components, including MongoDB Community Server under SSPL-1.0.",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "Point of sale software",
   "author": {
@@ -46,6 +46,9 @@
   ],
   "keywords": [
     "pos",
+    "open-source-pos",
+    "offline-pos",
+    "online-offline-pos",
     "point-of-sale",
     "point-of-sale-system",
     "pos-software",
@@ -61,15 +64,15 @@
     "linux",
     "mongodb"
   ],
-  "url": "https://posnic.com/",
+  "url": "https://posnic.io/",
   "downloadUrl": "https://github.com/Posnic/POS/releases/latest",
   "softwareHelp": "https://github.com/Posnic/POS/blob/main/docs/USER_GUIDE.md",
   "citation": "https://github.com/Posnic/POS/blob/main/CITATION.cff",
   "relatedLink": [
     "https://posnic.com/posnic-facts",
     "https://posnic.com/trust",
-    "https://github.com/Posnic/POS/blob/main/PRIVACY.md",
-    "https://github.com/Posnic/POS/blob/main/GOVERNANCE.md",
+    "https://github.com/Posnic/POS/blob/main/docs/PRIVACY.md",
+    "https://github.com/Posnic/POS/blob/main/docs/GOVERNANCE.md",
     "https://github.com/Posnic/POS/blob/main/THIRD-PARTY-NOTICES.md",
     "https://posnic.com/features",
     "https://posnic.com/download",
@@ -77,12 +80,12 @@
     "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
   ],
   "softwareVersion": "1.6.1",
-  "dateModified": "2026-08-23",
+  "dateModified": "2026-09-02",
   "readme": "https://github.com/Posnic/POS/blob/main/README.md",
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
   "releaseNotes": "https://github.com/Posnic/POS/blob/main/docs/ROADMAP.md",
   "isSourceCodeOf": {
-    "@id": "https://posnic.com/#software",
+    "@id": "https://posnic.io/#software",
     "@type": "SoftwareApplication",
     "name": "Posnic POS",
     "applicationCategory": "BusinessApplication",
@@ -93,6 +96,6 @@
       "Linux"
     ],
     "isAccessibleForFree": true,
-    "url": "https://posnic.com/"
+    "url": "https://posnic.io/"
   }
 }

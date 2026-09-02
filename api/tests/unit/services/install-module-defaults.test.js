@@ -64,6 +64,8 @@ describe('a new shop’s feature switches', () => {
       'module_channels_kiosk_enable',
       'module_cashbook_enable',
       'module_recyclebin_enable',
+      'quotes_enable',
+      'invoices_enable',
     ]) {
       expect(defaults).toHaveProperty(key);
       expect(defaults[key]).toBe(false);
@@ -79,7 +81,9 @@ describe('a new shop’s feature switches', () => {
          is said out loud here rather than pretended away - a pattern that
          quietly excluded a real key would let a switch ship unset, and unset
          reads as ON. */
-      expect(key).toMatch(/^(module_[a-z_]+|quick_sale|quotes|cash_register|staff_[a-z]+)_enable$/);
+      expect(key).toMatch(
+        /^(module_[a-z_]+|quick_sale|quotes|invoices|cash_register|staff_[a-z]+)_enable$/
+      );
     }
   });
 
