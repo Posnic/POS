@@ -104,10 +104,25 @@ for (const code of codes) {
   const file = path.join(LANG_DIR, `${code}.json`);
   let pack = {};
   let existed = false;
-  if (fs.existsSync(file)) {
-    existed = true;
+  /*
+   * Read first and let a missing file tell us it is missing, rather than
+   * asking existsSync and then reading - between the two answers the file can
+   * change, and the check-then-act is what CodeQL flags as a race.
+   */
+  {
+    let raw = null;
     try {
-      pack = JSON.parse(fs.readFileSync(file, 'utf8'));
+      raw = fs.readFileSync(file, 'utf8');
+      existed = true;
+    } catch (e) {
+      if (e.code !== 'ENOENT') {
+        console.error(`Cannot read languages/${code}.json: ${e.message}`);
+        process.exitCode = 1;
+        continue;
+      }
+    }
+    try {
+      if (raw !== null) pack = JSON.parse(raw);
     } catch (e) {
       console.error(`languages/${code}.json is not valid JSON: ${e.message}`);
       process.exitCode = 1;

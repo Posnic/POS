@@ -19,6 +19,11 @@ const path = require('path');
 const LANG_DIR = path.resolve(__dirname, '..', '..', 'languages');
 const CONFIG = path.resolve(__dirname, '..', '..', 'frontend', 'gulpfile.js', 'config.js');
 
+/* Kept identical to PosnicPro.i18n._allowedTags - the runtime enforces the
+   same list, and a contributor should be told here rather than discover it
+   as words that silently vanished. */
+const ALLOWED_TAGS = ['span', 'i', 'b', 'strong', 'em', 'small', 'br', 'u'];
+
 const problems = [];
 const notes = [];
 const fail = (file, what, fix) => problems.push({ file, what, fix });
@@ -115,6 +120,40 @@ for (const file of files) {
     }
     if (/^\s|\s$/.test(value)) {
       notes.push(`${file}: ${key} has a leading or trailing space`);
+    }
+    /*
+     * A tag in a translation is a script in a shop.
+     *
+     * These files are pull requests from strangers now, reviewed by somebody
+     * who by definition cannot read the language: `<img src=x onerror=...>`
+     * inside a Malayalam string looks exactly like Malayalam. The runtime no
+     * longer treats a tag as markup, and this refuses it a second time, at the
+     * gate, so a pack carrying one never reaches a build.
+     */
+    /*
+     * A few strings legitimately carry an icon or the <span> the app rewrites
+     * later, so markup is not banned outright - but a translation is a pull
+     * request from somebody whose language the reviewer cannot read, and
+     * `<img src=x onerror=...>` looks exactly like Malayalam to them.
+     *
+     * The runtime sanitises to this same allowlist, so nothing dangerous
+     * reaches a shop either way. This is the half that says so out loud, to
+     * the contributor, before a maintainer has to notice.
+     *
+     * ">" alone is fine: Tamil writes a breadcrumb as "Manage > Features".
+     */
+    for (const tag of value.match(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9]*)/g) || []) {
+      const name = tag.replace(/[<\/\s]/g, '').toLowerCase();
+      if (!ALLOWED_TAGS.includes(name)) {
+        fail(file, `${key} contains a <${name}> tag`,
+          `Only ${ALLOWED_TAGS.join(', ')} are allowed, and only to carry an `
+          + 'icon or a placeholder the app fills in. Everything else is removed '
+          + 'before the words reach the screen, so it would not work anyway.');
+      }
+    }
+    if (/\son\w+\s*=/i.test(value)) {
+      fail(file, `${key} contains an event handler`,
+        'A translation is words. Remove the on... attribute.');
     }
   }
   if (empty) notes.push(`${file}: ${empty} entr(ies) are blank and will show English`);
