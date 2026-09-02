@@ -49,13 +49,12 @@ jobs:
       - name: Nothing outside the language files changed
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           # A translation PR that also edits application code is not a
           # translation PR. Saying so here is quicker and kinder than a
           # reviewer noticing on the third read.
           git fetch --no-tags --depth=1 origin "$BASE" >/dev/null 2>&1 || true
-          CHANGED=$(git diff --name-only "$BASE" "$HEAD" || git diff --name-only HEAD~1 HEAD)
+          CHANGED=$(git diff --name-only "$BASE" HEAD || git diff --name-only HEAD~1 HEAD)
           echo "Changed:"; echo "$CHANGED" | sed 's/^/  /'
           UNEXPECTED=$(echo "$CHANGED" | grep -v -E '^(languages/|docs/|\.github/)' \
             | grep -v -E '^frontend/gulpfile\.js/config\.js$' || true)
