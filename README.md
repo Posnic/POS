@@ -107,6 +107,24 @@ without granting marketing reuse.
 
 ## Install
 
+Posnic installs two ways, both free and both the same AGPL-3.0 software.
+**Most shops want the desktop app.**
+
+| | **Desktop** | **Your own server** |
+|---|---|---|
+| Install | Download and run | One command on Ubuntu |
+| Used from | That computer | A browser on any till, tablet or phone on the network |
+| Data lives | That computer | Your server |
+| Needs internet | No | No — your own network is enough |
+| Somebody maintains it | No | **You** — updates, backups, certificate |
+| Sync between shops | Posnic Cloud | Posnic Cloud |
+
+A server is not a better desktop; it is a machine somebody has to look after. If
+one person rings up sales on one computer, the desktop app is the right answer
+and always will be.
+
+### Desktop
+
 Download the package for your platform from
 **[the latest release](https://github.com/Posnic/POS/releases/latest)**, run it,
 and follow the wizard. Stable v1.3.0 packages include MongoDB Community Server
@@ -122,6 +140,35 @@ artifact-bound SBOM and provenance, follow the [release verification guide](docs
 
 First launch takes a few minutes while it sets up its database. After that,
 seconds. Full walkthrough in the **[user guide](docs/USER_GUIDE.md)**.
+
+### Your own server
+
+Ubuntu 24.04, 2 GB of memory, 8 GB of disk. A 2 GB virtual machine from any
+provider runs a single shop comfortably.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Posnic/POS/main/scripts/install-server.sh -o install-server.sh
+less install-server.sh          # read it first - you are about to run it as root
+sudo bash install-server.sh
+```
+
+It installs Node.js 22, MongoDB 8 and Posnic into `/opt/posnic`, generates that
+machine's own secrets, and runs it under systemd so it survives a reboot. When
+it finishes it prints the address to open. Re-running it updates Posnic and
+leaves your secrets and your data alone.
+
+Three things it cannot do for you, none of them optional on a shop taking real
+money: **get a certificate** (without one, passwords cross the network in the
+clear), **keep port 27017 off the internet**, and **restore a backup once** to
+prove it is a backup rather than a file.
+
+**Self-hosting does not include sync between tills or branches.** That is
+[Posnic Cloud](https://posnic.com/pricing.html). A self-hosted Posnic is one
+database several people use at once — which is what most single-shop setups
+actually want — not several databases kept in step.
+
+Full guide, including installing by hand on other systems:
+**[docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)**.
 
 ## Build from source
 
@@ -166,15 +213,8 @@ source is AGPL-3.0-only, while bundled components keep their separate licences.
 | Off-site backups, remote dashboard | | ✅ |
 | Installer under your own brand | | ✅ |
 
-Posnic runs two ways, both free: as a desktop application on the shop
-computer, or on **a server you control**, used from a browser on any till or
-tablet on your network. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) — one
-command on Ubuntu, and an honest account of the certificate, firewall and
-backups you take on with it.
-
-Self-hosting does **not** include sync between separate tills or branches. That
-is Cloud. A self-hosted Posnic is one database several people use at once,
-which is what most single-shop setups want.
+Both ways of running Posnic — [desktop and your own server](#install) — sit in
+the left column. Neither is a trial and neither expires.
 
 **We do not move features from the left column to the right.** What is free
 today stays free. Cloud has to earn its price by being useful, not by making
