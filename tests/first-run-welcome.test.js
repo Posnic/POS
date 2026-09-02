@@ -287,7 +287,7 @@ test('the modal markup carries what the code paints into', () => {
         'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_summary',
         'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip',
         'feature_intro_next', 'feature_intro_back', 'feature_intro_step_label',
-        'feature_intro_demo_bg_status', 'feature_intro_close']) {
+        'feature_intro_demo_bg_status', 'feature_intro_close', 'feature_intro_edit_settings']) {
         assert.ok(modalCode.includes('id="' + id + '"'), 'missing #' + id);
     }
     assert.match(modalCode, /class="modal-content first-run"/);
@@ -332,6 +332,13 @@ test('the welcome shows saved starter settings before selling', () => {
     assert.match(summary, /currencySign/);
     assert.match(summary, /PosnicPro\.timeZone\(\)/);
     assert.match(summary, /dateformatset/);
+});
+
+test('the starter settings review offers a path to edit country and currency', () => {
+    assert.match(modalCode, /id="feature_intro_edit_settings"/);
+    assert.match(modalCode, /Edit country, currency and tax details/);
+    assert.match(settingsCode, /\$\(document\)\.on\('click', '#feature_intro_edit_settings'/);
+    assert.match(settingsCode, /hasher\.setHash\('settings\/general'\)/);
 });
 
 test('the first-run features are searchable and recommended ones rise first', () => {
@@ -518,12 +525,21 @@ test('the tour is not sent to the sale screen', () => {
                           'PosnicPro.alert(response.type');
     assert.match(success, /var wantedTour = PosnicPro\.features\._tourAfterSave;/,
         'nothing remembers which button was pressed');
-    assert.match(success, /if \(!wantedTour\) \{ PosnicPro\.features\.startSelling\(\); \}/,
+    assert.match(success, /if \(!wantedTour && !wantedSettings\) \{ PosnicPro\.features\.startSelling\(\); \}/,
         'the tour and the sale screen are not told apart');
     /* The flag is cleared by the tour branch above, so reading it afterwards
        would always say "no tour" and the tour would be cut short every time. */
     assert.ok(success.indexOf('var wantedTour') < success.indexOf('_tourAfterSave = false'),
         'the flag is read after the branch that clears it');
+});
+
+test('editing starter settings saves the welcome without opening the sale screen', () => {
+    const success = block(settingsCode, "var wantedTour = PosnicPro.features._tourAfterSave;",
+                          'PosnicPro.alert(response.type');
+    assert.match(success, /var wantedSettings = PosnicPro\.features\._settingsAfterSave;/);
+    assert.match(success, /if \(wantedSettings\)/);
+    assert.match(success, /hasher\.setHash\('settings\/general'\)/);
+    assert.match(success, /if \(!wantedTour && !wantedSettings\) \{ PosnicPro\.features\.startSelling\(\); \}/);
 });
 
 test('a failed save goes nowhere', () => {
