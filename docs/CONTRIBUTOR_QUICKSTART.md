@@ -217,6 +217,9 @@ adds a new failure, fix that before asking for review.
 
 ### Connector or AI PR
 
+Before proposing an external app or connector, read the
+[app review checklist](APP_REVIEW_CHECKLIST.md). It shows the required review information and synthetic examples of a submission that passes or fails.
+
 1. Start with design in [#33](https://github.com/Posnic/POS/issues/33) or
    [#34](https://github.com/Posnic/POS/issues/34).
 2. The default local app must send no shop data outside the machine.
