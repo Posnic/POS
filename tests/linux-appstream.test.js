@@ -41,6 +41,10 @@ test('AppStream copy is useful, factual and backed by a real product screenshot'
   const description = document.querySelector('description').textContent.replace(/\s+/g, ' ').trim();
   const screenshot = document.querySelector('screenshot[type="default"] image[type="source"]');
   const urls = [...document.querySelectorAll('url')].map((node) => node.textContent.trim());
+  const keywords = [...document.querySelectorAll('keywords > keyword')].map((node) =>
+    node.textContent.trim(),
+  );
+  const releases = [...document.querySelectorAll('releases > release')];
 
   assert.ok(summary.length <= 100 && !summary.endsWith('.'));
   assert.match(description, /open-source point-of-sale software/i);
@@ -49,6 +53,12 @@ test('AppStream copy is useful, factual and backed by a real product screenshot'
   assert.equal(screenshot.getAttribute('height'), '1032');
   assert.match(screenshot.textContent.trim(), /^https:\/\/raw\.githubusercontent\.com\/Posnic\/POS\/[0-9a-f]{40}\//);
   assert.ok(urls.length >= 4 && urls.every((url) => url.startsWith('https://')));
+  assert.ok(urls.includes('https://posnic.io/'));
+  assert.ok(keywords.includes('billing software'));
+  assert.ok(keywords.includes('offline POS'));
+  assert.ok(keywords.includes('online/offline POS'));
+  assert.ok(keywords.includes('open source POS'));
+  assert.equal(releases[0].getAttribute('version'), pkg.version);
 });
 
 test('AppImage and Debian packages use the metadata filename each catalog expects', async (t) => {
