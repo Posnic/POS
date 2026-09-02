@@ -2789,6 +2789,7 @@ PosnicPro = {
         $('#manage_li_workforce').toggle(on('staff_shifts_enable'));
         $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
         $('#li_quotes').toggle(on('quotes_enable'));
+        $('#li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_credit').toggle(on('module_credit_enable'));
         /*
          * Customer Dues on the dashboard follows the same switch.
@@ -2813,6 +2814,7 @@ PosnicPro = {
            door for every feature, however many we grow. */
         $('#manage_li_demodata').toggle(on('module_demo_data_enable'));
         $('#manage_li_quotes').toggle(on('quotes_enable'));
+        $('#manage_li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_tillpin').toggle(s.till_lock_enable === true);
         $('#manage_modules_header').toggle(
             $('[id^="manage_li_"]').filter(function () { return $(this).css('display') !== 'none'; }).length > 0
