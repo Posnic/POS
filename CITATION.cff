@@ -5,11 +5,12 @@ message: >-
 title: Posnic POS
 type: software
 abstract: >-
-  Posnic POS is zero-price, offline-first point-of-sale software for retail
-  shops and restaurants. Posnic's own source is AGPL-3.0-only. Release packages
-  include separately licensed components, including MongoDB Community Server
-  under SSPL-1.0. Its primary API and database run on the shop computer, with
-  optional external payment, cloud, and integration dependencies.
+  Posnic POS is zero-price, offline-first open source POS and billing software
+  for retail shops and restaurants. Posnic's own source is AGPL-3.0-only.
+  Release packages include separately licensed components, including MongoDB
+  Community Server under SSPL-1.0. Its primary API and database run on the shop
+  computer or on a server you control, with optional external payment, cloud,
+  and integration dependencies.
 authors:
   - name: Posnic Innovations Private Limited
 repository-code: https://github.com/Posnic/POS
@@ -19,6 +20,9 @@ version: 1.6.1
 keywords:
   - point of sale
   - POS software
+  - open source POS
+  - offline POS
+  - online/offline POS
   - offline-first
   - retail
   - restaurant
