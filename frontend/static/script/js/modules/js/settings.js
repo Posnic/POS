@@ -5628,19 +5628,80 @@ PosnicPro.features = {
     },
 
     paintDemoChoice: function (wanted) {
-        $('#feature_intro_demo_yes').toggleClass('is-selected', wanted === true);
-        $('#feature_intro_demo_no').toggleClass('is-selected', wanted === false);
+        $('#feature_intro_demo_yes').toggleClass('is-selected', wanted === true)
+            .attr('aria-pressed', wanted === true ? 'true' : 'false');
+        $('#feature_intro_demo_no').toggleClass('is-selected', wanted === false)
+            .attr('aria-pressed', wanted === false ? 'true' : 'false');
         $('#feature_intro_demo_status').text(wanted === true
-            ? 'Sample data will be available from the Demo Data page and sale screen.'
+            ? 'Sample data selected. It will install in the background after Next.'
             : 'Clean catalogue selected. You can add sample data later under Manage > Demo Data.');
     },
 
     chooseDemoData: function (wanted) {
         $('#fi_module_demo_data_enable').prop('checked', wanted === true);
         PosnicPro.features.paintDemoChoice(wanted === true);
-        if (wanted === true && PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
-            PosnicPro.settings.syncDemoDataAfterSave(true);
+    },
+
+    markIntroDemoStatus: function (title, line, pct, keepOpen) {
+        var box = $('#feature_intro_demo_bg_status');
+        if (!box.length) { return; }
+        box.prop('hidden', false).removeAttr('hidden');
+        $('#feature_intro_demo_bg_title').text(title || 'Adding sample data');
+        $('#feature_intro_demo_bg_step').text(line || 'Working in the background...');
+        $('#feature_intro_demo_bg_bar').css('width', Math.max(0, Math.min(100, Number(pct) || 0)) + '%');
+        if (!keepOpen) {
+            window.setTimeout(function () {
+                $('#feature_intro_demo_bg_status').prop('hidden', true).attr('hidden', 'hidden');
+            }, 2200);
         }
+    },
+
+    beginIntroDemoInstall: function () {
+        if (PosnicPro.features._introDemoStarted) { return; }
+        var selected = $('#fi_module_demo_data_enable').is(':checked');
+        if (!selected) {
+            PosnicPro.features.markIntroDemoStatus('Clean shop selected', 'No sample records will be added.', 100, false);
+            return;
+        }
+        PosnicPro.features._introDemoStarted = true;
+        if (PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
+            PosnicPro.settings.syncDemoDataAfterSave(true, {
+                inlineTarget: '#feature_intro_demo_bg_status',
+                title: 'Adding sample data'
+            });
+            return;
+        }
+        PosnicPro.features.markIntroDemoStatus('Sample data ready', 'Products and sample sales are ready to try.', 100, false);
+    },
+
+    showIntroStep: function (step) {
+        var steps = ['sample', 'features', 'settings'];
+        var index = Math.max(0, Math.min(steps.length - 1, Number(step) || 0));
+        PosnicPro.features._introStep = index;
+        $('[data-intro-step]').each(function () {
+            $(this).toggleClass('is-active', $(this).data('introStep') === steps[index]);
+        });
+        $('[data-intro-dot]').each(function () {
+            var dot = Number($(this).attr('data-intro-dot'));
+            $(this).toggleClass('is-active', dot === index);
+            $(this).toggleClass('is-done', dot < index);
+        });
+        $('#feature_intro_step_label').text('Step ' + (index + 1) + ' of ' + steps.length);
+        $('#feature_intro_back').prop('hidden', index === 0).attr('hidden', index === 0 ? 'hidden' : null);
+        $('#feature_intro_next').prop('hidden', index === steps.length - 1).attr('hidden', index === steps.length - 1 ? 'hidden' : null);
+        $('#feature_intro_save, #feature_intro_tour')
+            .prop('hidden', index !== steps.length - 1)
+            .attr('hidden', index !== steps.length - 1 ? 'hidden' : null);
+    },
+
+    nextIntroStep: function () {
+        var index = PosnicPro.features._introStep || 0;
+        if (index === 0) { PosnicPro.features.beginIntroDemoInstall(); }
+        PosnicPro.features.showIntroStep(index + 1);
+    },
+
+    previousIntroStep: function () {
+        PosnicPro.features.showIntroStep((PosnicPro.features._introStep || 0) - 1);
     },
 
     filterIntro: function () {
@@ -5688,9 +5749,15 @@ PosnicPro.features = {
         $('#feature_intro_summary').html(PosnicPro.features.setupSummary());
 
         $('#feature_intro_filter').val('');
-        var demoOn = PosnicPro.features.featureOn(blob, 'module_demo_data_enable');
+        var demoOn = blob.module_demo_data_enable === false || blob.module_demo_data_enable === 'false'
+            ? true
+            : PosnicPro.features.featureOn(blob, 'module_demo_data_enable');
         $('#fi_module_demo_data_enable').prop('checked', demoOn);
         PosnicPro.features.paintDemoChoice(demoOn);
+        PosnicPro.features._introStep = 0;
+        PosnicPro.features._introDemoStarted = false;
+        $('#feature_intro_demo_bg_status').prop('hidden', true).attr('hidden', 'hidden');
+        PosnicPro.features.showIntroStep(0);
 
         var rows = PosnicPro.features.INTRO.filter(function (f) {
             return f[0] !== 'module_demo_data_enable';
@@ -5746,16 +5813,9 @@ PosnicPro.features = {
             hasher.setHash('sales/new');
         };
         /*
-         * Both dialogs fade, so hiding one is asynchronous and it is still on
-         * screen when this runs. Changing the page under a modal that has not
-         * finished closing is how a backdrop gets left behind, greying out the
-         * screen it was supposed to reveal. The tour hits the same thing and
-         * waits a fixed 400ms; waiting for the event is the same idea without
-         * the guess.
-         *
-         * A visible check rather than a blind wait, because a modal that has
-         * ALREADY closed fired its event before this line ran, and binding to
-         * it then would wait for something that is never coming.
+         * The welcome fades out asynchronously. Changing the page under a
+         * modal that has not finished closing is how a backdrop gets left
+         * behind over the sale screen, so wait for this one visible dialog.
          */
         var showing = function (sel) {
             var m = $(sel);
@@ -5765,14 +5825,7 @@ PosnicPro.features = {
             if (!showing(sel)) { next(); return; }
             $(sel).one('hidden.bs.modal', next);
         };
-        /*
-         * The sample-data bar has real work running behind it - switching demo
-         * data off during the welcome starts a purge. The hash change would
-         * not stop that work, but it would leave the bar floating over the
-         * sale screen and land its finishing message somewhere it makes no
-         * sense. So the sale screen waits for that too.
-         */
-        after('#feature_intro_modal', function () { after('#demo_progress_modal', go); });
+        after('#feature_intro_modal', go);
         /*
          * And a floor under all of it. A transition that never fires - a
          * detached element, a browser honouring reduced motion, a stylesheet
@@ -5826,12 +5879,20 @@ PosnicPro.features = {
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
                 if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
-                $('#feature_intro_modal').modal('hide');
-                PosnicPro.alert('success', 'Feature switches saved');
                 /* Read before the branch below clears it, because where this
                    shop goes next depends on which of the two buttons was
                    pressed and the flag does not survive to the end. */
                 var wantedTour = PosnicPro.features._tourAfterSave;
+                var wantedDemo = $('#fi_module_demo_data_enable').length
+                    ? $('#fi_module_demo_data_enable').is(':checked')
+                    : undefined;
+                if (wantedDemo === true && PosnicPro.features._introDemoStarted !== true) {
+                    PosnicPro.features.beginIntroDemoInstall();
+                } else {
+                    PosnicPro.settings.syncDemoDataAfterSave(wantedDemo);
+                }
+                $('#feature_intro_modal').modal('hide');
+                PosnicPro.alert('success', 'Feature switches saved');
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
@@ -5839,14 +5900,6 @@ PosnicPro.features = {
                     PosnicPro.features._tourAfterSave = false;
                     setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
                 }
-                /* The welcome saves the demo switch too, so its off->on and
-                   consented off both act here - state passed explicitly,
-                   because the settings form's checkbox is not this dialog. */
-                PosnicPro.settings.syncDemoDataAfterSave(
-                    $('#fi_module_demo_data_enable').length
-                        ? $('#fi_module_demo_data_enable').is(':checked')
-                        : undefined
-                );
                 /* And then the sale screen, because that is what the button
                    says. The tour goes the other way - see startSelling. */
                 if (!wantedTour) { PosnicPro.features.startSelling(); }
@@ -5870,6 +5923,11 @@ $(document).on('click', '#feature_intro_skip', function () {
     PosnicPro.features._tourAfterSave = false;
     PosnicPro.features.saveIntro();
 });
+$(document).on('click', '#feature_intro_close', function () {
+    PosnicPro.features._decided = true;
+    PosnicPro.features._tourAfterSave = false;
+    PosnicPro.features.saveIntro();
+});
 $(document).on('change', '#fi_module_demo_data_enable', function () {
     /* The welcome's own demo switch: same consent, same rule. The blob is
        the truth here - the settings form may not be primed yet. */
@@ -5880,6 +5938,8 @@ $(document).on('change', '#fi_module_demo_data_enable', function () {
 $(document).on('input', '#feature_intro_filter', function () { PosnicPro.features.filterIntro(); });
 $(document).on('click', '#feature_intro_demo_yes', function () { PosnicPro.features.chooseDemoData(true); });
 $(document).on('click', '#feature_intro_demo_no', function () { PosnicPro.features.chooseDemoData(false); });
+$(document).on('click', '#feature_intro_next', function () { PosnicPro.features.nextIntroStep(); });
+$(document).on('click', '#feature_intro_back', function () { PosnicPro.features.previousIntroStep(); });
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
@@ -6618,6 +6678,7 @@ $(document).on('click', '#v-pills-modules .module-card', function (e) {
 PosnicPro.settings.demoProgress = {
     _timer: null,
     _pct: 0,
+    _inlineTarget: '',
 
     /*
      * `title` because this bar now serves two jobs: putting the samples back
@@ -6625,8 +6686,18 @@ PosnicPro.settings.demoProgress = {
      * "Adding the sample data" while rows are being REMOVED is a bar that
      * describes work other than the work being done.
      */
-    open: function (title) {
+    open: function (title, options) {
         var self = PosnicPro.settings.demoProgress;
+        options = options || {};
+        self._inlineTarget = options.inlineTarget || '';
+        if (self._inlineTarget && $(self._inlineTarget).length) {
+            $(self._inlineTarget).prop('hidden', false).removeAttr('hidden');
+            $('#feature_intro_demo_bg_title').text(options.title || title || 'Adding sample data');
+            self._pct = 0;
+            self._set(4, 'Getting ready...');
+        } else {
+            self._inlineTarget = '';
+        }
         if (!$('#demo_progress_modal').length) {
             $('body').append(
                 '<div class="modal fade" id="demo_progress_modal" tabindex="-1" role="dialog"' +
@@ -6646,7 +6717,7 @@ PosnicPro.settings.demoProgress = {
         self._pct = 0;
         $('#demo_progress_title').text(title || 'Adding the sample data');
         self._set(4, 'Getting ready…');
-        $('#demo_progress_modal').modal('show');
+        if (!self._inlineTarget) { $('#demo_progress_modal').modal('show'); }
 
         /*
          * Named steps rather than a silent crawl. The shop is watching a bar
@@ -6692,6 +6763,12 @@ PosnicPro.settings.demoProgress = {
 
     _set: function (pct, label) {
         PosnicPro.settings.demoProgress._pct = pct;
+        var inlineTarget = PosnicPro.settings.demoProgress._inlineTarget;
+        if (inlineTarget) {
+            $(inlineTarget).find('.demo-progress-bar').css('width', pct + '%');
+            if (label) { $('#feature_intro_demo_bg_step').text(label.replace(/…/g, '...')); }
+            return;
+        }
         $('#demo_progress_bar').css('width', pct + '%');
         if (label) { $('#demo_progress_step').text(label); }
     },
@@ -6699,6 +6776,18 @@ PosnicPro.settings.demoProgress = {
     close: function (message, ok) {
         var self = PosnicPro.settings.demoProgress;
         if (self._timer) { window.clearInterval(self._timer); self._timer = null; }
+        if (self._inlineTarget) {
+            var target = self._inlineTarget;
+            self._set(100, ok ? 'Sample data ready.' : (message || 'Sample data could not be added.'));
+            self._inlineTarget = '';
+            if (message && !ok) { PosnicPro.alert('error', message); }
+            if (ok) {
+                window.setTimeout(function () {
+                    $(target).prop('hidden', true).attr('hidden', 'hidden');
+                }, 2600);
+            }
+            return;
+        }
         self._set(100, ok ? 'Done' : 'Stopped');
         /* A beat at 100% so the bar is seen to finish rather than vanishing
            mid-way, which reads as a crash. */
@@ -6970,7 +7059,7 @@ PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
  * moved, never on every save, or a tax change puts a progress bar in front
  * of somebody who asked for nothing.
  */
-PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
+PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
     var on = nowOnArg !== undefined ? !!nowOnArg : $('#module_demo_data_enable').is(':checked');
     var was = PosnicPro.settings._demoWasOn;
     PosnicPro.settings._demoWasOn = on;
@@ -6998,7 +7087,7 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
     PosnicPro.settings._demoPurgeArmed = false;
     if (!on || was !== false) { return; }
 
-    PosnicPro.settings.demoProgress.open();
+    PosnicPro.settings.demoProgress.open(options && options.title, options);
     PosnicPro.post({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
         PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
     }, function (xhr) {
