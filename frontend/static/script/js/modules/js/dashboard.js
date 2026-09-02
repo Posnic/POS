@@ -849,8 +849,10 @@ $('#change_language').on('click', 'a', function () {
     var nav_language = $(this).data('value');
     var nav_id = $(this).data('code');
 
-    // Persist selected language for subsequent loads
+    // Persist selected language for subsequent loads, and say so in the
+    // header now: there is no navigation any more to redraw the label.
     PosnicPro.local.set('language', nav_language);
+    $('.select_language').html(nav_language);
 
     /*
      * No navigation. There used to be a page per language, so switching meant
