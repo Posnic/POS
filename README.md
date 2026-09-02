@@ -4,11 +4,13 @@
 
 # Posnic
 
-**Free point-of-sale software with public source and local checkout.**
+**Free open source POS and billing software with public source, local checkout
+and online/offline workflows.**
 
 An offline-first POS for retail shops and restaurants. The primary API and
-database run on the shop computer; electronic payments, optional cloud
-services, downloads and integrations can still need a network.
+database run on the shop computer or on a server you control; electronic
+payments, optional cloud services, downloads and integrations can still need a
+network.
 
 Posnic's own source is AGPL-3.0-only. Release packages also bundle separately
 licensed components, including MongoDB Community Server under SSPL-1.0. Review
@@ -37,7 +39,7 @@ shop with a week of sample trading, running the same code as this repository;
 ring up sales, break things freely, and the whole shop is restored on the
 hour. Outbound email, SMS and password changes are switched off there.
 
-[Website](https://posnic.com/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://posnic.com/) · [Cloud login](https://posnic.io/) · [Verified product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -290,7 +292,7 @@ Sponsors are named in releases unless they would rather not be.
 | Sales and licensing | **info@posnic.com** |
 | Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
 | Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
-| Web | [posnic.com](https://posnic.com) |
+| Web | [posnic.com](https://posnic.com) · [posnic.io](https://posnic.io/) |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays
