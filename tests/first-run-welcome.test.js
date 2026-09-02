@@ -150,24 +150,23 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
      * page." The first design marked any close as asked; he overruled it,
      * and he is right about who this screen is for - a brand-new user who
      * Escapes a dialog they did not read has not learned that features are
-     * switchable, which is the entire point. Save and the explicit "Not now"
-     * write the flags; Esc and a stray click write NOTHING, and the welcome
-     * returns next login.
+     * switchable, which is the entire point. Save and the explicit "Use
+     * defaults" path write the flags; Esc and a stray click write NOTHING,
+     * and the welcome returns next login.
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
     /* No dismiss handler at all now: an undecided close leaves NOTHING, and
-       the DB flag written by Save / "Not now" is the entire record. */
+       the DB flag written by Save / "Use defaults" is the entire record. */
     assert.ok(!/hidden\.bs\.modal/.test(gate),
         'a dismiss handler is writing browser state again');
 
-    // The explicit Skip is the decision that writes both flags.
+    // The explicit defaults path is the decision that writes both flags.
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
     assert.match(skip, /_decided = true/);
-    assert.match(skip, /settings\/group\/features/);
-    assert.match(skip, /first_run_decided: true/);
-    // And a failed write un-decides, so the shop is asked again - correct
-    // for a shop that was never recorded as asked.
-    assert.match(skip, /_decided = false/);
+    assert.match(skip, /_tourAfterSave = false/);
+    assert.match(skip, /saveIntro\(\)/);
+    assert.ok(!/data-dismiss|modal\('hide'\)/.test(skip),
+        'Use defaults is closing without the save path');
 });
 
 test('the welcome opens OVER the features page', () => {
@@ -282,10 +281,37 @@ test('a long description cannot push the switch off the edge', () => {
 
 test('the modal markup carries what the code paints into', () => {
     for (const id of ['feature_intro_modal', 'feature_intro_sub', 'feature_intro_lead',
-        'feature_intro_list', 'feature_intro_save', 'feature_intro_skip']) {
+        'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_summary',
+        'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip']) {
         assert.ok(modalCode.includes('id="' + id + '"'), 'missing #' + id);
     }
     assert.match(modalCode, /class="modal-content first-run"/);
+    assert.match(modalCode, /data-backdrop="static"/);
+    assert.match(modalCode, /data-keyboard="false"/);
+    assert.ok(!/data-dismiss="modal"/.test(modalCode),
+        'the first-run welcome must not have a close-only button');
+});
+
+test('the welcome shows saved starter settings before selling', () => {
+    const render = block(settingsCode, 'renderIntro:', 'saveIntro:');
+    const summary = block(settingsCode, 'setupSummary:', 'featureOn:');
+    assert.match(render, /\$\('#feature_intro_summary'\)\.html\(PosnicPro\.features\.setupSummary\(\)\)/);
+    assert.match(summary, /country_setting/);
+    assert.match(summary, /currencySign/);
+    assert.match(summary, /PosnicPro\.timeZone\(\)/);
+    assert.match(summary, /dateformatset/);
+});
+
+test('the first-run features are searchable and recommended ones rise first', () => {
+    const render = block(settingsCode, 'renderIntro:', 'startSelling:');
+    assert.match(modalCode, /id="feature_intro_filter"/);
+    assert.match(settingsCode, /filterIntro: function/);
+    assert.match(settingsCode, /\$\(document\)\.on\('input', '#feature_intro_filter'/);
+    assert.match(render, /data-feature-row/);
+    assert.match(render, /data-feature-search/);
+    assert.match(render, /is-recommended/);
+    assert.match(render, /\.sort\(function \(a, b\)/);
+    assert.match(cssCode, /\.first-run-row\.is-hidden\s*\{\s*display: none;/);
 });
 
 test('every icon the welcome asks for exists in the shipped font', () => {
@@ -476,13 +502,16 @@ test('a failed save goes nowhere', () => {
     assert.ok(!/hasher\.setHash/.test(fail));
 });
 
-test('Not now stays where it is', () => {
+test('Use defaults saves through the normal first-run path', () => {
     /*
-     * Skipping decides nothing about features and asks to be left alone. Only
-     * the button that names selling goes to the sale screen.
+     * The welcome is intentionally not closable now. Use defaults is a
+     * decision: persist the currently recommended switches and then let the
+     * normal save-success code take the owner to the sale screen.
      */
     const skip = block(settingsCode, "'click', '#feature_intro_skip'", "'change', '#fi_module_demo_data_enable'");
-    assert.ok(!/startSelling|sales\/new/.test(skip), 'Not now navigates the shop somewhere');
+    assert.match(skip, /_decided = true/);
+    assert.match(skip, /saveIntro\(\)/);
+    assert.ok(!/settings\/group\/features/.test(skip), 'Use defaults bypasses the normal feature save path');
 });
 
 test('the sale screen waits for both dialogs to finish closing', () => {

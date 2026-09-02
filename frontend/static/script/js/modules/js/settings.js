@@ -5602,6 +5602,55 @@ PosnicPro.features = {
             'also opens in any browser - the address is under <b>My Account</b> there.';
     },
 
+    setupSummary: function () {
+        var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+        var value = function () {
+            for (var i = 0; i < arguments.length; i += 1) {
+                var text = $.trim(String(arguments[i] == null ? '' : arguments[i]));
+                if (text && text !== 'null' && text !== 'undefined') { return text; }
+            }
+            return '';
+        };
+        var rows = [
+            ['Country', value(PosnicPro.local.get('country_setting'), PosnicPro.local.get('countryname'), PosnicPro.local.get('country_value'), 'Detected')],
+            ['Currency', value(PosnicPro.local.get('currencySign'), 'Shop currency')],
+            ['Timezone', value(PosnicPro.timeZone(), 'Shop timezone')],
+            ['Date format', value(PosnicPro.local.get('dateformatset'), 'Shop default')]
+        ];
+        return rows.map(function (row) {
+            return '<span><small>' + esc(row[0]) + '</small><b>' + esc(row[1]) + '</b></span>';
+        }).join('');
+    },
+
+    featureOn: function (blob, key) {
+        var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
+        return blob[key] === undefined ? onByDefault : blob[key] === true;
+    },
+
+    paintDemoChoice: function (wanted) {
+        $('#feature_intro_demo_yes').toggleClass('is-selected', wanted === true);
+        $('#feature_intro_demo_no').toggleClass('is-selected', wanted === false);
+        $('#feature_intro_demo_status').text(wanted === true
+            ? 'Sample data will be available from the Demo Data page and sale screen.'
+            : 'Clean catalogue selected. You can add sample data later under Manage > Demo Data.');
+    },
+
+    chooseDemoData: function (wanted) {
+        $('#fi_module_demo_data_enable').prop('checked', wanted === true);
+        PosnicPro.features.paintDemoChoice(wanted === true);
+        if (wanted === true && PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
+            PosnicPro.settings.syncDemoDataAfterSave(true);
+        }
+    },
+
+    filterIntro: function () {
+        var q = String($('#feature_intro_filter').val() || '').trim().toLowerCase();
+        $('[data-feature-row]').each(function () {
+            var hay = String($(this).data('featureSearch') || '').toLowerCase();
+            $(this).toggleClass('is-hidden', !!q && hay.indexOf(q) === -1);
+        });
+    },
+
     renderIntro: function () {
         var blob = PosnicPro.features._blob();
 
@@ -5636,17 +5685,24 @@ PosnicPro.features = {
         /* Built by accessNote, which escapes the one dynamic value (the
            hostname); everything else in it is our own copy. */
         $('#feature_intro_access').html(PosnicPro.features.accessNote());
+        $('#feature_intro_summary').html(PosnicPro.features.setupSummary());
 
-        var rows = PosnicPro.features.INTRO.map(function (f) {
+        $('#feature_intro_filter').val('');
+        var demoOn = PosnicPro.features.featureOn(blob, 'module_demo_data_enable');
+        $('#fi_module_demo_data_enable').prop('checked', demoOn);
+        PosnicPro.features.paintDemoChoice(demoOn);
+
+        var rows = PosnicPro.features.INTRO.filter(function (f) {
+            return f[0] !== 'module_demo_data_enable';
+        }).map(function (f) {
             var key = f[0];
-            // The blob carries every key post-login (guard-tested); absent
-            // falls back to each key's polarity: tips/till-lock opt-in OFF,
-            // everything else opt-out ON.
-            var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
-            var on = blob[key] === undefined ? onByDefault : blob[key] === true;
+            var on = PosnicPro.features.featureOn(blob, key);
+            var search = (f[1] + ' ' + f[2] + ' ' + key).replace(/"/g, '&quot;');
             /* The whole row is the label, so a thumb anywhere on it flips the
                switch - the switch itself is a 40px target on a touch screen. */
-            return '<label class="first-run-row" for="fi_' + key + '">' +
+            return {
+                on: on,
+                html: '<label class="first-run-row' + (on ? ' is-recommended' : '') + '" for="fi_' + key + '" data-feature-row data-feature-search="' + search + '">' +
                 '<span class="first-run-row-text">' +
                 '<b>' + f[1] + '</b>' +
                 '<span>' + f[2] + '</span>' +
@@ -5655,8 +5711,11 @@ PosnicPro.features = {
                 '<input type="checkbox" class="custom-control-input feature-intro-toggle" id="fi_' + key + '" data-key="' + key + '"' + (on ? ' checked' : '') + '>' +
                 '<span class="custom-control-label"></span>' +
                 '</span>' +
-                '</label>';
-        }).join('');
+                '</label>'
+            };
+        }).sort(function (a, b) {
+            return (a.on === b.on) ? 0 : (a.on ? -1 : 1);
+        }).map(function (row) { return row.html; }).join('');
         $('#feature_intro_list').html(rows);
     },
     /*
@@ -5802,31 +5861,25 @@ PosnicPro.features = {
     }
 };
 /*
- * "Not now" is a decision; it writes the same flag a save writes, minus the
- * switches. Anything else that closes the dialog decides nothing.
+ * "Use defaults" is a decision, not a close button. It saves the current
+ * recommended switches through the same path as Save and start selling, so the
+ * welcome cannot disappear without recording the chosen setup.
  */
 $(document).on('click', '#feature_intro_skip', function () {
     PosnicPro.features._decided = true;
-    PosnicPro.put({
-        url: 'settings/group/features',
-        data: JSON.stringify({ first_run_done: true, first_run_decided: true })
-    }, function () {
-        var b = PosnicPro.features._blob();
-        b.first_run_done = true;
-        b.first_run_decided = true;
-        PosnicPro.local.set('general_settings', JSON.stringify(b));
-    }, function () {
-        /* The write failing means the shop was never recorded as asked, and
-           the welcome returning is the correct outcome for that. */
-        PosnicPro.features._decided = false;
-    });
+    PosnicPro.features._tourAfterSave = false;
+    PosnicPro.features.saveIntro();
 });
 $(document).on('change', '#fi_module_demo_data_enable', function () {
     /* The welcome's own demo switch: same consent, same rule. The blob is
        the truth here - the settings form may not be primed yet. */
     var blobOn = PosnicPro.features._blob().module_demo_data_enable !== false;
     if (!this.checked && blobOn) { PosnicPro.settings.confirmDemoOff(this); }
+    PosnicPro.features.paintDemoChoice($(this).is(':checked'));
 });
+$(document).on('input', '#feature_intro_filter', function () { PosnicPro.features.filterIntro(); });
+$(document).on('click', '#feature_intro_demo_yes', function () { PosnicPro.features.chooseDemoData(true); });
+$(document).on('click', '#feature_intro_demo_no', function () { PosnicPro.features.chooseDemoData(false); });
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
