@@ -2,7 +2,7 @@
 #
 # Install Posnic on your own server.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Posnic/POS/main/scripts/install-server.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Posnic/POS/develop/scripts/install-server.sh | bash
 #
 # or, having cloned the repository:
 #
@@ -36,7 +36,7 @@ PORT="${POSNIC_PORT:-3000}"
 MONGO_PORT="${POSNIC_MONGO_PORT:-27017}"
 DB_NAME="${POSNIC_DB:-Posnic}"
 REPO="${POSNIC_REPO:-https://github.com/Posnic/POS.git}"
-BRANCH="${POSNIC_BRANCH:-main}"
+BRANCH="${POSNIC_BRANCH:-develop}"
 
 say()  { echo ""; echo "==> $*"; }
 info() { echo "    $*"; }
@@ -78,7 +78,15 @@ apt-get install -y -qq curl gnupg git ca-certificates >/dev/null
 
 if ! command -v node >/dev/null 2>&1 || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 22 ]; then
   info "Node.js 22"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+  # Configure NodeSource's signed repository directly. Do not download and
+  # execute a remote setup script as root.
+  NODE_SOURCE_KEY=/tmp/nodesource-repo.gpg.key
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "$NODE_SOURCE_KEY"
+  gpg --dearmor --yes -o /usr/share/keyrings/nodesource.gpg "$NODE_SOURCE_KEY"
+  rm -f "$NODE_SOURCE_KEY"
+  echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list
+  apt-get update -qq
   apt-get install -y -qq nodejs >/dev/null
 fi
 info "node $(node --version)"

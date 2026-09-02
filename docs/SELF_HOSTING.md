@@ -57,7 +57,7 @@ around $10–12 a month at the time of writing.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Posnic/POS/main/scripts/install-server.sh -o install-server.sh
+curl -fsSL https://raw.githubusercontent.com/Posnic/POS/develop/scripts/install-server.sh -o install-server.sh
 less install-server.sh          # read it first - you are about to run it as root
 sudo bash install-server.sh
 ```
