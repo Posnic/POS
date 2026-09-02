@@ -78,7 +78,25 @@ afterAll(() => {
 const ROLE_ENUM = ['admin', 'manager', 'cashier', 'staff', 'super_admin', 'api'];
 const STATUS_ENUM = ['active', 'inactive', 'suspended', 'pending'];
 const GENDER_ENUM = ['male', 'female', 'other', 'prefer-not-to-say'];
-const LANG_ENUM = ['en', 'es', 'fr', 'de', 'hi', 'ta', 'te', 'kn', 'ml'];
+/* Every language the app offers (frontend/gulpfile.js/config.js), plus 'de'
+   for records that already hold it. */
+const LANG_ENUM = [
+  'en',
+  'ta',
+  'hi',
+  'ml',
+  'kn',
+  'te',
+  'si',
+  'ne',
+  'ar',
+  'fr',
+  'es',
+  'pt',
+  'id',
+  'th',
+  'de',
+];
 const THEME_ENUM = ['light', 'dark', 'system'];
 const ACL_MODULES = [
   'dashboard',
@@ -614,7 +632,7 @@ describe('User — gender / preferredLanguage / themePreference', () => {
     expect(p('gender').isRequired).toBeFalsy();
   });
 
-  test('preferredLanguage enum contains all 9 language codes', () => {
+  test('preferredLanguage enum accepts every language the app offers, plus de', () => {
     expect(p('preferredLanguage').enumValues).toEqual(LANG_ENUM);
   });
 
