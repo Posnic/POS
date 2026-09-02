@@ -112,6 +112,11 @@
                                     <lang class="lang_quotes_title">Quotes</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-invoices-tab" data-toggle="pill" href="#v-pills-invoices" role="tab"
+                                    aria-controls="v-pills-invoices" aria-selected="false"><i class="feather icon-file mr-2"></i>
+                                    <lang class="lang_invoices_title">Invoices</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-tillpin-tab" data-toggle="pill" href="#v-pills-tillpin" role="tab"
                                     aria-controls="v-pills-tillpin" aria-selected="false"><i class="feather icon-lock mr-2"></i>
                                     <lang class="lang_tilllock_title">Till PIN Lock</lang>
@@ -2455,6 +2460,18 @@
 
                                         <div class="module-card">
                                             <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-file"></i></span>
+                                                <div class="module-title"><lang class="lang_invoices_enable">Invoices</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="invoices_enable" name="invoices_enable">
+                                                    <label class="custom-control-label" for="invoices_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Bill a customer now, get paid later - and see who still owes you.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
                                                 <span class="module-ico"><i class="feather icon-plus-square"></i></span>
                                                 <div class="module-title"><lang class="lang_custom_charges_enable">Custom charges</lang></div>
                                                 <div class="custom-control custom-switch module-switch">
@@ -3294,6 +3311,42 @@
                     </div>
                 </div>
                                         <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-invoices"
+                            role="tabpanel" aria-labelledby="v-pills-invoices-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_invoices_title">Invoices</lang></h5>
+                                    <small class="text-muted"><lang class="lang_invoices_hint">How new invoices are numbered, when they fall due, and the terms printed on them. Payment details and the signature are shared with quotations.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_invoices">
+                                        <h6 class="fc-title"><lang class="lang_invoices_title">Invoices</lang></h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_prefix">Invoice number prefix</lang></label>
+                        <input type="text" name="invoice_prefix" id="invoice_prefix"
+                            class="form-control form-control-sm mb-2" maxlength="12"
+                            placeholder="INV-" autocomplete="off">
+                        <small class="text-muted d-block mb-2">Numbers continue from the highest one so far, whatever the prefix. Your receipts keep their own series.</small>
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_due_days">Due in (days)</lang></label>
+                        <input type="number" name="invoice_due_days" id="invoice_due_days" min="0" max="365" step="1"
+                            class="form-control form-control-sm mb-2" placeholder="30" aria-label="Invoice due days">
+                        <small class="text-muted d-block mb-2">0 means due on receipt. Every new invoice starts from this; change it on the invoice itself when a customer has other terms.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_terms">Terms on new invoices</lang></label>
+                        <textarea name="invoice_terms" id="invoice_terms"
+                            class="form-control form-control-sm mb-2" rows="5" maxlength="1500"
+                            placeholder="e.g. Payment within 30 days of the invoice date. Goods once sold are not returnable."></textarea>
+                        <small class="text-muted d-block">Also printed on A4 receipts.</small>
+                    </div>
+                </div>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="invoice_settings_save"><lang class="lang_save_title">Save invoice settings</lang></button>
                                     </div>
                                 </div>
                             </div>

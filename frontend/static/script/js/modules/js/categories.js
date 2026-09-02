@@ -510,13 +510,8 @@ PosnicPro.categories = {
                 $('#category_discount_amount').val(data.discount_amount);
                 $('#category_discount_percentage').val(data.discount_percentage);
                 $('#category_description').val(data.description);
-                if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $('#category_title').text('திருத்தப்பட்ட');
-                    $('#category_button_title').text('புதுப்பி');
-                } else {
-                    $('#category_title').text('Edit');
-                    $('#category_button_title').text('Update');
-                }
+                    $('#category_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+                    $('#category_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
                 $('#category_image').val(data.image);
                 $('#get_category_image_value').val(data.image);
@@ -548,13 +543,8 @@ PosnicPro.categories = {
     addCategoryButton: function () {
         var loader = $(".loader-category");
         loader.find(".loadingSpinner:first").remove();
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#category_title').text('புதிய');
-            $('#category_button_title').text('சேமி');
-        } else {
-            $('#category_title').text('Add');
-            $('#category_button_title').text('Save');
-        }
+            $('#category_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#category_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.category-image-label-title').html('<i class="feather icon-edit"></i>');
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#get_category_image_value').val('category.svg');

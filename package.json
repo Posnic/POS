@@ -7,6 +7,7 @@
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
     "start": "electron .",
+    "dev": "node scripts/dev-server.js",
     "test:auth": "node --test tests/startup-auth.test.js",
     "prepare:frontend": "node scripts/prepare-frontend.js",
     "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
@@ -51,7 +52,8 @@
     "badges:fix": "node scripts/check-badges.js --fix",
     "check:advisories": "node scripts/check-advisories.js",
     "release:sbom": "node scripts/generate-release-sboms.js",
-    "art": "node scripts/make-installer-art.js"
+    "art": "node scripts/make-installer-art.js",
+    "recover": "node scripts/recover-access.js"
   },
   "build": {
     "appId": "com.posnic.app",

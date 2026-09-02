@@ -77,7 +77,7 @@ Roughly in order, starting at the lowest step that fits:
    severe act — harassment, threats, or deliberately putting shops' data at risk.
 
 Decisions are made by the maintainers, currently as described in
-[GOVERNANCE.md](GOVERNANCE.md#where-the-project-is-today). If you believe one
+[GOVERNANCE.md](../docs/GOVERNANCE.md#where-the-project-is-today). If you believe one
 was wrong, say so at the same address; where a second maintainer exists, they
 review it.
 

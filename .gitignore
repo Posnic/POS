@@ -102,3 +102,8 @@ asset-signing-key.private.pem
 
 # a dev till pointed at the wrong anchor once wrote its database here
 src/mongodb/
+
+# Translator worksheets (tests/tools/i18n-coverage.js --worksheet). A working
+# file on its way to a person and back; the translations belong in
+# frontend/languages/<code>.json once merged, not in a half-filled sheet.
+*-to-translate.json

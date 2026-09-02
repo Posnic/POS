@@ -49,7 +49,7 @@ attaching them. Issues are public.
 ## What happens next
 
 **Within a few days** someone reads it and adds labels. That is a person, not a
-bot, and the project is small — see [GOVERNANCE.md](GOVERNANCE.md) for who.
+bot, and the project is small — see [GOVERNANCE.md](../docs/GOVERNANCE.md) for who.
 
 Every issue ends up in one of these:
 

@@ -18,7 +18,7 @@ const APPROVED_ACTIONS = new Map([
 ]);
 
 test('Scorecard runs only on supported default-branch and scheduled triggers', () => {
-  assert.match(WORKFLOW, /^on:\n  push:\n    branches: \[main\]/m);
+  assert.match(WORKFLOW, /^on:\n  push:\n    branches: \[develop\]/m);
   assert.match(WORKFLOW, /^  schedule:\n    - cron: '[^']+'$/m);
   assert.match(WORKFLOW, /^  workflow_dispatch:$/m);
   assert.doesNotMatch(WORKFLOW, /^  pull_request(?:_target)?:/m);

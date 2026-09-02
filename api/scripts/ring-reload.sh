@@ -154,21 +154,19 @@ smoke() {
     # deploy, and a heavy shipping day drained the fixture to zero - every
     # deploy then failed its own gate for a reason unrelated to the code.
     # Top the fixture back up before proving the ring. Never a gate itself.
-    # The SAME tenant default the smoke below uses, or the two halves top
-    # up one shop while selling from another: the api .env still said
-    # `tech`, so every deploy restocked tech's fixture and drained
-    # test123's - the gate went red five deploys in a row for stock,
-    # not code. An explicit shell value beats dotenv in the helper.
+    # The SAME tenant the smoke below uses, or the two halves top up one shop
+    # while selling from another. It comes from the sourced admin .env so the
+    # target can be changed without a public repo commit if the owner rotates
+    # the test shop.
     if [ -f "$API_DIR/scripts/smoke-restock.js" ]; then
-      SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-test123}" \
+      SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-}" \
         node "$API_DIR/scripts/smoke-restock.js" || true
     fi
-    # test123, not tech: tech's trial expired and it is SUSPENDED, so the
-    # billing write test answered "cannot test" on every deploy - the one
-    # check that proves a shop can actually SELL was silently not running.
-    # test123 is the owner's own idle test shop; unsuspending tech instead
-    # would only hold until the next billing sweep re-suspends it.
-    SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-test123}" \
+    # The billing write test deliberately has no code default: it creates and
+    # deletes a real sale, so the target must be an operator-owned test shop.
+    # If SMOKE_WRITE_TENANT is absent, smoke.js reports the write check as
+    # skipped instead of guessing a customer shop.
+    SMOKE_QUIET=true SMOKE_WRITE_TENANT="${SMOKE_WRITE_TENANT:-}" \
       node provisioning/smoke.js --quiet
   )
 }

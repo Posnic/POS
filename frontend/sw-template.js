@@ -101,6 +101,21 @@ self.addEventListener('notificationclick', (event) => {
  */
 const REFERENCE = /^\/(api\/)?setting\/getJSON(Country|State|Currency|TimeZone|GstState)/;
 
+/*
+ * The shop's language pack.
+ *
+ * Pages ship in English and PosnicPro.i18n fetches languages/<code>.json to
+ * translate them, so without this a Tamil shop that loses its connection
+ * silently reverts to English - on a till, mid-sale.
+ *
+ * Cached on FIRST USE rather than precached, which is the whole point: a shop
+ * downloads the one language it chose and nothing else, so the tenth language
+ * costs the other nine shops nothing. Same stale-while-revalidate treatment as
+ * the reference data above - answered instantly from cache, refreshed behind
+ * the answer, and swept wholesale by the versioned cache name on release.
+ */
+const LANGUAGE_PACK = /\/languages\/[a-z]{2}(-[A-Za-z]{2,4})?\.json$/;
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
@@ -123,7 +138,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (REFERENCE.test(url.pathname)) {
+  if (REFERENCE.test(url.pathname) || LANGUAGE_PACK.test(url.pathname)) {
     event.respondWith(
       caches.open(CACHE).then((cache) =>
         cache.match(request).then((hit) => {

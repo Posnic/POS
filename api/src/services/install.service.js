@@ -64,9 +64,10 @@ class InstallService {
          * genuine signups, which is a worse failure than the one being
          * prevented.
          */
-        const existing = typeof this.repository.countExistingBranches === 'function'
-          ? await this.repository.countExistingBranches().catch(() => 0)
-          : 0;
+        const existing =
+          typeof this.repository.countExistingBranches === 'function'
+            ? await this.repository.countExistingBranches().catch(() => 0)
+            : 0;
         if (existing > 0) {
           console.error(
             `⛔ install refused: this database already holds ${existing} branch(es). ` +
@@ -913,6 +914,7 @@ class InstallService {
        * own.
        */
       quotes_enable: false,
+      invoices_enable: false,
       cash_register_enable: false,
       staff_shifts_enable: false,
       staff_roster_enable: false,
@@ -1511,7 +1513,16 @@ class InstallService {
    * which should happen for a demonstration - a demo sale that moved stock
    * would leave a shop whose counts are wrong before they have sold anything.
    */
-  async _insertDemoActivity({ branchId, branchName, licenseId, now, pack, items, userName, datasetPeople }) {
+  async _insertDemoActivity({
+    branchId,
+    branchName,
+    licenseId,
+    now,
+    pack,
+    items,
+    userName,
+    datasetPeople,
+  }) {
     const demoSeed = require('./demo-seed');
     const BaseModel = require('../models/base.model');
 

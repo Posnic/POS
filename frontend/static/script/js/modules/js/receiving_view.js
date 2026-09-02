@@ -27,7 +27,7 @@ PosnicPro.receivings.view = {
                     $('.hide-receiving-table,.hide-receiving-return,#receiving_button_print_view,#receiving_return_print_view,#show_receiving_print').show();
                     $('#hide_receiving_print,#hide_receiving_return_print').hide();
                 }
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#receivingtitelText').text('பெறுதல் விவரங்கள் (' + data.receiving_status + ')') : $('#receivingtitelText').html('Receiving Details (' + data.receiving_status + ')');
+                $('#receivingtitelText').text(PosnicPro.i18n.t('lang_action_receiving_details', 'Receiving Details') + ' (' + data.receiving_status + ')');
                 PosnicPro.receivings.view.viewReceivingData(response, id);
                 loader.find(".loadingSpinner:first").remove();
             } else {
@@ -364,7 +364,7 @@ PosnicPro.receivings.view = {
     returnPage: function (page, id) {
         $('#show_last_created_receiving').hide();
         $('#v-pills-purchase').addClass('show active');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $(".purchase-tittle-change").text('திருப்பி அனுப்பிய') : $('.purchase-tittle-change').html('Return');
+        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_action_return_sale', 'Return'));
         $('table#receiving_print tr#cart_content_area').remove();
         $('.page_loader,#osk-container,#clearReceiving,.chat-search,.receving-return-hide').hide();
         $('.page-title-box,#closeReceiving').show();
@@ -373,7 +373,7 @@ PosnicPro.receivings.view = {
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
         PosnicPro.receivings.receivingReturnAction = 'return';
 //        $('.changeReceivingText').text('Return');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeReceivingText').text('திரும்ப கொள்முதல்') : $('.changeReceivingText').text('Return');
+        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_action_return_purchase', 'Return'));
 
         $('#receving_returned_table tbody').html('');
         PosnicPro.receivings.loadEditReceivings(id);
@@ -392,7 +392,7 @@ PosnicPro.receivings.view = {
         });
         PosnicPro.receivings.receivingReturnAction = 'edit';
 //        $(".changeReceivingText").text('Update');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('.changeReceivingText').text('புதுப்பி') : $('.changeReceivingText').text('Update');
+        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
         $('#receiving_submit').removeAttr('disabled');
         $('#receving_returned_table tbody').html('');

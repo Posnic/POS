@@ -501,10 +501,10 @@ function buildPeople({ branch, pack, now, base, people }) {
    * empty list would otherwise leave the shop with no customers at all, which
    * is worse than foreign ones.
    */
-  const customerRows = people && people.customers && people.customers.length
-    ? people.customers : DEMO_CUSTOMERS;
-  const supplierRows = people && people.suppliers && people.suppliers.length
-    ? people.suppliers : DEMO_SUPPLIERS;
+  const customerRows =
+    people && people.customers && people.customers.length ? people.customers : DEMO_CUSTOMERS;
+  const supplierRows =
+    people && people.suppliers && people.suppliers.length ? people.suppliers : DEMO_SUPPLIERS;
 
   return {
     customers: customerRows.map(common),

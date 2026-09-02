@@ -29,8 +29,12 @@ function serviceWithBranches(count) {
   service.repository = {
     countExistingBranches: jest.fn(async () => count),
     /* If any of these are reached the guard has already failed. */
-    findExistingUser: jest.fn(async () => { throw new Error('the install was allowed to proceed'); }),
-    insertUser: jest.fn(async () => { throw new Error('the install was allowed to proceed'); }),
+    findExistingUser: jest.fn(async () => {
+      throw new Error('the install was allowed to proceed');
+    }),
+    insertUser: jest.fn(async () => {
+      throw new Error('the install was allowed to proceed');
+    }),
   };
   return service;
 }
@@ -107,8 +111,12 @@ describe('installing into an empty database', () => {
      */
     const service = new InstallService();
     service.repository = {
-      countExistingBranches: jest.fn(async () => { throw new Error('no such collection'); }),
-      findExistingUser: jest.fn(async () => { throw new Error('the install was allowed to proceed'); }),
+      countExistingBranches: jest.fn(async () => {
+        throw new Error('no such collection');
+      }),
+      findExistingUser: jest.fn(async () => {
+        throw new Error('the install was allowed to proceed');
+      }),
     };
     const res = await service.processInstallation(payload());
     expect(res.message).toMatch(/allowed to proceed/);

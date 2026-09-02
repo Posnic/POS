@@ -587,6 +587,7 @@ PosnicPro.settings = {
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
+                        invoices_enable: response.data['invoices_enable'] !== false,
                         custom_charges_enable: response.data['custom_charges_enable'] === true,
                         first_run_done: PosnicPro.features.keepFirstRunFlag(response.data),
                         first_run_decided: PosnicPro.features.keepFirstRunFlag(response.data, 'first_run_decided')
@@ -798,6 +799,13 @@ PosnicPro.settings = {
                 $('#quote_default_terms').val(data.quote_default_terms || '');
                 $('#quote_default_signature').val(data.quote_default_signature || '');
                 PosnicPro.local.set('quotesignature', data.quote_default_signature || '');
+                /* Invoices (INVOICING_MODULE_DESIGN): prefix, credit days, terms. The
+                   terms are cached for the A4 receipt too, which already reads
+                   invoice_terms and until now found nothing there. */
+                $('#invoice_prefix').val(data.invoice_prefix || 'INV-');
+                $('#invoice_due_days').val(data.invoice_due_days !== undefined && data.invoice_due_days !== null && data.invoice_due_days !== '' ? data.invoice_due_days : 30);
+                $('#invoice_terms').val(data.invoice_terms || '');
+                PosnicPro.local.set('invoice_terms', data.invoice_terms || '');
                 if (data.quote_default_signature) {
                     $('#quote_signature_thumb').attr('src', data.quote_default_signature).show();
                     $('#quote_signature_clear').show();
@@ -858,6 +866,7 @@ PosnicPro.settings = {
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
                 $('#quotes_enable').prop('checked', data.quotes_enable !== false);
+                $('#invoices_enable').prop('checked', data.invoices_enable !== false);
                 $('#custom_charges_enable').prop('checked', data.custom_charges_enable === true);
 
                 // Store general settings including hardware_weight_machine_enable
@@ -881,6 +890,7 @@ PosnicPro.settings = {
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
+                    invoices_enable: data.invoices_enable !== false,
                     custom_charges_enable: data.custom_charges_enable === true,
                     first_run_done: PosnicPro.features.keepFirstRunFlag(data),
                     first_run_decided: PosnicPro.features.keepFirstRunFlag(data, 'first_run_decided')
@@ -1624,6 +1634,7 @@ if ($wrapper.length) {
         'module_demo_data_enable',
         'quick_sale_enable',
         'quotes_enable',
+        'invoices_enable',
         'custom_charges_enable',
         'pl_include_cashbook',
     ],
@@ -1806,6 +1817,7 @@ if ($wrapper.length) {
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
                 quotes_enable: $('#quotes_enable').is(':checked') ? 'true' : 'false',
+                invoices_enable: $('#invoices_enable').is(':checked') ? 'true' : 'false',
                 custom_charges_enable: $('#custom_charges_enable').is(':checked') ? 'true' : 'false',
             })
         };
@@ -1926,6 +1938,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
+                    invoices_enable: $('#invoices_enable').is(':checked'),
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
                     quick_sale_enable: $('#quick_sale_enable').is(':checked'),
                     /* No field on this form - carried over, never re-decided. */
@@ -2027,6 +2040,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
         $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
+        $('#v-pills-invoices-tab').toggle(on('invoices_enable'));
         $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
@@ -2458,13 +2472,8 @@ PosnicPro.tax = {
     triggerModules: function () {
         PosnicPro.showAddModal('tax');
         $('#tax_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tax-heading').text('புதிய');
-            $('#tax_text_change').text('சேமி');
-        } else {
-            $('#tax-heading').html('Add');
-            $('#tax_text_change').text('Save');
-        }
+            $('#tax-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#tax_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#tax_reset').show();
@@ -2476,14 +2485,9 @@ PosnicPro.tax = {
         $('#tax_id').val(id);
         $('#tax_name').val(module.data('taxname'));
         $('#tax_value').val(module.data('taxvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tax-heading').text('திருத்தப்பட்ட');
-            $('#tax_text_change').text('புதுப்பி');
-        } else {
-            $('#tax-heading').html('Edit');
-            $('#tax_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tax_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tax_reset').hide();
         $('.tax_edit_reset').show();
         $('.tax_edit_reset').attr("id", id);
@@ -2623,13 +2627,8 @@ PosnicPro.denom = {
     triggerModules: function () {
         PosnicPro.showAddModal('denomcash');
         $('#denom_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#denom-heading').text('புதிய');
-            $('#denom_text_change').text('சேமி');
-        } else {
-            $('#denom-heading').html('Add');
-            $('#denom_text_change').text('Save');
-        }
+            $('#denom-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#denom_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#denom_reset').show();
@@ -2640,14 +2639,9 @@ PosnicPro.denom = {
         PosnicPro.showAddModal('denomcash');
         $('#denom_id').val(id);
         $('#denom_value').val(module.data('denomvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#denom-heading').text('திருத்தப்பட்ட');
-            $('#denom_text_change').text('புதுப்பி');
-        } else {
-            $('#denom-heading').html('Edit');
-            $('#denom_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#denom-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#denom_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#denom_reset').hide();
         $('.denom_edit_reset').show();
         $('.denom_edit_reset').attr("id", id);
@@ -2791,13 +2785,8 @@ PosnicPro.tableOrders = {
     triggerModules: function () {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tableorder-heading').text('புதிய');
-            $('#tableorder_text_change').text('சேமி');
-        } else {
-            $('#tableorder-heading').html('Add');
-            $('#tableorder_text_change').text('Save');
-        }
+            $('#tableorder-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#tableorder_reset').show();
@@ -2808,13 +2797,8 @@ PosnicPro.tableOrders = {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val(id);
         $('#tableorder_value').val(module.data('tableordervalue'));
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#tableorder-heading').text('திருத்தப்பட்ட');
-            $('#tableorder_text_change').text('புதுப்பி');
-        } else {
-            $('#tableorder-heading').html('Edit');
-            $('#tableorder_text_change').text('Update');
-        }
+            $('#tableorder-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tableorder_reset').hide();
         $('.tableorder_edit_reset').show();
         $('.tableorder_edit_reset').attr("id", id);
@@ -3048,13 +3032,8 @@ PosnicPro.payment = {
     triggerModules: function () {
         PosnicPro.showAddModal('payment');
         $('.payment_id').val('');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#payment-heading').text('புதிய');
-            $('#payment_text_change').text('சேமி');
-        } else {
-            $('#payment-heading').html('Add');
-            $('#payment_text_change').text('Save');
-        }
+            $('#payment-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
+            $('#payment_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
         loader.find(".loadingSpinner:first").remove();
         $('#payment_reset').show();
@@ -3065,14 +3044,9 @@ PosnicPro.payment = {
         PosnicPro.showAddModal('payment');
         $('.payment_id').val(id);
         $('#payment_value').val(module.data('paymentvalue'));
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#tax-heading').text('திருத்தப்பட்ட') : $('#tax-heading').html('Edit');
-        if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-            $('#payment-heading').text('திருத்தப்பட்ட');
-            $('#payment_text_change').text('புதுப்பி');
-        } else {
-            $('#payment-heading').html('Edit');
-            $('#payment_text_change').text('Update');
-        }
+        $('#tax-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#payment-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
+            $('#payment_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#payment_reset').hide();
         $('.payment_edit_reset').show();
         $('.payment_edit_reset').attr("id", id);
@@ -3218,11 +3192,11 @@ PosnicPro.payment = {
 
 PosnicPro.taxgroup = {
     triggerModules: function () {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('புதிய') : $('#taxgroup-heading').html('Add');
+        $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val('');
         //        $('#taxgroup_text_change').text('Save');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('சேமி') : $('#taxgroup_text_change').text('Save');
+        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#taxgroup_reset').show();
         $('.taxgroup_edit_reset').hide();
         var loader = $(".loader-taxgroup");
@@ -3249,11 +3223,11 @@ PosnicPro.taxgroup = {
         });
     },
     triggerTaxEdit: function (id) {
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup-heading').text('திருத்தப்பட்ட') : $('#taxgroup-heading').html('Edit');
+        $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val(id);
         //        $('#taxgroup_text_change').text('Update');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#taxgroup_text_change').text('புதுப்பி') : $('#taxgroup_text_change').text('Update');
+        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         var loader = $(".loader-taxgroup");
         loader.find(".loadingSpinner:first").remove();
         $('#taxgroup_reset').hide();
@@ -6083,6 +6057,35 @@ $(document).on('click', '#v-pills-general-tab', function () {
     PosnicPro.settings.loadSharing();
 });
 
+/* Invoice settings (INVOICING_MODULE_DESIGN): two groups, two endpoints -
+   the prefix and credit days are preferences, the terms are document text.
+   Each endpoint knows only its own keys, so neither can be asked for the
+   other's. */
+$(document).on('click', '#invoice_settings_save', function () {
+    var days = parseInt($('#invoice_due_days').val(), 10);
+    if (isNaN(days) || days < 0) { days = 30; }
+    if (days > 365) { days = 365; }
+    var prefs = {
+        invoice_prefix: ($.trim($('#invoice_prefix').val()) || 'INV-').slice(0, 12),
+        invoice_due_days: days
+    };
+    var docs = { invoice_terms: $('#invoice_terms').val() || '' };
+    var $btn = $('#invoice_settings_save').prop('disabled', true);
+    var fail = function (xhr) {
+        $btn.prop('disabled', false);
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        PosnicPro.alert('error', resp.message || 'Could not save invoice settings');
+    };
+    PosnicPro.put({ url: 'settings/group/preferences', data: JSON.stringify(prefs) }, function (r) {
+        if (r.type !== 'success') { $btn.prop('disabled', false); PosnicPro.alert(r.type, r.message); return; }
+        PosnicPro.put({ url: 'settings/group/documents', data: JSON.stringify(docs) }, function (r2) {
+            $btn.prop('disabled', false);
+            PosnicPro.alert(r2.type, r2.type === 'success' ? 'Invoice settings saved' : r2.message);
+            if (r2.type === 'success') { PosnicPro.local.set('invoice_terms', docs.invoice_terms); }
+        }, fail);
+    }, fail);
+});
+
 $(document).on('click', '#quote_settings_save', function () {
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
@@ -6295,6 +6298,22 @@ PosnicPro.settings.featureInfo = {
             'New quotation: pick a customer, add lines, set validity',
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
+        ],
+    },
+    invoices_enable: {
+        tagline: 'Bill a customer now, get paid later - and see who still owes you.',
+        about: 'An invoice is the bill you hand a customer who pays after delivery: lines from your catalog or free text, discounts, charges in any name, a due date, and a professional A4 PDF to share. A draft is a proforma; issuing it books the sale for you - stock, tax and the books - and recording a payment, in full or in part, keeps the customer balance right.',
+        benefits: [
+            'Quote becomes invoice becomes sale - the numbers agree end to end',
+            'Issue books the sale itself - no till screen in between',
+            'Overdue at a glance: what is owed, and how much of it is late',
+            'Share by PDF, print, email, WhatsApp or a copy-paste link'
+        ],
+        how: [
+            'Turn the feature on - Invoices appears in the home menu',
+            'New invoice, or Create invoice from an accepted quote',
+            'Issue it when the goods go out - the sale is booked for you',
+            'Record payments as the money lands - full or part, with a reference'
         ],
     },
     staff_shifts_enable: {
@@ -6554,6 +6573,7 @@ PosnicPro.settings.FEATURE_HOME = {
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
     quotes_enable: ['quotes', 'Quotes'],
+    invoices_enable: ['invoices', 'Invoices'],
     till_lock_enable: ['tillpin', 'Till PIN Lock'],
 };
 /* The Configure link leaves the guide the same way Back does; the hash

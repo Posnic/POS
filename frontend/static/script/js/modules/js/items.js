@@ -1548,7 +1548,7 @@ PosnicPro.items = {
                     $('#items_expiry_date').val('');
                 }
                 $('#item_title_data').text('Edit');
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#item_button_title').text('புதுப்பி') : $('#item_button_title').text('Update');
+                $('#item_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                 if ((data.itemid === data.barcode_id) && (data.itemid !== '')) {
                     $("#same_as_sku").prop("checked", true);
                 } else {
@@ -1666,7 +1666,7 @@ PosnicPro.items = {
         // A fresh entry: the discount fields are untouched again, so a
         // category pick may fill them (applyCategoryDiscount checks this).
         PosnicPro.items._discountTouched = false;
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#item_button_title').text('சேமி') : $('#item_button_title').text('Save');
+        $('#item_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#show_last_created_item').hide();
@@ -2143,7 +2143,7 @@ PosnicPro.items = {
             if (response.type === 'success') {
                 hasher.setHash('items/new');
                 $('#item_title_data').text('Clone');
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#item_button_title').text('நகல் & சேமி') : $('#item_button_title').text('Duplicate & Save');
+                $('#item_button_title').text(PosnicPro.i18n.t('lang_action_duplicate_save', 'Duplicate & Save'));
                 var data = response.data;
                 $('#itemid').val('');
                 $('#items_name').val(data.name + '_copy');

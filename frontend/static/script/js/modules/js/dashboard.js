@@ -407,14 +407,13 @@ PosnicPro.dashboard = {
                         $('.BestSellingitem').show();
                     }
                     $("#tblBestSellingProducts tbody").append(html);
-                } else if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $("#tblBestSellingProducts tbody").text('உங்கள் தயாரிப்பு விவரங்கள் காலியாக உள்ளன.');
-                    $("#tblBestSellingProducts tbody").css({"color": "#2554C7"});
-                    $('.BestSellingitem').css('display', 'none');
-
                 } else {
-                    $("#tblBestSellingProducts tbody").text('Your product details are empty');
-                    $("#tblBestSellingProducts tbody").css({"color": "#2554C7", "column-span": "4"});
+                    /* One branch. The two halves differed only in the words -
+                       now a key - and in a column-span that does nothing to a
+                       tbody, so keeping it for both changes neither. */
+                    $("#tblBestSellingProducts tbody")
+                        .text(PosnicPro.i18n.t('lang_empty_product_details', 'Your product details are empty'))
+                        .css({"color": "#2554C7", "column-span": "4"});
                     $('.BestSellingitem').css('display', 'none');
                 }
                 $('span.number').number(true, 2);
@@ -454,14 +453,12 @@ PosnicPro.dashboard = {
                         $('.Expireditem').show();
                     }
                     $("#expired_stock_table tbody").append(html);
-                } else if (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') {
-                    $("#expired_stock_table tbody").text('உங்கள் தயாரிப்பு விவரங்கள் காலியாக உள்ளன.');
-                    $("#expired_stock_table tbody").css({"color": "#2554C7"});
-                    $('.Expireditem').css('display', 'none');
-
                 } else {
-                    $("#expired_stock_table tbody").text('Your product details are empty');
-                    $("#expired_stock_table tbody").css({"color": "#2554C7", "column-span": "4"});
+                    /* Same collapse as Best Selling above, for the same
+                       reason: only the words differed. */
+                    $("#expired_stock_table tbody")
+                        .text(PosnicPro.i18n.t('lang_empty_product_details', 'Your product details are empty'))
+                        .css({"color": "#2554C7", "column-span": "4"});
                     $('.Expireditem').css('display', 'none');
                 }
                 $('span.number').number(true, 2);
@@ -768,34 +765,113 @@ PosnicPro.dashboard = {
         }, 500); // Adjust delay (1000ms = 1s) if needed
     }
 };
-$(document).ready(function (e) {
-    var nav_lang = PosnicPro.local.get('language');
-    $('.select_language').html(nav_lang);
-    if ((nav_lang == null) || (nav_lang == '')) {
-        $('.select_language').html('English');
-        var nav_id = 'dashboard.html';
-        PosnicPro.local.set('language_herf', nav_id);
-    }
-
+$(document).ready(function () {
+    /* The label is the language's own name. Nothing stored means nothing
+       chosen yet; buildLanguageMenu settles it once the shipped list is in.
+       It is NOT written back here: a stored value looks exactly like a
+       choice, and would stop the first-run detection from ever running. */
+    $('.select_language').html(PosnicPro.local.get('language') || 'English');
 });
-$('#change_language a').click(function () {
+
+/* Type sizes and spacing a language needs, settled here rather than by
+   loading a different page. Tamil runs long in the sidebar and report tabs. */
+function posnicLanguageStyling(code) {
+    $('.report_tab_font').toggleClass('tamil_font14', code === 'ta');
+    $('.vertical-menu').toggleClass('tamil_verticalmenu', code === 'ta');
+    $('.top_sales_tamil').toggleClass('card_tamil_padding', code === 'ta');
+    $('.tamil_qty').toggleClass('sales_tamil_padding', code === 'ta');
+    $('.discount_tamil_right').toggleClass('pull-right', code !== 'ta');
+}
+
+/*
+ * Build the language menu from what the build actually shipped.
+ *
+ * Every language used to need its own hand-written <a> in header.html. Now the
+ * list comes from languages/index.json, so adding one is a file and a line of
+ * config - never markup.
+ *
+ * The menu keeps its English entry if this fails: an unreadable list should
+ * cost the OTHER languages, never leave a shop with no way to choose at all.
+ */
+(function buildLanguageMenu() {
+    var menu = document.getElementById('change_language');
+    if (!menu || typeof fetch !== 'function') return;
+    fetch('languages/index.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (list) {
+            if (!Array.isArray(list) || !list.length) return;
+            menu.innerHTML = list.map(function (l) {
+                /*
+                 * An unreviewed language says so. "beta" is the one word every
+                 * script here reads, and the tooltip carries the number a
+                 * translator wants to see move. This honesty is what lets
+                 * every language ship: the shopkeeper knows what they are
+                 * picking, and every missing word is still English.
+                 */
+                var note = l.reviewed === false
+                    ? ' <small class="text-muted lang-beta">beta</small>' : '';
+                var title = typeof l.coverage === 'number'
+                    ? ' title="' + l.coverage + '% translated'
+                        + (l.reviewed === false ? ', not yet reviewed by a speaker' : '') + '"'
+                    : '';
+                /*
+                 * The NAME is isolated with <bdi>, not the row. dir="rtl" on the
+                 * anchor mirrored the whole entry - flag on the right, "beta"
+                 * before the name - in a menu every other row reads left to
+                 * right. <bdi> lets Arabic shape and order its own letters and
+                 * leaves the row alone.
+                 */
+                return '<a class="dropdown-item" href="javascript:void(0)" data-code="' + l.code + '"'
+                    + ' data-value="' + l.name + '"' + title + '>'
+                    + '<i class="flag flag-icon-' + (l.flag || 'us') + ' flag-icon-squared"></i> '
+                    + '<bdi>' + l.name + '</bdi>' + note + '</a>';
+            }).join('');
+
+            /* The label and the type sizes follow the SETTLED language - after
+               the first-run detection in PosnicPro.i18n has had its say. */
+            PosnicPro.i18n.ready.then(function () {
+                var current = PosnicPro.i18n.code();
+                var entry = null;
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].code === current) entry = list[i];
+                }
+                if (entry) {
+                    $('.select_language').html(entry.name);
+                    PosnicPro.local.set('language', entry.name);
+                }
+                posnicLanguageStyling(current);
+            });
+        })
+        .catch(function () { /* the English entry in the markup stands */ });
+}());
+
+$('#change_language').on('click', 'a', function () {
     var nav_language = $(this).data('value');
-    var nav_id = $(this).data('id');
+    var nav_id = $(this).data('code');
 
     // Persist selected language for subsequent loads
     PosnicPro.local.set('language', nav_language);
-    PosnicPro.local.set('language_herf', nav_id);
 
-    // Stay on the current host (localhost / custom domain / posnic.io) and
-    // only swap the dashboard shell (dashboard.html <-> ta_dashboard.html),
-    // preserving the current hash route (e.g. #/settings).
-    var newPath = window.location.pathname.replace(/[^/]+$/, nav_id);
-    window.location.href = newPath + window.location.hash;
+    /*
+     * No navigation. There used to be a page per language, so switching meant
+     * loading ta_dashboard.html and losing everything on screen. There is one
+     * page now: change() records the code, fetches that language's words and
+     * redraws in place, which is both simpler and instant.
+     *
+     * The menu carries the code itself now. A filename is still tolerated so a
+     * cached older header cannot break the switcher on the first load after an
+     * update.
+     */
+    var code = /^[a-z]{2}$/.test(nav_id) ? nav_id
+        : (/^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en');
+    PosnicPro.i18n.change(code).then(function () { posnicLanguageStyling(code); });
 });
 jQuery(document).ready(function () {
     console.log('WORKING');
-    var pathname = window.location.pathname.slice(1);
-    if (pathname === 'ta_dashboard.html') {
+    /* Tamil needs its own type sizes and menu spacing. Asked of the language,
+       not of the URL - the filename stops being the language as soon as the
+       HTML is no longer built per language. */
+    if (PosnicPro.i18n.is('ta')) {
         $('.report_tab_font').addClass('tamil_font14');
         $('.vertical-menu').addClass('tamil_verticalmenu');
         $('.top_sales_tamil').addClass('card_tamil_padding');

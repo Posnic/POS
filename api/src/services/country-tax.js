@@ -60,7 +60,9 @@ function table() {
 }
 
 /** Test seam. Nothing in production calls this. */
-function _reset() { cache = null; }
+function _reset() {
+  cache = null;
+}
 
 /*
  * A rate is only usable if somebody can be asked where it came from. The
