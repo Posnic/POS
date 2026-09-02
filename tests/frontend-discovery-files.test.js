@@ -7,9 +7,21 @@ const ROOT = path.join(__dirname, '..');
 const FRONTEND = path.join(ROOT, 'frontend');
 const PUBLIC = path.join(FRONTEND, 'public');
 const ROOT_FILES = ['robots.txt', 'sitemap.xml', 'llms.txt', '_headers'];
+const POSNIC_SEO_TITLE = 'Posnic POS - Offline POS & Billing Software';
+const POSNIC_SEO_DESCRIPTION =
+  'Posnic POS is offline-first open source POS and billing software for retail stores, restaurants, and small businesses.';
+const POSNIC_SEO_KEYWORDS = ['POS', 'Billing Software', 'Offline POS', 'Online/Offline POS', 'open source POS'];
 
 function read(...parts) {
   return fs.readFileSync(path.join(...parts), 'utf8');
+}
+
+function extractJsonLd(html, scriptId) {
+  const match = html.match(
+    new RegExp(`<script\\s+type="application/ld\\+json"\\s+id="${scriptId}">([\\s\\S]*?)<\\/script>`),
+  );
+  assert.ok(match, `${scriptId} JSON-LD script is missing`);
+  return JSON.parse(match[1]);
 }
 
 test('frontend source carries machine-readable discovery files for the app domain', () => {
@@ -44,6 +56,35 @@ test('frontend source carries machine-readable discovery files for the app domai
     headers,
     /\/static\/manifest\.webmanifest[\s\S]*Content-Type: application\/manifest\+json; charset=utf-8/,
   );
+});
+
+test('public app entry pages expose canonical POS metadata', () => {
+  const index = read(FRONTEND, 'index.html');
+  const login = read(FRONTEND, 'login.html');
+  const keywordContent = POSNIC_SEO_KEYWORDS.join(', ');
+
+  for (const html of [index, login]) {
+    assert.match(html, new RegExp(`<title>${POSNIC_SEO_TITLE}</title>`));
+    assert.match(html, new RegExp(`<meta name="description" content="${POSNIC_SEO_DESCRIPTION}">`));
+    assert.match(html, new RegExp(`<meta name="keywords" content="${keywordContent}">`));
+    assert.match(html, /<meta name="robots" content="index, follow">/);
+    assert.match(html, /<link rel="canonical" href="https:\/\/www\.posnic\.io\/">/);
+  }
+
+  assert.match(login, /<meta property="og:title" content="Posnic POS - Offline POS & Billing Software">/);
+  assert.match(login, /<meta property="og:url" content="https:\/\/www\.posnic\.io\/">/);
+  assert.match(login, /<meta name="twitter:card" content="summary">/);
+  assert.match(login, /<meta name="twitter:title" content="Posnic POS - Offline POS & Billing Software">/);
+
+  const softwareSchema = extractJsonLd(login, 'posnic-software-schema');
+  assert.equal(softwareSchema['@context'], 'https://schema.org');
+  assert.equal(softwareSchema['@type'], 'SoftwareApplication');
+  assert.equal(softwareSchema.name, 'Posnic POS');
+  assert.equal(softwareSchema.url, 'https://www.posnic.io/');
+  assert.equal(softwareSchema.codeRepository, 'https://github.com/Posnic/POS');
+  assert.equal(softwareSchema.applicationCategory, 'BusinessApplication');
+  assert.equal(softwareSchema.softwareVersion, '1.6.1');
+  assert.deepEqual(softwareSchema.keywords, POSNIC_SEO_KEYWORDS);
 });
 
 test('gulp publishes discovery files into frontend/public', () => {
