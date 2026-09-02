@@ -258,6 +258,12 @@ class InstallService {
           taxData,
           unitId,
           businessType: data.businessType || 'supermarket', // Generic retail default
+          location: {
+            country: data.register_country || '',
+            country_id: data.register_countryid || '',
+            state: data.register_state || '',
+            sortname,
+          },
           currencyCode: (
             this._currencyForCountry(data.register_country, data.register_currency)
               .currency_value[0] || {}
@@ -1109,6 +1115,12 @@ class InstallService {
         taxData: tax ? { name: tax.name, rate: tax.rate } : null,
         unitId: unit ? unit._id : null,
         businessType,
+        location: {
+          country: branch.country || '',
+          country_id: branch.country_id || branch.countryid || '',
+          state: branch.state || '',
+          sortname: branch.sortname || '',
+        },
         currencyCode,
       });
 
@@ -1193,6 +1205,7 @@ class InstallService {
         taxData,
         unitId,
         businessType,
+        location,
       } = params;
 
       /*
@@ -1480,7 +1493,7 @@ class InstallService {
           branchName,
           licenseId,
           now,
-          pack: businessType,
+          pack: packTag,
           items: itemMultiData,
           userName: username,
           /* The dataset's own customers and suppliers, already placed in its
@@ -1489,6 +1502,7 @@ class InstallService {
           datasetPeople: datasetPack
             ? { customers: datasetPack.customers, suppliers: datasetPack.suppliers }
             : null,
+          location: location || {},
         });
       } catch (e) {
         console.error('Demo sales and quotes skipped:', e.message);
@@ -1521,6 +1535,7 @@ class InstallService {
     items,
     userName,
     datasetPeople,
+    location,
   }) {
     const demoSeed = require('./demo-seed');
     const BaseModel = require('../models/base.model');
@@ -1561,6 +1576,7 @@ class InstallService {
         country_id: branch.country_id || '',
         state: branch.state || '',
         sortname: branch.sortname || '',
+        ...(location || {}),
       },
       people: datasetPeople,
     });
