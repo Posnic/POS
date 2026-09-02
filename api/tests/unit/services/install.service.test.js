@@ -323,13 +323,13 @@ describe('InstallService', () => {
       });
     });
 
-    test('routes to _insertDefaultCategoryAndItem when register_demo is false', async () => {
+    test('does not seed products when register_demo is false', async () => {
       spyAllPrivateMethods(service);
       repo.findExistingUser.mockResolvedValue(null);
 
       await service.processInstallation(validInstallData({ register_demo: false }));
 
-      expect(service._insertDefaultCategoryAndItem).toHaveBeenCalledTimes(1);
+      expect(service._insertDefaultCategoryAndItem).not.toHaveBeenCalled();
       expect(service._insertBusinessTypeDemoData).not.toHaveBeenCalled();
     });
 
@@ -823,13 +823,15 @@ describe('InstallService', () => {
       expect(getDemoDataByType).toHaveBeenCalledWith('cafe');
     });
 
-    test('falls back to _insertDefaultCategoryAndItem when getDemoDataByType returns null', async () => {
+    test('skips seeding when no demo data pack can be found', async () => {
       getDemoDataByType.mockReturnValue(null);
       jest.spyOn(service, '_insertDefaultCategoryAndItem').mockResolvedValue(undefined);
 
       await service._insertBusinessTypeDemoData(makeParams({ businessType: 'unknown' }));
 
-      expect(service._insertDefaultCategoryAndItem).toHaveBeenCalledTimes(1);
+      expect(service._insertDefaultCategoryAndItem).not.toHaveBeenCalled();
+      expect(repo.insertCategories).not.toHaveBeenCalled();
+      expect(repo.insertItems).not.toHaveBeenCalled();
     });
 
     test('calls insertCategories + findCategoriesByIds + insertItems for valid business type', async () => {
