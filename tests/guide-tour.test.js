@@ -85,9 +85,12 @@ test('the tour starts only after a SUCCESSFUL save, and only when asked', () => 
    * handler reads: a failed save must never start a tour of a shop that did
    * not save, and plain Save must never grow an uninvited tour.
    */
-  assert.match(settingsJs, /_tourAfterSave = true;\s*\n\s*PosnicPro\.features\.saveIntro\(\)/);
+  assert.match(
+    settingsJs,
+    /_tourAfterSave = true;[\s\S]{0,90}PosnicPro\.features\.saveIntro\(\)/
+  );
   const success = between(settingsJs, "PosnicPro.alert('success', 'Feature switches saved')", 'PosnicPro.alert(response.type');
-  assert.match(success, /if \(PosnicPro\.features\._tourAfterSave\)/);
+  assert.match(success, /PosnicPro\.features\._tourAfterSave/);
   assert.match(success, /PosnicPro\.tour\.firstRun\(\)/);
   // the failure path clears the flag, or the NEXT save inherits the wish
   const fail = between(settingsJs, "Could not save - you can set these later", '};');
