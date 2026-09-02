@@ -4506,6 +4506,29 @@ PosnicPro.i18n.ready = (function firstRun() {
         .then(function () { PosnicPro.i18n.apply(); })
         .catch(function () { /* English, as shipped */ });
 }());
+/*
+ * A plain <select id="language_select"> anywhere offers the same list the
+ * header menu does. The login page has one: somebody who cannot read the
+ * sign-in screen should not have to sign in to change it. Filled after the
+ * first run has settled, so it opens on the language actually in use.
+ */
+PosnicPro.i18n.ready.then(function () {
+    var pick = (typeof document !== 'undefined') ? document.getElementById('language_select') : null;
+    if (!pick || typeof fetch !== 'function') return;
+    fetch('languages/index.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (list) {
+            if (!Array.isArray(list) || !list.length) return;
+            var current = PosnicPro.i18n.code();
+            pick.innerHTML = list.map(function (l) {
+                return '<option value="' + l.code + '"' + (l.code === current ? ' selected' : '') + '>'
+                    + l.name + (l.reviewed === false ? ' (beta)' : '') + '</option>';
+            }).join('');
+            pick.onchange = function () { PosnicPro.i18n.change(pick.value); };
+            pick.style.display = '';
+        })
+        .catch(function () { /* the page stays as it is */ });
+});
 /* Markup that exists before the pack lands still gets translated: this runs
    again once the DOM is ready, and apply() is idempotent. */
 if (typeof document !== 'undefined') {
