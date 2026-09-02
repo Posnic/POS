@@ -1012,12 +1012,17 @@ class SettingModel extends BaseModel {
           'countries.json'
         );
         const countriesData = JSON.parse(fs.readFileSync(countriesJsonPath, 'utf8'));
-        const countryMatch = countriesData.countries?.find((c) => c.value === text(data.setting_country));
+        const countryMatch = countriesData.countries?.find(
+          (c) => c.value === text(data.setting_country)
+        );
         if (countryMatch?.sortname) {
           sortname = countryMatch.sortname;
         }
       } catch (err) {
-        console.warn('Could not load countries.json for starter locale sortname lookup:', err.message);
+        console.warn(
+          'Could not load countries.json for starter locale sortname lookup:',
+          err.message
+        );
       }
 
       let cleanTimezone = text(data.time_zone) || 'Asia/Kolkata';
