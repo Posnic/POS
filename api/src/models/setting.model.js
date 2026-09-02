@@ -4,6 +4,8 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
+const { recordAudit } = require('../utils/audit-trail');
+const { publicPageUrl } = require('../utils/public-url');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -29,10 +31,14 @@ class SettingModel extends BaseModel {
     this.cachedFallbackTax = null;
   }
 
-  setContext({ branchId = null, licenseId = null, user = null } = {}) {
+  setContext({ branchId = null, licenseId = null, user = null, ip = null, userAgent = null } = {}) {
     this.branchId = branchId;
     this.licenseId = licenseId;
     this.user = user;
+    /* Where the request came from. Only the audit trail uses these, and only
+       for the handful of events where "from where" is the whole question. */
+    this.ip = ip;
+    this.userAgent = userAgent;
     this.branchName = null; // Will be loaded lazily when needed
   }
 
@@ -2123,6 +2129,19 @@ class SettingModel extends BaseModel {
       }
 
       if (!oldPasswordValid) {
+        /* Recorded too. Somebody repeatedly failing to change a password is
+           either a person who has forgotten it or somebody working through a
+           list, and the address is what tells those apart. */
+        await recordAudit(await this.getDB().catch(() => null), {
+          event: 'password_change_failed',
+          actor: { id: String(user._id), name: user.email || user.username || '' },
+          target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+          ip: this.ip,
+          userAgent: this.userAgent,
+          branchId: this.branchId,
+          license: this.licenseId,
+          extra: { reason: 'current password did not match' },
+        });
         return { status: false, message: 'Current password is incorrect' };
       }
 
@@ -2149,6 +2168,26 @@ class SettingModel extends BaseModel {
       if (result.modifiedCount === 0) {
         return { status: false, message: 'Failed to update password' };
       }
+
+      /*
+       * The event that could not be answered.
+       *
+       * When a shop was locked out, the only evidence a password had changed
+       * was a timestamp on the user document - no actor, no address, nothing
+       * to tell the owner whether it was them last Tuesday or somebody else.
+       * The password itself is never written here; recordAudit redacts any
+       * field whose name looks like a secret regardless of what is passed.
+       */
+      await recordAudit(await this.getDB().catch(() => null), {
+        event: 'password_changed',
+        actor: { id: String(user._id), name: user.email || user.username || '' },
+        target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+        ip: this.ip,
+        userAgent: this.userAgent,
+        branchId: this.branchId,
+        license: this.licenseId,
+        extra: { method: 'self_service_change_password' },
+      });
 
       return {
         status: true,
@@ -3845,7 +3884,11 @@ class SettingModel extends BaseModel {
   }
 
   // Forgot Password
-  async getForgotUserDetails(email) {
+  /*
+   * @param {object} [req] the request, used ONLY to work out this shop's own
+   *                       public address for the link in the email.
+   */
+  async getForgotUserDetails(email, req = null) {
     try {
       const usersCollection = await this.getCollection('users');
       const user = await usersCollection.findOne({ email: email });
@@ -3863,20 +3906,36 @@ class SettingModel extends BaseModel {
       const expireDate = new Date(Date.now() + 10 * 60 * 1000);
       await usersCollection.updateOne({ _id: user._id }, { $set: { expire_date: expireDate } });
 
-      // Build reset link using userkey (matching PHP lines 700-711)
-      const serverName = process.env.SERVER_NAME || 'localhost';
-      const cleanServerName = serverName.replace(/^api\./, '');
-      const forgotPasswordId = encodeURIComponent(user.userkey);
+      /*
+       * The link goes to THIS shop, not to a hardcoded address.
+       *
+       * This used to read SERVER_NAME, which is set on no process in the
+       * estate, fall through to the localhost branch, and mail every hosted
+       * shop a link to http://localhost:3000 - the recipient's own computer,
+       * on a port with nothing listening. Self-service recovery has therefore
+       * never once worked for a cloud shop, which is why a locked-out owner
+       * needed five days and a database session to get back into his till.
+       *
+       * publicPageUrl derives the address from the request, but accepts only a
+       * host on a domain we actually run: a link inside an email we send is
+       * exactly what password-reset poisoning targets.
+       */
+      const basePath = publicPageUrl(req, 'forgotpassword.html', {
+        forgotpassword_Id: user.userkey,
+      });
 
-      let basePath;
-      if (cleanServerName.includes('dev.posnic.io')) {
-        basePath = `http://pro.dev.posnic.io/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else if (cleanServerName.includes('localhost')) {
-        // For local development
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        basePath = `${frontendUrl}/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else {
-        basePath = `https://www.posnic.io/forgotpassword?forgotpassword_Id=${forgotPasswordId}`;
+      if (!basePath) {
+        /* Refused rather than sent. A dead link and a poisoned link are both
+           worse than an error somebody can see and fix. */
+        console.error(
+          '[forgot-password] no trustworthy public address for this shop - ' +
+            'set PUBLIC_BASE_URL. No email sent.'
+        );
+        return {
+          status: false,
+          data: null,
+          message: 'Password reset is not configured for this shop. Please contact support.',
+        };
       }
 
       // Send email via Brevo (matching PHP lines 714-729)
