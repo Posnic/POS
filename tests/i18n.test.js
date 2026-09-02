@@ -179,11 +179,25 @@ test('no module JS contains mojibake', () => {
 test('no language file contains mojibake', () => {
   const dir = LANGUAGES_DIR;
   const bad = [];
-  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
-    const dict = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-    for (const [k, v] of Object.entries(dict)) {
-      if (/[\u0080-\u00FF]{3,}/.test(String(v))) bad.push(`${f}:${k} = ${String(v).slice(0, 30)}`);
+
+  /*
+   * Walked, not iterated one level deep. _glossary.json nests its words one
+   * object further down, and a shallow loop stringified those objects to
+   * "[object Object]", which never matches - so the one file where every word
+   * is now authored would have been the one file this test could not see.
+   */
+  const walk = (node, where, file) => {
+    if (typeof node === 'string') {
+      if (/[\u0080-\u00FF]{3,}/.test(node)) bad.push(`${file}:${where} = ${node.slice(0, 30)}`);
+      return;
     }
+    if (node && typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) walk(v, where ? `${where}.${k}` : k, file);
+    }
+  };
+
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+    walk(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')), '', f);
   }
   assert.deepEqual(bad, [], 'mojibake in a language file:\n  ' + bad.join('\n  '));
 });
@@ -211,7 +225,11 @@ test('the build emits a pack for every non-English language', () => {
 
 test('every language file is valid JSON with string values', () => {
   const dir = LANGUAGES_DIR;
-  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+  /* A leading underscore means "not a language pack". _glossary.json is the
+     source the packs are seeded from, and its values are objects of languages
+     rather than strings. The mojibake test above still reads it, because that
+     is the check it must never be exempt from. */
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json') && !x.startsWith('_'))) {
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     let dict;
     assert.doesNotThrow(() => { dict = JSON.parse(raw); }, `${f} is not valid JSON`);
@@ -357,6 +375,86 @@ test('the build publishes the list the menu reads', () => {
   assert.match(config, /const LANGUAGES = \[/, 'languages carry no display names');
   /* A language a speaker cannot recognise is not offered to them. */
   assert.match(config, /name: 'தமிழ்'/, 'Tamil is not named in Tamil');
+});
+
+test('a draft language is never offered to a shopkeeper', () => {
+  /*
+   * The safety property of the whole seeded-translation idea, so it is pinned
+   * rather than trusted.
+   *
+   * Twelve language packs were seeded from the glossary in one go. Not one of
+   * them has been read by somebody who speaks the language. A shopkeeper who
+   * picks Hindi and gets confidently wrong Hindi is worse off than one reading
+   * English: English is honestly foreign, whereas a wrong word looks exactly
+   * like a right one until something goes wrong at the counter.
+   *
+   * So the default build - the one that becomes an installer - must offer only
+   * reviewed languages. Removing a language's `draft: true` is the deliberate
+   * act that ships it, and it should take a human deciding to do it.
+   */
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  const shipped = config.shippedLanguages.map((l) => l.code);
+
+  assert.ok(!config.draftLanguages,
+    'POSNIC_DRAFT_LANGUAGES is set in the test environment, so this proves nothing');
+
+  const leaked = config.LANGUAGES.filter((l) => l.draft).map((l) => l.code)
+    .filter((code) => shipped.includes(code));
+  assert.deepEqual(leaked, [],
+    'these are marked draft but the default build still offers them: ' + leaked.join(', '));
+
+  /* And the reviewed ones must still be there - a gate that shuts on everything
+     is not a gate, it is an outage. */
+  assert.ok(shipped.includes('en') && shipped.includes('ta'),
+    'the reviewed languages are missing from the default build');
+});
+
+test('every declared language has a pack, and every pack is declared', () => {
+  /*
+   * A language in the menu with no file behind it is a menu entry that does
+   * nothing. A file nobody declared is work that will never appear on screen -
+   * the more disheartening of the two if a contributor wrote it.
+   */
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  const declared = config.LANGUAGES.map((l) => l.code).filter((c) => c !== 'en');
+  const onDisk = fs.readdirSync(LANGUAGES_DIR)
+    .filter((f) => f.endsWith('.json') && !f.startsWith('_'))
+    .map((f) => f.replace(/\.json$/, ''));
+
+  const missing = declared.filter((c) => !onDisk.includes(c));
+  assert.deepEqual(missing, [], 'declared with no languages/<code>.json: ' + missing.join(', '));
+
+  const undeclared = onDisk.filter((c) => !declared.includes(c));
+  assert.deepEqual(undeclared, [],
+    'a pack exists but no LANGUAGES entry offers it: ' + undeclared.join(', '));
+});
+
+test('the glossary agrees with itself', () => {
+  /*
+   * The glossary is the one file where a mistake reaches every screen of a
+   * language at once, so it is worth more checking than a single key.
+   */
+  const glossary = JSON.parse(
+    fs.readFileSync(path.join(LANGUAGES_DIR, '_glossary.json'), 'utf8'));
+  const known = new Set(glossary.languages);
+
+  const strays = [];
+  for (const [term, byLang] of Object.entries(glossary.terms)) {
+    for (const [code, word] of Object.entries(byLang)) {
+      if (!known.has(code)) strays.push(`${term}: "${code}" is not in the languages list`);
+      if (typeof word !== 'string') strays.push(`${term}.${code} is not text`);
+      else if (word !== word.trim()) strays.push(`${term}.${code} has a stray space: "${word}"`);
+    }
+  }
+  assert.deepEqual(strays, [], 'glossary problems:\n  ' + strays.join('\n  '));
+
+  /* Terms that must never be translated: a shopkeeper matches GST and its
+     relatives against a government form, character for character. */
+  assert.ok(glossary.doNotTranslate.includes('GST'), 'GST is not protected from translation');
+  for (const term of glossary.doNotTranslate) {
+    assert.ok(!Object.prototype.hasOwnProperty.call(glossary.terms, term),
+      `${term} is marked do-not-translate but has translations in the glossary`);
+  }
 });
 
 test('stylesheets are written once, not once per language', () => {
