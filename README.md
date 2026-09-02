@@ -129,7 +129,7 @@ and always will be.
 
 Download the package for your platform from
 **[the latest release](https://github.com/Posnic/POS/releases/latest)**, run it,
-and follow the wizard. Stable v1.3.0 packages include MongoDB Community Server
+and follow the wizard. Current v1.6.1 packages include MongoDB Community Server
 under its separate SSPL-1.0 licence, so no separate database install is needed
 for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 
