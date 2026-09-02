@@ -22,6 +22,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const FRONTEND = path.join(__dirname, '..', 'frontend');
 const MODULES = path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js');
@@ -377,38 +378,6 @@ test('the build publishes the list the menu reads', () => {
   assert.match(config, /name: 'தமிழ்'/, 'Tamil is not named in Tamil');
 });
 
-test('a draft language is never offered to a shopkeeper', () => {
-  /*
-   * The safety property of the whole seeded-translation idea, so it is pinned
-   * rather than trusted.
-   *
-   * Twelve language packs were seeded from the glossary in one go. Not one of
-   * them has been read by somebody who speaks the language. A shopkeeper who
-   * picks Hindi and gets confidently wrong Hindi is worse off than one reading
-   * English: English is honestly foreign, whereas a wrong word looks exactly
-   * like a right one until something goes wrong at the counter.
-   *
-   * So the default build - the one that becomes an installer - must offer only
-   * reviewed languages. Removing a language's `draft: true` is the deliberate
-   * act that ships it, and it should take a human deciding to do it.
-   */
-  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
-  const shipped = config.shippedLanguages.map((l) => l.code);
-
-  assert.ok(!config.draftLanguages,
-    'POSNIC_DRAFT_LANGUAGES is set in the test environment, so this proves nothing');
-
-  const leaked = config.LANGUAGES.filter((l) => l.draft).map((l) => l.code)
-    .filter((code) => shipped.includes(code));
-  assert.deepEqual(leaked, [],
-    'these are marked draft but the default build still offers them: ' + leaked.join(', '));
-
-  /* And the reviewed ones must still be there - a gate that shuts on everything
-     is not a gate, it is an outage. */
-  assert.ok(shipped.includes('en') && shipped.includes('ta'),
-    'the reviewed languages are missing from the default build');
-});
-
 test('every declared language has a pack, and every pack is declared', () => {
   /*
    * A language in the menu with no file behind it is a menu entry that does
@@ -465,4 +434,143 @@ test('stylesheets are written once, not once per language', () => {
    */
   const css = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'css.js'), 'utf8');
   assert.ok(!/languages\.forEach/.test(css), 'CSS is still written once per language');
+});
+
+/* --------------------------------------- every language ships, honestly --- */
+
+test('every declared language ships by default, and says whether a speaker has read it', () => {
+  /*
+   * Owner, 2026-09-02: ship them all; the community improves them over time.
+   *
+   * A gate that hides a language until it is perfect is a language nobody
+   * will ever correct - the people who could fix it are exactly the people who
+   * would have picked it. What ships instead of the gate is honesty: every
+   * entry says whether a speaker has read it, and the menu turns that into a
+   * "beta" mark beside the name. Every missing word is still English.
+   */
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  assert.ok(!config.reviewedOnly,
+    'POSNIC_REVIEWED_LANGUAGES_ONLY is set in the test environment, so this proves nothing');
+  assert.deepEqual(config.shippedLanguages.map((l) => l.code), config.LANGUAGES.map((l) => l.code),
+    'the default build leaves a declared language out');
+  for (const l of config.LANGUAGES) {
+    assert.equal(typeof l.reviewed, 'boolean', l.code + ' does not say whether it was reviewed');
+  }
+  const reviewed = config.LANGUAGES.filter((l) => l.reviewed).map((l) => l.code);
+  assert.ok(reviewed.includes('en') && reviewed.includes('ta'), 'English and Tamil are the reviewed pair');
+});
+
+test('an installer can still ask for reviewed languages only', () => {
+  /* The env is read when config.js loads, so it has to be a fresh process. */
+  const r = spawnSync(process.execPath, ['-e',
+    'console.log(JSON.stringify(require(process.argv[1]).shippedLanguages.map((l) => l.code)))',
+    path.join(FRONTEND, 'gulpfile.js', 'config.js')],
+    { encoding: 'utf8', env: { ...process.env, POSNIC_REVIEWED_LANGUAGES_ONLY: '1' } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout.trim()), ['en', 'ta']);
+});
+
+test('the shipped list carries direction, review state and coverage', () => {
+  /*
+   * index.json is what the menu reads. Direction lets the menu entry itself
+   * render right-to-left; reviewed drives the beta mark; coverage is the
+   * number a translator wants to see move, computed by the SAME tool the
+   * coverage report and the translations CI use, so the build cannot
+   * disagree with them.
+   */
+  const gulp = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'index.js'), 'utf8');
+  assert.match(gulp, /reviewed: !!l\.reviewed/, 'index.json entries do not carry reviewed');
+  assert.match(gulp, /entry\.coverage =/, 'index.json entries do not carry coverage');
+  assert.match(gulp, /i18n-coverage\.js/, 'coverage is not computed by the tool CI uses');
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  assert.equal(config.LANGUAGES.find((l) => l.code === 'ar').dir, 'rtl', 'Arabic is not declared right-to-left');
+});
+
+test('the menu marks an unreviewed language as beta and settles a first run from the browser', () => {
+  const dash = fs.readFileSync(path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js', 'dashboard.js'), 'utf8');
+  assert.match(dash, /l\.reviewed === false/, 'the menu ignores the reviewed flag');
+  assert.match(dash, />beta</, 'an unreviewed language is not marked');
+  /* The first run is settled ONCE, in the core, so login and dashboard agree;
+     the menu only waits for it. */
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /PosnicPro\.i18n\.ready = /, 'the core publishes no ready promise');
+  assert.match(core, /i18n\.detect\(list/, 'a first run does not consult the browser language');
+  assert.match(core, /i18n\.chosen\(\)/, 'detection is not gated on "never chosen"');
+  assert.match(dash, /i18n\.ready\.then/, 'the menu does not wait for the settled language');
+  /* The old ready() wrote English back as if somebody had chosen it, which
+     would have stopped detection from ever running. */
+  assert.ok(!/select\('dashboard\.html'\)/.test(dash), 'the dashboard still writes English as a choice');
+});
+
+/* --------------------------------------- the document knows its language --- */
+
+test('the runtime sets the document language and direction', () => {
+  /*
+   * <html lang> is what screen readers, spell-checkers, hyphenation and font
+   * fallback read. dir="rtl" is the whole of Arabic's text layout. Both come
+   * from the code, before any pack arrives, so direction never waits on a
+   * fetch.
+   */
+  const markFn = member('mark');
+  assert.match(markFn, /documentElement\.setAttribute\('lang'/, 'html lang is not set');
+  assert.match(markFn, /'dir'/, 'html dir is not set');
+  assert.match(i18nSource(), /_rtl:\s*\{[^}]*\bar:/, 'Arabic is not in the right-to-left set');
+  assert.match(member('change'), /i18n\.mark\(\)/, 'switching language does not re-mark the document');
+  assert.match(member('load'), /i18n\.mark\(\)/, 'direction waits on the pack fetch');
+});
+
+test('first-run detection is a BCP 47 lookup over what the build ships', () => {
+  /* RFC 4647 lookup: the full tag first ('pt-BR'), then its primary subtag
+     ('pt'), through the browser's preference list in order; English last. */
+  const detectFn = member('detect');
+  assert.match(detectFn, /nav\.languages/, 'detect() ignores the browser preference list');
+  assert.match(detectFn, /split\('-'\)\[0\]/, 'detect() does not fall back to the primary subtag');
+  assert.match(detectFn, /return 'en'/, 'detect() has no English fallback');
+  /* And asking for the code must not count as choosing - that is what kept
+     every fresh install silently pinned to English. */
+  assert.ok(!/stored = m \? m\[1\] : 'en'/.test(member('code')), 'code() still writes English back as a choice');
+});
+
+test('switching back to English restores the words the page shipped with', () => {
+  /*
+   * English lives in the markup, not in any pack. Once a translation has
+   * overwritten it, the only way back was a reload. apply() now keeps the
+   * shipped markup on the element the first time it replaces it.
+   */
+  assert.match(member('apply'), /data-en/, 'apply() does not keep the English before overwriting it');
+  assert.match(member('restore'), /data-en/, 'restore() does not read the kept English');
+  assert.match(member('change'), /restore\(\)/, 'change() never restores English');
+});
+
+test('the RTL stylesheet rides the pages a shopkeeper sees, and loads last', () => {
+  const map = JSON.parse(fs.readFileSync(path.join(FRONTEND, 'pages_css_js_map.json'), 'utf8'));
+  for (const page of ['dashboard', 'login', 'forgotpassword']) {
+    const css = map[page].css;
+    assert.equal(css[css.length - 1], 'static/style/css/rtl.css', page + ' does not load rtl.css last');
+  }
+  const rtl = fs.readFileSync(path.join(FRONTEND, 'static', 'style', 'css', 'rtl.css'), 'utf8');
+  assert.match(rtl, /\[dir="rtl"\] \.leftbar/, 'the sidebar is not mirrored');
+  assert.match(rtl, /\[dir="rtl"\] \.topbar/, 'the top bar is not mirrored');
+  /* Every rule is scoped: an LTR page must pay nothing for this sheet. */
+  const unscoped = rtl.split('\n').filter((l) => /^[.#a-z]/.test(l) && !/^\[dir/.test(l));
+  assert.deepEqual(unscoped, [], 'rules not scoped under [dir="rtl"]: ' + unscoped.join(' | '));
+});
+
+test('no language pack has fallen behind the UI', () => {
+  /*
+   * 2026-09-02: every pack answered every key. From here a gap is a string
+   * added to the UI without its translations. The floor is 95% rather than
+   * 100% so a new key does not block the feature that needs it - but it does
+   * mean somebody has to run
+   *
+   *     node tests/tools/i18n-coverage.js --worksheet <code>
+   *
+   * before the gap grows into a screen of English again.
+   */
+  const { report } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
+  const rows = report().rows.filter((r) => !r.error && r.lang !== '_glossary');
+  assert.ok(rows.length >= 13, 'expected the thirteen packs, found ' + rows.length);
+  const behind = rows.filter((r) => r.coverage < 95)
+    .map((r) => `${r.lang} at ${r.coverage}% (e.g. ${r.missing.slice(0, 3).join(', ')})`);
+  assert.deepEqual(behind, [], 'packs below 95%:\n  ' + behind.join('\n  '));
 });
