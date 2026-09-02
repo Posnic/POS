@@ -29,7 +29,7 @@ follows, so it is worth being explicit rather than leaving people to discover it
 |---|---|
 | The network | MongoDB binds to `127.0.0.1`. Nothing on the LAN or the internet can reach it. |
 | Other Windows accounts | The database requires a password, generated per install and stored in the shop's own user profile. No shared secret between shops. |
-| A stolen or resold disk | With device encryption enabled — see the [user guide](docs/USER_GUIDE.md#keeping-your-till-secure). Without it, the disk is readable. |
+| A stolen or resold disk | With device encryption enabled — see the [user guide](../docs/USER_GUIDE.md#keeping-your-till-secure). Without it, the disk is readable. |
 | The till while unattended | PIN lock, and close-to-tray locks the screen. |
 
 **What is not protected, and cannot be**
@@ -62,7 +62,7 @@ these are the properties to weigh.
 Run the till on a standard, non-administrator Windows account, keep a separate
 administrator account with a real password, and turn on device encryption.
 Those three steps do more than anything in this codebase can. The
-[user guide](docs/USER_GUIDE.md#keeping-your-till-secure) walks through them.
+[user guide](../docs/USER_GUIDE.md#keeping-your-till-secure) walks through them.
 
 ## Scope
 
@@ -97,8 +97,8 @@ rather than left quiet.
 | Secret scan of the full git history | Every CI run — `scripts/scan-git-history.js` |
 | Electron and Node major versions | Quarterly, and within 30 days of a security release |
 | Review of IPC surface, permissions and navigation guards | Every release that adds an IPC channel |
-| Backup restore drill on a clean machine | Every release — see [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) |
-| Incident response walk-through | Annually — see [docs/INCIDENT_RESPONSE.md](docs/INCIDENT_RESPONSE.md) |
+| Backup restore drill on a clean machine | Every release — see [docs/DISASTER_RECOVERY.md](../docs/DISASTER_RECOVERY.md) |
+| Incident response walk-through | Annually — see [docs/INCIDENT_RESPONSE.md](../docs/INCIDENT_RESPONSE.md) |
 | Third-party licence and notice review | Annually, and whenever a bundled asset changes |
 
 An independent security audit has **not** been commissioned. When one is, the

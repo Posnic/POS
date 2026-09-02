@@ -1,0 +1,194 @@
+<!-- Invoices (INVOICING_MODULE_DESIGN): the bill - list, editor and A4 view,
+     built on the quotes surface. Server: /invoices. The SALE holds the money;
+     this page shows what the sale says. -->
+<div class="vertical-layout page_loader" id="invoices_new" style="display: none">
+    <div id="containerbar">
+            <div class="breadcrumbbar">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <h4 class="page-title break_title mb-0"><lang class="lang_invoices_title">Invoices</lang></h4>
+                    </div>
+                    <div class="col">
+                        <div class="lf-panel" id="invoices_filter_panel" style="display:none;"></div>
+                    </div>
+                    <div class="col-auto text-right">
+                        <div class="widgetbar">
+                            <span id="invoices_sort_host"></span>
+                            <button type="button" class="btn btn-primary-rgba lf-btn" id="invoices_filter_btn"
+                                data-toggle="tooltip" title="Filter invoices">
+                                <i class="feather icon-filter mr-2"></i>Filter
+                            </button>
+                            <a href="#/invoices/new" class="btn btn-primary-rgba add_new_tooltip"
+                                data-module="sales" data-access="write"
+                                data-toggle="tooltip" title="New invoice">
+                                <i class="feather icon-plus mr-2"></i>
+                                <lang class="lang_addvariant_title">New</lang>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="contentbar">
+                <div class="card m-b-30 md-rail" id="invoices_list_card">
+                    <div class="card-body">
+                        <!-- Status as a labelled dropdown, same as quotes and purchases.
+                             Overdue is not a stored state - the server reads it off the
+                             due date - but it is the one filter a shop opens this page
+                             for, so it sits first after All. -->
+                        <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="invoices_filter_chips">
+                            <span class="p-qf-label">Status</span>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false" id="invoices_status_dd">All</button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="">All</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="overdue">Overdue</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="owed">Owed</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="draft">Draft (proforma)</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="unpaid">Unpaid</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="partial">Partially paid</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="paid">Paid</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                </div>
+                            </div>
+                            <!-- What the shop is owed, and how much of it is late: the
+                                 two numbers this page exists to answer. -->
+                            <span class="text-muted small" id="invoices_summary"></span>
+                        </div>
+                        <div id="invoices_list_rows" class="md-rail-rows text-muted">Loading invoices ...</div>
+                    </div>
+                </div>
+                <!-- Invoice editor: the quote editor's twin - catalog rows or custom
+                     rows, discounts, named charges, live totals mirroring the
+                     server's math - with a due date and a customer reference in
+                     place of a validity. -->
+                <div class="card m-b-30" id="invoices_edit_card" style="display:none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center m-b-15 flex-wrap" style="gap:8px;">
+                            <h5 class="mb-0" id="ie_title">New invoice</h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edCancel();">Cancel</button>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.invoices.edSave();">Save invoice</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6" id="ie_edit_col">
+                                <div class="qe-sec">
+                                    <div class="q-label">Bill to</div>
+                                    <input type="text" id="ie_cust_search" class="form-control form-control-sm mb-2"
+                                        placeholder="Search an existing customer by name or phone" autocomplete="off">
+                                    <div class="form-row">
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone"></div>
+                                        <div class="col-md-6 mb-2"><input type="email" id="ie_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID"></div>
+                                        <div class="col-12 mb-2"><input type="text" id="ie_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address"></div>
+                                    </div>
+                                </div>
+                                <div class="qe-sec">
+                                    <div class="q-label">Lines</div>
+                                    <input type="text" id="ie_item_search" class="form-control form-control-sm mb-2"
+                                        placeholder="Search an item to add a line" autocomplete="off">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-1" id="ie_lines_table">
+                                            <thead><tr>
+                                                <th style="min-width:170px;">Item</th><th>Qty</th><th>Unit price</th>
+                                                <th>Line discount</th><th class="text-right">Total</th><th></th>
+                                            </tr></thead>
+                                            <tbody id="ie_lines"></tbody>
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCustom();">+ Custom line</button>
+                                </div>
+                                <div class="qe-sec">
+                                    <div class="q-label">Charges &amp; taxes - any name</div>
+                                    <div id="ie_charges"></div>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCharge();">+ Charge / tax</button>
+                                </div>
+                                <div class="qe-sec">
+                                    <div class="form-row">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="q-label">Invoice discount</div>
+                                            <div class="input-group input-group-sm">
+                                                <select id="ie_disc_type" class="form-control" style="max-width:110px;" aria-label="Invoice discount type">
+                                                    <option value="">None</option>
+                                                    <option value="percent">Percent</option>
+                                                    <option value="amount">Amount</option>
+                                                </select>
+                                                <input type="number" id="ie_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="q-label">Due date</div>
+                                            <div class="d-flex align-items-center mb-1" style="gap:6px;">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="0">On receipt</button>
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="15">15 days</button>
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="30">30 days</button>
+                                                </div>
+                                                <input type="date" id="ie_due_date" class="form-control form-control-sm" style="width:150px;" aria-label="Invoice due date">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="q-label">Customer reference (their PO / job number)</div>
+                                    <input type="text" id="ie_reference" class="form-control form-control-sm mb-2" maxlength="60" placeholder="Optional - printed on the invoice">
+                                    <div class="q-label">Payment details</div>
+                                    <input type="text" id="ie_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash">
+                                    <textarea id="ie_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC"></textarea>
+                                    <div class="q-label">Terms</div>
+                                    <textarea id="ie_terms" class="form-control form-control-sm mb-2" rows="2" maxlength="1500"></textarea>
+                                    <div class="q-label">Notes (printed on the invoice)</div>
+                                    <textarea id="ie_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
+                                    <small class="text-muted d-block mb-2">A draft is a proforma: nothing is booked until you press Issue. The authorised signature comes from Settings &rsaquo; Quotes and signs invoices too.</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="qe-paper-wrap">
+                                    <div id="ie_preview" class="q-sheet qe-paper"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card m-b-30 md-detail" id="invoices_view_card" style="display:none;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center m-b-10 md-detail-head" style="gap:8px;" id="invoices_view_head">
+                            <button type="button" class="btn btn-sm btn-light" id="invoices_rail_toggle"
+                                title="Show or hide the invoice list">
+                                <i class="feather icon-sidebar"></i>
+                            </button>
+                            <div class="flex-fill text-right" id="invoices_view_actions"></div>
+                            <button type="button" class="btn btn-sm btn-light" id="invoices_view_close"
+                                title="Close this invoice and show the full list" aria-label="Close">
+                                <i class="feather icon-x"></i>
+                            </button>
+                        </div>
+                        <!-- Record payment: a quiet inline strip, not a browser prompt.
+                             The amount defaults to the balance and may be less (a part
+                             payment); method and reference are what the accountant asks
+                             for later. -->
+                        <div class="ie-pay-strip m-b-10" id="invoices_pay_strip" style="display:none;">
+                            <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
+                                <strong class="mr-1">Record payment</strong>
+                                <input type="number" id="ie_pay_amount" class="form-control form-control-sm" style="max-width:130px;" min="0.01" step="0.01" aria-label="Amount received">
+                                <span class="text-muted small">of <span id="ie_pay_balance"></span> due</span>
+                                <select id="ie_pay_method" class="form-control form-control-sm" style="max-width:150px;" aria-label="Payment method">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank transfer">Bank transfer</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Card">Card</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="ie_pay_reference" class="form-control form-control-sm" style="max-width:200px;" maxlength="80" placeholder="Reference / UTR (optional)">
+                                <button type="button" class="btn btn-sm btn-success" id="ie_pay_confirm">Record</button>
+                                <button type="button" class="btn btn-sm btn-light" id="ie_pay_cancel">Not now</button>
+                            </div>
+                        </div>
+                        <div id="invoices_view_body" class="md-detail-body"></div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>

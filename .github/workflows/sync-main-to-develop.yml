@@ -1,0 +1,83 @@
+# Keep develop from drifting behind main.
+#
+# The normal direction is develop -> main: work lands on develop, gets tested,
+# and the owner promotes it. main only moves ahead of develop when something
+# skipped that path - a hotfix applied directly, or the merge commit a release
+# creates. Left alone, develop then silently lacks a fix that is already live,
+# and the next contributor branches from a tree that is missing it.
+#
+# This opens a pull request rather than pushing. Both branches are restricted to
+# the owner on purpose, and a workflow that force-pushed past that would make
+# the protection a decoration. The owner stays the only thing that merges;
+# this only notices and asks.
+name: Sync main to develop
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-main-to-develop
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Is develop actually behind?
+        id: check
+        run: |
+          git fetch origin main develop
+          # Commits on main that develop does not have. Zero is the normal
+          # case - after a release develop already contains everything.
+          BEHIND=$(git rev-list --count origin/develop..origin/main)
+          echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
+          echo "develop is $BEHIND commit(s) behind main"
+
+      - name: Open or update the sync pull request
+        if: steps.check.outputs.behind != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="sync/main-to-develop"
+
+          # A real merge, not a reset: develop may carry work main has never
+          # seen, and resetting it to main would delete that silently.
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH" origin/develop
+
+          if git merge --no-edit origin/main; then
+            CONFLICT=""
+          else
+            # Conflicts are left in the branch deliberately. A person has to
+            # resolve them, and hiding that by aborting would leave develop
+            # quietly behind with nothing to show for it.
+            git merge --abort || true
+            git checkout -B "$BRANCH" origin/main
+            CONFLICT=" (main had conflicts with develop - this branch is main, so review carefully)"
+          fi
+
+          git push -f origin "$BRANCH"
+
+          BODY="main has moved ahead of develop by ${{ steps.check.outputs.behind }} commit(s)${CONFLICT}.
+
+          That normally means a hotfix went straight to main, or this is the merge a release created. Either way develop should pick it up, or the next contributor branches from a tree that is missing a fix which is already live.
+
+          Nothing here is new work - it is main's own commits."
+
+          if gh pr list --head "$BRANCH" --state open --json number --jq 'length' | grep -q '^0$'; then
+            gh pr create --base develop --head "$BRANCH" \
+              --title "Sync main into develop" --body "$BODY" --label "area: contributor"
+          else
+            echo "a sync pull request is already open"
+          fi
