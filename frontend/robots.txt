@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /node_modules/
+
+Sitemap: https://www.posnic.io/sitemap.xml
