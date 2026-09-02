@@ -98,6 +98,7 @@
             "static/script/js/modules/js/weight-bridge.js",
             "static/script/js/modules/js/sales.js",
             "static/script/js/modules/js/sales_view.js",
+            "static/script/js/modules/js/invoices.js",
             "static/script/js/modules/js/kot.js",
             "static/script/js/modules/js/kothistory.js",
             "static/script/js/modules/js/settings.js",

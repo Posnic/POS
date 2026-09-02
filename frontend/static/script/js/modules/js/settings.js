@@ -587,6 +587,7 @@ PosnicPro.settings = {
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
+                        invoices_enable: response.data['invoices_enable'] !== false,
                         custom_charges_enable: response.data['custom_charges_enable'] === true,
                         first_run_done: PosnicPro.features.keepFirstRunFlag(response.data),
                         first_run_decided: PosnicPro.features.keepFirstRunFlag(response.data, 'first_run_decided')
@@ -798,6 +799,13 @@ PosnicPro.settings = {
                 $('#quote_default_terms').val(data.quote_default_terms || '');
                 $('#quote_default_signature').val(data.quote_default_signature || '');
                 PosnicPro.local.set('quotesignature', data.quote_default_signature || '');
+                /* Invoices (INVOICING_MODULE_DESIGN): prefix, credit days, terms. The
+                   terms are cached for the A4 receipt too, which already reads
+                   invoice_terms and until now found nothing there. */
+                $('#invoice_prefix').val(data.invoice_prefix || 'INV-');
+                $('#invoice_due_days').val(data.invoice_due_days !== undefined && data.invoice_due_days !== null && data.invoice_due_days !== '' ? data.invoice_due_days : 30);
+                $('#invoice_terms').val(data.invoice_terms || '');
+                PosnicPro.local.set('invoice_terms', data.invoice_terms || '');
                 if (data.quote_default_signature) {
                     $('#quote_signature_thumb').attr('src', data.quote_default_signature).show();
                     $('#quote_signature_clear').show();
@@ -858,6 +866,7 @@ PosnicPro.settings = {
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
                 $('#quotes_enable').prop('checked', data.quotes_enable !== false);
+                $('#invoices_enable').prop('checked', data.invoices_enable !== false);
                 $('#custom_charges_enable').prop('checked', data.custom_charges_enable === true);
 
                 // Store general settings including hardware_weight_machine_enable
@@ -881,6 +890,7 @@ PosnicPro.settings = {
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
+                    invoices_enable: data.invoices_enable !== false,
                     custom_charges_enable: data.custom_charges_enable === true,
                     first_run_done: PosnicPro.features.keepFirstRunFlag(data),
                     first_run_decided: PosnicPro.features.keepFirstRunFlag(data, 'first_run_decided')
@@ -1624,6 +1634,7 @@ if ($wrapper.length) {
         'module_demo_data_enable',
         'quick_sale_enable',
         'quotes_enable',
+        'invoices_enable',
         'custom_charges_enable',
         'pl_include_cashbook',
     ],
@@ -1806,6 +1817,7 @@ if ($wrapper.length) {
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
                 quotes_enable: $('#quotes_enable').is(':checked') ? 'true' : 'false',
+                invoices_enable: $('#invoices_enable').is(':checked') ? 'true' : 'false',
                 custom_charges_enable: $('#custom_charges_enable').is(':checked') ? 'true' : 'false',
             })
         };
@@ -1926,6 +1938,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
+                    invoices_enable: $('#invoices_enable').is(':checked'),
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
                     quick_sale_enable: $('#quick_sale_enable').is(':checked'),
                     /* No field on this form - carried over, never re-decided. */
@@ -2027,6 +2040,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
         $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
+        $('#v-pills-invoices-tab').toggle(on('invoices_enable'));
         $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
@@ -6043,6 +6057,35 @@ $(document).on('click', '#v-pills-general-tab', function () {
     PosnicPro.settings.loadSharing();
 });
 
+/* Invoice settings (INVOICING_MODULE_DESIGN): two groups, two endpoints -
+   the prefix and credit days are preferences, the terms are document text.
+   Each endpoint knows only its own keys, so neither can be asked for the
+   other's. */
+$(document).on('click', '#invoice_settings_save', function () {
+    var days = parseInt($('#invoice_due_days').val(), 10);
+    if (isNaN(days) || days < 0) { days = 30; }
+    if (days > 365) { days = 365; }
+    var prefs = {
+        invoice_prefix: ($.trim($('#invoice_prefix').val()) || 'INV-').slice(0, 12),
+        invoice_due_days: days
+    };
+    var docs = { invoice_terms: $('#invoice_terms').val() || '' };
+    var $btn = $('#invoice_settings_save').prop('disabled', true);
+    var fail = function (xhr) {
+        $btn.prop('disabled', false);
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        PosnicPro.alert('error', resp.message || 'Could not save invoice settings');
+    };
+    PosnicPro.put({ url: 'settings/group/preferences', data: JSON.stringify(prefs) }, function (r) {
+        if (r.type !== 'success') { $btn.prop('disabled', false); PosnicPro.alert(r.type, r.message); return; }
+        PosnicPro.put({ url: 'settings/group/documents', data: JSON.stringify(docs) }, function (r2) {
+            $btn.prop('disabled', false);
+            PosnicPro.alert(r2.type, r2.type === 'success' ? 'Invoice settings saved' : r2.message);
+            if (r2.type === 'success') { PosnicPro.local.set('invoice_terms', docs.invoice_terms); }
+        }, fail);
+    }, fail);
+});
+
 $(document).on('click', '#quote_settings_save', function () {
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
@@ -6255,6 +6298,22 @@ PosnicPro.settings.featureInfo = {
             'New quotation: pick a customer, add lines, set validity',
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
+        ],
+    },
+    invoices_enable: {
+        tagline: 'Bill a customer now, get paid later - and see who still owes you.',
+        about: 'An invoice is the bill you hand a customer who pays after delivery: lines from your catalog or free text, discounts, charges in any name, a due date, and a professional A4 PDF to share. A draft is a proforma; issuing it books the sale for you - stock, tax and the books - and recording a payment, in full or in part, keeps the customer balance right.',
+        benefits: [
+            'Quote becomes invoice becomes sale - the numbers agree end to end',
+            'Issue books the sale itself - no till screen in between',
+            'Overdue at a glance: what is owed, and how much of it is late',
+            'Share by PDF, print, email, WhatsApp or a copy-paste link'
+        ],
+        how: [
+            'Turn the feature on - Invoices appears in the home menu',
+            'New invoice, or Create invoice from an accepted quote',
+            'Issue it when the goods go out - the sale is booked for you',
+            'Record payments as the money lands - full or part, with a reference'
         ],
     },
     staff_shifts_enable: {
@@ -6514,6 +6573,7 @@ PosnicPro.settings.FEATURE_HOME = {
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
     quotes_enable: ['quotes', 'Quotes'],
+    invoices_enable: ['invoices', 'Invoices'],
     till_lock_enable: ['tillpin', 'Till PIN Lock'],
 };
 /* The Configure link leaves the guide the same way Back does; the hash
