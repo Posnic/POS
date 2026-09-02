@@ -29,8 +29,8 @@ const { recordAudit } = require('../utils/audit-trail');
  * possibility costs nothing, leaks nothing, and is the first thing to try.
  */
 const LOGIN_FAILED_MESSAGE =
-  'Username or password is incorrect. If the password was changed recently, '
-  + 'use the new one - otherwise ask an administrator to reset it.';
+  'Username or password is incorrect. If the password was changed recently, ' +
+  'use the new one - otherwise ask an administrator to reset it.';
 
 const persistActiveTenant = async (req, data, fallbackLicense) => {
   const context = setActiveTenantContext(req, {
