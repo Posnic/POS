@@ -410,6 +410,62 @@ describe('InvoiceRepository', () => {
     expect(doc.source_quote_number).toBe('QUO-000012');
   });
 
+  test('a payment is NOTED on the invoice - appended, never totalled, walled by the branch', async () => {
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const when = new Date('2026-09-02T10:00:00Z');
+    const r = await repo.recordPayment(
+      INVOICE,
+      {
+        amount: 75.004,
+        method: 'UPI',
+        reference: 'UTR9',
+        note: 'first half',
+        date: when,
+        by: 'owner',
+      },
+      ctx
+    );
+    expect(r.status).toBe(true);
+    const [filter, update] = mockCollection.updateOne.mock.calls[0];
+    expect(String(filter._id)).toBe(INVOICE);
+    expect(String(filter.branch_id)).toBe(BRANCH);
+    expect(update.$push.payments).toEqual({
+      amount: 75,
+      method: 'UPI',
+      reference: 'UTR9',
+      note: 'first half',
+      date: when,
+      by: 'owner',
+    });
+    /* no balance, no paid_amount, no status: the sale owns those */
+    expect(Object.keys(update.$set)).toEqual(['updated_date']);
+    expect([...new Set(mockRequestedCollections)]).toEqual(['invoices']);
+  });
+
+  test('every method the services and controller call on this repository exists', () => {
+    /*
+     * recordPayment was lost between two edits of the transition block, and
+     * nothing noticed until a shop pressed Record on the sandbox: the mirror's
+     * tests mock this class, so a missing method there is a passing test and
+     * a 500 in production. This reads the callers and asks the real class.
+     */
+    const fs = require('fs');
+    const path = require('path');
+    const src = (p) => fs.readFileSync(path.join(__dirname, '..', '..', '..', 'src', p), 'utf8');
+    const callers = [
+      'services/invoice-sync.js',
+      'services/invoice-booking.js',
+      'controllers/invoices.controller.js',
+    ];
+    const called = new Set();
+    for (const file of callers) {
+      for (const m of src(file).matchAll(/\brepo(?:sitory)?\.([a-zA-Z_]+)\(/g)) called.add(m[1]);
+    }
+    expect(called.size).toBeGreaterThan(5);
+    const missing = [...called].filter((name) => typeof repo[name] !== 'function');
+    expect(missing).toEqual([]);
+  });
+
   test('a quote with no lines cannot become an invoice', async () => {
     const r = await repo.createFromQuote({ _id: new ObjectId(QUOTE), items: [] }, ctx);
     expect(r.status).toBe(false);
