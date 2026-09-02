@@ -868,9 +868,7 @@ describe('InstallService', () => {
       const datasetPack = {
         datasetId: 'USD-retail-v1',
         categories: [{ name: 'Grocery', description: 'Daily goods' }],
-        products: [
-          { name: 'Tea', category: 'Grocery', price: '2.00', stock: '25', unit: 'pack' },
-        ],
+        products: [{ name: 'Tea', category: 'Grocery', price: '2.00', stock: '25', unit: 'pack' }],
         customers: [{ name: 'Local Customer', phone: '5550100', city: 'Berlin' }],
         suppliers: [{ name: 'Local Supplier', phone: '5550200', city: 'Berlin' }],
       };
