@@ -150,9 +150,9 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
      * page." The first design marked any close as asked; he overruled it,
      * and he is right about who this screen is for - a brand-new user who
      * Escapes a dialog they did not read has not learned that features are
-     * switchable, which is the entire point. Save and the explicit "Use
-     * defaults" path write the flags; Esc and a stray click write NOTHING,
-     * and the welcome returns next login.
+     * switchable, which is the entire point. Save and the explicit skip paths
+     * write the flags; Esc and a stray click write NOTHING, and the welcome
+     * returns next login.
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
     /* No dismiss handler at all now: an undecided close leaves NOTHING, and
@@ -160,13 +160,16 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
     assert.ok(!/hidden\.bs\.modal/.test(gate),
         'a dismiss handler is writing browser state again');
 
-    // The explicit defaults path is the decision that writes both flags.
+    // The explicit skip path is the decision that writes both flags.
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
     assert.match(skip, /_decided = true/);
     assert.match(skip, /_tourAfterSave = false/);
     assert.match(skip, /saveIntro\(\)/);
     assert.ok(!/data-dismiss|modal\('hide'\)/.test(skip),
         'Use defaults is closing without the save path');
+    const close = block(settingsCode, "'#feature_intro_close', function", "'change', '#fi_module_demo_data_enable'");
+    assert.match(close, /_decided = true/);
+    assert.match(close, /saveIntro\(\)/);
 });
 
 test('the welcome opens OVER the features page', () => {
@@ -282,7 +285,9 @@ test('a long description cannot push the switch off the edge', () => {
 test('the modal markup carries what the code paints into', () => {
     for (const id of ['feature_intro_modal', 'feature_intro_sub', 'feature_intro_lead',
         'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_summary',
-        'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip']) {
+        'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip',
+        'feature_intro_next', 'feature_intro_back', 'feature_intro_step_label',
+        'feature_intro_demo_bg_status', 'feature_intro_close']) {
         assert.ok(modalCode.includes('id="' + id + '"'), 'missing #' + id);
     }
     assert.match(modalCode, /class="modal-content first-run"/);
@@ -290,6 +295,33 @@ test('the modal markup carries what the code paints into', () => {
     assert.match(modalCode, /data-keyboard="false"/);
     assert.ok(!/data-dismiss="modal"/.test(modalCode),
         'the first-run welcome must not have a close-only button');
+});
+
+test('the welcome is a step-by-step assistant, not one crowded settings wall', () => {
+    assert.match(modalCode, /data-intro-step="sample"/);
+    assert.match(modalCode, /data-intro-step="features"/);
+    assert.match(modalCode, /data-intro-step="settings"/);
+    assert.match(settingsCode, /showIntroStep: function/);
+    assert.match(settingsCode, /nextIntroStep: function/);
+    assert.match(settingsCode, /previousIntroStep: function/);
+    assert.match(settingsCode, /data-intro-dot/);
+    assert.match(cssCode, /\.first-run-step\s*\{\s*display: none;/);
+    assert.match(cssCode, /\.first-run-step\.is-active\s*\{\s*display: block;/);
+});
+
+test('sample data is selected by default and starts in the background on Next', () => {
+    assert.match(modalCode, /id="fi_module_demo_data_enable"[\s\S]{0,90}checked/);
+    assert.match(modalCode, /Use sample data/);
+    assert.match(settingsCode, /beginIntroDemoInstall: function/);
+    assert.match(settingsCode, /if \(index === 0\) \{ PosnicPro\.features\.beginIntroDemoInstall\(\); \}/);
+    assert.match(settingsCode, /inlineTarget: '#feature_intro_demo_bg_status'/);
+    assert.match(settingsCode, /syncDemoDataAfterSave\(true, \{/);
+});
+
+test('the first-run visual is not caught by the general greyscale artwork rule', () => {
+    assert.match(modalCode, /static\/images\/onboarding\/shop-ready-photo\.jpg/);
+    assert.ok(!/static\/images\/general\/Background_four\.jpg/.test(modalCode));
+    assert.match(cssCode, /\.first-run-visual img[\s\S]*filter: none !important/);
 });
 
 test('the welcome shows saved starter settings before selling', () => {
@@ -482,7 +514,7 @@ test('the tour is not sent to the sale screen', () => {
      * page change would cut it off at the first step, so the two buttons have
      * to part company after the save they share.
      */
-    const success = block(settingsCode, "PosnicPro.alert('success', 'Feature switches saved')",
+    const success = block(settingsCode, "var wantedTour = PosnicPro.features._tourAfterSave;",
                           'PosnicPro.alert(response.type');
     assert.match(success, /var wantedTour = PosnicPro\.features\._tourAfterSave;/,
         'nothing remembers which button was pressed');
@@ -514,19 +546,21 @@ test('Use defaults saves through the normal first-run path', () => {
     assert.ok(!/settings\/group\/features/.test(skip), 'Use defaults bypasses the normal feature save path');
 });
 
-test('the sale screen waits for both dialogs to finish closing', () => {
+test('the sale screen waits for the welcome only; sample data runs in the background', () => {
     /*
      * Both fade, so hiding one is asynchronous and it is still on screen when
      * this runs. Changing the page under a modal mid-close is how a backdrop
      * gets left behind, greying out the screen it was meant to reveal - the
      * tour hits the same thing and waits a fixed 400ms.
      *
-     * And the sample-data bar has real work behind it: switching demo data off
-     * during the welcome starts a purge.
+     * The sample-data bar now lives inside the welcome footer, so waiting on a
+     * second modal is exactly the stuck feeling this flow must avoid.
      */
     const save = block(settingsCode, 'startSelling:', 'saveIntro:');
-    assert.match(save, /after\('#feature_intro_modal', function \(\) \{ after\('#demo_progress_modal', go\); \}\)/,
-        'the sale screen does not wait for the dialogs');
+    assert.match(save, /after\('#feature_intro_modal', go\)/,
+        'the sale screen does not wait for the welcome');
+    assert.ok(!/demo_progress_modal/.test(save),
+        'the first-run sale path is blocked by the old sample-data modal');
     assert.match(save, /m\.hasClass\('show'\) \|\| m\.hasClass\('in'\)/,
         'the visibility check is tied to one bootstrap version');
 });

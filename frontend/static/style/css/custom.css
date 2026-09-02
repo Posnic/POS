@@ -4888,13 +4888,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 #feature_intro_modal .modal-dialog {
-    max-width: min(1120px, calc(100vw - 28px));
+    max-width: min(980px, calc(100vw - 28px));
 }
 
 .first-run-shell {
     display: grid;
-    grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.35fr);
-    min-height: 620px;
+    grid-template-columns: minmax(230px, 0.78fr) minmax(0, 1.42fr);
+    min-height: 560px;
     max-height: calc(100vh - 48px);
     max-height: calc(100dvh - 48px);
 }
@@ -4911,6 +4911,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     height: 100%;
     object-fit: cover;
     display: block;
+    filter: none !important;
 }
 
 .first-run-visual::after {
@@ -4951,9 +4952,32 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 .first-run-head {
+    position: relative;
     padding: 26px 28px 18px;
     text-align: left;
     border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 50%;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-muted, #5b6577);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.first-run-close:hover,
+.first-run-close:focus {
+    color: var(--theme-text-primary, #16203a);
+    border-color: var(--theme-primary-color, #506fe4);
+    outline: none;
 }
 
 /* The one flourish, and it is small on purpose: a shop opening its till
@@ -4985,11 +5009,47 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: var(--theme-text-muted, #5b6577);
 }
 
+.first-run-progress {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.first-run-progress span {
+    margin-right: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-progress i {
+    display: block;
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-progress i.is-active,
+.first-run-progress i.is-done {
+    background: var(--theme-primary-color, #506fe4);
+}
+
 .first-run-body {
-    padding: 18px 28px 4px;
+    padding: 20px 28px 8px;
     flex: 1 1 auto;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
+}
+
+.first-run-step {
+    display: none;
+}
+
+.first-run-step.is-active {
+    display: block;
 }
 
 .first-run-lead {
@@ -5001,13 +5061,13 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 .first-run-question {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
-    align-items: center;
-    padding: 14px 16px;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: stretch;
+    padding: 18px;
     margin: 0 0 14px;
     border: 1px solid var(--theme-border-color, #e5e8ef);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--theme-table-row-hover, #f6f9ff);
 }
 
@@ -5036,10 +5096,53 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 
 .first-run-choice {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.first-run-choice-card {
+    display: grid;
+    gap: 4px;
+    min-height: 82px;
+    padding: 13px 14px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    text-align: left;
+    cursor: pointer;
+}
+
+.first-run-choice-card b,
+.first-run-choice-card span {
+    display: block;
+}
+
+.first-run-choice-card b {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.first-run-choice-card span {
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-choice-card.is-selected {
+    border-color: var(--theme-primary-color, #506fe4);
+    background: var(--theme-table-row-hover, #f6f9ff);
+    box-shadow: inset 0 0 0 1px var(--theme-primary-color, #506fe4);
+}
+
+.first-run-choice-card.is-selected b {
+    color: var(--theme-primary-color, #506fe4);
+}
+
+.first-run-choice-card:focus {
+    border-color: var(--theme-primary-color, #506fe4);
+    outline: none;
 }
 
 .first-run-choice .btn.is-selected {
@@ -5111,7 +5214,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    till would otherwise push the buttons off the bottom of the screen -
    and a Save nobody can reach is the same as no Save. */
 .first-run-list {
-    max-height: 28vh;
+    max-height: min(292px, 34vh);
     overflow-y: auto;
     margin: 0 -6px;
     padding: 0 6px;
@@ -5215,6 +5318,38 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-top: 1px solid var(--theme-border-color, #e5e8ef);
 }
 
+.first-run-demo-status {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(130px, 0.34fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-table-row-hover, #f6f9ff);
+}
+
+.first-run-demo-status[hidden] {
+    display: none;
+}
+
+.first-run-demo-status b,
+.first-run-demo-status span {
+    display: block;
+}
+
+.first-run-demo-status b {
+    font-size: 13px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-demo-status span {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
 .first-run-foot-note {
     font-size: 13px;
     color: var(--theme-text-muted, #5b6577);
@@ -5245,11 +5380,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     }
 
     .first-run-choice {
-        justify-content: stretch;
-    }
-
-    .first-run-choice .btn {
-        flex: 1 1 0;
+        grid-template-columns: 1fr;
     }
 
     .first-run-summary {
@@ -5270,6 +5401,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
     .first-run-foot-actions .btn {
         flex: 1 1 0;
+    }
+
+    .first-run-demo-status {
+        grid-template-columns: 1fr;
     }
 
     /* On a phone the whole card is taller than the screen, and the only
