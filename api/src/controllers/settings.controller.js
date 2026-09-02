@@ -511,9 +511,11 @@ class SettingController extends BaseController {
           .status(200)
           .json({ type: 'success', message: 'Starter settings updated', data: result.data });
       }
-      return res
-        .status(404)
-        .json({ type: 'error', message: result.message || 'Starter settings not updated', data: result.data });
+      return res.status(404).json({
+        type: 'error',
+        message: result.message || 'Starter settings not updated',
+        data: result.data,
+      });
     } catch (error) {
       console.error('Error updating starter locale:', error);
       return res.status(500).json({ type: 'error', message: error.message });
