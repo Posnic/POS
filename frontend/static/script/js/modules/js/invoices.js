@@ -7,10 +7,11 @@
  * line math, the tax breakup, the PDF sheet) are the quotes' own, called by
  * reference so the arithmetic on screen is the arithmetic the server stores.
  *
- * The one rule: THE INVOICE NEVER HOLDS MONEY. "Convert to sale" books it
- * through the ordinary sale screen; "Mark paid" settles that sale; and what
- * the document shows as paid or owed is what the sale says, mirrored by the
- * server. Feature-gated by invoices_enable, ACL: sales.
+ * The one rule: THE INVOICE NEVER HOLDS MONEY. A draft is a proforma;
+ * "Issue" has the SERVER book the sale (stock, tax, the books) with no till
+ * screen in between; "Record payment" pays that sale down, in full or in
+ * part; and what the document shows as paid or owed is what the sale says,
+ * mirrored by the server. Feature-gated by invoices_enable, ACL: sales.
  */
 PosnicPro.invoices = {
     _current: null,
@@ -26,7 +27,13 @@ PosnicPro.invoices = {
     },
     /* The status word a shopkeeper reads, and the pill colour it wears. */
     _label: function (s) {
-        return { draft: 'Draft', sent: 'Sent', unpaid: 'Unpaid', partial: 'Partially paid', paid: 'Paid', cancelled: 'Cancelled' }[s] || s;
+        return { draft: 'Draft', unpaid: 'Unpaid', partial: 'Partially paid', paid: 'Paid', cancelled: 'Cancelled' }[s] || s;
+    },
+    /* PROFORMA while it is a draft; once issued, the shop's own word for a
+       bill - TAX INVOICE under GST, INVOICE elsewhere. */
+    _title: function (inv) {
+        if (!inv || inv.status === 'draft') { return 'PROFORMA INVOICE'; }
+        return PosnicPro.local.get('gst_action') === 'enable' ? 'TAX INVOICE' : 'INVOICE';
     },
     _pill: function (inv) {
         var s = inv.status;
@@ -34,7 +41,7 @@ PosnicPro.invoices = {
         var text = inv.is_overdue ? 'Overdue' : PosnicPro.invoices._label(s);
         return '<span class="rs-pill ' + cls + '">' + text + '</span>';
     },
-    _editable: function (inv) { return inv && (inv.status === 'draft' || inv.status === 'sent'); },
+    _editable: function (inv) { return inv && inv.status === 'draft'; },
     _booked: function (inv) { return inv && !!inv.sale_id; },
 
     showDataTablePage: function () {
@@ -490,7 +497,8 @@ PosnicPro.invoices = {
             + '<th class="text-right">Total</th><th class="text-right i-col-balance">Balance</th><th class="text-center">Status</th>'
             + '</tr></thead><tbody>';
         rows.forEach(function (inv) {
-            var owed = ['draft', 'sent', 'unpaid', 'partial'].indexOf(inv.status) !== -1;
+            /* a proforma is not a receivable: only issued invoices show a balance */
+            var owed = inv.status === 'unpaid' || inv.status === 'partial';
             var balance = inv.balance !== undefined && inv.balance !== null ? Number(inv.balance) : Number(inv.total) || 0;
             html += '<tr class="md-row invoices-row highlight-select" data-id="' + esc(inv._id) + '" style="cursor:pointer;">'
                 + '<td>' + esc(inv.invoice_id) + '</td>'
@@ -612,7 +620,7 @@ PosnicPro.invoices = {
             })()
             + '</div>'
             + '<div class="q-title-block">'
-            + '<div class="q-doc-title">INVOICE</div>'
+            + '<div class="q-doc-title">' + PosnicPro.invoices._title(inv) + '</div>'
             + '<div class="q-num">' + esc(inv.invoice_id) + '</div>'
             + '<div class="q-muted">Date: ' + d(inv.issue_date || inv.created_date) + '</div>'
             + '<div class="q-muted">Due: ' + ed('due_date', d(inv.due_date), 'dd/mm/yyyy') + '</div>'
@@ -675,7 +683,9 @@ PosnicPro.invoices = {
                 : '')
             + '</tfoot></table></div>'
             + (booked
-                ? '<div class="q-muted m-t-5">Recorded as sale ' + esc(inv.sale_number || '') + (inv.converted_date ? ' on ' + d(inv.converted_date) : '')
+                ? '<div class="q-muted m-t-5">Issued as sale ' + esc(inv.sale_number || '') + (inv.issued_date ? ' on ' + d(inv.issued_date) : '')
+                    + (Number(inv.sale_total) > 0 && Math.abs(Number(inv.sale_total) - Number(inv.total)) >= 0.01
+                        ? ' &middot; booked at ' + money(inv.sale_total) + ' after round-off' : '')
                     + (inv.paid_date ? ' &middot; paid ' + d(inv.paid_date) : '') + '</div>'
                 : '')
             + (inv.status === 'cancelled' && inv.cancel_reason ? '<div class="q-muted m-t-5">Cancelled: ' + esc(inv.cancel_reason) + '</div>' : '')
@@ -710,21 +720,25 @@ PosnicPro.invoices = {
             + '</div>';
         return body;
     },
-    /* The status word on the paper: nothing while it is still being written,
-       and OVERDUE beats UNPAID because it is the thing the reader must act on. */
+    /* The status word on the paper: nothing on a proforma (the title says
+       what it is), and OVERDUE beats UNPAID because it is the thing the
+       reader must act on. */
     _stamp: function (inv) {
-        if (inv.status === 'draft' || inv.status === 'sent') { return inv.is_overdue ? 'OVERDUE' : ''; }
+        if (inv.status === 'draft') { return ''; }
         if (inv.status === 'paid') { return 'PAID'; }
         if (inv.status === 'cancelled') { return 'CANCELLED'; }
         if (inv.is_overdue) { return 'OVERDUE'; }
         return inv.status === 'partial' ? 'PARTIALLY PAID' : 'UNPAID';
     },
-    /* One primary action per state (the quotes rule): convert while it is a
-       bill, mark paid while it is owed. Sending copies lives under Share;
-       state changes and destruction live under More. */
+    /* One primary action per state (the quotes rule): Issue while it is a
+       proforma, Record payment while it is owed. Sending copies lives under
+       Share; state changes and destruction live under More. Record payment
+       is also offered on a draft - the customer paying IS the moment the
+       bill is real, and the server issues it on the way. */
     _actions: function (inv) {
         var open = PosnicPro.invoices._editable(inv);
         var booked = PosnicPro.invoices._booked(inv);
+        var owed = inv.status === 'unpaid' || inv.status === 'partial';
         var mi = function (call, label, cls, acc) {
             return '<a class="dropdown-item' + (cls ? ' ' + cls : '')
                 + (acc ? '" data-module="sales" data-access="' + acc : '')
@@ -744,16 +758,14 @@ PosnicPro.invoices = {
             + mi('PosnicPro.invoices.whatsappInvoice();', 'WhatsApp')
             + mi('PosnicPro.invoices.shareLink();', 'Copy link'));
         var moreItems = '';
-        if (inv.status === 'draft') { moreItems += mi('PosnicPro.invoices.markSent();', 'Mark sent', '', 'write'); }
         if (booked) {
             moreItems += mi('PosnicPro.invoices.sync();', 'Refresh from sale', '', 'write')
-                + mi('hasher.setHash(\'sales/' + String(inv.sale_id) + '\');', 'Open the sale');
+                + mi('hasher.setHash(\'sales/' + String(inv.sale_id) + '\');', 'Open sale ' + PosnicPro.invoices._esc(inv.sale_number || ''));
         }
-        if (inv.status !== 'cancelled' && inv.status !== 'paid' && inv.status !== 'partial') {
-            moreItems += (moreItems ? '<div class="dropdown-divider"></div>' : '')
-                + mi('PosnicPro.invoices.cancel();', 'Cancel invoice', 'text-danger', 'write');
+        if (open) {
+            moreItems += mi('PosnicPro.invoices.cancel();', 'Cancel invoice', 'text-danger', 'write')
+                + mi('PosnicPro.invoices.remove();', 'Delete invoice', 'text-danger', 'delete');
         }
-        if (open) { moreItems += mi('PosnicPro.invoices.remove();', 'Delete invoice', 'text-danger', 'delete'); }
 
         var visible = '';
         if (open) {
@@ -765,9 +777,10 @@ PosnicPro.invoices = {
         visible += share;
         if (moreItems) { visible += menu('More', moreItems, 'write||delete'); }
         if (open) {
-            visible += '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.invoices.convert();">Convert to sale</button>';
-        } else if (inv.status === 'unpaid' || inv.status === 'partial') {
-            visible += '<button type="button" class="btn btn-sm btn-success" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();">Mark paid</button>';
+            visible += '<button type="button" class="btn btn-sm btn-light border" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();">Record payment</button>'
+                + '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.invoices.issue();">Issue invoice</button>';
+        } else if (owed) {
+            visible += '<button type="button" class="btn btn-sm btn-success" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();">Record payment</button>';
         }
         return visible;
     },
@@ -860,7 +873,7 @@ PosnicPro.invoices = {
         var dmy = PosnicPro.invoices._dmy;
         var booked = PosnicPro.invoices._booked(inv);
         return {
-            title: 'INVOICE',
+            title: PosnicPro.invoices._title(inv),
             number: inv.invoice_id,
             headLines: [
                 'Date: ' + dmy(inv.issue_date || inv.created_date),
@@ -920,18 +933,12 @@ PosnicPro.invoices = {
             doc.save((inv.invoice_id || 'invoice').toLowerCase() + '.pdf');
         });
     },
-    _markSentQuietly: function (inv) {
-        if (!inv || !inv._id || inv.status !== 'draft') { return; }
-        PosnicPro.post({ url: 'invoices/' + inv._id + '/transition', data: JSON.stringify({ action: 'send' }) },
-            function () { inv.status = 'sent'; }, function () { /* the copy still went - status is cosmetic */ });
-    },
     emailInvoice: function () {
         var inv = PosnicPro.invoices._current || {};
         PosnicPro.reportExport.email('invoices_view_body', {
-            title: 'Invoice ' + (inv.invoice_id || ''),
+            title: (inv.status === 'draft' ? 'Proforma invoice ' : 'Invoice ') + (inv.invoice_id || ''),
             filename: (inv.invoice_id || 'invoice').toLowerCase(),
-            to: inv.customer_email || '',
-            onSent: function () { PosnicPro.invoices._markSentQuietly(inv); }
+            to: inv.customer_email || ''
         }, PosnicPro.invoices._withDoc);
     },
     shareLink: function (then) {
@@ -949,7 +956,6 @@ PosnicPro.invoices = {
                     return;
                 }
                 inv.share = { url: r.data.url, rev: r.data.rev };
-                if (inv.status === 'draft') { inv.status = 'sent'; }
                 if (then) { then(r.data.url); return; }
                 var url = r.data.url;
                 var copied = function () { PosnicPro.alert('success', 'Link copied - paste it anywhere. ' + url); };
@@ -970,77 +976,40 @@ PosnicPro.invoices = {
         var shop = PosnicPro.local.get('branchname') || 'Our shop';
         var openWa = function (msg) { window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); };
         var owed = PosnicPro.invoices._booked(inv) ? Number(inv.balance || 0) : Number(inv.total || 0);
-        var head = 'Invoice ' + (inv.invoice_id || '') + ' from ' + shop
+        var head = (inv.status === 'draft' ? 'Proforma invoice ' : 'Invoice ') + (inv.invoice_id || '') + ' from ' + shop
             + '\nTotal: ' + Number(inv.total || 0).toFixed(2)
             + (inv.status === 'paid' ? '\nPaid - thank you' : '\nBalance due: ' + owed.toFixed(2)
                 + (inv.due_date ? ' by ' + new Date(inv.due_date).toLocaleDateString('en-IN') : ''));
         PosnicPro.invoices.shareLink(function (url) {
             if (url) {
                 openWa(head + '\n\nView or download the invoice:\n' + url);
-                PosnicPro.invoices._markSentQuietly(inv);
                 return;
             }
             openWa(head + '\n\nItems:\n' + (inv.items || []).map(function (l) {
                 return '- ' + l.item_name + ' x' + l.qty + ' = ' + Number(l.line_total || 0).toFixed(2);
             }).join('\n'));
-            PosnicPro.invoices._markSentQuietly(inv);
         });
     },
 
     /* --------------------------------------------------------- lifecycle -- */
-    /* Convert: the invoice lands on the sale screen at ITS prices - a bill is
-       a promise like a quote, and it has no validity to lapse. Tender it,
-       take a part payment, or flip Unpaid to book it on credit; the sale's
-       payment state comes back to the invoice either way. */
-    convert: function () {
+    /* Issue: the proforma becomes the bill. The SERVER books the sale - stock
+       moves, tax is recorded, the numbers freeze - and the page shows what
+       it now owes. One confirmation, because it is the one step that cannot
+       be edited back. */
+    issue: function () {
         var inv = PosnicPro.invoices._current;
         if (!inv) { return; }
-        PosnicPro.sales._sourceInvoiceId = String(inv._id);
-        var customCount = 0;
-        var lines = [];
-        (inv.items || []).forEach(function (l) {
-            if (l.kind === 'custom' || !l.item_id) { customCount += 1; return; }
-            lines.push({
-                item_id: String(l.item_id),
-                qty: Number(l.qty) || 1,
-                unit_price: Number(l.unit_price) || 0,
-                dtype: l.discount ? l.discount.type : '',
-                dval: l.discount ? Number(l.discount.value) || 0 : 0
-            });
-        });
-        if (!lines.length) {
-            PosnicPro.alert('warning', 'This invoice has only custom lines - there is no catalog item to load on a sale.');
-            PosnicPro.sales._sourceInvoiceId = null;
-            return;
-        }
-        PosnicPro.sales.loadDocumentIntoCart({
-            lines: lines,
-            honour: true,
-            discount: (inv.discount && inv.discount.computed > 0) ? inv.discount.computed : 0,
-            charges: inv.charges || [],
-            onSkipped: function (skipped) {
-                PosnicPro.sales._sourceInvoiceId = null;
-                PosnicPro.alert('warning', skipped + ' of ' + lines.length
-                    + ' invoiced items are no longer sellable and were skipped - invoice '
-                    + (inv.invoice_id || '') + ' stays open.');
-            },
-            onLoaded: function (info) {
-                var extras = [];
-                if (info.chargeCount) { extras.push(info.chargeCount + ' charge(s) on the bill'); }
-                if (info.extra > 0) { extras.push('invoice discount applied'); }
-                if (customCount) { extras.push(customCount + ' custom line(s) stay on the invoice'); }
-                PosnicPro.alert('success', 'Invoice ' + (inv.invoice_id || '') + ' loaded at its invoiced prices.'
-                    + (extras.length ? ' ' + extras.join('; ') + '.' : '')
-                    + ' Tender it, or switch the payment toggle to Unpaid to book it on credit.');
-            }
-        });
-    },
-    markSent: function () {
-        var inv = PosnicPro.invoices._current;
-        if (!inv) { return; }
-        PosnicPro.post({ url: 'invoices/' + inv._id + '/transition', data: JSON.stringify({ action: 'send' }) }, function (r) {
+        if (!window.confirm('Issue invoice ' + (inv.invoice_id || '') + '? Stock and tax are recorded and the numbers are frozen.')) { return; }
+        PosnicPro.post({ url: 'invoices/' + inv._id + '/issue', data: '{}' }, function (r) {
             PosnicPro.alert(r.type, r.message);
-            if (r.type === 'success') { PosnicPro.invoices.showDetails(String(inv._id)); }
+            if (r.type === 'success') {
+                PosnicPro.invoices.showDetails(String(inv._id));
+                PosnicPro.invoices.load(true);
+                PosnicPro.invoices.loadSummary();
+            }
+        }, function (xhr) {
+            var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+            PosnicPro.alert('error', resp.message || 'Could not issue the invoice');
         });
     },
     /* Re-read the sale: the mirror is written on every sale save, but a
@@ -1072,24 +1041,29 @@ PosnicPro.invoices = {
             if (r.type === 'success') { hasher.setHash('invoices'); PosnicPro.invoices.showDataTablePage(); }
         }, function () { PosnicPro.alert('error', 'Could not delete the invoice'); });
     },
-    /* Mark paid: the strip asks how and with what reference, then the sale
-       behind the invoice is settled and the document follows. */
+    /* Record payment: the strip asks how much (the balance, or less), how,
+       and with what reference; the sale behind the invoice is paid down and
+       the document follows. On a draft the server issues it first. */
     payOpen: function () {
         var inv = PosnicPro.invoices._current;
         if (!inv) { return; }
-        $('#ie_pay_amount').html(PosnicPro.invoices._money(inv.balance));
+        var due = PosnicPro.invoices._booked(inv) ? Number(inv.balance || 0) : Number(inv.total || 0);
+        $('#ie_pay_amount').val(due.toFixed(2));
+        $('#ie_pay_balance').html(PosnicPro.invoices._money(due));
         $('#ie_pay_reference').val('');
         $('#invoices_pay_strip').show();
-        $('#ie_pay_reference').focus();
+        $('#ie_pay_amount').focus().select();
     },
     payClose: function () { $('#invoices_pay_strip').hide(); },
     payConfirm: function () {
         var inv = PosnicPro.invoices._current;
         if (!inv) { return; }
+        var amount = parseFloat($('#ie_pay_amount').val());
+        if (!(amount > 0)) { PosnicPro.alert('warning', 'Enter the amount received.'); return; }
         var $btn = $('#ie_pay_confirm').prop('disabled', true);
         PosnicPro.post({
             url: 'invoices/' + inv._id + '/payment',
-            data: JSON.stringify({ method: $('#ie_pay_method').val() || '', reference: $.trim($('#ie_pay_reference').val()) })
+            data: JSON.stringify({ amount: amount, method: $('#ie_pay_method').val() || '', reference: $.trim($('#ie_pay_reference').val()) })
         }, function (r) {
             $btn.prop('disabled', false);
             PosnicPro.alert(r.type, r.message);
@@ -1145,7 +1119,8 @@ PosnicPro.invoices = {
             PosnicPro.post({ url: 'invoices', data: JSON.stringify(payload) }, function (r) {
                 if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
                 PosnicPro.alert('success', 'Invoice ' + ((r.data && r.data.invoice_id) || '') + ' saved');
-                // the invoice holds the lines now - the cart clears quietly
+                // the invoice holds the lines now - the cart clears quietly;
+                // nothing is booked until the invoice is issued
                 PosnicPro.sales.clear.cartItems(false);
                 if (r.data && r.data.id) { hasher.setHash('invoices/' + r.data.id + '/edit'); }
             }, function (xhr) {

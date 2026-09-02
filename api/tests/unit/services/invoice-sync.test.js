@@ -6,16 +6,15 @@
  *   - the sale's PHP-era payment words become the invoice's paid/balance,
  *     and a parked cart yields nothing;
  *   - a sync writes the invoice from the SALE and closes the quote chain;
- *   - marking an invoice paid settles the sale through the customer page's
- *     own door, writing the two ledger rows that door expects, and never
- *     writes money onto the invoice itself.
+ *   - recording a payment - full or part - pays the SALE down, writing the
+ *     two ledger rows the customer page expects and recomputing the
+ *     customer's balance, and never writes money onto the invoice itself.
  */
 
 const mockApply = jest.fn();
 const mockGetInvoice = jest.fn();
 const mockRecordPayment = jest.fn();
 const mockQuoteTransition = jest.fn();
-const mockClose = jest.fn();
 
 jest.mock('../../../src/repositories/invoice.repository', () => {
   return class MockInvoiceRepository {
@@ -39,9 +38,6 @@ jest.mock('../../../src/repositories/quote.repository', () => {
     }
   };
 });
-jest.mock('../../../src/repositories/sale.repository', () => ({
-  salesPaymentCloseModel: (...a) => mockClose(...a),
-}));
 
 const collections = {};
 jest.mock('../../../src/models/base.model', () => ({
@@ -77,12 +73,16 @@ beforeEach(() => {
   collections.transaction = {
     findOne: jest.fn().mockResolvedValue(null),
     insertOne: jest.fn().mockResolvedValue({}),
+    updateOne: jest.fn().mockResolvedValue({}),
+    aggregate: jest
+      .fn()
+      .mockReturnValue({ toArray: async () => [{ totalIn: 200, totalOut: 200 }] }),
   };
+  collections.customers = { updateOne: jest.fn().mockResolvedValue({}) };
   mockApply.mockResolvedValue({ status: true, data: { status: 'paid' }, message: 'Invoice paid' });
   mockGetInvoice.mockResolvedValue({ status: true, data: { _id: new ObjectId(INVOICE) } });
   mockRecordPayment.mockResolvedValue({ status: true });
   mockQuoteTransition.mockResolvedValue({ status: true });
-  mockClose.mockResolvedValue({ status: true, data: 0, message: 'Sales settled successfully' });
 });
 
 describe('snapshotFromSale', () => {
@@ -97,7 +97,7 @@ describe('snapshotFromSale', () => {
     });
     expect(
       sync.snapshotFromSale(sale({ payment_status: 'Partialy Paid', payment_pending: 60 }))
-    ).toMatchObject({ paid_amount: 140, balance: 60, sale_number: 'S000042' });
+    ).toMatchObject({ paid_amount: 140, balance: 60, sale_number: 'S000042', total: 200 });
   });
 
   test('a parked cart is not a sale', () => {
@@ -127,7 +127,7 @@ describe('syncSale', () => {
     expect(r.synced).toBe(true);
     const [id, snapshot, ctx] = mockApply.mock.calls[0];
     expect(id).toBe(INVOICE);
-    expect(snapshot).toMatchObject({ sale_id: SALE, paid_amount: 200, balance: 0 });
+    expect(snapshot).toMatchObject({ sale_id: SALE, total: 200, paid_amount: 200, balance: 0 });
     expect(ctx).toMatchObject({ branchId: BRANCH, licenseId: LICENSE });
     expect(mockQuoteTransition).toHaveBeenCalledWith(
       QUOTE,
@@ -152,7 +152,7 @@ describe('syncSale', () => {
   });
 });
 
-describe('settleForInvoice', () => {
+describe('recordPayment', () => {
   const invoice = () => ({
     _id: new ObjectId(INVOICE),
     invoice_id: 'INV-000009',
@@ -160,80 +160,122 @@ describe('settleForInvoice', () => {
     sale_id: new ObjectId(SALE),
   });
 
-  test('with a customer: a payment received row, the missing sale row, then the settlement door', async () => {
+  test('full payment with a customer: the money-in row, the sale row, the sale itself, the balance', async () => {
     collections.sales.findOne.mockResolvedValue(
       sale({ customer_id: new ObjectId(CUSTOMER), customer_name: 'Acme' })
     );
-    const r = await sync.settleForInvoice(
+    const r = await sync.recordPayment(
       invoice(),
       { method: 'Bank transfer', reference: 'UTR123' },
-      { userName: 'owner', userId: BRANCH }
+      { userName: 'owner' }
     );
     expect(r.status).toBe(true);
+    expect(r.data).toMatchObject({ amount: 200, balance: 0 });
     const inserted = collections.transaction.insertOne.mock.calls.map((c) => c[0]);
     /* the money received, in the customer page's own shape */
     expect(inserted[0]).toMatchObject({ type: 'in', amount: 200, pending: 0, sale_id: '' });
     expect(inserted[0].description).toMatch(/INV-000009 paid - Bank transfer \(UTR123\)/);
-    /* the sale's own row did not exist (an unpaid-toggle sale never writes
-       one) so it is created for the settlement to land on */
+    /* the sale's own row did not exist (an unpaid sale never writes one) so
+       it is created, then paid down */
     expect(inserted[1]).toMatchObject({ type: 'out', amount: 0, pending: 200 });
     expect(String(inserted[1].sale_id)).toBe(SALE);
-    expect(mockClose).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sales: [{ id: SALE, amount: 200, paidamount: 0 }],
-        id: CUSTOMER,
-        loggedUserName: 'owner',
-      })
-    );
-    /* the invoice gets a note, and then the mirror - never a balance */
+    const rowUpdate = collections.transaction.updateOne.mock.calls[0][1];
+    expect(rowUpdate.$inc).toEqual({ amount: 200 });
+    expect(rowUpdate.$set.pending).toBe(0);
+    /* the sale's PHP-era fields move exactly as the customer page moves them */
+    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    expect(saleUpdate.$set).toMatchObject({
+      payment_status: 'Paid',
+      payment_pending: 0,
+      partial_balance: 200,
+    });
+    expect(saleUpdate.$inc).toEqual({ wallet_amount: 200 });
+    /* customer balance recomputed from the ledger */
+    expect(collections.customers.updateOne).toHaveBeenCalled();
+    expect(collections.customers.updateOne.mock.calls[0][1].$set.balance).toBe(0);
+    /* the invoice gets a note, and then the mirror - never a balance of its own */
     expect(mockRecordPayment.mock.calls[0][1]).toMatchObject({
       amount: 200,
       method: 'Bank transfer',
     });
     expect(mockApply).toHaveBeenCalled();
-    expect(collections.sales.updateOne).not.toHaveBeenCalled();
   });
 
-  test('the sale row is not duplicated when it already exists', async () => {
+  test('a part payment leaves the rest pending, on the sale and on the ledger row', async () => {
     collections.sales.findOne.mockResolvedValue(sale({ customer_id: new ObjectId(CUSTOMER) }));
     collections.transaction.findOne.mockResolvedValue({ _id: 'existing' });
-    await sync.settleForInvoice(invoice(), {}, {});
+    const r = await sync.recordPayment(invoice(), { amount: 75, method: 'Cash' }, {});
+    expect(r.status).toBe(true);
+    expect(r.data).toMatchObject({ amount: 75, balance: 125 });
+    expect(r.message).toMatch(/125\.00 still due/);
+    /* the sale row already existed: not duplicated, paid down */
     expect(collections.transaction.insertOne).toHaveBeenCalledTimes(1);
     expect(collections.transaction.insertOne.mock.calls[0][0].type).toBe('in');
+    const rowUpdate = collections.transaction.updateOne.mock.calls[0][1];
+    expect(rowUpdate.$inc).toEqual({ amount: 75 });
+    expect(rowUpdate.$set.pending).toBe(125);
+    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    expect(saleUpdate.$set).toMatchObject({
+      payment_status: 'Partialy Paid',
+      payment_pending: 125,
+      partial_balance: 75,
+    });
   });
 
-  test('without a customer the sale is marked paid directly - there is no ledger to keep', async () => {
+  test('a second part payment builds on the first', async () => {
+    collections.sales.findOne.mockResolvedValue(
+      sale({
+        customer_id: new ObjectId(CUSTOMER),
+        payment_status: 'Partialy Paid',
+        payment_pending: 125,
+        partial_balance: 75,
+      })
+    );
+    const r = await sync.recordPayment(invoice(), { amount: 125 }, {});
+    expect(r.status).toBe(true);
+    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    expect(saleUpdate.$set).toMatchObject({
+      payment_status: 'Paid',
+      payment_pending: 0,
+      partial_balance: 200,
+    });
+  });
+
+  test('without a customer the sale alone is written - there is no ledger to keep', async () => {
     collections.sales.findOne.mockResolvedValue(sale({ customer_id: null }));
-    const r = await sync.settleForInvoice(invoice(), { method: 'Cash' }, { userName: 'owner' });
+    const r = await sync.recordPayment(invoice(), { method: 'Cash' }, { userName: 'owner' });
     expect(r.status).toBe(true);
     expect(collections.transaction.insertOne).not.toHaveBeenCalled();
-    expect(mockClose).not.toHaveBeenCalled();
+    expect(collections.customers.updateOne).not.toHaveBeenCalled();
     const set = collections.sales.updateOne.mock.calls[0][1].$set;
     expect(set).toMatchObject({ payment_status: 'Paid', payment_pending: 0, partial_balance: 200 });
   });
 
-  test('a part payment is refused - v1 settles the balance', async () => {
+  test('more than the balance, or nothing at all, is refused before anything is written', async () => {
     collections.sales.findOne.mockResolvedValue(sale({ customer_id: new ObjectId(CUSTOMER) }));
-    const r = await sync.settleForInvoice(invoice(), { amount: 50 }, {});
-    expect(r.status).toBe(false);
-    expect(r.message).toMatch(/whole balance/);
+    const over = await sync.recordPayment(invoice(), { amount: 250 }, {});
+    expect(over.status).toBe(false);
+    expect(over.message).toMatch(/more than the 200\.00 still owed/);
+    const zero = await sync.recordPayment(invoice(), { amount: 0 }, {});
+    expect(zero.status).toBe(false);
     expect(collections.transaction.insertOne).not.toHaveBeenCalled();
+    expect(collections.sales.updateOne).not.toHaveBeenCalled();
   });
 
   test('an already-paid sale just refreshes the mirror', async () => {
     collections.sales.findOne.mockResolvedValue(
       sale({ payment_status: 'Paid', payment_pending: 0 })
     );
-    const r = await sync.settleForInvoice(invoice(), {}, {});
+    const r = await sync.recordPayment(invoice(), {}, {});
     expect(r.status).toBe(true);
     expect(r.data.already).toBe(true);
     expect(mockApply).toHaveBeenCalled();
     expect(collections.transaction.insertOne).not.toHaveBeenCalled();
   });
 
-  test('an invoice with no sale cannot be paid - the sale is the money', async () => {
-    const r = await sync.settleForInvoice({ _id: new ObjectId(INVOICE), sale_id: null }, {}, {});
+  test('an invoice with no sale cannot be paid here - issuing comes first', async () => {
+    const r = await sync.recordPayment({ _id: new ObjectId(INVOICE), sale_id: null }, {}, {});
     expect(r.status).toBe(false);
-    expect(r.message).toMatch(/Convert to sale/);
+    expect(r.message).toMatch(/Issue the invoice first/);
   });
 });

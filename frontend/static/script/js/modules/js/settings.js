@@ -6302,18 +6302,18 @@ PosnicPro.settings.featureInfo = {
     },
     invoices_enable: {
         tagline: 'Bill a customer now, get paid later - and see who still owes you.',
-        about: 'An invoice is the bill you hand a customer who pays after delivery: lines from your catalog or free text, discounts, charges in any name, a due date, and a professional A4 PDF to share. Record the sale when the goods go out, mark the invoice paid when the money arrives - the sale keeps the books, the invoice keeps the customer informed.',
+        about: 'An invoice is the bill you hand a customer who pays after delivery: lines from your catalog or free text, discounts, charges in any name, a due date, and a professional A4 PDF to share. A draft is a proforma; issuing it books the sale for you - stock, tax and the books - and recording a payment, in full or in part, keeps the customer balance right.',
         benefits: [
             'Quote becomes invoice becomes sale - the numbers agree end to end',
+            'Issue books the sale itself - no till screen in between',
             'Overdue at a glance: what is owed, and how much of it is late',
-            'Share by PDF, print, email, WhatsApp or a copy-paste link',
-            'Mark paid with the method and reference your accountant asks for'
+            'Share by PDF, print, email, WhatsApp or a copy-paste link'
         ],
         how: [
             'Turn the feature on - Invoices appears in the home menu',
             'New invoice, or Create invoice from an accepted quote',
-            'Convert to sale when the goods go out; tender or leave it unpaid',
-            'Mark paid when the money lands - the customer balance follows'
+            'Issue it when the goods go out - the sale is booked for you',
+            'Record payments as the money lands - full or part, with a reference'
         ],
     },
     staff_shifts_enable: {
