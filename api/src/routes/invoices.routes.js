@@ -4,8 +4,9 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/invoices.controller');
 const { protect } = require('../middleware/auth');
+const { invoiceLimiter } = require('../middleware/auth-rate-limit');
 
-router.use(protect);
+router.use(protect, invoiceLimiter);
 
 // Invoices (INVOICING_MODULE_DESIGN) - a draft is a proforma; issuing books
 // the sale on the server; payments pay that sale down. The SALE holds the money.
