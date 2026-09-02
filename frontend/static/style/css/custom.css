@@ -4972,9 +4972,19 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-radius: 50%;
     background: var(--theme-card-bg, #ffffff);
     color: var(--theme-text-muted, #5b6577);
-    font-size: 22px;
+    font-size: 0;
     line-height: 1;
     cursor: pointer;
+}
+
+.first-run-close::before {
+    content: "\00d7";
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1;
+    transform: translateY(-1px);
 }
 
 .first-run-close:hover,
@@ -5192,27 +5202,58 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: var(--theme-text-primary, #16203a);
 }
 
-.first-run-edit-settings {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 36px;
+.first-run-locale {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     margin: 0 0 12px;
-    padding: 7px 11px;
+}
+
+.first-run-locale label {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    margin: 0;
+}
+
+.first-run-locale label:last-child {
+    grid-column: 1 / -1;
+}
+
+.first-run-locale span {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-locale select {
+    width: 100%;
+    min-height: 40px;
+    border-color: var(--theme-border-color, #d8e0ec);
+    color: var(--theme-text-primary, #16203a);
+    background: var(--theme-card-bg, #ffffff);
+}
+
+.first-run-locale .select2-container {
+    width: 100% !important;
+}
+
+.first-run-locale .select2-container--default .select2-selection--single {
+    height: 40px;
     border: 1px solid var(--theme-border-color, #d8e0ec);
     border-radius: 8px;
     background: var(--theme-card-bg, #ffffff);
-    color: var(--theme-primary-color, #506fe4);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
 }
 
-.first-run-edit-settings:hover,
-.first-run-edit-settings:focus {
-    border-color: var(--theme-primary-color, #506fe4);
-    background: var(--theme-table-row-hover, #f6f9ff);
-    outline: none;
+.first-run-locale .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 38px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-locale .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
 }
 
 .first-run-filter {
@@ -5412,6 +5453,14 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
     .first-run-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .first-run-locale {
+        grid-template-columns: 1fr;
+    }
+
+    .first-run-locale label:last-child {
+        grid-column: auto;
     }
 
     .first-run-head,

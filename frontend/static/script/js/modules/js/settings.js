@@ -5636,6 +5636,250 @@ PosnicPro.features = {
         }).join('');
     },
 
+    _esc: function (v) {
+        return $('<i>').text(v == null ? '' : v).html();
+    },
+
+    _value: function () {
+        for (var i = 0; i < arguments.length; i += 1) {
+            var text = $.trim(String(arguments[i] == null ? '' : arguments[i]));
+            if (text && text !== 'null' && text !== 'undefined') { return text; }
+        }
+        return '';
+    },
+
+    enhanceIntroSelect: function (selector) {
+        var el = $(selector);
+        if (!el.length || !$.fn.select2) { return; }
+        if (el.data('select2')) {
+            el.trigger('change.select2');
+            return;
+        }
+        el.select2({
+            dropdownParent: $('#feature_intro_modal'),
+            width: '100%'
+        });
+    },
+
+    chooseIntroSelectValue: function (selector, wanted) {
+        var el = $(selector);
+        if (!el.length) { return; }
+        var hasWanted = false;
+        if (wanted) {
+            el.find('option').each(function () {
+                if (String($(this).val()) === String(wanted)) { hasWanted = true; }
+            });
+        }
+        if (hasWanted) {
+            el.val(wanted);
+        }
+        if (!el.val() && el.find('option').length) {
+            el.prop('selectedIndex', 0);
+        }
+        PosnicPro.features.enhanceIntroSelect(selector);
+        el.trigger('change.select2');
+    },
+
+    copyIntroOptions: function (from, to, selected) {
+        var src = $(from);
+        var dest = $(to);
+        if (!src.length || !dest.length || !src.find('option').length) { return false; }
+        dest.html(src.html());
+        PosnicPro.features.chooseIntroSelectValue(to, selected);
+        return true;
+    },
+
+    loadIntroCountries: function () {
+        var selected = PosnicPro.features._value(
+            PosnicPro.local.get('country_setting'),
+            PosnicPro.local.get('countryname'),
+            PosnicPro.local.get('country_value')
+        );
+        if (PosnicPro.features.copyIntroOptions('#setting_country', '#feature_intro_country', selected)) {
+            PosnicPro.features.loadIntroStates();
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONCountry',
+            data: { name: 'countries' }
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.countries) || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.value) +
+                    '" data-setting-id="' + PosnicPro.features._esc(dataItem.id) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_country').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_country', selected);
+            PosnicPro.features.loadIntroStates();
+        });
+    },
+
+    loadIntroStates: function (countryId, selected) {
+        var picked = PosnicPro.features._value(selected, PosnicPro.local.get('state_setting'), PosnicPro.local.get('statename'));
+        var id = PosnicPro.features._value(countryId, $('#feature_intro_country option:selected').data('setting-id'), PosnicPro.local.get('countryid'));
+        if (!id) {
+            $('#feature_intro_state').html('<option value="' + PosnicPro.features._esc(picked) + '">' + PosnicPro.features._esc(picked || 'State / region') + '</option>');
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_state', picked);
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONState',
+            data: { id: id }
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.stateJsonArray) || [], function (key, name) {
+                options += '<option value="' + PosnicPro.features._esc(name) + '">' + PosnicPro.features._esc(name) + '</option>';
+            });
+            if (!options && picked) {
+                options = '<option value="' + PosnicPro.features._esc(picked) + '">' + PosnicPro.features._esc(picked) + '</option>';
+            }
+            $('#feature_intro_state').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_state', picked);
+        });
+    },
+
+    loadIntroCurrencies: function () {
+        var selected = PosnicPro.features._value($('#currency_setting').val(), PosnicPro.local.get('currency_setting'));
+        if (PosnicPro.features.copyIntroOptions('#currency_setting', '#feature_intro_currency', selected)) {
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONCurrency'
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.currency) || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.value) +
+                    '" data-currency-id="' + PosnicPro.features._esc(dataItem.id) +
+                    '" data-currency-text="' + PosnicPro.features._esc(dataItem.text) +
+                    '" data-currency-symbol="' + PosnicPro.features._esc(dataItem.symbol) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_currency').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_currency', selected);
+        });
+    },
+
+    loadIntroTimezones: function () {
+        var selected = PosnicPro.features._value(PosnicPro.timeZone());
+        if (PosnicPro.features.copyIntroOptions('#time_zone', '#feature_intro_timezone', selected)) {
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONTimeZone'
+        }, function (response) {
+            var options = '';
+            $.each(response.data || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.text) +
+                    '" data-timezone-name="' + PosnicPro.features._esc(dataItem.text) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_timezone').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_timezone', selected);
+        });
+    },
+
+    loadIntroDates: function () {
+        var selected = PosnicPro.features._value(PosnicPro.local.get('dateformatset'), $('#storedate').val(), 'dd/mm/yyyy');
+        PosnicPro.features.copyIntroOptions('#storedate', '#feature_intro_date', selected);
+    },
+
+    initIntroLocaleEditor: function () {
+        PosnicPro.features.loadIntroCountries();
+        PosnicPro.features.loadIntroCurrencies();
+        PosnicPro.features.loadIntroTimezones();
+        PosnicPro.features.loadIntroDates();
+        window.setTimeout(function () {
+            PosnicPro.features._introLocaleSnapshot = JSON.stringify(PosnicPro.features.readIntroLocale());
+        }, 0);
+    },
+
+    readIntroLocale: function () {
+        var countryOption = $('#feature_intro_country option:selected');
+        var currencyOption = $('#feature_intro_currency option:selected');
+        var dateOption = $('#feature_intro_date option:selected');
+        var currencySymbol = PosnicPro.features._value(
+            currencyOption.attr('data-currency-symbol'),
+            $('#currencyText').val(),
+            PosnicPro.local.get('currencySign')
+        );
+        return {
+            setting_country: PosnicPro.features._value($('#feature_intro_country').val(), PosnicPro.local.get('country_setting')),
+            country_id: PosnicPro.features._value(countryOption.attr('data-setting-id'), PosnicPro.local.get('countryid')),
+            setting_state: PosnicPro.features._value($('#feature_intro_state').val(), PosnicPro.local.get('state_setting')),
+            currency_setting: PosnicPro.features._value($('#feature_intro_currency').val(), $('#currency_setting').val()),
+            currencyText: currencySymbol,
+            currencyTextname: PosnicPro.features._value(currencyOption.attr('data-currency-text'), $('#currencyTextname').val(), currencySymbol),
+            currency_type: currencySymbol,
+            time_zone: PosnicPro.features._value($('#feature_intro_timezone').val(), PosnicPro.timeZone()),
+            storedate: PosnicPro.features._value($('#feature_intro_date').val(), PosnicPro.local.get('dateformatset'), 'dd/mm/yyyy'),
+            serverdate: PosnicPro.features._value(dateOption.attr('data-id'), $('#serverdate').val(), 'd/m/Y'),
+            dateText: PosnicPro.features._value(dateOption.text(), $('#dateText').val(), '01/01/2018 - dd/mm/yyyy')
+        };
+    },
+
+    applyIntroLocale: function (data, sent) {
+        var d = data || {};
+        var fallback = sent || {};
+        var country = PosnicPro.features._value(d.country, fallback.setting_country);
+        var state = PosnicPro.features._value(d.state, fallback.setting_state);
+        var countryId = PosnicPro.features._value(d.country_id, fallback.country_id);
+        var currencyText = PosnicPro.features._value(d.currency_text, fallback.currency_setting);
+        var currencySymbol = PosnicPro.features._value(d.currency_type, fallback.currency_type, fallback.currencyText);
+        var timezone = PosnicPro.features._value(d.time_zone, fallback.time_zone);
+        var clientDate = PosnicPro.features._value(d.clientdate, d.client_dateformat, fallback.storedate);
+        var serverDate = PosnicPro.features._value(d.serverdate, d.server_dateformat, fallback.serverdate);
+        var dateText = PosnicPro.features._value(d.dateformat_text, fallback.dateText);
+
+        PosnicPro.local.set('country_setting', country);
+        PosnicPro.local.set('countryname', country);
+        PosnicPro.local.set('countryid', countryId);
+        PosnicPro.local.set('state_setting', state);
+        PosnicPro.local.set('statename', state);
+        PosnicPro.local.set('currency_setting', currencyText);
+        PosnicPro.local.set('currencySign', currencySymbol);
+        PosnicPro.local.set('timezone', timezone);
+        PosnicPro.local.set('dateformatset', clientDate);
+        PosnicPro.local.set('setdateformat', serverDate);
+
+        $('#setting_country').val(country).trigger('change.select2');
+        if (state) {
+            $('#setting_state').html('<option value="' + PosnicPro.features._esc(state) + '" selected>' + PosnicPro.features._esc(state) + '</option>');
+        }
+        $('#currency_setting').val(currencyText).trigger('change.select2');
+        $('#currencyText').val(PosnicPro.features._value(fallback.currencyText, currencySymbol));
+        $('#currencyTextname').val(PosnicPro.features._value(fallback.currencyTextname, currencyText));
+        $('#currency_type').html('<option value="' + PosnicPro.features._esc(currencySymbol) + '" selected>Symbol( ' + PosnicPro.features._esc(currencySymbol) + ' )</option>');
+        $('#time_zone').val(timezone).trigger('change.select2');
+        $('#storedate').val(clientDate).trigger('change.select2');
+        $('#serverdate').val(serverDate);
+        $('#dateText').val(dateText);
+        $('.display-currency').html(currencySymbol);
+    },
+
+    saveIntroLocaleIfNeeded: function (done, fail) {
+        var locale = PosnicPro.features.readIntroLocale();
+        var snapshot = JSON.stringify(locale);
+        if (snapshot === PosnicPro.features._introLocaleSnapshot) {
+            done();
+            return;
+        }
+        PosnicPro.put({
+            url: 'setting/starterLocale',
+            data: JSON.stringify(locale)
+        }, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.features.applyIntroLocale(response.data, locale);
+                PosnicPro.features._introLocaleSnapshot = snapshot;
+                done();
+            } else {
+                fail(response.message || 'Could not save starter settings');
+            }
+        }, function () {
+            fail('Could not save starter settings. Please try again.');
+        });
+    },
+
     featureOn: function (blob, key) {
         var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
         return blob[key] === undefined ? onByDefault : blob[key] === true;
@@ -5653,6 +5897,9 @@ PosnicPro.features = {
 
     chooseDemoData: function (wanted) {
         $('#fi_module_demo_data_enable').prop('checked', wanted === true);
+        if (wanted === false && PosnicPro.settings) {
+            PosnicPro.settings._demoPurgeArmed = true;
+        }
         PosnicPro.features.paintDemoChoice(wanted === true);
     },
 
@@ -5760,7 +6007,7 @@ PosnicPro.features = {
         /* Built by accessNote, which escapes the one dynamic value (the
            hostname); everything else in it is our own copy. */
         $('#feature_intro_access').html(PosnicPro.features.accessNote());
-        $('#feature_intro_summary').html(PosnicPro.features.setupSummary());
+        PosnicPro.features.initIntroLocaleEditor();
 
         $('#feature_intro_filter').val('');
         var demoOn = blob.module_demo_data_enable === false || blob.module_demo_data_enable === 'false'
@@ -5873,12 +6120,14 @@ PosnicPro.features = {
            never be offered the switches it did not manage to save. */
         payload.first_run_done = true;
         payload.first_run_decided = true;
-        $('#feature_intro_save').prop('disabled', true);
-        PosnicPro.put({
-            url: 'settings/group/features',
-            data: JSON.stringify(payload)
-        }, function (response) {
-            $('#feature_intro_save').prop('disabled', false);
+        var saveButtons = $('#feature_intro_save, #feature_intro_tour, #feature_intro_skip, #feature_intro_close');
+        saveButtons.prop('disabled', true);
+        PosnicPro.features.saveIntroLocaleIfNeeded(function () {
+            PosnicPro.put({
+                url: 'settings/group/features',
+                data: JSON.stringify(payload)
+            }, function (response) {
+                saveButtons.prop('disabled', false);
             if (response.type === 'success') {
                 // The session blob must agree with what was just written, and
                 // the menus react now, not at next login.
@@ -5897,7 +6146,6 @@ PosnicPro.features = {
                    shop goes next depends on which of the two buttons was
                    pressed and the flag does not survive to the end. */
                 var wantedTour = PosnicPro.features._tourAfterSave;
-                var wantedSettings = PosnicPro.features._settingsAfterSave;
                 var wantedDemo = $('#fi_module_demo_data_enable').length
                     ? $('#fi_module_demo_data_enable').is(':checked')
                     : undefined;
@@ -5911,23 +6159,25 @@ PosnicPro.features = {
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
-                if (wantedSettings) {
-                    PosnicPro.features._settingsAfterSave = false;
-                    setTimeout(function () { hasher.setHash('settings/general'); }, 250);
-                } else if (PosnicPro.features._tourAfterSave) {
+                if (PosnicPro.features._tourAfterSave) {
                     PosnicPro.features._tourAfterSave = false;
                     setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
                 }
                 /* And then the sale screen, because that is what the button
                    says. The tour goes the other way - see startSelling. */
-                if (!wantedTour && !wantedSettings) { PosnicPro.features.startSelling(); }
+                if (!wantedTour) { PosnicPro.features.startSelling(); }
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
-        }, function () {
-            $('#feature_intro_save').prop('disabled', false);
+            }, function () {
+                saveButtons.prop('disabled', false);
+                PosnicPro.features._tourAfterSave = false;
+                PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
+            });
+        }, function (message) {
+            saveButtons.prop('disabled', false);
             PosnicPro.features._tourAfterSave = false;
-            PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
+            PosnicPro.alert('error', message);
         });
     }
 };
@@ -5961,13 +6211,10 @@ $(document).on('click', '#feature_intro_back', function () { PosnicPro.features.
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
-    PosnicPro.features._settingsAfterSave = false;
     PosnicPro.features.saveIntro();
 });
-$(document).on('click', '#feature_intro_edit_settings', function () {
-    PosnicPro.features._settingsAfterSave = true;
-    PosnicPro.features._tourAfterSave = false;
-    PosnicPro.features.saveIntro();
+$(document).on('change', '#feature_intro_country', function () {
+    PosnicPro.features.loadIntroStates($(this).find('option:selected').attr('data-setting-id'), '');
 });
 $(document).ready(function () {
     /*
