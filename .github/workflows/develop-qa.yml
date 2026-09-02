@@ -1,0 +1,71 @@
+# When a change lands on develop, say so on the pull request.
+#
+# The QA loop only works if somebody knows there is something to test. Left to
+# people to remember, "ready for QA" gets set for the first week and then
+# never again, and the label stops meaning anything.
+#
+# This labels the merged PR and comments where to try it, so a tester can find
+# work by filtering one label rather than reading the commit log.
+name: Develop QA
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [develop]
+
+# pull_request_target runs with a token that can write to the repository, so it
+# is deliberately given the least that allows: labels and a comment, nothing
+# that touches code. It never checks the pull request out, which is the thing
+# that makes this trigger dangerous.
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  label:
+    # Closed is not merged. A PR somebody abandoned should not be announced as
+    # something to test.
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark ready for QA
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const common = { owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number };
+
+            await github.rest.issues.addLabels({ ...common, labels: ['ready for QA'] });
+
+            // A previous round's verdict is about a previous version of the
+            // change. Leaving it would let a stale "QA passed" travel with a
+            // commit nobody tested.
+            for (const stale of ['QA passed', 'QA failed', 'needs rebase']) {
+              try {
+                await github.rest.issues.removeLabel({ ...common, name: stale });
+              } catch (e) {
+                if (e.status !== 404) throw e;
+              }
+            }
+
+            await github.rest.issues.createComment({
+              ...common,
+              body: [
+                'Merged to `develop`. **Anyone can test this** - you do not need write access.',
+                '',
+                'Try it at https://develop.posnic.io, or run it yourself:',
+                '',
+                '```bash',
+                'git fetch origin develop && git checkout develop',
+                'npm install && npm --prefix api install',
+                'npm run dev   # then http://localhost:3000',
+                '```',
+                '',
+                'When you have tested it, say what you did and what happened, and set',
+                '`QA passed` or `QA failed`. If you cannot set labels, just comment -',
+                'a maintainer will.',
+                '',
+                'Reporting that something is broken is as useful as fixing it. It is',
+                'better found here than by a shopkeeper.',
+              ].join('\n'),
+            });

@@ -9,7 +9,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
   # Release calls this so a tag is gated on exactly what a pull request meets.
   # It used to run the API unit suite alone, which meant a release could ship
