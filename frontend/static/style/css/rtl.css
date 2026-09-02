@@ -1,0 +1,162 @@
+/*
+ * Right-to-left layout, switched on by <html dir="rtl">.
+ *
+ * PosnicPro.i18n.mark() sets that attribute from the language code (Arabic,
+ * Hebrew, Persian, Urdu...). The browser mirrors text, inline flow and table
+ * columns from the one attribute; what it cannot know is which side the
+ * sidebar and the top bar belong on, or that Bootstrap's .mr-2 meant "the gap
+ * before the words". Those are settled here.
+ *
+ * Everything is scoped under [dir="rtl"] and this sheet loads LAST, so a
+ * left-to-right page pays nothing and no rule here has to out-specify a theme.
+ *
+ * First pass (2026-09-02): the chrome and the utilities the screens lean on.
+ * A screen with hand-laid absolute positioning will want its own rule; report
+ * it against issue #32 with the screen name.
+ */
+
+[dir="rtl"] body {
+    text-align: right;
+}
+
+/* ---------------------------------------------------------- the chrome --- */
+
+/* Sidebar on the right, content and top bar pushed left. */
+[dir="rtl"] .leftbar {
+    left: auto;
+    right: 0;
+}
+
+[dir="rtl"] .rightbar {
+    margin-left: 0;
+    margin-right: 256px;
+    transition: margin-right 0.3s ease;
+}
+
+[dir="rtl"] .topbar {
+    left: 0;
+    right: 250px;
+}
+
+[dir="rtl"] .toggle-menu .leftbar {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+[dir="rtl"] .toggle-menu .rightbar {
+    margin-left: 0;
+    margin-right: 60px;
+}
+
+[dir="rtl"] .toggle-menu .rightbar .topbar {
+    left: 0;
+    right: 60px;
+}
+
+@media (min-width: 1025px) {
+    [dir="rtl"] .vertical-layout.toggle-menu .leftbar:hover~.rightbar .topbar {
+        left: 0;
+        right: 250px;
+    }
+}
+
+[dir="rtl"] .vertical-menu>li>a>img {
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+[dir="rtl"] .vertical-menu .vertical-submenu {
+    padding: 5px 5px 5px 0;
+}
+
+[dir="rtl"] .vertical-menu .vertical-submenu .vertical-submenu {
+    padding-left: 0;
+    padding-right: 12px;
+}
+
+[dir="rtl"] .vertical-menu .vertical-submenu>li>a {
+    padding: 4px 24px 4px 12px;
+}
+
+[dir="rtl"] .vertical-menu .vertical-submenu>li>a>.mdi {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+[dir="rtl"] .vertical-menu .vertical-submenu>li>a:before {
+    padding-right: 0;
+    padding-left: 0.2rem;
+}
+
+/* A "go deeper" chevron points into the reading direction. */
+[dir="rtl"] .vertical-menu li>a>.icon-chevron-right {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .topbar .searchbar {
+    margin-left: 0;
+    margin-right: 5px;
+}
+
+/* ----------------------------------------------------- the utilities --- */
+
+/* Bootstrap 4 ships no RTL build. The utilities the screens use, mirrored. */
+[dir="rtl"] .text-left { text-align: right !important; }
+[dir="rtl"] .text-right { text-align: left !important; }
+
+[dir="rtl"] .float-left,
+[dir="rtl"] .pull-left { float: right !important; }
+[dir="rtl"] .float-right,
+[dir="rtl"] .pull-right { float: left !important; }
+
+[dir="rtl"] .ml-auto { margin-left: 0 !important; margin-right: auto !important; }
+[dir="rtl"] .mr-auto { margin-right: 0 !important; margin-left: auto !important; }
+
+[dir="rtl"] .mr-1 { margin-right: 0 !important; margin-left: .25rem !important; }
+[dir="rtl"] .mr-2 { margin-right: 0 !important; margin-left: .5rem !important; }
+[dir="rtl"] .mr-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+[dir="rtl"] .ml-1 { margin-left: 0 !important; margin-right: .25rem !important; }
+[dir="rtl"] .ml-2 { margin-left: 0 !important; margin-right: .5rem !important; }
+[dir="rtl"] .ml-3 { margin-left: 0 !important; margin-right: 1rem !important; }
+
+[dir="rtl"] .dropdown-menu { text-align: right; }
+[dir="rtl"] .dropdown-menu-right { right: auto; left: 0; }
+
+[dir="rtl"] .modal-header .close { margin: -1rem auto -1rem -1rem; }
+
+[dir="rtl"] .custom-control { padding-left: 0; padding-right: 1.5rem; }
+[dir="rtl"] .custom-control-label::before,
+[dir="rtl"] .custom-control-label::after { left: auto; right: -1.5rem; }
+
+[dir="rtl"] .input-group>.form-control:not(:last-child),
+[dir="rtl"] .input-group>.custom-select:not(:last-child) { border-radius: 0 .25rem .25rem 0; }
+[dir="rtl"] .input-group>.input-group-append>.btn,
+[dir="rtl"] .input-group>.input-group-append>.input-group-text { border-radius: .25rem 0 0 .25rem; }
+
+[dir="rtl"] .list-inline-item:not(:last-child) { margin-right: 0; margin-left: .5rem; }
+
+[dir="rtl"] table th,
+[dir="rtl"] table td { text-align: right; }
+
+[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__arrow { left: 1px; right: auto; }
+[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__rendered { padding-left: 20px; padding-right: 8px; }
+
+/* ------------------------------------------------- what stays LTR --- */
+
+/* Numbers, codes and addresses read left to right inside a right-to-left
+   sentence: an amount like 1,250.00 must never be mirrored by its paragraph. */
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="url"],
+[dir="rtl"] code,
+[dir="rtl"] kbd,
+[dir="rtl"] pre {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="tel"] {
+    text-align: right;
+}

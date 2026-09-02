@@ -42,7 +42,7 @@ test('CodeMeta identifies point-of-sale scope without promoting development as r
   assert.deepEqual(metadata.runtimePlatform, ['Electron', 'Node.js', 'MongoDB']);
   assert.equal(metadata.isSourceCodeOf?.['@type'], 'SoftwareApplication');
   assert.equal(metadata.isSourceCodeOf?.name, 'Posnic POS');
-  assert.equal(metadata.isSourceCodeOf?.url, 'https://posnic.com/');
+  assert.equal(metadata.isSourceCodeOf?.url, 'https://posnic.io/');
   assert.match(metadata.developmentStatus, /active development/i);
   assert.match(metadata.developmentStatus, /not a tagged release/i);
   assert.doesNotMatch(JSON.stringify(metadata), /aggregateRating|reviewRating|customer count/i);
@@ -56,5 +56,11 @@ test('public repository discovery surfaces both machine-readable metadata files'
   ));
   assert.ok(metadata.relatedLink.includes(
     'https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md',
+  ));
+  assert.ok(metadata.relatedLink.includes(
+    'https://github.com/Posnic/POS/blob/main/docs/PRIVACY.md',
+  ));
+  assert.ok(metadata.relatedLink.includes(
+    'https://github.com/Posnic/POS/blob/main/docs/GOVERNANCE.md',
   ));
 });

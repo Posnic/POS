@@ -4061,6 +4061,47 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 .quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 13px; padding: 4px 10px; }
 
+/* ============================================================
+   Invoices (INVOICING_MODULE_DESIGN): the quotes surface, twice.
+
+   The list-and-document split, the A4 sheet and the editor are the SAME
+   pattern - .master-detail, .q-sheet, .qe-* - so nothing is restyled here.
+   What follows is only what names the invoices page itself: the header
+   air the quotes rule gives its own page, the split's chip strip, the
+   columns that yield in a narrow rail, and the payment strip.
+   ============================================================ */
+#invoices_new .contentbar:not(.master-detail) {
+    padding-top: 5px !important;
+}
+#invoices_view_card { max-width: 900px; margin: 0 auto; }
+#invoices_edit_card { max-width: none; }
+.invoices-split #invoices_list_card #invoices_filter_chips {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    padding: 12px 10px;
+    background: #f6f8fa !important;
+    border-bottom: 1px solid #d8dee4;
+}
+.invoices-split #invoices_list_card #invoices_filter_chips .btn { font-size: 13px; padding: 4px 10px; }
+@media (max-width: 1499px) {
+    .invoices-split #invoices_list_card .i-col-date,
+    .invoices-split #invoices_list_card .i-col-due,
+    .invoices-split #invoices_list_card .i-col-balance { display: none; }
+}
+/* PAID reads green, the rest keep the quote's red stamp: a customer's eye
+   goes to the stamp first, and "paid" is the one word that should not be
+   the colour of a warning. */
+.q-status.is-paid { border-color: #23985c; color: #23985c; }
+/* The due date turns red only while money is still owed on it. */
+.i-overdue { color: #c53030; font-weight: 600; }
+.ie-pay-strip {
+    background: rgba(43, 183, 111, 0.08);
+    border: 1px solid rgba(43, 183, 111, 0.35);
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+[data-theme] .ie-pay-strip { background: var(--theme-card-bg, rgba(43, 183, 111, 0.08)); }
+
 /* Under about 1500px the rail cannot carry six columns, so the three that
    identify a quote survive - number, who it is for, what it comes to - plus
    its status. On a wide screen there is room for all of them, which is what

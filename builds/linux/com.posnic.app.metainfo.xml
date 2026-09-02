@@ -26,7 +26,7 @@
     <binary>posnic</binary>
   </provides>
 
-  <url type="homepage">https://posnic.com/</url>
+  <url type="homepage">https://posnic.io/</url>
   <url type="help">https://posnic.com/support</url>
   <url type="bugtracker">https://github.com/Posnic/POS/issues</url>
   <url type="vcs-browser">https://github.com/Posnic/POS</url>
@@ -39,6 +39,10 @@
     <keyword>point of sale</keyword>
     <keyword>POS</keyword>
     <keyword>billing</keyword>
+    <keyword>billing software</keyword>
+    <keyword>offline POS</keyword>
+    <keyword>online/offline POS</keyword>
+    <keyword>open source POS</keyword>
     <keyword>inventory</keyword>
     <keyword>restaurant</keyword>
   </keywords>
@@ -51,6 +55,7 @@
   </screenshots>
 
   <releases>
+    <release version="1.6.1" date="2026-08-28"/>
     <release version="1.3.0" date="2026-08-14"/>
   </releases>
 

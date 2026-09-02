@@ -18,7 +18,7 @@ below describe how that transition happens and what earns a say.
 
 Posnic's own desktop application source is free software under
 **AGPL-3.0-only**. Release packages also contain separately licensed components;
-see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The local edition has a
+see [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md). The local edition has a
 zero software price and no trial clock. It is not a timed demo or an
 intentionally feature-limited trial. Whether it fits a particular business
 still depends on its workflows, hardware, payments, tax rules, recovery and
@@ -177,9 +177,9 @@ without a stated reason is not a decision, it is an assertion.
 
 **Report a bug.** The most useful contribution, and the most undervalued. What
 you did, what happened, what you expected, and the log — see
-[DEVELOPMENT.md](docs/DEVELOPMENT.md) for where the log lives.
+[DEVELOPMENT.md](DEVELOPMENT.md) for where the log lives.
 
-**Fix something small.** [DEVELOPMENT.md](docs/DEVELOPMENT.md) lists current
+**Fix something small.** [DEVELOPMENT.md](DEVELOPMENT.md) lists current
 good first issues: 19 failing tests, 21 real `no-undef` bugs, two enormous files
 that want splitting.
 
@@ -201,7 +201,7 @@ to review, then to maintain. We do not use a bot to hand out badges.
 |---|---|
 | Bugs, features, design discussion | GitHub Issues |
 | Questions, ideas, showing what you built | GitHub Discussions |
-| Security problems | See [SECURITY.md](SECURITY.md) — **not** a public issue |
+| Security problems | See [SECURITY.md](../.github/SECURITY.md) — **not** a public issue |
 | Commercial and Cloud enquiries | info@posnic.com |
 
 Everything technical happens in public. If a decision gets made in a private
@@ -222,16 +222,16 @@ what the version number says.
 
 ## Package licence boundary
 
-The root [LICENSE](LICENSE) governs Posnic's own source. It does not replace the
+The root [LICENSE](../LICENSE) governs Posnic's own source. It does not replace the
 licences and notices for every binary or asset in a release package. Review
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), the files shipped with the
+[THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md), the files shipped with the
 artifact and the current
 [reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json).
 This governance document records project policy; it is not legal advice.
 
 ## Code of conduct
 
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) applies everywhere the project
+[CODE_OF_CONDUCT.md](../.github/CODE_OF_CONDUCT.md) applies everywhere the project
 operates. Report problems to info@posnic.com.
 
 ## Changing this document
