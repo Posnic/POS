@@ -14,6 +14,23 @@ const BaseModel = require('../models/base.model');
 const { authCookieOptions } = require('../utils/auth-cookie');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { setActiveTenantContext } = require('../utils/tenant-context');
+const { recordAudit } = require('../utils/audit-trail');
+
+/*
+ * What somebody sees when a sign-in fails.
+ *
+ * Shown for BOTH an unknown user and a wrong password, on purpose: telling
+ * them apart would let anybody enumerate which emails have accounts here.
+ *
+ * The old wording was "Invalid account. Please contact your branch manager."
+ * A sole shop owner locked out of their own till read that as an instruction
+ * to contact himself, and it said nothing about the thing that had actually
+ * happened - somebody had changed the password the day before. Naming that
+ * possibility costs nothing, leaks nothing, and is the first thing to try.
+ */
+const LOGIN_FAILED_MESSAGE =
+  'Username or password is incorrect. If the password was changed recently, '
+  + 'use the new one - otherwise ask an administrator to reset it.';
 
 const persistActiveTenant = async (req, data, fallbackLicense) => {
   const context = setActiveTenantContext(req, {
@@ -203,6 +220,40 @@ class UsersController extends BaseController {
    * The frontend posts { username, password } to /users/verify.
    * This method authenticates the user, checks rate limiting, and returns user data with JWT token.
    */
+  /*
+   * Record a failed sign-in where support can read it.
+   *
+   * The client is told one thing; this keeps the detail. When a shop says "we
+   * cannot get in", the two questions are which account was tried and from
+   * where - and, if the account exists, whether its password was changed
+   * recently. That last field is what took a database session and a bcrypt
+   * comparison by hand to establish, the one time it mattered.
+   *
+   * Never throws: a login must not fail because its audit line could not be
+   * written. Never records the attempted password, not even hashed.
+   */
+  async recordFailedLogin(req, loginId, reason, user = null) {
+    try {
+      const db = await BaseModel.getDb();
+      await recordAudit(db, {
+        event: 'login_failed',
+        actor: { id: user ? String(user._id) : null, name: loginId },
+        target: user ? { id: String(user._id), name: user.email || '', type: 'user' } : null,
+        ip: clientIp(req),
+        userAgent: (req.headers && req.headers['user-agent']) || '',
+        extra: {
+          reason,
+          attempted: loginId,
+          /* Only meaningful when the account exists. Equal to creation means
+             it has never been changed. */
+          passwordChangedAt: user ? user.updated_date || user.updated_at || null : null,
+        },
+      });
+    } catch (err) {
+      console.error('[audit] failed login not recorded:', err.message);
+    }
+  }
+
   async legacyVerifyLogin(req, res) {
     try {
       // 🔍 DEBUG - Check if this method is called
@@ -234,11 +285,27 @@ class UsersController extends BaseController {
         )
         .lean();
 
-      // PHP: if (isset($recordsFiltered) && ... password_verify(...))
+      /*
+       * ONE MESSAGE FOR BOTH FAILURES, DELIBERATELY.
+       *
+       * Saying "no such user" here would tell anybody who asks which email
+       * addresses have accounts on this shop, one guess at a time. So an
+       * unknown user and a wrong password answer identically, and the reason
+       * is recorded on the server instead, where support can see it and an
+       * attacker cannot.
+       *
+       * The wording changed after a real shop was locked out for five days.
+       * The old text - "Invalid account. Please contact your branch manager."
+       * - told a sole owner, who IS the branch manager, to contact himself,
+       * and never mentioned the thing that had actually happened: the
+       * password had been changed. It now names that possibility, for both
+       * cases, which gives the person at the till something to try.
+       */
       if (!user) {
+        await this.recordFailedLogin(req, loginId, 'no_such_user');
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: 'incorrect',
         });
       }
@@ -262,9 +329,14 @@ class UsersController extends BaseController {
         // Match legacy PHP behaviour for incorrect credentials:
         // response('error', $response['message'], 'incorrect', 404);
 
+        /* Same message as the unknown-user case above. The distinction is
+           recorded server-side, including whether this account's password was
+           changed recently, which is the single most useful fact when
+           somebody says "it worked yesterday". */
+        await this.recordFailedLogin(req, loginId, 'bad_password', user);
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: 'incorrect',
         });
       }
@@ -2382,7 +2454,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: null,
         });
       }
@@ -2574,7 +2646,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: null,
         });
       }
