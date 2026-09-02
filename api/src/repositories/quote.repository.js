@@ -12,6 +12,7 @@
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
+const docMath = require('../services/document-math');
 
 const STATUSES = Object.freeze([
   'open',
@@ -19,12 +20,16 @@ const STATUSES = Object.freeze([
   'sent',
   'accepted',
   'declined',
+  'invoiced',
   'converted',
   'cancelled',
 ]);
 /* draft and sent behave like open: still editable, still convertible.
    accepted freezes edits (the promise is made); declined/converted/
-   cancelled are history. */
+   cancelled are history. invoiced (INVOICING_MODULE_DESIGN) means an
+   invoice now carries the numbers: the quote is frozen like accepted, and
+   it is the INVOICE that converts to the sale - which stamps the quote
+   converted in turn, so the chain reads quote -> invoice -> sale. */
 const EDITABLE = Object.freeze(['open', 'draft', 'sent']);
 
 class QuoteRepository extends BaseModel {
@@ -56,147 +61,38 @@ class QuoteRepository extends BaseModel {
     return 'QUO-' + String(max + 1).padStart(6, '0');
   }
 
-  static _round2(n) {
-    return Math.round(n * 100) / 100;
-  }
-
-  /* One optional discount, per line or quote-level: percent of the gross
-     (0-100) or a flat amount capped at the gross. Anything malformed means
-     "no discount", never a rejected save. */
-  static _discountOf(raw, gross) {
-    if (!raw || typeof raw !== 'object') return null;
-    const type = raw.type === 'percent' ? 'percent' : raw.type === 'amount' ? 'amount' : null;
-    const value = Number(raw.value);
-    if (!type || !Number.isFinite(value) || value <= 0) return null;
-    const computed =
-      type === 'percent'
-        ? QuoteRepository._round2((gross * Math.min(value, 100)) / 100)
-        : QuoteRepository._round2(Math.min(value, gross));
-    return { type, value: QuoteRepository._round2(value), computed };
-  }
-
   /*
-   * Lines, generalized (QUOTATION_MODULE_DESIGN Q1): a row is either a
-   * catalog item snapshot (kind 'item') or free text (kind 'custom'). Edits
-   * live HERE - the catalog is never touched by a quote. A row with a name
-   * but no valid item id heals into a custom row rather than vanishing.
+   * The money arithmetic moved to services/document-math when invoices
+   * arrived: a quote becomes an invoice becomes a sale, and one copy of the
+   * rounding rules is the only way the three documents agree. These thin
+   * delegates keep the repository's own surface unchanged.
    */
-  _normalizeLines(rows) {
-    if (!Array.isArray(rows) || rows.length === 0) return { error: 'Add at least one line' };
-    if (rows.length > 500) return { error: 'At most 500 lines per quote' };
-    const lines = [];
-    for (const row of rows) {
-      if (!row) continue;
-      const hasItem = ObjectId.isValid(String(row.item_id));
-      const name = String(row.item_name || row.name || '').trim();
-      if (!hasItem && !name) continue;
-      const qty = Number(row.qty);
-      const price = Number(row.unit_price);
-      if (!Number.isFinite(qty) || qty <= 0) continue;
-      const unitPrice = Number.isFinite(price) && price >= 0 ? price : 0;
-      const gross = QuoteRepository._round2(qty * unitPrice);
-      const discount = QuoteRepository._discountOf(row.discount, gross);
-      /*
-       * Per-line tax (owner: "each line item will have different tax -
-       * indian GST like that"), seeded from the item's own configured tax.
-       * Inclusive stays inside the price; exclusive adds on top - the same
-       * convention the sale runs, so a converted quote's tax matches by
-       * construction.
-       */
-      const taxRateRaw = Number(row.tax_value !== undefined ? row.tax_value : row.tax);
-      const taxRate = Number.isFinite(taxRateRaw) && taxRateRaw > 0 ? Math.min(taxRateRaw, 100) : 0;
-      const taxTypeRaw = String(row.tax_type || '').toLowerCase();
-      const taxType =
-        taxRate > 0 ? (taxTypeRaw.indexOf('ex') === 0 ? 'exclusive' : 'inclusive') : '';
-      const taxable = QuoteRepository._round2(gross - (discount ? discount.computed : 0));
-      const taxAmount =
-        taxRate > 0
-          ? taxType === 'exclusive'
-            ? QuoteRepository._round2((taxable * taxRate) / 100)
-            : QuoteRepository._round2(taxable - taxable / (1 + taxRate / 100))
-          : 0;
-      lines.push({
-        kind: hasItem && row.kind !== 'custom' ? 'item' : 'custom',
-        item_id: hasItem && row.kind !== 'custom' ? new ObjectId(String(row.item_id)) : null,
-        item_name: name.slice(0, 200),
-        description: String(row.description || '')
-          .trim()
-          .slice(0, 500),
-        barcode_id: String(row.barcode_id || '').trim(),
-        qty,
-        unit_price: unitPrice,
-        discount,
-        tax_name: String(row.tax_name || '')
-          .trim()
-          .slice(0, 40),
-        tax_value: taxRate,
-        tax_type: taxType,
-        tax_amount: taxAmount,
-        line_total:
-          taxType === 'exclusive' ? QuoteRepository._round2(taxable + taxAmount) : taxable,
-      });
-    }
-    if (!lines.length)
-      return { error: 'No valid lines - each needs an item or a name, and a quantity' };
-    return { lines };
+  static _round2(n) {
+    return docMath.round2(n);
   }
 
-  /* Named charge/adjustment rows - "tax in any name" (CGST 9%, Freight,
-     Installation), percent-of-base or flat, sign -1 for named deductions. */
+  static _discountOf(raw, gross) {
+    return docMath.discountOf(raw, gross);
+  }
+
+  _normalizeLines(rows) {
+    return docMath.normalizeLines(rows, 'quote');
+  }
+
   _normalizeCharges(rows) {
-    if (!Array.isArray(rows)) return [];
-    const charges = [];
-    for (const row of rows.slice(0, 20)) {
-      if (!row || typeof row !== 'object') continue;
-      const name = String(row.name || '')
-        .trim()
-        .slice(0, 60);
-      const type = row.type === 'percent' ? 'percent' : row.type === 'amount' ? 'amount' : null;
-      const value = Number(row.value);
-      if (!name || !type || !Number.isFinite(value) || value < 0) continue;
-      charges.push({
-        name,
-        type,
-        value: QuoteRepository._round2(value),
-        sign: Number(row.sign) === -1 ? -1 : 1,
-        computed: 0,
-      });
-    }
-    return charges;
+    return docMath.normalizeCharges(rows);
   }
 
   _normalizeBlocks(rows) {
-    if (!Array.isArray(rows)) return [];
-    const blocks = [];
-    for (const row of rows.slice(0, 10)) {
-      if (!row || typeof row !== 'object') continue;
-      const title = String(row.title || '')
-        .trim()
-        .slice(0, 80);
-      const text = String(row.text || '')
-        .trim()
-        .slice(0, 2000);
-      if (!title && !text) continue;
-      blocks.push({ title, text });
-    }
-    return blocks;
+    return docMath.normalizeBlocks(rows);
   }
 
   _normalizeLayout(value) {
-    const KNOWN = ['billto', 'items', 'charges', 'payment', 'bank', 'terms', 'notes', 'custom'];
-    if (!Array.isArray(value)) return null;
-    const out = [];
-    for (const v of value) {
-      const t = String(v || '').trim();
-      if (KNOWN.includes(t) && !out.includes(t)) out.push(t);
-    }
-    return out.length ? out : null;
+    return docMath.normalizeLayout(value);
   }
 
   _validUntil(value) {
-    if (!value) return null;
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
+    return docMath.dateOrNull(value);
   }
 
   /* Create (id empty) or update - open quotes only; history is not editable. */
@@ -208,37 +104,15 @@ class QuoteRepository extends BaseModel {
       const parsed = this._normalizeLines(data.lines || data.items);
       if (parsed.error) return { status: false, data: null, message: parsed.error };
 
-      const subtotal = QuoteRepository._round2(parsed.lines.reduce((s, l) => s + l.line_total, 0));
-      const charges = this._normalizeCharges(data.charges);
-      const quoteDiscount = QuoteRepository._discountOf(data.discount, subtotal);
-      const chargeBase = QuoteRepository._round2(
-        subtotal - (quoteDiscount ? quoteDiscount.computed : 0)
-      );
-      let chargesTotal = 0;
-      for (const c of charges) {
-        c.computed =
-          c.type === 'percent' ? QuoteRepository._round2((chargeBase * c.value) / 100) : c.value;
-        chargesTotal += c.sign * c.computed;
-      }
-      chargesTotal = QuoteRepository._round2(chargesTotal);
-      const computedTotal = Math.max(0, QuoteRepository._round2(chargeBase + chargesTotal));
-      /*
-       * Money authority (QUOTATION_MODULE_DESIGN rule 4): the moment any of
-       * the new money fields is used (charges, quote discount, line
-       * discounts), the server's arithmetic is the stored truth and the
-       * client's total is advisory. The legacy sale-screen path - plain
-       * lines plus the cart's own grand total - keeps its behavior.
-       */
-      const hasNewMoney =
-        charges.length > 0 || quoteDiscount !== null || parsed.lines.some((l) => l.discount);
-      /* Lines carrying their own tax make the tax total OURS to compute;
-         the legacy path (sale-screen carts) keeps sending its own figure. */
-      const linesCarryTax = parsed.lines.some((l) => l.tax_value > 0);
-      const computedTaxTotal = QuoteRepository._round2(
-        parsed.lines.reduce((s, l) => s + (l.tax_amount || 0), 0)
-      );
-      const taxTotal = Number(data.tax_total);
-      const total = Number(data.total);
+      /* Money authority (QUOTATION_MODULE_DESIGN rule 4) lives in
+         document-math.computeTotals, shared with invoices. */
+      const money = docMath.computeTotals({
+        lines: parsed.lines,
+        charges: this._normalizeCharges(data.charges),
+        discount: data.discount,
+        clientTotal: data.total,
+        clientTaxTotal: data.tax_total,
+      });
 
       const now = new Date();
       const collection = await this.getCollection(this.collectionName);
@@ -273,21 +147,17 @@ class QuoteRepository extends BaseModel {
           .trim()
           .slice(0, 1500),
         items: parsed.lines,
-        charges,
-        discount: quoteDiscount,
-        charges_total: chargesTotal,
+        charges: money.charges,
+        discount: money.discount,
+        charges_total: money.charges_total,
         custom_blocks: this._normalizeBlocks(data.custom_blocks),
         layout: this._normalizeLayout(data.layout),
         notes: String(data.notes || '')
           .trim()
           .slice(0, 2000),
-        subtotal,
-        tax_total: linesCarryTax
-          ? computedTaxTotal
-          : Number.isFinite(taxTotal) && taxTotal >= 0
-            ? taxTotal
-            : 0,
-        total: hasNewMoney ? computedTotal : Number.isFinite(total) && total > 0 ? total : subtotal,
+        subtotal: money.subtotal,
+        tax_total: money.tax_total,
+        total: money.total,
         valid_until: this._validUntil(data.valid_until),
         note: String(data.note || '')
           .trim()
@@ -597,6 +467,13 @@ class QuoteRepository extends BaseModel {
         if (doc.status === 'converted' || doc.status === 'cancelled') {
           return { status: false, data: null, message: 'This quote is already closed' };
         }
+        if (doc.status === 'invoiced') {
+          return {
+            status: false,
+            data: null,
+            message: 'This quote became an invoice - cancel the invoice instead',
+          };
+        }
         await collection.updateOne(
           { _id: doc._id },
           { $set: { status: 'cancelled', updated_date: new Date() } }
@@ -641,6 +518,46 @@ class QuoteRepository extends BaseModel {
         return { status: true, data: { id: String(doc._id) }, message: 'Quote ' + status };
       }
 
+      /*
+       * The quote became an invoice (INVOICING_MODULE_DESIGN): the invoice
+       * repository creates the document and then stamps the quote here. One
+       * quote, one invoice - a replay with the same invoice id succeeds, a
+       * different one is refused.
+       */
+      if (action === 'invoice') {
+        const invoiceId =
+          data.invoice_id && ObjectId.isValid(String(data.invoice_id))
+            ? new ObjectId(String(data.invoice_id))
+            : null;
+        if (!invoiceId) return { status: false, data: null, message: 'An invoice id is required' };
+        if (doc.status === 'invoiced') {
+          const same = doc.invoice_id && String(doc.invoice_id) === String(invoiceId);
+          return same
+            ? { status: true, data: { id: String(doc._id) }, message: 'Quote already invoiced' }
+            : { status: false, data: null, message: 'This quote already has an invoice' };
+        }
+        if (!EDITABLE.includes(doc.status) && doc.status !== 'accepted') {
+          return {
+            status: false,
+            data: null,
+            message: 'Only an open or accepted quote can become an invoice',
+          };
+        }
+        await collection.updateOne(
+          { _id: doc._id },
+          {
+            $set: {
+              status: 'invoiced',
+              invoice_id: invoiceId,
+              invoice_number: String(data.invoice_number || '').slice(0, 40),
+              invoiced_date: new Date(),
+              updated_date: new Date(),
+            },
+          }
+        );
+        return { status: true, data: { id: String(doc._id) }, message: 'Quote invoiced' };
+      }
+
       if (action === 'convert') {
         const saleId =
           data.sale_id && ObjectId.isValid(String(data.sale_id))
@@ -653,7 +570,13 @@ class QuoteRepository extends BaseModel {
             ? { status: true, data: { id: String(doc._id) }, message: 'Quote already converted' }
             : { status: false, data: null, message: 'This quote was already converted to a sale' };
         }
-        if (!EDITABLE.includes(doc.status) && doc.status !== 'accepted') {
+        /* invoiced joins the list: the invoice's own conversion stamps the
+           quote it came from, closing the chain. */
+        if (
+          !EDITABLE.includes(doc.status) &&
+          doc.status !== 'accepted' &&
+          doc.status !== 'invoiced'
+        ) {
           return {
             status: false,
             data: null,

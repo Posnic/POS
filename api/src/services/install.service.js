@@ -914,6 +914,7 @@ class InstallService {
        * own.
        */
       quotes_enable: false,
+      invoices_enable: false,
       cash_register_enable: false,
       staff_shifts_enable: false,
       staff_roster_enable: false,
