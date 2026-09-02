@@ -4962,13 +4962,17 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     position: absolute;
     top: 16px;
     right: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 34px;
     height: 34px;
+    padding: 0;
     border: 1px solid var(--theme-border-color, #e5e8ef);
     border-radius: 50%;
     background: var(--theme-card-bg, #ffffff);
     color: var(--theme-text-muted, #5b6577);
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1;
     cursor: pointer;
 }
@@ -5186,6 +5190,29 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .first-run-summary b {
     font-size: 13px;
     color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-edit-settings {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    margin: 0 0 12px;
+    padding: 7px 11px;
+    border: 1px solid var(--theme-border-color, #d8e0ec);
+    border-radius: 8px;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-primary-color, #506fe4);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.first-run-edit-settings:hover,
+.first-run-edit-settings:focus {
+    border-color: var(--theme-primary-color, #506fe4);
+    background: var(--theme-table-row-hover, #f6f9ff);
+    outline: none;
 }
 
 .first-run-filter {
