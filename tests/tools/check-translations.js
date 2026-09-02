@@ -27,7 +27,12 @@ const fail = (file, what, fix) => problems.push({ file, what, fix });
 
 let files = [];
 try {
-  files = fs.readdirSync(LANG_DIR).filter((f) => f.endsWith('.json'));
+  files = fs.readdirSync(LANG_DIR)
+    .filter((f) => f.endsWith('.json'))
+    /* _glossary.json is the source the packs are seeded from, not a pack: its
+       values are objects of languages, not strings. Underscore means "not a
+       language file" so a future sibling needs no change here. */
+    .filter((f) => !f.startsWith('_'));
 } catch (e) {
   console.error(`Cannot read ${LANG_DIR}: ${e.message}`);
   process.exit(1);
@@ -122,6 +127,11 @@ try {
   const block = /const LANGUAGES = \[([\s\S]*?)\n\];/.exec(config);
   if (block) {
     const declared = [...block[1].matchAll(/code:\s*'([^']+)'/g)].map((m) => m[1]);
+    const drafts = [...block[1].matchAll(/code:\s*'([^']+)'[^\n]*draft:\s*true/g)].map((m) => m[1]);
+    if (drafts.length) {
+      notes.push(`${drafts.length} language(s) are marked draft and are NOT offered to `
+        + `shopkeepers until a speaker reviews them: ${drafts.join(', ')}`);
+    }
     for (const code of declared) {
       if (code === 'en') continue;
       if (!files.includes(`${code}.json`)) {
