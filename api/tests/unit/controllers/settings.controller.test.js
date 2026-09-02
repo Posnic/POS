@@ -934,7 +934,14 @@ describe('forgotPassword', () => {
     mockModel.getForgotUserDetails.mockResolvedValue(ok({ email: 'a@b.com' }, 'Found'));
     const res = mockRes();
     await ctrl.forgotPassword(mockReq({ body: { email: 'a@b.com' } }), res);
-    expect(mockModel.getForgotUserDetails).toHaveBeenCalledWith('a@b.com');
+    /* The request is passed too: the reset link must be built from the host
+       this shop was actually reached on, not from a hardcoded address. It used
+       to be hardcoded, and every hosted shop was mailed a link to
+       http://localhost:3000 as a result. */
+    expect(mockModel.getForgotUserDetails).toHaveBeenCalledWith(
+      'a@b.com',
+      expect.objectContaining({ body: { email: 'a@b.com' } })
+    );
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

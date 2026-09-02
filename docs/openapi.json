@@ -102,6 +102,10 @@
       "description": "Mounted at /install"
     },
     {
+      "name": "Invoices",
+      "description": "Mounted at /invoices"
+    },
+    {
       "name": "Items",
       "description": "Mounted at /items"
     },
@@ -5717,6 +5721,340 @@
             }
           }
         }
+      }
+    },
+    "/invoices": {
+      "post": {
+        "summary": "create",
+        "operationId": "post_invoices",
+        "tags": [
+          "Invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "get": {
+        "summary": "list",
+        "operationId": "get_invoices",
+        "tags": [
+          "Invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/invoices/summary": {
+      "get": {
+        "summary": "summary",
+        "operationId": "get_invoices_summary",
+        "tags": [
+          "Invoices"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/invoices/from-quote/{quoteId}": {
+      "post": {
+        "summary": "fromQuote",
+        "operationId": "post_invoices_from_quote_quoteId",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "summary": "getById",
+        "operationId": "get_invoices_id",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "update",
+        "operationId": "put_invoices_id",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "delete": {
+        "summary": "remove",
+        "operationId": "delete_invoices_id",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/issue": {
+      "post": {
+        "summary": "issue",
+        "operationId": "post_invoices_id_issue",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/invoices/{id}/transition": {
+      "post": {
+        "summary": "transition",
+        "operationId": "post_invoices_id_transition",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/invoices/{id}/payment": {
+      "post": {
+        "summary": "payment",
+        "operationId": "post_invoices_id_payment",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/invoices/{id}/share": {
+      "post": {
+        "summary": "share",
+        "operationId": "post_invoices_id_share",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/items/accesskiosk": {
