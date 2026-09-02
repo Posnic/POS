@@ -169,6 +169,7 @@ function report() {
 
 /* ------------------------------------------------------------------ cli --- */
 
+function main() {
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
 const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
@@ -434,3 +435,9 @@ if (min) {
     process.exit(1);
   }
 }
+}
+
+/* Required as a module by the frontend build (for index.json's coverage
+   numbers) and by the tests; run as a script by people and CI. */
+if (require.main === module) main();
+module.exports = { keysUsed, report, languages };
