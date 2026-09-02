@@ -24,7 +24,8 @@
             "static/style/css/intlTelInput.css",
             "static/style/css/component.css",
             "static/style/plugins/sweet-alert2/sweetalert2.min.css",
-            "static/pages/lock-screen.css"
+            "static/pages/lock-screen.css",
+            "static/style/css/rtl.css"
         ],
         "js": [
             "static/script/js/jquery.min.js",
@@ -149,7 +150,8 @@
             "static/style/css/bootstrap.min.css",
             "static/style/css/icons.min.css",
             "static/style/css/modules/font.css",
-            "static/style/scss/style.scss"
+            "static/style/scss/style.scss",
+            "static/style/css/rtl.css"
         ]
     },
     "customerview": {
@@ -265,7 +267,8 @@
             "static/style/css/bootstrap.min.css",
             "static/style/css/jquery.toast.min.css",
             "static/style/css/modules/font.css",
-            "static/style/scss/style.scss"
+            "static/style/scss/style.scss",
+            "static/style/css/rtl.css"
         ]
     },
     "ssoauth": {

@@ -92,17 +92,26 @@ const HTTP_STATUS = {
   INTERNAL_ERROR: 500,
 };
 
-// Languages
+// Languages the app can show. Mirrors LANGUAGES in frontend/gulpfile.js/config.js,
+// which is where a language is actually added; this is the server-side allow
+// list for a user's stored preference.
 const LANGUAGES = {
   ENGLISH: 'en',
-  SPANISH: 'es',
-  FRENCH: 'fr',
-  GERMAN: 'de',
-  HINDI: 'hi',
   TAMIL: 'ta',
-  TELUGU: 'te',
-  KANNADA: 'kn',
+  HINDI: 'hi',
   MALAYALAM: 'ml',
+  KANNADA: 'kn',
+  TELUGU: 'te',
+  SINHALA: 'si',
+  NEPALI: 'ne',
+  ARABIC: 'ar',
+  FRENCH: 'fr',
+  SPANISH: 'es',
+  PORTUGUESE: 'pt',
+  INDONESIAN: 'id',
+  THAI: 'th',
+  // Kept for records that already hold it; the app does not offer it.
+  GERMAN: 'de',
 };
 
 // Theme preferences
