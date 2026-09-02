@@ -2789,6 +2789,7 @@ PosnicPro = {
         $('#manage_li_workforce').toggle(on('staff_shifts_enable'));
         $('#manage_li_cashbook').toggle(on('module_cashbook_enable'));
         $('#li_quotes').toggle(on('quotes_enable'));
+        $('#li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_credit').toggle(on('module_credit_enable'));
         /*
          * Customer Dues on the dashboard follows the same switch.
@@ -2813,6 +2814,7 @@ PosnicPro = {
            door for every feature, however many we grow. */
         $('#manage_li_demodata').toggle(on('module_demo_data_enable'));
         $('#manage_li_quotes').toggle(on('quotes_enable'));
+        $('#manage_li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_tillpin').toggle(s.till_lock_enable === true);
         $('#manage_modules_header').toggle(
             $('[id^="manage_li_"]').filter(function () { return $(this).css('display') !== 'none'; }).length > 0
@@ -4210,6 +4212,8 @@ PosnicPro.local = {
 PosnicPro.i18n = {
     _dict: null,
     _code: null,
+    /* Original English nodes are kept outside the mutable DOM. */
+    _english: new WeakMap(),
 
     /*
      * 'en' | 'ta' | ...
@@ -4394,9 +4398,16 @@ PosnicPro.i18n = {
             /* Missing or blank leaves the English that is already there. */
             if (typeof value !== 'string' || value.trim() === '') return;
             /* The English is in no pack - it is what the page shipped with.
-               Kept on the element the first time it is overwritten, so a
-               switch back to English is a restore rather than a reload. */
-            if (!el.hasAttribute('data-en')) el.setAttribute('data-en', el.innerHTML);
+               Keep clones outside the mutable DOM the first time it is
+               overwritten, so a switch back to English is a restore rather
+               than a reload. */
+            if (!PosnicPro.i18n._english.has(el)) {
+                var original = [];
+                for (var child = el.firstChild; child; child = child.nextSibling) {
+                    original.push(child.cloneNode(true));
+                }
+                PosnicPro.i18n._english.set(el, original);
+            }
             /*
              * A handful of strings carry markup: an icon before "Download", a
              * <span> the code rewrites later, an &nbsp;. Three cases:
@@ -4436,15 +4447,20 @@ PosnicPro.i18n = {
     /*
      * Put the English back.
      *
-     * apply() keeps each element's shipped markup in data-en the first time
-     * it overwrites it, so this is the whole of "switch to English": the
+     * apply() keeps cloned English nodes outside the DOM the first time it
+     * overwrites them, so this is the whole of "switch to English": the
      * words are not fetched from anywhere, they were here all along.
      */
     restore: function (root) {
         var scope = root || document;
-        var kept = scope.querySelectorAll('[data-en]');
+        var kept = scope.querySelectorAll('lang[class], [data-t]');
         for (var i = 0; i < kept.length; i++) {
-            kept[i].innerHTML = kept[i].getAttribute('data-en');
+            var original = PosnicPro.i18n._english.get(kept[i]);
+            if (!original) continue;
+            while (kept[i].firstChild) kept[i].removeChild(kept[i].firstChild);
+            for (var j = 0; j < original.length; j++) {
+                kept[i].appendChild(original[j].cloneNode(true));
+            }
         }
     },
 

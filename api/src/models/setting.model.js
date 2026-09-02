@@ -793,6 +793,7 @@ class SettingModel extends BaseModel {
       const module_demo_data_enable = offOnly(data.module_demo_data_enable);
       const quick_sale_enable = offOnly(data.quick_sale_enable);
       const quotes_enable = offOnly(data.quotes_enable);
+      const invoices_enable = offOnly(data.invoices_enable);
 
       /*
        * Two different forms save through here now: the Module On/Off tab
@@ -943,6 +944,7 @@ class SettingModel extends BaseModel {
         module_demo_data_enable: module_demo_data_enable,
         quick_sale_enable: quick_sale_enable,
         quotes_enable: quotes_enable,
+        invoices_enable: invoices_enable,
         ...(data.custom_charges_enable !== undefined
           ? {
               custom_charges_enable:
@@ -1272,6 +1274,7 @@ class SettingModel extends BaseModel {
         first_run_done: onOnly,
         first_run_decided: onOnly,
         quotes_enable: offOnly,
+        invoices_enable: offOnly,
         pl_include_cashbook: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
@@ -1404,6 +1407,7 @@ class SettingModel extends BaseModel {
       module_demo_data_enable: { parse: offOnly, dflt: true },
       quick_sale_enable: { parse: offOnly, dflt: true },
       quotes_enable: { parse: offOnly, dflt: true },
+      invoices_enable: { parse: offOnly, dflt: true },
       custom_charges_enable: { parse: (v) => v === true || v === 'true', dflt: false },
       pl_include_cashbook: { parse: offOnly, dflt: true },
     };
