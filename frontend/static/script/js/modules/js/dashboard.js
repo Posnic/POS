@@ -814,10 +814,17 @@ function posnicLanguageStyling(code) {
                     ? ' title="' + l.coverage + '% translated'
                         + (l.reviewed === false ? ', not yet reviewed by a speaker' : '') + '"'
                     : '';
+                /*
+                 * The NAME is isolated with <bdi>, not the row. dir="rtl" on the
+                 * anchor mirrored the whole entry - flag on the right, "beta"
+                 * before the name - in a menu every other row reads left to
+                 * right. <bdi> lets Arabic shape and order its own letters and
+                 * leaves the row alone.
+                 */
                 return '<a class="dropdown-item" href="javascript:void(0)" data-code="' + l.code + '"'
-                    + ' data-value="' + l.name + '"' + (l.dir ? ' dir="' + l.dir + '"' : '') + title + '>'
+                    + ' data-value="' + l.name + '"' + title + '>'
                     + '<i class="flag flag-icon-' + (l.flag || 'us') + ' flag-icon-squared"></i> '
-                    + l.name + note + '</a>';
+                    + '<bdi>' + l.name + '</bdi>' + note + '</a>';
             }).join('');
 
             /* The label and the type sizes follow the SETTLED language - after
