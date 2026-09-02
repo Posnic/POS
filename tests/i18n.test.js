@@ -537,8 +537,8 @@ test('switching back to English restores the words the page shipped with', () =>
    * overwritten it, the only way back was a reload. apply() now keeps the
    * shipped markup on the element the first time it replaces it.
    */
-  assert.match(member('apply'), /data-en/, 'apply() does not keep the English before overwriting it');
-  assert.match(member('restore'), /data-en/, 'restore() does not read the kept English');
+  assert.match(member('apply'), /_english/, 'apply() does not keep the English before overwriting it');
+  assert.match(member('restore'), /_english/, 'restore() does not read the kept English');
   assert.match(member('change'), /restore\(\)/, 'change() never restores English');
 });
 
