@@ -1,5 +1,4 @@
 const { parallel, series, src, dest, pipe, gulp, watch } = require('gulp');
-var argv = require('yargs').argv;
 const { publicDir, languages, s } = require('./config');
 var css = require('./css');
 var js = require('./js');
@@ -15,9 +14,16 @@ function buildJs(cb) {
     js.buildAllJs(cb);
 }
 
+/*
+ * --skipLang used to halve the build by not emitting the per-language pages.
+ * There are none any more, so it has nothing to skip and buildAllHtml ignores
+ * it. The whole of yargs was here to parse that one dead flag, and yargs 18
+ * dropped `require('yargs').argv` - which broke the build on the dependabot
+ * bump. Removing the flag was the smaller change and one dependency lighter
+ * than porting it.
+ */
 function buildHtml(cb) {
-    let skipLang = !!argv.skipLang;
-    html.buildAllHtml(cb, skipLang);
+    html.buildAllHtml(cb, false);
 }
 
 /*

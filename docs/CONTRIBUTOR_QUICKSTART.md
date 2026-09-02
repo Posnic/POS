@@ -74,6 +74,23 @@ npm start
 The app opens as an Electron desktop app. On first run it prepares a local
 database and walks you through setup.
 
+### Or run it in a browser
+
+```bash
+npm run dev
+```
+
+Then open **http://localhost:3000/public/login.html**.
+
+Same application, same API, same database - it is the desktop app's own server
+with a browser in front of it instead of an Electron window. Useful when you
+are changing a screen and want to hit refresh, and necessary if you are
+reviewing a translation, because you need to see the words in place.
+
+The first run generates development secrets into `api/.env` (kept out of git,
+and not what a real installation uses), builds the frontend if it has not been
+built, and starts the bundled MongoDB. Ctrl+C stops all of it.
+
 Development defaults:
 
 | Service | Default |
@@ -207,7 +224,17 @@ adds a new failure, fix that before asking for review.
 
 Before opening a PR:
 
-1. Branch from `main`.
+1. Branch from **`develop`**, and open the pull request against `develop`.
+
+   `develop` is where contributions land and get tested; `main` is released
+   code. If you opened against `main` by mistake, change the base branch with
+   the "Edit" button next to the PR title - the work is fine, only the target
+   is wrong.
+
+   ```bash
+   git fetch origin develop
+   git checkout -b my-change origin/develop
+   ```
 2. Keep one concern per PR.
 3. Link the issue and state which acceptance criteria or PR slice is covered.
 4. Add or update a focused test when code behavior changes.
@@ -219,6 +246,38 @@ Before opening a PR:
    ```
 
 7. Fill in the pull request template with what changed and how you tested it.
+
+## After it is merged
+
+Your change lands on `develop` and is labelled `ready for QA`, and a comment
+says where to try it. Anyone can test it - including you, and including people
+without write access.
+
+### About develop.posnic.io
+
+`develop` is deployed to **https://develop.posnic.io** on every merge, so you
+can try a change without checking anything out.
+
+It is a **public sandbox**, and worth being blunt about what that means:
+
+- It runs code that has been merged but not released, including changes nobody
+  has tested yet. It will sometimes be broken. That is what it is for.
+- It holds **demo data only** and is wiped. Do not put anything real into it -
+  not a customer, not a phone number, not a price you care about.
+- Assume anything you type there can be read by anyone.
+
+It shares nothing with the production estate: its own database, its own
+secrets, and no route to anything a real shop uses. If it ever misbehaves the
+answer is to delete it and make another, which is only a comfortable answer
+because nothing on it matters.
+
+If you have a few minutes, testing somebody else's change is genuinely useful
+and needs no permissions - [`docs/QA_PROCESS.md`](QA_PROCESS.md) is the whole
+thing on one page. Filter issues by `ready for QA`, try the thing, and
+say what happened. Reporting that something is broken is as valuable as fixing
+it, and much better found there than by a shopkeeper.
+
+The maintainer promotes tested work from `develop` into a release.
 
 For a focused fix, a good PR title looks like:
 
