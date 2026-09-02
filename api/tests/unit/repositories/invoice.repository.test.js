@@ -5,6 +5,10 @@
  * AN INVOICE NEVER HOLDS MONEY. The mock records every collection name the
  * repository opens; every WRITE must land in 'invoices' and nothing else.
  * `branches` may be READ for the shop's defaults, exactly as quotes do.
+ *
+ * The lifecycle it pins is the international one: a draft is a proforma
+ * (editable, deletable, cancellable, never overdue); issuing books a sale
+ * (elsewhere) and from then on the document mirrors that sale.
  */
 
 const mockRequestedCollections = [];
@@ -82,7 +86,6 @@ describe('InvoiceRepository', () => {
 
   test('create writes only the invoices collection, numbers INV-000001 and starts from the shop defaults', async () => {
     mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(INVOICE) });
-    /* the branches read: no prefix set, 15 credit days, invoice terms */
     mockCollection.findOne.mockResolvedValue({
       invoice_due_days: 15,
       invoice_terms: 'Payment within 15 days.',
@@ -171,7 +174,7 @@ describe('InvoiceRepository', () => {
     expect(doc.balance).toBe(209.85);
   });
 
-  test('only a draft or sent invoice can be edited or deleted', async () => {
+  test('only a draft can be edited or deleted - an issued invoice is frozen', async () => {
     mockCollection.updateOne.mockResolvedValue({ matchedCount: 0 });
     const edit = await repo.upsertInvoice(
       { items: [{ item_id: ITEM, item_name: 'Rice', qty: 1, unit_price: 10 }] },
@@ -179,18 +182,19 @@ describe('InvoiceRepository', () => {
       ctx
     );
     expect(edit.status).toBe(false);
-    expect(mockCollection.updateOne.mock.calls[0][0].status).toEqual({ $in: ['draft', 'sent'] });
+    expect(edit.message).toMatch(/issued/);
+    expect(mockCollection.updateOne.mock.calls[0][0].status).toEqual({ $in: ['draft'] });
 
     mockCollection.deleteOne.mockResolvedValue({ deletedCount: 0 });
     const del = await repo.deleteInvoice(INVOICE, ctx);
     expect(del.status).toBe(false);
-    expect(mockCollection.deleteOne.mock.calls[0][0].status).toEqual({ $in: ['draft', 'sent'] });
+    expect(mockCollection.deleteOne.mock.calls[0][0].status).toEqual({ $in: ['draft'] });
   });
 
   describe('the sale mirror', () => {
     const invoice = (extra = {}) => ({
       _id: new ObjectId(INVOICE),
-      status: 'sent',
+      status: 'draft',
       total: 200,
       sale_id: null,
       ...extra,
@@ -207,7 +211,13 @@ describe('InvoiceRepository', () => {
         mockCollection.findOne.mockResolvedValue(invoice());
         const r = await repo.applySaleSnapshot(
           INVOICE,
-          { sale_id: SALE, sale_number: 'S000042', paid_amount: paid, payment_status: 'x' },
+          {
+            sale_id: SALE,
+            sale_number: 'S000042',
+            total: 200,
+            paid_amount: paid,
+            payment_status: 'x',
+          },
           ctx
         );
         expect(r.status).toBe(true);
@@ -217,9 +227,25 @@ describe('InvoiceRepository', () => {
         expect(set.balance).toBe(200 - paid);
         expect(String(set.sale_id)).toBe(SALE);
         expect(set.sale_number).toBe('S000042');
-        expect(set.converted_date).toBeInstanceOf(Date);
+        expect(set.issued_date).toBeInstanceOf(Date);
         if (status === 'paid') expect(set.paid_date).toBeInstanceOf(Date);
       }
+    });
+
+    test('what is owed is what the SALE says - a rounded-off booking is not clamped to the paper', async () => {
+      /* a 209.85 document booked with round-off on becomes a 210 sale */
+      mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+      mockCollection.findOne.mockResolvedValue(invoice({ total: 209.85 }));
+      const r = await repo.applySaleSnapshot(
+        INVOICE,
+        { sale_id: SALE, total: 210, paid_amount: 100, payment_status: 'Partialy Paid' },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      const set = mockCollection.updateOne.mock.calls[0][1].$set;
+      expect(set.sale_total).toBe(210);
+      expect(set.balance).toBe(110);
+      expect(set.status).toBe('partial');
     });
 
     test('one invoice, one sale: a different sale is refused, the same one replays', async () => {
@@ -235,12 +261,16 @@ describe('InvoiceRepository', () => {
       expect(other.status).toBe(false);
       expect(mockCollection.updateOne).not.toHaveBeenCalled();
 
-      const same = await repo.applySaleSnapshot(INVOICE, { sale_id: SALE, paid_amount: 200 }, ctx);
+      const same = await repo.applySaleSnapshot(
+        INVOICE,
+        { sale_id: SALE, total: 200, paid_amount: 200 },
+        ctx
+      );
       expect(same.status).toBe(true);
       const set = mockCollection.updateOne.mock.calls[0][1].$set;
       expect(set.status).toBe('paid');
-      /* the conversion date was stamped the first time - not rewritten */
-      expect(set.converted_date).toBeUndefined();
+      /* the issue date was stamped the first time - not rewritten */
+      expect(set.issued_date).toBeUndefined();
     });
 
     test('a cancelled invoice is left alone', async () => {
@@ -259,40 +289,39 @@ describe('InvoiceRepository', () => {
   });
 
   describe('transitions', () => {
-    test('send moves a draft on and is idempotent afterwards', async () => {
+    test('a draft can be cancelled, with a reason kept on the record', async () => {
       mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
       mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(INVOICE), status: 'draft' });
-      const first = await repo.transition(INVOICE, 'send', {}, ctx);
-      expect(first.status).toBe(true);
-      expect(mockCollection.updateOne.mock.calls[0][1].$set.status).toBe('sent');
-
-      mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(INVOICE), status: 'unpaid' });
-      const again = await repo.transition(INVOICE, 'send', {}, ctx);
-      expect(again.status).toBe(true);
-      expect(again.message).toBe('Invoice already sent');
-      expect(mockCollection.updateOne).toHaveBeenCalledTimes(1);
-    });
-
-    test('cancel is refused once money has moved - refund the sale instead', async () => {
-      for (const status of ['paid', 'partial']) {
-        mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(INVOICE), status });
-        const r = await repo.transition(INVOICE, 'cancel', {}, ctx);
-        expect(r.status).toBe(false);
-        expect(r.message).toMatch(/refund the sale/);
-      }
-      expect(writes()).toBe(0);
-
-      mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
-      mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(INVOICE), status: 'unpaid' });
       const ok = await repo.transition(INVOICE, 'cancel', { reason: 'duplicate' }, ctx);
       expect(ok.status).toBe(true);
       const set = mockCollection.updateOne.mock.calls[0][1].$set;
       expect(set.status).toBe('cancelled');
       expect(set.cancel_reason).toBe('duplicate');
     });
+
+    test('an issued invoice cannot be cancelled - the reversal is a return on its sale', async () => {
+      for (const status of ['unpaid', 'partial', 'paid']) {
+        mockCollection.findOne.mockResolvedValue({
+          _id: new ObjectId(INVOICE),
+          status,
+          sale_number: 'S000042',
+        });
+        const r = await repo.transition(INVOICE, 'cancel', {}, ctx);
+        expect(r.status).toBe(false);
+        expect(r.message).toMatch(/return on sale S000042/);
+      }
+      expect(writes()).toBe(0);
+    });
+
+    test('there is no send state any more - sharing is a fact, not a status', async () => {
+      mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(INVOICE), status: 'draft' });
+      const r = await repo.transition(INVOICE, 'send', {}, ctx);
+      expect(r.status).toBe(false);
+      expect(r.message).toBe('Unknown action');
+    });
   });
 
-  test('sharing records the newest revision and sends a draft', async () => {
+  test('sharing records the newest revision and the first time it left the shop, changing no status', async () => {
     mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
     const r = await repo.recordShare(
       INVOICE,
@@ -302,15 +331,17 @@ describe('InvoiceRepository', () => {
     expect(r.status).toBe(true);
     expect(mockCollection.updateOne.mock.calls[0][1].$set.share.rev).toBe(2);
     const sent = mockCollection.updateOne.mock.calls[1];
-    expect(sent[0].status).toBe('draft');
-    expect(sent[1].$set.status).toBe('sent');
+    expect(sent[0].sent_date).toEqual({ $exists: false });
+    expect(sent[1].$set.sent_date).toBeInstanceOf(Date);
+    expect(sent[1].$set.status).toBeUndefined();
   });
 
-  test('overdue is read off the due date, never stored', () => {
+  test('overdue is read off the due date of an ISSUED invoice, never stored - a proforma is not a receivable', () => {
     const now = new Date('2026-09-02T12:00:00Z');
     const past = new Date('2026-08-01T00:00:00Z');
     expect(InvoiceRepository.isOverdue({ status: 'unpaid', due_date: past }, now)).toBe(true);
-    expect(InvoiceRepository.isOverdue({ status: 'sent', due_date: past }, now)).toBe(true);
+    expect(InvoiceRepository.isOverdue({ status: 'partial', due_date: past }, now)).toBe(true);
+    expect(InvoiceRepository.isOverdue({ status: 'draft', due_date: past }, now)).toBe(false);
     expect(InvoiceRepository.isOverdue({ status: 'paid', due_date: past }, now)).toBe(false);
     expect(InvoiceRepository.isOverdue({ status: 'cancelled', due_date: past }, now)).toBe(false);
     expect(InvoiceRepository.isOverdue({ status: 'unpaid', due_date: null }, now)).toBe(false);
@@ -319,25 +350,23 @@ describe('InvoiceRepository', () => {
     ).toBe(false);
   });
 
-  test('the list answers Overdue as a query on owed + due date, and only whitelisted sorts reach Mongo', async () => {
+  test('the list answers Overdue as a query on issued + owed + due date, and only whitelisted sorts reach Mongo', async () => {
     const calls = {};
     mockCollection.find.mockReturnValue(mkFindChain([], calls));
     const r = await repo.listInvoices({ status: 'overdue', sort: 'due_asc' }, ctx);
     expect(r.status).toBe(true);
     const filter = mockCollection.find.mock.calls[0][0];
-    expect(filter.status).toEqual({ $in: ['draft', 'sent', 'unpaid', 'partial'] });
+    expect(filter.status).toEqual({ $in: ['unpaid', 'partial'] });
     expect(filter.due_date.$lt).toBeInstanceOf(Date);
     expect(calls.sort).toEqual({ due_date: 1, _id: -1 });
 
-    mockCollection.find.mockClear();
-    await repo.listInvoices({ sort: 'created_by' }, ctx);
     const calls2 = {};
     mockCollection.find.mockReturnValue(mkFindChain([], calls2));
     await repo.listInvoices({ sort: 'created_by' }, ctx);
     expect(calls2.sort).toEqual({ created_date: -1 });
   });
 
-  test('a quote becomes an invoice at the quoted numbers, remembering where it came from', async () => {
+  test('a quote becomes a draft invoice at the quoted numbers, remembering where it came from', async () => {
     mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(INVOICE) });
     mockCollection.findOne.mockResolvedValue({ invoice_terms: 'Pay in 30 days.' });
     const quote = {
@@ -367,6 +396,7 @@ describe('InvoiceRepository', () => {
     const r = await repo.createFromQuote(quote, ctx);
     expect(r.status).toBe(true);
     const doc = mockCollection.insertOne.mock.calls[0][0];
+    expect(doc.status).toBe('draft');
     expect(doc.items[0].line_total).toBe(90);
     expect(doc.items[0].tax_value).toBe(5);
     expect(doc.charges[0].computed).toBe(40);

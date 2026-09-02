@@ -3,14 +3,17 @@
 /*
  * Invoices (INVOICING_MODULE_DESIGN). ACL: the sale permission, like quotes -
  * an invoice is a sales document. Reads need sale.read, anything that changes
- * an invoice needs sale.write. Money is never touched here: recording a
- * payment settles the SALE through services/invoice-sync, and the invoice
- * repeats what the sale then says.
+ * an invoice needs sale.write.
+ *
+ * Money is never touched here. Issuing books the SALE (services/invoice-
+ * booking); recording a payment pays that sale down (services/invoice-sync);
+ * the invoice repeats what the sale then says.
  */
 
 const InvoiceRepository = require('../repositories/invoice.repository');
 const QuoteRepository = require('../repositories/quote.repository');
 const invoiceSync = require('../services/invoice-sync');
+const invoiceBooking = require('../services/invoice-booking');
 
 const repository = new InvoiceRepository();
 const quotes = new QuoteRepository();
@@ -63,11 +66,11 @@ module.exports = {
   },
 
   /*
-   * Quote -> invoice. The invoice is created from the quote's own numbers,
-   * then the quote is stamped `invoiced` so it cannot be converted twice
-   * (once as an invoice, once straight to a sale). If the stamp is refused -
-   * the quote was invoiced meanwhile - the invoice just created is removed
-   * again rather than left as a second bill for one promise.
+   * Quote -> invoice. The invoice is created from the quote's own numbers as
+   * a draft (a proforma), then the quote is stamped `invoiced` so it cannot
+   * be converted twice. If the stamp is refused - the quote was invoiced
+   * meanwhile - the invoice just created is removed again rather than left
+   * as a second bill for one promise.
    */
   async fromQuote(req, res) {
     try {
@@ -193,30 +196,33 @@ module.exports = {
     }
   },
 
+  /* Issue: the draft becomes the sale. The server books it; nobody is sent
+     to a till screen. Replay-safe. */
+  async issue(req, res) {
+    try {
+      if (!can(req, 'write')) return fail(res, 'Unauthorized access', 403);
+      const r = await invoiceBooking.issueInvoice(req.params.id, contextOf(req));
+      return r.status ? ok(res, r.data, r.message) : fail(res, r.message);
+    } catch (error) {
+      console.error('Error in invoices issue:', error);
+      return fail(res, error.message, 500);
+    }
+  },
+
   /*
-   * send / cancel change the document alone. convert and sync go through the
-   * sale: the till hands over the sale it just saved, or the page asks for a
-   * refresh, and either way the invoice is rewritten FROM the sale - never
-   * from what the client claims.
+   * cancel changes the document alone (drafts only). sync re-reads the sale:
+   * the invoice is rewritten FROM the sale, never from what a client claims.
    */
   async transition(req, res) {
     try {
       if (!can(req, 'write')) return fail(res, 'Unauthorized access', 403);
       const ctx = contextOf(req);
       const action = String(req.body?.action || '');
-      if (action === 'convert' || action === 'sync') {
+      if (action === 'sync') {
         const found = await repository.getInvoice(req.params.id, ctx);
         if (!found.status) return fail(res, found.message, 404);
-        const saleId = action === 'convert' ? req.body?.sale_id : found.data.sale_id;
-        if (!saleId) {
-          return fail(
-            res,
-            action === 'convert'
-              ? 'A sale id is required'
-              : 'No sale has been recorded for this invoice'
-          );
-        }
-        const r = await invoiceSync.syncSale(saleId, { invoiceId: req.params.id });
+        if (!found.data.sale_id) return fail(res, 'This invoice has not been issued yet');
+        const r = await invoiceSync.syncSale(found.data.sale_id, { invoiceId: req.params.id });
         return r.synced ? ok(res, r.data, r.message) : fail(res, r.message);
       }
       const r = await repository.transition(req.params.id, action, req.body || {}, ctx);
@@ -227,20 +233,28 @@ module.exports = {
     }
   },
 
-  /* Mark paid: settles the sale behind the invoice, then mirrors. */
+  /*
+   * Record a payment, in full or in part. A draft is issued first - the
+   * customer paying IS the moment the bill is real - so nobody has to press
+   * two buttons to record one thing.
+   */
   async payment(req, res) {
     try {
       if (!can(req, 'write')) return fail(res, 'Unauthorized access', 403);
       const ctx = contextOf(req);
-      const found = await repository.getInvoice(req.params.id, ctx);
+      let found = await repository.getInvoice(req.params.id, ctx);
       if (!found.status) return fail(res, found.message, 404);
-      const inv = found.data;
+      let inv = found.data;
       if (inv.status === 'cancelled') return fail(res, 'This invoice was cancelled');
       if (inv.status === 'paid') return fail(res, 'This invoice is already paid');
       if (!inv.sale_id) {
-        return fail(res, 'Record the sale first - Convert to sale, then mark it paid');
+        const issued = await invoiceBooking.issueInvoice(req.params.id, ctx);
+        if (!issued.status) return fail(res, issued.message);
+        found = await repository.getInvoice(req.params.id, ctx);
+        if (!found.status) return fail(res, found.message, 404);
+        inv = found.data;
       }
-      const r = await invoiceSync.settleForInvoice(inv, req.body || {}, ctx);
+      const r = await invoiceSync.recordPayment(inv, req.body || {}, ctx);
       return r.status ? ok(res, r.data, r.message) : fail(res, r.message);
     } catch (error) {
       console.error('Error in invoices payment:', error);

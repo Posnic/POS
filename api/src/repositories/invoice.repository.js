@@ -11,21 +11,26 @@
  * discounts, an A4 sheet, a due date. What it is NOT is a second ledger. The
  * accounting moment is still the sale: stock, tax, the customer's outstanding
  * balance and every report read the `sales` collection and nothing else.
- * "Convert to sale" books the invoice through the ordinary sale path; from
- * then on the invoice's paid/partial/unpaid state is a MIRROR of that sale's
- * payment_status, written by services/invoice-sync whenever the sale changes.
- * Recording a payment against an invoice settles the SALE (the same door the
- * customer page uses), and the mirror follows.
+ *
+ * The international model (Zoho, Odoo, QuickBooks, GST practice): a DRAFT is
+ * a proforma - editable, no stock, no tax. ISSUING it is the sale: the
+ * server books the sale record itself (services/invoice-booking), stock
+ * moves, the tax point is set, the numbers freeze. From then on the
+ * invoice's unpaid/partial/paid state is a MIRROR of that sale's
+ * payment_status, written by services/invoice-sync whenever the sale
+ * changes. Recording a payment - in full or in part - settles the SALE and
+ * the mirror follows. Nobody is walked through a till screen in between.
  *
  * So this repository writes only its own collection. It READS `branches` for
  * the shop's invoice defaults, exactly as quotes read their own. A test pins
  * that no write ever lands anywhere but `invoices`.
  *
  * Lifecycle:
- *   draft ─ sent ─┬─ cancelled
- *                 └─ (convert) ─ unpaid ─ partial ─ paid
- * `overdue` is not a state; it is a fact about an owed invoice past its due
- * date, computed at read time so it can never go stale.
+ *   draft ──┬─ cancelled
+ *           └─ (issue: the sale is booked) ─ unpaid ─ partial ─ paid
+ * `overdue` is not a state; it is a fact about an ISSUED, still-owed invoice
+ * past its due date, computed at read time so it can never go stale. A
+ * proforma is not a receivable, so a draft is never overdue.
  */
 
 const BaseModel = require('../models/base.model');
@@ -33,13 +38,13 @@ const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
 
-const STATUSES = Object.freeze(['draft', 'sent', 'unpaid', 'partial', 'paid', 'cancelled']);
-/* Still authoring: the numbers may change. Once a sale exists they may not -
-   a customer holds a document and the till holds a record, and they must
+const STATUSES = Object.freeze(['draft', 'unpaid', 'partial', 'paid', 'cancelled']);
+/* Still authoring: the numbers may change. Once the sale exists they may not -
+   a customer holds a document and the books hold a record, and they must
    agree. */
-const EDITABLE = Object.freeze(['draft', 'sent']);
-/* Money is still owed on these; they are what "overdue" can apply to. */
-const OWED = Object.freeze(['draft', 'sent', 'unpaid', 'partial']);
+const EDITABLE = Object.freeze(['draft']);
+/* Money is owed on these - issued, not yet paid off; what "overdue" applies to. */
+const OWED = Object.freeze(['unpaid', 'partial']);
 /* A sale has been recorded against these. */
 const BOOKED = Object.freeze(['unpaid', 'partial', 'paid']);
 
@@ -246,8 +251,7 @@ class InvoiceRepository extends BaseModel {
           return {
             status: false,
             data: null,
-            message:
-              'This invoice can no longer be edited - a sale was recorded from it, or it is closed',
+            message: 'This invoice can no longer be edited - it has been issued, or it is closed',
           };
         }
         return { status: true, data: { id: String(id) }, message: 'Invoice updated' };
@@ -561,22 +565,34 @@ class InvoiceRepository extends BaseModel {
         };
       }
 
-      const total = docMath.round2(Number(doc.total) || 0);
-      const paid = Math.max(0, Math.min(total, docMath.round2(Number(snapshot.paid_amount) || 0)));
-      const balance = docMath.round2(Math.max(0, total - paid));
+      /* What is owed is what the SALE says - a shop with round-off on books
+         210 for a 209.85 document, and the customer pays the sale's figure.
+         The printed total stays the document's own; sale_total is kept beside
+         it so the sheet can show both when they differ. */
+      const saleTotal = docMath.round2(
+        Number.isFinite(Number(snapshot.total)) && Number(snapshot.total) > 0
+          ? Number(snapshot.total)
+          : Number(doc.total) || 0
+      );
+      const paid = Math.max(
+        0,
+        Math.min(saleTotal, docMath.round2(Number(snapshot.paid_amount) || 0))
+      );
+      const balance = docMath.round2(Math.max(0, saleTotal - paid));
       const status = balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
       const now = new Date();
       const set = {
         status,
         sale_id: saleId,
         sale_number: String(snapshot.sale_number || doc.sale_number || '').slice(0, 40),
+        sale_total: saleTotal,
         paid_amount: paid,
         balance,
         sale_payment_status: String(snapshot.payment_status || '').slice(0, 20),
         synced_date: now,
         updated_date: now,
       };
-      if (!doc.sale_id) set.converted_date = now;
+      if (!doc.sale_id) set.issued_date = now;
       if (status === 'paid' && !doc.paid_date) set.paid_date = now;
       if (status !== 'paid' && doc.paid_date) set.paid_date = null;
       await collection.updateOne({ _id: doc._id }, { $set: set });
@@ -592,9 +608,10 @@ class InvoiceRepository extends BaseModel {
   }
 
   /*
-   * Transitions that need no sale: send (draft -> sent) and cancel. Anything
-   * involving a sale goes through applySaleSnapshot, because the sale is the
-   * truth and the invoice only repeats it.
+   * The one transition that needs no sale: cancel, while the document is a
+   * draft. Once issued, stock and tax have moved and a customer may hold the
+   * paper - the reversal is a return on the sale (a credit note is the
+   * follow-up), never a word written over a record that says otherwise.
    */
   async transition(id, action, data = {}, context = {}) {
     try {
@@ -607,29 +624,18 @@ class InvoiceRepository extends BaseModel {
       const doc = await collection.findOne({ _id: new ObjectId(String(id)), ...wall });
       if (!doc) return { status: false, data: null, message: 'Invoice not found' };
 
-      if (action === 'send') {
-        if (doc.status !== 'draft') {
-          return { status: true, data: { id: String(doc._id) }, message: 'Invoice already sent' };
-        }
-        await collection.updateOne(
-          { _id: doc._id },
-          { $set: { status: 'sent', sent_date: new Date(), updated_date: new Date() } }
-        );
-        return { status: true, data: { id: String(doc._id) }, message: 'Invoice marked sent' };
-      }
-
       if (action === 'cancel') {
         if (doc.status === 'cancelled') {
           return { status: false, data: null, message: 'This invoice is already cancelled' };
         }
-        /* Money has moved: the sale must be returned through the till, and
-           the invoice follows it. Cancelling the paper over a paid sale would
-           leave a record saying "void" beside a ledger saying "paid". */
-        if (doc.status === 'paid' || doc.status === 'partial') {
+        if (doc.status !== 'draft') {
           return {
             status: false,
             data: null,
-            message: 'A payment was recorded on this invoice - refund the sale instead',
+            message:
+              'This invoice has been issued - reverse it with a return on sale ' +
+              (doc.sale_number || '') +
+              ' instead',
           };
         }
         await collection.updateOne(
@@ -655,43 +661,10 @@ class InvoiceRepository extends BaseModel {
     }
   }
 
-  /* The document's own memory of a payment recorded against it: who, when,
-     how, which reference. The MONEY lives on the sale; this is the note on
-     the paper. Appended, never totalled - the balance comes from the sale. */
-  async recordPayment(id, entry = {}, context = {}) {
-    try {
-      const wall = this._wall(context);
-      if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
-      if (!ObjectId.isValid(String(id))) {
-        return { status: false, data: null, message: 'Invalid invoice id' };
-      }
-      const collection = await this.getCollection(this.collectionName);
-      const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
-        {
-          $push: {
-            payments: {
-              amount: docMath.round2(Number(entry.amount) || 0),
-              method: String(entry.method || '').slice(0, 40),
-              reference: String(entry.reference || '').slice(0, 80),
-              note: String(entry.note || '').slice(0, 200),
-              date: entry.date instanceof Date ? entry.date : new Date(),
-              by: String(entry.by || context.userName || '').slice(0, 80),
-            },
-          },
-          $set: { updated_date: new Date() },
-        }
-      );
-      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
-      return { status: true, data: { id: String(id) }, message: 'Payment noted' };
-    } catch (error) {
-      console.error('Error in InvoiceRepository.recordPayment:', error);
-      return { status: false, data: null, message: error.message };
-    }
-  }
-
-  /* Share metadata: which S3 object currently represents this invoice.
-     Sharing a draft sends it. */
+  /* Share metadata: which S3 object currently represents this invoice, and
+     when it first left the shop. Sharing changes no status - a shared draft
+     is a proforma, a shared issued invoice is a bill - so `sent_date` is
+     a fact on the record, not a state of it. */
   async recordShare(id, share, context) {
     try {
       const wall = this._wall(context);
@@ -716,8 +689,8 @@ class InvoiceRepository extends BaseModel {
       );
       if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
       await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall, status: 'draft' },
-        { $set: { status: 'sent', sent_date: new Date() } }
+        { _id: new ObjectId(String(id)), ...wall, sent_date: { $exists: false } },
+        { $set: { sent_date: new Date() } }
       );
       return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
     } catch (error) {
@@ -726,7 +699,7 @@ class InvoiceRepository extends BaseModel {
     }
   }
 
-  /* Delete: drafts and sent invoices only - a booked one has a sale behind it. */
+  /* Delete: drafts only - an issued invoice has a sale behind it. */
   async deleteInvoice(id, context = {}) {
     try {
       const wall = this._wall(context);
@@ -744,7 +717,7 @@ class InvoiceRepository extends BaseModel {
         return {
           status: false,
           data: null,
-          message: 'Only a draft or sent invoice can be deleted - cancel it instead',
+          message: 'Only a draft can be deleted - an issued invoice is reversed on its sale',
         };
       }
       return { status: true, data: { id: String(id) }, message: 'Invoice deleted' };

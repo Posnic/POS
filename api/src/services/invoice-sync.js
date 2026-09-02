@@ -7,10 +7,12 @@
  * that reads a sale's payment state and repeats it onto the invoice, so the
  * two can never be reconciled in two different ways:
  *
- *   - after a sale is saved (created or edited) with source_invoice_id
+ *   - after a sale is saved (created or edited) with source_invoice_id -
+ *     including the one services/invoice-booking creates when an invoice
+ *     is issued
  *   - after a pending sale is settled from the customer page
- *   - when a payment is recorded on the invoice itself, which settles the
- *     SALE through the same door the customer page uses, and then mirrors
+ *   - when a payment is recorded on the invoice itself, which pays down the
+ *     SALE and its ledger rows, and then mirrors
  *
  * Every entry point is fire-safe: a mirror that fails must never fail the
  * sale it is mirroring. The sale is the truth; a stale invoice heals on the
@@ -140,28 +142,25 @@ async function afterSaleSettled(saleId) {
 }
 
 /*
- * Record a payment against an invoice = settle its SALE.
+ * Record a payment against an invoice = pay down its SALE.
  *
- * v1 settles the whole remaining balance: the sale flips to Paid through the
- * same path the customer page uses, so the customer's ledger and outstanding
- * report agree with the invoice. Partial payments are taken at the till when
- * the sale is recorded (the tender screen already supports them); a second
- * partial payment against an already-recorded sale is a follow-up.
+ * Full or partial: the amount defaults to the balance and may be less. The
+ * sale's PHP-era fields move exactly as the customer page's settlement moves
+ * them - partial_balance is what has been paid, payment_pending what is
+ * still owed, payment_status the word - and with a customer on the sale the
+ * ledger gets the two rows that page would have written by hand: a payment
+ * received ('in'), and the sale's own row carrying the money consumed and
+ * the pending that remains. The customer's balance is then recomputed from
+ * the ledger, so their outstanding drops by exactly what was paid. Without
+ * a customer (a walk-in invoice) there is no ledger to keep, and the sale
+ * alone is written.
  *
- * With a customer on the sale the ledger gets the two rows the customer page
- * would have written by hand: a payment received ('in'), and the sale's own
- * row settled ('out', pending 0) - so the customer's balance is unchanged and
- * their outstanding drops by exactly the invoice. Without a customer (a
- * walk-in invoice) there is no ledger to keep, and the sale is marked paid
- * directly with the same fields the settlement path writes.
+ * The invoice keeps a NOTE of the payment (who, when, how, reference); the
+ * money lives on the sale, and the mirror repeats it.
  */
-async function settleForInvoice(invoice, payment = {}, context = {}) {
+async function recordPayment(invoice, payment = {}, context = {}) {
   if (!invoice || !invoice.sale_id) {
-    return {
-      status: false,
-      data: null,
-      message: 'Record the sale first - Convert to sale, then mark it paid',
-    };
+    return { status: false, data: null, message: 'Issue the invoice first' };
   }
   const sale = await loadSale(invoice.sale_id);
   if (!sale)
@@ -173,18 +172,24 @@ async function settleForInvoice(invoice, payment = {}, context = {}) {
     await syncSale(sale._id, { invoiceId: String(invoice._id) });
     return { status: true, data: { already: true }, message: 'This invoice is already paid' };
   }
-  const requested = Number(payment.amount);
-  if (Number.isFinite(requested) && requested > 0 && round2(requested) < before.balance) {
+  const requested =
+    payment.amount === undefined || payment.amount === null || payment.amount === ''
+      ? before.balance
+      : round2(payment.amount);
+  if (!(requested > 0)) {
+    return { status: false, data: null, message: 'Enter the amount received' };
+  }
+  if (requested > before.balance + 0.005) {
     return {
       status: false,
       data: null,
-      message:
-        'This records the whole balance of ' +
-        before.balance.toFixed(2) +
-        ' as paid. Partial payments are taken at the till when the sale is recorded.',
+      message: 'That is more than the ' + before.balance.toFixed(2) + ' still owed on this invoice',
     };
   }
-  const amount = before.balance;
+  const amount = Math.min(requested, before.balance);
+  const paidAfter = round2(before.paid_amount + amount);
+  const pendingAfter = round2(Math.max(0, before.total - paidAfter));
+  const statusWord = pendingAfter > 0 ? 'Partialy Paid' : 'Paid';
   const now = new Date();
   const method = String(payment.method || '')
     .trim()
@@ -197,19 +202,29 @@ async function settleForInvoice(invoice, payment = {}, context = {}) {
     .slice(0, 200);
   const userName = String(context.userName || '');
   const db = await BaseModel.getDb();
+  const sales = db.collection('sales');
+
+  const saleSet = {
+    partial_balance: paidAfter,
+    payment_pending: pendingAfter,
+    payment_status: statusWord,
+    updated_date: now,
+    updated_by: userName,
+  };
 
   if (sale.customer_id && ObjectId.isValid(String(sale.customer_id))) {
+    const customerId = new ObjectId(String(sale.customer_id));
     const transactions = db.collection('transaction');
     const description =
       'Invoice ' +
       (invoice.invoice_id || '') +
-      ' paid' +
+      (pendingAfter > 0 ? ' part payment' : ' paid') +
       (method ? ' - ' + method : '') +
       (reference ? ' (' + reference + ')' : '');
     /* Payment received: the row the customer page's "add transaction" writes. */
     await transactions.insertOne({
       sale_id: '',
-      customer_id: new ObjectId(String(sale.customer_id)),
+      customer_id: customerId,
       customer_name: String(sale.customer_name || ''),
       customer_phone: String(sale.customer_phone || ''),
       branch_id: sale.branch_id || null,
@@ -225,21 +240,21 @@ async function settleForInvoice(invoice, payment = {}, context = {}) {
       license: sale.license,
       invoice_id: invoice._id,
     });
-    /* The sale's own ledger row exists only for sales tendered as partial;
-       an "unpaid" sale never wrote one, and the settlement below updates by
-       sale_id - so it must exist for the settlement to land. */
+    /* The sale's own row exists only for sales tendered as partial; an
+       unpaid sale never wrote one. It must exist to carry the money
+       consumed and the pending that remains. */
     const own = await transactions.findOne({ sale_id: sale._id, license: sale.license });
     if (!own) {
       await transactions.insertOne({
         sale_id: sale._id,
-        customer_id: new ObjectId(String(sale.customer_id)),
+        customer_id: customerId,
         customer_name: String(sale.customer_name || ''),
         transaction_image: 'category.svg',
         branch_id: sale.branch_id || null,
         license: sale.license,
         amount: 0,
         type: 'out',
-        pending: amount,
+        pending: before.balance,
         sale_total: before.total,
         description: 'Add sale',
         date: now,
@@ -247,29 +262,36 @@ async function settleForInvoice(invoice, payment = {}, context = {}) {
         updated_date: now,
       });
     }
-    const salesRepository = require('../repositories/sale.repository');
-    const r = await salesRepository.salesPaymentCloseModel({
-      sales: [{ id: String(sale._id), amount, paidamount: before.paid_amount }],
-      id: String(sale.customer_id),
-      license: sale.license,
-      branch_id: sale.branch_id ? String(sale.branch_id) : null,
-      loggedUserName: userName,
-      loggedUserId: context.userId ? String(context.userId) : null,
-    });
-    if (!r.status) return { status: false, data: null, message: r.message };
-  } else {
-    await db.collection('sales').updateOne(
-      { _id: sale._id },
+    await transactions.updateOne(
+      { sale_id: sale._id, license: sale.license },
       {
-        $set: {
-          partial_balance: before.total,
-          payment_status: 'Paid',
-          payment_pending: 0.0,
-          updated_date: now,
-          updated_by: userName,
-        },
+        $inc: { amount },
+        $set: { pending: pendingAfter, type: 'out', updated_date: now },
       }
     );
+    await sales.updateOne({ _id: sale._id }, { $set: saleSet, $inc: { wallet_amount: amount } });
+    /* customer balance = money in - money out, the same sum the customer
+       page and the transaction endpoint compute */
+    const filter = { customer_id: customerId, license: sale.license };
+    if (sale.branch_id) filter.branch_id = sale.branch_id;
+    const agg = await transactions
+      .aggregate([
+        { $match: filter },
+        {
+          $group: {
+            _id: null,
+            totalIn: { $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] } },
+            totalOut: { $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] } },
+          },
+        },
+      ])
+      .toArray();
+    const balance = agg.length ? round2((agg[0].totalIn || 0) - (agg[0].totalOut || 0)) : 0;
+    await db
+      .collection('customers')
+      .updateOne({ _id: customerId }, { $set: { balance, updated_date: now } });
+  } else {
+    await sales.updateOne({ _id: sale._id }, { $set: saleSet });
   }
 
   const InvoiceRepository = require('../repositories/invoice.repository');
@@ -280,10 +302,18 @@ async function settleForInvoice(invoice, payment = {}, context = {}) {
     context
   );
   const synced = await syncSale(sale._id, { invoiceId: String(invoice._id) });
+  /* the word comes from what was just written, not from the mirror's reply -
+     the reply is the same truth a moment later, but the message must not
+     depend on a round trip */
+  const word = pendingAfter > 0 ? 'partial' : 'paid';
   return {
     status: true,
-    data: { amount, ...(synced.data || {}) },
-    message: 'Payment recorded - invoice ' + ((synced.data && synced.data.status) || 'paid'),
+    data: { amount, balance: pendingAfter, ...(synced.data || {}) },
+    message:
+      'Payment of ' +
+      amount.toFixed(2) +
+      ' recorded - invoice ' +
+      (word === 'partial' ? 'partially paid, ' + pendingAfter.toFixed(2) + ' still due' : word),
   };
 }
 
@@ -292,6 +322,6 @@ module.exports = {
   syncSale,
   afterSaleSaved,
   afterSaleSettled,
-  settleForInvoice,
+  recordPayment,
   _round2: round2,
 };

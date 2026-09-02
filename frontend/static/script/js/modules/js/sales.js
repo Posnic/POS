@@ -3852,8 +3852,6 @@ PosnicPro.sales.addSale = {
                     source_quote_id: PosnicPro.sales._sourceQuoteId || '',
                     quote_price_honoured: PosnicPro.sales._sourceQuoteId
                         ? (PosnicPro.sales._quoteHonoured ? 'true' : 'false') : undefined,
-                    // invoice lineage rides the same way (INVOICING_MODULE_DESIGN)
-                    source_invoice_id: PosnicPro.sales._sourceInvoiceId || '',
                     multi_payment: payments,
                     enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                     table_number: newSaleTableNumber,
@@ -3881,15 +3879,6 @@ PosnicPro.sales.addSale = {
                         var sid = (response && response.data && (response.data.id || response.data._id)) || null;
                         PosnicPro.post({ url: 'quotes/' + qid + '/transition', data: JSON.stringify({ action: 'convert', sale_id: sid }) },
                             function () { /* stamped */ }, function () { /* quote stays open - visible on the Quotes page */ });
-                    }
-                    // A sale born from an invoice: the server mirrored it on save;
-                    // this is the replay-safe belt for a server that could not.
-                    if (PosnicPro.sales._sourceInvoiceId) {
-                        var iid = PosnicPro.sales._sourceInvoiceId;
-                        PosnicPro.sales._sourceInvoiceId = null;
-                        var isid = (response && response.data && (response.data.id || response.data._id)) || null;
-                        PosnicPro.post({ url: 'invoices/' + iid + '/transition', data: JSON.stringify({ action: 'convert', sale_id: isid }) },
-                            function () { /* mirrored */ }, function () { /* the save-side mirror already ran */ });
                     }
                     $('#sale_tip_input').val('');
                     $('#sale_tip_in_total').prop('checked', false);

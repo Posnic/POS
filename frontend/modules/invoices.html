@@ -45,8 +45,7 @@
                                     <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="overdue">Overdue</a>
                                     <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="owed">Owed</a>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="draft">Draft</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="sent">Sent</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="draft">Draft (proforma)</a>
                                     <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="unpaid">Unpaid</a>
                                     <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="partial">Partially paid</a>
                                     <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="paid">Paid</a>
@@ -141,7 +140,7 @@
                                     <textarea id="ie_terms" class="form-control form-control-sm mb-2" rows="2" maxlength="1500"></textarea>
                                     <div class="q-label">Notes (printed on the invoice)</div>
                                     <textarea id="ie_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
-                                    <small class="text-muted d-block mb-2">The authorised signature comes from Settings &rsaquo; Quotes and signs invoices too.</small>
+                                    <small class="text-muted d-block mb-2">A draft is a proforma: nothing is booked until you press Issue. The authorised signature comes from Settings &rsaquo; Quotes and signs invoices too.</small>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -165,11 +164,15 @@
                                 <i class="feather icon-x"></i>
                             </button>
                         </div>
-                        <!-- Record payment: a quiet inline strip, not a browser prompt -
-                             method and reference are what the accountant asks for later. -->
+                        <!-- Record payment: a quiet inline strip, not a browser prompt.
+                             The amount defaults to the balance and may be less (a part
+                             payment); method and reference are what the accountant asks
+                             for later. -->
                         <div class="ie-pay-strip m-b-10" id="invoices_pay_strip" style="display:none;">
                             <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
-                                <strong class="mr-1">Record payment of <span id="ie_pay_amount"></span></strong>
+                                <strong class="mr-1">Record payment</strong>
+                                <input type="number" id="ie_pay_amount" class="form-control form-control-sm" style="max-width:130px;" min="0.01" step="0.01" aria-label="Amount received">
+                                <span class="text-muted small">of <span id="ie_pay_balance"></span> due</span>
                                 <select id="ie_pay_method" class="form-control form-control-sm" style="max-width:150px;" aria-label="Payment method">
                                     <option value="Cash">Cash</option>
                                     <option value="Bank transfer">Bank transfer</option>
@@ -179,7 +182,7 @@
                                     <option value="Other">Other</option>
                                 </select>
                                 <input type="text" id="ie_pay_reference" class="form-control form-control-sm" style="max-width:200px;" maxlength="80" placeholder="Reference / UTR (optional)">
-                                <button type="button" class="btn btn-sm btn-success" id="ie_pay_confirm">Mark paid</button>
+                                <button type="button" class="btn btn-sm btn-success" id="ie_pay_confirm">Record</button>
                                 <button type="button" class="btn btn-sm btn-light" id="ie_pay_cancel">Not now</button>
                             </div>
                         </div>
