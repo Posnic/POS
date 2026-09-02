@@ -773,7 +773,7 @@ class SettingController extends BaseController {
         return res.status(400).json({ type: 'error', message: 'Valid email required' });
       }
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getForgotUserDetails(req.body.email);
+      const result = await settingModel.getForgotUserDetails(req.body.email, req);
       if (result.status) {
         return res
           .status(200)
