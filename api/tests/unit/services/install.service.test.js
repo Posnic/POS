@@ -98,12 +98,18 @@ jest.mock('../../../utils/demoData', () => ({
   getDemoDataByType: jest.fn(),
 }));
 
+jest.mock('../../../src/services/demo-dataset', () => ({
+  loadDatasetPack: jest.fn(),
+  datasetKeyFor: jest.fn(),
+}));
+
 // ─── Requires ─────────────────────────────────────────────────────────────────
 const InstallRepository = require('../../../src/repositories/install.repository');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const { getDemoDataByType } = require('../../../utils/demoData');
+const demoDataset = require('../../../src/services/demo-dataset');
 const { SUCCESS_MESSAGES, ERROR_MESSAGES } = require('../../../src/constants/install.constants');
 const InstallService = require('../../../src/services/install.service');
 
@@ -155,6 +161,7 @@ function makeRepoMethods(overrides = {}) {
     insertItem: jest.fn(),
     insertCategories: jest.fn(),
     findCategoriesByIds: jest.fn(),
+    findUnitsByBranch: jest.fn().mockResolvedValue([]),
     insertItems: jest.fn(),
     ...overrides,
   };
@@ -244,6 +251,9 @@ describe('InstallService', () => {
 
     // Default fs mock
     setupFsReadFileMock();
+
+    demoDataset.loadDatasetPack.mockResolvedValue(null);
+    demoDataset.datasetKeyFor.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -852,6 +862,44 @@ describe('InstallService', () => {
       const [items] = repo.insertItems.mock.calls[0];
       expect(items).toHaveLength(1);
       expect(items[0].name).toBe('Espresso');
+    });
+
+    test('seeds activity with the same canonical dataset tag used on products', async () => {
+      const datasetPack = {
+        datasetId: 'USD-retail-v1',
+        categories: [{ name: 'Grocery', description: 'Daily goods' }],
+        products: [
+          { name: 'Tea', category: 'Grocery', price: '2.00', stock: '25', unit: 'pack' },
+        ],
+        customers: [{ name: 'Local Customer', phone: '5550100', city: 'Berlin' }],
+        suppliers: [{ name: 'Local Supplier', phone: '5550200', city: 'Berlin' }],
+      };
+      demoDataset.loadDatasetPack.mockResolvedValue(datasetPack);
+      demoDataset.datasetKeyFor.mockReturnValue('retail');
+      repo.insertCategories.mockResolvedValue([CATEGORY_ID]);
+      repo.findCategoriesByIds.mockResolvedValue([{ _id: CATEGORY_ID, name: 'Grocery' }]);
+      repo.insertItems.mockResolvedValue(undefined);
+      jest.spyOn(service, '_insertDemoActivity').mockResolvedValue(undefined);
+
+      await service._insertBusinessTypeDemoData(
+        makeParams({
+          businessType: 'supermarket',
+          currencyCode: 'USD',
+          location: { country: 'Germany', country_id: 'DE', state: 'Berlin', sortname: 'DE' },
+        })
+      );
+
+      expect(repo.insertItems.mock.calls[0][0][0].demo_pack).toBe('retail');
+      expect(service._insertDemoActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pack: 'retail',
+          datasetPeople: {
+            customers: datasetPack.customers,
+            suppliers: datasetPack.suppliers,
+          },
+          location: { country: 'Germany', country_id: 'DE', state: 'Berlin', sortname: 'DE' },
+        })
+      );
     });
 
     test('swallows errors silently (does NOT throw)', async () => {
