@@ -29,8 +29,7 @@
     "gulp": "^5.0.1",
     "gulp-cli": "^3.1.0",
     "sass": "^1.70.0",
-    "terser": "^5.50.0",
-    "yargs": "^15.4.1"
+    "terser": "^5.50.0"
   },
   "private": true
 }
