@@ -15,8 +15,9 @@ Tracking issue: [#32 Language pack contributions](https://github.com/Posnic/POS/
 
 ```
 languages/
-  ta.json      Tamil
-  <code>.json  one file per language
+  _glossary.json   the shared vocabulary: one row per term, every language
+  ta.json          Tamil
+  <code>.json      one file per language
 ```
 
 Each file maps a key to the words a shopkeeper reads:
@@ -35,6 +36,80 @@ understand here:
 > **A half-translated language is not broken.** Every key you have not done
 > falls back to English. You can translate ten strings, open a pull request,
 > and it is a real improvement. Nobody is waiting for you to do all of them.
+
+---
+
+## The fastest way to help: review a draft
+
+Thirteen languages have a **draft** pack already. Every word in them was seeded
+from the glossary, and **not one has been read by somebody who speaks the
+language.** That is why drafts are not offered to shopkeepers: a draft is a
+starting point for you to correct, never a finished translation.
+
+| | |
+|---|---|
+| Drafts | Hindi, Malayalam, Kannada, Telugu, Sinhala, Nepali, Arabic, French, Spanish, Portuguese, Bahasa Indonesia, Thai |
+| Reviewed | English, Tamil |
+
+**Reviewing is more valuable than translating more keys.** About 200 keys per
+language are filled in; the other 450 show English, which is readable. A wrong
+word is not: it looks exactly like a right one until something goes wrong at
+the counter.
+
+See your language on a real screen at **https://develop.posnic.io** - the
+sandbox is the one place drafts are switched on. Pick your language from the
+menu in the header, then walk through a sale.
+
+When you find something wrong, fix `languages/<code>.json` and open a pull
+request. Ten corrections are a real contribution. Say in the PR that you speak
+the language - that is the thing we cannot check ourselves.
+
+### Getting a draft promoted
+
+A language stops being a draft when somebody who speaks it has been through the
+common screens: login, dashboard, new sale, payment, sales history, items,
+customers, reports. Say so in your PR and remove `draft: true` from its line in
+`frontend/gulpfile.js/config.js`. That one line is what puts it in front of
+shopkeepers.
+
+---
+
+## The glossary
+
+`languages/_glossary.json` holds the words that appear everywhere - Save, Item,
+Customer, Total - with every language on one line:
+
+```json
+"Save": {"ta": "சேமி", "hi": "सहेजें", "fr": "Enregistrer", "es": "Guardar"}
+```
+
+Tamil is the cautionary tale for why this exists. Translated key by key over
+several years, it ended up with `Apply` and `Search` sharing a word, `Item
+position` labelled with the words for `branch access`, and every Edit button
+reading as `Edited`, past tense. Nobody made a mistake. It is what happens when
+the same English word is translated seven times by people who cannot see each
+other's work.
+
+Fixing a glossary row fixes every screen that uses the word at once:
+
+```bash
+# edit languages/_glossary.json, then
+node tests/tools/seed-from-glossary.js            # what would change
+node tests/tools/seed-from-glossary.js --write    # do it
+```
+
+The seeder **never overwrites a translation somebody has already written.** If
+you have translated a key, your word wins over the glossary, always - you have
+seen the screen it appears on and the glossary has not.
+
+A blank in the glossary is deliberate, not a gap to fill with a guess. It means
+nobody has confidently settled that term, and English shows instead.
+
+### Words that must never be translated
+
+`GST`, `CGST`, `SGST`, `IGST`, `HSN`, `SKU`, `GTIN`, `EAN`, `UPI`, `MRP` and the
+rest of the `doNotTranslate` list stay in Latin script exactly as they are. A
+shopkeeper matches them against a government form, character for character.
 
 ---
 
