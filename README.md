@@ -161,9 +161,20 @@ source is AGPL-3.0-only, while bundled components keep their separate licences.
 | Local database and backups | ✅ | ✅ |
 | Documented printer, scanner, drawer and scale paths | ✅ | ✅ |
 | GST invoicing and reports | ✅ | ✅ |
+| Runs on your own server, used from a browser | ✅ | ✅ |
 | Sync across tills and branches | | ✅ |
 | Off-site backups, remote dashboard | | ✅ |
 | Installer under your own brand | | ✅ |
+
+Posnic runs two ways, both free: as a desktop application on the shop
+computer, or on **a server you control**, used from a browser on any till or
+tablet on your network. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) — one
+command on Ubuntu, and an honest account of the certificate, firewall and
+backups you take on with it.
+
+Self-hosting does **not** include sync between separate tills or branches. That
+is Cloud. A self-hosted Posnic is one database several people use at once,
+which is what most single-shop setups want.
 
 **We do not move features from the left column to the right.** What is free
 today stays free. Cloud has to earn its price by being useful, not by making
