@@ -377,7 +377,23 @@ const userSchema = new mongoose.Schema(
       default: 'en',
       /* The languages the app offers (frontend/gulpfile.js/config.js), plus
          'de' for records that already hold it. */
-      enum: ['en', 'ta', 'hi', 'ml', 'kn', 'te', 'si', 'ne', 'ar', 'fr', 'es', 'pt', 'id', 'th', 'de'],
+      enum: [
+        'en',
+        'ta',
+        'hi',
+        'ml',
+        'kn',
+        'te',
+        'si',
+        'ne',
+        'ar',
+        'fr',
+        'es',
+        'pt',
+        'id',
+        'th',
+        'de',
+      ],
     },
     themePreference: {
       type: String,
