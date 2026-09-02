@@ -321,7 +321,11 @@ class UsersController extends BaseController {
 
         // If base64 fails, try without base64 (old format)
         if (!passwordValid) {
-          passwordValid = await bcrypt.compare(password, user.password);
+          /* String() here as well as above: bcrypt.compare on a non-string
+             behaves differently across versions, and `password` arrives
+             straight from the request body where it can be an object or an
+             array. The base64 branch already coerced; this one did not. */
+          passwordValid = await bcrypt.compare(String(password), user.password);
         }
       }
 

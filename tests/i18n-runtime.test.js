@@ -241,3 +241,76 @@ test('a first run starts in the browser language the build ships', () => {
   assert.equal(PosnicPro.i18n.code(), 'en');
   assert.equal(PosnicPro.i18n.chosen(), false, 'asking for the code must not count as choosing');
 });
+
+/* ------------------------------------------------- a pack is somebody else's --- */
+
+/*
+ * WHY THESE EXIST.
+ *
+ * apply() used to do `el.innerHTML = value` for any translation containing a
+ * tag, justified by a comment saying the packs were "this repository's own
+ * files... not user input". That was true when it was written, and it stopped
+ * being true the same week: translations were opened to outside contributors,
+ * twelve packs were seeded for strangers to correct, and develop.posnic.io was
+ * built to serve their work.
+ *
+ * A pack is now a pull request from somebody we do not know, reviewed by
+ * somebody who by definition cannot read the language - `<img src=x
+ * onerror=...>` inside a Malayalam string looks exactly like Malayalam to the
+ * reviewer. Signing the asset channel proves where a pack came from, never
+ * that it is safe to run.
+ *
+ * These are written against the running DOM rather than the source, because
+ * what matters is what reaches the page, not how the code is spelled.
+ */
+
+test('a script tag in a translation never becomes a script', () => {
+  const dom = page('<h5><lang class="lang_item_name">Item name</lang></h5>');
+  const { PosnicPro } = loadI18n(dom, {
+    lang_item_name: 'Item <script>window.__pwned = true;<\/script> name',
+  });
+  PosnicPro.i18n.apply();
+  const el = dom.window.document.querySelector('lang');
+  assert.equal(el.querySelector('script'), null, 'a <script> element reached the page');
+  assert.equal(dom.window.__pwned, undefined, 'the script ran');
+  /* The words survive: unwrapping keeps what the translator wrote. */
+  assert.match(el.textContent, /Item/);
+});
+
+test('an image with an onerror handler never reaches the page', () => {
+  /* The realistic payload: no <script> needed, and it fires on its own. */
+  const dom = page('<h5><lang class="lang_item_name">Item name</lang></h5>');
+  const { PosnicPro } = loadI18n(dom, {
+    lang_item_name: '<img src=x onerror="window.__pwned = true">Nombre',
+  });
+  PosnicPro.i18n.apply();
+  const el = dom.window.document.querySelector('lang');
+  assert.equal(el.querySelector('img'), null, 'an <img> reached the page');
+  assert.equal(dom.window.__pwned, undefined, 'the handler ran');
+  assert.equal(el.textContent.trim(), 'Nombre');
+});
+
+test('an event handler is stripped from a tag that is otherwise allowed', () => {
+  /* <span> is on the allowlist; onclick is not, and the two arrive together. */
+  const dom = page('<p><lang class="lang_item_name">Item name</lang></p>');
+  const { PosnicPro } = loadI18n(dom, {
+    lang_item_name: '<span id="keep" class="x" onclick="window.__pwned = true">Article</span>',
+  });
+  PosnicPro.i18n.apply();
+  const span = dom.window.document.getElementById('keep');
+  assert.ok(span, 'an allowed tag was removed');
+  assert.equal(span.getAttribute('onclick'), null, 'the handler survived');
+  assert.equal(span.getAttribute('class'), 'x', 'class should be kept');
+  assert.equal(span.textContent, 'Article');
+});
+
+test('an anchor cannot be smuggled in to send somebody elsewhere', () => {
+  const dom = page('<p><lang class="lang_item_name">Item name</lang></p>');
+  const { PosnicPro } = loadI18n(dom, {
+    lang_item_name: 'See <a href="https://evil.example">our offer</a>',
+  });
+  PosnicPro.i18n.apply();
+  const el = dom.window.document.querySelector('lang');
+  assert.equal(el.querySelector('a'), null, 'a link reached the page');
+  assert.match(el.textContent, /our offer/, 'the words should survive the unwrap');
+});
