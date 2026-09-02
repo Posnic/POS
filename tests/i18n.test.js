@@ -574,3 +574,4 @@ test('no language pack has fallen behind the UI', () => {
     .map((r) => `${r.lang} at ${r.coverage}% (e.g. ${r.missing.slice(0, 3).join(', ')})`);
   assert.deepEqual(behind, [], 'packs below 95%:\n  ' + behind.join('\n  '));
 });
+

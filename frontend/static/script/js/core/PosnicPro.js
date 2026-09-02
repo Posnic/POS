@@ -4388,6 +4388,74 @@ PosnicPro.i18n = {
      * Takes a root so markup rendered later - a modal, an AJAX table - can be
      * translated the moment it exists rather than waiting for a reload.
      */
+    /*
+     * The few tags a translation is allowed to carry.
+     *
+     * Not a general HTML subset - just what the packs actually need: a feather
+     * icon before "Download", and the <span> the code later rewrites with a
+     * screen name. Anything else is unwrapped, keeping its text.
+     */
+    _allowedTags: { SPAN: 1, I: 1, B: 1, STRONG: 1, EM: 1, SMALL: 1, BR: 1, U: 1 },
+    _allowedAttrs: { id: 1, class: 1 },
+
+    /*
+     * Put a translation that carries markup onto the page, safely.
+     *
+     * This was `el.innerHTML = value`, justified by a comment saying the packs
+     * were "this repository's own files... not user input". That was true when
+     * it was written and stopped being true the same week, when translations
+     * were opened to outside contributors and twelve packs were seeded for
+     * strangers to correct. A pack is now a pull request reviewed by somebody
+     * who by definition cannot read the language: `<img src=x onerror=...>`
+     * inside a Malayalam string looks exactly like Malayalam. Signing the asset
+     * channel proves where a pack came from, never that it is safe to run.
+     *
+     * The parse happens inside a <template>, whose content is an inert
+     * fragment - scripts do not run and images do not load, even for what is
+     * about to be thrown away. Only then is the tree walked and anything
+     * outside the allowlist removed, so what reaches the page is a small,
+     * known set of tags carrying nothing but id and class.
+     */
+    _setMarkup: function (el, value) {
+        var doc = el.ownerDocument;
+        var tpl = doc.createElement('template');
+        /* Inert: nothing here is rendered, fetched or executed. */
+        tpl.innerHTML = value;
+
+        var clean = function (node) {
+            var child = node.firstChild;
+            while (child) {
+                var next = child.nextSibling;
+                if (child.nodeType === 1) {
+                    if (!PosnicPro.i18n._allowedTags[child.tagName]) {
+                        /* Unwrap rather than delete: a translator who wrapped a
+                           word in something we do not allow still wrote the
+                           word, and losing it silently would be worse. */
+                        clean(child);
+                        while (child.firstChild) node.insertBefore(child.firstChild, child);
+                        node.removeChild(child);
+                    } else {
+                        var attrs = child.attributes;
+                        for (var a = attrs.length - 1; a >= 0; a--) {
+                            if (!PosnicPro.i18n._allowedAttrs[attrs[a].name.toLowerCase()]) {
+                                child.removeAttribute(attrs[a].name);
+                            }
+                        }
+                        clean(child);
+                    }
+                } else if (child.nodeType !== 3) {
+                    /* Comments and anything else carry no words. */
+                    node.removeChild(child);
+                }
+                child = next;
+            }
+        };
+        clean(tpl.content);
+
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(tpl.content);
+    },
+
     apply: function (root) {
         var dict = PosnicPro.i18n._dict;
         if (!dict) return;
@@ -4409,19 +4477,34 @@ PosnicPro.i18n = {
                 PosnicPro.i18n._english.set(el, original);
             }
             /*
-             * A handful of strings carry markup: an icon before "Download", a
-             * <span> the code rewrites later, an &nbsp;. Three cases:
+             * A handful of strings carry an &nbsp; or similar entity. Three
+             * cases:
              *
-             *   the translation carries the markup too  -> use it as markup
              *   the page has markup, the words do not   -> keep the page's
              *                                              icon, swap the words
              *   plain text on both sides                -> the common case
+             *   the translation contains a tag          -> shown as text
              *
-             * The packs are this repository's own files, delivered through
-             * the signed asset channel; they are not user input, which is
-             * what makes innerHTML acceptable here and nowhere else.
+             * A TAG IS NEVER TREATED AS MARKUP. This used to read
+             * `if (/[<&]/.test(value)) el.innerHTML = value`, justified by the
+             * packs being "this repository's own files... not user input".
+             *
+             * That stopped being true the day translations were opened to
+             * outside contributors. A pack is now a pull request from a
+             * stranger, reviewed by somebody who by definition cannot read the
+             * language - `<img src=x onerror=...>` in a Malayalam string looks
+             * exactly like Malayalam to the reviewer. Signing the asset channel
+             * proves where a pack came from, not that it is safe.
+             *
+             * Entities are still decoded, because &nbsp; is legitimate and
+             * common. A detached <textarea> parses its content as text rather
+             * than markup, so nothing is ever constructed as an element - and
+             * it is only reached for values with no `<` in them at all.
              */
-            if (/[<&]/.test(value)) { el.innerHTML = value; return; }
+            if (/[<&]/.test(value)) {
+                PosnicPro.i18n._setMarkup(el, value);
+                return;
+            }
             if (el.children && el.children.length) {
                 var swapped = false;
                 for (var n = el.firstChild; n; n = n.nextSibling) {
