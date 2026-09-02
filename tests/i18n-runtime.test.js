@@ -162,3 +162,70 @@ test('changing language does not navigate', () => {
   assert.ok(!/location\s*\./.test(changeFn), 'change() still navigates');
   assert.match(changeFn, /apply\(\)/, 'change() does not redraw');
 });
+
+/* ------------------------------------------------- markup in the words --- */
+
+test('a text-only translation keeps the icon the page carries', () => {
+  /*
+   * "Download" sits after a feather icon inside its <lang>. Tamil translated
+   * the word alone, and textContent threw the icon away with the English.
+   */
+  const dom = page('<button><lang class="lang_download_title"><i class="feather icon-download mr-2"></i>Download </lang></button>');
+  const { PosnicPro } = loadI18n(dom, { lang_download_title: 'பதிவிறக்க' });
+  PosnicPro.i18n.apply();
+  const el = dom.window.document.querySelector('lang');
+  assert.ok(el.querySelector('i.feather'), 'the icon was lost');
+  assert.equal(el.textContent, 'பதிவிறக்க');
+});
+
+test('a translation that carries the same markup is used as markup', () => {
+  /* The code later rewrites #resetHeading to "Sale" or "Receiving"; the span
+     has to survive translation or that write lands nowhere. */
+  const dom = page('<p><lang class="lang_reset_want">Do you want to reset cart and proceed to New <span id="resetHeading">Sale</span> ?</lang></p>');
+  const { PosnicPro } = loadI18n(dom, {
+    lang_reset_want: 'Réinitialiser le panier et passer à une nouvelle <span id="resetHeading">Vente</span> ?',
+  });
+  PosnicPro.i18n.apply();
+  const span = dom.window.document.getElementById('resetHeading');
+  assert.ok(span, 'the span the code rewrites later is gone');
+  assert.equal(span.textContent, 'Vente');
+});
+
+test('switching back to English restores what the page shipped with', () => {
+  const dom = page('<h5><lang class="lang_item_name">Item name</lang></h5>');
+  const { PosnicPro } = loadI18n(dom, TA, { language_code: 'ta' });
+  PosnicPro.i18n.apply();
+  assert.equal(dom.window.document.querySelector('lang').textContent, 'பொருளின் பெயர்');
+  return PosnicPro.i18n.change('en').then(() => {
+    assert.equal(dom.window.document.querySelector('lang').textContent, 'Item name');
+    assert.equal(dom.window.document.documentElement.getAttribute('lang'), 'en');
+    assert.equal(dom.window.document.documentElement.getAttribute('dir'), 'ltr');
+  });
+});
+
+/* ---------------------------------------------- the document's language --- */
+
+test('the document takes the language and its direction', () => {
+  const dom = page('');
+  const { PosnicPro } = loadI18n(dom, {}, { language_code: 'ar' });
+  PosnicPro.i18n.mark();
+  assert.equal(dom.window.document.documentElement.getAttribute('lang'), 'ar');
+  assert.equal(dom.window.document.documentElement.getAttribute('dir'), 'rtl');
+  return PosnicPro.i18n.change('ta').then(() => {
+    assert.equal(dom.window.document.documentElement.getAttribute('lang'), 'ta');
+    assert.equal(dom.window.document.documentElement.getAttribute('dir'), 'ltr');
+  });
+});
+
+test('a first run starts in the browser language the build ships', () => {
+  const dom = page('');
+  const { PosnicPro } = loadI18n(dom, {});
+  const offered = [{ code: 'en' }, { code: 'ta' }, { code: 'pt' }, { code: 'pt-BR' }];
+  assert.equal(PosnicPro.i18n.detect(offered, ['pt-BR', 'en-US']), 'pt-BR', 'an exact tag should win');
+  assert.equal(PosnicPro.i18n.detect(offered, ['pt-PT', 'en-US']), 'pt', 'the primary subtag is tried next');
+  assert.equal(PosnicPro.i18n.detect(offered, ['ta-IN']), 'ta');
+  assert.equal(PosnicPro.i18n.detect(offered, ['de-DE', 'fr']), 'en', 'nothing shipped means English');
+  assert.equal(PosnicPro.i18n.chosen(), false, 'a fresh machine has chosen nothing');
+  assert.equal(PosnicPro.i18n.code(), 'en');
+  assert.equal(PosnicPro.i18n.chosen(), false, 'asking for the code must not count as choosing');
+});
