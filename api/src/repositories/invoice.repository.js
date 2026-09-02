@@ -661,6 +661,47 @@ class InvoiceRepository extends BaseModel {
     }
   }
 
+  /*
+   * The document's own memory of a payment recorded against it: who, when,
+   * how, which reference. The MONEY lives on the sale; this is the note on
+   * the paper. Appended, never totalled - the balance comes from the sale.
+   *
+   * This method was lost once, between two edits of the block above it, and
+   * the mirror's own tests did not notice because they mock this class. The
+   * contract test in invoice.repository.test.js now reads the callers.
+   */
+  async recordPayment(id, entry = {}, context = {}) {
+    try {
+      const wall = this._wall(context);
+      if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
+      if (!ObjectId.isValid(String(id))) {
+        return { status: false, data: null, message: 'Invalid invoice id' };
+      }
+      const collection = await this.getCollection(this.collectionName);
+      const result = await collection.updateOne(
+        { _id: new ObjectId(String(id)), ...wall },
+        {
+          $push: {
+            payments: {
+              amount: docMath.round2(Number(entry.amount) || 0),
+              method: String(entry.method || '').slice(0, 40),
+              reference: String(entry.reference || '').slice(0, 80),
+              note: String(entry.note || '').slice(0, 200),
+              date: entry.date instanceof Date ? entry.date : new Date(),
+              by: String(entry.by || context.userName || '').slice(0, 80),
+            },
+          },
+          $set: { updated_date: new Date() },
+        }
+      );
+      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
+      return { status: true, data: { id: String(id) }, message: 'Payment noted' };
+    } catch (error) {
+      console.error('Error in InvoiceRepository.recordPayment:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   /* Share metadata: which S3 object currently represents this invoice, and
      when it first left the shop. Sharing changes no status - a shared draft
      is a proforma, a shared issued invoice is a bill - so `sent_date` is
