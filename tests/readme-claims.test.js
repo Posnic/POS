@@ -216,7 +216,7 @@ test('every package points support and source at this repository', () => {
 
 test('the product package uses the canonical product homepage', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  assert.equal(pkg.homepage, 'https://posnic.com/');
+  assert.equal(pkg.homepage, 'https://posnic.io/');
 });
 
 test('every locked sharp copy includes the symlink-validation fix', () => {
