@@ -982,6 +982,103 @@ class SettingModel extends BaseModel {
     }
   }
 
+  async updateStarterLocale(data = {}) {
+    try {
+      if (!this.branchId || !this.licenseId) {
+        throw new Error('Branch context is required');
+      }
+
+      const collection = await this.getCollection();
+      const text = (value) => (value === undefined || value === null ? '' : String(value).trim());
+      const currencySymbol = text(data.currencyText || data.currency_type) || '₹';
+      const currencyName = text(data.currencyTextname || data.currency_setting) || currencySymbol;
+      const currencyValue = [
+        {
+          currency_text: currencyName,
+          currency_sign: currencySymbol,
+        },
+      ];
+
+      let sortname = '';
+      try {
+        const countriesJsonPath = path.join(
+          __dirname,
+          '..',
+          '..',
+          '..',
+          'api',
+          'src',
+          'json',
+          'countries.json'
+        );
+        const countriesData = JSON.parse(fs.readFileSync(countriesJsonPath, 'utf8'));
+        const countryMatch = countriesData.countries?.find((c) => c.value === text(data.setting_country));
+        if (countryMatch?.sortname) {
+          sortname = countryMatch.sortname;
+        }
+      } catch (err) {
+        console.warn('Could not load countries.json for starter locale sortname lookup:', err.message);
+      }
+
+      let cleanTimezone = text(data.time_zone) || 'Asia/Kolkata';
+      const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
+      if (gmtOffsetMatch) {
+        cleanTimezone = gmtOffsetMatch[1].trim();
+      }
+
+      const updateData = {
+        country: text(data.setting_country),
+        country_id: text(data.country_id),
+        state: text(data.setting_state),
+        sortname,
+        currency: currencySymbol,
+        currency_text: text(data.currency_setting) || currencyName,
+        currency_type: currencySymbol,
+        currency_value: currencyValue,
+        time_zone: cleanTimezone,
+        client_dateformat: text(data.storedate) || 'dd/mm/yyyy',
+        server_dateformat: text(data.serverdate) || 'd/m/Y',
+        dateformat_text: text(data.dateText) || '01/01/2018 - dd/mm/yyyy',
+      };
+
+      const filter = {
+        _id: this.normalizeId(this.branchId),
+        license: this.normalizeId(this.licenseId),
+      };
+      const result = await collection.updateOne(filter, { $set: updateData });
+      if (result.matchedCount === 0) {
+        return {
+          status: false,
+          data: null,
+          message: 'Branch not found or license mismatch',
+        };
+      }
+
+      return {
+        status: true,
+        data: {
+          country: updateData.country,
+          state: updateData.state,
+          country_id: updateData.country_id,
+          currency_text: updateData.currency_text,
+          currency_type: updateData.currency_type,
+          time_zone: updateData.time_zone,
+          clientdate: updateData.client_dateformat,
+          serverdate: updateData.server_dateformat,
+          dateformat_text: updateData.dateformat_text,
+        },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in updateStarterLocale:', error);
+      return {
+        status: false,
+        data: null,
+        message: error.message,
+      };
+    }
+  }
+
   toBoolean(value) {
     if (typeof value === 'boolean') return value;
     if (typeof value === 'string') {

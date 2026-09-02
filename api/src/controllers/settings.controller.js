@@ -500,6 +500,26 @@ class SettingController extends BaseController {
     }
   }
 
+  async updateStarterLocale(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      settingsService.setModel(settingModel);
+
+      const result = await settingsService.updateStarterLocale(req.body);
+      if (result.status) {
+        return res
+          .status(200)
+          .json({ type: 'success', message: 'Starter settings updated', data: result.data });
+      }
+      return res
+        .status(404)
+        .json({ type: 'error', message: result.message || 'Starter settings not updated', data: result.data });
+    } catch (error) {
+      console.error('Error updating starter locale:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
   /*
    * One branch's module switches (M4 branch selector). Any branch of THIS
    * license only - the model's license filter is the wall; a foreign id
