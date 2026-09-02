@@ -53,7 +53,7 @@ test('it acts only when the switch actually MOVED', () => {
    * there, and - since the owner made off a deletion - purge on on->off, but
    * only when the person consented at the moment of unchecking.
    */
-  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
+  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options)');
   assert.match(fn, /if \(!on \|\| was !== false\) \{ return; \}/, 'the seed fires for states other than off-to-on');
   assert.match(fn, /if \(!on && was !== false && PosnicPro\.settings\._demoPurgeArmed\)/,
     'the purge must need BOTH the on->off transition AND the consent');
@@ -76,7 +76,7 @@ test('switching off deletes only with consent, and a failed save deletes nothing
   assert.match(confirm, /products, sales, quotes, customers and suppliers/);
   assert.match(confirm, /kept/);
 
-  const sync = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
+  const sync = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options)');
   assert.match(sync, /PosnicPro\.delete\(\{ url: 'items\/demo'/);
 });
 
@@ -114,7 +114,7 @@ test('"already here" is not reported as a failure', () => {
    * there. The shop asked to see the samples and is about to - telling them
    * something went wrong would be false.
    */
-  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg)');
+  const fn = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options)');
   assert.match(fn, /\/already\/i\.test/, 'an already-seeded shop is shown an error');
 });
 

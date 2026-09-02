@@ -186,7 +186,7 @@ test('the progress bar says which work is running', () => {
    * REMOVED is a bar describing work other than the work being done.
    */
   const prog = between(settingsJs, 'PosnicPro.settings.demoProgress = {', 'PosnicPro.settings.syncDemoDataAfterSave');
-  assert.match(prog, /open: function \(title\)/);
+  assert.match(prog, /open: function \(title, options\)/);
   assert.match(prog, /step: function \(label\)/);
   assert.match(prog, /_scripted = false/);
   // The scripted narration stands down once the caller starts naming stages.
