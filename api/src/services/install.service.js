@@ -270,21 +270,7 @@ class InstallService {
           ).currency_text,
         });
       } else {
-        console.log('⚠️ Loading default single product...');
-        await this._insertDefaultCategoryAndItem({
-          branchId,
-          branchName: data.register_companyname.trim(),
-          userId,
-          username: data.register_username,
-          licenseId,
-          now,
-          userBranch,
-          supplierId,
-          supplierName: 'General Supplier',
-          taxId,
-          taxData,
-          unitId,
-        });
+        console.log('Clean catalogue selected. No starter products inserted.');
       }
 
       return {
@@ -1242,8 +1228,7 @@ class InstallService {
 
       if (!demoData) {
         console.error('❌ Invalid business type:', businessType);
-        // Fall back to default data
-        return await this._insertDefaultCategoryAndItem(params);
+        return;
       }
 
       console.log(
