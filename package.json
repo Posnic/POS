@@ -52,7 +52,8 @@
     "badges:fix": "node scripts/check-badges.js --fix",
     "check:advisories": "node scripts/check-advisories.js",
     "release:sbom": "node scripts/generate-release-sboms.js",
-    "art": "node scripts/make-installer-art.js"
+    "art": "node scripts/make-installer-art.js",
+    "recover": "node scripts/recover-access.js"
   },
   "build": {
     "appId": "com.posnic.app",

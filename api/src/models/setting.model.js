@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
+const { publicPageUrl } = require('../utils/public-url');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -3845,7 +3846,11 @@ class SettingModel extends BaseModel {
   }
 
   // Forgot Password
-  async getForgotUserDetails(email) {
+  /*
+   * @param {object} [req] the request, used ONLY to work out this shop's own
+   *                       public address for the link in the email.
+   */
+  async getForgotUserDetails(email, req = null) {
     try {
       const usersCollection = await this.getCollection('users');
       const user = await usersCollection.findOne({ email: email });
@@ -3863,20 +3868,36 @@ class SettingModel extends BaseModel {
       const expireDate = new Date(Date.now() + 10 * 60 * 1000);
       await usersCollection.updateOne({ _id: user._id }, { $set: { expire_date: expireDate } });
 
-      // Build reset link using userkey (matching PHP lines 700-711)
-      const serverName = process.env.SERVER_NAME || 'localhost';
-      const cleanServerName = serverName.replace(/^api\./, '');
-      const forgotPasswordId = encodeURIComponent(user.userkey);
+      /*
+       * The link goes to THIS shop, not to a hardcoded address.
+       *
+       * This used to read SERVER_NAME, which is set on no process in the
+       * estate, fall through to the localhost branch, and mail every hosted
+       * shop a link to http://localhost:3000 - the recipient's own computer,
+       * on a port with nothing listening. Self-service recovery has therefore
+       * never once worked for a cloud shop, which is why a locked-out owner
+       * needed five days and a database session to get back into his till.
+       *
+       * publicPageUrl derives the address from the request, but accepts only a
+       * host on a domain we actually run: a link inside an email we send is
+       * exactly what password-reset poisoning targets.
+       */
+      const basePath = publicPageUrl(req, 'forgotpassword.html', {
+        forgotpassword_Id: user.userkey,
+      });
 
-      let basePath;
-      if (cleanServerName.includes('dev.posnic.io')) {
-        basePath = `http://pro.dev.posnic.io/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else if (cleanServerName.includes('localhost')) {
-        // For local development
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        basePath = `${frontendUrl}/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else {
-        basePath = `https://www.posnic.io/forgotpassword?forgotpassword_Id=${forgotPasswordId}`;
+      if (!basePath) {
+        /* Refused rather than sent. A dead link and a poisoned link are both
+           worse than an error somebody can see and fix. */
+        console.error(
+          '[forgot-password] no trustworthy public address for this shop - ' +
+            'set PUBLIC_BASE_URL. No email sent.'
+        );
+        return {
+          status: false,
+          data: null,
+          message: 'Password reset is not configured for this shop. Please contact support.',
+        };
       }
 
       // Send email via Brevo (matching PHP lines 714-729)
