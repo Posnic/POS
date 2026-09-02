@@ -203,6 +203,18 @@ test('switching back to English restores what the page shipped with', () => {
   });
 });
 
+test('switching back to English ignores mutable DOM attributes', () => {
+  const dom = page('<h5><lang class="lang_item_name">Item name</lang></h5>');
+  const { PosnicPro } = loadI18n(dom, TA, { language_code: 'ta' });
+  PosnicPro.i18n.apply();
+  const label = dom.window.document.querySelector('lang');
+  label.setAttribute('data-en', '<img src=x onerror=alert(1)>');
+  return PosnicPro.i18n.change('en').then(() => {
+    assert.equal(label.textContent, 'Item name');
+    assert.equal(label.querySelector('img'), null);
+  });
+});
+
 /* ---------------------------------------------- the document's language --- */
 
 test('the document takes the language and its direction', () => {
