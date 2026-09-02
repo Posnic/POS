@@ -4883,13 +4883,76 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: var(--theme-card-bg, #ffffff);
     color: var(--theme-text-primary, #16203a);
     border: 1px solid var(--theme-border-color, #e5e8ef);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
+}
+
+#feature_intro_modal .modal-dialog {
+    max-width: min(1120px, calc(100vw - 28px));
+}
+
+.first-run-shell {
+    display: grid;
+    grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.35fr);
+    min-height: 620px;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+}
+
+.first-run-visual {
+    position: relative;
+    min-height: 100%;
+    background: var(--theme-table-row-hover, rgba(80, 111, 228, 0.08));
+    overflow: hidden;
+}
+
+.first-run-visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.first-run-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10, 25, 47, 0.05), rgba(10, 25, 47, 0.5));
+}
+
+.first-run-visual-copy {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1;
+    color: var(--theme-btn-primary-text, rgb(255, 255, 255));
+}
+
+.first-run-visual-copy b {
+    display: block;
+    font-size: 20px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.first-run-visual-copy span {
+    display: block;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.first-run-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
 }
 
 .first-run-head {
     padding: 26px 28px 18px;
-    text-align: center;
+    text-align: left;
     border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
 }
 
@@ -4898,7 +4961,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .first-run-mark {
     width: 46px;
     height: 46px;
-    margin: 0 auto 12px;
+    margin: 0 0 12px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -4924,6 +4987,9 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 .first-run-body {
     padding: 18px 28px 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .first-run-lead {
@@ -4933,11 +4999,119 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: var(--theme-text-secondary, #3a4459);
 }
 
+.first-run-question {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    margin: 0 0 14px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-table-row-hover, #f6f9ff);
+}
+
+.first-run-question b,
+.first-run-question span,
+.first-run-question small {
+    display: block;
+}
+
+.first-run-question b {
+    font-size: 15px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-question span {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
+.first-run-question small {
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-choice {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.first-run-choice .btn.is-selected {
+    color: var(--theme-btn-primary-text, #ffffff);
+    background: var(--theme-primary-color, #506fe4);
+    border-color: var(--theme-primary-color, #506fe4);
+}
+
+.first-run-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 14px;
+}
+
+.first-run-summary span {
+    display: block;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 8px;
+    background: var(--theme-card-bg, #ffffff);
+}
+
+.first-run-summary small,
+.first-run-summary b {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.first-run-summary small {
+    margin-bottom: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-summary b {
+    font-size: 13px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-filter {
+    display: grid;
+    gap: 5px;
+    margin: 0 0 10px;
+}
+
+.first-run-filter span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-filter input {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--theme-border-color, #d8e0ec);
+    border-radius: 8px;
+    padding: 8px 11px;
+    color: var(--theme-text-primary, #16203a);
+    background: var(--theme-card-bg, #ffffff);
+}
+
 /* The list scrolls, the dialog does not. Eleven features on a 768px-tall
    till would otherwise push the buttons off the bottom of the screen -
    and a Save nobody can reach is the same as no Save. */
 .first-run-list {
-    max-height: 46vh;
+    max-height: 28vh;
     overflow-y: auto;
     margin: 0 -6px;
     padding: 0 6px;
@@ -4957,6 +5131,23 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 .first-run-row:last-child {
     border-bottom: 0;
+}
+
+.first-run-row.is-hidden {
+    display: none;
+}
+
+.first-run-row.is-recommended .first-run-row-text b::after {
+    content: "Recommended";
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(80, 111, 228, 0.11);
+    color: var(--theme-primary-color, #506fe4);
+    font-size: 10px;
+    font-weight: 700;
+    vertical-align: middle;
 }
 
 .first-run-row:hover {
@@ -5038,6 +5229,33 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* A phone or a small till: the note moves under the buttons rather than
    squeezing them, and the buttons stay full width for a thumb. */
 @media (max-width: 575.98px) {
+    .first-run-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .first-run-visual {
+        min-height: 150px;
+        max-height: 170px;
+    }
+
+    .first-run-question {
+        grid-template-columns: 1fr;
+    }
+
+    .first-run-choice {
+        justify-content: stretch;
+    }
+
+    .first-run-choice .btn {
+        flex: 1 1 0;
+    }
+
+    .first-run-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .first-run-head,
     .first-run-body,
     .first-run-foot {

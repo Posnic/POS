@@ -11,60 +11,87 @@
      have always been in Settings; almost nobody goes looking in Settings on
      their first day.
 
-     WHAT IT IS NOT. Not a wizard. Nothing here blocks selling: it can be
-     closed at any point, it never appears again, and every switch on it is
-     the same switch that lives under Manage > Features. It exists to say the
-     shop is theirs to shape, once, at the only moment somebody is certain to
-     be looking. -->
-<div class="modal fade close_on_esc" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
-    aria-labelledby="feature_intro_title" data-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+     WHAT IT IS NOT. Not a marketing card and not a casual dismiss. Backdrop
+     clicks and Esc do not close it; every way out is a real decision that
+     saves the defaults or the selected switches, then takes the owner to
+     selling. -->
+<div class="modal fade" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
+    aria-labelledby="feature_intro_title" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content first-run">
-            <div class="first-run-head">
-                <!-- mdi-store, not mdi-storefront: this build's icon font does
-                     not carry the second one, and a missing glyph renders as an
-                     empty box rather than as nothing. -->
-                <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
-                <h5 class="first-run-title" id="feature_intro_title">
-                    <lang class="lang_feature_intro_title">Your shop is ready</lang>
-                </h5>
-                <p class="first-run-sub" id="feature_intro_sub"></p>
-            </div>
-            <div class="modal-body first-run-body">
-                <p class="first-run-lead" id="feature_intro_lead"></p>
-                <div id="feature_intro_list" class="first-run-list"></div>
-                <!-- Desktop app AND web till: said here because this is the one
-                     screen a new shop is certain to read, and "user is not
-                     clear about this system software desktop application plus
-                     web based" was reported as the thing costing signups.
-                     Filled by renderIntro with the sentence that is true for
-                     WHERE this is running - app, public web address, or the
-                     shop's own network - never a generic both-exist line that
-                     tells them nothing about the one they are looking at. -->
-                <div id="feature_intro_access" class="first-run-access"></div>
-            </div>
-            <div class="first-run-foot">
-                <span class="first-run-foot-note">
-                    <lang class="lang_feature_intro_note">You can change these any time under Manage &gt;
-                        Features.</lang>
-                </span>
-                <span class="first-run-foot-actions">
-                    <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip"
-                        data-dismiss="modal">
-                        <lang class="lang_feature_intro_skip">Not now</lang>
-                    </button>
-                    <!-- Saves the switches AND walks the shop to where they
-                         live. Two buttons, one save path: the tour variant
-                         sets a flag the save-success handler reads, so a
-                         failed save never starts a tour of a shop that did
-                         not save. -->
-                    <button type="button" class="btn btn-outline-primary" id="feature_intro_tour">
-                        <lang class="lang_feature_intro_tour">Save &amp; show me around</lang>
-                    </button>
-                    <button type="button" class="btn btn-primary" id="feature_intro_save">
-                        <lang class="lang_feature_intro_save">Save and start selling</lang>
-                    </button>
-                </span>
+            <div class="first-run-shell">
+                <aside class="first-run-visual" aria-hidden="true">
+                    <img src="static/images/general/Background_four.jpg" alt="">
+                    <div class="first-run-visual-copy">
+                        <b>Ready for the first bill</b>
+                        <span>Start small, then switch on the workflows your shop really uses.</span>
+                    </div>
+                </aside>
+                <section class="first-run-main">
+                    <div class="first-run-head">
+                        <!-- mdi-store, not mdi-storefront: this build's icon font does
+                             not carry the second one, and a missing glyph renders as an
+                             empty box rather than as nothing. -->
+                        <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
+                        <h5 class="first-run-title" id="feature_intro_title">
+                            <lang class="lang_feature_intro_title">Your shop is ready</lang>
+                        </h5>
+                        <p class="first-run-sub" id="feature_intro_sub"></p>
+                    </div>
+                    <div class="modal-body first-run-body">
+                        <p class="first-run-lead" id="feature_intro_lead"></p>
+                        <div class="first-run-question" id="feature_intro_demo_question">
+                            <div>
+                                <b>Install sample data for an easy start?</b>
+                                <span>Choose yes to add sample products, customers and sales while you review features. Choose no to start with a clean catalogue.</span>
+                                <small id="feature_intro_demo_status">No sample data is installed until you ask.</small>
+                            </div>
+                            <div class="first-run-choice" role="group" aria-label="Sample data choice">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="feature_intro_demo_yes">Yes</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="feature_intro_demo_no">No</button>
+                            </div>
+                            <input type="checkbox" class="feature-intro-toggle" id="fi_module_demo_data_enable"
+                                data-key="module_demo_data_enable" hidden>
+                        </div>
+                        <div class="first-run-summary" id="feature_intro_summary" aria-label="Starter shop settings"></div>
+                        <label class="first-run-filter" for="feature_intro_filter">
+                            <span>Search features</span>
+                            <input type="search" id="feature_intro_filter" autocomplete="off" placeholder="Search features">
+                        </label>
+                        <div id="feature_intro_list" class="first-run-list"></div>
+                        <!-- Desktop app AND web till: said here because this is the one
+                             screen a new shop is certain to read, and "user is not
+                             clear about this system software desktop application plus
+                             web based" was reported as the thing costing signups.
+                             Filled by renderIntro with the sentence that is true for
+                             WHERE this is running - app, public web address, or the
+                             shop's own network - never a generic both-exist line that
+                             tells them nothing about the one they are looking at. -->
+                        <div id="feature_intro_access" class="first-run-access"></div>
+                    </div>
+                    <div class="first-run-foot">
+                        <span class="first-run-foot-note">
+                            <lang class="lang_feature_intro_note">You can change these any time under Manage &gt;
+                                Features.</lang>
+                        </span>
+                        <span class="first-run-foot-actions">
+                            <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip">
+                                <lang class="lang_feature_intro_skip">Use defaults</lang>
+                            </button>
+                            <!-- Saves the switches AND walks the shop to where they
+                                 live. Two buttons, one save path: the tour variant
+                                 sets a flag the save-success handler reads, so a
+                                 failed save never starts a tour of a shop that did
+                                 not save. -->
+                            <button type="button" class="btn btn-outline-primary" id="feature_intro_tour">
+                                <lang class="lang_feature_intro_tour">Save &amp; show me around</lang>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="feature_intro_save">
+                                <lang class="lang_feature_intro_save">Save and start selling</lang>
+                            </button>
+                        </span>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
