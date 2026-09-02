@@ -3570,11 +3570,11 @@ PosnicPro = {
             if (input === 'sale') {
                 $('#resetReceivingButton').hide();
                 $('#resetSaleButton').show();
-                $('#resetHeading').html('Sale');
+                $('#resetHeading').html(PosnicPro.i18n.t('lang_newsale_title', 'Sale'));
             } else {
                 $('#resetSaleButton').hide();
                 $('#resetReceivingButton').show();
-                $('#resetHeading').html('Receiving');
+                $('#resetHeading').html(PosnicPro.i18n.t('lang_receiving_title', 'Receiving'));
             }
         }
     },
@@ -4225,11 +4225,22 @@ PosnicPro.i18n = {
         if (!stored) {
             var href = PosnicPro.local.get('language_herf') || '';
             var m = /^([a-z]{2})_/.exec(href);
-            stored = m ? m[1] : 'en';
+            if (!m) {
+                /* Nothing chosen, ever. English for now, and NOT written back:
+                   a stored value looks exactly like a choice, and the first-run
+                   detection below only runs for a machine that never chose. */
+                return 'en';
+            }
+            stored = m[1];
             PosnicPro.local.set('language_code', stored);
         }
         PosnicPro.i18n._code = stored;
         return stored;
+    },
+
+    /* Has anybody on this machine ever picked a language? */
+    chosen: function () {
+        return !!(PosnicPro.local.get('language_code') || PosnicPro.local.get('language_herf'));
     },
 
     is: function (code) {
@@ -4273,6 +4284,67 @@ PosnicPro.i18n = {
     },
 
     /*
+     * Scripts written right to left, by BCP 47 primary subtag.
+     *
+     * The document direction follows the language, so Arabic mirrors the
+     * layout without its pack having to say so - and a language this list
+     * does not know is left to right, the safe default for a till.
+     */
+    _rtl: { ar: 1, he: 1, fa: 1, ur: 1, ps: 1, sd: 1, ug: 1, yi: 1, dv: 1, ckb: 1 },
+
+    rtl: function (code) {
+        var primary = String(code || '').toLowerCase().split('-')[0];
+        return !!PosnicPro.i18n._rtl[primary];
+    },
+
+    /*
+     * Tell the document which language it is in.
+     *
+     * <html lang> is what screen readers, spell-checkers, hyphenation and font
+     * fallback read: a Tamil page marked lang="en" gets English hyphenation
+     * and whichever font the browser reaches for first. dir="rtl" is the
+     * whole of Arabic's text layout - the browser mirrors text, tables and
+     * inline flow from that one attribute, and static/style/css/rtl.css
+     * mirrors the chrome. Runs before the pack arrives, so direction never
+     * waits on a fetch.
+     */
+    mark: function () {
+        if (typeof document === 'undefined' || !document.documentElement) return;
+        var code = PosnicPro.i18n.code();
+        document.documentElement.setAttribute('lang', code);
+        document.documentElement.setAttribute('dir', PosnicPro.i18n.rtl(code) ? 'rtl' : 'ltr');
+    },
+
+    /*
+     * The language a first run should start in.
+     *
+     * BCP 47 lookup (RFC 4647): walk the browser's preferences in order and
+     * take the first one this build ships, trying the full tag ('pt-BR') and
+     * then its primary subtag ('pt'). English when nothing matches. Only ever
+     * consulted for a machine where nobody has chosen - a choice, once made,
+     * is never second-guessed by the operating system's locale.
+     *
+     * `preferred` is for tests; the browser's list is the real input.
+     */
+    detect: function (offered, preferred) {
+        var byCode = {};
+        (offered || []).forEach(function (l) {
+            if (l && l.code) byCode[String(l.code).toLowerCase()] = String(l.code);
+        });
+        var nav = (typeof navigator !== 'undefined') ? navigator : {};
+        var prefs = preferred
+            || (nav.languages && nav.languages.length ? nav.languages : [nav.language || 'en']);
+        for (var i = 0; i < prefs.length; i++) {
+            var tag = String(prefs[i] || '').toLowerCase();
+            if (!tag) continue;
+            if (byCode[tag]) return byCode[tag];
+            var primary = tag.split('-')[0];
+            if (byCode[primary]) return byCode[primary];
+        }
+        return 'en';
+    },
+
+    /*
      * Fetch this shop's language pack, once.
      *
      * English loads nothing at all - it is in the markup and in every t()
@@ -4285,6 +4357,7 @@ PosnicPro.i18n = {
      */
     load: function () {
         var code = PosnicPro.i18n.code();
+        PosnicPro.i18n.mark();
         if (code === 'en' || PosnicPro.i18n._dict) return Promise.resolve();
         return fetch('languages/' + code + '.json')
             .then(function (r) { return r.ok ? r.json() : null; })
@@ -4320,6 +4393,34 @@ PosnicPro.i18n = {
             var value = dict[key];
             /* Missing or blank leaves the English that is already there. */
             if (typeof value !== 'string' || value.trim() === '') return;
+            /* The English is in no pack - it is what the page shipped with.
+               Kept on the element the first time it is overwritten, so a
+               switch back to English is a restore rather than a reload. */
+            if (!el.hasAttribute('data-en')) el.setAttribute('data-en', el.innerHTML);
+            /*
+             * A handful of strings carry markup: an icon before "Download", a
+             * <span> the code rewrites later, an &nbsp;. Three cases:
+             *
+             *   the translation carries the markup too  -> use it as markup
+             *   the page has markup, the words do not   -> keep the page's
+             *                                              icon, swap the words
+             *   plain text on both sides                -> the common case
+             *
+             * The packs are this repository's own files, delivered through
+             * the signed asset channel; they are not user input, which is
+             * what makes innerHTML acceptable here and nowhere else.
+             */
+            if (/[<&]/.test(value)) { el.innerHTML = value; return; }
+            if (el.children && el.children.length) {
+                var swapped = false;
+                for (var n = el.firstChild; n; n = n.nextSibling) {
+                    if (n.nodeType !== 3) continue;
+                    if (!swapped && n.nodeValue.trim() !== '') { n.nodeValue = value; swapped = true; }
+                    else n.nodeValue = '';
+                }
+                if (!swapped) el.appendChild(el.ownerDocument.createTextNode(value));
+                return;
+            }
             el.textContent = value;
         };
         var tags = scope.querySelectorAll('lang[class]');
@@ -4333,20 +4434,62 @@ PosnicPro.i18n = {
     },
 
     /*
+     * Put the English back.
+     *
+     * apply() keeps each element's shipped markup in data-en the first time
+     * it overwrites it, so this is the whole of "switch to English": the
+     * words are not fetched from anywhere, they were here all along.
+     */
+    restore: function (root) {
+        var scope = root || document;
+        var kept = scope.querySelectorAll('[data-en]');
+        for (var i = 0; i < kept.length; i++) {
+            kept[i].innerHTML = kept[i].getAttribute('data-en');
+        }
+    },
+
+    /*
      * Switch language without leaving the page.
      *
      * This used to navigate to ta_dashboard.html, because the language WAS the
      * filename. There is one page now, so switching is a fetch and a redraw -
-     * which is also why it is instant rather than a reload.
+     * which is also why it is instant rather than a reload. English is the one
+     * language with no pack: switching to it restores what the page shipped.
      */
     change: function (code) {
         PosnicPro.i18n.select(code === 'en' ? 'dashboard.html' : code + '_dashboard.html');
+        PosnicPro.i18n.mark();
         return PosnicPro.i18n.load().then(function () {
-            PosnicPro.i18n.apply();
+            if (PosnicPro.i18n.code() === 'en') PosnicPro.i18n.restore();
+            else PosnicPro.i18n.apply();
         });
     }
 };
 PosnicPro.i18n.load().then(function () { PosnicPro.i18n.apply(); });
+/*
+ * First run.
+ *
+ * A machine where nobody has chosen a language starts in the browser's
+ * language if this build ships it, else English - decided once, here, so the
+ * login page and the dashboard agree without either knowing about the other.
+ * Anything that wants the settled language (the menu label, the per-language
+ * type sizes) waits on `ready`, which never rejects: whatever fails along the
+ * way, English is already on the screen.
+ */
+PosnicPro.i18n.ready = (function firstRun() {
+    var settle = (PosnicPro.i18n.chosen() || typeof fetch !== 'function')
+        ? Promise.resolve()
+        : fetch('languages/index.json')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (list) {
+                var detected = PosnicPro.i18n.detect(list || []);
+                if (detected !== 'en') return PosnicPro.i18n.change(detected);
+            });
+    return settle
+        .then(function () { return PosnicPro.i18n.load(); })
+        .then(function () { PosnicPro.i18n.apply(); })
+        .catch(function () { /* English, as shipped */ });
+}());
 /* Markup that exists before the pack lands still gets translated: this runs
    again once the DOM is ready, and apply() is idempotent. */
 if (typeof document !== 'undefined') {
