@@ -4,7 +4,7 @@
   "@id": "https://github.com/Posnic/POS",
   "name": "Posnic POS",
   "alternateName": "Posnic Point of Sale",
-  "description": "Free, offline-first point-of-sale software for retail shops and restaurants. Posnic's own source is AGPL-3.0-only; release packages contain separately licensed components, including MongoDB Community Server under SSPL-1.0.",
+  "description": "Free, offline-first point-of-sale software for retail shops and restaurants, with open source POS code and billing workflows. Posnic's own source is AGPL-3.0-only; release packages contain separately licensed components, including MongoDB Community Server under SSPL-1.0.",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "Point of sale software",
   "author": {
@@ -46,6 +46,9 @@
   ],
   "keywords": [
     "pos",
+    "open-source-pos",
+    "offline-pos",
+    "online-offline-pos",
     "point-of-sale",
     "point-of-sale-system",
     "pos-software",
@@ -77,7 +80,7 @@
     "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
   ],
   "softwareVersion": "1.6.1",
-  "dateModified": "2026-08-23",
+  "dateModified": "2026-09-02",
   "readme": "https://github.com/Posnic/POS/blob/main/README.md",
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
   "releaseNotes": "https://github.com/Posnic/POS/blob/main/docs/ROADMAP.md",
