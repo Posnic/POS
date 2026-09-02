@@ -259,9 +259,9 @@ PosnicPro.expenses = {
                 $('#expenses_recipientname').val(data.recipientname);
                 $('#expenses_approvedby').val(data.approvedby);
                 $('#expenses_expensesnote').val(data.description);
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#expenses_title').text('திருத்தப்பட்ட') : $('#expenses_title').text('Edit');
+                $('#expenses_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
 //                $('#expenses_button_title').text('Update');
-                (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#expenses_button_title').text('புதுப்பி') : $('#expenses_button_title').text('Update');
+                $('#expenses_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
                 $('#addExpenses').modal('show');
@@ -280,9 +280,9 @@ PosnicPro.expenses = {
     addExpensesButton: function () {
         var loader = $(".loader-expense");
         loader.find(".loadingSpinner:first").remove();
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#expenses_title').text('புதிய') : $('#expenses_title').text('Add');
+        $('#expenses_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
 //        $('#expenses_button_title').text('Save');
-        (PosnicPro.local.get('language_herf') === 'ta_dashboard.html') ? $('#expenses_button_title').text('சேமி') : $('#expenses_button_title').text('Save');
+        $('#expenses_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $('#expenses_id').val('');

@@ -64,8 +64,9 @@ describe('country tax rows for a new shop', () => {
        fixture - a change to countries.json that altered India would fail here. */
     const fs2 = require('fs');
     const path2 = require('path');
-    const countries = JSON.parse(fs2.readFileSync(
-      path2.join(__dirname, '../../../src/json/countries.json'), 'utf8'));
+    const countries = JSON.parse(
+      fs2.readFileSync(path2.join(__dirname, '../../../src/json/countries.json'), 'utf8')
+    );
     const india = (countries.countries || countries).find((c) => c.value === 'India');
     const plan = countryTax.taxRowsFor(india.sortname, india.tax);
     expect(plan.rates).toHaveLength(india.tax.length);
@@ -95,15 +96,27 @@ describe('what makes a sourced rate usable', () => {
      * to point at is exactly the state this whole change exists to reject.
      */
     expect(countryTax.isUsable({ verified: true, rates: [{ value: 5 }] })).toBe(false);
-    expect(countryTax.isUsable({ verified: true, sourceUrl: 'x', rates: [{ value: 5 }] })).toBe(false);
+    expect(countryTax.isUsable({ verified: true, sourceUrl: 'x', rates: [{ value: 5 }] })).toBe(
+      false
+    );
     expect(
-      countryTax.isUsable({ verified: true, sourceUrl: 'x', checkedAt: '2026-08-30', rates: [{ value: 5 }] })
+      countryTax.isUsable({
+        verified: true,
+        sourceUrl: 'x',
+        checkedAt: '2026-08-30',
+        rates: [{ value: 5 }],
+      })
     ).toBe(true);
   });
 
   test('unverified is refused even with a source', () => {
     expect(
-      countryTax.isUsable({ verified: false, sourceUrl: 'x', checkedAt: '2026-08-30', rates: [{ value: 5 }] })
+      countryTax.isUsable({
+        verified: false,
+        sourceUrl: 'x',
+        checkedAt: '2026-08-30',
+        rates: [{ value: 5 }],
+      })
     ).toBe(false);
   });
 
@@ -113,7 +126,13 @@ describe('what makes a sourced rate usable', () => {
      * rates, and it must never be confused with a country nobody looked up -
      * they produce the same empty shop but only one of them is knowledge.
      */
-    const proven = { verified: true, regime: 'none', rates: [], sourceUrl: 'x', checkedAt: '2026-08-30' };
+    const proven = {
+      verified: true,
+      regime: 'none',
+      rates: [],
+      sourceUrl: 'x',
+      checkedAt: '2026-08-30',
+    };
     expect(countryTax.isUsable(proven)).toBe(true);
   });
 });

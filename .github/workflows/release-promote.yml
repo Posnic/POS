@@ -1,0 +1,96 @@
+# Open the pull request that promotes develop to main.
+#
+# The release itself is tag-driven and unchanged: tag main, release.yml builds
+# and publishes. This is the step before that - turning "develop has some
+# tested work on it" into one reviewable thing the owner can read and merge.
+#
+# Run by hand, never on a schedule. Deciding that what is on develop is worth
+# releasing is a judgement about whether it has been tested enough, and that
+# judgement is the owner's. A timer would only ever guess.
+name: Promote develop to main
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "Anything to say about this release (optional)"
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: What would this release?
+        id: what
+        run: |
+          git fetch origin main develop
+          AHEAD=$(git rev-list --count origin/main..origin/develop)
+          echo "ahead=$AHEAD" >> "$GITHUB_OUTPUT"
+          if [ "$AHEAD" = "0" ]; then
+            echo "::notice::develop has nothing main does not already have."
+            exit 0
+          fi
+
+          # The subjects, not the hashes. Somebody deciding whether to release
+          # wants to read what changed, and a list of shas is not that.
+          git log --no-merges --format='- %s' origin/main..origin/develop > /tmp/commits.txt
+          echo "$AHEAD commit(s) to promote:"
+          cat /tmp/commits.txt
+
+          # Anyone whose work is in this release, so the release notes are not
+          # the first time they see their name.
+          git log --format='%an' origin/main..origin/develop \
+            | sort -u | grep -v 'github-actions' > /tmp/authors.txt || true
+
+      - name: Open the release pull request
+        if: steps.what.outputs.ahead != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTE: ${{ inputs.note }}
+        run: |
+          {
+            echo "Promotes **${{ steps.what.outputs.ahead }} commit(s)** from \`develop\` to \`main\`."
+            echo
+            if [ -n "$NOTE" ]; then echo "$NOTE"; echo; fi
+            echo "### What is in it"
+            echo
+            cat /tmp/commits.txt
+            echo
+            echo "### Contributors in this release"
+            echo
+            sed 's/^/- /' /tmp/authors.txt
+            echo
+            echo "### Before merging"
+            echo
+            echo "- [ ] Everything here has been tried on develop.posnic.io or locally"
+            echo "- [ ] Anything labelled \`QA failed\` has been fixed or reverted"
+            echo "- [ ] CI is green"
+            echo
+            echo "Merging this does **not** release anything. Tag main afterwards:"
+            echo
+            echo '```bash'
+            echo 'git checkout main && git pull'
+            echo 'git tag vX.Y.Z && git push origin vX.Y.Z'
+            echo '```'
+            echo
+            echo "That is what builds the installers and publishes the release."
+          } > /tmp/body.md
+
+          if gh pr list --base main --head develop --state open --json number --jq 'length' | grep -q '^0$'; then
+            gh pr create --base main --head develop \
+              --title "Release: promote develop to main" --body-file /tmp/body.md
+          else
+            # Reusing the open one keeps the discussion in a single place
+            # rather than starting a second thread about the same release.
+            NUM=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number')
+            gh pr edit "$NUM" --body-file /tmp/body.md
+            echo "updated the open release pull request #$NUM"
+          fi

@@ -80,3 +80,19 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 /*Language End*/
+/*
+ * <lang> is a translation marker, not a box.
+ *
+ * The build used to strip these tags and write a whole second copy of every
+ * page per language. It now leaves them in place carrying their key, so
+ * PosnicPro.i18n can swap the words in at load - which means 94 pages that
+ * previously contained bare text now contain an inline element around it.
+ *
+ * display:contents removes the element's own box entirely: its text lays out
+ * exactly as it did when the tag was stripped. Without this, every one of
+ * those 1,351 sites would be a potential spacing change on a screen nobody
+ * thought to look at.
+ */
+lang {
+    display: contents;
+}

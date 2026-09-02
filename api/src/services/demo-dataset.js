@@ -232,12 +232,20 @@ async function openZip(buffer) {
      */
     if (entry.path.endsWith('/customers.json') || entry.path === 'customers.json') {
       // eslint-disable-next-line no-await-in-loop
-      try { people.customers = JSON.parse((await entry.buffer()).toString('utf8')); } catch (e) { /* products still install */ }
+      try {
+        people.customers = JSON.parse((await entry.buffer()).toString('utf8'));
+      } catch (e) {
+        /* products still install */
+      }
       continue;
     }
     if (entry.path.endsWith('/suppliers.json') || entry.path === 'suppliers.json') {
       // eslint-disable-next-line no-await-in-loop
-      try { people.suppliers = JSON.parse((await entry.buffer()).toString('utf8')); } catch (e) { /* products still install */ }
+      try {
+        people.suppliers = JSON.parse((await entry.buffer()).toString('utf8'));
+      } catch (e) {
+        /* products still install */
+      }
       continue;
     }
     if (entry.path.endsWith('/data.json') || entry.path === 'data.json') {

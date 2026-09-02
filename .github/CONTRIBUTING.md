@@ -6,6 +6,11 @@ hardware quirks from real shops.
 
 ## Getting started
 
+If this is your first Posnic contribution, start with the
+[contributor quickstart](../docs/CONTRIBUTOR_QUICKSTART.md). It has the local
+setup commands, common test commands, and task map for translations, GST,
+e-invoicing, AI helper work, integrations and hardware evidence.
+
 ```bash
 git clone https://github.com/Posnic/POS.git
 cd POS
@@ -18,20 +23,28 @@ You do **not** need to install MongoDB. Posnic bundles its own and picks a port
 derived from the application name, so it never collides with a database you
 already run. The first launch takes a few minutes while it unpacks.
 
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — full developer guide: tests,
+- [Contributor quickstart](../docs/CONTRIBUTOR_QUICKSTART.md) — first setup,
+  task map and test matrix
+- [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md) — full developer guide: tests,
   linting, conventions, and what not to rename
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — how the pieces fit together
-- [docs/API.md](docs/API.md) — REST reference, 478 endpoints
-- [docs/BUILD_INSTRUCTIONS.md](docs/BUILD_INSTRUCTIONS.md) — installer builds
+- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — how the pieces fit together
+- [docs/API.md](../docs/API.md) — REST reference
+- [docs/BUILD_INSTRUCTIONS.md](../docs/BUILD_INSTRUCTIONS.md) — installer builds
 
 ## How to contribute
 
 1. **Open an issue first** for anything non-trivial — a bug report or a short
    proposal for a feature. It avoids wasted work on both sides.
-2. Fork, create a branch (`fix/receipt-rounding`, `feat/tamil-translation`).
-3. Keep pull requests focused — one change per PR.
-4. Match the style of the surrounding code; avoid drive-by reformatting.
-5. Run the tests: `cd api && npm test` (7,744 unit tests, about a minute), plus
+2. Pick a task from the
+   [contributor roadmap](https://github.com/Posnic/POS/issues/35) or the
+   [`good first issue`](https://github.com/Posnic/POS/labels/good%20first%20issue)
+   label.
+3. Read the issue acceptance criteria and choose one small checkbox or PR slice.
+   If the issue does not yet define "done", start by proposing that checklist.
+4. Fork, create a branch (`fix/receipt-rounding`, `feat/tamil-translation`).
+5. Keep pull requests focused — one change per PR.
+6. Match the style of the surrounding code; avoid drive-by reformatting.
+7. Run the tests: `cd api && npm test` (7,744 unit tests, about a minute), plus
    `npm test` at the repo root for the desktop side (294 more). Both should pass on a
    clean checkout — if they do not, that is worth an issue on its own.
 
@@ -46,7 +59,7 @@ that one is yours.
 **Do not rename a persisted field or collection in a pull request.** Those names
 travel over the sync wire to desktop installations that cannot be force-updated,
 so renaming them needs a versioned migration. See
-[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#what-not-to-rename).
+[docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md#what-not-to-rename).
 
 ## What happens to your pull request
 
@@ -55,7 +68,7 @@ So you know what you are waiting for.
 1. **CI runs** — unit tests, the desktop tests, lint, the packaging check and
    the API docs check. All of them gate: if CI is red, the pull request waits.
 2. **A maintainer reads it.** Usually within a week. The project is small; see
-   [GOVERNANCE.md](GOVERNANCE.md).
+   [GOVERNANCE.md](../docs/GOVERNANCE.md).
 3. **You may get comments.** Comments are not rejection. A pull request with
    twenty comments is one someone is taking seriously.
 4. **It merges**, or it does not — and if it does not, the reason is written in
@@ -116,14 +129,14 @@ limitation.
   and submit the structured
   [acceptance result form](https://github.com/Posnic/POS/issues/new?template=pos_acceptance_run.yml).
 - Test an exact printer, scanner, cash drawer, scale or display against the
-  [hardware matrix](docs/HARDWARE_MATRIX.md), then submit the structured
+  [hardware matrix](../docs/HARDWARE_MATRIX.md), then submit the structured
   [hardware evidence form](https://github.com/Posnic/POS/issues/new?template=hardware_evidence.yml).
 - If you operate, piloted, installed, evaluated or stopped using Posnic, read
-  the [adoption evidence policy](docs/ADOPTION_EVIDENCE.md) and submit a
+  the [adoption evidence policy](../docs/ADOPTION_EVIDENCE.md) and submit a
   structured
   [deployment evidence report](https://github.com/Posnic/POS/issues/new?template=deployment_evidence.yml).
   Failures, workarounds and reasons not to adopt are useful evidence.
-- Read [ROADMAP.md](ROADMAP.md) for the current evidence gaps and the boundary
+- Read [ROADMAP.md](../docs/ROADMAP.md) for the current evidence gaps and the boundary
   between released, reproduced, in-validation and planned work.
 
 An evidence issue is public and is not a certification or testimonial. Use

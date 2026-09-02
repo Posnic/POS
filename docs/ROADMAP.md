@@ -67,7 +67,7 @@ Status: **evidence needed**
 - Publish a named compatibility result only after the evidence can be reviewed
   and reproduced. A report is not an automatic certification.
 
-Review the [hardware matrix](docs/HARDWARE_MATRIX.md) and submit a
+Review the [hardware matrix](HARDWARE_MATRIX.md) and submit a
 [hardware evidence report](https://github.com/Posnic/POS/issues/new?template=hardware_evidence.yml).
 
 ### P0: release and security trust
@@ -81,7 +81,7 @@ Status: **in validation**
 - Commission an independent security review before making an audited-security
   claim.
 - Keep private vulnerability reports out of public issues; follow
-  [SECURITY.md](SECURITY.md).
+  [SECURITY.md](../.github/SECURITY.md).
 
 ### P1: operator workflow coverage
 
@@ -127,7 +127,7 @@ Status: **planned**
 | Source and licence | AGPL-3.0-only source, versioned releases, governance, contribution and security policies | Bundled dependencies retain their own licences; trademarks are separate |
 | Local sale | One synthetic Windows v1.3.0 cash sale was completed and reopened under bounded external-host isolation | Not an OS-wide outage, full shift, physical-device, payment-terminal, or power-loss test |
 | Development fixture | Eight of ten ordered synthetic scenarios reproduced through the HTTP API and isolated MongoDB on exact commit `53f89a15`; 45 assertions and the XTS 66.50 close reconciled | Development snapshot, not a tagged release or complete fixture pass; provider decline, packaged UI, physical hardware, customer operation, security, compliance, and performance were not established |
-| Fixture client supplement | [`pos-acceptance-client-evidence.test.js`](tests/pos-acceptance-client-evidence.test.js) sends fixture-shaped `SALE-001` markup through the real receipt parser and ESC/POS renderer and executes the real pre-completion clear handler with instrumented network methods | Source/DOM and printer-byte evidence only; it does not upgrade the 8/10 API result or prove packaged Electron behavior, physical output, or provider payment |
+| Fixture client supplement | [`pos-acceptance-client-evidence.test.js`](../tests/pos-acceptance-client-evidence.test.js) sends fixture-shaped `SALE-001` markup through the real receipt parser and ESC/POS renderer and executes the real pre-completion clear handler with instrumented network methods | Source/DOM and printer-byte evidence only; it does not upgrade the 8/10 API result or prove packaged Electron behavior, physical output, or provider payment |
 | Source tests | Versioned test results and focused workflow tests are linked from the product evidence page | Not a customer acceptance run, independent audit, or hardware certification |
 | Backup and restore | One synthetic restore record with stated counts and limits | Not every dataset, failed disk, platform, or production recovery condition |
 | Hardware | Protocol and source-test evidence plus a versioned matrix | No named device is automatically certified |
@@ -156,7 +156,7 @@ GitHub issues are public. Never attach customer names, phone numbers, email
 addresses, addresses, tax identifiers, credentials, API keys, card data, bank
 details, production database files, or unredacted logs. Use fictional records
 for transaction tests. Report security vulnerabilities privately through
-[SECURITY.md](SECURITY.md).
+[SECURITY.md](../.github/SECURITY.md).
 
 ## Explicit non-goals
 
