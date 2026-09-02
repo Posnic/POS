@@ -27,6 +27,9 @@ concurrency:
 
 permissions:
   contents: read
+  # To ask the API which files the PR touches, rather than trying to work it
+  # out from a shallow clone that does not contain both ends of the diff.
+  pull-requests: read
 
 jobs:
   check:
@@ -46,19 +49,35 @@ jobs:
       - name: Coverage
         run: node tests/tools/i18n-coverage.js
 
+      # ADVISORY ONLY. This step must never fail a run, and it has to be written
+      # that way rather than intended that way.
+      #
+      # It used to read the diff with git, from a checkout that is both shallow
+      # and - on a pull_request event - the MERGE commit, so the head sha was
+      # simply not in local history. `git diff BASE HEAD` said "bad object", the
+      # HEAD~1 fallback said "unknown revision" on a depth-1 clone, and `bash -e`
+      # turned an advisory note into exit 128. Every translation PR would have
+      # gone red with a git error, which is exactly the experience the rest of
+      # this file exists to avoid.
+      #
+      # The API knows the file list without any history, so ask it.
       - name: Nothing outside the language files changed
+        continue-on-error: true
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
           # A translation PR that also edits application code is not a
           # translation PR. Saying so here is quicker and kinder than a
           # reviewer noticing on the third read.
-          git fetch --no-tags --depth=1 origin "$BASE" >/dev/null 2>&1 || true
-          CHANGED=$(git diff --name-only "$BASE" "$HEAD" || git diff --name-only HEAD~1 HEAD)
+          CHANGED=$(gh pr diff "$PR" --name-only) || {
+            echo "::notice::Could not read the file list; skipping this check."
+            exit 0
+          }
           echo "Changed:"; echo "$CHANGED" | sed 's/^/  /'
           UNEXPECTED=$(echo "$CHANGED" | grep -v -E '^(languages/|docs/|\.github/)' \
-            | grep -v -E '^frontend/gulpfile\.js/config\.js$' || true)
+            | grep -v -E '^(frontend/gulpfile\.js/config\.js|tests/tools/[a-z-]+\.js|tests/i18n\.test\.js)$' \
+            || true)
           if [ -n "$UNEXPECTED" ]; then
             echo ""
             echo "::warning::This PR changes files outside languages/. That may be"

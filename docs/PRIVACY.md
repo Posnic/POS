@@ -36,7 +36,7 @@ and logs. Nobody else has a copy unless you make one.
 **This cuts both ways.** If that computer dies and you have no backup, the data
 is gone — we cannot recover it for you, because we never had it. Copy your
 backups somewhere else. See the
-[user guide](docs/USER_GUIDE.md#backups).
+[user guide](USER_GUIDE.md#backups).
 
 ## What leaves your computer on its own
 
@@ -57,7 +57,7 @@ usage statistics, no "anonymous" beacons. This is verifiable rather than a
 promise: the project has no analytics dependency, does not enable Electron's
 crash reporter, and its Content-Security-Policy does not allow a script from any
 analytics or error-reporting host — so one could not load even if something
-tried. If you find otherwise, that is a bug — please [report it](SECURITY.md).
+tried. If you find otherwise, that is a bug — please [report it](../.github/SECURITY.md).
 
 ## What you can switch on, and what it sends
 
@@ -172,7 +172,7 @@ that is the point of the design.
 
 Posnic Cloud data is intended to be held **in India**. If that ever changes we
 will use a lawful transfer mechanism and update
-[docs/SUBPROCESSORS.md](docs/SUBPROCESSORS.md) with 30 days' notice first.
+[docs/SUBPROCESSORS.md](SUBPROCESSORS.md) with 30 days' notice first.
 
 ### Security, and its limits
 
@@ -184,7 +184,7 @@ limited and logged.
 We would rather state the limit than imply there is none: **no cloud service is
 immune to compromise.** If your data is exposed we will tell you within
 **48 hours** of becoming aware — see
-[docs/INCIDENT_RESPONSE.md](docs/INCIDENT_RESPONSE.md).
+[docs/INCIDENT_RESPONSE.md](INCIDENT_RESPONSE.md).
 
 ### Your rights
 
@@ -194,12 +194,12 @@ the product; anything the tools do not cover, write to info@posnic.com and we
 will do it by hand. We answer within **30 days**.
 
 If you need a signed data processing agreement, see
-[docs/DATA_PROCESSING_ADDENDUM.md](docs/DATA_PROCESSING_ADDENDUM.md).
+[docs/DATA_PROCESSING_ADDENDUM.md](DATA_PROCESSING_ADDENDUM.md).
 
 ## Questions
 
 - **Privacy questions or a deletion request:** info@posnic.com
-- **A security problem:** [SECURITY.md](SECURITY.md), privately
+- **A security problem:** [SECURITY.md](../.github/SECURITY.md), privately
 - **Anything else:** [Discussions](https://github.com/Posnic/POS/discussions)
 
 ## Changes

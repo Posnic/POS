@@ -73,6 +73,7 @@ test('a shop with no history gets the new-shop defaults', () => {
   assert.strictEqual(value('module_channels_enable'), false);
   assert.strictEqual(value('module_credit_enable'), false);
   assert.strictEqual(value('quotes_enable'), false);
+  assert.strictEqual(value('invoices_enable'), false);
 });
 
 test('a decision the shop already made is never overwritten', () => {
