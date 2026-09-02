@@ -1,6 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { MongoRateLimitStore } = require('./rate-limit-store');
-const { perClientKey } = require('./rate-limit-key');
+const { perClientKey, perShopKey } = require('./rate-limit-key');
 
 /*
  * Counters in the database, not in this process's memory.
@@ -109,4 +109,23 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { loginLimiter, passwordResetLimiter, registerLimiter };
+/*
+ * Invoice routes are also mounted at the legacy root path, where app.js's
+ * /api-wide limiter does not run. Keep a separate availability budget here so
+ * both route prefixes are protected without making a normal till workflow
+ * share a small credential-guessing budget.
+ */
+const invoiceLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'invoice' }),
+  keyGenerator: perShopKey,
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  message: {
+    status: false,
+    message: 'Too many invoice requests. Please wait a few minutes and try again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { loginLimiter, passwordResetLimiter, registerLimiter, invoiceLimiter };
