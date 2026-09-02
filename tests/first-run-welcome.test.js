@@ -299,6 +299,18 @@ test('the modal markup carries what the code paints into', () => {
         'the first-run welcome must not have a close-only button');
 });
 
+test('the first-run close icon is drawn in the center of the circle', () => {
+    const closeCss = block(cssCode, '.first-run-close {', '.first-run-close:hover');
+    assert.match(closeCss, /font-size: 0 !important/);
+    assert.match(closeCss, /\.first-run-close::before,\s*\n\.first-run-close::after/);
+    assert.match(closeCss, /top: 50%/);
+    assert.match(closeCss, /left: 50%/);
+    assert.match(closeCss, /transform: translate\(-50%, -50%\) rotate\(45deg\)/);
+    assert.match(closeCss, /\.first-run-close::after[\s\S]*rotate\(-45deg\)/);
+    assert.ok(!/content: "\\00d7"/.test(closeCss),
+        'the font multiplication glyph sits off-center in this circular button');
+});
+
 test('the welcome is a step-by-step assistant, not one crowded settings wall', () => {
     assert.match(modalCode, /data-intro-step="sample"/);
     assert.match(modalCode, /data-intro-step="features"/);
@@ -351,6 +363,8 @@ test('starter settings are editable in the welcome without leaving the popup', (
     assert.match(modalCode, /id="feature_intro_locale_form"/);
     assert.match(settingsCode, /saveIntroLocaleIfNeeded: function/);
     assert.match(settingsCode, /url: 'setting\/starterLocale'/);
+    assert.ok(!modalCode.includes('Edit country, currency and tax details'),
+        'the welcome should not show the old edit-settings callout');
     assert.ok(!modalCode.includes('feature_intro_edit_settings'),
         'the welcome should not show a button that leaves the popup');
     assert.ok(!settingsCode.includes("hasher.setHash('settings/general')"),

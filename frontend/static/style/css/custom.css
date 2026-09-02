@@ -4962,29 +4962,35 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     position: absolute;
     top: 16px;
     right: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     width: 34px;
     height: 34px;
     padding: 0;
+    overflow: hidden;
     border: 1px solid var(--theme-border-color, #e5e8ef);
     border-radius: 50%;
     background: var(--theme-card-bg, #ffffff);
     color: var(--theme-text-muted, #5b6577);
-    font-size: 0;
-    line-height: 1;
+    font-size: 0 !important;
+    line-height: 0;
     cursor: pointer;
 }
 
-.first-run-close::before {
-    content: "\00d7";
-    display: block;
-    font-family: Arial, sans-serif;
-    font-size: 21px;
-    font-weight: 400;
-    line-height: 1;
-    transform: translateY(-1px);
+.first-run-close::before,
+.first-run-close::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.first-run-close::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .first-run-close:hover,
