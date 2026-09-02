@@ -46,6 +46,9 @@ jobs:
       # Built here rather than on the box: a 2 GB machine running mongod and
       # the API should not also be running a gulp build, and building in CI
       # means a broken build never reaches the sandbox at all.
+      # Every language ships in every build now, the unreviewed ones marked
+      # beta in the menu (frontend/gulpfile.js/config.js). Nothing to switch
+      # on here: the sandbox shows exactly what an installer shows.
       - name: Build the frontend
         run: |
           npm --prefix frontend install --no-audit --no-fund

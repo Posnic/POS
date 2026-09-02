@@ -57,7 +57,7 @@ around $10–12 a month at the time of writing.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Posnic/POS/main/scripts/install-server.sh -o install-server.sh
+curl -fsSL https://raw.githubusercontent.com/Posnic/POS/develop/scripts/install-server.sh -o install-server.sh
 less install-server.sh          # read it first - you are about to run it as root
 sudo bash install-server.sh
 ```
@@ -212,6 +212,46 @@ The API serves the built frontend itself, so there is no second web server to
 configure — only the reverse proxy that terminates TLS.
 
 `scripts/install-server.sh` is the readable version of all of this.
+
+---
+
+## If you are locked out
+
+Nobody can reset your password for you. There is no console for a server you
+own, our reset email does not know where your shop lives, and support cannot
+reach a machine on your network. That is the trade you made for holding your
+own data, and it is fine as long as there is a way back in.
+
+Run this **on the server itself**:
+
+```bash
+cd /opt/posnic
+npm run recover
+```
+
+It lists everyone who can sign in, and — usefully when somebody says *"it
+worked yesterday"* — when each password was last changed.
+
+To set one:
+
+```bash
+npm run recover -- owner@yourshop.example 'a new password'
+```
+
+Three things worth knowing:
+
+- It hashes the password the way this application expects. Editing the database
+  by hand almost always gets this wrong, and the symptom is nasty: sign-in
+  works, and manager approvals quietly stop accepting the same password weeks
+  later.
+- **Every use is written to your own audit log**, with the operating-system
+  account that ran it. You can see it happened.
+- It only opens the database this installation already uses. There is no flag
+  to point it somewhere else.
+
+This is not a back door. Anybody who can run it can already read your database
+directly — they are sitting on your server. What it does is make recovery
+documented and recorded, instead of a technique somebody has to know.
 
 ---
 

@@ -8406,6 +8406,107 @@ PosnicPro.sales.parkedMenu = {
  * items' CURRENT prices - honest to today's pricing; quoted-price
  * override is a noted follow-up. Feature-gated by quotes_enable.
  */
+/*
+ * Load a priced document - a quote or an invoice - onto the sale screen.
+ *
+ * Extracted from quotes.convert when invoices arrived. Both documents make
+ * the same promise ("these items at these prices") and both are honoured the
+ * same way: each line lands in the cart, its quantity follows, line discounts
+ * become the SALE's line discounts, the unit price goes through the same
+ * path the manual price edit uses (so tax and totals recompute in the one
+ * engine), a document discount and named deductions become the sale's extra
+ * discount, and positive named charges become their own charge rows.
+ *
+ * spec:
+ *   lines      [{ item_id, qty, unit_price, dtype, dval }]
+ *   honour     true = document prices and discounts; false = today's prices
+ *   discount   the document-level discount, computed
+ *   charges    [{ name, computed, sign }]
+ *   onSkipped  (count) - some lines no longer sell; nothing else is applied
+ *   onLoaded   ({ chargeCount, extra }) - everything landed
+ */
+PosnicPro.sales.loadDocumentIntoCart = function (spec) {
+    var lines = spec.lines || [];
+    var honour = spec.honour !== false;
+    hasher.setHash('sales/new');
+    var tries = 0;
+    var t = setInterval(function () {
+        tries += 1;
+        if ($('#sales_new_item_name').is(':visible') || tries > 20) {
+            clearInterval(t);
+            lines.forEach(function (l) {
+                PosnicPro.sales.itemsMenu.addToLineItemsList(l.item_id);
+            });
+            var pending = lines.slice();
+            var waited = 0;
+            var t2 = setInterval(function () {
+                waited += 300;
+                pending = pending.filter(function (l) {
+                    var $qty = $('#touchsale_item_qty' + l.item_id);
+                    if (!$qty.length) { return true; }
+                    if (l.qty > 1 && parseFloat($qty.val()) !== l.qty) {
+                        $qty.val(l.qty).trigger('keyup');
+                    }
+                    if (honour && l.dtype && l.dval > 0) {
+                        // the document's line discount lands as the SALE's
+                        // line discount - visible in the Disc column
+                        var id2 = l.item_id;
+                        if (l.dtype === 'percent') {
+                            $('#addSalesLineItemDiscount_' + id2).text(l.dval);
+                            $('#discountSign' + id2).text('%');
+                        } else {
+                            var perUnit = Math.round((l.dval / l.qty) * 100) / 100;
+                            $('#addSalesLineItemDiscount_' + id2).text(perUnit.toFixed(2));
+                            $('#discountSign' + id2).text(PosnicPro.local.get('currencySign') || '');
+                        }
+                    }
+                    if (honour && l.unit_price > 0) {
+                        PosnicPro.quotes._applyQuotedPrice(l.item_id, l.unit_price);
+                    }
+                    return false;
+                });
+                if (!pending.length || waited > 9000) {
+                    clearInterval(t2);
+                    if (pending.length) {
+                        if (spec.onSkipped) { spec.onSkipped(pending.length); }
+                        return;
+                    }
+                    // document discount + named deductions -> the sale's
+                    // extra discount, as a flat amount
+                    var extra = honour ? (Number(spec.discount) || 0) : 0;
+                    if (honour) {
+                        (spec.charges || []).forEach(function (c) {
+                            if (c.sign === -1) { extra += Number(c.computed) || 0; }
+                        });
+                    }
+                    if (extra > 0) {
+                        $('#percentIcon').addClass('d-none');
+                        $('#rupeeIcon').removeClass('d-none');
+                        $('#extraDisc').text(extra.toFixed(2));
+                        try { PosnicPro.sales.calculation.extraDiscoundCalculation(); } catch (e) { /* next edit refreshes */ }
+                    }
+                    // positive charges become their own named lines
+                    var posCharges = honour ? (spec.charges || []).filter(function (c) {
+                        return c.sign !== -1 && Number(c.computed) > 0;
+                    }) : [];
+                    posCharges.forEach(function (c) {
+                        PosnicPro.sales.charges.push({
+                            name: c.name,
+                            amount: Number(c.computed) || 0,
+                            taxed: false,
+                            // 'quote' is the server's word for document-borne
+                            // (sale.service maps anything else to 'manual')
+                            source: 'quote'
+                        });
+                    });
+                    if (posCharges.length) { PosnicPro.sales.renderCharges(); }
+                    if (spec.onLoaded) { spec.onLoaded({ chargeCount: posCharges.length, extra: extra }); }
+                }
+            }, 300);
+        }
+    }, 300);
+};
+
 PosnicPro.quotes = {
     _rows: [],
     _status: '',
@@ -8969,7 +9070,7 @@ PosnicPro.quotes = {
             var qty = (q.items || []).reduce(function (a, l) { return a + (Number(l.qty) || 0); }, 0);
             var label = String(q.status || 'open');
             label = label.charAt(0).toUpperCase() + label.slice(1);
-            var pill = q.status === 'converted' || q.status === 'accepted'
+            var pill = q.status === 'converted' || q.status === 'accepted' || q.status === 'invoiced'
                 ? '<span class="rs-pill paid">' + label + '</span>'
                 : q.status === 'cancelled' || q.status === 'declined'
                     ? '<span class="rs-pill unpaid">' + label + '</span>'
@@ -9250,6 +9351,19 @@ PosnicPro.quotes = {
                 + mi('PosnicPro.quotes.shareLink();', 'Copy link'));
 
             var moreItems = '';
+            /* Quote -> invoice (INVOICING_MODULE_DESIGN): while the quote is
+               open or accepted and the Invoices feature is on, the numbers
+               can become a bill. Once it has one, the quote points at it. */
+            var canInvoice = (open || q.status === 'accepted')
+                && PosnicPro.invoices && PosnicPro.invoices._on();
+            if (canInvoice) {
+                moreItems += mi('PosnicPro.invoices.fromQuote(\'' + String(q._id) + '\');', 'Create invoice', '', 'write')
+                    + '<div class="dropdown-divider"></div>';
+            }
+            if (q.status === 'invoiced' && q.invoice_id) {
+                moreItems += mi('hasher.setHash(\'invoices/' + String(q.invoice_id) + '\');',
+                    'Open invoice ' + esc(q.invoice_number || ''));
+            }
             if (open) {
                 moreItems += mi('PosnicPro.quotes.setStatus(\'accept\');', 'Mark accepted', '', 'write')
                     + mi('PosnicPro.quotes.setStatus(\'decline\');', 'Mark declined', '', 'write')
@@ -9428,7 +9542,17 @@ PosnicPro.quotes = {
     },
     /* The professional quotation document. Layout verified numerically
        (margins, column edges, leading, pagination) before shipping. */
-    _buildPdf: function (C, q, seller, logo) {
+    /*
+     * opts (INVOICING_MODULE_DESIGN): the same sheet serves an invoice.
+     *   title      - 'INVOICE' in place of 'QUOTATION'
+     *   number     - the document number (q.quote_id otherwise)
+     *   headLines  - the small lines under the number ('Date: ..', 'Due: ..')
+     *   stamp      - the status word, or '' for none
+     *   afterTotal - rows under TOTAL: [{ label, value, bold }]
+     * Without opts the quotation layout is byte-for-byte what was verified.
+     */
+    _buildPdf: function (C, q, seller, logo, opts) {
+      var o = opts || null;
       var doc = new C({ unit: 'mm', format: 'a4', orientation: 'portrait' });
         var W = 210, M = 16, R = W - M, bottom = 278;
         var y = M + 2;
@@ -9450,7 +9574,7 @@ PosnicPro.quotes = {
         };
         var pageFooter = function () {
           doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(140, 148, 160);
-          doc.text(txt(q.quote_id) + '  -  ' + txt(seller.name), M, 289);
+          doc.text(txt(o && o.number ? o.number : q.quote_id) + '  -  ' + txt(seller.name), M, 289);
           doc.text('Page ' + doc.internal.getNumberOfPages() + ' of ' + totalAlias, R, 289, { align: 'right' });
         };
         var ensure = function (h) {
@@ -9483,18 +9607,30 @@ PosnicPro.quotes = {
 
         var rightY = y;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(45, 55, 72);
-        doc.text('QUOTATION', R, rightY + 6, { align: 'right' });
+        doc.text(o && o.title ? o.title : 'QUOTATION', R, rightY + 6, { align: 'right' });
         doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
-        doc.text(txt(q.quote_id), R, rightY + 12.5, { align: 'right' });
+        doc.text(txt(o && o.number ? o.number : q.quote_id), R, rightY + 12.5, { align: 'right' });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
-        doc.text('Date: ' + dmy(q.created_date), R, rightY + 17.5, { align: 'right' });
-        if (q.valid_until) { doc.text('Valid till: ' + dmy(q.valid_until), R, rightY + 21.5, { align: 'right' }); }
-        if (q.status && q.status !== 'open') {
-          doc.setFont('helvetica', 'bold');
-          doc.text(String(q.status).toUpperCase(), R, rightY + 26, { align: 'right' });
-        }
+        if (o && o.headLines) {
+          /* the generalized head: any number of small lines, then a stamp */
+          var ry = rightY + 17.5;
+          o.headLines.forEach(function (ln) { if (ln) { doc.text(txt(ln), R, ry, { align: 'right' }); ry += 4; } });
+          if (o.stamp) {
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(o.stamp).toUpperCase(), R, ry + 0.5, { align: 'right' });
+            ry += 4.5;
+          }
+          y = Math.max(leftY + 3, ry - 1);
+        } else {
+          doc.text('Date: ' + dmy(q.created_date), R, rightY + 17.5, { align: 'right' });
+          if (q.valid_until) { doc.text('Valid till: ' + dmy(q.valid_until), R, rightY + 21.5, { align: 'right' }); }
+          if (q.status && q.status !== 'open') {
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(q.status).toUpperCase(), R, rightY + 26, { align: 'right' });
+          }
 
-        y = Math.max(leftY + 3, rightY + 25);
+          y = Math.max(leftY + 3, rightY + 25);
+        }
         doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.6);
         doc.line(M, y, R, y);
         y += 7;
@@ -9635,6 +9771,17 @@ PosnicPro.quotes = {
         doc.text('TOTAL', totX, y + 8);
         doc.text(money(q.total), R, y + 8, { align: 'right' });
         y += 14;
+        /* an invoice says what was paid and what is still due, under the total */
+        if (o && o.afterTotal && o.afterTotal.length) {
+          o.afterTotal.forEach(function (row) {
+            ensure(8);
+            doc.setFont('helvetica', row.bold ? 'bold' : 'normal'); doc.setFontSize(9.5); doc.setTextColor(row.bold ? 26 : 70, row.bold ? 32 : 78, row.bold ? 44 : 92);
+            doc.text(txt(row.label), totX, y + 2);
+            doc.text(txt(row.value), R, y + 2, { align: 'right' });
+            y += 6;
+          });
+          y += 2;
+        }
 
         /* payment, bank, terms - stacked, skipped when empty */
         var block = function (label, text) {
@@ -9766,103 +9913,38 @@ PosnicPro.quotes = {
             PosnicPro.sales._sourceQuoteId = null;
             return;
         }
-        hasher.setHash('sales/new');
-        var tries = 0;
-        var t = setInterval(function () {
-            tries += 1;
-            if ($('#sales_new_item_name').is(':visible') || tries > 20) {
-                clearInterval(t);
-                lines.forEach(function (l) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(l.item_id);
-                });
-                var pending = lines.slice();
-                var waited = 0;
-                var t2 = setInterval(function () {
-                    waited += 300;
-                    pending = pending.filter(function (l) {
-                        var $qty = $('#touchsale_item_qty' + l.item_id);
-                        if (!$qty.length) { return true; }
-                        if (l.qty > 1 && parseFloat($qty.val()) !== l.qty) {
-                            $qty.val(l.qty).trigger('keyup');
-                        }
-                        if (!lapsed && l.dtype && l.dval > 0) {
-                            // the quote's line discount lands as the SALE's
-                            // line discount - visible in the Disc column
-                            var id2 = l.item_id;
-                            if (l.dtype === 'percent') {
-                                $('#addSalesLineItemDiscount_' + id2).text(l.dval);
-                                $('#discountSign' + id2).text('%');
-                            } else {
-                                var perUnit = Math.round((l.dval / l.qty) * 100) / 100;
-                                $('#addSalesLineItemDiscount_' + id2).text(perUnit.toFixed(2));
-                                $('#discountSign' + id2).text(PosnicPro.local.get('currencySign') || '');
-                            }
-                        }
-                        if (!lapsed && l.unit_price > 0) {
-                            PosnicPro.quotes._applyQuotedPrice(l.item_id, l.unit_price);
-                        }
-                        return false;
-                    });
-                    if (!pending.length || waited > 9000) {
-                        clearInterval(t2);
-                        if (pending.length) {
-                            PosnicPro.sales._sourceQuoteId = null;
-                            PosnicPro.sales._quoteHonoured = null;
-                            PosnicPro.alert('warning', pending.length + ' of ' + lines.length
-                                + ' quoted items are no longer sellable and were skipped - quote '
-                                + (q.quote_id || '') + ' stays open.');
-                            return;
-                        }
-                        // quote discount + named deductions -> the sale's
-                        // extra discount, as a flat amount
-                        var extra = (!lapsed && q.discount && q.discount.computed > 0) ? q.discount.computed : 0;
-                        if (!lapsed) {
-                            (q.charges || []).forEach(function (c) {
-                                if (c.sign === -1) { extra += Number(c.computed) || 0; }
-                            });
-                        }
-                        if (extra > 0) {
-                            $('#percentIcon').addClass('d-none');
-                            $('#rupeeIcon').removeClass('d-none');
-                            $('#extraDisc').text(extra.toFixed(2));
-                            try { PosnicPro.sales.calculation.extraDiscoundCalculation(); } catch (e) { /* next edit refreshes */ }
-                        }
-                        // positive charges become their own named lines
-                        var posCharges = lapsed ? [] : (q.charges || []).filter(function (c) {
-                            return c.sign !== -1 && Number(c.computed) > 0;
-                        });
-                        var chargeCount = posCharges.length;
-                        posCharges.forEach(function (c) {
-                            PosnicPro.sales.charges.push({
-                                name: c.name,
-                                amount: Number(c.computed) || 0,
-                                taxed: false,
-                                source: 'quote'
-                            });
-                        });
-                        if (chargeCount) { PosnicPro.sales.renderCharges(); }
-                        var finish = function () {
-                            var extras = [];
-                            if (chargeCount) { extras.push(chargeCount + ' charge(s) on the bill'); }
-                            if (extra > 0) { extras.push('quote discount applied'); }
-                            if (customCount) { extras.push(customCount + ' custom line(s) stay on the quote'); }
-                            var tail = extras.length ? ' ' + extras.join('; ') + '.' : '';
-                            if (lapsed) {
-                                PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
-                                    + new Date(q.valid_until).toLocaleDateString('en-IN')
-                                    + ' - items loaded at today\'s prices. Quoted total was '
-                                    + Number(q.total || 0).toFixed(2) + '.'
-                                    + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote.' : ''));
-                            } else {
-                                PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
-                                    + ' loaded at its quoted prices.' + tail);
-                            }
-                        };
-                        finish();
-                    }
-                }, 300);
+        /* The cart loader is shared with invoices (INVOICING_MODULE_DESIGN):
+           one set of timings, one price-override path, one charge rail. */
+        PosnicPro.sales.loadDocumentIntoCart({
+            lines: lines,
+            honour: !lapsed,
+            discount: (q.discount && q.discount.computed > 0) ? q.discount.computed : 0,
+            charges: q.charges || [],
+            onSkipped: function (skipped) {
+                PosnicPro.sales._sourceQuoteId = null;
+                PosnicPro.sales._quoteHonoured = null;
+                PosnicPro.alert('warning', skipped + ' of ' + lines.length
+                    + ' quoted items are no longer sellable and were skipped - quote '
+                    + (q.quote_id || '') + ' stays open.');
+            },
+            onLoaded: function (info) {
+                var extras = [];
+                if (info.chargeCount) { extras.push(info.chargeCount + ' charge(s) on the bill'); }
+                if (info.extra > 0) { extras.push('quote discount applied'); }
+                if (customCount) { extras.push(customCount + ' custom line(s) stay on the quote'); }
+                var tail = extras.length ? ' ' + extras.join('; ') + '.' : '';
+                if (lapsed) {
+                    PosnicPro.alert('warning', 'Quote ' + (q.quote_id || '') + ' lapsed on '
+                        + new Date(q.valid_until).toLocaleDateString('en-IN')
+                        + ' - items loaded at today\'s prices. Quoted total was '
+                        + Number(q.total || 0).toFixed(2) + '.'
+                        + (customCount ? ' ' + customCount + ' custom line(s) stay on the quote.' : ''));
+                } else {
+                    PosnicPro.alert('success', 'Quote ' + (q.quote_id || '')
+                        + ' loaded at its quoted prices.' + tail);
+                }
             }
-        }, 300);
+        });
     },
     cancel: function () {
         var q = PosnicPro.quotes._current;
