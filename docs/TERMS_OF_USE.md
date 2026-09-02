@@ -69,7 +69,7 @@ it here so it is also a contractual one.
 ## 5. What we provide, and what we promise
 
 We will provide Posnic Cloud with reasonable skill and care, and we will keep
-this document and [SUPPORT_LIFECYCLE.md](docs/SUPPORT_LIFECYCLE.md) accurate
+this document and [SUPPORT_LIFECYCLE.md](SUPPORT_LIFECYCLE.md) accurate
 about what that means.
 
 **Support is answered around the clock for urgent problems.** If your shop
@@ -81,7 +81,7 @@ a person. Everything else is answered during business hours, Monday to Saturday,
 percentage of uptime, a guaranteed response time, or a repair time. We are a
 small team and we would rather say so than publish a number we cannot stand
 behind. What we do commit to is in
-[SUPPORT_LIFECYCLE.md](docs/SUPPORT_LIFECYCLE.md).
+[SUPPORT_LIFECYCLE.md](SUPPORT_LIFECYCLE.md).
 
 We may modify or discontinue features. If we discontinue Posnic Cloud entirely,
 we will give at least **90 days' notice** and provide a full export of your data
@@ -94,11 +94,11 @@ in a documented format before it stops.
 - We use it to run the service you are paying for, and for nothing else.
 - **We do not sell it, mine it, rent it, or train models on it.**
 - We disclose it only to the subprocessors listed in
-  [SUBPROCESSORS.md](docs/SUBPROCESSORS.md), or where a law compels us — and
+  [SUBPROCESSORS.md](SUBPROCESSORS.md), or where a law compels us — and
   where we are permitted to tell you about such a demand, we will.
 - Handling is described in [PRIVACY.md](PRIVACY.md) and, where you are a data
   processor for your own customers, in
-  [DATA_PROCESSING_ADDENDUM.md](docs/DATA_PROCESSING_ADDENDUM.md).
+  [DATA_PROCESSING_ADDENDUM.md](DATA_PROCESSING_ADDENDUM.md).
 
 **Export and deletion.** You can export at any time. On request at
 **info@posnic.com** we delete your cloud data within **30 days**, other than
@@ -107,7 +107,7 @@ affected.
 
 **Backups are not a substitute for yours.** We back up the service. That is for
 our recovery, not a guarantee of yours. Keep your own local backups — see
-[BACKUP_POLICY.md](docs/BACKUP_POLICY.md).
+[BACKUP_POLICY.md](BACKUP_POLICY.md).
 
 ## 7. Acceptable use
 
@@ -117,7 +117,7 @@ data; interfere with the service or place a deliberately unreasonable load on
 it; or resell it as your own service without a written agreement with us.
 
 Security testing against our systems needs written permission first. Report
-what you find under [SECURITY.md](SECURITY.md) — we will not pursue anyone who
+what you find under [SECURITY.md](../.github/SECURITY.md) — we will not pursue anyone who
 reports a genuine issue responsibly.
 
 We may suspend an account that is causing harm to the service or to other
@@ -211,7 +211,7 @@ deleted.
   received the next working day.
 - **To us:** info@posnic.com, or by post to Posnic Innovations, Tamil Nadu,
   India. Urgent support is the phone number in
-  [SUPPORT_LIFECYCLE.md](docs/SUPPORT_LIFECYCLE.md), not a notice address.
+  [SUPPORT_LIFECYCLE.md](SUPPORT_LIFECYCLE.md), not a notice address.
 
 Keep your account email current. A notice sent to an address you no longer read
 still counts as given.
@@ -231,5 +231,5 @@ still counts as given.
 ---
 
 **Questions:** info@posnic.com
-**Security:** [SECURITY.md](SECURITY.md)
+**Security:** [SECURITY.md](../.github/SECURITY.md)
 **Posnic Innovations**, Tamil Nadu, India
