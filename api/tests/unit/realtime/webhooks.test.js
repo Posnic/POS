@@ -49,6 +49,14 @@ function fakeDb() {
       updateOne: async (q, u) => {
         const row = rows.find((r) => matches(r, q));
         if (row && u.$set) Object.assign(row, u.$set);
+        if (row && u.$unset) {
+          for (const path of Object.keys(u.$unset)) {
+            const parts = path.split('.');
+            const key = parts.pop();
+            const owner = parts.reduce((value, part) => (value ? value[part] : undefined), row);
+            if (owner) delete owner[key];
+          }
+        }
         return { matchedCount: row ? 1 : 0 };
       },
       deleteOne: async (q) => {
@@ -207,5 +215,97 @@ describe('drainDue', () => {
 
     // second call within the window is a no-op by throttle
     expect(await wh.drainDue(db, unique)).toBe(0);
+  });
+});
+
+
+describe('retry and dead-letter contract (#75, parent #34)', () => {
+  test('a timeout gets a safe retry code and bounded backoff', async () => {
+    const db = fakeDb();
+    await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
+    global.fetch = async () => {
+      const error = new Error('private.internal.example timed out with token=secret');
+      error.name = 'TimeoutError';
+      throw error;
+    };
+
+    await wh.publish(db, 'private-shop-name', { entity: 'sales', at: 'T' });
+    await flush();
+    const row = db.collection(wh.DELIVERIES).rows[0];
+    expect(row.status).toBe('pending');
+    expect(row.attempts).toBe(1);
+    expect(row.lastErrorCode).toBe('timeout');
+    expect(JSON.stringify(row)).not.toContain('private.internal.example');
+    expect(JSON.stringify(row)).not.toContain('token=secret');
+    expect(row.nextAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  test('a 500 retries, while a non-retryable 400 dead-letters immediately', async () => {
+    const retryDb = fakeDb();
+    await wh.addSubscription(retryDb, { url: 'https://a.example/h', events: ['sales'] });
+    global.fetch = async () => ({ status: 500 });
+    await wh.publish(retryDb, 's', { entity: 'sales', at: 'T' });
+    await flush();
+    expect(retryDb.collection(wh.DELIVERIES).rows[0]).toMatchObject({
+      status: 'pending',
+      attempts: 1,
+      lastErrorCode: 'http_5xx',
+    });
+
+    const deadDb = fakeDb();
+    await wh.addSubscription(deadDb, { url: 'https://b.example/h', events: ['sales'] });
+    global.fetch = async () => ({ status: 400 });
+    await wh.publish(deadDb, 'private-shop', { entity: 'sales', at: 'private-time' });
+    await flush();
+    const dead = deadDb.collection(wh.DELIVERIES).rows[0];
+    expect(dead).toMatchObject({ status: 'dead', attempts: 1, lastErrorCode: 'http_4xx' });
+    expect(dead.deadLetteredAt).toBeInstanceOf(Date);
+    expect(dead.payload).toEqual({ event: 'change', entity: 'sales' });
+    expect(dead).not.toHaveProperty('lastError');
+  });
+
+  test('a retry keeps the delivery id stable and can succeed', async () => {
+    const db = fakeDb();
+    await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
+    const ids = [];
+    let calls = 0;
+    global.fetch = async (_url, init) => {
+      ids.push(init.headers['x-posnic-delivery']);
+      calls++;
+      return { status: calls === 1 ? 500 : 204 };
+    };
+
+    await wh.publish(db, 's', { entity: 'sales', at: 'T' });
+    await flush();
+    const row = db.collection(wh.DELIVERIES).rows[0];
+    row.nextAt = new Date(Date.now() - 1);
+    expect(await wh.drainDue(db, 'retry_success_' + Date.now())).toBe(1);
+    await flush();
+    expect(row).toMatchObject({ status: 'delivered', attempts: 2 });
+    expect(ids).toEqual([String(row._id), String(row._id)]);
+  });
+
+  test('permanent 500 failure stops at MAX_ATTEMPTS and leaves a sanitized record', async () => {
+    const db = fakeDb();
+    await wh.addSubscription(db, { url: 'https://a.example/h', events: ['sales'] });
+    global.fetch = async () => ({ status: 500 });
+    await wh.publish(db, 'private-shop', { entity: 'sales', at: 'private-time' });
+    await flush();
+    const row = db.collection(wh.DELIVERIES).rows[0];
+
+    for (let attempt = 1; attempt < wh.MAX_ATTEMPTS; attempt++) {
+      row.nextAt = new Date(Date.now() - 1);
+      expect(await wh.drainDue(db, `permanent_${Date.now()}_${attempt}`)).toBe(1);
+      await flush();
+    }
+
+    expect(row).toMatchObject({
+      status: 'dead',
+      attempts: wh.MAX_ATTEMPTS,
+      lastErrorCode: 'http_5xx',
+    });
+    expect(row.deadLetteredAt).toBeInstanceOf(Date);
+    expect(row.payload).toEqual({ event: 'change', entity: 'sales' });
+    expect(row).not.toHaveProperty('lastError');
   });
 });
