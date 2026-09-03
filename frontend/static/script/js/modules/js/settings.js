@@ -1483,7 +1483,7 @@ if ($wrapper.length) {
         const isValid = /^[A-Za-z0-9]{3,6}$/.test(storeId);
         if (!isValid) {
             loader.find(".loadingSpinner").remove();
-            PosnicPro.alert('error', 'Store ID and Secret Key must be 3–6 letters/numbers only');
+            PosnicPro.alert('error', 'Store ID and Secret Key must be 3-6 letters/numbers only');
             return false;
         }
 
@@ -3935,7 +3935,7 @@ $("#payment_add_form").submit(function (event) {
     }
 });
 $('#tableorder_value').on('input', function () {
-    // remove anything that is not A–Z, a–z, 0–9
+    // remove anything that is not A-Z, a-z, 0-9
     this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
 });
 $("#tableorder_add_form").validate({
@@ -6984,7 +6984,7 @@ PosnicPro.settings.demoPacks = {
             : pack.products + ' products in ' + pack.categories + ' categories'
               + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
         $('#demo_pack_summary').text(
-            key === self._current ? line + ' — this is what you have now' : line
+            key === self._current ? line + ' (this is what you have now)' : line
         );
         $('#demo_pack_install').text(
             key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'
