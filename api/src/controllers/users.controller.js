@@ -1842,6 +1842,19 @@ class UsersController extends BaseController {
         return this.error(res, 'No user identified', 401);
       }
 
+      /*
+       * The rule getUser already uses: your own picture is always yours to
+       * remove, anybody else's needs the user-management permission. Without
+       * it the id simply arrives in the body and is obeyed, which was
+       * survivable while this only reset a database field and is not now that
+       * it destroys the file in the bucket.
+       */
+      const isSelf =
+        String(req.user && (req.user._id || req.user.id)) === String(userId);
+      if (!isSelf && !this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'Unauthorized', 403);
+      }
+
       const User = this.userModel;
       const user = await User.findById(userId).select('image').lean();
 
@@ -1862,81 +1875,111 @@ class UsersController extends BaseController {
 
       const storageType = process.env.STORAGE_TYPE || 'local';
 
-      // If S3 storage is configured, attempt to delete the S3 object
-      if (storageType === 's3' && process.env.AWS_S3_BUCKET && storedImageUrl) {
+      /*
+       * Clearing the object out of the bucket is BEST EFFORT, the way
+       * categories.controller already treats category images.
+       *
+       * Two rules pulling in opposite directions. Never delete an object we
+       * cannot positively identify as this user's picture, so anything
+       * unrecognised is left where it is rather than guessed at. And never let
+       * the bucket decide whether somebody may clear their own photograph: a
+       * stale URL, a bucket renamed since, a key written by the old PHP app,
+       * or an IAM policy without DeleteObject would otherwise leave that
+       * person stuck with a picture they cannot remove. An orphaned file is
+       * the cheaper failure.
+       *
+       * So every branch below skips the delete and carries on to the database.
+       */
+      if (storageType === 's3' && process.env.AWS_S3_BUCKET) {
         try {
-          // Verify that the request data matches the stored image URL
-          if (requestedImageUrl && requestedImageUrl !== storedImageUrl) {
-            return this.error(
-              res,
-              'Provided image URL does not match stored image',
-              400
-            );
+          const key = this.resolveUserImageS3Key(storedImageUrl, requestedImageUrl);
+          if (key) {
+            await require('../utils/s3').deleteObject(key);
           }
-
-          const parsedUrl = new URL(storedImageUrl);
-          const key = parsedUrl.pathname.replace(/^\/+/, '');
-          const bucket = process.env.AWS_S3_BUCKET;
-          const region = process.env.AWS_REGION;
-          const publicUrl = process.env.AWS_S3_PUBLIC_URL;
-          const allowedHosts = [];
-
-          // Build list of allowed S3 hosts
-          if (publicUrl) {
-            try {
-              allowedHosts.push(new URL(publicUrl).hostname);
-            } catch (err) {
-              // Ignore invalid public URL configuration and fall back to bucket-based checks.
-            }
-          }
-
-          if (bucket) {
-            allowedHosts.push(`${bucket}.s3.amazonaws.com`);
-            if (region) {
-              allowedHosts.push(`${bucket}.s3.${region}.amazonaws.com`);
-            }
-          }
-
-          // Validate: key must be a valid Posnic user-image filename or local storage path
-          const isBareUserImageKey = this.isValidPosnicUserImageFilename(key);
-          const isLocalStoragePath =
-            key.startsWith('uploads/user_images/') &&
-            this.isValidPosnicUserImageFilename(
-              key.substring('uploads/user_images/'.length)
-            );
-          const isValidUserImageKey = isBareUserImageKey || isLocalStoragePath;
-          const isAllowedHost =
-            allowedHosts.length > 0 &&
-            allowedHosts.includes(parsedUrl.hostname);
-
-          if (!isValidUserImageKey) {
-            return this.error(
-              res,
-              'Invalid image key: must be a Posnic user-image filename',
-              400
-            );
-          }
-
-          if (!isAllowedHost) {
-            return this.error(res, 'Invalid S3 host', 400);
-          }
-
-          await require('../utils/s3').deleteObject(key);
         } catch (err) {
           console.error('Error deleting user image from S3:', err);
-          return this.error(res, 'Failed to delete image from storage', 500);
         }
       }
 
-      // Update database only after successful S3 deletion (or for local storage)
-      const updateData = { image: 'user.svg' };
-      await User.findByIdAndUpdate(userId, updateData);
+      await User.findByIdAndUpdate(userId, { image: 'user.svg' });
 
       return this.success(res, 'user.svg', 'Image was deleted');
     } catch (error) {
       console.error('Error in userImageDelete:', error);
       return this.error(res, error.message, 500);
     }
+  }
+
+  /**
+   * The S3 key to remove for a stored user image, or null when the object
+   * cannot be positively identified as one of ours. Never throws for a reason
+   * that should merely skip the delete; the caller treats null as "leave it".
+   *
+   * @param {string} storedImageUrl     the URL held in the user record
+   * @param {string} [requestedImageUrl] what the client believed it was
+   * @returns {string|null}
+   */
+  resolveUserImageS3Key(storedImageUrl, requestedImageUrl) {
+    // The client is working from a stale record; do not act on its guess.
+    if (requestedImageUrl && requestedImageUrl !== storedImageUrl) {
+      console.warn(
+        '[userImageDelete] request does not match the stored image, leaving the object in place'
+      );
+      return null;
+    }
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(storedImageUrl);
+    } catch (err) {
+      // A relative path, written by an older install, is not an S3 object.
+      console.warn(
+        '[userImageDelete] stored image is not an absolute URL, leaving it in place'
+      );
+      return null;
+    }
+
+    const key = parsedUrl.pathname.replace(/^\/+/, '');
+    const bucket = process.env.AWS_S3_BUCKET;
+    const region = process.env.AWS_REGION;
+    const publicUrl = process.env.AWS_S3_PUBLIC_URL;
+
+    const allowedHosts = [];
+    if (publicUrl) {
+      try {
+        allowedHosts.push(new URL(publicUrl).hostname);
+      } catch (err) {
+        // Ignore invalid public URL configuration and fall back to the bucket hosts.
+      }
+    }
+    if (bucket) {
+      allowedHosts.push(`${bucket}.s3.amazonaws.com`);
+      if (region) {
+        allowedHosts.push(`${bucket}.s3.${region}.amazonaws.com`);
+      }
+    }
+
+    const prefix = 'uploads/user_images/';
+    const isBareKey = this.isValidPosnicUserImageFilename(key);
+    const isPrefixedKey =
+      key.startsWith(prefix) &&
+      this.isValidPosnicUserImageFilename(key.substring(prefix.length));
+
+    if (!isBareKey && !isPrefixedKey) {
+      console.warn(
+        '[userImageDelete] key is not a Posnic user image, leaving it in place'
+      );
+      return null;
+    }
+
+    if (!allowedHosts.includes(parsedUrl.hostname)) {
+      console.warn(
+        '[userImageDelete] image is not on a known bucket host, leaving it in place'
+      );
+      return null;
+    }
+
+    return key;
   }
 
   /**
