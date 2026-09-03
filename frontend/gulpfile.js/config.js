@@ -78,6 +78,9 @@ const LANGUAGES = [
      * KOT, PAX, parked - and are worth a speaker rather than a guess.
      */
     { code: 'de', name: 'Deutsch', flag: 'de', reviewed: false },
+    { code: 'sw', name: 'Kiswahili', flag: 'tz', reviewed: false },
+    { code: 'nl', name: 'Nederlands', flag: 'nl', reviewed: false },
+    { code: 'it', name: 'Italiano', flag: 'it', reviewed: false },
 ];
 
 /* Whether this build restricts the menu to reviewed languages. Off unless
