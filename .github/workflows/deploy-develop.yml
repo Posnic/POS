@@ -54,6 +54,17 @@ jobs:
           npm --prefix frontend install --no-audit --no-fund
           cd frontend && npx gulp build
 
+      - name: Check discovery files
+        run: |
+          set -e
+          for f in \
+            frontend/public/robots.txt \
+            frontend/public/sitemap.xml \
+            frontend/public/llms.txt
+          do
+            test -s "$f" || { echo "missing or empty after build: $f"; exit 1; }
+          done
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
