@@ -59,11 +59,28 @@
                         </section>
                         <section class="first-run-step" data-intro-step="settings">
                             <p class="first-run-lead">These starter settings are already filled from your signup location. You can correct them now if they are wrong, or later from Settings.</p>
-                            <div class="first-run-summary" id="feature_intro_summary" aria-label="Starter shop settings"></div>
-                            <button type="button" class="first-run-edit-settings" id="feature_intro_edit_settings">
-                                <i class="mdi mdi-settings" aria-hidden="true"></i>
-                                <span>Edit country, currency and tax details</span>
-                            </button>
+                            <div class="first-run-locale" id="feature_intro_locale_form" aria-label="Starter shop settings">
+                                <label>
+                                    <span>Country</span>
+                                    <select id="feature_intro_country" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>State / region</span>
+                                    <select id="feature_intro_state" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Currency</span>
+                                    <select id="feature_intro_currency" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Timezone</span>
+                                    <select id="feature_intro_timezone" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Date format</span>
+                                    <select id="feature_intro_date" class="form-control border-control"></select>
+                                </label>
+                            </div>
                             <div id="feature_intro_access" class="first-run-access"></div>
                         </section>
                     </div>

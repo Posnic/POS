@@ -284,10 +284,12 @@ test('a long description cannot push the switch off the edge', () => {
 
 test('the modal markup carries what the code paints into', () => {
     for (const id of ['feature_intro_modal', 'feature_intro_sub', 'feature_intro_lead',
-        'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_summary',
+        'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_locale_form',
+        'feature_intro_country', 'feature_intro_state', 'feature_intro_currency',
+        'feature_intro_timezone', 'feature_intro_date',
         'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip',
         'feature_intro_next', 'feature_intro_back', 'feature_intro_step_label',
-        'feature_intro_demo_bg_status', 'feature_intro_close', 'feature_intro_edit_settings']) {
+        'feature_intro_demo_bg_status', 'feature_intro_close']) {
         assert.ok(modalCode.includes('id="' + id + '"'), 'missing #' + id);
     }
     assert.match(modalCode, /class="modal-content first-run"/);
@@ -295,6 +297,18 @@ test('the modal markup carries what the code paints into', () => {
     assert.match(modalCode, /data-keyboard="false"/);
     assert.ok(!/data-dismiss="modal"/.test(modalCode),
         'the first-run welcome must not have a close-only button');
+});
+
+test('the first-run close icon is drawn in the center of the circle', () => {
+    const closeCss = block(cssCode, '.first-run-close {', '.first-run-close:hover');
+    assert.match(closeCss, /font-size: 0 !important/);
+    assert.match(closeCss, /\.first-run-close::before,\s*\n\.first-run-close::after/);
+    assert.match(closeCss, /top: 50%/);
+    assert.match(closeCss, /left: 50%/);
+    assert.match(closeCss, /transform: translate\(-50%, -50%\) rotate\(45deg\)/);
+    assert.match(closeCss, /\.first-run-close::after[\s\S]*rotate\(-45deg\)/);
+    assert.ok(!/content: "\\00d7"/.test(closeCss),
+        'the font multiplication glyph sits off-center in this circular button');
 });
 
 test('the welcome is a step-by-step assistant, not one crowded settings wall', () => {
@@ -318,6 +332,13 @@ test('sample data is selected by default and starts in the background on Next', 
     assert.match(settingsCode, /syncDemoDataAfterSave\(true, \{/);
 });
 
+test('choosing a clean start arms the sample-data removal path', () => {
+    const chooseDemo = block(settingsCode, 'chooseDemoData: function', 'markIntroDemoStatus:');
+    assert.match(chooseDemo, /wanted === false/);
+    assert.match(chooseDemo, /_demoPurgeArmed = true/);
+    assert.match(settingsCode, /syncDemoDataAfterSave\(wantedDemo\)/);
+});
+
 test('the first-run visual is not caught by the general greyscale artwork rule', () => {
     assert.match(modalCode, /static\/images\/onboarding\/shop-ready-photo\.jpg/);
     assert.ok(!/static\/images\/general\/Background_four\.jpg/.test(modalCode));
@@ -326,19 +347,28 @@ test('the first-run visual is not caught by the general greyscale artwork rule',
 
 test('the welcome shows saved starter settings before selling', () => {
     const render = block(settingsCode, 'renderIntro:', 'saveIntro:');
-    const summary = block(settingsCode, 'setupSummary:', 'featureOn:');
-    assert.match(render, /\$\('#feature_intro_summary'\)\.html\(PosnicPro\.features\.setupSummary\(\)\)/);
-    assert.match(summary, /country_setting/);
-    assert.match(summary, /currencySign/);
-    assert.match(summary, /PosnicPro\.timeZone\(\)/);
-    assert.match(summary, /dateformatset/);
+    const editor = block(settingsCode, 'initIntroLocaleEditor:', 'featureOn:');
+    assert.match(render, /PosnicPro\.features\.initIntroLocaleEditor\(\)/);
+    assert.match(editor, /feature_intro_country/);
+    assert.match(editor, /feature_intro_currency/);
+    assert.match(editor, /feature_intro_timezone/);
+    assert.match(editor, /feature_intro_date/);
+    assert.match(editor, /country_setting/);
+    assert.match(editor, /currencySign/);
+    assert.match(editor, /PosnicPro\.timeZone\(\)/);
+    assert.match(editor, /dateformatset/);
 });
 
-test('the starter settings review offers a path to edit country and currency', () => {
-    assert.match(modalCode, /id="feature_intro_edit_settings"/);
-    assert.match(modalCode, /Edit country, currency and tax details/);
-    assert.match(settingsCode, /\$\(document\)\.on\('click', '#feature_intro_edit_settings'/);
-    assert.match(settingsCode, /hasher\.setHash\('settings\/general'\)/);
+test('starter settings are editable in the welcome without leaving the popup', () => {
+    assert.match(modalCode, /id="feature_intro_locale_form"/);
+    assert.match(settingsCode, /saveIntroLocaleIfNeeded: function/);
+    assert.match(settingsCode, /url: 'setting\/starterLocale'/);
+    assert.ok(!modalCode.includes('Edit country, currency and tax details'),
+        'the welcome should not show the old edit-settings callout');
+    assert.ok(!modalCode.includes('feature_intro_edit_settings'),
+        'the welcome should not show a button that leaves the popup');
+    assert.ok(!settingsCode.includes("hasher.setHash('settings/general')"),
+        'editing starter settings must not redirect to the settings page');
 });
 
 test('the first-run features are searchable and recommended ones rise first', () => {
@@ -525,7 +555,7 @@ test('the tour is not sent to the sale screen', () => {
                           'PosnicPro.alert(response.type');
     assert.match(success, /var wantedTour = PosnicPro\.features\._tourAfterSave;/,
         'nothing remembers which button was pressed');
-    assert.match(success, /if \(!wantedTour && !wantedSettings\) \{ PosnicPro\.features\.startSelling\(\); \}/,
+    assert.match(success, /if \(!wantedTour\) \{ PosnicPro\.features\.startSelling\(\); \}/,
         'the tour and the sale screen are not told apart');
     /* The flag is cleared by the tour branch above, so reading it afterwards
        would always say "no tour" and the tour would be cut short every time. */
@@ -533,13 +563,14 @@ test('the tour is not sent to the sale screen', () => {
         'the flag is read after the branch that clears it');
 });
 
-test('editing starter settings saves the welcome without opening the sale screen', () => {
-    const success = block(settingsCode, "var wantedTour = PosnicPro.features._tourAfterSave;",
-                          'PosnicPro.alert(response.type');
-    assert.match(success, /var wantedSettings = PosnicPro\.features\._settingsAfterSave;/);
-    assert.match(success, /if \(wantedSettings\)/);
-    assert.match(success, /hasher\.setHash\('settings\/general'\)/);
-    assert.match(success, /if \(!wantedTour && !wantedSettings\) \{ PosnicPro\.features\.startSelling\(\); \}/);
+test('changed starter settings save before the first-run decision closes', () => {
+    const save = block(settingsCode, 'saveIntro: function', "$(document).on('click', '#feature_intro_skip'");
+    assert.match(save, /saveIntroLocaleIfNeeded\(function \(\) \{/);
+    assert.match(save, /url: 'settings\/group\/features'/);
+    assert.ok(save.indexOf('saveIntroLocaleIfNeeded') < save.indexOf("url: 'settings/group/features'"),
+        'starter settings should persist before the welcome is marked decided');
+    assert.ok(!save.includes('_settingsAfterSave'),
+        'the removed edit-and-redirect flag should not return');
 });
 
 test('a failed save goes nowhere', () => {
