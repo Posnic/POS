@@ -1050,8 +1050,8 @@ PosnicPro.users = {
             var row = list[i];
             var name = row.register_name;
             var suffix = '';
-            if (row.in_use && row.in_use_by_me) suffix = ' — your open session';
-            else if (row.in_use) suffix = ' — in use' + (row.in_use_by ? ' by ' + row.in_use_by : '');
+            if (row.in_use && row.in_use_by_me) suffix = ' (your open session)';
+            else if (row.in_use) suffix = ' (in use' + (row.in_use_by ? ' by ' + row.in_use_by : '') + ')';
             html += '<option id="' + row.register_id + '" value="' + row.register_id + '"' +
                 ' data-inuse="' + (row.in_use ? '1' : '') + '"' +
                 ' data-inuseby="' + $('<span>').text(row.in_use_by || '').html() + '"' +

@@ -47,7 +47,7 @@ const envVarsSchema = Joi.object()
       .default(15 * 60 * 1000), // 15 minutes
     RATE_LIMIT_MAX: Joi.alternatives().try(Joi.number(), Joi.string()).default(100),
 
-    // Email (optional – allow empty to avoid hard-failing when SMTP is not configured)
+    // Email (optional - allow empty to avoid hard-failing when SMTP is not configured)
     EMAIL_HOST: Joi.string().optional().allow('').description('SMTP host'),
     EMAIL_PORT: Joi.alternatives()
       .try(Joi.number(), Joi.string())

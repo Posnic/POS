@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * GTIN — the number that makes a product the SAME product in two shops.
+ * GTIN - the number that makes a product the SAME product in two shops.
  *
  * A barcode on a retail pack is a Global Trade Item Number: EAN-13 in most of
  * the world, UPC-A in North America, EAN-8 on small packs, GTIN-14 on cases.
