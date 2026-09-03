@@ -37,7 +37,7 @@ PosnicPro.registers = {
                 var r = rows[i];
                 var status, action = '';
                 if (r.in_use && r.in_use_by_me) {
-                    status = '<span class="badge badge-success">Open — your session</span>';
+                    status = '<span class="badge badge-success">Open, your session</span>';
                     // Resume covers the browser that lost its local session
                     // record; when the session is already live here the
                     // details below the table are the whole story.
@@ -45,7 +45,7 @@ PosnicPro.registers = {
                         action = '<button type="button" class="btn btn-primary btn-sm register-open-btn" data-idx="' + i + '"><i class="feather icon-unlock"></i> Resume</button>';
                     }
                 } else if (r.in_use) {
-                    status = '<span class="badge badge-warning">Open — ' +
+                    status = '<span class="badge badge-warning">Open, ' +
                         $('<span>').text(r.in_use_by || 'another till').html() + '</span>';
                 } else {
                     status = '<span class="badge badge-light">Closed</span>';
