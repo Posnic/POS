@@ -57,6 +57,35 @@ understand here:
 | Português Portuguese | pt | all | not yet - marked *beta* |
 | Bahasa Indonesia | id | all | not yet - marked *beta* |
 | ไทย Thai | th | all | not yet - marked *beta* |
+| Deutsch German | de | all | not yet - marked *beta* |
+
+### Which language is added next, and why
+
+The queue is not a list of the world's biggest languages. It is the countries
+that have actually sent Posnic a signup and had nothing here to read the till
+in, most signups first:
+
+| Next | Code | Signups waiting on it |
+|---|---|---|
+| Kiswahili | sw | Kenya, Tanzania, Uganda, DR Congo - **four**, the largest gap |
+| Nederlands | nl | Belgium |
+| Italiano | it | Switzerland, Malta |
+| Filipino | tl | Philippines |
+| Български | bg | Bulgaria |
+| Bosanski | bs | Bosnia and Herzegovina |
+| ភាសាខ្មែរ | km | Cambodia |
+| Čeština | cs | Czechia |
+| Azərbaycan | az | Azerbaijan |
+| Kinyarwanda | rw | Rwanda |
+
+**Swahili, Dutch and Italian already have their glossary columns filled** in
+`languages/_glossary.json` - the 147 shared terms, which is about 200 of the
+662 keys. Adding the language to `frontend/gulpfile.js/config.js` and running
+`node tests/tools/seed-from-glossary.js --write` produces that much of a pack
+immediately. The remaining 463 are the ones worth a speaker: opening float,
+input tax credit, KOT, PAX, parked sale. Those are the strings where a
+confident wrong word costs a shopkeeper money, and they are why those three are
+not shipped yet.
 
 **Every language ships in every build.** Pick it from the menu in the header of
 any Posnic and the switch is instant. A language nobody who speaks it has read
