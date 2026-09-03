@@ -1296,7 +1296,9 @@ describe('userImageDelete', () => {
     delete process.env.AWS_REGION;
   });
 
-  test('400 when req.body.data does not match stored image URL', async () => {
+  test('a stale URL from the client leaves the object alone but still clears the picture', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
     process.env.STORAGE_TYPE = 's3';
     process.env.AWS_S3_BUCKET = 'bucket';
 
@@ -1304,6 +1306,7 @@ describe('userImageDelete', () => {
     const requestedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/different.jpg';
     const userChain = chainable({ image: storedUrl });
     mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
 
     const req = mockReq({ body: { data: requestedUrl, id: 'u1' } });
     const res = mockRes();
@@ -1311,14 +1314,20 @@ describe('userImageDelete', () => {
     await ctrl.userImageDelete(req, res);
 
     expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
-    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
+    // Nothing is removed from the bucket: we cannot tell which object it is.
+    expect(deleteSpy).not.toHaveBeenCalled();
+    // But the person is not left stuck with a picture they cannot remove.
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
 
+    deleteSpy.mockRestore();
     delete process.env.STORAGE_TYPE;
     delete process.env.AWS_S3_BUCKET;
   });
 
-  test('400 when stored image key does not start with uploads/user_images/', async () => {
+  test('an unrecognised key is left in the bucket, and the picture still clears', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
     process.env.STORAGE_TYPE = 's3';
     process.env.AWS_S3_BUCKET = 'bucket';
     process.env.AWS_REGION = 'ap-south-1';
@@ -1326,6 +1335,7 @@ describe('userImageDelete', () => {
     const storedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/backups/old.jpg';
     const userChain = chainable({ image: storedUrl });
     mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
 
     const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
@@ -1333,15 +1343,20 @@ describe('userImageDelete', () => {
     await ctrl.userImageDelete(req, res);
 
     expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    // Nothing is removed from the bucket: this key is not one of ours.
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
 
+    deleteSpy.mockRestore();
     delete process.env.STORAGE_TYPE;
     delete process.env.AWS_S3_BUCKET;
     delete process.env.AWS_REGION;
   });
 
-  test('400 when stored image is from non-allowed S3 host', async () => {
+  test('an image on an unknown host is left alone, and the picture still clears', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
     process.env.STORAGE_TYPE = 's3';
     process.env.AWS_S3_BUCKET = 'bucket';
     process.env.AWS_REGION = 'ap-south-1';
@@ -1349,6 +1364,7 @@ describe('userImageDelete', () => {
     const storedUrl = 'https://example.com/uploads/user_images/old.jpg';
     const userChain = chainable({ image: storedUrl });
     mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
 
     const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
@@ -1356,9 +1372,12 @@ describe('userImageDelete', () => {
     await ctrl.userImageDelete(req, res);
 
     expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    // Nothing is removed from the bucket: this key is not one of ours.
+    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
 
+    deleteSpy.mockRestore();
     delete process.env.STORAGE_TYPE;
     delete process.env.AWS_S3_BUCKET;
     delete process.env.AWS_REGION;
@@ -1417,7 +1436,7 @@ describe('userImageDelete', () => {
     expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('reqUser1', { image: 'user.svg' });
   });
 
-  test('500 when S3 deletion fails and returns error without updating DB', async () => {
+  test('a bucket that refuses the delete does not stop somebody clearing their picture', async () => {
     const s3 = require('../../../src/utils/s3');
     const deleteSpy = jest.spyOn(s3, 'deleteObject').mockRejectedValue(new Error('S3 connection failed'));
     process.env.STORAGE_TYPE = 's3';
@@ -1441,8 +1460,69 @@ describe('userImageDelete', () => {
       'Error deleting user image from S3:',
       expect.any(Error)
     );
+    // The failure is logged and stepped over. An orphaned object in the
+    // bucket is a smaller problem than a person unable to remove their photo,
+    // and an IAM policy without DeleteObject would otherwise strand everybody.
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  /*
+   * Whose picture is it. The id arrives in the request body and used to be
+   * obeyed without question, which was survivable while this only reset a
+   * database field. It destroys the file in the bucket now, so it follows the
+   * rule getUser already uses: your own is always yours, anybody else's needs
+   * the user-management permission.
+   */
+  test('a cashier can always clear their own picture', async () => {
+    process.env.STORAGE_TYPE = 'local';
+    const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({
+      body: { data: 'http://localhost/uploads/img.jpg', id: 'dddddddddddddddddddddddd' },
+      user: {
+        _id: 'dddddddddddddddddddddddd',
+        usertype: 'cashier',
+        access: { user: { read: false, write: false, delete: false } },
+      },
+    });
+    const res = mockRes();
+    await ctrl.userImageDelete(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('dddddddddddddddddddddddd', { image: 'user.svg' });
+  });
+
+  test('a cashier cannot destroy a colleague picture', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    const req = mockReq({
+      body: { data: 'x', id: 'eeeeeeeeeeeeeeeeeeeeeeee' },
+      user: {
+        _id: 'dddddddddddddddddddddddd',
+        usertype: 'cashier',
+        access: { user: { read: false, write: false, delete: false } },
+      },
+    });
+    const res = mockRes();
+    await ctrl.userImageDelete(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(deleteSpy).not.toHaveBeenCalled();
     expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
+    // Refused before the record is even read.
+    expect(mockUserModel.findById).not.toHaveBeenCalled();
 
     deleteSpy.mockRestore();
     delete process.env.STORAGE_TYPE;
@@ -1489,14 +1569,15 @@ describe('userImageDelete', () => {
     delete process.env.AWS_REGION;
   });
 
-  test('400 rejects S3 deletion for arbitrary S3 keys not matching posnic_user pattern', async () => {
+  test('never deletes an object it cannot identify as this user picture', async () => {
     const s3 = require('../../../src/utils/s3');
     const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
     process.env.STORAGE_TYPE = 's3';
     process.env.AWS_S3_BUCKET = 'bucket';
     process.env.AWS_REGION = 'ap-south-1';
 
-    // Various invalid keys that should be rejected
+    // Various keys that must never be deleted
     const testCases = [
       {
         name: 'path with posnic_user marker (should fail - has slash)',
@@ -1529,9 +1610,11 @@ describe('userImageDelete', () => {
 
       await ctrl.userImageDelete(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
+      // The point of the whole exercise: nothing that is not positively a
+      // Posnic user image is ever removed from the bucket.
       expect(deleteSpy).not.toHaveBeenCalled();
-      expect(res.json.mock.calls[res.json.mock.calls.length - 1][0].message).toMatch(/Invalid image key/i);
+      // The record is still cleared, so the person is not stuck.
+      expect(res.status).toHaveBeenCalledWith(200);
     }
 
     deleteSpy.mockRestore();
