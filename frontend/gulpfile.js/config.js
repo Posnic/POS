@@ -57,6 +57,30 @@ const LANGUAGES = [
     { code: 'pt', name: 'Português', flag: 'pt', reviewed: false },
     { code: 'id', name: 'Bahasa Indonesia', flag: 'id', reviewed: false },
     { code: 'th', name: 'ไทย', flag: 'th', reviewed: false },
+
+    /*
+     * Chosen from where signups actually come from, not from a list of big
+     * languages. Switzerland has sent signups that had no language here to
+     * read the till in; German also covers Germany and Austria.
+     *
+     * The queue behind it, by the same measure - number of real signups from
+     * countries with nothing here to read:
+     *
+     *   sw  Kenya, Tanzania, Uganda, DR Congo - four, the largest single gap
+     *   nl  Belgium        it  Switzerland, Malta      tl  Philippines
+     *   bg  Bulgaria       bs  Bosnia                  km  Cambodia
+     *   cs  Czechia        az  Azerbaijan              rw  Rwanda
+     *
+     * Their columns are already in languages/_glossary.json, so
+     * `node tests/tools/seed-from-glossary.js --write` fills the first ~200
+     * keys of each the moment somebody adds them here. What is missing is the
+     * other 463, which are POS terms of art - opening float, input tax credit,
+     * KOT, PAX, parked - and are worth a speaker rather than a guess.
+     */
+    { code: 'de', name: 'Deutsch', flag: 'de', reviewed: false },
+    { code: 'sw', name: 'Kiswahili', flag: 'tz', reviewed: false },
+    { code: 'nl', name: 'Nederlands', flag: 'nl', reviewed: false },
+    { code: 'it', name: 'Italiano', flag: 'it', reviewed: false },
 ];
 
 /* Whether this build restricts the menu to reviewed languages. Off unless

@@ -793,6 +793,44 @@ function posnicLanguageStyling(code) {
  * The menu keeps its English entry if this fails: an unreadable list should
  * cost the OTHER languages, never leave a shop with no way to choose at all.
  */
+/*
+ * Offer the shop's Posnic account, to the person who owns it.
+ *
+ * Two conditions, and both matter.
+ *
+ * The SERVER decides whether this installation has an account, because only it
+ * can tell the difference that matters: a till paired to Cloud reports its mode
+ * as 'desktop', not 'cloud' - so a frontend test on edition would hide the link
+ * from exactly the paying customers it is for. features.account carries the
+ * answer, and a white-labelled build always answers false, since that shop was
+ * not sold anything called Posnic.
+ *
+ * The BROWSER decides whether this person should see it. A cashier has no
+ * business being shown the subscription and the bill.
+ *
+ * Failure is silence. If runtime-info cannot be read the item stays hidden,
+ * which is the same outcome as a community install and costs nobody anything.
+ */
+(function showAccountLink() {
+    var item = document.getElementById('posnic_account_item');
+    if (!item || typeof fetch !== 'function') return;
+    if (PosnicPro.local.get('usertype') !== 'super_admin') return;
+
+    /*
+     * API_URL, not a relative path. This page is served from /public, so
+     * 'api/runtime-info' would resolve to /public/api/runtime-info, 404, land
+     * in the catch below, and hide the link forever without anyone noticing -
+     * which is exactly how a feature ships dead.
+     */
+    var base = (typeof API_URL === 'string' && API_URL) || '/';
+    fetch(base + 'api/runtime-info')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+            if (info && info.features && info.features.account) item.style.display = '';
+        })
+        .catch(function () { /* hidden, which is the safe answer */ });
+}());
+
 (function buildLanguageMenu() {
     var menu = document.getElementById('change_language');
     if (!menu || typeof fetch !== 'function') return;

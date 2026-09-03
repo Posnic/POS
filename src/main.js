@@ -4611,6 +4611,26 @@ function startServer() {
   process.env.POSNIC_APP_VERSION = app.getVersion();
 
   /*
+   * Is this till enrolled with Posnic Cloud?
+   *
+   * The API cannot work this out for itself. resolveMode() answers 'desktop'
+   * before it looks at anything else, so a paying Cloud customer's till reports
+   * edition 'community' - correct for the update channel, wrong for "show me my
+   * account". Only the shell knows, because only the shell reads this file.
+   *
+   * Read once at startup rather than per request: /api/runtime-info is
+   * unauthenticated and is hit before login, so it must stay cheap. A till that
+   * pairs later gets the flag on its next start, which is the same restart the
+   * sync agent needs anyway.
+   */
+  try {
+    const cloud = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
+    if (cloud && cloud.gatewayUrl && cloud.deviceToken) process.env.POSNIC_SYNC_PAIRED = '1';
+  } catch (e) {
+    /* No file, or unreadable: not paired, which is the safe answer. */
+  }
+
+  /*
    * Decide which frontend to serve, before the API starts serving it.
    *
    * beginBoot counts this start. A version that has already failed to reach a

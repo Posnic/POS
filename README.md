@@ -24,7 +24,7 @@ before making a package-level licence statement.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-607%20endpoints-blue)](docs/API.md)
+[![API](https://img.shields.io/badge/REST%20API-608%20endpoints-blue)](docs/API.md)
 [![Source licence](https://img.shields.io/badge/source%20licence-AGPL--3.0-blue)](LICENSE)
 [![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
@@ -230,7 +230,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) | Local setup, test commands, issue map, PR flow and safety rules |
 | [Developer guide](docs/DEVELOPMENT.md) | Setup, tests, conventions, good first issues |
 | [Architecture](docs/ARCHITECTURE.md) | How it fits together, and the parts that bite |
-| [REST API](docs/API.md) | 607 endpoints, generated from the routes |
+| [REST API](docs/API.md) | 608 endpoints, generated from the routes |
 | [Hardware](docs/HARDWARE_MATRIX.md) | Printers, scanners, drawers, scales — and how far each claim is checked |
 | [India e-invoicing](docs/INDIA_EINVOICING_DESIGN.md) | Research, readiness inventory and design for GST e-invoicing as an optional feature; no live IRP submission is built |
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |

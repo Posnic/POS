@@ -71,6 +71,8 @@ router.get(
 
 router.get('/backupTable', bindController(settingController.backupTable));
 
+router.put('/starterLocale', bindController(settingController.updateStarterLocale));
+
 // PUT /api/setting/general - Update general settings
 router.put(
   '/general',

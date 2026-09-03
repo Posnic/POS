@@ -57,6 +57,49 @@ understand here:
 | Português Portuguese | pt | all | not yet - marked *beta* |
 | Bahasa Indonesia | id | all | not yet - marked *beta* |
 | ไทย Thai | th | all | not yet - marked *beta* |
+| Deutsch German | de | all | not yet - marked *beta* |
+| Kiswahili | sw | all | not yet - marked *beta* |
+| Nederlands Dutch | nl | all | not yet - marked *beta* |
+| Italiano Italian | it | all | not yet - marked *beta* |
+
+### Which language is added next, and why
+
+The queue is not a list of the world's biggest languages. It is the countries
+that have actually sent Posnic a signup and had nothing here to read the till
+in, most signups first:
+
+| Next | Code | Signups waiting on it |
+|---|---|---|
+| Filipino | tl | Philippines |
+| Български | bg | Bulgaria |
+| Bosanski | bs | Bosnia and Herzegovina |
+| ភាសាខ្មែរ | km | Cambodia |
+| Čeština | cs | Czechia |
+| Azərbaycan | az | Azerbaijan |
+| Kinyarwanda | rw | Rwanda |
+
+Swahili came off the top of that list first: Kenya, Tanzania, Uganda and DR
+Congo had all sent a signup with nothing here to read. Dutch and Italian
+followed for Belgium, Switzerland and Malta.
+
+### Adding one
+
+1. Add a column to `languages/_glossary.json` - the 147 shared terms.
+2. Add `{ code, name, flag, reviewed: false }` to
+   `frontend/gulpfile.js/config.js`.
+3. `node tests/tools/seed-from-glossary.js --write` - fills about 200 of the
+   662 keys from the glossary alone.
+4. `node tests/tools/i18n-coverage.js --worksheet <code>` - writes the other
+   463 to `<code>-to-translate.json`.
+5. Fill the blanks, then
+   `node tests/tools/i18n-coverage.js --merge <code> --out <code>-to-translate.json`.
+6. `node tests/tools/check-translations.js` and `npm test`.
+
+Step 4 is the real work, and it is where a language earns its place: those 463
+are the terms of art - opening float, input tax credit, KOT, PAX, parked sale,
+split payment - plus 26 strings carrying HTML that has to survive intact. A
+pack has to answer 95% of the keys before it may ship (`tests/i18n.test.js`),
+which is what stops a half-English screen reaching a real till.
 
 **Every language ships in every build.** Pick it from the menu in the header of
 any Posnic and the switch is instant. A language nobody who speaks it has read
