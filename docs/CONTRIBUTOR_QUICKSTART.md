@@ -177,7 +177,11 @@ adds a new failure, fix that before asking for review.
 ### Tax, GST, or e-invoice PR
 
 1. Start from [#29](https://github.com/Posnic/POS/issues/29) or
-   [#30](https://github.com/Posnic/POS/issues/30).
+   [#30](https://github.com/Posnic/POS/issues/30). For e-invoicing, read the
+   [research](INDIA_EINVOICING_RESEARCH.md), the
+   [readiness inventory](INDIA_EINVOICING_READINESS.md) and the
+   [design](INDIA_EINVOICING_DESIGN.md) first; the design names the fixtures
+   and the order of PRs.
 2. Use synthetic records only. Do not post real GSTINs, invoices, customer data,
    portal credentials, logs, or database files.
 3. Keep offline preparation separate from online portal submission.
@@ -212,6 +216,9 @@ adds a new failure, fix that before asking for review.
 4. Do not call a device certified unless the maintainer accepts the evidence.
 
 ### Connector or AI PR
+
+Before proposing an external app or connector, read the
+[app review checklist](APP_REVIEW_CHECKLIST.md). It shows the required review information and synthetic examples of a submission that passes or fails.
 
 1. Start with design in [#33](https://github.com/Posnic/POS/issues/33) or
    [#34](https://github.com/Posnic/POS/issues/34).

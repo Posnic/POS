@@ -609,6 +609,14 @@ const saleSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // The invoice this sale was recorded from (INVOICING_MODULE_DESIGN).
+    // Same lesson as invoice_key: the schema is strict, so an undeclared
+    // field is stripped without a word and the invoice never learns it was
+    // paid. Declared here, pinned by test, mirrored by services/invoice-sync.
+    source_invoice_id: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+
     // For strict PHP parity we do not require subtotal/total on the document;
     // they may be omitted entirely when saving via the legacy sales service.
     subtotal: {
@@ -978,6 +986,7 @@ class LegacySaleModel {
     tip_in_total: { type: 'Boolean', select: true },
     source_quote_id: { type: 'ObjectId', select: true },
     quote_price_honoured: { type: 'Boolean', select: true },
+    source_invoice_id: { type: 'ObjectId', select: true },
     charges: { type: 'Mixed', select: true },
     discount_description: { type: 'String', select: true },
     return_extra_discount: { type: 'Number', select: true },
@@ -1826,7 +1835,7 @@ Sale.getQrStatusModel = async function (id) {
 
 /**
  * PHP: kioskOrderModel($data)
- * Process a kiosk order — calculate item totals, generate sales_id,
+ * Process a kiosk order - calculate item totals, generate sales_id,
  * find/create customer, insert sale document, return receipt data.
  * Ported from Api/src/model/sales_model.php lines 8297-8764.
  */

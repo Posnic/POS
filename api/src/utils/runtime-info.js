@@ -46,6 +46,35 @@ function resolveMode(env) {
 }
 
 /**
+ * Does this installation belong to somebody with a Posnic account?
+ *
+ * Not the same question as the mode, and the difference is the whole point.
+ * resolveMode() answers 'desktop' before it looks at anything else, so a till
+ * PAIRED TO CLOUD - a paying customer, standing at their own counter - reports
+ * edition 'community'. That is right for the update channel and wrong for
+ * "show me my account", which is why this is its own flag rather than a test
+ * on edition somewhere in the frontend.
+ *
+ * Two ways to be true:
+ *   cloud mode          - a provisioned tenant process
+ *   POSNIC_SYNC_PAIRED  - the desktop shell found a cloud config with a
+ *                         gateway on it, so this till is enrolled
+ *
+ * FALSE IS THE SAFE ANSWER and the default. A community shop sent to an
+ * account page that greets them with "no account found" is worse off than one
+ * that was never offered the link.
+ *
+ * A white-labelled build never offers it: that installation is not called
+ * Posnic, and sending its owner to posnic.com would break the rebrand it was
+ * sold as.
+ */
+function hasAccount(env, mode) {
+  if (String(env.WHITE_LABEL_NAME || '').trim()) return false;
+  if (mode === 'cloud') return true;
+  return String(env.POSNIC_SYNC_PAIRED || '') === '1';
+}
+
+/**
  * Build the runtime-info payload. Pure given (env, apiRoot) so it is
  * unit-testable; contains no tenant data and requires no auth.
  */
@@ -58,10 +87,15 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
     channel: String(env.POSNIC_UPDATE_CHANNEL || '').trim() || null,
     apiSchema: API_SCHEMA_VERSION,
     syncProtocol: SYNC_PROTOCOL_VERSION,
-    // Reserved for capability flags (PRODUCT_ARCHITECTURE §1/§4); shipping the
-    // empty object now means clients can read .features unconditionally.
-    features: {},
+    // Capability flags (PRODUCT_ARCHITECTURE §1/§4). Clients read .features
+    // unconditionally; a flag that is absent reads as false, which is always
+    // the safe direction here.
+    features: {
+      /* Show a link to posnic.com/account. See hasAccount() for why this is
+         not simply `edition === 'cloud'`. */
+      account: hasAccount(env, mode),
+    },
   };
 }
 
-module.exports = { buildRuntimeInfo, resolveAppVersion, resolveMode };
+module.exports = { buildRuntimeInfo, resolveAppVersion, resolveMode, hasAccount };

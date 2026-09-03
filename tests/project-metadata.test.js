@@ -72,5 +72,7 @@ test('CodeMeta uses only secure canonical links', () => {
   ];
 
   for (const link of links) assert.match(link, /^https:\/\//);
-  assert.equal(JSON.stringify(metadata).includes('posnic.io'), false);
+  assert.equal(packageJson.homepage, 'https://posnic.io/');
+  assert.equal(metadata.url, 'https://posnic.io/');
+  assert.equal(metadata.isSourceCodeOf.url, 'https://posnic.io/');
 });

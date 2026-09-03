@@ -78,6 +78,19 @@ describe('buildRuntimeInfo', () => {
   test('channel is null unless configured; features is always an object', () => {
     expect(buildRuntimeInfo({}, '/nowhere').channel).toBeNull();
     expect(buildRuntimeInfo({ POSNIC_UPDATE_CHANNEL: 'beta' }, '/nowhere').channel).toBe('beta');
-    expect(buildRuntimeInfo({}, '/nowhere').features).toEqual({});
+    /*
+     * features carries flags now, so this asserts the CONTRACT rather than
+     * emptiness: it is always an object clients can read unconditionally, and
+     * every flag defaults false. Pinning {} made adding the first flag look
+     * like a regression.
+     */
+    const features = buildRuntimeInfo({}, '/nowhere').features;
+    expect(typeof features).toBe('object');
+    expect(features).not.toBeNull();
+    for (const [name, value] of Object.entries(features)) {
+      expect(typeof value).toBe('boolean');
+      expect(value).toBe(false); // a bare environment grants nothing
+    }
+    expect(features.account).toBe(false);
   });
 });

@@ -60,6 +60,18 @@ function copyStatic() {
         .pipe(dest(`${publicDir}/static`));
 }
 
+/*
+ * Root discovery files are served from frontend/public in production and by
+ * Cloudflare-style static hosts. Keeping the source copies beside index.html
+ * is convenient for maintainers, but the build output must contain them or a
+ * request for /robots.txt, /sitemap.xml or /llms.txt falls through to the app
+ * shell instead.
+ */
+function copyRootPublicFiles() {
+    return src(['robots.txt', 'sitemap.xml', 'llms.txt', '_headers'], { encoding: false })
+        .pipe(dest(publicDir));
+}
+
 function copyVendorScripts() {
     return src('static/script/vendor/**/*', { base: 'static/script/vendor', encoding: false })
         .pipe(dest(`${publicDir}/script/vendor`));
@@ -127,6 +139,7 @@ exports.default = function() {
     // a fresh dashboard.js under its canonical name is invisible to pages
     // that reference the hashed one, and the dev would be running stale code.
     watch(['**/*.html', '!static/**', '!public/**'], series(buildHtml, fingerprintAssets, buildServiceWorker));
+    watch(['robots.txt', 'sitemap.xml', 'llms.txt', '_headers'], copyRootPublicFiles);
     watch('static/style/**/*.css', series(buildCss, fingerprintAssets, buildServiceWorker));
     watch('static/style/**/*.scss', series(buildCss, fingerprintAssets, buildServiceWorker));
     watch('static/script/**/*.js', series(buildJs, fingerprintAssets, buildServiceWorker));
@@ -137,6 +150,7 @@ exports.js = buildJs
 exports.css = buildCss
 exports.html = buildHtml
 exports.static = copyStatic
+exports.rootPublicFiles = copyRootPublicFiles
 exports.vendorScripts = copyVendorScripts
 /* The service worker hashes the built bundles, so it must run after them. */
 function buildServiceWorker(cb) {
@@ -175,6 +189,7 @@ function buildLangPacks(cb) {
         const outDir = pathx.join(process.cwd(), publicDir, 'languages');
         fsx.mkdirSync(outDir, { recursive: true });
         const problems = [];
+        const packs = {};
         for (const lang of languages) {
             if (lang === 'en') continue;
             const source = pathx.join(process.cwd(), '..', 'languages', `${lang}.json`);
@@ -186,6 +201,7 @@ function buildLangPacks(cb) {
                 problems.push(`${lang}.json is not valid JSON: ${e.message}`);
                 continue;
             }
+            packs[lang] = dict;
             for (const [key, value] of Object.entries(dict)) {
                 /* A run of Latin-1 supplement characters is what UTF-8 read as
                    Latin-1 looks like. Real translations never contain one. */
@@ -205,12 +221,38 @@ function buildLangPacks(cb) {
          * language meant editing markup as well as adding a file - the last
          * place adding a language was still a code change. The menu is built
          * from this at runtime instead.
+         *
+         * Each entry carries `reviewed` and `coverage`: whether a speaker has
+         * read the pack, and how many of the keys the UI uses it answers. The
+         * menu shows an unreviewed language as beta with the number beside
+         * it - a shopkeeper picking Thai deserves to know it was drafted by a
+         * machine and read by nobody, and a translator deserves to see the
+         * number move. The key list comes from the same tool the coverage
+         * report and the translations CI use, so the build cannot disagree
+         * with them; a build without tests/ beside it simply carries no
+         * number.
          */
-        const { LANGUAGES } = require('./config');
-        fsx.writeFileSync(pathx.join(outDir, 'index.json'), JSON.stringify(LANGUAGES), 'utf8');
+        const { shippedLanguages } = require('./config');
+        let used = null;
+        try {
+            used = require(pathx.join(process.cwd(), '..', 'tests', 'tools', 'i18n-coverage.js')).keysUsed().used;
+        } catch (e) { /* no coverage number, not a failed build */ }
+        const list = shippedLanguages.map((l) => {
+            const entry = { code: l.code, name: l.name, flag: l.flag, reviewed: !!l.reviewed };
+            if (l.dir) entry.dir = l.dir;
+            if (l.code === 'en') { entry.coverage = 100; return entry; }
+            if (used) {
+                const dict = packs[l.code] || {};
+                const answered = [...used]
+                    .filter((k) => typeof dict[k] === 'string' && dict[k].trim() !== '').length;
+                entry.coverage = used.size ? Math.round((answered / used.size) * 100) : 0;
+            }
+            return entry;
+        });
+        fsx.writeFileSync(pathx.join(outDir, 'index.json'), JSON.stringify(list), 'utf8');
         cb();
     } catch (e) { cb(e); }
 }
 exports.langPacks = buildLangPacks;
 
-exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildLangPacks, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
+exports.build = series(parallel(copyRootPublicFiles, copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildLangPacks, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);

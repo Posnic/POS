@@ -341,6 +341,25 @@
                                                     <lang class="lang_myacc_title">My Profile</lang>
                                                 </a>
                                             </li>
+                                            <!--
+                                                The shop's account with Posnic - the subscription, the bill,
+                                                the other tills - as opposed to "My Profile" just above, which
+                                                is this person's profile inside this shop. Two different
+                                                things, so two different words.
+
+                                                Hidden by construction, and shown only by dashboard.js when
+                                                the server says features.account and this user is a
+                                                super_admin. A community shop must never be sent to an account
+                                                page that will tell them they have no account, so the default
+                                                for markup that ships to everybody is "not there".
+                                            -->
+                                            <li class="media dropdown-item" id="posnic_account_item" style="display:none;">
+                                                <a href="https://posnic.com/account" target="_blank" rel="noopener noreferrer"
+                                                    id="posnic_account" class="profile-icon"><img src="static/images/svg-icon/crm.svg"
+                                                        class="img-fluid" alt="account" loading="lazy" decoding="async">
+                                                    <lang class="lang_posnic_account_title">Posnic Account</lang>
+                                                </a>
+                                            </li>
                                             <li class="media dropdown-item">
                                                 <a href="javascript:void(0)" id="change_password"
                                                     class="profile-icon"><img src="static/images/svg-icon/email.svg"

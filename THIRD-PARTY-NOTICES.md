@@ -177,6 +177,20 @@ page loads are Font Awesome's.
 If that holds up under a proper check, most of these sets can be deleted
 outright and the question goes away rather than being answered.
 
+### Flag icons
+
+**Shipped as:** `frontend/static/images/flags/1x1/` and `4x3/` - one SVG per
+language the app offers (in, us, lk, np, sa, fr, es, pt, id, th), and nothing
+else. The 242 other countries the stylesheet knows are not bundled.
+
+| Set | Licence | Source |
+| --- | --- | --- |
+| flag-icons (formerly flag-icon-css) | MIT | `flag-icons` 7.5.0, `npm view flag-icons license`, 2 September 2026 |
+
+The eight added on 2 September 2026 were copied unmodified from that package
+for the language menu; `in.svg` and `us.svg` were already here from the
+same project's earlier name. MIT needs its notice carried, which this file does.
+
 ### What has been removed
 
 `flag-icon-css-master` — 528 files — is gone. Nothing referenced that path, and

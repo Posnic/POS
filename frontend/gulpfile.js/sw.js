@@ -4,7 +4,7 @@
  * file names. Must run AFTER buildJs/buildCss/buildHtml AND fingerprintAssets
  * (index.js sequences it): the hash has to describe what actually shipped and
  * the precache has to name the hashed files, or a deploy could serve stale
- * code — the exact failure this worker exists to prevent.
+ * code - the exact failure this worker exists to prevent.
  */
 const fs = require('fs');
 const path = require('path');
