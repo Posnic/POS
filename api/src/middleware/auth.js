@@ -386,7 +386,7 @@ const isLoggedIn = async (req, res, next) => {
 };
 
 /**
- * Optional auth middleware — mirrors PHP session-exceptional behaviour.
+ * Optional auth middleware - mirrors PHP session-exceptional behaviour.
  *
  * PHP dispatcher.php starts a session on EVERY request.  For routes listed in
  * $sessionExceptionalRequest the dispatcher simply skips the "is authenticated?"
@@ -430,7 +430,7 @@ const optionalProtect = async (req, res, next) => {
       }
     }
 
-    // 3) No valid auth — continue anyway (session-exceptional)
+    // 3) No valid auth - continue anyway (session-exceptional)
     next();
   } catch (_) {
     next();
