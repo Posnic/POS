@@ -501,7 +501,7 @@ class CategoriesController extends BaseController {
     // Always derive branch_name from the RESOLVED branch_id so the two can never
     // disagree (PHP: branch_name => self::$currentBranchName, always the current
     // branch). The candidate-based branch_name from resolveBranchContext can belong
-    // to a DIFFERENT branch (e.g. branch_access[0]) — that bug stamped every
+    // to a DIFFERENT branch (e.g. branch_access[0]) - that bug stamped every
     // category with the first branch's name ("posnic") regardless of the actual
     // branch_id. The branches collection's only name field is `branch_name`.
     let finalBranchName = '';

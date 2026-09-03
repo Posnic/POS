@@ -85,12 +85,28 @@ test('the tour starts only after a SUCCESSFUL save, and only when asked', () => 
    * handler reads: a failed save must never start a tour of a shop that did
    * not save, and plain Save must never grow an uninvited tour.
    */
-  assert.match(
-    settingsJs,
-    /_tourAfterSave = true;[\s\S]{0,90}PosnicPro\.features\.saveIntro\(\)/
+  /*
+   * The tour button raises the flag and then saves. Asserted over the WHOLE
+   * handler rather than as two adjacent lines: this regex demanded that
+   * `_tourAfterSave = true;` be immediately followed by `saveIntro()`, and a
+   * later change inserted `_settingsAfterSave = false;` between them. Both pull
+   * requests were green on their own and the merge of the two was red - the
+   * behaviour never changed, only the line spacing.
+   *
+   * A test that fails when a correct line is added tests the typing, not the
+   * program.
+   */
+  const tourButton = between(settingsJs, "on('click', '#feature_intro_tour'", '});');
+  assert.match(tourButton, /_tourAfterSave = true;/,
+    'the tour button does not raise the flag the save-success handler reads');
+  assert.match(tourButton, /PosnicPro\.features\.saveIntro\(\)/,
+    'the tour button does not save');
+  assert.ok(
+    tourButton.indexOf('_tourAfterSave = true;') < tourButton.indexOf('saveIntro()'),
+    'the flag must be set before the save, or the success handler will not see it'
   );
   const success = between(settingsJs, "PosnicPro.alert('success', 'Feature switches saved')", 'PosnicPro.alert(response.type');
-  assert.match(success, /PosnicPro\.features\._tourAfterSave/);
+  assert.match(success, /if \(PosnicPro\.features\._tourAfterSave\)/);
   assert.match(success, /PosnicPro\.tour\.firstRun\(\)/);
   // the failure path clears the flag, or the NEXT save inherits the wish
   const fail = between(settingsJs, "Could not save - you can set these later", '};');
