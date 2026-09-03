@@ -60,6 +60,18 @@ function copyStatic() {
         .pipe(dest(`${publicDir}/static`));
 }
 
+/*
+ * Root discovery files are served from frontend/public in production and by
+ * Cloudflare-style static hosts. Keeping the source copies beside index.html
+ * is convenient for maintainers, but the build output must contain them or a
+ * request for /robots.txt, /sitemap.xml or /llms.txt falls through to the app
+ * shell instead.
+ */
+function copyRootPublicFiles() {
+    return src(['robots.txt', 'sitemap.xml', 'llms.txt', '_headers'], { encoding: false })
+        .pipe(dest(publicDir));
+}
+
 function copyVendorScripts() {
     return src('static/script/vendor/**/*', { base: 'static/script/vendor', encoding: false })
         .pipe(dest(`${publicDir}/script/vendor`));
@@ -127,6 +139,7 @@ exports.default = function() {
     // a fresh dashboard.js under its canonical name is invisible to pages
     // that reference the hashed one, and the dev would be running stale code.
     watch(['**/*.html', '!static/**', '!public/**'], series(buildHtml, fingerprintAssets, buildServiceWorker));
+    watch(['robots.txt', 'sitemap.xml', 'llms.txt', '_headers'], copyRootPublicFiles);
     watch('static/style/**/*.css', series(buildCss, fingerprintAssets, buildServiceWorker));
     watch('static/style/**/*.scss', series(buildCss, fingerprintAssets, buildServiceWorker));
     watch('static/script/**/*.js', series(buildJs, fingerprintAssets, buildServiceWorker));
@@ -137,6 +150,7 @@ exports.js = buildJs
 exports.css = buildCss
 exports.html = buildHtml
 exports.static = copyStatic
+exports.rootPublicFiles = copyRootPublicFiles
 exports.vendorScripts = copyVendorScripts
 /* The service worker hashes the built bundles, so it must run after them. */
 function buildServiceWorker(cb) {
@@ -241,4 +255,4 @@ function buildLangPacks(cb) {
 }
 exports.langPacks = buildLangPacks;
 
-exports.build = series(parallel(copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildLangPacks, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
+exports.build = series(parallel(copyRootPublicFiles, copyStatic, copyVendorScripts, copyLazyScripts, buildLazyReports, buildLangPacks, buildCss, buildJs, buildHtml), fingerprintAssets, buildServiceWorker);
