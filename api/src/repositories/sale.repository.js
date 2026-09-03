@@ -7213,7 +7213,7 @@ class SalesRepository {
       // Generate token ID
       const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
 
-      // Map items — use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
+      // Map items - use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
       const itemCollection = db.collection('items');
       const saleItems = [];
       for (const item of items) {
@@ -7638,7 +7638,7 @@ class SalesRepository {
           });
         }
         if (!itemDoc) {
-          // Item not in catalog (e.g. KOT order item) — update in-place using existing data
+          // Item not in catalog (e.g. KOT order item) - update in-place using existing data
           if (existingIndex[productId] !== undefined) {
             const i = existingIndex[productId];
             updatedItems[i] = {
