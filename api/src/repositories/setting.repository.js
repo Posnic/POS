@@ -213,6 +213,10 @@ class SettingsRepository {
     return await this.settingModel.editGeneralSetting(data);
   }
 
+  async updateStarterLocale(data) {
+    return await this.settingModel.updateStarterLocale(data);
+  }
+
   /**
    * Update common settings
    */
