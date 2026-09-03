@@ -66,7 +66,7 @@ const Item = defineModel('Item', itemSchema);
 // ItemRepository. Most instance methods below are legacy-only and should
 // not be used by new code.
 //
-// Usage examples (legacy only – new code should NOT use these directly):
+// Usage examples (legacy only - new code should NOT use these directly):
 //   const Item = require("../models/item.model");          // Mongoose
 //   const LegacyItem = Item.LegacyItemModel;               // Legacy class alias
 //   const { LegacyItemModel } = require("../models/item.model");

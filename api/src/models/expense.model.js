@@ -84,7 +84,7 @@ class ExpenseModel extends BaseModel {
           message: 'Expense added successfully',
         };
       } else {
-        // Update existing expense — never modify created_date/created_by fields
+        // Update existing expense - never modify created_date/created_by fields
         delete expenseData.created_date;
         delete expenseData.created_by;
         delete expenseData.created_by_id;

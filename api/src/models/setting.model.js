@@ -3895,7 +3895,17 @@ class SettingModel extends BaseModel {
   async getForgotUserDetails(email, req = null) {
     try {
       const usersCollection = await this.getCollection('users');
-      const user = await usersCollection.findOne({ email: email });
+      /*
+       * String(), because this value came from a request body and Mongo reads
+       * an object as operators. `{"email": {"$ne": null}}` posted to
+       * forgot-password would otherwise match the FIRST user in the shop and
+       * send a reset link for somebody else's account.
+       *
+       * The controller's regex happens to reject an object today - test()
+       * stringifies it to "[object Object]" - but that is the caller being
+       * careful, and this method is what actually touches the database.
+       */
+      const user = await usersCollection.findOne({ email: String(email) });
 
       if (!user) {
         return {
