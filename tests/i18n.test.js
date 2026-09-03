@@ -22,6 +22,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const FRONTEND = path.join(__dirname, '..', 'frontend');
 const MODULES = path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js');
@@ -179,11 +180,25 @@ test('no module JS contains mojibake', () => {
 test('no language file contains mojibake', () => {
   const dir = LANGUAGES_DIR;
   const bad = [];
-  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
-    const dict = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-    for (const [k, v] of Object.entries(dict)) {
-      if (/[\u0080-\u00FF]{3,}/.test(String(v))) bad.push(`${f}:${k} = ${String(v).slice(0, 30)}`);
+
+  /*
+   * Walked, not iterated one level deep. _glossary.json nests its words one
+   * object further down, and a shallow loop stringified those objects to
+   * "[object Object]", which never matches - so the one file where every word
+   * is now authored would have been the one file this test could not see.
+   */
+  const walk = (node, where, file) => {
+    if (typeof node === 'string') {
+      if (/[\u0080-\u00FF]{3,}/.test(node)) bad.push(`${file}:${where} = ${node.slice(0, 30)}`);
+      return;
     }
+    if (node && typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) walk(v, where ? `${where}.${k}` : k, file);
+    }
+  };
+
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+    walk(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')), '', f);
   }
   assert.deepEqual(bad, [], 'mojibake in a language file:\n  ' + bad.join('\n  '));
 });
@@ -211,7 +226,11 @@ test('the build emits a pack for every non-English language', () => {
 
 test('every language file is valid JSON with string values', () => {
   const dir = LANGUAGES_DIR;
-  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+  /* A leading underscore means "not a language pack". _glossary.json is the
+     source the packs are seeded from, and its values are objects of languages
+     rather than strings. The mojibake test above still reads it, because that
+     is the check it must never be exempt from. */
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json') && !x.startsWith('_'))) {
     const raw = fs.readFileSync(path.join(dir, f), 'utf8');
     let dict;
     assert.doesNotThrow(() => { dict = JSON.parse(raw); }, `${f} is not valid JSON`);
@@ -359,6 +378,54 @@ test('the build publishes the list the menu reads', () => {
   assert.match(config, /name: 'தமிழ்'/, 'Tamil is not named in Tamil');
 });
 
+test('every declared language has a pack, and every pack is declared', () => {
+  /*
+   * A language in the menu with no file behind it is a menu entry that does
+   * nothing. A file nobody declared is work that will never appear on screen -
+   * the more disheartening of the two if a contributor wrote it.
+   */
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  const declared = config.LANGUAGES.map((l) => l.code).filter((c) => c !== 'en');
+  const onDisk = fs.readdirSync(LANGUAGES_DIR)
+    .filter((f) => f.endsWith('.json') && !f.startsWith('_'))
+    .map((f) => f.replace(/\.json$/, ''));
+
+  const missing = declared.filter((c) => !onDisk.includes(c));
+  assert.deepEqual(missing, [], 'declared with no languages/<code>.json: ' + missing.join(', '));
+
+  const undeclared = onDisk.filter((c) => !declared.includes(c));
+  assert.deepEqual(undeclared, [],
+    'a pack exists but no LANGUAGES entry offers it: ' + undeclared.join(', '));
+});
+
+test('the glossary agrees with itself', () => {
+  /*
+   * The glossary is the one file where a mistake reaches every screen of a
+   * language at once, so it is worth more checking than a single key.
+   */
+  const glossary = JSON.parse(
+    fs.readFileSync(path.join(LANGUAGES_DIR, '_glossary.json'), 'utf8'));
+  const known = new Set(glossary.languages);
+
+  const strays = [];
+  for (const [term, byLang] of Object.entries(glossary.terms)) {
+    for (const [code, word] of Object.entries(byLang)) {
+      if (!known.has(code)) strays.push(`${term}: "${code}" is not in the languages list`);
+      if (typeof word !== 'string') strays.push(`${term}.${code} is not text`);
+      else if (word !== word.trim()) strays.push(`${term}.${code} has a stray space: "${word}"`);
+    }
+  }
+  assert.deepEqual(strays, [], 'glossary problems:\n  ' + strays.join('\n  '));
+
+  /* Terms that must never be translated: a shopkeeper matches GST and its
+     relatives against a government form, character for character. */
+  assert.ok(glossary.doNotTranslate.includes('GST'), 'GST is not protected from translation');
+  for (const term of glossary.doNotTranslate) {
+    assert.ok(!Object.prototype.hasOwnProperty.call(glossary.terms, term),
+      `${term} is marked do-not-translate but has translations in the glossary`);
+  }
+});
+
 test('stylesheets are written once, not once per language', () => {
   /*
    * This looped the languages and wrote the same path every time - the
@@ -367,4 +434,172 @@ test('stylesheets are written once, not once per language', () => {
    */
   const css = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'css.js'), 'utf8');
   assert.ok(!/languages\.forEach/.test(css), 'CSS is still written once per language');
+});
+
+/* --------------------------------------- every language ships, honestly --- */
+
+test('every declared language ships by default, and says whether a speaker has read it', () => {
+  /*
+   * Owner, 2026-09-02: ship them all; the community improves them over time.
+   *
+   * A gate that hides a language until it is perfect is a language nobody
+   * will ever correct - the people who could fix it are exactly the people who
+   * would have picked it. What ships instead of the gate is honesty: every
+   * entry says whether a speaker has read it, and the menu turns that into a
+   * "beta" mark beside the name. Every missing word is still English.
+   */
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  assert.ok(!config.reviewedOnly,
+    'POSNIC_REVIEWED_LANGUAGES_ONLY is set in the test environment, so this proves nothing');
+  assert.deepEqual(config.shippedLanguages.map((l) => l.code), config.LANGUAGES.map((l) => l.code),
+    'the default build leaves a declared language out');
+  for (const l of config.LANGUAGES) {
+    assert.equal(typeof l.reviewed, 'boolean', l.code + ' does not say whether it was reviewed');
+  }
+  const reviewed = config.LANGUAGES.filter((l) => l.reviewed).map((l) => l.code);
+  assert.ok(reviewed.includes('en') && reviewed.includes('ta'), 'English and Tamil are the reviewed pair');
+});
+
+test('an installer can still ask for reviewed languages only', () => {
+  /* The env is read when config.js loads, so it has to be a fresh process. */
+  const r = spawnSync(process.execPath, ['-e',
+    'console.log(JSON.stringify(require(process.argv[1]).shippedLanguages.map((l) => l.code)))',
+    path.join(FRONTEND, 'gulpfile.js', 'config.js')],
+    { encoding: 'utf8', env: { ...process.env, POSNIC_REVIEWED_LANGUAGES_ONLY: '1' } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout.trim()), ['en', 'ta']);
+});
+
+test('the shipped list carries direction, review state and coverage', () => {
+  /*
+   * index.json is what the menu reads. Direction lets the menu entry itself
+   * render right-to-left; reviewed drives the beta mark; coverage is the
+   * number a translator wants to see move, computed by the SAME tool the
+   * coverage report and the translations CI use, so the build cannot
+   * disagree with them.
+   */
+  const gulp = fs.readFileSync(path.join(FRONTEND, 'gulpfile.js', 'index.js'), 'utf8');
+  assert.match(gulp, /reviewed: !!l\.reviewed/, 'index.json entries do not carry reviewed');
+  assert.match(gulp, /entry\.coverage =/, 'index.json entries do not carry coverage');
+  assert.match(gulp, /i18n-coverage\.js/, 'coverage is not computed by the tool CI uses');
+  const config = require(path.join(FRONTEND, 'gulpfile.js', 'config.js'));
+  assert.equal(config.LANGUAGES.find((l) => l.code === 'ar').dir, 'rtl', 'Arabic is not declared right-to-left');
+});
+
+test('the menu marks an unreviewed language as beta and settles a first run from the browser', () => {
+  const dash = fs.readFileSync(path.join(FRONTEND, 'static', 'script', 'js', 'modules', 'js', 'dashboard.js'), 'utf8');
+  assert.match(dash, /l\.reviewed === false/, 'the menu ignores the reviewed flag');
+  assert.match(dash, />beta</, 'an unreviewed language is not marked');
+  /* The first run is settled ONCE, in the core, so login and dashboard agree;
+     the menu only waits for it. */
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /PosnicPro\.i18n\.ready = /, 'the core publishes no ready promise');
+  assert.match(core, /i18n\.detect\(list/, 'a first run does not consult the browser language');
+  assert.match(core, /i18n\.chosen\(\)/, 'detection is not gated on "never chosen"');
+  assert.match(dash, /i18n\.ready\.then/, 'the menu does not wait for the settled language');
+  /* The old ready() wrote English back as if somebody had chosen it, which
+     would have stopped detection from ever running. */
+  assert.ok(!/select\('dashboard\.html'\)/.test(dash), 'the dashboard still writes English as a choice');
+});
+
+/* --------------------------------------- the document knows its language --- */
+
+test('the runtime sets the document language and direction', () => {
+  /*
+   * <html lang> is what screen readers, spell-checkers, hyphenation and font
+   * fallback read. dir="rtl" is the whole of Arabic's text layout. Both come
+   * from the code, before any pack arrives, so direction never waits on a
+   * fetch.
+   */
+  const markFn = member('mark');
+  assert.match(markFn, /documentElement\.setAttribute\('lang'/, 'html lang is not set');
+  assert.match(markFn, /'dir'/, 'html dir is not set');
+  assert.match(i18nSource(), /_rtl:\s*\{[^}]*\bar:/, 'Arabic is not in the right-to-left set');
+  assert.match(member('change'), /i18n\.mark\(\)/, 'switching language does not re-mark the document');
+  assert.match(member('load'), /i18n\.mark\(\)/, 'direction waits on the pack fetch');
+});
+
+test('first-run detection is a BCP 47 lookup over what the build ships', () => {
+  /* RFC 4647 lookup: the full tag first ('pt-BR'), then its primary subtag
+     ('pt'), through the browser's preference list in order; English last. */
+  const detectFn = member('detect');
+  assert.match(detectFn, /nav\.languages/, 'detect() ignores the browser preference list');
+  assert.match(detectFn, /split\('-'\)\[0\]/, 'detect() does not fall back to the primary subtag');
+  assert.match(detectFn, /return 'en'/, 'detect() has no English fallback');
+  /* And asking for the code must not count as choosing - that is what kept
+     every fresh install silently pinned to English. */
+  assert.ok(!/stored = m \? m\[1\] : 'en'/.test(member('code')), 'code() still writes English back as a choice');
+});
+
+test('switching back to English restores the words the page shipped with', () => {
+  /*
+   * English lives in the markup, not in any pack. Once a translation has
+   * overwritten it, the only way back was a reload. apply() now keeps the
+   * shipped markup on the element the first time it replaces it.
+   */
+  assert.match(member('apply'), /_english/, 'apply() does not keep the English before overwriting it');
+  assert.match(member('restore'), /_english/, 'restore() does not read the kept English');
+  assert.match(member('change'), /restore\(\)/, 'change() never restores English');
+});
+
+test('the RTL stylesheet rides the pages a shopkeeper sees, and loads last', () => {
+  const map = JSON.parse(fs.readFileSync(path.join(FRONTEND, 'pages_css_js_map.json'), 'utf8'));
+  for (const page of ['dashboard', 'login', 'forgotpassword']) {
+    const css = map[page].css;
+    assert.equal(css[css.length - 1], 'static/style/css/rtl.css', page + ' does not load rtl.css last');
+  }
+  const rtl = fs.readFileSync(path.join(FRONTEND, 'static', 'style', 'css', 'rtl.css'), 'utf8');
+  assert.match(rtl, /\[dir="rtl"\] \.leftbar/, 'the sidebar is not mirrored');
+  assert.match(rtl, /\[dir="rtl"\] \.topbar/, 'the top bar is not mirrored');
+  /* Every rule is scoped: an LTR page must pay nothing for this sheet. */
+  const unscoped = rtl.split('\n').filter((l) => /^[.#a-z]/.test(l) && !/^\[dir/.test(l));
+  assert.deepEqual(unscoped, [], 'rules not scoped under [dir="rtl"]: ' + unscoped.join(' | '));
+});
+
+test('no language pack has fallen behind the UI', () => {
+  /*
+   * 2026-09-02: every pack answered every key. From here a gap is a string
+   * added to the UI without its translations. The floor is 95% rather than
+   * 100% so a new key does not block the feature that needs it - but it does
+   * mean somebody has to run
+   *
+   *     node tests/tools/i18n-coverage.js --worksheet <code>
+   *
+   * before the gap grows into a screen of English again.
+   */
+  const { report } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
+  const rows = report().rows.filter((r) => !r.error && r.lang !== '_glossary');
+  assert.ok(rows.length >= 13, 'expected the thirteen packs, found ' + rows.length);
+  const behind = rows.filter((r) => r.coverage < 95)
+    .map((r) => `${r.lang} at ${r.coverage}% (e.g. ${r.missing.slice(0, 3).join(', ')})`);
+  assert.deepEqual(behind, [], 'packs below 95%:\n  ' + behind.join('\n  '));
+});
+
+
+test('the English map the console edits against is not stale', () => {
+  /*
+   * languages/_english.json is what the staff console shows a translator
+   * beside each box - the sentence they are translating. The packs do not
+   * carry the English themselves (it lives in the markup, which is what makes
+   * a missing key fall back correctly), so this file is the only copy an
+   * editor outside this repo can read.
+   *
+   * Generated by `node tests/tools/i18n-coverage.js --write-english`. Pinned
+   * here because a stale map shows the wrong English, and somebody would
+   * translate it faithfully - a worse failure than showing none, since it
+   * looks right on both sides.
+   */
+  const { report } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
+  const expected = {};
+  for (const [key, c] of report().context) if (c.english) expected[key] = c.english;
+
+  const file = path.join(__dirname, '..', 'languages', '_english.json');
+  assert.ok(fs.existsSync(file), 'languages/_english.json is missing - run i18n-coverage.js --write-english');
+  const actual = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+  const missing = Object.keys(expected).filter((k) => !(k in actual));
+  const extra = Object.keys(actual).filter((k) => !(k in expected));
+  const changed = Object.keys(expected).filter((k) => k in actual && actual[k] !== expected[k]);
+  assert.deepEqual({ missing, extra, changed }, { missing: [], extra: [], changed: [] },
+    'languages/_english.json is out of date - run: node tests/tools/i18n-coverage.js --write-english');
 });

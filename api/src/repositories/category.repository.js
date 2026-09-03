@@ -358,15 +358,15 @@ class CategoryRepository extends BaseModel {
                 // not the intended multi-channel selector).
                 is_deleted: { $ne: true },
                 $or: [
-                  // Case 1: Inventory not tracked — always allowed
+                  // Case 1: Inventory not tracked - always allowed
                   { track_inventory: false },
 
-                  // Case 2: Negative stock allowed — quantity >= 0
+                  // Case 2: Negative stock allowed - quantity >= 0
                   {
                     $and: [{ negative_stock: true }, { available_quantity: { $gte: 0 } }],
                   },
 
-                  // Case 3: Normal stock — quantity > 0
+                  // Case 3: Normal stock - quantity > 0
                   {
                     $and: [
                       {

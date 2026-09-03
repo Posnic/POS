@@ -1285,6 +1285,17 @@ class BaseModel {
         user_id: userId instanceof ObjectId ? userId : new ObjectId(String(userId)),
         user_name: userName || '',
         license: license instanceof ObjectId ? license : new ObjectId(String(license)),
+        /*
+         * How this session began, when the caller knows.
+         *
+         * 'signup' is the shop being opened FOR somebody the moment they
+         * created it, not somebody choosing to come back. Both are real
+         * sessions and both belong in the log, but only one of them answers
+         * "did this customer return", and the console cannot tell them apart
+         * from a timestamp. Absent on an ordinary sign-in, which is the vast
+         * majority of rows and needs no field.
+         */
+        ...(reqInfo.source ? { source: String(reqInfo.source).slice(0, 32) } : {}),
       };
 
       const insertResult = await collection.insertOne(document);

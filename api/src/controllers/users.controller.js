@@ -14,6 +14,23 @@ const BaseModel = require('../models/base.model');
 const { authCookieOptions } = require('../utils/auth-cookie');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { setActiveTenantContext } = require('../utils/tenant-context');
+const { recordAudit } = require('../utils/audit-trail');
+
+/*
+ * What somebody sees when a sign-in fails.
+ *
+ * Shown for BOTH an unknown user and a wrong password, on purpose: telling
+ * them apart would let anybody enumerate which emails have accounts here.
+ *
+ * The old wording was "Invalid account. Please contact your branch manager."
+ * A sole shop owner locked out of their own till read that as an instruction
+ * to contact himself, and it said nothing about the thing that had actually
+ * happened - somebody had changed the password the day before. Naming that
+ * possibility costs nothing, leaks nothing, and is the first thing to try.
+ */
+const LOGIN_FAILED_MESSAGE =
+  'Username or password is incorrect. If the password was changed recently, ' +
+  'use the new one - otherwise ask an administrator to reset it.';
 
 const persistActiveTenant = async (req, data, fallbackLicense) => {
   const context = setActiveTenantContext(req, {
@@ -203,6 +220,40 @@ class UsersController extends BaseController {
    * The frontend posts { username, password } to /users/verify.
    * This method authenticates the user, checks rate limiting, and returns user data with JWT token.
    */
+  /*
+   * Record a failed sign-in where support can read it.
+   *
+   * The client is told one thing; this keeps the detail. When a shop says "we
+   * cannot get in", the two questions are which account was tried and from
+   * where - and, if the account exists, whether its password was changed
+   * recently. That last field is what took a database session and a bcrypt
+   * comparison by hand to establish, the one time it mattered.
+   *
+   * Never throws: a login must not fail because its audit line could not be
+   * written. Never records the attempted password, not even hashed.
+   */
+  async recordFailedLogin(req, loginId, reason, user = null) {
+    try {
+      const db = await BaseModel.getDb();
+      await recordAudit(db, {
+        event: 'login_failed',
+        actor: { id: user ? String(user._id) : null, name: loginId },
+        target: user ? { id: String(user._id), name: user.email || '', type: 'user' } : null,
+        ip: clientIp(req),
+        userAgent: (req.headers && req.headers['user-agent']) || '',
+        extra: {
+          reason,
+          attempted: loginId,
+          /* Only meaningful when the account exists. Equal to creation means
+             it has never been changed. */
+          passwordChangedAt: user ? user.updated_date || user.updated_at || null : null,
+        },
+      });
+    } catch (err) {
+      console.error('[audit] failed login not recorded:', err.message);
+    }
+  }
+
   async legacyVerifyLogin(req, res) {
     try {
       // 🔍 DEBUG - Check if this method is called
@@ -234,11 +285,27 @@ class UsersController extends BaseController {
         )
         .lean();
 
-      // PHP: if (isset($recordsFiltered) && ... password_verify(...))
+      /*
+       * ONE MESSAGE FOR BOTH FAILURES, DELIBERATELY.
+       *
+       * Saying "no such user" here would tell anybody who asks which email
+       * addresses have accounts on this shop, one guess at a time. So an
+       * unknown user and a wrong password answer identically, and the reason
+       * is recorded on the server instead, where support can see it and an
+       * attacker cannot.
+       *
+       * The wording changed after a real shop was locked out for five days.
+       * The old text - "Invalid account. Please contact your branch manager."
+       * - told a sole owner, who IS the branch manager, to contact himself,
+       * and never mentioned the thing that had actually happened: the
+       * password had been changed. It now names that possibility, for both
+       * cases, which gives the person at the till something to try.
+       */
       if (!user) {
+        await this.recordFailedLogin(req, loginId, 'no_such_user');
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: 'incorrect',
         });
       }
@@ -254,7 +321,11 @@ class UsersController extends BaseController {
 
         // If base64 fails, try without base64 (old format)
         if (!passwordValid) {
-          passwordValid = await bcrypt.compare(password, user.password);
+          /* String() here as well as above: bcrypt.compare on a non-string
+             behaves differently across versions, and `password` arrives
+             straight from the request body where it can be an object or an
+             array. The base64 branch already coerced; this one did not. */
+          passwordValid = await bcrypt.compare(String(password), user.password);
         }
       }
 
@@ -262,9 +333,14 @@ class UsersController extends BaseController {
         // Match legacy PHP behaviour for incorrect credentials:
         // response('error', $response['message'], 'incorrect', 404);
 
+        /* Same message as the unknown-user case above. The distinction is
+           recorded server-side, including whether this account's password was
+           changed recently, which is the single most useful fact when
+           somebody says "it worked yesterday". */
+        await this.recordFailedLogin(req, loginId, 'bad_password', user);
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: 'incorrect',
         });
       }
@@ -1721,39 +1797,189 @@ class UsersController extends BaseController {
   }
 
   /**
+   * Validate that an extracted S3 key is a legitimate Posnic user-image filename.
+   * Must match format generated by uploadUserImage():
+   *   YYYY-MM-DDTHH-mm-ss-posnic_user-{randomId}.{extension}
+   *
+   * Examples accepted:
+   *   - 2025-12-25T14-30-45-posnic_user-abc123.jpg ✓
+   *   - 2025-09-02T15-22-08-posnic_user-k9j8l7m6n5.png ✓
+   *
+   * Examples rejected:
+   *   - backups/2025-12-25T14-30-45-posnic_user-abc123.jpg ✗ (contains /)
+   *   - user.svg ✗ (doesn't match pattern)
+   *   - arbitrary.jpg ✗ (no -posnic_user- marker)
+   *   - 2025-12-25T14-30-45-posnic_category-abc123.jpg ✗ (wrong marker)
+   *
+   * @param {string} key - The S3 key or bare filename to validate
+   * @returns {boolean} True if valid Posnic user-image filename, false otherwise
+   */
+  isValidPosnicUserImageFilename(key) {
+    if (!key || typeof key !== 'string') return false;
+    if (key.includes('/') || key.includes('\\')) return false;
+
+    // Match: YYYY-MM-DDTHH-mm-ss-posnic_user-{2-15 alphanumeric chars}.{extension}
+    const userImagePattern =
+      /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-posnic_user-[a-z0-9]{2,15}\.(gif|jpg|png|jpeg|bmp)$/i;
+    return userImagePattern.test(key);
+  }
+
+  /**
    * PHP: userImageDelete()
    * Delete user profile image
    */
   async userImageDelete(req, res) {
     try {
-      const imageUrl = req.body.data;
-      const userId = req.body.id;
+      const requestedImageUrl = req.body.data;
+      const bodyUserId = req.body.id;
+
+      // Resolve the target user ID from body or authenticated request
+      const userId =
+        (bodyUserId && String(bodyUserId).trim()) ||
+        (req.user && (req.user._id || req.user.id));
+
+      if (!userId) {
+        return this.error(res, 'No user identified', 401);
+      }
+
+      /*
+       * The rule getUser already uses: your own picture is always yours to
+       * remove, anybody else's needs the user-management permission. Without
+       * it the id simply arrives in the body and is obeyed, which was
+       * survivable while this only reset a database field and is not now that
+       * it destroys the file in the bucket.
+       */
+      const isSelf =
+        String(req.user && (req.user._id || req.user.id)) === String(userId);
+      if (!isSelf && !this.checkPermission('user', 'write', req.user)) {
+        return this.error(res, 'Unauthorized', 403);
+      }
+
+      const User = this.userModel;
+      const user = await User.findById(userId).select('image').lean();
+
+      if (!user) {
+        return this.error(res, 'User not found', 404);
+      }
+
+      const storedImageUrl = user.image || 'user.svg';
 
       // Handle empty/default image - idempotent operation
-      // If no image or already default, just return success
-      if (!imageUrl || imageUrl.trim() === '' || imageUrl.includes('user.svg')) {
+      if (
+        !storedImageUrl ||
+        storedImageUrl.trim() === '' ||
+        storedImageUrl.includes('user.svg')
+      ) {
         return this.success(res, 'user.svg', 'Image was deleted');
       }
 
-      // TODO: Implement S3 deletion logic when S3 is configured
-      // For now, just update the database record to point to default image
-      const updateData = { image: 'user.svg' };
-      const User = this.userModel;
+      const storageType = process.env.STORAGE_TYPE || 'local';
 
-      // If an explicit user id is provided (e.g. from Users module), update that user
-      if (userId && userId.trim() !== '') {
-        await User.findByIdAndUpdate(userId, updateData);
-      } else if (req.user && (req.user._id || req.user.id)) {
-        // Otherwise fall back to currently authenticated user
-        const currentUserId = req.user._id || req.user.id;
-        await User.findByIdAndUpdate(currentUserId, updateData);
+      /*
+       * Clearing the object out of the bucket is BEST EFFORT, the way
+       * categories.controller already treats category images.
+       *
+       * Two rules pulling in opposite directions. Never delete an object we
+       * cannot positively identify as this user's picture, so anything
+       * unrecognised is left where it is rather than guessed at. And never let
+       * the bucket decide whether somebody may clear their own photograph: a
+       * stale URL, a bucket renamed since, a key written by the old PHP app,
+       * or an IAM policy without DeleteObject would otherwise leave that
+       * person stuck with a picture they cannot remove. An orphaned file is
+       * the cheaper failure.
+       *
+       * So every branch below skips the delete and carries on to the database.
+       */
+      if (storageType === 's3' && process.env.AWS_S3_BUCKET) {
+        try {
+          const key = this.resolveUserImageS3Key(storedImageUrl, requestedImageUrl);
+          if (key) {
+            await require('../utils/s3').deleteObject(key);
+          }
+        } catch (err) {
+          console.error('Error deleting user image from S3:', err);
+        }
       }
+
+      await User.findByIdAndUpdate(userId, { image: 'user.svg' });
 
       return this.success(res, 'user.svg', 'Image was deleted');
     } catch (error) {
       console.error('Error in userImageDelete:', error);
       return this.error(res, error.message, 500);
     }
+  }
+
+  /**
+   * The S3 key to remove for a stored user image, or null when the object
+   * cannot be positively identified as one of ours. Never throws for a reason
+   * that should merely skip the delete; the caller treats null as "leave it".
+   *
+   * @param {string} storedImageUrl     the URL held in the user record
+   * @param {string} [requestedImageUrl] what the client believed it was
+   * @returns {string|null}
+   */
+  resolveUserImageS3Key(storedImageUrl, requestedImageUrl) {
+    // The client is working from a stale record; do not act on its guess.
+    if (requestedImageUrl && requestedImageUrl !== storedImageUrl) {
+      console.warn(
+        '[userImageDelete] request does not match the stored image, leaving the object in place'
+      );
+      return null;
+    }
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(storedImageUrl);
+    } catch (err) {
+      // A relative path, written by an older install, is not an S3 object.
+      console.warn(
+        '[userImageDelete] stored image is not an absolute URL, leaving it in place'
+      );
+      return null;
+    }
+
+    const key = parsedUrl.pathname.replace(/^\/+/, '');
+    const bucket = process.env.AWS_S3_BUCKET;
+    const region = process.env.AWS_REGION;
+    const publicUrl = process.env.AWS_S3_PUBLIC_URL;
+
+    const allowedHosts = [];
+    if (publicUrl) {
+      try {
+        allowedHosts.push(new URL(publicUrl).hostname);
+      } catch (err) {
+        // Ignore invalid public URL configuration and fall back to the bucket hosts.
+      }
+    }
+    if (bucket) {
+      allowedHosts.push(`${bucket}.s3.amazonaws.com`);
+      if (region) {
+        allowedHosts.push(`${bucket}.s3.${region}.amazonaws.com`);
+      }
+    }
+
+    const prefix = 'uploads/user_images/';
+    const isBareKey = this.isValidPosnicUserImageFilename(key);
+    const isPrefixedKey =
+      key.startsWith(prefix) &&
+      this.isValidPosnicUserImageFilename(key.substring(prefix.length));
+
+    if (!isBareKey && !isPrefixedKey) {
+      console.warn(
+        '[userImageDelete] key is not a Posnic user image, leaving it in place'
+      );
+      return null;
+    }
+
+    if (!allowedHosts.includes(parsedUrl.hostname)) {
+      console.warn(
+        '[userImageDelete] image is not on a known bucket host, leaving it in place'
+      );
+      return null;
+    }
+
+    return key;
   }
 
   /**
@@ -2382,7 +2608,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: null,
         });
       }
@@ -2574,7 +2800,7 @@ class UsersController extends BaseController {
 
         return res.status(404).json({
           type: 'error',
-          message: 'Invalid account. Please contact your branch manager.',
+          message: LOGIN_FAILED_MESSAGE,
           data: null,
         });
       }

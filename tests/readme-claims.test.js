@@ -216,7 +216,7 @@ test('every package points support and source at this repository', () => {
 
 test('the product package uses the canonical product homepage', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  assert.equal(pkg.homepage, 'https://posnic.com/');
+  assert.equal(pkg.homepage, 'https://posnic.io/');
 });
 
 test('every locked sharp copy includes the symlink-validation fix', () => {
@@ -252,4 +252,73 @@ test('line endings and editor settings are declared', () => {
   assert.match(attrs, /^\* text=auto/m, '.gitattributes does not normalise text');
   assert.match(attrs, /\*\.bat\s+text eol=crlf/,
     'Windows batch files need CRLF or they misbehave when run');
+});
+
+test('a documented command that runs as root points at a file that exists', () => {
+  /*
+   * The README and the self-hosting guide tell a stranger to fetch a script
+   * over the network and run it with sudo. That instruction has to keep
+   * working, and it is the single worst one to get wrong: a 404 is the good
+   * outcome, and a rename that leaves the URL resolving to something else is
+   * the bad one.
+   *
+   * Every raw.githubusercontent URL in the docs is checked against the tree
+   * here, so moving or renaming a script breaks the build rather than the
+   * instruction.
+   */
+  const docs = ['README.md', 'docs/SELF_HOSTING.md']
+    .filter((f) => fs.existsSync(path.join(ROOT, f)));
+  assert.ok(docs.length, 'neither the README nor the self-hosting guide is present');
+
+  const missing = [];
+  const pattern = /raw\.githubusercontent\.com\/Posnic\/POS\/[^/\s]+\/([^\s)"'`]+)/g;
+  let found = 0;
+  for (const doc of docs) {
+    const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
+    for (const m of text.matchAll(pattern)) {
+      found += 1;
+      if (!fs.existsSync(path.join(ROOT, m[1]))) missing.push(`${doc} -> ${m[1]}`);
+    }
+  }
+
+  assert.ok(found > 0, 'no raw file URL found - has the server install been reworded?');
+  assert.deepEqual(missing, [],
+    'these URLs name a file that is not in the repository:\n  ' + missing.join('\n  '));
+});
+
+test('the README explains both ways to install, and tells them apart', () => {
+  /*
+   * "we provide either offline desktop app or they can install in servers" -
+   * the two are different enough in what they ask of the shop (somebody has to
+   * maintain a server) that offering them as one thing sends people to the
+   * harder answer than the one they need.
+   */
+  assert.match(README, /^### Desktop$/m, 'the README has no desktop install section');
+  assert.match(README, /^### Your own server$/m, 'the README has no server install section');
+
+  const install = README.slice(README.indexOf('\n## Install'));
+  const desktopAt = install.indexOf('### Desktop');
+  const serverAt = install.indexOf('### Your own server');
+  assert.ok(desktopAt < serverAt,
+    'the server install comes first; most shops want the desktop app');
+
+  /* The honest parts. Each of these was a deliberate decision, not filler. */
+  assert.match(install, /install-server\.sh/, 'the server section names no installer');
+  assert.match(install, /SELF_HOSTING\.md/, 'the server section links to no full guide');
+  assert.match(install, /27017/,
+    'the server section does not warn about exposing the database port');
+  assert.match(install, /does not include sync|not include sync/i,
+    'the server section does not say that sync is Cloud');
+});
+
+test('every relative link in the README points at something', () => {
+  /*
+   * A broken link in the first file a stranger reads costs more than the page
+   * it fails to open: it is the cheapest possible signal that nobody checks.
+   */
+  const broken = [];
+  for (const m of README.matchAll(/\]\((?!https?:|mailto:|#)([^)#\s]+)/g)) {
+    if (!fs.existsSync(path.join(ROOT, m[1]))) broken.push(m[1]);
+  }
+  assert.deepEqual([...new Set(broken)], [], 'README links to files that do not exist');
 });

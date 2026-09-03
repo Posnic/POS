@@ -76,16 +76,24 @@ describe('users.constants', () => {
       INTERNAL_ERROR: 500,
     });
 
+    /* Mirrors LANGUAGES in frontend/gulpfile.js/config.js: what the app offers,
+       plus 'de' for records that already hold it. */
     expect(LANGUAGES).toEqual({
       ENGLISH: 'en',
-      SPANISH: 'es',
-      FRENCH: 'fr',
-      GERMAN: 'de',
-      HINDI: 'hi',
       TAMIL: 'ta',
-      TELUGU: 'te',
-      KANNADA: 'kn',
+      HINDI: 'hi',
       MALAYALAM: 'ml',
+      KANNADA: 'kn',
+      TELUGU: 'te',
+      SINHALA: 'si',
+      NEPALI: 'ne',
+      ARABIC: 'ar',
+      FRENCH: 'fr',
+      SPANISH: 'es',
+      PORTUGUESE: 'pt',
+      INDONESIAN: 'id',
+      THAI: 'th',
+      GERMAN: 'de',
     });
 
     expect(THEMES).toEqual({

@@ -112,6 +112,11 @@
                                     <lang class="lang_quotes_title">Quotes</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-invoices-tab" data-toggle="pill" href="#v-pills-invoices" role="tab"
+                                    aria-controls="v-pills-invoices" aria-selected="false"><i class="feather icon-file mr-2"></i>
+                                    <lang class="lang_invoices_title">Invoices</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
                                     id="v-pills-tillpin-tab" data-toggle="pill" href="#v-pills-tillpin" role="tab"
                                     aria-controls="v-pills-tillpin" aria-selected="false"><i class="feather icon-lock mr-2"></i>
                                     <lang class="lang_tilllock_title">Till PIN Lock</lang>
@@ -522,7 +527,7 @@
                             <div class="modal-header">
                                 <h5 class="modal-title">
                                     <lang class="lang_registeredopen">Open Register</lang>
-                                    &mdash; <span id="register_open_name"></span>
+                                    - <span id="register_open_name"></span>
                                 </h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             </div>
@@ -1001,7 +1006,7 @@
                                             <select id="tax_regime_override" class="form-control border-control"
                                                 onchange="PosnicPro.settings.taxSystemRegimeChanged();">
                                                 <option value="">Automatic (from country)</option>
-                                                <option value="vat_credit">VAT / GST — credit method</option>
+                                                <option value="vat_credit">VAT / GST - credit method</option>
                                                 <option value="sales_tax">Sales tax (no input credit)</option>
                                                 <option value="none">No consumption tax</option>
                                             </select>
@@ -1016,8 +1021,8 @@
                                                 </label>
                                                 <select name="indian_gst" class="form-control border-control"
                                                     id="indian_gst" onchange="PosnicPro.settings.updateCommonSetting('GST invoicing saved');">
-                                                    <option value="gst_off">Off — plain tax lines</option>
-                                                    <option value="gst_on">On — CGST/SGST/IGST on every bill</option>
+                                                    <option value="gst_off">Off - plain tax lines</option>
+                                                    <option value="gst_on">On - CGST/SGST/IGST on every bill</option>
                                                 </select>
                                                 <small class="text-muted">On splits every tax line into the GST heads and unlocks the GSTR filing reports. Registered shops keep this on.</small>
                                             </div>
@@ -1047,7 +1052,7 @@
                                                 <small class="text-muted d-block" id="india_5cr_note"></small>
                                                 <label class="label-text-color mt-2" style="font-weight:normal;" id="india_qrmp_row">
                                                     <input type="checkbox" id="india_qrmp" />
-                                                    <lang class="lang_taxsystem_qrmp">QRMP — file quarterly</lang>
+                                                    <lang class="lang_taxsystem_qrmp">QRMP - file quarterly</lang>
                                                 </label>
                                             </div>
                                         </div>
@@ -1620,7 +1625,7 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="col-md-12 mb-2">
-                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
+                                            <label>Message - {name} {amount} {code} {currency} {shop} {expiry}</label>
                                             <textarea class="form-control" id="cashback_template" rows="2"
                                                 placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
                                         </div>
@@ -1825,7 +1830,7 @@
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">SMS is sent through <strong>your own provider
-                                                account</strong> — pick your provider and enter your credentials. Your
+                                                account</strong>. Pick your provider and enter your credentials. Your
                                             keys are stored securely on the server and are never shown again after
                                             saving.</p>
                                         <div class="form-row">
@@ -1879,7 +1884,7 @@
                                         </div>
 
                                         <div id="messaging_wa_web">
-                                            <p class="text-muted small mb-2">Runs locally as a linked device — scan the QR
+                                            <p class="text-muted small mb-2">Runs locally as a linked device. Scan the QR
                                                 under <strong>Settings → WhatsApp Connection</strong>. No cloud credentials
                                                 are stored.</p>
                                             <div class="form-row">
@@ -1899,7 +1904,7 @@
                                         <div id="messaging_wa_cloud" style="display:none;">
                                             <p class="text-muted small mb-2">Register a Meta app, add a WhatsApp phone
                                                 number, and paste its credentials. Marketing messages need an approved
-                                                Meta template — set its name below.</p>
+                                                Meta template, set its name below.</p>
                                             <div class="form-row">
                                                 <div class="col-md-6 mb-2">
                                                     <label>Access token <span class="text-danger">*</span></label>
@@ -2455,6 +2460,18 @@
 
                                         <div class="module-card">
                                             <div class="module-card-head">
+                                                <span class="module-ico"><i class="feather icon-file"></i></span>
+                                                <div class="module-title"><lang class="lang_invoices_enable">Invoices</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="invoices_enable" name="invoices_enable">
+                                                    <label class="custom-control-label" for="invoices_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc">Bill a customer now, get paid later - and see who still owes you.</p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
                                                 <span class="module-ico"><i class="feather icon-plus-square"></i></span>
                                                 <div class="module-title"><lang class="lang_custom_charges_enable">Custom charges</lang></div>
                                                 <div class="custom-control custom-switch module-switch">
@@ -2709,7 +2726,7 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="col-md-12 mb-2">
-                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <label>Message - use {name} {due} {currency} {shop}</label>
                                             <textarea class="form-control" id="credit_reminder_template" rows="2"
                                                 placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
                                         </div>
@@ -2722,7 +2739,7 @@
 
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Outstanding customers —
+                                    <h5 class="card-title mb-0">Outstanding customers -
                                         <span id="credit_outstanding_total">0</span></h5>
                                     <div>
                                         <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
@@ -3294,6 +3311,42 @@
                     </div>
                 </div>
                                         <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-invoices"
+                            role="tabpanel" aria-labelledby="v-pills-invoices-tab">
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_invoices_title">Invoices</lang></h5>
+                                    <small class="text-muted"><lang class="lang_invoices_hint">How new invoices are numbered, when they fall due, and the terms printed on them. Payment details and the signature are shared with quotations.</lang></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="fc-section" id="fc_invoices">
+                                        <h6 class="fc-title"><lang class="lang_invoices_title">Invoices</lang></h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_prefix">Invoice number prefix</lang></label>
+                        <input type="text" name="invoice_prefix" id="invoice_prefix"
+                            class="form-control form-control-sm mb-2" maxlength="12"
+                            placeholder="INV-" autocomplete="off">
+                        <small class="text-muted d-block mb-2">Numbers continue from the highest one so far, whatever the prefix. Your receipts keep their own series.</small>
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_due_days">Due in (days)</lang></label>
+                        <input type="number" name="invoice_due_days" id="invoice_due_days" min="0" max="365" step="1"
+                            class="form-control form-control-sm mb-2" placeholder="30" aria-label="Invoice due days">
+                        <small class="text-muted d-block mb-2">0 means due on receipt. Every new invoice starts from this; change it on the invoice itself when a customer has other terms.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-size:12.5px;" class="mb-1"><lang class="lang_invoice_terms">Terms on new invoices</lang></label>
+                        <textarea name="invoice_terms" id="invoice_terms"
+                            class="form-control form-control-sm mb-2" rows="5" maxlength="1500"
+                            placeholder="e.g. Payment within 30 days of the invoice date. Goods once sold are not returnable."></textarea>
+                        <small class="text-muted d-block">Also printed on A4 receipts.</small>
+                    </div>
+                </div>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="invoice_settings_save"><lang class="lang_save_title">Save invoice settings</lang></button>
                                     </div>
                                 </div>
                             </div>
@@ -4505,7 +4558,7 @@
                                                         <div class="alert alert-info mb-0" style="font-size:13.5px;">
                                                             <b>Printer and paper are set per till.</b>
                                                             Which printer prints receipts, and whether the roll is
-                                                            58mm, 80mm or A4, belong to this computer &mdash; the
+                                                            58mm, 80mm or A4, belong to this computer. The
                                                             counter beside you may have a different one. They live in
                                                             Hardware Manager, together with the cash drawer, kitchen
                                                             printers and the weighing scale.

@@ -13,6 +13,7 @@ jest.mock('../../../src/controllers/settings.controller', () => {
     getDefaultCustomerSupplier: make,
     backupTable: make,
     updateGeneralSetting: make,
+    updateStarterLocale: make,
     updateCommonSettings: make,
     getBranchModules: make,
     getModifierGroups: make,

@@ -6815,6 +6815,21 @@ class SalesRepository {
             wallet_amount: (saleDetails.wallet_amount || 0) + parseFloat(saleData.amount),
           },
         });
+
+        /* A settled sale that came from an invoice tells the invoice it is
+           paid (INVOICING_MODULE_DESIGN) - fire-safe, after the sale's own
+           writes have landed. */
+        if (saleDetails.source_invoice_id) {
+          await require('../services/invoice-sync').afterSaleSettled(saleDetails._id);
+        }
+      }
+
+      /* A settlement with no customer to recompute (a walk-in sale marked
+         paid from its invoice) stops here: the sales are settled, and there
+         is no ledger to total. Before this guard, ObjectId(undefined) threw
+         AFTER the sales were already marked paid. */
+      if (!data.id || !ObjectId.isValid(String(data.id))) {
+        return { status: true, data: 0, message: 'Sales settled successfully' };
       }
 
       // Recalculate customer balance
@@ -7198,7 +7213,7 @@ class SalesRepository {
       // Generate token ID
       const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
 
-      // Map items — use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
+      // Map items - use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
       const itemCollection = db.collection('items');
       const saleItems = [];
       for (const item of items) {
@@ -7623,7 +7638,7 @@ class SalesRepository {
           });
         }
         if (!itemDoc) {
-          // Item not in catalog (e.g. KOT order item) — update in-place using existing data
+          // Item not in catalog (e.g. KOT order item) - update in-place using existing data
           if (existingIndex[productId] !== undefined) {
             const i = existingIndex[productId];
             updatedItems[i] = {

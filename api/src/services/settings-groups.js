@@ -49,6 +49,7 @@ const FEATURES = [
      nothing reads it to decide. */
   'first_run_decided',
   'quotes_enable',
+  'invoices_enable',
   'pl_include_cashbook',
   // sale-screen capabilities that behave the same way
   'custom_charges_enable',
@@ -90,6 +91,11 @@ const PREFERENCES = [
   'default_tax',
   'sales_prefix',
   'receiving_prefix',
+  /* Invoices (INVOICING_MODULE_DESIGN): the document number prefix and the
+     credit days a new invoice's due date is counted from. invoice_terms, the
+     document's wording, sits with the other document text below. */
+  'invoice_prefix',
+  'invoice_due_days',
   'notification_range',
   'discount_percentage',
   'discount_amount',

@@ -169,6 +169,7 @@ function report() {
 
 /* ------------------------------------------------------------------ cli --- */
 
+function main() {
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
 const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
@@ -183,6 +184,28 @@ if (flag('--json')) {
     plain.context[key] = { english: c.english, where: [...c.where] };
   }
   console.log(JSON.stringify(plain, null, 2));
+  process.exit(0);
+}
+
+/*
+ * Write languages/_english.json - every key with the English the UI shows.
+ *
+ * The packs deliberately do not carry the English (it lives in the markup, and
+ * that is what makes a missing key fall back correctly). But anything editing a
+ * pack from outside this repo - the staff console's language editor - has no
+ * way to show a translator WHAT they are translating without it.
+ *
+ * Generated rather than hand-kept, and pinned by tests/i18n.test.js so it
+ * cannot drift: a stale map would show a translator the wrong English, which is
+ * a worse failure than not showing any.
+ */
+if (flag('--write-english')) {
+  const en = {};
+  for (const [key, c] of data.context) if (c.english) en[key] = c.english;
+  const sorted = {};
+  for (const k of Object.keys(en).sort()) sorted[k] = en[k];
+  fs.writeFileSync(path.join(LANG_DIR, '_english.json'), JSON.stringify(sorted, null, 2) + '\n');
+  console.log(`languages/_english.json: ${Object.keys(sorted).length} keys`);
   process.exit(0);
 }
 
@@ -434,3 +457,9 @@ if (min) {
     process.exit(1);
   }
 }
+}
+
+/* Required as a module by the frontend build (for index.json's coverage
+   numbers) and by the tests; run as a script by people and CI. */
+if (require.main === module) main();
+module.exports = { keysUsed, report, languages };
