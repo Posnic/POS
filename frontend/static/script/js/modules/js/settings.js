@@ -4730,6 +4730,8 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
         && PosnicPro.settings._demoWasOn !== false) {
         PosnicPro.settings.confirmDemoOff(this, ['#fp_master']);
     }
+    /* Quotes and Invoices are two halves of one job - see suggestPartner. */
+    PosnicPro.settings.suggestPartner(this);
 });
 // Unsaved feature changes get a real decision (owner upgrade from the
 // toast): Stay pulls you back with every selection intact; Leave
@@ -7102,6 +7104,70 @@ $(document).on('click', '#demo_pack_reset', function () {
  * referenced by a real transaction. Whatever survives stays hidden by the
  * read filter while the switch is off, so refusal never means reappearing.
  */
+/*
+ * Quotes and Invoices are two halves of one job.
+ *
+ * A shop that prices work before doing it also bills for it afterwards: the
+ * quote is the promise, the invoice is the claim, and the same customer sees
+ * both. Somebody who finds one switch has usually not thought about the other,
+ * and discovers it months later - or never.
+ *
+ * So turning one on offers the other. Three rules keep an offer from becoming
+ * nagging:
+ *
+ *   only on the way ON. Switching Invoices off says nothing about Quotes.
+ *   only when the partner is OFF. Otherwise there is nothing to offer.
+ *   only once per visit, per pair. "No" is an answer, and asking a second
+ *     time tells somebody their answer was not heard.
+ *
+ * Nothing is written here. The switch is feedback; Save is what saves - which
+ * is the rule every other card on this page already follows.
+ */
+PosnicPro.settings._partners = {
+    quotes_enable: {
+        other: 'invoices_enable',
+        title: 'Turn on Invoices as well?',
+        text: 'Quotes price the work before you do it; invoices bill for it afterwards, '
+            + 'and show you who still owes. Shops that use one usually want both.',
+        yes: 'Turn on Invoices',
+    },
+    invoices_enable: {
+        other: 'quotes_enable',
+        title: 'Turn on Quotes as well?',
+        text: 'Invoices bill for work you have done; quotes price it beforehand, so the '
+            + 'customer agrees before you start. Shops that use one usually want both.',
+        yes: 'Turn on Quotes',
+    },
+};
+PosnicPro.settings._partnerAsked = {};
+
+PosnicPro.settings.suggestPartner = function (checkbox) {
+    var pair = PosnicPro.settings._partners[checkbox && checkbox.id];
+    if (!pair || !checkbox.checked) return;
+    if (PosnicPro.settings._partnerAsked[checkbox.id]) return;
+
+    var $other = $('#' + pair.other);
+    if (!$other.length || $other.is(':checked')) return;
+
+    PosnicPro.settings._partnerAsked[checkbox.id] = true;
+    swal({
+        title: pair.title,
+        text: pair.text,
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-primary',
+        cancelButtonClass: 'btn btn-light m-l-10',
+        confirmButtonText: pair.yes,
+        cancelButtonText: 'Not now'
+        /* SweetAlert v6 REJECTS on cancel. Without the second handler, saying
+           "Not now" is an unhandled rejection on a screen where the person
+           did nothing wrong. */
+    }).then(function () {
+        $other.prop('checked', true).trigger('change');
+    }, function () {
+        /* Declined. The flag above means we do not ask again this visit. */
+    });
+};
+
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
         title: 'Switch off Demo Data and remove the samples?',
