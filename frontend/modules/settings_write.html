@@ -527,7 +527,7 @@
                             <div class="modal-header">
                                 <h5 class="modal-title">
                                     <lang class="lang_registeredopen">Open Register</lang>
-                                    &mdash; <span id="register_open_name"></span>
+                                    - <span id="register_open_name"></span>
                                 </h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             </div>
@@ -1006,7 +1006,7 @@
                                             <select id="tax_regime_override" class="form-control border-control"
                                                 onchange="PosnicPro.settings.taxSystemRegimeChanged();">
                                                 <option value="">Automatic (from country)</option>
-                                                <option value="vat_credit">VAT / GST — credit method</option>
+                                                <option value="vat_credit">VAT / GST - credit method</option>
                                                 <option value="sales_tax">Sales tax (no input credit)</option>
                                                 <option value="none">No consumption tax</option>
                                             </select>
@@ -1021,8 +1021,8 @@
                                                 </label>
                                                 <select name="indian_gst" class="form-control border-control"
                                                     id="indian_gst" onchange="PosnicPro.settings.updateCommonSetting('GST invoicing saved');">
-                                                    <option value="gst_off">Off — plain tax lines</option>
-                                                    <option value="gst_on">On — CGST/SGST/IGST on every bill</option>
+                                                    <option value="gst_off">Off - plain tax lines</option>
+                                                    <option value="gst_on">On - CGST/SGST/IGST on every bill</option>
                                                 </select>
                                                 <small class="text-muted">On splits every tax line into the GST heads and unlocks the GSTR filing reports. Registered shops keep this on.</small>
                                             </div>
@@ -1052,7 +1052,7 @@
                                                 <small class="text-muted d-block" id="india_5cr_note"></small>
                                                 <label class="label-text-color mt-2" style="font-weight:normal;" id="india_qrmp_row">
                                                     <input type="checkbox" id="india_qrmp" />
-                                                    <lang class="lang_taxsystem_qrmp">QRMP — file quarterly</lang>
+                                                    <lang class="lang_taxsystem_qrmp">QRMP - file quarterly</lang>
                                                 </label>
                                             </div>
                                         </div>
@@ -1625,7 +1625,7 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="col-md-12 mb-2">
-                                            <label>Message — {name} {amount} {code} {currency} {shop} {expiry}</label>
+                                            <label>Message - {name} {amount} {code} {currency} {shop} {expiry}</label>
                                             <textarea class="form-control" id="cashback_template" rows="2"
                                                 placeholder="Thank you {name}! You earned {currency}{amount} cashback (code {code}). Use it before {expiry}."></textarea>
                                         </div>
@@ -1830,7 +1830,7 @@
                                     </div>
                                     <div class="card-body">
                                         <p class="text-muted mb-3">SMS is sent through <strong>your own provider
-                                                account</strong> — pick your provider and enter your credentials. Your
+                                                account</strong>. Pick your provider and enter your credentials. Your
                                             keys are stored securely on the server and are never shown again after
                                             saving.</p>
                                         <div class="form-row">
@@ -1884,7 +1884,7 @@
                                         </div>
 
                                         <div id="messaging_wa_web">
-                                            <p class="text-muted small mb-2">Runs locally as a linked device — scan the QR
+                                            <p class="text-muted small mb-2">Runs locally as a linked device. Scan the QR
                                                 under <strong>Settings → WhatsApp Connection</strong>. No cloud credentials
                                                 are stored.</p>
                                             <div class="form-row">
@@ -1904,7 +1904,7 @@
                                         <div id="messaging_wa_cloud" style="display:none;">
                                             <p class="text-muted small mb-2">Register a Meta app, add a WhatsApp phone
                                                 number, and paste its credentials. Marketing messages need an approved
-                                                Meta template — set its name below.</p>
+                                                Meta template, set its name below.</p>
                                             <div class="form-row">
                                                 <div class="col-md-6 mb-2">
                                                     <label>Access token <span class="text-danger">*</span></label>
@@ -2726,7 +2726,7 @@
                                     </div>
                                     <div class="form-row">
                                         <div class="col-md-12 mb-2">
-                                            <label>Message — use {name} {due} {currency} {shop}</label>
+                                            <label>Message - use {name} {due} {currency} {shop}</label>
                                             <textarea class="form-control" id="credit_reminder_template" rows="2"
                                                 placeholder="Hi {name}, you have {currency}{due} due at {shop}. Please pay soon."></textarea>
                                         </div>
@@ -2739,7 +2739,7 @@
 
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">Outstanding customers —
+                                    <h5 class="card-title mb-0">Outstanding customers -
                                         <span id="credit_outstanding_total">0</span></h5>
                                     <div>
                                         <button type="button" class="btn btn-outline-secondary btn-sm mr-1"
@@ -4558,7 +4558,7 @@
                                                         <div class="alert alert-info mb-0" style="font-size:13.5px;">
                                                             <b>Printer and paper are set per till.</b>
                                                             Which printer prints receipts, and whether the roll is
-                                                            58mm, 80mm or A4, belong to this computer &mdash; the
+                                                            58mm, 80mm or A4, belong to this computer. The
                                                             counter beside you may have a different one. They live in
                                                             Hardware Manager, together with the cash drawer, kitchen
                                                             printers and the weighing scale.

@@ -62,7 +62,10 @@ jobs:
           set -e
           for f in \
             frontend/public/dashboard.html \
-            frontend/public/login.html
+            frontend/public/login.html \
+            frontend/public/robots.txt \
+            frontend/public/sitemap.xml \
+            frontend/public/llms.txt
           do
             test -s "$f" || { echo "missing or empty after build: $f"; exit 1; }
           done
@@ -147,7 +150,7 @@ jobs:
 
             # The pages by name; the bundles by hashed pattern (the name
             # carries a content hash and changes every deploy).
-            for f in public/dashboard.html public/login.html; do
+            for f in public/dashboard.html public/login.html public/robots.txt public/sitemap.xml public/llms.txt; do
               if [ -s "$f" ]; then echo "  ok       $f"; else echo "  MISSING  $f"; fail=1; fi
             done
             ls public/style/dashboard.*.css >/dev/null 2>&1 && echo "  ok       hashed dashboard css" || { echo "  MISSING  hashed dashboard css"; fail=1; }

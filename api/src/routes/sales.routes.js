@@ -459,7 +459,7 @@ router.get('/kotDiscountReports', bindController(salesController.kotDiscountRepo
 // PHP: kotTablewiseDetails() - Get KOT table-wise detailed item report
 router.get('/kotTablewiseDetails', bindController(salesController.kotTablewiseDetails));
 
-// PHP: getListKot() - (moved before protect for kiosk access — see above)
+// PHP: getListKot() - (moved before protect for kiosk access - see above)
 
 // PHP: pendingCustomerCategoryReportTable() - Get pending customer category report
 router.get(

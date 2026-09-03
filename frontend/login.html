@@ -17,10 +17,48 @@
                 : 'http://localhost:5555/';
         </script>
 
-        <title> <lang class="lang_login_title"> Login Here </lang> </title>
+        <title>Posnic POS - Offline POS & Billing Software</title>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Posnic POS is offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta name="keywords" content="POS, Billing Software, Offline POS, Online/Offline POS, open source POS">
+        <meta name="application-name" content="Posnic POS">
+        <meta name="author" content="Posnic">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="https://www.posnic.io/">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Posnic POS">
+        <meta property="og:title" content="Posnic POS - Offline POS & Billing Software">
+        <meta property="og:description" content="Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta property="og:url" content="https://www.posnic.io/">
+        <meta property="og:image" content="https://www.posnic.io/static/images/icons-pwa/icon-512.png">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="Posnic POS - Offline POS & Billing Software">
+        <meta name="twitter:description" content="Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta name="twitter:image" content="https://www.posnic.io/static/images/icons-pwa/icon-512.png">
+        <script type="application/ld+json" id="posnic-software-schema">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Posnic POS",
+            "description": "Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.",
+            "url": "https://www.posnic.io/",
+            "codeRepository": "https://github.com/Posnic/POS",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Windows, macOS, Linux, Web",
+            "softwareVersion": "1.6.1",
+            "license": "https://github.com/Posnic/POS/blob/develop/LICENSE",
+            "isAccessibleForFree": true,
+            "keywords": [
+                "POS",
+                "Billing Software",
+                "Offline POS",
+                "Online/Offline POS",
+                "open source POS"
+            ]
+        }
+        </script>
         <!-- App favicon -->
         <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
         <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
@@ -390,7 +428,7 @@
           '<a href="https://web.posnic.com/download.html" style="flex:1 1 auto;text-align:center;background:#fff;color:#16203a;' +
             'text-decoration:none;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:8px;">Download free</a>' +
           '<a href="#" id="posnic_app_card_open" style="flex:0 0 auto;color:#8ab4ff;text-decoration:none;font-size:12.5px;">' +
-            'I have it &mdash; open</a></div>';
+            'I have it, open</a></div>';
 
       form.insertAdjacentElement('afterend', el);
       document.getElementById('posnic_app_card_open').onclick = function () { location.href = 'posnic://open'; return false; };

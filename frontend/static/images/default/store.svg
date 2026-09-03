@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 50 50" role="img" aria-label="Shop">
+  <!--
+    The default picture for a branch that has not uploaded a logo.
+
+    Drawn to match the other defaults in this folder rather than invented: the
+    same 50-unit box, the same soft #e5e9fb disc behind it, and the same indigo
+    (#506ee4) that user.svg and category.svg already use. A shop that has not
+    chosen a logo should look like it belongs to the software, not like a piece
+    of clipart somebody found.
+
+    store.png beside this file is generated FROM this file. The name matters:
+    'store.png' is a sentinel in the code - branches.js reads
+    `d.logo !== 'store.png'` to mean "no logo was uploaded" - so the filename
+    cannot change without touching stored branch records.
+  -->
+  <circle cx="25" cy="25" r="25" fill="#e5e9fb"/>
+
+  <!-- shopfront -->
+  <path d="M12 20.5h26v19.5a1.2 1.2 0 0 1-1.2 1.2H13.2A1.2 1.2 0 0 1 12 40V20.5Z" fill="#ffffff"/>
+
+  <!-- window, with a single mullion so it reads as glass rather than a panel -->
+  <rect x="15.2" y="25" width="9.6" height="8" rx="1" fill="#cfd8f8"/>
+  <path d="M20 25v8" stroke="#e5e9fb" stroke-width="0.9" stroke-linecap="round"/>
+
+  <!-- door -->
+  <path d="M28 41.2V29.8a3.6 3.6 0 0 1 7.2 0v11.4Z" fill="#506ee4"/>
+  <circle cx="29.9" cy="35.6" r="0.75" fill="#e5e9fb"/>
+
+  <!-- awning: five scallops, hanging under the fascia -->
+  <path d="M10 15.7h30v4.8a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0v-4.8Z" fill="#506ee4"/>
+
+  <!-- fascia above the awning, and the step below the shopfront -->
+  <rect x="9.5" y="12.4" width="31" height="3.3" rx="1.2" fill="#3f57bd"/>
+  <rect x="9" y="41.2" width="32" height="1.8" rx="0.9" fill="#3f57bd"/>
+</svg>
