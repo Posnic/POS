@@ -16,7 +16,7 @@ them for a given build.
 
 **Shipped as:** `resources/mongodb/bin/mongod.exe` on Windows and
 `resources/mongodb/bin/mongod` on macOS and Linux
-**Version:** 7.0.14
+**Version:** 7.0.14 (exact bundled release matching installer build pin)
 **Copyright:** © MongoDB, Inc.
 **Licence:** Server Side Public License, Version 1 (SSPL-1.0)
 **Source:** <https://github.com/mongodb/mongo>
@@ -33,7 +33,7 @@ distribution rather than assigning one licence to the complete bundle. This
 notice records technical provenance and is not legal advice.
 
 If you would rather not receive it, the installer can be built without a bundled
-MongoDB and pointed at one you already run; see `download-mongodb.bat` and
+MongoDB and pointed at one you already run; see `download-mongodb.bat`  and
 `MONGODB_URI`.
 
 ## Node.js
@@ -73,7 +73,7 @@ listed in `LICENSES.chromium.html` beside the installed application)
 ## Microsoft Visual C++ Runtime
 
 **Shipped as:** `resources/mongodb/bin/msvcp140.dll`,
-`vcruntime140.dll`, `vcruntime140_1.dll`
+`vcruntime140.dll`, `vcruntime140_1.dll` (Windows package only)
 **Copyright:** © Microsoft Corporation
 **Licence:** Redistributed under the Microsoft Visual Studio redistributable
 terms, as files MongoDB requires to run.
