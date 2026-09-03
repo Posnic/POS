@@ -595,3 +595,82 @@ describe('QuoteRepository', () => {
     });
   });
 });
+
+/*
+ * Quote -> invoice (INVOICING_MODULE_DESIGN). A quote that became an invoice
+ * is frozen like an accepted one, cannot be cancelled from its own page, and
+ * cannot grow a second invoice - but the invoice's own conversion may still
+ * stamp it converted, closing the chain.
+ */
+describe('QuoteRepository invoiced', () => {
+  const INVOICE = '64b000000000000000000009';
+  const OTHER_INVOICE = '64b00000000000000000000a';
+  let repo;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequestedCollections.length = 0;
+    repo = new QuoteRepository();
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+  });
+
+  test('an open or accepted quote becomes invoiced, carrying the invoice id', async () => {
+    for (const status of ['open', 'sent', 'accepted']) {
+      mockCollection.updateOne.mockClear();
+      mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status });
+      const r = await repo.transition(
+        QUOTE_ID,
+        'invoice',
+        { invoice_id: INVOICE, invoice_number: 'INV-000003' },
+        ctx
+      );
+      expect(r.status).toBe(true);
+      const set = mockCollection.updateOne.mock.calls[0][1].$set;
+      expect(set.status).toBe('invoiced');
+      expect(String(set.invoice_id)).toBe(INVOICE);
+      expect(set.invoice_number).toBe('INV-000003');
+    }
+    expect([...new Set(mockRequestedCollections)]).toEqual(['quotes']);
+  });
+
+  test('one quote, one invoice: the same id replays, a different one is refused', async () => {
+    mockCollection.findOne.mockResolvedValue({
+      _id: new ObjectId(QUOTE_ID),
+      status: 'invoiced',
+      invoice_id: new ObjectId(INVOICE),
+    });
+    const same = await repo.transition(QUOTE_ID, 'invoice', { invoice_id: INVOICE }, ctx);
+    expect(same.status).toBe(true);
+    const other = await repo.transition(QUOTE_ID, 'invoice', { invoice_id: OTHER_INVOICE }, ctx);
+    expect(other.status).toBe(false);
+    expect(mockCollection.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('closed quotes cannot be invoiced, and an invoiced quote cannot be cancelled or edited', async () => {
+    for (const status of ['declined', 'converted', 'cancelled']) {
+      mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status });
+      const r = await repo.transition(QUOTE_ID, 'invoice', { invoice_id: INVOICE }, ctx);
+      expect(r.status).toBe(false);
+    }
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'invoiced' });
+    const cancel = await repo.transition(QUOTE_ID, 'cancel', {}, ctx);
+    expect(cancel.status).toBe(false);
+    expect(cancel.message).toMatch(/cancel the invoice instead/);
+    mockCollection.updateOne.mockResolvedValue({ matchedCount: 0 });
+    const edit = await repo.upsertQuote(
+      { items: [{ item_id: ITEM, item_name: 'Rice', qty: 1, unit_price: 10 }] },
+      QUOTE_ID,
+      ctx
+    );
+    expect(edit.status).toBe(false);
+  });
+
+  test("the invoice's conversion stamps the quote converted", async () => {
+    mockCollection.findOne.mockResolvedValue({ _id: new ObjectId(QUOTE_ID), status: 'invoiced' });
+    const r = await repo.transition(QUOTE_ID, 'convert', { sale_id: SALE }, ctx);
+    expect(r.status).toBe(true);
+    const set = mockCollection.updateOne.mock.calls[0][1].$set;
+    expect(set.status).toBe('converted');
+    expect(String(set.converted_sale_id)).toBe(SALE);
+  });
+});

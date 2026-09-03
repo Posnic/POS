@@ -508,6 +508,19 @@ class SettingsService {
     }
   }
 
+  async updateStarterLocale(data) {
+    try {
+      const result = await this.repository.updateStarterLocale(data);
+      return result;
+    } catch (error) {
+      return {
+        status: false,
+        message: error.message || ERROR_MESSAGES.UPDATE_FAILED,
+        data: null,
+      };
+    }
+  }
+
   /**
    * Update common settings
    */

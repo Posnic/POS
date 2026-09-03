@@ -74,8 +74,8 @@ test('the welcome saves BOOLEANS - the string "false" reads as enabled everywher
   );
   assert.ok(!saveIntro.includes("? 'true' : 'false'"), 'the string form is back');
   assert.match(saveIntro, /payload\.first_run_decided = true;/);
-  /* the "Not now" write too */
-  assert.match(src, /\{ first_run_done: true, first_run_decided: true \}/);
+  /* the "Use defaults" write uses the same boolean save path too */
+  assert.match(src, /'#feature_intro_skip'[\s\S]{0,160}PosnicPro\.features\.saveIntro\(\)/);
 });
 
 test('the money-path lists are card-ready on phones (Mobile P2)', () => {

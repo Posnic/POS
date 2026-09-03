@@ -150,24 +150,26 @@ test('only a DECISION ends the welcome - a casual dismissal brings it back', () 
      * page." The first design marked any close as asked; he overruled it,
      * and he is right about who this screen is for - a brand-new user who
      * Escapes a dialog they did not read has not learned that features are
-     * switchable, which is the entire point. Save and the explicit "Not now"
+     * switchable, which is the entire point. Save and the explicit skip paths
      * write the flags; Esc and a stray click write NOTHING, and the welcome
      * returns next login.
      */
     const gate = block(settingsCode, 'maybeShowIntro:', 'runningContext:');
     /* No dismiss handler at all now: an undecided close leaves NOTHING, and
-       the DB flag written by Save / "Not now" is the entire record. */
+       the DB flag written by Save / "Use defaults" is the entire record. */
     assert.ok(!/hidden\.bs\.modal/.test(gate),
         'a dismiss handler is writing browser state again');
 
-    // The explicit Skip is the decision that writes both flags.
+    // The explicit skip path is the decision that writes both flags.
     const skip = block(settingsCode, "'#feature_intro_skip', function", "'#fi_module_demo_data_enable'");
     assert.match(skip, /_decided = true/);
-    assert.match(skip, /settings\/group\/features/);
-    assert.match(skip, /first_run_decided: true/);
-    // And a failed write un-decides, so the shop is asked again - correct
-    // for a shop that was never recorded as asked.
-    assert.match(skip, /_decided = false/);
+    assert.match(skip, /_tourAfterSave = false/);
+    assert.match(skip, /saveIntro\(\)/);
+    assert.ok(!/data-dismiss|modal\('hide'\)/.test(skip),
+        'Use defaults is closing without the save path');
+    const close = block(settingsCode, "'#feature_intro_close', function", "'change', '#fi_module_demo_data_enable'");
+    assert.match(close, /_decided = true/);
+    assert.match(close, /saveIntro\(\)/);
 });
 
 test('the welcome opens OVER the features page', () => {
@@ -282,10 +284,103 @@ test('a long description cannot push the switch off the edge', () => {
 
 test('the modal markup carries what the code paints into', () => {
     for (const id of ['feature_intro_modal', 'feature_intro_sub', 'feature_intro_lead',
-        'feature_intro_list', 'feature_intro_save', 'feature_intro_skip']) {
+        'feature_intro_demo_yes', 'feature_intro_demo_no', 'feature_intro_locale_form',
+        'feature_intro_country', 'feature_intro_state', 'feature_intro_currency',
+        'feature_intro_timezone', 'feature_intro_date',
+        'feature_intro_filter', 'feature_intro_list', 'feature_intro_save', 'feature_intro_skip',
+        'feature_intro_next', 'feature_intro_back', 'feature_intro_step_label',
+        'feature_intro_demo_bg_status', 'feature_intro_close']) {
         assert.ok(modalCode.includes('id="' + id + '"'), 'missing #' + id);
     }
     assert.match(modalCode, /class="modal-content first-run"/);
+    assert.match(modalCode, /data-backdrop="static"/);
+    assert.match(modalCode, /data-keyboard="false"/);
+    assert.ok(!/data-dismiss="modal"/.test(modalCode),
+        'the first-run welcome must not have a close-only button');
+});
+
+test('the first-run close icon is drawn in the center of the circle', () => {
+    const closeCss = block(cssCode, '.first-run-close {', '.first-run-close:hover');
+    assert.match(closeCss, /font-size: 0 !important/);
+    assert.match(closeCss, /\.first-run-close::before,\s*\n\.first-run-close::after/);
+    assert.match(closeCss, /top: 50%/);
+    assert.match(closeCss, /left: 50%/);
+    assert.match(closeCss, /transform: translate\(-50%, -50%\) rotate\(45deg\)/);
+    assert.match(closeCss, /\.first-run-close::after[\s\S]*rotate\(-45deg\)/);
+    assert.ok(!/content: "\\00d7"/.test(closeCss),
+        'the font multiplication glyph sits off-center in this circular button');
+});
+
+test('the welcome is a step-by-step assistant, not one crowded settings wall', () => {
+    assert.match(modalCode, /data-intro-step="sample"/);
+    assert.match(modalCode, /data-intro-step="features"/);
+    assert.match(modalCode, /data-intro-step="settings"/);
+    assert.match(settingsCode, /showIntroStep: function/);
+    assert.match(settingsCode, /nextIntroStep: function/);
+    assert.match(settingsCode, /previousIntroStep: function/);
+    assert.match(settingsCode, /data-intro-dot/);
+    assert.match(cssCode, /\.first-run-step\s*\{\s*display: none;/);
+    assert.match(cssCode, /\.first-run-step\.is-active\s*\{\s*display: block;/);
+});
+
+test('sample data is selected by default and starts in the background on Next', () => {
+    assert.match(modalCode, /id="fi_module_demo_data_enable"[\s\S]{0,90}checked/);
+    assert.match(modalCode, /Use sample data/);
+    assert.match(settingsCode, /beginIntroDemoInstall: function/);
+    assert.match(settingsCode, /if \(index === 0\) \{ PosnicPro\.features\.beginIntroDemoInstall\(\); \}/);
+    assert.match(settingsCode, /inlineTarget: '#feature_intro_demo_bg_status'/);
+    assert.match(settingsCode, /syncDemoDataAfterSave\(true, \{/);
+});
+
+test('choosing a clean start arms the sample-data removal path', () => {
+    const chooseDemo = block(settingsCode, 'chooseDemoData: function', 'markIntroDemoStatus:');
+    assert.match(chooseDemo, /wanted === false/);
+    assert.match(chooseDemo, /_demoPurgeArmed = true/);
+    assert.match(settingsCode, /syncDemoDataAfterSave\(wantedDemo\)/);
+});
+
+test('the first-run visual is not caught by the general greyscale artwork rule', () => {
+    assert.match(modalCode, /static\/images\/onboarding\/shop-ready-photo\.jpg/);
+    assert.ok(!/static\/images\/general\/Background_four\.jpg/.test(modalCode));
+    assert.match(cssCode, /\.first-run-visual img[\s\S]*filter: none !important/);
+});
+
+test('the welcome shows saved starter settings before selling', () => {
+    const render = block(settingsCode, 'renderIntro:', 'saveIntro:');
+    const editor = block(settingsCode, 'initIntroLocaleEditor:', 'featureOn:');
+    assert.match(render, /PosnicPro\.features\.initIntroLocaleEditor\(\)/);
+    assert.match(editor, /feature_intro_country/);
+    assert.match(editor, /feature_intro_currency/);
+    assert.match(editor, /feature_intro_timezone/);
+    assert.match(editor, /feature_intro_date/);
+    assert.match(editor, /country_setting/);
+    assert.match(editor, /currencySign/);
+    assert.match(editor, /PosnicPro\.timeZone\(\)/);
+    assert.match(editor, /dateformatset/);
+});
+
+test('starter settings are editable in the welcome without leaving the popup', () => {
+    assert.match(modalCode, /id="feature_intro_locale_form"/);
+    assert.match(settingsCode, /saveIntroLocaleIfNeeded: function/);
+    assert.match(settingsCode, /url: 'setting\/starterLocale'/);
+    assert.ok(!modalCode.includes('Edit country, currency and tax details'),
+        'the welcome should not show the old edit-settings callout');
+    assert.ok(!modalCode.includes('feature_intro_edit_settings'),
+        'the welcome should not show a button that leaves the popup');
+    assert.ok(!settingsCode.includes("hasher.setHash('settings/general')"),
+        'editing starter settings must not redirect to the settings page');
+});
+
+test('the first-run features are searchable and recommended ones rise first', () => {
+    const render = block(settingsCode, 'renderIntro:', 'startSelling:');
+    assert.match(modalCode, /id="feature_intro_filter"/);
+    assert.match(settingsCode, /filterIntro: function/);
+    assert.match(settingsCode, /\$\(document\)\.on\('input', '#feature_intro_filter'/);
+    assert.match(render, /data-feature-row/);
+    assert.match(render, /data-feature-search/);
+    assert.match(render, /is-recommended/);
+    assert.match(render, /\.sort\(function \(a, b\)/);
+    assert.match(cssCode, /\.first-run-row\.is-hidden\s*\{\s*display: none;/);
 });
 
 test('every icon the welcome asks for exists in the shipped font', () => {
@@ -456,7 +551,7 @@ test('the tour is not sent to the sale screen', () => {
      * page change would cut it off at the first step, so the two buttons have
      * to part company after the save they share.
      */
-    const success = block(settingsCode, "PosnicPro.alert('success', 'Feature switches saved')",
+    const success = block(settingsCode, "var wantedTour = PosnicPro.features._tourAfterSave;",
                           'PosnicPro.alert(response.type');
     assert.match(success, /var wantedTour = PosnicPro\.features\._tourAfterSave;/,
         'nothing remembers which button was pressed');
@@ -468,6 +563,16 @@ test('the tour is not sent to the sale screen', () => {
         'the flag is read after the branch that clears it');
 });
 
+test('changed starter settings save before the first-run decision closes', () => {
+    const save = block(settingsCode, 'saveIntro: function', "$(document).on('click', '#feature_intro_skip'");
+    assert.match(save, /saveIntroLocaleIfNeeded\(function \(\) \{/);
+    assert.match(save, /url: 'settings\/group\/features'/);
+    assert.ok(save.indexOf('saveIntroLocaleIfNeeded') < save.indexOf("url: 'settings/group/features'"),
+        'starter settings should persist before the welcome is marked decided');
+    assert.ok(!save.includes('_settingsAfterSave'),
+        'the removed edit-and-redirect flag should not return');
+});
+
 test('a failed save goes nowhere', () => {
     /* Same rule the tour already follows: a shop that did not save must not be
        walked away from the screen that still holds its unsaved choices. */
@@ -476,28 +581,33 @@ test('a failed save goes nowhere', () => {
     assert.ok(!/hasher\.setHash/.test(fail));
 });
 
-test('Not now stays where it is', () => {
+test('Use defaults saves through the normal first-run path', () => {
     /*
-     * Skipping decides nothing about features and asks to be left alone. Only
-     * the button that names selling goes to the sale screen.
+     * The welcome is intentionally not closable now. Use defaults is a
+     * decision: persist the currently recommended switches and then let the
+     * normal save-success code take the owner to the sale screen.
      */
     const skip = block(settingsCode, "'click', '#feature_intro_skip'", "'change', '#fi_module_demo_data_enable'");
-    assert.ok(!/startSelling|sales\/new/.test(skip), 'Not now navigates the shop somewhere');
+    assert.match(skip, /_decided = true/);
+    assert.match(skip, /saveIntro\(\)/);
+    assert.ok(!/settings\/group\/features/.test(skip), 'Use defaults bypasses the normal feature save path');
 });
 
-test('the sale screen waits for both dialogs to finish closing', () => {
+test('the sale screen waits for the welcome only; sample data runs in the background', () => {
     /*
      * Both fade, so hiding one is asynchronous and it is still on screen when
      * this runs. Changing the page under a modal mid-close is how a backdrop
      * gets left behind, greying out the screen it was meant to reveal - the
      * tour hits the same thing and waits a fixed 400ms.
      *
-     * And the sample-data bar has real work behind it: switching demo data off
-     * during the welcome starts a purge.
+     * The sample-data bar now lives inside the welcome footer, so waiting on a
+     * second modal is exactly the stuck feeling this flow must avoid.
      */
     const save = block(settingsCode, 'startSelling:', 'saveIntro:');
-    assert.match(save, /after\('#feature_intro_modal', function \(\) \{ after\('#demo_progress_modal', go\); \}\)/,
-        'the sale screen does not wait for the dialogs');
+    assert.match(save, /after\('#feature_intro_modal', go\)/,
+        'the sale screen does not wait for the welcome');
+    assert.ok(!/demo_progress_modal/.test(save),
+        'the first-run sale path is blocked by the old sample-data modal');
     assert.match(save, /m\.hasClass\('show'\) \|\| m\.hasClass\('in'\)/,
         'the visibility check is tied to one bootstrap version');
 });
