@@ -1248,11 +1248,153 @@ describe('userImageDelete', () => {
     const req = mockReq({ body: { data: 'user.svg', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('404 when user not found', async () => {
+    const userChain = chainable(null);
+    mockUserModel.findById.mockReturnValue(userChain);
+
+    const req = mockReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
+    const res = mockRes();
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test('200 deletes S3 object and updates DB when stored image is valid S3 URL', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    // Use realistic S3 URL with Posnic user-image filename
+    const filename = '2025-12-25T14-30-45-posnic_user-old123xyz.jpg';
+    const storedUrl = `https://bucket.s3.ap-south-1.amazonaws.com/${filename}`;
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(deleteSpy).toHaveBeenCalledWith(filename);
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('400 when req.body.data does not match stored image URL', async () => {
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+
+    const storedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/actual.jpg';
+    const requestedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/different.jpg';
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+
+    const req = mockReq({ body: { data: requestedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+  });
+
+  test('400 when stored image key does not start with uploads/user_images/', async () => {
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    const storedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/backups/old.jpg';
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('400 when stored image is from non-allowed S3 host', async () => {
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    const storedUrl = 'https://example.com/uploads/user_images/old.jpg';
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('200 deletes S3 object when AWS_S3_PUBLIC_URL host is configured', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+    process.env.AWS_S3_PUBLIC_URL = 'https://cdn.example.com';
+
+    // Use realistic S3 URL with Posnic user-image filename through CDN host
+    const filename = '2025-09-02T15-22-08-posnic_user-cdn123xyz.jpg';
+    const storedUrl = `https://cdn.example.com/${filename}`;
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(deleteSpy).toHaveBeenCalledWith(filename);
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('200 and updates user record when valid imageUrl and userId', async () => {
+    process.env.STORAGE_TYPE = 'local';
     mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
+    mockUserModel.findById.mockReturnValue(userChain);
+
     const req = mockReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
@@ -1261,7 +1403,11 @@ describe('userImageDelete', () => {
   });
 
   test('200 and uses req.user when no userId in body', async () => {
+    process.env.STORAGE_TYPE = 'local';
     mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
+    mockUserModel.findById.mockReturnValue(userChain);
+
     const req = mockReq({
       body: { data: 'http://localhost/uploads/img.jpg', id: '' },
       user: { _id: 'reqUser1' },
@@ -1269,6 +1415,160 @@ describe('userImageDelete', () => {
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
     expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('reqUser1', { image: 'user.svg' });
+  });
+
+  test('500 when S3 deletion fails and returns error without updating DB', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockRejectedValue(new Error('S3 connection failed'));
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    // Use realistic S3 URL with Posnic user-image filename
+    const filename = '2025-09-02T12-34-56-posnic_user-fail123xyz.jpg';
+    const storedUrl = `https://bucket.s3.ap-south-1.amazonaws.com/${filename}`;
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(deleteSpy).toHaveBeenCalledWith(filename);
+    expect(console.error).toHaveBeenCalledWith(
+      'Error deleting user image from S3:',
+      expect.any(Error)
+    );
+    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(500);
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('401 when no user is resolved from body or request', async () => {
+    const req = mockReq({ body: { data: 'http://localhost/uploads/img.jpg', id: '' }, user: undefined });
+    const res = mockRes();
+    await ctrl.userImageDelete(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  test('200 deletes S3 object using realistic S3 URL with uploadUserImage()-generated filename', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    // Real filename format from uploadUserImage() line 1665-1668
+    // Format: YYYY-MM-DDTHH-mm-ss-posnic_user-{randomId}.{extension}
+    const generatedFilename = '2025-12-25T14-30-45-posnic_user-abc123xyz.jpg';
+    const s3Url = `https://bucket.s3.ap-south-1.amazonaws.com/${generatedFilename}`;
+
+    const userChain = chainable({ image: s3Url });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({ body: { data: s3Url, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(deleteSpy).toHaveBeenCalledWith(generatedFilename);
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('400 rejects S3 deletion for arbitrary S3 keys not matching posnic_user pattern', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    // Various invalid keys that should be rejected
+    const testCases = [
+      {
+        name: 'path with posnic_user marker (should fail - has slash)',
+        url: 'https://bucket.s3.ap-south-1.amazonaws.com/backups/2025-12-25T14-30-45-posnic_user-abc123.jpg',
+      },
+      {
+        name: 'arbitrary S3 object without marker',
+        url: 'https://bucket.s3.ap-south-1.amazonaws.com/arbitrary.jpg',
+      },
+      {
+        name: 'category image (wrong marker)',
+        url: 'https://bucket.s3.ap-south-1.amazonaws.com/2025-12-25T14-30-45-posnic_category-abc123.jpg',
+      },
+      {
+        name: 'quotes directory object',
+        url: 'https://bucket.s3.ap-south-1.amazonaws.com/quotes/image.jpg',
+      },
+      {
+        name: 'item images directory object',
+        url: 'https://bucket.s3.ap-south-1.amazonaws.com/item-images/photo.jpg',
+      },
+    ];
+
+    for (const testCase of testCases) {
+      const userChain = chainable({ image: testCase.url });
+      mockUserModel.findById.mockReturnValue(userChain);
+
+      const req = mockReq({ body: { data: testCase.url, id: 'u1' } });
+      const res = mockRes();
+
+      await ctrl.userImageDelete(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(deleteSpy).not.toHaveBeenCalled();
+      expect(res.json.mock.calls[res.json.mock.calls.length - 1][0].message).toMatch(/Invalid image key/i);
+    }
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
+  });
+
+  test('200 accepts legacy uploads/user_images/ Posnic user-image path', async () => {
+    const s3 = require('../../../src/utils/s3');
+    const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
+    process.env.STORAGE_TYPE = 's3';
+    process.env.AWS_S3_BUCKET = 'bucket';
+    process.env.AWS_REGION = 'ap-south-1';
+
+    // Legacy local storage path format preserved for backward compatibility
+    // The implementation accepts this path with valid Posnic user-image filename
+    // S3 deletion succeeds silently (no such object in S3), DB is properly updated
+    const storedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/2025-12-25T14-30-45-posnic_user-abc123.jpg';
+    const userChain = chainable({ image: storedUrl });
+    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+
+    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const res = mockRes();
+
+    await ctrl.userImageDelete(req, res);
+
+    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(deleteSpy).toHaveBeenCalledWith('uploads/user_images/2025-12-25T14-30-45-posnic_user-abc123.jpg');
+    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    deleteSpy.mockRestore();
+    delete process.env.STORAGE_TYPE;
+    delete process.env.AWS_S3_BUCKET;
+    delete process.env.AWS_REGION;
   });
 });
 
