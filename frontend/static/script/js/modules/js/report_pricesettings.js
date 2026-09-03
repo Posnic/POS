@@ -67,7 +67,7 @@ PosnicPro.pricesettings = {
             var d = r.data || {};
             var msg = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
             if (d.noCost) msg += ' <span class="text-muted">' + d.noCost + ' have no cost price (left alone).</span>';
-            if (d.exceedsMrpCount) msg += '<div class="text-danger" style="margin-top:4px;">' + d.exceedsMrpCount + ' would price above MRP &mdash; skipped when the box is ticked.</div>';
+            if (d.exceedsMrpCount) msg += '<div class="text-danger" style="margin-top:4px;">' + d.exceedsMrpCount + ' would price above MRP, skipped when the box is ticked.</div>';
             box.attr('class', d.exceedsMrpCount ? 'alert alert-warning' : 'alert alert-success')
                 .css({ 'font-size': '12.5px', 'padding': '8px 12px' }).html(msg).show();
         }, function () { box.hide(); });
@@ -117,7 +117,7 @@ PosnicPro.pricesettings = {
             var d = r.data || {};
             var issues = (d.exceedsMrpCount || 0) + (d.belowCostCount || 0);
             var msg = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
-            if (issues) msg += '<div class="text-danger" style="margin-top:4px;">' + (d.exceedsMrpCount || 0) + ' above MRP, ' + (d.belowCostCount || 0) + ' below cost &mdash; skipped when ticked.</div>';
+            if (issues) msg += '<div class="text-danger" style="margin-top:4px;">' + (d.exceedsMrpCount || 0) + ' above MRP, ' + (d.belowCostCount || 0) + ' below cost, skipped when ticked.</div>';
             box.attr('class', issues ? 'alert alert-warning' : 'alert alert-success')
                 .css({ 'font-size': '12.5px', 'padding': '8px 12px' }).html(msg).show();
         }, function () { box.hide(); });

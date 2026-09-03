@@ -343,7 +343,7 @@ class MessagingService {
    */
   async test(branchId, phone, channel = 'sms', ctx = {}) {
     if (!phone) return { status: false, message: 'Enter a phone number to test' };
-    const text = 'Test message from your POS — messaging is configured correctly.';
+    const text = 'Test message from your POS. Messaging is configured correctly.';
     const r =
       channel === 'whatsapp'
         ? await this.sendWhatsapp(branchId, phone, text)

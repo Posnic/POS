@@ -133,7 +133,7 @@ class ExpenseRepository extends BaseModel {
       updated_by_id: updateData.updated_by_id || null,
     };
 
-    // Only add fields that are provided — never modify created_date/created_by
+    // Only add fields that are provided - never modify created_date/created_by
     if (updateData.amount !== undefined) updateFields.amount = parseFloat(updateData.amount);
     if (updateData.type) updateFields.type = updateData.type;
     if (expenseDate) updateFields.date = expenseDate;

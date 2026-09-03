@@ -1483,7 +1483,7 @@ if ($wrapper.length) {
         const isValid = /^[A-Za-z0-9]{3,6}$/.test(storeId);
         if (!isValid) {
             loader.find(".loadingSpinner").remove();
-            PosnicPro.alert('error', 'Store ID and Secret Key must be 3–6 letters/numbers only');
+            PosnicPro.alert('error', 'Store ID and Secret Key must be 3-6 letters/numbers only');
             return false;
         }
 
@@ -3935,7 +3935,7 @@ $("#payment_add_form").submit(function (event) {
     }
 });
 $('#tableorder_value').on('input', function () {
-    // remove anything that is not A–Z, a–z, 0–9
+    // remove anything that is not A-Z, a-z, 0-9
     this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
 });
 $("#tableorder_add_form").validate({
@@ -5897,6 +5897,7 @@ PosnicPro.features = {
                    shop goes next depends on which of the two buttons was
                    pressed and the flag does not survive to the end. */
                 var wantedTour = PosnicPro.features._tourAfterSave;
+                var wantedSettings = PosnicPro.features._settingsAfterSave;
                 var wantedDemo = $('#fi_module_demo_data_enable').length
                     ? $('#fi_module_demo_data_enable').is(':checked')
                     : undefined;
@@ -5910,13 +5911,16 @@ PosnicPro.features = {
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
-                if (PosnicPro.features._tourAfterSave) {
+                if (wantedSettings) {
+                    PosnicPro.features._settingsAfterSave = false;
+                    setTimeout(function () { hasher.setHash('settings/general'); }, 250);
+                } else if (PosnicPro.features._tourAfterSave) {
                     PosnicPro.features._tourAfterSave = false;
                     setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
                 }
                 /* And then the sale screen, because that is what the button
                    says. The tour goes the other way - see startSelling. */
-                if (!wantedTour) { PosnicPro.features.startSelling(); }
+                if (!wantedTour && !wantedSettings) { PosnicPro.features.startSelling(); }
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
@@ -5957,6 +5961,12 @@ $(document).on('click', '#feature_intro_back', function () { PosnicPro.features.
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
+    PosnicPro.features._settingsAfterSave = false;
+    PosnicPro.features.saveIntro();
+});
+$(document).on('click', '#feature_intro_edit_settings', function () {
+    PosnicPro.features._settingsAfterSave = true;
+    PosnicPro.features._tourAfterSave = false;
     PosnicPro.features.saveIntro();
 });
 $(document).ready(function () {
@@ -6974,7 +6984,7 @@ PosnicPro.settings.demoPacks = {
             : pack.products + ' products in ' + pack.categories + ' categories'
               + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
         $('#demo_pack_summary').text(
-            key === self._current ? line + ' — this is what you have now' : line
+            key === self._current ? line + ' (this is what you have now)' : line
         );
         $('#demo_pack_install').text(
             key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'

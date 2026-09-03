@@ -11539,7 +11539,7 @@ PosnicPro.sales.updateCustomerChip = function () {
         $('#sales_customer_btn_label').text('Walk-in');
         $btn.removeClass('has-customer');
         $icon.removeClass('icon-user-check').addClass('icon-user');
-        var t = 'Walk-in customer — click to choose or add';
+        var t = 'Walk-in customer. Click to choose or add';
         $btn.attr('data-original-title', t).attr('title', t);
     }
 };
@@ -12152,7 +12152,7 @@ PosnicPro.sales.warnWeighedItemFallback = function (itemData, reason) {
     if (PosnicPro.alert) {
         PosnicPro.alert('warning',
             name + ' is sold by weight. ' + reason +
-            ' Quantity is set to 1 — type the weight in, or press the weight button once the scale is ready.');
+            ' Quantity is set to 1. Type the weight in, or press the weight button once the scale is ready.');
     }
 };
 
