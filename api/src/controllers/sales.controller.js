@@ -547,7 +547,7 @@ class SalesController extends BaseController {
       if (r && !r.allowed) {
         return {
           blocked: true,
-          error: `Credit limit exceeded — limit ${r.limit}, already outstanding ${r.outstanding}, this sale would make it ${r.wouldBe}.`,
+          error: `Credit limit exceeded. Limit ${r.limit}, already outstanding ${r.outstanding}, this sale would make it ${r.wouldBe}.`,
           data: r,
         };
       }
@@ -1193,7 +1193,7 @@ class SalesController extends BaseController {
         }
 
         // Fallback: body itself may be an array or an object like
-        // { "0": "id1", "1": "id2" } – treat all string values as IDs.
+        // { "0": "id1", "1": "id2" } - treat all string values as IDs.
         if (Array.isArray(body)) {
           return body;
         }
@@ -5230,7 +5230,7 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.SALE_NOT_FOUND, 404);
       }
 
-      // Format print details — must match PHP getCustomerPrintDetails() exactly,
+      // Format print details - must match PHP getCustomerPrintDetails() exactly,
       // because the frontend (customer_mail.js) reads these precise field names
       // and calls .toFixed()/loops on them. A missing field (e.g. sales_sub_total)
       // throws in the browser and blanks the whole receipt below the header.
@@ -6827,7 +6827,7 @@ class SalesController extends BaseController {
 
   /**
    * PHP: multiKitchenPrint()
-   * Multi-printer KOT polling — returns pending print_jobs per sale
+   * Multi-printer KOT polling - returns pending print_jobs per sale
    */
   async multiKitchenPrint(req, res) {
     try {
