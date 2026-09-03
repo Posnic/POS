@@ -4732,7 +4732,7 @@ class ItemRepository extends BaseModel {
         let taxDocuments = null;
 
         // Detect whether this import row is HSN-based. For HSN items we do
-        // not create/attach tax groups – they use HSN codes instead.
+        // not create/attach tax groups - they use HSN codes instead.
         const rawImportHsn =
           items.hsncode !== undefined && items.hsncode !== null
             ? items.hsncode
@@ -4784,7 +4784,7 @@ class ItemRepository extends BaseModel {
           const taxRate = Number(items.tax);
 
           if (!hasHsnForTax && importTaxName) {
-            // Non-HSN item with explicit tax_name from CSV – treat as a
+            // Non-HSN item with explicit tax_name from CSV - treat as a
             // tax group name (e.g. "mugrt8").
 
             // 1) Try existing tax group with this name

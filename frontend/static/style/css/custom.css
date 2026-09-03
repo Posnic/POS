@@ -4061,6 +4061,47 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 }
 .quotes-split #quotes_list_card #quotes_filter_chips .btn { font-size: 13px; padding: 4px 10px; }
 
+/* ============================================================
+   Invoices (INVOICING_MODULE_DESIGN): the quotes surface, twice.
+
+   The list-and-document split, the A4 sheet and the editor are the SAME
+   pattern - .master-detail, .q-sheet, .qe-* - so nothing is restyled here.
+   What follows is only what names the invoices page itself: the header
+   air the quotes rule gives its own page, the split's chip strip, the
+   columns that yield in a narrow rail, and the payment strip.
+   ============================================================ */
+#invoices_new .contentbar:not(.master-detail) {
+    padding-top: 5px !important;
+}
+#invoices_view_card { max-width: 900px; margin: 0 auto; }
+#invoices_edit_card { max-width: none; }
+.invoices-split #invoices_list_card #invoices_filter_chips {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    padding: 12px 10px;
+    background: #f6f8fa !important;
+    border-bottom: 1px solid #d8dee4;
+}
+.invoices-split #invoices_list_card #invoices_filter_chips .btn { font-size: 13px; padding: 4px 10px; }
+@media (max-width: 1499px) {
+    .invoices-split #invoices_list_card .i-col-date,
+    .invoices-split #invoices_list_card .i-col-due,
+    .invoices-split #invoices_list_card .i-col-balance { display: none; }
+}
+/* PAID reads green, the rest keep the quote's red stamp: a customer's eye
+   goes to the stamp first, and "paid" is the one word that should not be
+   the colour of a warning. */
+.q-status.is-paid { border-color: #23985c; color: #23985c; }
+/* The due date turns red only while money is still owed on it. */
+.i-overdue { color: #c53030; font-weight: 600; }
+.ie-pay-strip {
+    background: rgba(43, 183, 111, 0.08);
+    border: 1px solid rgba(43, 183, 111, 0.35);
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+[data-theme] .ie-pay-strip { background: var(--theme-card-bg, rgba(43, 183, 111, 0.08)); }
+
 /* Under about 1500px the rail cannot carry six columns, so the three that
    identify a quote survive - number, who it is for, what it comes to - plus
    its status. On a wide screen there is room for all of them, which is what
@@ -4842,14 +4883,121 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     background: var(--theme-card-bg, #ffffff);
     color: var(--theme-text-primary, #16203a);
     border: 1px solid var(--theme-border-color, #e5e8ef);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
 }
 
+#feature_intro_modal .modal-dialog {
+    max-width: min(980px, calc(100vw - 28px));
+}
+
+.first-run-shell {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.78fr) minmax(0, 1.42fr);
+    min-height: 560px;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+}
+
+.first-run-visual {
+    position: relative;
+    min-height: 100%;
+    background: var(--theme-table-row-hover, rgba(80, 111, 228, 0.08));
+    overflow: hidden;
+}
+
+.first-run-visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: none !important;
+}
+
+.first-run-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10, 25, 47, 0.05), rgba(10, 25, 47, 0.5));
+}
+
+.first-run-visual-copy {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1;
+    color: var(--theme-btn-primary-text, rgb(255, 255, 255));
+}
+
+.first-run-visual-copy b {
+    display: block;
+    font-size: 20px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.first-run-visual-copy span {
+    display: block;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.first-run-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
 .first-run-head {
+    position: relative;
     padding: 26px 28px 18px;
-    text-align: center;
+    text-align: left;
     border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    display: block;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 50%;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-muted, #5b6577);
+    font-size: 0 !important;
+    line-height: 0;
+    cursor: pointer;
+}
+
+.first-run-close::before,
+.first-run-close::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.first-run-close::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.first-run-close:hover,
+.first-run-close:focus {
+    color: var(--theme-text-primary, #16203a);
+    border-color: var(--theme-primary-color, #506fe4);
+    outline: none;
 }
 
 /* The one flourish, and it is small on purpose: a shop opening its till
@@ -4857,7 +5005,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .first-run-mark {
     width: 46px;
     height: 46px;
-    margin: 0 auto 12px;
+    margin: 0 0 12px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -4881,8 +5029,47 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: var(--theme-text-muted, #5b6577);
 }
 
+.first-run-progress {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.first-run-progress span {
+    margin-right: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-progress i {
+    display: block;
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--theme-border-color, #e5e8ef);
+}
+
+.first-run-progress i.is-active,
+.first-run-progress i.is-done {
+    background: var(--theme-primary-color, #506fe4);
+}
+
 .first-run-body {
-    padding: 18px 28px 4px;
+    padding: 20px 28px 8px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.first-run-step {
+    display: none;
+}
+
+.first-run-step.is-active {
+    display: block;
 }
 
 .first-run-lead {
@@ -4892,11 +5079,216 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     color: var(--theme-text-secondary, #3a4459);
 }
 
+.first-run-question {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: stretch;
+    padding: 18px;
+    margin: 0 0 14px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 12px;
+    background: var(--theme-table-row-hover, #f6f9ff);
+}
+
+.first-run-question b,
+.first-run-question span,
+.first-run-question small {
+    display: block;
+}
+
+.first-run-question b {
+    font-size: 15px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-question span {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--theme-text-secondary, #3a4459);
+}
+
+.first-run-question small {
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-choice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.first-run-choice-card {
+    display: grid;
+    gap: 4px;
+    min-height: 82px;
+    padding: 13px 14px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-card-bg, #ffffff);
+    color: var(--theme-text-primary, #16203a);
+    text-align: left;
+    cursor: pointer;
+}
+
+.first-run-choice-card b,
+.first-run-choice-card span {
+    display: block;
+}
+
+.first-run-choice-card b {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.first-run-choice-card span {
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-choice-card.is-selected {
+    border-color: var(--theme-primary-color, #506fe4);
+    background: var(--theme-table-row-hover, #f6f9ff);
+    box-shadow: inset 0 0 0 1px var(--theme-primary-color, #506fe4);
+}
+
+.first-run-choice-card.is-selected b {
+    color: var(--theme-primary-color, #506fe4);
+}
+
+.first-run-choice-card:focus {
+    border-color: var(--theme-primary-color, #506fe4);
+    outline: none;
+}
+
+.first-run-choice .btn.is-selected {
+    color: var(--theme-btn-primary-text, #ffffff);
+    background: var(--theme-primary-color, #506fe4);
+    border-color: var(--theme-primary-color, #506fe4);
+}
+
+.first-run-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 14px;
+}
+
+.first-run-summary span {
+    display: block;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 8px;
+    background: var(--theme-card-bg, #ffffff);
+}
+
+.first-run-summary small,
+.first-run-summary b {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.first-run-summary small {
+    margin-bottom: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-summary b {
+    font-size: 13px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-locale {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 12px;
+}
+
+.first-run-locale label {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    margin: 0;
+}
+
+.first-run-locale label:last-child {
+    grid-column: 1 / -1;
+}
+
+.first-run-locale span {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-locale select {
+    width: 100%;
+    min-height: 40px;
+    border-color: var(--theme-border-color, #d8e0ec);
+    color: var(--theme-text-primary, #16203a);
+    background: var(--theme-card-bg, #ffffff);
+}
+
+.first-run-locale .select2-container {
+    width: 100% !important;
+}
+
+.first-run-locale .select2-container--default .select2-selection--single {
+    height: 40px;
+    border: 1px solid var(--theme-border-color, #d8e0ec);
+    border-radius: 8px;
+    background: var(--theme-card-bg, #ffffff);
+}
+
+.first-run-locale .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 38px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-locale .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+}
+
+.first-run-filter {
+    display: grid;
+    gap: 5px;
+    margin: 0 0 10px;
+}
+
+.first-run-filter span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+.first-run-filter input {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--theme-border-color, #d8e0ec);
+    border-radius: 8px;
+    padding: 8px 11px;
+    color: var(--theme-text-primary, #16203a);
+    background: var(--theme-card-bg, #ffffff);
+}
+
 /* The list scrolls, the dialog does not. Eleven features on a 768px-tall
    till would otherwise push the buttons off the bottom of the screen -
    and a Save nobody can reach is the same as no Save. */
 .first-run-list {
-    max-height: 46vh;
+    max-height: min(292px, 34vh);
     overflow-y: auto;
     margin: 0 -6px;
     padding: 0 6px;
@@ -4916,6 +5308,23 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
 .first-run-row:last-child {
     border-bottom: 0;
+}
+
+.first-run-row.is-hidden {
+    display: none;
+}
+
+.first-run-row.is-recommended .first-run-row-text b::after {
+    content: "Recommended";
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(80, 111, 228, 0.11);
+    color: var(--theme-primary-color, #506fe4);
+    font-size: 10px;
+    font-weight: 700;
+    vertical-align: middle;
 }
 
 .first-run-row:hover {
@@ -4983,6 +5392,38 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     border-top: 1px solid var(--theme-border-color, #e5e8ef);
 }
 
+.first-run-demo-status {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(130px, 0.34fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--theme-border-color, #e5e8ef);
+    border-radius: 10px;
+    background: var(--theme-table-row-hover, #f6f9ff);
+}
+
+.first-run-demo-status[hidden] {
+    display: none;
+}
+
+.first-run-demo-status b,
+.first-run-demo-status span {
+    display: block;
+}
+
+.first-run-demo-status b {
+    font-size: 13px;
+    color: var(--theme-text-primary, #16203a);
+}
+
+.first-run-demo-status span {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
 .first-run-foot-note {
     font-size: 13px;
     color: var(--theme-text-muted, #5b6577);
@@ -4997,6 +5438,37 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* A phone or a small till: the note moves under the buttons rather than
    squeezing them, and the buttons stay full width for a thumb. */
 @media (max-width: 575.98px) {
+    .first-run-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .first-run-visual {
+        min-height: 150px;
+        max-height: 170px;
+    }
+
+    .first-run-question {
+        grid-template-columns: 1fr;
+    }
+
+    .first-run-choice {
+        grid-template-columns: 1fr;
+    }
+
+    .first-run-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .first-run-locale {
+        grid-template-columns: 1fr;
+    }
+
+    .first-run-locale label:last-child {
+        grid-column: auto;
+    }
+
     .first-run-head,
     .first-run-body,
     .first-run-foot {
@@ -5011,6 +5483,10 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 
     .first-run-foot-actions .btn {
         flex: 1 1 0;
+    }
+
+    .first-run-demo-status {
+        grid-template-columns: 1fr;
     }
 
     /* On a phone the whole card is taller than the screen, and the only

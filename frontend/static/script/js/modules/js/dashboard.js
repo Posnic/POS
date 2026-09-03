@@ -765,16 +765,24 @@ PosnicPro.dashboard = {
         }, 500); // Adjust delay (1000ms = 1s) if needed
     }
 };
-$(document).ready(function (e) {
-    var nav_lang = PosnicPro.local.get('language');
-    $('.select_language').html(nav_lang);
-    if ((nav_lang == null) || (nav_lang == '')) {
-        $('.select_language').html('English');
-        var nav_id = 'dashboard.html';
-        PosnicPro.i18n.select(nav_id);
-    }
-
+$(document).ready(function () {
+    /* The label is the language's own name. Nothing stored means nothing
+       chosen yet; buildLanguageMenu settles it once the shipped list is in.
+       It is NOT written back here: a stored value looks exactly like a
+       choice, and would stop the first-run detection from ever running. */
+    $('.select_language').html(PosnicPro.local.get('language') || 'English');
 });
+
+/* Type sizes and spacing a language needs, settled here rather than by
+   loading a different page. Tamil runs long in the sidebar and report tabs. */
+function posnicLanguageStyling(code) {
+    $('.report_tab_font').toggleClass('tamil_font14', code === 'ta');
+    $('.vertical-menu').toggleClass('tamil_verticalmenu', code === 'ta');
+    $('.top_sales_tamil').toggleClass('card_tamil_padding', code === 'ta');
+    $('.tamil_qty').toggleClass('sales_tamil_padding', code === 'ta');
+    $('.discount_tamil_right').toggleClass('pull-right', code !== 'ta');
+}
+
 /*
  * Build the language menu from what the build actually shipped.
  *
@@ -785,6 +793,44 @@ $(document).ready(function (e) {
  * The menu keeps its English entry if this fails: an unreadable list should
  * cost the OTHER languages, never leave a shop with no way to choose at all.
  */
+/*
+ * Offer the shop's Posnic account, to the person who owns it.
+ *
+ * Two conditions, and both matter.
+ *
+ * The SERVER decides whether this installation has an account, because only it
+ * can tell the difference that matters: a till paired to Cloud reports its mode
+ * as 'desktop', not 'cloud' - so a frontend test on edition would hide the link
+ * from exactly the paying customers it is for. features.account carries the
+ * answer, and a white-labelled build always answers false, since that shop was
+ * not sold anything called Posnic.
+ *
+ * The BROWSER decides whether this person should see it. A cashier has no
+ * business being shown the subscription and the bill.
+ *
+ * Failure is silence. If runtime-info cannot be read the item stays hidden,
+ * which is the same outcome as a community install and costs nobody anything.
+ */
+(function showAccountLink() {
+    var item = document.getElementById('posnic_account_item');
+    if (!item || typeof fetch !== 'function') return;
+    if (PosnicPro.local.get('usertype') !== 'super_admin') return;
+
+    /*
+     * API_URL, not a relative path. This page is served from /public, so
+     * 'api/runtime-info' would resolve to /public/api/runtime-info, 404, land
+     * in the catch below, and hide the link forever without anyone noticing -
+     * which is exactly how a feature ships dead.
+     */
+    var base = (typeof API_URL === 'string' && API_URL) || '/';
+    fetch(base + 'api/runtime-info')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+            if (info && info.features && info.features.account) item.style.display = '';
+        })
+        .catch(function () { /* hidden, which is the safe answer */ });
+}());
+
 (function buildLanguageMenu() {
     var menu = document.getElementById('change_language');
     if (!menu || typeof fetch !== 'function') return;
@@ -793,10 +839,46 @@ $(document).ready(function (e) {
         .then(function (list) {
             if (!Array.isArray(list) || !list.length) return;
             menu.innerHTML = list.map(function (l) {
+                /*
+                 * An unreviewed language says so. "beta" is the one word every
+                 * script here reads, and the tooltip carries the number a
+                 * translator wants to see move. This honesty is what lets
+                 * every language ship: the shopkeeper knows what they are
+                 * picking, and every missing word is still English.
+                 */
+                var note = l.reviewed === false
+                    ? ' <small class="text-muted lang-beta">beta</small>' : '';
+                var title = typeof l.coverage === 'number'
+                    ? ' title="' + l.coverage + '% translated'
+                        + (l.reviewed === false ? ', not yet reviewed by a speaker' : '') + '"'
+                    : '';
+                /*
+                 * The NAME is isolated with <bdi>, not the row. dir="rtl" on the
+                 * anchor mirrored the whole entry - flag on the right, "beta"
+                 * before the name - in a menu every other row reads left to
+                 * right. <bdi> lets Arabic shape and order its own letters and
+                 * leaves the row alone.
+                 */
                 return '<a class="dropdown-item" href="javascript:void(0)" data-code="' + l.code + '"'
-                    + ' data-value="' + l.name + '"><i class="flag flag-icon-' + (l.flag || 'us')
-                    + ' flag-icon-squared"></i> ' + l.name + '</a>';
+                    + ' data-value="' + l.name + '"' + title + '>'
+                    + '<i class="flag flag-icon-' + (l.flag || 'us') + ' flag-icon-squared"></i> '
+                    + '<bdi>' + l.name + '</bdi>' + note + '</a>';
             }).join('');
+
+            /* The label and the type sizes follow the SETTLED language - after
+               the first-run detection in PosnicPro.i18n has had its say. */
+            PosnicPro.i18n.ready.then(function () {
+                var current = PosnicPro.i18n.code();
+                var entry = null;
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].code === current) entry = list[i];
+                }
+                if (entry) {
+                    $('.select_language').html(entry.name);
+                    PosnicPro.local.set('language', entry.name);
+                }
+                posnicLanguageStyling(current);
+            });
         })
         .catch(function () { /* the English entry in the markup stands */ });
 }());
@@ -805,8 +887,10 @@ $('#change_language').on('click', 'a', function () {
     var nav_language = $(this).data('value');
     var nav_id = $(this).data('code');
 
-    // Persist selected language for subsequent loads
+    // Persist selected language for subsequent loads, and say so in the
+    // header now: there is no navigation any more to redraw the label.
     PosnicPro.local.set('language', nav_language);
+    $('.select_language').html(nav_language);
 
     /*
      * No navigation. There used to be a page per language, so switching meant
@@ -820,15 +904,7 @@ $('#change_language').on('click', 'a', function () {
      */
     var code = /^[a-z]{2}$/.test(nav_id) ? nav_id
         : (/^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en');
-    PosnicPro.i18n.change(code).then(function () {
-        /* The type sizes below are language-dependent and were previously
-           settled by loading a different page. */
-        $('.report_tab_font').toggleClass('tamil_font14', code === 'ta');
-        $('.vertical-menu').toggleClass('tamil_verticalmenu', code === 'ta');
-        $('.top_sales_tamil').toggleClass('card_tamil_padding', code === 'ta');
-        $('.tamil_qty').toggleClass('sales_tamil_padding', code === 'ta');
-        $('.discount_tamil_right').toggleClass('pull-right', code !== 'ta');
-    });
+    PosnicPro.i18n.change(code).then(function () { posnicLanguageStyling(code); });
 });
 jQuery(document).ready(function () {
     console.log('WORKING');

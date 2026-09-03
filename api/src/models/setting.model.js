@@ -4,6 +4,8 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
+const { recordAudit } = require('../utils/audit-trail');
+const { publicPageUrl } = require('../utils/public-url');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -29,10 +31,14 @@ class SettingModel extends BaseModel {
     this.cachedFallbackTax = null;
   }
 
-  setContext({ branchId = null, licenseId = null, user = null } = {}) {
+  setContext({ branchId = null, licenseId = null, user = null, ip = null, userAgent = null } = {}) {
     this.branchId = branchId;
     this.licenseId = licenseId;
     this.user = user;
+    /* Where the request came from. Only the audit trail uses these, and only
+       for the handful of events where "from where" is the whole question. */
+    this.ip = ip;
+    this.userAgent = userAgent;
     this.branchName = null; // Will be loaded lazily when needed
   }
 
@@ -787,6 +793,7 @@ class SettingModel extends BaseModel {
       const module_demo_data_enable = offOnly(data.module_demo_data_enable);
       const quick_sale_enable = offOnly(data.quick_sale_enable);
       const quotes_enable = offOnly(data.quotes_enable);
+      const invoices_enable = offOnly(data.invoices_enable);
 
       /*
        * Two different forms save through here now: the Module On/Off tab
@@ -937,6 +944,7 @@ class SettingModel extends BaseModel {
         module_demo_data_enable: module_demo_data_enable,
         quick_sale_enable: quick_sale_enable,
         quotes_enable: quotes_enable,
+        invoices_enable: invoices_enable,
         ...(data.custom_charges_enable !== undefined
           ? {
               custom_charges_enable:
@@ -966,6 +974,108 @@ class SettingModel extends BaseModel {
       };
     } catch (error) {
       console.error('Error in editGeneralSetting:', error);
+      return {
+        status: false,
+        data: null,
+        message: error.message,
+      };
+    }
+  }
+
+  async updateStarterLocale(data = {}) {
+    try {
+      if (!this.branchId || !this.licenseId) {
+        throw new Error('Branch context is required');
+      }
+
+      const collection = await this.getCollection();
+      const text = (value) => (value === undefined || value === null ? '' : String(value).trim());
+      const currencySymbol = text(data.currencyText || data.currency_type) || '₹';
+      const currencyName = text(data.currencyTextname || data.currency_setting) || currencySymbol;
+      const currencyValue = [
+        {
+          currency_text: currencyName,
+          currency_sign: currencySymbol,
+        },
+      ];
+
+      let sortname = '';
+      try {
+        const countriesJsonPath = path.join(
+          __dirname,
+          '..',
+          '..',
+          '..',
+          'api',
+          'src',
+          'json',
+          'countries.json'
+        );
+        const countriesData = JSON.parse(fs.readFileSync(countriesJsonPath, 'utf8'));
+        const countryMatch = countriesData.countries?.find(
+          (c) => c.value === text(data.setting_country)
+        );
+        if (countryMatch?.sortname) {
+          sortname = countryMatch.sortname;
+        }
+      } catch (err) {
+        console.warn(
+          'Could not load countries.json for starter locale sortname lookup:',
+          err.message
+        );
+      }
+
+      let cleanTimezone = text(data.time_zone) || 'Asia/Kolkata';
+      const gmtOffsetMatch = cleanTimezone.match(/^([^(]+)\s*\(GMT[^)]+\)$/);
+      if (gmtOffsetMatch) {
+        cleanTimezone = gmtOffsetMatch[1].trim();
+      }
+
+      const updateData = {
+        country: text(data.setting_country),
+        country_id: text(data.country_id),
+        state: text(data.setting_state),
+        sortname,
+        currency: currencySymbol,
+        currency_text: text(data.currency_setting) || currencyName,
+        currency_type: currencySymbol,
+        currency_value: currencyValue,
+        time_zone: cleanTimezone,
+        client_dateformat: text(data.storedate) || 'dd/mm/yyyy',
+        server_dateformat: text(data.serverdate) || 'd/m/Y',
+        dateformat_text: text(data.dateText) || '01/01/2018 - dd/mm/yyyy',
+      };
+
+      const filter = {
+        _id: this.normalizeId(this.branchId),
+        license: this.normalizeId(this.licenseId),
+      };
+      const result = await collection.updateOne(filter, { $set: updateData });
+      if (result.matchedCount === 0) {
+        return {
+          status: false,
+          data: null,
+          message: 'Branch not found or license mismatch',
+        };
+      }
+
+      return {
+        status: true,
+        data: {
+          country: updateData.country,
+          state: updateData.state,
+          country_id: updateData.country_id,
+          currency_text: updateData.currency_text,
+          currency_type: updateData.currency_type,
+          time_zone: updateData.time_zone,
+          clientdate: updateData.client_dateformat,
+          serverdate: updateData.server_dateformat,
+          dateformat_text: updateData.dateformat_text,
+        },
+        message: 'success',
+      };
+    } catch (error) {
+      console.error('Error in updateStarterLocale:', error);
       return {
         status: false,
         data: null,
@@ -1266,6 +1376,7 @@ class SettingModel extends BaseModel {
         first_run_done: onOnly,
         first_run_decided: onOnly,
         quotes_enable: offOnly,
+        invoices_enable: offOnly,
         pl_include_cashbook: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
@@ -1398,6 +1509,7 @@ class SettingModel extends BaseModel {
       module_demo_data_enable: { parse: offOnly, dflt: true },
       quick_sale_enable: { parse: offOnly, dflt: true },
       quotes_enable: { parse: offOnly, dflt: true },
+      invoices_enable: { parse: offOnly, dflt: true },
       custom_charges_enable: { parse: (v) => v === true || v === 'true', dflt: false },
       pl_include_cashbook: { parse: offOnly, dflt: true },
     };
@@ -2123,6 +2235,19 @@ class SettingModel extends BaseModel {
       }
 
       if (!oldPasswordValid) {
+        /* Recorded too. Somebody repeatedly failing to change a password is
+           either a person who has forgotten it or somebody working through a
+           list, and the address is what tells those apart. */
+        await recordAudit(await this.getDB().catch(() => null), {
+          event: 'password_change_failed',
+          actor: { id: String(user._id), name: user.email || user.username || '' },
+          target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+          ip: this.ip,
+          userAgent: this.userAgent,
+          branchId: this.branchId,
+          license: this.licenseId,
+          extra: { reason: 'current password did not match' },
+        });
         return { status: false, message: 'Current password is incorrect' };
       }
 
@@ -2149,6 +2274,26 @@ class SettingModel extends BaseModel {
       if (result.modifiedCount === 0) {
         return { status: false, message: 'Failed to update password' };
       }
+
+      /*
+       * The event that could not be answered.
+       *
+       * When a shop was locked out, the only evidence a password had changed
+       * was a timestamp on the user document - no actor, no address, nothing
+       * to tell the owner whether it was them last Tuesday or somebody else.
+       * The password itself is never written here; recordAudit redacts any
+       * field whose name looks like a secret regardless of what is passed.
+       */
+      await recordAudit(await this.getDB().catch(() => null), {
+        event: 'password_changed',
+        actor: { id: String(user._id), name: user.email || user.username || '' },
+        target: { id: String(user._id), name: user.email || user.username || '', type: 'user' },
+        ip: this.ip,
+        userAgent: this.userAgent,
+        branchId: this.branchId,
+        license: this.licenseId,
+        extra: { method: 'self_service_change_password' },
+      });
 
       return {
         status: true,
@@ -3845,10 +3990,24 @@ class SettingModel extends BaseModel {
   }
 
   // Forgot Password
-  async getForgotUserDetails(email) {
+  /*
+   * @param {object} [req] the request, used ONLY to work out this shop's own
+   *                       public address for the link in the email.
+   */
+  async getForgotUserDetails(email, req = null) {
     try {
       const usersCollection = await this.getCollection('users');
-      const user = await usersCollection.findOne({ email: email });
+      /*
+       * String(), because this value came from a request body and Mongo reads
+       * an object as operators. `{"email": {"$ne": null}}` posted to
+       * forgot-password would otherwise match the FIRST user in the shop and
+       * send a reset link for somebody else's account.
+       *
+       * The controller's regex happens to reject an object today - test()
+       * stringifies it to "[object Object]" - but that is the caller being
+       * careful, and this method is what actually touches the database.
+       */
+      const user = await usersCollection.findOne({ email: String(email) });
 
       if (!user) {
         return {
@@ -3863,20 +4022,36 @@ class SettingModel extends BaseModel {
       const expireDate = new Date(Date.now() + 10 * 60 * 1000);
       await usersCollection.updateOne({ _id: user._id }, { $set: { expire_date: expireDate } });
 
-      // Build reset link using userkey (matching PHP lines 700-711)
-      const serverName = process.env.SERVER_NAME || 'localhost';
-      const cleanServerName = serverName.replace(/^api\./, '');
-      const forgotPasswordId = encodeURIComponent(user.userkey);
+      /*
+       * The link goes to THIS shop, not to a hardcoded address.
+       *
+       * This used to read SERVER_NAME, which is set on no process in the
+       * estate, fall through to the localhost branch, and mail every hosted
+       * shop a link to http://localhost:3000 - the recipient's own computer,
+       * on a port with nothing listening. Self-service recovery has therefore
+       * never once worked for a cloud shop, which is why a locked-out owner
+       * needed five days and a database session to get back into his till.
+       *
+       * publicPageUrl derives the address from the request, but accepts only a
+       * host on a domain we actually run: a link inside an email we send is
+       * exactly what password-reset poisoning targets.
+       */
+      const basePath = publicPageUrl(req, 'forgotpassword.html', {
+        forgotpassword_Id: user.userkey,
+      });
 
-      let basePath;
-      if (cleanServerName.includes('dev.posnic.io')) {
-        basePath = `http://pro.dev.posnic.io/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else if (cleanServerName.includes('localhost')) {
-        // For local development
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        basePath = `${frontendUrl}/forgotpassword.html?forgotpassword_Id=${forgotPasswordId}`;
-      } else {
-        basePath = `https://www.posnic.io/forgotpassword?forgotpassword_Id=${forgotPasswordId}`;
+      if (!basePath) {
+        /* Refused rather than sent. A dead link and a poisoned link are both
+           worse than an error somebody can see and fix. */
+        console.error(
+          '[forgot-password] no trustworthy public address for this shop - ' +
+            'set PUBLIC_BASE_URL. No email sent.'
+        );
+        return {
+          status: false,
+          data: null,
+          message: 'Password reset is not configured for this shop. Please contact support.',
+        };
       }
 
       // Send email via Brevo (matching PHP lines 714-729)

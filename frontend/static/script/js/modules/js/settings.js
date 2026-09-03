@@ -587,6 +587,7 @@ PosnicPro.settings = {
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
+                        invoices_enable: response.data['invoices_enable'] !== false,
                         custom_charges_enable: response.data['custom_charges_enable'] === true,
                         first_run_done: PosnicPro.features.keepFirstRunFlag(response.data),
                         first_run_decided: PosnicPro.features.keepFirstRunFlag(response.data, 'first_run_decided')
@@ -798,6 +799,13 @@ PosnicPro.settings = {
                 $('#quote_default_terms').val(data.quote_default_terms || '');
                 $('#quote_default_signature').val(data.quote_default_signature || '');
                 PosnicPro.local.set('quotesignature', data.quote_default_signature || '');
+                /* Invoices (INVOICING_MODULE_DESIGN): prefix, credit days, terms. The
+                   terms are cached for the A4 receipt too, which already reads
+                   invoice_terms and until now found nothing there. */
+                $('#invoice_prefix').val(data.invoice_prefix || 'INV-');
+                $('#invoice_due_days').val(data.invoice_due_days !== undefined && data.invoice_due_days !== null && data.invoice_due_days !== '' ? data.invoice_due_days : 30);
+                $('#invoice_terms').val(data.invoice_terms || '');
+                PosnicPro.local.set('invoice_terms', data.invoice_terms || '');
                 if (data.quote_default_signature) {
                     $('#quote_signature_thumb').attr('src', data.quote_default_signature).show();
                     $('#quote_signature_clear').show();
@@ -858,6 +866,7 @@ PosnicPro.settings = {
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
                 $('#quotes_enable').prop('checked', data.quotes_enable !== false);
+                $('#invoices_enable').prop('checked', data.invoices_enable !== false);
                 $('#custom_charges_enable').prop('checked', data.custom_charges_enable === true);
 
                 // Store general settings including hardware_weight_machine_enable
@@ -881,6 +890,7 @@ PosnicPro.settings = {
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
+                    invoices_enable: data.invoices_enable !== false,
                     custom_charges_enable: data.custom_charges_enable === true,
                     first_run_done: PosnicPro.features.keepFirstRunFlag(data),
                     first_run_decided: PosnicPro.features.keepFirstRunFlag(data, 'first_run_decided')
@@ -1473,7 +1483,7 @@ if ($wrapper.length) {
         const isValid = /^[A-Za-z0-9]{3,6}$/.test(storeId);
         if (!isValid) {
             loader.find(".loadingSpinner").remove();
-            PosnicPro.alert('error', 'Store ID and Secret Key must be 3–6 letters/numbers only');
+            PosnicPro.alert('error', 'Store ID and Secret Key must be 3-6 letters/numbers only');
             return false;
         }
 
@@ -1624,6 +1634,7 @@ if ($wrapper.length) {
         'module_demo_data_enable',
         'quick_sale_enable',
         'quotes_enable',
+        'invoices_enable',
         'custom_charges_enable',
         'pl_include_cashbook',
     ],
@@ -1806,6 +1817,7 @@ if ($wrapper.length) {
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
                 quotes_enable: $('#quotes_enable').is(':checked') ? 'true' : 'false',
+                invoices_enable: $('#invoices_enable').is(':checked') ? 'true' : 'false',
                 custom_charges_enable: $('#custom_charges_enable').is(':checked') ? 'true' : 'false',
             })
         };
@@ -1926,6 +1938,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
+                    invoices_enable: $('#invoices_enable').is(':checked'),
                     custom_charges_enable: $('#custom_charges_enable').is(':checked'),
                     quick_sale_enable: $('#quick_sale_enable').is(':checked'),
                     /* No field on this form - carried over, never re-decided. */
@@ -2027,6 +2040,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
         $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
+        $('#v-pills-invoices-tab').toggle(on('invoices_enable'));
         $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
@@ -3921,7 +3935,7 @@ $("#payment_add_form").submit(function (event) {
     }
 });
 $('#tableorder_value').on('input', function () {
-    // remove anything that is not A–Z, a–z, 0–9
+    // remove anything that is not A-Z, a-z, 0-9
     this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
 });
 $("#tableorder_add_form").validate({
@@ -4716,6 +4730,8 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
         && PosnicPro.settings._demoWasOn !== false) {
         PosnicPro.settings.confirmDemoOff(this, ['#fp_master']);
     }
+    /* Quotes and Invoices are two halves of one job - see suggestPartner. */
+    PosnicPro.settings.suggestPartner(this);
 });
 // Unsaved feature changes get a real decision (owner upgrade from the
 // toast): Stay pulls you back with every selection intact; Leave
@@ -5602,6 +5618,363 @@ PosnicPro.features = {
             'also opens in any browser - the address is under <b>My Account</b> there.';
     },
 
+    setupSummary: function () {
+        var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
+        var value = function () {
+            for (var i = 0; i < arguments.length; i += 1) {
+                var text = $.trim(String(arguments[i] == null ? '' : arguments[i]));
+                if (text && text !== 'null' && text !== 'undefined') { return text; }
+            }
+            return '';
+        };
+        var rows = [
+            ['Country', value(PosnicPro.local.get('country_setting'), PosnicPro.local.get('countryname'), PosnicPro.local.get('country_value'), 'Detected')],
+            ['Currency', value(PosnicPro.local.get('currencySign'), 'Shop currency')],
+            ['Timezone', value(PosnicPro.timeZone(), 'Shop timezone')],
+            ['Date format', value(PosnicPro.local.get('dateformatset'), 'Shop default')]
+        ];
+        return rows.map(function (row) {
+            return '<span><small>' + esc(row[0]) + '</small><b>' + esc(row[1]) + '</b></span>';
+        }).join('');
+    },
+
+    _esc: function (v) {
+        return $('<i>').text(v == null ? '' : v).html();
+    },
+
+    _value: function () {
+        for (var i = 0; i < arguments.length; i += 1) {
+            var text = $.trim(String(arguments[i] == null ? '' : arguments[i]));
+            if (text && text !== 'null' && text !== 'undefined') { return text; }
+        }
+        return '';
+    },
+
+    enhanceIntroSelect: function (selector) {
+        var el = $(selector);
+        if (!el.length || !$.fn.select2) { return; }
+        if (el.data('select2')) {
+            el.trigger('change.select2');
+            return;
+        }
+        el.select2({
+            dropdownParent: $('#feature_intro_modal'),
+            width: '100%'
+        });
+    },
+
+    chooseIntroSelectValue: function (selector, wanted) {
+        var el = $(selector);
+        if (!el.length) { return; }
+        var hasWanted = false;
+        if (wanted) {
+            el.find('option').each(function () {
+                if (String($(this).val()) === String(wanted)) { hasWanted = true; }
+            });
+        }
+        if (hasWanted) {
+            el.val(wanted);
+        }
+        if (!el.val() && el.find('option').length) {
+            el.prop('selectedIndex', 0);
+        }
+        PosnicPro.features.enhanceIntroSelect(selector);
+        el.trigger('change.select2');
+    },
+
+    copyIntroOptions: function (from, to, selected) {
+        var src = $(from);
+        var dest = $(to);
+        if (!src.length || !dest.length || !src.find('option').length) { return false; }
+        dest.html(src.html());
+        PosnicPro.features.chooseIntroSelectValue(to, selected);
+        return true;
+    },
+
+    loadIntroCountries: function () {
+        var selected = PosnicPro.features._value(
+            PosnicPro.local.get('country_setting'),
+            PosnicPro.local.get('countryname'),
+            PosnicPro.local.get('country_value')
+        );
+        if (PosnicPro.features.copyIntroOptions('#setting_country', '#feature_intro_country', selected)) {
+            PosnicPro.features.loadIntroStates();
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONCountry',
+            data: { name: 'countries' }
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.countries) || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.value) +
+                    '" data-setting-id="' + PosnicPro.features._esc(dataItem.id) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_country').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_country', selected);
+            PosnicPro.features.loadIntroStates();
+        });
+    },
+
+    loadIntroStates: function (countryId, selected) {
+        var picked = PosnicPro.features._value(selected, PosnicPro.local.get('state_setting'), PosnicPro.local.get('statename'));
+        var id = PosnicPro.features._value(countryId, $('#feature_intro_country option:selected').data('setting-id'), PosnicPro.local.get('countryid'));
+        if (!id) {
+            $('#feature_intro_state').html('<option value="' + PosnicPro.features._esc(picked) + '">' + PosnicPro.features._esc(picked || 'State / region') + '</option>');
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_state', picked);
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONState',
+            data: { id: id }
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.stateJsonArray) || [], function (key, name) {
+                options += '<option value="' + PosnicPro.features._esc(name) + '">' + PosnicPro.features._esc(name) + '</option>';
+            });
+            if (!options && picked) {
+                options = '<option value="' + PosnicPro.features._esc(picked) + '">' + PosnicPro.features._esc(picked) + '</option>';
+            }
+            $('#feature_intro_state').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_state', picked);
+        });
+    },
+
+    loadIntroCurrencies: function () {
+        var selected = PosnicPro.features._value($('#currency_setting').val(), PosnicPro.local.get('currency_setting'));
+        if (PosnicPro.features.copyIntroOptions('#currency_setting', '#feature_intro_currency', selected)) {
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONCurrency'
+        }, function (response) {
+            var options = '';
+            $.each((response.data && response.data.currency) || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.value) +
+                    '" data-currency-id="' + PosnicPro.features._esc(dataItem.id) +
+                    '" data-currency-text="' + PosnicPro.features._esc(dataItem.text) +
+                    '" data-currency-symbol="' + PosnicPro.features._esc(dataItem.symbol) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_currency').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_currency', selected);
+        });
+    },
+
+    loadIntroTimezones: function () {
+        var selected = PosnicPro.features._value(PosnicPro.timeZone());
+        if (PosnicPro.features.copyIntroOptions('#time_zone', '#feature_intro_timezone', selected)) {
+            return;
+        }
+        PosnicPro.get({
+            url: 'setting/getJSONTimeZone'
+        }, function (response) {
+            var options = '';
+            $.each(response.data || [], function (key, dataItem) {
+                options += '<option value="' + PosnicPro.features._esc(dataItem.text) +
+                    '" data-timezone-name="' + PosnicPro.features._esc(dataItem.text) + '">' +
+                    PosnicPro.features._esc(dataItem.value) + '</option>';
+            });
+            $('#feature_intro_timezone').html(options);
+            PosnicPro.features.chooseIntroSelectValue('#feature_intro_timezone', selected);
+        });
+    },
+
+    loadIntroDates: function () {
+        var selected = PosnicPro.features._value(PosnicPro.local.get('dateformatset'), $('#storedate').val(), 'dd/mm/yyyy');
+        PosnicPro.features.copyIntroOptions('#storedate', '#feature_intro_date', selected);
+    },
+
+    initIntroLocaleEditor: function () {
+        PosnicPro.features.loadIntroCountries();
+        PosnicPro.features.loadIntroCurrencies();
+        PosnicPro.features.loadIntroTimezones();
+        PosnicPro.features.loadIntroDates();
+        window.setTimeout(function () {
+            PosnicPro.features._introLocaleSnapshot = JSON.stringify(PosnicPro.features.readIntroLocale());
+        }, 0);
+    },
+
+    readIntroLocale: function () {
+        var countryOption = $('#feature_intro_country option:selected');
+        var currencyOption = $('#feature_intro_currency option:selected');
+        var dateOption = $('#feature_intro_date option:selected');
+        var currencySymbol = PosnicPro.features._value(
+            currencyOption.attr('data-currency-symbol'),
+            $('#currencyText').val(),
+            PosnicPro.local.get('currencySign')
+        );
+        return {
+            setting_country: PosnicPro.features._value($('#feature_intro_country').val(), PosnicPro.local.get('country_setting')),
+            country_id: PosnicPro.features._value(countryOption.attr('data-setting-id'), PosnicPro.local.get('countryid')),
+            setting_state: PosnicPro.features._value($('#feature_intro_state').val(), PosnicPro.local.get('state_setting')),
+            currency_setting: PosnicPro.features._value($('#feature_intro_currency').val(), $('#currency_setting').val()),
+            currencyText: currencySymbol,
+            currencyTextname: PosnicPro.features._value(currencyOption.attr('data-currency-text'), $('#currencyTextname').val(), currencySymbol),
+            currency_type: currencySymbol,
+            time_zone: PosnicPro.features._value($('#feature_intro_timezone').val(), PosnicPro.timeZone()),
+            storedate: PosnicPro.features._value($('#feature_intro_date').val(), PosnicPro.local.get('dateformatset'), 'dd/mm/yyyy'),
+            serverdate: PosnicPro.features._value(dateOption.attr('data-id'), $('#serverdate').val(), 'd/m/Y'),
+            dateText: PosnicPro.features._value(dateOption.text(), $('#dateText').val(), '01/01/2018 - dd/mm/yyyy')
+        };
+    },
+
+    applyIntroLocale: function (data, sent) {
+        var d = data || {};
+        var fallback = sent || {};
+        var country = PosnicPro.features._value(d.country, fallback.setting_country);
+        var state = PosnicPro.features._value(d.state, fallback.setting_state);
+        var countryId = PosnicPro.features._value(d.country_id, fallback.country_id);
+        var currencyText = PosnicPro.features._value(d.currency_text, fallback.currency_setting);
+        var currencySymbol = PosnicPro.features._value(d.currency_type, fallback.currency_type, fallback.currencyText);
+        var timezone = PosnicPro.features._value(d.time_zone, fallback.time_zone);
+        var clientDate = PosnicPro.features._value(d.clientdate, d.client_dateformat, fallback.storedate);
+        var serverDate = PosnicPro.features._value(d.serverdate, d.server_dateformat, fallback.serverdate);
+        var dateText = PosnicPro.features._value(d.dateformat_text, fallback.dateText);
+
+        PosnicPro.local.set('country_setting', country);
+        PosnicPro.local.set('countryname', country);
+        PosnicPro.local.set('countryid', countryId);
+        PosnicPro.local.set('state_setting', state);
+        PosnicPro.local.set('statename', state);
+        PosnicPro.local.set('currency_setting', currencyText);
+        PosnicPro.local.set('currencySign', currencySymbol);
+        PosnicPro.local.set('timezone', timezone);
+        PosnicPro.local.set('dateformatset', clientDate);
+        PosnicPro.local.set('setdateformat', serverDate);
+
+        $('#setting_country').val(country).trigger('change.select2');
+        if (state) {
+            $('#setting_state').html('<option value="' + PosnicPro.features._esc(state) + '" selected>' + PosnicPro.features._esc(state) + '</option>');
+        }
+        $('#currency_setting').val(currencyText).trigger('change.select2');
+        $('#currencyText').val(PosnicPro.features._value(fallback.currencyText, currencySymbol));
+        $('#currencyTextname').val(PosnicPro.features._value(fallback.currencyTextname, currencyText));
+        $('#currency_type').html('<option value="' + PosnicPro.features._esc(currencySymbol) + '" selected>Symbol( ' + PosnicPro.features._esc(currencySymbol) + ' )</option>');
+        $('#time_zone').val(timezone).trigger('change.select2');
+        $('#storedate').val(clientDate).trigger('change.select2');
+        $('#serverdate').val(serverDate);
+        $('#dateText').val(dateText);
+        $('.display-currency').html(currencySymbol);
+    },
+
+    saveIntroLocaleIfNeeded: function (done, fail) {
+        var locale = PosnicPro.features.readIntroLocale();
+        var snapshot = JSON.stringify(locale);
+        if (snapshot === PosnicPro.features._introLocaleSnapshot) {
+            done();
+            return;
+        }
+        PosnicPro.put({
+            url: 'setting/starterLocale',
+            data: JSON.stringify(locale)
+        }, function (response) {
+            if (response.type === 'success') {
+                PosnicPro.features.applyIntroLocale(response.data, locale);
+                PosnicPro.features._introLocaleSnapshot = snapshot;
+                done();
+            } else {
+                fail(response.message || 'Could not save starter settings');
+            }
+        }, function () {
+            fail('Could not save starter settings. Please try again.');
+        });
+    },
+
+    featureOn: function (blob, key) {
+        var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
+        return blob[key] === undefined ? onByDefault : blob[key] === true;
+    },
+
+    paintDemoChoice: function (wanted) {
+        $('#feature_intro_demo_yes').toggleClass('is-selected', wanted === true)
+            .attr('aria-pressed', wanted === true ? 'true' : 'false');
+        $('#feature_intro_demo_no').toggleClass('is-selected', wanted === false)
+            .attr('aria-pressed', wanted === false ? 'true' : 'false');
+        $('#feature_intro_demo_status').text(wanted === true
+            ? 'Sample data selected. It will install in the background after Next.'
+            : 'Clean catalogue selected. You can add sample data later under Manage > Demo Data.');
+    },
+
+    chooseDemoData: function (wanted) {
+        $('#fi_module_demo_data_enable').prop('checked', wanted === true);
+        if (wanted === false && PosnicPro.settings) {
+            PosnicPro.settings._demoPurgeArmed = true;
+        }
+        PosnicPro.features.paintDemoChoice(wanted === true);
+    },
+
+    markIntroDemoStatus: function (title, line, pct, keepOpen) {
+        var box = $('#feature_intro_demo_bg_status');
+        if (!box.length) { return; }
+        box.prop('hidden', false).removeAttr('hidden');
+        $('#feature_intro_demo_bg_title').text(title || 'Adding sample data');
+        $('#feature_intro_demo_bg_step').text(line || 'Working in the background...');
+        $('#feature_intro_demo_bg_bar').css('width', Math.max(0, Math.min(100, Number(pct) || 0)) + '%');
+        if (!keepOpen) {
+            window.setTimeout(function () {
+                $('#feature_intro_demo_bg_status').prop('hidden', true).attr('hidden', 'hidden');
+            }, 2200);
+        }
+    },
+
+    beginIntroDemoInstall: function () {
+        if (PosnicPro.features._introDemoStarted) { return; }
+        var selected = $('#fi_module_demo_data_enable').is(':checked');
+        if (!selected) {
+            PosnicPro.features.markIntroDemoStatus('Clean shop selected', 'No sample records will be added.', 100, false);
+            return;
+        }
+        PosnicPro.features._introDemoStarted = true;
+        if (PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
+            PosnicPro.settings.syncDemoDataAfterSave(true, {
+                inlineTarget: '#feature_intro_demo_bg_status',
+                title: 'Adding sample data'
+            });
+            return;
+        }
+        PosnicPro.features.markIntroDemoStatus('Sample data ready', 'Products and sample sales are ready to try.', 100, false);
+    },
+
+    showIntroStep: function (step) {
+        var steps = ['sample', 'features', 'settings'];
+        var index = Math.max(0, Math.min(steps.length - 1, Number(step) || 0));
+        PosnicPro.features._introStep = index;
+        $('[data-intro-step]').each(function () {
+            $(this).toggleClass('is-active', $(this).data('introStep') === steps[index]);
+        });
+        $('[data-intro-dot]').each(function () {
+            var dot = Number($(this).attr('data-intro-dot'));
+            $(this).toggleClass('is-active', dot === index);
+            $(this).toggleClass('is-done', dot < index);
+        });
+        $('#feature_intro_step_label').text('Step ' + (index + 1) + ' of ' + steps.length);
+        $('#feature_intro_back').prop('hidden', index === 0).attr('hidden', index === 0 ? 'hidden' : null);
+        $('#feature_intro_next').prop('hidden', index === steps.length - 1).attr('hidden', index === steps.length - 1 ? 'hidden' : null);
+        $('#feature_intro_save, #feature_intro_tour')
+            .prop('hidden', index !== steps.length - 1)
+            .attr('hidden', index !== steps.length - 1 ? 'hidden' : null);
+    },
+
+    nextIntroStep: function () {
+        var index = PosnicPro.features._introStep || 0;
+        if (index === 0) { PosnicPro.features.beginIntroDemoInstall(); }
+        PosnicPro.features.showIntroStep(index + 1);
+    },
+
+    previousIntroStep: function () {
+        PosnicPro.features.showIntroStep((PosnicPro.features._introStep || 0) - 1);
+    },
+
+    filterIntro: function () {
+        var q = String($('#feature_intro_filter').val() || '').trim().toLowerCase();
+        $('[data-feature-row]').each(function () {
+            var hay = String($(this).data('featureSearch') || '').toLowerCase();
+            $(this).toggleClass('is-hidden', !!q && hay.indexOf(q) === -1);
+        });
+    },
+
     renderIntro: function () {
         var blob = PosnicPro.features._blob();
 
@@ -5636,17 +6009,30 @@ PosnicPro.features = {
         /* Built by accessNote, which escapes the one dynamic value (the
            hostname); everything else in it is our own copy. */
         $('#feature_intro_access').html(PosnicPro.features.accessNote());
+        PosnicPro.features.initIntroLocaleEditor();
 
-        var rows = PosnicPro.features.INTRO.map(function (f) {
+        $('#feature_intro_filter').val('');
+        var demoOn = blob.module_demo_data_enable === false || blob.module_demo_data_enable === 'false'
+            ? true
+            : PosnicPro.features.featureOn(blob, 'module_demo_data_enable');
+        $('#fi_module_demo_data_enable').prop('checked', demoOn);
+        PosnicPro.features.paintDemoChoice(demoOn);
+        PosnicPro.features._introStep = 0;
+        PosnicPro.features._introDemoStarted = false;
+        $('#feature_intro_demo_bg_status').prop('hidden', true).attr('hidden', 'hidden');
+        PosnicPro.features.showIntroStep(0);
+
+        var rows = PosnicPro.features.INTRO.filter(function (f) {
+            return f[0] !== 'module_demo_data_enable';
+        }).map(function (f) {
             var key = f[0];
-            // The blob carries every key post-login (guard-tested); absent
-            // falls back to each key's polarity: tips/till-lock opt-in OFF,
-            // everything else opt-out ON.
-            var onByDefault = !(key === 'staff_tips_enable' || key === 'till_lock_enable');
-            var on = blob[key] === undefined ? onByDefault : blob[key] === true;
+            var on = PosnicPro.features.featureOn(blob, key);
+            var search = (f[1] + ' ' + f[2] + ' ' + key).replace(/"/g, '&quot;');
             /* The whole row is the label, so a thumb anywhere on it flips the
                switch - the switch itself is a 40px target on a touch screen. */
-            return '<label class="first-run-row" for="fi_' + key + '">' +
+            return {
+                on: on,
+                html: '<label class="first-run-row' + (on ? ' is-recommended' : '') + '" for="fi_' + key + '" data-feature-row data-feature-search="' + search + '">' +
                 '<span class="first-run-row-text">' +
                 '<b>' + f[1] + '</b>' +
                 '<span>' + f[2] + '</span>' +
@@ -5655,8 +6041,11 @@ PosnicPro.features = {
                 '<input type="checkbox" class="custom-control-input feature-intro-toggle" id="fi_' + key + '" data-key="' + key + '"' + (on ? ' checked' : '') + '>' +
                 '<span class="custom-control-label"></span>' +
                 '</span>' +
-                '</label>';
-        }).join('');
+                '</label>'
+            };
+        }).sort(function (a, b) {
+            return (a.on === b.on) ? 0 : (a.on ? -1 : 1);
+        }).map(function (row) { return row.html; }).join('');
         $('#feature_intro_list').html(rows);
     },
     /*
@@ -5687,16 +6076,9 @@ PosnicPro.features = {
             hasher.setHash('sales/new');
         };
         /*
-         * Both dialogs fade, so hiding one is asynchronous and it is still on
-         * screen when this runs. Changing the page under a modal that has not
-         * finished closing is how a backdrop gets left behind, greying out the
-         * screen it was supposed to reveal. The tour hits the same thing and
-         * waits a fixed 400ms; waiting for the event is the same idea without
-         * the guess.
-         *
-         * A visible check rather than a blind wait, because a modal that has
-         * ALREADY closed fired its event before this line ran, and binding to
-         * it then would wait for something that is never coming.
+         * The welcome fades out asynchronously. Changing the page under a
+         * modal that has not finished closing is how a backdrop gets left
+         * behind over the sale screen, so wait for this one visible dialog.
          */
         var showing = function (sel) {
             var m = $(sel);
@@ -5706,14 +6088,7 @@ PosnicPro.features = {
             if (!showing(sel)) { next(); return; }
             $(sel).one('hidden.bs.modal', next);
         };
-        /*
-         * The sample-data bar has real work running behind it - switching demo
-         * data off during the welcome starts a purge. The hash change would
-         * not stop that work, but it would leave the bar floating over the
-         * sale screen and land its finishing message somewhere it makes no
-         * sense. So the sale screen waits for that too.
-         */
-        after('#feature_intro_modal', function () { after('#demo_progress_modal', go); });
+        after('#feature_intro_modal', go);
         /*
          * And a floor under all of it. A transition that never fires - a
          * detached element, a browser honouring reduced motion, a stylesheet
@@ -5747,12 +6122,14 @@ PosnicPro.features = {
            never be offered the switches it did not manage to save. */
         payload.first_run_done = true;
         payload.first_run_decided = true;
-        $('#feature_intro_save').prop('disabled', true);
-        PosnicPro.put({
-            url: 'settings/group/features',
-            data: JSON.stringify(payload)
-        }, function (response) {
-            $('#feature_intro_save').prop('disabled', false);
+        var saveButtons = $('#feature_intro_save, #feature_intro_tour, #feature_intro_skip, #feature_intro_close');
+        saveButtons.prop('disabled', true);
+        PosnicPro.features.saveIntroLocaleIfNeeded(function () {
+            PosnicPro.put({
+                url: 'settings/group/features',
+                data: JSON.stringify(payload)
+            }, function (response) {
+                saveButtons.prop('disabled', false);
             if (response.type === 'success') {
                 // The session blob must agree with what was just written, and
                 // the menus react now, not at next login.
@@ -5767,12 +6144,20 @@ PosnicPro.features = {
                 PosnicPro.local.set('general_settings', JSON.stringify(blob));
                 if (PosnicPro.settings && PosnicPro.settings.applyModuleNav) { PosnicPro.settings.applyModuleNav(); }
                 else if (PosnicPro.applyModuleSidebar) { PosnicPro.applyModuleSidebar(); }
-                $('#feature_intro_modal').modal('hide');
-                PosnicPro.alert('success', 'Feature switches saved');
                 /* Read before the branch below clears it, because where this
                    shop goes next depends on which of the two buttons was
                    pressed and the flag does not survive to the end. */
                 var wantedTour = PosnicPro.features._tourAfterSave;
+                var wantedDemo = $('#fi_module_demo_data_enable').length
+                    ? $('#fi_module_demo_data_enable').is(':checked')
+                    : undefined;
+                if (wantedDemo === true && PosnicPro.features._introDemoStarted !== true) {
+                    PosnicPro.features.beginIntroDemoInstall();
+                } else {
+                    PosnicPro.settings.syncDemoDataAfterSave(wantedDemo);
+                }
+                $('#feature_intro_modal').modal('hide');
+                PosnicPro.alert('success', 'Feature switches saved');
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
@@ -5780,57 +6165,58 @@ PosnicPro.features = {
                     PosnicPro.features._tourAfterSave = false;
                     setTimeout(function () { PosnicPro.tour.firstRun(); }, 400);
                 }
-                /* The welcome saves the demo switch too, so its off->on and
-                   consented off both act here - state passed explicitly,
-                   because the settings form's checkbox is not this dialog. */
-                PosnicPro.settings.syncDemoDataAfterSave(
-                    $('#fi_module_demo_data_enable').length
-                        ? $('#fi_module_demo_data_enable').is(':checked')
-                        : undefined
-                );
                 /* And then the sale screen, because that is what the button
                    says. The tour goes the other way - see startSelling. */
                 if (!wantedTour) { PosnicPro.features.startSelling(); }
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
-        }, function () {
-            $('#feature_intro_save').prop('disabled', false);
+            }, function () {
+                saveButtons.prop('disabled', false);
+                PosnicPro.features._tourAfterSave = false;
+                PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
+            });
+        }, function (message) {
+            saveButtons.prop('disabled', false);
             PosnicPro.features._tourAfterSave = false;
-            PosnicPro.alert('error', 'Could not save - you can set these later under Manage > Features');
+            PosnicPro.alert('error', message);
         });
     }
 };
 /*
- * "Not now" is a decision; it writes the same flag a save writes, minus the
- * switches. Anything else that closes the dialog decides nothing.
+ * "Use defaults" is a decision, not a close button. It saves the current
+ * recommended switches through the same path as Save and start selling, so the
+ * welcome cannot disappear without recording the chosen setup.
  */
 $(document).on('click', '#feature_intro_skip', function () {
     PosnicPro.features._decided = true;
-    PosnicPro.put({
-        url: 'settings/group/features',
-        data: JSON.stringify({ first_run_done: true, first_run_decided: true })
-    }, function () {
-        var b = PosnicPro.features._blob();
-        b.first_run_done = true;
-        b.first_run_decided = true;
-        PosnicPro.local.set('general_settings', JSON.stringify(b));
-    }, function () {
-        /* The write failing means the shop was never recorded as asked, and
-           the welcome returning is the correct outcome for that. */
-        PosnicPro.features._decided = false;
-    });
+    PosnicPro.features._tourAfterSave = false;
+    PosnicPro.features.saveIntro();
+});
+$(document).on('click', '#feature_intro_close', function () {
+    PosnicPro.features._decided = true;
+    PosnicPro.features._tourAfterSave = false;
+    PosnicPro.features.saveIntro();
 });
 $(document).on('change', '#fi_module_demo_data_enable', function () {
     /* The welcome's own demo switch: same consent, same rule. The blob is
        the truth here - the settings form may not be primed yet. */
     var blobOn = PosnicPro.features._blob().module_demo_data_enable !== false;
     if (!this.checked && blobOn) { PosnicPro.settings.confirmDemoOff(this); }
+    PosnicPro.features.paintDemoChoice($(this).is(':checked'));
 });
+$(document).on('input', '#feature_intro_filter', function () { PosnicPro.features.filterIntro(); });
+$(document).on('click', '#feature_intro_demo_yes', function () { PosnicPro.features.chooseDemoData(true); });
+$(document).on('click', '#feature_intro_demo_no', function () { PosnicPro.features.chooseDemoData(false); });
+$(document).on('click', '#feature_intro_next', function () { PosnicPro.features.nextIntroStep(); });
+$(document).on('click', '#feature_intro_back', function () { PosnicPro.features.previousIntroStep(); });
 $(document).on('click', '#feature_intro_save', function () { PosnicPro.features.saveIntro(); });
 $(document).on('click', '#feature_intro_tour', function () {
     PosnicPro.features._tourAfterSave = true;
     PosnicPro.features.saveIntro();
+});
+$(document).on('change', '#feature_intro_country', function () {
+    PosnicPro.features.loadIntroStates($(this).find('option:selected').attr('data-setting-id'), '');
 });
 $(document).ready(function () {
     /*
@@ -6041,6 +6427,35 @@ PosnicPro.settings.saveSharing = function () {
 
 $(document).on('click', '#v-pills-general-tab', function () {
     PosnicPro.settings.loadSharing();
+});
+
+/* Invoice settings (INVOICING_MODULE_DESIGN): two groups, two endpoints -
+   the prefix and credit days are preferences, the terms are document text.
+   Each endpoint knows only its own keys, so neither can be asked for the
+   other's. */
+$(document).on('click', '#invoice_settings_save', function () {
+    var days = parseInt($('#invoice_due_days').val(), 10);
+    if (isNaN(days) || days < 0) { days = 30; }
+    if (days > 365) { days = 365; }
+    var prefs = {
+        invoice_prefix: ($.trim($('#invoice_prefix').val()) || 'INV-').slice(0, 12),
+        invoice_due_days: days
+    };
+    var docs = { invoice_terms: $('#invoice_terms').val() || '' };
+    var $btn = $('#invoice_settings_save').prop('disabled', true);
+    var fail = function (xhr) {
+        $btn.prop('disabled', false);
+        var resp = {}; try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+        PosnicPro.alert('error', resp.message || 'Could not save invoice settings');
+    };
+    PosnicPro.put({ url: 'settings/group/preferences', data: JSON.stringify(prefs) }, function (r) {
+        if (r.type !== 'success') { $btn.prop('disabled', false); PosnicPro.alert(r.type, r.message); return; }
+        PosnicPro.put({ url: 'settings/group/documents', data: JSON.stringify(docs) }, function (r2) {
+            $btn.prop('disabled', false);
+            PosnicPro.alert(r2.type, r2.type === 'success' ? 'Invoice settings saved' : r2.message);
+            if (r2.type === 'success') { PosnicPro.local.set('invoice_terms', docs.invoice_terms); }
+        }, fail);
+    }, fail);
 });
 
 $(document).on('click', '#quote_settings_save', function () {
@@ -6255,6 +6670,22 @@ PosnicPro.settings.featureInfo = {
             'New quotation: pick a customer, add lines, set validity',
             'Share it; mark Accepted when the customer says yes',
             'Convert to sale - the receipt total matches the quote'
+        ],
+    },
+    invoices_enable: {
+        tagline: 'Bill a customer now, get paid later - and see who still owes you.',
+        about: 'An invoice is the bill you hand a customer who pays after delivery: lines from your catalog or free text, discounts, charges in any name, a due date, and a professional A4 PDF to share. A draft is a proforma; issuing it books the sale for you - stock, tax and the books - and recording a payment, in full or in part, keeps the customer balance right.',
+        benefits: [
+            'Quote becomes invoice becomes sale - the numbers agree end to end',
+            'Issue books the sale itself - no till screen in between',
+            'Overdue at a glance: what is owed, and how much of it is late',
+            'Share by PDF, print, email, WhatsApp or a copy-paste link'
+        ],
+        how: [
+            'Turn the feature on - Invoices appears in the home menu',
+            'New invoice, or Create invoice from an accepted quote',
+            'Issue it when the goods go out - the sale is booked for you',
+            'Record payments as the money lands - full or part, with a reference'
         ],
     },
     staff_shifts_enable: {
@@ -6514,6 +6945,7 @@ PosnicPro.settings.FEATURE_HOME = {
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
     quotes_enable: ['quotes', 'Quotes'],
+    invoices_enable: ['invoices', 'Invoices'],
     till_lock_enable: ['tillpin', 'Till PIN Lock'],
 };
 /* The Configure link leaves the guide the same way Back does; the hash
@@ -6565,6 +6997,7 @@ $(document).on('click', '#v-pills-modules .module-card', function (e) {
 PosnicPro.settings.demoProgress = {
     _timer: null,
     _pct: 0,
+    _inlineTarget: '',
 
     /*
      * `title` because this bar now serves two jobs: putting the samples back
@@ -6572,8 +7005,18 @@ PosnicPro.settings.demoProgress = {
      * "Adding the sample data" while rows are being REMOVED is a bar that
      * describes work other than the work being done.
      */
-    open: function (title) {
+    open: function (title, options) {
         var self = PosnicPro.settings.demoProgress;
+        options = options || {};
+        self._inlineTarget = options.inlineTarget || '';
+        if (self._inlineTarget && $(self._inlineTarget).length) {
+            $(self._inlineTarget).prop('hidden', false).removeAttr('hidden');
+            $('#feature_intro_demo_bg_title').text(options.title || title || 'Adding sample data');
+            self._pct = 0;
+            self._set(4, 'Getting ready...');
+        } else {
+            self._inlineTarget = '';
+        }
         if (!$('#demo_progress_modal').length) {
             $('body').append(
                 '<div class="modal fade" id="demo_progress_modal" tabindex="-1" role="dialog"' +
@@ -6593,7 +7036,7 @@ PosnicPro.settings.demoProgress = {
         self._pct = 0;
         $('#demo_progress_title').text(title || 'Adding the sample data');
         self._set(4, 'Getting ready…');
-        $('#demo_progress_modal').modal('show');
+        if (!self._inlineTarget) { $('#demo_progress_modal').modal('show'); }
 
         /*
          * Named steps rather than a silent crawl. The shop is watching a bar
@@ -6639,6 +7082,12 @@ PosnicPro.settings.demoProgress = {
 
     _set: function (pct, label) {
         PosnicPro.settings.demoProgress._pct = pct;
+        var inlineTarget = PosnicPro.settings.demoProgress._inlineTarget;
+        if (inlineTarget) {
+            $(inlineTarget).find('.demo-progress-bar').css('width', pct + '%');
+            if (label) { $('#feature_intro_demo_bg_step').text(label.replace(/…/g, '...')); }
+            return;
+        }
         $('#demo_progress_bar').css('width', pct + '%');
         if (label) { $('#demo_progress_step').text(label); }
     },
@@ -6646,6 +7095,18 @@ PosnicPro.settings.demoProgress = {
     close: function (message, ok) {
         var self = PosnicPro.settings.demoProgress;
         if (self._timer) { window.clearInterval(self._timer); self._timer = null; }
+        if (self._inlineTarget) {
+            var target = self._inlineTarget;
+            self._set(100, ok ? 'Sample data ready.' : (message || 'Sample data could not be added.'));
+            self._inlineTarget = '';
+            if (message && !ok) { PosnicPro.alert('error', message); }
+            if (ok) {
+                window.setTimeout(function () {
+                    $(target).prop('hidden', true).attr('hidden', 'hidden');
+                }, 2600);
+            }
+            return;
+        }
         self._set(100, ok ? 'Done' : 'Stopped');
         /* A beat at 100% so the bar is seen to finish rather than vanishing
            mid-way, which reads as a crash. */
@@ -6772,7 +7233,7 @@ PosnicPro.settings.demoPacks = {
             : pack.products + ' products in ' + pack.categories + ' categories'
               + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
         $('#demo_pack_summary').text(
-            key === self._current ? line + ' — this is what you have now' : line
+            key === self._current ? line + ' (this is what you have now)' : line
         );
         $('#demo_pack_install').text(
             key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'
@@ -6890,6 +7351,70 @@ $(document).on('click', '#demo_pack_reset', function () {
  * referenced by a real transaction. Whatever survives stays hidden by the
  * read filter while the switch is off, so refusal never means reappearing.
  */
+/*
+ * Quotes and Invoices are two halves of one job.
+ *
+ * A shop that prices work before doing it also bills for it afterwards: the
+ * quote is the promise, the invoice is the claim, and the same customer sees
+ * both. Somebody who finds one switch has usually not thought about the other,
+ * and discovers it months later - or never.
+ *
+ * So turning one on offers the other. Three rules keep an offer from becoming
+ * nagging:
+ *
+ *   only on the way ON. Switching Invoices off says nothing about Quotes.
+ *   only when the partner is OFF. Otherwise there is nothing to offer.
+ *   only once per visit, per pair. "No" is an answer, and asking a second
+ *     time tells somebody their answer was not heard.
+ *
+ * Nothing is written here. The switch is feedback; Save is what saves - which
+ * is the rule every other card on this page already follows.
+ */
+PosnicPro.settings._partners = {
+    quotes_enable: {
+        other: 'invoices_enable',
+        title: 'Turn on Invoices as well?',
+        text: 'Quotes price the work before you do it; invoices bill for it afterwards, '
+            + 'and show you who still owes. Shops that use one usually want both.',
+        yes: 'Turn on Invoices',
+    },
+    invoices_enable: {
+        other: 'quotes_enable',
+        title: 'Turn on Quotes as well?',
+        text: 'Invoices bill for work you have done; quotes price it beforehand, so the '
+            + 'customer agrees before you start. Shops that use one usually want both.',
+        yes: 'Turn on Quotes',
+    },
+};
+PosnicPro.settings._partnerAsked = {};
+
+PosnicPro.settings.suggestPartner = function (checkbox) {
+    var pair = PosnicPro.settings._partners[checkbox && checkbox.id];
+    if (!pair || !checkbox.checked) return;
+    if (PosnicPro.settings._partnerAsked[checkbox.id]) return;
+
+    var $other = $('#' + pair.other);
+    if (!$other.length || $other.is(':checked')) return;
+
+    PosnicPro.settings._partnerAsked[checkbox.id] = true;
+    swal({
+        title: pair.title,
+        text: pair.text,
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-primary',
+        cancelButtonClass: 'btn btn-light m-l-10',
+        confirmButtonText: pair.yes,
+        cancelButtonText: 'Not now'
+        /* SweetAlert v6 REJECTS on cancel. Without the second handler, saying
+           "Not now" is an unhandled rejection on a screen where the person
+           did nothing wrong. */
+    }).then(function () {
+        $other.prop('checked', true).trigger('change');
+    }, function () {
+        /* Declined. The flag above means we do not ask again this visit. */
+    });
+};
+
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
         title: 'Switch off Demo Data and remove the samples?',
@@ -6917,7 +7442,7 @@ PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
  * moved, never on every save, or a tax change puts a progress bar in front
  * of somebody who asked for nothing.
  */
-PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
+PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
     var on = nowOnArg !== undefined ? !!nowOnArg : $('#module_demo_data_enable').is(':checked');
     var was = PosnicPro.settings._demoWasOn;
     PosnicPro.settings._demoWasOn = on;
@@ -6945,7 +7470,7 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
     PosnicPro.settings._demoPurgeArmed = false;
     if (!on || was !== false) { return; }
 
-    PosnicPro.settings.demoProgress.open();
+    PosnicPro.settings.demoProgress.open(options && options.title, options);
     PosnicPro.post({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
         PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
     }, function (xhr) {

@@ -149,6 +149,12 @@ const FEATURES = [
     evidence: [['quotes', {}]],
   },
   {
+    key: 'invoices_enable',
+    dflt: false,
+    why: 'invoices billed and chased before the sale',
+    evidence: [['invoices', {}]],
+  },
+  {
     key: 'cash_register_enable',
     dflt: false,
     why: 'till openings, closings and counts',

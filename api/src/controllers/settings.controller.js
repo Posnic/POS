@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const BaseController = require('./base.controller');
+const { clientIp } = require('../utils/client-ip');
 const SettingModel = require('../models/setting.model');
 const settingsService = require('../services/setting.service');
 
@@ -121,6 +122,12 @@ class SettingController extends BaseController {
       branchId,
       licenseId,
       user: req.user,
+      /* Carried so security-relevant writes can record where they came from.
+         Models have never seen a request, which is exactly why the change log
+         has no addresses in it and why a changed password could not be traced
+         to anybody. */
+      ip: clientIp(req),
+      userAgent: (req.headers && req.headers['user-agent']) || '',
     });
     return model;
   }
@@ -493,6 +500,28 @@ class SettingController extends BaseController {
     }
   }
 
+  async updateStarterLocale(req, res) {
+    try {
+      const settingModel = this.createModelWithContext(req);
+      settingsService.setModel(settingModel);
+
+      const result = await settingsService.updateStarterLocale(req.body);
+      if (result.status) {
+        return res
+          .status(200)
+          .json({ type: 'success', message: 'Starter settings updated', data: result.data });
+      }
+      return res.status(404).json({
+        type: 'error',
+        message: result.message || 'Starter settings not updated',
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error updating starter locale:', error);
+      return res.status(500).json({ type: 'error', message: error.message });
+    }
+  }
+
   /*
    * One branch's module switches (M4 branch selector). Any branch of THIS
    * license only - the model's license filter is the wall; a foreign id
@@ -766,7 +795,7 @@ class SettingController extends BaseController {
         return res.status(400).json({ type: 'error', message: 'Valid email required' });
       }
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getForgotUserDetails(req.body.email);
+      const result = await settingModel.getForgotUserDetails(req.body.email, req);
       if (result.status) {
         return res
           .status(200)

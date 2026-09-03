@@ -1,70 +1,119 @@
-<!-- The first thing a new shop sees.
-
-     Owner ask: "First time when user logs in to system, show very nicely
-     welcome message, tell him we enabled default feature, if he wants enable
-     features, later also enable. right away enable show features."
-
-     WHY IT EXISTS. A new shop is created with four features on and the rest
-     off. That is the right starting point, but on its own it is
-     indistinguishable from a product that simply does not HAVE the rest, and
-     a shop that never learns they exist never asks for them. The switches
-     have always been in Settings; almost nobody goes looking in Settings on
-     their first day.
-
-     WHAT IT IS NOT. Not a wizard. Nothing here blocks selling: it can be
-     closed at any point, it never appears again, and every switch on it is
-     the same switch that lives under Manage > Features. It exists to say the
-     shop is theirs to shape, once, at the only moment somebody is certain to
-     be looking. -->
-<div class="modal fade close_on_esc" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
-    aria-labelledby="feature_intro_title" data-backdrop="static">
+<!-- The first thing a new shop sees: a short setup assistant, not a settings wall. -->
+<div class="modal fade" id="feature_intro_modal" tabindex="-1" role="dialog" aria-hidden="true"
+    aria-labelledby="feature_intro_title" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content first-run">
-            <div class="first-run-head">
-                <!-- mdi-store, not mdi-storefront: this build's icon font does
-                     not carry the second one, and a missing glyph renders as an
-                     empty box rather than as nothing. -->
-                <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
-                <h5 class="first-run-title" id="feature_intro_title">
-                    <lang class="lang_feature_intro_title">Your shop is ready</lang>
-                </h5>
-                <p class="first-run-sub" id="feature_intro_sub"></p>
-            </div>
-            <div class="modal-body first-run-body">
-                <p class="first-run-lead" id="feature_intro_lead"></p>
-                <div id="feature_intro_list" class="first-run-list"></div>
-                <!-- Desktop app AND web till: said here because this is the one
-                     screen a new shop is certain to read, and "user is not
-                     clear about this system software desktop application plus
-                     web based" was reported as the thing costing signups.
-                     Filled by renderIntro with the sentence that is true for
-                     WHERE this is running - app, public web address, or the
-                     shop's own network - never a generic both-exist line that
-                     tells them nothing about the one they are looking at. -->
-                <div id="feature_intro_access" class="first-run-access"></div>
-            </div>
-            <div class="first-run-foot">
-                <span class="first-run-foot-note">
-                    <lang class="lang_feature_intro_note">You can change these any time under Manage &gt;
-                        Features.</lang>
-                </span>
-                <span class="first-run-foot-actions">
-                    <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip"
-                        data-dismiss="modal">
-                        <lang class="lang_feature_intro_skip">Not now</lang>
-                    </button>
-                    <!-- Saves the switches AND walks the shop to where they
-                         live. Two buttons, one save path: the tour variant
-                         sets a flag the save-success handler reads, so a
-                         failed save never starts a tour of a shop that did
-                         not save. -->
-                    <button type="button" class="btn btn-outline-primary" id="feature_intro_tour">
-                        <lang class="lang_feature_intro_tour">Save &amp; show me around</lang>
-                    </button>
-                    <button type="button" class="btn btn-primary" id="feature_intro_save">
-                        <lang class="lang_feature_intro_save">Save and start selling</lang>
-                    </button>
-                </span>
+            <div class="first-run-shell">
+                <aside class="first-run-visual" aria-hidden="true">
+                    <img src="static/images/onboarding/shop-ready-photo.jpg" alt="">
+                    <div class="first-run-visual-copy">
+                        <b>Ready for the first sale</b>
+                        <span>Pick the starter data and features, then begin billing.</span>
+                    </div>
+                </aside>
+                <section class="first-run-main">
+                    <div class="first-run-head">
+                        <button type="button" class="first-run-close" id="feature_intro_close" aria-label="Skip setup and start selling">&times;</button>
+                        <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
+                        <h5 class="first-run-title" id="feature_intro_title">
+                            <lang class="lang_feature_intro_title">Your shop is ready</lang>
+                        </h5>
+                        <p class="first-run-sub" id="feature_intro_sub"></p>
+                        <div class="first-run-progress" aria-label="Setup assistant progress">
+                            <span id="feature_intro_step_label">Step 1 of 3</span>
+                            <i data-intro-dot="0" class="is-active"></i>
+                            <i data-intro-dot="1"></i>
+                            <i data-intro-dot="2"></i>
+                        </div>
+                    </div>
+                    <div class="modal-body first-run-body">
+                        <section class="first-run-step is-active" data-intro-step="sample">
+                            <p class="first-run-lead">Start with realistic products, customers and sample sales. You can remove the samples later when you are ready for real billing.</p>
+                            <div class="first-run-question" id="feature_intro_demo_question">
+                                <div>
+                                    <b>Install sample data?</b>
+                                    <span>Recommended for a first look. It gives the sale screen something useful immediately.</span>
+                                    <small id="feature_intro_demo_status">Sample data selected. It will install in the background after Next.</small>
+                                </div>
+                                <div class="first-run-choice" role="group" aria-label="Sample data choice">
+                                    <button type="button" class="first-run-choice-card is-selected" id="feature_intro_demo_yes">
+                                        <b>Use sample data</b>
+                                        <span>Best for trying the till now</span>
+                                    </button>
+                                    <button type="button" class="first-run-choice-card" id="feature_intro_demo_no">
+                                        <b>Start clean</b>
+                                        <span>No sample records</span>
+                                    </button>
+                                </div>
+                                <input type="checkbox" class="feature-intro-toggle" id="fi_module_demo_data_enable"
+                                    data-key="module_demo_data_enable" hidden checked>
+                            </div>
+                        </section>
+                        <section class="first-run-step" data-intro-step="features">
+                            <p class="first-run-lead" id="feature_intro_lead"></p>
+                            <label class="first-run-filter" for="feature_intro_filter">
+                                <span>Search features</span>
+                                <input type="search" id="feature_intro_filter" autocomplete="off" placeholder="Search features">
+                            </label>
+                            <div id="feature_intro_list" class="first-run-list"></div>
+                        </section>
+                        <section class="first-run-step" data-intro-step="settings">
+                            <p class="first-run-lead">These starter settings are already filled from your signup location. You can correct them now if they are wrong, or later from Settings.</p>
+                            <div class="first-run-locale" id="feature_intro_locale_form" aria-label="Starter shop settings">
+                                <label>
+                                    <span>Country</span>
+                                    <select id="feature_intro_country" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>State / region</span>
+                                    <select id="feature_intro_state" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Currency</span>
+                                    <select id="feature_intro_currency" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Timezone</span>
+                                    <select id="feature_intro_timezone" class="form-control border-control"></select>
+                                </label>
+                                <label>
+                                    <span>Date format</span>
+                                    <select id="feature_intro_date" class="form-control border-control"></select>
+                                </label>
+                            </div>
+                            <div id="feature_intro_access" class="first-run-access"></div>
+                        </section>
+                    </div>
+                    <div class="first-run-foot">
+                        <div class="first-run-demo-status" id="feature_intro_demo_bg_status" hidden aria-live="polite">
+                            <div>
+                                <b id="feature_intro_demo_bg_title">Adding sample data</b>
+                                <span id="feature_intro_demo_bg_step">Preparing...</span>
+                            </div>
+                            <div class="demo-progress-track"><div id="feature_intro_demo_bg_bar" class="demo-progress-bar"></div></div>
+                        </div>
+                        <span class="first-run-foot-note">
+                            <lang class="lang_feature_intro_note">You can change these any time under Manage &gt; Features.</lang>
+                        </span>
+                        <span class="first-run-foot-actions">
+                            <button type="button" class="btn btn-outline-secondary" id="feature_intro_skip">
+                                <lang class="lang_feature_intro_skip">Skip setup</lang>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="feature_intro_back" hidden>
+                                Back
+                            </button>
+                            <button type="button" class="btn btn-primary" id="feature_intro_next">
+                                Next
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="feature_intro_tour" hidden>
+                                <lang class="lang_feature_intro_tour">Save &amp; show me around</lang>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="feature_intro_save" hidden>
+                                <lang class="lang_feature_intro_save">Save and start selling</lang>
+                            </button>
+                        </span>
+                    </div>
+                </section>
             </div>
         </div>
     </div>

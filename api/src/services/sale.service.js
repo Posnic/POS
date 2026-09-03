@@ -1019,6 +1019,14 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         : existingSale?.quote_price_honoured !== undefined
           ? { quote_price_honoured: existingSale.quote_price_honoured }
           : {}),
+      // A sale recorded from an INVOICE (INVOICING_MODULE_DESIGN) remembers
+      // it the same way; services/invoice-sync mirrors this sale's payment
+      // state onto that invoice after every save. Same presence rule.
+      ...(data.source_invoice_id && ObjectId.isValid(String(data.source_invoice_id))
+        ? { source_invoice_id: new ObjectId(String(data.source_invoice_id)) }
+        : existingSale?.source_invoice_id
+          ? { source_invoice_id: existingSale.source_invoice_id }
+          : {}),
       // Document-level charges (parcel, service, freight - owner spec):
       // stored as sent, capped and cleaned; an edit that does not resend
       // them keeps them, and a sale that HAS them stays editable even
@@ -1511,6 +1519,26 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
           sale_id: saleId,
           customer_id: data.customer_id,
         });
+      }
+    }
+
+    /*
+     * The invoice this sale was recorded from learns what just happened -
+     * unpaid, partial or paid - and the quote behind THAT invoice is stamped
+     * converted. Awaited so the till's next read of the invoice is current;
+     * fire-safe so a mirror that fails can never fail a sale that succeeded.
+     */
+    const linkedInvoiceId =
+      data.source_invoice_id && ObjectId.isValid(String(data.source_invoice_id))
+        ? String(data.source_invoice_id)
+        : existingSale?.source_invoice_id
+          ? String(existingSale.source_invoice_id)
+          : null;
+    if (linkedInvoiceId) {
+      try {
+        await require('./invoice-sync').afterSaleSaved(saleId);
+      } catch (e) {
+        console.error('[SALES] invoice mirror skipped:', e.message);
       }
     }
 
