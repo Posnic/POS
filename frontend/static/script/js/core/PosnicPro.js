@@ -2196,7 +2196,7 @@ PosnicPro = {
             var data = PosnicPro.shiftWidget._lastReport;
             var rows = (data && data.rows) || [];
             if (!rows.length) {
-                PosnicPro.alert('warning', 'Run the report first — there is nothing to export.');
+                PosnicPro.alert('warning', 'Run the report first. There is nothing to export.');
                 return;
             }
             var range = PosnicPro.shiftWidget._lastRange || {};
