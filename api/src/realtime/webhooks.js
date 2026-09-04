@@ -38,6 +38,21 @@ const TIMEOUT_MS = 10_000;
 const DRAIN_EVERY_MS = 60_000; // how often lazy draining may run, per process
 const drainLast = new Map(); // dbName -> ts
 
+/* Store only stable, non-sensitive failure categories. Raw exception messages can
+ * contain hostnames, query strings, credentials or payload fragments and do not
+ * belong in durable delivery records. */
+function classifyFailure(outcome) {
+  const status = Number(outcome && outcome.status) || 0;
+  if (status === 408) return { code: 'http_408', retryable: true };
+  if (status === 429) return { code: 'http_429', retryable: true };
+  if (status >= 500) return { code: 'http_5xx', retryable: true };
+  if (status >= 400) return { code: 'http_4xx', retryable: false };
+  if (outcome && ['AbortError', 'TimeoutError'].includes(outcome.errorName)) {
+    return { code: 'timeout', retryable: true };
+  }
+  return { code: 'network_error', retryable: true };
+}
+
 function sign(secret, body) {
   return 'sha256=' + crypto.createHmac('sha256', String(secret)).update(body).digest('hex');
 }
@@ -100,10 +115,11 @@ async function attempt(db, delivery, sub) {
     });
     outcome = { ok: res.status >= 200 && res.status < 300, status: res.status };
   } catch (err) {
-    outcome = { ok: false, status: 0, error: err.message };
+    outcome = { ok: false, status: 0, errorName: err && err.name };
   }
 
   const attempts = (delivery.attempts || 0) + 1;
+  const failure = outcome.ok ? null : classifyFailure(outcome);
   if (outcome.ok) {
     await db.collection(DELIVERIES).updateOne(
       { _id: delivery._id },
@@ -116,7 +132,7 @@ async function attempt(db, delivery, sub) {
         },
       }
     );
-  } else if (attempts >= MAX_ATTEMPTS) {
+  } else if (!failure.retryable || attempts >= MAX_ATTEMPTS) {
     await db.collection(DELIVERIES).updateOne(
       { _id: delivery._id },
       {
@@ -124,8 +140,10 @@ async function attempt(db, delivery, sub) {
           status: 'dead',
           attempts,
           lastStatus: outcome.status,
-          lastError: outcome.error || '',
+          lastErrorCode: failure.code,
+          deadLetteredAt: new Date(),
         },
+        $unset: { lastError: '', 'payload.at': '', 'payload.shop': '' },
       }
     );
   } else {
@@ -137,8 +155,9 @@ async function attempt(db, delivery, sub) {
           attempts,
           nextAt: new Date(Date.now() + BACKOFF_MS[Math.min(attempts - 1, BACKOFF_MS.length - 1)]),
           lastStatus: outcome.status,
-          lastError: outcome.error || '',
+          lastErrorCode: failure.code,
         },
+        $unset: { lastError: '' },
       }
     );
   }
@@ -210,7 +229,14 @@ async function drainDue(db, dbName) {
           .collection(DELIVERIES)
           .updateOne(
             { _id: d._id },
-            { $set: { status: 'dead', lastError: 'subscription removed' } }
+            {
+              $set: {
+                status: 'dead',
+                lastErrorCode: 'subscription_removed',
+                deadLetteredAt: new Date(),
+              },
+              $unset: { lastError: '', 'payload.at': '', 'payload.shop': '' },
+            }
           );
         continue;
       }
@@ -236,7 +262,8 @@ async function recentDeliveries(db, limit = 50) {
           createdAt: 1,
           deliveredAt: 1,
           lastStatus: 1,
-          lastError: 1,
+          lastErrorCode: 1,
+          deadLetteredAt: 1,
           subscription_id: 1,
         },
       }
@@ -255,6 +282,7 @@ module.exports = {
   recentDeliveries,
   sign,
   urlAllowed,
+  classifyFailure,
   SUBS,
   DELIVERIES,
   MAX_ATTEMPTS,
