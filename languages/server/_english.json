@@ -1,0 +1,2377 @@
+{
+  "A \"from\" date is required": [
+    "src/controllers/categories.controller.js"
+  ],
+  "A branch cannot copy its catalogue from itself": [
+    "src/services/catalogue-copy.js"
+  ],
+  "A family needs at least two variants.": [
+    "src/services/item.service.js"
+  ],
+  "A group with this name already exists.": [
+    "src/models/setting.model.js"
+  ],
+  "A kiosk with this Store ID already exists": [
+    "src/models/setting.model.js"
+  ],
+  "A parked cart cannot be paid": [
+    "src/services/invoice-sync.js"
+  ],
+  "A parked cart is not a sale": [
+    "src/services/invoice-sync.js"
+  ],
+  "A sale id is required": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "A valid id is required": [
+    "src/repositories/shift.repository.js"
+  ],
+  "A valid shift id is required": [
+    "src/repositories/shift.repository.js"
+  ],
+  "A valid supplier is required": [
+    "src/repositories/item.repository.js"
+  ],
+  "A valid user_id is required": [
+    "src/repositories/shift.repository.js",
+    "src/services/authorization.service.js",
+    "src/services/shift.service.js"
+  ],
+  "API v2": [
+    "src/routes/index.js"
+  ],
+  "Account created successfully": [
+    "src/models/install.model.js"
+  ],
+  "Active branch does not belong to the current license": [
+    "src/repositories/item.repository.js"
+  ],
+  "Active categories retrieved successfully": [
+    "src/services/category.service.js"
+  ],
+  "Add at least one item to adjust": [
+    "src/repositories/item.repository.js"
+  ],
+  "Add transaction successfully": [
+    "src/controllers/customers.controller.js"
+  ],
+  "All categories are already imported": [
+    "src/models/category.model.js",
+    "src/services/category.service.js"
+  ],
+  "All customers are already imported": [
+    "src/services/customer.service.js"
+  ],
+  "All suppliers are already imported": [
+    "src/models/supplier-legacy.model.js",
+    "src/services/supplier.service.js"
+  ],
+  "Already applied": [
+    "src/services/coupon.service.js"
+  ],
+  "Already connected": [
+    "src/services/whatsapp.service.js"
+  ],
+  "Already earned": [
+    "src/services/loyalty.service.js"
+  ],
+  "Already issued": [
+    "src/services/cashback.service.js"
+  ],
+  "Already redeemed": [
+    "src/services/loyalty.service.js"
+  ],
+  "Already rewarded": [
+    "src/services/loyalty.service.js"
+  ],
+  "Already used this link, please contact posnic admin !.": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Amount and type are required": [
+    "src/services/expense.service.js"
+  ],
+  "An error occurred while computing profit": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching active orders": [
+    "src/controllers/sales.controller.js"
+  ],
+  "An error occurred while fetching best selling products": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching dashboard totals": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching dashboard welcome message": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching expired products data": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching payment mode data": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching pending activities": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching sales/purchase data": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while fetching top performers": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while loading the dashboard": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "An error occurred while verifying the token": [
+    "src/controllers/auth.controller.js"
+  ],
+  "An invoice id is required": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Another customer with this email already exists": [
+    "src/services/customer.service.js"
+  ],
+  "Another customer with this phone number already exists": [
+    "src/services/customer.service.js"
+  ],
+  "Approved": [
+    "src/services/authorization.service.js"
+  ],
+  "At least one branch must be assigned to the user": [
+    "src/models/user.model.js"
+  ],
+  "At least one branch must be selected": [
+    "src/models/user.model.js"
+  ],
+  "At most 200 items per adjustment": [
+    "src/repositories/item.repository.js"
+  ],
+  "At most 50 variants per family.": [
+    "src/services/item.service.js"
+  ],
+  "Audience preview": [
+    "src/services/campaign.service.js"
+  ],
+  "Authentication required": [
+    "src/controllers/branches.controller.js",
+    "src/controllers/dashboard.controller.js",
+    "src/controllers/users.controller.js"
+  ],
+  "Authentication successful": [
+    "src/services/user.service.js"
+  ],
+  "Available": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Backup Details Not found": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Backup records retrieved successfully": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Barcode \"": [
+    "src/services/item.service.js"
+  ],
+  "Below referral minimum spend": [
+    "src/services/loyalty.service.js"
+  ],
+  "Branch Data Exported": [
+    "src/models/branch.model.js"
+  ],
+  "Branch ID and License are required": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Branch ID is required": [
+    "src/controllers/sales.controller.js",
+    "src/services/category.service.js",
+    "src/services/customer-category.service.js",
+    "src/services/sale.service.js"
+  ],
+  "Branch ID not found": [
+    "src/repositories/invoice.repository.js",
+    "src/repositories/item.repository.js",
+    "src/repositories/purchase-order.repository.js",
+    "src/repositories/quote.repository.js"
+  ],
+  "Branch ID not found. Please ensure you are logged in.": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Branch ID required": [
+    "src/models/branch.model.js"
+  ],
+  "Branch added successfully": [
+    "src/models/branch.model.js"
+  ],
+  "Branch and licence are required.": [
+    "src/services/install.service.js"
+  ],
+  "Branch and license context required": [
+    "src/models/expense.model.js",
+    "src/models/setting.model.js",
+    "src/models/supplier-legacy.model.js",
+    "src/repositories/item.repository.js"
+  ],
+  "Branch context is missing for import": [
+    "src/models/category.model.js"
+  ],
+  "Branch context is required": [
+    "src/repositories/item.repository.js",
+    "src/repositories/settings.repository.js"
+  ],
+  "Branch context required": [
+    "src/controllers/sales.controller.js"
+  ],
+  "Branch could not be resolved": [
+    "src/controllers/categories.controller.js"
+  ],
+  "Branch deleted successfully": [
+    "src/models/branch.model.js"
+  ],
+  "Branch details not found": [
+    "src/models/setting.model.js"
+  ],
+  "Branch id is required": [
+    "src/controllers/branches.controller.js",
+    "src/models/branch.model.js"
+  ],
+  "Branch information is required. Please ensure you are logged in with a valid branch.": [
+    "src/models/customer-category.model.js"
+  ],
+  "Branch is required": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Branch name updated successfully": [
+    "src/services/user.service.js"
+  ],
+  "Branch not found": [
+    "src/controllers/dashboard.controller.js",
+    "src/models/branch.model.js",
+    "src/models/sale.model.js",
+    "src/models/setting.model.js",
+    "src/repositories/item.repository.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Branch not found for the given branch/store ID.": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Branch not found or license mismatch": [
+    "src/models/setting.model.js"
+  ],
+  "Branch not found or unauthorized": [
+    "src/models/setting.model.js"
+  ],
+  "Branch not found.": [
+    "src/services/install.service.js"
+  ],
+  "Branch updated successfully": [
+    "src/models/branch.model.js"
+  ],
+  "Branches retrieved successfully": [
+    "src/controllers/branches.controller.js"
+  ],
+  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": [
+    "src/repositories/item.repository.js"
+  ],
+  "Campaigns": [
+    "src/services/campaign.service.js"
+  ],
+  "Cancelling a sale requires POST": [
+    "src/routes/sales.routes.js"
+  ],
+  "Card is required": [
+    "src/services/authorization.service.js"
+  ],
+  "Card not recognised": [
+    "src/services/shift.service.js"
+  ],
+  "Card not recognised or not authorised for this action": [
+    "src/services/authorization.service.js"
+  ],
+  "Cash added successfully": [
+    "src/repositories/register.repository.js"
+  ],
+  "Cashback issued": [
+    "src/services/cashback.service.js"
+  ],
+  "Cashback off": [
+    "src/services/cashback.service.js"
+  ],
+  "Cashback voided": [
+    "src/services/cashback.service.js"
+  ],
+  "Categories exported successfully": [
+    "src/services/category.service.js"
+  ],
+  "Categories retrieved successfully": [
+    "src/services/category.service.js"
+  ],
+  "Categories with items retrieved successfully": [
+    "src/services/category.service.js"
+  ],
+  "Category ID required": [
+    "src/repositories/item.repository.js"
+  ],
+  "Category Id Not Found": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Category Id is mandatory": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Category created successfully": [
+    "src/services/category.service.js"
+  ],
+  "Category data imported successfully": [
+    "src/models/category.model.js",
+    "src/services/category.service.js"
+  ],
+  "Category deleted successfully": [
+    "src/routes/categories.routes.js"
+  ],
+  "Category name is required": [
+    "src/services/category.service.js"
+  ],
+  "Category not found": [
+    "src/routes/categories.routes.js",
+    "src/services/category.service.js"
+  ],
+  "Category not found or already deleted": [
+    "src/routes/categories.routes.js"
+  ],
+  "Category retrieved successfully": [
+    "src/services/category.service.js"
+  ],
+  "Category updated successfully": [
+    "src/services/category.service.js"
+  ],
+  "Category with this name already exists in this branch": [
+    "src/services/category.service.js"
+  ],
+  "Changes Retrieved": [
+    "src/controllers/categories.controller.js",
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Choose a supplier": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Claim failed": [
+    "app.js"
+  ],
+  "Client initialized": [
+    "src/services/whatsapp.service.js"
+  ],
+  "Clocked out": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Common settings updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Could not check that API key.": [
+    "src/middleware/api-key.js"
+  ],
+  "Could not check the purchase history, so nothing was removed.": [
+    "src/repositories/item.repository.js"
+  ],
+  "Could not check the sales history, so nothing was removed.": [
+    "src/repositories/item.repository.js"
+  ],
+  "Could not create \"": [
+    "src/services/item.service.js"
+  ],
+  "Could not create token": [
+    "app.js"
+  ],
+  "Could not email the report": [
+    "app.js"
+  ],
+  "Could not list deliveries": [
+    "app.js"
+  ],
+  "Could not list tokens": [
+    "app.js"
+  ],
+  "Could not list webhooks": [
+    "app.js"
+  ],
+  "Could not read branch modules": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Could not read state": [
+    "app.js"
+  ],
+  "Could not register webhook": [
+    "app.js"
+  ],
+  "Could not remove webhook": [
+    "app.js"
+  ],
+  "Could not revoke token": [
+    "app.js"
+  ],
+  "Coupon redemptions reversed": [
+    "src/services/coupon.service.js"
+  ],
+  "Coupons": [
+    "src/services/coupon.service.js"
+  ],
+  "Credentials are never copied between branches": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Current password is incorrect": [
+    "src/models/setting.model.js"
+  ],
+  "Customer Category Data Exported": [
+    "src/models/customer-category.model.js"
+  ],
+  "Customer Details Not Found": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Customer ID and amount are required": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Customer ID is required": [
+    "src/models/setting.model.js"
+  ],
+  "Customer and supplier ids are required": [
+    "src/models/setting.model.js"
+  ],
+  "Customer categories retrieved successfully": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category added successfully": [
+    "src/models/customer-category.model.js"
+  ],
+  "Customer category created successfully": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category data already imported": [
+    "src/models/customer-category.model.js",
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category data imported successfully": [
+    "src/models/customer-category.model.js",
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category deleted successfully": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category name is required": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category not found": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category retrieved successfully": [
+    "src/services/customer-category.service.js"
+  ],
+  "Customer category updated successfully": [
+    "src/models/customer-category.model.js",
+    "src/services/customer-category.service.js"
+  ],
+  "Customer created successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customer deleted successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customer name is required": [
+    "src/models/customer.model.js",
+    "src/services/customer.service.js"
+  ],
+  "Customer not found": [
+    "src/controllers/customers.controller.js",
+    "src/models/setting.model.js",
+    "src/services/credit.service.js",
+    "src/services/customer.service.js",
+    "src/services/loyalty.service.js"
+  ],
+  "Customer retrieved successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customer summary retrieved successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customer updated successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customer with this email already exists": [
+    "src/services/customer.service.js"
+  ],
+  "Customer with this phone number already exists": [
+    "src/services/customer.service.js"
+  ],
+  "Customers exported successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Customers retrieved successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Data Not Valid": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: receiving_prefix must be 1-6 characters": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: sales_prefix must be 1-6 characters": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: unit_name required (1-20 chars)": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: unit_value required (1-6 chars)": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data changes retrieved successfully": [
+    "src/services/category.service.js",
+    "src/services/customer.service.js",
+    "src/services/supplier.service.js"
+  ],
+  "Database connection not available": [
+    "src/utils/db.js"
+  ],
+  "Database not connected": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "Date range is required": [
+    "src/controllers/sales.controller.js"
+  ],
+  "Debug session filter failed": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "Deletion of this collection is not allowed": [
+    "src/models/setting.model.js"
+  ],
+  "Denomination list retrieved": [
+    "src/models/setting.model.js"
+  ],
+  "Denomination not found or you do not have permission to delete it": [
+    "src/models/setting.model.js"
+  ],
+  "Device ID and Branch ID are required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Device ID is required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Device removed successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Document Not Found": [
+    "src/models/base.model.js"
+  ],
+  "Document Restored successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Draft deleted": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Duplicate key error": [
+    "src/middleware/async.js"
+  ],
+  "Email is not configured on this server - the PDF was generated but not sent": [
+    "app.js"
+  ],
+  "Email is required": [
+    "src/controllers/users.controller.js"
+  ],
+  "Email settings updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Enter a phone number to test": [
+    "src/services/messaging.service.js"
+  ],
+  "Enter a valid email address": [
+    "app.js"
+  ],
+  "Enter must correct item id": [
+    "src/models/receiving.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Enter the amount received": [
+    "src/services/invoice-sync.js"
+  ],
+  "Error": [
+    "src/models/base.model.js"
+  ],
+  "Error fetching unprinted sales: ": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Error in Data Fetch": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Error marking sales as printed: ": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Error processing your token": [
+    "src/middleware/auth.js"
+  ],
+  "Error updating kiosk settings: ": [
+    "src/models/setting.model.js"
+  ],
+  "Error updating payment settings: ": [
+    "src/models/setting.model.js"
+  ],
+  "Error: ": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Expense Data Exported": [
+    "src/models/expense.model.js"
+  ],
+  "Expense added successfully": [
+    "src/models/expense.model.js",
+    "src/services/expense.service.js"
+  ],
+  "Expense data imported successfully": [
+    "src/models/expense.model.js"
+  ],
+  "Expense not found": [
+    "src/services/expense.service.js"
+  ],
+  "Expense retrieved successfully": [
+    "src/services/expense.service.js"
+  ],
+  "Expense summary retrieved successfully": [
+    "src/services/expense.service.js"
+  ],
+  "Expense updated successfully": [
+    "src/models/expense.model.js",
+    "src/services/expense.service.js"
+  ],
+  "Expenses deleted successfully": [
+    "src/models/expense.model.js"
+  ],
+  "Expenses retrieved successfully": [
+    "src/services/expense.service.js"
+  ],
+  "Expired stock items retrieved successfully": [
+    "src/models/dashboard.model.js"
+  ],
+  "Failed to delete category": [
+    "src/routes/categories.routes.js"
+  ],
+  "Failed to fetch category options": [
+    "src/routes/categories.routes.js"
+  ],
+  "Failed to fetch template: ": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Failed to retrieve branch list": [
+    "src/controllers/branches.controller.js"
+  ],
+  "Failed to update category status": [
+    "src/routes/categories.routes.js"
+  ],
+  "Failed to update customer category": [
+    "src/services/customer-category.service.js"
+  ],
+  "Failed to update password": [
+    "src/models/setting.model.js"
+  ],
+  "Family created: ": [
+    "src/services/item.service.js"
+  ],
+  "Field Added Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Field Updated Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Field deleted successfully": [
+    "src/models/setting.model.js"
+  ],
+  "File is required": [
+    "src/middleware/validateRequest.js"
+  ],
+  "File writing completed": [
+    "src/controllers/crons.controller.js"
+  ],
+  "Frequent items fetched": [
+    "src/repositories/sale.repository.js"
+  ],
+  "General Setting Not Updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "General Setting updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Get Successfully": [
+    "src/controllers/customers.controller.js",
+    "src/controllers/items.controller.js",
+    "src/controllers/receivings.controller.js",
+    "src/repositories/sale.repository.js",
+    "src/services/item.service.js"
+  ],
+  "Get detail successfully": [
+    "src/models/receiving.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Get payment details successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Get payment return sales transaction details successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Get payment sales transaction details successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Get products details": [
+    "src/repositories/item.repository.js"
+  ],
+  "Get store details successfully": [
+    "src/controllers/branches.controller.js"
+  ],
+  "Get successfully": [
+    "src/models/receiving.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Get tax details successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Get unprinted sales successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Graphical report successfully": [
+    "src/models/receiving.model.js",
+    "src/models/supplier-legacy.model.js",
+    "src/repositories/customer.repository.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Group id required": [
+    "src/models/setting.model.js"
+  ],
+  "Handler not implemented": [
+    "src/routes/items.routes.js",
+    "src/routes/receivings.routes.js",
+    "src/routes/sales.routes.js"
+  ],
+  "Hourly rate must be a non-negative number": [
+    "src/services/shift.service.js"
+  ],
+  "Hourly rate saved": [
+    "src/services/shift.service.js"
+  ],
+  "ID is required": [
+    "src/models/base.model.js"
+  ],
+  "Id is Required": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Image update successfully": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Image update unsuccessfully": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Image uploaded successfully": [
+    "src/controllers/customers.controller.js",
+    "src/models/setting.model.js"
+  ],
+  "Image was deleted": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Incorrect format of filter": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Incorrect username or password": [
+    "src/services/user.service.js"
+  ],
+  "Installation is not configured on this server": [
+    "src/middleware/install.validation.js"
+  ],
+  "Insufficient loyalty points": [
+    "src/services/customer.service.js"
+  ],
+  "Internal Server Error": [
+    "src/utils/errorResponse.js"
+  ],
+  "Internal server error during validation": [
+    "src/middleware/validateRequest.js"
+  ],
+  "Invalid API key.": [
+    "src/middleware/api-key.js"
+  ],
+  "Invalid Admin Password": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Invalid Branch ID format": [
+    "src/services/sale.service.js"
+  ],
+  "Invalid Branch IDs": [
+    "src/models/branch.model.js"
+  ],
+  "Invalid GST number format": [
+    "src/models/customer.model.js"
+  ],
+  "Invalid ID format": [
+    "src/middleware/async.js"
+  ],
+  "Invalid PIN or not authorised for this action": [
+    "src/services/authorization.service.js"
+  ],
+  "Invalid branch ID format. ID must be a 24 character hex string.": [
+    "src/routes/branches.routes.js"
+  ],
+  "Invalid branch or category id": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid branch or customer id": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid branch or user id": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid card": [
+    "src/services/authorization.service.js"
+  ],
+  "Invalid category id": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid credentials": [
+    "src/services/user.service.js"
+  ],
+  "Invalid credentials or inactive account": [
+    "src/services/user.service.js"
+  ],
+  "Invalid customer IDs": [
+    "src/services/customer.service.js"
+  ],
+  "Invalid email format": [
+    "src/models/customer.model.js"
+  ],
+  "Invalid file name": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Invalid file type. Only JPG, PNG, GIF, and PDF are allowed.": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Invalid import data": [
+    "src/services/customer.service.js"
+  ],
+  "Invalid invoice id": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invalid loyalty tier": [
+    "src/services/customer.service.js"
+  ],
+  "Invalid or missing authentication token": [
+    "src/middleware/security.js"
+  ],
+  "Invalid or revoked API token": [
+    "src/middleware/auth.js"
+  ],
+  "Invalid points amount": [
+    "src/services/customer.service.js"
+  ],
+  "Invalid purchase order id": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Invalid quote id": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Invalid receiving ID": [
+    "src/models/receiving.model.js"
+  ],
+  "Invalid return id": [
+    "src/models/receiving.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid sale id": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid saleIds provided.": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Invalid schedule time": [
+    "src/services/campaign.service.js"
+  ],
+  "Invalid subscription": [
+    "app.js"
+  ],
+  "Invalid template ID format": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Invalid theme settings data": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Invalid token. Please log in again!": [
+    "src/middleware/auth.js"
+  ],
+  "Invalid token. Please log in again.": [
+    "src/controllers/auth.controller.js"
+  ],
+  "Invalid user ID format. ID must be a 24 character hex string.": [
+    "src/routes/users.routes.js"
+  ],
+  "Invoice ": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invoice already issued as sale ": [
+    "src/services/invoice-booking.js"
+  ],
+  "Invoice cancelled": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invoice deleted": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invoice issued - booked as sale ": [
+    "src/services/invoice-booking.js"
+  ],
+  "Invoice not found": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invoice saved": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Invoice updated": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Issue the invoice first": [
+    "src/services/invoice-sync.js"
+  ],
+  "Item Data Exported": [
+    "src/repositories/item.repository.js"
+  ],
+  "Item ID and new item name are required": [
+    "src/repositories/stock-log.repository.js"
+  ],
+  "Item not found": [
+    "src/repositories/item.repository.js"
+  ],
+  "Item not found in inventory": [
+    "src/models/inventory.model.js"
+  ],
+  "Item updated": [
+    "src/repositories/item.repository.js"
+  ],
+  "Items retrieved": [
+    "src/repositories/item.repository.js"
+  ],
+  "Kiosk availability updated successfully": [
+    "src/repositories/item.repository.js"
+  ],
+  "Kiosk hourly payment chart data fetched successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Kiosk image update successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Kiosk settings updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "License ID required": [
+    "src/models/branch.model.js"
+  ],
+  "License and email are required": [
+    "src/controllers/users.controller.js"
+  ],
+  "License context is required": [
+    "src/repositories/item.repository.js"
+  ],
+  "License information is required.": [
+    "src/models/customer-category.model.js"
+  ],
+  "Link requested - the connector will show a QR code shortly": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "List id required": [
+    "src/models/setting.model.js"
+  ],
+  "Logged out successfully": [
+    "src/services/whatsapp.service.js"
+  ],
+  "Loyalty liability": [
+    "src/services/loyalty.service.js"
+  ],
+  "Loyalty reversed": [
+    "src/services/loyalty.service.js"
+  ],
+  "Loyalty summary": [
+    "src/services/loyalty.service.js"
+  ],
+  "Mail sent successfully": [
+    "src/models/sale.model.js"
+  ],
+  "Message has been sent": [
+    "src/services/sms.service.js"
+  ],
+  "Message or template is required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Message sent successfully": [
+    "src/services/whatsapp.service.js"
+  ],
+  "Modifier group created": [
+    "src/models/setting.model.js"
+  ],
+  "Modifier group deleted": [
+    "src/models/setting.model.js"
+  ],
+  "Modifier group updated": [
+    "src/models/setting.model.js"
+  ],
+  "Module is required": [
+    "src/services/base.service.js"
+  ],
+  "New password and confirmation are required": [
+    "src/controllers/users.controller.js"
+  ],
+  "No IDs provided": [
+    "src/models/expense.model.js",
+    "src/models/receiving.model.js",
+    "src/repositories/item.repository.js",
+    "src/repositories/sale.repository.js",
+    "src/services/receiving.service.js"
+  ],
+  "No IDs provided for export": [
+    "src/controllers/customer-categories.controller.js",
+    "src/models/receiving.model.js",
+    "src/services/receiving.service.js"
+  ],
+  "No IDs provided for restoration": [
+    "src/models/setting.model.js"
+  ],
+  "No SMS provider configured (brevo or msg91)": [
+    "src/services/sms.service.js"
+  ],
+  "No branch IDs provided": [
+    "src/models/branch.model.js"
+  ],
+  "No branches available for this user": [
+    "src/controllers/users.controller.js"
+  ],
+  "No cashback for this bill": [
+    "src/services/cashback.service.js"
+  ],
+  "No cashback to reverse": [
+    "src/services/cashback.service.js"
+  ],
+  "No categories to import": [
+    "src/models/category.model.js"
+  ],
+  "No category IDs provided": [
+    "src/services/category.service.js"
+  ],
+  "No category data provided": [
+    "src/services/category.service.js"
+  ],
+  "No changes made or item not found": [
+    "src/repositories/item.repository.js"
+  ],
+  "No changes made to the order": [
+    "src/repositories/sale.repository.js"
+  ],
+  "No data to import": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "No database handle": [
+    "src/services/catalogue-copy.js"
+  ],
+  "No documents found for restoration": [
+    "src/models/setting.model.js"
+  ],
+  "No expense IDs provided": [
+    "src/services/expense.service.js"
+  ],
+  "No expenses to import": [
+    "src/models/expense.model.js"
+  ],
+  "No file uploaded": [
+    "src/controllers/customers.controller.js"
+  ],
+  "No files uploaded": [
+    "src/models/setting.model.js"
+  ],
+  "No invoice on this sale": [
+    "src/services/invoice-sync.js"
+  ],
+  "No items matched": [
+    "src/repositories/item.repository.js"
+  ],
+  "No items to import": [
+    "src/repositories/item.repository.js"
+  ],
+  "No matching expenses found": [
+    "src/models/expense.model.js"
+  ],
+  "No old deleted logs to cleanup": [
+    "src/repositories/stock-log.repository.js"
+  ],
+  "No open shift to clock out": [
+    "src/repositories/shift.repository.js"
+  ],
+  "No points earned": [
+    "src/services/loyalty.service.js"
+  ],
+  "No referral points configured": [
+    "src/services/loyalty.service.js"
+  ],
+  "No referrer": [
+    "src/services/loyalty.service.js"
+  ],
+  "No return items provided": [
+    "src/repositories/sale.repository.js"
+  ],
+  "No rows to import": [
+    "src/repositories/item.repository.js"
+  ],
+  "No sales data found for the period": [
+    "src/models/dashboard.model.js"
+  ],
+  "No shop in context": [
+    "app.js"
+  ],
+  "No such branch in this shop": [
+    "src/models/setting.model.js"
+  ],
+  "No such modifier group": [
+    "src/models/setting.model.js"
+  ],
+  "No such price list": [
+    "src/models/setting.model.js"
+  ],
+  "No supplier IDs provided": [
+    "src/services/supplier.service.js"
+  ],
+  "No supplier data provided": [
+    "src/services/supplier.service.js"
+  ],
+  "No theme settings found": [
+    "src/controllers/settings.controller.js",
+    "src/models/setting.model.js"
+  ],
+  "No token provided": [
+    "src/routes/auth-utils.routes.js"
+  ],
+  "No unprinted KOT sales found for the specified branch.": [
+    "src/repositories/sale.repository.js"
+  ],
+  "No user IDs provided": [
+    "src/models/user.model.js"
+  ],
+  "No user for card": [
+    "src/repositories/shift.repository.js"
+  ],
+  "No user in context": [
+    "src/repositories/shift.repository.js"
+  ],
+  "No users found to delete": [
+    "src/services/user.service.js"
+  ],
+  "No valid IDs provided": [
+    "src/models/receiving.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "No valid IDs provided for export": [
+    "src/models/receiving.model.js"
+  ],
+  "No valid category rows to import": [
+    "src/models/category.model.js"
+  ],
+  "No valid expenses to import": [
+    "src/models/expense.model.js"
+  ],
+  "No valid fields provided for update": [
+    "src/models/setting.model.js"
+  ],
+  "No valid files uploaded": [
+    "src/models/setting.model.js"
+  ],
+  "No valid payment settings provided": [
+    "src/models/setting.model.js"
+  ],
+  "No valid sale IDs to mark as printed.": [
+    "src/repositories/sale.repository.js"
+  ],
+  "No webhook data found for this QR code": [
+    "src/models/sale.model.js"
+  ],
+  "Not Found": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Not a valid family id": [
+    "src/repositories/item.repository.js"
+  ],
+  "Not available instock": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Not connected to MongoDB": [
+    "src/utils/db.js"
+  ],
+  "Not found": [
+    "src/models/setting.model.js"
+  ],
+  "Not implemented yet": [
+    "src/routes/activity-logs.routes.js"
+  ],
+  "Not valid Input": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Nothing left to cancel on this order": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Nothing outstanding": [
+    "src/services/credit.service.js"
+  ],
+  "Nothing to apply": [
+    "src/services/coupon.service.js"
+  ],
+  "Nothing to receive - enter a quantity": [
+    "src/models/receiving.model.js"
+  ],
+  "Nothing to redeem": [
+    "src/services/loyalty.service.js"
+  ],
+  "Nothing to reverse": [
+    "src/services/coupon.service.js",
+    "src/services/loyalty.service.js"
+  ],
+  "Nothing to update": [
+    "src/repositories/item.repository.js"
+  ],
+  "Nothing to write": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Only a draft can be deleted - an issued invoice is reversed on its sale": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Only a draft can be issued": [
+    "src/services/invoice-booking.js"
+  ],
+  "Only a draft can be ordered": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Only an open or accepted quote can be converted": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Only an open or accepted quote can become an invoice": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Only an open quote can be accepted or declined": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Only an open quote can be deleted": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Only draft or ordered purchase orders can be edited": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Only drafts can be deleted": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Order cancelled successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Order history fetched": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Order not found": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Order placed successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Order updated successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Outstanding customers": [
+    "src/services/credit.service.js"
+  ],
+  "Outstanding report retrieved successfully": [
+    "src/services/customer.service.js",
+    "src/services/supplier.service.js"
+  ],
+  "PIN is required": [
+    "src/services/authorization.service.js"
+  ],
+  "PIN must be 4 to 8 digits": [
+    "src/services/authorization.service.js"
+  ],
+  "Password mismatch": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Password reset is not configured for this shop. Please contact support.": [
+    "src/models/setting.model.js"
+  ],
+  "Password reset key is required": [
+    "src/controllers/users.controller.js"
+  ],
+  "Password successfully updated": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Password updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Passwords do not match": [
+    "src/models/setting.model.js"
+  ],
+  "Payment Gateway Updated": [
+    "src/models/setting.model.js"
+  ],
+  "Payment details retrieved successfully": [
+    "src/services/customer.service.js",
+    "src/services/supplier.service.js"
+  ],
+  "Payment method added successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Payment method updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Payment mode data retrieved successfully": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "Payment not found or already deleted": [
+    "src/models/setting.model.js"
+  ],
+  "Payment noted": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "Payment of ": [
+    "src/services/invoice-sync.js"
+  ],
+  "Payment settings updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Pending activities retrieved successfully": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "Phone number is required": [
+    "src/controllers/whatsapp.controller.js",
+    "src/models/customer.model.js"
+  ],
+  "Phone number must be at least 10 digits": [
+    "src/models/customer.model.js"
+  ],
+  "Phonepe Payment Gateway Updated": [
+    "src/models/setting.model.js"
+  ],
+  "Pick a reason and its direction (count sets, loss/damage subtract, found adds)": [
+    "src/repositories/item.repository.js"
+  ],
+  "Pick at least one group to copy": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Pick two different branches": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Plan updated successfully": [
+    "src/services/user.service.js"
+  ],
+  "Please complete your transaction": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Please provide a valid email address": [
+    "src/models/user.model.js"
+  ],
+  "Posnic API v2 root": [
+    "app.js"
+  ],
+  "Preferences updated successfully": [
+    "src/services/customer.service.js"
+  ],
+  "Preview ready": [
+    "src/repositories/item.repository.js"
+  ],
+  "Price list deleted": [
+    "src/models/setting.model.js"
+  ],
+  "Price list saved": [
+    "src/models/setting.model.js"
+  ],
+  "Print setting retrieval failed": [
+    "src/repositories/user.repository.js"
+  ],
+  "Print setting retrieved successfully": [
+    "src/repositories/user.repository.js"
+  ],
+  "Print setting update failed": [
+    "src/repositories/user.repository.js"
+  ],
+  "Print setting updated successfully": [
+    "src/repositories/user.repository.js"
+  ],
+  "Purchase not found": [
+    "src/models/receiving.model.js"
+  ],
+  "Purchase order not found": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Purchase order placed": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Purchase order updated": [
+    "src/repositories/purchase-order.repository.js"
+  ],
+  "Purchase voided - stock reversed, record kept": [
+    "src/models/receiving.model.js"
+  ],
+  "Push unavailable": [
+    "app.js"
+  ],
+  "QR Code Generate successfully": [
+    "src/models/sale.model.js"
+  ],
+  "QR code ID is required": [
+    "src/models/sale.model.js"
+  ],
+  "QR code closed successfully": [
+    "src/models/sale.model.js"
+  ],
+  "QR ordering is not enabled for this branch": [
+    "src/repositories/sale.repository.js"
+  ],
+  "QR status retrieved successfully": [
+    "src/models/sale.model.js"
+  ],
+  "Quantity updated": [
+    "src/repositories/item.repository.js"
+  ],
+  "Quote ": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote already converted": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote already invoiced": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote already sent": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote cancelled": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote converted": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote deleted": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote invoiced": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote marked sent": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote not found": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote saved": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Quote updated": [
+    "src/repositories/quote.repository.js"
+  ],
+  "Receiving Data Exported": [
+    "src/models/receiving.model.js"
+  ],
+  "Receiving Details Not Found": [
+    "src/models/receiving.model.js"
+  ],
+  "Receiving added successfully": [
+    "src/models/receiving.model.js"
+  ],
+  "Receiving not found": [
+    "src/models/receiving.model.js"
+  ],
+  "Receiving updated successfully": [
+    "src/models/receiving.model.js"
+  ],
+  "Receivings exported successfully": [
+    "src/models/receiving.model.js"
+  ],
+  "Recent cashback": [
+    "src/services/cashback.service.js"
+  ],
+  "Referral rewarded": [
+    "src/services/loyalty.service.js"
+  ],
+  "Referrals off": [
+    "src/services/loyalty.service.js"
+  ],
+  "Refund could not be saved because another return changed this sale": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Refund is already processing or already completed for this sale": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Reminders are off": [
+    "src/services/credit.service.js"
+  ],
+  "Report PDF missing or too large": [
+    "app.js"
+  ],
+  "Report email setting updated": [
+    "src/models/setting.model.js"
+  ],
+  "Report emailed": [
+    "app.js"
+  ],
+  "Report failed": [
+    "app.js"
+  ],
+  "Return id is required": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Return quantity cannot exceed the remaining sale quantity": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Return receiving product details fetched successfully": [
+    "src/models/receiving.model.js"
+  ],
+  "Return receiving updated successfully": [
+    "src/models/receiving-return.model.js"
+  ],
+  "Return receiving value is null": [
+    "src/models/receiving-return.model.js"
+  ],
+  "Return sales value is null": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Role created": [
+    "src/repositories/role.repository.js"
+  ],
+  "Role deleted": [
+    "src/repositories/role.repository.js"
+  ],
+  "Role must be one of: admin, manager, cashier, staff, super_admin, api": [
+    "src/models/user.model.js"
+  ],
+  "Role not found": [
+    "src/repositories/role.repository.js"
+  ],
+  "SSO authentication successful": [
+    "src/services/user.service.js"
+  ],
+  "SSO token generated successfully": [
+    "src/services/user.service.js"
+  ],
+  "SSO token has expired": [
+    "src/services/user.service.js"
+  ],
+  "Sale ": [
+    "src/services/invoice-booking.js"
+  ],
+  "Sale Data Exported": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Sale added successfully": [
+    "src/models/sale.model.js"
+  ],
+  "Sale not found": [
+    "src/controllers/whatsapp.controller.js",
+    "src/repositories/sale.repository.js",
+    "src/services/invoice-sync.js"
+  ],
+  "Sale not found for update": [
+    "src/services/sale.service.js"
+  ],
+  "Sale saved successfully": [
+    "src/services/sale.service.js"
+  ],
+  "Sales Details Not Found": [
+    "src/controllers/items.controller.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "Sales audit logs retrieved successfully": [
+    "src/controllers/activity-logs.controller.js"
+  ],
+  "Sales id is missing or invalid": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Sales marked as printed successfully.": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Sales settled successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Sales summary report retrieved successfully": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Sales targets saved": [
+    "src/services/shift.service.js"
+  ],
+  "Schedule entry not found": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Schedule entry removed": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Scheduled": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Scheduled run complete": [
+    "src/services/campaign.service.js"
+  ],
+  "Search completed successfully": [
+    "src/services/category.service.js",
+    "src/services/customer.service.js",
+    "src/services/supplier.service.js"
+  ],
+  "Search query must be at least 2 characters": [
+    "src/services/branch.service.js"
+  ],
+  "Search term is required": [
+    "src/services/customer.service.js"
+  ],
+  "Selected branches not found or do not belong to your license. Please select valid branches.": [
+    "src/models/user.model.js"
+  ],
+  "Selected collections processed": [
+    "src/models/setting.model.js"
+  ],
+  "Send failed": [
+    "app.js"
+  ],
+  "Session filter debug completed": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "Share recorded": [
+    "src/repositories/invoice.repository.js",
+    "src/repositories/quote.repository.js"
+  ],
+  "Shift not found": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Shift updated": [
+    "src/repositories/shift.repository.js"
+  ],
+  "Something went wrong!": [
+    "src/middleware/errorHandler.js"
+  ],
+  "Sort order updated successfully": [
+    "src/services/category.service.js"
+  ],
+  "Source branch, target branch and licence are all required": [
+    "src/services/catalogue-copy.js"
+  ],
+  "Starter settings updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "State update failed": [
+    "app.js"
+  ],
+  "Stock changed at another billing counter. Please refresh the item and try again.": [
+    "src/services/sale.service.js"
+  ],
+  "Store details not found": [
+    "src/models/setting.model.js"
+  ],
+  "Subscribed": [
+    "app.js"
+  ],
+  "Subscription failed": [
+    "app.js"
+  ],
+  "Success": [
+    "src/models/base.model.js",
+    "src/models/dashboard.model.js"
+  ],
+  "Successfully logged in": [
+    "src/controllers/auth-utils.controller.js"
+  ],
+  "Successfully login": [
+    "src/controllers/users.controller.js"
+  ],
+  "Successfully updated": [
+    "src/controllers/users.controller.js"
+  ],
+  "Supplier Data Exported": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "Supplier ID is required": [
+    "src/models/setting.model.js"
+  ],
+  "Supplier added successfully": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "Supplier balance updated successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "Supplier created successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "Supplier data imported successfully": [
+    "src/models/supplier-legacy.model.js",
+    "src/services/supplier.service.js"
+  ],
+  "Supplier deleted successfully": [
+    "src/models/supplier-legacy.model.js",
+    "src/services/supplier.service.js"
+  ],
+  "Supplier name is required": [
+    "src/services/supplier.service.js"
+  ],
+  "Supplier not found": [
+    "src/models/setting.model.js",
+    "src/services/supplier.service.js"
+  ],
+  "Supplier retrieved successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "Supplier summary retrieved successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "Supplier updated successfully": [
+    "src/models/supplier-legacy.model.js",
+    "src/services/supplier.service.js"
+  ],
+  "Supplier with this email already exists": [
+    "src/services/supplier.service.js"
+  ],
+  "Suppliers Limit Reached. Upgrade to Premium Plan.": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "Suppliers exported successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "Suppliers retrieved successfully": [
+    "src/services/supplier.service.js"
+  ],
+  "System roles cannot be deleted": [
+    "src/repositories/role.repository.js"
+  ],
+  "System settings retrieved successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Table order not found or you do not have permission to delete it": [
+    "src/models/setting.model.js"
+  ],
+  "Table parameter is required": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Tables with active orders loaded": [
+    "src/services/sale.service.js"
+  ],
+  "Targets must be non-negative numbers": [
+    "src/services/shift.service.js"
+  ],
+  "Tax Added Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Tax Group Added Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Tax Group Updated Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Tax Updated Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Tax deleted successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Tax group not found": [
+    "src/models/setting.model.js"
+  ],
+  "Tax not found or you do not have permission to delete it": [
+    "src/models/setting.model.js"
+  ],
+  "Template ID and Sale ID are required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template ID is required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template deleted successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template id is required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template name and message are required": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template not found": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template processed successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template saved successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Template updated successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Templates retrieved successfully": [
+    "src/controllers/whatsapp.controller.js"
+  ],
+  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": [
+    "src/models/setting.model.js"
+  ],
+  "That branch already has items - nothing was copied": [
+    "src/services/catalogue-copy.js"
+  ],
+  "That card is already assigned to another user": [
+    "src/services/authorization.service.js"
+  ],
+  "That is more than the ": [
+    "src/services/invoice-sync.js"
+  ],
+  "That is not a sample data pack.": [
+    "src/services/install.service.js"
+  ],
+  "That key does not belong to an API user.": [
+    "src/middleware/api-key.js"
+  ],
+  "That shop has no items yet": [
+    "src/services/catalogue-copy.js"
+  ],
+  "The Google Analytics id should look like G-XXXXXXXXXX": [
+    "src/repositories/settings.repository.js"
+  ],
+  "The family needs a product name.": [
+    "src/services/item.service.js"
+  ],
+  "The sale behind this invoice was not found": [
+    "src/services/invoice-sync.js"
+  ],
+  "The sample data is already here - switch Demo Data on to see it.": [
+    "src/services/install.service.js"
+  ],
+  "The user belonging to this token no longer exists.": [
+    "src/controllers/auth.controller.js"
+  ],
+  "The user belonging to this token no longer exists. Please log in again.": [
+    "src/middleware/auth.js"
+  ],
+  "Theme settings not updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Theme settings retrieved": [
+    "src/controllers/settings.controller.js",
+    "src/models/setting.model.js"
+  ],
+  "Theme settings updated": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Theme settings updated successfully": [
+    "src/models/setting.model.js"
+  ],
+  "There was not deleted": [
+    "src/controllers/settings.controller.js"
+  ],
+  "These keys do not belong to ": [
+    "src/repositories/settings.repository.js"
+  ],
+  "This API key has been deactivated.": [
+    "src/middleware/api-key.js"
+  ],
+  "This Branch details already exist in our system": [
+    "src/models/branch.model.js"
+  ],
+  "This category details already exist in our system": [
+    "src/models/customer-category.model.js",
+    "src/services/customer-category.service.js"
+  ],
+  "This database already contains a shop. Installing would replace it, ": [
+    "src/services/install.service.js"
+  ],
+  "This details already exist in our system": [
+    "src/models/setting.model.js"
+  ],
+  "This endpoint is not available to API keys.": [
+    "src/middleware/api-key.js"
+  ],
+  "This field details already exist in our system": [
+    "src/models/setting.model.js"
+  ],
+  "This group is used by ": [
+    "src/models/setting.model.js"
+  ],
+  "This invoice can no longer be edited - it has been issued, or it is closed": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This invoice has been issued - reverse it with a return on sale ": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This invoice is already cancelled": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This invoice is already paid": [
+    "src/services/invoice-sync.js"
+  ],
+  "This invoice was already recorded as sale ": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This invoice was cancelled": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This is default supplier, please choose another supplier and remove this": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "This is default tax, please choose another tax value and remove this": [
+    "src/models/setting.model.js"
+  ],
+  "This item details already exist in our system": [
+    "src/repositories/item.repository.js"
+  ],
+  "This password already exist. Please choose another": [
+    "src/repositories/user.repository.js"
+  ],
+  "This product has already been removed, so you can not modify anything.": [
+    "src/models/receiving.model.js",
+    "src/models/sale.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "This purchase is already fully received": [
+    "src/models/receiving.model.js"
+  ],
+  "This purchase is already voided": [
+    "src/models/receiving.model.js"
+  ],
+  "This purchase was voided - it can no longer be edited": [
+    "src/models/receiving.model.js"
+  ],
+  "This purchase was voided - nothing can be received": [
+    "src/models/receiving.model.js"
+  ],
+  "This quote already has an invoice": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This quote became an invoice - cancel the invoice instead": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This quote can no longer be edited - it is accepted, converted or closed": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This quote has no lines to invoice": [
+    "src/repositories/invoice.repository.js"
+  ],
+  "This quote is already closed": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This quote is closed - nothing to send": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This quote was already converted to a sale": [
+    "src/repositories/quote.repository.js"
+  ],
+  "This refund has already been processed for this sale": [
+    "src/repositories/sale.repository.js"
+  ],
+  "This supplier details already exist in our system": [
+    "src/models/supplier-legacy.model.js"
+  ],
+  "This tax details already exist in our system": [
+    "src/models/setting.model.js"
+  ],
+  "This tax group details already exist in our system": [
+    "src/models/setting.model.js"
+  ],
+  "This token cannot message customers": [
+    "app.js"
+  ],
+  "This transaction belongs to a sale. Cancel the sale instead.": [
+    "src/controllers/customers.controller.js"
+  ],
+  "This unit details already exist in our system": [
+    "src/models/setting.model.js"
+  ],
+  "This user details already exist in our system": [
+    "src/models/user.model.js"
+  ],
+  "Token created. Store it now - it is not shown again.": [
+    "app.js"
+  ],
+  "Token is required": [
+    "src/controllers/users.controller.js"
+  ],
+  "Token sent to email!": [
+    "src/controllers/auth.controller.js"
+  ],
+  "Too many accounts created from this connection. Please wait an hour.": [
+    "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many invoice requests. Please wait a few minutes and try again.": [
+    "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many login attempts, please try again later": [
+    "src/config/auth.js"
+  ],
+  "Too many password reset requests, please try again later": [
+    "src/config/auth.js"
+  ],
+  "Too many password reset requests. Please wait an hour, or contact support.": [
+    "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many requests from this IP, please try again after 15 minutes": [
+    "src/middleware/security.js"
+  ],
+  "Too many requests from this IP, please try again later!": [
+    "app.js"
+  ],
+  "Too many sign-in attempts. Please wait ten minutes and try again, ": [
+    "src/middleware/auth-rate-limit.js"
+  ],
+  "Top performer data retrieved successfully": [
+    "src/models/dashboard.model.js"
+  ],
+  "Top performers retrieved successfully": [
+    "src/controllers/dashboard.controller.js"
+  ],
+  "Transaction deleted successfully": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Transaction id and customer id are required": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Transaction not found": [
+    "src/controllers/customers.controller.js"
+  ],
+  "Transactions retrieved successfully": [
+    "src/services/customer.service.js",
+    "src/services/supplier.service.js"
+  ],
+  "UID is missing": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "Unable to load backup records": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Unable to load branches. Please try again later.": [
+    "src/controllers/users.controller.js"
+  ],
+  "Unable to load default customer": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Unable to load default customer/supplier": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Unable to load default supplier": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Unable to load register list. Please try again later.": [
+    "src/controllers/branches.controller.js",
+    "src/controllers/users.controller.js"
+  ],
+  "Unable to load state list": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Unable to load store. Please try again later.": [
+    "src/controllers/branches.controller.js"
+  ],
+  "Unable to load user access details. Please try again later.": [
+    "src/controllers/users.controller.js"
+  ],
+  "Unauthorized": [
+    "app.js",
+    "src/controllers/customer-categories.controller.js",
+    "src/controllers/customers.controller.js",
+    "src/controllers/settings.controller.js",
+    "src/controllers/users.controller.js"
+  ],
+  "Unit Added Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Unit Updated Successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Unit deleted successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Unit not found or you do not have permission to delete it": [
+    "src/models/setting.model.js"
+  ],
+  "Unknown action": [
+    "src/repositories/invoice.repository.js",
+    "src/repositories/purchase-order.repository.js",
+    "src/repositories/quote.repository.js"
+  ],
+  "Unknown settings group": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Unknown settings group: ": [
+    "src/repositories/settings.repository.js"
+  ],
+  "Update info": [
+    "src/models/setting.model.js"
+  ],
+  "User Data Exported": [
+    "src/models/user.model.js"
+  ],
+  "User Have not Any Branch": [
+    "src/controllers/users.controller.js"
+  ],
+  "User Key Verified Successfully": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "User account is not activated": [
+    "src/services/user.service.js"
+  ],
+  "User added successfully": [
+    "src/models/user.model.js"
+  ],
+  "User adding limit reached. Please upgrade to the Premium Plan.": [
+    "src/models/user.model.js"
+  ],
+  "User deleted successfully": [
+    "src/services/user.service.js"
+  ],
+  "User details update successfully": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "User don't have valid branch. Please contact Administrator": [
+    "src/controllers/users.controller.js"
+  ],
+  "User key is required": [
+    "src/controllers/users.controller.js"
+  ],
+  "User logout successfully": [
+    "src/controllers/users.controller.js"
+  ],
+  "User not found": [
+    "src/controllers/users.controller.js",
+    "src/models/base.model.js",
+    "src/models/setting.model.js",
+    "src/repositories/user.repository.js",
+    "src/services/authorization.service.js",
+    "src/services/shift.service.js",
+    "src/services/user.service.js"
+  ],
+  "User password not set": [
+    "src/models/setting.model.js"
+  ],
+  "User recently changed password! Please log in again.": [
+    "src/controllers/auth.controller.js"
+  ],
+  "User status report retrieved successfully": [
+    "src/models/user.model.js"
+  ],
+  "User updated successfully": [
+    "src/models/user.model.js"
+  ],
+  "Valid Admin": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Valid email required": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Valid item ID required": [
+    "src/repositories/item.repository.js"
+  ],
+  "Valid item id is required": [
+    "src/repositories/item.repository.js"
+  ],
+  "Validation Error": [
+    "src/controllers/users.controller.js",
+    "src/helpers/response.helper.js",
+    "src/middleware/branches.validation.js",
+    "src/middleware/users.validation.js",
+    "src/middleware/validation.js"
+  ],
+  "Validation error": [
+    "src/controllers/users.controller.js"
+  ],
+  "Validation failed": [
+    "src/middleware/async.js",
+    "src/middleware/security.js",
+    "src/middleware/validateRequest.js",
+    "src/middleware/validation.js",
+    "src/utils/validators.js"
+  ],
+  "Variant value \"": [
+    "src/services/item.service.js"
+  ],
+  "Webhook registered. Store the secret now - it is not shown again.": [
+    "app.js"
+  ],
+  "Welcome to the Posnic API v2": [
+    "app.js"
+  ],
+  "WhatsApp connection lost. Please reconnect from Settings → WhatsApp Connection.": [
+    "src/services/whatsapp.service.js"
+  ],
+  "WhatsApp is not connected. Please go to Settings → WhatsApp Connection and connect your WhatsApp first.": [
+    "src/services/whatsapp.service.js"
+  ],
+  "WhatsApp receipt setting retrieved successfully": [
+    "src/models/setting.model.js"
+  ],
+  "WhatsApp receipt setting saved successfully": [
+    "src/models/setting.model.js"
+  ],
+  "Wish and quotes retrieved successfully": [
+    "src/models/dashboard.model.js"
+  ],
+  "Wrong request": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "You Can Not Be Delete Master Branch Setting": [
+    "src/models/branch.model.js"
+  ],
+  "You already have an open shift": [
+    "src/repositories/shift.repository.js"
+  ],
+  "You are not logged in! Please log in to get access.": [
+    "src/controllers/auth.controller.js",
+    "src/middleware/auth.js"
+  ],
+  "You do not have access to the selected branch": [
+    "src/services/user.service.js"
+  ],
+  "You do not have permission to view active orders": [
+    "src/controllers/sales.controller.js"
+  ],
+  "You have reached maximum Branches count, please contact support.": [
+    "src/models/branch.model.js"
+  ],
+  "You tried to sign in too many times with an incorrect account or password": [
+    "src/controllers/users.controller.js"
+  ],
+  "Your account is inactive. Please contact administrator.": [
+    "src/controllers/users.controller.js"
+  ],
+  "Your key deactivated, please contact posnic admin !": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Your link expired, please contact posnic admin !": [
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
+  ],
+  "Your password was recently changed. Please log in again.": [
+    "src/middleware/auth.js"
+  ],
+  "Your sales item quantity is mismatched.": [
+    "src/services/sale.service.js"
+  ],
+  "Your session has expired. Please log in again.": [
+    "src/middleware/auth.js"
+  ],
+  "Your token has expired! Please log in again.": [
+    "src/controllers/auth.controller.js"
+  ],
+  "action is required": [
+    "src/services/authorization.service.js"
+  ],
+  "branch_id is required": [
+    "src/controllers/settings.controller.js"
+  ],
+  "break_minutes must be a non-negative number": [
+    "src/repositories/shift.repository.js"
+  ],
+  "category deleted successfully": [
+    "src/services/category.service.js"
+  ],
+  "clock_out cannot be before clock_in": [
+    "src/repositories/shift.repository.js"
+  ],
+  "customerCategory Exported Successfully": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "customerCategory Exported Unsuccessfully": [
+    "src/controllers/customer-categories.controller.js"
+  ],
+  "dashboard report successfully": [
+    "src/models/dashboard.model.js"
+  ],
+  "date must be YYYY-MM-DD": [
+    "src/repositories/shift.repository.js"
+  ],
+  "denomination data get successfully": [
+    "src/repositories/register.repository.js"
+  ],
+  "download_url missing in document": [
+    "src/models/setting.model.js"
+  ],
+  "empty value": [
+    "src/repositories/sale.repository.js"
+  ],
+  "end must be after start": [
+    "src/repositories/shift.repository.js"
+  ],
+  "error": [
+    "src/models/customer-category.model.js",
+    "src/models/setting.model.js",
+    "src/models/supplier-legacy.model.js"
+  ],
+  "get detail successfully": [
+    "src/controllers/customers.controller.js",
+    "src/repositories/item.repository.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "get successfully": [
+    "src/models/base.model.js",
+    "src/repositories/sale.repository.js"
+  ],
+  "no branch": [
+    "src/services/po-receive-bridge.js"
+  ],
+  "not valid": [
+    "src/controllers/users.controller.js"
+  ],
+  "overview": [
+    "src/models/dashboard.model.js"
+  ],
+  "preview": [
+    "src/repositories/item.repository.js"
+  ],
+  "profit summary": [
+    "src/models/dashboard.model.js"
+  ],
+  "purchase order not found": [
+    "src/services/po-receive-bridge.js"
+  ],
+  "register report successfully": [
+    "src/models/branch.model.js"
+  ],
+  "something went wrong, try again!": [
+    "src/controllers/users.controller.js"
+  ],
+  "start and end must be HH:MM": [
+    "src/repositories/shift.repository.js"
+  ],
+  "success": [
+    "src/controllers/customers.controller.js",
+    "src/controllers/dashboard.controller.js",
+    "src/controllers/settings.controller.js",
+    "src/controllers/users.controller.js",
+    "src/models/base.model.js",
+    "src/models/branch.model.js",
+    "src/models/customer-category.model.js",
+    "src/models/dashboard.model.js",
+    "src/models/receiving.model.js",
+    "src/models/setting.model.js",
+    "src/models/supplier-legacy.model.js",
+    "src/models/user.model.js",
+    "src/repositories/customer.repository.js",
+    "src/repositories/invoice.repository.js",
+    "src/repositories/item.repository.js",
+    "src/repositories/purchase-order.repository.js",
+    "src/repositories/quote.repository.js",
+    "src/repositories/register.repository.js",
+    "src/repositories/role.repository.js",
+    "src/repositories/sale.repository.js",
+    "src/repositories/settings.repository.js",
+    "src/repositories/shift.repository.js",
+    "src/repositories/user.repository.js",
+    "src/routes/categories.routes.js",
+    "src/services/item.service.js",
+    "src/services/user.service.js"
+  ],
+  "successfully": [
+    "src/controllers/settings.controller.js"
+  ],
+  "successfully loaded": [
+    "src/controllers/users.controller.js"
+  ],
+  "tips must be a non-negative number": [
+    "src/repositories/shift.repository.js"
+  ],
+  "unsuccessfully": [
+    "src/controllers/settings.controller.js"
+  ],
+  "valid": [
+    "src/controllers/users.controller.js"
+  ]
+}

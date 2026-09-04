@@ -677,7 +677,7 @@ test('no template carries English a pack cannot reach', () => {
 });
 
 test('the sweep tools live in the repository', () => {
-  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js', 'i18n-collisions.js']) {
+  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js', 'i18n-collisions.js', 'i18n-server-text.js']) {
     const file = path.join(__dirname, 'tools', tool);
     assert.ok(fs.existsSync(file), tool + ' is missing');
     assert.ok(!/[A-Z]:[\\/]/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
@@ -848,4 +848,84 @@ test('the modules have nothing left to tag', () => {
   assert.equal(run.status, 0, 'the sweep did not run:\n' + (run.stderr || ''));
   const line = (run.stdout || '').split('\n').find((l) => l.startsWith('sites changed:')) || '';
   assert.match(line, /^sites changed: 0 /, 'JavaScript still writes English no pack can reach:\n' + run.stdout);
+});
+
+/* ------------------------------------------- the words the server writes --- */
+
+test("the server writes its own sentences, and they can be answered here", () => {
+  /*
+   * Every save, delete and refusal a shopkeeper sees is a toast, and the words
+   * in it come from the API: { type: 'success', message: 'Customer added
+   * successfully' }. The frontend prints that string as it arrives - five
+   * hundred and seventy-six call sites do - so no <lang> tag and no key can
+   * reach it. It was English in every language, on the messages a cashier
+   * reads most often.
+   *
+   * The API cannot carry the key itself. It is deployed separately, so a till
+   * on a new build talking to a server one release behind would be handed a
+   * key it has never seen and would print it raw. The ENGLISH is the identity
+   * instead, which is what gettext has done for thirty years.
+   */
+  const say = member('say');
+  /* the member as written, given a PosnicPro of its own to look inside */
+  const build = (says) => {
+    const PosnicPro = { i18n: null };
+    // eslint-disable-next-line no-new-func
+    PosnicPro.i18n = new Function('PosnicPro', 'return ({' + say.replace(/,\s*$/, '') + '});')(PosnicPro);
+    PosnicPro.i18n._says = says;
+    PosnicPro.i18n._saysIndex = null;
+    return PosnicPro.i18n.say;
+  };
+  const run = (says, text) => build(says)(text);
+
+  assert.equal(run(null, 'Customer added successfully'), 'Customer added successfully',
+    "with no pack loaded the English from the server must come through unchanged");
+  assert.equal(run({}, 'Customer added successfully'), 'Customer added successfully',
+    'an empty pack must not swallow the message');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'Customer added successfully'), 'Client ajouté');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'customer   added successfully'), 'Client ajouté',
+    'a message that gained a capital or a double space is the same sentence');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'Something else entirely'), 'Something else entirely',
+    'a sentence this build has never heard of must print as it arrived');
+});
+
+test('the toast asks for the server sentence in this language', () => {
+  const core = fs.readFileSync(CORE, 'utf8');
+  const alert = core.slice(core.indexOf('    alert: function ('), core.indexOf('    defaultcustomerSet: function'));
+  assert.ok(alert.length > 100, 'PosnicPro.alert is missing');
+  assert.match(alert, /text: PosnicPro\.i18n\.say\(text\)/,
+    'the toast prints the server sentence without asking for a translation');
+});
+
+test('the list of what the server says is current', () => {
+  /*
+   * The English is the lookup key, so a message that changed wording on the
+   * server is a message no pack can answer any more. Re-extracting is the fix:
+   *
+   *     node tests/tools/i18n-server-text.js --write
+   */
+  const tool = require(path.join(__dirname, 'tools', 'i18n-server-text.js'));
+  const found = [...tool.collect().keys()].sort();
+  const file = path.join(LANGUAGES_DIR, 'server', '_english.json');
+  assert.ok(fs.existsSync(file), 'languages/server/_english.json is missing');
+  const listed = Object.keys(JSON.parse(fs.readFileSync(file, 'utf8'))).sort();
+  const gone = listed.filter((m) => !found.includes(m));
+  const fresh = found.filter((m) => !listed.includes(m));
+  assert.deepEqual({ gone, fresh }, { gone: [], fresh: [] },
+    'languages/server/_english.json is out of date - run: node tests/tools/i18n-server-text.js --write');
+});
+
+test('no server pack answers a sentence the server never sends', () => {
+  const file = path.join(LANGUAGES_DIR, 'server', '_english.json');
+  if (!fs.existsSync(file)) return;
+  const known = new Set(Object.keys(JSON.parse(fs.readFileSync(file, 'utf8'))));
+  const dir = path.join(LANGUAGES_DIR, 'server');
+  const stray = [];
+  for (const f of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+    const pack = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    for (const english of Object.keys(pack)) {
+      if (!known.has(english)) stray.push(f.slice(0, 2) + ': ' + JSON.stringify(english.slice(0, 60)));
+    }
+  }
+  assert.deepEqual(stray, [], 'a translation is keyed by a sentence the server does not send:\n  ' + stray.join('\n  '));
 });
