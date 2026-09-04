@@ -1,0 +1,3 @@
+Product Name,SKU,Barcode,Category,Vendor,MRP,Cost Price,Rate,GST %,Stock,Unit
+"Demo Wireless Mouse","DEMO-MOUSE-01","890000000001","Computer Accessories","Demo Supplier",999,550,799,18,25,"pcs"
+"Demo USB-C Cable","DEMO-CABLE-01","890000000002","Computer Accessories","Demo Supplier",499,200,349,18,50,"pcs"
