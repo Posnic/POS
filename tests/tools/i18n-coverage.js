@@ -147,6 +147,9 @@ function keysUsed() {
     for (const m of js.matchAll(/label: '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
       remember(m[2], m[1], file);
     }
+    for (const m of js.matchAll(/title: '((?:[^'\\]|\\.)*)',\s*titleKey: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
+    }
     /* JavaScript renders markup too - table headers, pills, receipt labels -
        and the observer translates it, so its keys are keys the UI uses. */
     for (const m of js.matchAll(/<lang class="([^"]+)">([^<]*)<\/lang>/g)) {
