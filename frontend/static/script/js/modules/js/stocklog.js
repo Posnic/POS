@@ -187,9 +187,9 @@ PosnicPro.stocklogs = {
        process names its door (Add Receiving, Edit Sale, Delete Item ...),
        so a family is one regex, not a list to keep in step. */
     MOVES: {
-        purchases: { label: PosnicPro.i18n.t('lang_po_title', 'Purchases'), re: 'Receiving|Purchase' },
-        sales: { label: PosnicPro.i18n.t('lang_rgrp_sales', 'Sales'), re: 'Sale' },
-        items: { label: PosnicPro.i18n.t('lang_item_edits', 'Item edits'), re: 'Item' }
+        purchases: { label: 'Purchases', re: 'Receiving|Purchase' },
+        sales: { label: 'Sales', re: 'Sale' },
+        items: { label: 'Item edits', re: 'Item' }
     },
     setMove: function (key) {
         var m = PosnicPro.stocklogs.MOVES[key];

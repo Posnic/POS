@@ -7372,14 +7372,14 @@ $(document).on('click', '#demo_pack_reset', function () {
 PosnicPro.settings._partners = {
     quotes_enable: {
         other: 'invoices_enable',
-        title: PosnicPro.i18n.t('lang_turn_on_invoices_as_well', 'Turn on Invoices as well?'),
+        title: 'Turn on Invoices as well?',
         text: 'Quotes price the work before you do it; invoices bill for it afterwards, '
             + 'and show you who still owes. Shops that use one usually want both.',
         yes: 'Turn on Invoices',
     },
     invoices_enable: {
         other: 'quotes_enable',
-        title: PosnicPro.i18n.t('lang_turn_on_quotes_as_well', 'Turn on Quotes as well?'),
+        title: 'Turn on Quotes as well?',
         text: 'Invoices bill for work you have done; quotes price it beforehand, so the '
             + 'customer agrees before you start. Shops that use one usually want both.',
         yes: 'Turn on Quotes',
