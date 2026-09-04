@@ -29,22 +29,27 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const POS = path.resolve(__dirname, '..', '..');
 const FE = POS + '/frontend';
 const write = process.argv.includes('--write');
 const list = process.argv.includes('--list');
 
-const ctx = JSON.parse(execFileSync(process.execPath,
-  [POS + '/tests/tools/i18n-coverage.js', '--json'], { encoding: 'utf8', cwd: POS, maxBuffer: 64 * 1024 * 1024 })).context;
+/*
+ * The keys and English already in use, read by CALLING the coverage tool
+ * rather than spawning it and parsing its output. Six hundred kilobytes of
+ * JSON through a pipe is a truncation waiting to happen, and it happened: on
+ * CI the parse died mid-string at position 182714 while every local run was
+ * fine. The module already returns exactly this.
+ */
+const ctx = require('./i18n-coverage.js').keysUsed().context;   // a Map
 const tidy = (s) => String(s).replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 const byEnglish = new Map();
-for (const [key, c] of Object.entries(ctx)) {
+for (const [key, c] of ctx) {
   const en = tidy(c.english);
   if (en && !byEnglish.has(en)) byEnglish.set(en, key);
 }
-const usedKeys = new Set(Object.keys(ctx));
+const usedKeys = new Set(ctx.keys());
 const minted = new Map();
 function keyFor(english) {
   const en = tidy(english);

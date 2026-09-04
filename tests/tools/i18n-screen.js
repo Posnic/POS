@@ -19,14 +19,17 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const POS = path.resolve(__dirname, '..', '..');
 const LANGUAGES = path.join(POS, 'languages');
 
+/* Read by CALLING the coverage tool, not by spawning it: six hundred
+   kilobytes of JSON through a pipe truncates, and on CI it did. */
 function context() {
-  return JSON.parse(execFileSync(process.execPath, [path.join(__dirname, 'i18n-coverage.js'), '--json'],
-    { cwd: POS, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })).context;
+  const map = require('./i18n-coverage.js').keysUsed().context;
+  const out = {};
+  for (const [key, c] of map) out[key] = { english: c.english, where: [...c.where] };
+  return out;
 }
 
 function pack(code) {

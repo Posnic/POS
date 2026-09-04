@@ -19,7 +19,6 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const POS = path.resolve(__dirname, '..', '..');
 const FE = POS + '/frontend';
@@ -43,15 +42,16 @@ const ATTRS = ['placeholder', 'title', 'aria-label'];
 const SEO_TITLE_PAGE = /^(index|login)\.html$/;
 
 /* Existing keys: english -> key, from the same tool CI uses. */
-const ctx = JSON.parse(execFileSync(process.execPath,
-  [POS + '/tests/tools/i18n-coverage.js', '--json'], { encoding: 'utf8', cwd: POS, maxBuffer: 64 * 1024 * 1024 })).context;
+/* Read by CALLING the coverage tool, not by spawning it: six hundred
+   kilobytes of JSON through a pipe truncates, and on CI it did. */
+const ctx = require('./i18n-coverage.js').keysUsed().context;   // a Map
 const tidy = (s) => String(s).replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 const byEnglish = new Map();
-for (const [key, c] of Object.entries(ctx)) {
+for (const [key, c] of ctx) {
   const en = tidy(c.english);
   if (en && !byEnglish.has(en)) byEnglish.set(en, key);
 }
-const usedKeys = new Set(Object.keys(ctx));
+const usedKeys = new Set(ctx.keys());
 
 /* New keys: english -> key, minted once per distinct English. */
 const minted = new Map();
