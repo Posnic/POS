@@ -144,7 +144,7 @@ function keysUsed() {
        t: 'lang_this_day'` - because resolving it where the object is built
        would run before any pack exists. The render site does the asking, so
        the key is used even though no t() call names it here. */
-    for (const m of js.matchAll(/label: '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
+    for (const m of js.matchAll(/(?:label|title): '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
       remember(m[2], m[1], file);
     }
     for (const m of js.matchAll(/title: '((?:[^'\\]|\\.)*)',\s*titleKey: '([^']+)'/g)) {

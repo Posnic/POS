@@ -2642,7 +2642,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
-        'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', font: 13, small: 11 }
+        'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', t: 'lang_a4_sheet', font: 13, small: 11 }
     },
 
     resolvePaperWidth: function () {
@@ -2975,7 +2975,9 @@ PosnicPro = {
 
         var html =
             '<div style="text-align:center;font-weight:bold;"><lang class="lang_test_receipt">TEST RECEIPT</lang></div>' +
-            '<div style="text-align:center;font-size:11px;">' + paper.label + '</div>' +
+            '<div style="text-align:center;font-size:11px;">'
+            + (paper.t ? '<lang class="' + paper.t + '">' + paper.label + '</lang>' : paper.label)
+            + '</div>' +
             '<div style="text-align:center;font-size:11px;">' + now.toLocaleString() + '</div>' +
             '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
             '<table style="width:100%;border-collapse:collapse;">' +
