@@ -668,7 +668,7 @@ test('bare English in the templates stays rare', () => {
   const { report } = require(path.join(__dirname, 'tools', 'i18n-gaps.js'));
   const data = report();
   const shown = data.rows.map((r) => r.file + ': ' + r.found.map((x) => x.text).slice(0, 3).join(' | '));
-  assert.ok(data.total <= 5, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
+  assert.ok(data.total <= 2, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
 });
 
 test('the sweep tools live in the repository', () => {
