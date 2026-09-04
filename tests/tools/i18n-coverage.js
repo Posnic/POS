@@ -140,6 +140,13 @@ function keysUsed() {
       remember(m[1], '', file);
       calls += 1;
     }
+    /* Some config data carries its key beside the English - `label: 'Today',
+       t: 'lang_this_day'` - because resolving it where the object is built
+       would run before any pack exists. The render site does the asking, so
+       the key is used even though no t() call names it here. */
+    for (const m of js.matchAll(/label: '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
+    }
     /* JavaScript renders markup too - table headers, pills, receipt labels -
        and the observer translates it, so its keys are keys the UI uses. */
     for (const m of js.matchAll(/<lang class="([^"]+)">([^<]*)<\/lang>/g)) {
