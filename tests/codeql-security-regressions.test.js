@@ -127,3 +127,12 @@ test('translation tools parse shortcuts without backtracking regexes', () => {
     assert.doesNotMatch(tool, /\(\\s\*\\\+\\s\*\\S\+\)\*/);
   }
 });
+
+test('translation gap checks parse HTML instead of filtering it with regexes', () => {
+  const gaps = source('tests/tools/i18n-gaps.js');
+
+  assert.match(gaps, /const \{ JSDOM \} = require\('jsdom'\)/);
+  assert.match(gaps, /document\.querySelectorAll\('script, style, textarea'\)/);
+  assert.doesNotMatch(gaps, /replace\(\/<script\[\\s\\S\]/);
+  assert.doesNotMatch(gaps, /replace\(\/<style\[\\s\\S\]/);
+});

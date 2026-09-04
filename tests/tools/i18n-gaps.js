@@ -19,6 +19,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
 
 const FE = path.resolve(__dirname, '..', '..', 'frontend');
 const SKIP_FILE = [/^modules[\\/]report_gstr/, /^error-\d+\.html$/, /^error-email\.html$/,
@@ -55,49 +56,74 @@ function htmlFiles(dir, out = []) {
    the desktop card under the sign-in form, the boot watchdog, and the
    desktop tools button. What those scripts BUILD is markup, so the
    markup is what gets read here instead of thrown away. */
-const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
 const MARKUP_RUN = />([^<>\'"{}();=]{2,})</g;                 // >text<, with no code punctuation in it
 const ENTITY_ONLY = /^(&[a-z#0-9]+;|\s)+$/i;       // &times; is a glyph, not the word "times"
-const LANG_BLOCK = /<lang class="[^"]*">[\s\S]*?<\/lang>/g;
-const inlineMarkup = (block) => {
+function stripTranslatedBlocks(input) {
+  let output = '';
+  let cursor = 0;
+  while (cursor < input.length) {
+    const start = input.indexOf('<lang ', cursor);
+    if (start === -1) return output + input.slice(cursor);
+    const openingEnd = input.indexOf('>', start + 6);
+    const closing = openingEnd === -1 ? -1 : input.indexOf('</lang>', openingEnd + 1);
+    if (openingEnd === -1 || closing === -1) return output + input.slice(cursor);
+    output += input.slice(cursor, start) + '<span data-posnic-lang></span>';
+    cursor = closing + 7;
+  }
+  return output;
+}
+const inlineMarkup = (body) => {
   let out = '';
-  for (const script of block.matchAll(INLINE_SCRIPT)) {
-    const body = script[1].replace(LANG_BLOCK, '');   // already reachable
-    for (const run of body.matchAll(MARKUP_RUN)) {
-      if (!ENTITY_ONLY.test(run[1])) out += '<i>' + run[1] + '</i>';
-    }
+  const untagged = stripTranslatedBlocks(body);   // already reachable
+  for (const run of untagged.matchAll(MARKUP_RUN)) {
+    if (!ENTITY_ONLY.test(run[1])) out += '<i>' + run[1] + '</i>';
   }
   return out;
 };
 function scan(file, rel) {
-  let html = fs.readFileSync(file, 'utf8')
-    .replace(/<textarea[\s\S]*?<\/textarea>/gi, '<textarea></textarea>')
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<script[\s\S]*?<\/script>/gi, (block) => inlineMarkup(block))
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/ on[a-z]+="[^"]*"/gi, '')     // an on* handler is code, and one of them holds a >
-    .replace(/<lang class="[^"]*">[\s\S]*?<\/lang>/g, '<lang></lang>')
-    .replace(/<(title|option)([^>]*data-t="[^"]*"[^>]*)>[^<]*<\/\1>/g, '<$1$2></$1>');
-  if (rel && SEO_TITLE_PAGE.test(rel)) html = html.replace(/<title>[\s\S]*?<\/title>/i, '<title></title>');
+  const html = stripTranslatedBlocks(fs.readFileSync(file, 'utf8'));
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+  const generated = [];
+  for (const script of document.querySelectorAll('script:not([src])')) {
+    const markup = inlineMarkup(script.textContent || '');
+    if (markup) generated.push(markup);
+  }
+  document.querySelectorAll('script, style, textarea').forEach((element) => element.remove());
+
   const found = [];
-  let m;
-  const text = />([^<]+)</g;
-  while ((m = text.exec(html))) {
-    const raw = m[1].replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&mdash;|&minus;/g, '-').replace(/\s+/g, ' ').trim();
-    if (!raw || raw.length < 2 || SKIP_TEXT.test(raw) || NOT_WORDS(raw)) continue;
-    found.push({ kind: 'text', text: raw });
-  }
-  const attrs = /<[a-zA-Z][^>]*>/g;
-  while ((m = attrs.exec(html))) {
-    const tag = m[0];
-    for (const attr of ['placeholder', 'title', 'aria-label']) {
-      const v = new RegExp('\\s' + attr + '="([^"]{2,})"').exec(tag);
-      if (!v || tag.includes(' data-t-' + attr + '=')) continue;
-      const raw = v[1].trim();
-      if (SKIP_TEXT.test(raw) || NOT_WORDS(raw)) continue;
-      found.push({ kind: attr, text: raw });
+  const collect = (root) => {
+    const walker = document.createTreeWalker(root, dom.window.NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent || parent.closest('[data-posnic-lang]')) continue;
+      if (rel && SEO_TITLE_PAGE.test(rel) && parent.closest('title')) continue;
+      if (parent.closest('[data-t]')) continue;
+      const raw = String(node.nodeValue || '').replace(/\u00a0/g, ' ').replace(/[—−]/g, '-').replace(/\s+/g, ' ').trim();
+      if (/^<span data-posnic-lang/i.test(raw)) continue;
+      if (!raw || raw.length < 2 || SKIP_TEXT.test(raw) || NOT_WORDS(raw)) continue;
+      found.push({ kind: 'text', text: raw });
     }
+
+    for (const element of root.querySelectorAll('*')) {
+      for (const attr of ['placeholder', 'title', 'aria-label']) {
+        if (!element.hasAttribute(attr) || element.hasAttribute('data-t-' + attr)) continue;
+        const raw = element.getAttribute(attr).trim();
+        if (raw.length < 2) continue;
+        if (SKIP_TEXT.test(raw) || NOT_WORDS(raw)) continue;
+        found.push({ kind: attr, text: raw });
+      }
+    }
+  };
+
+  collect(document);
+  for (const markup of generated) {
+    const holder = document.createElement('div');
+    holder.innerHTML = markup;
+    collect(holder);
   }
+  dom.window.close();
   return found;
 }
 
