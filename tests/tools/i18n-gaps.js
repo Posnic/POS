@@ -28,6 +28,7 @@ const SKIP_FILE = [/^modules[\\/]report_gstr/, /^error-\d+\.html$/, /^error-emai
 const SEO_TITLE_PAGE = /^(index|login)\.html$/;
 const SKIP_TEXT = /^[\s\d.,:;!?()\[\]{}%$₹#*+\-–—/|&'"«»…=<>_×]*$/;
 const NOT_WORDS = (t) => !/[A-Za-z]{2,}/.test(t)
+  || /^\{\w+\}$/.test(t)                        // a merge token is data, not prose
   || /\{\{|__\w+__|\$\{|<%|\bfunction\b|\bvar\b|=>/.test(t)
   || /^[a-z_]+\.[a-z_]+/.test(t)
   || /^(ctrl|alt|shift|cmd|esc|f\d+)(\s*\+\s*\S+)*$/i.test(t)
