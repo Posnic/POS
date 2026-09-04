@@ -267,30 +267,120 @@ possible is entirely in
 One limitation to know: the offline tools do not run on Linux or macOS and need
 Microsoft Excel.
 
-## Other credibility signals, ranked
+## Selling to government buyers, and other credibility signals
 
-For a vendor of this size, in order of value for effort.
+None of these is a GST credential. They matter because "the government buys it"
+is a stronger signal than any badge, and the first three are free.
 
-1. **NIC e-invoice ERP registration.** Free, no committee, about a week of NIC
-   turnaround once the test report exists. Best ratio by a distance.
-2. **Startup India / DPIIT recognition**
-   ([scheme page](https://www.startupindia.gov.in/content/sih/en/startup-scheme.html)).
-   Needs a private limited company, LLP, registered partnership or cooperative,
-   within ten years of incorporation and under two hundred crore turnover. No
-   fee. Gives self-certification on labour and environment rules, an eighty per
-   cent patent fee rebate, a three-year income tax exemption under section
-   80-IAC, and public procurement relaxations. Cheap and genuinely useful.
-3. **Government e-Marketplace seller listing** ([gem.gov.in](https://gem.gov.in)).
-   The route to actually selling to government buyers, which is a stronger
-   signal than any badge. Fees and caution-money rules are contested across
-   secondary sources; verify on the site before relying on a figure.
-4. **A GSP partnership**, as above, for returns filing.
-5. **ISO 27001 with a CERT-In empanelled auditor.** Not required for the ERP
-   route, but it is the artifact a GSP application demands and a real trust
-   signal to mid-market buyers.
+### Worth doing, in this order
 
-STQC certification, MeitY empanelment and ONDC confer no GST-specific
-credential and are not required for anything above.
+**1. Udyam registration.** Free and immediate. It is what makes the
+small-enterprise exemptions below apply.
+
+**2. Class-I local supplier status.** The best return for the least effort on
+this page, and the item most often misunderstood.
+
+Under the Public Procurement (Preference to Make in India) Order, a supplier
+with at least fifty per cent local content is Class-I, twenty to fifty per cent
+is Class-II, and below twenty is non-local. **Only Class-I and Class-II may bid
+in domestic tenders at all**, so this is a procurement gate rather than a badge.
+
+There is no certificate to obtain, and anyone selling one is selling a document
+the government says does not exist. DPIIT answers this directly in its
+[public procurement FAQ](https://www.dpiit.gov.in/static/uploads/2025/07/8583e876591c96cacf45805f5f0cf705.pdf):
+
+> How to obtain Make in India "MII" certificate? Answer: No such certificate
+> issued by Government of India.
+
+A bidder **self-certifies** the percentage. Only above ten crore does an
+auditor's certificate become necessary. For a product developed in India with
+Indian-owned intellectual property, substantiating fifty per cent is
+straightforward. A false declaration carries a penalty of up to ten per cent of
+contract value and debarment for up to two years, so the figure has to be real.
+
+One genuine ambiguity: no local-content computation method has been published
+for software delivered as a service.
+
+**3. Startup India / DPIIT recognition**
+([scheme page](https://www.startupindia.gov.in/content/sih/en/startup-scheme.html)).
+Free, usually granted within days to weeks. Needs a private limited company,
+LLP, registered partnership or cooperative society, **within ten years of
+incorporation** and under two hundred crore turnover in any year. Deep-tech
+entities get twenty years and three hundred crore.
+
+The age limit is the hard gate. If the company is older than ten years this
+branch is closed and the procurement advantages below go with it.
+
+It gives self-certification under labour and environment law, patent fee
+rebates with fast-track examination, exemption from bid security on the
+Government e-Marketplace, and eligibility for relaxation of prior-turnover and
+prior-experience requirements under the General Financial Rules. That last is at
+the buyer's discretion, not automatic. The three-year tax holiday under section
+80-IAC is a **separate and much harder** application decided by an
+inter-ministerial board.
+
+**4. Government e-Marketplace seller listing** ([gem.gov.in](https://gem.gov.in)).
+Registration is free, and the category already exists: software, then finance,
+accounting and enterprise resource planning.
+
+Two figures circulate in outdated form and are worth having right:
+
+- **Caution money has been abolished.** The current general terms, version 1.28
+  of December 2025, say it is "Exempted for all sellers irrespective of
+  turnover". Pages still quoting five, ten or twenty-five thousand rupee slabs
+  are out of date.
+- **Transaction charges start only after twenty lakh** of merchandise value in
+  a financial year: a one-time ten thousand rupee milestone charge, then 0.30
+  per cent on orders above ten lakh. Individual orders at or below ten lakh
+  carry nothing. In practice it is free until there is real government business.
+
+Vendor assessment is run by RITES at roughly nine hundred to three and a half
+thousand rupees plus tax, by turnover band. Two frictions to expect: assessment
+for product categories includes a video call validating a "manufacturing
+premise", which is designed around factories; and the service route wants
+completed government contracts from the last three years, which a first-time
+vendor does not have. Udyam and DPIIT registration remove the bid-security
+barrier, which is the main cash blocker.
+
+There is a Startup Runway outlet restricted to DPIIT-recognised startups, but
+its fourteen categories are things like robotics, blockchain and health
+sciences. A billing product fits none of them and would list under ordinary
+software.
+
+**5. A GSP partnership**, as above, for returns filing.
+
+**6. ISO 27001 with a CERT-In empanelled auditor.** Not required for the ERP
+route, but it is the artifact a GSP application demands and a real trust signal
+to mid-market buyers.
+
+### Not achievable, or not real
+
+- **MeitY empanelment** is for **cloud service providers** with their own
+  audited data centres. It covers software-as-a-service offerings, which is why
+  people assume an application can be empanelled alone. It cannot. Host on an
+  empanelled provider and say so.
+- **BIS certification for software does not exist.** BIS certifies physical
+  goods and management systems. There is no mark for a billing application.
+- **ONDC** is a retail commerce network. A point-of-sale product is
+  infrastructure for sellers rather than a seller application, so the only
+  sensible role is technology service provider, which is the least documented
+  part of their policy. Network participants carry an annual security audit by
+  a CERT-In empanelled auditor, a permanent cost for a small team.
+- **STQC** runs a website quality certification at about forty thousand rupees
+  plus tax and a security audit, which certifies a website rather than a
+  product. Its software product certification scheme exists but publishes no
+  eligibility, process, fees or timeline; treat it as an email, not a plan.
+  Nothing in GST requires STQC.
+- **ICAI does not endorse software.** Its member-discount listings carry an
+  explicit disclaimer that it "acts solely as a facilitator" and "does not
+  endorse or guarantee the quality, reliability, or accuracy of these
+  offerings". This is the arrangement most often misrepresented as official
+  approval. If Posnic ever appears there, describe it as a member-benefit
+  tie-up.
+- **No state commercial-tax department publishes an approved-software list.**
+  Searches across state portals found none. Under GST the design is
+  deliberately vendor-neutral: any software may raise an invoice provided the
+  reference number is registered with a portal.
 
 ## The sequence
 
@@ -298,6 +388,7 @@ credential and are not required for anything above.
 |---|---|---|
 | Now | Register on the NIC sandbox as an ERP | nothing |
 | Now, in parallel | Build the offline file paths: e-invoice JSON, bulk-tool compatibility, GSTR-1 offline-tool output | the returns gap work |
+| Now, in parallel | Udyam registration, then declare Class-I local supplier status | nothing |
 | Now, in parallel | Startup India recognition if the entity qualifies | entity type and age |
 | After the connector works end to end | Run and log about 390 operations against the sandbox | the connector decision in the design document |
 | Then | Email **support.einv.api@gov.in** with the test report and up to four static IPs | the above, plus a real customer |
@@ -323,5 +414,13 @@ credential and are not required for anything above.
 10. How the eight original accounting-software vendors were selected in 2019.
 11. Whether the post-login accounting-software page still works for eligible
     taxpayers; the manual describes it, the public menu no longer lists it.
-12. Current Government e-Marketplace fee and caution-money rules, and the
-    detail of the STQC, MeitY and ONDC programmes.
+12. Whether DPIIT-recognised startups are exempt from the Government
+    e-Marketplace vendor assessment. The current policy's exemption list does
+    not name them, despite the claim being widely repeated.
+13. Fees, eligibility and process for STQC software product certification. The
+    scheme page publishes none of them.
+14. The operational status of the Indian Software Product Registry, and whether
+    its promised marketplace integration was ever delivered. The policy behind
+    it ran on a seven-year outlay that has now ended.
+15. The current status of the ONDC per-transaction network fee, which was
+    announced and then deferred three times.
