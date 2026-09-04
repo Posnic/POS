@@ -43,12 +43,34 @@ function htmlFiles(dir, out = []) {
   return out;
 }
 
+
+/* An inline <script> in a page is scanned by nobody: this tool strips
+   <script> before it looks, and i18n-tag-js.js only walks
+   static/script/js. Three panels a shopkeeper reads lived in that gap -
+   the desktop card under the sign-in form, the boot watchdog, and the
+   desktop tools button. What those scripts BUILD is markup, so the
+   markup is what gets read here instead of thrown away. */
+const INLINE_SCRIPT = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
+const MARKUP_RUN = />([^<>\'"{}();=]{2,})</g;                 // >text<, with no code punctuation in it
+const ENTITY_ONLY = /^(&[a-z#0-9]+;|\s)+$/i;       // &times; is a glyph, not the word "times"
+const LANG_BLOCK = /<lang class="[^"]*">[\s\S]*?<\/lang>/g;
+const inlineMarkup = (block) => {
+  let out = '';
+  for (const script of block.matchAll(INLINE_SCRIPT)) {
+    const body = script[1].replace(LANG_BLOCK, '');   // already reachable
+    for (const run of body.matchAll(MARKUP_RUN)) {
+      if (!ENTITY_ONLY.test(run[1])) out += '<i>' + run[1] + '</i>';
+    }
+  }
+  return out;
+};
 function scan(file, rel) {
   let html = fs.readFileSync(file, 'utf8')
     .replace(/<textarea[\s\S]*?<\/textarea>/gi, '<textarea></textarea>')
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, (block) => inlineMarkup(block))
     .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/ on[a-z]+="[^"]*"/gi, '')     // an on* handler is code, and one of them holds a >
     .replace(/<lang class="[^"]*">[\s\S]*?<\/lang>/g, '<lang></lang>')
     .replace(/<(title|option)([^>]*data-t="[^"]*"[^>]*)>[^<]*<\/\1>/g, '<$1$2></$1>');
   if (rel && SEO_TITLE_PAGE.test(rel)) html = html.replace(/<title>[\s\S]*?<\/title>/i, '<title></title>');
