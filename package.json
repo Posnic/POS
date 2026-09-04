@@ -49,6 +49,7 @@
     "release:windows": "node scripts/release-windows.js",
     "release:ship": "node scripts/release-ship.js",
     "scan:secrets": "node scripts/scan-git-history.js",
+    "check:attribution": "node scripts/check-ai-attribution.js --all --commits",
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
     "check:advisories": "node scripts/check-advisories.js",

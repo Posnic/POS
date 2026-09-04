@@ -256,13 +256,20 @@ Before opening a PR:
 3. Link the issue and state which acceptance criteria or PR slice is covered.
 4. Add or update a focused test when code behavior changes.
 5. Run the checks that match your change type.
-6. Sign off commits:
+6. Keep attribution human-only. Do not credit an AI tool as an author,
+   contributor, co-author, reviewer, signer, or release-note credit. Run:
+
+   ```bash
+   npm run check:attribution
+   ```
+
+7. Sign off commits:
 
    ```bash
    git commit -s -m "Explain why this change exists"
    ```
 
-7. Fill in the pull request template with what changed and how you tested it.
+8. Fill in the pull request template with what changed and how you tested it.
 
 ## After it is merged
 

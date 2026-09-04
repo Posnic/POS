@@ -680,7 +680,7 @@ test('the sweep tools live in the repository', () => {
   for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js', 'i18n-collisions.js']) {
     const file = path.join(__dirname, 'tools', tool);
     assert.ok(fs.existsSync(file), tool + ' is missing');
-    assert.ok(!/D:\/Claude|C:\\Users/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
+    assert.ok(!/[A-Z]:[\\/]/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
   }
 });
 
