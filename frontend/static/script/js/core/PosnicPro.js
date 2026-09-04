@@ -448,9 +448,12 @@ PosnicPro = {
         var icon = heading === 'Information' || heading === 'Alert' ? 'info' : heading;
         icon = icon.toLowerCase();
         $('.jq-toast-wrap').removeClass("top-right bottom-right");
+        /* Most of what lands here is the server's own sentence, printed as it
+           arrived. say() answers it in this language when it knows it, and
+           hands back the same English when it does not. */
         $.toast({
             heading: heading,
-            text: text,
+            text: PosnicPro.i18n.say(text),
             position: position,
             icon: icon,
             hideAfter: hideAfter,
@@ -4271,6 +4274,11 @@ PosnicPro.i18n = {
         PosnicPro.local.set('language_code', code);
         PosnicPro.i18n._code = code;
         PosnicPro.i18n._dict = null;
+        /* the server's words are per-language too, and its lookup index is
+           built from them - both go, or the next toast answers in the language
+           being left */
+        PosnicPro.i18n._says = null;
+        PosnicPro.i18n._saysIndex = null;
         return code;
     },
 
@@ -4372,10 +4380,64 @@ PosnicPro.i18n = {
         var code = PosnicPro.i18n.code();
         PosnicPro.i18n.mark();
         if (code === 'en' || PosnicPro.i18n._dict) return Promise.resolve();
-        return fetch('languages/' + code + '.json')
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (json) { if (json) PosnicPro.i18n._dict = json; })
-            .catch(function () { /* English is already the answer */ });
+        return Promise.all([
+            fetch('languages/' + code + '.json')
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (json) { if (json) PosnicPro.i18n._dict = json; })
+                .catch(function () { /* English is already the answer */ }),
+            /*
+             * The words the SERVER writes, keyed by the English itself. A
+             * separate file because it is a separate source: it can be a
+             * version behind the till, and a message it has never heard of
+             * must still print. Its absence costs nothing - say() falls
+             * through to the English it was handed.
+             */
+            fetch('languages/msg-' + code + '.json')
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (json) { if (json) PosnicPro.i18n._says = json; })
+                .catch(function () { /* the server's English, as today */ }),
+        ]).then(function () { });
+    },
+
+    /*
+     * Say what the server said, in this language.
+     *
+     * Every save, delete and refusal a shopkeeper sees is a toast whose words
+     * came from the API - `{ type: 'success', message: 'Customer added
+     * successfully' }` - printed as it arrived by five hundred call sites. No
+     * <lang> tag and no key can reach it, so it was English in every language
+     * on the messages a cashier reads most often.
+     *
+     * The API cannot carry the key itself. It ships separately, so a till on a
+     * new build talking to a server one release behind would be handed a key
+     * it has never seen and would print it raw. The ENGLISH is the identity
+     * instead, which is what gettext has done for thirty years: an unknown
+     * message, an untranslated one, or a missing file all fall through to
+     * exactly the words that arrive today.
+     *
+     * Matching ignores case and runs of space, because a message that gained a
+     * capital or lost a double space is the same sentence. Anything with a
+     * value interpolated into it will not match, and should not: half of that
+     * string is a number.
+     */
+    _says: null,
+    say: function (text) {
+        if (typeof text !== 'string' || !text) return text;
+        var says = PosnicPro.i18n._says;
+        if (!says) return text;
+        var said = says[text];
+        if (typeof said === 'string' && said) return said;
+        var key = text.replace(/\s+/g, ' ').trim().toLowerCase();
+        if (!PosnicPro.i18n._saysIndex) {
+            var index = {};
+            for (var english in says) {
+                if (!Object.prototype.hasOwnProperty.call(says, english)) continue;
+                index[english.replace(/\s+/g, ' ').trim().toLowerCase()] = says[english];
+            }
+            PosnicPro.i18n._saysIndex = index;
+        }
+        said = PosnicPro.i18n._saysIndex[key];
+        return (typeof said === 'string' && said) ? said : text;
     },
 
     /*

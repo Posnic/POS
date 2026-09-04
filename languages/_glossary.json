@@ -156,7 +156,8 @@
       "sw": "Hariri",
       "de": "Bearbeiten",
       "nl": "Bewerken",
-      "it": "Modifica"
+      "it": "Modifica",
+      "ta": "திருத்து"
     },
     "Add": {
       "hi": "जोड़ें",
@@ -174,7 +175,8 @@
       "sw": "Ongeza",
       "de": "Hinzufügen",
       "nl": "Toevoegen",
-      "it": "Aggiungi"
+      "it": "Aggiungi",
+      "ta": "சேர்"
     },
     "New": {
       "ta": "புதியதைச் சேர்க்க",
@@ -268,7 +270,8 @@
       "sw": "Chapisha",
       "de": "Drucken",
       "nl": "Afdrukken",
-      "it": "Stampa"
+      "it": "Stampa",
+      "ta": "அச்சிடு"
     },
     "Submit": {
       "ta": "சமர்ப்பிக்கவும்",
@@ -381,7 +384,8 @@
       "sw": "Endelea",
       "de": "Fortfahren",
       "nl": "Doorgaan",
-      "it": "Procedi"
+      "it": "Procedi",
+      "ta": "தொடரவும்"
     },
     "Restore": {
       "ta": "திரும்ப பெறு",
@@ -684,7 +688,8 @@
       "sw": "Mauzo",
       "de": "Verkauf",
       "nl": "Verkoop",
-      "it": "Vendita"
+      "it": "Vendita",
+      "ta": "விற்பனை"
     },
     "Sales": {
       "ta": "விற்பனை",
@@ -740,7 +745,8 @@
       "sw": "Historia ya mauzo",
       "de": "Verkaufsverlauf",
       "nl": "Verkoopgeschiedenis",
-      "it": "Storico vendite"
+      "it": "Storico vendite",
+      "ta": "விற்பனை வரலாறு"
     },
     "Purchase": {
       "hi": "खरीद",
@@ -758,7 +764,8 @@
       "sw": "Manunuzi",
       "de": "Einkauf",
       "nl": "Inkoop",
-      "it": "Acquisto"
+      "it": "Acquisto",
+      "ta": "கொள்முதல்"
     },
     "Purchases": {
       "ta": "கொள்முதல் ஆர்டர்கள்",
@@ -814,7 +821,8 @@
       "sw": "Rejesho",
       "de": "Rückgabe",
       "nl": "Retour",
-      "it": "Reso"
+      "it": "Reso",
+      "ta": "திரும்பல்"
     },
     "Item": {
       "hi": "वस्तु",
@@ -832,7 +840,8 @@
       "sw": "Bidhaa",
       "de": "Artikel",
       "nl": "Artikel",
-      "it": "Articolo"
+      "it": "Articolo",
+      "ta": "பொருள்"
     },
     "Items": {
       "hi": "वस्तुएं",
@@ -850,7 +859,8 @@
       "sw": "Bidhaa",
       "de": "Artikel",
       "nl": "Artikelen",
-      "it": "Articoli"
+      "it": "Articoli",
+      "ta": "பொருட்கள்"
     },
     "Item Name": {
       "ta": "பொருளின் பெயர்",
@@ -906,7 +916,8 @@
       "sw": "Mteja",
       "de": "Kunde",
       "nl": "Klant",
-      "it": "Cliente"
+      "it": "Cliente",
+      "ta": "வாடிக்கையாளர்"
     },
     "Customers": {
       "hi": "ग्राहक",
@@ -924,7 +935,8 @@
       "sw": "Wateja",
       "de": "Kunden",
       "nl": "Klanten",
-      "it": "Clienti"
+      "it": "Clienti",
+      "ta": "வாடிக்கையாளர்கள்"
     },
     "Customer List": {
       "ta": "வாடிக்கையாளர் பட்டியல்",
@@ -961,7 +973,8 @@
       "sw": "Msambazaji",
       "de": "Lieferant",
       "nl": "Leverancier",
-      "it": "Fornitore"
+      "it": "Fornitore",
+      "ta": "சப்ளையர்"
     },
     "Suppliers": {
       "ta": "சப்ளையர்கள்",
@@ -1017,7 +1030,8 @@
       "sw": "Kategoria",
       "de": "Kategorie",
       "nl": "Categorie",
-      "it": "Categoria"
+      "it": "Categoria",
+      "ta": "வகை"
     },
     "Categories": {
       "ta": "வகை பட்டியல்",
@@ -1054,7 +1068,8 @@
       "sw": "Tawi",
       "de": "Filiale",
       "nl": "Filiaal",
-      "it": "Filiale"
+      "it": "Filiale",
+      "ta": "கிளை"
     },
     "Inventory": {
       "hi": "इन्वेंटरी",
@@ -1072,7 +1087,8 @@
       "sw": "Bohari",
       "de": "Lagerbestand",
       "nl": "Voorraad",
-      "it": "Magazzino"
+      "it": "Magazzino",
+      "ta": "சரக்கு"
     },
     "Low Stock": {
       "hi": "कम स्टॉक",
@@ -1090,7 +1106,8 @@
       "sw": "Akiba ndogo",
       "de": "Geringer Bestand",
       "nl": "Lage voorraad",
-      "it": "Scorte basse"
+      "it": "Scorte basse",
+      "ta": "குறைந்த இருப்பு"
     },
     "Opening Stock": {
       "ta": "ஆரம்ப இருப்பு",
@@ -1526,7 +1543,8 @@
       "de": "Kasse",
       "nl": "Kassa",
       "it": "Cassa",
-      "si": "මුදල් ලාච්චුව"
+      "si": "මුදල් ලාච්චුව",
+      "ta": "பண ரிஜிஸ்டர்"
     },
     "Recycle Bin": {
       "ta": "மறுசுழற்சி தொட்டி",
@@ -1563,7 +1581,8 @@
       "sw": "Jina",
       "de": "Name",
       "nl": "Naam",
-      "it": "Nome"
+      "it": "Nome",
+      "ta": "பெயர்"
     },
     "First Name": {
       "ta": "முதல் பெயர்",
@@ -1619,7 +1638,8 @@
       "sw": "Barua pepe",
       "de": "E-Mail",
       "nl": "E-mail",
-      "it": "Email"
+      "it": "Email",
+      "ta": "மின்னஞ்சல்"
     },
     "Phone": {
       "ta": "டெலிபோன்",
@@ -1675,7 +1695,8 @@
       "sw": "Anwani",
       "de": "Adresse",
       "nl": "Adres",
-      "it": "Indirizzo"
+      "it": "Indirizzo",
+      "ta": "முகவரி"
     },
     "City": {
       "ta": "நகரம்",
@@ -1750,7 +1771,8 @@
       "sw": "Msimbo wa posta",
       "de": "Postleitzahl",
       "nl": "Postcode",
-      "it": "CAP"
+      "it": "CAP",
+      "ta": "அஞ்சல் குறியீடு"
     },
     "Password": {
       "hi": "पासवर्ड",
@@ -1768,7 +1790,8 @@
       "sw": "Nenosiri",
       "de": "Passwort",
       "nl": "Wachtwoord",
-      "it": "Password"
+      "it": "Password",
+      "ta": "கடவுச்சொல்"
     },
     "New Password": {
       "ta": "புதிய கடவுச்சொல்",
@@ -1881,7 +1904,8 @@
       "sw": "Mtumiaji",
       "de": "Benutzer",
       "nl": "Gebruiker",
-      "it": "Utente"
+      "it": "Utente",
+      "ta": "பயனர்"
     },
     "Users": {
       "ta": "பயனர்கள்",
@@ -2203,7 +2227,8 @@
       "sw": "Hali",
       "de": "Status",
       "nl": "Status",
-      "it": "Stato"
+      "it": "Stato",
+      "ta": "நிலை"
     },
     "Active": {
       "ta": "ஆக்டிவ்",
@@ -2240,7 +2265,8 @@
       "sw": "Haifanyi kazi",
       "de": "Inaktiv",
       "nl": "Inactief",
-      "it": "Non attivo"
+      "it": "Non attivo",
+      "ta": "இன்ஆக்டிவ்"
     },
     "Type": {
       "hi": "प्रकार",
@@ -2258,7 +2284,8 @@
       "sw": "Aina",
       "de": "Typ",
       "nl": "Type",
-      "it": "Tipo"
+      "it": "Tipo",
+      "ta": "வகை"
     },
     "Unit": {
       "ta": "அலகு",

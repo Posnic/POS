@@ -41,26 +41,26 @@ understand here:
 
 ## Which languages, and how far along
 
-| Language | Code | Keys answered | Read by a speaker? |
-|---|---|---|---|
-| English | en | in the app itself | yes |
-| தமிழ் Tamil | ta | all | **yes** |
-| हिन्दी Hindi | hi | all | not yet - marked *beta* |
-| മലയാളം Malayalam | ml | all | not yet - marked *beta* |
-| ಕನ್ನಡ Kannada | kn | all | not yet - marked *beta* |
-| తెలుగు Telugu | te | all | not yet - marked *beta* |
-| සිංහල Sinhala | si | all | not yet - marked *beta* |
-| नेपाली Nepali | ne | all | not yet - marked *beta* |
-| العربية Arabic | ar | all | not yet - marked *beta*, right-to-left |
-| Français French | fr | all | not yet - marked *beta* |
-| Español Spanish | es | all | not yet - marked *beta* |
-| Português Portuguese | pt | all | not yet - marked *beta* |
-| Bahasa Indonesia | id | all | not yet - marked *beta* |
-| ไทย Thai | th | all | not yet - marked *beta* |
-| Deutsch German | de | all | not yet - marked *beta* |
-| Kiswahili | sw | all | not yet - marked *beta* |
-| Nederlands Dutch | nl | all | not yet - marked *beta* |
-| Italiano Italian | it | all | not yet - marked *beta* |
+| Language | Code | Screens | The server's toasts | Read by a speaker? |
+|---|---|---|---|---|
+| English | en | in the app itself | in the app itself | yes |
+| தமிழ் Tamil | ta | all | not yet | **yes** |
+| हिन्दी Hindi | hi | all | half | not yet - marked *beta* |
+| മലയാളം Malayalam | ml | all | not yet | not yet - marked *beta* |
+| ಕನ್ನಡ Kannada | kn | all | not yet | not yet - marked *beta* |
+| తెలుగు Telugu | te | all | not yet | not yet - marked *beta* |
+| සිංහල Sinhala | si | all | not yet | not yet - marked *beta* |
+| नेपाली Nepali | ne | all | not yet | not yet - marked *beta* |
+| العربية Arabic | ar | all | half | not yet - marked *beta*, right-to-left |
+| Français French | fr | all | all | not yet - marked *beta* |
+| Español Spanish | es | all | half | not yet - marked *beta* |
+| Português Portuguese | pt | all | not yet | not yet - marked *beta* |
+| Bahasa Indonesia | id | all | not yet | not yet - marked *beta* |
+| ไทย Thai | th | all | not yet | not yet - marked *beta* |
+| Deutsch German | de | all | half | not yet - marked *beta* |
+| Kiswahili | sw | all | not yet | not yet - marked *beta* |
+| Nederlands Dutch | nl | all | not yet | not yet - marked *beta* |
+| Italiano Italian | it | all | not yet | not yet - marked *beta* |
 
 ### Which language is added next, and why
 
@@ -87,8 +87,8 @@ followed for Belgium, Switzerland and Malta.
 1. Add a column to `languages/_glossary.json` - the 147 shared terms.
 2. Add `{ code, name, flag, reviewed: false }` to
    `frontend/gulpfile.js/config.js`.
-3. `node tests/tools/seed-from-glossary.js --write` - fills about 200 of the
-   662 keys from the glossary alone.
+3. `node tests/tools/seed-from-glossary.js --write` - fills a few hundred of
+   the 2,925 keys from the glossary alone.
 4. `node tests/tools/i18n-coverage.js --worksheet <code>` - writes the other
    463 to `<code>-to-translate.json`.
 5. Fill the blanks, then
@@ -358,6 +358,54 @@ two screens shares one key. Then hand the new keys to translators with
 `--worksheet <code>`. Three tests hold this: no template may carry English a pack cannot reach, no
 key may carry two meanings, and no pack may slip below the coverage it last
 reached.
+
+---
+
+---
+
+## The words the server writes
+
+Every save, delete and refusal a shopkeeper sees is a toast, and the sentence
+in it comes from the API, not from a page:
+
+```json
+{ "type": "success", "message": "Customer added successfully" }
+```
+
+The frontend prints that as it arrives, at five hundred and seventy-six call
+sites, so no `<lang>` tag and no key can reach it. These are the messages a
+cashier reads most often, and until now every one of them was English in every
+language.
+
+**The English is the key here.** The API is deployed separately from the till
+and can be a release behind it, so a key would be worse than useless: a server
+that had never heard of it would send words the pack could not match, and a
+pack that had never heard of the key would print it raw. Looking the sentence
+up by its own words is what gettext has done for thirty years, and it degrades
+the right way - an unknown sentence, an untranslated one and a missing file all
+print exactly what the server sent.
+
+Translations live in `languages/server/<code>.json`, keyed by the English
+sentence, byte for byte:
+
+```json
+{
+  "Customer added successfully": "Client ajouté",
+  "A sale id is required": "Un identifiant de vente est obligatoire"
+}
+```
+
+```bash
+node tests/tools/i18n-server-text.js            what the API says, and how much is answered
+node tests/tools/i18n-server-text.js --todo fr  the sentences French has not answered yet
+node tests/tools/i18n-server-text.js --write    after the API changes wording
+```
+
+Change one character of the English key and the translation stops being found -
+silently, because the fallback is the English itself. Copy it, do not retype
+it. A message with a value interpolated into it (`Imported 12 rows`) will not
+match and is not listed; those need the API to send the number separately, and
+that is a change for another day.
 
 ---
 

@@ -113,8 +113,12 @@ const REFERENCE = /^\/(api\/)?setting\/getJSON(Country|State|Currency|TimeZone|G
  * costs the other nine shops nothing. Same stale-while-revalidate treatment as
  * the reference data above - answered instantly from cache, refreshed behind
  * the answer, and swept wholesale by the versioned cache name on release.
+ *
+ * msg-<code>.json rides along: it is the same shop's language, holding the
+ * sentences the server sends. Left out, a Tamil till that lost its connection
+ * would keep its screens in Tamil and answer every save in English.
  */
-const LANGUAGE_PACK = /\/languages\/[a-z]{2}(-[A-Za-z]{2,4})?\.json$/;
+const LANGUAGE_PACK = /\/languages\/(msg-)?[a-z]{2}(-[A-Za-z]{2,4})?\.json$/;
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
