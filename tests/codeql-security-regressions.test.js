@@ -136,3 +136,14 @@ test('translation gap checks parse HTML instead of filtering it with regexes', (
   assert.doesNotMatch(gaps, /replace\(\/<script\[\\s\\S\]/);
   assert.doesNotMatch(gaps, /replace\(\/<style\[\\s\\S\]/);
 });
+
+test('development secrets and signing keys use exclusive file creation', () => {
+  const devServer = source('scripts/dev-server.js');
+  const keypair = source('scripts/generate-asset-keypair.js');
+
+  assert.match(devServer, /openSync\(envFile, 'wx', 0o600\)/);
+  assert.doesNotMatch(devServer, /existsSync\(envFile\)/);
+  assert.match(keypair, /openSync\(pubPath, 'wx', 0o644\)/);
+  assert.match(keypair, /openSync\(privPath, 'wx', 0o600\)/);
+  assert.doesNotMatch(keypair, /existsSync\(pubPath\)/);
+});

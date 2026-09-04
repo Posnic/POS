@@ -55,14 +55,14 @@ function die(what, fix) {
  */
 function ensureSecrets() {
   const envFile = path.join(API, '.env');
-  if (fs.existsSync(envFile)) {
+  const validateExisting = () => {
     const text = fs.readFileSync(envFile, 'utf8');
     const missing = ['JWT_SECRET', 'SESSION_SECRET', 'ENCRYPTION_KEY', 'ENCRYPTION_IV']
-      .filter((k) => !new RegExp(`^${k}=.+`, 'm').test(text));
+      .filter((key) => !text.split(/\r?\n/).some((line) => line.startsWith(`${key}=`) && line.length > key.length + 1));
     if (!missing.length) return say('api/.env already has its secrets');
     die(`api/.env exists but is missing: ${missing.join(', ')}`,
       'Delete api/.env and run this again to regenerate it, or fill those in by hand.');
-  }
+  };
 
   /* Same shapes as the desktop app's getLocalSecrets(): AES-256-CBC wants a
      32-byte key and a 16-byte IV, which is 16 and 8 bytes of hex. */
@@ -81,7 +81,18 @@ function ensureSecrets() {
     `MONGODB_URI=mongodb://127.0.0.1:${MONGO_PORT}/PosnicPro`,
     '',
   ];
-  fs.writeFileSync(envFile, lines.join('\n'), { mode: 0o600 });
+  let fd;
+  try {
+    fd = fs.openSync(envFile, 'wx', 0o600);
+  } catch (error) {
+    if (error.code === 'EEXIST') return validateExisting();
+    throw error;
+  }
+  try {
+    fs.writeFileSync(fd, lines.join('\n'), 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
   say('generated api/.env with development secrets');
 }
 
