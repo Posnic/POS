@@ -69,3 +69,19 @@ test('plain report and settings values do not pass through html sinks', () => {
   assert.doesNotMatch(settings, /\.html\((?:response\.data\[['"](?:printing_address|store_telephone|store_email|branch_name)['"]\]|htmlHeaderView|htmlView)\)/);
   assert.doesNotMatch(reports, /append\(['"][^\n]*No (?:Records|Cancellations|Open Items|Discounts)[^\n]*\+/);
 });
+
+test('collections and media previews do not reinterpret strings as markup', () => {
+  const core = source('frontend/static/script/js/core/PosnicPro.js');
+  const items = source('frontend/static/script/js/modules/js/items.js');
+  const receiving = source('frontend/static/script/js/modules/js/receiving_add.js');
+  const deleteSelection = core.slice(
+    core.indexOf('deleteTableSelectedRowData: function'),
+    core.indexOf('deleteSelectedRow: function')
+  );
+  assert.doesNotMatch(deleteSelection, /\$\(e\)\.each/);
+  assert.ok((items.match(/Array\.from\(variant_value \|\| \[\]\)\.forEach/g) || []).length >= 2);
+  assert.match(items, /\.modal-title'\)\.text\('Add ' \+ fam\.axis\)/);
+  assert.doesNotMatch(receiving, /onclick="PosnicPro\.receivings\.image_edit_remove_selected/);
+  assert.match(receiving, /new URL\(image_path, window\.location\.href\)/);
+  assert.match(receiving, /\$wrapper\.append\(/);
+});

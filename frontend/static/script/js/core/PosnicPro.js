@@ -1853,7 +1853,7 @@ PosnicPro = {
             PosnicPro.callbackRegistry = {};
             var arr = [];
             var obj = {};
-            $(e).each(function (key, id) {
+            Array.from(e || []).forEach(function (id) {
                 obj = id;
                 arr.push(obj);
             });
@@ -1862,7 +1862,6 @@ PosnicPro = {
                 data: JSON.stringify({ data: arr, approval_token: PosnicPro._approvalToken || undefined })
             };
             PosnicPro._approvalToken = null; // single-use
-            //$(e).each(function (key, id) {
             PosnicPro.delete(params, function (response) {
                 if (response.type === 'success') {
                     let actionUrl = (PosnicPro.record_url === 'customerCategory') ? PosnicPro.record_url.toLowerCase() : PosnicPro.record_url;
@@ -1889,7 +1888,6 @@ PosnicPro = {
                 PosnicPro.alert(response.type, response.message);
                 PosnicPro.deleteConfirmation = false;
             });
-            // });
         } else {
             PosnicPro.record_url = '';
             PosnicPro.record_url = action;

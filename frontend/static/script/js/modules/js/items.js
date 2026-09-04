@@ -948,7 +948,7 @@ PosnicPro.items = {
             var variant_list = $('#item_variant_list').val();
             var variant_array = ["variant"];
             var variant_value = (variant_list.length > 0) ? $('#item_variant_list').val() : variant_array;
-            $(variant_value).each(function (key, variantName) {
+            Array.from(variant_value || []).forEach(function (variantName, key) {
                 var itemName = $("#items_name").val();
                 var unitDetail = $("#items_unit").select2("data");
                 let unitVariantDetail = $('#items_unit_' + key + '');
@@ -1414,13 +1414,13 @@ PosnicPro.items = {
         $('body').append(
             '<div class="modal fade close_on_esc" id="family_add_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
             '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h5 class="modal-title">Add ' + fam.axis + '</h5>' +
+            '<div class="modal-header"><h5 class="modal-title"></h5>' +
             '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>' +
             '<div class="modal-body">' +
-            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">' + fam.axis + ' value</label>' +
+            '<div class="form-group"><label class="family-axis-label" style="font-weight:600; font-size:.85rem;"></label>' +
             '<input type="text" class="form-control" id="family_add_value" maxlength="60" placeholder="e.g. XL"></div>' +
             '<div class="form-group"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_selling_price_2">Selling price</lang></label>' +
-            '<input type="number" min="0" step="0.01" class="form-control" id="family_add_price" value="' + ($('#items_selling_price').val() || '') + '"></div>' +
+            '<input type="number" min="0" step="0.01" class="form-control" id="family_add_price"></div>' +
             '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Barcode <small class="text-muted">(optional)</small></label>' +
             '<input type="text" class="form-control" id="family_add_barcode"></div>' +
             '<div class="form-group mb-0"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_opening_stock">Opening stock</lang></label>' +
@@ -1432,6 +1432,9 @@ PosnicPro.items = {
             '<button type="button" class="btn btn-outline-primary" id="family_add_btn" onclick="PosnicPro.items.submitAddValue();"><lang class="lang_nav_add">Add</lang></button>' +
             '</div></div></div></div>'
         );
+        $('#family_add_modal .modal-title').text('Add ' + fam.axis);
+        $('#family_add_modal .family-axis-label').text(fam.axis + ' value');
+        $('#family_add_price').val($('#items_selling_price').val() || '');
         $('#family_add_modal').modal('show');
         setTimeout(function () { $('#family_add_value').trigger('focus'); }, 400);
     },
@@ -2273,7 +2276,7 @@ PosnicPro.items = {
             }
         } else {
             var variant_value = $('#item_variant_list').val();
-            $(variant_value).each(function (key, id) {
+            Array.from(variant_value || []).forEach(function (id, key) {
                 if (checked) {
                     $('#items_barcodeid_' + key + '').val($('#items_itemid_' + key + '').val());
                     $('#items_barcodeid_' + key + '').attr('disabled', 'disabled');

@@ -310,7 +310,7 @@ PosnicPro.customersearch = {
                 $('.search-branch-no').html(data.branch_no);
                 $('.search-branch-name').html(data.branch_name);
                 $('.search-branch-address').html(data.store_address);
-                $('.search-branch-mobile').html(data.store_telephone);
+                $('.search-branch-mobile').text(data.store_telephone);
                 $('.search-branch-email').html(data.store_email);
                 loader.find(".loadingSpinner:first").remove();
             } else {

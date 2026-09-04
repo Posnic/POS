@@ -366,7 +366,7 @@ PosnicPro.receivings = {
             image_name = image_name ? [image_name] : [];
         }
 
-        $(image_name).each(function (key, val) {
+        image_name.forEach(function (val, key) {
             if (!val) {
                 return true; // continue
             }
@@ -385,19 +385,41 @@ PosnicPro.receivings = {
             var extension = image_path.substr((image_path.lastIndexOf('.') + 1)).toLowerCase();
             var title = (typeof val === 'object' && val.name) ? val.name : image_path;
 
-            var filepath;
-            if (extension === 'pdf') {
-                filepath = '<iframe class="img-thumbnail image_style" src="' + image_path + '" frameborder="0" style="border:none;" data-toggle="tooltip" title="' + escape(title) + '"></iframe>';
-            } else {
-                filepath = '<img loading="lazy" decoding="async" class="img-thumbnail image_style" src="' + image_path + '" \
-                            data-toggle="tooltip" title="' + escape(title) + '" />';
+            var parsedUrl;
+            try {
+                parsedUrl = new URL(image_path, window.location.href);
+            } catch (error) {
+                return;
+            }
+            if (!/^(https?:|blob:|file:)$/.test(parsedUrl.protocol)) {
+                return;
             }
 
-            $('#display-preview').append(
-                    '<div id="selector_' + key + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-            <span>' + filepath + ' </span><br /> \
-            <a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.receivings.image_edit_remove_selected(\'' + key + '\',\'' + image_path + '\')">&#215;</a> \
-            </div>');
+            var $media;
+            if (extension === 'pdf') {
+                $media = $('<iframe>')
+                    .addClass('img-thumbnail image_style')
+                    .attr({ src: parsedUrl.href, frameborder: '0', title: title, 'data-toggle': 'tooltip' })
+                    .css('border', 'none');
+            } else {
+                $media = $('<img>')
+                    .addClass('img-thumbnail image_style')
+                    .attr({ src: parsedUrl.href, loading: 'lazy', decoding: 'async', title: title, 'data-toggle': 'tooltip' });
+            }
+
+            var $wrapper = $('<div>')
+                .attr('id', 'selector_' + key)
+                .addClass('receiving-image-wrapper image-area')
+                .css('position', 'relative');
+            var $remove = $('<button type="button">')
+                .addClass('remove-image')
+                .attr('aria-label', 'Remove image')
+                .text('\u00d7')
+                .on('click', function () {
+                    PosnicPro.receivings.image_edit_remove_selected(key, image_path);
+                });
+            $wrapper.append($('<span>').append($media), $('<br>'), $remove);
+            $('#display-preview').append($wrapper);
 
             // Keep only the URL for edit submissions; uploads for new images
             // still go through receiving_image_preview -> uploadReceivingImage.
