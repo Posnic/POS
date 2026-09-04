@@ -55,4 +55,17 @@ test('customer and branch identity fields are rendered as text', () => {
   const customerView = source('frontend/static/script/js/modules/js/customer_view.js');
 
   assert.doesNotMatch(customerView, /\.(?:customer|branch)-(?:name|phone|email|address)"\)\.html\(/);
+  assert.doesNotMatch(customerView, /innerHTML\s*\+=/);
+});
+
+test('plain report and settings values do not pass through html sinks', () => {
+  const settings = source('frontend/static/script/js/modules/js/settings.js');
+  const reports = [
+    'report_customers.js', 'report_dailysales.js', 'report_gstrone.js',
+    'report_kiosk.js', 'report_kot.js', 'report_payment.js',
+    'report_pending.js', 'report_receivings.js', 'report_sales.js'
+  ].map((file) => source('frontend/static/script/js/modules/js/' + file)).join('\n');
+
+  assert.doesNotMatch(settings, /\.html\((?:response\.data\[['"](?:printing_address|store_telephone|store_email|branch_name)['"]\]|htmlHeaderView|htmlView)\)/);
+  assert.doesNotMatch(reports, /append\(['"][^\n]*No (?:Records|Cancellations|Open Items|Discounts)[^\n]*\+/);
 });

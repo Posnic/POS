@@ -126,53 +126,42 @@ PosnicPro.customerview = {
             
             var itemIndex = 0;
             for (var i = 0; i < data.length; i++) {
-                var rowHTMLLines = '';
+                var fragment = document.createDocumentFragment();
                 $(data[i].items).each(function (key, val) {
                     itemIndex++;
                     var currency = PosnicPro.local.get('currencySign');
-                    $('.current-currency').html(currency);
-                    var name = val.name;
+                    $('.current-currency').text(currency);
+                    var name = String(val.name || '');
                     var matches = name.match(/\b(\w)/g);
                     var joinLetter = matches ? matches.join('') : '';
-                    rowHTMLLines += '<div class="card m-b-20">' +
-                        '<div class="card-body">' +
-                        '<div class="table-responsive">' +
-                        '<table class="table table-borderless mb-0">' +
-                        '<tbody>' +
-                        '<tr>' +
-                        '<td><h5 class="my-0 font-13">' + itemIndex + '</h5></td>' +
-                        '<td><span class="action-icon badge badge-primary-inverse rounded-circle">' + joinLetter.substring(0, 3) + '</span></td>' +
-                        '<td>' +
-                        '<h5 class="mt-0 font-13 view_item_Name">' + val.name + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark "><lang class="lang_price_title">Price</lang></p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.price + '</span></h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark"><lang class="lang_qty_title">Qty</lang></p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.qty + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark"><lang class="lang_discount_title">Discount</lang></p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.discount + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark"><lang class="lang_module_tax">Tax</lang></p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.tax + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark"><lang class="lang_total_title">Total</lang></p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.total + '</span></h5>' +
-                        '</td>' +
-                        '</tr>' +
-                        '</tbody>' +
-                        '</table>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
+                    var $card = $('<div class="card m-b-20"><div class="card-body"><div class="table-responsive"><table class="table table-borderless mb-0"><tbody><tr></tr></tbody></table></div></div></div>');
+                    var $row = $card.find('tr');
+                    $('<td><h5 class="my-0 font-13"></h5></td>').find('h5').text(itemIndex).end().appendTo($row);
+                    $('<td><span class="action-icon badge badge-primary-inverse rounded-circle"></span></td>')
+                        .find('span').text(joinLetter.substring(0, 3)).end().appendTo($row);
+                    $('<td><h5 class="mt-0 font-13 view_item_Name"></h5></td>').find('h5').text(name).end().appendTo($row);
+
+                    var addValueCell = function (labelClass, label, value, withCurrency) {
+                        var $cell = $('<td><p class="mb-1 font-14 font-dark"><lang></lang></p><h5 class="mt-0 mb-0 font-13"></h5></td>');
+                        $cell.find('lang').addClass(labelClass).text(label);
+                        var $value = $cell.find('h5');
+                        if (withCurrency) {
+                            $value.text(currency + '\u00a0');
+                            $('<span class="number"></span>').text(value).appendTo($value);
+                        } else {
+                            $value.text(value);
+                        }
+                        $cell.appendTo($row);
+                    };
+
+                    addValueCell('lang_price_title', 'Price', val.price, true);
+                    addValueCell('lang_qty_title', 'Qty', val.qty, false);
+                    addValueCell('lang_discount_title', 'Discount', val.discount, false);
+                    addValueCell('lang_module_tax', 'Tax', val.tax, false);
+                    addValueCell('lang_total_title', 'Total', val.total, true);
+                    fragment.appendChild($card[0]);
                 });
-                container.innerHTML += rowHTMLLines;
+                container.appendChild(fragment);
             }
             $('span.number').number(true, 2);
         });

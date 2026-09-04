@@ -213,9 +213,9 @@ PosnicPro.customersearch = {
                 var image_path = (data.image !== "item.svg") ? data.image : 'static/images/default/item.svg';
                 $('.customer_image_view').attr('src', image_path);
                 $('#item_view_category').text(data.category_name);
-                $('#item_view_discription').append(data.description);
+                $('#item_view_discription').text(data.description);
                 var htmlView = $('#item_view_discription').text();
-                $('#item_view_discriptions').html(htmlView);
+                $('#item_view_discriptions').text(htmlView);
 
                 //preview for image
                 var myobjFor = document.getElementById("item_display_preview_for");
@@ -586,4 +586,3 @@ $(document).ready(function () {
         }
     });
 });
-

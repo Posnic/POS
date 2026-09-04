@@ -4927,7 +4927,7 @@ PosnicPro.kotitemreport = {
 
 
 
-                        $('.kotcancellation_norecord').empty().append('<div class="text-center text-dark"><p>' + cancelMsg + '</p></div>');
+                        PosnicPro.renderNoRecords('.kotcancellation_norecord', cancelMsg);
 
                         $('#kotcancellation_img_hide,.kotcancellation_norecord').show();
 
@@ -5315,7 +5315,7 @@ PosnicPro.kotopenitemreport = {
 
                 $('.kotopenitemreport_header').hide();
 
-                $('.kotopenitemreport_norecord').empty().append('<div class="text-center text-dark"><p>' + kotOpenMsg + '</p></div>');
+                PosnicPro.renderNoRecords('.kotopenitemreport_norecord', kotOpenMsg);
 
                 $('#kotopenitemreport_img_hide,.kotopenitemreport_norecord').show();
 
@@ -5691,7 +5691,7 @@ PosnicPro.kotdiscountreport = {
 
 
 
-                        $('.kotdiscountreport_norecord').empty().append('<div class="text-center text-dark"><p>' + kotDiscMsg + '</p></div>');
+                        PosnicPro.renderNoRecords('.kotdiscountreport_norecord', kotDiscMsg);
 
                         $('#kotdiscountreport_img_hide,.kotdiscountreport_norecord').show();
 

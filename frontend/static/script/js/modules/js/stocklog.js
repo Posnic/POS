@@ -341,14 +341,17 @@ PosnicPro.stocklogs = {
                 var totalCount = parseInt(data.count);
                 $('#list_lowstock_name').html('');
                 $(data.list).each(function (key, val) {
-                    var branch_value = '<li class="media dropdown-item">' +
-                            '<span class="badge badge-secondary-inverse">' + (key + 1) + '</span>&nbsp;&nbsp;' +
-                            '<div class="media-body">' +
-                            '<h5 class="action-title" width="30%">' + PosnicPro.textOverflowEllipsis(val.name, 30, true) + '</h5>' +
-                            '<p><span class="timing">' + val.date + '</span></p>' +
-                            '</div>' +
-                            '</li>';
-                    $('#list_lowstock_name').append(branch_value);
+                    var $item = $('<li class="media dropdown-item"></li>');
+                    $('<span class="badge badge-secondary-inverse"></span>').text(key + 1).appendTo($item);
+                    $item.append(document.createTextNode('\u00a0\u00a0'));
+                    var $body = $('<div class="media-body"></div>').appendTo($item);
+                    $('<h5 class="action-title" width="30%"></h5>')
+                        .text(PosnicPro.textOverflowEllipsis(val.name, 30, true))
+                        .appendTo($body);
+                    $('<p><span class="timing"></span></p>')
+                        .find('.timing').text(val.date).end()
+                        .appendTo($body);
+                    $('#list_lowstock_name').append($item);
                 });
                 // The bell is the ONE notification centre now (activity feed +
                 // push opt-in live in the same dropdown), so zero low stock

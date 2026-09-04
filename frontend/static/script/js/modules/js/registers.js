@@ -630,7 +630,7 @@ PosnicPro.registers = {
             $('.print_registerclosedate').html(data.register_closedate);
 
             // Dynamically populate payment types from payment tally
-            var paymentTypesHtml = '';
+            var $paymentTypesBody = $('#payment_types_print_tbody').empty();
             console.log('=== Payment Tally Print Debug ===');
             $('#payment_tally_tbody tr').each(function() {
                 var $row = $(this);
@@ -639,40 +639,31 @@ PosnicPro.registers = {
                 var countedAmount = $row.find('a[id^="counted_"]').text().trim() || '0';
                 var diffAmount = $row.find('span[id^="diffrent_"]').text().trim();
                 
-                console.log('Row HTML:', $row.html());
-                console.log('Payment Type:', paymentType);
-                console.log('Expected:', expectedAmount);
-                console.log('Counted:', countedAmount);
-                console.log('Difference:', diffAmount);
-                console.log('---');
-                
                 if (paymentType && paymentType !== '') {
-                    paymentTypesHtml += '<tr style="border-bottom: 1px solid #eee;">';
-                    paymentTypesHtml += '<td style="color: #333;font-size: 13px; padding: 8px 5px; font-weight: 500;" class="article print-deatils-size-family" align="left">' + paymentType + '</td>';
-                    paymentTypesHtml += '<td style="color: #333;font-size: 13px; padding: 8px 5px;" class="print-deatils-size-family" align="right">' + expectedAmount + '</td>';
-                    paymentTypesHtml += '<td style="color: #333;font-size: 13px; padding: 8px 5px;" class="print-deatils-size-family" align="right">' + countedAmount + '</td>';
-                    paymentTypesHtml += '<td style="color: #333;font-size: 13px; padding: 8px 5px; font-weight: 600;" class="print-deatils-size-family" align="right">' + diffAmount + '</td>';
-                    paymentTypesHtml += '</tr>';
+                    var $printRow = $('<tr></tr>').css('border-bottom', '1px solid #eee');
+                    [paymentType, expectedAmount, countedAmount, diffAmount].forEach(function (value, index) {
+                        $('<td class="print-deatils-size-family"></td>')
+                            .toggleClass('article', index === 0)
+                            .attr('align', index === 0 ? 'left' : 'right')
+                            .css({ color: '#333', fontSize: '13px', padding: '8px 5px', fontWeight: index === 0 ? 500 : (index === 3 ? 600 : 400) })
+                            .text(value)
+                            .appendTo($printRow);
+                    });
+                    $paymentTypesBody.append($printRow);
                 }
             });
-            console.log('Final HTML:', paymentTypesHtml);
-            
-            // Add final border
-            paymentTypesHtml += '<tr><td height="20"></td></tr>';
-            paymentTypesHtml += '<tr><td height="1" colspan="4" style="border-bottom:1px solid #000"></td></tr>';
-            paymentTypesHtml += '<tr><td height="20"></td></tr>';
-            
-            $('#payment_types_print_tbody').html(paymentTypesHtml);
-            
-            $('.currentUser').html(data.current_user);
-            $('#opening_Amount').html(data.opening_float);
-            $('#in_Amount').html(cash_inData);
-            $('#out_Amount').html(cash_outData);
-            $('#received_Amount').html($('#payment_receive').html());
-            $('#refund_Amount').html($('#register_refund').html());
-            $('#net_Amount').html($('#net_receipt').html());
-            $('#total_sale').html($('#register_total_sales').html());
-            $('#total_transaction').html($('#register_transaction').html());
+
+            $paymentTypesBody.append('<tr><td height="20"></td></tr><tr><td height="1" colspan="4" style="border-bottom:1px solid #000"></td></tr><tr><td height="20"></td></tr>');
+
+            $('.currentUser').text(data.current_user);
+            $('#opening_Amount').text(data.opening_float);
+            $('#in_Amount').text(cash_inData);
+            $('#out_Amount').text(cash_outData);
+            $('#received_Amount').text($('#payment_receive').text());
+            $('#refund_Amount').text($('#register_refund').text());
+            $('#net_Amount').text($('#net_receipt').text());
+            $('#total_sale').text($('#register_total_sales').text());
+            $('#total_transaction').text($('#register_transaction').text());
 
             var contents = $("#printRegister_a4_form").html();
             var frame1 = $('<iframe />');

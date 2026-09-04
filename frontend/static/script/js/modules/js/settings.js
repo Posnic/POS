@@ -1646,14 +1646,13 @@ if ($wrapper.length) {
             return $(this).val() && $(this).val() !== 'addbranch';
         });
         if (options.length < 2) { $('#modules_branch_wrap').hide(); return; }
-        var html = '';
+        $sel.empty();
         options.each(function () {
             var v = $(this).val();
             var label = $(this).text();
-            html += '<option value="' + v + '"' + (String(v) === String(sessionBranch) ? ' selected' : '') + '>'
-                + label + (String(v) === String(sessionBranch) ? ' (this till)' : '') + '</option>';
+            var isSession = String(v) === String(sessionBranch);
+            $sel.append(new Option(label + (isSession ? ' (this till)' : ''), v, false, isSession));
         });
-        $sel.html(html);
         $('#modules_branch_wrap').show();
     },
     _modulesRemoteBranch: function () {
@@ -6819,7 +6818,7 @@ PosnicPro.settings._shotNext = function (img) {
     var $strip = $img.closest('.fd-shots');
     var key = $strip.attr('data-shot-key');
     var n = Number($img.attr('data-shot-n') || 0);
-    if (!key || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
+    if (!/^[a-z0-9_-]+$/i.test(key || '') || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
     if ($strip.find('[data-shot-n="' + (n + 1) + '"]').length) { return; }
     $('<img>')
         .attr('src', 'static/images/features/' + key + '-' + (n + 1) + '.png')
@@ -7491,7 +7490,10 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
    deferPreview comment above. */
 $(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
     $('#v-pills-kiosk img[data-defer-src]').each(function () {
-        $(this).attr('src', $(this).attr('data-defer-src')).removeAttr('data-defer-src');
+        var source = $(this).attr('data-defer-src') || '';
+        if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
+            $(this).attr('src', source).removeAttr('data-defer-src');
+        }
     });
 });
 

@@ -236,24 +236,32 @@ PosnicPro.kot = {
     renderTableBox: function (table) {
         var isCustom = table.isCustom || false;
         var isTakeaway = table.tableorder_value === 'TA';
-        var tableId = table.tableorder_id || table.tableorder_value;
+        var tableId = String(table.tableorder_id || table.tableorder_value || '');
+        var tableNumber = String(table.tableorder_value || '');
 
         // Different colors for Take Away
         var boxColor = isTakeaway ? '#ffe0b2' : '#d4edda';
         var numberColor = isTakeaway ? '#ff9800' : '#a3d9a5';
-        var labelHtml = isTakeaway ? '<div style="font-size: 12px; color: #ff9800; font-weight: 600; margin-top: 4px;"><lang class="lang_take_away_2">Take Away</lang></div>' : '';
-
-        var tableBox = `
-            <a href="#/kot/${table.tableorder_value}" class="kot-table-box page_url" data-table-id="${tableId}" data-table-number="${table.tableorder_value}" 
-                 style="position: relative; aspect-ratio: 1; border: 2px solid ${boxColor}; border-radius: 12px; 
-                        display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; 
-                        transition: all 0.3s; background: white; min-height: 100px; margin-bottom: 10px; text-decoration: none;">
-                <h2 class="mb-0" style="font-weight: 700; color: ${numberColor}; font-size: 36px;">${table.tableorder_value}</h2>
-                ${labelHtml}
-            </a>
-        `;
-
-        $('#kot_tables_grid').append(tableBox);
+        var $tableBox = $('<a class="kot-table-box page_url"><h2 class="mb-0"></h2></a>')
+            .attr({
+                href: '#/kot/' + encodeURIComponent(tableNumber),
+                'data-table-id': tableId,
+                'data-table-number': tableNumber
+            })
+            .css({
+                position: 'relative', aspectRatio: '1', border: '2px solid ' + boxColor,
+                borderRadius: '12px', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                transition: 'all 0.3s', background: 'white', minHeight: '100px',
+                marginBottom: '10px', textDecoration: 'none'
+            });
+        $tableBox.find('h2').text(tableNumber).css({ fontWeight: 700, color: numberColor, fontSize: '36px' });
+        if (isTakeaway) {
+            $('<div><lang class="lang_take_away_2">Take Away</lang></div>')
+                .css({ fontSize: '12px', color: '#ff9800', fontWeight: 600, marginTop: '4px' })
+                .appendTo($tableBox);
+        }
+        $('#kot_tables_grid').append($tableBox);
     },
 
     addCustomTableBox: function () {

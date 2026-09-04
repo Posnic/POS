@@ -1366,8 +1366,7 @@ PosnicPro.items = {
         $('#item_view_description_value,#item_description_value').html('');
         if (data.description !== '') {
             $('#item-description-tab').show();
-            var desciptionInnerText = $('#item_view_description_value').html(data.description);
-            $('#item_description_value').html(desciptionInnerText.prop("innerText"));
+            $('#item_view_description_value,#item_description_value').text(data.description);
         }
     },
     /*
@@ -2307,7 +2306,7 @@ PosnicPro.items = {
                 items_expiry_date = items_expiry_date.split(' ')[0];
                 $('#userInput').val(data.barcode_id);
                 $('#branch-value').val(data.name);
-                $('#branch-name').html(data.name);
+                $('#branch-name').text(data.name);
                 $('#price-name').text('PRICE' + " " + currency + " " + data.selling_price);
                 $('#mrp-price').text('MRP' + " " + currency + " " + data.mrp_price);
                 $('#price-value').val('PRICE' + " " + currency + " " + data.selling_price);

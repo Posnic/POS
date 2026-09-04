@@ -1040,7 +1040,7 @@ PosnicPro.sales.view = {
                         }
                     }
                     if ($a4GstSpan.length) {
-                        $a4GstSpan.html(branchGstin);
+                        $a4GstSpan.text(branchGstin);
                         var $a4GstContainer = $a4Body.find('.gst_hide_show');
                         if (branchGstin) {
                             $a4GstContainer.show();

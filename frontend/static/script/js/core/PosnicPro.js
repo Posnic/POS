@@ -722,7 +722,12 @@ PosnicPro = {
         $('#view_' + module + '_daterange').removeClass('active-date');
         $('#view_' + module + '_daterange').val(start_date + ' - ' + end_date);
 
-        $('.daterange-timepicker span').html('<span>' + daterangeTxt + '</span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + start_date + ' - ' + end_date + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        var $dateDisplay = $('.daterange-timepicker').children('span').first().empty();
+        $('<span></span>').text(daterangeTxt).appendTo($dateDisplay);
+        $dateDisplay.append(document.createTextNode('\u00a0\u00a0'));
+        $('<span data-toggle="tooltip" data-placement="top"><i class="feather icon-help-circle setfeather_font"></i></span>')
+            .attr('data-original-title', start_date + ' - ' + end_date)
+            .appendTo($dateDisplay);
         $('.daterange-timepicker').val(start_date + ' - ' + end_date);
         //PosnicPro.dashboard.datePicker();
         var value = '<button class="btn btn-primary-rgba" type="button" data-id="' + module + '" onclick="PosnicPro.search(this,\"Table\")">'
