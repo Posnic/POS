@@ -189,6 +189,9 @@ function buildLangPacks(cb) {
         const outDir = pathx.join(process.cwd(), publicDir, 'languages');
         fsx.mkdirSync(outDir, { recursive: true });
         const problems = [];
+        /* A run of Latin-1 supplement characters is what UTF-8 read as
+           Latin-1 looks like. Real translations never contain one. */
+        const MOJIBAKE = /[\u0080-\u00FF]{3,}/;
         const packs = {};
         for (const lang of languages) {
             if (lang === 'en') continue;
@@ -210,6 +213,40 @@ function buildLangPacks(cb) {
                 }
             }
             fsx.writeFileSync(pathx.join(outDir, `${lang}.json`), JSON.stringify(dict), 'utf8');
+        }
+        /*
+         * The words the SERVER writes, keyed by the English itself.
+         *
+         * They ship as their own file per language because they answer a
+         * different source. The API is deployed separately and can be a
+         * release behind the till, so a message this pack has never heard
+         * of still has to print. A missing file, a missing entry and an
+         * unknown sentence all fall through to the English the server
+         * sent - see PosnicPro.i18n.say().
+         */
+        const serverDir = pathx.join(process.cwd(), '..', 'languages', 'server');
+        if (fsx.existsSync(serverDir)) {
+            for (const file of fsx.readdirSync(serverDir)) {
+                if (!/^[a-z]{2}[.]json$/.test(file)) continue;
+                const lang = file.slice(0, 2);
+                let says;
+                try {
+                    says = JSON.parse(fsx.readFileSync(pathx.join(serverDir, file), 'utf8'));
+                } catch (e) {
+                    problems.push(`server/${file} is not valid JSON: ${e.message}`);
+                    continue;
+                }
+                const clean = {};
+                for (const [english, said] of Object.entries(says)) {
+                    if (typeof said !== 'string' || !said.trim()) continue;
+                    if (MOJIBAKE.test(said)) {
+                        problems.push(`server/${lang}: "${english.slice(0, 30)}" looks like mojibake`);
+                        continue;
+                    }
+                    clean[english] = said;
+                }
+                fsx.writeFileSync(pathx.join(outDir, `msg-${lang}.json`), JSON.stringify(clean), 'utf8');
+            }
         }
         if (problems.length) {
             return cb(new Error('language packs:\n  ' + problems.join('\n  ')));
