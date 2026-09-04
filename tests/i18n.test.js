@@ -710,3 +710,41 @@ test('no module asks for a translation while it is still loading', () => {
     .map(([file, sites]) => file + ': ' + sites.map((x) => 'line ' + x.line + ' "' + x.english + '"').join(', '));
   assert.equal(total, 0, 't() runs while these modules are still loading:\n  ' + detail.join('\n  '));
 });
+
+test('a brand is spelled, not translated', () => {
+  /*
+   * Six translators in a row reported the same fight, and each one lost it
+   * differently: "Provider Way2sms", "TextLocal", "Msimbo wa Pharmacode",
+   * "Stile Turbo C", "بوابة Razorpay". None of them was being careless. The
+   * validator they worked against rejects a value identical to its English -
+   * the right default, since that is what a skipped row looks like - and it
+   * had no exemption for a proper noun, so the only way to pass was to change
+   * the name. A payment tab that no longer names the payment provider.
+   *
+   * languages/_glossary.json carries the list, and this is the exemption:
+   * where a key's whole English IS one of those names, every pack spells it
+   * the same way. Descriptive names are deliberately absent from that list -
+   * Soft Dark, Warm Night and Diamond are words, and a theme picker in Thai
+   * should read in Thai.
+   */
+  const glossary = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, '_glossary.json'), 'utf8'));
+  const english = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, '_english.json'), 'utf8'));
+  assert.ok(Array.isArray(glossary.brands) && glossary.brands.length, 'the glossary lists no brands');
+  const brands = new Set(glossary.brands.map((b) => b.toLowerCase()));
+  const keys = Object.keys(english).filter((k) => brands.has(String(english[k]).trim().toLowerCase()));
+  assert.ok(keys.length, 'no key carries a brand as its whole English');
+
+  const wrong = [];
+  for (const file of fs.readdirSync(LANGUAGES_DIR).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+    const pack = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, file), 'utf8'));
+    for (const key of keys) {
+      const value = pack[key];
+      if (typeof value !== 'string' || value.trim() === '') continue;   // untranslated is fine
+      if (value !== english[key]) {
+        wrong.push(file.slice(0, 2) + '.' + key + ' = ' + JSON.stringify(value)
+          + ', should be ' + JSON.stringify(english[key]));
+      }
+    }
+  }
+  assert.deepEqual(wrong, [], 'a brand was rewritten:\n  ' + wrong.join('\n  '));
+});
