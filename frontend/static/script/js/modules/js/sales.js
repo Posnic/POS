@@ -89,7 +89,7 @@
         $('#image_sidebar_newsale').show();
         /* The words are the same call either way; only the type sizes below
            still depend on the language. */
-        $("#sales-text-change").text(PosnicPro.i18n.t('lang_new_title', 'New'));
+        $("#sales-text-change").text(PosnicPro.i18n.t('lang_addvariant_title', 'New'));
         $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         if (PosnicPro.i18n.is('ta')) {
             $('.payment_detail').addClass('tm_payment');
@@ -2008,7 +2008,7 @@
         if (localStorage.getItem("payment_gateway") === 'true') {
             let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                 '<label class="btn btn-block btn-payment-mode Qrpay_active payment_detail change_active save_enable qr_active qr_btn ' + active_qrpay_mode + ' ">' +
-                '<input type="radio" class="payment_mode" name="payment_mode" id="Qrpay" value="Qrpay" style="display: none;"/><lang class="lang_qrcode_title"> Razorpay </lang>' +
+                '<input type="radio" class="payment_mode" name="payment_mode" id="Qrpay" value="Qrpay" style="display: none;"/><lang class="lang_razorpay"> Razorpay </lang>' +
                 '</label>' +
                 '</div>';
             $('#payment_id').append(paymentMethod);

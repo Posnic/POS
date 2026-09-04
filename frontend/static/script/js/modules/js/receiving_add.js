@@ -34,7 +34,7 @@ PosnicPro.receivings = {
     },
     showAdd: function () {
         PosnicPro.receivings.showPaymentMode('');
-        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_new_title', 'New'));
+        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_addvariant_title', 'New'));
 //        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         PosnicPro.HideSideBarModal();
@@ -1054,7 +1054,7 @@ PosnicPro.receivings = {
                                 '<th class="text-center"><lang class="lang_qty_title">Qty </lang></th>' +
                                 '<th class="text-center"><lang class="lang_unit_title">Unit </lang></th>' +
                                 '<th class="text-right"><lang class="lang_cost_title">Cost </lang></th>' +
-                                '<th class="text-center"><lang class="lang_tax_title">Tax </lang></th>' +
+                                '<th class="text-center"><lang class="lang_module_tax">Tax </lang></th>' +
                                 '<th class="text-right"><lang class="lang_total_title">Total </lang></th>' +
                                 '</tr></thead>';
                         app = app + '' + head + '';

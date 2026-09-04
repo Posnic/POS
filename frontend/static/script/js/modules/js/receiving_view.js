@@ -183,7 +183,7 @@ PosnicPro.receivings.view = {
                     '<th width="30%"><lang class="lang_name_title">Name </lang></th>' +
                     '<th width="10%"><lang class="lang_price_title">Price </lang></th>' +
                     '<th width="10%"><lang class="lang_qty_title">Qty </lang></th>' +
-                    '<th width="30%"><lang class="lang_tax_title">Exclusive (Tax) </lang></th>' +
+                    '<th width="30%"><lang class="lang_exclusive_tax_2">Exclusive (Tax) </lang></th>' +
                     '<th  width="20%" class="text-center"><lang class="lang_total_title">Total </lang></th>' +
                     '</thead>';
             app = app + '' + head + '';

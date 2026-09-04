@@ -162,11 +162,17 @@ function keysUsed() {
     for (const m of js.matchAll(/data-t="([A-Za-z0-9_-]+)"[^>]*>([^<']*)</g)) {
       remember(m[1], m[2], file);
     }
-    for (const tag of js.matchAll(/<[a-zA-Z][^<>']*>/g)) {
-      for (const m of tag[0].matchAll(/data-t-(placeholder|title|aria-label)="([^"]+)"/g)) {
-        const en = new RegExp('\\s' + m[1] + '="([^"]*)"').exec(tag[0]);
-        remember(m[2], en ? en[1] : '', file);
-      }
+    /* A tag a module builds is usually split across three concatenated
+       literals, so there is no whole tag to match and no closing > to find.
+       Anchor on the key and read the plain attribute from the text around
+       it, which is where an author writes it. */
+    for (const m of js.matchAll(/data-t-(placeholder|title|aria-label)="([A-Za-z0-9_-]+)"/g)) {
+      const attr = new RegExp('\\s' + m[1] + '="([^"]*)"');
+      const before = js.slice(Math.max(0, m.index - 400), m.index);
+      const opened = before.lastIndexOf('<');
+      let en = attr.exec(opened >= 0 ? before.slice(opened) : before);
+      if (!en) en = attr.exec(js.slice(m.index, m.index + 400));
+      remember(m[2], en ? en[1] : '', file);
     }
   }
   return { used, tags, calls, context };

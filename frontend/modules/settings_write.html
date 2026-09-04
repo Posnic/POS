@@ -222,7 +222,7 @@
                                                     <hr>
                                                     <small class="text-muted d-block mb-2"><lang class="lang_wf_links_hint">Wages and staff cards live on each user; clock-in, tips and roster switches are on the Workforce card in Features.</lang></small>
                                                     <a href="#/labourreport" class="btn btn-outline-primary btn-sm mr-2"><i class="feather icon-clock mr-1"></i><lang class="lang_labourreport_title">Labour / Payout</lang></a>
-                                                    <a href="#/users" class="btn btn-outline-primary btn-sm mr-2"><i class="feather icon-users mr-1"></i><lang class="lang_users_title">Users</lang></a>
+                                                    <a href="#/users" class="btn btn-outline-primary btn-sm mr-2"><i class="feather icon-users mr-1"></i><lang class="lang_userscut_title">Users</lang></a>
                                                     <a href="#/settings/modules" class="btn btn-outline-primary btn-sm"><i class="feather icon-toggle-right mr-1"></i><lang class="lang_modules">Features</lang></a>
                                                 </div>
 
@@ -469,7 +469,7 @@
      empty page whenever no session was open. -->
 <div class="row align-items-center row_filter register_details_visibledata" style="display:none;">
                     <div class="col-lg-6 col-xl-6">
-                        <h4 class="page-title"><lang class="lang_register_detail">Register Details</lang></h4>
+                        <h4 class="page-title"><lang class="lang_registerdetail_title">Register Details</lang></h4>
                         <div class="table-responsive">
                             <table class="table table-borderless">
                                 <tbody>
@@ -508,7 +508,7 @@
                                                 <th>#</th>
                                                 <th><lang class="lang_registername_title">Register name</lang></th>
                                                 <th><lang class="lang_status_title">Status</lang></th>
-                                                <th class="text-right"><lang class="lang_action_title">Action</lang></th>
+                                                <th class="text-right"><lang class="lang_action">Action</lang></th>
                                             </tr>
                                         </thead>
                                         <tbody id="register_overview_body"></tbody>
@@ -715,7 +715,7 @@
                                             <tr>
                                         <th scope="col"><lang class="lang_users_title"> User</lang></th>                                               
                                         <th scope="col"><lang class="lang_amount_title"> Amount</lang></th>
-                                        <th scope="col"><lang class="lang_action_title"> Action</lang></th>
+                                        <th scope="col"><lang class="lang_action"> Action</lang></th>
                                         </tr>
                                         </thead>
                                         <tbody class="cash_Intable"></tbody>
@@ -729,7 +729,7 @@
                                             <tr>
                                         <th scope="col"><lang class="lang_users_title"> User</lang></th>                                               
                                         <th scope="col"><lang class="lang_amount_title"> Amount</lang></th>
-                                        <th scope="col"><lang class="lang_action_title"> Action</lang></th>
+                                        <th scope="col"><lang class="lang_action"> Action</lang></th>
                                         </tr>
                                         </thead>
                                         <tbody class="cash_Outtable"></tbody>
@@ -740,7 +740,7 @@
 
                         <div class="card m-b-30">
                             <div class="card-header">
-                                <h5 class="card-title"><lang class="lang_sale_summary"> Sales Summary</lang></h5>
+                                <h5 class="card-title"><lang class="lang_sales_summary"> Sales Summary</lang></h5>
                             </div>
                             <div class="card-body">
                                 <table class="table table-borderless">
@@ -799,10 +799,10 @@
                         <lang class="lang_category_title">Category</lang>
                         </option>
                         <option value="recipientname">
-                        <lang class="lang_recipient_title">Recipient</lang>
+                        <lang class="lang_recipient">Recipient</lang>
                         </option>
                         <option value="approvedby">
-                        <lang class="lang_approvedby_title">Approved By</lang>
+                        <lang class="lang_approved_by">Approved By</lang>
                         </option>
                     </select>
                 </div>
@@ -983,7 +983,7 @@
                                             <div class="nav flex-column nav-pills" id="taxmodule_subnav" role="tablist">
                                                 <a class="nav-link active" data-toggle="pill" href="#tax-sub-general" role="tab"><i class="feather icon-sliders mr-2"></i><lang class="lang_common_settings">General</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#tax-sub-rates" role="tab" onclick="PosnicPro.tax.taxTable();"><i class="feather icon-percent mr-2"></i><lang class="lang_taxrate_title">Tax Rates</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" onclick="PosnicPro.taxgroup.taxgroupTable();"><i class="feather icon-layers mr-2"></i><lang class="lang_taxgroup">Tax Groups</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" onclick="PosnicPro.taxgroup.taxgroupTable();"><i class="feather icon-layers mr-2"></i><lang class="lang_tax_groups">Tax Groups</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -1088,7 +1088,7 @@
                                                 <input type="checkbox" id="default_tax_enable_disable"
                                                     name="default_tax_enable_disable"
                                                     onclick="PosnicPro.settings.defaultTaxData(this.checked);" />
-                                                <lang class="lang_tax_title">Apply a default tax rate to new items</lang>
+                                                <lang class="lang_apply_a_default_tax_rate_to_new_items">Apply a default tax rate to new items</lang>
                                             </label>
                                             <small class="text-muted d-block" style="margin-top:-4px;"><lang class="lang_every_new_product_starts_with_this_rate_ch">Every new product starts with this rate; change it per item any time. Untick if most of your catalogue is untaxed.</lang></small>
                                             <div class="input-group">
@@ -1150,7 +1150,7 @@
                                                                     <lang class="lang_value_title">Value</lang>
                                                                 </td>
                                                                 <td class="text-center font-weight-normal">
-                                                                    <lang class="lang_action_title">Action</lang>
+                                                                    <lang class="lang_action">Action</lang>
                                                                 </td>
                                                             </tr>
                                                         </thead>
@@ -1171,7 +1171,7 @@
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title">
-                                        <lang class="lang_taxgroup">Tax Groups</lang>
+                                        <lang class="lang_tax_groups">Tax Groups</lang>
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -1204,7 +1204,7 @@
                                                                     <lang class="lang_value_title">Value</lang>
                                                                 </td>
                                                                 <td class="text-center font-weight-normal">
-                                                                    <lang class="lang_action_title">Action</lang>
+                                                                    <lang class="lang_action">Action</lang>
                                                                 </td>
                                                             </tr>
                                                         </thead>
@@ -2192,7 +2192,7 @@
                                             <div class="form-row">
                                                 <div class="form-group col-9">
                                                     <label class="form-control-placeholder" for="email_address">
-                                                        <lang class="lang_addfield">Email Address</lang> <span
+                                                        <lang class="lang_email_address">Email Address</lang> <span
                                                             class="text-danger">*</span>
                                                     </label>
                                                     <div class="email-wrapper">
@@ -2281,7 +2281,7 @@
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
                                                         <label for="way2sms_userid">
-                                                            <lang class="lang_entermobilenumber_title">Enter mobile
+                                                            <lang class="lang_enter_mobile_number">Enter mobile
                                                                 number </lang> <span class="text-danger">*</span>
                                                         </label>
                                                         <input name="way2sms_userid" id="way2sms_userid" type="tel"
@@ -2290,7 +2290,7 @@
                                                     </div>
                                                     <div class="form-group col-md-6">
                                                         <label for="way2sms_password">
-                                                            <lang class="lang_enterpassword_title">Enter password
+                                                            <lang class="lang_enter_password">Enter password
                                                             </lang> <span class="text-danger">*</span>
                                                         </label>
                                                         <input name="way2sms_password" id="way2sms_password"
@@ -2536,7 +2536,7 @@
                                         <div class="module-card">
                                             <div class="module-card-head">
                                                 <span class="module-ico"><img src="static/images/svg-icon/crm.svg" alt="marketing" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_marketing">Customer Marketing</lang></div>
+                                                <div class="module-title"><lang class="lang_customer_marketing">Customer Marketing</lang></div>
                                                 <div class="custom-control custom-switch module-switch">
                                                     <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
                                                     <label class="custom-control-label" for="module_marketing_enable"></label>
@@ -2899,7 +2899,7 @@
                                                                     <lang class="lang_value_title">Value</lang>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <lang class="lang_action_title">Action</lang>
+                                                                    <lang class="lang_action">Action</lang>
                                                                 </td>
                                                             </tr>
                                                         </thead>
@@ -2972,10 +2972,10 @@
                                                     <lang class="lang_receiving_title">Receiving</lang>
                                                 </option>
                                                 <option value="customers">
-                                                    <lang class="lang_customer_title">Customer</lang>
+                                                    <lang class="lang_newcustomer_title">Customer</lang>
                                                 </option>
                                                 <option value="suppliers">
-                                                    <lang class="lang_supply_title">Supplier</lang>
+                                                    <lang class="lang_newsupplier_title">Supplier</lang>
                                                 </option>
                                                 <option value="categories">
                                                     <lang class="lang_category_title">Category</lang>
@@ -2984,10 +2984,10 @@
                                                     <lang class="lang_item_title">Item</lang>
                                                 </option>
                                                 <option value="expenses">
-                                                    <lang class="lang_expense_title">Expense</lang>
+                                                    <lang class="lang_newexpense_title">Expense</lang>
                                                 </option>
                                                 <option value="users">
-                                                    <lang class="lang_user_title">User</lang>
+                                                    <lang class="lang_newuser_title">User</lang>
                                                 </option>
                                                 <option value="branches">
                                                     <lang class="lang_branch_title">Branch</lang>
@@ -3017,7 +3017,7 @@
                                                     <lang class="lang_id_title">Id</lang>
                                                 </option>
                                                 <option value="customer_name" class="sales-recyclebin hide-recyclebin">
-                                                    <lang class="lang_customer_title">Customer</lang>
+                                                    <lang class="lang_newcustomer_title">Customer</lang>
                                                 </option>
                                                 <option value="sale_process" class="sales-recyclebin hide-recyclebin">
                                                     <lang class="lang_process_title">Process</lang>
@@ -3057,10 +3057,10 @@
                                                 </option>
                                                 <option value="recipientname"
                                                     class="expenses-recyclebin hide-recyclebin">
-                                                    <lang class="lang_recipient_title">Recipient</lang>
+                                                    <lang class="lang_recipient">Recipient</lang>
                                                 </option>
                                                 <option value="approvedby" class="expenses-recyclebin hide-recyclebin">
-                                                    <lang class="lang_approvedby_title">Approved by</lang>
+                                                    <lang class="lang_approved_by">Approved by</lang>
                                                 </option>
                                                 <option value="username" class="users-recyclebin hide-recyclebin">
                                                     <lang class="lang_name_title">Name</lang>
@@ -3310,7 +3310,7 @@
                         <small class="text-muted d-block"><lang class="lang_no_image_no_signatory_line_on_the_quote">No image = no signatory line on the quote.</lang></small>
                     </div>
                 </div>
-                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_title">Save quotation settings</lang></button>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="quote_settings_save"><lang class="lang_save_quotation_settings">Save quotation settings</lang></button>
                                     </div>
                                 </div>
                             </div>
@@ -3346,7 +3346,7 @@
                         <small class="text-muted d-block"><lang class="lang_also_printed_on_a4_receipts">Also printed on A4 receipts.</lang></small>
                     </div>
                 </div>
-                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="invoice_settings_save"><lang class="lang_save_title">Save invoice settings</lang></button>
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" id="invoice_settings_save"><lang class="lang_save_invoice_settings">Save invoice settings</lang></button>
                                     </div>
                                 </div>
                             </div>
@@ -3402,11 +3402,11 @@
                                                 <span
                                                     class="restoreCountValue text-success mr-3 action-icon badge badge-success-inverse">
                                                 </span>
-                                                <lang class="lang_selecteddetails_title"> Selected details will be
+                                                <lang class="lang_selected_details_will_be_restored"> Selected details will be
                                                     restored </lang>
                                             </h6>
                                             <h6>
-                                                <lang class="lang_areyousure_title">Are you sure you want to restore
+                                                <lang class="lang_are_you_sure_you_want_to_restore_these_rec">Are you sure you want to restore
                                                     these records </lang>?
                                             </h6>
                                         </div>
@@ -3509,7 +3509,7 @@
                                                             </label>
                                                         </td>
                                                         <td><label for="sales">
-                                                                <lang class="lang_sales_title"> Sales </lang>
+                                                                <lang class="lang_rgrp_sales"> Sales </lang>
                                                             </label></td>
                                                         <td class="text-danger-gradient"> <span
                                                                 class="sales-record-counts">0</span> <lang class="lang_records_found">Records found</lang> </td>
@@ -3565,7 +3565,7 @@
                                                             </label>
                                                         </td>
                                                         <td><label for="supplier">
-                                                                <lang class="lang_supply_title">Suppliers </lang>
+                                                                <lang class="lang_sharesuppliers_title">Suppliers </lang>
                                                             </label></td>
                                                         <td class="text-danger-gradient"> <span
                                                                 class="suppliers-record-counts">0</span> <lang class="lang_records_found">Records found</lang>
@@ -3603,7 +3603,7 @@
                                                             </label>
                                                         </td>
                                                         <td><label for="items">
-                                                                <lang class="lang_item_title"> items </lang>
+                                                                <lang class="lang_itemcut_title"> items </lang>
                                                             </label></td>
                                                         <td class="text-danger-gradient"> <span
                                                                 class="items-record-counts">0</span> <lang class="lang_records_found">Records found</lang> </td>
@@ -3621,7 +3621,7 @@
                                                             </label>
                                                         </td>
                                                         <td><label for="expenses">
-                                                                <lang class="lang_expense_title"> Expenses </lang>
+                                                                <lang class="lang_expensecut_title"> Expenses </lang>
                                                             </label></td>
                                                         <td class="text-danger-gradient"> <span
                                                                 class="expenses-record-counts">0</span> <lang class="lang_records_found">Records found</lang>
@@ -3899,7 +3899,7 @@
                                                      letting a cashier press Save and get a 403. -->
                                                 <div class="row">
                                                     <fieldset class="col-12 form-group border p-3 field-general-setting" id="sharing_fieldset">
-                                                        <legend class="w-auto px-2"><lang class="lang_datasharing_title">Shared between your shops</lang></legend>
+                                                        <legend class="w-auto px-2"><lang class="lang_shared_between_your_shops">Shared between your shops</lang></legend>
                                                         <small class="form-text text-muted mb-2"><lang class="lang_applies_to_every_shop_on_this_account_chan">Applies to every shop on
                                                             this account. Changing it takes effect on the next search -
                                                             nothing is copied or moved. Stock is not here on purpose: a
@@ -4036,7 +4036,7 @@
                                                     <div class="form-group col-md-6" style="display: none;">
                                                         <label class="control-label" style="margin-bottom: 0px;">
                                                             <label for="radio_discount_amount" class="control control--radio">
-                                                                <lang class="lang_discount_title">Global Discount &nbsp;&nbsp;
+                                                                <lang class="lang_global_discount">Global Discount &nbsp;&nbsp;
                                                                 </lang> <span class="display-currency"></span>
                                                                 <input type="radio" class="radio_discount" name="radio_discount"
                                                                     id="radio_discount_amount" checked="checked">
@@ -4215,7 +4215,7 @@
                                                             <div class="tab-pane fade show active" id="pay-sub-general" role="tabpanel">
                                                                 <div class="form-group" data-module="plan" data-access="read">
                                                                     <label for="enable_multi_payment" class="mb-0">
-                                                                        <lang class="lang_splitpay_title">Accept Split Payments</lang>
+                                                                        <lang class="lang_accept_split_payments">Accept Split Payments</lang>
                                                                     </label>
                                                                     <div class="custom-control custom-switch mt-1">
                                                                         <input type="checkbox" class="custom-control-input"
@@ -4241,7 +4241,7 @@
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title">
-                                        <lang class="lang_denomination_fields">Payment Fields</lang>
+                                        <lang class="lang_payment_fields_2">Payment Fields</lang>
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -4271,7 +4271,7 @@
                                                                     <lang class="lang_method_title">Method</lang>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <lang class="lang_action_title">Action</lang>
+                                                                    <lang class="lang_action">Action</lang>
                                                                 </td>
                                                             </tr>
                                                         </thead>
@@ -4491,7 +4491,7 @@
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title">
-                                        <lang class="lang_denomination_fields">Denomination Fields</lang>
+                                        <lang class="lang_denomination_fields_2">Denomination Fields</lang>
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -4521,7 +4521,7 @@
                                                                     <lang class="lang_value_title">Value</lang>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <lang class="lang_action_title">Action</lang>
+                                                                    <lang class="lang_action">Action</lang>
                                                                 </td>
                                                             </tr>
                                                         </thead>
@@ -4546,7 +4546,7 @@
                                                 <div class="row">
                                                     <div class="form-group col-md-12">
                                                         <label for="print_type">
-                                                            <lang class="lang_choosesize_title">Print Type</lang>
+                                                            <lang class="lang_print_type">Print Type</lang>
                                                         </label>
                                                         <select name="print_type" id="print_type"
                                                             class="form-control border-control">
@@ -4585,7 +4585,7 @@
                                                     </div>
                                                     <div class="form-group col-md-6">
                                                         <label for="print_character">
-                                                            <lang class="lang_choosesize_title">Print Maximum Character
+                                                            <lang class="lang_print_maximum_character_set_product_name">Print Maximum Character
                                                                 set product name</lang>
                                                         </label>
                                                         <select name="print_character" id="print_character"

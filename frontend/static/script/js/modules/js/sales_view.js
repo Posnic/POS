@@ -367,7 +367,7 @@ PosnicPro.sales.view = {
                 '<th><lang class="lang_price_title">Price </lang></th>' +
                 '<th><lang class="lang_qty_title">Qty </lang></th>' +
                 '<th> <lang class="lang_discount_title">Discount </lang></th>' +
-                '<th><lang class="lang_tax_title">Tax </lang></th>' +
+                '<th><lang class="lang_module_tax">Tax </lang></th>' +
                 '<th class="text-right"><lang class="lang_total_title">Total </lang></th>' +
                 '</tr></thead>';
             app = app + '' + head + '';
@@ -822,7 +822,7 @@ PosnicPro.sales.view = {
                             '<th class="text-right"><lang class="lang_price_title">Price </lang></th>' +
                             '<th class="text-center"><lang class="lang_qty_title">Qty </lang></th>' +
                             '<th class="text-center"> <lang class="lang_discount_title">Discount </lang></th>' +
-                            '<th class="text-center"><lang class="lang_tax_title">Tax </lang></th>' +
+                            '<th class="text-center"><lang class="lang_module_tax">Tax </lang></th>' +
                             '<th class="text-right"><lang class="lang_total_title">Total </lang></th>' +
                             '</tr></thead>';
                         app = app + '' + head + '';

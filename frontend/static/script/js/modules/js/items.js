@@ -2904,7 +2904,7 @@ PosnicPro.items = {
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_mrp_price_' + key + '">';
-                html = html + '<lang class="lang_mrp_title"> M.R.P </lang>';
+                html = html + '<lang class="lang_m_r_p"> M.R.P </lang>';
                 html = html + '</label>';
                 html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_mrp_price_' + key + '" name="items_mrp_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="M.R.P">';
                 html = html + '</div>';
@@ -2912,13 +2912,13 @@ PosnicPro.items = {
                 html = html + '<div class="row">';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_selling_price_' + key + '">';
-                html = html + '<lang class="lang_sales_title"> Selling </lang>';
+                html = html + '<lang class="lang_selling"> Selling </lang>';
                 html = html + '</label>';
                 html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_selling_price_' + key + '" name="items_selling_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Sale Price" data-t-placeholder="lang_sale_price">';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_available_quantity_' + key + '">';
-                html = html + '<lang class="lang_itemquantity_title"> Quantity </lang>';
+                html = html + '<lang class="lang_quantity"> Quantity </lang>';
                 html = html + '</label>';
                 html = html + '<input type="number" class="form-control allow_decimal text-right" id="items_available_quantity_' + key + '" name="items_available_quantity_' + key + '" minlength="1" maxlength="10" value="0" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title">';
                 html = html + '</div>';
@@ -2932,7 +2932,7 @@ PosnicPro.items = {
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_unit_' + key + '">';
-                html = html + '<lang class="lang_showitemposition_title"> Item Units </lang>';
+                html = html + '<lang class="lang_item_units"> Item Units </lang>';
                 html = html + '</label>';
                 html = html + '<select class="form-control items_units select2" id="items_unit_' + key + '" name="items_unit_' + key + '"></select>';
                 html = html + '</div>';

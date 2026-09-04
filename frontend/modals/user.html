@@ -133,7 +133,7 @@
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_api">
-                            <lang class="lang_enteremail_title">Api Key </lang>
+                            <lang class="lang_apikey">Api Key </lang>
                             <span class="text-danger">*</span>                            
                         </label>
                         <span class="pull-right" style="color: blue; cursor:pointer;" onclick="return PosnicPro.users.generateApiKey();"><lang class="lang_generate_key">generate key</lang></span>
@@ -337,7 +337,7 @@
                                                 <div>
                                                     <label class="control-label">
                                                         <label for="apiUser" class="control control--radio">
-                                                            <lang class="lang_adminaccess_title">Api </lang>
+                                                            <lang class="lang_api">Api </lang>
                                                             <input type="radio" name="usertype" id="apiUser" value="api"
                                                                    onclick="PosnicPro.users.userApiAccess();" required>
                                                             <div class="control__indicator"></div>
@@ -400,7 +400,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_sales_title">Sales</lang>
+                                            <lang class="lang_rgrp_sales">Sales</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -436,7 +436,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_receiving_title">Purchase</lang>
+                                            <lang class="lang_purchse_title">Purchase</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -459,7 +459,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_customer_title">Customer </lang>
+                                            <lang class="lang_newcustomer_title">Customer </lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -482,7 +482,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_supply_title">Supplier </lang>
+                                            <lang class="lang_newsupplier_title">Supplier </lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -551,7 +551,7 @@
                                             </tr>                                                    
                                             <tr>
                                                 <td>
-                                            <lang class="lang_expense_title">Expenses</lang>
+                                            <lang class="lang_expensecut_title">Expenses</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -585,7 +585,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_user_title">User</lang>
+                                            <lang class="lang_newuser_title">User</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -596,7 +596,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_report_title">Report</lang>
+                                            <lang class="lang_report">Report</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -693,7 +693,7 @@
 
         <ul class="nav nav-tabs mb-3" id="defaultTab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="user-detail-tab" data-toggle="tab" href="#user_detail" role="tab" aria-controls="user_detail" aria-selected="true"><lang class="lang_manage_title"> Details</lang></a>
+                <a class="nav-link active" id="user-detail-tab" data-toggle="tab" href="#user_detail" role="tab" aria-controls="user_detail" aria-selected="true"><lang class="lang_item_details_title"> Details</lang></a>
             </li>
             <li class="nav-item" onclick="return PosnicPro.usersdetails.usersdetailsTable();">
                 <a class="nav-link" id="user-sale-tab" data-toggle="tab" href="#user_sale" role="tab" aria-controls="user_sale" aria-selected="false"><lang class="lang_activity"> Activities</lang></a>
@@ -714,16 +714,16 @@
                                             <table class="table table-border table-striped mb-0">
                                                 <tbody>
                                                     <tr>
-                                                        <th scope="row"><lang class="lang_image_title"> Profile Image </lang></th>
+                                                        <th scope="row"><lang class="lang_profile_image"> Profile Image </lang></th>
                                                    <td style="width: 70%;"><a href="#"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="userimageview" width='40' height='40' alt="NoImg" loading="lazy" decoding="async"></a>
                                                 </td>
                                                 </tr>
                                                 <tr class="hide-username" style="display: none;">
-                                                    <th scope="row"><lang class="lang_name_title"> First Name </lang> :</th>
+                                                    <th scope="row"><lang class="lang_firstname"> First Name </lang> :</th>
                                                 <td><span id="user_view_firstname"></span></td>
                                                 </tr>
                                                 <tr class="hide-username" style="display: none;">
-                                                    <th scope="row"><lang class="lang_name_title"> Last Name </lang> :</th>
+                                                    <th scope="row"><lang class="lang_lastname"> Last Name </lang> :</th>
                                                 <td><span id="user_view_lastname"></span></td>
                                                 </tr>
                                                 <tr>
@@ -804,7 +804,7 @@
                                                         id="user_receiving_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_customer_title">Customer</lang></td>
+                                                <td><lang class="lang_newcustomer_title">Customer</lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_customer_read_access"><i
                                                         class="fa fa-times" id="user_customer_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
@@ -816,7 +816,7 @@
                                                         id="user_customer_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_supply_title">Supplier</lang></td>
+                                                <td><lang class="lang_newsupplier_title">Supplier</lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_supplier_read_access"><i
                                                         class="fa fa-times" id="user_supplier_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
@@ -851,7 +851,7 @@
                                             </td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_expense_title">Expense </lang></td>
+                                                <td><lang class="lang_newexpense_title">Expense </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_expense_read_access"><i
                                                         class="fa fa-times" id="user_expense_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
@@ -875,7 +875,7 @@
                                                         id="user_branch_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_report_title">Report </lang></td>
+                                                <td><lang class="lang_report">Report </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_report_read_access"><i
                                                         class="fa fa-times" id="user_report_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
@@ -887,7 +887,7 @@
                                                         id="user_report_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_user_title">User </lang></td>
+                                                <td><lang class="lang_newuser_title">User </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_user_read_access"><i
                                                         class="fa fa-times" id="user_user_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
@@ -962,7 +962,7 @@
                                 <div class="portlet light slider-portlet-vh">
                                     <div class="portlet-title margin-bottom-0">
                                         <div class="caption caption-basic font-green-meadow">
-                                            <span class="caption-subject bold uppercase"><lang class="lang_salehistory_title"> Sale History</lang></span>
+                                            <span class="caption-subject bold uppercase"><lang class="lang_sale_history"> Sale History</lang></span>
                                         </div>
                                         <div class="actions">
                                             <div class="inline-block text-left">
