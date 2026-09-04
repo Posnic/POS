@@ -185,7 +185,14 @@ function redactSecrets(value) {
   return String(value)
     .replace(/(mongodb(?:\+srv)?:\/\/[^:\s/]+:)[^@\s/]+@/gi, '$1[REDACTED]@')
     .replace(/(authorization["']?\s*[:=]\s*["']?bearer\s+)[^\s"',}]+/gi, '$1[REDACTED]')
-    .replace(/((?:gh_token|jwt_secret|session_secret)["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, '$1[REDACTED]');
+    .replace(/((?:register_userpassword|db_password|dbPassword|password|passphrase|access_token|refresh_token|api[_-]?key|gh_token|jwt_secret|session_secret|client_secret|cookie)["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, '$1[REDACTED]');
+}
+
+function sanitizeLogText(value) {
+  return redactSecrets(value)
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
 }
 
 function formatLogValue(value, seen = new WeakSet()) {
@@ -201,24 +208,24 @@ function formatLogValue(value, seen = new WeakSet()) {
       stack: value.stack,
       cause: value.cause
     };
-    return redactSecrets(JSON.stringify(details, null, 2));
+    return sanitizeLogText(JSON.stringify(details));
   }
 
   if (typeof value === 'object' && value !== null) {
     try {
-      return redactSecrets(JSON.stringify(value, (_key, nestedValue) => {
+      return sanitizeLogText(JSON.stringify(value, (_key, nestedValue) => {
         if (typeof nestedValue === 'object' && nestedValue !== null) {
           if (seen.has(nestedValue)) return '[Circular]';
           seen.add(nestedValue);
         }
         return nestedValue;
-      }, 2));
+      }));
     } catch (error) {
       return `[Unserializable ${value.constructor?.name || 'Object'}: ${error.message}]`;
     }
   }
 
-  return redactSecrets(value);
+  return sanitizeLogText(value);
 }
 
 function ensureDailyLog() {

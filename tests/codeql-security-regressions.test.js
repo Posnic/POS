@@ -85,3 +85,16 @@ test('collections and media previews do not reinterpret strings as markup', () =
   assert.match(receiving, /new URL\(image_path, window\.location\.href\)/);
   assert.match(receiving, /\$wrapper\.append\(/);
 });
+
+test('desktop logs redact credential fields and neutralize injected lines', () => {
+  const main = source('src/main.js');
+  const redaction = main.slice(
+    main.indexOf('function redactSecrets'),
+    main.indexOf('function ensureDailyLog')
+  );
+
+  assert.match(redaction, /register_userpassword\|db_password\|dbPassword\|password/);
+  assert.match(redaction, /access_token\|refresh_token\|api\[_-\]\?key/);
+  assert.match(redaction, /\.replace\(\/\\r\/g, '\\\\r'\)/);
+  assert.match(redaction, /\.replace\(\/\\n\/g, '\\\\n'\)/);
+});
