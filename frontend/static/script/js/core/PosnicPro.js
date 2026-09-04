@@ -1199,24 +1199,24 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
-        { root: '#salereport_new', title: 'Sales Report', range: '#view_sale_report_daterange', file: 'sales-report',
+        { root: '#salereport_new', title: 'Sales Report', titleKey: 'lang_sales_report', range: '#view_sale_report_daterange', file: 'sales-report',
             full: [
                 { when: '#sale-view-tab-line', table: '#view_salereport', per: '#view_salereport_per_page', load: 'salereport.salereportTable' },
                 { when: '#instant-tab-line', table: '#view_instantreport', per: '#view_instantreport_per_page', load: 'instantreport.instantreportTable' }
             ] },
-        { root: '#categoryreport_new', title: 'Category Report', range: '.view_category_report_daterange', file: 'category-report',
+        { root: '#categoryreport_new', title: 'Category Report', titleKey: 'lang_category_report', range: '.view_category_report_daterange', file: 'category-report',
             full: [{ table: '#view_categoryreport', per: '#view_categoryreport_per_page', load: 'categoryreport.categoryreportTable' }] },
-        { root: '#customerreport_new', title: 'Customer Report', range: '#view_customer_report_daterange', file: 'customer-report',
+        { root: '#customerreport_new', title: 'Customer Report', titleKey: 'lang_customer_report', range: '#view_customer_report_daterange', file: 'customer-report',
             full: [{ table: '#view_customerreport', per: '#view_customerreport_per_page', load: 'customerreport.customerreportTable' }] },
-        { root: '#expensesreport_new', title: 'Expense Report', range: '#view_expenses_report_daterange', file: 'expense-report',
+        { root: '#expensesreport_new', title: 'Expense Report', titleKey: 'lang_expense_report', range: '#view_expenses_report_daterange', file: 'expense-report',
             full: [{ table: '#view_expensesreport', per: '#view_expensesreport_per_page', load: 'expensesreport.expensesreportTable' }] },
-        { root: '#itemreport_new', title: 'Item Report', range: '.view_item_report_daterange', file: 'item-report',
+        { root: '#itemreport_new', title: 'Item Report', titleKey: 'lang_item_report', range: '.view_item_report_daterange', file: 'item-report',
             full: [{ table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' }] },
-        { root: '#kioskreport_new', title: 'Kiosk Report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
+        { root: '#kioskreport_new', title: 'Kiosk Report', titleKey: 'lang_kiosk_report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
             full: [{ table: '#view_kioskreport', per: '#view_kioskreport_per_page', load: 'kioskreport.kioskreportTable' }] },
         // KOT is five reports behind one date range; the active tab decides
         // which table the full-range export loads.
-        { root: '#kotreport_new', title: 'KOT Report', range: '#view_kot_report_daterange', file: 'kot-report',
+        { root: '#kotreport_new', title: 'KOT Report', titleKey: 'lang_kot_report', range: '#view_kot_report_daterange', file: 'kot-report',
             // (sales-summary is not paginated - it has no per-page selector,
             //  so its export already carries every row)
             full: [
@@ -1225,31 +1225,31 @@ PosnicPro = {
                 { when: '#kot-cancellation-tab', table: '#view_kotcancellation', per: '#view_kotcancellation_per_page', load: 'kotcancellation.kotcancellationTable' },
                 { when: '#kot-open-item-tab', table: '#view_kotopenitemreport', per: '#view_kotopenitemreport_per_page', load: 'kotopenitemreport.kotopenitemreportTable' }
             ] },
-        { root: '#labourreport_new', title: 'Labour / Payout', range: '', file: 'labour-report' },
-        { root: '#paymentreport_new', title: 'Payment Report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
+        { root: '#labourreport_new', title: 'Labour / Payout', titleKey: 'lang_labourreport_title', range: '', file: 'labour-report' },
+        { root: '#paymentreport_new', title: 'Payment Report', titleKey: 'lang_payment_report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
             full: [{ table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' }] },
-        { root: '#pendingreport_new', title: 'Pending Payments', range: '.view_pending_report_daterange', file: 'pending-payments',
+        { root: '#pendingreport_new', title: 'Pending Payments', titleKey: 'lang_pending_report', range: '.view_pending_report_daterange', file: 'pending-payments',
             full: [{ table: '#view_pendingreport', per: '#view_pendingreport_per_page', load: 'pendingreport.pendingreportTable' }] },
-        { root: '#receivingreport_new', title: 'Purchase Report', range: '#view_receiving_report_daterange', file: 'purchase-report',
+        { root: '#receivingreport_new', title: 'Purchase Report', titleKey: 'lang_purchase_report', range: '#view_receiving_report_daterange', file: 'purchase-report',
             full: [{ table: '#view_receivingreport', per: '#view_receivingreport_per_page', load: 'receivingreport.receivingreportTable' }] },
-        { root: '#returnreport_new', title: 'Sales Return Report', range: '.view_return_report_daterange', file: 'sales-return-report',
+        { root: '#returnreport_new', title: 'Sales Return Report', titleKey: 'lang_sales_return_report', range: '.view_return_report_daterange', file: 'sales-return-report',
             full: [{ table: '#view_returnreport', per: '#view_returnreport_per_page', load: 'returnreport.returnreportTable' }] },
-        { root: '#returnreceivingreport_new', title: 'Purchase Return Report', range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
+        { root: '#returnreceivingreport_new', title: 'Purchase Return Report', titleKey: 'lang_purchase_return_report', range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
             full: [{ table: '#view_returnreceivingreport', per: '#view_returnreceivingreport_per_page', load: 'returnreceivingreport.returnreceivingreportTable' }] },
-        { root: '#supplierreport_new', title: 'Supplier Report', range: '.view_supplier_report_daterange', file: 'supplier-report',
+        { root: '#supplierreport_new', title: 'Supplier Report', titleKey: 'lang_supplier_report', range: '.view_supplier_report_daterange', file: 'supplier-report',
             full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
-        { root: '#taxsummaryreport_new', title: 'Tax Summary', range: '', file: 'tax-summary' },
-        { root: '#taxpayable_new', title: 'Tax Payable', range: '', file: 'tax-payable' },
+        { root: '#taxsummaryreport_new', title: 'Tax Summary', titleKey: 'lang_taxsummary_title', range: '', file: 'tax-summary' },
+        { root: '#taxpayable_new', title: 'Tax Payable', titleKey: 'lang_taxpayable_title', range: '', file: 'tax-payable' },
         // scans the whole catalogue already - no paging to expand
-        { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', range: '', file: 'gst-readiness' },
-        { root: '#taxdiscountreport_new', title: 'Tax Report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
-        { root: '#userreport_new', title: 'User Report', range: '.view_user_report_daterange', file: 'user-report',
+        { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', titleKey: 'lang_gstreadiness_title', range: '', file: 'gst-readiness' },
+        { root: '#taxdiscountreport_new', title: 'Tax Report', titleKey: 'lang_tax_report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
+        { root: '#userreport_new', title: 'User Report', titleKey: 'lang_user_report', range: '.view_user_report_daterange', file: 'user-report',
             full: [{ table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' }] },
-        { root: '#gstr_one', title: 'GSTR1 Report', range: '#gst_form_one_daterange_one', file: 'gstr1' },
-        { root: '#gstr_two', title: 'GSTR2 Report', range: '#gst_form_two_daterange_one', file: 'gstr2' },
-        { root: '#gstr_twob', title: 'GSTR2B Report', range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
-        { root: '#gstr_three', title: 'GSTR3B Report', range: '#gst_form_three_daterange_one', file: 'gstr3b' },
-        { root: '#gstrNine', title: 'GSTR9 Report', range: '#gst_form_nine_daterange_one', file: 'gstr9' },
+        { root: '#gstr_one', title: 'GSTR1 Report', titleKey: 'lang_gstr1_report', range: '#gst_form_one_daterange_one', file: 'gstr1' },
+        { root: '#gstr_two', title: 'GSTR2 Report', titleKey: 'lang_gstr2_report', range: '#gst_form_two_daterange_one', file: 'gstr2' },
+        { root: '#gstr_twob', title: 'GSTR2B Report', titleKey: 'lang_gstr2b_report', range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
+        { root: '#gstr_three', title: 'GSTR3B Report', titleKey: 'lang_gstr3b_report', range: '#gst_form_three_daterange_one', file: 'gstr3b' },
+        { root: '#gstrNine', title: 'GSTR9 Report', titleKey: 'lang_gstr9_report', range: '#gst_form_nine_daterange_one', file: 'gstr9' },
     ],
     /*
      * Full-duration export (owner report: "pdf reports are taking first
@@ -1307,7 +1307,10 @@ PosnicPro = {
             shop: PosnicPro.local.get('branchname') || '',
             address: PosnicPro.local.get('branchaddress') || '',
             phone: PosnicPro.local.get('branchphone') || '',
-            title: cfg.title,
+            /* asked for here, not where the page list is built: that list is
+               constructed while this file is still loading, when neither the
+               core nor any pack exists yet. */
+            title: cfg.titleKey ? PosnicPro.i18n.t(cfg.titleKey, cfg.title) : cfg.title,
             range: (function () {
                 if (!cfg.range) { return ''; }
                 var el = $(cfg.root).find(cfg.range).first();
