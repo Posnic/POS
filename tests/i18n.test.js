@@ -825,3 +825,27 @@ test('every key written into a page is a key the tooling can see', () => {
   const shown = [...unseen].map(([key, file]) => key + ' (' + file + ')');
   assert.deepEqual(shown, [], shown.length + ' key(s) are written into a page but invisible to the sweep:\n  ' + shown.join('\n  '));
 });
+
+test('the modules have nothing left to tag', () => {
+  /*
+   * The JavaScript sweep reported the same seventy-five sites on every run and
+   * offered to fix them by wrapping each one in t(). All seventy-five were
+   * already correct: they are config data written at the top of a module,
+   * where a t() call runs before any pack exists - the failure that took the
+   * dashboard down - so they carry the key beside the English instead,
+   *
+   *     { hash: 'salereport', label: 'Sales', t: 'lang_rgrp_sales' }
+   *
+   * and the render site does the asking. A tool that always cries wolf teaches
+   * people to ignore it, and running --write on that one reintroduces the
+   * outage. It knows the shape now, so its count means something: zero, or a
+   * screen somebody added without a sweep.
+   *
+   *     node tests/tools/i18n-tag-js.js --write
+   */
+  const tool = path.join(__dirname, 'tools', 'i18n-tag-js.js');
+  const run = spawnSync(process.execPath, [tool], { encoding: 'utf8', cwd: path.join(__dirname, '..') });
+  assert.equal(run.status, 0, 'the sweep did not run:\n' + (run.stderr || ''));
+  const line = (run.stdout || '').split('\n').find((l) => l.startsWith('sites changed:')) || '';
+  assert.match(line, /^sites changed: 0 /, 'JavaScript still writes English no pack can reach:\n' + run.stdout);
+});
