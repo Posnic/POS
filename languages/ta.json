@@ -2780,5 +2780,9 @@
   "lang_your_cash_details_are_empty": "உங்கள் பணப் பரிவர்த்தனை விவரங்கள் காலியாக உள்ளன",
   "lang_your_choice": "உங்கள் தேர்வு",
   "lang_your_own_provider_account": "உங்கள் சொந்த வழங்குநர் கணக்கு",
-  "lang_yourselecteddetails_title": "நீங்கள் தேர்ந்தெடுத்த விவரங்கள் நீக்கப்படும்"
+  "lang_yourselecteddetails_title": "நீங்கள் தேர்ந்தெடுத்த விவரங்கள் நீக்கப்படும்",
+  "lang_item_report": "பொருள் அறிக்கை",
+  "lang_kiosk_report": "கியோஸ்க் அறிக்கை",
+  "lang_kot_report": "KOT அறிக்கை",
+  "lang_align_left": "இடது"
 }

@@ -655,7 +655,7 @@ test('the screens the owner checked carry keys, not bare English', () => {
 
 /* ------------------------------------------- nothing bare on the screen --- */
 
-test('bare English in the templates stays rare', () => {
+test('no template carries English a pack cannot reach', () => {
   /*
    * develop.posnic.io, 2026-09-02: the owner picked Tamil and found the
    * dashboard totals, the list headers, the receipt panel and the supplier
@@ -664,15 +664,20 @@ test('bare English in the templates stays rare', () => {
    * that adds bare text fails here, and the fix is one command:
    *
    *     node tests/tools/i18n-tag.js --write
+   *
+   * The number is zero, and stays zero. It was a budget of two while a false
+   * positive stood in the report - an onclick handler holding a > that the
+   * text scan read as prose. That is fixed, so the guard can say what it
+   * means: every word on every template is reachable by a language pack.
    */
   const { report } = require(path.join(__dirname, 'tools', 'i18n-gaps.js'));
   const data = report();
   const shown = data.rows.map((r) => r.file + ': ' + r.found.map((x) => x.text).slice(0, 3).join(' | '));
-  assert.ok(data.total <= 2, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
+  assert.equal(data.total, 0, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
 });
 
 test('the sweep tools live in the repository', () => {
-  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js']) {
+  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js']) {
     const file = path.join(__dirname, 'tools', tool);
     assert.ok(fs.existsSync(file), tool + ' is missing');
     assert.ok(!/D:\/Claude|C:\\Users/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
