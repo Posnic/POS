@@ -677,7 +677,7 @@ test('no template carries English a pack cannot reach', () => {
 });
 
 test('the sweep tools live in the repository', () => {
-  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js']) {
+  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js', 'i18n-collisions.js']) {
     const file = path.join(__dirname, 'tools', tool);
     assert.ok(fs.existsSync(file), tool + ' is missing');
     assert.ok(!/D:\/Claude|C:\\Users/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
@@ -752,4 +752,76 @@ test('a brand is spelled, not translated', () => {
     }
   }
   assert.deepEqual(wrong, [], 'a brand was rewritten:\n  ' + wrong.join('\n  '));
+});
+
+test('one key, one meaning', () => {
+  /*
+   * A <lang> tag says two things at once: which words to show in English, and
+   * which key every other language is looked up by. Give two DIFFERENT labels
+   * the same key and English stays right on both screens while every other
+   * language is wrong on one of them - invisibly, because the person who can
+   * see it is not the person reviewing the diff.
+   *
+   * The branch form was the worst of it. City carried lang_supply_title, State
+   * carried lang_customer_title, Country carried lang_address_title. Read in
+   * English the form is correct. Pick any other language and City reads
+   * "Supplier list", State reads "Customers", Country reads "Address". Two
+   * hundred and thirteen labels were in that state across seventy-eight keys,
+   * including the nineteen columns called Tax, which every pack had been asked
+   * to translate as "Denomination Field".
+   *
+   * languages/_english.json decides which meaning keeps the key, because that
+   * file is what every translator was shown - so it is what the packs already
+   * say. The fix for a new one is one command:
+   *
+   *     node tests/tools/i18n-collisions.js --write
+   */
+  const { plan } = require(path.join(__dirname, 'tools', 'i18n-collisions.js'));
+  const { byKey, moves } = plan();
+  const shown = [...byKey]
+    .filter(([, g]) => g.size > 1)
+    .map(([key, g]) => key + ': ' + [...g.keys()].map((t) => JSON.stringify(t)).join(' vs '));
+  assert.deepEqual(shown, [], moves.length + ' label(s) carry a key that means something else:\n  ' + shown.join('\n  '));
+});
+
+test('every key written into a page is a key the tooling can see', () => {
+  /*
+   * Sixty-three tooltips nobody could translate.
+   *
+   * The coverage scan looked for a whole tag - <button ... > - and then for
+   * the data-t-title inside it. A module builds most of its buttons by
+   * concatenating strings, so the tag is split across three literals and there
+   * is no closing > to find. Every action tooltip and screen-reader label on
+   * the list pages fell out of the count: Edit this branch, Delete this
+   * category, View expense, Print bill, Show on kiosk. Not one of them was in
+   * any pack, no worksheet ever offered them, and coverage said 100%.
+   *
+   * A key that the tooling cannot see is worse than a missing translation,
+   * because nothing reports it. So: anything written as a key in the source is
+   * a key the scan must find.
+   */
+  const { keysUsed } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
+  const used = keysUsed().used;
+  const unseen = new Map();
+  const written = new RegExp('<lang class="([A-Za-z0-9_-]+)">' + '|data-t(?:-(?:placeholder|title|aria-label))?="([A-Za-z0-9_-]+)"' + "|i18n\\.t\\(\\s*['\"]([A-Za-z0-9_-]+)['\"]", 'g');
+
+  const look = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { if (!/^(node_modules|public|vendor|plugins|lazy)$/.test(e.name)) look(full); continue; }
+      if (!/\.(html|js)$/.test(e.name) || /\.min\.js$/.test(e.name)) continue;
+      /* a comment showing what a tag looks like is documentation, not a key */
+      const src = fs.readFileSync(full, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/<!--[\s\S]*?-->/g, '');
+      for (const m of src.matchAll(written)) {
+        const key = m[1] || m[2] || m[3];
+        if (!used.has(key) && !unseen.has(key)) unseen.set(key, path.relative(FRONTEND, full).replace(/\\/g, '/'));
+      }
+    }
+  };
+  look(FRONTEND);
+
+  const shown = [...unseen].map(([key, file]) => key + ' (' + file + ')');
+  assert.deepEqual(shown, [], shown.length + ' key(s) are written into a page but invisible to the sweep:\n  ' + shown.join('\n  '));
 });

@@ -119,7 +119,7 @@ PosnicPro.roles = {
                 + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this role" data-t-title="lang_edit_this_role" aria-label="Edit" data-t-aria-label="lang_edit_title"'
                 + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\');"><i class="feather icon-edit-2"></i></button>'
                 + (r.is_system ? ''
-                    : '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Delete this role" data-t-title="lang_delete_this_role" aria-label="Delete" data-t-aria-label="lang_delete"'
+                    : '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Delete this role" data-t-title="lang_delete_this_role_2" aria-label="Delete" data-t-aria-label="lang_delete"'
                         + ' onclick="PosnicPro.listDoc.close(\'roles\'); PosnicPro.roles.remove(\'' + esc(roleId) + '\');"><i class="feather icon-trash-2"></i></button>')
             : '';
         PosnicPro.listDoc.open({ key: 'roles', id: roleId, title: r.name, actions: actions, body: body });

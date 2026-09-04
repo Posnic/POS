@@ -4384,7 +4384,7 @@ PosnicPro.i18n = {
      * Pages are built ONCE now, in English, and carry their keys with them:
      *
      *     <lang class="lang_item_name">Item name</lang>
-     *     <title data-t="lang_login_title">Login Here</title>
+     *     <title data-t="lang_login_here">Login Here</title>
      *
      * The <lang> element stays where the words are ordinary content. Inside
      * <title> and <option> the parser will not build an element for it, so

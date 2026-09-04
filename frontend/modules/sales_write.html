@@ -72,7 +72,7 @@
                                                 <thead class="btn-primary">
                                                     <tr class="sales_new_class">
                                                         <th scope="col">
-                                                            <lang class="lang_item_title"> <span
+                                                            <lang class="lang_returning_items"> <span
                                                                     class="return_table_head_hide">Returning</span>
                                                                 Items </lang>
                                                         </th>
@@ -86,17 +86,17 @@
                                                             <lang class="lang_price_title">Price</lang>
                                                         </th>
                                                         <th scope="col" class="text-center kot-hide">
-                                                            <lang class="lang_discount_title">Disc</lang>
+                                                            <lang class="lang_disc_2">Disc</lang>
                                                         </th>
                                                         <th scope="col" class="text-center kot-hide th-tax-col">
-                                                            <lang class="lang_tax_title">Tax</lang>
+                                                            <lang class="lang_module_tax">Tax</lang>
                                                         </th>
                                                         <th scope="col" class="text-center kot-hide">
                                                             <lang class="lang_total_title">Total</lang>
                                                         </th>
                                                         <th scope="col" class="text-center"></th>
                                                         <th scope="col" class="text-left">
-                                                            <lang class="lang_action_title"><span
+                                                            <lang class="lang_action"><span
                                                                     class="return_table_head_text">Action</span></lang>
                                                         </th>
                                                     </tr>
@@ -221,7 +221,7 @@
                                             id="home-tab-justified" data-toggle="tab" href="#home-justified" role="tab"
                                             aria-controls="home" aria-selected="true"
                                             onclick="PosnicPro.sales.itemsMenu.onlineProductList();"><i class="feather icon-package mr-1"></i>
-                                            <lang class="lang_item_title">Items</lang>
+                                            <lang class="lang_itemcut_title">Items</lang>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -229,7 +229,7 @@
                                             data-toggle="tab" href="#profile-justified" role="tab"
                                             aria-controls="profile" aria-selected="false"
                                             onclick="PosnicPro.sales.categoryMenu.listCategories();"><i class="feather icon-list mr-1"></i>
-                                            <lang class="lang_category_title">Categories</lang>
+                                            <lang class="lang_itemcategory_title">Categories</lang>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -280,7 +280,7 @@
                                             <thead class="btn-primary">
                                                 <tr class="sales_new_class">
                                                     <th scope="col">
-                                                        <lang class="lang_item_title"><span
+                                                        <lang class="lang_sold_items"><span
                                                                 class="sale_table_head_hide">Sold</span> Items</lang>
                                                     </th>
                                                     <th scope="col" class="text-center">
@@ -293,16 +293,16 @@
                                                         <lang class="lang_price_title">Price</lang>
                                                     </th>
                                                     <th scope="col" class="kot-hide">
-                                                        <lang class="lang_discount_title">Disc</lang>
+                                                        <lang class="lang_disc_2">Disc</lang>
                                                     </th>
                                                     <th scope="col" class="kot-hide">
-                                                        <lang class="lang_tax_title">Tax</lang>
+                                                        <lang class="lang_module_tax">Tax</lang>
                                                     </th>
                                                     <th scope="col" class="kot-hide">
                                                         <lang class="lang_total_title">Total</lang>
                                                     </th>
                                                     <th scope="col">
-                                                        <lang class="lang_action_title"><span
+                                                        <lang class="lang_action"><span
                                                                 class="sale_table_head_text">Action</span></lang>
                                                     </th>
                                                 </tr>
@@ -409,7 +409,7 @@
                                                     <div id="sale_charges_list" class="customer-display-hide"></div>
                                                 </td>
                                                 <td class="payable-total pay_amount_total" id="sub_hide">
-                                                    <lang class="lang_subtotal_title">Sub Total </lang>
+                                                    <lang class="lang_sub_total">Sub Total </lang>
                                                 </td>
 
                                                 <td class="payable-total" id="sub_total_hide">
@@ -420,7 +420,7 @@
                                                 </td>
                                                 <td class="payable-total customer-display-hide pay_amount_total"
                                                     id="refund_sub_hide">
-                                                    <lang class="lang_subtotal_title">Sub Total</lang>
+                                                    <lang class="lang_sub_total">Sub Total</lang>
                                                 </td>
                                                 <td class="payable-total customer-display-hide" id="refund_sub_total">
                                                     <span class="pull-right"><span
@@ -447,13 +447,13 @@
                                                 <td class="discount-percentage-line-heigth sale-display-hide pay_amount_total"
                                                     id="return_disc" style="border: 0.5px dashed lightgrey;">
                                                     <div class="discount_amount_display">
-                                                        <lang class="lang_discount_title"> Disc </lang> [ <span
+                                                        <lang class="lang_disc_2"> Disc </lang> [ <span
                                                             id="discountSign" class="display-currency"></span>]
                                                         <span id="sales_new_radio_discountpercent"
                                                             class="sales_discountamount display-discount-amount-text"></span>
                                                     </div>
                                                     <div class="discount_percentage_display">
-                                                        <lang class="lang_discount_title"> Disc </lang>[ <span
+                                                        <lang class="lang_disc_2"> Disc </lang>[ <span
                                                             id="percentSign">%</span>]
                                                         <span id="sales_new_radio_discountamount"
                                                             class="sales_discountpercentage display-discount-percentage-text"></span>
@@ -462,14 +462,14 @@
 
                                                 <!-- Return tax -->
                                                 <td class="return_discount_show pay_amount_total">
-                                                    <lang class="lang_tax_title">Tax </lang><span class="pull-right">+
+                                                    <lang class="lang_module_tax">Tax </lang><span class="pull-right">+
                                                         <span id="sales_tax_return_value">0.00</span></span>
                                                 </td>
 
                                                 <!-- New / Edit sale tax-->
                                                 <td class="discount-percentage-line-heigth return_discount_hide pay_amount_total"
                                                     id="return_tax">
-                                                    <lang class="lang_tax_title">Tax </lang>
+                                                    <lang class="lang_module_tax">Tax </lang>
                                                     <span class="pull-right">+ <span id="tax">0.00</span></span>
                                                 </td>
                                             </tr>

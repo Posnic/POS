@@ -325,19 +325,39 @@ pack has arrived, so a top-level object literal must carry `<lang>` markup
 instead of `t()` (see `PosnicPro.dashboard.SETUP_CARDS`). Calls inside
 functions are fine.
 
+**The other thing to watch:** one key, one meaning. It is tempting to reuse
+`lang_supply_title` for a field that happens to be near the supplier column, or
+`lang_name_title` for "First name". Do not. English stays right on both screens
+and every other language is wrong on one of them, silently - the person who can
+see it is not the person reviewing the diff. Two hundred and forty-three labels
+were in that state, including the City, State and Country fields on the branch
+form, which read "Supplier list", "Customers" and "Address" in every language
+but English.
+
+```bash
+node tests/tools/i18n-collisions.js         # every key carrying two meanings
+node tests/tools/i18n-collisions.js --write # give the newcomer its own key
+```
+
+Punctuation is part of the label: `lang_name` means "Name:" and
+`lang_name_title` means "Name". Reusing one for the other leaves a stray colon
+in fifteen languages.
+
 You do not have to do this by hand. After adding a screen:
 
 ```bash
 node tests/tools/i18n-tag.js --write        # templates: text nodes and attributes
 node tests/tools/i18n-tag-js.js --write     # JavaScript: markup literals and t() calls
 node tests/tools/i18n-gaps.js               # what is still bare, per template
+node tests/tools/i18n-collisions.js          # keys given a second meaning
 node tests/tools/i18n-coverage.js           # which packs now have gaps
 ```
 
 Keys are minted from the English (`lang_add_to_bill`), and the same English on
 two screens shares one key. Then hand the new keys to translators with
-`--worksheet <code>`. Two tests hold this: bare English in the templates must
-stay near zero, and no pack may slip below the coverage it last reached.
+`--worksheet <code>`. Three tests hold this: no template may carry English a pack cannot reach, no
+key may carry two meanings, and no pack may slip below the coverage it last
+reached.
 
 ---
 
