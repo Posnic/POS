@@ -166,8 +166,8 @@
      * reads it - one fetch, no race with an unfiltered load.
      */
     var ENTITY_SOURCES = [
-        { module: 'items', label: PosnicPro.i18n.t('lang_newitem_title', 'Item'), acl: ['item', 'read'] },
-        { module: 'customers', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer'), acl: ['customer', 'read'] },
+        { module: 'items', label: 'Item', acl: ['item', 'read'] },
+        { module: 'customers', label: 'Customer', acl: ['customer', 'read'] },
     ];
 
     function searchEntities(query, done) {
