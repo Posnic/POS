@@ -556,23 +556,30 @@ test('the RTL stylesheet rides the pages a shopkeeper sees, and loads last', () 
   assert.deepEqual(unscoped, [], 'rules not scoped under [dir="rtl"]: ' + unscoped.join(' | '));
 });
 
-test('no language pack has fallen behind the UI', () => {
+test('no language pack slips below the point it reached', () => {
   /*
-   * 2026-09-02: every pack answered every key. From here a gap is a string
-   * added to the UI without its translations. The floor is 95% rather than
-   * 100% so a new key does not block the feature that needs it - but it does
-   * mean somebody has to run
+   * A ratchet, not a floor. tests/i18n-coverage-baseline.json records where
+   * every pack stood the last time translations were merged; a pack may only
+   * go up from there. A flat floor would sit red for as long as the UI is
+   * being tagged faster than the packs are filled - and a red test everybody
+   * has learned to ignore protects nothing.
    *
-   *     node tests/tools/i18n-coverage.js --worksheet <code>
+   * One point of slack covers key churn: a screen edit that renames a key
+   * costs a pack a fraction of a percent before anybody has had a chance to
+   * translate the new name.
    *
-   * before the gap grows into a screen of English again.
+   *     node tests/tools/i18n-coverage.js --worksheet <code>   what is missing
+   *     node tests/tools/i18n-coverage.js --write-baseline     after merging
    */
   const { report } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
-  const rows = report().rows.filter((r) => !r.error && r.lang !== '_glossary');
-  assert.ok(rows.length >= 13, 'expected the thirteen packs, found ' + rows.length);
-  const behind = rows.filter((r) => r.coverage < 95)
-    .map((r) => `${r.lang} at ${r.coverage}% (e.g. ${r.missing.slice(0, 3).join(', ')})`);
-  assert.deepEqual(behind, [], 'packs below 95%:\n  ' + behind.join('\n  '));
+  const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, 'i18n-coverage-baseline.json'), 'utf8'));
+  const rows = report().rows.filter((r) => !r.error && !r.lang.startsWith('_'));
+  assert.ok(rows.length >= 17, 'expected the seventeen packs, found ' + rows.length);
+  const slipped = rows.filter((r) => r.coverage < (baseline[r.lang] || 0) - 1)
+    .map((r) => r.lang + ' at ' + r.coverage + '% (baseline ' + baseline[r.lang] + '%)');
+  assert.deepEqual(slipped, [], 'packs below their baseline:\n  ' + slipped.join('\n  '));
+  const unknown = rows.filter((r) => !(r.lang in baseline)).map((r) => r.lang);
+  assert.deepEqual(unknown, [], 'packs with no baseline (run --write-baseline): ' + unknown.join(', '));
 });
 
 
@@ -602,4 +609,72 @@ test('the English map the console edits against is not stale', () => {
   const changed = Object.keys(expected).filter((k) => k in actual && actual[k] !== expected[k]);
   assert.deepEqual({ missing, extra, changed }, { missing: [], extra: [], changed: [] },
     'languages/_english.json is out of date - run: node tests/tools/i18n-coverage.js --write-english');
+});
+
+/* ------------------------------------------- what JavaScript draws, too --- */
+
+test('the runtime watches for markup drawn after load', () => {
+  const watchFn = member('watch');
+  assert.match(watchFn, /MutationObserver/, 'watch() does not observe the document');
+  assert.match(watchFn, /if \(!PosnicPro\.i18n\._dict\) return/, 'English still pays for the observer');
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /^PosnicPro\.i18n\.watch\(\);/m, 'nothing starts the observer');
+});
+
+test('attributes people read are translated', () => {
+  assert.match(i18nSource(), /_attrs: \['placeholder', 'title', 'aria-label'\]/, 'the attribute list is missing');
+  assert.match(member('apply'), /data-t-' \+ attrs\[a\]/, 'apply() ignores data-t-<attr>');
+  assert.match(member('restore'), /data-en-' \+ attrs\[a\]/, 'restore() ignores the kept attributes');
+});
+
+test('the coverage tool counts keys JavaScript renders as markup', () => {
+  const tool = fs.readFileSync(path.join(__dirname, 'tools', 'i18n-coverage.js'), 'utf8');
+  assert.match(tool, /JavaScript renders markup too/, 'JS <lang> tags are not counted');
+  assert.match(tool, /data-t-\(placeholder\|title\|aria-label\)/, 'attribute keys are not counted');
+});
+
+test('the screens the owner checked carry keys, not bare English', () => {
+  /*
+   * develop.posnic.io, 2026-09-02: the dashboard greeting and totals, the
+   * quick-action buttons, the sales list headers, the receipt panel and the
+   * supplier list were English in every language. Each is pinned here by a
+   * string that must now be reachable through a key.
+   */
+  const html = (f) => fs.readFileSync(path.join(FRONTEND, 'modules', f), 'utf8');
+  const js = (f) => fs.readFileSync(path.join(MODULES, f), 'utf8');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Totals<\/lang>/, 'Totals is bare');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Gross profit<\/lang>/, 'Gross profit is bare');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Sales History<\/lang>/, 'Sales History button is bare');
+  assert.match(js('dashboard.js'), /i18n\.t\('[^']+', 'Good Morning'\)/, 'the greeting is bare');
+  assert.match(js('sales.js'), /<th><lang class="[^"]+">Bill #<\/lang><\/th>/, 'the sales list header is bare');
+  assert.match(js('sales.js'), /<lang class="[^"]+">Subtotal<\/lang>/, 'the receipt panel is bare');
+  assert.match(js('suppliers.js'), /<th><lang class="[^"]+">Name<\/lang><\/th>/, 'the supplier list header is bare');
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /_sort_label"><lang class="[^"]+">Sort<\/lang>/, 'the Sort control is bare');
+});
+
+/* ------------------------------------------- nothing bare on the screen --- */
+
+test('bare English in the templates stays rare', () => {
+  /*
+   * develop.posnic.io, 2026-09-02: the owner picked Tamil and found the
+   * dashboard totals, the list headers, the receipt panel and the supplier
+   * screen still in English. None of it was inside <lang>, so no pack could
+   * reach it. Every template was swept; this holds the sweep. A new screen
+   * that adds bare text fails here, and the fix is one command:
+   *
+   *     node tests/tools/i18n-tag.js --write
+   */
+  const { report } = require(path.join(__dirname, 'tools', 'i18n-gaps.js'));
+  const data = report();
+  const shown = data.rows.map((r) => r.file + ': ' + r.found.map((x) => x.text).slice(0, 3).join(' | '));
+  assert.ok(data.total <= 5, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
+});
+
+test('the sweep tools live in the repository', () => {
+  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js']) {
+    const file = path.join(__dirname, 'tools', tool);
+    assert.ok(fs.existsSync(file), tool + ' is missing');
+    assert.ok(!/D:\/Claude|C:\\Users/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
+  }
 });

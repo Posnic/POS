@@ -322,7 +322,7 @@ PosnicPro = {
         $('.hide_date_filetr').hide();
         $('.view_' + module + '_date_filter_value').hide();
         if ($('#view_' + module + '_daterange span').html() === 'All Time') {
-            $('.daterange-timepicker-all span').html('All Time');
+            $('.daterange-timepicker-all span').html(PosnicPro.i18n.t('lang_all_time', 'All Time'));
             $('#view_' + module + '_daterange').val(moment().subtract(10, 'years').startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
         } else {
             let startDate = $('#view_' + module + '_daterange').data('daterangepicker').startDate._d;
@@ -353,7 +353,7 @@ PosnicPro = {
 
         $('#view_' + module + '_daterange').removeClass('active-date');
         $('#view_' + module + '_daterange').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
-        $('.daterange-timepicker span').html('<span>This Month</span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        $('.daterange-timepicker span').html('<span><lang class="lang_this_month">This Month</lang></span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
         $('.daterange-timepicker').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
         PosnicPro.dashboard.datePicker();
     },
@@ -366,7 +366,7 @@ PosnicPro = {
 
         $('#view_' + module + '_report_daterange').removeClass('active-date');
         $('#view_' + module + '_report_daterange').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
-        $('.daterange-timepicker-all span').html('<span>This Month</span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        $('.daterange-timepicker-all span').html('<span><lang class="lang_this_month">This Month</lang></span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
         $('.daterange-timepicker-all').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
         PosnicPro.dashboard.datePicker();
     },
@@ -410,7 +410,7 @@ PosnicPro = {
         });
 
         request.fail(function (jqXHR, textStatus) {
-            PosnicPro.alert('error', 'Request Faild!!.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_request_faild', 'Request Faild!!.'));
             return false;
         });
     },
@@ -612,7 +612,7 @@ PosnicPro = {
         var branch_id = PosnicPro.local.get('branch_id_set');
         $('.display-current-branch').select2('val', [branch_id]);
 
-        addNewBranch = '<option data-page="branches/new" class="page_url" value="true">Add New Branch</option>';
+        addNewBranch = '<option data-page="branches/new" class="page_url" value="true" data-t="lang_add_new_branch">Add New Branch</option>';
         if (PosnicPro.local.get('usertype') === 'super_admin') {
             var ChangeBranchOption = addNewBranch.concat(dashboardBranchOption);
         } else {
@@ -640,7 +640,7 @@ PosnicPro = {
                         taxOption += '<option value="' + value.tax_id + '" data-tax-id="' + value.tax_id + '" data-tax-name="' + value.tax_name + '" data-tax-value="' + value.tax_value + '">' + value.tax_name + '</option>';
                     });
                 } else {
-                    taxOption += '<option selected="selected" value="0">No tax</option>';
+                    taxOption += '<option selected="selected" value="0" data-t="lang_no_tax">No tax</option>';
                 }
                 $('.items_tax').html(taxOption);
             } else {
@@ -860,7 +860,7 @@ PosnicPro = {
                 /* A failed load must be retryable on the next click, never
                    cached as forever-broken. */
                 delete PosnicPro.lazy._loads[name];
-                PosnicPro.alert('error', 'Could not load the report tools - check the connection and try again.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_report_tools_check_the', 'Could not load the report tools - check the connection and try again.'));
                 throw err;
             });
             p = p.then(function () {
@@ -939,7 +939,7 @@ PosnicPro = {
         _buildDoc: function (elId, meta, jsPDFCtor) {
             var ex = PosnicPro.reportExport;
             var sections = ex.gather(elId);
-            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return null; }
+            if (!sections) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_export_it', 'Run the report first, then export it.')); return null; }
             var doc = new jsPDFCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' });
             var W = 210, M = 14, bottom = 283;
             var y = M;
@@ -1079,7 +1079,7 @@ PosnicPro = {
                 var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
                     : (typeof window.jsPDF === 'function') ? window.jsPDF
                     : (typeof window.jspdf === 'function') ? window.jspdf : null;
-                if (!C) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return; }
+                if (!C) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_pdf_tools_not_loaded_refresh_and_retry', 'PDF tools not loaded - refresh and retry.')); return; }
                 var doc = PosnicPro.reportExport._buildDoc(elId, meta, C);
                 if (doc) { use(doc); }
             });
@@ -1094,7 +1094,7 @@ PosnicPro = {
                 if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
                 var url = doc.output('bloburl');
                 var w = window.open(url, '_blank');
-                if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the report can print.'); }
+                if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_report_can_print', 'Allow pop-ups so the report can print.')); }
             });
         },
         _download: function (blob, filename) {
@@ -1107,7 +1107,7 @@ PosnicPro = {
         },
         csv: function (elId, meta) {
             var sections = PosnicPro.reportExport.gather(elId);
-            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return; }
+            if (!sections) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_export_it', 'Run the report first, then export it.')); return; }
             var esc = function (v) { return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
             var lines = [];
             if (meta.title) { lines.push(esc(meta.title + (meta.range ? ' (' + meta.range + ')' : ''))); lines.push(''); }
@@ -1127,20 +1127,20 @@ PosnicPro = {
                 $('body').append(
                     '<div class="modal fade" id="report_email_modal" tabindex="-1" role="dialog" aria-hidden="true">'
                     + '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">'
-                    + '<div class="modal-header py-2"><h5 class="modal-title">Email this report</h5>'
+                    + '<div class="modal-header py-2"><h5 class="modal-title"><lang class="lang_email_this_report">Email this report</lang></h5>'
                     + '<button type="button" class="close" data-dismiss="modal">&times;</button></div>'
                     + '<div class="modal-body">'
-                    + '<label class="mb-0 small text-muted" for="report_email_to">Send to</label>'
+                    + '<label class="mb-0 small text-muted" for="report_email_to"><lang class="lang_send_to">Send to</lang></label>'
                     + '<input type="email" class="form-control" id="report_email_to" placeholder="name@example.com" autocomplete="off">'
                     + '</div>'
                     + '<div class="modal-footer py-2">'
-                    + '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>'
-                    + '<button type="button" class="btn btn-primary" id="report_email_send">Send</button>'
+                    + '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>'
+                    + '<button type="button" class="btn btn-primary" id="report_email_send"><lang class="lang_send">Send</lang></button>'
                     + '</div></div></div></div>');
                 $(document).on('click', '#report_email_send', function () {
                     var to = $.trim($('#report_email_to').val());
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-                        PosnicPro.alert('error', 'Enter a valid email address');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_valid_email_address_2', 'Enter a valid email address'));
                         return;
                     }
                     var m = PosnicPro.reportExport._emailJob || {};
@@ -1172,7 +1172,7 @@ PosnicPro = {
         },
         xls: function (elId, meta) {
             var sections = PosnicPro.reportExport.gather(elId);
-            if (!sections) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return; }
+            if (!sections) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_export_it', 'Run the report first, then export it.')); return; }
             var esc = function (v) { return $('<i>').text(v).html(); };
             var html = '<html><head><meta charset="utf-8"><style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Arial;font-size:12px;}th{background:#2d3748;color:#fff;}h3{font-family:Arial;}</style></head><body>';
             if (meta.title) { html += '<h2>' + esc(meta.title) + '</h2>' + (meta.range ? '<p>' + esc(meta.range) + '</p>' : ''); }
@@ -1199,24 +1199,24 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
-        { root: '#salereport_new', title: 'Sales Report', range: '#view_sale_report_daterange', file: 'sales-report',
+        { root: '#salereport_new', title: PosnicPro.i18n.t('lang_sales_report', 'Sales Report'), range: '#view_sale_report_daterange', file: 'sales-report',
             full: [
                 { when: '#sale-view-tab-line', table: '#view_salereport', per: '#view_salereport_per_page', load: 'salereport.salereportTable' },
                 { when: '#instant-tab-line', table: '#view_instantreport', per: '#view_instantreport_per_page', load: 'instantreport.instantreportTable' }
             ] },
-        { root: '#categoryreport_new', title: 'Category Report', range: '.view_category_report_daterange', file: 'category-report',
+        { root: '#categoryreport_new', title: PosnicPro.i18n.t('lang_category_report', 'Category Report'), range: '.view_category_report_daterange', file: 'category-report',
             full: [{ table: '#view_categoryreport', per: '#view_categoryreport_per_page', load: 'categoryreport.categoryreportTable' }] },
-        { root: '#customerreport_new', title: 'Customer Report', range: '#view_customer_report_daterange', file: 'customer-report',
+        { root: '#customerreport_new', title: PosnicPro.i18n.t('lang_customer_report', 'Customer Report'), range: '#view_customer_report_daterange', file: 'customer-report',
             full: [{ table: '#view_customerreport', per: '#view_customerreport_per_page', load: 'customerreport.customerreportTable' }] },
-        { root: '#expensesreport_new', title: 'Expense Report', range: '#view_expenses_report_daterange', file: 'expense-report',
+        { root: '#expensesreport_new', title: PosnicPro.i18n.t('lang_expense_report', 'Expense Report'), range: '#view_expenses_report_daterange', file: 'expense-report',
             full: [{ table: '#view_expensesreport', per: '#view_expensesreport_per_page', load: 'expensesreport.expensesreportTable' }] },
-        { root: '#itemreport_new', title: 'Item Report', range: '.view_item_report_daterange', file: 'item-report',
+        { root: '#itemreport_new', title: PosnicPro.i18n.t('lang_item_report', 'Item Report'), range: '.view_item_report_daterange', file: 'item-report',
             full: [{ table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' }] },
-        { root: '#kioskreport_new', title: 'Kiosk Report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
+        { root: '#kioskreport_new', title: PosnicPro.i18n.t('lang_kiosk_report', 'Kiosk Report'), range: '#view_kiosk_report_daterange', file: 'kiosk-report',
             full: [{ table: '#view_kioskreport', per: '#view_kioskreport_per_page', load: 'kioskreport.kioskreportTable' }] },
         // KOT is five reports behind one date range; the active tab decides
         // which table the full-range export loads.
-        { root: '#kotreport_new', title: 'KOT Report', range: '#view_kot_report_daterange', file: 'kot-report',
+        { root: '#kotreport_new', title: PosnicPro.i18n.t('lang_kot_report', 'KOT Report'), range: '#view_kot_report_daterange', file: 'kot-report',
             // (sales-summary is not paginated - it has no per-page selector,
             //  so its export already carries every row)
             full: [
@@ -1225,31 +1225,31 @@ PosnicPro = {
                 { when: '#kot-cancellation-tab', table: '#view_kotcancellation', per: '#view_kotcancellation_per_page', load: 'kotcancellation.kotcancellationTable' },
                 { when: '#kot-open-item-tab', table: '#view_kotopenitemreport', per: '#view_kotopenitemreport_per_page', load: 'kotopenitemreport.kotopenitemreportTable' }
             ] },
-        { root: '#labourreport_new', title: 'Labour / Payout', range: '', file: 'labour-report' },
-        { root: '#paymentreport_new', title: 'Payment Report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
+        { root: '#labourreport_new', title: PosnicPro.i18n.t('lang_labourreport_title', 'Labour / Payout'), range: '', file: 'labour-report' },
+        { root: '#paymentreport_new', title: PosnicPro.i18n.t('lang_payment_report', 'Payment Report'), range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
             full: [{ table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' }] },
-        { root: '#pendingreport_new', title: 'Pending Payments', range: '.view_pending_report_daterange', file: 'pending-payments',
+        { root: '#pendingreport_new', title: PosnicPro.i18n.t('lang_pending_report', 'Pending Payments'), range: '.view_pending_report_daterange', file: 'pending-payments',
             full: [{ table: '#view_pendingreport', per: '#view_pendingreport_per_page', load: 'pendingreport.pendingreportTable' }] },
-        { root: '#receivingreport_new', title: 'Purchase Report', range: '#view_receiving_report_daterange', file: 'purchase-report',
+        { root: '#receivingreport_new', title: PosnicPro.i18n.t('lang_purchase_report', 'Purchase Report'), range: '#view_receiving_report_daterange', file: 'purchase-report',
             full: [{ table: '#view_receivingreport', per: '#view_receivingreport_per_page', load: 'receivingreport.receivingreportTable' }] },
-        { root: '#returnreport_new', title: 'Sales Return Report', range: '.view_return_report_daterange', file: 'sales-return-report',
+        { root: '#returnreport_new', title: PosnicPro.i18n.t('lang_sales_return_report', 'Sales Return Report'), range: '.view_return_report_daterange', file: 'sales-return-report',
             full: [{ table: '#view_returnreport', per: '#view_returnreport_per_page', load: 'returnreport.returnreportTable' }] },
-        { root: '#returnreceivingreport_new', title: 'Purchase Return Report', range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
+        { root: '#returnreceivingreport_new', title: PosnicPro.i18n.t('lang_purchase_return_report', 'Purchase Return Report'), range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
             full: [{ table: '#view_returnreceivingreport', per: '#view_returnreceivingreport_per_page', load: 'returnreceivingreport.returnreceivingreportTable' }] },
-        { root: '#supplierreport_new', title: 'Supplier Report', range: '.view_supplier_report_daterange', file: 'supplier-report',
+        { root: '#supplierreport_new', title: PosnicPro.i18n.t('lang_supplier_report', 'Supplier Report'), range: '.view_supplier_report_daterange', file: 'supplier-report',
             full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
-        { root: '#taxsummaryreport_new', title: 'Tax Summary', range: '', file: 'tax-summary' },
-        { root: '#taxpayable_new', title: 'Tax Payable', range: '', file: 'tax-payable' },
+        { root: '#taxsummaryreport_new', title: PosnicPro.i18n.t('lang_taxsummary_title', 'Tax Summary'), range: '', file: 'tax-summary' },
+        { root: '#taxpayable_new', title: PosnicPro.i18n.t('lang_taxpayable_title', 'Tax Payable'), range: '', file: 'tax-payable' },
         // scans the whole catalogue already - no paging to expand
-        { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', range: '', file: 'gst-readiness' },
-        { root: '#taxdiscountreport_new', title: 'Tax Report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
-        { root: '#userreport_new', title: 'User Report', range: '.view_user_report_daterange', file: 'user-report',
+        { root: '#gstreadiness_new', title: PosnicPro.i18n.t('lang_gstreadiness_title', 'GST 2.0 Readiness'), range: '', file: 'gst-readiness' },
+        { root: '#taxdiscountreport_new', title: PosnicPro.i18n.t('lang_tax_report', 'Tax Report'), range: '.view_tax_sales_report_daterange', file: 'tax-report' },
+        { root: '#userreport_new', title: PosnicPro.i18n.t('lang_user_report', 'User Report'), range: '.view_user_report_daterange', file: 'user-report',
             full: [{ table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' }] },
-        { root: '#gstr_one', title: 'GSTR1 Report', range: '#gst_form_one_daterange_one', file: 'gstr1' },
-        { root: '#gstr_two', title: 'GSTR2 Report', range: '#gst_form_two_daterange_one', file: 'gstr2' },
-        { root: '#gstr_twob', title: 'GSTR2B Report', range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
-        { root: '#gstr_three', title: 'GSTR3B Report', range: '#gst_form_three_daterange_one', file: 'gstr3b' },
-        { root: '#gstrNine', title: 'GSTR9 Report', range: '#gst_form_nine_daterange_one', file: 'gstr9' },
+        { root: '#gstr_one', title: PosnicPro.i18n.t('lang_gstr1_report', 'GSTR1 Report'), range: '#gst_form_one_daterange_one', file: 'gstr1' },
+        { root: '#gstr_two', title: PosnicPro.i18n.t('lang_gstr2_report', 'GSTR2 Report'), range: '#gst_form_two_daterange_one', file: 'gstr2' },
+        { root: '#gstr_twob', title: PosnicPro.i18n.t('lang_gstr2b_report', 'GSTR2B Report'), range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
+        { root: '#gstr_three', title: PosnicPro.i18n.t('lang_gstr3b_report', 'GSTR3B Report'), range: '#gst_form_three_daterange_one', file: 'gstr3b' },
+        { root: '#gstrNine', title: PosnicPro.i18n.t('lang_gstr9_report', 'GSTR9 Report'), range: '#gst_form_nine_daterange_one', file: 'gstr9' },
     ],
     /*
      * Full-duration export (owner report: "pdf reports are taking first
@@ -1357,10 +1357,10 @@ PosnicPro = {
             if (!host.length) { return; }
             host.prepend(
                 '<div class="report-export-bar text-right m-b-10">'
-                + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'xls\');" title="Export Excel"><i class="fa fa-file-excel-o mr-1"></i>Excel</button> '
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'email\');" title="Email this report"><i class="fa fa-envelope-o mr-1"></i>Email</button>'
+                + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF" data-t-title="lang_download_a4_pdf"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV" data-t-title="lang_export_csv"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'xls\');" title="Export Excel" data-t-title="lang_export_excel"><i class="fa fa-file-excel-o mr-1"></i>Excel</button> '
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'email\');" title="Email this report" data-t-title="lang_email_this_report"><i class="fa fa-envelope-o mr-1"></i>Email</button>'
                 + '</div>');
         });
     },
@@ -1434,16 +1434,16 @@ PosnicPro = {
             return !!(m && m.classList.contains('show'));
         },
         _KINDS: {
-            sales: { label: 'Sales activity', hash: 'sales', acl: ['sales', 'read'] },
-            items: { label: 'Inventory updated', hash: 'items', acl: ['item', 'read'] },
-            receivings: { label: 'Receiving activity', hash: 'receivings', acl: ['receiving', 'read'] },
-            customers: { label: 'Customer records changed', hash: 'customers', acl: ['customer', 'read'] },
-            suppliers: { label: 'Supplier records changed', hash: 'suppliers', acl: ['supplier', 'read'] },
-            categories: { label: 'Categories changed', hash: 'categories', acl: ['category', 'read'] },
-            expenses: { label: 'Expense recorded', hash: 'expenses', acl: ['expense', 'read'] },
-            registers: { label: 'Register activity', hash: 'registers', acl: ['sales', 'read'] },
-            shifts: { label: 'Staff clock activity', hash: 'users', acl: ['user', 'read'] },
-            easytables: { label: 'Table / KOT activity', hash: 'kothistory', acl: ['sales', 'read'] },
+            sales: { label: PosnicPro.i18n.t('lang_sales_activity', 'Sales activity'), hash: 'sales', acl: ['sales', 'read'] },
+            items: { label: PosnicPro.i18n.t('lang_inventory_updated', 'Inventory updated'), hash: 'items', acl: ['item', 'read'] },
+            receivings: { label: PosnicPro.i18n.t('lang_receiving_activity', 'Receiving activity'), hash: 'receivings', acl: ['receiving', 'read'] },
+            customers: { label: PosnicPro.i18n.t('lang_customer_records_changed', 'Customer records changed'), hash: 'customers', acl: ['customer', 'read'] },
+            suppliers: { label: PosnicPro.i18n.t('lang_supplier_records_changed', 'Supplier records changed'), hash: 'suppliers', acl: ['supplier', 'read'] },
+            categories: { label: PosnicPro.i18n.t('lang_categories_changed', 'Categories changed'), hash: 'categories', acl: ['category', 'read'] },
+            expenses: { label: PosnicPro.i18n.t('lang_expense_recorded', 'Expense recorded'), hash: 'expenses', acl: ['expense', 'read'] },
+            registers: { label: PosnicPro.i18n.t('lang_register_activity', 'Register activity'), hash: 'registers', acl: ['sales', 'read'] },
+            shifts: { label: PosnicPro.i18n.t('lang_staff_clock_activity', 'Staff clock activity'), hash: 'users', acl: ['user', 'read'] },
+            easytables: { label: PosnicPro.i18n.t('lang_table_kot_activity', 'Table / KOT activity'), hash: 'kothistory', acl: ['sales', 'read'] },
         },
         _can: function (acl) {
             var u = PosnicPro.userACL;
@@ -1505,7 +1505,7 @@ PosnicPro = {
             if (!list) return;
             var items = PosnicPro.bellFeed._items;
             if (!items.length) {
-                list.innerHTML = '<div class="bellfeed-empty">Nothing yet - activity from other tills lands here.</div>';
+                list.innerHTML = '<div class="bellfeed-empty"><lang class="lang_nothing_yet_activity_from_other_tills_land">Nothing yet - activity from other tills lands here.</lang></div>';
                 return;
             }
             var html = '';
@@ -1540,7 +1540,7 @@ PosnicPro = {
             navigator.serviceWorker.getRegistration().then(function (reg) {
                 if (!reg) { $btn.hide(); return; }
                 reg.pushManager.getSubscription().then(function (sub) {
-                    $btn.text(sub ? 'Send test notification' : 'Enable notifications on this device')
+                    $btn.text(sub ? PosnicPro.i18n.t('lang_send_test_notification', 'Send test notification') : PosnicPro.i18n.t('lang_enable_notifications_on_this_device', 'Enable notifications on this device'))
                         .data('subscribed', !!sub).show();
                 });
             }).catch(function () { $btn.hide(); });
@@ -1550,7 +1550,7 @@ PosnicPro = {
             if ($btn.data('subscribed')) {
                 PosnicPro.post({ url: 'push/test', data: JSON.stringify({}) }, function (response) {
                     PosnicPro.alert(response.type, response.message);
-                }, function () { PosnicPro.alert('error', 'Could not send the test.'); });
+                }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_send_the_test', 'Could not send the test.')); });
                 return;
             }
             Notification.requestPermission().then(function (perm) {
@@ -1576,7 +1576,7 @@ PosnicPro = {
                                     url: 'push/subscribe',
                                     data: JSON.stringify({ subscription: sub.toJSON() }),
                                 }, function () {
-                                    PosnicPro.alert('success', 'Notifications enabled on this device.');
+                                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_notifications_enabled_on_this_device', 'Notifications enabled on this device.'));
                                     PosnicPro.bellFeed._pushSetup();
                                     resolve();
                                 }, function () { resolve(); });
@@ -1679,7 +1679,7 @@ PosnicPro = {
             $('#selectrow').val(selectedTableRow);
             $('#table_row').val(table);
         } else {
-            PosnicPro.alert('warning', 'Select must atleast one row!!.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_must_atleast_one_row', 'Select must atleast one row!!.'));
             return false;
         }
     },
@@ -1741,7 +1741,7 @@ PosnicPro = {
         csv.unshift(fields.join(',')); // add header column
         var CSV = csv.join('\r\n');
         if (CSV === '') {
-            PosnicPro.alert('warning', 'Invalid data...!!!');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_invalid_data', 'Invalid data...!!!'));
             return false;
         }
         //Generate a file name
@@ -1967,11 +1967,11 @@ PosnicPro = {
         if (mode === 'card') {
             $('#manager_pin_pane').addClass('d-none');
             $('#manager_card_pane').removeClass('d-none');
-            $('#manager_approval_toggle').text('Enter PIN instead');
+            $('#manager_approval_toggle').text(PosnicPro.i18n.t('lang_enter_pin_instead', 'Enter PIN instead'));
         } else {
             $('#manager_card_pane').addClass('d-none');
             $('#manager_pin_pane').removeClass('d-none');
-            $('#manager_approval_toggle').text('Swipe card instead');
+            $('#manager_approval_toggle').text(PosnicPro.i18n.t('lang_swipe_card_instead', 'Swipe card instead'));
         }
     },
     toggleApprovalMode: function () {
@@ -1986,7 +1986,7 @@ PosnicPro = {
         var byCard = PosnicPro._approvalMode === 'card';
         var value = byCard ? $('#manager_card_input').val() : $('#manager_pin_input').val();
         if (!value || !value.trim()) {
-            $('#manager_pin_error').text(byCard ? 'Swipe a card' : 'Enter a PIN').removeClass('d-none');
+            $('#manager_pin_error').text(byCard ? PosnicPro.i18n.t('lang_swipe_a_card', 'Swipe a card') : PosnicPro.i18n.t('lang_enter_a_pin', 'Enter a PIN')).removeClass('d-none');
             return;
         }
         $('#manager_pin_submit').prop('disabled', true);
@@ -2075,11 +2075,11 @@ PosnicPro = {
                 $('#shift_clock_out_btn').toggle(onShift);
                 if (onShift) {
                     var since = new Date(s.clock_in);
-                    $('#shift_status').html('<span class="badge badge-success">On shift</span><br>'
+                    $('#shift_status').html('<span class="badge badge-success"><lang class="lang_on_shift">On shift</lang></span><br>'
                         + '<small class="text-muted">since ' + since.toLocaleString() + '</small>');
                     $('#shift_clock_out_btn').prop('disabled', false);
                 } else {
-                    $('#shift_status').html('<span class="badge badge-secondary">Not clocked in</span>');
+                    $('#shift_status').html('<span class="badge badge-secondary"><lang class="lang_not_clocked_in">Not clocked in</lang></span>');
                     $('#shift_clock_in_btn').prop('disabled', false);
                 }
             }, function () { $('#shift_status').text('—'); });
@@ -2144,7 +2144,7 @@ PosnicPro = {
             PosnicPro.get(url, function (response) {
                 PosnicPro.shiftWidget._renderReport(response && response.data);
             }, function () {
-                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-danger">Could not load the report.</td></tr>');
+                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-danger"><lang class="lang_could_not_load_the_report">Could not load the report.</lang></td></tr>');
             });
         },
         _renderReport: function (data) {
@@ -2158,7 +2158,7 @@ PosnicPro = {
             };
             var num = function (n) { return (Number(n) || 0).toFixed(2); };
             if (!rows.length) {
-                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">No shifts in this range.</td></tr>');
+                $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted"><lang class="lang_no_shifts_in_this_range">No shifts in this range.</lang></td></tr>');
                 $('#labour_report_foot').html('');
                 return;
             }
@@ -2196,7 +2196,7 @@ PosnicPro = {
             var data = PosnicPro.shiftWidget._lastReport;
             var rows = (data && data.rows) || [];
             if (!rows.length) {
-                PosnicPro.alert('warning', 'Run the report first. There is nothing to export.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_there_is_nothing_to_e_2', 'Run the report first. There is nothing to export.'));
                 return;
             }
             var range = PosnicPro.shiftWidget._lastRange || {};
@@ -2224,7 +2224,7 @@ PosnicPro = {
             PosnicPro.get(url, function (response) {
                 var shifts = (response && response.data) || [];
                 if (!shifts.length) {
-                    PosnicPro.alert('warning', 'No shifts in this range.');
+                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_shifts_in_this_range', 'No shifts in this range.'));
                     return;
                 }
                 var fmt = PosnicPro.shiftWidget._fmtDateTime;
@@ -2241,7 +2241,7 @@ PosnicPro = {
                 });
                 PosnicPro.JSONToCSVConvertor(out, 'timecards_' + (from || 'all') + '_' + (to || 'all'), true);
             }, function () {
-                PosnicPro.alert('error', 'Could not load shifts for the export.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_shifts_for_the_export', 'Could not load shifts for the export.'));
             });
         },
         _fmtDateTime: function (v) {
@@ -2277,7 +2277,7 @@ PosnicPro = {
                     if (id && name) { html += '<option value="' + id + '">' + esc(name) + '</option>'; }
                 });
                 $('#roster_user').html(html);
-            }, function () { $('#roster_user').html('<option value="">Could not load staff</option>'); });
+            }, function () { $('#roster_user').html('<option value="" data-t="lang_could_not_load_staff">Could not load staff</option>'); });
         },
         runRoster: function () {
             var from = $('#roster_from').val();
@@ -2287,7 +2287,7 @@ PosnicPro = {
             PosnicPro.get(url, function (res) {
                 PosnicPro.shiftWidget._renderRoster((res && res.data) || []);
             }, function () {
-                $('#roster_body').html('<tr><td colspan="6" class="text-center text-danger">Could not load the roster.</td></tr>');
+                $('#roster_body').html('<tr><td colspan="6" class="text-center text-danger"><lang class="lang_could_not_load_the_roster">Could not load the roster.</lang></td></tr>');
             });
         },
         _renderRoster: function (entries) {
@@ -2297,7 +2297,7 @@ PosnicPro = {
                 });
             };
             if (!entries.length) {
-                $('#roster_body').html('<tr><td colspan="6" class="text-center text-muted">Nothing planned in this range.</td></tr>');
+                $('#roster_body').html('<tr><td colspan="6" class="text-center text-muted"><lang class="lang_nothing_planned_in_this_range">Nothing planned in this range.</lang></td></tr>');
                 return;
             }
             var html = '';
@@ -2319,7 +2319,7 @@ PosnicPro = {
         addRosterEntry: function () {
             var userId = $('#roster_user').val();
             var userName = $('#roster_user option:selected').text();
-            if (!userId) { PosnicPro.alert('warning', 'Pick a staff member.'); return; }
+            if (!userId) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_pick_a_staff_member', 'Pick a staff member.')); return; }
             $('#roster_add_btn').prop('disabled', true);
             var done = function () { $('#roster_add_btn').prop('disabled', false); };
             PosnicPro.post({
@@ -2355,13 +2355,13 @@ PosnicPro = {
                     PosnicPro.deleteAllSelectedRecords(checkedIds);
                 } else {
                     $('#checkall').prop('checked', false);
-                    PosnicPro.alert('error', 'Selected Row Empty!!.');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_selected_row_empty', 'Selected Row Empty!!.'));
                 }
             } else {
-                PosnicPro.alert('warning', 'Please selected atleast one row!!.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_please_selected_atleast_one_row', 'Please selected atleast one row!!.'));
             }
         } else {
-            PosnicPro.alert('warning', 'No accesss to delete Records!!.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_accesss_to_delete_records', 'No accesss to delete Records!!.'));
         }
     },
     getSelectedDangerZoneCollection: function (param) {
@@ -2390,7 +2390,7 @@ PosnicPro = {
                     $('#delete_collection_modal').modal('show');
                 }
             } else {
-                PosnicPro.alert('error', 'No accesss to delete Records!!.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_no_accesss_to_delete_records', 'No accesss to delete Records!!.'));
             }
         }
     },
@@ -2639,7 +2639,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
-        'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', font: 13, small: 11 }
+        'a4': { css: 'A4', content: 'auto', label: PosnicPro.i18n.t('lang_a4_sheet', 'A4 sheet'), font: 13, small: 11 }
     },
 
     resolvePaperWidth: function () {
@@ -2700,35 +2700,35 @@ PosnicPro = {
      */
     REPORT_GROUPS: [
         { name: 'Sales', items: [
-            { hash: 'quickreport', label: 'Day-End', icon: 'zap' },
-            { hash: 'salereport', label: 'Sales', icon: 'shopping-cart' },
-            { hash: 'returnreport', label: 'Return Sale', icon: 'refresh-ccw' },
-            { hash: 'pendingreport', label: 'Pending Payments', icon: 'clock' },
-            { hash: 'registerreport', label: 'Register', icon: 'inbox', module: 'cash_register_enable' },
-            { hash: 'kotreport', label: 'KOT', icon: 'grid', kot: true },
-            { hash: 'kioskreport', label: 'Kiosk', icon: 'monitor', module: 'module_channels_enable' },
+            { hash: 'quickreport', label: PosnicPro.i18n.t('lang_day_end', 'Day-End'), icon: 'zap' },
+            { hash: 'salereport', label: PosnicPro.i18n.t('lang_rgrp_sales', 'Sales'), icon: 'shopping-cart' },
+            { hash: 'returnreport', label: PosnicPro.i18n.t('lang_return_sale', 'Return Sale'), icon: 'refresh-ccw' },
+            { hash: 'pendingreport', label: PosnicPro.i18n.t('lang_pending_report', 'Pending Payments'), icon: 'clock' },
+            { hash: 'registerreport', label: PosnicPro.i18n.t('lang_records_title', 'Register'), icon: 'inbox', module: 'cash_register_enable' },
+            { hash: 'kotreport', label: PosnicPro.i18n.t('lang_kot_title', 'KOT'), icon: 'grid', kot: true },
+            { hash: 'kioskreport', label: PosnicPro.i18n.t('lang_module_kiosk', 'Kiosk'), icon: 'monitor', module: 'module_channels_enable' },
         ] },
         { name: 'Purchase', items: [
-            { hash: 'receivingreport', label: 'Purchase', icon: 'truck' },
-            { hash: 'returnreceivingreport', label: 'Return Purchase', icon: 'refresh-ccw' },
-            { hash: 'supplierreport', label: 'Supplier', icon: 'user-check' },
+            { hash: 'receivingreport', label: PosnicPro.i18n.t('lang_newpurchase_title', 'Purchase'), icon: 'truck' },
+            { hash: 'returnreceivingreport', label: PosnicPro.i18n.t('lang_return_purchase', 'Return Purchase'), icon: 'refresh-ccw' },
+            { hash: 'supplierreport', label: PosnicPro.i18n.t('lang_newsupplier_title', 'Supplier'), icon: 'user-check' },
         ] },
         { name: 'Inventory', items: [
-            { hash: 'itemreport', label: 'Item', icon: 'package' },
-            { hash: 'categoryreport', label: 'Category', icon: 'layers' },
+            { hash: 'itemreport', label: PosnicPro.i18n.t('lang_newitem_title', 'Item'), icon: 'package' },
+            { hash: 'categoryreport', label: PosnicPro.i18n.t('lang_newcategory_title', 'Category'), icon: 'layers' },
         ] },
         { name: 'People', items: [
-            { hash: 'customerreport', label: 'Customer', icon: 'users' },
-            { hash: 'userreport', label: 'User', icon: 'user-check' },
-            { hash: 'labourreport', label: 'Labour / Payout', icon: 'clock', module: 'staff_shifts_enable' },
+            { hash: 'customerreport', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer'), icon: 'users' },
+            { hash: 'userreport', label: PosnicPro.i18n.t('lang_newuser_title', 'User'), icon: 'user-check' },
+            { hash: 'labourreport', label: PosnicPro.i18n.t('lang_labourreport_title', 'Labour / Payout'), icon: 'clock', module: 'staff_shifts_enable' },
         ] },
         { name: 'Money', items: [
-            { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
-            { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
-            { hash: 'taxsummaryreport', label: 'Tax Summary', icon: 'layers', module: 'module_tax_enable' },
-            { hash: 'taxpayable', label: 'Tax Payable', icon: 'trending-up', module: 'module_tax_enable' },
-            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', icon: 'check-square', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
+            { hash: 'paymentreport', label: PosnicPro.i18n.t('lang_payment_2', 'Payment'), icon: 'dollar-sign' },
+            { hash: 'taxreport', label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), icon: 'percent', module: 'module_tax_enable' },
+            { hash: 'taxsummaryreport', label: PosnicPro.i18n.t('lang_taxsummary_title', 'Tax Summary'), icon: 'layers', module: 'module_tax_enable' },
+            { hash: 'taxpayable', label: PosnicPro.i18n.t('lang_taxpayable_title', 'Tax Payable'), icon: 'trending-up', module: 'module_tax_enable' },
+            { hash: 'gstreadiness', label: PosnicPro.i18n.t('lang_gstreadiness_title', 'GST 2.0 Readiness'), icon: 'check-square', module: 'module_tax_enable' },
+            { hash: 'expensesreport', label: PosnicPro.i18n.t('lang_expense_title', 'Cash Book'), icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
     injectReportGroupTabs: function () {
@@ -2971,16 +2971,16 @@ PosnicPro = {
         }).join('');
 
         var html =
-            '<div style="text-align:center;font-weight:bold;">TEST RECEIPT</div>' +
+            '<div style="text-align:center;font-weight:bold;"><lang class="lang_test_receipt">TEST RECEIPT</lang></div>' +
             '<div style="text-align:center;font-size:11px;">' + paper.label + '</div>' +
             '<div style="text-align:center;font-size:11px;">' + now.toLocaleString() + '</div>' +
             '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
             '<table style="width:100%;border-collapse:collapse;">' +
-            '<tr><th style="text-align:left;">Item</th><th style="text-align:center;">Qty</th>' +
-            '<th style="text-align:right;">Amount</th></tr>' + rows +
+            '<tr><th style="text-align:left;"><lang class="lang_newitem_title">Item</lang></th><th style="text-align:center;"><lang class="lang_qty_title">Qty</lang></th>' +
+            '<th style="text-align:right;"><lang class="lang_amount_title">Amount</lang></th></tr>' + rows +
             '</table>' +
             '<div style="border-top:1px dashed #000;margin:6px 0;"></div>' +
-            '<table style="width:100%;"><tr><td style="text-align:left;font-weight:bold;">TOTAL</td>' +
+            '<table style="width:100%;"><tr><td style="text-align:left;font-weight:bold;"><lang class="lang_total">TOTAL</lang></td>' +
             '<td style="text-align:right;font-weight:bold;">805.00</td></tr></table>' +
             '<div style="border-top:1px solid #000;margin:6px 0;"></div>' +
             '<div style="font-size:10px;text-align:center;">' +
@@ -3114,7 +3114,7 @@ PosnicPro = {
             }
         })
         .catch(function (err) {
-            PosnicPro.alert('error', (err && err.message) ? err.message : 'Print failed');
+            PosnicPro.alert('error', (err && err.message) ? err.message : PosnicPro.i18n.t('lang_print_failed', 'Print failed'));
         });
 
         return true;
@@ -3220,7 +3220,7 @@ PosnicPro = {
                     }
                 })
                 .catch(function (err) {
-                    PosnicPro.alert('error', (err && err.message) ? err.message : 'Print failed');
+                    PosnicPro.alert('error', (err && err.message) ? err.message : PosnicPro.i18n.t('lang_print_failed', 'Print failed'));
                 });
             }, 200); // Wait 200ms for CSS to load
             return;
@@ -3602,43 +3602,43 @@ PosnicPro = {
             $('.deleteCountValue').html(selectedTableRow.length);
             PosnicPro.deleteTableSelectedRowData(selectedTableRow, table);
         } else {
-            PosnicPro.alert('warning', 'Select must atleast one row!!.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_must_atleast_one_row', 'Select must atleast one row!!.'));
         }
     },
 
     appendReportTableBody: function (report) {
 
         var TableBody = {
-            'salesreport': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center">Customer</th><th class="text-center">Customer Phone</th><th class="text-center">No.of Item</th><th class="text-right">Subtotal</th><th class="text-right">Tax</th><th class="text-right">Discount</th><th class="text-right">Price</th></tr>',
-            'tax': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-right">GST</th><th class="text-right">Tax[%]</th><th>Tax Description</th><th class="text-right">Sub Total</th><th class="text-right">Price</th></tr>',
-            'receivingreport': '<tr><th></th><th>#</th><th>Id</th><th>Date</th><th>Supplier</th><th class="text-right">Supplier Phone</th><th class="text-center">Total Item</th><th class="text-right">Total</th></tr>',
-            'salesitemreport': '<tr><th></th><th>#</th><th>Id</th><th>Date</th><th>Customer</th><th class="text-center">Total Item</th><th class="text-right">Price</th></tr>',
-            'receivingitemreport': '<tr><th>#</th><th>Id</th><th>Date</th><th>Supplier</th><th class="text-center">Total Item</th><th class="text-right">Price</th></tr>',
-            'itemreport': '<tr><th>#</th><th>Name</th><th class="text-center">Total no. of item sold</th><th class="text-center">No. of sale</th><th class="text-right">Profit</th><th class="text-right">Avg.sale</th><th class="text-right">Total sale</th></tr>',
-            'itemexpiry': '<tr><th>#</th><th>Item Name</th><th>Category</th><th>SKU</th><th>Expiry Date</th><th class="text-right">Quantity</th><th class="text-right">Company Price</th><th class="text-right">Total Amount</th></tr>',
-            'categoryreport': '<tr><th>#</th><th>Name</th><th class="text-center">Total no. of item sold</th><th class="text-right">Profit</th><th class="text-right">Avg.sale</th><th class="text-right">Total sale</th></tr>',
-            'customerreport': '<tr><th>#</th><th>Name</th><th>Phone</th><th class="text-center">No. of purchase</th><th class="text-right">Return</th><th class="text-right">Avg.Purchase</th><th class="text-right">Total purchase</th></tr>',
-            'supplierreport': '<tr><th>#</th><th>Name</th><th>Phone</th><th class="text-center">No. of sale</th><th class="text-right">Avg.sale</th><th class="text-right">Total sale</th></tr>',
-            'userreport': '<tr><th>#</th><th>Name</th><th class="text-center">No. of sale</th><th class="text-right">Return</th><th class="text-right">Profit</th><th class="text-right">Avg.Sale</th><th class="text-right">Total sale</th></tr>',
-            'paymentsalesreport': '<tr><th>#</th><th>Id</th><th>Date</th><th>Customer</th><th>Payment Mode</th><th>Payment Note</th><th class="text-right">Price</th></tr>',
-            'paymentreceivingreport': '<tr><th>#</th><th>Id</th><th>Date</th><th>Supplier</th><th>Payment Mode</th><th>Payment Note</th><th class="text-right">Price</th></tr>',
-            'taxsalesreport': '<tr><th>#</th><th>Tax Name</th><th class="text-right">Amount</th></tr>',
-            'registerreport': '<tr><th>#</th><th>Name</th><th>Time opened</th><th>Time closed</th><th class="text-right">Float Amount</th><th class="text-right">Register amount</th></tr>',
-            'pendingreport': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center">No. of product</th><th class="text-right">Total</th><th class="text-right">Partial</th><th class="text-right">Due</th></tr>',
-            'returnreport': '<tr><th>#</th><th>Sales Id</th><th>Date</th><th>Customer name</th><th>Payment Method</th><th>No. of Item </th><th class="text-right">Return Amount</th></tr>',
-            'returnreceivingreport': '<tr><th>#</th><th>Receiving Id</th><th>Date</th><th>Supplier name</th><th>Payment Method</th><th>No. of Item </th><th class="text-right">Return Amount</th></tr>',
-            'customerdetails': '<tr><th>#</th><th> Sale </th><th>Date</th><th class="text-center">Process</th><th class="text-center">No. of item return</th><th class="text-right">Return total</th><th class="text-center">No. of item sold</th><th class="text-right">Sale total</th></tr>',
+            'salesreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th class="text-center"><lang class="lang_newcustomer_title">Customer</lang></th><th class="text-center"><lang class="lang_customer_phone">Customer Phone</lang></th><th class="text-center"><lang class="lang_no_of_item">No.of Item</lang></th><th class="text-right"><lang class="lang_subtotal">Subtotal</lang></th><th class="text-right"><lang class="lang_module_tax">Tax</lang></th><th class="text-right"><lang class="lang_discount_title">Discount</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'tax': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th class="text-right"><lang class="lang_gst">GST</lang></th><th class="text-right">Tax[%]</th><th><lang class="lang_tax_description">Tax Description</lang></th><th class="text-right"><lang class="lang_sub_total">Sub Total</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'receivingreport': '<tr><th></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th class="text-right"><lang class="lang_supplier_phone">Supplier Phone</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th></tr>',
+            'salesitemreport': '<tr><th></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'receivingitemreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'itemreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_total_no_of_item_sold">Total no. of item sold</lang></th><th class="text-center"><lang class="lang_no_of_sale">No. of sale</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avg_sale">Avg.sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
+            'itemexpiry': '<tr><th>#</th><th><lang class="lang_itemname_title">Item Name</lang></th><th><lang class="lang_newcategory_title">Category</lang></th><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_expiry_date">Expiry Date</lang></th><th class="text-right"><lang class="lang_quantity">Quantity</lang></th><th class="text-right"><lang class="lang_company_price_2">Company Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>',
+            'categoryreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_total_no_of_item_sold">Total no. of item sold</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avg_sale">Avg.sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
+            'customerreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th class="text-center"><lang class="lang_no_of_purchase">No. of purchase</lang></th><th class="text-right"><lang class="lang_return_title">Return</lang></th><th class="text-right"><lang class="lang_avg_purchase">Avg.Purchase</lang></th><th class="text-right"><lang class="lang_total_purchase_2">Total purchase</lang></th></tr>',
+            'supplierreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th class="text-center"><lang class="lang_no_of_sale">No. of sale</lang></th><th class="text-right"><lang class="lang_avg_sale">Avg.sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
+            'userreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_no_of_sale">No. of sale</lang></th><th class="text-right"><lang class="lang_return_title">Return</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avg_sale_2">Avg.Sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
+            'paymentsalesreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th><lang class="lang_paymentmode">Payment Mode</lang></th><th><lang class="lang_paymentdescription_title">Payment Note</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'paymentreceivingreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th><lang class="lang_paymentmode">Payment Mode</lang></th><th><lang class="lang_paymentdescription_title">Payment Note</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
+            'taxsalesreport': '<tr><th>#</th><th><lang class="lang_tax_name">Tax Name</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr>',
+            'registerreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_time_opened">Time opened</lang></th><th><lang class="lang_time_closed">Time closed</lang></th><th class="text-right"><lang class="lang_float_amount">Float Amount</lang></th><th class="text-right"><lang class="lang_registeramount_title">Register amount</lang></th></tr>',
+            'pendingreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th class="text-center"><lang class="lang_no_of_product">No. of product</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th class="text-right"><lang class="lang_partial">Partial</lang></th><th class="text-right"><lang class="lang_due">Due</lang></th></tr>',
+            'returnreport': '<tr><th>#</th><th><lang class="lang_sales_id">Sales Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_customer_name">Customer name</lang></th><th><lang class="lang_paymentmethod">Payment Method</lang></th><th><lang class="lang_no_of_item_2">No. of Item </lang></th><th class="text-right"><lang class="lang_return_amount">Return Amount</lang></th></tr>',
+            'returnreceivingreport': '<tr><th>#</th><th><lang class="lang_receiving_id">Receiving Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_supplier_name_2">Supplier name</lang></th><th><lang class="lang_paymentmethod">Payment Method</lang></th><th><lang class="lang_no_of_item_2">No. of Item </lang></th><th class="text-right"><lang class="lang_return_amount">Return Amount</lang></th></tr>',
+            'customerdetails': '<tr><th>#</th><th> Sale </th><th><lang class="lang_date_title">Date</lang></th><th class="text-center"><lang class="lang_process_title">Process</lang></th><th class="text-center"><lang class="lang_no_of_item_return">No. of item return</lang></th><th class="text-right"><lang class="lang_return_total">Return total</lang></th><th class="text-center"><lang class="lang_no_of_item_sold">No. of item sold</lang></th><th class="text-right"><lang class="lang_sale_total">Sale total</lang></th></tr>',
             'customertransactiondetails': '<tr><th>#</th><th> Date </th><th class="text-center"> Description </th><th> Type </th><th class="text-center"> Wallet </th><th class="text-center"> Paid </th><th class="text-center"> Pending </th><th class="text-center"> Total </th><th class="text-center"> Image </th><th class="text-center"> Action </th></tr>',
-            'supplierdetails': '<tr><th>#</th><th> Purchase </th><th>Date</th><th class="text-center">Process</th><th class="text-center">No. of item return</th><th class="text-right">Return total</th><th class="text-center">No. of item sold</th><th class="text-right">Sale total</th></tr>',
-            'usersdetails': '<tr><th>#</th><th> Sale </th><th>Date</th><th class="text-right">Amount</th></tr>',
-            'productdetails': '<tr><th>#</th><th> Name </th><th>Date</th><th class="text-right">Selling Amount</th></tr>',
-            'returndetails': '<tr><th>#</th><th> Name </th><th>Qty</th><th class="text-right"> Amount</th></tr>',
-            'registerdetails': '<tr><th>#</th><th> Sale </th><th>Date</th><th>Payment</th><th class="text-right">Return</th><th class="text-right">Amount</th></tr>',
-            'paymenttransaction': '<tr><th>#</th><th>Sale</th><th>Date</th><th>User</th><th>Method</th><th class="text-right">Amount</th></tr>',
-            'staffactivity': '<tr><th>#</th><th>Name</th><th>Login Date/Time</th><th>Outlet</th><th>IP address</th><th>Device type</th><th>OS</th><th>Browser</th></tr>',
-            'expensesreport': '<tr><th>#</th><th>Amount</th><th>Type</th><th> Category </th><th>Recipient Name</th><th>Approvedby</th><th>Description</th></tr>',
-            'transactionreport': '<tr><th>#</th><th>Name</th><th class="text-right">Credit</th><th class="text-right">Debit</th><th class="text-right">Wallet Amount</th><th class="text-right">Sales Pending</th><th class="text-right">Overall Due</th></tr>',
-            'itemstock': '<tr><th>#</th><th> Name </th><th>Qty</th><th class="text-right">Company Price</th><th class="text-right">Total Amount</th><th class="text-right">Selling Price</th><th class="text-right">Total Amount</th></tr>'
+            'supplierdetails': '<tr><th>#</th><th> Purchase </th><th><lang class="lang_date_title">Date</lang></th><th class="text-center"><lang class="lang_process_title">Process</lang></th><th class="text-center"><lang class="lang_no_of_item_return">No. of item return</lang></th><th class="text-right"><lang class="lang_return_total">Return total</lang></th><th class="text-center"><lang class="lang_no_of_item_sold">No. of item sold</lang></th><th class="text-right"><lang class="lang_sale_total">Sale total</lang></th></tr>',
+            'usersdetails': '<tr><th>#</th><th> Sale </th><th><lang class="lang_date_title">Date</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr>',
+            'productdetails': '<tr><th>#</th><th> Name </th><th><lang class="lang_date_title">Date</lang></th><th class="text-right"><lang class="lang_sellingamount_title">Selling Amount</lang></th></tr>',
+            'returndetails': '<tr><th>#</th><th> Name </th><th><lang class="lang_qty_title">Qty</lang></th><th class="text-right"> Amount</th></tr>',
+            'registerdetails': '<tr><th>#</th><th> Sale </th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_payment_2">Payment</lang></th><th class="text-right"><lang class="lang_return_title">Return</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr>',
+            'paymenttransaction': '<tr><th>#</th><th><lang class="lang_newsale_title">Sale</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newuser_title">User</lang></th><th><lang class="lang_method_title">Method</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr>',
+            'staffactivity': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_login_date_time">Login Date/Time</lang></th><th><lang class="lang_outlet">Outlet</lang></th><th><lang class="lang_ip_address">IP address</lang></th><th><lang class="lang_device_type">Device type</lang></th><th><lang class="lang_os">OS</lang></th><th><lang class="lang_browser">Browser</lang></th></tr>',
+            'expensesreport': '<tr><th>#</th><th><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_type_title">Type</lang></th><th> Category </th><th><lang class="lang_recipientname_title">Recipient Name</lang></th><th><lang class="lang_approvedby">Approvedby</lang></th><th><lang class="lang_description_title">Description</lang></th></tr>',
+            'transactionreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-right"><lang class="lang_credit_title">Credit</lang></th><th class="text-right"><lang class="lang_debit_title">Debit</lang></th><th class="text-right"><lang class="lang_wallet_amount">Wallet Amount</lang></th><th class="text-right"><lang class="lang_sales_pending">Sales Pending</lang></th><th class="text-right"><lang class="lang_overall_due">Overall Due</lang></th></tr>',
+            'itemstock': '<tr><th>#</th><th> Name </th><th><lang class="lang_qty_title">Qty</lang></th><th class="text-right"><lang class="lang_company_price_2">Company Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th><th class="text-right"><lang class="lang_selling_price">Selling Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>'
         };
 
         $(TableBody).each(function (key, val) {
@@ -3666,10 +3666,10 @@ PosnicPro = {
            entry - the standard lists render their own headers, and their
            keys came out with them (owner: clean up after the redesign). */
         var TableBody = {
-            'kothistory': '<tr><th>#</th><th>Id</th><th>Date</th><th class="text-center table-number-hide">Table</th><th class="text-center">No.of.Pax</th><th class="text-center order-type-column" width="10%">Order Type</th><th class="text-center" width="16%">Actions</th></tr>',
-            'branches': '<tr><th><input name="branches-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'branches\');"></th><th>#</th><th>Name</th><th class="text-right">Phone</th><th>Email</th><th>Address</th><th>State</th><th>Country</th><th class="text-center">Action</th></tr>',
-            'expenses': '<tr><th><input name="expenses-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'expenses\');"></th><th>#</th><th class="text-right">Amount</th><th>Type</th><th>Category</th><th>Approved By</th><th>Description</th><th class="text-center">Action</th></tr>',
-            'registers': '<tr><th data-module="user" data-access="delete"><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th>Register name</th><th>Date</th><th>Id</th><th>User name</th><th>Branch</th><th class="text-right">Register amount</th><th class="text-center">Action</th></tr>'
+            'kothistory': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th class="text-center table-number-hide"><lang class="lang_table_title">Table</lang></th><th class="text-center"><lang class="lang_no_of_pax_2">No.of.Pax</lang></th><th class="text-center order-type-column" width="10%"><lang class="lang_ordertype_title">Order Type</lang></th><th class="text-center" width="16%"><lang class="lang_action_title">Actions</lang></th></tr>',
+            'branches': '<tr><th><input name="branches-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'branches\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-right"><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_state_title">State</lang></th><th><lang class="lang_country_title">Country</lang></th><th class="text-center"><lang class="lang_action">Action</lang></th></tr>',
+            'expenses': '<tr><th><input name="expenses-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'expenses\');"></th><th>#</th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_type_title">Type</lang></th><th><lang class="lang_newcategory_title">Category</lang></th><th><lang class="lang_approved_by">Approved By</lang></th><th><lang class="lang_description_title">Description</lang></th><th class="text-center"><lang class="lang_action">Action</lang></th></tr>',
+            'registers': '<tr><th data-module="user" data-access="delete"><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th><lang class="lang_registername_title">Register name</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_user_name">User name</lang></th><th><lang class="lang_newbranch_title">Branch</lang></th><th class="text-right"><lang class="lang_registeramount_title">Register amount</lang></th><th class="text-center"><lang class="lang_action">Action</lang></th></tr>'
         };
 
         $(TableBody).each(function (key, val) {
@@ -3714,17 +3714,17 @@ PosnicPro = {
 
     appendRecyclebinDataTableBody: function (table) {
         var TableBody = {
-            'sales': '<tr><th><input name="sales-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'sales\');"></th><th>#</th><th>Id</th><th>Date</th><th>Customer</th><th>Process</th><th class="text-center">Price</th><th width="16%">Actions</th></tr>',
-            'receivings': '<tr><th><input name="receivings-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'receivings\');"></th><th>#</th><th>Id</th><th>Date</th><th>Supplier</th><th>Status</th><th class="text-center">Price</th><th width="16%">Action</th></tr>',
-            'customers': '<tr><th><input name="customers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'customers\');"></th><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Action</th></tr>',
-            'suppliers': '<tr><th><input name="suppliers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'suppliers\');"></th><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Action</th></tr>',
-            'categories': '<tr><th><input name="categories-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'categories\');"></th><th>#</th><th>Name</th><th>Image</th><th>Discount </th><th>Description</th><th>Action</th></tr>',
-            'items': '<tr><th><input name="items-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'items\');"></th><th>#</th><th>Name</th><th>Image</th><th>SKU</th><th>Price</th><th>Quantity</th><th width="15%">Action</th></tr>',
-            'branches': '<tr><th><input name="branches-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'branches\');"></th><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Country</th><th>State</th><th>Action</th></tr>',
-            'users': '<tr><th><input name="users-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'users\');"></th><th>#</th><th>Name</th><th>Image</th><th>Email Id</th><th> Type</th><th width="15%">Action</th></tr>',
-            'expenses': '<tr><th><input name="expenses-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'expenses\');"></th><th>#</th><th>Amount</th><th>Type</th><th>Category</th><th>Recipient</th><th>Approved By</th><th>Description</th><th>Action</th></tr>',
-            'registers': '<tr><th><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th>Register name</th><th>Date</th><th>Id</th><th>User name</th><th>Branch</th><th>Register amount</th><th>Action</th></tr>',
-            'stocklogs': '<tr><th><input name="stocklogs-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'stocklogs\');"></th><th>#</th><th>SKU</th><th>Name</th><th>Date</th><th>Process</th><th>Opening Balance</th><th>Closing Balance</th><th>Action</th></tr>'
+            'sales': '<tr><th><input name="sales-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'sales\');"></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th><lang class="lang_process_title">Process</lang></th><th class="text-center"><lang class="lang_price_title">Price</lang></th><th width="16%"><lang class="lang_action_title">Actions</lang></th></tr>',
+            'receivings': '<tr><th><input name="receivings-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'receivings\');"></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th><lang class="lang_userstatus">Status</lang></th><th class="text-center"><lang class="lang_price_title">Price</lang></th><th width="16%"><lang class="lang_action">Action</lang></th></tr>',
+            'customers': '<tr><th><input name="customers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'customers\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'suppliers': '<tr><th><input name="suppliers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'suppliers\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'categories': '<tr><th><input name="categories-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'categories\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_image">Image</lang></th><th><lang class="lang_discount_title">Discount </lang></th><th><lang class="lang_description_title">Description</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'items': '<tr><th><input name="items-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'items\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_image">Image</lang></th><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_price_title">Price</lang></th><th><lang class="lang_quantity">Quantity</lang></th><th width="15%"><lang class="lang_action">Action</lang></th></tr>',
+            'branches': '<tr><th><input name="branches-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'branches\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_country_title">Country</lang></th><th><lang class="lang_state_title">State</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'users': '<tr><th><input name="users-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'users\');"></th><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_image">Image</lang></th><th><lang class="lang_email_id">Email Id</lang></th><th> Type</th><th width="15%"><lang class="lang_action">Action</lang></th></tr>',
+            'expenses': '<tr><th><input name="expenses-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'expenses\');"></th><th>#</th><th><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_type_title">Type</lang></th><th><lang class="lang_newcategory_title">Category</lang></th><th><lang class="lang_recipient">Recipient</lang></th><th><lang class="lang_approved_by">Approved By</lang></th><th><lang class="lang_description_title">Description</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'registers': '<tr><th><input name="registers-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'registers\');"></th><th>#</th><th><lang class="lang_registername_title">Register name</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_user_name">User name</lang></th><th><lang class="lang_newbranch_title">Branch</lang></th><th><lang class="lang_registeramount_title">Register amount</lang></th><th><lang class="lang_action">Action</lang></th></tr>',
+            'stocklogs': '<tr><th><input name="stocklogs-select-all" type="checkbox" onclick="PosnicPro.checkboxSelectAll(this,\'stocklogs\');"></th><th>#</th><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_process_title">Process</lang></th><th><lang class="lang_opening_balance">Opening Balance</lang></th><th><lang class="lang_closing_balance">Closing Balance</lang></th><th><lang class="lang_action">Action</lang></th></tr>'
         };
         $(TableBody).each(function (key, val) {
             $(".datatable-thead-tbody").empty().html(val[table]);
@@ -3733,12 +3733,12 @@ PosnicPro = {
 
     appendImportDataTableBody: function (table) {
         var TableBody = {
-            'customers': '<tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Status</th></tr>',
-            'suppliers': '<tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Status</th></tr>',
-            'categories': '<tr><th>#</th><th>Name</th><th>Discount Amount</th> <th>Discount Percentage</th><th>Status</th></tr>',
-            'customercategory': '<tr><th>#</th><th>Name</th><th>Description</th><th>Status</th></tr>',
-            'items': '<tr><th>#</th><th>Name</th><th>Category Name</th><th>Price</th><th>Quantity</th><th>Status</th></tr>',
-            'expenses': '<tr><th>#</th><th>Type</th><th>Amount</th><th>Category Name</th><th>Notes</th><th>Status</th></tr>'
+            'customers': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>',
+            'suppliers': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th><lang class="lang_email_title">Email</lang></th><th><lang class="lang_address_title">Address</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>',
+            'categories': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_discount_amount_2">Discount Amount</lang></th> <th><lang class="lang_discount_percentage_2">Discount Percentage</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>',
+            'customercategory': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_description_title">Description</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>',
+            'items': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_category_name">Category Name</lang></th><th><lang class="lang_price_title">Price</lang></th><th><lang class="lang_quantity">Quantity</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>',
+            'expenses': '<tr><th>#</th><th><lang class="lang_type_title">Type</lang></th><th><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_category_name">Category Name</lang></th><th><lang class="lang_notes_title">Notes</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr>'
         };
         $(TableBody).each(function (key, val) {
             $(".import-datatable-thead").empty().html(val[table]);
@@ -4191,7 +4191,7 @@ PosnicPro.local = {
  * handled like this, in fifteen files:
  *
  *     (PosnicPro.local.get('language_herf') === 'ta_dashboard.html')
- *         ? $('#branch_title').text('...') : $('#branch_title').text('Edit');
+ *         ? $('#branch_title').text('...') : $('#branch_title').text(PosnicPro.i18n.t('lang_edit_title', 'Edit'));
  *
  * Three problems in one line. The language was identified by a FILENAME. It
  * was a two-way branch, so a third language did not fit without editing all
@@ -4294,6 +4294,10 @@ PosnicPro.i18n = {
      * layout without its pack having to say so - and a language this list
      * does not know is left to right, the safe default for a till.
      */
+    /* Attributes people read. Marked in the markup as data-t-<attr>="key"
+       by the tagger, translated here, restored by restore(). */
+    _attrs: ['placeholder', 'title', 'aria-label'],
+
     _rtl: { ar: 1, he: 1, fa: 1, ur: 1, ps: 1, sd: 1, ug: 1, yi: 1, dv: 1, ckb: 1 },
 
     rtl: function (code) {
@@ -4517,6 +4521,12 @@ PosnicPro.i18n = {
             }
             el.textContent = value;
         };
+        /* querySelectorAll never returns its own root; a <lang> handed in
+           by the observer is the thing to translate. */
+        if (root && root.nodeType === 1) {
+            if (root.tagName === 'LANG') set(root, (root.getAttribute('class') || '').trim());
+            else if (root.hasAttribute('data-t')) set(root, root.getAttribute('data-t'));
+        }
         var tags = scope.querySelectorAll('lang[class]');
         for (var i = 0; i < tags.length; i++) {
             set(tags[i], (tags[i].getAttribute('class') || '').trim());
@@ -4524,6 +4534,21 @@ PosnicPro.i18n = {
         var marked = scope.querySelectorAll('[data-t]');
         for (var j = 0; j < marked.length; j++) {
             set(marked[j], marked[j].getAttribute('data-t'));
+        }
+        /* placeholder, title, aria-label: the words a person reads that are
+           not text nodes. The English is kept the same way, per attribute. */
+        var attrs = PosnicPro.i18n._attrs;
+        for (var a = 0; a < attrs.length; a++) {
+            var els = Array.prototype.slice.call(scope.querySelectorAll('[data-t-' + attrs[a] + ']'));
+            if (root && root.nodeType === 1 && root.hasAttribute('data-t-' + attrs[a])) els.unshift(root);
+            for (var e = 0; e < els.length; e++) {
+                var value = dict[els[e].getAttribute('data-t-' + attrs[a])];
+                if (typeof value !== 'string' || value.trim() === '') continue;
+                if (!els[e].hasAttribute('data-en-' + attrs[a])) {
+                    els[e].setAttribute('data-en-' + attrs[a], els[e].getAttribute(attrs[a]) || '');
+                }
+                els[e].setAttribute(attrs[a], value);
+            }
         }
     },
 
@@ -4545,6 +4570,46 @@ PosnicPro.i18n = {
                 kept[i].appendChild(original[j].cloneNode(true));
             }
         }
+        var attrs = PosnicPro.i18n._attrs;
+        for (var a = 0; a < attrs.length; a++) {
+            var els = scope.querySelectorAll('[data-en-' + attrs[a] + ']');
+            for (var e = 0; e < els.length; e++) {
+                els[e].setAttribute(attrs[a], els[e].getAttribute('data-en-' + attrs[a]));
+            }
+        }
+    },
+
+    /*
+     * Translate markup as it lands.
+     *
+     * Most of the interface is drawn by JavaScript after load - list rows,
+     * table headers, the receipt panel, every modal body - and none of it
+     * passed through apply(). A module can write <lang class="key">English
+     * </lang> into any string it renders and forget about it: each added
+     * subtree is translated the moment it is in the document. Nothing at all
+     * happens for a shop in English (no dictionary, no work), and apply()
+     * reads keys rather than text, so it cannot translate its own output
+     * twice. Text nodes are skipped: a translation that only changed words
+     * must not wake the observer that made it.
+     */
+    watch: function (root) {
+        if (typeof document === 'undefined') return null;
+        /* The observer of the document being watched - a test's, or ours. */
+        var doc = (root && root.ownerDocument) || document;
+        var Observer = (doc.defaultView && doc.defaultView.MutationObserver)
+            || (typeof MutationObserver !== 'undefined' ? MutationObserver : null);
+        if (!Observer) return null;
+        var observer = new Observer(function (records) {
+            if (!PosnicPro.i18n._dict) return;
+            for (var r = 0; r < records.length; r++) {
+                var added = records[r].addedNodes;
+                for (var a = 0; a < added.length; a++) {
+                    if (added[a].nodeType === 1) PosnicPro.i18n.apply(added[a]);
+                }
+            }
+        });
+        observer.observe(root || document.documentElement, { childList: true, subtree: true });
+        return observer;
     },
 
     /*
@@ -4589,6 +4654,8 @@ PosnicPro.i18n.ready = (function firstRun() {
         .then(function () { PosnicPro.i18n.apply(); })
         .catch(function () { /* English, as shipped */ });
 }());
+/* Markup drawn after load is translated as it lands - see i18n.watch(). */
+PosnicPro.i18n.watch();
 /*
  * A plain <select id="language_select"> anywhere offers the same list the
  * header menu does. The login page has one: somebody who cannot read the
@@ -4622,8 +4689,8 @@ $(document).ready(function () {
     // before the first sale so the first receipt is right, not the second.
     PosnicPro.syncPrinterPreferences();
 
-    //    $(".changeCountry").append('<option id="Select country"  value="">Select Country</option>');
-    //    $(".changeState").append('<option id="Select State" value="">Select State</option>');
+    //    $(".changeCountry").append('<option id="Select country"  value="" data-t="lang_select_country">Select Country</option>');
+    //    $(".changeState").append('<option id="Select State" value="" data-t="lang_select_state">Select State</option>');
 
     var kotEnabled = (PosnicPro.local.get('table_options') === 'enable');
     var $newSaleLi = $('#view_touchsales_page').closest('li');
@@ -4677,7 +4744,7 @@ $(".files").on('change', function (e) {
                     });
 
                     if (!lines || lines.length === 0) {
-                        PosnicPro.alert('error', 'Empty CSV file');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_empty_csv_file', 'Empty CSV file'));
                         return false;
                     }
 
@@ -5420,16 +5487,16 @@ $('.custom_report_search_input').on('keyup', function (event) {
                defaults to black, which is how the minimise bar came out dark
                on a dark title bar while the other two - drawn with stroke -
                were correctly following the text colour. */
-            { name: 'minimize', label: 'Minimise',
+            { name: 'minimize', label: PosnicPro.i18n.t('lang_minimise', 'Minimise'),
               path: '<rect x="2" y="5.5" width="8" height="1" fill="currentColor" />' },
             /* Two icons, because this button means two different things. Not
                maximised it maximises, and shows one square. Maximised it
                restores, and every other application on the machine draws two
                overlapping squares for that - one square there tells the shop
                the click will do something it will not. See paintMaximise. */
-            { name: 'maximize', label: 'Maximise',
+            { name: 'maximize', label: PosnicPro.i18n.t('lang_maximise', 'Maximise'),
               path: '<rect x="2.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" />' },
-            { name: 'close', label: 'Close',
+            { name: 'close', label: PosnicPro.i18n.t('lang_close_title', 'Close'),
               path: '<path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" fill="none" />' }
         ];
 
@@ -5467,7 +5534,7 @@ $('.custom_report_search_input').on('keyup', function (event) {
             var svg = btn.querySelector('svg');
             if (!svg) return;
             svg.innerHTML = maximised ? RESTORE_ICON : MAXIMISE_ICON;
-            var label = maximised ? 'Restore down' : 'Maximise';
+            var label = maximised ? PosnicPro.i18n.t('lang_restore_down', 'Restore down') : PosnicPro.i18n.t('lang_maximise', 'Maximise');
             btn.setAttribute('aria-label', label);
             btn.title = label;
         }
@@ -5575,8 +5642,8 @@ PosnicPro.gstreadiness = {
     },
     run: function () {
         var esc = PosnicPro.gstreadiness._esc;
-        $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">Scanning&hellip;</td></tr>');
-        $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">Scanning&hellip;</td></tr>');
+        $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_scanning">Scanning&hellip;</lang></td></tr>');
+        $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_scanning">Scanning&hellip;</lang></td></tr>');
         PosnicPro.get('items/gstReadiness', function (response) {
             var d = (response && response.data) || {};
             PosnicPro.gstreadiness._last = d;
@@ -5615,13 +5682,13 @@ PosnicPro.gstreadiness = {
                 }).join(''));
             }
         }, function () {
-            $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">Could not run the scan - try again.</td></tr>');
+            $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_could_not_run_the_scan_try_again">Could not run the scan - try again.</lang></td></tr>');
             $('#gstready_differs').html('');
         });
     },
     exportCsv: function () {
         var d = PosnicPro.gstreadiness._last;
-        if (!d) { PosnicPro.alert('warning', 'Run the scan first.'); return; }
+        if (!d) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_scan_first', 'Run the scan first.')); return; }
         var rows = [['Section', 'Item', 'HSN', 'Current rate', 'Reference rate', 'Note']];
         (d.retired || []).forEach(function (r) {
             rows.push(['Withdrawn slab', r.name, r.hsncode, r.rate + '%', '', r.reason]);
@@ -5691,7 +5758,7 @@ PosnicPro.peek = {
             + '<div class="modal-dialog" role="document"><div class="modal-content">'
             + '<div class="modal-header" style="align-items:center;">'
             + '<h5 class="modal-title" id="pp_peek_title"></h5>'
-            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>'
             + '</div>'
             + '<div class="modal-body" id="pp_peek_body" style="max-height:70vh; overflow-y:auto;"></div>'
             + '<div class="modal-footer" id="pp_peek_footer" style="justify-content:space-between; display:none;"></div>'
@@ -5702,7 +5769,7 @@ PosnicPro.peek = {
         PosnicPro.peek._ensure();
         $('#pp_peek_modal .modal-dialog').toggleClass('modal-lg', !!o.large);
         $('#pp_peek_title').text(o.title || '');
-        $('#pp_peek_body').html(o.body || '<div class="text-center text-muted" style="padding:40px;">Loading ...</div>');
+        $('#pp_peek_body').html(o.body || '<div class="text-center text-muted" style="padding:40px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         $('#pp_peek_footer').html(o.footer || '').toggle(!!o.footer);
         $('#pp_peek_modal').modal('show');
     },
@@ -5755,15 +5822,15 @@ PosnicPro.listDoc = {
         }
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'' + split + '\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'' + split + '\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(o.title) + '</span>' + (o.pills || '')
             + '<span class="ml-auto"></span>'
             + (o.actions || '')
-            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.listDoc.close(\'' + o.key + '\');"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.listDoc.close(\'' + o.key + '\');"><i class="feather icon-x"></i></button>'
             + '</div>';
         $('#' + o.key + '_doc').html(toolbar
             + '<div class="s-doc-body"><div class="q-sheet s-sheet">'
-            + (o.body || '<div class="text-center text-muted" style="padding:40px;">Loading ...</div>')
+            + (o.body || '<div class="text-center text-muted" style="padding:40px;"><lang class="lang_loading_4">Loading ...</lang></div>')
             + '</div></div>');
     },
     /* Swap the sheet's content once a fetch lands - the pane is already
@@ -5861,7 +5928,7 @@ PosnicPro.listExport = {
                 }
                 PosnicPro.listExport.save(rows, cfg.filename);
             }, function () {
-                PosnicPro.alert('error', 'Export failed part-way - nothing was downloaded');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_export_failed_part_way_nothing_was_downloa', 'Export failed part-way - nothing was downloaded'));
             });
         };
         step();
@@ -5893,10 +5960,10 @@ PosnicPro.listSort = {
         }).join('');
         host.html('<div class="btn-group">'
             + '<button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"'
-            + ' aria-haspopup="true" aria-expanded="false" id="' + key + '_sort_btn" title="Sort the list">'
-            + '<i class="feather icon-bar-chart mr-2"></i><span id="' + key + '_sort_label">Sort</span></button>'
+            + ' aria-haspopup="true" aria-expanded="false" id="' + key + '_sort_btn" title="Sort the list" data-t-title="lang_sort_the_list">'
+            + '<i class="feather icon-bar-chart mr-2"></i><span id="' + key + '_sort_label"><lang class="lang_sort">Sort</lang></span></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
-            + '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort="">Default</a>'
+            + '<a class="dropdown-item ls-sort-opt" href="javascript:void(0)" data-key="' + key + '" data-sort=""><lang class="lang_default">Default</lang></a>'
             + items + '</div></div>');
     },
     value: function (key) {
@@ -5909,7 +5976,7 @@ $(document).on('click', '.ls-sort-opt', function () {
     var reg = PosnicPro.listSort._reg[key];
     if (!reg) { return; }
     reg._v = String($(this).data('sort') || '');
-    $('#' + key + '_sort_label').text(reg._v ? $(this).text() : 'Sort');
+    $('#' + key + '_sort_label').text(reg._v ? $(this).text() : PosnicPro.i18n.t('lang_sort', 'Sort'));
     if (typeof reg.onChange === 'function') { reg.onChange(reg._v); }
 });
 
@@ -5953,7 +6020,7 @@ PosnicPro.taxpayable = {
         PosnicPro.get({ url: 'sales/taxPayable?' + q, data: {} }, function (r) {
             PosnicPro.taxpayable._months = (r.data && r.data.months) || [];
             PosnicPro.taxpayable.renderMonths();
-        }, function () { $('#taxpayable_months_body').html('<tr><td class="text-danger">Could not load - try again.</td></tr>'); });
+        }, function () { $('#taxpayable_months_body').html('<tr><td class="text-danger"><lang class="lang_could_not_load_try_again">Could not load - try again.</lang></td></tr>'); });
         PosnicPro.get({ url: 'sales/taxPayableRegister?' + q, data: {} }, function (r) {
             PosnicPro.taxpayable._register = (r.data && r.data.list) || [];
             PosnicPro.taxpayable.renderRegister();
@@ -5964,17 +6031,17 @@ PosnicPro.taxpayable = {
         var L = PosnicPro.taxpayable._label;
         var n = function (v) { return (Number(v) || 0).toFixed(2); };
         var head = three
-            ? '<tr><th rowspan="2">Month</th><th colspan="4" class="text-center">Output (' + L + ' collected)</th>'
-              + '<th colspan="4" class="text-center">Input credit (purchases)</th>'
-              + '<th colspan="4" class="text-center">Net payable</th><th rowspan="2" class="text-right">Credit carried</th></tr>'
-              + '<tr><th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th>'
-              + '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th>'
-              + '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th></tr>'
-            : '<tr><th>Month</th><th class="text-right">' + L + ' collected</th><th class="text-right">Input credit</th><th class="text-right">Net payable</th><th class="text-right">Credit carried</th></tr>';
+            ? '<tr><th rowspan="2"><lang class="lang_month">Month</lang></th><th colspan="4" class="text-center">Output (' + L + ' collected)</th>'
+              + '<th colspan="4" class="text-center"><lang class="lang_input_credit_purchases">Input credit (purchases)</lang></th>'
+              + '<th colspan="4" class="text-center"><lang class="lang_net_payable">Net payable</lang></th><th rowspan="2" class="text-right"><lang class="lang_credit_carried">Credit carried</lang></th></tr>'
+              + '<tr><th class="text-right"><lang class="lang_igst_tax_receiving">IGST</lang></th><th class="text-right"><lang class="lang_cgst_tax_receiving">CGST</lang></th><th class="text-right"><lang class="lang_sgst_tax_receiving">SGST</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
+              + '<th class="text-right"><lang class="lang_igst_tax_receiving">IGST</lang></th><th class="text-right"><lang class="lang_cgst_tax_receiving">CGST</lang></th><th class="text-right"><lang class="lang_sgst_tax_receiving">SGST</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
+              + '<th class="text-right"><lang class="lang_igst_tax_receiving">IGST</lang></th><th class="text-right"><lang class="lang_cgst_tax_receiving">CGST</lang></th><th class="text-right"><lang class="lang_sgst_tax_receiving">SGST</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th></tr>'
+            : '<tr><th><lang class="lang_month">Month</lang></th><th class="text-right">' + L + ' collected</th><th class="text-right"><lang class="lang_input_credit">Input credit</lang></th><th class="text-right"><lang class="lang_net_payable">Net payable</lang></th><th class="text-right"><lang class="lang_credit_carried">Credit carried</lang></th></tr>';
         $('#taxpayable_months_head').html(head);
         var rows = PosnicPro.taxpayable._months || [];
         if (!rows.length) {
-            $('#taxpayable_months_body').html('<tr><td class="text-muted" colspan="14">Nothing in this period.</td></tr>');
+            $('#taxpayable_months_body').html('<tr><td class="text-muted" colspan="14"><lang class="lang_nothing_in_this_period">Nothing in this period.</lang></td></tr>');
             return;
         }
         var html = '';
@@ -5997,17 +6064,17 @@ PosnicPro.taxpayable = {
         var three = PosnicPro.taxpayable._threeHead;
         var n = function (v) { return (Number(v) || 0).toFixed(2); };
         var esc = function (t) { return $('<i/>').text(t == null ? '' : t).html(); };
-        $('#taxpayable_register_head').html('<tr><th>Purchase</th><th>Date</th><th>Supplier</th><th>Tax ID</th>'
-            + (three ? '<th class="text-right">IGST</th><th class="text-right">CGST</th><th class="text-right">SGST</th>' : '<th class="text-right">Tax paid</th>')
-            + '<th class="text-right">Total</th><th class="text-center">Credit</th><th class="text-center">Doc</th></tr>');
+        $('#taxpayable_register_head').html('<tr><th><lang class="lang_newpurchase_title">Purchase</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th><lang class="lang_tax_id">Tax ID</lang></th>'
+            + (three ? '<th class="text-right"><lang class="lang_igst_tax_receiving">IGST</lang></th><th class="text-right"><lang class="lang_cgst_tax_receiving">CGST</lang></th><th class="text-right"><lang class="lang_sgst_tax_receiving">SGST</lang></th>' : '<th class="text-right"><lang class="lang_tax_paid">Tax paid</lang></th>')
+            + '<th class="text-right"><lang class="lang_total_title">Total</lang></th><th class="text-center"><lang class="lang_credit_title">Credit</lang></th><th class="text-center"><lang class="lang_doc">Doc</lang></th></tr>');
         var rows = PosnicPro.taxpayable._register || [];
         if (!rows.length) {
-            $('#taxpayable_register_body').html('<tr><td class="text-muted" colspan="10">No purchases in this period.</td></tr>');
+            $('#taxpayable_register_body').html('<tr><td class="text-muted" colspan="10"><lang class="lang_no_purchases_in_this_period">No purchases in this period.</lang></td></tr>');
             return;
         }
         var html = '';
         rows.forEach(function (r) {
-            var warn = r.invoice_total_mismatch ? ' <i class="feather icon-alert-triangle text-warning" title="Declared invoice total does not match the lines"></i>' : '';
+            var warn = r.invoice_total_mismatch ? ' <i class="feather icon-alert-triangle text-warning" title="Declared invoice total does not match the lines" data-t-title="lang_declared_invoice_total_does_not_match_the"></i>' : '';
             html += '<tr><td>' + esc(r.receiving_id) + warn + '</td>'
                 + '<td>' + (r.date ? new Date(r.date).toLocaleDateString('en-IN') : '-') + '</td>'
                 + '<td>' + esc(r.supplier_name) + '</td>'
@@ -6016,7 +6083,7 @@ PosnicPro.taxpayable = {
                     ? '<td class="text-right">' + n(r.igst) + '</td><td class="text-right">' + n(r.cgst) + '</td><td class="text-right">' + n(r.sgst) + '</td>'
                     : '<td class="text-right">' + n((Number(r.igst) || 0) + (Number(r.cgst) || 0) + (Number(r.sgst) || 0)) + '</td>')
                 + '<td class="text-right">' + n(r.total_amount) + '</td>'
-                + '<td class="text-center">' + (r.itc_eligible === false ? '<span class="rs-pill unpaid">No</span>' : '<span class="rs-pill paid">Yes</span>') + '</td>'
+                + '<td class="text-center">' + (r.itc_eligible === false ? '<span class="rs-pill unpaid"><lang class="lang_no">No</lang></span>' : '<span class="rs-pill paid"><lang class="lang_yes">Yes</lang></span>') + '</td>'
                 + '<td class="text-center">' + (r.has_document ? '<i class="feather icon-paperclip"></i>' : '-') + '</td>'
                 + '</tr>';
         });
@@ -6075,7 +6142,7 @@ PosnicPro.taxsummaryreport = {
     run: function () {
         var from = $('#taxsummary_from').val();
         var to = $('#taxsummary_to').val();
-        $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted">Loading&hellip;</td></tr>');
+        $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr>');
         $('#taxsummary_foot').html('');
         var url = 'sales/taxSummaryReportTable?starting_date=' + encodeURIComponent(from)
             + '&ending_date=' + encodeURIComponent(to);
@@ -6088,7 +6155,7 @@ PosnicPro.taxsummaryreport = {
                period of pure purchasing still builds credit. */
             PosnicPro.taxsummaryreport.renderGst(d, cur);
             if (!rows.length) {
-                $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted">No sales in this range.</td></tr>');
+                $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-muted"><lang class="lang_no_sales_in_this_range">No sales in this range.</lang></td></tr>');
                 return;
             }
             var esc = function (s) {
@@ -6110,13 +6177,13 @@ PosnicPro.taxsummaryreport = {
             $('#taxsummary_body').html(html);
             var t = d.totals || {};
             $('#taxsummary_foot').html('<tr class="font-weight-bold">'
-                + '<td colspan="2">Total</td>'
+                + '<td colspan="2"><lang class="lang_total_title">Total</lang></td>'
                 + '<td class="text-right">' + cur + '&nbsp;' + (t.net || 0).toFixed(2) + '</td>'
                 + '<td class="text-right">' + cur + '&nbsp;' + (t.tax || 0).toFixed(2) + '</td>'
                 + '<td class="text-right">' + cur + '&nbsp;' + (t.gross || 0).toFixed(2) + '</td>'
                 + '<td></td></tr>');
         }, function () {
-            $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-danger">Could not load the summary.</td></tr>');
+            $('#taxsummary_body').html('<tr><td colspan="6" class="text-center text-danger"><lang class="lang_could_not_load_the_summary">Could not load the summary.</lang></td></tr>');
         });
     },
     /*
@@ -6146,7 +6213,7 @@ PosnicPro.taxsummaryreport = {
         );
         var rows = p.list || [];
         if (!rows.length) {
-            $('#taxsummary_purchase_body').html('<tr><td colspan="5" class="text-center text-muted">No purchases in this range.</td></tr>');
+            $('#taxsummary_purchase_body').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_no_purchases_in_this_range">No purchases in this range.</lang></td></tr>');
             $('#taxsummary_purchase_foot').html('');
         } else {
             var html = '';
@@ -6162,7 +6229,7 @@ PosnicPro.taxsummaryreport = {
             $('#taxsummary_purchase_body').html(html);
             var t = p.totals || {};
             $('#taxsummary_purchase_foot').html('<tr class="font-weight-bold">'
-                + '<td>Total</td>'
+                + '<td><lang class="lang_total_title">Total</lang></td>'
                 + '<td class="text-right">' + money(t.net) + '</td>'
                 + '<td class="text-right">' + money(t.tax) + '</td>'
                 + '<td class="text-right">' + money(t.gross) + '</td>'
@@ -6174,7 +6241,7 @@ PosnicPro.taxsummaryreport = {
         var d = PosnicPro.taxsummaryreport._last;
         var rows = (d && d.list) || [];
         if (!rows.length) {
-            PosnicPro.alert('warning', 'Run the report first - there is nothing to export.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_there_is_nothing_to_e', 'Run the report first - there is nothing to export.'));
             return;
         }
         var out = rows.map(function (r) {
@@ -6221,12 +6288,12 @@ PosnicPro.roster = {
             return d.getDate() + ' ' + d.toLocaleString(undefined, { month: 'short' });
         };
         $('#roster_week_label').text(label(monday) + ' – ' + label(sunday));
-        $('#roster_view_body').html('<div class="text-center text-muted p-4">Loading&hellip;</div>');
+        $('#roster_view_body').html('<div class="text-center text-muted p-4"><lang class="lang_loading">Loading&hellip;</lang></div>');
         var url = 'shifts/schedule?from=' + encodeURIComponent(fmt(monday)) + '&to=' + encodeURIComponent(fmt(sunday));
         PosnicPro.get(url, function (res) {
             PosnicPro.roster._render((res && res.data) || []);
         }, function () {
-            $('#roster_view_body').html('<div class="text-center text-danger p-4">Could not load the roster.</div>');
+            $('#roster_view_body').html('<div class="text-center text-danger p-4"><lang class="lang_could_not_load_the_roster">Could not load the roster.</lang></div>');
         });
     },
     _render: function (entries) {
@@ -6251,9 +6318,9 @@ PosnicPro.roster = {
             html += '<div class="mb-3' + (isToday ? ' p-2 rounded" style="background:rgba(0,123,255,.06);' : '"') + '">'
                 + '<h6 class="mb-1">' + d.toLocaleString(undefined, { weekday: 'long' })
                 + ' <small class="text-muted">' + d.getDate() + ' ' + d.toLocaleString(undefined, { month: 'short' }) + '</small>'
-                + (isToday ? ' <span class="badge badge-primary">Today</span>' : '') + '</h6>';
+                + (isToday ? ' <span class="badge badge-primary"><lang class="lang_this_day">Today</lang></span>' : '') + '</h6>';
             if (!day.length) {
-                html += '<small class="text-muted">No one planned.</small>';
+                html += '<small class="text-muted"><lang class="lang_no_one_planned">No one planned.</lang></small>';
             } else {
                 day.sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); });
                 day.forEach(function (e) {
@@ -6282,12 +6349,12 @@ PosnicPro.workforce = {
     },
     loadOnShift: function () {
         var today = PosnicPro.shiftWidget._fmtDate(new Date());
-        $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted">Loading&hellip;</td></tr>');
+        $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr>');
         PosnicPro.get('shifts/report?from=' + today + '&to=' + today, function (response) {
             var rows = ((response && response.data && response.data.rows) || [])
                 .filter(function (r) { return r.open_shifts; });
             if (!rows.length) {
-                $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted">No one is clocked in right now.</td></tr>');
+                $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-muted"><lang class="lang_no_one_is_clocked_in_right_now">No one is clocked in right now.</lang></td></tr>');
                 return;
             }
             var esc = function (s) {
@@ -6303,7 +6370,7 @@ PosnicPro.workforce = {
             });
             $('#wf_onshift_body').html(html);
         }, function () {
-            $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-danger">Could not load shifts.</td></tr>');
+            $('#wf_onshift_body').html('<tr><td colspan="2" class="text-center text-danger"><lang class="lang_could_not_load_shifts">Could not load shifts.</lang></td></tr>');
         });
     },
     openRosterTab: function () {

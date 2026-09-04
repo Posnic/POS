@@ -8,11 +8,11 @@ PosnicPro.stocklogs = {
             && $('#stocklogs_detail_card').is(':visible')) { return; }
         PosnicPro.stocklogs._chrome();
         PosnicPro.stocklogs.loadList(1);
-        PosnicPro.listDoc.open({ key: 'stocklogs', id: id, title: 'Movement' });
+        PosnicPro.listDoc.open({ key: 'stocklogs', id: id, title: PosnicPro.i18n.t('lang_movement', 'Movement') });
         PosnicPro.get('stocklogs/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3">Could not open this movement.</div>');
+                PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_movement">Could not open this movement.</lang></div>');
                 return;
             }
             PosnicPro.listDoc.title('stocklogs', d.item_name || 'Movement');
@@ -28,7 +28,7 @@ PosnicPro.stocklogs = {
             }));
             PosnicPro.stocklogs._aclDoc();
         }, function () {
-            PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3">Could not open this movement.</div>');
+            PosnicPro.listDoc.body('stocklogs', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_movement">Could not open this movement.</lang></div>');
         });
     },
     /* The pane draws AFTER the login-time ACL sweep - its links to the
@@ -86,17 +86,17 @@ PosnicPro.stocklogs = {
                 : '<div class="q-muted">Ref: ' + esc(o.reference) + '</div>';
         }
         return PosnicPro.listDoc.stats([
-            { v: change, l: 'Change' },
-            { v: o.opening != null ? esc(o.opening) : null, l: 'Opening' },
-            { v: o.opening != null ? esc(o.closing) : null, l: 'Closing' }
+            { v: change, l: PosnicPro.i18n.t('lang_change', 'Change') },
+            { v: o.opening != null ? esc(o.opening) : null, l: PosnicPro.i18n.t('lang_opening_2', 'Opening') },
+            { v: o.opening != null ? esc(o.closing) : null, l: PosnicPro.i18n.t('lang_closing_2', 'Closing') }
         ])
             + PosnicPro.listDoc.grid([
-                { label: 'Movement', lines: [
+                { label: PosnicPro.i18n.t('lang_movement', 'Movement'), lines: [
                     '<div>' + esc(o.process) + '</div>',
                     o.note ? '<div class="q-muted">' + esc(o.note) + '</div>' : ''
                 ] },
-                { label: 'Reference', lines: [refLine] },
-                { label: 'Recorded', lines: [
+                { label: PosnicPro.i18n.t('lang_reference_title', 'Reference'), lines: [refLine] },
+                { label: PosnicPro.i18n.t('lang_recorded', 'Recorded'), lines: [
                     o.by ? '<div>' + esc(o.by) + '</div>' : '',
                     o.date ? '<div class="q-muted">' + esc(o.date) + '</div>' : ''
                 ] }
@@ -128,8 +128,8 @@ PosnicPro.stocklogs = {
                 var row = r && r.data && r.data.list && r.data.list[0];
                 var id = row && (row._id && row._id.$oid ? row._id.$oid : row._id);
                 if (id) { hasher.setHash('sales/' + id); }
-                else { PosnicPro.alert('warning', 'That bill is not in Sales History any more'); }
-            }, function () { PosnicPro.alert('warning', 'Could not look up the bill'); });
+                else { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_that_bill_is_not_in_sales_history_any_more', 'That bill is not in Sales History any more')); }
+            }, function () { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_could_not_look_up_the_bill', 'Could not look up the bill')); });
             return;
         }
         PosnicPro.get({
@@ -139,8 +139,8 @@ PosnicPro.stocklogs = {
             var row = r && r.data && r.data.list && r.data.list[0];
             var id = row && (row._id && row._id.$oid ? row._id.$oid : row._id);
             if (id) { hasher.setHash('purchaseorders/' + id); }
-            else { PosnicPro.alert('warning', 'That purchase is not on record any more'); }
-        }, function () { PosnicPro.alert('warning', 'Could not look up the purchase'); });
+            else { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_that_purchase_is_not_on_record_any_more', 'That purchase is not on record any more')); }
+        }, function () { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_could_not_look_up_the_purchase', 'Could not look up the purchase')); });
     },
     showModuleDetails: function (id) {
         hasher.setHash('items/' + id);
@@ -172,13 +172,13 @@ PosnicPro.stocklogs = {
             key: 'stocklogs',
             container: '#stocklogs_filter_panel',
             button: '#stocklogs_filter_btn',
-            searchPlaceholder: 'Search item, activity or reference',
-            dateField: 'Stock date',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_item_activity_or_reference', 'Search item, activity or reference'),
+            dateField: PosnicPro.i18n.t('lang_stock_date', 'Stock date'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'item_name', label: 'Item' },
-                { value: 'process', label: 'Activity' },
-                { value: 'reference', label: 'Reference' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'item_name', label: PosnicPro.i18n.t('lang_newitem_title', 'Item') },
+                { value: 'process', label: PosnicPro.i18n.t('lang_activity_2', 'Activity') },
+                { value: 'reference', label: PosnicPro.i18n.t('lang_reference_title', 'Reference') }
             ],
             onChange: function () { PosnicPro.stocklogs.loadList(1); }
         });
@@ -187,13 +187,13 @@ PosnicPro.stocklogs = {
        process names its door (Add Receiving, Edit Sale, Delete Item ...),
        so a family is one regex, not a list to keep in step. */
     MOVES: {
-        purchases: { label: 'Purchases', re: 'Receiving|Purchase' },
-        sales: { label: 'Sales', re: 'Sale' },
-        items: { label: 'Item edits', re: 'Item' }
+        purchases: { label: PosnicPro.i18n.t('lang_po_title', 'Purchases'), re: 'Receiving|Purchase' },
+        sales: { label: PosnicPro.i18n.t('lang_rgrp_sales', 'Sales'), re: 'Sale' },
+        items: { label: PosnicPro.i18n.t('lang_item_edits', 'Item edits'), re: 'Item' }
     },
     setMove: function (key) {
         var m = PosnicPro.stocklogs.MOVES[key];
-        $('#stocklogs_move_dd').text(m ? m.label : 'All');
+        $('#stocklogs_move_dd').text(m ? m.label : PosnicPro.i18n.t('lang_report_all', 'All'));
         PosnicPro.stocklogs.mountFilters();
         PosnicPro.listFilter.setExtra('stocklogs', 'process',
             m ? { $regex: m.re, $options: 'i' } : '');
@@ -214,15 +214,15 @@ PosnicPro.stocklogs = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('stocklogs') > 0;
                 $('#stocklogs_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No movements match this filter.' : 'No stock movements yet - receive or sell an item and its trail starts here.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_movements_match_this_filter', 'No movements match this filter.') : PosnicPro.i18n.t('lang_no_stock_movements_yet_receive_or_sell_an', 'No stock movements yet - receive or sell an item and its trail starts here.')) + '</div>');
                 $('#stocklogs_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Item</th><th>Movement</th><th class="il-col-ref">Reference</th>'
-                + '<th class="il-col-by">By</th><th class="il-col-date">Date</th>'
-                + '<th class="text-right il-col-bal">Opening</th><th class="text-right">Change</th>'
-                + '<th class="text-right il-col-bal">Closing</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_movement">Movement</lang></th><th class="il-col-ref"><lang class="lang_reference_title">Reference</lang></th>'
+                + '<th class="il-col-by"><lang class="lang_by">By</lang></th><th class="il-col-date"><lang class="lang_date_title">Date</lang></th>'
+                + '<th class="text-right il-col-bal"><lang class="lang_opening_2">Opening</lang></th><th class="text-right"><lang class="lang_change">Change</lang></th>'
+                + '<th class="text-right il-col-bal"><lang class="lang_closing_2">Closing</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var n = Number(r.count) || 0;
                 var note = r.note ? '<div class="q-muted" style="font-size:11.5px; white-space:normal;">' + esc(r.note) + '</div>' : '';
@@ -243,14 +243,14 @@ PosnicPro.stocklogs = {
             $('#stocklogs_list_rows').html(html);
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#stocklogs_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load the stock ledger - try again.</div>');
+            $('#stocklogs_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_the_stock_ledger_try_again">Could not load the stock ledger - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.stocklogs;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' movement' : ' movements');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_movement_2', 'movement') : PosnicPro.i18n.t('lang_movements', 'movements'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')

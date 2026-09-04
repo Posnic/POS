@@ -116,7 +116,7 @@
                                         'padding:26px 24px 20px;font:14px/1.55 system-ui,Segoe UI,Arial,sans-serif;' +
                                         'box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;');
                                     card.innerHTML =
-                                        '<div style="font-size:19px;font-weight:700;margin-bottom:8px;">Making this shop yours?</div>' +
+                                        '<div style="font-size:19px;font-weight:700;margin-bottom:8px;"><lang class="lang_making_this_shop_yours">Making this shop yours?</lang></div>' +
                                         '<div style="margin-bottom:18px;">Create your own free shop in a minute. No credit card, no commitment. ' +
                                         'If you never renew, you simply continue on the free Community Edition.</div>' +
                                         '<a href="' + signupHref('demo_nudge') + '" target="_blank" rel="noopener" style="display:block;' +

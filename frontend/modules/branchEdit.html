@@ -28,7 +28,7 @@
                                             class="feather icon-edit"></i></label>
                                     <input type="hidden" name="setting_image_value" id="setting_image_value">
                                     <a href="javascript:void(0)" class="btn btn-danger-rgba font-18"
-                                        onclick="PosnicPro.settings.removePopupBranchImage()" aria-label="Delete">
+                                        onclick="PosnicPro.settings.removePopupBranchImage()" aria-label="Delete" data-t-aria-label="lang_delete">
                                         <i class="feather icon-trash"></i>
                                     </a>
                                     <input type="hidden" id="setting_logo_value" name="setting_logo_value">
@@ -65,7 +65,7 @@
                                     </label>
                                     <input type="text" class="form-control border-control" name="store_name"
                                         id="store_name" minlength="3" maxlength="250"
-                                        placeholder="Enter the store name" autocomplete="off" required>
+                                        placeholder="Enter the store name" data-t-placeholder="lang_enter_the_store_name" autocomplete="off" required>
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="store_email">
@@ -74,7 +74,7 @@
                                     </label>
                                     <input type="email" class="form-control border-control"
                                         name="store_email" id="store_email" maxlength="50"
-                                        placeholder="Enter the email address" autocomplete="off" required>
+                                        placeholder="Enter the email address" data-t-placeholder="lang_enter_the_email_address" autocomplete="off" required>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -86,7 +86,7 @@
                                     <input type="tel"
                                         class="form-control border-control allow_phone_validate"
                                         name="store_telephone" id="store_telephone" minlength="3"
-                                        maxlength="20" placeholder="Enter the phone number"
+                                        maxlength="20" placeholder="Enter the phone number" data-t-placeholder="lang_enter_the_phone_number"
                                         autocomplete="off" required>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -96,7 +96,7 @@
                                     <input type="tel"
                                         class="form-control border-control allow_phone_validate"
                                         name="store_alternativephone" id="store_alternativephone"
-                                        minlength="3" maxlength="20" placeholder="Enter the phone number"
+                                        minlength="3" maxlength="20" placeholder="Enter the phone number" data-t-placeholder="lang_enter_the_phone_number"
                                         autocomplete="off">
                                 </div>
                             </div>
@@ -108,7 +108,7 @@
                                     </label>
                                     <textarea name="store_address"
                                         class="form-control border-control scroll_width" id="store_address"
-                                        minlength="3" maxlength="500" placeholder="Enter the store address"
+                                        minlength="3" maxlength="500" placeholder="Enter the store address" data-t-placeholder="lang_enter_the_store_address"
                                         required></textarea>
                                 </div>
                                 <div class="form-group col-lg-12 col-xl-6">
@@ -119,7 +119,7 @@
                                     <textarea name="printing_address"
                                         class="form-control border-control scroll_width"
                                         id="printing_address" minlength="3" maxlength="500"
-                                        placeholder="Enter the print address" required></textarea>
+                                        placeholder="Enter the print address" data-t-placeholder="lang_enter_the_print_address" required></textarea>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -147,7 +147,7 @@
                                         <lang class="lang_city_title">City </lang>
                                     </label>
                                     <input type="text" class="form-control border-control" name="city"
-                                        id="city" maxlength="50" placeholder="Enter the city"
+                                        id="city" maxlength="50" placeholder="Enter the city" data-t-placeholder="lang_enter_the_city"
                                         autocomplete="off">
                                 </div>
                                 <div class="form-group col-md-6">
@@ -156,7 +156,7 @@
                                     </label>
                                     <input type="text" class="form-control border-control" name="pincode"
                                         id="pincode" onkeypress="return PosnicPro.isNumber(event)"
-                                        maxlength="15" placeholder="Enter the pincode" autocomplete="off">
+                                        maxlength="15" placeholder="Enter the pincode" data-t-placeholder="lang_enter_the_pincode" autocomplete="off">
                                 </div>
                             </div>
                             <div class="form-row">
@@ -195,19 +195,19 @@
                                     <select class="select2" data-page="storedate" id="storedate"
                                         name="storedate" required="">
                                         <option name="01/01/2018" value="dd/mm/yyyy" data-id="d/m/Y"
-                                            selected>01/01/2018 - dd/mm/yyyy</option>
+                                            selected><lang class="lang_01_01_2018_dd_mm_yyyy">01/01/2018 - dd/mm/yyyy</lang></option>
                                         <option name="2018/01/01" value="yyyy/mm/dd" data-id="Y/m/d">
-                                            2018/01/01 - yyyy/mm/dd</option>
+                                            <lang class="lang_2018_01_01_yyyy_mm_dd">2018/01/01 - yyyy/mm/dd</lang></option>
                                         <option name="01/01/2018" value="mm/dd/yyyy" data-id="m/d/Y">
-                                            01/01/2018 - mm/dd/yyyy</option>
-                                        <option name="Sun 01/18" value="D mm/dd" data-id="D m/d">Sun 01/18 -
-                                            Day mm/dd</option>
+                                            <lang class="lang_01_01_2018_mm_dd_yyyy">01/01/2018 - mm/dd/yyyy</lang></option>
+                                        <option name="Sun 01/18" value="D mm/dd" data-id="D m/d"><lang class="lang_sun_01_18_day_mm_dd">Sun 01/18 -
+                                            Day mm/dd</lang></option>
                                         <option name="January 01 2018" value="MM dd yyyy" data-id="M d y">
-                                            January 01 2018 - MM dd yyyy</option>
-                                        <option name="01 January 18" value="d MM yy" data-id="d M y">01
-                                            January 18 - d MM yy</option>
+                                            <lang class="lang_january_01_2018_mm_dd_yyyy">January 01 2018 - MM dd yyyy</lang></option>
+                                        <option name="01 January 18" value="d MM yy" data-id="d M y"><lang class="lang_01_january_18_d_mm_yy">01
+                                            January 18 - d MM yy</lang></option>
                                         <option name="Thu 01 January 18" value="D d MM yy"
-                                            data-id="D d M y">Thu 01 January 18 - Day d MM yy</option>
+                                            data-id="D d M y"><lang class="lang_thu_01_january_18_day_d_mm_yy">Thu 01 January 18 - Day d MM yy</lang></option>
                                     </select>
                                     <input type="hidden" id="serverdate" name="serverdate">
                                     <input type="hidden" id="dateText" name="dateText">
@@ -220,16 +220,16 @@
                                     </label>
                                     <input type="text" class="form-control border-control" name="website"
                                         id="website" minlength="3" maxlength="50"
-                                        placeholder="Enter the website" autocomplete="off">
+                                        placeholder="Enter the website" data-t-placeholder="lang_enter_the_website" autocomplete="off">
                                 </div>
                                 <div class="form-group col-md-6 branch-gstin-hide-show">
                                     <label for="branch_gstin_number" data-toggle="tooltip"
-                                        title="Gstrin number" class="label-text-color">
+                                        title="Gstrin number" data-t-title="lang_gstrin_number" class="label-text-color">
                                         <lang class="lang_gstr_number">GSTIN Number</lang>
                                     </label>
                                     <input type="text" class="form-control border-control"
                                         name="branch_gstin_number" id="branch_gstin_number" minlength="15"
-                                        maxlength="15" placeholder="Enter the GSTIN" autocomplete="off">
+                                        maxlength="15" placeholder="Enter the GSTIN" data-t-placeholder="lang_enter_the_gstin" autocomplete="off">
                                 </div>
                             </div>
                             <div class="form-row">
@@ -240,8 +240,8 @@
                                         onclick="PosnicPro.branches.beAddRegisterRow('');">
                                         <i class="feather icon-plus mr-1"></i><lang class="lang_addregister_title">Add register</lang>
                                     </button>
-                                    <small class="form-text text-muted">Renaming keeps a register's history.
-                                        Register names need at least 3 characters.</small>
+                                    <small class="form-text text-muted"><lang class="lang_renaming_keeps_a_register_s_history_regist">Renaming keeps a register's history.
+                                        Register names need at least 3 characters.</lang></small>
                                 </fieldset>
                             </div>
                         </div>

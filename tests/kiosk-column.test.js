@@ -94,7 +94,9 @@ test('header and cells carry the same marker', () => {
      cells, which is worse than the column that was there before. The list
      moved to the master-detail standard (2026-08-27): loadList writes its
      own header, so both markers live in items.js now. */
-  assert.match(ITEMS_JS, /<th class="text-center kiosk-column">Kiosk<\/th>/,
+  /* The word is wrapped in <lang> so a pack can reach it; what this pins is
+     that the header carries the marker class, beside the cell's. */
+  assert.match(ITEMS_JS, /<th class="text-center kiosk-column">(?:<lang class="[^"]+">)?Kiosk/,
     'the Kiosk header is not marked');
   assert.match(ITEMS_JS, /<td class="text-center kiosk-column">/,
     'the Kiosk cell is not marked');
@@ -108,7 +110,7 @@ test('the page hides the column when the server says there is no kiosk', () => {
 test('the header exists before the answer arrives', () => {
   /* loadList writes the header in the same render that toggles the column;
      the toggle must come AFTER the rows land in the DOM. */
-  const headerAt = ITEMS_JS.indexOf('kiosk-column">Kiosk');
+  const headerAt = ITEMS_JS.search(/kiosk-column">(?:<lang class="[^"]+">)?Kiosk/);
   const renderAt = ITEMS_JS.indexOf("$('#items_list_rows').html(html)");
   const toggleAt = ITEMS_JS.indexOf("$('.kiosk-column')");
   assert.ok(headerAt > -1, 'the item table header is no longer written here');

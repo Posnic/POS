@@ -124,7 +124,7 @@
                                         </div>
 
                                         <form id="Branch_selection_form" enctype="multipart/form-data" style="display:none;">
-                                            <h4 class="text-primary my-4">Select branch </h4>
+                                            <h4 class="text-primary my-4"><lang class="lang_select_branch">Select branch</lang> </h4>
                                             <div class="custom-layout-setting">
                                                 <div class="row align-items-center pb-3 multi_branch_selection">
 
@@ -135,12 +135,12 @@
                                         <form id="login_form" method="post">
                                             <h4 class="text-primary my-4"><lang class="lang_login">Login</lang></h4>
                                             <div class="form-group loader-login">
-                                                <input type="text" class="form-control border-control" id="username" name="username" minlength="3" maxlength="250" placeholder="Enter username (or) email here" autocomplete="username" required>
+                                                <input type="text" class="form-control border-control" id="username" name="username" minlength="3" maxlength="250" placeholder="Enter username (or) email here" data-t-placeholder="lang_enter_username_or_email_here" autocomplete="username" required>
                                             </div>
 
                                             <div class="form-group right-inner-addon input-container">
                                                 <span class="btn addon_btnview current-show_hide_password"> <i class="fa fa-eye-slash"></i></span>
-                                                <input type="password" class="form-control border-control" id="password" name="password" minlength="5" maxlength="20" placeholder="Enter password here" required autocomplete="current-password">
+                                                <input type="password" class="form-control border-control" id="password" name="password" minlength="5" maxlength="20" placeholder="Enter password here" data-t-placeholder="lang_enter_password_here" required autocomplete="current-password">
                                             </div>    
                                             <div class="form-row mb-3">
                                                 <div class="col-sm-6">
@@ -163,7 +163,7 @@
                                             <h4 class="text-primary my-4"><lang class="lang_forgot">Forgot Password !</lang> </h4>
                                             <p class="mb-4" style="font-weight: 510;"><lang class="lang_forget_description">Enter the email address below to receive reset password instructions.</lang></p>
                                             <div class="form-group">
-                                                <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" required>
+                                                <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" data-t-placeholder="lang_enter_email_here" required>
                                             </div>                          
                                             <button type="submit" class="btn btn-success btn-lg btn-block font-18"><lang class="lang_foget_mail">Reset Password</lang></button>
                                             <p class="mb-0 mt-3"><lang class="lang_remeber_password">Already have a POSNIC account? </lang><a id="Loginslide" href="#"><lang class="lang_login_title">Log in </lang></a></p>
@@ -171,7 +171,7 @@
 
 
                                         <form id="registerselect_form" style="display:none;"> 
-                                            <h4 class="text-primary my-4">Select Register </h4>
+                                            <h4 class="text-primary my-4"><lang class="lang_select_register">Select Register</lang> </h4>
                                             <div id="form_regsiter_selction">                                                                            
                                                 <div class="form-group col-md-12 text-center">
                                                     <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%;border: 1px solid #eae8e8;">
@@ -180,7 +180,7 @@
                                             </div>
 
                                             <div class="form-group col-md-12 text-left">
-                                                <label for="opening_float" class="text_white">Opening Float </label>
+                                                <label for="opening_float" class="text_white"><lang class="lang_opening_float">Opening Float</lang> </label>
                                                 <input type="text" class="form-control border-control allow_decimal text-right" id="opening_float" name="opening_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00">
                                             </div> 
                                             <div class="form-group col-md-12">
@@ -193,11 +193,11 @@
                                         <div class="row">
                                             <div class="col-sm-12">                                        
                                                 <div id="user_error_slide" style="display:none;">
-                                                    <h4 class="text-primary my-4">Sign-in is blocked ! </h4>
-                                                    <p class="text-danger text-left"> You've tried to sign in too many times with an incorrect account or password. </p>
-                                                    <p class="text-left"> Sign-in with <span class="user-text-update text-success font-18">satheesh</span> entered the wrong password too many times. </p>
-                                                    <p id="redirect_slide" style="color:#3a5de1; cursor:pointer ;margin-top:-15px;">Reset your password? </p>
-                                                    <p> Another posnic account ?<a id="redirect_login" href="#">Log in</a> </p>
+                                                    <h4 class="text-primary my-4"><lang class="lang_sign_in_is_blocked">Sign-in is blocked !</lang> </h4>
+                                                    <p class="text-danger text-left"> <lang class="lang_you_ve_tried_to_sign_in_too_many_times_wit">You've tried to sign in too many times with an incorrect account or password.</lang> </p>
+                                                    <p class="text-left"> <lang class="lang_sign_in_with">Sign-in with</lang> <span class="user-text-update text-success font-18"><lang class="lang_satheesh">satheesh</lang></span> <lang class="lang_entered_the_wrong_password_too_many_times">entered the wrong password too many times.</lang> </p>
+                                                    <p id="redirect_slide" style="color:#3a5de1; cursor:pointer ;margin-top:-15px;"><lang class="lang_reset_your_password">Reset your password?</lang> </p>
+                                                    <p> <lang class="lang_another_posnic_account">Another posnic account ?</lang><a id="redirect_login" href="#"><lang class="lang_log_in">Log in</lang></a> </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -206,7 +206,7 @@
                                              hidden until the list is in so an empty box never shows. -->
                                         <div class="text-center mt-3">
                                             <select id="language_select" class="form-control form-control-sm d-inline-block w-auto"
-                                                aria-label="Language" style="display:none"></select>
+                                                aria-label="Language" data-t-aria-label="lang_language" style="display:none"></select>
                                         </div>
                                     </div>
                                 </div>

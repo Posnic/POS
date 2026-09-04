@@ -179,7 +179,7 @@
             PosnicPro.quickitems.optionsLoaded = true;
 
             PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (r) {
-                var html = '<option value="">No category</option>';
+                var html = '<option value="" data-t="lang_no_category">No category</option>';
                 $.each((r && r.suggestions) || [], function (i, c) {
                     html += '<option value="' + c.id + '" data-name="' + c.name + '">' + c.name + '</option>';
                 });
@@ -196,7 +196,7 @@
             }, function () {});
 
             PosnicPro.get({ url: 'setting/getTaxAll', data: { tax_group: 'all' } }, function (r) {
-                var html = '<option value="">No tax</option>';
+                var html = '<option value="" data-t="lang_no_tax">No tax</option>';
                 $.each((r && r.data) || [], function (i, t) {
                     html += '<option value="' + t.tax_id + '" data-name="' + t.tax_name + '"'
                         + ' data-value="' + t.tax_value + '">' + t.tax_name + '</option>';
@@ -210,7 +210,7 @@
         save: function () {
             var name = $.trim($('#qa_name').val());
             if (!name) {
-                PosnicPro.alert('error', 'An item needs a name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_an_item_needs_a_name', 'An item needs a name.'));
                 $('#qa_name').focus();
                 return false;
             }
@@ -573,20 +573,20 @@
             $('body').append(
                 '<div class="modal fade" id="quick_item_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
                 '<div class="modal-dialog modal-dialog-centered modal-sm" role="document"><div class="modal-content">' +
-                '<div class="modal-header py-2"><h5 class="modal-title">New item</h5>' +
+                '<div class="modal-header py-2"><h5 class="modal-title"><lang class="lang_new_item">New item</lang></h5>' +
                 '<button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
                 '<div class="modal-body">' +
-                '<label class="mb-0 small text-muted" for="quick_item_name">Name</label>' +
+                '<label class="mb-0 small text-muted" for="quick_item_name"><lang class="lang_name_title">Name</lang></label>' +
                 '<input type="text" class="form-control mb-2" id="quick_item_name" maxlength="100" autocomplete="off">' +
-                '<label class="mb-0 small text-muted" for="quick_item_price">Selling price</label>' +
+                '<label class="mb-0 small text-muted" for="quick_item_price"><lang class="lang_selling_price_2">Selling price</lang></label>' +
                 '<input type="number" min="0" step="any" class="form-control mb-2 text-right" id="quick_item_price" placeholder="0.00" autocomplete="off">' +
-                '<label class="mb-0 small text-muted" for="quick_item_qty">Stock on hand</label>' +
+                '<label class="mb-0 small text-muted" for="quick_item_qty"><lang class="lang_stock_on_hand">Stock on hand</lang></label>' +
                 '<input type="number" min="0" step="any" class="form-control text-right" id="quick_item_qty" placeholder="0" autocomplete="off">' +
-                '<small class="text-muted d-block mt-2">Saved to your items - add details anytime from the Items page.</small>' +
+                '<small class="text-muted d-block mt-2"><lang class="lang_saved_to_your_items_add_details_anytime_fr">Saved to your items - add details anytime from the Items page.</lang></small>' +
                 '</div>' +
                 '<div class="modal-footer py-2">' +
-                '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal">Cancel</button>' +
-                '<button type="button" class="btn btn-primary" id="quick_item_save">Save item</button>' +
+                '<button type="button" class="btn btn-secondary-rgba" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>' +
+                '<button type="button" class="btn btn-primary" id="quick_item_save"><lang class="lang_save_item">Save item</lang></button>' +
                 '</div></div></div></div>');
             $('#quick_item_price,#quick_item_qty').on('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); $('#quick_item_save').click(); }
@@ -625,7 +625,7 @@
                 return;
             }
             $('#quick_item_modal').modal('hide');
-            PosnicPro.alert('success', 'Item saved');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_saved', 'Item saved'));
             var id = (result.data && (result.data.id || result.data._id)) || '';
             var cb = PosnicPro.quickitems._onCreated;
             PosnicPro.quickitems._onCreated = null;

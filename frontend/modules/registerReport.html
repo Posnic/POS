@@ -29,7 +29,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -63,8 +63,8 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="register_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="register-line" role="tabpanel" aria-labelledby="register-tab-line">
                                 <!-- start table -->
@@ -106,24 +106,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_registerreport_page_total"></span></b>
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_registerreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_registerreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-registerreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-registerreport text-dark"> 0 </span>&nbsp; 
-                                                        rows selected  
+                                                        <span class="showing-value-registerreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp; 
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registerreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registerreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registerreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registerreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>

@@ -204,7 +204,7 @@
             + 'font:14px/1.55 system-ui,Segoe UI,Arial,sans-serif;'
             + 'box-shadow:0 22px 60px rgba(0,0,0,.4);');
         card.innerHTML = POSTERS[variant]()
-            + '<button type="button" id="posnic_dn_x" aria-label="Close" style="position:absolute;'
+            + '<button type="button" id="posnic_dn_x" aria-label="Close" data-t-aria-label="lang_close_title" style="position:absolute;'
             + 'top:10px;right:12px;background:none;border:none;cursor:pointer;font-size:22px;line-height:1;'
             + 'color:' + (variant === 'reasons' ? '#B4BACB' : 'rgba(255,255,255,.6)') + ';padding:4px 6px;">'
             + '×</button>';

@@ -274,8 +274,8 @@ PosnicPro.customeroutstandingreport = {
                             
                             // Check if customer is deleted - if deleted, show name as plain text, otherwise show as link
                             var customerNameCell = row.is_deleted || !row.id 
-                                ? '<span class="text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Customer Deleted">' + row.name + ' (Deleted)</span>'
-                                : '<a href="#/customerreport/' + row.id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details">' + row.name + '</i></a>';
+                                ? '<span class="text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Customer Deleted" data-t-title="lang_customer_deleted">' + row.name + ' (Deleted)</span>'
+                                : '<a href="#/customerreport/' + row.id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details" data-t-title="lang_view_details_2">' + row.name + '</i></a>';
                             
                             var trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + customerNameCell + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.credit.toFixed(2) + '</td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.debit.toFixed(2) + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.wallet.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.pending.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.due.toFixed(2) + '</span></td></tr>';
                             due += row.due;

@@ -131,7 +131,7 @@ test('the pager always says something, even on a single page', () => {
   const pager = render.slice(render.indexOf('var label;'));
   assert.ok(pager, 'no pager is rendered at all');
   assert.ok(
-    /total \+ \(total === 1 \? ' quote' : ' quotes'\)/.test(pager),
+    /total \+ ' ' \+ \(total === 1 \?[^:]+'quote'[^:]+:[^)]+'quotes'/.test(pager),
     'a measured total must be shown as a count',
   );
   /* The property is "it always renders something", not "no if statement

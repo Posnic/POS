@@ -12,7 +12,7 @@
                 <div class="form-row">
                     <div class="form-group col-md-12">
                         <label for="expenses_date"> <lang class="lang_date_title"> Date </lang> </label> <span class="text-danger">*</span>
-                        <input type="text" class="form-control border-control commonDate" id="expenses_date" name="date" placeholder="Enter the Date" required>
+                        <input type="text" class="form-control border-control commonDate" id="expenses_date" name="date" placeholder="Enter the Date" data-t-placeholder="lang_enter_the_date" required>
                         <input type="hidden" name="id" id="expenses_id">
                     </div>
                 </div>
@@ -22,7 +22,7 @@
                             <lang class="lang_amount_title"> Amount </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="number" class="form-control border-control text-right"  id="expenses_amount" name="amount" onkeypress="return PosnicPro.isNumber(event)" min="0" minlength="1" maxlength="10" placeholder="Enter the Amount">
+                        <input type="number" class="form-control border-control text-right"  id="expenses_amount" name="amount" onkeypress="return PosnicPro.isNumber(event)" min="0" minlength="1" maxlength="10" placeholder="Enter the Amount" data-t-placeholder="lang_enter_the_amount">
                     </div>
                     <div class="form-group col-md-6">
                         <label for="expenses_type">
@@ -44,7 +44,7 @@
                         <label for="expenses_category">
                             <lang class="lang_category_title"> Category </lang>
                         </label>
-                        <input type="text" id="expenses_category" name="category" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the category">
+                        <input type="text" id="expenses_category" name="category" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the category" data-t-placeholder="lang_enter_the_category">
                     </div>
                 </div>
                 <div class="form-row">                                                                            
@@ -52,7 +52,7 @@
                         <label for="expenses_recipientname">
                             <lang class="lang_recipientname_title"> Recipient Name </lang>
                         </label>
-                        <input type="text" id="expenses_recipientname" name="recipientname" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the receipt name">
+                        <input type="text" id="expenses_recipientname" name="recipientname" class="form-control border-control" minlength="3" maxlength="20" placeholder="Enter the receipt name" data-t-placeholder="lang_enter_the_receipt_name">
                     </div>
                 </div>
                 <div class="form-row">                                                                            
@@ -60,7 +60,7 @@
                         <label for="expenses_approvedby">
                             <lang class="lang_approvedby_title"> Approved-by </lang>
                         </label>
-                        <input type="text" data-id="users" id="expenses_approvedby" name="approvedby" class="form-control border-control"  minlength="3" maxlength="20" placeholder="Enter approved by">
+                        <input type="text" data-id="users" id="expenses_approvedby" name="approvedby" class="form-control border-control"  minlength="3" maxlength="20" placeholder="Enter approved by" data-t-placeholder="lang_enter_approved_by">
                     </div>
                 </div>
                 <div class="form-row">
@@ -69,7 +69,7 @@
                             <lang class="lang_description_title">Expense Note </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <textarea name="description" id="expenses_expensesnote" class="form-control border-control supplier-trigger" minlength="3" maxlength="500" placeholder="Enter the expense note" required></textarea>
+                        <textarea name="description" id="expenses_expensesnote" class="form-control border-control supplier-trigger" minlength="3" maxlength="500" placeholder="Enter the expense note" data-t-placeholder="lang_enter_the_expense_note" required></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -93,7 +93,7 @@
                 <div class="form-row" id="show_last_created_expense" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved an expense. <a href="#" id="last_created_expense">Open it</a></h6>
+                            <h6><lang class="lang_saved_an_expense">Saved an expense.</lang> <a href="#" id="last_created_expense"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>

@@ -24,7 +24,7 @@
                     <select class="floating-input select2 load-branch display-current-branch sale_branch_value"
                         multiple="multiple" data-placeholder="Select Branch" name="sale_branch_value[]"
                         id="sale_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -41,7 +41,7 @@
                     <div class="widgetbar">
                         <button type="button"
                             class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
-                            data-toggle="tooltip" title="Filter">
+                            data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -95,11 +95,11 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="sales_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for
-                                    full access to all features.</p>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for
+                                    full access to all features.</lang></p>
                                 <a href="javascript:void(0)"
                                     onclick="return PosnicPro.users.accountGoToWebsiteURL(this);"
-                                    class="btn btn-primary">Upgrade to Premium</a>
+                                    class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="sale-view-line" role="tabpanel"
                                 aria-labelledby="sale-view-tab-line">
@@ -124,7 +124,7 @@
                                                             data-access="read" data-id="salereport"
                                                             onclick="PosnicPro.refreshReportDatatable(this);"
                                                             class="add_new_tooltip" data-toggle="tooltip"
-                                                            title="Refresh">
+                                                            title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
@@ -134,7 +134,7 @@
                                                             data-id="salereportexport"
                                                             onclick="PosnicPro.salereport.viewReportSaleExport(this);"
                                                             class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                            title="Export All To CSV">
+                                                            title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -163,12 +163,12 @@
                                                         <th></th>
                                                         <th>#</th>
                                                         <th>ID</th>
-                                                        <th>Date</th>
-                                                        <th>Customer</th>
-                                                        <th class="text-right">Customer Phone</th>
-                                                        <th class="text-center">Items</th>
-                                                        <th class="text-right">Additional Discount</th>
-                                                        <th class="text-right">Total</th>
+                                                        <th><lang class="lang_date_title">Date</lang></th>
+                                                        <th><lang class="lang_newcustomer_title">Customer</lang></th>
+                                                        <th class="text-right"><lang class="lang_customer_phone">Customer Phone</lang></th>
+                                                        <th class="text-center"><lang class="lang_itemdetail_title">Items</lang></th>
+                                                        <th class="text-right"><lang class="lang_additional_discount">Additional Discount</lang></th>
+                                                        <th class="text-right"><lang class="lang_total_title">Total</lang></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -185,17 +185,17 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing
+                                                    <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_salereport_page_total"></span></b>
-                                                    to
+                                                    <lang class="lang_to">to</lang>
                                                     <b><span id="view_salereport_page_perpage_total"></span></b>
-                                                    of
+                                                    <lang class="lang_of">of</lang>
                                                     <b><span id="view_salereport_total"></span></b>
-                                                    entries
+                                                    <lang class="lang_entries">entries</lang>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
                                                         <button class="btn previous page-item text-dark-gradient f-w-7"
                                                             data-id="salereport"
@@ -235,7 +235,7 @@
                                                             data-access="read" data-id="instantreport"
                                                             onclick="PosnicPro.refreshReportDatatable(this);"
                                                             class="add_new_tooltip" data-toggle="tooltip"
-                                                            title="Refresh">
+                                                            title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
@@ -245,7 +245,7 @@
                                                             data-id="instantreportexport"
                                                             onclick="PosnicPro.instantreport.instantreportExport(this);"
                                                             class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                            title="Export All To CSV">
+                                                            title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -271,12 +271,12 @@
                                                 <thead class="reportsale_instheader">
                                                     <tr>
                                                         <th>#</th>
-                                                        <th>Sale ID</th>
-                                                        <th>Date</th>
-                                                        <th>Customer</th>
-                                                        <th>User</th>
-                                                        <th>Items</th>
-                                                        <th class="text-right">Price</th>
+                                                        <th><lang class="lang_sale_id">Sale ID</lang></th>
+                                                        <th><lang class="lang_date_title">Date</lang></th>
+                                                        <th><lang class="lang_newcustomer_title">Customer</lang></th>
+                                                        <th><lang class="lang_newuser_title">User</lang></th>
+                                                        <th><lang class="lang_itemdetail_title">Items</lang></th>
+                                                        <th class="text-right"><lang class="lang_price_title">Price</lang></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="reportsale_instheader"></tbody>
@@ -291,17 +291,17 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing
+                                                    <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_instantreport_page_total"></span></b>
-                                                    to
+                                                    <lang class="lang_to">to</lang>
                                                     <b><span id="view_instantreport_page_perpage_total"></span></b>
-                                                    of
+                                                    <lang class="lang_of">of</lang>
                                                     <b><span id="view_instantreport_total"></span></b>
-                                                    entries
+                                                    <lang class="lang_entries">entries</lang>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
                                                         <button class="btn previous page-item text-dark-gradient f-w-7"
                                                             data-id="instantreport"
@@ -335,7 +335,7 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Sales (Include Tax)
+                                                                        <lang class="lang_sales_include_tax">Sales (Include Tax)</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -365,8 +365,8 @@
                                                         <div class="row align-items-center mb-3">
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
-                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Net
-                                                                        Sales
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10"><lang class="lang_net_sales">Net
+                                                                        Sales</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -400,14 +400,14 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Order Type - Dine-in</h5>
+                                                                        <lang class="lang_order_type_dine_in">Order Type - Dine-in</lang></h5>
                                                                 </div>
                                                             </div>
 
                                                         </div>
                                                         <div class="row align-items-center">
                                                             <div class="col-10">
-                                                                 <h6 class="mb-1 summary_font_blue">Total Orders -
+                                                                 <h6 class="mb-1 summary_font_blue"><lang class="lang_total_orders">Total Orders -</lang>
                                                                         <span id="sale_summary_dinein_count"></span>
                                                                     </h6>
                                                                 <div class="kanban-users">
@@ -439,7 +439,7 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Sales (Exclude Tax)
+                                                                        <lang class="lang_sales_exclude_tax">Sales (Exclude Tax)</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -471,8 +471,8 @@
                                                         <div class="row align-items-center mb-3">
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
-                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Net
-                                                                        Sales Tax
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10"><lang class="lang_net_sales_tax">Net
+                                                                        Sales Tax</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -505,14 +505,14 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Order Type - Take away</h5>
+                                                                        <lang class="lang_order_type_take_away">Order Type - Take away</lang></h5>
                                                                 </div>
                                                             </div>
 
                                                         </div>
                                                         <div class="row align-items-center">
                                                             <div class="col-10">
-                                                                <h6 class="mb-1 summary_font_blue">Total Orders -
+                                                                <h6 class="mb-1 summary_font_blue"><lang class="lang_total_orders">Total Orders -</lang>
                                                                         <span id="sale_summary_takeaway_count"></span>
                                                                     </h6>
                                                                 <div class="kanban-users">
@@ -544,7 +544,7 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Discounts
+                                                                        <lang class="lang_discounts">Discounts</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -574,7 +574,7 @@
                                                         <div class="row align-items-center mb-3">
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
-                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10">Gross Profit</h5>
+                                                                    <h5 class="mb-0 summary_font_blue summary_mb-10"><lang class="lang_gross_profit_2">Gross Profit</lang></h5>
                                                                 </div>
                                                             </div>
 
@@ -609,7 +609,7 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        Refunds
+                                                                        <lang class="lang_refund">Refunds</lang>
                                                                         <span class="summary_toolsize"
                                                                             data-toggle="tooltip" data-placement="top"
                                                                             title=""
@@ -639,7 +639,7 @@
                                                             <div class="col-12">
                                                                 <div class="kanban-tag">
                                                                     <h5 class="mb-0 summary_font_blue summary_mb-10">
-                                                                        COGS</h5>
+                                                                        <lang class="lang_cogs">COGS</lang></h5>
                                                                 </div>
                                                             </div>
                                                         </div>

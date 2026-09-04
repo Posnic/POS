@@ -19,23 +19,23 @@
                     <div class="card-body">
                         <div class="form-row align-items-end mb-3">
                             <div class="form-group col-md-3 col-6 mb-2">
-                                <label for="labour_report_from" style="font-size:.8rem; font-weight:600;">From</label>
+                                <label for="labour_report_from" style="font-size:.8rem; font-weight:600;"><lang class="lang_from">From</lang></label>
                                 <input type="date" class="form-control" id="labour_report_from">
                             </div>
                             <div class="form-group col-md-3 col-6 mb-2">
-                                <label for="labour_report_to" style="font-size:.8rem; font-weight:600;">To</label>
+                                <label for="labour_report_to" style="font-size:.8rem; font-weight:600;"><lang class="lang_to_2">To</lang></label>
                                 <input type="date" class="form-control" id="labour_report_to">
                             </div>
                             <div class="form-group col-md-2 col-4 mb-2">
                                 <button type="button" class="btn btn-primary-rgba" id="labour_report_run"
-                                        onclick="PosnicPro.shiftWidget.runReport();">Run</button>
+                                        onclick="PosnicPro.shiftWidget.runReport();"><lang class="lang_run_title">Run</lang></button>
                             </div>
                             <div class="form-group col-md-4 col-8 mb-2 text-right">
                                 <button type="button" class="btn btn-outline-secondary" onclick="PosnicPro.shiftWidget.exportTimecards();">
-                                    <i class="feather icon-download mr-1"></i>Timecards CSV
+                                    <i class="feather icon-download mr-1"></i><lang class="lang_timecards_csv">Timecards CSV</lang>
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.shiftWidget.exportPayroll();">
-                                    <i class="feather icon-download mr-1"></i>Payroll CSV
+                                    <i class="feather icon-download mr-1"></i><lang class="lang_payroll_csv">Payroll CSV</lang>
                                 </button>
                             </div>
                         </div>
@@ -43,17 +43,17 @@
                             <table class="table table-borderless m-sticky-first" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>Staff</th>
-                                        <th class="text-right">Shifts</th>
-                                        <th class="text-right">Sched hrs</th>
-                                        <th class="text-right">Hours</th>
-                                        <th class="text-right">Tips</th>
-                                        <th class="text-right">Wage</th>
-                                        <th class="text-right">Payout</th>
+                                        <th><lang class="lang_staff">Staff</lang></th>
+                                        <th class="text-right"><lang class="lang_shifts">Shifts</lang></th>
+                                        <th class="text-right"><lang class="lang_sched_hrs">Sched hrs</lang></th>
+                                        <th class="text-right"><lang class="lang_hours_2">Hours</lang></th>
+                                        <th class="text-right"><lang class="lang_tips">Tips</lang></th>
+                                        <th class="text-right"><lang class="lang_wage">Wage</lang></th>
+                                        <th class="text-right"><lang class="lang_payout">Payout</lang></th>
                                     </tr>
                                 </thead>
                                 <tbody id="labour_report_body">
-                                    <tr><td colspan="7" class="text-center text-muted">Pick a range and Run.</td></tr>
+                                    <tr><td colspan="7" class="text-center text-muted"><lang class="lang_pick_a_range_and_run">Pick a range and Run.</lang></td></tr>
                                 </tbody>
                                 <tfoot id="labour_report_foot"></tfoot>
                             </table>

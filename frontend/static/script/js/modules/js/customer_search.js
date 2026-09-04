@@ -115,7 +115,7 @@ PosnicPro.customersearch = {
                                 '</div>' +
                                 '<div class="col-6">' +
                                 '<div class="text-right">' +
-                                '<button type="button" class="btn btn-primary-rgba font-18" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details"><i class="fa fa-eye"></i></button>' +
+                                '<button type="button" class="btn btn-primary-rgba font-18" id="' + getItemdata[i]['_id'] + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details" data-t-aria-label="lang_view_details"><i class="fa fa-eye"></i></button>' +
                                 '</div>' +
                                 '</div>' +
                                 '</div>' +
@@ -126,7 +126,7 @@ PosnicPro.customersearch = {
                     }
                     $('#list-item').html(app);
                 } else {
-                    app = "<div class='row'></div><div class='row'></div><div class='col-lg-12 col-xl-12 text-center text-dark'><p>There are no items available ...!!!</p></div>";
+                    app = "<div class='row'></div><div class='row'></div><div class='col-lg-12 col-xl-12 text-center text-dark'><p><lang class='lang_there_are_no_items_available'>There are no items available ...!!!</lang></p></div>";
                     $('#list-item').html(app);
                 }
                 $('span.number').number(true, 2);
@@ -450,7 +450,7 @@ $(function () {
                     '</div>' +
                     '<div class="col-6">' +
                     '<div class="text-right">' +
-                    '<button type="button" class="btn btn-primary-rgba font-18" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details"><i class="fa fa-eye"></i></button>' +
+                    '<button type="button" class="btn btn-primary-rgba font-18" id="' + suggestion.data.item_id + '" onclick="return PosnicPro.customersearch.viewCustomerViewItem(this.id);" aria-label="View details" data-t-aria-label="lang_view_details"><i class="fa fa-eye"></i></button>' +
                     '</div>' +
                     '</div>' +
                     '</div>' +
@@ -548,7 +548,7 @@ $(document).ready(function () {
     db.customerPlan.get('1').then(function (data) {
         if(data.read ===  false) {
             swal({
-                title: 'You are Unauthorized',
+                title: PosnicPro.i18n.t('lang_you_are_unauthorized', 'You are Unauthorized'),
                 showCancelButton: true,
                 confirmButtonClass: 'btn btn-outline-primary',
                 cancelButtonClass: 'btn btn-outline-danger m-l-10',

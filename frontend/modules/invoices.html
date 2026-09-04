@@ -15,12 +15,12 @@
                         <div class="widgetbar">
                             <span id="invoices_sort_host"></span>
                             <button type="button" class="btn btn-primary-rgba lf-btn" id="invoices_filter_btn"
-                                data-toggle="tooltip" title="Filter invoices">
-                                <i class="feather icon-filter mr-2"></i>Filter
+                                data-toggle="tooltip" title="Filter invoices" data-t-title="lang_filter_invoices">
+                                <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                             </button>
                             <a href="#/invoices/new" class="btn btn-primary-rgba add_new_tooltip"
                                 data-module="sales" data-access="write"
-                                data-toggle="tooltip" title="New invoice">
+                                data-toggle="tooltip" title="New invoice" data-t-title="lang_new_invoice">
                                 <i class="feather icon-plus mr-2"></i>
                                 <lang class="lang_addvariant_title">New</lang>
                             </a>
@@ -36,27 +36,27 @@
                              due date - but it is the one filter a shop opens this page
                              for, so it sits first after All. -->
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="invoices_filter_chips">
-                            <span class="p-qf-label">Status</span>
+                            <span class="p-qf-label"><lang class="lang_userstatus">Status</lang></span>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="invoices_status_dd">All</button>
+                                    aria-haspopup="true" aria-expanded="false" id="invoices_status_dd"><lang class="lang_report_all">All</lang></button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="">All</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="overdue">Overdue</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="owed">Owed</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status=""><lang class="lang_report_all">All</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="overdue"><lang class="lang_overdue">Overdue</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="owed"><lang class="lang_owed">Owed</lang></a>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="draft">Draft (proforma)</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="unpaid">Unpaid</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="partial">Partially paid</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="paid">Paid</a>
-                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="draft"><lang class="lang_draft_proforma">Draft (proforma)</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="unpaid"><lang class="lang_unpaid">Unpaid</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="partial"><lang class="lang_partially_paid_2">Partially paid</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="paid"><lang class="lang_paid">Paid</lang></a>
+                                    <a class="dropdown-item invoices-chip" href="javascript:void(0)" data-status="cancelled"><lang class="lang_cancelled">Cancelled</lang></a>
                                 </div>
                             </div>
                             <!-- What the shop is owed, and how much of it is late: the
                                  two numbers this page exists to answer. -->
                             <span class="text-muted small" id="invoices_summary"></span>
                         </div>
-                        <div id="invoices_list_rows" class="md-rail-rows text-muted">Loading invoices ...</div>
+                        <div id="invoices_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_invoices">Loading invoices ...</lang></div>
                     </div>
                 </div>
                 <!-- Invoice editor: the quote editor's twin - catalog rows or custom
@@ -66,81 +66,81 @@
                 <div class="card m-b-30" id="invoices_edit_card" style="display:none;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center m-b-15 flex-wrap" style="gap:8px;">
-                            <h5 class="mb-0" id="ie_title">New invoice</h5>
+                            <h5 class="mb-0" id="ie_title"><lang class="lang_new_invoice">New invoice</lang></h5>
                             <div>
-                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edCancel();">Cancel</button>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.invoices.edSave();">Save invoice</button>
+                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edCancel();"><lang class="lang_cancel_title">Cancel</lang></button>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.invoices.edSave();"><lang class="lang_save_invoice">Save invoice</lang></button>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-lg-6" id="ie_edit_col">
                                 <div class="qe-sec">
-                                    <div class="q-label">Bill to</div>
+                                    <div class="q-label"><lang class="lang_bill_to">Bill to</lang></div>
                                     <input type="text" id="ie_cust_search" class="form-control form-control-sm mb-2"
-                                        placeholder="Search an existing customer by name or phone" autocomplete="off">
+                                        placeholder="Search an existing customer by name or phone" data-t-placeholder="lang_search_an_existing_customer_by_name_or_pho" autocomplete="off">
                                     <div class="form-row">
-                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name"></div>
-                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone"></div>
-                                        <div class="col-md-6 mb-2"><input type="email" id="ie_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email"></div>
-                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID"></div>
-                                        <div class="col-12 mb-2"><input type="text" id="ie_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name" data-t-placeholder="lang_customer_name"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone" data-t-placeholder="lang_phone_title"></div>
+                                        <div class="col-md-6 mb-2"><input type="email" id="ie_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email" data-t-placeholder="lang_email_title"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="ie_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID" data-t-placeholder="lang_gstin_tax_id"></div>
+                                        <div class="col-12 mb-2"><input type="text" id="ie_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address" data-t-placeholder="lang_address_title"></div>
                                     </div>
                                 </div>
                                 <div class="qe-sec">
-                                    <div class="q-label">Lines</div>
+                                    <div class="q-label"><lang class="lang_lines">Lines</lang></div>
                                     <input type="text" id="ie_item_search" class="form-control form-control-sm mb-2"
-                                        placeholder="Search an item to add a line" autocomplete="off">
+                                        placeholder="Search an item to add a line" data-t-placeholder="lang_search_an_item_to_add_a_line" autocomplete="off">
                                     <div class="table-responsive">
                                         <table class="table table-sm mb-1" id="ie_lines_table">
                                             <thead><tr>
-                                                <th style="min-width:170px;">Item</th><th>Qty</th><th>Unit price</th>
-                                                <th>Line discount</th><th class="text-right">Total</th><th></th>
+                                                <th style="min-width:170px;"><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_qty_title">Qty</lang></th><th><lang class="lang_unit_price">Unit price</lang></th>
+                                                <th><lang class="lang_line_discount">Line discount</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th></th>
                                             </tr></thead>
                                             <tbody id="ie_lines"></tbody>
                                         </table>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCustom();">+ Custom line</button>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCustom();"><lang class="lang_custom_line">+ Custom line</lang></button>
                                 </div>
                                 <div class="qe-sec">
-                                    <div class="q-label">Charges &amp; taxes - any name</div>
+                                    <div class="q-label"><lang class="lang_charges_taxes_any_name">Charges &amp; taxes - any name</lang></div>
                                     <div id="ie_charges"></div>
-                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCharge();">+ Charge / tax</button>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.invoices.edAddCharge();"><lang class="lang_charge_tax">+ Charge / tax</lang></button>
                                 </div>
                                 <div class="qe-sec">
                                     <div class="form-row">
                                         <div class="col-md-6 mb-2">
-                                            <div class="q-label">Invoice discount</div>
+                                            <div class="q-label"><lang class="lang_invoice_discount">Invoice discount</lang></div>
                                             <div class="input-group input-group-sm">
-                                                <select id="ie_disc_type" class="form-control" style="max-width:110px;" aria-label="Invoice discount type">
-                                                    <option value="">None</option>
-                                                    <option value="percent">Percent</option>
-                                                    <option value="amount">Amount</option>
+                                                <select id="ie_disc_type" class="form-control" style="max-width:110px;" aria-label="Invoice discount type" data-t-aria-label="lang_invoice_discount_type">
+                                                    <option value=""><lang class="lang_none">None</lang></option>
+                                                    <option value="percent"><lang class="lang_percent">Percent</lang></option>
+                                                    <option value="amount"><lang class="lang_amount_title">Amount</lang></option>
                                                 </select>
                                                 <input type="number" id="ie_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <div class="q-label">Due date</div>
+                                            <div class="q-label"><lang class="lang_due_date">Due date</lang></div>
                                             <div class="d-flex align-items-center mb-1" style="gap:6px;">
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="0">On receipt</button>
-                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="15">15 days</button>
-                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="30">30 days</button>
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="0"><lang class="lang_on_receipt">On receipt</lang></button>
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="15"><lang class="lang_15_days">15 days</lang></button>
+                                                    <button type="button" class="btn btn-secondary-rgba ie-due-chip" data-days="30"><lang class="lang_30_days">30 days</lang></button>
                                                 </div>
-                                                <input type="date" id="ie_due_date" class="form-control form-control-sm" style="width:150px;" aria-label="Invoice due date">
+                                                <input type="date" id="ie_due_date" class="form-control form-control-sm" style="width:150px;" aria-label="Invoice due date" data-t-aria-label="lang_invoice_due_date">
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="q-label">Customer reference (their PO / job number)</div>
-                                    <input type="text" id="ie_reference" class="form-control form-control-sm mb-2" maxlength="60" placeholder="Optional - printed on the invoice">
-                                    <div class="q-label">Payment details</div>
-                                    <input type="text" id="ie_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash">
-                                    <textarea id="ie_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC"></textarea>
-                                    <div class="q-label">Terms</div>
+                                    <div class="q-label"><lang class="lang_customer_reference_their_po_job_number">Customer reference (their PO / job number)</lang></div>
+                                    <input type="text" id="ie_reference" class="form-control form-control-sm mb-2" maxlength="60" placeholder="Optional - printed on the invoice" data-t-placeholder="lang_optional_printed_on_the_invoice">
+                                    <div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>
+                                    <input type="text" id="ie_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash" data-t-placeholder="lang_method_e_g_bank_transfer_upi_cash">
+                                    <textarea id="ie_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC" data-t-placeholder="lang_bank_details_account_name_number_ifsc"></textarea>
+                                    <div class="q-label"><lang class="lang_terms">Terms</lang></div>
                                     <textarea id="ie_terms" class="form-control form-control-sm mb-2" rows="2" maxlength="1500"></textarea>
-                                    <div class="q-label">Notes (printed on the invoice)</div>
+                                    <div class="q-label"><lang class="lang_notes_printed_on_the_invoice">Notes (printed on the invoice)</lang></div>
                                     <textarea id="ie_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
-                                    <small class="text-muted d-block mb-2">A draft is a proforma: nothing is booked until you press Issue. The authorised signature comes from Settings &rsaquo; Quotes and signs invoices too.</small>
+                                    <small class="text-muted d-block mb-2"><lang class="lang_a_draft_is_a_proforma_nothing_is_booked_un">A draft is a proforma: nothing is booked until you press Issue. The authorised signature comes from Settings &rsaquo; Quotes and signs invoices too.</lang></small>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -155,12 +155,12 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center m-b-10 md-detail-head" style="gap:8px;" id="invoices_view_head">
                             <button type="button" class="btn btn-sm btn-light" id="invoices_rail_toggle"
-                                title="Show or hide the invoice list">
+                                title="Show or hide the invoice list" data-t-title="lang_show_or_hide_the_invoice_list">
                                 <i class="feather icon-sidebar"></i>
                             </button>
                             <div class="flex-fill text-right" id="invoices_view_actions"></div>
                             <button type="button" class="btn btn-sm btn-light" id="invoices_view_close"
-                                title="Close this invoice and show the full list" aria-label="Close">
+                                title="Close this invoice and show the full list" data-t-title="lang_close_this_invoice_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title">
                                 <i class="feather icon-x"></i>
                             </button>
                         </div>
@@ -170,20 +170,20 @@
                              for later. -->
                         <div class="ie-pay-strip m-b-10" id="invoices_pay_strip" style="display:none;">
                             <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
-                                <strong class="mr-1">Record payment</strong>
-                                <input type="number" id="ie_pay_amount" class="form-control form-control-sm" style="max-width:130px;" min="0.01" step="0.01" aria-label="Amount received">
-                                <span class="text-muted small">of <span id="ie_pay_balance"></span> due</span>
-                                <select id="ie_pay_method" class="form-control form-control-sm" style="max-width:150px;" aria-label="Payment method">
-                                    <option value="Cash">Cash</option>
-                                    <option value="Bank transfer">Bank transfer</option>
-                                    <option value="UPI">UPI</option>
-                                    <option value="Card">Card</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="Other">Other</option>
+                                <strong class="mr-1"><lang class="lang_record_payment">Record payment</lang></strong>
+                                <input type="number" id="ie_pay_amount" class="form-control form-control-sm" style="max-width:130px;" min="0.01" step="0.01" aria-label="Amount received" data-t-aria-label="lang_amount_received">
+                                <span class="text-muted small"><lang class="lang_of">of</lang> <span id="ie_pay_balance"></span> <lang class="lang_due_3">due</lang></span>
+                                <select id="ie_pay_method" class="form-control form-control-sm" style="max-width:150px;" aria-label="Payment method" data-t-aria-label="lang_payment_method">
+                                    <option value="Cash"><lang class="lang_cash_title">Cash</lang></option>
+                                    <option value="Bank transfer"><lang class="lang_bank_transfer">Bank transfer</lang></option>
+                                    <option value="UPI"><lang class="lang_upi">UPI</lang></option>
+                                    <option value="Card"><lang class="lang_card">Card</lang></option>
+                                    <option value="Cheque"><lang class="lang_cheque_title">Cheque</lang></option>
+                                    <option value="Other"><lang class="lang_other">Other</lang></option>
                                 </select>
-                                <input type="text" id="ie_pay_reference" class="form-control form-control-sm" style="max-width:200px;" maxlength="80" placeholder="Reference / UTR (optional)">
-                                <button type="button" class="btn btn-sm btn-success" id="ie_pay_confirm">Record</button>
-                                <button type="button" class="btn btn-sm btn-light" id="ie_pay_cancel">Not now</button>
+                                <input type="text" id="ie_pay_reference" class="form-control form-control-sm" style="max-width:200px;" maxlength="80" placeholder="Reference / UTR (optional)" data-t-placeholder="lang_reference_utr_optional">
+                                <button type="button" class="btn btn-sm btn-success" id="ie_pay_confirm"><lang class="lang_record">Record</lang></button>
+                                <button type="button" class="btn btn-sm btn-light" id="ie_pay_cancel"><lang class="lang_feature_intro_skip">Not now</lang></button>
                             </div>
                         </div>
                         <div id="invoices_view_body" class="md-detail-body"></div>

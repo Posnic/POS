@@ -77,15 +77,15 @@ PosnicPro.cashback = {
       var sign = PosnicPro.cashback.sign();
       var body = $('#cashback_recent_body').empty();
       if (!rows.length) {
-        body.append('<tr><td colspan="6" class="text-center text-muted py-3">No cashback issued yet.</td></tr>');
+        body.append('<tr><td colspan="6" class="text-center text-muted py-3"><lang class="lang_no_cashback_issued_yet">No cashback issued yet.</lang></td></tr>');
         return;
       }
       rows.forEach(function (r) {
         var status = r.voided
-          ? '<span class="badge badge-danger-inverse">Voided</span>'
+          ? '<span class="badge badge-danger-inverse"><lang class="lang_voided">Voided</lang></span>'
           : r.delivered
-            ? '<span class="badge badge-success-inverse">Sent</span>'
-            : '<span class="badge badge-secondary-inverse">Issued</span>';
+            ? '<span class="badge badge-success-inverse"><lang class="lang_sent_2">Sent</lang></span>'
+            : '<span class="badge badge-secondary-inverse"><lang class="lang_issued">Issued</lang></span>';
         body.append(
           '<tr>' +
             '<td><strong>' + PosnicPro.cashback.esc(r.code) + '</strong></td>' +
@@ -136,7 +136,7 @@ PosnicPro.cashback = {
 
     var w = window.open('', '_blank', 'width=420,height=640');
     if (!w) {
-      PosnicPro.alert('error', 'Allow pop-ups to print the coupon.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_allow_pop_ups_to_print_the_coupon', 'Allow pop-ups to print the coupon.'));
       return;
     }
     w.document.write(
@@ -150,7 +150,7 @@ PosnicPro.cashback = {
         '.e{font-size:12px;color:#666;margin-top:10px;}' +
         'svg{max-width:100%;height:auto;margin-top:10px;}' +
         '</style></head><body><div class="c">' +
-        '<div class="t">Cashback voucher</div>' +
+        '<div class="t"><lang class="lang_cashback_voucher">Cashback voucher</lang></div>' +
         '<div class="a">' + amount + '</div>' +
         '<div class="s">' + PosnicPro.cashback.esc(shop) + '</div>' +
         barcodeSvg +

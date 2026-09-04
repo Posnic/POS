@@ -14,7 +14,7 @@ PosnicPro.kotreport = {
 
         var endToday = moment().endOf('day');
 
-        $('.view_kot_report_daterange span').html('<span>Today</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startToday.format('YYYY/MM/DD h:mm A') + ' - ' + endToday.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        $('.view_kot_report_daterange span').html('<span><lang class="lang_this_day">Today</lang></span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startToday.format('YYYY/MM/DD h:mm A') + ' - ' + endToday.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
 
         $('.view_kot_report_daterange').val(startToday.format('YYYY/MM/DD h:mm A') + ' - ' + endToday.format('YYYY/MM/DD h:mm A'));
 
@@ -762,7 +762,7 @@ PosnicPro.kotitemreport = {
 
             if (detailRes.type !== 'success') {
 
-                right.append('<div class="text-center text-dark mt-4">No Records</div>');
+                right.append('<div class="text-center text-dark mt-4"><lang class="lang_no_records">No Records</lang></div>');
 
                 return;
 
@@ -774,7 +774,7 @@ PosnicPro.kotitemreport = {
 
             if (!detailData || detailData.length === 0) {
 
-                right.append('<div class="text-center text-dark mt-4">No Records</div>');
+                right.append('<div class="text-center text-dark mt-4"><lang class="lang_no_records">No Records</lang></div>');
 
                 return;
 
@@ -1052,27 +1052,27 @@ PosnicPro.kotitemreport = {
 
                 tableRowsHtml += '<thead><tr>';
 
-                tableRowsHtml += '<th class="text-center" style="width: 60px;">S.No</th>';
+                tableRowsHtml += '<th class="text-center" style="width: 60px;"><lang class="lang_s_no">S.No</lang></th>';
 
-                tableRowsHtml += '<th class="text-center">Date</th>';
+                tableRowsHtml += '<th class="text-center"><lang class="lang_date_title">Date</lang></th>';
 
-                tableRowsHtml += '<th class="text-center">Sale ID</th>';
+                tableRowsHtml += '<th class="text-center"><lang class="lang_sale_id">Sale ID</lang></th>';
 
-                tableRowsHtml += '<th class="text-left">Item Name</th>';
+                tableRowsHtml += '<th class="text-left"><lang class="lang_itemname_title">Item Name</lang></th>';
 
-                tableRowsHtml += '<th class="text-center">Qty</th>';
+                tableRowsHtml += '<th class="text-center"><lang class="lang_qty_title">Qty</lang></th>';
 
-                tableRowsHtml += '<th class="text-right">Amount</th>';
+                tableRowsHtml += '<th class="text-right"><lang class="lang_amount_title">Amount</lang></th>';
 
-                tableRowsHtml += '<th class="text-right">Discount</th>';
+                tableRowsHtml += '<th class="text-right"><lang class="lang_discount_title">Discount</lang></th>';
 
-                tableRowsHtml += '<th class="text-right">Tax</th>';
+                tableRowsHtml += '<th class="text-right"><lang class="lang_module_tax">Tax</lang></th>';
 
-                tableRowsHtml += '<th class="text-right">Extra Discount</th>';
+                tableRowsHtml += '<th class="text-right"><lang class="lang_extra_discount">Extra Discount</lang></th>';
 
-                tableRowsHtml += '<th class="text-center">Pax</th>';
+                tableRowsHtml += '<th class="text-center"><lang class="lang_pax">Pax</lang></th>';
 
-                tableRowsHtml += '<th class="text-right">Total Amount</th>';
+                tableRowsHtml += '<th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th>';
 
                 tableRowsHtml += '</tr></thead><tbody>';
 
@@ -1232,7 +1232,7 @@ PosnicPro.kotitemreport = {
 
             if (!tableRowsHtml) {
 
-                right.append('<div class="text-center text-dark mt-4">No Records</div>');
+                right.append('<div class="text-center text-dark mt-4"><lang class="lang_no_records">No Records</lang></div>');
 
                 return;
 
@@ -1326,21 +1326,21 @@ PosnicPro.kotitemreport = {
 
                 '<th style="width: 40px;"></th>' +
 
-                '<th class="text-center" style="width:60px;">S.No</th>' +
+                '<th class="text-center" style="width:60px;"><lang class="lang_s_no">S.No</lang></th>' +
 
-                '<th class="text-center">Table No</th>' +
+                '<th class="text-center"><lang class="lang_table_no">Table No</lang></th>' +
 
-                '<th class="text-right">Amount</th>' +
+                '<th class="text-right"><lang class="lang_amount_title">Amount</lang></th>' +
 
-                '<th class="text-right">Discount</th>' +
+                '<th class="text-right"><lang class="lang_discount_title">Discount</lang></th>' +
 
-                '<th class="text-right">Tax</th>' +
+                '<th class="text-right"><lang class="lang_module_tax">Tax</lang></th>' +
 
-                '<th class="text-right">Total</th>' +
+                '<th class="text-right"><lang class="lang_total_title">Total</lang></th>' +
 
-                '<th class="text-right">Extra Discount</th>' +
+                '<th class="text-right"><lang class="lang_extra_discount">Extra Discount</lang></th>' +
 
-                '<th class="text-right">Total Amount</th>' +
+                '<th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th>' +
 
                 '</tr>' +
 
@@ -1356,7 +1356,7 @@ PosnicPro.kotitemreport = {
 
                 '<tr class="font-weight-bold">' +
 
-                '<td colspan="3" class="text-right">Total</td>' +
+                '<td colspan="3" class="text-right"><lang class="lang_total_title">Total</lang></td>' +
 
                 '<td class="text-right">' + dCurrency + ' ' + grandTotalWithoutTax.toFixed(2) + '</td>' +
 
@@ -1416,7 +1416,7 @@ PosnicPro.kotitemreport = {
 
             loader.find('.loadingSpinner:first').remove();
 
-            right.append('<div class="text-center text-dark mt-4">No Records</div>');
+            right.append('<div class="text-center text-dark mt-4"><lang class="lang_no_records">No Records</lang></div>');
 
         });
 
@@ -2647,7 +2647,7 @@ PosnicPro.kotitemreport = {
 
                                 '<td class="text-center align-middle">' +
 
-                                '<a href="javascript:void(0);" class="kotsales-expand-toggle" title="View Details">' +
+                                '<a href="javascript:void(0);" class="kotsales-expand-toggle" title="View Details" data-t-title="lang_view_details_2">' +
 
                                 '<i class="fa fa-plus-circle"></i>' +
 
@@ -2689,7 +2689,7 @@ PosnicPro.kotitemreport = {
 
                                 '<div class="kotsales-details-items-container" data-table-number="' + tableNumber + '" data-loaded="0" data-payment-html="' + paymentTypesAttr + '">' +
 
-                                '<div class="text-muted small">Loading details...</div>' +
+                                '<div class="text-muted small"><lang class="lang_loading_details">Loading details...</lang></div>' +
 
                                 '</div>' +
 
@@ -2745,7 +2745,7 @@ PosnicPro.kotitemreport = {
 
                             '<td></td>' +
 
-                            '<td class="text-center">Total</td>' +
+                            '<td class="text-center"><lang class="lang_total_title">Total</lang></td>' +
 
                             '<td class="text-center">' + totalQtyText + '</td>' +
 
@@ -2851,7 +2851,7 @@ PosnicPro.kotitemreport = {
 
 
 
-                            $itemsContainer.html('<div class="text-muted small">Loading details...</div>');
+                            $itemsContainer.html('<div class="text-muted small"><lang class="lang_loading_details">Loading details...</lang></div>');
 
 
 
@@ -2859,7 +2859,7 @@ PosnicPro.kotitemreport = {
 
                                 if (detailRes.type !== 'success') {
 
-                                    $itemsContainer.html('<div class="text-danger small">Details not available</div>');
+                                    $itemsContainer.html('<div class="text-danger small"><lang class="lang_details_not_available">Details not available</lang></div>');
 
                                     return;
 
@@ -2871,7 +2871,7 @@ PosnicPro.kotitemreport = {
 
                                 if (!detailData || detailData.length === 0) {
 
-                                    $itemsContainer.html('<div class="text-muted small">No item details</div>');
+                                    $itemsContainer.html('<div class="text-muted small"><lang class="lang_no_item_details">No item details</lang></div>');
 
                                     return;
 
@@ -3233,7 +3233,7 @@ PosnicPro.kotitemreport = {
 
                                 if (!detailRowsHtml) {
 
-                                    $itemsContainer.html('<div class="text-muted small">No item details</div>');
+                                    $itemsContainer.html('<div class="text-muted small"><lang class="lang_no_item_details">No item details</lang></div>');
 
                                     return;
 
@@ -3345,29 +3345,29 @@ PosnicPro.kotitemreport = {
 
                                     '<tr>' +
 
-                                    '<th class="text-center" style="width:60px;">S.No</th>' +
+                                    '<th class="text-center" style="width:60px;"><lang class="lang_s_no">S.No</lang></th>' +
 
-                                    '<th class="text-left" style="width:120px;">Date</th>' +
+                                    '<th class="text-left" style="width:120px;"><lang class="lang_date_title">Date</lang></th>' +
 
-                                    '<th class="text-left" style="width:60px;">Sale ID</th>' +
+                                    '<th class="text-left" style="width:60px;"><lang class="lang_sale_id">Sale ID</lang></th>' +
 
-                                    '<th class="text-left" style="width:60px;">Item Name</th>' +
+                                    '<th class="text-left" style="width:60px;"><lang class="lang_itemname_title">Item Name</lang></th>' +
 
-                                    '<th class="text-center" style="width:80px;">Qty</th>' +
+                                    '<th class="text-center" style="width:80px;"><lang class="lang_qty_title">Qty</lang></th>' +
 
-                                    '<th class="text-right" style="width:120px;">Amount</th>' +
+                                    '<th class="text-right" style="width:120px;"><lang class="lang_amount_title">Amount</lang></th>' +
 
-                                    '<th class="text-right" style="width:120px;">Discount</th>' +
+                                    '<th class="text-right" style="width:120px;"><lang class="lang_discount_title">Discount</lang></th>' +
 
-                                    '<th class="text-right" style="width:120px;">Tax</th>' +
+                                    '<th class="text-right" style="width:120px;"><lang class="lang_module_tax">Tax</lang></th>' +
 
-                                    '<th class="text-right" style="width:120px;">Extra Discount</th>' +
+                                    '<th class="text-right" style="width:120px;"><lang class="lang_extra_discount">Extra Discount</lang></th>' +
 
-                                    '<th class="text-center" style="width:80px;">Pax</th>' +
+                                    '<th class="text-center" style="width:80px;"><lang class="lang_pax">Pax</lang></th>' +
 
-                                    '<th class="text-left">Payment Type</th>' +
+                                    '<th class="text-left"><lang class="lang_payment_type">Payment Type</lang></th>' +
 
-                                    '<th class="text-right" style="width:120px;">Total Amount</th>' +
+                                    '<th class="text-right" style="width:120px;"><lang class="lang_total_amount">Total Amount</lang></th>' +
 
                                     '</tr>' +
 
@@ -3391,7 +3391,7 @@ PosnicPro.kotitemreport = {
 
                             }, function () {
 
-                                $itemsContainer.html('<div class="text-danger small">Failed to load details</div>');
+                                $itemsContainer.html('<div class="text-danger small"><lang class="lang_failed_to_load_details">Failed to load details</lang></div>');
 
                             });
 
@@ -4519,7 +4519,7 @@ PosnicPro.kotitemreport = {
 
         if (!startingDate || !endingDate) {
 
-            PosnicPro.alert('error', 'Select a valid date range');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_a_valid_date_range', 'Select a valid date range'));
 
             return false;
 
@@ -4697,7 +4697,7 @@ PosnicPro.kotitemreport = {
 
         if (!startingDate || !endingDate) {
 
-            PosnicPro.alert('error', 'Select a valid date range');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_a_valid_date_range', 'Select a valid date range'));
 
             return false;
 
@@ -5449,7 +5449,7 @@ PosnicPro.kotopenitemreport = {
 
         if (totalRecords === 0) {
 
-            PosnicPro.alert('info', 'No records to export');
+            PosnicPro.alert('info', PosnicPro.i18n.t('lang_no_records_to_export', 'No records to export'));
 
             return;
 
@@ -5919,7 +5919,7 @@ PosnicPro.kotdiscountreport = {
 
                             '<tr class="font-weight-bold">' +
 
-                            '<td colspan="4" class="text-right">Total</td>' +
+                            '<td colspan="4" class="text-right"><lang class="lang_total_title">Total</lang></td>' +
 
                             '<td class="text-right">' + currency + '&nbsp;<span class="number">' + totalAmountSum.toFixed(2) + '</span></td>' +
 
@@ -5987,7 +5987,7 @@ PosnicPro.kotdiscountreport = {
 
                 } catch (e) {
 
-                    PosnicPro.alert('error', 'Unable to load KOT discount report');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_unable_to_load_kot_discount_report', 'Unable to load KOT discount report'));
 
                 }
 

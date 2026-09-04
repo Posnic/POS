@@ -16,25 +16,25 @@
                     <div class="widgetbar" id="suppliers_controls">
                         <a data-module="supplier" data-access="write" href="#/suppliers" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('suppliers'); return false;"
-                            data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import suppliers">
+                            data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import suppliers" data-t-aria-label="lang_import_suppliers">
                             <i class="feather icon-download"></i>
                         </a>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
                             <i class="feather icon-share"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportCsv(); return false;">This page (what is shown)</a>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportAllCsv(); return false;">Everything matching the filter</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.suppliers.exportAllCsv(); return false;"><lang class="lang_everything_matching_the_filter">Everything matching the filter</lang></a>
                         </div>
                         </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="suppliers_filter_btn"
-                            data-toggle="tooltip" title="Filter suppliers">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                            data-toggle="tooltip" title="Filter suppliers" data-t-title="lang_filter_suppliers">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                         <a data-module="supplier" data-access="write" href="#/suppliers/new"
-                            class="btn btn-primary-rgba supplier_new_shortcut" data-toggle="tooltip" title="New supplier">
+                            class="btn btn-primary-rgba supplier_new_shortcut" data-toggle="tooltip" title="New supplier" data-t-title="lang_new_supplier">
                             <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
@@ -46,7 +46,7 @@
             <div id="suppliers_split">
                 <div class="card m-b-30 md-rail" id="suppliers_list_card">
                     <div class="card-body">
-                        <div id="suppliers_list_rows" class="md-rail-rows text-muted">Loading suppliers ...</div>
+                        <div id="suppliers_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_suppliers">Loading suppliers ...</lang></div>
                         <div class="q-pager" id="suppliers_list_paging"></div>
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                                             <div class="card-body">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 text-center">
-                                                        <h5 class="card-title text-primary mb-1 font-16">Total Selling Amount</h5>
+                                                        <h5 class="card-title text-primary mb-1 font-16"><lang class="lang_total_selling_amount">Total Selling Amount</lang></h5>
                                                     </div>
                                                     <div class="col-12 text-center">
                                                         <span class="display-currency"></span> &nbsp;<span class="supplier_product_details_selling font-18">0</span>
@@ -94,7 +94,7 @@
                                             <div class="card-body">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 text-center">
-                                                        <h5 class="card-title text-primary mb-1 font-16">Total Products</h5>
+                                                        <h5 class="card-title text-primary mb-1 font-16"><lang class="lang_total_products">Total Products</lang></h5>
                                                     </div>
                                                     <div class="col-12 text-center">
                                                         <span class="supplier_product_details_count font-18">0</span>
@@ -112,7 +112,7 @@
                         <div class="portlet light slider-portlet-vh">
                             <div class="portlet-title margin-bottom-0">
                                 <div class="caption caption-basic font-green-meadow">
-                                    <span class="caption-subject bold uppercase">Product history</span>
+                                    <span class="caption-subject bold uppercase"><lang class="lang_product_history">Product history</lang></span>
                                 </div>
                                 <div class="actions">
                                     <div class="inline-block text-left">
@@ -156,24 +156,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_supplierproductdetails_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_supplierproductdetails_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_supplierproductdetails_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-supplierproductdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-supplierproductdetails text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-supplierproductdetails text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierproductdetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierproductdetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierproductdetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierproductdetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>

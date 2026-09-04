@@ -7,7 +7,7 @@
             <!--  filter-->
             <div class="row align-items-center row_filter hide-sale-filter">
                 <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title">Day-End Summary</h4>
+                    <h4 class="page-title break_title"><lang class="lang_day_end_summary">Day-End Summary</lang></h4>
                 </div>
                 <div class="col-md-9 col-lg-9 show-button-action"></div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
@@ -20,7 +20,7 @@
                 <div class="col-lg-6 col-xl-6 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-select-branch display-current-branch"
                         data-placeholder="Select Branch" name="dailysale_branch_value[]" id="dailysale_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-1 col-lg-1 hide-button-action" style="display:none;">
@@ -33,7 +33,7 @@
                     <div class="widgetbar">
                         <button type="button"
                             class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
-                            data-toggle="tooltip" title="Filter">
+                            data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -65,11 +65,11 @@
                         </ul> -->
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="dailysale_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for
-                                    full access to all features.</p>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for
+                                    full access to all features.</lang></p>
                                 <a href="javascript:void(0)"
                                     onclick="return PosnicPro.users.accountGoToWebsiteURL(this);"
-                                    class="btn btn-primary">Upgrade to Premium</a>
+                                    class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="dailysale-view-line" role="tabpanel"
                                 aria-labelledby="dailysale-view-tab-line">
@@ -89,7 +89,7 @@
                                                         </div>
                                                         <div class="col-sm-6 col-md-12 col-lg-12">
                                                             <div class="text-center text-dark">
-                                                                <p>No Records </p>
+                                                                <p><lang class="lang_no_records">No Records</lang> </p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -107,41 +107,41 @@
                                                             <button class="btn btn-primary-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.printDailyReport();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Print (A4)" type="button"
+                                                                title="Print (A4)" data-t-title="lang_print_a4" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-print"></i>
                                                             </button>
                                                             <button class="btn btn-success-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.printDaySlip();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Day-close slip (thermal)" type="button"
+                                                                title="Day-close slip (thermal)" data-t-title="lang_day_close_slip_thermal" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-sticky-note-o"></i>
                                                             </button>
                                                             <button class="btn btn-secondary-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.exportCsv();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Export CSV" type="button"
+                                                                title="Export CSV" data-t-title="lang_export_csv" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-file-text-o"></i>
                                                             </button>
                                                             <button class="btn btn-secondary-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.exportXls();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Export Excel" type="button"
+                                                                title="Export Excel" data-t-title="lang_export_excel" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-file-excel-o"></i>
                                                             </button>
                                                             <button class="btn btn-danger-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.dailyReportPdf();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Download PDF" type="button"
+                                                                title="Download PDF" data-t-title="lang_download_pdf" type="button"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-file-pdf-o"></i>
                                                             </button>
                                                             <button class="btn btn-primary-rgba pull-right blur_val"
                                                                 onclick="return PosnicPro.quickreport.dailyReportEmail();"
-                                                                data-toggle="tooltip" data-placement="top" title="Email"
+                                                                data-toggle="tooltip" data-placement="top" title="Email" data-t-title="lang_email_title"
                                                                 style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-envelope-o"></i>
                                                             </button>
@@ -150,9 +150,9 @@
 
 
                                                     <div id="export_daily_report">
-                                                        <h5 style="display:none;">Summary</h5>
+                                                        <h5 style="display:none;"><lang class="lang_summary">Summary</lang></h5>
                                                         <table id="dayend_export_summary" data-export-include style="display:none;">
-                                                            <thead><tr><th>Summary</th><th class="text-right">Value</th></tr></thead>
+                                                            <thead><tr><th><lang class="lang_summary">Summary</lang></th><th class="text-right"><lang class="lang_value_title">Value</lang></th></tr></thead>
                                                             <tbody id="dayend_export_summary_body"></tbody>
                                                         </table>
                                                         <!-- From and To on one line, right-aligned, with a modest top
@@ -164,8 +164,8 @@
                                                             <tbody>
                                                                 <tr>
                                                                     <th class="text-right f-w-3 font-18">
-                                                                        <span>From :&nbsp;</span><span id="daily_report_fromdate"></span>
-                                                                        <span>&nbsp;&nbsp;&nbsp;&nbsp;To :&nbsp;</span><span id="daily_report_todate"></span>
+                                                                        <span><lang class="lang_from_2">From :&nbsp;</lang></span><span id="daily_report_fromdate"></span>
+                                                                        <span><lang class="lang_to_3">&nbsp;&nbsp;&nbsp;&nbsp;To :&nbsp;</lang></span><span id="daily_report_todate"></span>
                                                                     </th>
                                                                 </tr>
                                                             </tbody>
@@ -175,7 +175,7 @@
                                                             id="daily_report_branch_details">
                                                             <tbody>
                                                                 <tr>
-                                                                    <th id="" class="f-w-7 font-30 text-left">Day-End Summary</th>
+                                                                    <th id="" class="f-w-7 font-30 text-left"><lang class="lang_day_end_summary">Day-End Summary</lang></th>
                                                                 </tr>
                                                                 <tr>
                                                                     <th></th>
@@ -208,7 +208,7 @@
                                                             </tbody>
                                                         </table>
 
-                                                        <h5 class="f-w-6 m-t-30 m-b-20">Items</h5>
+                                                        <h5 class="f-w-6 m-t-30 m-b-20"><lang class="lang_itemdetail_title">Items</lang></h5>
                                                         <div class="table-responsive">
                                                             <table class="table table-bordered table-bordered-padding"
                                                                 cellspacing="0" width="100%"
@@ -216,21 +216,21 @@
                                                                 <thead>
                                                                     <tr>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="5%">S.No</td>
+                                                                            width="5%"><lang class="lang_s_no">S.No</lang></td>
                                                                         <td class="f-w-6 font-13 text-left" width="30%">
-                                                                            Description</td>
+                                                                            <lang class="lang_description_title">Description</lang></td>
                                                                         <td class="f-w-6 font-13 text-left" width="10%">
-                                                                            SKU</td>
+                                                                            <lang class="lang_sku_title">SKU</lang></td>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="5%">Qty</td>
+                                                                            width="5%"><lang class="lang_qty_title">Qty</lang></td>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="10%">Price</td>
+                                                                            width="10%"><lang class="lang_price_title">Price</lang></td>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="10%">Additional Discount</td>
+                                                                            width="10%"><lang class="lang_additional_discount">Additional Discount</lang></td>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="10%">Tax</td>
+                                                                            width="10%"><lang class="lang_module_tax">Tax</lang></td>
                                                                         <td class="f-w-6 font-13 text-center"
-                                                                            width="10%">Total</td>
+                                                                            width="10%"><lang class="lang_total_title">Total</lang></td>
                                                                         <!-- <td class="f-w-6 font-13 text-center" width="10%">Profit</td> -->
                                                                     </tr>
                                                                 </thead>
@@ -243,7 +243,7 @@
                                                                         <td></td>
                                                                         <td class="font-13 text-center f-w-6"
                                                                             style="border-left-style:hidden !important;">
-                                                                            Total</td>
+                                                                            <lang class="lang_total_title">Total</lang></td>
                                                                         <td class="font-12 text-left"> </td>
                                                                         <td class="font-12 text-center"><b><span
                                                                                     class="daily_report_qty_price"></span></b>
@@ -263,7 +263,7 @@
                                                                 </tfoot>
                                                             </table>
                                                         </div>
-                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="extra_discount_heading">Additional Discount</h5>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="extra_discount_heading"><lang class="lang_additional_discount">Additional Discount</lang></h5>
                                                         <div class="row m-t-20">
                                                             <div class="col-sm-12 m-b-20">
                                                                 <table class="table table-bordered"
@@ -271,9 +271,9 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="75%">Additional Discount</td>
+                                                                                width="75%"><lang class="lang_additional_discount">Additional Discount</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="25%">Amount</td>
+                                                                                width="25%"><lang class="lang_amount_title">Amount</lang></td>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -281,7 +281,7 @@
                                                                     <tfoot>
                                                                         <tr>
                                                                             <th class="text-center">
-                                                                                Total </th>
+                                                                                <lang class="lang_total_title">Total</lang> </th>
                                                                             <td class="text-right"><b><span
                                                                                         class="display-currency"></span>&nbsp;<span
                                                                                         class="daily_report_extra_discount_total"></span></b>
@@ -291,7 +291,7 @@
                                                                 </table>
                                                             </div>
                                                         </div>
-                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tender_type_heading">Tender Type</h5>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tender_type_heading"><lang class="lang_tender_type">Tender Type</lang></h5>
                                                         <div class="row m-t-20">
                                                             <div class="col-sm-12 m-b-20">
                                                                 <table class="table table-bordered"
@@ -299,11 +299,11 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="5%">S.No</td>
+                                                                                width="5%"><lang class="lang_s_no">S.No</lang></td>
                                                                             <td class="f-w-6 font-13 text-left"
-                                                                                width="75%">Tender Type</td>
+                                                                                width="75%"><lang class="lang_tender_type">Tender Type</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="20%">Amount</td>
+                                                                                width="20%"><lang class="lang_amount_title">Amount</lang></td>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -314,7 +314,7 @@
                                                                             <th></th>
                                                                             <th class="text-center"
                                                                                 style="border-left-style:hidden !important;">
-                                                                                Total </th>
+                                                                                <lang class="lang_total_title">Total</lang> </th>
                                                                             <td class="text-right"><b><span
                                                                                         class="display-currency"></span>&nbsp;<span
                                                                                         class="daily_report_product_tender_total"></span></b>
@@ -324,7 +324,7 @@
                                                                 </table>
                                                             </div>
                                                         </div>
-                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tax_type_heading">Tax Type</h5>
+                                                        <h5 class="f-w-6 m-t-50 m-b-20" id="tax_type_heading"><lang class="lang_tax_type">Tax Type</lang></h5>
                                                         <div class="row m-t-20">
                                                             <div class="col-sm-12 m-b-20">
                                                                 <table class="table table-bordered"
@@ -332,11 +332,11 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="5%">S.No</td>
+                                                                                width="5%"><lang class="lang_s_no">S.No</lang></td>
                                                                             <td class="f-w-6 font-13 text-left"
-                                                                                width="75%">Tax Type</td>
+                                                                                width="75%"><lang class="lang_tax_type">Tax Type</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="20%">Amount</td>
+                                                                                width="20%"><lang class="lang_amount_title">Amount</lang></td>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -347,7 +347,7 @@
                                                                             <th></th>
                                                                             <th class="text-center"
                                                                                 style="border-left-style:hidden !important;">
-                                                                                Total</th>
+                                                                                <lang class="lang_total_title">Total</lang></th>
                                                                             <td class="text-right"><b><span
                                                                                         class="display-currency"></span>&nbsp;<span
                                                                                         class="daily_report_product_tax_total"></span></b>
@@ -359,22 +359,22 @@
                                                         </div>
                                                         
                                                         <div class="row m-t-20 table-dine-summary-section">
-                                                            <h5 class="f-w-6 m-t-50 m-b-20">Dine & Table Summary</h5>
+                                                            <h5 class="f-w-6 m-t-50 m-b-20"><lang class="lang_dine_table_summary">Dine & Table Summary</lang></h5>
                                                             <div class="col-sm-12 m-b-20">
                                                                 <table class="table table-bordered"
                                                                     id="daily_report_dine_details">
                                                                     <thead>
                                                                         <tr>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="5%">S.No</td>
+                                                                                width="5%"><lang class="lang_s_no">S.No</lang></td>
                                                                             <td class="f-w-6 font-13 text-left"
-                                                                                width="55%">Dine Type</td>
+                                                                                width="55%"><lang class="lang_dine_type">Dine Type</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="15%">Count</td>
+                                                                                width="15%"><lang class="lang_count">Count</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="15%">Pax</td>
+                                                                                width="15%"><lang class="lang_pax">Pax</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="15%">Amount</td>
+                                                                                width="15%"><lang class="lang_amount_title">Amount</lang></td>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -385,7 +385,7 @@
                                                                             <th></th>
                                                                             <th class="text-center"
                                                                                 style="border-left-style:hidden !important;">
-                                                                                Total </th>
+                                                                                <lang class="lang_total_title">Total</lang> </th>
                                                                             <td class="text-center"><b>
                                                                                 <!-- <span class="display-currency"></span>&nbsp; -->
                                                                                     <span class="daily_report_dine_count"></span></b>
@@ -407,13 +407,13 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="5%">S.No</td>
+                                                                                width="5%"><lang class="lang_s_no">S.No</lang></td>
                                                                             <td class="f-w-6 font-13 text-left"
-                                                                                width="55%">Tables</td>
+                                                                                width="55%"><lang class="lang_tables">Tables</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="15%">Pax</td>
+                                                                                width="15%"><lang class="lang_pax">Pax</lang></td>
                                                                             <td class="f-w-6 font-13 text-center"
-                                                                                width="25%">Total</td>
+                                                                                width="25%"><lang class="lang_total_title">Total</lang></td>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -423,7 +423,7 @@
                                                                             <th></th>
                                                                             <th class="text-center"
                                                                                 style="border-left-style:hidden !important;">
-                                                                                Total
+                                                                                <lang class="lang_total_title">Total</lang>
                                                                             </th>
                                                                             <td class="text-center">
                                                                                 <b>
@@ -467,16 +467,16 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Email Address</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><lang class="lang_email_address">Email Address</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
                 <form class="to_email_form" method="POST">
                     <div class="form-row">
                         <div class="form-group col-md-12">
-                            <label for="to_email_value"> To email address <span class="text-danger">*</span></label>
+                            <label for="to_email_value"> <lang class="lang_to_email_address">To email address</lang> <span class="text-danger">*</span></label>
                             <input id="to_email_value" type="email" maxlength="250" name="to_email_value"
                                 class="form-control border-control" required="">
                         </div>

@@ -24,11 +24,11 @@
                                  masquerade as an empty list. -->
                             <span id="quotes_sort_host"></span>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="quotes_filter_btn"
-                                data-toggle="tooltip" title="Filter quotes">
-                                <i class="feather icon-filter mr-2"></i>Filter
+                                data-toggle="tooltip" title="Filter quotes" data-t-title="lang_filter_quotes">
+                                <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                             </button>
                             <a href="#/quotes/new" class="btn btn-primary-rgba dash_sale_count add_new_tooltip"
-                                data-toggle="tooltip" title="New quotation">
+                                data-toggle="tooltip" title="New quotation" data-t-title="lang_new_quotation">
                                 <i class="feather icon-plus mr-2"></i>
                                 <lang class="lang_addvariant_title">New</lang>
                             </a>
@@ -44,22 +44,22 @@
                              The entries keep the quotes-chip class so the existing
                              bar wiring (setExtra -> repaint) is untouched. -->
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="quotes_filter_chips">
-                            <span class="p-qf-label">Status</span>
+                            <span class="p-qf-label"><lang class="lang_userstatus">Status</lang></span>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="quotes_status_dd">All</button>
+                                    aria-haspopup="true" aria-expanded="false" id="quotes_status_dd"><lang class="lang_report_all">All</lang></button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="">All</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="open">Open</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="accepted">Accepted</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="declined">Declined</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="invoiced">Invoiced</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="converted">Converted</a>
-                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status=""><lang class="lang_report_all">All</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="open"><lang class="lang_open">Open</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="accepted"><lang class="lang_accepted">Accepted</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="declined"><lang class="lang_declined">Declined</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="invoiced"><lang class="lang_invoiced">Invoiced</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="converted"><lang class="lang_converted">Converted</lang></a>
+                                    <a class="dropdown-item quotes-chip" href="javascript:void(0)" data-status="cancelled"><lang class="lang_cancelled">Cancelled</lang></a>
                                 </div>
                             </div>
                         </div>
-                        <div id="quotes_list_rows" class="md-rail-rows text-muted">Loading quotes ...</div>
+                        <div id="quotes_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_quotes">Loading quotes ...</lang></div>
                     </div>
                 </div>
                 <!-- Quotation editor (QUOTATION_MODULE_DESIGN Q2): the authoring
@@ -68,87 +68,87 @@
                 <div class="card m-b-30" id="quotes_edit_card" style="display:none;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center m-b-15 flex-wrap" style="gap:8px;">
-                            <h5 class="mb-0" id="qe_title">New quotation</h5>
+                            <h5 class="mb-0" id="qe_title"><lang class="lang_new_quotation">New quotation</lang></h5>
                             <div>
-                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edCancel();">Cancel</button>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.quotes.edSave();">Save quotation</button>
+                                <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edCancel();"><lang class="lang_cancel_title">Cancel</lang></button>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.quotes.edSave();"><lang class="lang_save_quotation">Save quotation</lang></button>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-lg-6" id="qe_edit_col">
                                 <div class="qe-sec">
-                                    <div class="q-label">Bill to</div>
+                                    <div class="q-label"><lang class="lang_bill_to">Bill to</lang></div>
                                     <input type="text" id="qe_cust_search" class="form-control form-control-sm mb-2"
-                                        placeholder="Search an existing customer by name or phone" autocomplete="off">
+                                        placeholder="Search an existing customer by name or phone" data-t-placeholder="lang_search_an_existing_customer_by_name_or_pho" autocomplete="off">
                                     <div class="form-row">
-                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name"></div>
-                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone"></div>
-                                        <div class="col-md-6 mb-2"><input type="email" id="qe_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email"></div>
-                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID"></div>
-                                        <div class="col-12 mb-2"><input type="text" id="qe_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_name" class="form-control form-control-sm" maxlength="120" placeholder="Customer name" data-t-placeholder="lang_customer_name"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_phone" class="form-control form-control-sm" maxlength="20" placeholder="Phone" data-t-placeholder="lang_phone_title"></div>
+                                        <div class="col-md-6 mb-2"><input type="email" id="qe_cust_email" class="form-control form-control-sm" maxlength="120" placeholder="Email" data-t-placeholder="lang_email_title"></div>
+                                        <div class="col-md-6 mb-2"><input type="text" id="qe_cust_gstin" class="form-control form-control-sm" maxlength="20" placeholder="GSTIN / Tax ID" data-t-placeholder="lang_gstin_tax_id"></div>
+                                        <div class="col-12 mb-2"><input type="text" id="qe_cust_address" class="form-control form-control-sm" maxlength="300" placeholder="Address" data-t-placeholder="lang_address_title"></div>
                                     </div>
                                 </div>
                                 <div class="qe-sec">
-                                    <div class="q-label">Lines</div>
+                                    <div class="q-label"><lang class="lang_lines">Lines</lang></div>
                                     <input type="text" id="qe_item_search" class="form-control form-control-sm mb-2"
-                                        placeholder="Search an item to add a line" autocomplete="off">
+                                        placeholder="Search an item to add a line" data-t-placeholder="lang_search_an_item_to_add_a_line" autocomplete="off">
                                     <div class="table-responsive">
                                         <table class="table table-sm mb-1" id="qe_lines_table">
                                             <thead><tr>
-                                                <th style="min-width:170px;">Item</th><th>Qty</th><th>Unit price</th>
-                                                <th>Line discount</th><th class="text-right">Total</th><th></th>
+                                                <th style="min-width:170px;"><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_qty_title">Qty</lang></th><th><lang class="lang_unit_price">Unit price</lang></th>
+                                                <th><lang class="lang_line_discount">Line discount</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th></th>
                                             </tr></thead>
                                             <tbody id="qe_lines"></tbody>
                                         </table>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCustom();">+ Custom line</button>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCustom();"><lang class="lang_custom_line">+ Custom line</lang></button>
                                 </div>
                                 <div class="qe-sec">
-                                    <div class="q-label">Charges &amp; taxes - any name</div>
+                                    <div class="q-label"><lang class="lang_charges_taxes_any_name">Charges &amp; taxes - any name</lang></div>
                                     <div id="qe_charges"></div>
-                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCharge();">+ Charge / tax</button>
+                                    <button type="button" class="btn btn-sm btn-secondary-rgba" onclick="PosnicPro.quotes.edAddCharge();"><lang class="lang_charge_tax">+ Charge / tax</lang></button>
                                 </div>
                                 <div class="qe-sec">
                                     <div class="form-row">
                                         <div class="col-md-6 mb-2">
-                                            <div class="q-label">Quote discount</div>
+                                            <div class="q-label"><lang class="lang_quote_discount">Quote discount</lang></div>
                                             <div class="input-group input-group-sm">
-                                                <select id="qe_disc_type" class="form-control" style="max-width:110px;" aria-label="Qe disc type">
-                                                    <option value="">None</option>
-                                                    <option value="percent">Percent</option>
-                                                    <option value="amount">Amount</option>
+                                                <select id="qe_disc_type" class="form-control" style="max-width:110px;" aria-label="Qe disc type" data-t-aria-label="lang_qe_disc_type">
+                                                    <option value=""><lang class="lang_none">None</lang></option>
+                                                    <option value="percent"><lang class="lang_percent">Percent</lang></option>
+                                                    <option value="amount"><lang class="lang_amount_title">Amount</lang></option>
                                                 </select>
                                                 <input type="number" id="qe_disc_value" min="0" step="0.01" class="form-control" placeholder="0">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <div class="q-label">Valid until</div>
+                                            <div class="q-label"><lang class="lang_valid_until">Valid until</lang></div>
                                             <div class="d-flex align-items-center mb-1" style="gap:6px;">
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="7">7 days</button>
-                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="15">15 days</button>
-                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="30">30 days</button>
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="7"><lang class="lang_7_days">7 days</lang></button>
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="15"><lang class="lang_15_days">15 days</lang></button>
+                                                    <button type="button" class="btn btn-secondary-rgba qe-valid-chip" data-days="30"><lang class="lang_30_days">30 days</lang></button>
                                                 </div>
-                                                <input type="date" id="qe_valid_until" class="form-control form-control-sm" style="width:150px;" aria-label="Qe valid until">
+                                                <input type="date" id="qe_valid_until" class="form-control form-control-sm" style="width:150px;" aria-label="Qe valid until" data-t-aria-label="lang_qe_valid_until">
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="q-label">Payment details</div>
-                                    <input type="text" id="qe_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash">
-                                    <textarea id="qe_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC"></textarea>
-                                    <div class="q-label">Terms</div>
+                                    <div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>
+                                    <input type="text" id="qe_payment" class="form-control form-control-sm mb-1" maxlength="60" placeholder="Method - e.g. Bank transfer / UPI / Cash" data-t-placeholder="lang_method_e_g_bank_transfer_upi_cash">
+                                    <textarea id="qe_bank" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="Bank details - account name, number, IFSC" data-t-placeholder="lang_bank_details_account_name_number_ifsc"></textarea>
+                                    <div class="q-label"><lang class="lang_terms">Terms</lang></div>
                                     <textarea id="qe_terms" class="form-control form-control-sm mb-2" rows="2" maxlength="1500"></textarea>
-                                    <div class="q-label">Notes (printed on the quote)</div>
+                                    <div class="q-label"><lang class="lang_notes_printed_on_the_quote">Notes (printed on the quote)</lang></div>
                                     <textarea id="qe_notes" class="form-control form-control-sm mb-2" rows="2" maxlength="2000"></textarea>
-                                    <div class="q-label">Authorised signature</div>
+                                    <div class="q-label"><lang class="lang_authorised_signature">Authorised signature</lang></div>
                                     <div class="d-flex align-items-center flex-wrap" style="gap:8px;">
                                         <img id="qe_sig_thumb" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="max-height:40px; max-width:140px; display:none; border:1px solid #e3e7ee; border-radius:4px; padding:2px;" loading="lazy" decoding="async">
                                         <label class="btn btn-sm btn-secondary-rgba mb-0" style="cursor:pointer;">
-                                            <span id="qe_sig_action">Upload</span>
+                                            <span id="qe_sig_action"><lang class="lang_upload">Upload</lang></span>
                                             <input type="file" accept="image/*" id="qe_sig_file" style="display:none;">
                                         </label>
                                     </div>
-                                    <small class="text-muted d-block mb-2">Signs this and every future quote (saved to your settings). No image = no signatory line.</small>
+                                    <small class="text-muted d-block mb-2"><lang class="lang_signs_this_and_every_future_quote_saved_to">Signs this and every future quote (saved to your settings). No image = no signatory line.</lang></small>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -167,7 +167,7 @@
                              document needs the whole width. -->
                         <div class="d-flex align-items-center m-b-10 md-detail-head" style="gap:8px;" id="quotes_view_head">
                             <button type="button" class="btn btn-sm btn-light" id="quotes_rail_toggle"
-                                title="Show or hide the quote list">
+                                title="Show or hide the quote list" data-t-title="lang_show_or_hide_the_quote_list">
                                 <i class="feather icon-sidebar"></i>
                             </button>
                             <div class="flex-fill text-right" id="quotes_view_actions"></div>
@@ -175,7 +175,7 @@
                                  there is nowhere to go back TO - the list never
                                  left. Closing hands it the whole width again. -->
                             <button type="button" class="btn btn-sm btn-light" id="quotes_view_close"
-                                title="Close this quote and show the full list" aria-label="Close">
+                                title="Close this quote and show the full list" data-t-title="lang_close_this_quote_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title">
                                 <i class="feather icon-x"></i>
                             </button>
                         </div>

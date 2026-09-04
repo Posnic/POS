@@ -6,7 +6,7 @@
             <div class="row align-items-center row_filter">
                 <div class="col-auto">
                     <!-- items.js swaps the verb: Add / Edit / Clone -->
-                    <h4 class="page-title break_title mb-0"><span id="item_title_data">Add</span>
+                    <h4 class="page-title break_title mb-0"><span id="item_title_data"><lang class="lang_nav_add">Add</lang></span>
                         <lang class="lang_item_title">Item</lang></h4>
                 </div>
                 <!-- Import is not a field. It is the alternative to filling this
@@ -86,17 +86,17 @@
                                     </label>
                                 </div>
                                 <select class="form-control form-control-sm" id="item_service_unit"
-                                    style="display:none !important;" aria-label="Item service unit">
-                                    <option value="fixed">Fixed price</option>
-                                    <option value="hour">Per hour</option>
-                                    <option value="day">Per day</option>
+                                    style="display:none !important;" aria-label="Item service unit" data-t-aria-label="lang_item_service_unit">
+                                    <option value="fixed"><lang class="lang_fixed_price">Fixed price</lang></option>
+                                    <option value="hour"><lang class="lang_per_hour">Per hour</lang></option>
+                                    <option value="day"><lang class="lang_per_day">Per day</lang></option>
                                 </select>
                                 <!-- The radios stay in the DOM (hidden) - every mode check
                                      and fill in items.js keeps working; the link drives them. -->
-                                <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;">+ This item has variants</a>
+                                <a href="javascript:void(0)" id="variant_mode_link" style="font-size:.85rem;"><lang class="lang_this_item_has_variants">+ This item has variants</lang></a>
                                 <div style="display:none;">
-                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked aria-label="Product without variant">
-                                    <input type="radio" id="product_with_variant" name="product_radio_variant" aria-label="Product with variant">
+                                    <input type="radio" id="product_without_variant" name="product_radio_variant" checked aria-label="Product without variant" data-t-aria-label="lang_product_without_variant">
+                                    <input type="radio" id="product_with_variant" name="product_radio_variant" aria-label="Product with variant" data-t-aria-label="lang_product_with_variant">
                                 </div>
                             </div>
                         </div>
@@ -124,7 +124,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control border-control" id="items_name"
-                                        name="items_name" placeholder="Enter Item Name" minlength="3" maxlength="500"
+                                        name="items_name" placeholder="Enter Item Name" data-t-placeholder="lang_enter_item_name" minlength="3" maxlength="500"
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
                                 </div>
@@ -135,7 +135,7 @@
                                     <input inputmode="decimal" type="text"
                                         class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                         id="items_selling_price" name="items_selling_price" minlength="1"
-                                        maxlength="7" value="0.00" placeholder="Sale Price" autocomplete="off">
+                                        maxlength="7" value="0.00" placeholder="Sale Price" data-t-placeholder="lang_sale_price" autocomplete="off">
                                     <div class="custom-control custom-checkbox mt-1">
                                         <input type="checkbox" class="custom-control-input" id="item_open_price"
                                             name="item_open_price">
@@ -143,7 +143,7 @@
                                              It means the item has no fixed price: the cashier
                                              types one on the sale screen every time. -->
                                         <label class="custom-control-label" for="item_open_price"
-                                            title="No fixed price - the cashier types the amount on the sale screen each time. Use it for loose goods, custom jobs and anything priced on the spot.">
+                                            title="No fixed price - the cashier types the amount on the sale screen each time. Use it for loose goods, custom jobs and anything priced on the spot." data-t-title="lang_no_fixed_price_the_cashier_types_the_amoun">
                                             <lang class="lang_open_price">Cashier types the price</lang>
                                         </label>
                                         <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
@@ -157,7 +157,7 @@
                                     </label>
                                     <input inputmode="decimal" type="text" class="form-control allow_decimal text-right clear_text_item"
                                         id="items_available_quantity" name="items_available_quantity" min="0"
-                                        minlength="1" maxlength="10" value="0" placeholder="Available Quantity"
+                                        minlength="1" maxlength="10" value="0" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title"
                                         autocomplete="off">
                                 </div>
                             </div>
@@ -175,11 +175,11 @@
                                              falls back to the shop-wide range. -->
                                         <input type="number" min="0" step="any" class="form-control clear_text_item text-right"
                                             id="items_reorder_point" name="items_reorder_point"
-                                            placeholder="Reorder point" autocomplete="off">
+                                            placeholder="Reorder point" data-t-placeholder="lang_reorder_point" autocomplete="off">
                                     </div>
 <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_unit">
-                                            Item Units
+                                            <lang class="lang_item_units">Item Units</lang>
                                         </label>
                                         <select class="form-control select2 pricing-field items_unit items_choose_error"
                                             name="items_unit" id="items_unit">
@@ -210,7 +210,7 @@
                                         <lang class="lang_choosecategory_title">Select Category</lang>
                                     </label>
                                     <select id='items_category' name="items_category" style='width: 100%;'
-                                        class="select2 items_category items_choose_error" aria-label="Items category">
+                                        class="select2 items_category items_choose_error" aria-label="Items category" data-t-aria-label="lang_items_category">
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
@@ -231,7 +231,7 @@
                                          every payload builder and edit-fill in items.js keeps
                                          reading the same ids. -->
                                     <select id="items_supplier_pick" class="select2 items_supplier_pick"
-                                        style="width:100%;" aria-label="Items supplier pick"></select>
+                                        style="width:100%;" aria-label="Items supplier pick" data-t-aria-label="lang_items_supplier_pick"></select>
                                     <input type="hidden" id="items_supplier" name="items_supplier">
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
                                 </div>
@@ -265,7 +265,7 @@
                                         <input inputmode="decimal" type="text"
                                             class="form-control allow_decimal text-right clear_text_item hide_price_digit"
                                             id="items_company_price" name="items_company_price" minlength="1"
-                                            maxlength="7" value="0.00" placeholder="Cost" autocomplete="off">
+                                            maxlength="7" value="0.00" placeholder="Cost" data-t-placeholder="lang_companyamount_title" autocomplete="off">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-control-placeholder" for="items_mrp_price">
@@ -316,7 +316,7 @@
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_itemid"
                                             name="items_itemid" minlength="1" maxlength="20"
-                                            placeholder="Enter SKU Code" autocomplete="off"
+                                            placeholder="Enter SKU Code" data-t-placeholder="lang_enter_sku_code" autocomplete="off"
                                             onkeyup="PosnicPro.items.loadOnchangeSku();" />
                                     </div>
                                     <div class="col-md-6">
@@ -338,7 +338,7 @@
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_barcodeid"
                                             name="items_barcodeid" minlength="1" maxlength="100"
-                                            placeholder="Scan From Bar Code Reader" autocomplete="off">
+                                            placeholder="Scan From Bar Code Reader" data-t-placeholder="lang_scan_from_bar_code_reader" autocomplete="off">
                                     </div>
                                     <!--
                                         The GLOBAL identifier, deliberately its own
@@ -389,7 +389,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <select id='items_variant' name="items_variant" style='width: 200px;'
-                                        class="select2 items_choose_error" required aria-label="Items variant">
+                                        class="select2 items_choose_error" required aria-label="Items variant" data-t-aria-label="lang_items_variant">
                                     </select>
                                 </div>
                             </div>
@@ -412,7 +412,7 @@
                                  it saw before - the common case pays nothing for the
                                  rarer one. -->
                             <a href="javascript:void(0)" id="variant_axis2_link"
-                               style="font-size:.85rem;">+ Add a second option</a>
+                               style="font-size:.85rem;"><lang class="lang_add_a_second_option">+ Add a second option</lang></a>
                             <div id="variant_axis2_wrap" style="display:none;">
                                 <div class="form-row mt-2">
                                     <div class="form-group col-md-12">
@@ -496,21 +496,21 @@
                             </div>
                             <div class="">
                                 <input type="text" class="form-control border-control hsnCode" id="items_hsncode"
-                                    name="items_hsncode" maxlength="60" placeholder="Type a code or a word - e.g. 8517 or electronics" autocomplete="off">
+                                    name="items_hsncode" maxlength="60" placeholder="Type a code or a word - e.g. 8517 or electronics" data-t-placeholder="lang_type_a_code_or_a_word_e_g_8517_or_electron" autocomplete="off">
                                 <input type="hidden" id="items_hsndescription">
                                 <div id="hsn_suggest_row" class="mt-1" style="display:none;"></div>
-                                <small class="text-muted d-block mt-1">Rates shown are indicative - confirm the current GST slab.</small>
+                                <small class="text-muted d-block mt-1"><lang class="lang_rates_shown_are_indicative_confirm_the_cur">Rates shown are indicative - confirm the current GST slab.</lang></small>
                             </div>
                         </div>
 
                         <div class="col-md-12">
                             <input type="text" class="form-control" id="hsn_tax" name="hsn_tax" minlength="1"
-                                maxlength="20" placeholder="Enter Hsn Tax" autocomplete="off">
+                                maxlength="20" placeholder="Enter Hsn Tax" data-t-placeholder="lang_enter_hsn_tax" autocomplete="off">
                         </div>
 
                         <div class="col-md-12 m-t-10" id="default_tax">
                             <select class="form-control select2 pricing-field items_tax items_choose_error"
-                                name="items_tax" id="items_tax" required aria-label="Items tax">
+                                name="items_tax" id="items_tax" required aria-label="Items tax" data-t-aria-label="lang_items_tax">
                             </select>
                         </div>
 
@@ -542,7 +542,7 @@
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->
                     <div class="item-tab-nav" data-nav-for="item_tab_main">
-                        <span></span><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_details">Next: Details<i class="feather icon-arrow-right ml-1"></i></button>
+                        <span></span><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_details"><lang class="lang_next_details">Next: Details</lang><i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
 </div>
                     <div class="tab-pane fade" id="item_tab_details" role="tabpanel">
@@ -570,7 +570,7 @@
                                         </label>
                                         <textarea class="form-control items-description-fill" id="items_description" name="items_description"
                                             rows="4" maxlength="1000"
-                                            placeholder="Enter a description ..."></textarea>
+                                            placeholder="Enter a description ..." data-t-placeholder="lang_enter_a_description"></textarea>
                                     </div>
                                     <div class="col-lg-6">
                                         <!-- Labelled like Description beside it (owner ask). An
@@ -634,14 +634,14 @@
                                             <lang class="lang_tile_shape">Shape of the tile</lang>
                                         </label>
                                         <div id="item_tile_shapes">
-                                            <span class="tile-shape" data-shape="square" title="Square" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:3px;margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="rounded" title="Rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="circle" title="Circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
-                                            <span class="tile-shape" data-shape="diamond" title="Diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
+                                            <span class="tile-shape" data-shape="square" title="Square" data-t-title="lang_square" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:3px;margin-right:6px;"></span>
+                                            <span class="tile-shape" data-shape="rounded" title="Rounded" data-t-title="lang_rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
+                                            <span class="tile-shape" data-shape="circle" title="Circle" data-t-title="lang_circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
+                                            <span class="tile-shape" data-shape="diamond" title="Diamond" data-t-title="lang_diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
                                         </div>
                                         <input type="hidden" id="item_tile_shape" value="">
                                         <div id="item_tile_swatches" class="d-flex flex-wrap" style="gap:6px;">
-                                            <span class="tile-swatch" data-color="" title="None"
+                                            <span class="tile-swatch" data-color="" title="None" data-t-title="lang_none"
                                                 style="width:28px;height:28px;border:2px solid #ccc;border-radius:4px;cursor:pointer;background:repeating-linear-gradient(45deg,#fff,#fff 4px,#eee 4px,#eee 8px);"></span>
                                             <span class="tile-swatch" data-color="#e74c3c" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#e74c3c;"></span>
                                             <span class="tile-swatch" data-color="#e91e63" style="width:28px;height:28px;border:2px solid transparent;border-radius:4px;cursor:pointer;background:#e91e63;"></span>
@@ -663,7 +663,7 @@
                                             <lang class="lang_brand_title">Brand</lang>
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_brand"
-                                            name="items_brand" maxlength="100" placeholder="Brand"
+                                            name="items_brand" maxlength="100" placeholder="Brand" data-t-placeholder="lang_brand_title"
                                             autocomplete="off">
                                     </div>
                                     <div class="col-md-4">
@@ -672,7 +672,7 @@
                                         </label>
                                         <input type="text" class="form-control clear_text_item" id="items_tags"
                                             name="items_tags" maxlength="300"
-                                            placeholder="Tags, comma separated" autocomplete="off">
+                                            placeholder="Tags, comma separated" data-t-placeholder="lang_tags_comma_separated" autocomplete="off">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_sort">
@@ -681,7 +681,7 @@
                                         <input type="number"
                                             class="form-control allow_decimal text-right clear_text_item"
                                             id="items_sort" name="items_sort" minlength="1" maxlength="10" value="99"
-                                            placeholder="Item list position" autocomplete="off">
+                                            placeholder="Item list position" data-t-placeholder="lang_item_list_position" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="form-row mt-2">
@@ -690,14 +690,14 @@
                                             <lang class="lang_mfg_title">Items MFG Date </lang>
                                         </label>
                                         <input type="text" class="form-control text-right" id="items_mfg_date"
-                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" autocomplete="off">
+                                            name="items_mfg_date" placeholder="Enter MFG 2001-01-01" data-t-placeholder="lang_enter_mfg_2001_01_01" autocomplete="off">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-control-placeholder" for="items_expiry_date">
                                             <lang class="lang_expiry_title">Items Expiry Date </lang>
                                         </label>
                                         <input type="text" class="form-control text-right" id="items_expiry_date"
-                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01"
+                                            name="items_expiry_date" placeholder="Enter Expiry 2011-01-01" data-t-placeholder="lang_enter_expiry_2011_01_01"
                                             autocomplete="off">
                                     </div>
                                 </div>
@@ -711,7 +711,7 @@
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->
                     <div class="item-tab-nav" data-nav-for="item_tab_details">
-                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_main"><i class="feather icon-arrow-left mr-1"></i>Back</button><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_more">Next: More<i class="feather icon-arrow-right ml-1"></i></button>
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_main"><i class="feather icon-arrow-left mr-1"></i><lang class="lang_back_title">Back</lang></button><button type="button" class="btn btn-sm btn-primary item-tab-next" data-goto="item_tab_more"><lang class="lang_next_more">Next: More</lang><i class="feather icon-arrow-right ml-1"></i></button>
                     </div>
 </div>
                     <div class="tab-pane fade" id="item_tab_more" role="tabpanel">
@@ -739,7 +739,7 @@
                                     </label>
                                     <input type="text" class="form-control clear_text_item" id="items_barcodes_alt"
                                         name="items_barcodes_alt" maxlength="400"
-                                        placeholder="Alternate barcodes, comma separated" autocomplete="off">
+                                        placeholder="Alternate barcodes, comma separated" data-t-placeholder="lang_alternate_barcodes_comma_separated" autocomplete="off">
                                 </div>
                             </div>
                             <!-- V3: purchase-unit assist - "box of 24". Stock stays in base units. -->
@@ -752,14 +752,14 @@
                                     </label>
                                     <input type="text" class="form-control clear_text_item" id="items_purchase_unit"
                                         name="items_purchase_unit" maxlength="30"
-                                        placeholder="Purchase unit (e.g. box)" autocomplete="off">
+                                        placeholder="Purchase unit (e.g. box)" data-t-placeholder="lang_purchase_unit_e_g_box" autocomplete="off">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-control-placeholder items-label-inline" for="items_conversion_factor">
                                         <lang class="lang_conversion_factor_title">Units per pack</lang>
                                     </label>
                                     <input type="number" min="0" step="any" class="form-control clear_text_item" id="items_conversion_factor"
-                                        name="items_conversion_factor" placeholder="Units per pack" autocomplete="off">
+                                        name="items_conversion_factor" placeholder="Units per pack" data-t-placeholder="lang_conversion_factor_title" autocomplete="off">
                                 </div>
                             </div>
                         </div>
@@ -807,14 +807,14 @@
                                                 <input inputmode="decimal" name="items_discount_amount" id="items_discount_amount"
                                                     type="text" aria-describedby="basic-addon1"
                                                     class="form-control border-control allow_decimal text-right" min="0"
-                                                    minlength="1" maxlength="10" value="0" aria-label="Items discount amount">
+                                                    minlength="1" maxlength="10" value="0" aria-label="Items discount amount" data-t-aria-label="lang_items_discount_amount">
 
                                                 <input inputmode="decimal" name="items_discount_percentage" id="items_discount_percentage"
                                                     type="number" aria-describedby="basic-addon1"
                                                     class="form-control border-control text-right" min="0" max="100"
                                                     minlength="1" maxlength="4"
                                                     onkeyup="this.value = PosnicPro.minmax(this.value, 0, 100)"
-                                                    onkeypress="return PosnicPro.isNumber(event)" value="0" aria-label="Items discount percentage">
+                                                    onkeypress="return PosnicPro.isNumber(event)" value="0" aria-label="Items discount percentage" data-t-aria-label="lang_items_discount_percentage">
                                             </div>
                                         </div>
                                     </div>
@@ -852,7 +852,7 @@
                                         <input type="checkbox" class="custom-control-input" id="item_sales_channel"
                                             name="item_sales_channel" checked>
                                         <label class="custom-control-label" for="item_sales_channel">
-                                            Sales channel
+                                            <lang class="lang_sales_channel_2">Sales channel</lang>
                                         </label>
                                     </div>
 
@@ -860,7 +860,7 @@
                                         <input type="checkbox" class="custom-control-input" id="item_ecommerce"
                                             name="item_ecommerce">
                                         <label class="custom-control-label" for="item_ecommerce">
-                                            Kiosk
+                                            <lang class="lang_module_kiosk">Kiosk</lang>
                                         </label>
                                     </div>
 
@@ -868,7 +868,7 @@
                                         <input type="checkbox" class="custom-control-input" id="item_negative_stock"
                                             name="item_negative_stock">
                                         <label class="custom-control-label" for="item_negative_stock">
-                                            Negative stock
+                                            <lang class="lang_negative_stock_2">Negative stock</lang>
                                         </label>
                                     </div>
 
@@ -878,7 +878,7 @@
                                         <input type="checkbox" class="custom-control-input" id="item_weight_machine_based"
                                             name="item_weight_machine_based">
                                         <label class="custom-control-label" for="item_weight_machine_based">
-                                            Weight Scale Item
+                                            <lang class="lang_weight_scale_item">Weight Scale Item</lang>
                                         </label>
                                     </div>
                                 </div>
@@ -891,7 +891,7 @@
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->
                     <div class="item-tab-nav" data-nav-for="item_tab_more">
-                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_details"><i class="feather icon-arrow-left mr-1"></i>Back</button><span></span>
+                        <button type="button" class="btn btn-sm btn-light item-tab-back" data-goto="item_tab_details"><i class="feather icon-arrow-left mr-1"></i><lang class="lang_back_title">Back</lang></button><span></span>
                     </div>
 </div>
                                         <!-- Inside the tab-content box, and padded to match a pane.
@@ -925,7 +925,7 @@
                             <div class="form-row" id="show_last_created_item" style="display: none;">
                                 <div class="form-group col-md-12 mb-0">
                                     <div class="text-center">
-                                        <h6 class="mb-0 mt-1">Saved an item. <a href="#" id="last_created_item">Open it</a></h6>
+                                        <h6 class="mb-0 mt-1"><lang class="lang_saved_an_item">Saved an item.</lang> <a href="#" id="last_created_item"><lang class="lang_open_it">Open it</lang></a></h6>
                                     </div>
                                 </div>
                             </div>

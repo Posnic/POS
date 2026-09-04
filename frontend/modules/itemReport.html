@@ -18,7 +18,7 @@
                 <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-branch display-current-branch item_branch_value" multiple="multiple"
                             data-placeholder="Select Branch" name="item_branch_value[]" id="item_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -31,7 +31,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -75,8 +75,8 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="items_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="item-line" role="tabpanel" aria-labelledby="item-tab-line">
                                 <!-- start table -->
@@ -97,20 +97,20 @@
                                                     <!-- Family view (V1): a READING rollup, off by default; the
                                                          table regroups, exports stay per-item always. -->
                                                     <li class="list-inline-item email_320 mr-3">
-                                                        <div class="custom-control custom-switch d-inline-block" data-toggle="tooltip" title="One row per product family; each variant still counts separately everywhere else">
+                                                        <div class="custom-control custom-switch d-inline-block" data-toggle="tooltip" title="One row per product family; each variant still counts separately everywhere else" data-t-title="lang_one_row_per_product_family_each_variant_st">
                                                             <input type="checkbox" class="custom-control-input" id="itemreport_group_family"
                                                                 onchange="PosnicPro.itemreport.itemreportTable();">
                                                             <label class="custom-control-label" for="itemreport_group_family" style="font-size:.8rem;"><lang class="lang_group_by_family">Group by family</lang></label>
                                                         </div>
                                                     </li>
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="itemreport_exportbtn"
-                                                           data-id="itemreportexport" onclick="PosnicPro.itemreport.itemreportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="itemreportexport" onclick="PosnicPro.itemreport.itemreportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -141,24 +141,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_itemreport_page_total"></span></b>
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_itemreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_itemreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-itemreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-itemreport text-dark"> 0 </span>&nbsp; 
-                                                        rows selected  
+                                                        <span class="showing-value-itemreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp; 
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -184,12 +184,12 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemexpiry" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemexpiry" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemexpiry_exportbtn" data-id="itemexpiryexport" onclick="PosnicPro.itemexpiry.expiredItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemexpiry_exportbtn" data-id="itemexpiryexport" onclick="PosnicPro.itemexpiry.expiredItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -205,10 +205,10 @@
                                             <thead class="expiryreportitem_header">
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Item Name</th>
-                                                    <th class="text-center">Available Quantity</th>
-                                                    <th class="text-center">Category</th>
-                                                    <th class="text-right">Expiry Date</th>
+                                                    <th><lang class="lang_itemname_title">Item Name</lang></th>
+                                                    <th class="text-center"><lang class="lang_availablequatity_title">Available Quantity</lang></th>
+                                                    <th class="text-center"><lang class="lang_newcategory_title">Category</lang></th>
+                                                    <th class="text-right"><lang class="lang_expiry_date">Expiry Date</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody class="expiryreportitem_header">
@@ -224,26 +224,26 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing
+                                                    <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_itemexpiry_page_total"></span></b>
-                                                    to
+                                                    <lang class="lang_to">to</lang>
                                                     <b><span id="view_itemexpiry_page_perpage_total"></span></b>
-                                                    of
+                                                    <lang class="lang_of">of</lang>
                                                     <b><span id="view_itemexpiry_total"></span></b>
-                                                    entries
+                                                    <lang class="lang_entries">entries</lang>
                                                     <span class="showing-hide-show-itemreport" style="display:none;">&nbsp;&nbsp;&nbsp;&nbsp;
-                                                        <span class="showing-value-itemreport text-dark">0</span>&nbsp;
-                                                        rows selected
+                                                        <span class="showing-value-itemreport text-dark">0</span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemexpiry" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemexpiry" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                             <i class="fa fa-angle-left font-20"></i>
                                                         </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemexpiry" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemexpiry" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                             <i class="fa fa-angle-right font-20"></i>
                                                         </button>
                                                     </ul>
@@ -272,7 +272,7 @@
                                                                 <div class="row align-items-center">
                                                                     <div class="col-12 text-center">
                                                                         <h5 class="card-title text-primary mb-1 font-16">
-                                                                            Stock value (cost)
+                                                                            <lang class="lang_stock_value_cost">Stock value (cost)</lang>
                                                                         </h5>
                                                                     </div>
                                                                     <div class="col-12 text-center">
@@ -288,7 +288,7 @@
                                                                 <div class="row align-items-center">
                                                                     <div class="col-12 text-center">
                                                                         <h5 class="card-title text-primary mb-1 font-16">
-                                                                            Stock value (selling)
+                                                                            <lang class="lang_stock_value_selling">Stock value (selling)</lang>
                                                                         </h5>
                                                                     </div>
                                                                     <div class="col-12 text-center">
@@ -307,7 +307,7 @@
                                         <div class="portlet light slider-portlet-vh">
                                             <div class="portlet-title margin-bottom-0">
                                                 <div class="caption caption-basic font-green-meadow">
-                                                    <span class="caption-subject bold uppercase">Stock Product History</span>
+                                                    <span class="caption-subject bold uppercase"><lang class="lang_stock_product_history">Stock Product History</lang></span>
                                                 </div>
                                                 <div class="actions">
                                                     <div class="inline-block text-left">
@@ -333,12 +333,12 @@
                                                             <div class="card-header header_icon">
                                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                                     <li class="list-inline-item email_320">
-                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemstock" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemstock" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                                         </a>
                                                                     </li>
                                                                     <li class="list-inline-item email_320">
-                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemstock_exportbtn" data-id="itemstockexport" onclick="PosnicPro.itemstock.stockItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemstock_exportbtn" data-id="itemstockexport" onclick="PosnicPro.itemstock.stockItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                             <i class="feather icon-share font-20"></i>
                                                                         </a>
                                                                     </li>
@@ -368,26 +368,26 @@
                                                         <div class="row align-items-center">
                                                             <div class="col-8">
                                                                 <div class="hint-text">
-                                                                    Showing
+                                                                    <lang class="lang_showing">Showing</lang>
                                                                     <b><span id="view_itemstock_page_total"></span></b>
-                                                                    to
+                                                                    <lang class="lang_to">to</lang>
                                                                     <b><span id="view_itemstock_page_perpage_total"></span></b>
-                                                                    of
+                                                                    <lang class="lang_of">of</lang>
                                                                     <b><span id="view_itemstock_total"></span></b>
-                                                                    entries
+                                                                    <lang class="lang_entries">entries</lang>
                                                                     <span class="showing-hide-show-itemreport" style="display:none;">&nbsp;&nbsp;&nbsp;&nbsp;
-                                                                        <span class="showing-value-itemreport text-dark">0</span>&nbsp;
-                                                                        rows selected
+                                                                        <span class="showing-value-itemreport text-dark">0</span><lang class="lang_rows_selected">&nbsp;
+                                                                        rows selected</lang>
                                                                     </span>
                                                                 </div>
                                                             </div>
                                                             <div class="col-4">
-                                                                <nav aria-label="Page navigation example">
+                                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                                     <ul class="pagination mb-0">
-                                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                                             <i class="fa fa-angle-left font-20"></i>
                                                                         </button>
-                                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                                             <i class="fa fa-angle-right font-20"></i>
                                                                         </button>
                                                                     </ul>

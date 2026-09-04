@@ -102,7 +102,7 @@ PosnicPro.customerview = {
                 if (!PosnicPro.customerview.isEmptyStateShown) {
                     var container = document.getElementById('list_linelitem');
                     if (container) {
-                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong>Sale Order Empty</strong></p><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
+                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong><lang class="lang_sale_empty">Sale Order Empty</lang></strong></p><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
                         PosnicPro.customerview.isEmptyStateShown = true;
                     }
                 }
@@ -146,23 +146,23 @@ PosnicPro.customerview = {
                         '<h5 class="mt-0 font-13 view_item_Name">' + val.name + '</h5>' +
                         '</td>' +
                         '<td>' +
-                        '<p class="mb-1 font-14 font-dark ">Price</p>' +
+                        '<p class="mb-1 font-14 font-dark "><lang class="lang_price_title">Price</lang></p>' +
                         '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.price + '</span></h5>' +
                         '</td>' +
                         '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Qty</p>' +
+                        '<p class="mb-1 font-14 font-dark"><lang class="lang_qty_title">Qty</lang></p>' +
                         '<h5 class="mt-0 mb-0 font-13">' + val.qty + '</h5>' +
                         '</td>' +
                         '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Discount</p>' +
+                        '<p class="mb-1 font-14 font-dark"><lang class="lang_discount_title">Discount</lang></p>' +
                         '<h5 class="mt-0 mb-0 font-13">' + val.discount + '</h5>' +
                         '</td>' +
                         '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Tax</p>' +
+                        '<p class="mb-1 font-14 font-dark"><lang class="lang_module_tax">Tax</lang></p>' +
                         '<h5 class="mt-0 mb-0 font-13">' + val.tax + '</h5>' +
                         '</td>' +
                         '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Total</p>' +
+                        '<p class="mb-1 font-14 font-dark"><lang class="lang_total_title">Total</lang></p>' +
                         '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.total + '</span></h5>' +
                         '</td>' +
                         '</tr>' +
@@ -185,7 +185,7 @@ $(document).ready(function () {
     db.customerPlan.get('1').then(function (data) {
         if(data.read ===  false) {
             swal({
-                title: 'You are Unauthorized',
+                title: PosnicPro.i18n.t('lang_you_are_unauthorized', 'You are Unauthorized'),
                 showCancelButton: true,
                 confirmButtonClass: 'btn btn-outline-primary',
                 cancelButtonClass: 'btn btn-outline-danger m-l-10',

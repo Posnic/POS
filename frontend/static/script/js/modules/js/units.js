@@ -55,9 +55,9 @@ PosnicPro.units = {
             key: 'units',
             container: '#units_filter_panel',
             button: '#units_filter_btn',
-            searchPlaceholder: 'Search unit name',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_unit_name', 'Search unit name'),
             searchFields: [
-                { value: 'name', label: 'Name' }
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') }
             ],
             onChange: function () { PosnicPro.units.renderList(1); }
         });
@@ -73,14 +73,14 @@ PosnicPro.units = {
         PosnicPro.units.mountFilters();
         PosnicPro.get({ url: 'setting/getUnitAll' }, function (response) {
             if (response.type !== 'success') {
-                $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load units - try again.</div>');
+                $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_units_try_again">Could not load units - try again.</lang></div>');
                 return;
             }
             PosnicPro.units._all = response.data || [];
             PosnicPro.units.renderList(page || PosnicPro.units._page);
             if (then) { then(); }
         }, function () {
-            $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load units - try again.</div>');
+            $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_units_try_again">Could not load units - try again.</lang></div>');
         });
     },
     renderList: function (page) {
@@ -95,7 +95,7 @@ PosnicPro.units = {
         if (!self._filtered.length) {
             var filtered = PosnicPro.listFilter.activeCount('units') > 0;
             $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                + (filtered ? 'No units match this filter.' : 'No units yet - press New to add the first.') + '</div>');
+                + (filtered ? PosnicPro.i18n.t('lang_no_units_match_this_filter', 'No units match this filter.') : PosnicPro.i18n.t('lang_no_units_yet_press_new_to_add_the_first', 'No units yet - press New to add the first.')) + '</div>');
             $('#units_list_paging').html('');
             return;
         }
@@ -103,7 +103,7 @@ PosnicPro.units = {
         if (self._page > pages) { self._page = pages; }
         var slice = self._filtered.slice((self._page - 1) * self.PAGE_SIZE, self._page * self.PAGE_SIZE);
         var html = '<div class="table-responsive"><table class="table table-borderless">'
-            + '<thead><tr><th>Name</th><th class="text-right">Value</th></tr></thead><tbody>';
+            + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="text-right"><lang class="lang_value_title">Value</lang></th></tr></thead><tbody>';
         slice.forEach(function (u) {
             html += '<tr class="md-row units-row highlight-select'
                 + (PosnicPro.listDoc.activeId('units') === String(u.unit_id) ? ' is-active' : '') + '" data-id="' + esc(u.unit_id) + '" style="cursor:pointer;">'
@@ -119,7 +119,7 @@ PosnicPro.units = {
         var self = PosnicPro.units;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' unit' : ' units');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_unit', 'unit') : PosnicPro.i18n.t('lang_units', 'units'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -147,9 +147,9 @@ PosnicPro.units = {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var u = PosnicPro.units._find(id);
         if (!u) { return; }
-        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this unit" aria-label="Edit"'
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this unit" data-t-title="lang_edit_this_unit" aria-label="Edit" data-t-aria-label="lang_edit_title"'
             + ' onclick="hasher.setHash(\'units/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
-            + '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="delete" data-toggle="tooltip" title="Delete this unit" aria-label="Delete"'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="delete" data-toggle="tooltip" title="Delete this unit" data-t-title="lang_delete_this_unit" aria-label="Delete" data-t-aria-label="lang_delete"'
             + ' onclick="PosnicPro.units.askDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2"></i></button>';
         PosnicPro.listDoc.open({
             key: 'units',
@@ -157,17 +157,17 @@ PosnicPro.units = {
             title: u.unit_name,
             actions: actions,
             body: '<div id="units_doc_stats">'
-                + PosnicPro.listDoc.stats([{ v: esc(u.unit_value), l: 'Value' }])
+                + PosnicPro.listDoc.stats([{ v: esc(u.unit_value), l: PosnicPro.i18n.t('lang_value_title', 'Value') }])
                 + '</div>'
                 + PosnicPro.listDoc.grid([
-                    { label: 'About', lines: [
+                    { label: PosnicPro.i18n.t('lang_about', 'About'), lines: [
                         '<div>' + esc(u.unit_name) + '</div>',
                         '<div class="q-muted">e.g. "2 ' + esc(u.unit_name) + '" on a bill line</div>'
                     ] }
                 ])
                 + '<div data-module="item" data-access="read||write||delete">'
-                + '<div class="q-label" style="margin-top:14px;">Used by items</div>'
-                + '<div id="units_doc_items" class="q-muted">Loading ...</div>'
+                + '<div class="q-label" style="margin-top:14px;"><lang class="lang_used_by_items">Used by items</lang></div>'
+                + '<div id="units_doc_items" class="q-muted"><lang class="lang_loading_4">Loading ...</lang></div>'
                 + '</div>'
                 + '<div id="units_doc_strip"></div>'
         });
@@ -194,13 +194,13 @@ PosnicPro.units = {
             var total = Number(data.total) || list.length;
             $('#units_doc_stats .s-doc-stats').append(
                 '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
-                + '<div class="s-stat-label">' + (total === 1 ? 'Item uses it' : 'Items use it') + '</div></div>');
+                + '<div class="s-stat-label">' + (total === 1 ? PosnicPro.i18n.t('lang_item_uses_it', 'Item uses it') : PosnicPro.i18n.t('lang_items_use_it', 'Items use it')) + '</div></div>');
             if (!list.length) {
-                $('#units_doc_items').html('No items use this unit yet.');
+                $('#units_doc_items').html(PosnicPro.i18n.t('lang_no_items_use_this_unit_yet', 'No items use this unit yet.'));
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless table-sm" style="margin-bottom:0;">'
-                + '<thead><tr><th>Item</th><th class="un-col-sku">SKU</th><th class="text-right">Price</th><th class="text-right">Stock</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th class="un-col-sku"><lang class="lang_sku_title">SKU</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_stock">Stock</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var tracked = r.track_inventory === true || r.track_inventory === 'true';
                 html += '<tr class="un-doc-item-row highlight-select" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -216,7 +216,7 @@ PosnicPro.units = {
             }
             $('#units_doc_items').removeClass('q-muted').html(html);
         }, function () {
-            $('#units_doc_items').html('Could not load the items for this unit.');
+            $('#units_doc_items').html(PosnicPro.i18n.t('lang_could_not_load_the_items_for_this_unit', 'Could not load the items for this unit.'));
         });
     },
     /* The editor is the pane itself: two fields and Save. An empty id is a
@@ -238,7 +238,7 @@ PosnicPro.units = {
                 + '</div>'
                 + '<div class="text-danger" id="unit_page_error" style="display:none; margin-bottom:10px;"></div>'
                 + '<div>'
-                + '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.units.save(\'' + esc(id || '') + '\');">' + (u ? 'Update' : 'Save') + '</button> '
+                + '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.units.save(\'' + esc(id || '') + '\');">' + (u ? PosnicPro.i18n.t('lang_refresh_title', 'Update') : PosnicPro.i18n.t('lang_save_title', 'Save')) + '</button> '
                 + '<button type="button" class="btn btn-sm btn-light border" onclick="'
                 + (id ? 'hasher.setHash(\'units/' + esc(id) + '\'); PosnicPro.units.openDoc(\'' + esc(id) + '\');'
                     : 'PosnicPro.listDoc.close(\'units\'); hasher.setHash(\'units\');')
@@ -251,7 +251,7 @@ PosnicPro.units = {
         var name = $.trim($('#unit_page_name').val());
         var value = $.trim($('#unit_page_value').val());
         if (!name || !value) {
-            $('#unit_page_error').text('Both the name and the value are needed.').show();
+            $('#unit_page_error').text(PosnicPro.i18n.t('lang_both_the_name_and_the_value_are_needed', 'Both the name and the value are needed.')).show();
             return;
         }
         /* Two doors on purpose: addUnit only inserts (and refuses duplicate

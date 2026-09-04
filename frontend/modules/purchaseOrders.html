@@ -21,16 +21,16 @@
                 <div class="col-auto text-right">
                     <div class="widgetbar" id="purchases_controls">
                         <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.purchaseorders.exportCsv();"
-                            data-toggle="tooltip" title="Export the filtered rows" aria-label="Export CSV">
+                            data-toggle="tooltip" title="Export the filtered rows" data-t-title="lang_export_the_filtered_rows" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
                             <i class="feather icon-share"></i>
                         </button>
                         <span id="purchases_sort_host"></span>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="purchases_filter_btn"
-                            data-toggle="tooltip" title="Filter purchases">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                            data-toggle="tooltip" title="Filter purchases" data-t-title="lang_filter_purchases">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                         <a data-module="receiving" data-access="write" href="#/receivings/new"
-                            class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order">
+                            class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order" data-t-title="lang_record_a_purchase_or_an_order">
                             <i class="feather icon-plus mr-2"></i><lang class="lang_newpurchase_title">New Purchase</lang>
                         </a>
                     </div>
@@ -52,31 +52,31 @@
                              chip row ran out of width in the rail - "just make as
                              drop down same as More button"). -->
                         <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_quick_filters">
-                            <span class="p-qf-label">Status</span>
+                            <span class="p-qf-label"><lang class="lang_userstatus">Status</lang></span>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="purchases_status_dd">All</button>
+                                    aria-haspopup="true" aria-expanded="false" id="purchases_status_dd"><lang class="lang_report_all">All</lang></button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="">All</a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="ordered">Ordered</a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="partial">Partially received</a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="received">Received</a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="cancelled">Cancelled</a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status=""><lang class="lang_report_all">All</lang></a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="ordered"><lang class="lang_po_ordered">Ordered</lang></a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="partial"><lang class="lang_partially_received">Partially received</lang></a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="received"><lang class="lang_po_received">Received</lang></a>
+                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="cancelled"><lang class="lang_cancelled">Cancelled</lang></a>
                                 </div>
                             </div>
-                            <span class="p-qf-label">Expected</span>
+                            <span class="p-qf-label"><lang class="lang_expected">Expected</lang></span>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="purchases_expected_dd">Any</button>
+                                    aria-haspopup="true" aria-expanded="false" id="purchases_expected_dd"><lang class="lang_any">Any</lang></button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="">Any</a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="today">Today</a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="tomorrow">Tomorrow</a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="week">This week</a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected=""><lang class="lang_any">Any</lang></a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="today"><lang class="lang_this_day">Today</lang></a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="tomorrow"><lang class="lang_tomorrow">Tomorrow</lang></a>
+                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="week"><lang class="lang_roster_thisweek">This week</lang></a>
                                 </div>
                             </div>
                         </div>
-                        <div id="po_list_rows" class="md-rail-rows text-muted">Loading purchases ...</div>
+                        <div id="po_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_purchases">Loading purchases ...</lang></div>
                         <div class="q-pager" id="po_list_paging"></div>
                     </div>
                 </div>
@@ -91,14 +91,14 @@
         <div id="po_form_section" style="display:none;">
             <div class="card m-b-30">
                 <div class="card-header">
-                    <h5 class="card-title mb-0"><span id="po_form_verb">Create</span> <lang class="lang_po_one">purchase order</lang></h5>
+                    <h5 class="card-title mb-0"><span id="po_form_verb"><lang class="lang_po_create">Create</lang></span> <lang class="lang_po_one">purchase order</lang></h5>
                 </div>
                 <div class="card-body">
                     <input type="hidden" id="po_form_id" value="">
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label for="po_supplier_name"><lang class="lang_supplier_title">Supplier</lang> <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="po_supplier_name" placeholder="Choose a supplier" autocomplete="off">
+                            <input type="text" class="form-control" id="po_supplier_name" placeholder="Choose a supplier" data-t-placeholder="lang_choose_a_supplier" autocomplete="off">
                             <input type="hidden" id="po_supplier_id" value="">
                         </div>
                         <div class="form-group col-md-3">
@@ -113,7 +113,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <input type="text" class="form-control" id="po_item_search"
-                                placeholder="Search item by name, SKU or barcode" autocomplete="off">
+                                placeholder="Search item by name, SKU or barcode" data-t-placeholder="lang_search_item_by_name_sku_or_barcode" autocomplete="off">
                             <small class="text-muted">
                                 <lang class="lang_autofill_hint">Fill from supplier:</lang>
                                 <a href="javascript:void(0)" onclick="PosnicPro.purchaseorders.fillFromSupplier(false);"><lang class="lang_autofill_all">all items</lang></a>
@@ -136,7 +136,7 @@
                                 </tr>
                             </thead>
                             <tbody id="po_form_rows">
-                                <tr><td colspan="7" class="text-center text-muted">Search or fill from the supplier.</td></tr>
+                                <tr><td colspan="7" class="text-center text-muted"><lang class="lang_search_or_fill_from_the_supplier">Search or fill from the supplier.</lang></td></tr>
                             </tbody>
                         </table>
                     </div>

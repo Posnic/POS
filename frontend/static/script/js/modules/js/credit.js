@@ -62,7 +62,7 @@ PosnicPro.credit = {
       var sign = PosnicPro.credit.sign();
       var body = $('#credit_outstanding_body').empty();
       if (!rows.length) {
-        body.append('<tr><td colspan="4" class="text-center text-muted py-3">No outstanding customers.</td></tr>');
+        body.append('<tr><td colspan="4" class="text-center text-muted py-3"><lang class="lang_no_outstanding_customers">No outstanding customers.</lang></td></tr>');
         $('#credit_outstanding_total').text('0');
         return;
       }
@@ -100,7 +100,7 @@ PosnicPro.credit = {
         var d = res.data || {};
         PosnicPro.alert(
           'success',
-          (dryRun ? 'Dry run: ' : 'Reminders: ') + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
+          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_reminders', 'Reminders: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
         );
       });
     });

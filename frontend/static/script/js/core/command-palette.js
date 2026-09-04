@@ -166,8 +166,8 @@
      * reads it - one fetch, no race with an unfiltered load.
      */
     var ENTITY_SOURCES = [
-        { module: 'items', label: 'Item', acl: ['item', 'read'] },
-        { module: 'customers', label: 'Customer', acl: ['customer', 'read'] },
+        { module: 'items', label: PosnicPro.i18n.t('lang_newitem_title', 'Item'), acl: ['item', 'read'] },
+        { module: 'customers', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer'), acl: ['customer', 'read'] },
     ];
 
     function searchEntities(query, done) {
@@ -223,9 +223,9 @@
         var overlay = document.createElement('div');
         overlay.id = 'cmdk-overlay';
         overlay.innerHTML =
-            '<div id="cmdk-box" role="dialog" aria-label="Command palette">' +
+            '<div id="cmdk-box" role="dialog" aria-label="Command palette" data-t-aria-label="lang_command_palette">' +
             '<input id="cmdk-input" type="text" autocomplete="off" spellcheck="false" ' +
-            'placeholder="Type a page or action…" aria-label="Search commands">' +
+            'placeholder="Type a page or action…" aria-label="Search commands" data-t-aria-label="lang_search_commands">' +
             '<div id="cmdk-list" role="listbox"></div>' +
             '<div id="cmdk-hint">↑↓ navigate &nbsp; Enter open &nbsp; Esc close</div>' +
             '</div>';
@@ -279,7 +279,7 @@
                 (kind ? '<span class="cmdk-kind">' + kind + '</span>' : '') +
                 '</div>';
         }
-        if (!state.results.length) html = '<div class="cmdk-empty">Nothing matches</div>';
+        if (!state.results.length) html = '<div class="cmdk-empty"><lang class="lang_nothing_matches">Nothing matches</lang></div>';
         list.innerHTML = html;
         $(list).children('.cmdk-item').off('click').on('click', function () {
             pick(Number($(this).data('i')));

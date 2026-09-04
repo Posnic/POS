@@ -17,7 +17,7 @@
                 <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-branch display-current-branch tax_sales_branch_value" multiple="multiple"
                             data-placeholder="Select Branch" name="tax_sales_branch_value[]">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -30,7 +30,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -53,8 +53,8 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="tax_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="tax-line" role="tabpanel" aria-labelledby="tax-tab-line">
                                 <!-- start table -->
@@ -67,13 +67,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="taxreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="taxreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="taxreport_exportbtn"
-                                                           data-id="taxreportexport" onclick="PosnicPro.taxreport.taxSalesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="taxreportexport" onclick="PosnicPro.taxreport.taxSalesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>

@@ -9,14 +9,14 @@
         <div class="breadcrumbbar" style="margin-left: -0px;margin-top: -20px !important;">
             <div class="row text-left align-items-center">
                 <div class="col-7 col-md-8 col-lg-8">
-                    <h4 class="page-title break_title"><span id="sales-text-change">New</span>
+                    <h4 class="page-title break_title"><span id="sales-text-change"><lang class="lang_addvariant_title">New</lang></span>
                         <lang class="lang_printsale">&nbsp;Sale</lang>
                     </h4>
                 </div>
                 <div class="col-5 col-md-4 col-lg-4 text-right">
                     <input type="text" id="time-format" name="date"
                         class="form-control-plaintext commonDate text-right text-muted" readonly
-                        style="padding:0; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" aria-label="Time format"/>
+                        style="padding:0; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" aria-label="Time format" data-t-aria-label="lang_time_format"/>
                 </div>
             </div>
         </div>
@@ -35,10 +35,10 @@
                                     class="btn btn-info-rgba"
                                     style="height:38px;border: transparent;border-radius: 4px; flex: 1; min-width: 0;"
                                     onclick="PosnicPro.sales.readWeightFromMachine()">
-                                    <i class="feather icon-anchor"></i> Weight
+                                    <i class="feather icon-anchor"></i> <lang class="lang_weight">Weight</lang>
                                 </a>
                                 <div id="live_weight_display" style="background: #f0f0f0; padding: 8px 12px; border-radius: 4px; font-weight: bold; text-align: center; height: 38px; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
-                                    <span id="live_weight_value">--</span> <small style="margin-left: 4px;">kg</small>
+                                    <span id="live_weight_value">--</span> <small style="margin-left: 4px;"><lang class="lang_kg">kg</lang></small>
                                 </div>
                             </div>
                         </div>
@@ -126,7 +126,7 @@
                         <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 mobile-hide" id="items_view_hide">
                             <div class="row">
                                 <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
-                                    <input type="text" placeholder="Find item name, sku or barcode"
+                                    <input type="text" placeholder="Find item name, sku or barcode" data-t-placeholder="lang_find_item_name_sku_or_barcode_2"
                                         name="sales_new_item_name" id="sales_new_item_name"
                                         class="form-control border-control osk-trigger">
 
@@ -136,7 +136,7 @@
                                         style="height:38px;border: transparent;border-radius: 0px;display:none;"
                                         class="btn btn-primary-rgba"
                                         onclick="PosnicPro.sales.cameraScan.open();"
-                                        data-toggle="tooltip" title="Scan with the camera">
+                                        data-toggle="tooltip" title="Scan with the camera" data-t-title="lang_scan_with_the_camera">
                                         <i class="feather icon-camera"></i>
                                     </a>
                                     <!-- Quick Sale (Square study Q1): amount in, payment
@@ -145,18 +145,18 @@
                                         style="height:38px;border: transparent;border-radius: 0px;"
                                         class="btn btn-warning-rgba"
                                         onclick="PosnicPro.sales.quickSale.open();"
-                                        data-toggle="tooltip" title="Quick sale - just an amount">
+                                        data-toggle="tooltip" title="Quick sale - just an amount" data-t-title="lang_quick_sale_just_an_amount">
                                         <i class="feather icon-zap"></i>
                                     </a>
                                     <span class="input-group-btn" id="employee_box">
                                         <span id="sales_customer_btn"
                                             class="btn btn-primary-rgba toggle-user-input sales-customer-btn"
                                             data-toggle="tooltip" data-placement="top"
-                                            title="Walk-in customer. Click to choose or add"
+                                            title="Walk-in customer. Click to choose or add" data-t-title="lang_walk_in_customer_click_to_choose_or_add"
                                             data-original-title="Walk-in customer. Click to choose or add">
                                             <i class="feather icon-user"></i>
                                             <span id="sales_customer_btn_label"
-                                                class="sales-customer-label">Walk-in</span>
+                                                class="sales-customer-label"><lang class="lang_walk_in">Walk-in</lang></span>
                                         </span>
                                     </span>
                                 </div>
@@ -165,16 +165,16 @@
                             <div class="toggle-customer-user sales-customer-pop" style="display:none;">
                                 <div class="sales-customer-pop-head">
                                     <span class="sales-customer-pop-title"><i
-                                            class="feather icon-users mr-1"></i>Choose customer</span>
+                                            class="feather icon-users mr-1"></i><lang class="lang_choose_customer_2">Choose customer</lang></span>
                                     <a href="javascript:void(0)" class="sales-customer-pop-x"
-                                        id="sales_customer_pop_close" title="Close">&times;</a>
+                                        id="sales_customer_pop_close" title="Close" data-t-title="lang_close_title"><lang class="lang_text">&times;</lang></a>
                                 </div>
                                 <div class="input-group bootstrap-touchspin sales-customer-search-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text sales-customer-search-ic"><i
                                                 class="feather icon-search"></i></span>
                                     </div>
-                                    <input type="text" id="sales_new_customer_name" placeholder="Search name or phone…"
+                                    <input type="text" id="sales_new_customer_name" placeholder="Search name or phone…" data-t-placeholder="lang_search_name_or_phone"
                                         class="form-control border-control osk-trigger clear-sale-text" required
                                         autocomplete="off">
                                 </div>
@@ -183,11 +183,11 @@
                                 <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
                                 <a data-module="customer" data-access="write" href="#/sales/customers/new"
                                     class="sales-customer-pop-action" id="sales_customer_add_new">
-                                    <i class="feather icon-user-plus mr-2"></i>Add new customer
+                                    <i class="feather icon-user-plus mr-2"></i><lang class="lang_add_new_customer">Add new customer</lang>
                                 </a>
                                 <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"
                                     id="sales_customer_walkin">
-                                    <i class="feather icon-user mr-2"></i>Walk-in customer
+                                    <i class="feather icon-user mr-2"></i><lang class="lang_walk_in_customer">Walk-in customer</lang>
                                 </a>
                             </div>
                             <div>
@@ -199,15 +199,15 @@
                                     <div id="sales_loyalty_redeem_wrap" class="input-group input-group-sm"
                                         style="display:none; max-width: 300px; width:auto; flex:0 1 auto;">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text">Redeem points</span>
+                                            <span class="input-group-text"><lang class="lang_redeem_points">Redeem points</lang></span>
                                         </div>
                                         <input type="number" min="0" step="1" id="sales_loyalty_redeem_points"
                                             class="form-control" placeholder="0">
                                         <div class="input-group-append">
                                             <button type="button" class="btn btn-success-rgba"
-                                                id="sales_loyalty_redeem_apply">Apply</button>
+                                                id="sales_loyalty_redeem_apply"><lang class="lang_filter_title">Apply</lang></button>
                                             <button type="button" class="btn btn-secondary-rgba"
-                                                id="sales_loyalty_redeem_clear" title="Clear redemption">&times;</button>
+                                                id="sales_loyalty_redeem_clear" title="Clear redemption" data-t-title="lang_clear_redemption"><lang class="lang_text">&times;</lang></button>
                                         </div>
                                     </div>
                                     </div>
@@ -332,14 +332,14 @@
                                         <div class="sales-coupon-box">
                                             <i class="feather icon-tag sales-coupon-icon"></i>
                                             <input type="text" id="sales_coupon_code"
-                                                class="text-uppercase sales-coupon-input" placeholder="Coupon code">
+                                                class="text-uppercase sales-coupon-input" placeholder="Coupon code" data-t-placeholder="lang_coupon_code">
                                             <span class="sales-coupon-applied" id="sales_coupon_applied"
                                                 style="display:none;"></span>
                                             <button type="button" class="sales-coupon-apply"
-                                                id="sales_coupon_apply">Apply</button>
+                                                id="sales_coupon_apply"><lang class="lang_filter_title">Apply</lang></button>
                                             <button type="button" class="sales-coupon-clear"
-                                                id="sales_coupon_clear" title="Remove coupon"
-                                                style="display:none;">&times;</button>
+                                                id="sales_coupon_clear" title="Remove coupon" data-t-title="lang_remove_coupon"
+                                                style="display:none;"><lang class="lang_text">&times;</lang></button>
                                         </div>
                                         <div id="sales_coupon_status" class="small mt-1 text-right"></div>
                                     </div>
@@ -350,12 +350,11 @@
                                         <span class="tip-chips" style="display:none;"></span>
                                         <span class="display-currency"></span>&nbsp;<input
                                             type="number" min="0" step="0.01" id="sale_tip_input"
-                                            placeholder="0.00" title="Tip for staff - tick Add to bill to collect it with the sale">
+                                            placeholder="0.00" title="Tip for staff - tick Add to bill to collect it with the sale" data-t-title="lang_tip_for_staff_tick_add_to_bill_to_collect">
                                         <span class="custom-control custom-checkbox d-inline-block ml-1 align-middle">
                                             <input type="checkbox" class="custom-control-input" id="sale_tip_in_total">
                                             <label class="custom-control-label small" for="sale_tip_in_total"
-                                                title="Unticked, the tip is recorded for staff but the bill stays as-is (the usual way here). Ticked, the customer pays it with the sale."><lang
-                                                    class="lang_tip_in_bill">Add to bill</lang></label>
+                                                title="Unticked, the tip is recorded for staff but the bill stays as-is (the usual way here). Ticked, the customer pays it with the sale." data-t-title="lang_unticked_the_tip_is_recorded_for_staff_but"><lang class="lang_tip_in_bill">Add to bill</lang></label>
                                         </span>
                                     </span>
                                 </div>
@@ -480,7 +479,7 @@
 
                                                 <!-- MIDDLE: Additional Discount label -->
                                                 <td class="discount-label text-center">
-                                                    <span class="label-text">Additional Discount</span>
+                                                    <span class="label-text"><lang class="lang_additional_discount">Additional Discount</lang></span>
                                                 </td>
 
                                                 <!-- RIGHT: Additional Discount input -->
@@ -493,17 +492,17 @@
                                                              not the tint. -->
                                                         <span id="percentIcon"
                                                             class="icon text-muted toggle-icon d-none"
-                                                            title="Change to percentage discount"
+                                                            title="Change to percentage discount" data-t-title="lang_change_to_percentage_discount"
                                                             style="cursor: pointer;" aria-hidden="true">
                                                             %
                                                         </span>
                                                         <span id="rupeeIcon" class="icon text-muted toggle-icon"
-                                                            title="Change to rupee discount" style="cursor: pointer;"
+                                                            title="Change to rupee discount" data-t-title="lang_change_to_rupee_discount" style="cursor: pointer;"
                                                             aria-hidden="true">
                                                             <span class="display-currency">₹</span>
                                                         </span>
                                                         <a href="#" id="extraDisc" name="extraDiscVal"
-                                                            title="Edit Discount" class="text-danger">
+                                                            title="Edit Discount" data-t-title="lang_edit_discount" class="text-danger">
                                                             0.00
                                                         </a>
                                                     </div>
@@ -513,7 +512,7 @@
                                             <tr style="display: none" class="RoundOff-hide-show">
                                                 <td class="customer-display-hide">
                                                 </td>
-                                                <td class="discount-percentage-line-heigth"> Round Off
+                                                <td class="discount-percentage-line-heigth"> <lang class="lang_round_off">Round Off</lang>
                                                 </td>
                                                 <td class="discount-percentage-line-heigth">
                                                     <span class="pull-right" id="RoundOff"></span>
@@ -559,7 +558,7 @@
                                                         <button type="button" id="clearSaleButton"
                                                             class="col-xs-12 col-md-12 col-lg-2 btn btn-secondary-rgba"
                                                             onclick="return PosnicPro.resetForm('sale');"
-                                                            style="display: none;" aria-label="Reset"><i class="feather icon-refresh-ccw"
+                                                            style="display: none;" aria-label="Reset" data-t-aria-label="lang_reset_title"><i class="feather icon-refresh-ccw"
                                                                 style="margin-left:-5px;"></i>
                                                         </button>
                                                     </span>
@@ -590,7 +589,7 @@
                                                     <span class="salesBalanceAmount" style="display:none;">
                                                         <a href="javascript:void(0)"
                                                             class="col-xs-12 col-md-12 col-lg-6 btn btn-success-rgba custom_balance change-pay-text"
-                                                            onclick="PosnicPro.sales.openTenderModel()">PAY</a>
+                                                            onclick="PosnicPro.sales.openTenderModel()"><lang class="lang_pay">PAY</lang></a>
                                                     </span>
 
                                                 </td>
@@ -626,16 +625,16 @@
                                     <div class="col-md-12 col-lg-12 col-xl-12">
                                         <div class="text-center">
                                             <h6>
-                                                Wallet : <span class="display-currency">₹</span>
+                                                <lang class="lang_wallet">Wallet :</lang> <span class="display-currency">₹</span>
                                                 &nbsp;<span class="walletreturnamount">0.00</span> &nbsp;&nbsp;&nbsp;
 
-                                                <span class="payreturntext">Cash</span> : <span
+                                                <span class="payreturntext"><lang class="lang_cash_title">Cash</lang></span> : <span
                                                     class="display-currency">₹</span>
                                                 &nbsp;<span class="payreturnamount">0.00</span> &nbsp;&nbsp;
-                                                <span class="font-11 text-dark">(Note: Wallet payment can not be
-                                                    edited.)</span>&nbsp;
+                                                <span class="font-11 text-dark"><lang class="lang_note_wallet_payment_can_not_be_edited">(Note: Wallet payment can not be
+                                                    edited.)</lang></span><lang class="lang_due_2">&nbsp;
 
-                                                Due : <span class="display-currency">₹</span>
+                                                Due :</lang> <span class="display-currency">₹</span>
                                                 &nbsp;<span class="duebalance">0.00</span> &nbsp;&nbsp;
 
                                             </h6>
@@ -648,10 +647,10 @@
                             <div class="text-right kot-save-hide">
                                 <button type="button" name="cancel" id="kot_cancel_btn"
                                     class="col-4 btn btn-outline-secondary"
-                                    onclick="PosnicPro.kotorder.cancelKotSales()">Cancel</button>
+                                    onclick="PosnicPro.kotorder.cancelKotSales()"><lang class="lang_cancel_title">Cancel</lang></button>
                                 <button type="button" name="submit" id="kot_sales_btn"
                                     class="col-4 btn btn-outline-success"
-                                    onclick="PosnicPro.sales.openTenderModel()">Save</button>
+                                    onclick="PosnicPro.sales.openTenderModel()"><lang class="lang_save_title">Save</lang></button>
                             </div>
 
                             <!-- end row -->
@@ -712,7 +711,7 @@
                             <div class="email-leftbar">
                                 <div class="card m-b-10">
                                     <div class="card-header text-center">
-                                        <strong>DENOMINATION</strong>
+                                        <strong><lang class="lang_denomination">DENOMINATION</lang></strong>
                                     </div>
                                     <div class="card-body">
                                         <div class="row btn-group-toggle" data-toggle="buttons" id="render_amount">
@@ -735,7 +734,7 @@
                                                         maxlength="100" placeholder="" required>
                                                     <div class="input-group-append">
                                                         <span class="input-group-text" style="height:38px;">
-                                                            Tender
+                                                            <lang class="lang_tender">Tender</lang>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -760,7 +759,7 @@
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                Return balance
+                                                <lang class="lang_return_balance">Return balance</lang>
                                                 <h3><span class="badge badge-secondary-inverse pull-right"><span
                                                             class="display-currency"></span>&nbsp;<span
                                                             id="tendered_balance">0.00</span></span></h3>
@@ -775,23 +774,23 @@
                             <div class="email-leftbar kot-payment-info" style="display:none;">
                                 <div class="card m-b-30">
                                     <div class="card-header text-center">
-                                        <strong>KOT Details</strong>
+                                        <strong><lang class="lang_kotdetails_title">KOT Details</lang></strong>
                                     </div>
                                     <div class="card-body">
                                         <ul class="list-group">
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                <span>Table</span>
+                                                <span><lang class="lang_table_title">Table</lang></span>
                                                 <span id="kot_payment_table_no"></span>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                <span>No. of Pax</span>
+                                                <span><lang class="lang_no_of_pax">No. of Pax</lang></span>
                                                 <span id="kot_payment_pax"></span>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                <span>Order Type</span>
+                                                <span><lang class="lang_ordertype_title">Order Type</lang></span>
                                                 <span id="kot_payment_order_type"></span>
                                             </li>
                                         </ul>
@@ -805,7 +804,7 @@
                             <div class="email-leftbar">
                                 <div class="card m-b-30">
                                     <div class="card-header text-center">
-                                        <strong>SALE SUMMARY</strong>
+                                        <strong><lang class="lang_sale_summary_2">SALE SUMMARY</lang></strong>
                                     </div>
                                     <div class="card-body">
                                         <!-- The receipt itself, before it exists (owner: "there show
@@ -821,28 +820,28 @@
                                         <ul class="list-group" id="tender_amount_list" style="display:none;">
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                Sub Total
+                                                <lang class="lang_sub_total">Sub Total</lang>
                                                 <span class="pull-right"><span
                                                         class="display-currency"></span>&nbsp;<span
                                                         id="tendered_subtotal"></span></span>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                Discount
+                                                <lang class="lang_discount_title">Discount</lang>
                                                 <span class="pull-right"><span
                                                         class="display-currency"></span>&nbsp;<span
                                                         id="tendered_discount"></span></span>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                Tax
+                                                <lang class="lang_module_tax">Tax</lang>
                                                 <span class="pull-right"><span
                                                         class="display-currency"></span>&nbsp;<span
                                                         id="tendered_tax"></span></span>
                                             </li>
                                             <li
                                                 class="list-group-item d-flex justify-content-between align-items-center">
-                                                Grand Total
+                                                <lang class="lang_grand_total">Grand Total</lang>
                                                 <strong>
                                                     <h3><span class="badge badge-success-inverse badge_font_type"><span
                                                                 class="display-currency"></span>&nbsp;<span
@@ -862,11 +861,11 @@
                             <div class="email-rightbar">
                                 <div class="card m-b-30" id="tenderpage">
                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                        <strong class="mb-0">PAYMENT</strong>
+                                        <strong class="mb-0"><lang class="lang_payment">PAYMENT</lang></strong>
 
                                         <div class="d-inline-flex align-items-center">
                                             <span id="payment_status_label" class="text-warning"
-                                                style="font-size:14px; margin-right:6px;font-weight: 700;">Unpaid</span>
+                                                style="font-size:14px; margin-right:6px;font-weight: 700;"><lang class="lang_unpaid">Unpaid</lang></span>
                                             <label class="switch mb-0">
                                                 <input type="checkbox" id="unpaid_payment_toggle">
                                                 <span class="slider round"></span>
@@ -887,16 +886,16 @@
                                                 <div class="col-lg-8 offset-md-2">
                                                     <div class="input-group">
                                                         <div class="input-group-prepend"><span
-                                                                class="input-group-text">Pay amount</span></div>
+                                                                class="input-group-text"><lang class="lang_pay_amount">Pay amount</lang></span></div>
                                                         <input type="text" name="Partial_amount" id="Partial_amount"
-                                                            class="form-control partial_amount allow_decimal" aria-label="Partial amount">
+                                                            class="form-control partial_amount allow_decimal" aria-label="Partial amount" data-t-aria-label="lang_partial_amount">
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div class="row mt-3 mb-4 showhidDue">
                                                 <div class="col-lg-8 offset-md-2">
-                                                    <p class="font-weight-bold">Due : <span
+                                                    <p class="font-weight-bold"><lang class="lang_due_2">Due :</lang> <span
                                                             class="display-currency"></span>&nbsp;<span
                                                             class="balanceDue font-18">0.00</span></p>
                                                 </div>
@@ -906,8 +905,8 @@
                                                 <div class="form-group col-md-12">
                                                     <input type="checkbox" class="custom-control-input"
                                                         id="wallet_balance" name="wallet_balance">
-                                                    <label class="custom-control-label" for="wallet_balance">Use wallet
-                                                        ( <span class="display-currency"></span>&nbsp;<span
+                                                    <label class="custom-control-label" for="wallet_balance"><lang class="lang_use_wallet">Use wallet
+                                                        (</lang> <span class="display-currency"></span>&nbsp;<span
                                                             class="walletbalance"></span> )</label>
                                                 </div>
                                             </div>
@@ -915,16 +914,16 @@
                                                 <div class="form-group col-md-12">
 
                                                     <h6>
-                                                        Wallet : <span class="display-currency">₹</span>
+                                                        <lang class="lang_wallet">Wallet :</lang> <span class="display-currency">₹</span>
                                                         &nbsp;<span class="walleteditamount">0.00</span>
                                                         &nbsp;&nbsp;&nbsp;
 
-                                                        <span class="payedittext">Cash</span> : <span
+                                                        <span class="payedittext"><lang class="lang_cash_title">Cash</lang></span> : <span
                                                             class="display-currency">₹</span>
                                                         &nbsp;<span class="payeditamount">0.00</span> &nbsp;&nbsp;&nbsp;
                                                     </h6>
-                                                    <span class="font-11 text-dark">(Note: Wallet payment can not be
-                                                        edited.)</span>
+                                                    <span class="font-11 text-dark"><lang class="lang_note_wallet_payment_can_not_be_edited">(Note: Wallet payment can not be
+                                                        edited.)</lang></span>
 
                                                 </div>
                                             </div>
@@ -964,8 +963,8 @@
                                             <div class="row">
                                                 <div class="col-md-12">
                                                     <div class="alert alert-success text-center" role="alert">
-                                                        <i class="feather icon-check-circle mr-2"></i>Successfully
-                                                        Completed
+                                                        <i class="feather icon-check-circle mr-2"></i><lang class="lang_successfully_completed">Successfully
+                                                        Completed</lang>
                                                     </div>
                                                 </div>
                                             </div>
@@ -979,27 +978,27 @@
                                                          when its feature is on. -->
                                                     <div class="sale-done-actions">
                                                         <a href="#/sales/new" class="btn btn-primary btn-block sale-done-primary infobar-tender-close">
-                                                            <i class="feather icon-plus mr-2"></i><span>New sale</span>
+                                                            <i class="feather icon-plus mr-2"></i><span><lang class="lang_new_sale">New sale</lang></span>
                                                         </a>
                                                         <div class="sale-done-print">
                                                             <a href="javascript:void(0)" class="printSalesReceipt btn btn-outline-primary sale-done-print-main">
-                                                                <i class="feather icon-printer mr-2"></i><span>Print receipt</span>
+                                                                <i class="feather icon-printer mr-2"></i><span><lang class="lang_print_receipt">Print receipt</lang></span>
                                                             </a>
                                                             <a href="javascript:void(0)" class="btn btn-outline-primary sale-done-paper" id="print_receipt_thermal"
-                                                               title="Print on the till roll">Thermal</a>
+                                                               title="Print on the till roll" data-t-title="lang_print_on_the_till_roll"><lang class="lang_thermal">Thermal</lang></a>
                                                             <a href="javascript:void(0)" class="btn btn-outline-primary sale-done-paper" id="print_receipt_a4"
-                                                               title="Print a full A4 invoice">A4</a>
+                                                               title="Print a full A4 invoice" data-t-title="lang_print_a_full_a4_invoice">A4</a>
                                                         </div>
                                                         <div class="sale-done-send">
                                                             <a href="javascript:void(0)" class="smsSalesReceipt btn btn-light">
-                                                                <i class="feather icon-message-square mr-2"></i><span>SMS</span>
+                                                                <i class="feather icon-message-square mr-2"></i><span><lang class="lang_sms">SMS</lang></span>
                                                             </a>
                                                             <a href="javascript:void(0)" class="printSalesWhatsAppReceipt btn btn-light">
-                                                                <i class="feather icon-message-circle mr-2"></i><span>WhatsApp</span>
+                                                                <i class="feather icon-message-circle mr-2"></i><span><lang class="lang_whatsapp">WhatsApp</lang></span>
                                                             </a>
                                                         </div>
                                                     </div>
-                                                    <p class="sale-done-hint">Staying open. Close it when you are ready.</p>
+                                                    <p class="sale-done-hint"><lang class="lang_staying_open_close_it_when_you_are_ready">Staying open. Close it when you are ready.</lang></p>
                                                 </div>
                                             </div>
 
@@ -1010,12 +1009,12 @@
                             </div>
                             <div class="text-right cancel-save-hide-show">
                                 <button type="button"
-                                    class="col-4 btn btn-outline-secondary infobar-tender-close">Cancel</button>
+                                    class="col-4 btn btn-outline-secondary infobar-tender-close"><lang class="lang_cancel_title">Cancel</lang></button>
                                 <button type="button" name="submit" id="save_btn"
                                     class="col-4 save_btn btn btn-outline-success wav_pad save_return_submit"
                                     onclick="return PosnicPro.sales.addSale.cartOrderSubmit()">
-                                    <span class="changeSalesBtnText">Save</span>
-                                    <span class="save_text" style="display:none">Save</span>
+                                    <span class="changeSalesBtnText"><lang class="lang_save_title">Save</lang></span>
+                                    <span class="save_text" style="display:none"><lang class="lang_save_title">Save</lang></span>
                                 </button>
                             </div>
                         </div>
@@ -1049,7 +1048,7 @@
                                 <div class="card m-b-30">
                                     <div class="card-body">
                                         <div class="card-header text-center">
-                                            <strong>Order Type</strong>
+                                            <strong><lang class="lang_ordertype_title">Order Type</lang></strong>
                                         </div>
                                         <div class="row mb-2 justify-content-center" id="kot_dine_type_toggle">
                                             <div class="btn-group btn-group-toggle" data-toggle="buttons" style="width: 100%; max-width: 400px;">
@@ -1057,18 +1056,18 @@
                                                     <input type="radio" name="kot_dine_type" id="kot_dine_type_dinein"
                                                         autocomplete="off" value="Dine-in" checked>
                                                     <i class="feather icon-home" style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
-                                                    <span style="font-size: 14px; font-weight: 600;">Dine-in</span>
+                                                    <span style="font-size: 14px; font-weight: 600;"><lang class="lang_dine_in">Dine-in</lang></span>
                                                 </label>
                                                 <label class="btn btn-outline-info" id="kot_takeaway_label" style="flex: 1; padding: 15px 10px;">
                                                     <input type="radio" name="kot_dine_type" id="kot_dine_type_takeaway"
                                                         autocomplete="off" value="Take away">
                                                     <i class="feather icon-shopping-bag" style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
-                                                    <span style="font-size: 14px; font-weight: 600;">Take away</span>
+                                                    <span style="font-size: 14px; font-weight: 600;"><lang class="lang_take_away">Take away</lang></span>
                                                 </label>
                                             </div>
                                         </div>
                                         <div class="card-header text-center">
-                                            <strong>Tables</strong>
+                                            <strong><lang class="lang_tables">Tables</lang></strong>
                                         </div>
                                         <div class="row btn-group-toggle justify-content-center"
                                             id="kot_order_tables_list">
@@ -1086,7 +1085,7 @@
                             <div class="email-leftbar tables-list-hide">
                                 <div class="card m-b-30">
                                     <div class="card-header text-center">
-                                        <strong>PAX</strong>
+                                        <strong><lang class="lang_pax_2">PAX</lang></strong>
                                     </div>
                                     <div class="card-body">
                                         <div class="row btn-group-toggle justify-content-center"
@@ -1098,9 +1097,9 @@
                             </div>
                             <div class="text-right">
                                 <button type="button"
-                                    class="col-4 btn btn-outline-secondary infobar-tender-close table-selection-close">Cancel</button>
+                                    class="col-4 btn btn-outline-secondary infobar-tender-close table-selection-close"><lang class="lang_cancel_title">Cancel</lang></button>
                                 <button type="button" name="submit" id="kot_order_next_btn"
-                                    class="col-4 btn btn-outline-success">Next</button>
+                                    class="col-4 btn btn-outline-success"><lang class="lang_next">Next</lang></button>
                             </div>
                         </div>
                         <!-- End col -->
@@ -1121,8 +1120,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_autosmsaftersales_title">SMS Receipt</lang>
                 </h5>
-                <button type="button" class="close sms-modal-close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close sms-modal-close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <form id="sms_form">
@@ -1132,11 +1131,11 @@
                     <div class="card-body loader-view-emailsetting" data-select2-id="2240">
                         <div class="form-row">
                             <div class="form-group col-12">
-                                <label class="form-control-placeholder" for="customer_sms_phone">Customer phone <span
+                                <label class="form-control-placeholder" for="customer_sms_phone"><lang class="lang_customer_phone_2">Customer phone</lang> <span
                                         class="text-danger">*</span></label>
                                 <input type="tel" id="customer_sms_phone" name="customer_sms_phone"
                                     class="form-control border-control def-txt-input" minlength="3" maxlength="20"
-                                    placeholder="Enter a Customer Phone" autocomplete="off" required="">
+                                    placeholder="Enter a Customer Phone" data-t-placeholder="lang_enter_a_customer_phone" autocomplete="off" required="">
                                 <input type="hidden" id="customer_sms_fullphone" name="customer_sms_fullphone">
                             </div>
                         </div>
@@ -1144,8 +1143,8 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary sms-modal-close" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Send</button>
+                    <button type="button" class="btn btn-secondary sms-modal-close" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                    <button type="submit" class="btn btn-primary"><lang class="lang_send">Send</lang></button>
                 </div>
             </form>
         </div>
@@ -1177,7 +1176,7 @@
                         <lang class="lang_choose_register">Choose Register</lang>
                     </label>
                     <select id="sales_choose_register_model" class="custom-select border-control choose_register_model" style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; background-color: #f8f9fa;">
-                        <option value="">-- Select Register --</option>
+                        <option value=""><lang class="lang_select_register_2">-- Select Register --</lang></option>
                     </select>
                 </div>
                 <div class="form-group mb-0">

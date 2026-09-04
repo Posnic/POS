@@ -4,7 +4,7 @@
         <div class="col-md-12">
             <div class="mobile-logobar">
                 <a href="#" class="mobile-logo">
-                    <h1 class="title_h2">Posnic</h1>
+                    <h1 class="title_h2"><lang class="lang_posnic">Posnic</lang></h1>
                     <!--                    <img src="static/images/logo.svg" class="img-fluid" alt="logo" loading="lazy" decoding="async">-->
                 </a>
             </div>
@@ -126,7 +126,7 @@
                             <div class="dropdown">
                                 <a class="dropdown-toggle" href="#" role="button" id="languagelink"
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
-                                        class="live-icon select_language">English</span><span
+                                        class="live-icon select_language"><lang class="lang_english">English</lang></span><span
                                         class="feather icon-chevron-down live-icon"></span></a>
                                 <!--
                                     Filled from languages/index.json at load.
@@ -141,14 +141,14 @@
                                     id="change_language">
                                     <a class="dropdown-item" href="javascript:void(0)" data-code="en"
                                         data-value="English"><i class="flag flag-icon-us flag-icon-squared"></i>
-                                        English</a>
+                                        <lang class="lang_english">English</lang></a>
                                 </div>
                             </div>
                         </div>
                     </li>
 
                     <li class="list-inline-item mobile-hide fullscreen-mode add_new_tooltip" data-toggle="tooltip"
-                        title="fullscreen">
+                        title="fullscreen" data-t-title="lang_fullscreen">
                         <div class="fullscreenbar">
                             <a href="#" id="infobar-fullscreen-open" class="infobar-icon fullscreen-mode"
                                 onclick="PosnicPro.dashboard.toggleFullScreen();">
@@ -160,7 +160,7 @@
                     <!-- Shop activity lives inside the ONE notification bell
                          (user: no need of two different stuff) - see the
                          notifybar dropdown below. -->
-                    <li class="list-inline-item mobile-hide" id="shift_clock_li" data-toggle="tooltip" title="Clock In / Out">
+                    <li class="list-inline-item mobile-hide" id="shift_clock_li" data-toggle="tooltip" title="Clock In / Out" data-t-title="lang_clock_in_out">
                         <div class="clockbar">
                             <a href="javascript:void(0);" id="shift_clock_btn" class="infobar-icon"
                                 onclick="PosnicPro.shiftWidget.openWidget();">
@@ -185,7 +185,7 @@
                             } catch (e) { /* fail open */ }
                         })();
                     </script>
-                    <li class="list-inline-item" data-toggle="tooltip" title="Shortcut Keys" data-module="dashboard"
+                    <li class="list-inline-item" data-toggle="tooltip" title="Shortcut Keys" data-t-title="lang_shortcut_title" data-module="dashboard"
                         data-access="read">
                         <div class="offlinebar">
                             <a href="javascript:void(0)" id="shortcut" class="infobar-icon offline-mode"
@@ -196,7 +196,7 @@
                             </a>
                         </div>
                     </li>
-                    <li class="list-inline-item" data-toggle="tooltip" title="Theme">
+                    <li class="list-inline-item" data-toggle="tooltip" title="Theme" data-t-title="lang_theme">
                         <div class="themebar">
                             <div class="dropdown" id="dropdown-theme">
                                 <a class="infobar-icon" href="javascript:void(0)" role="button"
@@ -207,65 +207,65 @@
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="themelink"
                                     style="min-width:234px;padding:6px;">
                                     <div class="notification-dropdown-title" style="padding:6px 10px 4px;">
-                                        <h4 style="margin:0;">Theme</h4>
+                                        <h4 style="margin:0;"><lang class="lang_theme">Theme</lang></h4>
                                     </div>
-                                    <h6 class="dropdown-header" style="padding:4px 12px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;">Light</h6>
+                                    <h6 class="dropdown-header" style="padding:4px 12px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><lang class="lang_light">Light</lang></h6>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="github"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('github');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#f6f8fa 50%,#506fe4 50%);"></span>
-                                        <span class="flex-fill">Default <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Clean &amp; professional</small></span>
+                                        <span class="flex-fill"><lang class="lang_default">Default</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_clean_professional">Clean &amp; professional</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="comfort"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('comfort');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#F3ECDB 50%,#4F7A69 50%);"></span>
-                                        <span class="flex-fill">Eye Comfort <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Best for long sessions</small></span>
+                                        <span class="flex-fill"><lang class="lang_eye_comfort">Eye Comfort</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_best_for_long_sessions">Best for long sessions</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="cleanlight"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('cleanlight');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#fbfbfb 50%,#52525b 50%);"></span>
-                                        <span class="flex-fill">Clean Light <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Neutral greys</small></span>
+                                        <span class="flex-fill"><lang class="lang_clean_light">Clean Light</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_neutral_greys">Neutral greys</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="brown"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('brown');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#EFEBE9 50%,#795548 50%);"></span>
-                                        <span class="flex-fill">Coffee <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Warm &amp; cozy</small></span>
+                                        <span class="flex-fill"><lang class="lang_coffee">Coffee</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_warm_cozy">Warm &amp; cozy</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="macos"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('macos');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#ececec 50%,#007aff 50%);"></span>
-                                        <span class="flex-fill">macOS <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Bright &amp; minimal</small></span>
+                                        <span class="flex-fill"><lang class="lang_macos">macOS</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_bright_minimal">Bright &amp; minimal</lang></small></span>
                                     </a>
                                     <div class="dropdown-divider" style="margin:6px 0;"></div>
-                                    <h6 class="dropdown-header" style="padding:2px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;">Dark</h6>
+                                    <h6 class="dropdown-header" style="padding:2px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><lang class="lang_dark">Dark</lang></h6>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="dark"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('dark');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(135deg,#252526 50%,#569cd6 50%);"></span>
-                                        <span class="flex-fill">VS Code <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Developer dark</small></span>
+                                        <span class="flex-fill"><lang class="lang_vs_code">VS Code</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_developer_dark">Developer dark</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="softdark"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('softdark');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(255,255,255,0.2);background:linear-gradient(135deg,#16181d 50%,#4aa3ff 50%);"></span>
-                                        <span class="flex-fill">Soft Dark <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Dimmed, all-day</small></span>
+                                        <span class="flex-fill"><lang class="lang_soft_dark">Soft Dark</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_dimmed_all_day">Dimmed, all-day</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="warmnight"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('warmnight');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(255,255,255,0.2);background:linear-gradient(135deg,#1c1a17 50%,#e0a458 50%);"></span>
-                                        <span class="flex-fill">Warm Night <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">Warm, late-night</small></span>
+                                        <span class="flex-fill"><lang class="lang_warm_night">Warm Night</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_warm_late_night">Warm, late-night</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="terminal"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('terminal');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(255,255,255,0.2);background:linear-gradient(135deg,#0c0c0c 50%,#e8e8e8 50%);"></span>
-                                        <span class="flex-fill">Terminal <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">B&amp;W monospace</small></span>
+                                        <span class="flex-fill"><lang class="lang_terminal">Terminal</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_b_w_monospace">B&amp;W monospace</lang></small></span>
                                     </a>
                                     <a class="dropdown-item theme-item d-flex align-items-center" href="javascript:void(0)" data-preset="dosblue"
                                         style="padding:7px 12px;" onclick="PosnicPro.themeManager.applyPreset('dosblue');">
                                         <span style="width:18px;height:18px;border-radius:4px;margin-right:10px;flex:0 0 auto;border:1px solid rgba(255,255,255,0.2);background:linear-gradient(135deg,#0000aa 50%,#ffff55 50%);"></span>
-                                        <span class="flex-fill">Turbo C <small class="text-muted d-block" style="font-size:10px;line-height:1.1;">DOS retro blue</small></span>
+                                        <span class="flex-fill"><lang class="lang_turbo_c">Turbo C</lang> <small class="text-muted d-block" style="font-size:10px;line-height:1.1;"><lang class="lang_dos_retro_blue">DOS retro blue</lang></small></span>
                                     </a>
                                     <div class="dropdown-divider" style="margin:6px 0;"></div>
                                     <a class="dropdown-item text-center" href="javascript:void(0)"
                                         style="font-size:12px;padding:6px;"
-                                        onclick="location.hash='#/settings';var n=0,t=setInterval(function(){var el=document.getElementById('v-pills-theme-tab');if(el){clearInterval(t);el.click();if(el.scrollIntoView)el.scrollIntoView({block:'center'});}if(++n>40)clearInterval(t);},150);">Custom colours</a>
+                                        onclick="location.hash='#/settings';var n=0,t=setInterval(function(){var el=document.getElementById('v-pills-theme-tab');if(el){clearInterval(t);el.click();if(el.scrollIntoView)el.scrollIntoView({block:'center'});}if(++n>40)clearInterval(t);},150);"><lang class="lang_custom_colours">Custom colours</lang></a>
                                 </div>
                             </div>
                         </div>

@@ -341,9 +341,9 @@ PosnicPro.quickreport = {
         // exporter cannot gather, so the numbers ride this hidden table.
         (function () {
           var money = function (n) { return Number(n || 0).toFixed(2); };
-          var rows = '<tr><td>Total sales</td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.total) + '</td></tr>'
-            + '<tr><td>Items sold</td><td class="text-right">' + PosnicPro.quickreport.lastReport.qty + '</td></tr>'
-            + '<tr><td>Payments received</td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.tenderTotal) + '</td></tr>';
+          var rows = '<tr><td><lang class="lang_total_sales">Total sales</lang></td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.total) + '</td></tr>'
+            + '<tr><td><lang class="lang_items_sold">Items sold</lang></td><td class="text-right">' + PosnicPro.quickreport.lastReport.qty + '</td></tr>'
+            + '<tr><td><lang class="lang_payments_received">Payments received</lang></td><td class="text-right">' + money(PosnicPro.quickreport.lastReport.tenderTotal) + '</td></tr>';
           PosnicPro.quickreport.lastReport.payments.forEach(function (p) {
             rows += '<tr><td>' + $('<i>').text(p.label).html() + '</td><td class="text-right">' + money(p.amount) + '</td></tr>';
           });
@@ -691,7 +691,7 @@ PosnicPro.quickreport = {
   printDailyReport: function () {
     var report = PosnicPro.quickreport.lastReport;
     if (!report) {
-      PosnicPro.alert('warning', 'Run the report first, then print it.');
+      PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_print_it', 'Run the report first, then print it.'));
       return false;
     }
 
@@ -719,20 +719,20 @@ PosnicPro.quickreport = {
       shop: b.branch_name || '',
       address: b.branch_address || b.address || '',
       phone: b.branch_telephone || b.phone || '',
-      title: 'Day-End Summary',
+      title: PosnicPro.i18n.t('lang_day_end_summary', 'Day-End Summary'),
       range: (report.from && report.to) ? report.from + ' - ' + report.to : '',
       filename: 'day-end-summary'
     };
   },
 
   exportCsv: function () {
-    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return false; }
+    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_export_it', 'Run the report first, then export it.')); return false; }
     PosnicPro.reportExport.csv('export_daily_report', PosnicPro.quickreport._exportMeta());
     return false;
   },
 
   exportXls: function () {
-    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', 'Run the report first, then export it.'); return false; }
+    if (!PosnicPro.quickreport.lastReport) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_export_it', 'Run the report first, then export it.')); return false; }
     PosnicPro.reportExport.xls('export_daily_report', PosnicPro.quickreport._exportMeta());
     return false;
   },
@@ -745,7 +745,7 @@ PosnicPro.quickreport = {
    */
   printDaySlip: function () {
     var report = PosnicPro.quickreport.lastReport;
-    if (!report) { PosnicPro.alert('warning', 'Run the report first, then print the slip.'); return false; }
+    if (!report) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_print_the_slip', 'Run the report first, then print the slip.')); return false; }
     var width = PosnicPro.resolvePaperWidth();
     if (window.electronAPI && window.electronAPI.printer && window.electronAPI.printer.printReport
         && width !== 'a4') {
@@ -779,7 +779,7 @@ PosnicPro.quickreport = {
     });
     h += '</div>';
     var w = window.open('', '_blank');
-    if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the slip can print.'); return false; }
+    if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_slip_can_print', 'Allow pop-ups so the slip can print.')); return false; }
     w.document.write('<html><head><title>Day-Close Slip</title><style>'
       + '@page{margin:4mm;}body{margin:0;font-family:Consolas,Menlo,monospace;font-size:12px;color:#000;background:#fff;}'
       + '.slip{width:72mm;}.c{text-align:center;}.b{font-weight:700;}.big{font-size:15px;}'
@@ -809,24 +809,24 @@ PosnicPro.quickreport = {
 
     var doc = {
       shop: report.branch.branch_name || '',
-      title: 'DAILY SALES',
+      title: PosnicPro.i18n.t('lang_daily_sales', 'DAILY SALES'),
       meta: [
-        { label: 'From', value: report.from },
-        { label: 'To', value: report.to },
-        { label: 'Printed', value: new Date().toLocaleString('en-IN') },
-        { label: 'By', value: PosnicPro.local.get('loginuser_name') || '' }
+        { label: PosnicPro.i18n.t('lang_from', 'From'), value: report.from },
+        { label: PosnicPro.i18n.t('lang_to_2', 'To'), value: report.to },
+        { label: PosnicPro.i18n.t('lang_printed_2', 'Printed'), value: new Date().toLocaleString('en-IN') },
+        { label: PosnicPro.i18n.t('lang_by', 'By'), value: PosnicPro.local.get('loginuser_name') || '' }
       ],
       sections: [
         { type: 'pairs', name: 'SALES', rows: [
-          { label: 'Items sold', value: String(report.qty) },
-          { label: 'Subtotal', value: money(report.subtotal) }
+          { label: PosnicPro.i18n.t('lang_items_sold', 'Items sold'), value: String(report.qty) },
+          { label: PosnicPro.i18n.t('lang_subtotal', 'Subtotal'), value: money(report.subtotal) }
         ] },
-        { type: 'total', label: 'TOTAL SALES', value: money(report.total) },
+        { type: 'total', label: PosnicPro.i18n.t('lang_total_sales_2', 'TOTAL SALES'), value: money(report.total) },
         { type: 'pairs', name: 'PAYMENTS',
           rows: report.payments.map(function (p) {
             return { label: p.label, value: money(p.amount) };
           }),
-          total: { label: 'Total received', value: money(report.tenderTotal) } },
+          total: { label: PosnicPro.i18n.t('lang_total_received', 'Total received'), value: money(report.tenderTotal) } },
         /*
          * The cash figure sits at the head of the handover block, directly
          * above the line the count goes on, because that is the comparison
@@ -840,7 +840,7 @@ PosnicPro.quickreport = {
          * worse than printing a line to write on.
          */
         { type: 'blanks', name: 'HANDOVER', rows: [
-          { label: 'Cash sales', value: money(cash) },
+          { label: PosnicPro.i18n.t('lang_cash_sales', 'Cash sales'), value: money(cash) },
           'Opening float', 'Cash counted', 'Difference', 'Handed to', 'Signature'
         ] },
         { type: 'items', name: 'TOP ITEMS BY VALUE',
@@ -876,7 +876,7 @@ PosnicPro.quickreport = {
       }
     })
     .catch(function (err) {
-      PosnicPro.alert('error', (err && err.message) ? err.message : 'Print failed');
+      PosnicPro.alert('error', (err && err.message) ? err.message : PosnicPro.i18n.t('lang_print_failed', 'Print failed'));
     });
 
     return false;
@@ -888,7 +888,7 @@ PosnicPro.quickreport = {
   // any theme (dark themes included).
   _captureReport: function (onCanvas) {
     var el = document.getElementById('export_daily_report');
-    if (!el) { PosnicPro.alert('warning', 'Run the report first, then try again.'); return; }
+    if (!el) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_try_again', 'Run the report first, then try again.')); return; }
     /* html2canvas loads on first use. This also FIXES the dashboard: the
        library was only ever bundled into the mail-print page, so this check
        used to fail on every till with "Report tools not loaded". */
@@ -912,7 +912,7 @@ PosnicPro.quickreport = {
 
   dailyReportPdf: function () {
     var report = PosnicPro.quickreport.lastReport;
-    if (!report) { PosnicPro.alert('warning', 'Run the report first, then download it.'); return false; }
+    if (!report) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_run_the_report_first_then_download_it', 'Run the report first, then download it.')); return false; }
     PosnicPro.lazy.load('jspdf').then(function () {
       PosnicPro.quickreport._buildPdf();
     });
@@ -934,7 +934,7 @@ PosnicPro.quickreport = {
                   : (typeof window.jsPDF === 'function') ? window.jsPDF
                   : (typeof window.jspdf === 'function') ? window.jspdf
                   : null;
-    if (!jsPDFCtor) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return false; }
+    if (!jsPDFCtor) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_pdf_tools_not_loaded_refresh_and_retry', 'PDF tools not loaded - refresh and retry.')); return false; }
     PosnicPro.quickreport._captureReport(function (canvas) {
       var imgData = canvas.toDataURL('image/png');
       var pageW = 210, pageH = 297, margin = 8;         // A4 portrait, mm
@@ -1069,7 +1069,7 @@ $(document).ready(function () {
         .data("daterangepicker")
         .setEndDate(moment().endOf("day"));
       $("#view_dailysale_report_daterange span").html(
-        '<span>Today</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
+        '<span><lang class="lang_this_day">Today</lang></span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
           moment().startOf("day").format("YYYY/MM/DD h:mm A") +
           " - " +
           moment().endOf("day").format("YYYY/MM/DD h:mm A") +

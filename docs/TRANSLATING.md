@@ -216,8 +216,10 @@ the code writes into later must survive, or that write lands nowhere.
 ## Keeping a language up to date
 
 When a screen gains a new string, every pack is behind by one key until
-somebody fills it. A test fails when any language drops below 95%, so it
-cannot drift far. Find what is missing:
+somebody fills it. A test holds every pack at or above the point it last
+reached (`tests/i18n-coverage-baseline.json`, refreshed with
+`--write-baseline` after a merge), so a language can only move up. Find what
+is missing:
 
 ```bash
 node tests/tools/i18n-coverage.js
@@ -273,6 +275,43 @@ Write `name` **in the language itself**. Somebody looking for German is looking
 for Deutsch, not for "German". Add `dir: 'rtl'` for a right-to-left script.
 Add the code to `languages` in `_glossary.json` too, and fill the glossary
 column first - it is the fastest way to a consistent pack.
+
+---
+
+## Adding text to the app (for developers)
+
+Every word a person reads has to be reachable by a key, or it is English in
+every language. Three shapes, one runtime:
+
+| Where the words are | Write | Translated by |
+|---|---|---|
+| Template text | `<lang class="lang_key">English</lang>` | `PosnicPro.i18n.apply()` at load |
+| Inside `<title>` or `<option>` | the same tag - the build hoists it to `data-t="lang_key"` | apply() |
+| `placeholder`, `title`, `aria-label` | `placeholder="English" data-t-placeholder="lang_key"` | apply() |
+| Markup JavaScript renders (table headers, pills, modal bodies) | `'<th><lang class="lang_key">Bill #</lang></th>'` | `PosnicPro.i18n.watch()` as it lands |
+| Text JavaScript sets (`.text()`, toasts, labels, ternaries) | `PosnicPro.i18n.t('lang_key', 'English')` | at the call |
+
+The English is the fallback, physically present in every case, so a missing
+key never shows anything worse than English.
+
+**One thing to watch:** `t()` evaluated when a module *loads* runs before any
+pack has arrived, so a top-level object literal must carry `<lang>` markup
+instead of `t()` (see `PosnicPro.dashboard.SETUP_CARDS`). Calls inside
+functions are fine.
+
+You do not have to do this by hand. After adding a screen:
+
+```bash
+node tests/tools/i18n-tag.js --write        # templates: text nodes and attributes
+node tests/tools/i18n-tag-js.js --write     # JavaScript: markup literals and t() calls
+node tests/tools/i18n-gaps.js               # what is still bare, per template
+node tests/tools/i18n-coverage.js           # which packs now have gaps
+```
+
+Keys are minted from the English (`lang_add_to_bill`), and the same English on
+two screens shares one key. Then hand the new keys to translators with
+`--worksheet <code>`. Two tests hold this: bare English in the templates must
+stay near zero, and no pack may slip below the coverage it last reached.
 
 ---
 

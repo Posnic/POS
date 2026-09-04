@@ -109,6 +109,14 @@ function keysUsed() {
     for (const m of html.matchAll(/data-t="([^"]+)"[^>]*>([^<]*)</g)) {
       remember(m[1], m[2], file);
     }
+    /* Attributes people read: placeholder="English" data-t-placeholder="key"
+       in the same tag, in either order. */
+    for (const tag of html.matchAll(/<[a-zA-Z][^>]*>/g)) {
+      for (const m of tag[0].matchAll(/data-t-(placeholder|title|aria-label)="([^"]+)"/g)) {
+        const en = new RegExp('\\s' + m[1] + '="([^"]*)"').exec(tag[0]);
+        remember(m[2], en ? en[1] : '', file);
+      }
+    }
   }
   let calls = 0;
   for (const file of jsFiles(path.join(ROOT, 'static', 'script'))) {
@@ -121,6 +129,21 @@ function keysUsed() {
     for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*\)/g)) {
       remember(m[1], '', file);
       calls += 1;
+    }
+    /* JavaScript renders markup too - table headers, pills, receipt labels -
+       and the observer translates it, so its keys are keys the UI uses. */
+    for (const m of js.matchAll(/<lang class="([^"]+)">([^<]*)<\/lang>/g)) {
+      remember(m[1], m[2], file);
+      tags += 1;
+    }
+    for (const m of js.matchAll(/data-t="([^"]+)"[^>]*>([^<']*)</g)) {
+      remember(m[1], m[2], file);
+    }
+    for (const tag of js.matchAll(/<[a-zA-Z][^<>']*>/g)) {
+      for (const m of tag[0].matchAll(/data-t-(placeholder|title|aria-label)="([^"]+)"/g)) {
+        const en = new RegExp('\\s' + m[1] + '="([^"]*)"').exec(tag[0]);
+        remember(m[2], en ? en[1] : '', file);
+      }
     }
   }
   return { used, tags, calls, context };
@@ -199,6 +222,24 @@ if (flag('--json')) {
  * cannot drift: a stale map would show a translator the wrong English, which is
  * a worse failure than not showing any.
  */
+/*
+ * Record where every pack stands, so a test can refuse to let one slip.
+ *
+ * A flat floor ("every pack above 95%") is the wrong instrument while the
+ * UI is still being tagged faster than the packs are filled: it goes red
+ * for weeks and everybody learns to ignore it. A ratchet does not: each
+ * pack must stay at or above the point it last reached, and the baseline
+ * moves up when translations land. Run this after merging a pack.
+ */
+if (flag('--write-baseline')) {
+  const base = {};
+  for (const r of data.rows) if (!r.error && !r.lang.startsWith('_')) base[r.lang] = r.coverage;
+  fs.writeFileSync(path.join(__dirname, '..', 'i18n-coverage-baseline.json'),
+    JSON.stringify(base, null, 2) + '\n');
+  console.log('tests/i18n-coverage-baseline.json: ' + Object.entries(base).map(([k, v]) => k + ' ' + v + '%').join(', '));
+  process.exit(0);
+}
+
 if (flag('--write-english')) {
   const en = {};
   for (const [key, c] of data.context) if (c.english) en[key] = c.english;
