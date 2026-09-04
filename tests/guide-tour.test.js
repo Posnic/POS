@@ -105,7 +105,9 @@ test('the tour starts only after a SUCCESSFUL save, and only when asked', () => 
     tourButton.indexOf('_tourAfterSave = true;') < tourButton.indexOf('saveIntro()'),
     'the flag must be set before the save, or the success handler will not see it'
   );
-  const success = between(settingsJs, "PosnicPro.alert('success', 'Feature switches saved')", 'PosnicPro.alert(response.type');
+  /* The message is translated now, so anchor on the sentence rather than on
+     the call that carries it. */
+  const success = between(settingsJs, "'Feature switches saved'))", 'PosnicPro.alert(response.type');
   assert.match(success, /if \(PosnicPro\.features\._tourAfterSave\)/);
   assert.match(success, /PosnicPro\.tour\.firstRun\(\)/);
   // the failure path clears the flag, or the NEXT save inherits the wish

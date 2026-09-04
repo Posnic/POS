@@ -76,7 +76,8 @@ function serialiseGlossary(g) {
 let context;
 try {
   const out = execFileSync(process.execPath,
-    [path.join(__dirname, 'i18n-coverage.js'), '--json'], { encoding: 'utf8', cwd: ROOT });
+    [path.join(__dirname, 'i18n-coverage.js'), '--json'], /* The key list outgrew the 1 MB default buffer once every screen was tagged. */
+    { encoding: 'utf8', cwd: ROOT, maxBuffer: 64 * 1024 * 1024 });
   context = JSON.parse(out).context;
 } catch (e) {
   console.error(`Could not read the key list: ${e.message}`);

@@ -14,7 +14,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="custom-select border-control" id="view_registers_fields" data-id="registers" onchange="PosnicPro.changePlaceholder(this)" aria-label="View registers fields">
+                    <select class="custom-select border-control" id="view_registers_fields" data-id="registers" onchange="PosnicPro.changePlaceholder(this)" aria-label="View registers fields" data-t-aria-label="lang_view_registers_fields">
                         <option value="sales_id" selected>
                         <lang class="lang_name_title">Sale Id</lang>
                         </option>
@@ -25,7 +25,7 @@
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <input type="text" class="form-control border-control custom_search_input" id="view_registers_input"
-                           placeholder="Enter Name" data-id="registers" maxlength="25"  autocomplete="off">
+                           placeholder="Enter Name" data-t-placeholder="lang_enter_name" data-id="registers" maxlength="25"  autocomplete="off">
                 </div>
                 <div class="col-md-1 col-lg-1 col-xl-1 tb_search hide-button-action" style="display:none;">
                     <button type="button" class="btn btn-primary-rgba" data-id="registers" onclick="PosnicPro.search(this, 'Table')">
@@ -34,7 +34,7 @@
                 </div>
                 <div class="col-lg-12 col-xl-2 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left" data-toggle="tooltip" title="Filter"><i class="feather icon-filter" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left" data-toggle="tooltip" title="Filter" data-t-title="lang_filter"><i class="feather icon-filter" aria-hidden="true"></i></button>
                     </div>
                 </div>                        
             </div> 
@@ -84,12 +84,12 @@
                                     <div class="card-header header_icon">
                                         <ul class="list-inline mb-0 pl-0 float-right">
                                             <li class="list-inline-item email_320">
-                                                <a data-module="user" data-access="delete" href="#/registers" id="registers_deletebtn" class="sale_color" onclick="PosnicPro.registers.deleteSelectedRegisters();" data-toggle="tooltip" title="Delete">
+                                                <a data-module="user" data-access="delete" href="#/registers" id="registers_deletebtn" class="sale_color" onclick="PosnicPro.registers.deleteSelectedRegisters();" data-toggle="tooltip" title="Delete" data-t-title="lang_delete">
                                                     <i class="feather icon-trash font-20"></i>
                                                 </a>
                                             </li>
                                             <li class="list-inline-item">
-                                                <a href="javascript:PosnicPro.refreshDatatable('registers')" data-id="registers" data-toggle="tooltip" title="Refresh">
+                                                <a href="javascript:PosnicPro.refreshDatatable('registers')" data-id="registers" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                     <i class="feather icon-refresh-cw font-20"></i>
                                                 </a>
                                             </li>
@@ -113,24 +113,24 @@
                         <div class="row align-items-center">
                             <div class="col-8">
                                 <div class="hint-text">
-                                    Showing 
+                                    <lang class="lang_showing">Showing</lang> 
                                     <b><span id="view_registers_page_total"></span></b>
-                                    to 
+                                    <lang class="lang_to">to</lang> 
                                     <b><span id="view_registers_page_perpage_total"></span></b> 
-                                    of
+                                    <lang class="lang_of">of</lang>
                                     <b><span id="view_registers_total"></span></b> 
-                                    entries
+                                    <lang class="lang_entries">entries</lang>
                                     <span class="showing-hide-show-registers" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp;
-                                        <span class="showing-value-registers text-dark"> 0 </span>&nbsp;
-                                        rows selected  
+                                        <span class="showing-value-registers text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                        rows selected</lang>  
                                     </span>
                                 </div>
                             </div>
                             <div class="col-4">
-                                <nav aria-label="Page navigation example">
+                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                     <ul class="pagination mb-0">
-                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="registers" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                     </ul>
                                 </nav>
                             </div>
@@ -154,8 +154,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_registerdetail_title">Register Details</lang>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">

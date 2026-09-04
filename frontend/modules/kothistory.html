@@ -18,16 +18,16 @@
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <select class="custom-select border-control" id="view_kothistory_fields" data-id="kothistory"
-                        onchange="PosnicPro.changePlaceholder(this)" aria-label="View kothistory fields">
+                        onchange="PosnicPro.changePlaceholder(this)" aria-label="View kothistory fields" data-t-aria-label="lang_view_kothistory_fields">
                         <option value="sales_id" selected>
                             <lang class="lang_id_title">Id</lang>
                         </option>
-                        <option value="dine_type">Order Type</option>
+                        <option value="dine_type"><lang class="lang_ordertype_title">Order Type</lang></option>
                     </select>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <input type="text" class="form-control border-control custom_search_input"
-                        id="view_kothistory_input" placeholder="Enter Id" data-id="kothistory" maxlength="25"
+                        id="view_kothistory_input" placeholder="Enter Id" data-t-placeholder="lang_enter_id" data-id="kothistory" maxlength="25"
                         autocomplete="off">
                 </div>
                 <div class="col-md-2 col-lg-2 col-xl-2 tb_search hide-button-action adjuce_left" style="display:none;">
@@ -44,7 +44,7 @@
                     <div class="widgetbar">
                         <button type="button"
                             class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
-                            data-toggle="tooltip" title="Filter">
+                            data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -83,7 +83,7 @@
                                             <!-- NEW: Auto refresh toggle -->
                                             <div class="ml-3 d-inline-flex align-items-center">
                                                 <span class="auto-refresh-hide"
-                                                    style="font-size:12px; margin-right:6px;">Auto Refresh</span>
+                                                    style="font-size:12px; margin-right:6px;"><lang class="lang_auto_refresh">Auto Refresh</lang></span>
                                                 <label class="switch mb-0 auto-refresh-hide">
                                                     <input type="checkbox" id="kot_auto_refresh_toggle">
                                                     <span class="slider round"></span>
@@ -92,7 +92,7 @@
                                             <li class="list-inline-item">
                                                 <a href="javascript:PosnicPro.refreshDatatable('kothistory')"
                                                     data-id="kothistory" class="add_new_tooltip" data-toggle="tooltip"
-                                                    title="Refresh">
+                                                    title="Refresh" data-t-title="lang_wf_refresh">
                                                     <i class="feather icon-refresh-cw font-20"></i>
                                                 </a>
                                             </li>
@@ -107,7 +107,7 @@
                             <div class="col-12">
                                 <div id="kothistory_table_filter_buttons" class="btn-group btn-group-sm" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px;">
                                     <button type="button" class="btn btn-primary active" data-table="all" onclick="PosnicPro.kothistory.filterByTable('all')" style="min-width: 60px; font-weight: 500;">
-                                        All
+                                        <lang class="lang_report_all">All</lang>
                                     </button>
                                 </div>
                             </div>
@@ -147,8 +147,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_kotview_title">KOT Details</lang>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">

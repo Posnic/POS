@@ -1,7 +1,7 @@
 <!-- start supplier modal -->
 <div id="infobar-settings-sidebar-supplier" class="infobar-settings-sidebar">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span id="supplier_title">Add</span>&nbsp;<lang class="lang_supplier">Supplier</lang></h4>
+        <h4 id="exampleModalCenterTitle"><span id="supplier_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_supplier">Supplier</lang></h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="supplier">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
         </a>
@@ -15,7 +15,7 @@
                             <lang class="lang_name_title"> Name </lang>
                             <span class="text-danger">*</span> 
                         </label>
-                        <input type="text" class="form-control border-control supplier-trigger" name="name" id="supplier_name" minlength="3" maxlength="250" placeholder="Enter the name" required>
+                        <input type="text" class="form-control border-control supplier-trigger" name="name" id="supplier_name" minlength="3" maxlength="250" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name" required>
                         <input type="hidden" name="id" id="supplierid" class="supplier-trigger">
                     </div>
                 </div>
@@ -24,13 +24,13 @@
                         <label for="supplier_phone">
                             <lang class="lang_phone_title"> Phone </lang>
                         </label>
-                        <input type="tel" class="form-control border-control supplier-trigger allow_phone_validate"  name="phone" id="supplier_phone" minlength="3" maxlength="20" placeholder="Enter the phone">
+                        <input type="tel" class="form-control border-control supplier-trigger allow_phone_validate"  name="phone" id="supplier_phone" minlength="3" maxlength="20" placeholder="Enter the phone" data-t-placeholder="lang_enter_the_phone">
                     </div>
                     <div class="form-group col-md-6">
                         <label for="supplier_email">
                             <lang class="lang_email_title"> Email </lang>
                         </label>
-                        <input type="email" class="form-control border-control supplier-trigger" name="email" id="supplier_email"  maxlength="50" placeholder="Enter the email">
+                        <input type="email" class="form-control border-control supplier-trigger" name="email" id="supplier_email"  maxlength="50" placeholder="Enter the email" data-t-placeholder="lang_enter_the_email">
                     </div>
                 </div>
                 <div class="form-row">
@@ -39,7 +39,7 @@
                             <lang class="lang_address_title"> Address </lang>
                         </label>
                         <textarea name="address" id="supplier_address" 
-                                  class="form-control border-control supplier-trigger" minlength="3" maxlength="500" placeholder="Enter the address"></textarea>
+                                  class="form-control border-control supplier-trigger" minlength="3" maxlength="500" placeholder="Enter the address" data-t-placeholder="lang_enter_the_address"></textarea>
                     </div>
                 </div>
                 <div class="form-row">                                                                            
@@ -47,7 +47,7 @@
                         <label for="supplier_city">
                             <lang class="lang_city_title"> City </lang>
                         </label>
-                        <input type="text" name="city" id="supplier_city" class="form-control border-control supplier-trigger"  maxlength="20" placeholder="Enter the city">
+                        <input type="text" name="city" id="supplier_city" class="form-control border-control supplier-trigger"  maxlength="20" placeholder="Enter the city" data-t-placeholder="lang_enter_the_city">
                     </div>
                 </div>
                 <div class="form-row">
@@ -86,13 +86,13 @@
                                         </label>
                                         <select class="custom-select border-control" id="supplier_gst_type" name="gst_type" onchange="PosnicPro.suppliers.gstFields();">
                                             <option value="consumer" selected>
-                                                Unregisterd - consumer
+                                                <lang class="lang_unregisterd_consumer">Unregisterd - consumer</lang>
                                             </option>
                                             <option value="regular">
-                                                Registered - Regular
+                                                <lang class="lang_registered_regular">Registered - Regular</lang>
                                             </option>
                                             <option value="composite">
-                                                Registered - Composite
+                                                <lang class="lang_registered_composite">Registered - Composite</lang>
                                             </option>
                                         </select>
                                     </div>
@@ -102,7 +102,7 @@
                                         <label for="supplier_gstin_number">
                                             <lang class="lang_supplier_gstin_number"> GSTIN Number <span class="text-danger">*</span></lang>
                                         </label>
-                                        <input type="text" class="form-control border-control"  name="gstin_number" id="supplier_gstin_number" minlength="15" maxlength="15" placeholder="Enter the GSTIN"  autocomplete="off" required>
+                                        <input type="text" class="form-control border-control"  name="gstin_number" id="supplier_gstin_number" minlength="15" maxlength="15" placeholder="Enter the GSTIN" data-t-placeholder="lang_enter_the_gstin"  autocomplete="off" required>
                                     </div>
                                 </div>                                      
                             </div>
@@ -131,7 +131,7 @@
                 <div class="form-row" id="show_last_created_supplier" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a supplier. <a href="#" id="last_created_supplier">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_supplier">Saved a supplier.</lang> <a href="#" id="last_created_supplier"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>
@@ -320,7 +320,7 @@
                                                        width="100%">
                                                     <div class="col-sm-6 col-md-12 col-lg-12" id="supplieractivity_img_hide" style="display:none;">
                                                         <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
-                                                        <div class="text-center text-dark"> <p>No Records </p></div>
+                                                        <div class="text-center text-dark"> <p><lang class="lang_no_records">No Records</lang> </p></div>
                                                     </div>
                                                     <thead class="report-thead-tfoot table-header supplieractivity_content"></thead>
                                                     <tbody class="report-thead-tfoot table-body supplieractivity_content"></tbody>
@@ -333,21 +333,21 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing 
+                                                            <lang class="lang_showing">Showing</lang> 
                                                             <b><span id="view_supplierdetails_page_total"></span></b> 
-                                                            to 
+                                                            <lang class="lang_to">to</lang> 
                                                             <b><span id="view_supplierdetails_page_perpage_total"></span></b> 
-                                                            of 
+                                                            <lang class="lang_of">of</lang> 
                                                             <b><span id="view_supplierdetails_total"></span></b>
-                                                            entries 
+                                                            <lang class="lang_entries">entries</lang> 
                                                             <span class="showing-hide-show-supplierdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                                <span class="showing-value-supplierdetails text-dark"> 0 </span>&nbsp;
-                                                                rows selected  
+                                                                <span class="showing-value-supplierdetails text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                                rows selected</lang>  
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
                                                                 <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>

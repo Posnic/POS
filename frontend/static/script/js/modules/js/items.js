@@ -164,7 +164,7 @@ PosnicPro.items = {
             'clip-path': clip
         });
         $box.find('.tile-preview-note').text(
-            automatic ? 'Chosen from the name - pick a colour below to change it' : 'Your choice'
+            automatic ? PosnicPro.i18n.t('lang_chosen_from_the_name_pick_a_colour_below_t', 'Chosen from the name - pick a colour below to change it') : PosnicPro.i18n.t('lang_your_choice', 'Your choice')
         );
         $box.show();
     },
@@ -217,7 +217,7 @@ PosnicPro.items = {
             /* Said out loud rather than silently reverted - anything already
                typed into the variant rows is about to be cleared. */
             $('#product_without_variant').prop('checked', true).trigger('change');
-            PosnicPro.alert('info', 'Variants are for stocked products - this is now a single service');
+            PosnicPro.alert('info', PosnicPro.i18n.t('lang_variants_are_for_stocked_products_this_is', 'Variants are for stocked products - this is now a single service'));
         }
     },
     /* A shop with tax switched off never sees the Tax card (owner ask). */
@@ -271,27 +271,27 @@ PosnicPro.items = {
             key: 'items',
             container: '#items_filter_panel',
             button: '#items_filter_btn',
-            searchPlaceholder: 'Search name, SKU or barcode',
-            dateField: 'Updated',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_sku_or_barcode', 'Search name, SKU or barcode'),
+            dateField: PosnicPro.i18n.t('lang_updated', 'Updated'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'name', label: 'Name' },
-                { value: 'category_name', label: 'Category' },
-                { value: 'itemid', label: 'SKU' },
-                { value: 'barcode_id', label: 'Barcode' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'category_name', label: PosnicPro.i18n.t('lang_newcategory_title', 'Category') },
+                { value: 'itemid', label: PosnicPro.i18n.t('lang_sku_title', 'SKU') },
+                { value: 'barcode_id', label: PosnicPro.i18n.t('lang_barcode_title', 'Barcode') }
             ],
             onChange: function () { PosnicPro.items.loadList(1); }
         });
         PosnicPro.listSort.mount('items', {
             options: [
-                { v: 'recent', l: 'Recently updated', i: 'clock' },
-                { v: 'margin_desc', l: 'High margin first', i: 'trending-up' },
-                { v: 'margin_asc', l: 'Low margin first', i: 'trending-down' },
-                { v: 'stock_asc', l: 'Low stock first', i: 'alert-triangle' },
-                { v: 'price_desc', l: 'Price: high to low', i: 'arrow-down' },
-                { v: 'price_asc', l: 'Price: low to high', i: 'arrow-up' },
-                { v: 'cost_desc', l: 'Cost: high to low', i: 'arrow-down' },
-                { v: 'name', l: 'Name A to Z', i: 'type' }
+                { v: 'recent', l: PosnicPro.i18n.t('lang_recently_updated', 'Recently updated'), i: 'clock' },
+                { v: 'margin_desc', l: PosnicPro.i18n.t('lang_high_margin_first', 'High margin first'), i: 'trending-up' },
+                { v: 'margin_asc', l: PosnicPro.i18n.t('lang_low_margin_first', 'Low margin first'), i: 'trending-down' },
+                { v: 'stock_asc', l: PosnicPro.i18n.t('lang_low_stock_first', 'Low stock first'), i: 'alert-triangle' },
+                { v: 'price_desc', l: PosnicPro.i18n.t('lang_price_high_to_low', 'Price: high to low'), i: 'arrow-down' },
+                { v: 'price_asc', l: PosnicPro.i18n.t('lang_price_low_to_high', 'Price: low to high'), i: 'arrow-up' },
+                { v: 'cost_desc', l: PosnicPro.i18n.t('lang_cost_high_to_low', 'Cost: high to low'), i: 'arrow-down' },
+                { v: 'name', l: PosnicPro.i18n.t('lang_name_a_to_z', 'Name A to Z'), i: 'type' }
             ],
             onChange: function () { PosnicPro.items.loadList(1); }
         });
@@ -329,20 +329,20 @@ PosnicPro.items = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('items') > 0;
                 $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No items match this filter.' : 'No items yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_items_match_this_filter', 'No items match this filter.') : PosnicPro.i18n.t('lang_no_items_yet_press_new_to_add_the_first', 'No items yet - press New to add the first.')) + '</div>');
                 $('#items_list_paging').html('');
                 return;
             }
             var cur = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="i-col-sku">SKU</th>'
-                + '<th class="i-col-category">Category</th><th class="i-col-supplier">Supplier</th>'
-                + '<th class="text-right">Stock</th>'
-                + '<th class="text-right i-col-cost">Cost</th>'
-                + '<th class="text-right i-col-price">Price</th>'
-                + '<th class="text-right i-col-margin">Margin</th>'
-                + '<th class="text-right i-col-tax">Tax</th>'
-                + '<th class="text-center kiosk-column">Kiosk</th></tr></thead><tbody>';
+                + '<thead><tr><th style="width:44px;"></th><th><lang class="lang_name_title">Name</lang></th><th class="i-col-sku"><lang class="lang_sku_title">SKU</lang></th>'
+                + '<th class="i-col-category"><lang class="lang_newcategory_title">Category</lang></th><th class="i-col-supplier"><lang class="lang_newsupplier_title">Supplier</lang></th>'
+                + '<th class="text-right"><lang class="lang_stock">Stock</lang></th>'
+                + '<th class="text-right i-col-cost"><lang class="lang_companyamount_title">Cost</lang></th>'
+                + '<th class="text-right i-col-price"><lang class="lang_price_title">Price</lang></th>'
+                + '<th class="text-right i-col-margin"><lang class="lang_margin">Margin</lang></th>'
+                + '<th class="text-right i-col-tax"><lang class="lang_module_tax">Tax</lang></th>'
+                + '<th class="text-center kiosk-column"><lang class="lang_module_kiosk">Kiosk</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var unit = r.unit || 'qty';
                 var thumb;
@@ -383,7 +383,7 @@ PosnicPro.items = {
                     + '<td class="text-right i-col-price">' + cur + '&nbsp;' + sell.toFixed(2) + '</td>'
                     + '<td class="text-right i-col-margin">' + marginCell + '</td>'
                     + '<td class="text-right i-col-tax q-muted">' + taxCell + '</td>'
-                    + '<td class="text-center kiosk-column"><input type="checkbox" id="kiosk_' + esc(r._id) + '" class="kiosk-toggle" aria-label="Show on kiosk"' + (r.isAvailable ? ' checked' : '') + '></td>'
+                    + '<td class="text-center kiosk-column"><input type="checkbox" id="kiosk_' + esc(r._id) + '" class="kiosk-toggle" aria-label="Show on kiosk" data-t-aria-label="lang_show_on_kiosk"' + (r.isAvailable ? ' checked' : '') + '></td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -396,14 +396,14 @@ PosnicPro.items = {
             }
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load items - try again.</div>');
+            $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_items_try_again">Could not load items - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.items;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' item' : ' items');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_item', 'item') : PosnicPro.i18n.t('lang_items', 'items'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -467,15 +467,15 @@ PosnicPro.items = {
         if (window.location.hash.slice(2) !== 'items/' + id) {
             hasher.setHash('items/' + id);
         }
-        $('#items_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        $('#items_doc').html('<div class="text-center text-muted" style="padding:60px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         PosnicPro.get('items/' + id, function (response) {
             if (response.type !== 'success') {
-                $('#items_doc').html('<div class="text-danger p-4">Could not open this item.</div>');
+                $('#items_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_item">Could not open this item.</lang></div>');
                 return;
             }
             PosnicPro.items.renderItemDoc(response.data);
         }, function () {
-            $('#items_doc').html('<div class="text-danger p-4">Could not open this item.</div>');
+            $('#items_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_item">Could not open this item.</lang></div>');
         });
     },
     closeDoc: function () {
@@ -498,20 +498,20 @@ PosnicPro.items = {
         var tracked = d.track_inventory === true || d.track_inventory === 'true';
         var low = tracked && Number(d.available_quantity) <= Number(d.low_stock || 0);
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#items_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#items_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.name) + '</span>'
-            + (low ? '<span class="rs-pill unpaid">Low stock</span>' : '')
+            + (low ? '<span class="rs-pill unpaid"><lang class="lang_low_stock">Low stock</lang></span>' : '')
             + '<span class="ml-auto"></span>'
             + '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="write" onclick="hasher.setHash(\'items/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item" data-module="item" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/clone\');"><i class="feather icon-copy mr-2"></i>Clone</a>'
             + (real(d.barcode_id) ? '<a class="dropdown-item" href="javascript:void(0)" onclick="hasher.setHash(\'items/' + esc(id) + '/barcode\');"><i class="feather icon-align-justify mr-2"></i>Barcode labels</a>' : '')
             + '<div class="dropdown-divider"></div>'
             + '<a class="dropdown-item text-danger" data-module="item" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.items.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
-            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.items.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.items.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         var strip = '<div class="p-void-strip" id="i_delete_strip" style="display:none;">'
             + '<span>Delete <b>' + esc(d.name) + '</b>? Past sales and purchases keep their lines; only the catalogue entry goes.</span>'
@@ -524,17 +524,17 @@ PosnicPro.items = {
             + (tracked ? esc(d.available_quantity) + ' ' + esc(d.unit || 'qty') : '\u2014') + '</div>'
             + '<div class="s-stat-label">' + (tracked ? 'In stock' + (low ? ' \u00b7 low' : '') : 'Not tracked') + '</div></div>'
             + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + sell.toFixed(2) + '</div>'
-            + '<div class="s-stat-label">Selling price</div></div>'
+            + '<div class="s-stat-label"><lang class="lang_selling_price_2">Selling price</lang></div></div>'
             + (cost > 0
                 ? '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + cost.toFixed(2) + '</div>'
-                    + '<div class="s-stat-label">Cost</div></div>'
+                    + '<div class="s-stat-label"><lang class="lang_companyamount_title">Cost</lang></div></div>'
                 : '')
             + (margin !== null
                 ? '<div class="s-stat"><div class="s-stat-value">' + margin.toFixed(1) + '%</div>'
-                    + '<div class="s-stat-label">Margin</div></div>'
+                    + '<div class="s-stat-label"><lang class="lang_margin">Margin</lang></div></div>'
                 : '')
             + '</div>';
-        var identity = '<div class="q-block"><div class="q-label">Identity</div>'
+        var identity = '<div class="q-block"><div class="q-label"><lang class="lang_identity">Identity</lang></div>'
             + (real(d.itemid) ? '<div>SKU: ' + esc(d.itemid) + '</div>' : '')
             + (real(d.barcode_id) ? '<div class="q-muted">Barcode: ' + esc(d.barcode_id) + '</div>' : '')
             + (real(d.category_name) ? '<div class="q-muted">' + esc(d.category_name) + '</div>' : '')
@@ -545,11 +545,11 @@ PosnicPro.items = {
             pricingBits += '<div class="q-muted">Tax: ' + esc(d.tax_name || (d.tax + '%')) + (d.tax_type ? ' (' + esc(d.tax_type) + ')' : '') + '</div>';
         }
         if (real(d.supplier_name)) { pricingBits += '<div class="q-muted">Supplier: ' + esc(d.supplier_name) + '</div>'; }
-        var pricing = '<div class="q-block"><div class="q-label">Pricing &amp; supply</div>'
+        var pricing = '<div class="q-block"><div class="q-label"><lang class="lang_pricing_supply">Pricing &amp; supply</lang></div>'
             + '<div>MRP ' + cur + '&nbsp;' + (Number(d.mrp_price || d.selling_price) || 0).toFixed(2) + '</div>'
             + pricingBits
             + '</div>';
-        var record = '<div class="q-block"><div class="q-label">On record</div>'
+        var record = '<div class="q-block"><div class="q-label"><lang class="lang_on_record">On record</lang></div>'
             + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
             + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
             + (tracked && Number(d.low_stock) > 0 ? '<div class="q-muted">Low-stock alert at ' + esc(d.low_stock) + '</div>' : '')
@@ -561,8 +561,8 @@ PosnicPro.items = {
             + '<div class="i-doc-top">' + '<div class="i-doc-main">' + stats
             + '<div class="s-doc-grid">' + identity + pricing + record + '</div>'
             + '</div>' + photo + '</div>'
-            + '<div class="q-label" style="margin-top:18px;">Recent stock movements</div>'
-            + '<div id="i_doc_moves" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '<div class="q-label" style="margin-top:18px;"><lang class="lang_recent_stock_movements">Recent stock movements</lang></div>'
+            + '<div id="i_doc_moves" class="text-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>'
             + '</div></div>';
         $('#items_doc').html(toolbar + strip + body);
         PosnicPro.items.loadStockMoves(d);
@@ -582,11 +582,11 @@ PosnicPro.items = {
         }, function (response) {
             var list = ((response && response.data) || {}).list || [];
             if (!list.length) {
-                $('#i_doc_moves').html('<div class="text-muted">No stock movements yet.</div>');
+                $('#i_doc_moves').html('<div class="text-muted"><lang class="lang_no_stock_movements_yet">No stock movements yet.</lang></div>');
                 return;
             }
             var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Movement</th><th>Reference</th><th class="text-right">Change</th><th class="text-right">Balance</th>'
+                + '<th><lang class="lang_movement">Movement</lang></th><th><lang class="lang_reference_title">Reference</lang></th><th class="text-right"><lang class="lang_change">Change</lang></th><th class="text-right"><lang class="lang_balance">Balance</lang></th>'
                 + '</tr></thead><tbody>';
             list.forEach(function (r) {
                 var n = Number(r.count) || 0;
@@ -607,7 +607,7 @@ PosnicPro.items = {
                 + 'All movements for this item &rarr;</a></div>';
             $('#i_doc_moves').html(html);
         }, function () {
-            $('#i_doc_moves').html('<div class="text-muted">Stock history unavailable.</div>');
+            $('#i_doc_moves').html('<div class="text-muted"><lang class="lang_stock_history_unavailable">Stock history unavailable.</lang></div>');
         });
     },
     deleteAsk: function () {
@@ -1294,39 +1294,39 @@ PosnicPro.items = {
         if (data.track_inventory === true) {
             $('#item-access').removeClass('badge-danger').addClass('badge-success');
             $('#item-view-access').removeClass('fa-times').addClass('fa-check');
-            $('#inventory-access-item').html('ON');
+            $('#inventory-access-item').html(PosnicPro.i18n.t('lang_on_2', 'ON'));
         } else {
             $('#item-access').removeClass('badge-success').addClass('badge-danger');
             $('#item-view-access').removeClass('fa-check').addClass('fa-times');
-            $('#inventory-access-item').html('OFF');
+            $('#inventory-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
         }
         if (data.sales_channel === true) {
             $('#channel-access').removeClass('badge-danger').addClass('badge-success');
             $('#item-view-channel-access').removeClass('fa-times').addClass('fa-check');
-            $('#channel-access-item').html('ON');
+            $('#channel-access-item').html(PosnicPro.i18n.t('lang_on_2', 'ON'));
         } else {
             $('#channel-access').removeClass('badge-success').addClass('badge-danger');
             $('#item-view-channel-access').removeClass('fa-check').addClass('fa-times');
-            $('#channel-access-item').html('OFF');
+            $('#channel-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
         }
         if (data.ecommerce === true) {
             $('#ecommerce-access').removeClass('badge-danger').addClass('badge-success');
             $('#item-view-ecommerce-access').removeClass('fa-times').addClass('fa-check');
-            $('#ecommerce-access-item').html('ON');
+            $('#ecommerce-access-item').html(PosnicPro.i18n.t('lang_on_2', 'ON'));
         } else {
             $('#ecommerce-access').removeClass('badge-success').addClass('badge-danger');
             $('#item-view-ecommerce-access').removeClass('fa-check').addClass('fa-times');
-            $('#ecommerce-access-item').html('OFF');
+            $('#ecommerce-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
         }
 
         if (data.negative_stock === true) {
             $('#stock-access').removeClass('badge-danger').addClass('badge-success');
             $('#item-view-stock-access').removeClass('fa-times').addClass('fa-check');
-            $('#stock-access-item').html('ON');
+            $('#stock-access-item').html(PosnicPro.i18n.t('lang_on_2', 'ON'));
         } else {
             $('#stock-access').removeClass('badge-success').addClass('badge-danger');
             $('#item-view-stock-access').removeClass('fa-check').addClass('fa-times');
-            $('#stock-access-item').html('OFF');
+            $('#stock-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
         }
 
         $('#item_view_mrpprice').number(data.mrp_price, 2);
@@ -1416,21 +1416,21 @@ PosnicPro.items = {
             '<div class="modal fade close_on_esc" id="family_add_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
             '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">' +
             '<div class="modal-header"><h5 class="modal-title">Add ' + fam.axis + '</h5>' +
-            '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+            '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>' +
             '<div class="modal-body">' +
             '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">' + fam.axis + ' value</label>' +
             '<input type="text" class="form-control" id="family_add_value" maxlength="60" placeholder="e.g. XL"></div>' +
-            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Selling price</label>' +
+            '<div class="form-group"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_selling_price_2">Selling price</lang></label>' +
             '<input type="number" min="0" step="0.01" class="form-control" id="family_add_price" value="' + ($('#items_selling_price').val() || '') + '"></div>' +
             '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Barcode <small class="text-muted">(optional)</small></label>' +
             '<input type="text" class="form-control" id="family_add_barcode"></div>' +
-            '<div class="form-group mb-0"><label style="font-weight:600; font-size:.85rem;">Opening stock</label>' +
+            '<div class="form-group mb-0"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_opening_stock">Opening stock</lang></label>' +
             '<input type="number" min="0" class="form-control" id="family_add_qty" value="0"></div>' +
-            '<small class="form-text text-muted">Category, tax, supplier and the other settings copy from this item.</small>' +
+            '<small class="form-text text-muted"><lang class="lang_category_tax_supplier_and_the_other_settin">Category, tax, supplier and the other settings copy from this item.</lang></small>' +
             '</div>' +
             '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>' +
-            '<button type="button" class="btn btn-outline-primary" id="family_add_btn" onclick="PosnicPro.items.submitAddValue();">Add</button>' +
+            '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>' +
+            '<button type="button" class="btn btn-outline-primary" id="family_add_btn" onclick="PosnicPro.items.submitAddValue();"><lang class="lang_nav_add">Add</lang></button>' +
             '</div></div></div></div>'
         );
         $('#family_add_modal').modal('show');
@@ -1439,7 +1439,7 @@ PosnicPro.items = {
     submitAddValue: function () {
         var fam = PosnicPro.items._family;
         var value = ($('#family_add_value').val() || '').trim();
-        if (!fam || !value) { PosnicPro.alert('warning', 'Enter the new value.'); return; }
+        if (!fam || !value) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_the_new_value', 'Enter the new value.')); return; }
         $('#family_add_btn').prop('disabled', true);
         var shared = PosnicPro.items._sharedItemFields();
         var payload = Object.assign({}, shared, {
@@ -1547,7 +1547,7 @@ PosnicPro.items = {
                 } else {
                     $('#items_expiry_date').val('');
                 }
-                $('#item_title_data').text('Edit');
+                $('#item_title_data').text(PosnicPro.i18n.t('lang_edit_title', 'Edit'));
                 $('#item_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
                 if ((data.itemid === data.barcode_id) && (data.itemid !== '')) {
                     $("#same_as_sku").prop("checked", true);
@@ -1661,7 +1661,7 @@ PosnicPro.items = {
         $('.dropdown-item').removeClass('active');
         $('#v-pills-inventory-tab,#view_items_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
-        $('#item_title_data').text('Add');
+        $('#item_title_data').text(PosnicPro.i18n.t('lang_nav_add', 'Add'));
         $('#itemid').val('');
         // A fresh entry: the discount fields are untouched again, so a
         // category pick may fill them (applyCategoryDiscount checks this).
@@ -1763,12 +1763,12 @@ PosnicPro.items = {
         var scope = $('input[name="bulk_price_scope"]:checked').val();
         var value = $('#bulk_price_value').val();
         if (value === '' || isNaN(value) || Number(value) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid amount.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_valid_amount', 'Enter a valid amount.'));
             return null;
         }
         var category_id = (scope === 'category') ? $('#bulk_price_category').val() : null;
         if (scope === 'category' && !category_id) {
-            PosnicPro.alert('warning', 'Choose a category.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
             return null;
         }
         return {
@@ -1788,7 +1788,7 @@ PosnicPro.items = {
         if (!form) return false;
         var currency = PosnicPro.local.get('currencySign') || '';
         var box = $('#bulk_price_check_result');
-        box.html('<span class="dim">Checking...</span>').show();
+        box.html('<span class="dim"><lang class="lang_checking">Checking...</lang></span>').show();
 
         PosnicPro.post({ url: 'items/bulkPricePreview', data: JSON.stringify(form) }, function (response) {
             if (response.type !== 'success') {
@@ -1848,7 +1848,7 @@ PosnicPro.items = {
             });
             // Keep the dropdown inside the modal so it is not clipped or lost
             // behind it (a known select2-in-modal quirk).
-            sel.select2({ placeholder: 'Choose a category', dropdownParent: $('#bulk_price_modal') });
+            sel.select2({ placeholder: PosnicPro.i18n.t('lang_choose_a_category_2', 'Choose a category'), dropdownParent: $('#bulk_price_modal') });
         });
     },
 
@@ -1910,10 +1910,10 @@ PosnicPro.items = {
     },
     renderAdjRows: function () {
         var mode = PosnicPro.items._adjMode();
-        $('#stock_adjust_qty_head').text(mode === 'set' ? 'Counted' : mode === 'add' ? 'Qty found' : 'Qty lost');
+        $('#stock_adjust_qty_head').text(mode === 'set' ? 'Counted' : mode === 'add' ? PosnicPro.i18n.t('lang_qty_found', 'Qty found') : PosnicPro.i18n.t('lang_qty_lost', 'Qty lost'));
         var keys = Object.keys(PosnicPro.items._adjRows);
         if (!keys.length) {
-            $('#stock_adjust_rows').html('<tr><td colspan="5" class="text-center text-muted">Search and pick items to adjust.</td></tr>');
+            $('#stock_adjust_rows').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_search_and_pick_items_to_adjust">Search and pick items to adjust.</lang></td></tr>');
             return;
         }
         var html = keys.map(function (id) {
@@ -1935,14 +1935,14 @@ PosnicPro.items = {
             return { item_id: id, qty: Number(PosnicPro.items._adjRows[id].qty) || 0 };
         });
         if (!rows.length) {
-            PosnicPro.alert('warning', 'Pick at least one item');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_pick_at_least_one_item', 'Pick at least one item'));
             return;
         }
         $('#stock_adjust_submit').prop('disabled', true);
         var reasonSel = $('#stock_adjust_reason').val();
         var reason = reasonSel === '__custom__' ? ($('#stock_adjust_custom').val() || '').trim() : reasonSel;
         if (!reason) {
-            PosnicPro.alert('warning', 'Name the custom reason');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_name_the_custom_reason', 'Name the custom reason'));
             $('#stock_adjust_submit').prop('disabled', false);
             return;
         }
@@ -1974,7 +1974,7 @@ PosnicPro.items = {
         $('.bulk-stock-category-row').hide();
         $('#bulk_stock_direction').val('increase');
         $('#bulk_stock_op').val('amount');
-        $('.bulk-stock-unit').text('Qty');
+        $('.bulk-stock-unit').text(PosnicPro.i18n.t('lang_qty_title', 'Qty'));
         $('#bulk_stock_value').val('');
         $('#bulk_stock_note').val('');
         $('#bulk_stock_check_result').hide().empty();
@@ -1987,12 +1987,12 @@ PosnicPro.items = {
         var scope = $('input[name="bulk_stock_scope"]:checked').val();
         var value = $('#bulk_stock_value').val();
         if (value === '' || isNaN(value) || Number(value) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid quantity.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_valid_quantity', 'Enter a valid quantity.'));
             return null;
         }
         var category_id = (scope === 'category') ? $('#bulk_stock_category').val() : null;
         if (scope === 'category' && !category_id) {
-            PosnicPro.alert('warning', 'Choose a category.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
             return null;
         }
         return {
@@ -2009,7 +2009,7 @@ PosnicPro.items = {
         var form = PosnicPro.items.readBulkStockForm();
         if (!form) return false;
         var box = $('#bulk_stock_check_result');
-        box.html('<span class="dim">Checking...</span>').show();
+        box.html('<span class="dim"><lang class="lang_checking">Checking...</lang></span>').show();
         PosnicPro.post({ url: 'items/bulkStockPreview', data: JSON.stringify(form) }, function (response) {
             if (response.type !== 'success') {
                 box.hide();
@@ -2051,7 +2051,7 @@ PosnicPro.items = {
             $.map(response.suggestions || [], function (dataItem) {
                 sel.append('<option value="' + dataItem.id + '">' + dataItem.name + '</option>');
             });
-            sel.select2({ placeholder: 'Choose a category', dropdownParent: $('#bulk_stock_modal') });
+            sel.select2({ placeholder: PosnicPro.i18n.t('lang_choose_a_category_2', 'Choose a category'), dropdownParent: $('#bulk_stock_modal') });
         });
     },
 
@@ -2111,7 +2111,7 @@ PosnicPro.items = {
             });
 
         } else {
-            PosnicPro.alert('error', 'Fill in the required fields.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_fill_in_the_required_fields', 'Fill in the required fields.'));
         }
         return false;
     },
@@ -2142,7 +2142,7 @@ PosnicPro.items = {
         PosnicPro.get('items/' + id, function (response) {
             if (response.type === 'success') {
                 hasher.setHash('items/new');
-                $('#item_title_data').text('Clone');
+                $('#item_title_data').text(PosnicPro.i18n.t('lang_clone', 'Clone'));
                 $('#item_button_title').text(PosnicPro.i18n.t('lang_action_duplicate_save', 'Duplicate & Save'));
                 var data = response.data;
                 $('#itemid').val('');
@@ -2574,7 +2574,7 @@ PosnicPro.items = {
             var $strip = $(this).empty();
             if (!photos.length) {
                 $strip.append($('<small class="text-muted">')
-                    .text('Add photos above to give this variant its own'));
+                    .text(PosnicPro.i18n.t('lang_add_photos_above_to_give_this_variant_its', 'Add photos above to give this variant its own')));
                 return;
             }
             $.each(photos, function (_, photo) {
@@ -2704,7 +2704,7 @@ PosnicPro.items = {
             return;
         }
         if (!/^\d+$/.test(raw) || [8, 12, 13, 14].indexOf(raw.length) === -1) {
-            $hint.text('A GTIN is 8, 12, 13 or 14 digits')
+            $hint.text(PosnicPro.i18n.t('lang_a_gtin_is_8_12_13_or_14_digits', 'A GTIN is 8, 12, 13 or 14 digits'))
                 .addClass('text-danger').removeClass('text-success');
             return;
         }
@@ -2717,7 +2717,7 @@ PosnicPro.items = {
             sum += Number(body[i]) * (fromRight % 2 === 0 ? 3 : 1);
         }
         if (((10 - (sum % 10)) % 10) !== Number(raw[raw.length - 1])) {
-            $hint.text('That is not a valid barcode - check the digits')
+            $hint.text(PosnicPro.i18n.t('lang_that_is_not_a_valid_barcode_check_the_digi', 'That is not a valid barcode - check the digits'))
                 .addClass('text-danger').removeClass('text-success');
             return;
         }
@@ -2733,7 +2733,7 @@ PosnicPro.items = {
                 .removeClass('text-danger text-success');
             return;
         }
-        $hint.text('Valid barcode').addClass('text-success').removeClass('text-danger');
+        $hint.text(PosnicPro.i18n.t('lang_valid_barcode', 'Valid barcode')).addClass('text-success').removeClass('text-danger');
     },
 
     /* "2 ) Shirt / Large" once the item has a name, plain "2 ) Large" before
@@ -2860,7 +2860,7 @@ PosnicPro.items = {
          * on #items_name already enforces that, and it says so in place.
          */
         if (variant_value.length === 0) {
-            PosnicPro.alert('error', 'Choose at least one variant value - a size, a colour, a pack');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_choose_at_least_one_variant_value_a_size_a', 'Choose at least one variant value - a size, a colour, a pack'));
             $("#item_variant_list").focus();
             return false;
         } else {
@@ -2880,7 +2880,7 @@ PosnicPro.items = {
                 html = html + '<i class="mdi mdi mdi-help-circle"></i>';
                 html = html + '</span>';
                 html = html + '</label>';
-                html = html + '<input type="text" class="form-control" id="items_itemid_' + key + '" name="items_itemid_' + key + '" minlength="1" maxlength="20" placeholder="Enter SKU Code"  autocomplete="off" onkeyup="PosnicPro.items.loadOnchangeSku();"/>';
+                html = html + '<input type="text" class="form-control" id="items_itemid_' + key + '" name="items_itemid_' + key + '" minlength="1" maxlength="20" placeholder="Enter SKU Code" data-t-placeholder="lang_enter_sku_code"  autocomplete="off" onkeyup="PosnicPro.items.loadOnchangeSku();"/>';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_barcodeid_' + key + '">';
@@ -2888,11 +2888,11 @@ PosnicPro.items = {
                 html = html + '<span style="padding-left:50px">';
                 html = html + '<input type="checkbox" class="custom-control-input" id="same_as_sku_' + key + '" name="same_as_sku_' + key + '" onclick="PosnicPro.items.sameAsSku(this.checked);"/>';
                 html = html + '<label class="custom-control-label" for="same_as_sku_' + key + '">';
-                html = html + '<span class="text-dark" style="font-size:11px;">Same as SKU</span>';
+                html = html + '<span class="text-dark" style="font-size:11px;"><lang class="lang_same_sku">Same as SKU</lang></span>';
                 html = html + '</label>';
                 html = html + '</span>';
                 html = html + '</label>';
-                html = html + '<input type="text" class="form-control" id="items_barcodeid_' + key + '" name="items_barcodeid_' + key + '" minlength="1" maxlength="100" placeholder="Scan From Bar Code Reader" autocomplete="off">';
+                html = html + '<input type="text" class="form-control" id="items_barcodeid_' + key + '" name="items_barcodeid_' + key + '" minlength="1" maxlength="100" placeholder="Scan From Bar Code Reader" data-t-placeholder="lang_scan_from_bar_code_reader" autocomplete="off">';
                 html = html + '</div>';
                 html = html + '</div>';
                 html = html + '<div class="row">';
@@ -2900,7 +2900,7 @@ PosnicPro.items = {
                 html = html + '<label class="form-control-placeholder" for="items_company_price_' + key + '">';
                 html = html + '<lang class="lang_company_title"> Cost </lang>';
                 html = html + '</label>';
-                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_company_price_' + key + '" name="items_company_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Cost">';
+                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_company_price_' + key + '" name="items_company_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Cost" data-t-placeholder="lang_companyamount_title">';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_mrp_price_' + key + '">';
@@ -2914,13 +2914,13 @@ PosnicPro.items = {
                 html = html + '<label class="form-control-placeholder" for="items_selling_price_' + key + '">';
                 html = html + '<lang class="lang_sales_title"> Selling </lang>';
                 html = html + '</label>';
-                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_selling_price_' + key + '" name="items_selling_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Sale Price">';
+                html = html + '<input type="text" class="form-control allow_decimal text-right" id="items_selling_price_' + key + '" name="items_selling_price_' + key + '" minlength="1" maxlength="10" value="0.00" placeholder="Sale Price" data-t-placeholder="lang_sale_price">';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_available_quantity_' + key + '">';
                 html = html + '<lang class="lang_itemquantity_title"> Quantity </lang>';
                 html = html + '</label>';
-                html = html + '<input type="number" class="form-control allow_decimal text-right" id="items_available_quantity_' + key + '" name="items_available_quantity_' + key + '" minlength="1" maxlength="10" value="0" placeholder="Available Quantity">';
+                html = html + '<input type="number" class="form-control allow_decimal text-right" id="items_available_quantity_' + key + '" name="items_available_quantity_' + key + '" minlength="1" maxlength="10" value="0" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title">';
                 html = html + '</div>';
                 html = html + '</div>';
                 html = html + '<div class="row">';
@@ -2928,7 +2928,7 @@ PosnicPro.items = {
                 html = html + '<label class="form-control-placeholder" for="items_sort_' + key + '">';
                 html = html + '<lang class="lang_showitemposition_title"> Item Position </lang>';
                 html = html + '</label>';
-                html = html + '<input type="number" class="form-control allow_decimal text-right" id="items_sort_' + key + '" name="items_sort_' + key + '" minlength="1" maxlength="10" value="99" placeholder="Available Quantity">';
+                html = html + '<input type="number" class="form-control allow_decimal text-right" id="items_sort_' + key + '" name="items_sort_' + key + '" minlength="1" maxlength="10" value="99" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title">';
                 html = html + '</div>';
                 html = html + '<div class="col-md-6">';
                 html = html + '<label class="form-control-placeholder" for="items_unit_' + key + '">';
@@ -2976,7 +2976,7 @@ PosnicPro.items = {
                  */
                 html += '<div class="row">';
                 html += '  <div class="col-md-12">';
-                html += '    <label class="form-control-placeholder">Photo for this variant</label>';
+                html += '    <label class="form-control-placeholder"><lang class="lang_photo_for_this_variant">Photo for this variant</lang></label>';
                 html += '    <input type="hidden" id="items_photo_' + key + '" value="">';
                 html += '    <div class="items-variant-photos" id="items_photo_strip_' + key + '"></div>';
                 html += '  </div>';
@@ -3077,7 +3077,7 @@ PosnicPro.items = {
                     return false;
                 }
                 if ($('#item-display-preview').find('div').length > 11) {
-                    PosnicPro.alert('error', "You can upload up to 12 files.");
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_can_upload_up_to_12_files', 'You can upload up to 12 files.'));
                     return false;
                 }
 
@@ -3368,7 +3368,7 @@ PosnicPro.items = {
                 $pick.select2('destroy');
             }
             $pick.empty().append('<option value=""></option>')
-                .select2({ placeholder: 'Suppliers could not be loaded' });
+                .select2({ placeholder: PosnicPro.i18n.t('lang_suppliers_could_not_be_loaded', 'Suppliers could not be loaded') });
         });
     },
 
@@ -3461,7 +3461,7 @@ PosnicPro.items = {
                    at page render, and re-calling select2() on a live instance
                    does NOT re-read the options. */
                 if (second.hasClass('select2-hidden-accessible')) { second.select2('destroy'); }
-                second.select2({ placeholder: 'Choose a Variant' });
+                second.select2({ placeholder: PosnicPro.i18n.t('lang_choose_a_variant', 'Choose a Variant') });
                 /* No preselection - an unopened second axis must stay empty, or
                    every plain item silently becomes a combination. */
                 second.val('').trigger('change.select2');
@@ -3860,7 +3860,7 @@ PosnicPro.itemdetails = {
                 + '</tr>';
         }
         if (!shown) {
-            html = '<tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No changes of this kind.</td></tr>';
+            html = '<tr><td colspan="7" class="text-center text-muted" style="padding:20px;"><lang class="lang_no_changes_of_this_kind">No changes of this kind.</lang></td></tr>';
         }
         $('#item_pricehistory_body').html(html);
         $('#item_history_filter_count').text(shown + ' of ' + rows.length);
@@ -4858,7 +4858,7 @@ PosnicPro.items.hsnSuggest = function () {
         var top = scored.slice(0, 3).map(function (x) { return x[1]; });
         if (!top.length) { $('#hsn_suggest_row').hide(); return; }
         var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
-        $('#hsn_suggest_row').html('<small class="text-muted mr-1">Suggested:</small>' + top.map(function (r, i) {
+        $('#hsn_suggest_row').html('<small class="text-muted mr-1"><lang class="lang_suggested">Suggested:</lang></small>' + top.map(function (r, i) {
             var rate = String(r.taxrate || '').replace('%', '') || '0';
             var rateLabel = PosnicPro.items._hsnDeadSlab(r) ? rate + '% (pre-2025)' : rate + '%';
             return '<a href="javascript:void(0)" class="badge badge-light border mr-1 hsn-chip" data-i="' + i + '">'

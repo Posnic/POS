@@ -8,8 +8,8 @@
                         <lang class="lang_salesdetail_title"><span class="sale-view-heading">Sale</span> Details</lang>
                     </span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -26,16 +26,16 @@
                                                     <lang class="lang_customerdetails_title">Customer Details</lang>
                                                 </h4>
                                                 <p class="sale_view_customer_name sale_view_hide"><span
-                                                        class="font-weight-bold">Name : </span><span
+                                                        class="font-weight-bold"><lang class="lang_name_2">Name :</lang> </span><span
                                                         class="text-primary" id="sale_view_customer_name"></span></p>
                                                 <p class="sale_view_customer_address sale_view_hide"><span
-                                                        class="font-weight-bold">Address : </span><span
+                                                        class="font-weight-bold"><lang class="lang_address_2">Address :</lang> </span><span
                                                         id="sale_view_customer_address"></span></p>
                                                 <p class="sale_view_customer_phone sale_view_hide"><span
-                                                        class="font-weight-bold">Phone : </span><span
+                                                        class="font-weight-bold"><lang class="lang_phone">Phone :</lang> </span><span
                                                         id="sale_view_customer_phone"></span></p>
                                                 <p class="sale_view_customer_email sale_view_hide"><span
-                                                        class="font-weight-bold">Email : </span><span
+                                                        class="font-weight-bold"><lang class="lang_email_2">Email :</lang> </span><span
                                                         id="sale_view_customer_email"></span></p>
 
                                             </div>
@@ -51,7 +51,7 @@
 
                                             <div class="col-12 col-md-4 col-lg-4">
                                                 <div class="invoice-name">
-                                                    <p class="mb">Status : <span id="payment_status"></span></p>
+                                                    <p class="mb"><lang class="lang_status_2">Status :</lang> <span id="payment_status"></span></p>
                                                     <p class="mb-1">
                                                         <lang class="lang_no_title">Sale No :</lang> <span
                                                             class="badge badge-primary-inverse">#<span
@@ -115,7 +115,7 @@
                                                     <table class="table table-borderless text-left"
                                                         id="detailed_sale_item_gsttax">
                                                         <thead>
-                                                            <th> GST Tax Details : </th>
+                                                            <th> <lang class="lang_gst_tax_details">GST Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                             <tr class="indian-gstr hide-show-igst"
@@ -204,7 +204,7 @@
                                                             id="sale_view_Transaction_show">
                                                             <tbody>
                                                                 <tr>
-                                                                    <td>Payments/Credits :</td>
+                                                                    <td><lang class="lang_payments_credits">Payments/Credits :</lang></td>
                                                                     <td class="pull-right"><span
                                                                             class="sign display-currency"></span>&nbsp;<span
                                                                             class="number"
@@ -212,7 +212,7 @@
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td>Balance Due :</td>
+                                                                    <td><lang class="lang_balance_due">Balance Due :</lang></td>
                                                                     <td class="pull-right"><span
                                                                             class="sign display-currency"></span>&nbsp;<span
                                                                             class="number"
@@ -220,7 +220,7 @@
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td>Payment Status :</td>
+                                                                    <td><lang class="lang_payment_status">Payment Status :</lang></td>
                                                                     <td class="pull-right"><span
                                                                             class="badge badge-success-inverse"
                                                                             id="sale_view_payment_status"></span></td>
@@ -248,7 +248,7 @@
                                                     <table class="table table-borderless text-left"
                                                         id="detailed_sale_itemreturn_tax">
                                                         <thead>
-                                                            <th> Tax Details : </th>
+                                                            <th> <lang class="lang_tax_details">Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                         </tbody>
@@ -256,7 +256,7 @@
                                                     <table class="table table-borderless text-left"
                                                         id="detailed_sale_itemreturn_gsttax">
                                                         <thead>
-                                                            <th> GST Tax Details : </th>
+                                                            <th> <lang class="lang_gst_tax_details">GST Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                             <tr class="return-indian-gstr hide-show-igst"
@@ -376,21 +376,21 @@
                                             <div
                                                 class="col-sm-12 col-md-4 col-lg-4 sale_view_table_number sale_view_hide">
                                                 <div class="invoice-address">
-                                                    <h6>Table</h6>
+                                                    <h6><lang class="lang_table_title">Table</lang></h6>
                                                     <span id="sale_view_table_number"></span>
                                                 </div>
                                             </div>
                                             <div
                                                 class="col-sm-12 col-md-4 col-lg-4 sale_view_dine_type sale_view_hide">
                                                 <div class="invoice-address">
-                                                    <h6>Order Type</h6>
+                                                    <h6><lang class="lang_ordertype_title">Order Type</lang></h6>
                                                     <span id="sale_view_dine_type"></span>
                                                 </div>
                                             </div>
                                             <div
                                                 class="col-sm-12 col-md-4 col-lg-4 sale_view_discount_description sale_view_hide">
                                                 <div class="invoice-address">
-                                                    <h6>Discount Note</h6>
+                                                    <h6><lang class="lang_discount_note">Discount Note</lang></h6>
                                                     <span id="sale_view_discount_description"></span>
                                                 </div>
                                             </div>
@@ -436,9 +436,9 @@
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                 <a class="dropdown-item sales_id_print" id="sale_print_view" href="#"
-                                    data-id="sale">Sale Print</a>
+                                    data-id="sale"><lang class="lang_saleprint">Sale Print</lang></a>
                                 <a class="dropdown-item sales_id_print" id="return_print_view" href="#"
-                                    data-id="return">Return Print</a>
+                                    data-id="return"><lang class="lang_returnprint">Return Print</lang></a>
                             </div>
                         </div>
                     </div>
@@ -463,7 +463,7 @@
             <div class="modal-footer">
                 <input type="hidden" id="qrcode_id">
                 <button type="button" id="qr_done" class="btn btn-danger" data-dismiss="modal"
-                    onclick="return PosnicPro.sales.qr.qrClose();">Cancel Payment</button>
+                    onclick="return PosnicPro.sales.qr.qrClose();"><lang class="lang_cancel_payment">Cancel Payment</lang></button>
             </div>
         </div>
     </div>

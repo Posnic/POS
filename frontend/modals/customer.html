@@ -1,6 +1,6 @@
 <div id="infobar-settings-sidebar-customer" class="infobar-settings-sidebar">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span id="customer_title">Add</span>&nbsp;<lang class="lang_customer_title">
+        <h4 id="exampleModalCenterTitle"><span id="customer_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_customer_title">
                 Customer</lang>
         </h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="customer">
@@ -17,7 +17,7 @@
                             <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control border-control customer-trigger" name="name"
-                               id="customer_name" minlength="3" maxlength="250" placeholder="Enter the name" required>
+                               id="customer_name" minlength="3" maxlength="250" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name" required>
                         <input type="hidden" name="id" id="customer_id" class="customer-trigger">
                     </div>
                 </div>
@@ -27,7 +27,7 @@
                             <lang class="lang_phone_title"> Phone </lang>
                         </label>
                         <input type="tel" class="form-control border-control customer-trigger allow_phone_validate"
-                               name="phone" id="customer_phone" minlength="3" maxlength="20" placeholder="Enter the phone">
+                               name="phone" id="customer_phone" minlength="3" maxlength="20" placeholder="Enter the phone" data-t-placeholder="lang_enter_the_phone">
                     </div>
                 </div>
                 <div class="form-row">
@@ -44,7 +44,7 @@
                         <label for="customer_referrer_name">
                             <lang class="lang_choosecustomerReferral_title"> Referral customer </lang>
                         </label>
-                        <input type="text" class="form-control" id="customer_referrer_name" name="customer_referrer_name" maxlength="50" placeholder="Choose a referrer" autocomplete="off">
+                        <input type="text" class="form-control" id="customer_referrer_name" name="customer_referrer_name" maxlength="50" placeholder="Choose a referrer" data-t-placeholder="lang_choose_a_referrer" autocomplete="off">
                         <input type="hidden" name="customer_referrer_id" id="customer_referrer_id">
                     </div>
                 </div>
@@ -54,7 +54,7 @@
                             <lang class="lang_email_title"> Email </lang>
                         </label>
                         <input type="email" class="form-control border-control customer-trigger" name="email"
-                               id="customer_email" maxlength="50" placeholder="Enter the email">
+                               id="customer_email" maxlength="50" placeholder="Enter the email" data-t-placeholder="lang_enter_the_email">
                     </div>
                 </div>
                 <div class="form-row">
@@ -64,7 +64,7 @@
                         </label>
                         <textarea name="address" id="customer_address"
                                   class="form-control border-control customer-trigger" minlength="3" maxlength="500"
-                                  placeholder="Enter the address"></textarea>
+                                  placeholder="Enter the address" data-t-placeholder="lang_enter_the_address"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -73,7 +73,7 @@
                             <lang class="lang_city_title"> City </lang>
                         </label>
                         <input type="text" name="city" class="form-control border-control customer-trigger"
-                               id="customer_city" maxlength="20" placeholder="Enter the city">
+                               id="customer_city" maxlength="20" placeholder="Enter the city" data-t-placeholder="lang_enter_the_city">
                     </div>
                 </div>
                 <div class="form-row">
@@ -96,9 +96,9 @@
                     <div class="form-group col-md-12">
                         <input type="checkbox" class="custom-control-input" id="partial_balance" name="partial_balance">
                         <label class="custom-control-label" for="partial_balance">
-                            Allow credit (pay later)
+                            <lang class="lang_allow_credit_pay_later">Allow credit (pay later)</lang>
                         </label>
-                        <small class="form-text text-muted">Let this customer buy on credit and settle the balance later.</small>
+                        <small class="form-text text-muted"><lang class="lang_let_this_customer_buy_on_credit_and_settle">Let this customer buy on credit and settle the balance later.</lang></small>
                     </div>
                 </div>
 
@@ -127,11 +127,11 @@
                                         </label>
                                         <select class="custom-select border-control" id="customer_gst_type"
                                                 name="gst_type" onchange="PosnicPro.customers.gstFields();">
-                                            <option value="consumer" selected>Unregisterd - consumer
+                                            <option value="consumer" selected><lang class="lang_unregisterd_consumer">Unregisterd - consumer</lang>
                                             </option>
-                                            <option value="regular">Registered - Regular
+                                            <option value="regular"><lang class="lang_registered_regular">Registered - Regular</lang>
                                             </option>
-                                            <option value="composite">Registered - Composite
+                                            <option value="composite"><lang class="lang_registered_composite">Registered - Composite</lang>
                                             </option>
                                         </select>
                                     </div>
@@ -144,7 +144,7 @@
                                         </label>
                                         <input type="text" class="form-control border-control" name="gstin_number"
                                                id="customer_gstin_number" minlength="15" maxlength="15"
-                                               placeholder="Enter the GSTIN" autocomplete="off" required>
+                                               placeholder="Enter the GSTIN" data-t-placeholder="lang_enter_the_gstin" autocomplete="off" required>
                                     </div>
                                 </div>
                             </div>
@@ -183,7 +183,7 @@
                 <div class="form-row" id="show_last_created_customer" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a customer. <a href="#" id="last_created_customer">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_customer">Saved a customer.</lang> <a href="#" id="last_created_customer"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>
@@ -336,19 +336,19 @@
                                                 </tr>
                                                 <tr>
                                                     <th scope="row">
-                                                        Partially Paid :
+                                                        <lang class="lang_partially_paid">Partially Paid :</lang>
                                                     </th>
                                                     <td id="customer_view_partialBalance"></td>
                                                 </tr>
                                                 <tr>
                                                     <th scope="row">
-                                                        Wallet Balance :
+                                                        <lang class="lang_wallet_balance">Wallet Balance :</lang>
                                                     </th>
                                                     <td><span id="customer_viewBalance"></span></td>
                                                 </tr>
                                                 <tr id="customer_view_loyalty_row" style="display:none;">
                                                     <th scope="row">
-                                                        Loyalty :
+                                                        <lang class="lang_loyalty">Loyalty :</lang>
                                                     </th>
                                                     <td>
                                                         <span id="loyalty_customer_badge"></span>
@@ -488,7 +488,7 @@
                                                         <img src="static/images/general/nodata.svg" class="img-fluid"
                                                              style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
                                                         <div class="text-center text-dark">
-                                                            <p>No Records </p>
+                                                            <p><lang class="lang_no_records">No Records</lang> </p>
                                                         </div>
                                                     </div>
                                                     <thead
@@ -506,24 +506,24 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing
+                                                            <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_customerdetails_page_total"></span></b>
-                                                            to
+                                                            <lang class="lang_to">to</lang>
                                                             <b><span
                                                                     id="view_customerdetails_page_perpage_total"></span></b>
-                                                            of
+                                                            <lang class="lang_of">of</lang>
                                                             <b><span id="view_customerdetails_total"></span></b>
-                                                            entries
+                                                            <lang class="lang_entries">entries</lang>
                                                             <span class="showing-hide-show-customerdetails"
                                                                   style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp;
                                                                 <span class="showing-value-customerdetails text-dark"> 0
-                                                                </span>&nbsp;
-                                                                rows selected
+                                                                </span><lang class="lang_rows_selected">&nbsp;
+                                                                rows selected</lang>
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button
                                                                     class="btn previous page-item text-dark-gradient f-w-7"
@@ -558,7 +558,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16"> Overall Due </h5>
+                                                                <h5 class="card-title mb-1 font-16"> <lang class="lang_overall_due">Overall Due</lang> </h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="transaction_details_due text-dark  font-18">0</span>
@@ -570,7 +570,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16"> Sales Pending </h5>
+                                                                <h5 class="card-title mb-1 font-16"> <lang class="lang_sales_pending">Sales Pending</lang> </h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="transaction_details_pending text-dark  font-18">0</span>
@@ -582,7 +582,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16"> Wallet Balance </h5>
+                                                                <h5 class="card-title mb-1 font-16"> <lang class="lang_wallet_balance_2">Wallet Balance</lang> </h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="transaction_details_wallet text-dark  font-18">0</span>
@@ -594,7 +594,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16"> Credit </h5>
+                                                                <h5 class="card-title mb-1 font-16"> <lang class="lang_credit_title">Credit</lang> </h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="transaction_details_in text-dark  font-18">0</span>
@@ -606,7 +606,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16"> Debit </h5>
+                                                                <h5 class="card-title mb-1 font-16"> <lang class="lang_debit_title">Debit</lang> </h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="transaction_details_out text-dark  font-18">0</span>
@@ -623,7 +623,7 @@
                                 <div class="portlet light slider-portlet-vh">
                                     <div class="portlet-title margin-bottom-0">
                                         <div class="caption caption-basic font-green-meadow">
-                                            <span class="caption-subject bold uppercase">Transaction History</span>
+                                            <span class="caption-subject bold uppercase"><lang class="lang_transaction_history">Transaction History</lang></span>
                                         </div>
                                         <div class="actions">
                                             <div class="inline-block text-left">
@@ -658,7 +658,7 @@
                                                        width="100%">
                                                     <div class="col-sm-6 col-md-12 col-lg-12" id="transactionactivity_img_hide" style="display:none;"> 
                                                         <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
-                                                        <div class="text-center text-dark"> <p>No Records </p></div>
+                                                        <div class="text-center text-dark"> <p><lang class="lang_no_records">No Records</lang> </p></div>
                                                     </div>
                                                     <thead class="report-thead-tfoot table-header transactionactivity_content"></thead>
                                                     <tbody class="report-thead-tfoot table-body transactionactivity_content"></tbody>
@@ -671,21 +671,21 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing 
+                                                            <lang class="lang_showing">Showing</lang> 
                                                             <b><span id="view_transactiondetails_page_total"></span></b> 
-                                                            to 
+                                                            <lang class="lang_to">to</lang> 
                                                             <b><span id="view_transactiondetails_page_perpage_total"></span></b> 
-                                                            of 
+                                                            <lang class="lang_of">of</lang> 
                                                             <b><span id="view_transactiondetails_total"></span></b>
-                                                            entries 
+                                                            <lang class="lang_entries">entries</lang> 
                                                             <span class="showing-hide-show-transactiondetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                                <span class="showing-value-transactiondetails text-dark"> 0 </span>&nbsp;
-                                                                rows selected  
+                                                                <span class="showing-value-transactiondetails text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                                rows selected</lang>  
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button class="btn previous page-item text-dark-gradient f-w-7" data-id="transactiondetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
                                                                 <button class="btn next page-item text-dark-gradient f-w-7" data-id="transactiondetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>
@@ -713,7 +713,7 @@
                                                     <div class="card-body">
                                                         <div class="row align-items-center">
                                                             <div class="col-12 text-center">
-                                                                <h5 class="card-title mb-1 font-16">Wallet Balance</h5>
+                                                                <h5 class="card-title mb-1 font-16"><lang class="lang_wallet_balance_2">Wallet Balance</lang></h5>
                                                             </div>
                                                             <div class="col-12 text-center">
                                                                 <span class="closedsale_details_wallet text-dark font-18">₹ 0.00</span>
@@ -724,7 +724,7 @@
                                                 </div>
                                                 <div class="card m-b-30" id='walletamount' style='display:none;'>
                                                     <div class="card-body">
-                                                        <h6>Insufficient <span class="text-danger">Wallet balance</span></h6>
+                                                        <h6><lang class="lang_insufficient">Insufficient</lang> <span class="text-danger"><lang class="lang_wallet_balance_3">Wallet balance</lang></span></h6>
                                                     </div>
                                                 </div>
                                             </div>
@@ -743,7 +743,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <button type="button" class="btn btn-primary btn-block" id="walletsubmitbutton" onclick="return PosnicPro.closesalesdetails.paymentClose();" disabled>Submit</button>
+                                        <button type="button" class="btn btn-primary btn-block" id="walletsubmitbutton" onclick="return PosnicPro.closesalesdetails.paymentClose();" disabled><lang class="lang_submit">Submit</lang></button>
                                     </div>
                                 </div>
                             </div>
@@ -778,7 +778,7 @@
                             <lang class="lang_date_title"> Date </lang>
                         </label> <span class="text-danger">*</span>
                         <input type="text" class="form-control border-control commonDate" id="transaction_date"
-                               name="date" placeholder="Enter the Date" required>
+                               name="date" placeholder="Enter the Date" data-t-placeholder="lang_enter_the_date" required>
                         <input type="hidden" name="id" value="" id="customerTransaction_id">
                     </div>
                 </div>
@@ -790,7 +790,7 @@
                         </label>
                         <input type="number" class="form-control allow_decimal border-control text-right" id="transaction_amount"
                                name="amount" value="0.00" min="0" minlength="1"
-                               maxlength="10" placeholder="Enter the Amount">
+                               maxlength="10" placeholder="Enter the Amount" data-t-placeholder="lang_enter_the_amount">
                     </div>
                     <div class="form-group col-md-6">
                         <label for="transaction_type">
@@ -815,7 +815,7 @@
                         </label>
                         <textarea name="description" id="transaction_notes"
                                   class="form-control border-control supplier-trigger"
-                                  placeholder="Enter the transaction note"></textarea>
+                                  placeholder="Enter the transaction note" data-t-placeholder="lang_enter_the_transaction_note"></textarea>
                     </div>
                 </div>
 

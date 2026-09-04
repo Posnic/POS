@@ -32,6 +32,10 @@ function boot() {
   const PosnicPro = {
     local: { get: () => null },
     alert: (type, message) => alerts.push(type + ': ' + message),
+    /* The words a module writes now come through i18n. Answer the way the
+       real t() answers with no pack loaded: the English it was handed. */
+    i18n: { t: (key, english) => english },
+
     HideSideBarModal: () => {},
     get: (params, ok) => {
       const url = String(params.url);

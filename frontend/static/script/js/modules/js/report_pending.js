@@ -540,7 +540,7 @@ PosnicPro.pendingsupplierreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportpendingsupply_header').hide();
-                            $('.reportpendsupply_norecord').empty().append('<div class="text-center text-dark"> <p>No Records </p></div>');
+                            $('.reportpendsupply_norecord').empty().append('<div class="text-center text-dark"> <p><lang class="lang_no_records">No Records </lang></p></div>');
                             $('#reportpendsupply_img_hide,.reportpendsupply_norecord').show();
 
                         } else {

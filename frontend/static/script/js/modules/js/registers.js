@@ -37,7 +37,7 @@ PosnicPro.registers = {
                 var r = rows[i];
                 var status, action = '';
                 if (r.in_use && r.in_use_by_me) {
-                    status = '<span class="badge badge-success">Open, your session</span>';
+                    status = '<span class="badge badge-success"><lang class="lang_open_your_session">Open, your session</lang></span>';
                     // Resume covers the browser that lost its local session
                     // record; when the session is already live here the
                     // details below the table are the whole story.
@@ -48,7 +48,7 @@ PosnicPro.registers = {
                     status = '<span class="badge badge-warning">Open, ' +
                         $('<span>').text(r.in_use_by || 'another till').html() + '</span>';
                 } else {
-                    status = '<span class="badge badge-light">Closed</span>';
+                    status = '<span class="badge badge-light"><lang class="lang_closed">Closed</lang></span>';
                     action = '<button type="button" class="btn btn-primary btn-sm register-open-btn" data-idx="' + i + '"><i class="feather icon-unlock"></i> Open</button>';
                 }
                 html += '<tr><td>' + (i + 1) + '</td><td>' +
@@ -56,7 +56,7 @@ PosnicPro.registers = {
                     '</td><td class="text-right">' + action + '</td></tr>';
             }
             if (!html) {
-                html = '<tr><td colspan="4" class="text-muted">No registers configured for this branch - add them in Settings &gt; Branch.</td></tr>';
+                html = '<tr><td colspan="4" class="text-muted"><lang class="lang_no_registers_configured_for_this_branch_ad">No registers configured for this branch - add them in Settings &gt; Branch.</lang></td></tr>';
             }
             $('#register_overview_body').html(html);
         };
@@ -254,7 +254,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="in" data-amount="' + appendcash_in + '" data-index="' + index + '">' +
                                 '<td><span class="register_cashin_username register_user_fields" id="register_cashin_username">' + data.current_user + '</span></td>' +
                                 '<td><span class="register_price_fields" name="register_cash_in" id="register_cash_in"> ' + currency + '&nbsp;' + appendcash_in + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete" data-t-aria-label="lang_delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Intable').append(trow);
                     }
@@ -263,7 +263,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="out" data-amount="' + appendcash_out + '" data-index="' + index + '">' +
                                 '<td><span class="register_cashout_username register_user_fields" id="register_cashout_username">' + data.current_user + '</span></td>' +
                                 '<td><span class="register_price_outfields" name="register_cash_out" id="register_cash_out"> ' + currency + '&nbsp;' + appendcash_out + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete" data-t-aria-label="lang_delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Outtable').append(trow);
                     }
@@ -324,7 +324,7 @@ PosnicPro.registers = {
                             type: 'text',
                             pk: 1,
                             emptytext: '..',
-                            title: 'Enter ' + method + ' Amount',
+                            title: PosnicPro.i18n.t('lang_enter', 'Enter ') + method + ' Amount',
                             inputclass: 'form-control form-control-sm',
                             validate: function (value) {
                                 if ($.trim(value) == '') {
@@ -722,7 +722,7 @@ PosnicPro.registers = {
             $('#cash_button_note').val('');
         });
         if (outAmount > parseInt($('#expected_cash_amount').html())) {
-            PosnicPro.alert('error', 'The cash till does not have enough funds.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_cash_till_does_not_have_enough_funds', 'The cash till does not have enough funds.'));
             return false;
         } else {
             var inOutAmountType = {
@@ -754,7 +754,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="in" data-amount="' + savedInAmount.toFixed(2) + '" data-index="' + currentIndex + '">' +
                                 '<td><span class="register_cashin_username register_user_fields">' + currentUser + '</span></td>' +
                                 '<td><span class="register_price_fields"> ' + currency + '&nbsp;' + savedInAmount.toFixed(2) + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete" data-t-aria-label="lang_delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Intable').append(trow);
                         
@@ -774,7 +774,7 @@ PosnicPro.registers = {
                         var trow = '<tr class="cashinout-row" data-type="out" data-amount="' + savedOutAmount.toFixed(2) + '" data-index="' + currentIndex + '">' +
                                 '<td><span class="register_cashout_username register_user_fields">' + currentUser + '</span></td>' +
                                 '<td><span class="register_price_outfields"> ' + currency + '&nbsp;' + savedOutAmount.toFixed(2) + '</span></td>' +
-                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete"><i class="feather icon-trash"></i></button></td>' +
+                                '<td><button type="button" class="btn btn-outline-danger btn-sm delete-cashinout-btn" aria-label="Delete" data-t-aria-label="lang_delete"><i class="feather icon-trash"></i></button></td>' +
                                 '</tr>';
                         $('.cash_Outtable').append(trow);
                         
@@ -903,8 +903,8 @@ PosnicPro.registers = {
     addCashcalculation: function () {
         $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
         $("#infobar-settings-sidebar-denom").addClass("sidebarshow");
-        $(".denomination_title_name").html('Add');
-        $('.denomination_submit_button').html('Save');
+        $(".denomination_title_name").html(PosnicPro.i18n.t('lang_nav_add', 'Add'));
+        $('.denomination_submit_button').html(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var params = {
             url: 'registers/getcashField'
         };
@@ -948,8 +948,8 @@ PosnicPro.registers = {
     editCashcalculation: function () {
         $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
         $("#infobar-settings-sidebar-denom").addClass("sidebarshow");
-        $(".denomination_title_name").html('Edit');
-        $('.denomination_submit_button').show().html('Update');
+        $(".denomination_title_name").html(PosnicPro.i18n.t('lang_edit_title', 'Edit'));
+        $('.denomination_submit_button').show().html(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
         $('#denom_datastore').css("visibility", "visible");
         var url = 'registers/editCashDenomination';
         var params = {
@@ -1296,7 +1296,7 @@ $(document).on('click', '.delete-cashinout-btn', function() {
     var index = $row.data('index');
     
     // Set the type text in modal
-    $('#cashinout_type_text').text(type === 'in' ? 'Cash In' : 'Cash Out');
+    $('#cashinout_type_text').text(type === 'in' ? PosnicPro.i18n.t('lang_cash_in_title', 'Cash In') : PosnicPro.i18n.t('lang_cash_out_title', 'Cash Out'));
     
     // Store index and type for confirmation
     $('#confirm_delete_cashinout').data('index', index);
@@ -1318,7 +1318,7 @@ $('#confirm_delete_cashinout').off('click').on('click', function() {
     console.log('Delete Cash In/Out - Index:', index, 'Type:', type, 'Register ID (_id):', register_id, 'From reg_upd_id:', $('#reg_upd_id').val());
     
     if (!register_id || register_id === 'undefined' || register_id === '') {
-        PosnicPro.alert('error', 'Register not found. Please reload the page.');
+        PosnicPro.alert('error', PosnicPro.i18n.t('lang_register_not_found_please_reload_the_page', 'Register not found. Please reload the page.'));
         $('#delete_cashinout_modal').modal('hide');
         return;
     }

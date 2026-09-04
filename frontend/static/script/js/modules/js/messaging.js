@@ -48,7 +48,7 @@ PosnicPro.messaging = {
       (byScope[p.scope] = byScope[p.scope] || []).push(p);
     });
     var sel = $('#messaging_sms_provider').empty();
-    sel.append('<option value="">Choose a provider</option>');
+    sel.append('<option value="" data-t="lang_choose_a_provider">Choose a provider</option>');
     Object.keys(byScope).forEach(function (scope) {
       var group = $('<optgroup label="' + PosnicPro.messaging.esc(scope) + '"></optgroup>');
       byScope[scope].forEach(function (p) {
@@ -163,7 +163,7 @@ PosnicPro.messaging = {
   test: function (channel, phoneSel) {
     var phone = $(phoneSel).val();
     if (!phone) {
-      PosnicPro.alert('error', 'Enter a phone number (with country code) to send a test.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_phone_number_with_country_code_to', 'Enter a phone number (with country code) to send a test.'));
       return;
     }
     PosnicPro.put({ url: 'messaging/settings', data: JSON.stringify(PosnicPro.messaging.collect()) }, function () {

@@ -372,7 +372,7 @@ PosnicPro.receivings.view = {
         $('#receiving_add_item_name').focus();
         (PosnicPro.local.get('gst_action') === 'enable') ? $('.indian-gstr').show() : $('.indian-gstr').hide();
         PosnicPro.receivings.receivingReturnAction = 'return';
-//        $('.changeReceivingText').text('Return');
+//        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_return_title', 'Return'));
         $('.changeReceivingText').text(PosnicPro.i18n.t('lang_action_return_purchase', 'Return'));
 
         $('#receving_returned_table tbody').html('');
@@ -391,7 +391,7 @@ PosnicPro.receivings.view = {
             }
         });
         PosnicPro.receivings.receivingReturnAction = 'edit';
-//        $(".changeReceivingText").text('Update');
+//        $(".changeReceivingText").text(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
         $('.changeReceivingText').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
         $('#receiving_submit').removeAttr('disabled');
@@ -452,7 +452,7 @@ PosnicPro.receivings.view = {
                 $('.print-invoice-payment-mode').html(data.payment_mode);
                 $('#barcodeValue').val(data.receiving_id);
                 $('.hide_customer_details').show();
-                $('.print-custom-title').html('Supplier Details');
+                $('.print-custom-title').html(PosnicPro.i18n.t('lang_supplydetails_title', 'Supplier Details'));
                 $('.print-name').html(data.supplier_name);
                 $('.print-phone').html(data.supplier_phone);
                 $('.print-email').html(data.supplier_email);
@@ -854,7 +854,7 @@ PosnicPro.receivings.view = {
                 $('.print-invoice-payment-mode').html(data.payment_mode);
                 $('.barcodeValue').val(data.receiving_id);
                 $('.hide_customer_details').show();
-                $('.print-custom-title').html('Supplier Details');
+                $('.print-custom-title').html(PosnicPro.i18n.t('lang_supplydetails_title', 'Supplier Details'));
                 $('.print-name').html(data.supplier_name);
                 $('.print-phone').html(data.supplier_phone);
                 $('.print-email').html(data.supplier_email);
@@ -1107,7 +1107,7 @@ PosnicPro.receivings.view = {
        that lookup and answers honestly when there is none. */
     emailToSupplier: function (id) {
         swal({
-            title: 'Email purchase order',
+            title: PosnicPro.i18n.t('lang_email_purchase_order', 'Email purchase order'),
             text: 'Leave empty to use the supplier\'s saved email address',
             input: 'text',
             inputPlaceholder: 'supplier@example.com (optional)',

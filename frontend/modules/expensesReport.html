@@ -5,7 +5,7 @@
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
                 <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title">Expense Reports</h4>
+                    <h4 class="page-title break_title"><lang class="lang_expense_reports">Expense Reports</lang></h4>
                 </div>               
                 <div class="col-lg-9 col-md-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
@@ -17,7 +17,7 @@
                 <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-branch display-current-branch" multiple="multiple"
                             data-placeholder="Select Branch" name="expenses_branch_value[]" id="expenses_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -30,7 +30,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -48,13 +48,13 @@
                     <div class="card-body">
                         <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link active report_tab_font" id="expense-tab-line" data-toggle="tab" href="#expense-line" role="tab" aria-controls="expense-line" aria-selected="true" onClick="PosnicPro.expensesreport.expensesreportTable();"><i class="feather icon-file-text mr-1"></i>Expense Details</a>
+                                <a class="nav-link active report_tab_font" id="expense-tab-line" data-toggle="tab" href="#expense-line" role="tab" aria-controls="expense-line" aria-selected="true" onClick="PosnicPro.expensesreport.expensesreportTable();"><i class="feather icon-file-text mr-1"></i><lang class="lang_expensedetail_title">Expense Details</lang></a>
                             </li>
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="expense_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="expense-line" role="tabpanel" aria-labelledby="expense-tab-line">
                                 <!-- start table -->
@@ -73,13 +73,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="expensesreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="expensesreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="expensesreport_exportbtn"
-                                                           data-id="expensesreportexport" onclick="PosnicPro.expensesreport.expensesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="expensesreportexport" onclick="PosnicPro.expensesreport.expensesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -111,24 +111,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_expensesreport_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_expensesreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_expensesreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-expensesreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-expensesreport text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-expensesreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="expensesreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="expensesreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="expensesreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="expensesreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>

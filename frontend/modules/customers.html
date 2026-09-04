@@ -15,25 +15,25 @@
                     <div class="widgetbar" id="customers_controls">
                         <a data-module="customer" data-access="write" href="#/customers" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('customers'); return false;"
-                            data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import customers">
+                            data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import customers" data-t-aria-label="lang_import_customers">
                             <i class="feather icon-download"></i>
                         </a>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
                             <i class="feather icon-share"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.customers.exportCsv(); return false;">This page (what is shown)</a>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.customers.exportAllCsv(); return false;">Everything matching the filter</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.customers.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.customers.exportAllCsv(); return false;"><lang class="lang_everything_matching_the_filter">Everything matching the filter</lang></a>
                         </div>
                         </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="customers_filter_btn"
-                            data-toggle="tooltip" title="Filter customers">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                            data-toggle="tooltip" title="Filter customers" data-t-title="lang_filter_customers">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                         <a data-module="customer" data-access="write" href="#/customers/new"
-                            class="btn btn-primary-rgba customer_new_shortcut" data-toggle="tooltip" title="New customer">
+                            class="btn btn-primary-rgba customer_new_shortcut" data-toggle="tooltip" title="New customer" data-t-title="lang_new_customer">
                             <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
@@ -45,7 +45,7 @@
             <div id="customers_split">
                 <div class="card m-b-30 md-rail" id="customers_list_card">
                     <div class="card-body">
-                        <div id="customers_list_rows" class="md-rail-rows text-muted">Loading customers ...</div>
+                        <div id="customers_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_customers">Loading customers ...</lang></div>
                         <div class="q-pager" id="customers_list_paging"></div>
                     </div>
                 </div>

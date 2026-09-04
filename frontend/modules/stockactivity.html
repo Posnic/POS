@@ -17,17 +17,17 @@
                     <div class="widgetbar" id="stocklogs_controls">
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
                             <i class="feather icon-share"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportCsv(); return false;">This page (what is shown)</a>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportAllCsv(); return false;">Everything matching the filter</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportAllCsv(); return false;"><lang class="lang_everything_matching_the_filter">Everything matching the filter</lang></a>
                         </div>
                         </div>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="stocklogs_filter_btn"
-                            data-toggle="tooltip" title="Filter movements">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                            data-toggle="tooltip" title="Filter movements" data-t-title="lang_filter_movements">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                     </div>
                 </div>
@@ -42,19 +42,19 @@
                 <!-- Movement as a labeled dropdown (LIST_PAGE_UX_STANDARD §2:
                      quick filters are dropdowns, never chips). -->
                 <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="stocklogs_quick_filters">
-                    <span class="p-qf-label">Movement</span>
+                    <span class="p-qf-label"><lang class="lang_movement">Movement</lang></span>
                     <div class="btn-group">
                         <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" id="stocklogs_move_dd">All</button>
+                            aria-haspopup="true" aria-expanded="false" id="stocklogs_move_dd"><lang class="lang_report_all">All</lang></button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="">All</a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="purchases">Purchases</a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="sales">Sales</a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="items">Item edits</a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move=""><lang class="lang_report_all">All</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="purchases"><lang class="lang_po_title">Purchases</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="sales"><lang class="lang_rgrp_sales">Sales</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="items"><lang class="lang_item_edits">Item edits</lang></a>
                         </div>
                     </div>
                 </div>
-                <div id="stocklogs_list_rows" class="md-rail-rows text-muted">Loading movements ...</div>
+                <div id="stocklogs_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_movements">Loading movements ...</lang></div>
                 <div class="q-pager" id="stocklogs_list_paging"></div>
             </div>
         </div>
@@ -76,8 +76,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_stocklogdetail_title">Stock Log Details </lang>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">

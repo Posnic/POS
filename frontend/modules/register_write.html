@@ -6,8 +6,8 @@
         <div class="modal-content loader-view-variant">
             <div class="modal-header">
                 <h5 class="modal-title"><lang class="lang_branchchange"> Branch Change Details </lang></h5>
-                <button type="button" class="infobar-settings-close close" data-id="branches" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="infobar-settings-close close" data-id="branches" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -19,8 +19,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary infobar-settings-close" data-id="branches" data-dismiss="modal" aria-label="Close">
-                    Cancel
+                <button type="button" class="btn btn-outline-secondary infobar-settings-close" data-id="branches" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <lang class="lang_cancel_title">Cancel</lang>
                 </button>
                 <button type="button" class="btn btn-outline-danger" id="branch_register_close" data-dismiss="modal" onclick="PosnicPro.registers.branchChangeCloseRegisterFormSubmit();">
                     <i class="feather icon-delete mr-2"></i><lang class="lang_closedregister"> Close Register</lang>
@@ -52,7 +52,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-danger" id="ignore_registerTime" data-dismiss="modal">
-                    <i class="feather icon-x-circle mr-2"></i>Cancel/Ignore
+                    <i class="feather icon-x-circle mr-2"></i><lang class="lang_cancel_ignore">Cancel/Ignore</lang>
                 </button>
                 <button type="button" class="btn btn-outline-primary" data-dismiss="modal" onclick="PosnicPro.registers.registercloseFormSubmit();">
                     <i class="feather icon-delete mr-2"></i><lang class="lang_closedregister"> Close Register</lang>
@@ -67,7 +67,7 @@
 <!--cash denomiation design-->
 <div id="infobar-settings-sidebar-denom" class="infobar-settings-sidebar scroll_width">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span class="denomination_title_name">Add</span>&nbsp;Denomination</h4>
+        <h4 id="exampleModalCenterTitle"><span class="denomination_title_name"><lang class="lang_nav_add">Add</lang></span><lang class="lang_sale_summary">&nbsp;Denomination</lang></h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="denom">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
         </a>
@@ -82,7 +82,7 @@
                             <div class="col-md-2">
                             </div>
                             <div class="col-md-4">
-                                <h6><span>Total </span></h6> 
+                                <h6><span><lang class="lang_total_title">Total</lang> </span></h6> 
                             </div>
                             <div class="col-md-4 total_valpading">
                                 <h6><span class="display-currency"></span>&nbsp;<span class="font-18" id="TotalCashValue">0</span></h6> 
@@ -120,8 +120,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><lang class="lang_deletetaxrecord_title">Delete Denomination Details</lang></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -148,8 +148,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><lang class="lang_delete_cashinout_title">Delete Cash In/Out Entry</lang></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">

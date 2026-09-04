@@ -37,7 +37,7 @@ PosnicPro.gstrOne = {
             }
             var rows = response.data || [];
             if (!rows.length) {
-                PosnicPro.alert('warning', 'No B2B invoices in this period - nothing to file.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_b2b_invoices_in_this_period_nothing_to', 'No B2B invoices in this period - nothing to file.'));
                 return;
             }
             var gstArray = {
@@ -61,7 +61,7 @@ PosnicPro.gstrOne = {
             PosnicPro.alert('success', invoiceCount + ' invoice(s) for ' + rows.length + ' GSTIN(s) exported');
         }, function () {
             loader.find(".loadingSpinner:first").remove();
-            PosnicPro.alert('error', 'Could not build the GSTR-1 file');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_build_the_gstr_1_file', 'Could not build the GSTR-1 file'));
         });
     },
 

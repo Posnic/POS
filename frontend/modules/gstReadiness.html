@@ -20,55 +20,55 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center flex-wrap mb-3" style="gap:10px;">
                             <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.gstreadiness.run();">
-                                <i class="feather icon-refresh-cw mr-1"></i>Scan items
+                                <i class="feather icon-refresh-cw mr-1"></i><lang class="lang_scan_items">Scan items</lang>
                             </button>
                             <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.gstreadiness.exportCsv();">
-                                <i class="feather icon-download mr-1"></i>CSV
+                                <i class="feather icon-download mr-1"></i><lang class="lang_csv">CSV</lang>
                             </button>
                             <span class="text-muted" id="gstready_counts" style="font-size:14px;"></span>
                         </div>
 
                         <div class="alert alert-warning" id="gstready_notice" style="font-size:13.5px; display:none;"></div>
 
-                        <div class="fc-title mt-2">Items on a withdrawn slab</div>
+                        <div class="fc-title mt-2"><lang class="lang_items_on_a_withdrawn_slab">Items on a withdrawn slab</lang></div>
                         <p class="text-muted" style="font-size:13.5px;">
-                            The 12% and 28% slabs were withdrawn on 22 September 2025. These items still
-                            carry one, so every sale of them uses a rate that no longer exists.
+                            <lang class="lang_the_12_and_28_slabs_were_withdrawn_on_22_s">The 12% and 28% slabs were withdrawn on 22 September 2025. These items still
+                            carry one, so every sale of them uses a rate that no longer exists.</lang>
                         </p>
                         <div class="table-responsive">
                             <table class="table table-borderless" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>Item</th>
-                                        <th>HSN</th>
-                                        <th class="text-right">Current rate</th>
-                                        <th>Why it is listed</th>
+                                        <th><lang class="lang_newitem_title">Item</lang></th>
+                                        <th><lang class="lang_hsn_2">HSN</lang></th>
+                                        <th class="text-right"><lang class="lang_current_rate">Current rate</lang></th>
+                                        <th><lang class="lang_why_it_is_listed">Why it is listed</lang></th>
                                     </tr>
                                 </thead>
                                 <tbody id="gstready_retired">
-                                    <tr><td colspan="4" class="text-center text-muted">Press Scan items.</td></tr>
+                                    <tr><td colspan="4" class="text-center text-muted"><lang class="lang_press_scan_items">Press Scan items.</lang></td></tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div class="fc-title mt-4">Rate differs from the HSN reference</div>
+                        <div class="fc-title mt-4"><lang class="lang_rate_differs_from_the_hsn_reference">Rate differs from the HSN reference</lang></div>
                         <p class="text-muted" style="font-size:13.5px;">
-                            Suggestions only, and shown only where the reference still names a live slab.
-                            Check each against the notification before changing anything.
+                            <lang class="lang_suggestions_only_and_shown_only_where_the">Suggestions only, and shown only where the reference still names a live slab.
+                            Check each against the notification before changing anything.</lang>
                         </p>
                         <div class="table-responsive">
                             <table class="table table-borderless" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>Item</th>
-                                        <th>HSN</th>
-                                        <th class="text-right">Current rate</th>
-                                        <th class="text-right">Reference says</th>
-                                        <th>Matched on</th>
+                                        <th><lang class="lang_newitem_title">Item</lang></th>
+                                        <th><lang class="lang_hsn_2">HSN</lang></th>
+                                        <th class="text-right"><lang class="lang_current_rate">Current rate</lang></th>
+                                        <th class="text-right"><lang class="lang_reference_says">Reference says</lang></th>
+                                        <th><lang class="lang_matched_on">Matched on</lang></th>
                                     </tr>
                                 </thead>
                                 <tbody id="gstready_differs">
-                                    <tr><td colspan="5" class="text-center text-muted">Press Scan items.</td></tr>
+                                    <tr><td colspan="5" class="text-center text-muted"><lang class="lang_press_scan_items">Press Scan items.</lang></td></tr>
                                 </tbody>
                             </table>
                         </div>

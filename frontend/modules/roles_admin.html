@@ -22,22 +22,22 @@
             <div class="card m-b-30 md-rail" id="roles_list_card">
                 <div class="card-body">
                     <p class="text-muted" style="font-size:.85rem;">
-                        A role is a reusable permission set: the module access matrix plus the
+                        <lang class="lang_a_role_is_a_reusable_permission_set_the_mo">A role is a reusable permission set: the module access matrix plus the
                         till actions its holders may do without a manager. Assign roles on the
-                        user form. Editing a role updates every user holding it immediately.
+                        user form. Editing a role updates every user holding it immediately.</lang>
                     </p>
                     <div class="table-responsive md-rail-rows" id="roles_list_rows">
                         <table class="table table-borderless">
                             <thead>
                                 <tr>
-                                    <th>Role</th>
-                                    <th class="rl-col-type">Type</th>
-                                    <th class="rl-col-desc">Description</th>
-                                    <th class="rl-col-auth">Till authority</th>
+                                    <th><lang class="lang_role">Role</lang></th>
+                                    <th class="rl-col-type"><lang class="lang_type_title">Type</lang></th>
+                                    <th class="rl-col-desc"><lang class="lang_description_title">Description</lang></th>
+                                    <th class="rl-col-auth"><lang class="lang_till_authority">Till authority</lang></th>
                                 </tr>
                             </thead>
                             <tbody id="roles_admin_body">
-                                <tr><td colspan="4" class="text-center text-muted">Loading&hellip;</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -56,35 +56,35 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="role_editor_title">Role</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title" id="role_editor_title"><lang class="lang_role">Role</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="role_editor_id">
                 <div class="form-row">
                     <div class="form-group col-md-5">
-                        <label for="role_editor_name" style="font-weight:600;">Name</label>
+                        <label for="role_editor_name" style="font-weight:600;"><lang class="lang_name_title">Name</lang></label>
                         <input type="text" class="form-control border-control" id="role_editor_name"
                                maxlength="60" placeholder="e.g. Weekend Supervisor">
                     </div>
                     <div class="form-group col-md-7">
-                        <label for="role_editor_description" style="font-weight:600;">Description</label>
+                        <label for="role_editor_description" style="font-weight:600;"><lang class="lang_description_title">Description</lang></label>
                         <input type="text" class="form-control border-control" id="role_editor_description"
-                               maxlength="200" placeholder="What this role is for">
+                               maxlength="200" placeholder="What this role is for" data-t-placeholder="lang_what_this_role_is_for">
                     </div>
                 </div>
 
-                <label style="font-weight:600;">Module access</label>
+                <label style="font-weight:600;"><lang class="lang_module_access">Module access</lang></label>
                 <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
                     <table class="table table-sm" style="margin-bottom:0;">
                         <thead>
                             <tr>
-                                <th>Module</th>
-                                <th class="text-center">Read</th>
-                                <th class="text-center">Write</th>
-                                <th class="text-center">Delete</th>
+                                <th><lang class="lang_module">Module</lang></th>
+                                <th class="text-center"><lang class="lang_read">Read</lang></th>
+                                <th class="text-center"><lang class="lang_write">Write</lang></th>
+                                <th class="text-center"><lang class="lang_delete">Delete</lang></th>
                             </tr>
                         </thead>
                         <tbody id="role_editor_acl_body"></tbody>
@@ -93,18 +93,18 @@
                 <div class="form-group">
                     <label style="font-weight:400;">
                         <input type="checkbox" id="role_acl_dashboard_financials">
-                        Dashboard financials <span class="text-muted">(profit, margins, expenses)</span>
+                        <lang class="lang_dashboard_financials">Dashboard financials</lang> <span class="text-muted"><lang class="lang_profit_margins_expenses">(profit, margins, expenses)</lang></span>
                     </label>
                 </div>
 
-                <label style="font-weight:600;">Till / POS actions</label>
+                <label style="font-weight:600;"><lang class="lang_till_pos_actions_2">Till / POS actions</lang></label>
                 <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
                     <table class="table table-sm" style="margin-bottom:0;">
                         <thead>
                             <tr>
-                                <th>Action</th>
-                                <th class="text-center">Allowed</th>
-                                <th class="text-center">Needs manager approval</th>
+                                <th><lang class="lang_action">Action</lang></th>
+                                <th class="text-center"><lang class="lang_allowed">Allowed</lang></th>
+                                <th class="text-center"><lang class="lang_needs_manager_approval">Needs manager approval</lang></th>
                             </tr>
                         </thead>
                         <tbody id="role_editor_pos_body"></tbody>
@@ -112,25 +112,25 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6">
-                        <label style="font-weight:400; font-size:.85rem;">Max discount %</label>
+                        <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_discount">Max discount %</lang></label>
                         <input type="number" min="0" max="100" step="1" class="form-control border-control"
-                               id="role_editor_discount_cap" value="0" aria-label="Role editor discount cap">
+                               id="role_editor_discount_cap" value="0" aria-label="Role editor discount cap" data-t-aria-label="lang_role_editor_discount_cap">
                     </div>
                     <div class="form-group col-md-6">
-                        <label style="font-weight:400; font-size:.85rem;">Max refund amount <span class="text-muted">(0 = no limit)</span></label>
+                        <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_refund_amount">Max refund amount</lang> <span class="text-muted"><lang class="lang_0_no_limit">(0 = no limit)</lang></span></label>
                         <input type="number" min="0" step="0.01" class="form-control border-control"
-                               id="role_editor_refund_cap" value="0" aria-label="Role editor refund cap">
+                               id="role_editor_refund_cap" value="0" aria-label="Role editor refund cap" data-t-aria-label="lang_role_editor_refund_cap">
                     </div>
                 </div>
                 <small class="text-muted" id="role_editor_system_note" style="display:none;">
-                    This is a built-in role: its permissions can be tuned, but it cannot be renamed
-                    in a way that changes what it is, and it cannot be deleted.
+                    <lang class="lang_this_is_a_built_in_role_its_permissions_ca">This is a built-in role: its permissions can be tuned, but it cannot be renamed
+                    in a way that changes what it is, and it cannot be deleted.</lang>
                 </small>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
                 <button type="button" class="btn btn-outline-primary" id="role_editor_save"
-                        onclick="PosnicPro.roles.save();">Save Role</button>
+                        onclick="PosnicPro.roles.save();"><lang class="lang_save_role">Save Role</lang></button>
             </div>
         </div>
     </div>

@@ -80,11 +80,11 @@ PosnicPro.kothistory = {
 
                     var action =
                         '<div id="' + toolbarOptionsId + '" class="hidden">' +
-                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="View" onclick="PosnicPro.kothistory.view(\'' + row._id + '\')"><i class="feather icon-eye"></i></a>' +
-                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Edit KOT" onclick="PosnicPro.kothistory.edit(\'' + row._id + '\')"><i class="feather icon-edit-1"></i></a>' +
-                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Settlement" onclick="PosnicPro.kothistory.proceed(\'' + row._id + '\')"><i class="feather icon-arrow-right-circle"></i></a>' +
-                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Sale Print" onclick="PosnicPro.kothistory.print(\'' + row._id + '\')"><i class="feather icon-printer"></i></a>' +
-                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip text-danger" data-toggle="tooltip" title="Cancel" onclick="PosnicPro.kothistory.cancel(\'' + row._id + '\')"><i class="feather icon-x-circle"></i></a>' +
+                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="View" data-t-title="lang_view" onclick="PosnicPro.kothistory.view(\'' + row._id + '\')"><i class="feather icon-eye"></i></a>' +
+                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Edit KOT" data-t-title="lang_edit_kot" onclick="PosnicPro.kothistory.edit(\'' + row._id + '\')"><i class="feather icon-edit-1"></i></a>' +
+                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Settlement" data-t-title="lang_settlement" onclick="PosnicPro.kothistory.proceed(\'' + row._id + '\')"><i class="feather icon-arrow-right-circle"></i></a>' +
+                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip" data-toggle="tooltip" title="Sale Print" data-t-title="lang_saleprint" onclick="PosnicPro.kothistory.print(\'' + row._id + '\')"><i class="feather icon-printer"></i></a>' +
+                        '  <a href="javascript:void(0);" class="point-cursor mobile_tooltip text-danger" data-toggle="tooltip" title="Cancel" data-t-title="lang_cancel_title" onclick="PosnicPro.kothistory.cancel(\'' + row._id + '\')"><i class="feather icon-x-circle"></i></a>' +
                         '</div>' +
                         '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="' + toolbarButtonId + '"><i class="feather icon-more-vertical-"></i></div>';
 
@@ -253,12 +253,12 @@ PosnicPro.kothistory = {
             // use .html() so the inner <lang> tags are replaced, preventing
             // the language layer from resetting the text back to "Delete".
             setTimeout(function () {
-                $title.html('Cancel Record ');
+                $title.html(PosnicPro.i18n.t('lang_cancel_record', 'Cancel Record '));
                 if ($removeText.length) {
-                    $removeText.text('Selected details will be canceled');
+                    $removeText.text(PosnicPro.i18n.t('lang_selected_details_will_be_canceled', 'Selected details will be canceled'));
                 }
                 if ($questionLine.length) {
-                    $questionLine.html('Are you sure want to cancel this record ?');
+                    $questionLine.html(PosnicPro.i18n.t('lang_are_you_sure_want_to_cancel_this_record', 'Are you sure want to cancel this record ?'));
                 }
                 $modal.find('.removetransactiontext').hide();
             }, 0);
@@ -341,7 +341,7 @@ PosnicPro.kothistory = {
                             '</tr>';
                     }
                 } else {
-                    itemsHtml = '<tr><td colspan="3" class="text-center text-muted">No items</td></tr>';
+                    itemsHtml = '<tr><td colspan="3" class="text-center text-muted"><lang class="lang_no_items">No items</lang></td></tr>';
                 }
                 $('#kot_view_items_tbody').html(itemsHtml);
 

@@ -31,7 +31,7 @@ PosnicPro.kot = {
             PosnicPro.kot.loadTables();
             // Clear KOT details panel when no table is selected
             var detailsPanel = $('#kot_table_details');
-            var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;">Select a table from the left to view KOT details</p></div>';
+            var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p></div>';
             detailsPanel.html(emptyStateHtml);
         }
 
@@ -130,7 +130,7 @@ PosnicPro.kot = {
             PosnicPro.kot.currentTableNumber = null;
             PosnicPro.kot.currentTableId = null;
             var detailsPanel = $('#kot_table_details');
-            var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;">Select a table from the left to view KOT details</p></div>';
+            var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p></div>';
             detailsPanel.html(emptyStateHtml);
         }
     },
@@ -241,7 +241,7 @@ PosnicPro.kot = {
         // Different colors for Take Away
         var boxColor = isTakeaway ? '#ffe0b2' : '#d4edda';
         var numberColor = isTakeaway ? '#ff9800' : '#a3d9a5';
-        var labelHtml = isTakeaway ? '<div style="font-size: 12px; color: #ff9800; font-weight: 600; margin-top: 4px;">Take Away</div>' : '';
+        var labelHtml = isTakeaway ? '<div style="font-size: 12px; color: #ff9800; font-weight: 600; margin-top: 4px;"><lang class="lang_take_away_2">Take Away</lang></div>' : '';
 
         var tableBox = `
             <a href="#/kot/${table.tableorder_value}" class="kot-table-box page_url" data-table-id="${tableId}" data-table-number="${table.tableorder_value}" 
@@ -262,8 +262,8 @@ PosnicPro.kot = {
                         display: flex; flex-direction: column; align-items: center; justify-content: center; 
                         background: #f8f9fa; min-height: 100px; padding: 10px; margin-bottom: 10px;">
                 <input type="text" class="form-control form-control-sm" id="custom_table_number_input" 
-                       placeholder="Custom #" style="text-align: center; font-size: 14px; margin-bottom: 8px; border: 1px solid #17a2b8;">
-                <button type="button" class="btn btn-sm btn-info" onclick="PosnicPro.kot.addCustomTableKOT()" style="padding: 4px 12px;" aria-label="Add">
+                       placeholder="Custom #" data-t-placeholder="lang_custom" style="text-align: center; font-size: 14px; margin-bottom: 8px; border: 1px solid #17a2b8;">
+                <button type="button" class="btn btn-sm btn-info" onclick="PosnicPro.kot.addCustomTableKOT()" style="padding: 4px 12px;" aria-label="Add" data-t-aria-label="lang_nav_add">
                     <i class="feather icon-plus" style="font-size: 14px;"></i>
                 </button>
             </div>
@@ -332,7 +332,7 @@ PosnicPro.kot = {
         var detailsPanel = $('#kot_table_details');
         console.log('Right panel element found:', detailsPanel.length > 0);
 
-        var loadingHtml = '<div class="text-center" style="padding: 60px 20px;"><div class="loadingSpinner"></div><p class="text-muted mt-3">Loading table details...</p></div>';
+        var loadingHtml = '<div class="text-center" style="padding: 60px 20px;"><div class="loadingSpinner"></div><p class="text-muted mt-3"><lang class="lang_loading_table_details">Loading table details...</lang></p></div>';
         detailsPanel.html(loadingHtml);
 
         var filters = {
@@ -388,7 +388,7 @@ PosnicPro.kot = {
             // If no KOTs, show empty state and clear selection
             if (kotCount === 0) {
                 console.log('No KOTs found - showing empty state');
-                var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;">Select a table from the left to view KOT details</p></div>';
+                var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p></div>';
                 detailsPanel.html(emptyStateHtml);
 
                 // Clear current table selection
@@ -432,7 +432,7 @@ PosnicPro.kot = {
                     <h3 class="mb-1" style="font-weight: 700; font-size: 24px;">Table ${tableNumber}</h3>
                     <span class="badge ${statusBadge}">${statusText}</span>
                 </div>
-                <a href="#/kotorder/new/${tableNumber}/" class="btn btn-light page_url" title="Add KOT" style="border: 1px solid #dee2e6; text-decoration: none;">
+                <a href="#/kotorder/new/${tableNumber}/" class="btn btn-light page_url" title="Add KOT" data-t-title="lang_add_kot" style="border: 1px solid #dee2e6; text-decoration: none;">
                     <i class="feather icon-plus"></i>
                 </a>
             </div>
@@ -481,15 +481,15 @@ PosnicPro.kot = {
                         <div style="font-size: 13px; color: #ffc107; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
                             <span>
                                 <i class="feather icon-tag" style="font-size: 12px;"></i> 
-                                <strong>Discount:</strong> ${discountText}${discountDesc ? ' - ' + discountDesc : ''}
+                                <strong><lang class="lang_discount_4">Discount:</lang></strong> ${discountText}${discountDesc ? ' - ' + discountDesc : ''}
                             </span>
                             <i class="feather icon-edit" style="font-size: 14px; cursor: pointer; color: #6c757d;" 
                             onclick="PosnicPro.kot.showDiscount('${kot._id}')" 
-                            title="Edit discount"></i>
+                            title="Edit discount" data-t-title="lang_edit_discount_2"></i>
 
                             <i class="feather icon-trash" style="font-size: 14px; cursor: pointer; color: #dc3545;" 
                             onclick="PosnicPro.kot.clearDiscountFromIcon('${kot._id}')"
-                            title="Clear discount"></i>
+                            title="Clear discount" data-t-title="lang_clear_discount"></i>
                         </div>
                     `;
                 }
@@ -526,15 +526,15 @@ PosnicPro.kot = {
                                     </div>
                                     <div class="kot-item-qty-controls" data-sale-id="${kot._id}" data-item-id="${itemId}" data-item-price="${itemPrice}" style="display: none; align-items: center; justify-content: flex-end;">
                                         <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
-                                            <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity">
+                                            <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity" data-t-aria-label="lang_decrease_quantity">
                                                 <i class="feather icon-minus" style="font-size: 10px;"></i>
                                             </button>
                                             <input type="text" class="form-control form-control-sm qty-input" value="${itemQty}" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
-                                            <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity">
+                                            <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity" data-t-aria-label="lang_increase_quantity">
                                                 <i class="feather icon-plus" style="font-size: 10px;"></i>
                                             </button>
                                         </div>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" style="padding: 2px 6px; border-radius: 4px;" onclick="PosnicPro.kot.deleteItem('${kot._id}', '${itemId}')" title="Delete Item">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" style="padding: 2px 6px; border-radius: 4px;" onclick="PosnicPro.kot.deleteItem('${kot._id}', '${itemId}')" title="Delete Item" data-t-title="lang_delete_item">
                                             <i class="feather icon-trash" style="font-size: 12px;"></i>
                                         </button>
                                     </div>
@@ -583,7 +583,7 @@ PosnicPro.kot = {
                                     <input type="text" 
                                            class="form-control kot-product-search" 
                                            data-sale-id="${kot._id}"
-                                           placeholder="Search product to add..."
+                                           placeholder="Search product to add..." data-t-placeholder="lang_search_product_to_add"
                                            autocomplete="off"
                                            style="border: 2px solid #dee2e6; border-radius: 6px; padding: 8px 12px; font-size: 14px;">
                                     <div class="kot-search-results" data-sale-id="${kot._id}" style="display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 200px; overflow-y: auto; width: 100%; margin-top: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
@@ -623,7 +623,7 @@ PosnicPro.kot = {
             kotItemsHtml = `
                 <div class="text-center" style="padding: 40px 20px;">
                     <i class="feather icon-inbox" style="font-size: 48px; color: #dee2e6;"></i>
-                    <p class="text-muted mt-3">No active orders for this table</p>
+                    <p class="text-muted mt-3"><lang class="lang_no_active_orders_for_this_table">No active orders for this table</lang></p>
                 </div>
             `;
         }
@@ -776,7 +776,7 @@ PosnicPro.kot = {
             
             // Check if this is the last item
             if (rowCount <= 1) {
-                PosnicPro.alert('error', 'You cannot remove the last item. An order needs at least one product.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_cannot_remove_the_last_item_an_order_n', 'You cannot remove the last item. An order needs at least one product.'));
                 return;
             }
             
@@ -924,10 +924,10 @@ PosnicPro.kot = {
                     $('.kot-search-results[data-sale-id="' + saleId + '"]').hide().empty();
                 });
             } else {
-                $results.html('<div style="padding: 12px; text-align: center; color: #6c757d; font-size: 13px;">No products found</div>').show();
+                $results.html('<div style="padding: 12px; text-align: center; color: #6c757d; font-size: 13px;"><lang class="lang_no_products_found">No products found</lang></div>').show();
             }
         }, function() {
-            $results.html('<div style="padding: 12px; text-align: center; color: #dc3545; font-size: 13px;">Search failed</div>').show();
+            $results.html('<div style="padding: 12px; text-align: center; color: #dc3545; font-size: 13px;"><lang class="lang_search_failed">Search failed</lang></div>').show();
         });
     },
 
@@ -937,7 +937,7 @@ PosnicPro.kot = {
         var $itemsTable = $kotItem.find('table');
         
         if ($itemsTable.length === 0) {
-            PosnicPro.alert('error', 'Could not find items table');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_find_items_table', 'Could not find items table'));
             return;
         }
 
@@ -971,15 +971,15 @@ PosnicPro.kot = {
                         </div>
                         <div class="kot-item-qty-controls" data-sale-id="${saleId}" data-item-id="${itemId}" data-item-price="${itemPrice}" data-base-price="${basePrice || itemPrice}" style="display: inline-flex; align-items: center; justify-content: flex-end;">
                             <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
-                                <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity">
+                                <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity" data-t-aria-label="lang_decrease_quantity">
                                     <i class="feather icon-minus" style="font-size: 10px;"></i>
                                 </button>
                                 <input type="text" class="form-control form-control-sm qty-input" value="1" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
-                                <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity">
+                                <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity" data-t-aria-label="lang_increase_quantity">
                                     <i class="feather icon-plus" style="font-size: 10px;"></i>
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-outline-danger btn-sm kot-remove-new-item" style="padding: 2px 6px; border-radius: 4px;" title="Remove Item">
+                            <button type="button" class="btn btn-outline-danger btn-sm kot-remove-new-item" style="padding: 2px 6px; border-radius: 4px;" title="Remove Item" data-t-title="lang_remove_item">
                                 <i class="feather icon-trash" style="font-size: 12px;"></i>
                             </button>
                         </div>
@@ -1179,7 +1179,7 @@ PosnicPro.kot = {
                         PosnicPro.kot.finalizeAddProduct(saleId, data, items, newTotal, spinner);
                     } else {
                         spinner.remove();
-                        PosnicPro.alert('error', 'Item details not found');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_item_details_not_found', 'Item details not found'));
                     }
                 });
             } else {
@@ -1187,7 +1187,7 @@ PosnicPro.kot = {
             }
         }, function(xhr) {
             spinner.remove();
-            PosnicPro.alert('error', 'Failed to load order details');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order_details', 'Failed to load order details'));
         });
     },
 
@@ -1233,7 +1233,7 @@ PosnicPro.kot = {
                 if (typeof PosnicPro.kot.refreshTables === 'function') {
                     PosnicPro.kot.refreshTables();
                 }
-                PosnicPro.alert('success', 'Item added');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_added', 'Item added'));
             } else {
                 PosnicPro.alert(res.type, res.message);
             }
@@ -1339,7 +1339,7 @@ PosnicPro.kot = {
                     if (typeof PosnicPro.kot.refreshTables === 'function') {
                         PosnicPro.kot.refreshTables();
                     }
-                    PosnicPro.alert('success', 'Quantities updated');
+                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_quantities_updated', 'Quantities updated'));
                 } else {
                     PosnicPro.alert(res.type, res.message);
                 }
@@ -1350,20 +1350,20 @@ PosnicPro.kot = {
             });
         }, function(xhr) {
             spinner.remove();
-            PosnicPro.alert('error', 'Failed to load order details');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order_details', 'Failed to load order details'));
         });
     },
 
     addCustomTableKOT: function () {
         var customTableNumber = $('#custom_table_number_input').val().trim();
         if (!customTableNumber) {
-            PosnicPro.alert('error', 'Enter a table or room number.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_table_or_room_number', 'Enter a table or room number.'));
             return;
         }
 
         // Prevent using TA as it's reserved for takeaway
         if (customTableNumber.toUpperCase() === 'TA') {
-            PosnicPro.alert('error', 'TA is reserved for takeaway orders. Use a different table number.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_ta_is_reserved_for_takeaway_orders_use_a_d', 'TA is reserved for takeaway orders. Use a different table number.'));
             return;
         }
 
@@ -1387,7 +1387,7 @@ PosnicPro.kot = {
                         background: #fff3cd; cursor: pointer; transition: all 0.3s; display: flex; 
                         align-items: center; justify-content: center;">
                 <i class="feather icon-shopping-bag" style="font-size: 20px; color: #856404; margin-right: 8px;"></i>
-                <span style="font-weight: 600; color: #856404; font-size: 14px;">Takeaway</span>
+                <span style="font-weight: 600; color: #856404; font-size: 14px;"><lang class="lang_takeaway">Takeaway</lang></span>
                 <i class="feather icon-plus" style="font-size: 16px; color: #856404; margin-left: 8px;"></i>
             </div>
         `;
@@ -1530,22 +1530,22 @@ PosnicPro.kot = {
                     if (status === 'Cancelled') statusBadge = 'badge-danger';
 
                     var actions = `
-                        <a href="javascript:void(0);" class="btn btn-sm btn-primary-rgba mr-1" data-toggle="tooltip" title="View" onclick="PosnicPro.kothistory.view('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-primary-rgba mr-1" data-toggle="tooltip" title="View" data-t-title="lang_view" onclick="PosnicPro.kothistory.view('${kot._id}')">
                             <i class="feather icon-eye"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-info-rgba mr-1" data-toggle="tooltip" title="Edit KOT" onclick="PosnicPro.kothistory.edit('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-info-rgba mr-1" data-toggle="tooltip" title="Edit KOT" data-t-title="lang_edit_kot" onclick="PosnicPro.kothistory.edit('${kot._id}')">
                             <i class="feather icon-edit-1"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-warning-rgba mr-1" data-toggle="tooltip" title="Discount" onclick="PosnicPro.kot.showDiscount('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-warning-rgba mr-1" data-toggle="tooltip" title="Discount" data-t-title="lang_discount_title" onclick="PosnicPro.kot.showDiscount('${kot._id}')">
                             <i class="feather icon-percent"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-success-rgba mr-1" data-toggle="tooltip" title="Settlement" onclick="PosnicPro.kothistory.proceed('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-success-rgba mr-1" data-toggle="tooltip" title="Settlement" data-t-title="lang_settlement" onclick="PosnicPro.kothistory.proceed('${kot._id}')">
                             <i class="feather icon-arrow-right-circle"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-secondary-rgba mr-1" data-toggle="tooltip" title="Print" onclick="PosnicPro.kothistory.print('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-secondary-rgba mr-1" data-toggle="tooltip" title="Print" data-t-title="lang_printed" onclick="PosnicPro.kothistory.print('${kot._id}')">
                             <i class="feather icon-printer"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-danger-rgba" data-toggle="tooltip" title="Cancel" onclick="PosnicPro.kothistory.cancel('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-danger-rgba" data-toggle="tooltip" title="Cancel" data-t-title="lang_cancel_title" onclick="PosnicPro.kothistory.cancel('${kot._id}')">
                             <i class="feather icon-x-circle"></i>
                         </a>
                     `;
@@ -1596,7 +1596,7 @@ PosnicPro.kot = {
 
                 var total = (typeof kot.total_amount !== 'undefined' && kot.total_amount !== null) ? parseFloat(kot.total_amount).toFixed(2) : '0.00';
                 var hasDiscount = (typeof kot.discount_amount !== 'undefined' && kot.discount_amount !== null && parseFloat(kot.discount_amount) > 0);
-                var discountIcon = hasDiscount ? '<i class="feather icon-tag" style="font-size: 12px; margin-left: 4px; color: #ffc107;" title="Discount Applied" data-toggle="tooltip"></i>' : '';
+                var discountIcon = hasDiscount ? '<i class="feather icon-tag" style="font-size: 12px; margin-left: 4px; color: #ffc107;" title="Discount Applied" data-t-title="lang_discount_applied_2" data-toggle="tooltip"></i>' : '';
 
                 kotItemsHtml += `
                     <div class="kot-item" style="border-bottom: 1px solid #e9ecef; padding: 8px 0; margin-bottom: 8px;">
@@ -1608,13 +1608,13 @@ PosnicPro.kot = {
                                 <span class="text-primary" style="font-size: 15px; font-weight: 700; display: flex; align-items: center;">₹${total}${discountIcon}</span>
                             </div>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-t-title="lang_view_kot" data-toggle="tooltip">
                                     <i class="feather icon-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
                             </div>
@@ -1623,7 +1623,7 @@ PosnicPro.kot = {
                 `;
             });
         } else {
-            kotItemsHtml = '<div class="text-center text-muted" style="padding: 20px 0;"><small>No active orders</small></div>';
+            kotItemsHtml = '<div class="text-center text-muted" style="padding: 20px 0;"><small><lang class="lang_no_active_orders_2">No active orders</lang></small></div>';
         }
 
         return `
@@ -1632,7 +1632,7 @@ PosnicPro.kot = {
                     <div class="card-header" style="background: #fff3cd; border-bottom: 2px solid #ffc107; padding: 12px 15px;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center" style="flex: 1;">
-                                <h2 class="mb-0 mr-3" style="font-weight: 700; font-size: 40px; color: #856404; line-height: 1;">TA</h2>
+                                <h2 class="mb-0 mr-3" style="font-weight: 700; font-size: 40px; color: #856404; line-height: 1;"><lang class="lang_ta">TA</lang></h2>
                                 <div style="margin-right: auto;">
                                     <i class="feather icon-shopping-bag" style="font-size: 40px; color: #ffc107;"></i>
                                 </div>
@@ -1672,7 +1672,7 @@ PosnicPro.kot = {
 
                 var total = (typeof kot.total_amount !== 'undefined' && kot.total_amount !== null) ? parseFloat(kot.total_amount).toFixed(2) : '0.00';
                 var hasDiscount = (typeof kot.discount_amount !== 'undefined' && kot.discount_amount !== null && parseFloat(kot.discount_amount) > 0);
-                var discountIcon = hasDiscount ? '<i class="feather icon-tag" style="font-size: 12px; margin-left: 4px; color: #ffc107;" title="Discount Applied" data-toggle="tooltip"></i>' : '';
+                var discountIcon = hasDiscount ? '<i class="feather icon-tag" style="font-size: 12px; margin-left: 4px; color: #ffc107;" title="Discount Applied" data-t-title="lang_discount_applied_2" data-toggle="tooltip"></i>' : '';
 
                 kotItemsHtml += `
                     <div class="kot-item" style="border-bottom: 1px solid #e9ecef; padding: 8px 0; margin-bottom: 8px;">
@@ -1684,13 +1684,13 @@ PosnicPro.kot = {
                                 <span class="text-primary" style="font-size: 15px; font-weight: 700; display: flex; align-items: center;">₹${total}${discountIcon}</span>
                             </div>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-t-title="lang_view_kot" data-toggle="tooltip">
                                     <i class="feather icon-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
                             </div>
@@ -1699,7 +1699,7 @@ PosnicPro.kot = {
                 `;
             });
         } else {
-            kotItemsHtml = '<div class="text-center text-muted" style="padding: 20px 0;"><small>No active orders</small></div>';
+            kotItemsHtml = '<div class="text-center text-muted" style="padding: 20px 0;"><small><lang class="lang_no_active_orders_2">No active orders</lang></small></div>';
         }
 
         // Use table.png icon with gray filter
@@ -1880,7 +1880,7 @@ PosnicPro.kot = {
                             '</tr>';
                     }
                 } else {
-                    itemsHtml = '<tr><td colspan="3" class="text-center text-muted">No items</td></tr>';
+                    itemsHtml = '<tr><td colspan="3" class="text-center text-muted"><lang class="lang_no_items">No items</lang></td></tr>';
                 }
                 $('#kot_view_items_tbody').html(itemsHtml);
 
@@ -2120,7 +2120,7 @@ PosnicPro.kot = {
 
         // JS-based validation so we don't show native browser tooltip
         if (!saleId || isNaN(discountValue) || description === '') {
-            PosnicPro.alert('error', 'Fill in all required fields.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_fill_in_all_required_fields', 'Fill in all required fields.'));
             return;
         }
 
@@ -2210,7 +2210,7 @@ PosnicPro.kot = {
     clearDiscount: function () {
         var saleId = $('#kot_discount_sale_id').val();
         if (!saleId) {
-            PosnicPro.alert('error', 'Sale ID not found');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_sale_id_not_found', 'Sale ID not found'));
             return;
         }
 
@@ -2263,7 +2263,7 @@ PosnicPro.kot = {
                 }
             }, function () {
                 loader.find(".loadingSpinner:first").remove();
-                PosnicPro.alert('error', 'Failed to clear discount');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_clear_discount', 'Failed to clear discount'));
             });
         });
     },
@@ -2401,7 +2401,7 @@ PosnicPro.kot = {
 
         }, function (xhr) {
             spinner.remove();
-            PosnicPro.alert('error', 'Failed to load order');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
         });
     },
 
@@ -2418,7 +2418,7 @@ PosnicPro.kot = {
             
             // Check if this is the last item
             if (rowCount <= 1) {
-                PosnicPro.alert('error', 'You cannot remove the last item. An order needs at least one product.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_cannot_remove_the_last_item_an_order_n', 'You cannot remove the last item. An order needs at least one product.'));
                 return;
             }
             
@@ -2498,11 +2498,11 @@ PosnicPro.kot = {
                 PosnicPro.post({ url: 'sales/cancel/' + saleId, data: '{}' }, function (res) {
                     spinner.remove();
                     if (res.type === 'success') {
-                        PosnicPro.alert('success', 'Order cancelled - all items were removed.');
+                        PosnicPro.alert('success', PosnicPro.i18n.t('lang_order_cancelled_all_items_were_removed', 'Order cancelled - all items were removed.'));
                         if (PosnicPro.kot.currentTableNumber) {
                              // Refresh tables and clear details panel
                              PosnicPro.kot.refreshTables();
-                             $('#kot_table_details').html('<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;">Select a table from the left to view KOT details</p></div>');
+                             $('#kot_table_details').html('<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p></div>');
                         } else {
                             PosnicPro.kot.refreshKOTData();
                         }
@@ -2511,7 +2511,7 @@ PosnicPro.kot = {
                     }
                 }, function(xhr) {
                     spinner.remove();
-                    PosnicPro.alert('error', 'Failed to cancel empty order');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_cancel_empty_order', 'Failed to cancel empty order'));
                 });
                 return;
             }
@@ -2567,7 +2567,7 @@ PosnicPro.kot = {
 
         }, function (xhr) {
             spinner.remove();
-            PosnicPro.alert('error', 'Failed to load order');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
         });
     },
 
@@ -2592,7 +2592,7 @@ PosnicPro.kot = {
             $('#kot_item_search_results').html(`
                 <div class="text-center text-muted mt-4">
                     <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
-                    <p class="mt-2">Type to search for items</p>
+                    <p class="mt-2"><lang class="lang_type_to_search_for_items">Type to search for items</lang></p>
                 </div>
             `);
             
@@ -2622,7 +2622,7 @@ PosnicPro.kot = {
             $('#kot_item_search_results').html(`
                 <div class="text-center text-muted mt-4">
                     <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
-                    <p class="mt-2">Type to search for items</p>
+                    <p class="mt-2"><lang class="lang_type_to_search_for_items">Type to search for items</lang></p>
                 </div>
             `);
             
@@ -2653,7 +2653,7 @@ PosnicPro.kot = {
                 resultsContainer.html(`
                     <div class="text-center text-muted mt-4">
                         <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
-                        <p class="mt-2">Type to search for items</p>
+                        <p class="mt-2"><lang class="lang_type_to_search_for_items">Type to search for items</lang></p>
                     </div>
                 `);
                 return;
@@ -2689,7 +2689,7 @@ PosnicPro.kot = {
                             var opacity = outOfStock ? '0.6' : '1';
                             var clickAction = outOfStock ? '' : `onclick="PosnicPro.kot.addItemToOrder('${itemId}')"`;
                             var cursor = outOfStock ? 'not-allowed' : 'pointer';
-                            var stockBadge = outOfStock ? '<span class="badge badge-danger ml-2">Out of Stock</span>' : '';
+                            var stockBadge = outOfStock ? '<span class="badge badge-danger ml-2"><lang class="lang_out_of_stock">Out of Stock</lang></span>' : '';
                             
                             html += `
                                 <a href="javascript:void(0);" class="list-group-item list-group-item-action" 
@@ -2711,7 +2711,7 @@ PosnicPro.kot = {
                         resultsContainer.html(`
                             <div class="text-center text-muted mt-4">
                                 <i class="feather icon-alert-circle" style="font-size: 32px; opacity: 0.2;"></i>
-                                <p class="mt-2">No items found</p>
+                                <p class="mt-2"><lang class="lang_no_items_found">No items found</lang></p>
                             </div>
                         `);
                     }
@@ -2734,7 +2734,7 @@ PosnicPro.kot = {
         PosnicPro.get('sales/' + saleId, function (response) {
             if (response.type !== 'success') {
                 spinner.remove();
-                PosnicPro.alert('error', 'Failed to load order');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
                 return;
             }
 
@@ -2808,7 +2808,7 @@ PosnicPro.kot = {
                         PosnicPro.kot.finalizeAddItem(saleId, data, items, newTotal, spinner);
                     } else {
                         spinner.remove();
-                        PosnicPro.alert('error', 'Item details not found');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_item_details_not_found', 'Item details not found'));
                     }
                 });
             } else {
@@ -2817,7 +2817,7 @@ PosnicPro.kot = {
 
         }, function (xhr) {
             spinner.remove();
-            PosnicPro.alert('error', 'Failed to load order');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
         });
     },
 
@@ -2856,7 +2856,7 @@ PosnicPro.kot = {
         PosnicPro.put(params, function (res) {
             spinner.remove();
             if (res.type === 'success') {
-                PosnicPro.alert('success', 'Item added');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_added', 'Item added'));
                 
                 // Hide add modal
                 $('#kot_add_item_modal').modal('hide');

@@ -103,7 +103,7 @@
             $('.pay_amount_total').removeClass('tm_font13');
         }
         $(".sale_table_head_hide").text('');
-        $(".sale_table_head_text").text('Action');
+        $(".sale_table_head_text").text(PosnicPro.i18n.t('lang_action', 'Action'));
         $("#refund_pay_total,#refund_sub_total,#refund_pay_hide,#refund_sub_hide").hide();
         $("#sales_new_items_table,#paymentdisplay,#return_tax,#return_disc,#return_discount").removeClass("customer-display-hide");
         /***Clear addlineitem table**/
@@ -177,7 +177,7 @@
         $('#time-format').addClass('commonEditDate');
         $("#sales-text-change").text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         $(".sale_table_head_hide").text('');
-        $(".sale_table_head_text").text('Action');
+        $(".sale_table_head_text").text(PosnicPro.i18n.t('lang_action', 'Action'));
         $('.return_sale_only_show').hide();
         $("#viewtest,#payment_id").show();
         $('#table_return_page,#table_sale_page').find('table').removeAttr('id');
@@ -307,7 +307,7 @@
         console.log('showWhatsAppReceipt - Stored sale ID:', PosnicPro.sales.currentSaleId);
         
         $('#smsModal').modal('show');
-        $('#smsModal .modal-title .lang_autosmsaftersales_title').text('WhatsApp Receipt');
+        $('#smsModal .modal-title .lang_autosmsaftersales_title').text(PosnicPro.i18n.t('lang_autowhatsappaftersales_title', 'WhatsApp Receipt'));
         $('#customer_sms_id').val(id);
         $('#customer_sms_phone').val(phone);
         $('#customer_sms_name').val(name);
@@ -342,9 +342,9 @@
                 // Add template dropdown to modal
                 const templateDropdown = `
                     <div class="form-group" id="whatsapp_template_group">
-                        <label for="whatsapp_receipt_template">Use Template (Optional)</label>
+                        <label for="whatsapp_receipt_template"><lang class="lang_use_template_optional">Use Template (Optional)</lang></label>
                         <select class="form-control" id="whatsapp_receipt_template">
-                            <option value="">Select a template...</option>
+                            <option value="" data-t="lang_select_a_template">Select a template...</option>
                         </select>
                     </div>
                 `;
@@ -399,7 +399,7 @@
         $('#time-format').removeClass('commonDate');
         $('#time-format').addClass('commonEditDate');
         $(".sale_table_head_hide").text('');
-        $(".sale_table_head_text").text('Action');
+        $(".sale_table_head_text").text(PosnicPro.i18n.t('lang_action', 'Action'));
         $('.return_sale_only_show').hide();
         $("#viewtest,#payment_id").show();
         $('#table_return_page,#table_sale_page').find('table').removeAttr('id');
@@ -509,13 +509,13 @@
             key: 'sales',
             container: '#sales_filter_panel',
             button: '#sales_filter_btn',
-            searchPlaceholder: 'Search bill no, customer or phone',
-            dateField: 'Date',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_bill_no_customer_or_phone', 'Search bill no, customer or phone'),
+            dateField: PosnicPro.i18n.t('lang_date_title', 'Date'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'sales_id', label: 'Bill no' },
-                { value: 'customer_name', label: 'Customer' },
-                { value: 'customer_phone', label: 'Phone' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'sales_id', label: PosnicPro.i18n.t('lang_bill_no', 'Bill no') },
+                { value: 'customer_name', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer') },
+                { value: 'customer_phone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') }
             ],
             /* Suggestions come from the customers this till already uses. */
             typeahead: 'customer',
@@ -524,11 +524,11 @@
         });
         PosnicPro.listSort.mount('sales', {
             options: [
-                { v: 'date_desc', l: 'Business date: newest', i: 'clock' },
-                { v: 'date_asc', l: 'Business date: oldest', i: 'rotate-ccw' },
-                { v: 'total_desc', l: 'Highest bill first', i: 'arrow-down' },
-                { v: 'total_asc', l: 'Lowest bill first', i: 'arrow-up' },
-                { v: 'items_desc', l: 'Most items first', i: 'layers' }
+                { v: 'date_desc', l: PosnicPro.i18n.t('lang_business_date_newest', 'Business date: newest'), i: 'clock' },
+                { v: 'date_asc', l: PosnicPro.i18n.t('lang_business_date_oldest', 'Business date: oldest'), i: 'rotate-ccw' },
+                { v: 'total_desc', l: PosnicPro.i18n.t('lang_highest_bill_first', 'Highest bill first'), i: 'arrow-down' },
+                { v: 'total_asc', l: PosnicPro.i18n.t('lang_lowest_bill_first', 'Lowest bill first'), i: 'arrow-up' },
+                { v: 'items_desc', l: PosnicPro.i18n.t('lang_most_items_first', 'Most items first'), i: 'layers' }
             ],
             onChange: function () { PosnicPro.sales.loadHistory(1); }
         });
@@ -559,23 +559,23 @@
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('sales') > 0;
                 $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No sales match this filter.' : 'No sales yet - the first bill will appear here.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_sales_match_this_filter', 'No sales match this filter.') : PosnicPro.i18n.t('lang_no_sales_yet_the_first_bill_will_appear_he', 'No sales yet - the first bill will appear here.')) + '</div>');
                 $('#sales_list_paging').html('');
                 return;
             }
             var cur = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Bill #</th><th>Customer</th><th class="sl-col-date">Date &amp; time</th>'
-                + '<th class="text-right sl-col-items">Items</th><th class="text-right">Total</th>'
-                + '<th class="text-center">Status</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="sl-col-date"><lang class="lang_date_time">Date &amp; time</lang></th>'
+                + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
+                + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
                 var pill = /return/i.test(proc)
                     ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
                     : unpaid
-                        ? '<span class="rs-pill unpaid">Unpaid</span>'
-                        : '<span class="rs-pill paid">Paid</span>';
+                        ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>'
+                        : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
                 html += '<tr class="md-row sales-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.sales_id) + '</td>'
@@ -590,14 +590,14 @@
             $('#sales_list_rows').html(html);
             self.renderHistoryPager(Number(data.total) || list.length);
         }, function () {
-            $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load sales - try again.</div>');
+            $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_sales_try_again">Could not load sales - try again.</lang></div>');
         });
     },
     renderHistoryPager: function (total) {
         var self = PosnicPro.sales;
         var p = self._histPage, size = self.HIST_PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' sale' : ' sales');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_sale_2', 'sale') : PosnicPro.i18n.t('lang_sales', 'sales'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -634,20 +634,20 @@
                 '<div class="modal fade close_on_esc" id="sale_peek_modal" tabindex="-1" role="dialog" aria-hidden="true">'
                 + '<div class="modal-dialog modal-lg" role="document"><div class="modal-content">'
                 + '<div class="modal-header" style="align-items:center;">'
-                + '<h5 class="modal-title" id="sale_peek_title">Bill</h5>'
-                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+                + '<h5 class="modal-title" id="sale_peek_title"><lang class="lang_bill_2">Bill</lang></h5>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>'
                 + '</div>'
                 + '<div class="modal-body" id="sale_peek_body" style="max-height:70vh; overflow-y:auto;"></div>'
                 + '<div class="modal-footer" id="sale_peek_footer" style="justify-content:space-between;"></div>'
                 + '</div></div></div>');
         }
-        $('#sale_peek_title').text('Bill');
+        $('#sale_peek_title').text(PosnicPro.i18n.t('lang_bill_2', 'Bill'));
         $('#sale_peek_footer').html('');
-        $('#sale_peek_body').html('<div class="text-center text-muted" style="padding:40px;">Loading ...</div>');
+        $('#sale_peek_body').html('<div class="text-center text-muted" style="padding:40px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         $('#sale_peek_modal').modal('show');
         PosnicPro.get('sales/' + id, function (response) {
             if (response.type !== 'success' || !response.data) {
-                $('#sale_peek_body').html('<div class="text-danger p-4">Could not open this bill.</div>');
+                $('#sale_peek_body').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_bill">Could not open this bill.</lang></div>');
                 return;
             }
             var d = response.data;
@@ -661,7 +661,7 @@
                 + '<button type="button" class="btn btn-sm btn-light" onclick="PosnicPro.sales.showPrint(\'' + esc(d._id || id) + '\'); return false;">'
                 + '<i class="feather icon-printer mr-1"></i>Print</button>');
         }, function () {
-            $('#sale_peek_body').html('<div class="text-danger p-4">Could not open this bill.</div>');
+            $('#sale_peek_body').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_bill">Could not open this bill.</lang></div>');
         });
     },
     openDoc: function (id) {
@@ -676,16 +676,16 @@
         if (window.location.hash.slice(2) !== 'sales/' + id) {
             hasher.setHash('sales/' + id);
         }
-        $('#sales_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        $('#sales_doc').html('<div class="text-center text-muted" style="padding:60px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         PosnicPro.get('sales/' + id, function (response) {
             if (response.type !== 'success' || !response.data) {
-                $('#sales_doc').html('<div class="text-danger p-4">Could not open this sale.</div>');
+                $('#sales_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_sale">Could not open this sale.</lang></div>');
                 return;
             }
             PosnicPro.sales.renderSaleDoc(response.data);
             PosnicPro.ACLForModule('sales');
         }, function () {
-            $('#sales_doc').html('<div class="text-danger p-4">Could not open this sale.</div>');
+            $('#sales_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_sale">Could not open this sale.</lang></div>');
         });
     },
     closeDoc: function () {
@@ -705,9 +705,9 @@
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
         var proc = String(d.sale_process || '');
-        var stamp = /return/i.test(proc) ? proc.toUpperCase() : unpaid ? 'UNPAID' : 'PAID';
+        var stamp = /return/i.test(proc) ? proc.toUpperCase() : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
         var logo = PosnicPro.local.get('branchimage');
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var seller = '<div class="q-seller">'
             + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
             + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>';
@@ -720,19 +720,19 @@
         if (gst) { seller += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
         seller += '</div>';
         var title = '<div class="q-title-block">'
-            + '<div class="q-doc-title">' + (PosnicPro.local.get('gst_action') === 'enable' ? 'TAX INVOICE' : 'SALES RECEIPT') + '</div>'
+            + '<div class="q-doc-title">' + (PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_tax_invoice', 'TAX INVOICE') : PosnicPro.i18n.t('lang_sales_receipt', 'SALES RECEIPT')) + '</div>'
             + '<div class="q-num">' + esc(d.sales_id) + '</div>'
             + '<div class="q-muted">Date: ' + esc(d.string_date ? String(d.string_date).slice(0, 10) : (d.date ? String(d.date).slice(0, 10) : '-')) + '</div>'
             + '<div class="q-status">' + esc(stamp) + '</div>'
             + '</div>';
-        var billto = '<div class="q-billto"><div class="q-label">Bill To</div>'
+        var billto = '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
             + '<div class="q-cust">' + esc(d.customer_name || 'Walk-in customer') + '</div>'
             + (real(d.customer_phone) ? '<div class="q-muted">Phone: ' + esc(d.customer_phone) + '</div>' : '')
             + (real(d.customer_email) ? '<div class="q-muted">' + esc(d.customer_email) + '</div>' : '')
             + '</div>';
         var items = '<div class="table-responsive"><table class="q-items"><thead><tr>'
-            + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
-            + '<th class="text-right">Price</th><th class="text-right">Amount</th>'
+            + '<th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+            + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
         (d.items || []).forEach(function (l, i) {
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
@@ -741,19 +741,19 @@
                 + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
         });
         items += '</tbody><tfoot>'
-            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
             + '<td class="text-right">' + money(d.sales_sub_total) + '</td></tr>'
             + (Number(d.discount) > 0
-                ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount</td><td class="text-right">-' + money(d.discount) + '</td></tr>'
+                ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_discount_title">Discount</lang></td><td class="text-right">-' + money(d.discount) + '</td></tr>'
                 : '')
             + (Number(d.tax) > 0
-                ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(d.tax) + '</td></tr>'
+                ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(d.tax) + '</td></tr>'
                 : '')
-            + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
+            + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
             + '<th class="text-right">' + money(d.sales_total) + '</th></tr>'
             + '</tfoot></table></div>';
         var footer = '<div class="q-footer">';
-        footer += '<div class="q-block"><div class="q-label">Payment</div>'
+        footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
             + '<div>' + esc(d.payment_mode || '-') + '</div>'
             + (unpaid && Number(d.partial_balance) > 0
                 ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.partial_balance) + '</div>'
@@ -761,7 +761,7 @@
             + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
             + '</div>';
         if (real(d.sales_description)) {
-            footer += '<div class="q-block"><div class="q-label">Notes</div><div class="q-muted">' + esc(d.sales_description) + '</div></div>';
+            footer += '<div class="q-block"><div class="q-label"><lang class="lang_notes_title">Notes</lang></div><div class="q-muted">' + esc(d.sales_description) + '</div></div>';
         }
         footer += '</div>';
         return '<div class="q-sheet">'
@@ -772,7 +772,7 @@
     /* Email the bill's PDF - the address defaults to the customer's own. */
     emailSale: function (id, defaultEmail) {
         swal({
-            title: 'Email this bill',
+            title: PosnicPro.i18n.t('lang_email_this_bill', 'Email this bill'),
             text: defaultEmail ? 'Leave empty to send to ' + defaultEmail : 'Where should the PDF go?',
             input: 'text',
             inputPlaceholder: defaultEmail || 'customer@example.com',
@@ -782,7 +782,7 @@
             if (result && result.dismiss) { return; }
             var typed = typeof result === 'string' ? result : (result && result.value) || '';
             var to = $.trim(typed) || defaultEmail;
-            if (!to) { PosnicPro.alert('warning', 'No email address to send to.'); return; }
+            if (!to) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_email_address_to_send_to', 'No email address to send to.')); return; }
             PosnicPro.get({ url: 'sales/salesMailPdf', data: { id: id, email: to } }, function (r) {
                 PosnicPro.alert(r.type || 'success', r.message || 'Sent');
             }, function (xhr) {
@@ -798,17 +798,17 @@
         var proc = String(d.sale_process || '');
         var pill = /return/i.test(proc)
             ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
-            : unpaid ? '<span class="rs-pill unpaid">Unpaid</span>' : '<span class="rs-pill paid">Paid</span>';
+            : unpaid ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>' : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
             + (unpaid
                 ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" aria-label="Edit" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
             + '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Share</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_share">Share</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPrint(\'' + esc(id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPdf(\'' + esc(id) + '\'); return false;"><i class="feather icon-file mr-2"></i>Download PDF</a>'
@@ -820,12 +820,12 @@
             + '</div></div>'
             + (!/return/i.test(proc)
                 ? '<div class="btn-group">'
-                    + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+                    + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
                     + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
                     + '</div></div>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.sales.buildSaleSheet(d) + '</div>');
     },
@@ -950,11 +950,11 @@
                 '<div class="modal fade close_on_esc" id="sale_modifier_modal" tabindex="-1" role="dialog" aria-hidden="true">'
                 + '<div class="modal-dialog modal-sm" role="document"><div class="modal-content">'
                 + '<div class="modal-header"><h5 class="modal-title">' + esc(params.item_name || params.name || '') + '</h5>'
-                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
                 + '<div class="modal-body">' + body + '</div>'
                 + '<div class="modal-footer">'
-                + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Skip</button>'
-                + '<button type="button" class="btn btn-outline-primary" id="mod_pick_confirm">Add to sale</button>'
+                + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_skip">Skip</lang></button>'
+                + '<button type="button" class="btn btn-outline-primary" id="mod_pick_confirm"><lang class="lang_add_to_sale">Add to sale</lang></button>'
                 + '</div></div></div></div>'
             );
             $('#sale_modifier_modal').modal('show');
@@ -1097,7 +1097,7 @@
             var placedQty = $('#touchsale_item_qty' + id).val();
             if (params.available_quantity <= placedQty) {
                 $('#touchsale_item_qty' + id).val(params.available_quantity);
-                PosnicPro.alert('error', 'Some items are out of stock.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                 return false;
             }
         }
@@ -1125,7 +1125,7 @@
             var salesReturnLineTotal = Number(updateReturnLineTotal).toFixed(2);
             var addSalesReturnTaxValue = (lineItemTax > 0) ? (salesReturnLineTotal / 100) * parseFloat(lineItemTax) : '';
             var return_line_total = updateReturnLineTotal + addSalesReturnTaxValue;
-            //            $('.changeSalesBtnText').text('Return');
+            //            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_return_title', 'Return'));
             $('.salesBalanceAmount').hide();
             $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_action_return_sale_btn', 'Return'));
             $('#closeSaleButton').show();
@@ -1143,7 +1143,7 @@
                 '<span class="btn btn-success-rgba button_qty_check"><i class="feather icon-plus"></i></span>' +
                 '</div>' +
                 '</div>';
-            var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns"><i class="feather icon-arrow-right-circle"></i></button>';
+            var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns" data-t-aria-label="lang_move_to_returns"><i class="feather icon-arrow-right-circle"></i></button>';
         } else {
             var addLineItemQty = '<div class="input-group">' +
                 '<div class="input-group-prepend">' +
@@ -1155,7 +1155,7 @@
                 '</div>' +
                 '</div>';
             // matches the edit pencil beside it: same size, same hover plate
-            var removeLineItem = '<a href="javascript:void(0)" class="sale-line-act sale-line-del custom_remove" title="Remove this line" onclick="PosnicPro.sales.removeAddsalesLineRowItems(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>';
+            var removeLineItem = '<a href="javascript:void(0)" class="sale-line-act sale-line-del custom_remove" title="Remove this line" data-t-title="lang_remove_this_line" onclick="PosnicPro.sales.removeAddsalesLineRowItems(\'' + id + '\');"><i class="feather icon-trash-2"></i></a>';
         }
         var returnqty = 0;
         var updatePrice = params.selling_price * item_quantity;
@@ -1244,7 +1244,7 @@
                 '<span class="sales-inline-hide p-1">' +
                 '<i class="feather icon-edit-1 text-primary item-note-icon" ' +
                 'onclick="return PosnicPro.sales.openItemNoteModal(this);" ' +
-                'data-id="' + id + '" data-toggle="tooltip" title="Item note" ' +
+                'data-id="' + id + '" data-toggle="tooltip" title="Item note" data-t-title="lang_item_note" ' +
                 'style="cursor:pointer;"></i>' +
                 '<a href="#" id="item_note_' + id + '" class="item-note-editable" style="display:none;"></a>' +
                 '</span>';
@@ -1255,7 +1255,7 @@
         var colWidth = (PosnicPro.sales.saleProcess === 'KOT') ? 'width="60%"' : 'width="30%"';
         // whole-line editor door (owner ask): one pencil, every field
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
-            '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax"><i class="feather icon-edit-2"></i></a>';
+            '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax" data-t-title="lang_edit_price_qty_discount_tax"><i class="feather icon-edit-2"></i></a>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
@@ -1389,8 +1389,8 @@
                 tpl: '<textarea maxlength="500"></textarea>',
                 pk: 1,
                 placement: 'left',
-                placeholder: 'Item description here...',
-                title: 'Enter comments',
+                placeholder: PosnicPro.i18n.t('lang_item_description_here', 'Item description here...'),
+                title: PosnicPro.i18n.t('lang_enter_comments', 'Enter comments'),
                 inputclass: 'form-control form-control-sm textarea-height',
                 emptytext: '',
                 onblur: 'ignore',
@@ -1590,18 +1590,18 @@
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Enter a customer name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
             $('#collapseOne').removeClass("show");
             $('#collapseTwo').addClass("show");
-            PosnicPro.alert('warning', 'Add at least one item.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item', 'Add at least one item.'));
             $('#sales_new_item_name').focus();
             return false;
         }
 
         if (!PosnicPro.sales.paymentOnlyMode && saleNewTot < 0) {
-            PosnicPro.alert('error', 'Enter a payment amount greater than zero.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_payment_amount_greater_than_zero', 'Enter a payment amount greater than zero.'));
             return false;
         }
 
@@ -1622,7 +1622,7 @@
             // if (hasAnyDiscountTender) {
             //     var discountNoteTender = $.trim($('#discount_description').val() || '');
             //     if (discountNoteTender === '') {
-            //         PosnicPro.alert('error', 'Please enter Discount Note before proceeding to payment.');
+            //         PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_discount_note_before_proceedi', 'Please enter Discount Note before proceeding to payment.'));
             //         // Open the Discount Note popup and focus the editor, same as in cartOrderSubmit
             //         $('#discount_description').text('');
             //         $('#discount_description').show().editable('show');
@@ -1636,7 +1636,7 @@
 
         // In payment-only flow (from unpaid payment toggle), label the main action as 'Pay'
         if (PosnicPro.sales.paymentOnlyMode === true) {
-            $('.changeSalesBtnText').text('Pay');
+            $('.changeSalesBtnText').text(PosnicPro.i18n.t('lang_pay_2', 'Pay'));
         }
 
         var isKotPaymentOnlyFlow = (PosnicPro.sales.kotPaymentMode === true &&
@@ -1666,7 +1666,7 @@
         if (PosnicPro.sales.SaleAction === 'add') {
             $('.payment_mode').val('Cash');
             $('.payment_mode').attr('checked', false);
-            $('#tendered_payment_method').text('Cash');
+            $('#tendered_payment_method').text(PosnicPro.i18n.t('lang_cash_title', 'Cash'));
         }
         $(".infobar-settings-sidebar-overlay").css({ "background": "rgba(0,0,0,0.4)", "position": "fixed" });
         $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
@@ -1790,7 +1790,7 @@
         //     let customTableValue = (!isTableFound && PosnicPro.sales.selectedTable && PosnicPro.sales.selectedTable.tableNumber) ? PosnicPro.sales.selectedTable.tableNumber : '';
         //     tableHtml += '<div class="col-12 col-lg-4 mb-2">' +
         //         '<span>' +
-        //         '<input type="text" class="form-control" id="custom_table_input" placeholder="Enter Table Number" autocomplete="off" value="' + customTableValue + '">' +
+        //         '<input type="text" class="form-control" id="custom_table_input" placeholder="Enter Table Number" data-t-placeholder="lang_enter_table_number" autocomplete="off" value="' + customTableValue + '">' +
         //         '</span>' +
         //         '</div>';
 
@@ -1848,7 +1848,7 @@
         let customPersonValue = (!isPersonFound && PosnicPro.sales.selectedPerson) ? PosnicPro.sales.selectedPerson : '';
         personsHtml += '<div class="col-12 col-lg-4 mb-2">' +
             '<span>' +
-            '<input type="number" class="form-control" id="custom_person_input" placeholder="Enter Person Count" autocomplete="off" min="1" value="' + customPersonValue + '">' +
+            '<input type="number" class="form-control" id="custom_person_input" placeholder="Enter Person Count" data-t-placeholder="lang_enter_person_count" autocomplete="off" min="1" value="' + customPersonValue + '">' +
             '</span>' +
             '</div>';
 
@@ -2268,7 +2268,7 @@
         var diff = tendered - billAmount;
         /* A penny either way is rounding, not a shortfall. */
         if (Math.abs(diff) < 0.01) {
-            $el.text('Exact amount').removeClass('is-short is-over').addClass('is-exact').show();
+            $el.text(PosnicPro.i18n.t('lang_exact_amount', 'Exact amount')).removeClass('is-short is-over').addClass('is-exact').show();
         } else if (diff < 0) {
             $el.text(money(diff) + ' still to pay')
                 .removeClass('is-exact is-over').addClass('is-short').show();
@@ -2567,7 +2567,7 @@
         $('#addSalesLineItemPrice_' + id).editable({
             type: 'text',
             pk: 1,
-            title: 'Edit price value',
+            title: PosnicPro.i18n.t('lang_edit_price_value', 'Edit price value'),
             inputclass: 'form-control form-control-sm',
             tpl:
                 '<input size="4" min="0" max="100000" ' +
@@ -2612,7 +2612,7 @@
                         '&nbsp;&nbsp;<span class="sales-inline-hide">' +
                         '<i class="feather icon-edit-1 text-primary" ' +
                         'onclick="return PosnicPro.sales.editItemPricingSale(this);" ' +
-                        'data-id="' + id + '" data-toggle="tooltip" title="Price change" style="cursor:pointer;"></i>' +
+                        'data-id="' + id + '" data-toggle="tooltip" title="Price change" data-t-title="lang_price_change" style="cursor:pointer;"></i>' +
                         '</span></td>'
                     );
                 }
@@ -2642,7 +2642,7 @@
         $('#addSalesLineItemDiscountprint_' + id).editable({
             type: 'text',
             pk: 1,
-            title: 'Edit discount value',
+            title: PosnicPro.i18n.t('lang_edit_discount_value', 'Edit discount value'),
             inputclass: 'form-control form-control-sm',
             tpl:
                 '<input size="4" min="0" max="100000" ' +
@@ -2687,7 +2687,7 @@
                         '&nbsp;&nbsp;<span class="sales-inline-hide">' +
                         '<i class="feather icon-edit-1 text-primary" ' +
                         'onclick="return PosnicPro.sales.editItemDiscountSale(this, ' + newDiscountValue + ', \'' + (isPercentage ? 'percentage' : 'amount') + '\');" ' +
-                        'data-id="' + id + '" data-toggle="tooltip" title="Discount change" style="cursor:pointer;"></i>' +
+                        'data-id="' + id + '" data-toggle="tooltip" title="Discount change" data-t-title="lang_discount_change" style="cursor:pointer;"></i>' +
                         '</span></td>'
                     );
 
@@ -3166,7 +3166,7 @@ PosnicPro.kotorder = {
             '<div class="col-6 col-lg-4 mb-3">' +
             '<div style="position: relative;">' +
             '<i class="feather icon-edit-2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; z-index: 1;"></i>' +
-            '<input type="text" class="form-control" id="custom_table_input" placeholder="Custom Table" autocomplete="off" ' +
+            '<input type="text" class="form-control" id="custom_table_input" placeholder="Custom Table" data-t-placeholder="lang_custom_table" autocomplete="off" ' +
             'style="height: 80px; padding-left: 40px; border: 2px dashed #dee2e6; border-radius: 12px; font-size: 14px;">' +
             '</div>' +
             '</div>';
@@ -3234,7 +3234,7 @@ PosnicPro.kotorder = {
         personsHtml += '<div class="col-6 col-lg-4 mb-3">' +
             '<div style="position: relative;">' +
             '<i class="feather icon-users" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; z-index: 1; font-size: 20px;"></i>' +
-            '<input type="number" class="form-control" id="kot_custom_person_input" placeholder="Custom" autocomplete="off" min="1" max="100" ' +
+            '<input type="number" class="form-control" id="kot_custom_person_input" placeholder="Custom" data-t-placeholder="lang_custom_2" autocomplete="off" min="1" max="100" ' +
             'value="' + (PosnicPro.kotorder.selectedPerson || '') + '" ' +
             'style="height: 70px; padding-left: 45px; border: 2px dashed #dee2e6; border-radius: 10px; font-size: 16px; font-weight: 600; text-align: center;">' +
             '</div>' +
@@ -3510,7 +3510,7 @@ PosnicPro.kotorder = {
         }
 
         if (dineType === 'Dine-in' && (!tableNumber || tableNumber === '')) {
-            PosnicPro.alert('warning', 'Select a table.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_table', 'Select a table.'));
             return;
         }
 
@@ -3633,7 +3633,7 @@ PosnicPro.sales.addSale = {
         if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.SaleAction !== 'return' && $('#Partial_amount').val() === '') {
             if ($('#Partial_amount').val() === '') {
                 $("#Partial_amount").focus();
-                PosnicPro.alert('error', 'Enter a partial amount.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_partial_amount', 'Enter a partial amount.'));
                 return false;
             }
         }
@@ -3676,7 +3676,7 @@ PosnicPro.sales.addSale = {
                 (PosnicPro.kotorder && PosnicPro.kotorder.kotTableNumber && PosnicPro.kotorder.kotTableNumber.toString().trim() !== '');
 
             if (!hasTable) {
-                PosnicPro.alert('warning', 'Select a table.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_table', 'Select a table.'));
                 return false;
             }
 
@@ -3692,7 +3692,7 @@ PosnicPro.sales.addSale = {
             // if (hasAnyDiscountAdd) {
             //     var discountNoteAdd = $.trim($('#discount_description').val() || '');
             //     if (discountNoteAdd === '') {
-            //         PosnicPro.alert('error', 'Please enter Discount Note before saving the sale.');
+            //         PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_discount_note_before_saving_t', 'Please enter Discount Note before saving the sale.'));
             //         $('#discount_description').show().editable('show');
             //         setTimeout(function () {
             //             $('.editable-container:last textarea, .editable-container:last input').focus();
@@ -3712,12 +3712,12 @@ PosnicPro.sales.addSale = {
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Enter a customer name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
             $('#collapseOne').removeClass("show");
             $('#collapseTwo').addClass("show");
-            PosnicPro.alert('warning', 'Add at least one item.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item', 'Add at least one item.'));
             $('#sales_new_item_name').focus();
             return false;
         } else {
@@ -4015,7 +4015,7 @@ PosnicPro.sales.addSale = {
                 
         // Validate phone number
         if (!phoneNumber) {
-            PosnicPro.alert('error', 'Enter a valid phone number');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_valid_phone_number', 'Enter a valid phone number'));
             return;
         }
         
@@ -4040,7 +4040,7 @@ PosnicPro.sales.addSale = {
         } else if (message && message.trim() !== '') {
             params.data.message = message;
         } else {
-            PosnicPro.alert('error', 'Please select a template or enter a message');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_select_a_template_or_enter_a_messag', 'Please select a template or enter a message'));
             return;
         }
         
@@ -4103,7 +4103,7 @@ PosnicPro.sales.editSale = {
             !(PosnicPro.sales.kotPaymentMode === true && PosnicPro.sales.paymentOnlyMode === true)) {
 
             // if (!PosnicPro.sales.selectedTable || !PosnicPro.sales.selectedTable.id) {
-            //     PosnicPro.alert('warning', 'Please select a table before saving the sale.');
+            //     PosnicPro.alert('warning', PosnicPro.i18n.t('lang_please_select_a_table_before_saving_the_sa', 'Please select a table before saving the sale.'));
             //     return false;
             // }
 
@@ -4119,7 +4119,7 @@ PosnicPro.sales.editSale = {
             // if (hasAnyDiscountEdit) {
             //     var discountNoteEdit = $.trim($('#discount_description').val() || '');
             //     if (discountNoteEdit === '') {
-            //         PosnicPro.alert('error', 'Please enter Discount Note before saving the sale.');
+            //         PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_discount_note_before_saving_t', 'Please enter Discount Note before saving the sale.'));
             //         $('#discount_description').show().editable('show');
             //         setTimeout(function () {
             //             $('.editable-container:last textarea, .editable-container:last input').focus();
@@ -4138,7 +4138,7 @@ PosnicPro.sales.editSale = {
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
             if (customer_name === '') {
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Enter a customer name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
         }
@@ -4332,7 +4332,7 @@ PosnicPro.sales.editSale = {
             SalesDocumentId = (PosnicPro.sales.salesExchange === true) ? PosnicPro.sales.refundSaleId : SalesDocumentId;
 
             // Default behaviour: convert Hold -> Add, otherwise keep as Edit
-            var sale_process = (PosnicPro.sales.EditRecentSaleParams.sale_process === 'Hold') ? 'Add' : 'Edit';
+            var sale_process = (PosnicPro.sales.EditRecentSaleParams.sale_process === 'Hold') ? PosnicPro.i18n.t('lang_nav_add', 'Add') : PosnicPro.i18n.t('lang_edit_title', 'Edit');
 
             // KOT History payment-only flow: when paying a KOT order from KOT History,
             // promote it to a normal completed sale by setting sale_process to 'Add'.
@@ -4700,10 +4700,10 @@ PosnicPro.sales.holdSale = {
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
                 $("#sales_new_customer_name").focus();
-                PosnicPro.alert('error', 'Enter a customer name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
-            PosnicPro.alert('warning', 'Add at least one item.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item', 'Add at least one item.'));
             $('#sales_new_item_name').focus();
             return false;
         } else {
@@ -4912,7 +4912,7 @@ PosnicPro.sales.quantity = {
                             let available = response.data.available_quantity;
                             let change = parseInt($('#returnItemChangeQuantityValue_' + id).text());
                             if ((available + change) < value) {
-                                PosnicPro.alert('error', 'Items Not Available In The Stock!.');
+                                PosnicPro.alert('error', PosnicPro.i18n.t('lang_items_not_available_in_the_stock', 'Items Not Available In The Stock!.'));
                                 $('#touchsale_item_qty' + id).val(change);
                                 return false;
                             }
@@ -4921,13 +4921,13 @@ PosnicPro.sales.quantity = {
                         }
                     }, function (xhr) {
                         let change = parseInt($('#returnItemChangeQuantityValue_' + id).text());
-                        PosnicPro.alert('error', 'Items Not Available In The Stock!.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_items_not_available_in_the_stock', 'Items Not Available In The Stock!.'));
                         $('#touchsale_item_qty' + id).val(change);
                         return false;
                     });
                 } else {
                     if (available_quantity < value) {
-                        PosnicPro.alert('error', 'Some items are out of stock.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                         $('#touchsale_item_qty' + id).val(PosnicPro.sales.SaleTableLineItems[id].available_quantity);
                         return false;
                     }
@@ -5041,7 +5041,7 @@ PosnicPro.sales.quantity = {
                         let available = response.data.available_quantity;
                         let change = parseInt($('#returnItemChangeQuantityValue_' + id).text());
                         if ((available + change) < ItemQty) {
-                            PosnicPro.alert('error', 'Items Not Available In The Stock!.');
+                            PosnicPro.alert('error', PosnicPro.i18n.t('lang_items_not_available_in_the_stock', 'Items Not Available In The Stock!.'));
                             $('#touchsale_item_qty' + id).val(change);
                             let lineAmount = PosnicPro.sales.SaleTableLineItems[id].addSalesLineItemAmount * change;
                             let discountAmount = PosnicPro.sales.SaleTableLineItems[id].addSalesLineItemDiscountAmount;
@@ -5065,7 +5065,7 @@ PosnicPro.sales.quantity = {
                     }
                 }, function (xhr) {
                     let change = parseInt($('#returnItemChangeQuantityValue_' + id).text());
-                    PosnicPro.alert('error', 'Items Not Available In The Stock!.');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_items_not_available_in_the_stock', 'Items Not Available In The Stock!.'));
                     $('#touchsale_item_qty' + id).val(change);
                     return false;
                 });
@@ -5087,7 +5087,7 @@ PosnicPro.sales.quantity = {
                     itemRecord.push({ name: $('#addSalesLineItemName_' + id).text(), qty: available_quantity, price: $('#addSalesLineItemPrice_' + id).text(), discount: $('#addSalesLineItemDiscount_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: salesLineTotal });
                     db.customerDisplay.put({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
                     PosnicPro.sales.calculation.salesTableRowCart();
-                    PosnicPro.alert('error', 'Some items are out of stock.');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                     return false;
                 }
             }
@@ -5288,7 +5288,7 @@ PosnicPro.sales.quantity = {
             '    <td id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
             '    <td id="returnRemoveInLineTotal_' + id + '" style="display:none;">' + removeTotal + '</td>' +
             '    <td id="currentLineItemTotal_' + id + '" style="display:none;">' + itemLineTotal + '</td>' +
-            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale" data-t-aria-label="lang_move_back_to_sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
             '    <td id="discountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
             '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
             '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
@@ -5460,7 +5460,7 @@ PosnicPro.sales.quantity = {
             '<span class="btn btn-success-rgba button_qty_check"><i class="feather icon-plus"></i></span>' +
             '</div>' +
             '</div>';
-        var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns"><i class="feather icon-arrow-right-circle"></i></button>';
+        var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns" data-t-aria-label="lang_move_to_returns"><i class="feather icon-arrow-right-circle"></i></button>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" width="30%">' + item_name + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
@@ -5656,7 +5656,7 @@ PosnicPro.sales.quantity = {
                 '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
                 '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
                 '    <td name="reSalesLineDiscountPercentage" id="reSalesLineDiscountPercentage_' + id + '" style="display:none;">' + discount_percentage + '</td>' +
-                '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+                '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale" data-t-aria-label="lang_move_back_to_sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
                 '    <td id="value_item' + id + '" style="display:none;">' + value_product + '</td>' +
                 '    <td id="returnSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + tax_type + '</span></td>' +
                 '    <td id="addSalesLineItemSellingPrice_' + id + '" style="display:none;">' + item_price + '</td>' +
@@ -5777,7 +5777,7 @@ PosnicPro.sales.quantity = {
             '    <td id="currentLineItemTotal_' + id + '" style="display:none;">' + lineTotal + '</td>' +
             '    <td id="rediscountSign' + id + '" style="display:none;">' + discount_sign + '</td>' +
             '    <td name="reSalesLinediscountval" id="reSalesLinediscountval' + id + '" style="display:none;">' + discount + '</td>' +
-            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
+            '    <td class="text-center"><button type="button" class="btn-success-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnLineRowItems(\'' + id + '\');" aria-label="Move back to sale" data-t-aria-label="lang_move_back_to_sale"><i class="feather icon-arrow-left-circle"></i></button></td>' +
             '    <td id="value_item' + id + '" style="display:none;">' + value_product + '</td>' +
             '    <td id="returnSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + tax_type + '</span></td>' +
             '    <td id="addSalesLineItemSellingPrice_' + id + '" style="display:none;">' + itemLineprice + '</td>' +
@@ -5809,7 +5809,7 @@ PosnicPro.sales.quantity = {
                 $('#touchsale_item_return_qty' + id).val(qtyupdate);
                 PosnicPro.sales.quantity.retrunlineItemCalculation(id, qtyupdate);
                 $('#touch_row_return_' + id).remove();
-                PosnicPro.alert('error', 'Some items are out of stock.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                 return false;
             } else {
                 var total_qty = available_quantity - ItemQty;
@@ -6074,7 +6074,7 @@ PosnicPro.sales.quantity = {
             var total_qty = return_mode - value;
             total_qty = (Number.isInteger(total_qty) === false) ? total_qty.toFixed(2) : total_qty;
             if (parseFloat(return_mode) < parseFloat(value)) {
-                PosnicPro.alert('error', 'No items are in stock.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_no_items_are_in_stock', 'No items are in stock.'));
                 $('#touchsale_item_qty' + id).val(return_mode);
                 return false;
             }
@@ -6148,21 +6148,21 @@ PosnicPro.sales.lineEdit = {
                  * that, which is exactly how this dialog ended up with black
                  * text on a blue bar. Let the theme do its job.
                  */
-                + '<div class="modal-header"><h5 class="modal-title" id="sale_line_edit_name">Edit line</h5>'
-                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+                + '<div class="modal-header"><h5 class="modal-title" id="sale_line_edit_name"><lang class="lang_edit_line">Edit line</lang></h5>'
+                + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
                 + '<div class="modal-body pb-2">'
                 + '<div class="form-row">'
-                + '<div class="form-group col-6"><label class="le-label">Price</label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
-                + '<div class="form-group col-6"><label class="le-label">Quantity</label><input type="number" min="0" step="any" class="form-control text-right" id="le_qty"></div>'
-                + '<div class="form-group col-6"><label class="le-label">Discount</label>'
-                + '<div class="input-group"><div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary" id="le_disc_mode" title="Tap to switch amount / percent">%</button></div>'
+                + '<div class="form-group col-6"><label class="le-label"><lang class="lang_price_title">Price</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
+                + '<div class="form-group col-6"><label class="le-label"><lang class="lang_quantity">Quantity</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_qty"></div>'
+                + '<div class="form-group col-6"><label class="le-label"><lang class="lang_discount_title">Discount</lang></label>'
+                + '<div class="input-group"><div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary" id="le_disc_mode" title="Tap to switch amount / percent" data-t-title="lang_tap_to_switch_amount_percent">%</button></div>'
                 + '<input type="number" min="0" step="any" class="form-control text-right" id="le_disc"></div></div>'
-                + '<div class="form-group col-6" id="le_tax_group"><label class="le-label">Tax %</label><input type="number" min="0" max="100" step="any" class="form-control text-right" id="le_tax"></div>'
+                + '<div class="form-group col-6" id="le_tax_group"><label class="le-label"><lang class="lang_tax_2">Tax %</lang></label><input type="number" min="0" max="100" step="any" class="form-control text-right" id="le_tax"></div>'
                 + '</div>'
                 + '<small class="text-muted">"Sale + update item" also writes the change back to the item record for every future sale.</small>'
                 + '</div>'
                 + '<div class="modal-footer py-2 d-flex" style="gap:6px;">'
-                + '<button type="button" class="btn btn-primary flex-fill" id="le_save_sale">Only this sale</button>'
+                + '<button type="button" class="btn btn-primary flex-fill" id="le_save_sale"><lang class="lang_only_this_sale">Only this sale</lang></button>'
                 + '<button type="button" class="btn btn-outline-primary flex-fill" id="le_save_both">Sale + update item</button>'
                 + '</div></div></div></div>');
             $(document).on('click', '#le_disc_mode', function () {
@@ -6244,7 +6244,7 @@ PosnicPro.sales.lineEdit = {
             PosnicPro.post({ url: 'items/quickPatch', data: JSON.stringify(patch) }, function (r) {
                 PosnicPro.alert(r.type, r.type === 'success' ? 'Item record updated too' : r.message);
                 if (PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
-            }, function () { PosnicPro.alert('warning', 'Sale updated; the item record could not be'); });
+            }, function () { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_sale_updated_the_item_record_could_not_be', 'Sale updated; the item record could not be')); });
         }
     }
 };
@@ -6286,10 +6286,10 @@ PosnicPro.sales.parkedAgo = function (value) {
     else if (mins < 60) { text = mins + ' min ago'; }
     else if (mins < 60 * 24) {
         var hrs = Math.floor(mins / 60);
-        text = hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+        text = hrs + ' ' + (hrs === 1 ? PosnicPro.i18n.t('lang_hour_ago', 'hour ago') : PosnicPro.i18n.t('lang_hours_ago', 'hours ago'));
     } else {
         var days = Math.floor(mins / (60 * 24));
-        text = days + (days === 1 ? ' day ago' : ' days ago');
+        text = days + ' ' + (days === 1 ? PosnicPro.i18n.t('lang_day_ago', 'day ago') : PosnicPro.i18n.t('lang_days_ago', 'days ago'));
     }
     return { text: text, exact: then.toLocaleString(), stale: mins >= 60 * 24 };
 };
@@ -6422,10 +6422,10 @@ $(document).on('click', '#sale_add_charge', function () {
     if (!$entry.length) {
         $entry = $(
             '<div id="sale_charge_entry" class="customer-display-hide">' +
-            '<input type="text" class="form-control form-control-sm sc-name" maxlength="60" placeholder="Charge name (e.g. Parcel)">' +
+            '<input type="text" class="form-control form-control-sm sc-name" maxlength="60" placeholder="Charge name (e.g. Parcel)" data-t-placeholder="lang_charge_name_e_g_parcel">' +
             '<input type="number" class="form-control form-control-sm sc-amt" min="0" step="any" placeholder="0.00">' +
-            '<a href="javascript:void(0)" class="sc-ok text-success" title="Add"><i class="feather icon-check"></i></a>' +
-            '<a href="javascript:void(0)" class="sc-cancel text-danger" title="Cancel">&times;</a>' +
+            '<a href="javascript:void(0)" class="sc-ok text-success" title="Add" data-t-title="lang_nav_add"><i class="feather icon-check"></i></a>' +
+            '<a href="javascript:void(0)" class="sc-cancel text-danger" title="Cancel" data-t-title="lang_cancel_title">&times;</a>' +
             '</div>');
         $('#sale_charges_list').before($entry);
     }
@@ -6742,7 +6742,7 @@ PosnicPro.sales.setSaleDefaults = function () {
                     $('.choose_register_model').html(registerOption);
                     $('#salesRegisterModal').modal('show');
                     
-                    PosnicPro.alert('warning', 'Select a register before creating a sale.');
+                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_register_before_creating_a_sale', 'Select a register before creating a sale.'));
                 } else {
                     // No registers for this branch
                     PosnicPro.local.set('branch_has_no_registers', 'true');
@@ -6927,7 +6927,7 @@ PosnicPro.sales.clear.cartItems = function (isFalse) {
     $('#sales_new_item_name').focus();
     $('#reset_modal').modal('hide');
     if (isFalse !== false) {
-        PosnicPro.alert('success', 'Sale cancelled.');
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_sale_cancelled', 'Sale cancelled.'));
     }
 };
 /**** END CLEAR SALES FUNCTION ****/
@@ -7146,7 +7146,7 @@ PosnicPro.sales.itemsMenu = {
                     app = app + '</div>';
                     $('#item-lists').append(app);
                 } else {
-                    app = "<div class='row'></div><div class='row'></div><div class='text-center text-dark'><p>There are no items available ...!!!</p><a href='#/items/new'>Add New Item</a></div>";
+                    app = "<div class='row'></div><div class='row'></div><div class='text-center text-dark'><p><lang class='lang_there_are_no_items_available'>There are no items available ...!!!</lang></p><a href='#/items/new'>Add New Item</a></div>";
                     $('#item-lists').append(app);
                 }
                 $('span.number').number(true, 2);
@@ -7540,7 +7540,7 @@ PosnicPro.sales.itemsMenu = {
             el.setAttribute('aria-label', parent);
             el.innerHTML =
                 '<div class="vp-head">' + esc(parent) +
-                '<button type="button" class="vp-close" aria-label="Close">&times;</button></div>' +
+                '<button type="button" class="vp-close" aria-label="Close" data-t-aria-label="lang_close_title">&times;</button></div>' +
                 (shape.matrix
                     ? PosnicPro.sales.itemsMenu.variantPop.matrixHtml(shape, currency)
                     : '<div class="vp-list">'
@@ -7821,7 +7821,7 @@ PosnicPro.sales.categoryMenu = {
                     app += "</div>";
                     $('#category-lists').append(app);
                 } else {
-                    $('#category-lists').append("<div class='text-center text-dark'><p>No categories found with available or negative-stock items.</p></div>");
+                    $('#category-lists').append("<div class='text-center text-dark'><p><lang class='lang_no_categories_found_with_available_or_nega'>No categories found with available or negative-stock items.</lang></p></div>");
                 }
 
                 PosnicPro.sales.itemsMenu.clickEffect();
@@ -7897,7 +7897,7 @@ PosnicPro.sales.categoryMenu = {
                 app += "</div>";
 
                 if (shown === 0) {
-                    app = "<div class='text-center text-dark'><p>No items found for this category.</p></div>";
+                    app = "<div class='text-center text-dark'><p><lang class='lang_no_items_found_for_this_category'>No items found for this category.</lang></p></div>";
                 }
 
                 $('#item-lists').append(app);
@@ -7948,22 +7948,22 @@ PosnicPro.sales.recentMenu = {
                         var kotEnabled = (PosnicPro.local.get('table_options') === 'enable');
                         var editIcon = (isPaid || kotEnabled)
                             ? ''
-                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/edit" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Edit"><i class="feather icon-edit-2"></i></a>';
+                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/edit" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Edit" data-t-title="lang_edit_title"><i class="feather icon-edit-2"></i></a>';
                         var returnIcon = kotEnabled
                             ? ''
-                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/return" class="rs-act btn-secondary-rgba" data-toggle="tooltip" title="Return"><i class="feather icon-corner-up-left"></i></a>';
+                            : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/return" class="rs-act btn-secondary-rgba" data-toggle="tooltip" title="Return" data-t-title="lang_return_title"><i class="feather icon-corner-up-left"></i></a>';
                         var deleteIcon = kotEnabled
                             ? ''
-                            : '<a data-module="sales" data-access="delete" href="#/sales/' + id + '/delete" class="rs-act btn-danger-rgba" data-toggle="tooltip" title="Delete"><i class="feather icon-trash"></i></a>';
+                            : '<a data-module="sales" data-access="delete" href="#/sales/' + id + '/delete" class="rs-act btn-danger-rgba" data-toggle="tooltip" title="Delete" data-t-title="lang_delete"><i class="feather icon-trash"></i></a>';
                         var isParked = (String(params.sale_process) === 'Hold');
                         var retrieveIcon = isParked
-                            ? '<a data-module="sales" data-access="write" href="#/sales/' + id + '/hold" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Retrieve parked sale"><i class="feather icon-play-circle"></i></a>'
+                            ? '<a data-module="sales" data-access="write" href="#/sales/' + id + '/hold" class="rs-act btn-success-rgba" data-toggle="tooltip" title="Retrieve parked sale" data-t-title="lang_retrieve_parked_sale"><i class="feather icon-play-circle"></i></a>'
                             : '';
                         if (isParked) { editIcon = ''; returnIcon = ''; }
                         var pill = isParked
-                            ? '<span class="rs-pill hold">Parked</span>'
+                            ? '<span class="rs-pill hold"><lang class="lang_parked_title">Parked</lang></span>'
                             : isPaid
-                                ? '<span class="rs-pill paid">Paid</span>'
+                                ? '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>'
                                 : '<span class="rs-pill unpaid">' + esc(paymentStatus || 'Unpaid') + '</span>';
                         var when = '';
                         try { when = ago(PosnicPro.mongoIdToDate(id)); } catch (e) { /* no time, no label */ }
@@ -7978,14 +7978,14 @@ PosnicPro.sales.recentMenu = {
                             '<div class="rs-amt">' + currency + '&nbsp;' + Number(params.total_amount || 0).toFixed(2) + '</div>' + pill +
                             '</div>' +
                             '<div class="rs-actions">' +
-                            '<a data-module="sales" data-access="read" href="javascript:void(0)" onclick="PosnicPro.sales.peekSale(\'' + id + '\'); return false;" class="rs-act btn-primary-rgba" data-toggle="tooltip" title="View"><i class="feather icon-eye"></i></a>' +
+                            '<a data-module="sales" data-access="read" href="javascript:void(0)" onclick="PosnicPro.sales.peekSale(\'' + id + '\'); return false;" class="rs-act btn-primary-rgba" data-toggle="tooltip" title="View" data-t-title="lang_view"><i class="feather icon-eye"></i></a>' +
                             retrieveIcon + editIcon + returnIcon + deleteIcon +
                             '</div></div>';
                     });
                     $('#recent_sales_list').html(listHtml);
                     PosnicPro.ACLForModule('sales');
                 } else {
-                    $('#recent_sales_list').html('<div class="text-center text-muted p-t-30 p-b-30">No sales yet today - they will appear here as you bill.</div>');
+                    $('#recent_sales_list').html('<div class="text-center text-muted p-t-30 p-b-30"><lang class="lang_no_sales_yet_today_they_will_appear_here_a">No sales yet today - they will appear here as you bill.</lang></div>');
                 }
             } else {
                 PosnicPro.alert(response.type, response.message);
@@ -8389,7 +8389,7 @@ PosnicPro.sales.parkedMenu = {
                     '<td class="text-center">' + esc(r.number_of_items) + '</td>' +
                     '<td class="text-center">' + currency + '&nbsp;' + Number(r.total_amount || 0).toFixed(2) + '</td>' +
                     '<td class="text-center"><span class="parked-ago' + (waited.stale ? ' stale' : '') + '" title="' + esc(waited.exact) + '">' + esc(waited.text) + '</span></td>' +
-                    '<td class="text-center"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale"><i class="feather icon-play"></i></a></td>' +
+                    '<td class="text-center"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale" data-t-title="lang_resume_this_sale"><i class="feather icon-play"></i></a></td>' +
                     '</tr>';
             });
             $('#parked_sales_table tbody').html(html);
@@ -8577,7 +8577,7 @@ PosnicPro.quotes = {
         PosnicPro.quotes._edShell();
         PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
         PosnicPro.quotes._edSigSync();
-        $('#qe_title').text('New quotation');
+        $('#qe_title').text(PosnicPro.i18n.t('lang_new_quotation', 'New quotation'));
         $('#qe_cust_search,#qe_cust_name,#qe_cust_phone,#qe_cust_email,#qe_cust_gstin,#qe_cust_address').val('');
         $('#qe_item_search,#qe_payment,#qe_bank,#qe_terms,#qe_notes,#qe_disc_value').val('');
         $('#qe_disc_type').val('');
@@ -8589,7 +8589,7 @@ PosnicPro.quotes = {
     showEdit: function (id) {
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
-            if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
+            if (!q) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_quote_not_found', 'Quote not found')); return; }
             if (['open', 'draft', 'sent'].indexOf(q.status) === -1) {
                 PosnicPro.alert('warning', 'This quote is ' + q.status + ' - it can no longer be edited.');
                 hasher.setHash('quotes/' + id);
@@ -8637,7 +8637,7 @@ PosnicPro.quotes = {
             $('#qe_disc_value').val(q.discount ? q.discount.value : '');
             $('#qe_valid_until').val(q.valid_until ? new Date(q.valid_until).toISOString().slice(0, 10) : '');
             PosnicPro.quotes.edRender();
-        }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_quote', 'Could not load the quote')); });
     },
     _edR2: function (n) { return Math.round(n * 100) / 100; },
     /* Shop taxes for the custom-line picker - catalog items bring their
@@ -8686,8 +8686,8 @@ PosnicPro.quotes = {
             if (m) {
                 var half = r2(amt / 2);
                 var halfRate = Number(m[1]) / 2;
-                rows.push({ label: 'CGST ' + halfRate + '%', amount: half });
-                rows.push({ label: 'SGST ' + halfRate + '%', amount: r2(amt - half) });
+                rows.push({ label: PosnicPro.i18n.t('lang_cgst_tax_receiving', 'CGST ') + halfRate + '%', amount: half });
+                rows.push({ label: PosnicPro.i18n.t('lang_sgst_tax_receiving', 'SGST ') + halfRate + '%', amount: r2(amt - half) });
             } else {
                 rows.push({ label: label, amount: amt });
             }
@@ -8727,12 +8727,12 @@ PosnicPro.quotes = {
         var html = '';
         ed.lines.forEach(function (l, i) {
             html += '<tr data-i="' + i + '">'
-                + '<td><span class="qe-l-grip" title="Drag to reorder">&#x2630;</span>'
-                + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
-                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '">'
+                + '<td><span class="qe-l-grip" title="Drag to reorder" data-t-title="lang_drag_to_reorder">&#x2630;</span>'
+                + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? PosnicPro.i18n.t('lang_custom_line_name', 'Custom line name') : PosnicPro.i18n.t('lang_newitem_title', 'Item')) + '" value="' + esc(l.item_name) + '">'
+                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" data-t-placeholder="lang_description_optional" value="' + esc(l.description) + '">'
                 + (l.kind === 'custom'
                     ? '<select class="qe-l-taxsel form-control form-control-sm mt-1" style="max-width:170px;">'
-                        + '<option value="">No tax</option>'
+                        + '<option value="" data-t="lang_no_tax">No tax</option>'
                         + ((PosnicPro.quotes._taxList || []).map(function (t) {
                             var sel = Number(l.tax_value) > 0 && String(l.tax_name) === String(t.tax_name) ? ' selected' : '';
                             return '<option value="' + esc(t.tax_value) + '" data-name="' + esc(t.tax_name) + '"' + sel + '>'
@@ -8756,10 +8756,10 @@ PosnicPro.quotes = {
                 + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
                 + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>'
                 + '<td class="text-right qe-l-total" style="white-space:nowrap; padding-top:12px;">' + PosnicPro.quotes._edLineTotal(l).toFixed(2) + '</td>'
-                + '<td><button type="button" class="btn qe-l-del" title="Remove line">&times;</button></td>'
+                + '<td><button type="button" class="btn qe-l-del" title="Remove line" data-t-title="lang_remove_line">&times;</button></td>'
                 + '</tr>';
         });
-        $('#qe_lines').html(html || '<tr><td colspan="6" class="text-center text-muted">Search an item above, or add a custom line.</td></tr>');
+        $('#qe_lines').html(html || '<tr><td colspan="6" class="text-center text-muted"><lang class="lang_search_an_item_above_or_add_a_custom_line">Search an item above, or add a custom line.</lang></td></tr>');
         var chtml = '';
         ed.charges.forEach(function (c, i) {
             chtml += '<div class="input-group input-group-sm mb-1 qe-charge" data-i="' + i + '">'
@@ -8773,7 +8773,7 @@ PosnicPro.quotes = {
                 + '<div class="input-group-append"><button type="button" class="btn btn-outline-danger qe-c-del">&times;</button></div>'
                 + '</div>';
         });
-        $('#qe_charges').html(chtml || '<div class="text-muted small mb-1">No charges yet - add GST, freight, installation, anything, under its own name.</div>');
+        $('#qe_charges').html(chtml || '<div class="text-muted small mb-1"><lang class="lang_no_charges_yet_add_gst_freight_installatio">No charges yet - add GST, freight, installation, anything, under its own name.</lang></div>');
         PosnicPro.quotes.edRecalc();
     },
     edRecalc: function () {
@@ -8819,7 +8819,7 @@ PosnicPro.quotes = {
         if (!ed) { return; }
         var esc = PosnicPro.quotes._esc;
         var money = PosnicPro.quotes._money;
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var logo = PosnicPro.local.get('branchimage');
         var custName = $.trim($('#qe_cust_name').val());
         var vu = $('#qe_valid_until').val();
@@ -8840,18 +8840,18 @@ PosnicPro.quotes = {
                     + (gst ? '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>' : '');
             })()
             + '</div>'
-            + '<div class="q-title-block"><div class="q-doc-title">QUOTATION</div>'
+            + '<div class="q-title-block"><div class="q-doc-title"><lang class="lang_quotation">QUOTATION</lang></div>'
             + '<div class="q-num">' + esc(ed.quote_id || 'New') + '</div>'
             + (vu ? '<div class="q-muted">Valid till: ' + esc(vu.split('-').reverse().join('/')) + '</div>' : '')
             + '</div></div>'
-            + '<div class="q-billto"><div class="q-label">Bill To</div>'
+            + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
             + '<div class="q-cust">' + (esc(custName) || 'Walk-in customer') + '</div>'
             + '<div class="q-muted">' + esc($.trim($('#qe_cust_address').val())) + '</div>'
             + '<div class="q-muted">' + esc($.trim($('#qe_cust_phone').val()))
             + ($.trim($('#qe_cust_gstin').val()) ? ' &middot; ' + taxLabel + ': ' + esc($.trim($('#qe_cust_gstin').val())) : '') + '</div>'
             + '</div>'
-            + '<table class="q-items"><thead><tr><th>#</th><th>Item</th><th class="text-right">Qty</th>'
-            + '<th class="text-right">Price</th><th class="text-right">Amount</th></tr></thead><tbody>';
+            + '<table class="q-items"><thead><tr><th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+            + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr></thead><tbody>';
         ed.lines.forEach(function (l, i) {
             var note = esc(l.description || '');
             if (l.dtype && Number(l.dval) > 0) {
@@ -8868,35 +8868,35 @@ PosnicPro.quotes = {
                 + '<td class="text-right">' + money(PosnicPro.quotes._edLineTotal(l)) + '</td></tr>';
         });
         h += '</tbody><tfoot>'
-            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
             + (m.taxRows && m.taxRows.length
                 ? m.taxRows.map(function (t) {
                     return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
                 }).join('')
-                : (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : ''))
+                : (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : ''))
             + (m.qdisc > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount' + (m.dtype === 'percent' ? ' (' + m.dval + '%)' : '') + '</td><td class="text-right">-' + money(m.qdisc) + '</td></tr>' : '');
         m.chargeRows.forEach(function (c) {
             h += '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name) + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
         });
-        h += '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th><th class="text-right">' + money(m.total) + '</th></tr>'
+        h += '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th><th class="text-right">' + money(m.total) + '</th></tr>'
             + '</tfoot></table>';
         var pay = $.trim($('#qe_payment').val());
         var bank = $.trim($('#qe_bank').val());
         var terms = $.trim($('#qe_terms').val());
         var notes = $.trim($('#qe_notes').val());
         if (pay || bank) {
-            h += '<div class="q-block m-t-10"><div class="q-label">Payment details</div>'
+            h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
                 + (pay ? '<div>' + esc(pay) + '</div>' : '')
                 + (bank ? '<div class="q-muted">' + esc(bank) + '</div>' : '') + '</div>';
         }
-        if (terms) { h += '<div class="q-block m-t-10"><div class="q-label">Terms &amp; conditions</div>' + esc(terms) + '</div>'; }
-        if (notes) { h += '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(notes) + '</div>'; }
+        if (terms) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + esc(terms) + '</div>'; }
+        if (notes) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(notes) + '</div>'; }
         var sig = PosnicPro.local.get('quotesignature');
         if (sig) {
             // the image sits ABOVE the rule - the line is what one signs on,
             // and the uploaded signature stands in for that stroke
             h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
-                + '<div class="q-sign">Authorised signatory</div>';
+                + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>';
         }
         $('#qe_preview').html(h);
     },
@@ -8924,7 +8924,7 @@ PosnicPro.quotes = {
                 tax_type: String(d.tax_type || '').toLowerCase().indexOf('ex') === 0 ? 'exclusive' : 'inclusive'
             });
             PosnicPro.quotes.edRender();
-        }, function () { PosnicPro.alert('error', 'Could not load that item'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_that_item', 'Could not load that item')); });
     },
     edAddCharge: function () {
         if (!PosnicPro.quotes._ed) { return; }
@@ -8938,7 +8938,7 @@ PosnicPro.quotes = {
     _edSigSync: function () {
         var sig = PosnicPro.local.get('quotesignature');
         $('#qe_sig_thumb').attr('src', sig || '').toggle(!!sig);
-        $('#qe_sig_action').text(sig ? 'Replace' : 'Upload');
+        $('#qe_sig_action').text(sig ? PosnicPro.i18n.t('lang_replace', 'Replace') : PosnicPro.i18n.t('lang_upload', 'Upload'));
     },
     edCancel: function () {
         var ed = PosnicPro.quotes._ed || {};
@@ -8950,7 +8950,7 @@ PosnicPro.quotes = {
         var lines = ed.lines.filter(function (l) {
             return (String(l.item_name).trim() || l.item_id) && Number(l.qty) > 0;
         });
-        if (!lines.length) { PosnicPro.alert('warning', 'Add at least one line with a name and quantity.'); return; }
+        if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_line_with_a_name_and_quan', 'Add at least one line with a name and quantity.')); return; }
         var payload = {
             lines: lines.map(function (l) {
                 var out = {
@@ -9040,7 +9040,7 @@ PosnicPro.quotes = {
             PosnicPro.quotes.renderList();
         }, function () {
             if (mine !== PosnicPro.quotes._seq) { return; }
-            $('#quotes_list_rows').text('Could not load quotes - try again.');
+            $('#quotes_list_rows').text(PosnicPro.i18n.t('lang_could_not_load_quotes_try_again', 'Could not load quotes - try again.'));
         });
     },
     renderList: function () {
@@ -9063,8 +9063,8 @@ PosnicPro.quotes = {
         var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var html = '<div class="table-responsive"><table class="table table-borderless">'
             + '<thead><tr>'
-            + '<th>Quote #</th><th>Customer</th><th class="q-col-date">Date</th><th class="q-col-valid">Valid till</th>'
-            + '<th class="text-right q-col-qty">Qty</th><th class="text-right">Total</th><th class="text-center">Status</th>'
+            + '<th><lang class="lang_quote">Quote #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="q-col-date"><lang class="lang_date_title">Date</lang></th><th class="q-col-valid"><lang class="lang_valid_till">Valid till</lang></th>'
+            + '<th class="text-right q-col-qty"><lang class="lang_qty_title">Qty</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th class="text-center"><lang class="lang_userstatus">Status</lang></th>'
             + '</tr></thead><tbody>';
         shown.forEach(function (q) {
             var qty = (q.items || []).reduce(function (a, l) { return a + (Number(l.qty) || 0); }, 0);
@@ -9112,7 +9112,7 @@ PosnicPro.quotes = {
 
         var label;
         if (total !== null) {
-            label = total + (total === 1 ? ' quote' : ' quotes');
+            label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_quote_2', 'quote') : PosnicPro.i18n.t('lang_quotes', 'quotes'));
             if (pages > 1) { label = 'Page ' + cur + ' of ' + pages + ' · ' + label; }
         } else {
             var first = (cur - 1) * lim + 1;
@@ -9179,7 +9179,7 @@ PosnicPro.quotes = {
             .filter('[data-id="' + id + '"]').addClass('is-active');
         PosnicPro.get({ url: 'quotes/' + id, data: {} }, function (r) {
             var q = r && r.data;
-            if (!q) { PosnicPro.alert('error', 'Quote not found'); return; }
+            if (!q) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_quote_not_found', 'Quote not found')); return; }
             PosnicPro.quotes._current = q;
             /* The rail and the document load in parallel on a fresh arrival,
                so whichever lands second has to place the highlight - renderList
@@ -9189,7 +9189,7 @@ PosnicPro.quotes = {
             var esc = PosnicPro.quotes._esc;
             var money = PosnicPro.quotes._money;
             var open = ['open', 'draft', 'sent'].indexOf(q.status) !== -1;
-            var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+            var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
             var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : ''; };
             /* Inline-editable field: contenteditable on an open quote,
                plain text once converted or cancelled. */
@@ -9227,14 +9227,14 @@ PosnicPro.quotes = {
                 })()
                 + '</div>'
                 + '<div class="q-title-block">'
-                + '<div class="q-doc-title">QUOTATION</div>'
+                + '<div class="q-doc-title"><lang class="lang_quotation">QUOTATION</lang></div>'
                 + '<div class="q-num">' + esc(q.quote_id) + '</div>'
                 + '<div class="q-muted">Date: ' + d(q.created_date) + '</div>'
                 + '<div class="q-muted">Valid till: ' + ed('valid_until', d(q.valid_until), 'dd/mm/yyyy') + '</div>'
                 + (!open ? '<div class="q-status">' + esc(String(q.status).toUpperCase()) + '</div>' : '')
                 + '</div>'
                 + '</div>'
-                + '<div class="q-billto"><div class="q-label">Bill To</div>'
+                + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
                 + '<div class="q-cust">' + ed('customer_name', q.customer_name || 'Walk-in customer', 'Customer name') + '</div>'
                 + '<div class="q-muted">' + ed('customer_address', q.customer_address, 'Address') + '</div>'
                 + '<div class="q-muted">Phone: ' + ed('customer_phone', q.customer_phone, 'phone')
@@ -9242,8 +9242,8 @@ PosnicPro.quotes = {
                 + '<div class="q-muted">Email: ' + ed('customer_email', q.customer_email, 'email') + '</div>'
                 + '</div>'
                 + '<div class="table-responsive"><table class="q-items"><thead><tr>'
-                + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
-                + '<th class="text-right">Unit price</th><th class="text-right">Amount</th>'
+                + '<th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+                + '<th class="text-right"><lang class="lang_unit_price">Unit price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
                 + '</tr></thead><tbody>';
             (q.items || []).forEach(function (l, i) {
                 var note = esc(l.description || '');
@@ -9265,7 +9265,7 @@ PosnicPro.quotes = {
                     + '<td class="text-right">' + money(l.line_total) + '</td></tr>';
             });
             body += '</tbody><tfoot>'
-                + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
+                + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
                 + '<td class="text-right">' + money(q.subtotal) + '</td></tr>'
                 + (q.discount && q.discount.computed > 0
                     ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount'
@@ -9281,13 +9281,13 @@ PosnicPro.quotes = {
                     var rows = PosnicPro.quotes._taxBreakup(q.items, function (l) { return Number(l.tax_amount) || 0; });
                     if (!rows.length) {
                         // older quotes without per-line tax figures keep one row
-                        rows = [{ label: 'Tax', amount: Number(q.tax_total) }];
+                        rows = [{ label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), amount: Number(q.tax_total) }];
                     }
                     return rows.map(function (t) {
                         return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
                     }).join('');
                 })()
-                + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
+                + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
                 + '<th class="text-right">' + money(q.total) + '</th></tr>'
                 + '</tfoot></table></div>'
                 + (function () {
@@ -9295,14 +9295,14 @@ PosnicPro.quotes = {
                        to reorder on an open quote); unlisted tokens keep the
                        default order. Same rule the PDF builder runs. */
                     var sections = {
-                        payment: '<div class="q-label">Payment details</div>'
+                        payment: '<div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
                             + '<div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
                             + '<div class="q-muted">' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>',
-                        terms: '<div class="q-label">Terms &amp; conditions</div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.'),
+                        terms: '<div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.'),
                         custom: (q.custom_blocks || []).map(function (b) {
                             return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';
                         }).join(''),
-                        notes: q.notes ? '<div class="q-label">Notes</div>' + esc(q.notes) : ''
+                        notes: q.notes ? '<div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(q.notes) : ''
                     };
                     var tokens = ['payment', 'terms', 'custom', 'notes'];
                     var order = [];
@@ -9319,7 +9319,7 @@ PosnicPro.quotes = {
                 })()
                 + (PosnicPro.local.get('quotesignature')
                     ? '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
-                        + '<div class="q-sign">Authorised signatory</div>'
+                        + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>'
                     : '')
                 + '</div>';
             $('#quotes_view_body').html(body);
@@ -9387,13 +9387,13 @@ PosnicPro.quotes = {
             if (open || q.status === 'accepted') {
                 /* The accent, not green: green now means "succeeded", and
                    converting a quote is an action, not an outcome. */
-                visible += '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.quotes.convert();">Convert to sale</button>';
+                visible += '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.quotes.convert();"><lang class="lang_convert_to_sale">Convert to sale</lang></button>';
             }
             $('#quotes_view_actions').html('<div class="q-actions">' + visible + '</div>');
             PosnicPro.ACLForModule('sales');
             $('#quotes_view_card').show();
             if (open) { PosnicPro.quotes._pvInitSort(); }
-        }, function () { PosnicPro.alert('error', 'Could not load the quote'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_quote', 'Could not load the quote')); });
     },
     /* Drag a footer section by its label to reorder the printed document;
        the order saves onto the quote and the PDF obeys it. */
@@ -9504,7 +9504,7 @@ PosnicPro.quotes = {
             phone: real(PosnicPro.local.get('branchphone')),
             email: real(PosnicPro.local.get('branchemail')),
             gstin: real(PosnicPro.local.get('branchgstin')),
-            taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID',
+            taxLabel: PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID'),
             signature: PosnicPro.local.get('quotesignature') || ''
         };
     },
@@ -9512,12 +9512,12 @@ PosnicPro.quotes = {
        the builder runs. A logo that will not load never blocks the doc. */
     _withQuoteDoc: function (use) {
         var q = PosnicPro.quotes._current;
-        if (!q) { PosnicPro.alert('warning', 'Open a quote first.'); return; }
+        if (!q) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_open_a_quote_first', 'Open a quote first.')); return; }
         PosnicPro.lazy.load('jspdf').then(function () {
             var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
                 : (typeof window.jsPDF === 'function') ? window.jsPDF
                 : (typeof window.jspdf === 'function') ? window.jspdf : null;
-            if (!C) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return; }
+            if (!C) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_pdf_tools_not_loaded_refresh_and_retry', 'PDF tools not loaded - refresh and retry.')); return; }
             var src = PosnicPro.local.get('branchimage');
             var done = false;
             var go = function (logo) {
@@ -9607,7 +9607,7 @@ PosnicPro.quotes = {
 
         var rightY = y;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(45, 55, 72);
-        doc.text(o && o.title ? o.title : 'QUOTATION', R, rightY + 6, { align: 'right' });
+        doc.text(o && o.title ? o.title : PosnicPro.i18n.t('lang_quotation', 'QUOTATION'), R, rightY + 6, { align: 'right' });
         doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
         doc.text(txt(o && o.number ? o.number : q.quote_id), R, rightY + 12.5, { align: 'right' });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
@@ -9757,7 +9757,7 @@ PosnicPro.quotes = {
         });
         if (Number(q.tax_total) > 0) {
           var taxRows = PosnicPro.quotes._taxBreakup(q.items, function (l) { return Number(l.tax_amount) || 0; });
-          if (!taxRows.length) { taxRows = [{ label: 'Tax', amount: Number(q.tax_total) }]; }
+          if (!taxRows.length) { taxRows = [{ label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), amount: Number(q.tax_total) }]; }
           taxRows.forEach(function (t) {
             ensure(12);
             doc.text(txt(t.label).slice(0, 34), totX, y + 4);
@@ -9851,7 +9851,7 @@ PosnicPro.quotes = {
             if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
             var url = doc.output('bloburl');
             var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the quote can print.'); }
+            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_quote_can_print', 'Allow pop-ups so the quote can print.')); }
         });
     },
     print: function () {
@@ -9909,7 +9909,7 @@ PosnicPro.quotes = {
             });
         });
         if (!lines.length) {
-            PosnicPro.alert('warning', 'This quote has only custom lines - there is no catalog item to load on a sale.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_this_quote_has_only_custom_lines_there_is', 'This quote has only custom lines - there is no catalog item to load on a sale.'));
             PosnicPro.sales._sourceQuoteId = null;
             return;
         }
@@ -9962,7 +9962,7 @@ PosnicPro.quotes = {
         PosnicPro.request({ method: 'DELETE', url: 'quotes/' + q._id, data: '{}' }, function (r) {
             PosnicPro.alert(r.type, r.message);
             if (r.type === 'success') { hasher.setHash('quotes'); PosnicPro.quotes.showDataTablePage(); }
-        }, function () { PosnicPro.alert('error', 'Could not delete the quote'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_delete_the_quote', 'Could not delete the quote')); });
     },
     /* Save the CART as a quote - born on the sale screen. */
     saveFromSale: function () {
@@ -9978,7 +9978,7 @@ PosnicPro.quotes = {
                 unit_price: parseFloat(String($('#addSalesLineItemPrice_' + itemid).text()).replace(/,/g, '')) || 0
             };
         }).get().filter(Boolean);
-        if (!lines.length) { PosnicPro.alert('warning', 'Add at least one item, then save the quote.'); return false; }
+        if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item_then_save_the_quote', 'Add at least one item, then save the quote.')); return false; }
         // Owner flow: no questions at save - the quote lands on its A4
         // preview where everything edits in place.
         PosnicPro.quotes._pendingLines = lines;
@@ -10021,7 +10021,7 @@ PosnicPro.quotes = {
     emailQuote: function () {
         var q = PosnicPro.quotes._current || {};
         PosnicPro.reportExport.email('quotes_view_body', {
-            title: 'Quotation ' + (q.quote_id || ''),
+            title: PosnicPro.i18n.t('lang_quotation_2', 'Quotation ') + (q.quote_id || ''),
             filename: (q.quote_id || 'quote').toLowerCase(),
             to: q.customer_email || '',
             // a delivered email means the quote went out - open/draft
@@ -10137,7 +10137,7 @@ PosnicPro.sales.qr = {
                 $('#qrcode_id').val(data.id);
 
                 var qrContainer = document.querySelector('#qr_view .modal-body') || document.getElementById("qr_view");
-                qrContainer.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:20px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:24px;">Loading QR...</div>';
+                qrContainer.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:20px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:24px;"><lang class="lang_loading_qr">Loading QR...</lang></div>';
 
                 // Method 2: Try without CORS (CSS cropping)
                 function tryMethod2() {
@@ -10192,7 +10192,7 @@ PosnicPro.sales.qr = {
                     $('.payment_mode').val('Qrpay');
                     $('.payment_mode').attr('checked', false);
                     $('.Qrpay_active').addClass('active');
-                    $('#tendered_payment_method').text('Qrpay');
+                    $('#tendered_payment_method').text(PosnicPro.i18n.t('lang_qrpay', 'Qrpay'));
                     var hash = window.location.hash.slice(1);
                     if (hash === '/sales/new') {
                         PosnicPro.sales.addSale.cartOrderSubmit(data);
@@ -10207,7 +10207,7 @@ PosnicPro.sales.qr = {
                     $('.payment_mode').val('Cash');
                     $('.payment_mode').attr('checked', false);
                     $('.Cash_active').addClass('active');
-                    $('#tendered_payment_method').text('Cash');
+                    $('#tendered_payment_method').text(PosnicPro.i18n.t('lang_cash_title', 'Cash'));
                     $('#qr_view').modal('hide');
                     clearInterval(PosnicPro.sales.qr.intervalId);
                 }
@@ -10232,7 +10232,7 @@ PosnicPro.sales.qr = {
                 $('.payment_mode').val('Cash');
                 $('.payment_mode').attr('checked', false);
                 $('.Cash_active').addClass('active');
-                $('#tendered_payment_method').text('Cash');
+                $('#tendered_payment_method').text(PosnicPro.i18n.t('lang_cash_title', 'Cash'));
                 db.customerDisplay.where('id').equals('4').delete();
                 PosnicPro.alert('error', response.message);
             } else {
@@ -10280,7 +10280,7 @@ PosnicPro.sales.addByBarcode = function (barcode) {
                 if (mustCheckStock && !isNegativeStock) {
                     var availableQty = parseFloat(itemData.available_quantity) || 0;
                     if (availableQty <= 0) {
-                        PosnicPro.alert('error', 'Check the product quantity.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_check_the_product_quantity', 'Check the product quantity.'));
                         return;
                     }
                 }
@@ -10336,7 +10336,7 @@ PosnicPro.sales.cameraScan = {
     _timer: null,
     open: function () {
         if (!('BarcodeDetector' in window)) {
-            PosnicPro.alert('warning', 'Camera scanning needs Chrome or Edge on this device');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_camera_scanning_needs_chrome_or_edge_on_th', 'Camera scanning needs Chrome or Edge on this device'));
             return;
         }
         if (!$('#camera_scan_modal').length) {
@@ -10344,10 +10344,10 @@ PosnicPro.sales.cameraScan = {
                 '<div class="modal fade" id="camera_scan_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
                 '<div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content">' +
                 '<div class="modal-header"><h5 class="modal-title"><i class="feather icon-camera mr-2"></i>Scan an item</h5>' +
-                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>' +
                 '<div class="modal-body p-2 text-center">' +
                 '<video id="camera_scan_video" autoplay playsinline muted style="width:100%;border-radius:6px;background:#000;min-height:240px;"></video>' +
-                '<small class="text-muted d-block mt-1">Point the camera at a barcode</small>' +
+                '<small class="text-muted d-block mt-1"><lang class="lang_point_the_camera_at_a_barcode">Point the camera at a barcode</lang></small>' +
                 '</div></div></div></div>');
             $('#camera_scan_modal').on('hidden.bs.modal', PosnicPro.sales.cameraScan.stop);
         }
@@ -10369,7 +10369,7 @@ PosnicPro.sales.cameraScan = {
                 }).catch(function () { /* keep looking */ });
             }, 350);
         }).catch(function () {
-            PosnicPro.alert('error', 'Could not open the camera - check permission');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_open_the_camera_check_permission', 'Could not open the camera - check permission'));
         });
     },
     stop: function () {
@@ -10633,16 +10633,16 @@ PosnicPro.sales.quickSale = {
                 '<div class="modal fade" id="quick_sale_modal" tabindex="-1" role="dialog" aria-hidden="true">' +
                 '<div class="modal-dialog modal-sm modal-dialog-centered" role="document"><div class="modal-content">' +
                 '<div class="modal-header py-2"><h5 class="modal-title"><i class="feather icon-zap mr-2"></i>Quick sale</h5>' +
-                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>' +
                 '<div class="modal-body">' +
                 '<input type="number" min="0" step="any" class="form-control form-control-lg text-right mb-2" id="quick_sale_amount" placeholder="0.00" autocomplete="off" style="font-size:1.6rem;">' +
-                '<input type="text" class="form-control mb-2" id="quick_sale_note" maxlength="100" placeholder="Item name (optional)" autocomplete="off">' +
+                '<input type="text" class="form-control mb-2" id="quick_sale_note" maxlength="100" placeholder="Item name (optional)" data-t-placeholder="lang_item_name_optional" autocomplete="off">' +
                 '<small class="text-muted d-block" id="quick_sale_hint"></small>' +
                 '<small class="text-muted d-block" id="quick_sale_added"></small>' +
                 '</div>' +
                 '<div class="modal-footer py-2">' +
-                '<button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Done</button>' +
-                '<button type="button" class="btn btn-warning-rgba" id="quick_sale_add" onclick="PosnicPro.sales.quickSale.add();">Add to sale</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal"><lang class="lang_done">Done</lang></button>' +
+                '<button type="button" class="btn btn-warning-rgba" id="quick_sale_add" onclick="PosnicPro.sales.quickSale.add();"><lang class="lang_add_to_sale">Add to sale</lang></button>' +
                 '</div></div></div></div>');
             $('#quick_sale_amount').on('keydown', function (e) {
                 if (e.key === 'Enter') { PosnicPro.sales.quickSale.add(); }
@@ -10667,7 +10667,7 @@ PosnicPro.sales.quickSale = {
         if (PosnicPro.sales.quickSale._tax === null) {
             if (!PosnicPro.sales.taxFeatureOn()) {
                 PosnicPro.sales.quickSale._tax = { id: '', name: '', value: 0 };
-                $('#quick_sale_hint').text('No tax applied');
+                $('#quick_sale_hint').text(PosnicPro.i18n.t('lang_no_tax_applied', 'No tax applied'));
             } else {
                 PosnicPro.get({ url: 'setting/getTaxAjaxList', data: 'query=' }, function (response) {
                     var wanted = PosnicPro.local.get('default_tax_id');
@@ -10857,14 +10857,14 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     if (d.category_name) { meta.push(esc(d.category_name)); }
     var stock;
     if (d.item_kind === 'service') {
-        stock = '<span class="sug-stock na">Service</span>';
+        stock = '<span class="sug-stock na"><lang class="lang_service">Service</lang></span>';
     } else if (d.track_inventory === false) {
-        stock = '<span class="sug-stock na">Not tracked</span>';
+        stock = '<span class="sug-stock na"><lang class="lang_not_tracked">Not tracked</lang></span>';
     } else {
         var q = Number(d.available_quantity) || 0;
         var low = parseFloat(PosnicPro.local.get('notificationrange'));
         if (!isFinite(low) || low <= 0) { low = 5; }
-        if (q <= 0) { stock = '<span class="sug-stock out">Out of stock</span>'; }
+        if (q <= 0) { stock = '<span class="sug-stock out"><lang class="lang_out_of_stock_2">Out of stock</lang></span>'; }
         else if (q <= low) { stock = '<span class="sug-stock low">' + q + ' left</span>'; }
         else { stock = '<span class="sug-stock in">In stock ' + q + '</span>'; }
     }
@@ -11191,12 +11191,12 @@ PosnicPro.quotes.mountFilters = function () {
         key: 'quotes',
         container: '#quotes_filter_panel',
         button: '#quotes_filter_btn',
-        searchPlaceholder: 'Search customer or quote #',
-        dateField: 'Created',
+        searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_quote', 'Search customer or quote #'),
+        dateField: PosnicPro.i18n.t('lang_created', 'Created'),
         searchFields: [
-            { value: 'all', label: 'All fields' },
-            { value: 'quote_id', label: 'Quote #' },
-            { value: 'customer_name', label: 'Customer' }
+            { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+            { value: 'quote_id', label: PosnicPro.i18n.t('lang_quote', 'Quote #') },
+            { value: 'customer_name', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer') }
         ],
         /* Suggestions come from the customers this till already uses, whatever
            field is selected - picking one narrows the field for you. */
@@ -11209,10 +11209,10 @@ PosnicPro.quotes.mountFilters = function () {
     });
     PosnicPro.listSort.mount('quotes', {
         options: [
-            { v: 'total_desc', l: 'Highest amount first', i: 'arrow-down' },
-            { v: 'total_asc', l: 'Lowest amount first', i: 'arrow-up' },
-            { v: 'valid_asc', l: 'Valid till: soonest', i: 'clock' },
-            { v: 'valid_desc', l: 'Valid till: latest', i: 'calendar' }
+            { v: 'total_desc', l: PosnicPro.i18n.t('lang_highest_amount_first', 'Highest amount first'), i: 'arrow-down' },
+            { v: 'total_asc', l: PosnicPro.i18n.t('lang_lowest_amount_first', 'Lowest amount first'), i: 'arrow-up' },
+            { v: 'valid_asc', l: PosnicPro.i18n.t('lang_valid_till_soonest', 'Valid till: soonest'), i: 'clock' },
+            { v: 'valid_desc', l: PosnicPro.i18n.t('lang_valid_till_latest', 'Valid till: latest'), i: 'calendar' }
         ],
         onChange: function () { PosnicPro.quotes.loadList(); }
     });
@@ -11447,7 +11447,7 @@ PosnicPro.sales.noteEdit = {
         var $in = $('<input type="text" class="form-control form-control-sm note-inline-input">')
             .attr({ maxlength: maxLen || 500, placeholder: placeholder || 'Add a note' })
             .val(before);
-        var $ok = $('<a href="javascript:void(0)" class="note-inline-ok" title="Save note"><i class="feather icon-check"></i></a>');
+        var $ok = $('<a href="javascript:void(0)" class="note-inline-ok" title="Save note" data-t-title="lang_save_note"><i class="feather icon-check"></i></a>');
         $wrap.append($in).append($ok);
         $link.hide().after($wrap);
 
@@ -11536,7 +11536,7 @@ PosnicPro.sales.updateCustomerChip = function () {
         var tip = (name || 'Customer') + (phone ? ' · ' + phone : '');
         $btn.attr('data-original-title', tip).attr('title', tip);
     } else {
-        $('#sales_customer_btn_label').text('Walk-in');
+        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_walk_in', 'Walk-in'));
         $btn.removeClass('has-customer');
         $icon.removeClass('icon-user-check').addClass('icon-user');
         var t = 'Walk-in customer. Click to choose or add';
@@ -11614,21 +11614,21 @@ $(document).ready(function () {
 
 $("#payment_description").hover(function () {
     $(this).css('cursor', 'pointer').attr('data-toggle', 'tooltip');
-    $(this).css('cursor', 'pointer').attr('title', 'Payment Note');
+    $(this).css('cursor', 'pointer').attr('title', PosnicPro.i18n.t('lang_paymentdescription_title', 'Payment Note'));
 }, function () {
     $(this).css('cursor', 'auto');
 });
 
 $("#sales_description").hover(function () {
     $(this).css('cursor', 'pointer').attr('data-toggle', 'tooltip');
-    $(this).css('cursor', 'pointer').attr('title', 'Sale Description');
+    $(this).css('cursor', 'pointer').attr('title', PosnicPro.i18n.t('lang_sale_description', 'Sale Description'));
 }, function () {
     $(this).css('cursor', 'auto');
 });
 
 $("#discount_description").hover(function () {
     $(this).css('cursor', 'pointer').attr('data-toggle', 'tooltip');
-    $(this).css('cursor', 'pointer').attr('title', 'Discount Note');
+    $(this).css('cursor', 'pointer').attr('title', PosnicPro.i18n.t('lang_discount_note', 'Discount Note'));
 }, function () {
     $(this).css('cursor', 'auto');
 });
@@ -12030,13 +12030,13 @@ PosnicPro.sales.readWeightFromMachine = async function () {
     const settings = settingsStr ? JSON.parse(settingsStr) : null;
 
     if (!settings || !settings.hardware_weight_machine_enable) {
-        PosnicPro.alert('warning', 'Weight machine is not enabled in settings.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_weight_machine_is_not_enabled_in_settings', 'Weight machine is not enabled in settings.'));
         return;
     }
 
     // Check if WeightBridge is available
     if (!window.WeightBridge || !window.WeightBridge.isAvailable()) {
-        PosnicPro.alert('warning', 'Weight machine not available. Please use the desktop app.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_weight_machine_not_available_please_use_th', 'Weight machine not available. Please use the desktop app.'));
         window.WeightBridge && window.WeightBridge.showBrowserWarning();
         return;
     }
@@ -12111,10 +12111,10 @@ PosnicPro.sales.readWeightFromMachine = async function () {
 
                     PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg set for last item');
                 } else {
-                    PosnicPro.alert('warning', 'No quantity field found for last item');
+                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_quantity_field_found_for_last_item', 'No quantity field found for last item'));
                 }
             } else {
-                PosnicPro.alert('warning', 'No items in cart. Please add an item first.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
             }
         }
 
@@ -12293,7 +12293,7 @@ PosnicPro.sales.openRegisterFromSales = function () {
     let registerId = $('#sales_choose_register_model option:selected').val();
     
     if (!registerId) {
-        PosnicPro.alert('warning', 'Select a register.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_register', 'Select a register.'));
         return false;
     }
     
@@ -12450,7 +12450,7 @@ $(document).on('change', '#qe_sig_file', function () {
     var input = this;
     if (!f) { return; }
     if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', 'Keep the signature under 300 KB - a small PNG works best.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
         $(input).val('');
         return;
     }
@@ -12474,10 +12474,10 @@ $(document).on('change', '#qe_sig_file', function () {
             $('#quote_signature_clear').show();
             PosnicPro.quotes._edSigSync();
             PosnicPro.quotes.edRecalc();
-            PosnicPro.alert('success', 'Signature saved - it now signs this and every future quote.');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_signature_saved_it_now_signs_this_and_ever', 'Signature saved - it now signs this and every future quote.'));
         }, function () {
             $(input).val('');
-            PosnicPro.alert('error', 'Could not save the signature');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_signature', 'Could not save the signature'));
         });
     };
     reader.readAsDataURL(f);
@@ -12609,7 +12609,7 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
         };
         html = '<div class="receipt-preview rp-thermal">' + head +
             '<div class="rp-rule"></div>' +
-            '<div class="rp-cols"><span>Product</span><span>Qty.</span><span>Price</span></div>' +
+            '<div class="rp-cols"><span><lang class="lang_product">Product</lang></span><span><lang class="lang_qty">Qty.</lang></span><span><lang class="lang_price_title">Price</lang></span></div>' +
             '<div class="rp-rule"></div>' + rows +
             '<div class="rp-rule"></div>' +
             foot('Total Qty', esc(totalQty)) +
@@ -12618,7 +12618,7 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
             (parseFloat(tax) > 0 ? foot('Tax', money(tax)) : '') +
             '<div class="rp-rule"></div>' +
             foot('TOTAL', money(grand), 'rp-grand') +
-            '<div class="rp-thanks">Thank you, visit again</div>' +
+            '<div class="rp-thanks"><lang class="lang_thank_you_visit_again">Thank you, visit again</lang></div>' +
             '</div>';
     } else {
         var trs = items.map(function (it) {
@@ -12629,9 +12629,9 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
             return '<tr class="' + (cls || '') + '"><td colspan="3" class="rp-num">' + label + '</td>' +
                 '<td class="rp-num">' + value + '</td></tr>';
         };
-        html = '<div class="receipt-preview rp-a4"><div class="rp-doc-title">TAX INVOICE</div>' + head +
-            '<table class="rp-table"><thead><tr><th>Item</th><th class="rp-num">Qty</th>' +
-            '<th class="rp-num">Price</th><th class="rp-num">Total</th></tr></thead><tbody>' + trs +
+        html = '<div class="receipt-preview rp-a4"><div class="rp-doc-title"><lang class="lang_tax_invoice">TAX INVOICE</lang></div>' + head +
+            '<table class="rp-table"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th class="rp-num"><lang class="lang_qty_title">Qty</lang></th>' +
+            '<th class="rp-num"><lang class="lang_price_title">Price</lang></th><th class="rp-num"><lang class="lang_total_title">Total</lang></th></tr></thead><tbody>' + trs +
             trow('Sub Total', money(sub)) +
             (parseFloat(disc) > 0 ? trow('Discount', '- ' + money(disc)) : '') +
             (parseFloat(tax) > 0 ? trow('Tax', money(tax)) : '') +
