@@ -27,11 +27,16 @@ const SKIP_FILE = [/^modules[\\/]report_gstr/, /^error-\d+\.html$/, /^error-emai
 /* Their <title> is a published contract pinned by frontend-discovery-files. */
 const SEO_TITLE_PAGE = /^(index|login)\.html$/;
 const SKIP_TEXT = /^[\s\d.,:;!?()\[\]{}%$₹#*+\-–—/|&'"«»…=<>_×]*$/;
+const isShortcut = (text) => {
+  const parts = String(text).split('+').map((part) => part.trim());
+  if (!parts.length || !/^(ctrl|alt|shift|cmd|esc|f\d+)$/i.test(parts[0])) return false;
+  return parts.slice(1).every((part) => part.length > 0 && !/\s/.test(part));
+};
 const NOT_WORDS = (t) => !/[A-Za-z]{2,}/.test(t)
   || /^\{\w+\}$/.test(t)                        // a merge token is data, not prose
   || /\{\{|__\w+__|\$\{|<%|\bfunction\b|\bvar\b|=>/.test(t)
   || /^[a-z_]+\.[a-z_]+/.test(t)
-  || /^(ctrl|alt|shift|cmd|esc|f\d+)(\s*\+\s*\S+)*$/i.test(t)
+  || isShortcut(t)
   || /^View \S+ per page$/.test(t)
   || /^[A-Z]{1,2}$/.test(t);
 

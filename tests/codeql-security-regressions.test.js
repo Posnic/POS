@@ -118,3 +118,12 @@ test('desktop log and connector files stay on one descriptor while in use', () =
   assert.match(disconnect, /openSync\(file, 'r\+'\)/);
   assert.match(disconnect, /ftruncateSync\(fd, 0\)/);
 });
+
+test('translation tools parse shortcuts without backtracking regexes', () => {
+  for (const file of ['tests/tools/i18n-gaps.js', 'tests/tools/i18n-tag.js']) {
+    const tool = source(file);
+    assert.match(tool, /const isShortcut =/);
+    assert.match(tool, /String\(text\)\.split\('\+'\)/);
+    assert.doesNotMatch(tool, /\(\\s\*\\\+\\s\*\\S\+\)\*/);
+  }
+});

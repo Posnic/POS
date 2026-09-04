@@ -72,11 +72,16 @@ function keyFor(english) {
 
 const SKIP_TEXT = /^[\s\d.,:;!?()\[\]{}%$₹#*+\-–—/|&'"«»…=<>_×]*$/;
 const NO_TAG_INSIDE = /^(script|style|textarea|pre|code|lang|noscript|svg)$/i;
+const isShortcut = (text) => {
+  const parts = String(text).split('+').map((part) => part.trim());
+  if (!parts.length || !/^(ctrl|alt|shift|cmd|esc|f\d+)$/i.test(parts[0])) return false;
+  return parts.slice(1).every((part) => part.length > 0 && !/\s/.test(part));
+};
 /* Text that is a template hole, a code fragment, or a bare identifier. */
 const NOT_WORDS = (t) => !/[A-Za-z]{2,}/.test(t) || /\{\{|__\w+__|\$\{|<%|\bfunction\b|\bvar\b|=>/.test(t)
   || /^\{\w+\}$/.test(t)                        // a merge token is data, not prose
   || /^[a-z_]+\.[a-z_]+/.test(t)
-  || /^(ctrl|alt|shift|cmd|esc|f\d+)(\s*\+\s*\S+)*$/i.test(t)   // keyboard shortcuts
+  || isShortcut(t)                                               // keyboard shortcuts
   || /^View \S+ per page$/.test(t)                              // generated aria-labels
   || /^[A-Z]{1,2}$/.test(t);                                     // a bare initial
 
