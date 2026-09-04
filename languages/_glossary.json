@@ -456,7 +456,8 @@
       "sw": "Vinjari",
       "de": "Durchsuchen",
       "nl": "Bladeren",
-      "it": "Sfoglia"
+      "it": "Sfoglia",
+      "si": "පිරික්සන්න"
     },
     "Dismiss": {
       "ta": "மறை",
@@ -469,7 +470,13 @@
       "sw": "Ondoa",
       "de": "Verwerfen",
       "nl": "Negeren",
-      "it": "Ignora"
+      "it": "Ignora",
+      "ml": "ഒഴിവാക്കുക",
+      "kn": "ವಜಾಗೊಳಿಸಿ",
+      "te": "విస్మరించు",
+      "si": "ඉවත් කරන්න",
+      "ne": "हटाउनुहोस्",
+      "th": "ซ่อน"
     },
     "Run": {
       "hi": "चलाएं",
@@ -482,7 +489,13 @@
       "sw": "Endesha",
       "de": "Ausführen",
       "nl": "Uitvoeren",
-      "it": "Esegui"
+      "it": "Esegui",
+      "ta": "இயக்கு",
+      "ml": "റൺ ചെയ്യുക",
+      "kn": "ಚಲಾಯಿಸಿ",
+      "te": "అమలు చేయి",
+      "si": "ධාවනය කරන්න",
+      "ne": "चलाउनुहोस्"
     },
     "Login": {
       "ta": "உள்நுழைவு",
@@ -652,7 +665,8 @@
       "sw": "Chaguo-msingi",
       "de": "Standard",
       "nl": "Standaard",
-      "it": "Predefinito"
+      "it": "Predefinito",
+      "si": "පෙරනිමි"
     },
     "Sale": {
       "hi": "बिक्री",
@@ -873,7 +887,8 @@
       "sw": "Orodha ya bidhaa",
       "de": "Artikelliste",
       "nl": "Artikellijst",
-      "it": "Elenco articoli"
+      "it": "Elenco articoli",
+      "si": "අයිතම ලැයිස්තුව"
     },
     "Customer": {
       "hi": "ग्राहक",
@@ -927,7 +942,8 @@
       "sw": "Orodha ya wateja",
       "de": "Kundenliste",
       "nl": "Klantenlijst",
-      "it": "Elenco clienti"
+      "it": "Elenco clienti",
+      "si": "පාරිභෝගික ලැයිස්තුව"
     },
     "Supplier": {
       "hi": "आपूर्तिकर्ता",
@@ -982,7 +998,8 @@
       "sw": "Orodha ya wasambazaji",
       "de": "Lieferantenliste",
       "nl": "Leverancierslijst",
-      "it": "Elenco fornitori"
+      "it": "Elenco fornitori",
+      "si": "සැපයුම්කරු ලැයිස්තුව"
     },
     "Category": {
       "hi": "श्रेणी",
@@ -1091,7 +1108,8 @@
       "sw": "Akiba ya mwanzo",
       "de": "Anfangsbestand",
       "nl": "Beginvoorraad",
-      "it": "Giacenza iniziale"
+      "it": "Giacenza iniziale",
+      "si": "ආරම්භක තොගය"
     },
     "Closing Stock": {
       "ta": "இறுதி இருப்பு",
@@ -1109,7 +1127,8 @@
       "sw": "Akiba ya mwisho",
       "de": "Endbestand",
       "nl": "Eindvoorraad",
-      "it": "Giacenza finale"
+      "it": "Giacenza finale",
+      "si": "අවසාන තොගය"
     },
     "In stock": {
       "ta": "இருப்பில்",
@@ -1127,7 +1146,8 @@
       "sw": "Ipo",
       "de": "Auf Lager",
       "nl": "Op voorraad",
-      "it": "Disponibile"
+      "it": "Disponibile",
+      "si": "තොගයේ ඇත"
     },
     "Price": {
       "ta": "விலை",
@@ -1202,7 +1222,8 @@
       "sw": "Kiasi",
       "de": "Betrag",
       "nl": "Bedrag",
-      "it": "Importo"
+      "it": "Importo",
+      "te": "మొత్తం"
     },
     "Discount": {
       "ta": "தள்ளுபடி",
@@ -1296,7 +1317,8 @@
       "sw": "Njia ya malipo",
       "de": "Zahlungsart",
       "nl": "Betaalmethode",
-      "it": "Metodo di pagamento"
+      "it": "Metodo di pagamento",
+      "si": "ගෙවීමේ ක්‍රමය"
     },
     "Cash": {
       "ta": "பணம்",
@@ -1333,7 +1355,8 @@
       "sw": "Mkopo",
       "de": "Kredit",
       "nl": "Krediet",
-      "it": "Credito"
+      "it": "Credito",
+      "si": "බැර"
     },
     "Debit": {
       "ta": "பற்று (டெபிட்)",
@@ -1351,7 +1374,8 @@
       "sw": "Debiti",
       "de": "Lastschrift",
       "nl": "Debet",
-      "it": "Debito"
+      "it": "Debito",
+      "si": "හර"
     },
     "Credit Card": {
       "ta": "கடன் அட்டை",
@@ -1369,7 +1393,8 @@
       "sw": "Kadi ya mkopo",
       "de": "Kreditkarte",
       "nl": "Creditcard",
-      "it": "Carta di credito"
+      "it": "Carta di credito",
+      "si": "ක්‍රෙඩිට් කාඩ්පත"
     },
     "Cheque": {
       "ta": "காசோலை",
@@ -1387,7 +1412,8 @@
       "sw": "Hundi",
       "de": "Scheck",
       "nl": "Cheque",
-      "it": "Assegno"
+      "it": "Assegno",
+      "si": "චෙක්පත"
     },
     "Expense": {
       "ta": "புதிய செலவு",
@@ -1499,7 +1525,8 @@
       "sw": "Sanduku la fedha",
       "de": "Kasse",
       "nl": "Kassa",
-      "it": "Cassa"
+      "it": "Cassa",
+      "si": "මුදල් ලාච්චුව"
     },
     "Recycle Bin": {
       "ta": "மறுசுழற்சி தொட்டி",
@@ -1517,7 +1544,8 @@
       "sw": "Pipa la taka",
       "de": "Papierkorb",
       "nl": "Prullenbak",
-      "it": "Cestino"
+      "it": "Cestino",
+      "si": "ප්‍රතිචක්‍රීකරණ බඳුන"
     },
     "Name": {
       "hi": "नाम",
@@ -1777,7 +1805,8 @@
       "sw": "Nenosiri la sasa",
       "de": "Aktuelles Passwort",
       "nl": "Huidig wachtwoord",
-      "it": "Password attuale"
+      "it": "Password attuale",
+      "si": "වත්මන් මුරපදය"
     },
     "Confirm Password": {
       "ta": "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
@@ -1795,7 +1824,8 @@
       "sw": "Thibitisha nenosiri",
       "de": "Passwort bestätigen",
       "nl": "Wachtwoord bevestigen",
-      "it": "Conferma password"
+      "it": "Conferma password",
+      "si": "මුරපදය තහවුරු කරන්න"
     },
     "Change Password": {
       "ta": "கடவுச்சொல்லை மாற்று",
@@ -1813,7 +1843,8 @@
       "sw": "Badilisha nenosiri",
       "de": "Passwort ändern",
       "nl": "Wachtwoord wijzigen",
-      "it": "Cambia password"
+      "it": "Cambia password",
+      "si": "මුරපදය වෙනස් කරන්න"
     },
     "Remember Me": {
       "ta": "என்னை நினைவில் கொள்",
@@ -1831,7 +1862,8 @@
       "sw": "Nikumbuke",
       "de": "Angemeldet bleiben",
       "nl": "Onthoud mij",
-      "it": "Ricordami"
+      "it": "Ricordami",
+      "si": "මතක තබා ගන්න"
     },
     "User": {
       "hi": "उपयोगकर्ता",
@@ -1924,7 +1956,8 @@
       "sw": "Funga skrini",
       "de": "Bildschirm sperren",
       "nl": "Scherm vergrendelen",
-      "it": "Blocca schermo"
+      "it": "Blocca schermo",
+      "si": "තිරය අගුළු දමන්න"
     },
     "Roles": {
       "ta": "பயனர் பாத்திரங்கள்",
@@ -1942,7 +1975,8 @@
       "sw": "Majukumu",
       "de": "Rollen",
       "nl": "Rollen",
-      "it": "Ruoli"
+      "it": "Ruoli",
+      "si": "භූමිකා"
     },
     "Employees": {
       "ta": "பணியாளர்கள்",
@@ -1998,7 +2032,8 @@
       "sw": "Udhibiti wa ufikiaji",
       "de": "Zugriffsrechte",
       "nl": "Toegangsbeheer",
-      "it": "Controllo accessi"
+      "it": "Controllo accessi",
+      "si": "ප්‍රවේශ පාලනය"
     },
     "Date": {
       "ta": "தேதி",
@@ -2111,7 +2146,8 @@
       "sw": "Muundo wa tarehe",
       "de": "Datumsformat",
       "nl": "Datumnotatie",
-      "it": "Formato data"
+      "it": "Formato data",
+      "si": "දින ආකෘතිය"
     },
     "Time Zone": {
       "ta": "நேர மண்டலம்",
@@ -2129,7 +2165,8 @@
       "sw": "Saa za eneo",
       "de": "Zeitzone",
       "nl": "Tijdzone",
-      "it": "Fuso orario"
+      "it": "Fuso orario",
+      "si": "වේලා කලාපය"
     },
     "Currency": {
       "ta": "நாணய வகை",
@@ -2391,7 +2428,8 @@
       "sw": "Kumbukumbu",
       "de": "Referenz",
       "nl": "Referentie",
-      "it": "Riferimento"
+      "it": "Riferimento",
+      "si": "යොමුව"
     },
     "Barcode": {
       "ta": "பார்கோடு",
@@ -2465,7 +2503,9 @@
       "sw": "Picha",
       "de": "Fotos",
       "nl": "Foto's",
-      "it": "Foto"
+      "it": "Foto",
+      "ta": "புகைப்படங்கள்",
+      "si": "ඡායාරූප"
     },
     "Store": {
       "ta": "கடை",
@@ -2597,7 +2637,8 @@
       "sw": "Mandhari",
       "de": "Designs",
       "nl": "Thema's",
-      "it": "Temi"
+      "it": "Temi",
+      "si": "තේමා"
     },
     "Font": {
       "ta": "ஃபோன்ட்",
@@ -2615,7 +2656,8 @@
       "sw": "Fonti",
       "de": "Schriftart",
       "nl": "Lettertype",
-      "it": "Carattere"
+      "it": "Carattere",
+      "si": "අකුරු වර්ගය"
     },
     "Font Size": {
       "ta": "ஃபோன்ட் அளவு",
@@ -2633,7 +2675,8 @@
       "sw": "Ukubwa wa fonti",
       "de": "Schriftgröße",
       "nl": "Tekengrootte",
-      "it": "Dimensione carattere"
+      "it": "Dimensione carattere",
+      "si": "අකුරු ප්‍රමාණය"
     },
     "Background": {
       "ta": "பாக்ரவுண்டு",
@@ -2670,7 +2713,8 @@
       "sw": "Umbo",
       "de": "Form",
       "nl": "Vorm",
-      "it": "Forma"
+      "it": "Forma",
+      "si": "හැඩය"
     },
     "Received": {
       "ta": "பெறப்பட்டது",
@@ -2688,7 +2732,8 @@
       "sw": "Imepokelewa",
       "de": "Erhalten",
       "nl": "Ontvangen",
-      "it": "Ricevuto"
+      "it": "Ricevuto",
+      "si": "ලැබුණු"
     },
     "Ordered": {
       "ta": "ஆர்டர் செய்தது",
@@ -2706,7 +2751,8 @@
       "sw": "Imeagizwa",
       "de": "Bestellt",
       "nl": "Besteld",
-      "it": "Ordinato"
+      "it": "Ordinato",
+      "si": "ඇණවුම් කළ"
     },
     "Refunds": {
       "ta": "பணத்தைத் திரும்பப்பெறுதல்",
@@ -2724,7 +2770,8 @@
       "sw": "Marejesho",
       "de": "Erstattungen",
       "nl": "Terugbetalingen",
-      "it": "Rimborsi"
+      "it": "Rimborsi",
+      "si": "ආපසු ගෙවීම්"
     },
     "Analytics": {
       "hi": "विश्लेषण",
@@ -2741,7 +2788,9 @@
       "sw": "Uchanganuzi",
       "de": "Analysen",
       "nl": "Analyses",
-      "it": "Analisi"
+      "it": "Analisi",
+      "ta": "பகுப்பாய்வு",
+      "si": "විශ්ලේෂණ"
     },
     "Marketing": {
       "ta": "வாடிக்கையாளர் சந்தைப்படுத்தல்",
@@ -2759,7 +2808,8 @@
       "sw": "Masoko",
       "de": "Marketing",
       "nl": "Marketing",
-      "it": "Marketing"
+      "it": "Marketing",
+      "si": "අලෙවිකරණය"
     },
     "Integrations": {
       "ta": "ஒருங்கிணைப்புகள்",
@@ -2777,7 +2827,8 @@
       "sw": "Muunganisho",
       "de": "Integrationen",
       "nl": "Integraties",
-      "it": "Integrazioni"
+      "it": "Integrazioni",
+      "si": "ඒකාබද්ධ කිරීම්"
     },
     "Coupons": {
       "ta": "கூப்பன்கள்",
@@ -2795,7 +2846,8 @@
       "sw": "Kuponi",
       "de": "Gutscheine",
       "nl": "Kortingsbonnen",
-      "it": "Buoni sconto"
+      "it": "Buoni sconto",
+      "si": "කූපන්"
     },
     "Campaigns": {
       "ta": "பிரச்சாரங்கள்",
@@ -2813,7 +2865,8 @@
       "sw": "Kampeni",
       "de": "Kampagnen",
       "nl": "Campagnes",
-      "it": "Campagne"
+      "it": "Campagne",
+      "si": "ප්‍රචාරණ ව්‍යාපාර"
     }
   }
 }
