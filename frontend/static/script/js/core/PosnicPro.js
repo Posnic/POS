@@ -4023,7 +4023,7 @@ PosnicPro = {
     },
     getAllUrlParams: function (url) {
         var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
-        var obj = {};
+        var params = new Map();
 
         if (queryString) {
             queryString = queryString.split('#')[0];
@@ -4039,29 +4039,31 @@ PosnicPro = {
 
                 if (paramName.match(/\[(\d+)?\]$/)) {
                     var key = paramName.replace(/\[(\d+)?\]/, '');
-                    if (!obj[key])
-                        obj[key] = [];
+                    var values = params.get(key);
+                    if (!Array.isArray(values))
+                        values = [];
 
                     if (paramName.match(/\[\d+\]$/)) {
                         var index = /\[(\d+)\]/.exec(paramName)[1];
-                        obj[key][index] = paramValue;
+                        values[index] = paramValue;
                     } else {
-                        obj[key].push(paramValue);
+                        values.push(paramValue);
                     }
+                    params.set(key, values);
                 } else {
-                    if (!obj[paramName]) {
-                        obj[paramName] = paramValue;
-                    } else if (obj[paramName] && typeof obj[paramName] === 'string') {
-                        obj[paramName] = [obj[paramName]];
-                        obj[paramName].push(paramValue);
+                    var existing = params.get(paramName);
+                    if (typeof existing === 'undefined') {
+                        params.set(paramName, paramValue);
+                    } else if (typeof existing === 'string') {
+                        params.set(paramName, [existing, paramValue]);
                     } else {
-                        obj[paramName].push(paramValue);
+                        existing.push(paramValue);
                     }
                 }
             }
         }
 
-        return obj;
+        return Object.fromEntries(params);
     },
     removeDuplicates: function (arr) {
         return arr.filter((item,

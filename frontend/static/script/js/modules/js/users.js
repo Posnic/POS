@@ -1831,18 +1831,11 @@ PosnicPro.users = {
         return null;
     },
     generateApiKey: function () {
-        var date = new Date().getTime();
-        if (window.performance && typeof window.performance.now === "function")
-        {
-            date += performance.now();
-        }
-
-        var apikey = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c)
-        {
-            var r = (date + Math.random() * 16) % 16 | 0;
-            date = Math.floor(date / 16);
-            return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-        });
+        var bytes = new Uint8Array(20);
+        window.crypto.getRandomValues(bytes);
+        var apikey = Array.from(bytes, function (byte) {
+            return byte.toString(16).padStart(2, '0');
+        }).join('');
         $('#users_api').val(apikey);
     },
     clickNormalForm: function () {
