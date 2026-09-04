@@ -152,11 +152,14 @@ function keysUsed() {
     }
     /* JavaScript renders markup too - table headers, pills, receipt labels -
        and the observer translates it, so its keys are keys the UI uses. */
-    for (const m of js.matchAll(/<lang class="([^"]+)">([^<]*)<\/lang>/g)) {
+    /* A key is a word. Anything else between those quotes is JavaScript
+       building the class from a variable; that site names its key in the
+       config the render site reads, and an earlier pattern counted it. */
+    for (const m of js.matchAll(/<lang class="([A-Za-z0-9_-]+)">([^<]*)<\/lang>/g)) {
       remember(m[1], m[2], file);
       tags += 1;
     }
-    for (const m of js.matchAll(/data-t="([^"]+)"[^>]*>([^<']*)</g)) {
+    for (const m of js.matchAll(/data-t="([A-Za-z0-9_-]+)"[^>]*>([^<']*)</g)) {
       remember(m[1], m[2], file);
     }
     for (const tag of js.matchAll(/<[a-zA-Z][^<>']*>/g)) {
