@@ -108,7 +108,8 @@ test('tenant frontend deploy checks discovery files before rsync', () => {
   const deployWorkflow = read(ROOT, '.github', 'workflows', 'deploy-frontend.yml');
   const developWorkflow = read(ROOT, '.github', 'workflows', 'deploy-develop.yml');
   for (const file of ['frontend/public/robots.txt', 'frontend/public/sitemap.xml', 'frontend/public/llms.txt']) {
-    assert.match(deployWorkflow, new RegExp(file.replace(/[./]/g, '\\$&')));
-    assert.match(developWorkflow, new RegExp(file.replace(/[./]/g, '\\$&')));
+    const escapedFile = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.match(deployWorkflow, new RegExp(escapedFile));
+    assert.match(developWorkflow, new RegExp(escapedFile));
   }
 });

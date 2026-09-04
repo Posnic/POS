@@ -19,10 +19,24 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const strip = (s) => s
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/^[ \t]*\/\/.*$/gm, '')
-  .replace(/<!--[\s\S]*?-->/g, '');
+const removeDelimited = (source, opening, closing) => {
+  let result = '';
+  let cursor = 0;
+  while (cursor < source.length) {
+    const start = source.indexOf(opening, cursor);
+    if (start === -1) return result + source.slice(cursor);
+    result += source.slice(cursor, start);
+    const end = source.indexOf(closing, start + opening.length);
+    if (end === -1) return result;
+    cursor = end + closing.length;
+  }
+  return result;
+};
+const strip = (source) => {
+  const withoutBlocks = removeDelimited(source, '/*', '*/');
+  const withoutLines = withoutBlocks.replace(/^[ \t]*\/\/.*$/gm, '');
+  return removeDelimited(withoutLines, '<!--', '-->');
+};
 
 const tourJs = strip(read('frontend/static/script/js/core/tour.js'));
 const settingsJs = strip(read('frontend/static/script/js/modules/js/settings.js'));

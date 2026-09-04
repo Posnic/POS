@@ -43,7 +43,9 @@ test('the embedded link fixture is synthetic and offline', () => {
     'file:///etc/passwd',
   ]);
   assert.doesNotMatch(FIXTURE, /<(script|iframe|img|link)\b/i);
-  assert.doesNotMatch(FIXTURE, /https?:\/\/(?!example\.com\/help)/i);
+  for (const href of fixtureLinks().filter((value) => /^https?:\/\//i.test(value))) {
+    assert.match(href, /^https:\/\/example\.com\/help$/i);
+  }
 });
 
 test('safe embedded links use the production external-browser path', () => {

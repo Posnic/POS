@@ -25,6 +25,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
 
 const POS = path.resolve(__dirname, '..', '..');
 const FE = path.join(POS, 'frontend');
@@ -49,8 +50,7 @@ function files(dir, out = []) {
 
 /* The label, as a reader sees it: no markup, no entity noise, no trailing
    colon or asterisk. Two sites that differ only in an icon are one label. */
-const label = (s) => String(s)
-  .replace(/<[^>]*>/g, '')
+const label = (s) => JSDOM.fragment(String(s)).textContent
   .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
   .replace(/\s+/g, ' ').trim()
   .replace(/\s*([:*]+)$/, '$1')     // the colon is part of the label; the space before it is not

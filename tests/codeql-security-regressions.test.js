@@ -37,6 +37,7 @@ test('URL parameters are accumulated without dynamic object writes', () => {
   assert.match(parser, /new Map\(\)/);
   assert.match(parser, /Object\.fromEntries\(params\)/);
   assert.doesNotMatch(parser, /obj\[[^\]]+\]\s*=/);
+  assert.doesNotMatch(parser, /values\[[^\]]+\]\s*=/);
 });
 
 test('dynamic empty-state messages are inserted as text', () => {

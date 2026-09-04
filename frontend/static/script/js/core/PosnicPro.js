@@ -4044,8 +4044,9 @@ PosnicPro = {
                         values = [];
 
                     if (paramName.match(/\[\d+\]$/)) {
-                        var index = /\[(\d+)\]/.exec(paramName)[1];
-                        values[index] = paramValue;
+                        var index = Number(/\[(\d+)\]/.exec(paramName)[1]);
+                        while (values.length < index) values.push(undefined);
+                        values.splice(index, 1, paramValue);
                     } else {
                         values.push(paramValue);
                     }
