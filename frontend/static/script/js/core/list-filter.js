@@ -659,7 +659,7 @@ PosnicPro.listFilter = {
 
     LF.ENTITIES = {
         customer: {
-            title: 'Choose customer',
+            title: 'Choose customer', t: 'lang_choose_customer_2',
             icon: 'icon-users',
             rows: function () {
                 var r = recents('recent_customers').map(function (c) {
@@ -698,7 +698,7 @@ PosnicPro.listFilter = {
             }
         },
         item: {
-            title: 'Choose item',
+            title: 'Choose item', t: 'lang_choose_item',
             icon: 'icon-box',
             rows: function () {
                 /* price, not sku: that is what the sale screen actually
@@ -711,7 +711,7 @@ PosnicPro.listFilter = {
             }
         },
         supplier: {
-            title: 'Choose supplier',
+            title: 'Choose supplier', t: 'lang_choose_supplier',
             icon: 'icon-truck',
             rows: function () {
                 return uniq(recents('recent_suppliers').map(function (s) {
@@ -789,7 +789,7 @@ PosnicPro.listFilter = {
 
         $box.html(
             '<div class="lf-pick-head">'
-            + '<span class="lf-pick-title"><i class="feather ' + esc(e.icon) + ' mr-1"></i>' + esc(e.title) + '</span>'
+            + '<span class="lf-pick-title"><i class="feather ' + esc(e.icon) + ' mr-1"></i>' + (e.t ? '<lang class="' + e.t + '">' + esc(e.title) + '</lang>' : esc(e.title)) + '</span>'
             + '<a href="javascript:void(0)" class="lf-pick-x" title="Close" data-t-title="lang_close_title">&times;</a>'
             + '</div>'
             + '<div class="lf-pick-list">' + body + '</div>'
