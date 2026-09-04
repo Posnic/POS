@@ -1,5 +1,4 @@
 {
-  "key": "नेपाली *",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (दिन/महिना/वर्ष)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (महिना/दिन/वर्ष)",
   "lang_01_january_18_d_mm_yy": "01 जनवरी 18 - d MM yy",
@@ -1195,7 +1194,6 @@
   "lang_notes_title": "टिप्पणीहरू",
   "lang_notifications_title": "सूचनाहरू",
   "lang_number": "नं :",
-  "lang_on_title": "चालु",
   "lang_open_date": "रजिस्टर खोलेको मिति",
   "lang_open_price": "क्यासियरले मूल्य टाइप गर्छ",
   "lang_open_price_hint": "निश्चित मूल्य छैन - प्रत्येक बिक्रीमा सोधिन्छ",
