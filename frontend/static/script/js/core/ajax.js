@@ -155,7 +155,8 @@ PosnicPro.request = function (params, callback, failure = null) {
                 PosnicPro.users.createCookie('loginuser', '', -1);
                 if (!onAuthPage) {
                     var reason = (response && response.message)
-                        || 'Your session has ended. Please sign in again.';
+                        || PosnicPro.i18n.t('lang_your_session_has_ended_please_sign_in_ag',
+                            'Your session has ended. Please sign in again.');
                     window.location = 'login.html?msg=' + encodeURIComponent(reason)
                         + '&type=error';
                     return false;   // nothing below can help once we are leaving
