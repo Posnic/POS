@@ -21,7 +21,11 @@ const fs = require('fs');
 const path = require('path');
 
 const FE = path.resolve(__dirname, '..', '..', 'frontend');
-const SKIP_FILE = [/^modules[\\/]report_gstr/, /^error-\d+\.html$/, /^error-email\.html$/, /^customersMailPrint\.html$/];
+const SKIP_FILE = [/^modules[\\/]report_gstr/, /^error-\d+\.html$/, /^error-email\.html$/,
+  /^customersMailPrint\.html$/,
+  /^index\.html$/];                 // a redirect stub for search engines, as in i18n-tag.js
+/* Their <title> is a published contract pinned by frontend-discovery-files. */
+const SEO_TITLE_PAGE = /^(index|login)\.html$/;
 const SKIP_TEXT = /^[\s\d.,:;!?()\[\]{}%$₹#*+\-–—/|&'"«»…=<>_×]*$/;
 const NOT_WORDS = (t) => !/[A-Za-z]{2,}/.test(t)
   || /\{\{|__\w+__|\$\{|<%|\bfunction\b|\bvar\b|=>/.test(t)
@@ -38,13 +42,15 @@ function htmlFiles(dir, out = []) {
   return out;
 }
 
-function scan(file) {
+function scan(file, rel) {
   let html = fs.readFileSync(file, 'utf8')
+    .replace(/<textarea[\s\S]*?<\/textarea>/gi, '<textarea></textarea>')
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<lang class="[^"]*">[\s\S]*?<\/lang>/g, '<lang></lang>')
     .replace(/<(title|option)([^>]*data-t="[^"]*"[^>]*)>[^<]*<\/\1>/g, '<$1$2></$1>');
+  if (rel && SEO_TITLE_PAGE.test(rel)) html = html.replace(/<title>[\s\S]*?<\/title>/i, '<title></title>');
   const found = [];
   let m;
   const text = />([^<]+)</g;
@@ -72,7 +78,7 @@ function report() {
   for (const f of htmlFiles(FE)) {
     const rel = path.relative(FE, f);
     if (SKIP_FILE.some((re) => re.test(rel))) continue;
-    const found = scan(f);
+    const found = scan(f, rel.replace(/\\/g, '/'));
     if (found.length) rows.push({ file: rel.replace(/\\/g, '/'), found });
   }
   rows.sort((a, b) => b.found.length - a.found.length);
