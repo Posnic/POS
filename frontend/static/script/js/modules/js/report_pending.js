@@ -432,7 +432,7 @@ PosnicPro.pendingcustomerreport = {
                         if (rowTotal === 0) {
                             $('.reportpendingcust_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpendcustomer_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpendcustomer_norecord', 'No Records on ' + dateRange);
                             $('#reportpendcustomer_img_hide,.reportpendcustomer_norecord').show();
 
                         } else {
@@ -642,7 +642,7 @@ PosnicPro.pendingcustomercategoryreport = {
                         if (rowTotal === 0) {
                             $('.reportpendingcust_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpendcustomercategory_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpendcustomercategory_norecord', 'No Records on ' + dateRange);
                             $('#reportpendcustomercategory_img_hide,.reportpendcustomercategory_norecord').show();
 
                         } else {

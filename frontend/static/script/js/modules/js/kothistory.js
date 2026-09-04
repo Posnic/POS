@@ -42,7 +42,7 @@ PosnicPro.kothistory = {
                 var rowTotal = response.data.total;
                 if (rowTotal === 0) {
                     let dateRange = $('#view_kothistory_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                    $('.kothistory_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on  ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.kothistory_norecord', 'No Records on ' + dateRange);
                     $('#kothistory_img_hide,.kothistory_norecord').show();
                     $('.kothistory_header').hide();
                 } else {

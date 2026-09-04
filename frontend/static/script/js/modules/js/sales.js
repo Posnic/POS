@@ -2626,7 +2626,7 @@
         let oldDiscountValue = discountValue || parseFloat(
             $('#addSalesLineItemDiscountprint_' + id)
                 .text()
-                .replace('%', '')
+                .replaceAll('%', '')
                 .replace(PosnicPro.local.get('currencySign'), '')
                 .trim()
         ) || 0;

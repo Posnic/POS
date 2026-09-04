@@ -86,7 +86,7 @@ PosnicPro.customerreport = {
                         if (rowTotal === 0) {
                             $('.reportcustomer_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportcustomer_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportcustomer_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomer_img_hide,.reportcustomer_norecord').show();
 
                         } else {
@@ -251,7 +251,7 @@ PosnicPro.customeroutstandingreport = {
                         if (rowTotal === 0) {
                             $('.reportcustomeroutstanding_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportcustomeroutstanding_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportcustomeroutstanding_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomeroutstanding_img_hide,.reportcustomeroutstanding_norecord').show();
 
                         } else {
@@ -338,4 +338,3 @@ $(document).ready(function () {
         PosnicPro.customerreport.customerreportTable();
     }
 });
-

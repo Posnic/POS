@@ -4155,6 +4155,12 @@ PosnicPro.collapseMenuForWorkspace = function () {
     }
 };
 
+PosnicPro.renderNoRecords = function (selector, message) {
+    var wrapper = $('<div class="text-center text-dark"><p></p></div>');
+    wrapper.find('p').text(message);
+    $(selector).empty().append(wrapper);
+};
+
 PosnicPro.lazyPhoneInput = function (selector, target, prop, opts) {
     var made = null;
     function build() {

@@ -540,13 +540,13 @@ PosnicPro.settings = {
                     return;
                 }
                 if (response.type === 'success') {
-                    $('.print_store_address').html(response.data['printing_address']);
-                    $('.print_store_telephone').html(response.data['store_telephone']);
-                    $('.print_store_alternativephone').html(response.data['store_alternativephone']);
-                    $('.print_store_email').html(response.data['store_email']);
-                    $('.print_store_gst').html(response.data['branch_gstin_number']);
-                    $('.print_store_name').html(response.data['branch_name']);
-                    $('.display-currency').html(currency);
+                    $('.print_store_address').text(response.data['printing_address']);
+                    $('.print_store_telephone').text(response.data['store_telephone']);
+                    $('.print_store_alternativephone').text(response.data['store_alternativephone']);
+                    $('.print_store_email').text(response.data['store_email']);
+                    $('.print_store_gst').text(response.data['branch_gstin_number']);
+                    $('.print_store_name').text(response.data['branch_name']);
+                    $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
                     PosnicPro.local.set('countryid', response.data['country_id']);
@@ -559,7 +559,7 @@ PosnicPro.settings = {
                     PosnicPro.local.set('timezone', response.data['time_zone']);
                     PosnicPro.local.set('timeformat', response.data['time_format']);
                     PosnicPro.local.set('currencySign', currency);
-                    $(".branch-name").html(response.data['branch_name']);
+                    $(".branch-name").text(response.data['branch_name']);
                     PosnicPro.local.set('branchname', response.data['branch_name']);
                     PosnicPro.local.set('branchemail', response.data['store_email']);
                     PosnicPro.local.set('branchphone', response.data['store_telephone']);
@@ -1263,28 +1263,28 @@ if ($wrapper.length) {
                 var htmlHeaderView = $('#header_print').text();
                 PosnicPro.settings._printDocs.header = htmlHeaderView;
                 if (PosnicPro.settings._editorsReady) { $('#header_print').summernote('code', htmlHeaderView); }
-                $('.header-content').html(htmlHeaderView);
+                $('.header-content').text(htmlHeaderView);
 
                 let footerContent = (data.footer_print !== '') ? data.footer_print : 'Thank you for shopping...!';
                 $('#footer_print').html('').append(footerContent);
                 var htmlView = $('#footer_print').text();
                 PosnicPro.settings._printDocs.footer = htmlView;
                 if (PosnicPro.settings._editorsReady) { $('#footer_print').summernote('code', htmlView); }
-                $('.footer-content').html(htmlView);
+                $('.footer-content').text(htmlView);
 
-                $('.print_store_name').html(data.branch_name);
-                $('.print_store_gst').html(data.branch_gstin_number);
-                $('.print_store_address').html(data.printing_address);
-                $('.print_store_city').html(data.city);
-                $('.print_store_email').html(data.store_email);
-                $('.print_store_telephone').html(data.store_telephone);
-                $('.print_store_alternativephone').html('');
+                $('.print_store_name').text(data.branch_name);
+                $('.print_store_gst').text(data.branch_gstin_number);
+                $('.print_store_address').text(data.printing_address);
+                $('.print_store_city').text(data.city);
+                $('.print_store_email').text(data.store_email);
+                $('.print_store_telephone').text(data.store_telephone);
+                $('.print_store_alternativephone').text('');
                 if (data.store_alternativephone !== null && data.store_alternativephone !== undefined && data.store_alternativephone.trim() !== "") {
-                    $('.print_store_alternativephone').html(data.store_alternativephone);
+                    $('.print_store_alternativephone').text(data.store_alternativephone);
                 }
-                $('.print_store_country').html(data.country);
-                $('.print_store_state').html(data.state);
-                $('.print_store_pincode').html(data.pincode);
+                $('.print_store_country').text(data.country);
+                $('.print_store_state').text(data.state);
+                $('.print_store_pincode').text(data.pincode);
                 $("#receiving_tax option[value='" + data.tax_percentage + "']").prop("selected", true);
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
@@ -1845,9 +1845,9 @@ if ($wrapper.length) {
                 PosnicPro.settings._featuresDirty = false;
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
-                $('.footer-content').html(htmlView);
+                $('.footer-content').text(htmlView);
                 let htmlHeaderView = $('#header_print').text();
-                $('.header-content').html(htmlHeaderView);
+                $('.header-content').text(htmlHeaderView);
                 if (_taxId) {
                     $(".items_tax").val(_taxId).trigger("change");
                     PosnicPro.local.set('default_tax_id', _taxId);

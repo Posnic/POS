@@ -38,3 +38,20 @@ test('URL parameters are accumulated without dynamic object writes', () => {
   assert.match(parser, /Object\.fromEntries\(params\)/);
   assert.doesNotMatch(parser, /obj\[[^\]]+\]\s*=/);
 });
+
+test('dynamic empty-state messages are inserted as text', () => {
+  const core = source('frontend/static/script/js/core/PosnicPro.js');
+  const renderer = core.slice(
+    core.indexOf('PosnicPro.renderNoRecords ='),
+    core.indexOf('PosnicPro.lazyPhoneInput =')
+  );
+
+  assert.match(renderer, /\.text\(message\)/);
+  assert.doesNotMatch(renderer, /\.html\(message\)/);
+});
+
+test('customer and branch identity fields are rendered as text', () => {
+  const customerView = source('frontend/static/script/js/modules/js/customer_view.js');
+
+  assert.doesNotMatch(customerView, /\.(?:customer|branch)-(?:name|phone|email|address)"\)\.html\(/);
+});

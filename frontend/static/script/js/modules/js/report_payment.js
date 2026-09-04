@@ -76,7 +76,7 @@ PosnicPro.paymentreport = {
                     if (rowTotal === 0) {
                         $('.reportpayment_header').hide();
                         let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                        $('.reportpayment_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpayment_norecord', 'No Records on ' + dateRange);
                         $('#reportpayment_img_hide,.reportpayment_norecord').show();
 
                     } else {
@@ -169,7 +169,7 @@ PosnicPro.paymentransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentstatus_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymenttransc_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpaymenttransc_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymenttransc_img_hide,.reportpaymenttransc_norecord').show();
 
                         } else {
@@ -278,7 +278,7 @@ PosnicPro.paymentreturntransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentreturn_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymentreturntransction_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportpaymentreturntransction_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymentreturntransction_img_hide,.reportpaymentreturntransction_norecord').show();
 
                         } else {

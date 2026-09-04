@@ -104,8 +104,8 @@ PosnicPro.quickreport = {
         $("#daily_report_date").html(
           PosnicPro.convertDate(branchData.date || "")
         );
-        $("#daily_report_fromdate").html(startDate);
-        $("#daily_report_todate").html(endDate);
+        $("#daily_report_fromdate").text(startDate);
+        $("#daily_report_todate").text(endDate);
         $("#daily_report_branchname").html(esc(branchData.branch_name));
         $("#daily_report_branchaddress").html(esc(branchData.branch_address));
         $("#daily_report_branchphone").html(esc(branchData.branch_phone));

@@ -91,7 +91,7 @@ PosnicPro.kioskreport = {
                              */
                             let dateRange = $('#view_kiosk_report_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
                             let when = dateRange ? ' on ' + dateRange : '';
-                            $('.reportkiosk_norecord').empty().append('<div class="text-center text-dark"> <p>No Records' + when + '</p></div>');
+                PosnicPro.renderNoRecords('.reportkiosk_norecord', 'No Records' + when);
                             $('#reportkiosk_img_hide,.reportkiosk_norecord').show();
 
                         } else {
@@ -333,4 +333,3 @@ $(document).on("click", "#view_kioskreport tbody tr td .exploder", function () {
     }
 });
 //end
-

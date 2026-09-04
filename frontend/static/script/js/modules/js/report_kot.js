@@ -316,7 +316,7 @@ PosnicPro.kotitemreport = {
 
                         $('.kotitemreport_header').hide();
 
-                        $('.kotitemreport_norecord').empty().append('<div class="text-center text-dark"><p>' + kotItemMsg + '</p></div>');
+                PosnicPro.renderNoRecords('.kotitemreport_norecord', kotItemMsg);
 
                         $('#kotitemreport_img_hide,.kotitemreport_norecord').show();
 
@@ -2243,7 +2243,7 @@ PosnicPro.kotitemreport = {
 
 
 
-                        $('.kotsalessummary_norecord').empty().append('<div class="text-center text-dark"><p>' + kotsalesMsg + '</p></div>');
+                PosnicPro.renderNoRecords('.kotsalessummary_norecord', kotsalesMsg);
 
                         $('#kotsalessummary_img_hide,.kotsalessummary_norecord').show();
 
@@ -6190,4 +6190,3 @@ PosnicPro.kotdiscountreport = {
     }
 
 };
-

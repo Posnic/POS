@@ -119,14 +119,14 @@ PosnicPro.gstrOne = {
                 loader.find(".loadingSpinner:first").remove();
 
                 var one = dateOne.split('-');
-                $('.from-month').html(one[0]);
-                $('.from-year').html(one[1]);
+                $('.from-month').text(one[0]);
+                $('.from-year').text(one[1]);
                 var two = dateTwo.split('-');
-                $('.to-month').html(two[0]);
-                $('.to-year').html(two[1]);
-                $(".legal-name").html(PosnicPro.local.get('branchname'));
+                $('.to-month').text(two[0]);
+                $('.to-year').text(two[1]);
+                $(".legal-name").text(PosnicPro.local.get('branchname'));
                 var gstn_number = $('#branch_gstin_number').val();
-                $(".company_gstin").html(gstn_number);
+                $(".company_gstin").text(gstn_number);
                 var currency = PosnicPro.local.get('currencySign');
 
                 //4a item detail table

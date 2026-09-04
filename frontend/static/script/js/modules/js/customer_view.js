@@ -21,24 +21,24 @@ PosnicPro.customerview = {
 
         db.customerDisplay.get('1').then(function (data) {
             $(data.customer).each(function (key, val) {
-                $(".customer-name").html(val.name);
-                $(".customer-phone").html(val.phone);
+                $(".customer-name").text(val.name);
+                $(".customer-phone").text(val.phone);
                 if (val.phone !== '') {
                     $("#show_customer_phone").show();
                 } else {
                     $("#show_customer_phone").hide();
                 }
-                $(".customer-email").html(val.email);
-                $(".customer-address").html(val.address);
+                $(".customer-email").text(val.email);
+                $(".customer-address").text(val.address);
             });
         });
 
         db.customerDisplay.get('2').then(function (data) {
             $(data.branch).each(function (key, val) {
-                $(".branch-name").html(val.name);
-                $(".branch-email").html(val.email);
-                $(".branch-phone").html(val.phone);
-                $(".branch-address").html(val.address);
+                $(".branch-name").text(val.name);
+                $(".branch-email").text(val.email);
+                $(".branch-phone").text(val.phone);
+                $(".branch-address").text(val.address);
                 var image_path = (val.image !== "store.png") ? val.image : 'static/images/default/store.png';
                 $('#image_previewing').attr('src', image_path);
             });

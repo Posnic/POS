@@ -79,7 +79,7 @@ PosnicPro.receivingreport = {
                         if (rowTotal === 0) {
                             $('.reportpurchase_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpurchase_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportpurchase_norecord', 'No Records on ' + dateRange);
                             $('#reportpurchase_img_hide,.reportpurchase_norecord').show();
 
                         } else {
