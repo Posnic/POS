@@ -1434,16 +1434,16 @@ PosnicPro = {
             return !!(m && m.classList.contains('show'));
         },
         _KINDS: {
-            sales: { label: 'Sales activity', hash: 'sales', acl: ['sales', 'read'] },
-            items: { label: 'Inventory updated', hash: 'items', acl: ['item', 'read'] },
-            receivings: { label: 'Receiving activity', hash: 'receivings', acl: ['receiving', 'read'] },
-            customers: { label: 'Customer records changed', hash: 'customers', acl: ['customer', 'read'] },
-            suppliers: { label: 'Supplier records changed', hash: 'suppliers', acl: ['supplier', 'read'] },
-            categories: { label: 'Categories changed', hash: 'categories', acl: ['category', 'read'] },
-            expenses: { label: 'Expense recorded', hash: 'expenses', acl: ['expense', 'read'] },
-            registers: { label: 'Register activity', hash: 'registers', acl: ['sales', 'read'] },
-            shifts: { label: 'Staff clock activity', hash: 'users', acl: ['user', 'read'] },
-            easytables: { label: 'Table / KOT activity', hash: 'kothistory', acl: ['sales', 'read'] },
+            sales: { label: 'Sales activity', t: 'lang_sales_activity', hash: 'sales', acl: ['sales', 'read'] },
+            items: { label: 'Inventory updated', t: 'lang_inventory_updated', hash: 'items', acl: ['item', 'read'] },
+            receivings: { label: 'Receiving activity', t: 'lang_receiving_activity', hash: 'receivings', acl: ['receiving', 'read'] },
+            customers: { label: 'Customer records changed', t: 'lang_customer_records_changed', hash: 'customers', acl: ['customer', 'read'] },
+            suppliers: { label: 'Supplier records changed', t: 'lang_supplier_records_changed', hash: 'suppliers', acl: ['supplier', 'read'] },
+            categories: { label: 'Categories changed', t: 'lang_categories_changed', hash: 'categories', acl: ['category', 'read'] },
+            expenses: { label: 'Expense recorded', t: 'lang_expense_recorded', hash: 'expenses', acl: ['expense', 'read'] },
+            registers: { label: 'Register activity', t: 'lang_register_activity', hash: 'registers', acl: ['sales', 'read'] },
+            shifts: { label: 'Staff clock activity', t: 'lang_staff_clock_activity', hash: 'users', acl: ['user', 'read'] },
+            easytables: { label: 'Table / KOT activity', t: 'lang_table_kot_activity', hash: 'kothistory', acl: ['sales', 'read'] },
         },
         _can: function (acl) {
             var u = PosnicPro.userACL;
@@ -1458,7 +1458,7 @@ PosnicPro = {
                 items[0].count++;
                 items[0].at = now;
             } else {
-                items.unshift({ entity: entity, label: kind.label, hash: kind.hash, count: 1, at: now });
+                items.unshift({ entity: entity, label: kind.label, t: kind.t, hash: kind.hash, count: 1, at: now });
                 if (items.length > PosnicPro.bellFeed.MAX) items.pop();
                 PosnicPro.bellFeed._unseen++;
             }
@@ -1512,7 +1512,7 @@ PosnicPro = {
             for (var i = 0; i < items.length; i++) {
                 var it = items[i];
                 html += '<div class="bellfeed-item" data-i="' + i + '">' +
-                    '<span>' + it.label + (it.count > 1 ? ' <span class="bellfeed-count">×' + it.count + '</span>' : '') + '</span>' +
+                    '<span>' + (it.t ? '<lang class="' + it.t + '">' + it.label + '</lang>' : it.label) + (it.count > 1 ? ' <span class="bellfeed-count">×' + it.count + '</span>' : '') + '</span>' +
                     '<span class="bellfeed-time">' + PosnicPro.bellFeed._ago(it.at) + '</span>' +
                     '</div>';
             }
@@ -2700,35 +2700,35 @@ PosnicPro = {
      */
     REPORT_GROUPS: [
         { name: 'Sales', items: [
-            { hash: 'quickreport', label: 'Day-End', icon: 'zap' },
-            { hash: 'salereport', label: 'Sales', icon: 'shopping-cart' },
-            { hash: 'returnreport', label: 'Return Sale', icon: 'refresh-ccw' },
-            { hash: 'pendingreport', label: 'Pending Payments', icon: 'clock' },
-            { hash: 'registerreport', label: 'Register', icon: 'inbox', module: 'cash_register_enable' },
-            { hash: 'kotreport', label: 'KOT', icon: 'grid', kot: true },
-            { hash: 'kioskreport', label: 'Kiosk', icon: 'monitor', module: 'module_channels_enable' },
+            { hash: 'quickreport', label: 'Day-End', t: 'lang_day_end', icon: 'zap' },
+            { hash: 'salereport', label: 'Sales', t: 'lang_rgrp_sales', icon: 'shopping-cart' },
+            { hash: 'returnreport', label: 'Return Sale', t: 'lang_return_sale', icon: 'refresh-ccw' },
+            { hash: 'pendingreport', label: 'Pending Payments', t: 'lang_pending_report', icon: 'clock' },
+            { hash: 'registerreport', label: 'Register', t: 'lang_records_title', icon: 'inbox', module: 'cash_register_enable' },
+            { hash: 'kotreport', label: 'KOT', t: 'lang_kot_title', icon: 'grid', kot: true },
+            { hash: 'kioskreport', label: 'Kiosk', t: 'lang_module_kiosk', icon: 'monitor', module: 'module_channels_enable' },
         ] },
         { name: 'Purchase', items: [
-            { hash: 'receivingreport', label: 'Purchase', icon: 'truck' },
-            { hash: 'returnreceivingreport', label: 'Return Purchase', icon: 'refresh-ccw' },
-            { hash: 'supplierreport', label: 'Supplier', icon: 'user-check' },
+            { hash: 'receivingreport', label: 'Purchase', t: 'lang_newpurchase_title', icon: 'truck' },
+            { hash: 'returnreceivingreport', label: 'Return Purchase', t: 'lang_return_purchase', icon: 'refresh-ccw' },
+            { hash: 'supplierreport', label: 'Supplier', t: 'lang_newsupplier_title', icon: 'user-check' },
         ] },
         { name: 'Inventory', items: [
-            { hash: 'itemreport', label: 'Item', icon: 'package' },
-            { hash: 'categoryreport', label: 'Category', icon: 'layers' },
+            { hash: 'itemreport', label: 'Item', t: 'lang_newitem_title', icon: 'package' },
+            { hash: 'categoryreport', label: 'Category', t: 'lang_newcategory_title', icon: 'layers' },
         ] },
         { name: 'People', items: [
-            { hash: 'customerreport', label: 'Customer', icon: 'users' },
-            { hash: 'userreport', label: 'User', icon: 'user-check' },
-            { hash: 'labourreport', label: 'Labour / Payout', icon: 'clock', module: 'staff_shifts_enable' },
+            { hash: 'customerreport', label: 'Customer', t: 'lang_newcustomer_title', icon: 'users' },
+            { hash: 'userreport', label: 'User', t: 'lang_newuser_title', icon: 'user-check' },
+            { hash: 'labourreport', label: 'Labour / Payout', t: 'lang_labourreport_title', icon: 'clock', module: 'staff_shifts_enable' },
         ] },
         { name: 'Money', items: [
-            { hash: 'paymentreport', label: 'Payment', icon: 'dollar-sign' },
-            { hash: 'taxreport', label: 'Tax', icon: 'percent', module: 'module_tax_enable' },
-            { hash: 'taxsummaryreport', label: 'Tax Summary', icon: 'layers', module: 'module_tax_enable' },
-            { hash: 'taxpayable', label: 'Tax Payable', icon: 'trending-up', module: 'module_tax_enable' },
-            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', icon: 'check-square', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: 'Cash Book', icon: 'file-text', module: 'module_cashbook_enable' },
+            { hash: 'paymentreport', label: 'Payment', t: 'lang_payment_2', icon: 'dollar-sign' },
+            { hash: 'taxreport', label: 'Tax', t: 'lang_module_tax', icon: 'percent', module: 'module_tax_enable' },
+            { hash: 'taxsummaryreport', label: 'Tax Summary', t: 'lang_taxsummary_title', icon: 'layers', module: 'module_tax_enable' },
+            { hash: 'taxpayable', label: 'Tax Payable', t: 'lang_taxpayable_title', icon: 'trending-up', module: 'module_tax_enable' },
+            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', t: 'lang_gstreadiness_title', icon: 'check-square', module: 'module_tax_enable' },
+            { hash: 'expensesreport', label: 'Cash Book', t: 'lang_expense_title', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
     injectReportGroupTabs: function () {
@@ -2751,7 +2751,7 @@ PosnicPro = {
             html += '<li class="nav-item"><a class="nav-link' + (i.hash === hash ? ' active' : '') +
                 '" href="#/' + i.hash + '">' +
                 (i.icon ? '<i class="feather icon-' + i.icon + ' mr-1"></i>' : '') +
-                i.label + '</a></li>';
+                '<lang class="' + (i.t || '') + '">' + i.label + '</lang></a></li>';
         });
         html += '</ul></div>';
         var $row = $('.page_loader:visible .breadcrumbbar .row').first();

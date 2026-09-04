@@ -41,15 +41,15 @@ PosnicPro.listFilter = {
      * alternative silently moves a whole day between "this week" and "last".
      * ------------------------------------------------------------------- */
     PRESETS: [
-        { key: 'all', label: 'All time' },
-        { key: 'today', label: 'Today' },
-        { key: 'yesterday', label: 'Yesterday' },
-        { key: 'week', label: 'This week' },
-        { key: 'month', label: 'This month' },
-        { key: 'year', label: 'This year' },
-        { key: 'last7', label: 'Last 7 days' },
-        { key: 'last30', label: 'Last 30 days' },
-        { key: 'custom', label: 'Custom range' }
+        { key: 'all', label: 'All time', t: 'lang_all_time_2' },
+        { key: 'today', label: 'Today', t: 'lang_this_day' },
+        { key: 'yesterday', label: 'Yesterday', t: 'lang_yesterday' },
+        { key: 'week', label: 'This week', t: 'lang_roster_thisweek' },
+        { key: 'month', label: 'This month', t: 'lang_this_month_2' },
+        { key: 'year', label: 'This year', t: 'lang_this_year' },
+        { key: 'last7', label: 'Last 7 days', t: 'lang_last_7_days' },
+        { key: 'last30', label: 'Last 30 days', t: 'lang_last_30_days' },
+        { key: 'custom', label: 'Custom range', t: 'lang_custom_range' }
     ],
 
     _startOfDay: function (d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; },
@@ -350,7 +350,8 @@ PosnicPro.listFilter = {
                 + '  <div class="lf-preset-wrap">'
                 + '    <select class="form-control form-control-sm lf-preset">'
                 + LF.PRESETS.map(function (p) {
-                    return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '') + '>'
+                    return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '')
+                        + (p.t ? ' data-t="' + p.t + '"' : '') + '>'
                         + esc(p.label) + '</option>';
                 }).join('')
                 + '    </select>'
