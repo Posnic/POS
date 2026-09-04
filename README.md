@@ -233,6 +233,8 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [REST API](docs/API.md) | 608 endpoints, generated from the routes |
 | [Hardware](docs/HARDWARE_MATRIX.md) | Printers, scanners, drawers, scales — and how far each claim is checked |
 | [India e-invoicing](docs/INDIA_EINVOICING_DESIGN.md) | Research, readiness inventory and design for GST e-invoicing as an optional feature; no live IRP submission is built |
+| [India GST return gaps](docs/INDIA_GST_RETURNS_GAPS.md) | What the GST reports compute today, measured against GSTR-1, 3B and 9 |
+| [India government integration](docs/INDIA_GOVERNMENT_INTEGRATION.md) | How software is registered with the GST system, what each route requires, and when to apply |
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
