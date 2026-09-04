@@ -1696,13 +1696,17 @@ ipcMain.handle('connectors:disable', async (event, payload) => {
     const file = path.join(app.getPath('userData'), 'connector-runtime', name + '.config.json');
     /* Keep the token so re-enabling does not force a fresh mint; enabled:false
        is the whole decision - no config match, no start. */
-    if (fs.existsSync(file)) {
-      try {
-        const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
-        fs.writeFileSync(file, JSON.stringify({ ...cfg, enabled: false }, null, 2));
-      } catch (e) {
-        fs.rmSync(file, { force: true });
-      }
+    let fd;
+    try {
+      fd = fs.openSync(file, 'r+');
+      const cfg = JSON.parse(fs.readFileSync(fd, 'utf8'));
+      const disabled = JSON.stringify({ ...cfg, enabled: false }, null, 2);
+      fs.ftruncateSync(fd, 0);
+      fs.writeFileSync(fd, disabled, 'utf8');
+    } catch (e) {
+      if (e.code !== 'ENOENT') fs.rmSync(file, { force: true });
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
     }
     connectorSupervisor.stop(name);
     return { ok: true, connectors: connectorSupervisor.status() };
@@ -2965,27 +2969,16 @@ function openLogViewer() {
 const LOG_VIEW_MAX_BYTES = 2 * 1024 * 1024;
 
 ipcMain.handle('logs:read', () => {
+  let fd;
   try {
-    if (!fs.existsSync(LOG_FILE)) {
-      return { ok: true, lines: [], path: LOG_FILE, truncated: false };
-    }
-    const size = fs.statSync(LOG_FILE).size;
+    fd = fs.openSync(LOG_FILE, 'r');
+    const size = fs.fstatSync(fd).size;
     const truncated = size > LOG_VIEW_MAX_BYTES;
-    let text;
-    if (truncated) {
-      const fd = fs.openSync(LOG_FILE, 'r');
-      try {
-        const buf = Buffer.alloc(LOG_VIEW_MAX_BYTES);
-        fs.readSync(fd, buf, 0, LOG_VIEW_MAX_BYTES, size - LOG_VIEW_MAX_BYTES);
-        text = buf.toString('utf8');
-        /* The first line of a mid-file read is usually half a line. */
-        text = text.slice(text.indexOf('\n') + 1);
-      } finally {
-        fs.closeSync(fd);
-      }
-    } else {
-      text = fs.readFileSync(LOG_FILE, 'utf8');
-    }
+    const bytes = truncated ? LOG_VIEW_MAX_BYTES : size;
+    const buf = Buffer.alloc(bytes);
+    fs.readSync(fd, buf, 0, bytes, truncated ? size - bytes : 0);
+    let text = buf.toString('utf8');
+    if (truncated) text = text.slice(text.indexOf('\n') + 1);
     return {
       ok: true,
       path: LOG_FILE,
@@ -2993,7 +2986,12 @@ ipcMain.handle('logs:read', () => {
       lines: text.split(/\r?\n/).filter((l) => l.length),
     };
   } catch (err) {
+    if (err.code === 'ENOENT') {
+      return { ok: true, lines: [], path: LOG_FILE, truncated: false };
+    }
     return { ok: false, error: err.message };
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 });
 
@@ -3278,17 +3276,19 @@ function collectDiagnostics() {
 
 /* The last of the log, capped so a report stays sendable. */
 function tailLog(bytes = 200_000) {
+  let fd;
   try {
-    if (!fs.existsSync(LOG_FILE)) return '(no log file)';
-    const stat = fs.statSync(LOG_FILE);
+    fd = fs.openSync(LOG_FILE, 'r');
+    const stat = fs.fstatSync(fd);
     const start = Math.max(0, stat.size - bytes);
-    const fd = fs.openSync(LOG_FILE, 'r');
     const buf = Buffer.alloc(stat.size - start);
     fs.readSync(fd, buf, 0, buf.length, start);
-    fs.closeSync(fd);
     return buf.toString('utf8');
   } catch (e) {
+    if (e.code === 'ENOENT') return '(no log file)';
     return '(log unreadable: ' + e.message + ')';
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 }
 

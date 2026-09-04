@@ -98,3 +98,23 @@ test('desktop logs redact credential fields and neutralize injected lines', () =
   assert.match(redaction, /\.replace\(\/\\r\/g, '\\\\r'\)/);
   assert.match(redaction, /\.replace\(\/\\n\/g, '\\\\n'\)/);
 });
+
+test('desktop log and connector files stay on one descriptor while in use', () => {
+  const main = source('src/main.js');
+  const logRead = main.slice(
+    main.indexOf("ipcMain.handle('logs:read'"),
+    main.indexOf("ipcMain.handle('logs:open-folder'")
+  );
+  const tail = main.slice(main.indexOf('function tailLog'), main.indexOf('function diagnosticsMarkdown'));
+  const disconnect = main.slice(
+    main.indexOf("ipcMain.handle('connectors:disable'"),
+    main.indexOf("ipcMain.handle('cloud:disconnect'")
+  );
+
+  assert.match(logRead, /fstatSync\(fd\)/);
+  assert.doesNotMatch(logRead, /statSync\(LOG_FILE\)|readFileSync\(LOG_FILE/);
+  assert.match(tail, /fstatSync\(fd\)/);
+  assert.doesNotMatch(tail, /statSync\(LOG_FILE\)/);
+  assert.match(disconnect, /openSync\(file, 'r\+'\)/);
+  assert.match(disconnect, /ftruncateSync\(fd, 0\)/);
+});
