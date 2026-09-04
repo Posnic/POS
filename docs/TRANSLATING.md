@@ -41,26 +41,26 @@ understand here:
 
 ## Which languages, and how far along
 
-| Language | Code | Keys answered | Read by a speaker? |
-|---|---|---|---|
-| English | en | in the app itself | yes |
-| தமிழ் Tamil | ta | all | **yes** |
-| हिन्दी Hindi | hi | all | not yet - marked *beta* |
-| മലയാളം Malayalam | ml | all | not yet - marked *beta* |
-| ಕನ್ನಡ Kannada | kn | all | not yet - marked *beta* |
-| తెలుగు Telugu | te | all | not yet - marked *beta* |
-| සිංහල Sinhala | si | all | not yet - marked *beta* |
-| नेपाली Nepali | ne | all | not yet - marked *beta* |
-| العربية Arabic | ar | all | not yet - marked *beta*, right-to-left |
-| Français French | fr | all | not yet - marked *beta* |
-| Español Spanish | es | all | not yet - marked *beta* |
-| Português Portuguese | pt | all | not yet - marked *beta* |
-| Bahasa Indonesia | id | all | not yet - marked *beta* |
-| ไทย Thai | th | all | not yet - marked *beta* |
-| Deutsch German | de | all | not yet - marked *beta* |
-| Kiswahili | sw | all | not yet - marked *beta* |
-| Nederlands Dutch | nl | all | not yet - marked *beta* |
-| Italiano Italian | it | all | not yet - marked *beta* |
+| Language | Code | Screens | The server's toasts | Read by a speaker? |
+|---|---|---|---|---|
+| English | en | in the app itself | in the app itself | yes |
+| தமிழ் Tamil | ta | all | not yet | **yes** |
+| हिन्दी Hindi | hi | all | half | not yet - marked *beta* |
+| മലയാളം Malayalam | ml | all | not yet | not yet - marked *beta* |
+| ಕನ್ನಡ Kannada | kn | all | not yet | not yet - marked *beta* |
+| తెలుగు Telugu | te | all | not yet | not yet - marked *beta* |
+| සිංහල Sinhala | si | all | not yet | not yet - marked *beta* |
+| नेपाली Nepali | ne | all | not yet | not yet - marked *beta* |
+| العربية Arabic | ar | all | half | not yet - marked *beta*, right-to-left |
+| Français French | fr | all | all | not yet - marked *beta* |
+| Español Spanish | es | all | half | not yet - marked *beta* |
+| Português Portuguese | pt | all | not yet | not yet - marked *beta* |
+| Bahasa Indonesia | id | all | not yet | not yet - marked *beta* |
+| ไทย Thai | th | all | not yet | not yet - marked *beta* |
+| Deutsch German | de | all | half | not yet - marked *beta* |
+| Kiswahili | sw | all | not yet | not yet - marked *beta* |
+| Nederlands Dutch | nl | all | not yet | not yet - marked *beta* |
+| Italiano Italian | it | all | not yet | not yet - marked *beta* |
 
 ### Which language is added next, and why
 
@@ -87,8 +87,8 @@ followed for Belgium, Switzerland and Malta.
 1. Add a column to `languages/_glossary.json` - the 147 shared terms.
 2. Add `{ code, name, flag, reviewed: false }` to
    `frontend/gulpfile.js/config.js`.
-3. `node tests/tools/seed-from-glossary.js --write` - fills about 200 of the
-   662 keys from the glossary alone.
+3. `node tests/tools/seed-from-glossary.js --write` - fills a few hundred of
+   the 2,925 keys from the glossary alone.
 4. `node tests/tools/i18n-coverage.js --worksheet <code>` - writes the other
    463 to `<code>-to-translate.json`.
 5. Fill the blanks, then
