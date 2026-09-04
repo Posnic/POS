@@ -361,6 +361,54 @@ reached.
 
 ---
 
+---
+
+## The words the server writes
+
+Every save, delete and refusal a shopkeeper sees is a toast, and the sentence
+in it comes from the API, not from a page:
+
+```json
+{ "type": "success", "message": "Customer added successfully" }
+```
+
+The frontend prints that as it arrives, at five hundred and seventy-six call
+sites, so no `<lang>` tag and no key can reach it. These are the messages a
+cashier reads most often, and until now every one of them was English in every
+language.
+
+**The English is the key here.** The API is deployed separately from the till
+and can be a release behind it, so a key would be worse than useless: a server
+that had never heard of it would send words the pack could not match, and a
+pack that had never heard of the key would print it raw. Looking the sentence
+up by its own words is what gettext has done for thirty years, and it degrades
+the right way - an unknown sentence, an untranslated one and a missing file all
+print exactly what the server sent.
+
+Translations live in `languages/server/<code>.json`, keyed by the English
+sentence, byte for byte:
+
+```json
+{
+  "Customer added successfully": "Client ajouté",
+  "A sale id is required": "Un identifiant de vente est obligatoire"
+}
+```
+
+```bash
+node tests/tools/i18n-server-text.js            what the API says, and how much is answered
+node tests/tools/i18n-server-text.js --todo fr  the sentences French has not answered yet
+node tests/tools/i18n-server-text.js --write    after the API changes wording
+```
+
+Change one character of the English key and the translation stops being found -
+silently, because the fallback is the English itself. Copy it, do not retype
+it. A message with a value interpolated into it (`Imported 12 rows`) will not
+match and is not listed; those need the API to send the number separately, and
+that is a change for another day.
+
+---
+
 ## Right-to-left languages
 
 Arabic switches the whole app to right-to-left: the sidebar moves to the

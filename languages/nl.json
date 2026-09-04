@@ -2915,5 +2915,13 @@
   "lang_type_to_search_an_item": "Typ om een artikel te zoeken",
   "lang_view": "Bekijken",
   "lang_view_expense": "Uitgave bekijken",
-  "lang_view_kot": "KOT bekijken"
+  "lang_view_kot": "KOT bekijken",
+  "lang_align_left": "Links",
+  "lang_customer_report": "Klantrapport",
+  "lang_expense_report": "Uitgavenrapport",
+  "lang_gstr1_report": "GSTR1-rapport",
+  "lang_gstr2_report": "GSTR2-rapport",
+  "lang_gstr2b_report": "GSTR2B-rapport",
+  "lang_gstr3b_report": "GSTR3B-rapport",
+  "lang_gstr9_report": "GSTR9-rapport"
 }

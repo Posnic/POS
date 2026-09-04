@@ -2915,5 +2915,13 @@
   "lang_type_to_search_an_item": "Digita per cercare un articolo",
   "lang_view": "Vedi",
   "lang_view_expense": "Vedi spesa",
-  "lang_view_kot": "Vedi KOT"
+  "lang_view_kot": "Vedi KOT",
+  "lang_align_left": "Sinistra",
+  "lang_customer_report": "Report clienti",
+  "lang_expense_report": "Report spese",
+  "lang_gstr1_report": "Report GSTR1",
+  "lang_gstr2_report": "Report GSTR2",
+  "lang_gstr2b_report": "Report GSTR2B",
+  "lang_gstr3b_report": "Report GSTR3B",
+  "lang_gstr9_report": "Report GSTR9"
 }
