@@ -203,6 +203,32 @@ in the pack as well.
 rest of the `doNotTranslate` list stay in Latin script exactly as they are. A
 shopkeeper matches them against a government form, character for character.
 
+### Names that are spelled, not translated
+
+`_glossary.json` also carries a `brands` list: `Razorpay`, `PhonePe`,
+`Way2SMS`, `Textlocal`, `Pharmacode`, `VS Code`, `Turbo C`, `Posnic`,
+`WhatsApp`, `Google Analytics`. Where a key's whole English is one of those,
+every pack spells it identically, and a test says so.
+
+This one is worth explaining, because six translators in a row got it wrong for
+the same good reason. A review tool that rejects a value identical to its
+English is right almost always - that is exactly what a skipped row looks like.
+But a brand has no translation, so the only way to satisfy the tool was to
+invent one: *Provider Way2sms*, *TextLocal*, *Msimbo wa Pharmacode*, a Razorpay
+tab prefixed with the word for gateway. A payment tab that no longer names the
+payment provider. If a name is on that list, leave it exactly as it is.
+
+Descriptive names are deliberately **not** on the list. *Soft Dark*, *Warm
+Night* and *Diamond* are words, and a theme picker in Thai should read in Thai.
+
+### Merge tokens
+
+`{name}`, `{points}`, `{tier}` and the rest are placeholders the app fills in.
+Where a string is nothing but a token - the chips on the campaign editor that
+insert a merge field - what it shows is what it inserts, so it is not text at
+all and carries no key. Inside a sentence, keep the token exactly as written
+and move it where the grammar needs it.
+
 ### Strings that carry markup
 
 A few strings carry an icon or a `<span>` the app rewrites later, for example
@@ -333,6 +359,21 @@ The rules live in `frontend/static/style/css/rtl.css`, scoped under
 node tests/tools/i18n-coverage.js
 node --test tests/i18n.test.js
 ```
+
+### Finding the screen that is still English
+
+Coverage tells you how much of a language is done. It does not tell you which
+screen a shopkeeper is looking at when they see English, which is the report
+you want when you have an hour and want to spend it where it shows:
+
+```bash
+node tests/tools/i18n-screen.js ta            every screen with a gap
+node tests/tools/i18n-screen.js ta --list     the missing keys too
+node tests/tools/i18n-screen.js --worst       the worst screen per language
+```
+
+The screens are listed worst first, so the top of that list is the best hour
+you can give the language.
 
 ### Save as UTF-8. This one matters more than it sounds.
 
