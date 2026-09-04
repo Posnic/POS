@@ -2919,5 +2919,9 @@
   "lang_type_to_search_an_item": "వస్తువును వెతకడానికి టైప్ చేయండి",
   "lang_view": "చూడు",
   "lang_view_expense": "ఖర్చు చూడు",
-  "lang_view_kot": "KOT చూడు"
+  "lang_view_kot": "KOT చూడు",
+  "lang_align_left": "ఎడమ",
+  "lang_item_report": "వస్తువు నివేదిక",
+  "lang_kiosk_report": "కియోస్క్ నివేదిక",
+  "lang_kot_report": "KOT నివేదిక"
 }

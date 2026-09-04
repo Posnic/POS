@@ -2915,5 +2915,13 @@
   "lang_type_to_search_an_item": "Andika ili kutafuta bidhaa",
   "lang_view": "Ona",
   "lang_view_expense": "Ona matumizi",
-  "lang_view_kot": "Ona KOT"
+  "lang_view_kot": "Ona KOT",
+  "lang_align_left": "Kushoto",
+  "lang_customer_report": "Ripoti ya wateja",
+  "lang_expense_report": "Ripoti ya matumizi",
+  "lang_gstr1_report": "Ripoti ya GSTR1",
+  "lang_gstr2_report": "Ripoti ya GSTR2",
+  "lang_gstr2b_report": "Ripoti ya GSTR2B",
+  "lang_gstr3b_report": "Ripoti ya GSTR3B",
+  "lang_gstr9_report": "Ripoti ya GSTR9"
 }

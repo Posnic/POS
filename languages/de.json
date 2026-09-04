@@ -2915,5 +2915,13 @@
   "lang_type_to_search_an_item": "Tippen, um einen Artikel zu suchen",
   "lang_view": "Anzeigen",
   "lang_view_expense": "Ausgabe anzeigen",
-  "lang_view_kot": "KOT anzeigen"
+  "lang_view_kot": "KOT anzeigen",
+  "lang_align_left": "Links",
+  "lang_customer_report": "Kundenbericht",
+  "lang_expense_report": "Ausgabenbericht",
+  "lang_gstr1_report": "GSTR1-Bericht",
+  "lang_gstr2_report": "GSTR2-Bericht",
+  "lang_gstr2b_report": "GSTR2B-Bericht",
+  "lang_gstr3b_report": "GSTR3B-Bericht",
+  "lang_gstr9_report": "GSTR9-Bericht"
 }
