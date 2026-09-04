@@ -225,19 +225,17 @@ async function drainDue(db, dbName) {
     for (const d of due) {
       const sub = subs.get(String(d.subscription_id));
       if (!sub || !sub.active) {
-        await db
-          .collection(DELIVERIES)
-          .updateOne(
-            { _id: d._id },
-            {
-              $set: {
-                status: 'dead',
-                lastErrorCode: 'subscription_removed',
-                deadLetteredAt: new Date(),
-              },
-              $unset: { lastError: '', 'payload.at': '', 'payload.shop': '' },
-            }
-          );
+        await db.collection(DELIVERIES).updateOne(
+          { _id: d._id },
+          {
+            $set: {
+              status: 'dead',
+              lastErrorCode: 'subscription_removed',
+              deadLetteredAt: new Date(),
+            },
+            $unset: { lastError: '', 'payload.at': '', 'payload.shop': '' },
+          }
+        );
         continue;
       }
       attempt(db, d, sub).catch(() => {});

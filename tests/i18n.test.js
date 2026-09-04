@@ -668,7 +668,7 @@ test('bare English in the templates stays rare', () => {
   const { report } = require(path.join(__dirname, 'tools', 'i18n-gaps.js'));
   const data = report();
   const shown = data.rows.map((r) => r.file + ': ' + r.found.map((x) => x.text).slice(0, 3).join(' | '));
-  assert.ok(data.total <= 5, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
+  assert.ok(data.total <= 2, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
 });
 
 test('the sweep tools live in the repository', () => {
@@ -677,4 +677,36 @@ test('the sweep tools live in the repository', () => {
     assert.ok(fs.existsSync(file), tool + ' is missing');
     assert.ok(!/D:\/Claude|C:\\Users/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
   }
+});
+
+test('no module asks for a translation while it is still loading', () => {
+  /*
+   * This one shipped, and it took the whole dashboard down.
+   *
+   * PosnicPro.js is a single object literal thousands of lines long. A t()
+   * call written INSIDE that literal runs while the literal is still being
+   * built, at which point the name PosnicPro is not bound yet - so
+   * PosnicPro.i18n throws, the rest of the file never executes, and the app
+   * boots with an empty core object. Nothing catches it: the page simply
+   * stops working.
+   *
+   * It is wrong even where it does not throw. A t() evaluated at load resolves
+   * before any pack has been fetched, freezing English into a config object
+   * that switching language afterwards can never reach.
+   *
+   * So config data carries plain English and is translated where it is
+   * rendered; t() belongs inside functions, which run when they are called.
+   *
+   * Detected by running each module against a stub that answers every global,
+   * so nothing else can throw, and watching which t() calls fire. Guessing
+   * from braces was tried first and quietly missed the fifty-six calls that
+   * caused the outage.
+   *
+   *     node tests/tools/i18n-load-time.js            what fires, and where
+   *     node tests/tools/i18n-load-time.js --write    move them back to English
+   */
+  const { total, sitesByFile } = require(path.join(__dirname, 'tools', 'i18n-load-time.js'));
+  const detail = Object.entries(sitesByFile)
+    .map(([file, sites]) => file + ': ' + sites.map((x) => 'line ' + x.line + ' "' + x.english + '"').join(', '));
+  assert.equal(total, 0, 't() runs while these modules are still loading:\n  ' + detail.join('\n  '));
 });
