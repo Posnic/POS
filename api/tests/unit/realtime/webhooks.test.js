@@ -218,7 +218,6 @@ describe('drainDue', () => {
   });
 });
 
-
 describe('retry and dead-letter contract (#75, parent #34)', () => {
   test('a timeout gets a safe retry code and bounded backoff', async () => {
     const db = fakeDb();

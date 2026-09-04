@@ -1199,24 +1199,24 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
-        { root: '#salereport_new', title: PosnicPro.i18n.t('lang_sales_report', 'Sales Report'), range: '#view_sale_report_daterange', file: 'sales-report',
+        { root: '#salereport_new', title: 'Sales Report', titleKey: 'lang_sales_report', range: '#view_sale_report_daterange', file: 'sales-report',
             full: [
                 { when: '#sale-view-tab-line', table: '#view_salereport', per: '#view_salereport_per_page', load: 'salereport.salereportTable' },
                 { when: '#instant-tab-line', table: '#view_instantreport', per: '#view_instantreport_per_page', load: 'instantreport.instantreportTable' }
             ] },
-        { root: '#categoryreport_new', title: PosnicPro.i18n.t('lang_category_report', 'Category Report'), range: '.view_category_report_daterange', file: 'category-report',
+        { root: '#categoryreport_new', title: 'Category Report', titleKey: 'lang_category_report', range: '.view_category_report_daterange', file: 'category-report',
             full: [{ table: '#view_categoryreport', per: '#view_categoryreport_per_page', load: 'categoryreport.categoryreportTable' }] },
-        { root: '#customerreport_new', title: PosnicPro.i18n.t('lang_customer_report', 'Customer Report'), range: '#view_customer_report_daterange', file: 'customer-report',
+        { root: '#customerreport_new', title: 'Customer Report', titleKey: 'lang_customer_report', range: '#view_customer_report_daterange', file: 'customer-report',
             full: [{ table: '#view_customerreport', per: '#view_customerreport_per_page', load: 'customerreport.customerreportTable' }] },
-        { root: '#expensesreport_new', title: PosnicPro.i18n.t('lang_expense_report', 'Expense Report'), range: '#view_expenses_report_daterange', file: 'expense-report',
+        { root: '#expensesreport_new', title: 'Expense Report', titleKey: 'lang_expense_report', range: '#view_expenses_report_daterange', file: 'expense-report',
             full: [{ table: '#view_expensesreport', per: '#view_expensesreport_per_page', load: 'expensesreport.expensesreportTable' }] },
-        { root: '#itemreport_new', title: PosnicPro.i18n.t('lang_item_report', 'Item Report'), range: '.view_item_report_daterange', file: 'item-report',
+        { root: '#itemreport_new', title: 'Item Report', titleKey: 'lang_item_report', range: '.view_item_report_daterange', file: 'item-report',
             full: [{ table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' }] },
-        { root: '#kioskreport_new', title: PosnicPro.i18n.t('lang_kiosk_report', 'Kiosk Report'), range: '#view_kiosk_report_daterange', file: 'kiosk-report',
+        { root: '#kioskreport_new', title: 'Kiosk Report', titleKey: 'lang_kiosk_report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
             full: [{ table: '#view_kioskreport', per: '#view_kioskreport_per_page', load: 'kioskreport.kioskreportTable' }] },
         // KOT is five reports behind one date range; the active tab decides
         // which table the full-range export loads.
-        { root: '#kotreport_new', title: PosnicPro.i18n.t('lang_kot_report', 'KOT Report'), range: '#view_kot_report_daterange', file: 'kot-report',
+        { root: '#kotreport_new', title: 'KOT Report', titleKey: 'lang_kot_report', range: '#view_kot_report_daterange', file: 'kot-report',
             // (sales-summary is not paginated - it has no per-page selector,
             //  so its export already carries every row)
             full: [
@@ -1225,31 +1225,31 @@ PosnicPro = {
                 { when: '#kot-cancellation-tab', table: '#view_kotcancellation', per: '#view_kotcancellation_per_page', load: 'kotcancellation.kotcancellationTable' },
                 { when: '#kot-open-item-tab', table: '#view_kotopenitemreport', per: '#view_kotopenitemreport_per_page', load: 'kotopenitemreport.kotopenitemreportTable' }
             ] },
-        { root: '#labourreport_new', title: PosnicPro.i18n.t('lang_labourreport_title', 'Labour / Payout'), range: '', file: 'labour-report' },
-        { root: '#paymentreport_new', title: PosnicPro.i18n.t('lang_payment_report', 'Payment Report'), range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
+        { root: '#labourreport_new', title: 'Labour / Payout', titleKey: 'lang_labourreport_title', range: '', file: 'labour-report' },
+        { root: '#paymentreport_new', title: 'Payment Report', titleKey: 'lang_payment_report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
             full: [{ table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' }] },
-        { root: '#pendingreport_new', title: PosnicPro.i18n.t('lang_pending_report', 'Pending Payments'), range: '.view_pending_report_daterange', file: 'pending-payments',
+        { root: '#pendingreport_new', title: 'Pending Payments', titleKey: 'lang_pending_report', range: '.view_pending_report_daterange', file: 'pending-payments',
             full: [{ table: '#view_pendingreport', per: '#view_pendingreport_per_page', load: 'pendingreport.pendingreportTable' }] },
-        { root: '#receivingreport_new', title: PosnicPro.i18n.t('lang_purchase_report', 'Purchase Report'), range: '#view_receiving_report_daterange', file: 'purchase-report',
+        { root: '#receivingreport_new', title: 'Purchase Report', titleKey: 'lang_purchase_report', range: '#view_receiving_report_daterange', file: 'purchase-report',
             full: [{ table: '#view_receivingreport', per: '#view_receivingreport_per_page', load: 'receivingreport.receivingreportTable' }] },
-        { root: '#returnreport_new', title: PosnicPro.i18n.t('lang_sales_return_report', 'Sales Return Report'), range: '.view_return_report_daterange', file: 'sales-return-report',
+        { root: '#returnreport_new', title: 'Sales Return Report', titleKey: 'lang_sales_return_report', range: '.view_return_report_daterange', file: 'sales-return-report',
             full: [{ table: '#view_returnreport', per: '#view_returnreport_per_page', load: 'returnreport.returnreportTable' }] },
-        { root: '#returnreceivingreport_new', title: PosnicPro.i18n.t('lang_purchase_return_report', 'Purchase Return Report'), range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
+        { root: '#returnreceivingreport_new', title: 'Purchase Return Report', titleKey: 'lang_purchase_return_report', range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
             full: [{ table: '#view_returnreceivingreport', per: '#view_returnreceivingreport_per_page', load: 'returnreceivingreport.returnreceivingreportTable' }] },
-        { root: '#supplierreport_new', title: PosnicPro.i18n.t('lang_supplier_report', 'Supplier Report'), range: '.view_supplier_report_daterange', file: 'supplier-report',
+        { root: '#supplierreport_new', title: 'Supplier Report', titleKey: 'lang_supplier_report', range: '.view_supplier_report_daterange', file: 'supplier-report',
             full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
-        { root: '#taxsummaryreport_new', title: PosnicPro.i18n.t('lang_taxsummary_title', 'Tax Summary'), range: '', file: 'tax-summary' },
-        { root: '#taxpayable_new', title: PosnicPro.i18n.t('lang_taxpayable_title', 'Tax Payable'), range: '', file: 'tax-payable' },
+        { root: '#taxsummaryreport_new', title: 'Tax Summary', titleKey: 'lang_taxsummary_title', range: '', file: 'tax-summary' },
+        { root: '#taxpayable_new', title: 'Tax Payable', titleKey: 'lang_taxpayable_title', range: '', file: 'tax-payable' },
         // scans the whole catalogue already - no paging to expand
-        { root: '#gstreadiness_new', title: PosnicPro.i18n.t('lang_gstreadiness_title', 'GST 2.0 Readiness'), range: '', file: 'gst-readiness' },
-        { root: '#taxdiscountreport_new', title: PosnicPro.i18n.t('lang_tax_report', 'Tax Report'), range: '.view_tax_sales_report_daterange', file: 'tax-report' },
-        { root: '#userreport_new', title: PosnicPro.i18n.t('lang_user_report', 'User Report'), range: '.view_user_report_daterange', file: 'user-report',
+        { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', titleKey: 'lang_gstreadiness_title', range: '', file: 'gst-readiness' },
+        { root: '#taxdiscountreport_new', title: 'Tax Report', titleKey: 'lang_tax_report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
+        { root: '#userreport_new', title: 'User Report', titleKey: 'lang_user_report', range: '.view_user_report_daterange', file: 'user-report',
             full: [{ table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' }] },
-        { root: '#gstr_one', title: PosnicPro.i18n.t('lang_gstr1_report', 'GSTR1 Report'), range: '#gst_form_one_daterange_one', file: 'gstr1' },
-        { root: '#gstr_two', title: PosnicPro.i18n.t('lang_gstr2_report', 'GSTR2 Report'), range: '#gst_form_two_daterange_one', file: 'gstr2' },
-        { root: '#gstr_twob', title: PosnicPro.i18n.t('lang_gstr2b_report', 'GSTR2B Report'), range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
-        { root: '#gstr_three', title: PosnicPro.i18n.t('lang_gstr3b_report', 'GSTR3B Report'), range: '#gst_form_three_daterange_one', file: 'gstr3b' },
-        { root: '#gstrNine', title: PosnicPro.i18n.t('lang_gstr9_report', 'GSTR9 Report'), range: '#gst_form_nine_daterange_one', file: 'gstr9' },
+        { root: '#gstr_one', title: 'GSTR1 Report', titleKey: 'lang_gstr1_report', range: '#gst_form_one_daterange_one', file: 'gstr1' },
+        { root: '#gstr_two', title: 'GSTR2 Report', titleKey: 'lang_gstr2_report', range: '#gst_form_two_daterange_one', file: 'gstr2' },
+        { root: '#gstr_twob', title: 'GSTR2B Report', titleKey: 'lang_gstr2b_report', range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
+        { root: '#gstr_three', title: 'GSTR3B Report', titleKey: 'lang_gstr3b_report', range: '#gst_form_three_daterange_one', file: 'gstr3b' },
+        { root: '#gstrNine', title: 'GSTR9 Report', titleKey: 'lang_gstr9_report', range: '#gst_form_nine_daterange_one', file: 'gstr9' },
     ],
     /*
      * Full-duration export (owner report: "pdf reports are taking first
@@ -1307,7 +1307,10 @@ PosnicPro = {
             shop: PosnicPro.local.get('branchname') || '',
             address: PosnicPro.local.get('branchaddress') || '',
             phone: PosnicPro.local.get('branchphone') || '',
-            title: cfg.title,
+            /* asked for here, not where the page list is built: that list is
+               constructed while this file is still loading, when neither the
+               core nor any pack exists yet. */
+            title: cfg.titleKey ? PosnicPro.i18n.t(cfg.titleKey, cfg.title) : cfg.title,
             range: (function () {
                 if (!cfg.range) { return ''; }
                 var el = $(cfg.root).find(cfg.range).first();
@@ -1434,16 +1437,16 @@ PosnicPro = {
             return !!(m && m.classList.contains('show'));
         },
         _KINDS: {
-            sales: { label: PosnicPro.i18n.t('lang_sales_activity', 'Sales activity'), hash: 'sales', acl: ['sales', 'read'] },
-            items: { label: PosnicPro.i18n.t('lang_inventory_updated', 'Inventory updated'), hash: 'items', acl: ['item', 'read'] },
-            receivings: { label: PosnicPro.i18n.t('lang_receiving_activity', 'Receiving activity'), hash: 'receivings', acl: ['receiving', 'read'] },
-            customers: { label: PosnicPro.i18n.t('lang_customer_records_changed', 'Customer records changed'), hash: 'customers', acl: ['customer', 'read'] },
-            suppliers: { label: PosnicPro.i18n.t('lang_supplier_records_changed', 'Supplier records changed'), hash: 'suppliers', acl: ['supplier', 'read'] },
-            categories: { label: PosnicPro.i18n.t('lang_categories_changed', 'Categories changed'), hash: 'categories', acl: ['category', 'read'] },
-            expenses: { label: PosnicPro.i18n.t('lang_expense_recorded', 'Expense recorded'), hash: 'expenses', acl: ['expense', 'read'] },
-            registers: { label: PosnicPro.i18n.t('lang_register_activity', 'Register activity'), hash: 'registers', acl: ['sales', 'read'] },
-            shifts: { label: PosnicPro.i18n.t('lang_staff_clock_activity', 'Staff clock activity'), hash: 'users', acl: ['user', 'read'] },
-            easytables: { label: PosnicPro.i18n.t('lang_table_kot_activity', 'Table / KOT activity'), hash: 'kothistory', acl: ['sales', 'read'] },
+            sales: { label: 'Sales activity', t: 'lang_sales_activity', hash: 'sales', acl: ['sales', 'read'] },
+            items: { label: 'Inventory updated', t: 'lang_inventory_updated', hash: 'items', acl: ['item', 'read'] },
+            receivings: { label: 'Receiving activity', t: 'lang_receiving_activity', hash: 'receivings', acl: ['receiving', 'read'] },
+            customers: { label: 'Customer records changed', t: 'lang_customer_records_changed', hash: 'customers', acl: ['customer', 'read'] },
+            suppliers: { label: 'Supplier records changed', t: 'lang_supplier_records_changed', hash: 'suppliers', acl: ['supplier', 'read'] },
+            categories: { label: 'Categories changed', t: 'lang_categories_changed', hash: 'categories', acl: ['category', 'read'] },
+            expenses: { label: 'Expense recorded', t: 'lang_expense_recorded', hash: 'expenses', acl: ['expense', 'read'] },
+            registers: { label: 'Register activity', t: 'lang_register_activity', hash: 'registers', acl: ['sales', 'read'] },
+            shifts: { label: 'Staff clock activity', t: 'lang_staff_clock_activity', hash: 'users', acl: ['user', 'read'] },
+            easytables: { label: 'Table / KOT activity', t: 'lang_table_kot_activity', hash: 'kothistory', acl: ['sales', 'read'] },
         },
         _can: function (acl) {
             var u = PosnicPro.userACL;
@@ -1458,7 +1461,7 @@ PosnicPro = {
                 items[0].count++;
                 items[0].at = now;
             } else {
-                items.unshift({ entity: entity, label: kind.label, hash: kind.hash, count: 1, at: now });
+                items.unshift({ entity: entity, label: kind.label, t: kind.t, hash: kind.hash, count: 1, at: now });
                 if (items.length > PosnicPro.bellFeed.MAX) items.pop();
                 PosnicPro.bellFeed._unseen++;
             }
@@ -1512,7 +1515,7 @@ PosnicPro = {
             for (var i = 0; i < items.length; i++) {
                 var it = items[i];
                 html += '<div class="bellfeed-item" data-i="' + i + '">' +
-                    '<span>' + it.label + (it.count > 1 ? ' <span class="bellfeed-count">×' + it.count + '</span>' : '') + '</span>' +
+                    '<span>' + (it.t ? '<lang class="' + it.t + '">' + it.label + '</lang>' : it.label) + (it.count > 1 ? ' <span class="bellfeed-count">×' + it.count + '</span>' : '') + '</span>' +
                     '<span class="bellfeed-time">' + PosnicPro.bellFeed._ago(it.at) + '</span>' +
                     '</div>';
             }
@@ -2639,7 +2642,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
-        'a4': { css: 'A4', content: 'auto', label: PosnicPro.i18n.t('lang_a4_sheet', 'A4 sheet'), font: 13, small: 11 }
+        'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', font: 13, small: 11 }
     },
 
     resolvePaperWidth: function () {
@@ -2700,35 +2703,35 @@ PosnicPro = {
      */
     REPORT_GROUPS: [
         { name: 'Sales', items: [
-            { hash: 'quickreport', label: PosnicPro.i18n.t('lang_day_end', 'Day-End'), icon: 'zap' },
-            { hash: 'salereport', label: PosnicPro.i18n.t('lang_rgrp_sales', 'Sales'), icon: 'shopping-cart' },
-            { hash: 'returnreport', label: PosnicPro.i18n.t('lang_return_sale', 'Return Sale'), icon: 'refresh-ccw' },
-            { hash: 'pendingreport', label: PosnicPro.i18n.t('lang_pending_report', 'Pending Payments'), icon: 'clock' },
-            { hash: 'registerreport', label: PosnicPro.i18n.t('lang_records_title', 'Register'), icon: 'inbox', module: 'cash_register_enable' },
-            { hash: 'kotreport', label: PosnicPro.i18n.t('lang_kot_title', 'KOT'), icon: 'grid', kot: true },
-            { hash: 'kioskreport', label: PosnicPro.i18n.t('lang_module_kiosk', 'Kiosk'), icon: 'monitor', module: 'module_channels_enable' },
+            { hash: 'quickreport', label: 'Day-End', t: 'lang_day_end', icon: 'zap' },
+            { hash: 'salereport', label: 'Sales', t: 'lang_rgrp_sales', icon: 'shopping-cart' },
+            { hash: 'returnreport', label: 'Return Sale', t: 'lang_return_sale', icon: 'refresh-ccw' },
+            { hash: 'pendingreport', label: 'Pending Payments', t: 'lang_pending_report', icon: 'clock' },
+            { hash: 'registerreport', label: 'Register', t: 'lang_records_title', icon: 'inbox', module: 'cash_register_enable' },
+            { hash: 'kotreport', label: 'KOT', t: 'lang_kot_title', icon: 'grid', kot: true },
+            { hash: 'kioskreport', label: 'Kiosk', t: 'lang_module_kiosk', icon: 'monitor', module: 'module_channels_enable' },
         ] },
         { name: 'Purchase', items: [
-            { hash: 'receivingreport', label: PosnicPro.i18n.t('lang_newpurchase_title', 'Purchase'), icon: 'truck' },
-            { hash: 'returnreceivingreport', label: PosnicPro.i18n.t('lang_return_purchase', 'Return Purchase'), icon: 'refresh-ccw' },
-            { hash: 'supplierreport', label: PosnicPro.i18n.t('lang_newsupplier_title', 'Supplier'), icon: 'user-check' },
+            { hash: 'receivingreport', label: 'Purchase', t: 'lang_newpurchase_title', icon: 'truck' },
+            { hash: 'returnreceivingreport', label: 'Return Purchase', t: 'lang_return_purchase', icon: 'refresh-ccw' },
+            { hash: 'supplierreport', label: 'Supplier', t: 'lang_newsupplier_title', icon: 'user-check' },
         ] },
         { name: 'Inventory', items: [
-            { hash: 'itemreport', label: PosnicPro.i18n.t('lang_newitem_title', 'Item'), icon: 'package' },
-            { hash: 'categoryreport', label: PosnicPro.i18n.t('lang_newcategory_title', 'Category'), icon: 'layers' },
+            { hash: 'itemreport', label: 'Item', t: 'lang_newitem_title', icon: 'package' },
+            { hash: 'categoryreport', label: 'Category', t: 'lang_newcategory_title', icon: 'layers' },
         ] },
         { name: 'People', items: [
-            { hash: 'customerreport', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer'), icon: 'users' },
-            { hash: 'userreport', label: PosnicPro.i18n.t('lang_newuser_title', 'User'), icon: 'user-check' },
-            { hash: 'labourreport', label: PosnicPro.i18n.t('lang_labourreport_title', 'Labour / Payout'), icon: 'clock', module: 'staff_shifts_enable' },
+            { hash: 'customerreport', label: 'Customer', t: 'lang_newcustomer_title', icon: 'users' },
+            { hash: 'userreport', label: 'User', t: 'lang_newuser_title', icon: 'user-check' },
+            { hash: 'labourreport', label: 'Labour / Payout', t: 'lang_labourreport_title', icon: 'clock', module: 'staff_shifts_enable' },
         ] },
         { name: 'Money', items: [
-            { hash: 'paymentreport', label: PosnicPro.i18n.t('lang_payment_2', 'Payment'), icon: 'dollar-sign' },
-            { hash: 'taxreport', label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), icon: 'percent', module: 'module_tax_enable' },
-            { hash: 'taxsummaryreport', label: PosnicPro.i18n.t('lang_taxsummary_title', 'Tax Summary'), icon: 'layers', module: 'module_tax_enable' },
-            { hash: 'taxpayable', label: PosnicPro.i18n.t('lang_taxpayable_title', 'Tax Payable'), icon: 'trending-up', module: 'module_tax_enable' },
-            { hash: 'gstreadiness', label: PosnicPro.i18n.t('lang_gstreadiness_title', 'GST 2.0 Readiness'), icon: 'check-square', module: 'module_tax_enable' },
-            { hash: 'expensesreport', label: PosnicPro.i18n.t('lang_expense_title', 'Cash Book'), icon: 'file-text', module: 'module_cashbook_enable' },
+            { hash: 'paymentreport', label: 'Payment', t: 'lang_payment_2', icon: 'dollar-sign' },
+            { hash: 'taxreport', label: 'Tax', t: 'lang_module_tax', icon: 'percent', module: 'module_tax_enable' },
+            { hash: 'taxsummaryreport', label: 'Tax Summary', t: 'lang_taxsummary_title', icon: 'layers', module: 'module_tax_enable' },
+            { hash: 'taxpayable', label: 'Tax Payable', t: 'lang_taxpayable_title', icon: 'trending-up', module: 'module_tax_enable' },
+            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', t: 'lang_gstreadiness_title', icon: 'check-square', module: 'module_tax_enable' },
+            { hash: 'expensesreport', label: 'Cash Book', t: 'lang_expense_title', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
     injectReportGroupTabs: function () {
@@ -2751,7 +2754,7 @@ PosnicPro = {
             html += '<li class="nav-item"><a class="nav-link' + (i.hash === hash ? ' active' : '') +
                 '" href="#/' + i.hash + '">' +
                 (i.icon ? '<i class="feather icon-' + i.icon + ' mr-1"></i>' : '') +
-                i.label + '</a></li>';
+                '<lang class="' + (i.t || '') + '">' + i.label + '</lang></a></li>';
         });
         html += '</ul></div>';
         var $row = $('.page_loader:visible .breadcrumbbar .row').first();

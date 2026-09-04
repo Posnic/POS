@@ -1,5 +1,4 @@
 {
-  "key": "हिन्दी *",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (दिन/माह/वर्ष)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (माह/दिन/वर्ष)",
   "lang_01_january_18_d_mm_yy": "01 जनवरी 18 - d MM yy",
@@ -1616,7 +1615,6 @@
   "lang_on": "चालू",
   "lang_on_2": "चालू",
   "lang_on_cgst_sgst_igst_on_every_bill": "चालू — हर बिल पर CGST/SGST/IGST",
-  "lang_on_title": "चालू",
   "lang_open_date": "कैश रजिस्टर खोलने की तारीख",
   "lang_open_price": "कैशियर कीमत दर्ज करता है",
   "lang_open_price_hint": "कोई तय कीमत नहीं - हर बिक्री पर पूछी जाती है",

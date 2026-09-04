@@ -1,5 +1,4 @@
 {
-  "key": "English *",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/aaaa",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/aaaa",
   "lang_01_january_18_d_mm_yy": "01 janeiro 18 - d MM aa",
@@ -1195,7 +1194,6 @@
   "lang_notes_title": "Notas",
   "lang_notifications_title": "Notificações",
   "lang_number": "Nº :",
-  "lang_on_title": "LIGADO",
   "lang_open_date": "Data de abertura do caixa",
   "lang_open_price": "O caixa digita o preço",
   "lang_open_price_hint": "Sem preço fixo - perguntado a cada venda",

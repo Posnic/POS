@@ -1,5 +1,4 @@
 {
-  "key": "Français *",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - jj/mm/aaaa",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/jj/aaaa",
   "lang_01_january_18_d_mm_yy": "01 janvier 18 - j MM aa",
@@ -1195,7 +1194,6 @@
   "lang_notes_title": "Notes",
   "lang_notifications_title": "Notifications",
   "lang_number": "N° :",
-  "lang_on_title": "ACTIVÉ",
   "lang_open_date": "Date d'ouverture de la caisse",
   "lang_open_price": "Le caissier saisit le prix",
   "lang_open_price_hint": "Pas de prix fixe - demandé à chaque vente",

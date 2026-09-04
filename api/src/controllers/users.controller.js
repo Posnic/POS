@@ -1835,8 +1835,7 @@ class UsersController extends BaseController {
 
       // Resolve the target user ID from body or authenticated request
       const userId =
-        (bodyUserId && String(bodyUserId).trim()) ||
-        (req.user && (req.user._id || req.user.id));
+        (bodyUserId && String(bodyUserId).trim()) || (req.user && (req.user._id || req.user.id));
 
       if (!userId) {
         return this.error(res, 'No user identified', 401);
@@ -1849,8 +1848,7 @@ class UsersController extends BaseController {
        * survivable while this only reset a database field and is not now that
        * it destroys the file in the bucket.
        */
-      const isSelf =
-        String(req.user && (req.user._id || req.user.id)) === String(userId);
+      const isSelf = String(req.user && (req.user._id || req.user.id)) === String(userId);
       if (!isSelf && !this.checkPermission('user', 'write', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
@@ -1865,11 +1863,7 @@ class UsersController extends BaseController {
       const storedImageUrl = user.image || 'user.svg';
 
       // Handle empty/default image - idempotent operation
-      if (
-        !storedImageUrl ||
-        storedImageUrl.trim() === '' ||
-        storedImageUrl.includes('user.svg')
-      ) {
+      if (!storedImageUrl || storedImageUrl.trim() === '' || storedImageUrl.includes('user.svg')) {
         return this.success(res, 'user.svg', 'Image was deleted');
       }
 
@@ -1933,9 +1927,7 @@ class UsersController extends BaseController {
       parsedUrl = new URL(storedImageUrl);
     } catch (err) {
       // A relative path, written by an older install, is not an S3 object.
-      console.warn(
-        '[userImageDelete] stored image is not an absolute URL, leaving it in place'
-      );
+      console.warn('[userImageDelete] stored image is not an absolute URL, leaving it in place');
       return null;
     }
 
@@ -1962,20 +1954,15 @@ class UsersController extends BaseController {
     const prefix = 'uploads/user_images/';
     const isBareKey = this.isValidPosnicUserImageFilename(key);
     const isPrefixedKey =
-      key.startsWith(prefix) &&
-      this.isValidPosnicUserImageFilename(key.substring(prefix.length));
+      key.startsWith(prefix) && this.isValidPosnicUserImageFilename(key.substring(prefix.length));
 
     if (!isBareKey && !isPrefixedKey) {
-      console.warn(
-        '[userImageDelete] key is not a Posnic user image, leaving it in place'
-      );
+      console.warn('[userImageDelete] key is not a Posnic user image, leaving it in place');
       return null;
     }
 
     if (!allowedHosts.includes(parsedUrl.hostname)) {
-      console.warn(
-        '[userImageDelete] image is not on a known bucket host, leaving it in place'
-      );
+      console.warn('[userImageDelete] image is not on a known bucket host, leaving it in place');
       return null;
     }
 

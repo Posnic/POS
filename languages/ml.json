@@ -1,5 +1,4 @@
 {
-  "key": "ഇംഗ്ലീഷ് *",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (ദിവസം/മാസം/വർഷം)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (മാസം/ദിവസം/വർഷം)",
   "lang_01_january_18_d_mm_yy": "01 ജനുവരി 18 - d MM yy",
@@ -1195,7 +1194,6 @@
   "lang_notes_title": "കുറിപ്പുകൾ",
   "lang_notifications_title": "അറിയിപ്പുകൾ",
   "lang_number": "നമ്പർ :",
-  "lang_on_title": "ഓൺ",
   "lang_open_date": "രജിസ്റ്റർ തുറന്ന തീയതി",
   "lang_open_price": "കാഷ്യർ വില ടൈപ്പ് ചെയ്യുന്നു",
   "lang_open_price_hint": "നിശ്ചിത വിലയില്ല - ഓരോ വിൽപ്പനയിലും ചോദിക്കും",

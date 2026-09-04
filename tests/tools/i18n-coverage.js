@@ -77,6 +77,12 @@ function jsFiles(dir, found = []) {
  * A key used on six screens is one string to translate, not six, so this is a
  * Set.
  */
+/* Block comments, blanked rather than removed, so every offset a later
+   regex reports still points at the same place in the file. */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
 function keysUsed() {
   const used = new Set();
   /* key -> { english, where } so a translator can be handed the sentence and
@@ -120,7 +126,11 @@ function keysUsed() {
   }
   let calls = 0;
   for (const file of jsFiles(path.join(ROOT, 'static', 'script'))) {
-    const js = fs.readFileSync(file, 'utf8');
+    /* Block comments only, and only for the markup patterns below: a doc
+       comment that shows what a <lang> tag looks like is documentation, not
+       a string the app renders. Line comments are left alone because a
+       naive // strip eats https:// inside real string literals. */
+    const js = stripComments(fs.readFileSync(file, 'utf8'));
     for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*,\s*'([^']*)'/g)) {
       remember(m[1], m[2], file);
       calls += 1;
@@ -129,6 +139,16 @@ function keysUsed() {
     for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*\)/g)) {
       remember(m[1], '', file);
       calls += 1;
+    }
+    /* Some config data carries its key beside the English - `label: 'Today',
+       t: 'lang_this_day'` - because resolving it where the object is built
+       would run before any pack exists. The render site does the asking, so
+       the key is used even though no t() call names it here. */
+    for (const m of js.matchAll(/label: '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
+    }
+    for (const m of js.matchAll(/title: '((?:[^'\\]|\\.)*)',\s*titleKey: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
     }
     /* JavaScript renders markup too - table headers, pills, receipt labels -
        and the observer translates it, so its keys are keys the UI uses. */
