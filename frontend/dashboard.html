@@ -646,20 +646,20 @@
                         'align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial,sans-serif;');
                     card.innerHTML =
                         '<div style="max-width:460px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:26px 28px;box-shadow:0 12px 34px rgba(0,0,0,.12);">' +
-                        '<div style="font-size:18px;font-weight:600;color:#16203a;margin-bottom:6px;">The till is taking too long to load</div>' +
-                        '<p style="font-size:14px;color:#3a4459;line-height:1.5;margin:0 0 14px;">This can happen on a slow connection, or after an update. Reloading usually fixes it. If it keeps happening, reset the cached data - that signs this browser out, and nothing on the server is touched.</p>' +
+                        '<div style="font-size:18px;font-weight:600;color:#16203a;margin-bottom:6px;"><lang class="lang_the_till_is_taking_too_long_to_load">The till is taking too long to load</lang></div>' +
+                        '<p style="font-size:14px;color:#3a4459;line-height:1.5;margin:0 0 14px;"><lang class="lang_this_can_happen_on_a_slow_connection_or_af">This can happen on a slow connection, or after an update. Reloading usually fixes it. If it keeps happening, reset the cached data - that signs this browser out, and nothing on the server is touched.</lang></p>' +
                         (firstError
                             ? '<div style="font-size:11.5px;color:#8a94a6;font-family:ui-monospace,Consolas,monospace;background:#f6f7fb;border-radius:6px;padding:8px 10px;margin-bottom:14px;word-break:break-all;">' + String(firstError).slice(0, 160).replace(/[<>&]/g, '') + '</div>'
                             : '') +
                         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-                        '<button id="pbh_wait" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#16203a;font-size:14px;cursor:pointer;">Keep waiting</button>' +
-                        '<button id="pbh_reload" style="min-height:40px;padding:0 14px;border:0;border-radius:8px;background:#506fe4;color:#fff;font-size:14px;cursor:pointer;">Reload</button>' +
-                        '<button id="pbh_reset" style="min-height:40px;padding:0 14px;border:1px solid #f04438;border-radius:8px;background:#fff;color:#f04438;font-size:14px;cursor:pointer;">Reset cached data &amp; reload</button>' +
-                        '<button id="pbh_details" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#54627f;font-size:14px;cursor:pointer;">View details</button>' +
+                        '<button id="pbh_wait" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#16203a;font-size:14px;cursor:pointer;"><lang class="lang_keep_waiting">Keep waiting</lang></button>' +
+                        '<button id="pbh_reload" style="min-height:40px;padding:0 14px;border:0;border-radius:8px;background:#506fe4;color:#fff;font-size:14px;cursor:pointer;"><lang class="lang_reload">Reload</lang></button>' +
+                        '<button id="pbh_reset" style="min-height:40px;padding:0 14px;border:1px solid #f04438;border-radius:8px;background:#fff;color:#f04438;font-size:14px;cursor:pointer;"><lang class="lang_reset_cached_data_reload">Reset cached data &amp; reload</lang></button>' +
+                        '<button id="pbh_details" style="min-height:40px;padding:0 14px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;color:#54627f;font-size:14px;cursor:pointer;"><lang class="lang_view_details">View details</lang></button>' +
                         '</div>' +
                         '<div id="pbh_details_wrap" style="display:none;margin-top:12px;">' +
                         '<pre id="pbh_details_body" style="max-height:220px;overflow:auto;font-size:11px;line-height:1.45;font-family:ui-monospace,Consolas,monospace;background:#16203a;color:#dbe3f4;border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-all;margin:0 0 8px;"></pre>' +
-                        '<button id="pbh_copy" style="min-height:32px;padding:0 12px;border:1px solid #dfe3e8;border-radius:6px;background:#fff;color:#16203a;font-size:12.5px;cursor:pointer;">Copy details</button>' +
+                        '<button id="pbh_copy" style="min-height:32px;padding:0 12px;border:1px solid #dfe3e8;border-radius:6px;background:#fff;color:#16203a;font-size:12.5px;cursor:pointer;"><lang class="lang_copy_details">Copy details</lang></button>' +
                         '</div></div>';
                     document.body.appendChild(card);
                     document.getElementById('pbh_wait').addEventListener('click', function () {
@@ -1041,7 +1041,7 @@
 
                 const fab = document.createElement('div');
                 fab.id = 'posnic-desktop-fab';
-                fab.innerHTML = '<div class="fab-menu"></div><button class="fab-btn" title="Desktop tools">🖥️<span class="fab-label">Desktop</span><span id="posnic-sync-dot"></span></button>';
+                fab.innerHTML = '<div class="fab-menu"></div><button class="fab-btn" title="Desktop tools" data-t-title="lang_desktop_tools">🖥️<span class="fab-label"><lang class="lang_desktop">Desktop</lang></span><span id="posnic-sync-dot"></span></button>';
                 document.body.appendChild(fab);
 
                 const dotStyle = document.createElement('style');

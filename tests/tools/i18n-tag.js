@@ -74,6 +74,7 @@ const SKIP_TEXT = /^[\s\d.,:;!?()\[\]{}%$₹#*+\-–—/|&'"«»…=<>_×]*$/;
 const NO_TAG_INSIDE = /^(script|style|textarea|pre|code|lang|noscript|svg)$/i;
 /* Text that is a template hole, a code fragment, or a bare identifier. */
 const NOT_WORDS = (t) => !/[A-Za-z]{2,}/.test(t) || /\{\{|__\w+__|\$\{|<%|\bfunction\b|\bvar\b|=>/.test(t)
+  || /^\{\w+\}$/.test(t)                        // a merge token is data, not prose
   || /^[a-z_]+\.[a-z_]+/.test(t)
   || /^(ctrl|alt|shift|cmd|esc|f\d+)(\s*\+\s*\S+)*$/i.test(t)   // keyboard shortcuts
   || /^View \S+ per page$/.test(t)                              // generated aria-labels

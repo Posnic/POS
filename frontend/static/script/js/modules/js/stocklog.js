@@ -187,13 +187,15 @@ PosnicPro.stocklogs = {
        process names its door (Add Receiving, Edit Sale, Delete Item ...),
        so a family is one regex, not a list to keep in step. */
     MOVES: {
-        purchases: { label: 'Purchases', re: 'Receiving|Purchase' },
-        sales: { label: 'Sales', re: 'Sale' },
-        items: { label: 'Item edits', re: 'Item' }
+        purchases: { label: 'Purchases', t: 'lang_po_title', re: 'Receiving|Purchase' },
+        sales: { label: 'Sales', t: 'lang_rgrp_sales', re: 'Sale' },
+        items: { label: 'Item edits', t: 'lang_item_edits', re: 'Item' }
     },
     setMove: function (key) {
         var m = PosnicPro.stocklogs.MOVES[key];
-        $('#stocklogs_move_dd').text(m ? m.label : PosnicPro.i18n.t('lang_report_all', 'All'));
+        $('#stocklogs_move_dd').text(m
+            ? PosnicPro.i18n.t(m.t, m.label)
+            : PosnicPro.i18n.t('lang_report_all', 'All'));
         PosnicPro.stocklogs.mountFilters();
         PosnicPro.listFilter.setExtra('stocklogs', 'process',
             m ? { $regex: m.re, $options: 'i' } : '');
