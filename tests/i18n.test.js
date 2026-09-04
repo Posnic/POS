@@ -324,7 +324,8 @@ test('the language-pack pattern matches packs and nothing else', () => {
   assert.ok(m, 'LANGUAGE_PACK is not a literal regex');
   // eslint-disable-next-line no-eval
   const re = eval(m[1]);
-  for (const good of ['/languages/ta.json', '/languages/hi.json', '/languages/pt-BR.json']) {
+  for (const good of ['/languages/ta.json', '/languages/hi.json', '/languages/pt-BR.json',
+    '/languages/msg-ta.json', '/languages/msg-fr.json']) {
     assert.ok(re.test(good), 'should match ' + good);
   }
   /* Not user uploads, not scripts, not anything that merely says "languages". */
