@@ -1,0 +1,32 @@
+{
+  "provider": "shopify",
+  "store": "store_blr_central",
+  "externalOrderId": "SYNTH-ORD-9902",
+  "version": 1,
+  "attempt": 1,
+  "payload": {
+    "customer": {
+      "name": "Another Synthetic Customer",
+      "phone": "9123456780",
+      "email": "another.customer@example.com"
+    },
+    "currency": "INR",
+    "items": [
+      {
+        "sku": "SYNTH-SKU-003",
+        "name": "Synthetic Himalayan Salt 1kg",
+        "quantity": 1,
+        "unit_price": 90,
+        "tax_rate": 5
+      }
+    ],
+    "subtotal": 90,
+    "tax_total": 4.5,
+    "discount": 0,
+    "grand_total": 94.5,
+    "payment": {
+      "status": "COD",
+      "method": "CASH_ON_DELIVERY"
+    }
+  }
+}
