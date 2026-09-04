@@ -103,7 +103,7 @@ PosnicPro.branches = {
     },
     beAddRegisterRow: function (name) {
         var row = $('<div class="input-group mb-2 be-register-row" style="max-width:340px;">' +
-            '<input type="text" class="form-control be-register" maxlength="20" placeholder="Register name">' +
+            '<input type="text" class="form-control be-register" maxlength="20" placeholder="Register name" data-t-placeholder="lang_registername_title">' +
             '<div class="input-group-append"><button class="btn btn-outline-danger" type="button">' +
             '<i class="feather icon-x"></i></button></div></div>');
         row.find('input').val(name || '');
@@ -125,18 +125,18 @@ PosnicPro.branches = {
     openDoc: function (id) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var current = PosnicPro.local.get('branch_id_set') === String(id);
-        var pills = current ? '<span class="badge badge-success-inverse">Current</span>' : '';
+        var pills = current ? '<span class="badge badge-success-inverse"><lang class="lang_current">Current</lang></span>' : '';
         /* The branch you are STANDING in cannot be deleted from under you. */
-        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this branch" aria-label="Edit"'
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="write" data-toggle="tooltip" title="Edit this branch" data-t-title="lang_edit_this_branch" aria-label="Edit" data-t-aria-label="lang_edit_title"'
             + ' onclick="hasher.setHash(\'branches/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
-            + (current ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="delete" data-toggle="tooltip" title="Delete this branch" aria-label="Delete"'
+            + (current ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="branch" data-access="delete" data-toggle="tooltip" title="Delete this branch" data-t-title="lang_delete_this_branch" aria-label="Delete" data-t-aria-label="lang_delete"'
                 + ' onclick="PosnicPro.listDoc.close(\'branches\'); hasher.setHash(\'branches/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>');
-        PosnicPro.listDoc.open({ key: 'branches', id: id, title: 'Branch', pills: pills, actions: actions });
+        PosnicPro.listDoc.open({ key: 'branches', id: id, title: PosnicPro.i18n.t('lang_newbranch_title', 'Branch'), pills: pills, actions: actions });
         PosnicPro.ACLForModule('branch');
         PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
+                PosnicPro.listDoc.body('branches', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_branch">Could not open this branch.</lang></div>');
                 return;
             }
             PosnicPro.listDoc.title('branches', d.branch_name || 'Branch');
@@ -154,43 +154,43 @@ PosnicPro.branches = {
                 + logo
                 + '<div style="flex:1 1 auto; min-width:0;">'
                 + PosnicPro.listDoc.stats([
-                    { v: String(registers.length || 1), l: registers.length === 1 ? 'Register' : 'Registers' },
-                    { v: esc(currency || '\u2014'), l: 'Currency' },
-                    { v: d.branch_gstin_number ? 'GST' : '\u2014', l: d.branch_gstin_number ? 'Registered' : 'No GSTIN' }
+                    { v: String(registers.length || 1), l: registers.length === 1 ? PosnicPro.i18n.t('lang_records_title', 'Register') : PosnicPro.i18n.t('lang_registers_title', 'Registers') },
+                    { v: esc(currency || '\u2014'), l: PosnicPro.i18n.t('lang_currency_title', 'Currency') },
+                    { v: d.branch_gstin_number ? 'GST' : '\u2014', l: d.branch_gstin_number ? PosnicPro.i18n.t('lang_registered', 'Registered') : PosnicPro.i18n.t('lang_no_gstin', 'No GSTIN') }
                 ])
                 + '</div></div>'
                 + PosnicPro.listDoc.grid([
-                    { label: 'Contact', lines: [
+                    { label: PosnicPro.i18n.t('lang_contact', 'Contact'), lines: [
                         d.store_telephone ? '<div><a href="tel:' + esc(d.store_telephone) + '">' + esc(d.store_telephone) + '</a></div>' : '',
                         d.store_alternativephone ? '<div class="q-muted">Alt: ' + esc(d.store_alternativephone) + '</div>' : '',
                         d.store_email ? '<div><a href="mailto:' + esc(d.store_email) + '">' + esc(d.store_email) + '</a></div>' : '',
                         d.website ? '<div class="q-muted">' + esc(d.website) + '</div>' : ''
                     ] },
-                    { label: 'Location', lines: [
+                    { label: PosnicPro.i18n.t('lang_location', 'Location'), lines: [
                         d.store_address ? '<div>' + esc(d.store_address) + '</div>' : '',
                         (d.city || d.pincode) ? '<div class="q-muted">' + esc([d.city, d.pincode].filter(Boolean).join(' - ')) + '</div>' : '',
                         (d.state || d.country) ? '<div class="q-muted">' + esc([d.state, d.country].filter(Boolean).join(', ')) + '</div>' : ''
                     ] },
-                    { label: 'Tax', lines: [
-                        d.branch_gstin_number ? '<div>GSTIN ' + esc(d.branch_gstin_number) + '</div>' : '<div class="q-muted">No GSTIN configured</div>'
+                    { label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), lines: [
+                        d.branch_gstin_number ? '<div>GSTIN ' + esc(d.branch_gstin_number) + '</div>' : '<div class="q-muted"><lang class="lang_no_gstin_configured">No GSTIN configured</lang></div>'
                     ] },
-                    { label: 'Locale', lines: [
+                    { label: PosnicPro.i18n.t('lang_locale', 'Locale'), lines: [
                         currency ? '<div>' + esc(currency) + '</div>' : '',
                         d.time_zone ? '<div class="q-muted">' + esc(d.time_zone) + '</div>' : '',
                         d.client_dateformat ? '<div class="q-muted">Dates: ' + esc(d.dateformat_text || d.client_dateformat) + '</div>' : ''
                     ] },
-                    { label: 'Printing', lines: [
+                    { label: PosnicPro.i18n.t('lang_printing', 'Printing'), lines: [
                         d.printing_address ? '<div class="q-muted">' + esc(d.printing_address) + '</div>' : ''
                     ] },
-                    { label: 'Registers', lines: [
+                    { label: PosnicPro.i18n.t('lang_registers_title', 'Registers'), lines: [
                         registers.length
                             ? ['<div>' + registers.map(function (r) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(r) + '</span>'; }).join(' ') + '</div>']
-                            : '<div class="q-muted">One unnamed register</div>'
+                            : '<div class="q-muted"><lang class="lang_one_unnamed_register">One unnamed register</lang></div>'
                     ] }
                 ])
                 + (current ? '' : PosnicPro.listDoc.link('Switch to this branch', "PosnicPro.branches.showChange('" + esc(id) + "');")));
         }, function () {
-            PosnicPro.listDoc.body('branches', '<div class="text-danger p-3">Could not open this branch.</div>');
+            PosnicPro.listDoc.body('branches', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_branch">Could not open this branch.</lang></div>');
         });
     },
     /* The name the OLD table machinery answered to - settings flows still
@@ -209,13 +209,13 @@ PosnicPro.branches = {
             key: 'branches',
             container: '#branches_filter_panel',
             button: '#branches_filter_btn',
-            searchPlaceholder: 'Search name, phone or email',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'branch_name', label: 'Name' },
-                { value: 'store_telephone', label: 'Phone' },
-                { value: 'store_email', label: 'Email' },
-                { value: 'store_address', label: 'Address' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'branch_name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'store_telephone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') },
+                { value: 'store_email', label: PosnicPro.i18n.t('lang_email_title', 'Email') },
+                { value: 'store_address', label: PosnicPro.i18n.t('lang_address_title', 'Address') }
             ],
             onChange: function () { PosnicPro.branches.loadList(1); }
         });
@@ -236,20 +236,20 @@ PosnicPro.branches = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('branches') > 0;
                 $('#branches_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No branches match this filter.' : 'No branches yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_branches_match_this_filter', 'No branches match this filter.') : PosnicPro.i18n.t('lang_no_branches_yet_press_new_to_add_the_first', 'No branches yet - press New to add the first.')) + '</div>');
                 $('#branches_list_paging').html('');
                 return;
             }
             var current = PosnicPro.local.get('branch_id_set');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="br-col-phone">Phone</th><th class="br-col-email">Email</th>'
-                + '<th class="br-col-address">Address</th><th class="br-col-state">State</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="br-col-phone"><lang class="lang_phone_title">Phone</lang></th><th class="br-col-email"><lang class="lang_email_title">Email</lang></th>'
+                + '<th class="br-col-address"><lang class="lang_address_title">Address</lang></th><th class="br-col-state"><lang class="lang_state_title">State</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var isCurrent = current === String(r._id);
                 html += '<tr class="md-row branches-row highlight-select'
                     + (PosnicPro.listDoc.activeId('branches') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.branch_name)
-                    + (isCurrent ? ' <span class="badge badge-success-inverse">Current</span>' : '') + '</td>'
+                    + (isCurrent ? ' <span class="badge badge-success-inverse"><lang class="lang_current">Current</lang></span>' : '') + '</td>'
                     + '<td class="br-col-phone">' + esc(r.store_telephone || '-') + '</td>'
                     + '<td class="br-col-email q-muted">' + esc(r.store_email || '-') + '</td>'
                     + '<td class="br-col-address q-muted">' + esc(r.store_address || '-') + '</td>'
@@ -261,14 +261,14 @@ PosnicPro.branches = {
             PosnicPro.ACLForModule('branch');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#branches_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load branches - try again.</div>');
+            $('#branches_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_branches_try_again">Could not load branches - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.branches;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' branch' : ' branches');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_branch_4', 'branch') : PosnicPro.i18n.t('lang_branches', 'branches'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -591,7 +591,7 @@ PosnicPro.branches = {
         var loader = $(".loader-branch");
         loader.find(".loadingSpinner:first").remove();
         $('#branch_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
-//        $('#branch_button_title').text('Save');
+//        $('#branch_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#branch_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');

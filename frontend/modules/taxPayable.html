@@ -19,14 +19,14 @@
                 <div class="card m-b-30">
                     <div class="card-body">
                         <div class="d-flex align-items-center flex-wrap mb-3" style="gap:10px;">
-                            <input type="date" id="taxpayable_from" aria-label="From date" class="form-control border-control" style="width:auto;">
-                            <span class="text-muted">to</span>
-                            <input type="date" id="taxpayable_to" aria-label="To date" class="form-control border-control" style="width:auto;">
+                            <input type="date" id="taxpayable_from" aria-label="From date" data-t-aria-label="lang_from_date" class="form-control border-control" style="width:auto;">
+                            <span class="text-muted"><lang class="lang_to">to</lang></span>
+                            <input type="date" id="taxpayable_to" aria-label="To date" data-t-aria-label="lang_to_date" class="form-control border-control" style="width:auto;">
                             <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.taxpayable.run();">
                                 <i class="feather icon-refresh-cw mr-1"></i><lang class="lang_run_title">Run</lang>
                             </button>
                             <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.taxpayable.exportCsv();">
-                                <i class="feather icon-download mr-1"></i>CSV
+                                <i class="feather icon-download mr-1"></i><lang class="lang_csv">CSV</lang>
                             </button>
                             <span class="text-muted" id="taxpayable_regime_note" style="font-size:13px;"></span>
                         </div>
@@ -34,7 +34,7 @@
                             <table class="table table-bordered" id="taxpayable_months">
                                 <thead id="taxpayable_months_head"></thead>
                                 <tbody id="taxpayable_months_body">
-                                    <tr><td class="text-muted">Pick a period and press Run.</td></tr>
+                                    <tr><td class="text-muted"><lang class="lang_pick_a_period_and_press_run">Pick a period and press Run.</lang></td></tr>
                                 </tbody>
                             </table>
                         </div>

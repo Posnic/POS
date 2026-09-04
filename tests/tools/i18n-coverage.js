@@ -77,6 +77,12 @@ function jsFiles(dir, found = []) {
  * A key used on six screens is one string to translate, not six, so this is a
  * Set.
  */
+/* Block comments, blanked rather than removed, so every offset a later
+   regex reports still points at the same place in the file. */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
 function keysUsed() {
   const used = new Set();
   /* key -> { english, where } so a translator can be handed the sentence and
@@ -109,10 +115,22 @@ function keysUsed() {
     for (const m of html.matchAll(/data-t="([^"]+)"[^>]*>([^<]*)</g)) {
       remember(m[1], m[2], file);
     }
+    /* Attributes people read: placeholder="English" data-t-placeholder="key"
+       in the same tag, in either order. */
+    for (const tag of html.matchAll(/<[a-zA-Z][^>]*>/g)) {
+      for (const m of tag[0].matchAll(/data-t-(placeholder|title|aria-label)="([^"]+)"/g)) {
+        const en = new RegExp('\\s' + m[1] + '="([^"]*)"').exec(tag[0]);
+        remember(m[2], en ? en[1] : '', file);
+      }
+    }
   }
   let calls = 0;
   for (const file of jsFiles(path.join(ROOT, 'static', 'script'))) {
-    const js = fs.readFileSync(file, 'utf8');
+    /* Block comments only, and only for the markup patterns below: a doc
+       comment that shows what a <lang> tag looks like is documentation, not
+       a string the app renders. Line comments are left alone because a
+       naive // strip eats https:// inside real string literals. */
+    const js = stripComments(fs.readFileSync(file, 'utf8'));
     for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*,\s*'([^']*)'/g)) {
       remember(m[1], m[2], file);
       calls += 1;
@@ -121,6 +139,40 @@ function keysUsed() {
     for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*\)/g)) {
       remember(m[1], '', file);
       calls += 1;
+    }
+    /* Some config data carries its key beside the English - `label: 'Today',
+       t: 'lang_this_day'` - because resolving it where the object is built
+       would run before any pack exists. The render site does the asking, so
+       the key is used even though no t() call names it here. */
+    for (const m of js.matchAll(/(?:label|title): '((?:[^'\\]|\\.)*)',\s*t: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
+    }
+    for (const m of js.matchAll(/title: '((?:[^'\\]|\\.)*)',\s*titleKey: '([^']+)'/g)) {
+      remember(m[2], m[1], file);
+    }
+    /* JavaScript renders markup too - table headers, pills, receipt labels -
+       and the observer translates it, so its keys are keys the UI uses. */
+    /* A key is a word. Anything else between those quotes is JavaScript
+       building the class from a variable; that site names its key in the
+       config the render site reads, and an earlier pattern counted it. */
+    for (const m of js.matchAll(/<lang class="([A-Za-z0-9_-]+)">([^<]*)<\/lang>/g)) {
+      remember(m[1], m[2], file);
+      tags += 1;
+    }
+    for (const m of js.matchAll(/data-t="([A-Za-z0-9_-]+)"[^>]*>([^<']*)</g)) {
+      remember(m[1], m[2], file);
+    }
+    /* A tag a module builds is usually split across three concatenated
+       literals, so there is no whole tag to match and no closing > to find.
+       Anchor on the key and read the plain attribute from the text around
+       it, which is where an author writes it. */
+    for (const m of js.matchAll(/data-t-(placeholder|title|aria-label)="([A-Za-z0-9_-]+)"/g)) {
+      const attr = new RegExp('\\s' + m[1] + '="([^"]*)"');
+      const before = js.slice(Math.max(0, m.index - 400), m.index);
+      const opened = before.lastIndexOf('<');
+      let en = attr.exec(opened >= 0 ? before.slice(opened) : before);
+      if (!en) en = attr.exec(js.slice(m.index, m.index + 400));
+      remember(m[2], en ? en[1] : '', file);
     }
   }
   return { used, tags, calls, context };
@@ -199,6 +251,24 @@ if (flag('--json')) {
  * cannot drift: a stale map would show a translator the wrong English, which is
  * a worse failure than not showing any.
  */
+/*
+ * Record where every pack stands, so a test can refuse to let one slip.
+ *
+ * A flat floor ("every pack above 95%") is the wrong instrument while the
+ * UI is still being tagged faster than the packs are filled: it goes red
+ * for weeks and everybody learns to ignore it. A ratchet does not: each
+ * pack must stay at or above the point it last reached, and the baseline
+ * moves up when translations land. Run this after merging a pack.
+ */
+if (flag('--write-baseline')) {
+  const base = {};
+  for (const r of data.rows) if (!r.error && !r.lang.startsWith('_')) base[r.lang] = r.coverage;
+  fs.writeFileSync(path.join(__dirname, '..', 'i18n-coverage-baseline.json'),
+    JSON.stringify(base, null, 2) + '\n');
+  console.log('tests/i18n-coverage-baseline.json: ' + Object.entries(base).map(([k, v]) => k + ' ' + v + '%').join(', '));
+  process.exit(0);
+}
+
 if (flag('--write-english')) {
   const en = {};
   for (const [key, c] of data.context) if (c.english) en[key] = c.english;

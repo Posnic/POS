@@ -205,8 +205,8 @@ PosnicPro.settings = {
     triggerDefault: function (name) {
         $('.customer_edit_reset').hide();
         $('default' + name).val('');
-        $('#' + name + '_title').text('Add');
-        $('#' + name + '_button_title').text('Save');
+        $('#' + name + '_title').text(PosnicPro.i18n.t('lang_nav_add', 'Add'));
+        $('#' + name + '_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.' + name + '-trigger').val('');
         $(".infobar-settings-sidebar-overlay").css({ "background": "rgba(0,0,0,0.4)", "position": "fixed" });
         $("#infobar-settings-sidebar-" + name).addClass("sidebarshow");
@@ -255,14 +255,14 @@ PosnicPro.settings = {
                         $('.salenote_hide').show();
                     }
                     if (data.sale_process === 'Add' || data.sale_process === 'Edit' || data.sale_process === 'Hold') {
-                        $('.sale-view-heading').html('Sale');
+                        $('.sale-view-heading').html(PosnicPro.i18n.t('lang_newsale_title', 'Sale'));
                         $('.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print,#show_sales_print').hide();
                     } else if (data.sale_process === 'FullReturn') {
-                        $('.sale-view-heading').html('Return');
+                        $('.sale-view-heading').html(PosnicPro.i18n.t('lang_return_title', 'Return'));
                         $('.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print').show();
                         $('#viewsale_edit_print_view,#salesitemtitleText,#sales-total-hide,#sale_print_view,#hide_sales_print,#show_sales_print').hide();
                     } else {
-                        $('.sale-view-heading').html('Sale');
+                        $('.sale-view-heading').html(PosnicPro.i18n.t('lang_newsale_title', 'Sale'));
                         $('#sales-total-hide,.hide-sale-return,#salesreturntitleText,#return_print_view,#hide_return_print,#show_sales_print').show();
                         $('#hide_sales_print,#hide_return_print').hide();
                     }
@@ -348,8 +348,8 @@ PosnicPro.settings = {
                         var row = response.data.list[i];
                         var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                         var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "branch" data-access = "read"  href="#/settings/' + row._id + '" data-id="settings/' + row._id + '"  data-toggle="tooltip" title="View" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "branch" data-access = "write" data-toggle="tooltip" title="Restore" href="#/settings/' + row._id + '/restore" data-id="settings/' + row._id + '/restore" class="point-cursor mobile_tooltip"><i class="feather icon-repeat"></i></a>' +
+                            '<a data-module = "branch" data-access = "read"  href="#/settings/' + row._id + '" data-id="settings/' + row._id + '"  data-toggle="tooltip" title="View" data-t-title="lang_view" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
+                            '<a data-module = "branch" data-access = "write" data-toggle="tooltip" title="Restore" data-t-title="lang_restore_title" href="#/settings/' + row._id + '/restore" data-id="settings/' + row._id + '/restore" class="point-cursor mobile_tooltip"><i class="feather icon-repeat"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
                         var updateDate = PosnicPro.convertDate(row.string_date);
@@ -481,7 +481,7 @@ PosnicPro.settings = {
                 }
             });
         } else {
-            PosnicPro.alert('success', 'Image updated');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_image_updated', 'Image updated'));
         }
         return false;
     },
@@ -540,13 +540,13 @@ PosnicPro.settings = {
                     return;
                 }
                 if (response.type === 'success') {
-                    $('.print_store_address').html(response.data['printing_address']);
-                    $('.print_store_telephone').html(response.data['store_telephone']);
-                    $('.print_store_alternativephone').html(response.data['store_alternativephone']);
-                    $('.print_store_email').html(response.data['store_email']);
-                    $('.print_store_gst').html(response.data['branch_gstin_number']);
-                    $('.print_store_name').html(response.data['branch_name']);
-                    $('.display-currency').html(currency);
+                    $('.print_store_address').text(response.data['printing_address']);
+                    $('.print_store_telephone').text(response.data['store_telephone']);
+                    $('.print_store_alternativephone').text(response.data['store_alternativephone']);
+                    $('.print_store_email').text(response.data['store_email']);
+                    $('.print_store_gst').text(response.data['branch_gstin_number']);
+                    $('.print_store_name').text(response.data['branch_name']);
+                    $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
                     PosnicPro.local.set('countryid', response.data['country_id']);
@@ -559,7 +559,7 @@ PosnicPro.settings = {
                     PosnicPro.local.set('timezone', response.data['time_zone']);
                     PosnicPro.local.set('timeformat', response.data['time_format']);
                     PosnicPro.local.set('currencySign', currency);
-                    $(".branch-name").html(response.data['branch_name']);
+                    $(".branch-name").text(response.data['branch_name']);
                     PosnicPro.local.set('branchname', response.data['branch_name']);
                     PosnicPro.local.set('branchemail', response.data['store_email']);
                     PosnicPro.local.set('branchphone', response.data['store_telephone']);
@@ -1248,10 +1248,10 @@ if ($wrapper.length) {
                     $(controls).each(function (key, controlKey) {
                         PosnicPro.local.set(controlKey, defaultControlValue);
                     });
-                    PosnicPro.local.set('receiving_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Purchase Invoice</span>");
-                    PosnicPro.local.set('receiving_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Purchase Return Invoice</span>");
-                    PosnicPro.local.set('sale_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Sales Receipt</span>");
-                    PosnicPro.local.set('sale_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\">Sales Return Receipt</span>");
+                    PosnicPro.local.set('receiving_title', "<span style=\"font-size: 14px !important; font-weight: 900;\"><lang class='lang_purchase_invoice'>Purchase Invoice</lang></span>");
+                    PosnicPro.local.set('receiving_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\"><lang class='lang_purchase_return_invoice'>Purchase Return Invoice</lang></span>");
+                    PosnicPro.local.set('sale_title', "<span style=\"font-size: 14px !important; font-weight: 900;\"><lang class='lang_sales_receipt_2'>Sales Receipt</lang></span>");
+                    PosnicPro.local.set('sale_return_title', "<span style=\"font-size: 14px !important; font-weight: 900;\"><lang class='lang_sales_return_receipt'>Sales Return Receipt</lang></span>");
                 }
 
                 // SET, never append: the old append-at-response after a
@@ -1263,28 +1263,28 @@ if ($wrapper.length) {
                 var htmlHeaderView = $('#header_print').text();
                 PosnicPro.settings._printDocs.header = htmlHeaderView;
                 if (PosnicPro.settings._editorsReady) { $('#header_print').summernote('code', htmlHeaderView); }
-                $('.header-content').html(htmlHeaderView);
+                $('.header-content').text(htmlHeaderView);
 
                 let footerContent = (data.footer_print !== '') ? data.footer_print : 'Thank you for shopping...!';
                 $('#footer_print').html('').append(footerContent);
                 var htmlView = $('#footer_print').text();
                 PosnicPro.settings._printDocs.footer = htmlView;
                 if (PosnicPro.settings._editorsReady) { $('#footer_print').summernote('code', htmlView); }
-                $('.footer-content').html(htmlView);
+                $('.footer-content').text(htmlView);
 
-                $('.print_store_name').html(data.branch_name);
-                $('.print_store_gst').html(data.branch_gstin_number);
-                $('.print_store_address').html(data.printing_address);
-                $('.print_store_city').html(data.city);
-                $('.print_store_email').html(data.store_email);
-                $('.print_store_telephone').html(data.store_telephone);
-                $('.print_store_alternativephone').html('');
+                $('.print_store_name').text(data.branch_name);
+                $('.print_store_gst').text(data.branch_gstin_number);
+                $('.print_store_address').text(data.printing_address);
+                $('.print_store_city').text(data.city);
+                $('.print_store_email').text(data.store_email);
+                $('.print_store_telephone').text(data.store_telephone);
+                $('.print_store_alternativephone').text('');
                 if (data.store_alternativephone !== null && data.store_alternativephone !== undefined && data.store_alternativephone.trim() !== "") {
-                    $('.print_store_alternativephone').html(data.store_alternativephone);
+                    $('.print_store_alternativephone').text(data.store_alternativephone);
                 }
-                $('.print_store_country').html(data.country);
-                $('.print_store_state').html(data.state);
-                $('.print_store_pincode').html(data.pincode);
+                $('.print_store_country').text(data.country);
+                $('.print_store_state').text(data.state);
+                $('.print_store_pincode').text(data.pincode);
                 $("#receiving_tax option[value='" + data.tax_percentage + "']").prop("selected", true);
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
@@ -1483,7 +1483,7 @@ if ($wrapper.length) {
         const isValid = /^[A-Za-z0-9]{3,6}$/.test(storeId);
         if (!isValid) {
             loader.find(".loadingSpinner").remove();
-            PosnicPro.alert('error', 'Store ID and Secret Key must be 3–6 letters/numbers only');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_store_id_and_secret_key_must_be_3_6_letter', 'Store ID and Secret Key must be 3-6 letters/numbers only'));
             return false;
         }
 
@@ -1512,7 +1512,7 @@ if ($wrapper.length) {
                 const response = JSON.parse(xhr.responseText);
                 PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
             } catch (e) {
-                PosnicPro.alert('error', 'Something went wrong. Please try again.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_something_went_wrong_please_try_again', 'Something went wrong. Please try again.'));
             }
         });
 
@@ -1558,7 +1558,7 @@ if ($wrapper.length) {
                 const response = JSON.parse(xhr.responseText);
                 PosnicPro.alert(response.type || 'error', response.message || 'Unexpected server error');
             } catch (e) {
-                PosnicPro.alert('error', 'Something went wrong. Please try again.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_something_went_wrong_please_try_again', 'Something went wrong. Please try again.'));
             }
         });
     },
@@ -1646,14 +1646,13 @@ if ($wrapper.length) {
             return $(this).val() && $(this).val() !== 'addbranch';
         });
         if (options.length < 2) { $('#modules_branch_wrap').hide(); return; }
-        var html = '';
+        $sel.empty();
         options.each(function () {
             var v = $(this).val();
             var label = $(this).text();
-            html += '<option value="' + v + '"' + (String(v) === String(sessionBranch) ? ' selected' : '') + '>'
-                + label + (String(v) === String(sessionBranch) ? ' (this till)' : '') + '</option>';
+            var isSession = String(v) === String(sessionBranch);
+            $sel.append(new Option(label + (isSession ? ' (this till)' : ''), v, false, isSession));
         });
-        $sel.html(html);
         $('#modules_branch_wrap').show();
     },
     _modulesRemoteBranch: function () {
@@ -1671,7 +1670,7 @@ if ($wrapper.length) {
         }
         PosnicPro.get('setting/branchModules?branch_id=' + encodeURIComponent(remote), function (response) {
             var d = response && response.data;
-            if (!d || !d.modules) { PosnicPro.alert('error', 'Could not load that branch'); return; }
+            if (!d || !d.modules) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_that_branch', 'Could not load that branch')); return; }
             PosnicPro.settings._moduleToggleIds.forEach(function (key) {
                 if (d.modules[key] !== undefined) {
                     $('#' + key).prop('checked', d.modules[key] === true);
@@ -1683,7 +1682,7 @@ if ($wrapper.length) {
             );
             $('#modules_remote_note').show();
         }, function () {
-            PosnicPro.alert('error', 'Could not load that branch');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_that_branch', 'Could not load that branch'));
         });
     },
     saveModulesTab: function () {
@@ -1714,7 +1713,7 @@ if ($wrapper.length) {
                 PosnicPro.alert(response.type, response.message);
             }
         }, function () {
-            PosnicPro.alert('error', 'Could not save that branch');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_that_branch', 'Could not save that branch'));
         });
     },
     /* successLabel: what the toast says on success - each Save button names
@@ -1845,9 +1844,9 @@ if ($wrapper.length) {
                 PosnicPro.settings._featuresDirty = false;
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
-                $('.footer-content').html(htmlView);
+                $('.footer-content').text(htmlView);
                 let htmlHeaderView = $('#header_print').text();
-                $('.header-content').html(htmlHeaderView);
+                $('.header-content').text(htmlHeaderView);
                 if (_taxId) {
                     $(".items_tax").val(_taxId).trigger("change");
                     PosnicPro.local.set('default_tax_id', _taxId);
@@ -2094,7 +2093,7 @@ if ($("#sale_quick_edit").is(":checked")) {
             $('#restoreModal').modal('show');
             $('.restoreCountValue').html(restore.length);
         } else {
-            PosnicPro.alert('warning', 'Select at least one row.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_at_least_one_row', 'Select at least one row.'));
         }
     },
     setRestoreAccess: function () {
@@ -2200,7 +2199,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                         
                         db.currentregister.put({id: '1', register_id: '', register_name: '', register_status: 'close'});
                         
-                        PosnicPro.alert('success', 'Branch changed - Please select a register before creating sales');
+                        PosnicPro.alert('success', PosnicPro.i18n.t('lang_branch_changed_please_select_a_register_be', 'Branch changed - Please select a register before creating sales'));
                     }
                 });
                 
@@ -2211,7 +2210,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 $("#v-pills-dashboard-tab").addClass('active');
                 $("#v-pills-dashboard-tab").addClass('active show');
                 hasher.setHash('branches');
-                PosnicPro.alert('success', 'Branch changed');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_branch_changed', 'Branch changed'));
             }
             return false;
         }, function (xhr) {
@@ -2520,8 +2519,8 @@ PosnicPro.tax = {
                 let currency = PosnicPro.local.get('currencySign');
                 for (var i = 0; i < data.length; i++) {
                     let row = data[i];
-                    let edit = '<a href="#/settings/tax/' + row.tax_id + '/edit" id="setting_tax_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" class="btn btn-primary-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "write" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-edit"></i></a>';
-                    let deleted = '<a href="#/settings/tax/' + row.tax_id + '/delete" id="setting_tax_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" class="btn btn-danger-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "delete" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-trash"></i></a>';
+                    let edit = '<a href="#/settings/tax/' + row.tax_id + '/edit" id="setting_tax_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" data-t-title="lang_edit_tax" class="btn btn-primary-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "write" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/tax/' + row.tax_id + '/delete" id="setting_tax_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" data-t-title="lang_delete_tax" class="btn btn-danger-rgba mb-1 mr-1 mobile_tooltip" data-module = "branch" data-access = "delete" data-taxname="' + row.tax_name + '" data-taxvalue="' + row.tax_value + '" ><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td>  <td width="40%">' + row.tax_name + '</td> <td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.tax_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     $('#view_tax').children('tbody').append(trow);
                 }
@@ -2669,8 +2668,8 @@ PosnicPro.denom = {
                 }
                 for (var i = 0; i < data.length; i++) {
                     let row = data[i];
-                    let edit = '<a href="#/settings/denom/' + row.denom_id + '/edit" id="setting_denom_edit_' + row.denom_id + '" data-toggle="tooltip" title="Edit Denom" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-edit"></i></a>';
-                    let deleted = '<a href="#/settings/denom/' + row.denom_id + '/delete" id="setting_denom_delete_' + row.denom_id + '" data-toggle="tooltip" title="Delete Denom" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-trash"></i></a>';
+                    let edit = '<a href="#/settings/denom/' + row.denom_id + '/edit" id="setting_denom_edit_' + row.denom_id + '" data-toggle="tooltip" title="Edit Denom" data-t-title="lang_edit_denom" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/denom/' + row.denom_id + '/delete" id="setting_denom_delete_' + row.denom_id + '" data-toggle="tooltip" title="Delete Denom" data-t-title="lang_delete_denom" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-denomvalue="' + row.denom_value + '" ><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.denom_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     $('#view_denom').children('tbody').append(trow);
                     PosnicPro.sales.SaleDenomination[i] = {
@@ -2857,8 +2856,8 @@ PosnicPro.tableOrders = {
         // Render table rows for current page
         for (var i = startIndex; i < endIndex; i++) {
             let row = data[i];
-            let edit = '<a href="#/settings/tableorder/' + row.tableorder_id + '/edit" id="setting_tableorder_edit_' + row.tableorder_id + '" data-toggle="tooltip" title="Edit Table Order" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="write" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-edit"></i></a>';
-            let deleted = '<a href="#/settings/tableorder/' + row.tableorder_id + '/delete" id="setting_tableorder_delete_' + row.tableorder_id + '" data-toggle="tooltip" title="Delete Table Order" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="delete" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-trash"></i></a>';
+            let edit = '<a href="#/settings/tableorder/' + row.tableorder_id + '/edit" id="setting_tableorder_edit_' + row.tableorder_id + '" data-toggle="tooltip" title="Edit Table Order" data-t-title="lang_edit_table_order" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="write" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-edit"></i></a>';
+            let deleted = '<a href="#/settings/tableorder/' + row.tableorder_id + '/delete" id="setting_tableorder_delete_' + row.tableorder_id + '" data-toggle="tooltip" title="Delete Table Order" data-t-title="lang_delete_table_order" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module="branch" data-access="delete" data-tableordervalue="' + row.tableorder_value + '" ><i class="feather icon-trash"></i></a>';
             let trow = '<tr><td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.tableorder_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td></tr>';
             table.children('tbody').append(trow);
         }
@@ -3069,8 +3068,8 @@ PosnicPro.payment = {
                 var data = response.data;
                 for (var i = 0; i < data.length; i++) {
                     let row = data[i];
-                    let edit = '<a href="#/settings/payment/' + row.payment_id + '/edit" id="setting_payment_edit_' + row.payment_id + '" data-toggle="tooltip" title="Edit Payment" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-edit"></i></a>';
-                    let deleted = '<a href="#/settings/payment/' + row.payment_id + '/delete" id="setting_payment_delete_' + row.payment_id + '" data-toggle="tooltip" title="Delete Payment" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-trash"></i></a>';
+                    let edit = '<a href="#/settings/payment/' + row.payment_id + '/edit" id="setting_payment_edit_' + row.payment_id + '" data-toggle="tooltip" title="Edit Payment" data-t-title="lang_edit_payment" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/payment/' + row.payment_id + '/delete" id="setting_payment_delete_' + row.payment_id + '" data-toggle="tooltip" title="Delete Payment" data-t-title="lang_delete_payment" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.payment_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     $('#view_payment').children('tbody').append(trow);
                     PosnicPro.configPaymentType[i] = {
@@ -3195,7 +3194,7 @@ PosnicPro.taxgroup = {
         $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val('');
-        //        $('#taxgroup_text_change').text('Save');
+        //        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#taxgroup_reset').show();
         $('.taxgroup_edit_reset').hide();
@@ -3226,7 +3225,7 @@ PosnicPro.taxgroup = {
         $('#taxgroup-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
         PosnicPro.showAddModal('taxgroup');
         $('#taxgroup_id').val(id);
-        //        $('#taxgroup_text_change').text('Update');
+        //        $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
         $('#taxgroup_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         var loader = $(".loader-taxgroup");
         loader.find(".loadingSpinner:first").remove();
@@ -3291,8 +3290,8 @@ PosnicPro.taxgroup = {
                 let currency = PosnicPro.local.get('currencySign');
                 for (var i = 0; i < data.length; i++) {
                     let row = data[i];
-                    let edit = '<a href="#/settings/taxgroup/' + row.tax_id + '/edit" id="setting_taxgroup_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write"><i class="feather icon-edit"></i></a>';
-                    let deleted = '<a href="#/settings/taxgroup/' + row.tax_id + '/delete" id="setting_taxgroup_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete"><i class="feather icon-trash"></i></a>';
+                    let edit = '<a href="#/settings/taxgroup/' + row.tax_id + '/edit" id="setting_taxgroup_edit_' + row.tax_id + '" data-toggle="tooltip" title="Edit Tax" data-t-title="lang_edit_tax" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write"><i class="feather icon-edit"></i></a>';
+                    let deleted = '<a href="#/settings/taxgroup/' + row.tax_id + '/delete" id="setting_taxgroup_delete_' + row.tax_id + '" data-toggle="tooltip" title="Delete Tax" data-t-title="lang_delete_tax" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete"><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td>  <td width="40%">' + row.tax_name + '</td> <td width="10%" class="text-right">' + currency + '&nbsp;<span class="number">' + row.tax_value + '</span></td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     table.children('tbody').append(trow);
                 }
@@ -3443,7 +3442,7 @@ PosnicPro.kiosk = {
                 }
             } else {
                 $("#" + inputId).val(''); // Clear the input
-                PosnicPro.alert('error', "File size should be less than 5MB!");
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_file_size_should_be_less_than_5mb', 'File size should be less than 5MB!'));
             }
         });
     },
@@ -3564,8 +3563,7 @@ $(function () {
         if (window.electronAPI && window.electronAPI.desktop) {
             window.electronAPI.desktop.open('hardware');
         } else {
-            PosnicPro.alert('warning',
-                'Hardware Manager is part of the desktop app. Open Posnic on the till to set the printer.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_hardware_manager_is_part_of_the_desktop_ap', 'Hardware Manager is part of the desktop app. Open Posnic on the till to set the printer.'));
         }
     });
 
@@ -3935,7 +3933,7 @@ $("#payment_add_form").submit(function (event) {
     }
 });
 $('#tableorder_value').on('input', function () {
-    // remove anything that is not A–Z, a–z, 0–9
+    // remove anything that is not A-Z, a-z, 0-9
     this.value = this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
 });
 $("#tableorder_add_form").validate({
@@ -4553,7 +4551,7 @@ $("#payment_gateway").on('change', function (event) {
     if ($('#payment_gateway').is(":checked")) {
         if ($('#site_key').val() === '' || $('#secret_key').val() === '') {
             $('#payment_gateway').prop("checked", false).attr('unchecked', 'unchecked');
-            PosnicPro.alert('warning', 'Fill in all required fields.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_fill_in_all_required_fields', 'Fill in all required fields.'));
         }
     }
 });
@@ -4583,7 +4581,7 @@ PosnicPro.settings.initPrintEditors = function () {
         ['fontsize', ['fontsize']],
         ['fontname', ['fontname']]
     ],
-    placeholder: 'Enter a content ...',
+    placeholder: PosnicPro.i18n.t('lang_enter_a_content', 'Enter a content ...'),
     focus: true,
     callbacks: {
         onKeydown: function (e) {
@@ -4730,6 +4728,8 @@ $(document).on('change', '#v-pills-modules .module-card-head input.custom-contro
         && PosnicPro.settings._demoWasOn !== false) {
         PosnicPro.settings.confirmDemoOff(this, ['#fp_master']);
     }
+    /* Quotes and Invoices are two halves of one job - see suggestPartner. */
+    PosnicPro.settings.suggestPartner(this);
 });
 // Unsaved feature changes get a real decision (owner upgrade from the
 // toast): Stay pulls you back with every selection intact; Leave
@@ -4807,7 +4807,7 @@ PosnicPro.integrations = {
         api.status().then(function (r) {
             var rows = (r && r.connectors) || [];
             if (!rows.length) {
-                $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-muted">None installed yet - connectors arrive with the till&#39;s update checks once published.</td></tr>');
+                $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_none_installed_yet_connectors_arrive_with">None installed yet - connectors arrive with the till&#39;s update checks once published.</lang></td></tr>');
                 return;
             }
             var badge = function (c) {
@@ -4829,7 +4829,7 @@ PosnicPro.integrations = {
             });
             $('#int_connectors_body').html(html);
         }).catch(function () {
-            $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-danger">Could not reach the till&#39;s connector runtime.</td></tr>');
+            $('#int_connectors_body').html('<tr><td colspan="4" class="text-center text-danger"><lang class="lang_could_not_reach_the_till_39_s_connector_ru">Could not reach the till&#39;s connector runtime.</lang></td></tr>');
         });
     },
     enableConnector: function (name) {
@@ -4858,7 +4858,7 @@ PosnicPro.integrations = {
                 }
             });
         }, function () {
-            PosnicPro.alert('error', 'Could not mint the connector token.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_mint_the_connector_token', 'Could not mint the connector token.'));
         });
     },
     disableConnector: function (name) {
@@ -4882,7 +4882,7 @@ PosnicPro.integrations = {
             var rows = (r && r.data) || [];
             var esc = PosnicPro.integrations.esc;
             if (!rows.length) {
-                $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-muted">No tokens yet - mint one for each integration.</td></tr>');
+                $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_no_tokens_yet_mint_one_for_each_integratio">No tokens yet - mint one for each integration.</lang></td></tr>');
                 return;
             }
             var html = '';
@@ -4904,7 +4904,7 @@ PosnicPro.integrations = {
             });
             $('#int_tokens_body').html(html);
         }, function () {
-            $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-danger">Could not load tokens.</td></tr>');
+            $('#int_tokens_body').html('<tr><td colspan="5" class="text-center text-danger"><lang class="lang_could_not_load_tokens">Could not load tokens.</lang></td></tr>');
         });
     },
     openMint: function () {
@@ -4928,7 +4928,7 @@ PosnicPro.integrations = {
             scopes[m][p] = true;
             granted++;
         });
-        if (!granted) { PosnicPro.alert('error', 'Grant at least one permission - a token that can do nothing is a mistake, not a credential.'); return; }
+        if (!granted) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_grant_at_least_one_permission_a_token_that', 'Grant at least one permission - a token that can do nothing is a mistake, not a credential.')); return; }
         PosnicPro.post({
             url: 'api-tokens',
             data: JSON.stringify({ name: $('#int_mint_name').val() || 'API token', scopes: scopes })
@@ -4949,14 +4949,14 @@ PosnicPro.integrations = {
     },
     copyToken: function () {
         navigator.clipboard.writeText($('#int_token_plain').text()).then(function () {
-            PosnicPro.alert('success', 'Token copied');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_token_copied', 'Token copied'));
         });
     },
     revoke: function (id) {
         PosnicPro.delete({ url: 'api-tokens/' + id, data: JSON.stringify({}) }, function (r) {
             PosnicPro.alert((r && r.type) || 'success', (r && r.message) || 'Token revoked');
             PosnicPro.integrations.loadTokens();
-        }, function () { PosnicPro.alert('error', 'Could not revoke the token.'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_revoke_the_token', 'Could not revoke the token.')); });
     },
     // ---- webhooks ----
     loadHooks: function () {
@@ -4964,7 +4964,7 @@ PosnicPro.integrations = {
         PosnicPro.get({ url: 'webhooks', data: {} }, function (r) {
             var rows = (r && r.data) || [];
             if (!rows.length) {
-                $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-muted">No webhooks - register an endpoint to receive change signals.</td></tr>');
+                $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_no_webhooks_register_an_endpoint_to_receiv">No webhooks - register an endpoint to receive change signals.</lang></td></tr>');
             } else {
                 var html = '';
                 rows.forEach(function (h) {
@@ -4978,12 +4978,12 @@ PosnicPro.integrations = {
                 $('#int_hooks_body').html(html);
             }
         }, function () {
-            $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load webhooks.</td></tr>');
+            $('#int_hooks_body').html('<tr><td colspan="4" class="text-center text-danger"><lang class="lang_could_not_load_webhooks">Could not load webhooks.</lang></td></tr>');
         });
         PosnicPro.get({ url: 'webhooks/deliveries', data: {} }, function (r) {
             var rows = (r && r.data) || [];
             if (!rows.length) {
-                $('#int_deliveries_body').html('<tr><td colspan="5" class="text-center text-muted">No deliveries yet.</td></tr>');
+                $('#int_deliveries_body').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_no_deliveries_yet">No deliveries yet.</lang></td></tr>');
                 return;
             }
             var html = '';
@@ -5033,14 +5033,14 @@ PosnicPro.integrations = {
     },
     copySecret: function () {
         navigator.clipboard.writeText($('#int_hook_secret').text()).then(function () {
-            PosnicPro.alert('success', 'Secret copied');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_secret_copied', 'Secret copied'));
         });
     },
     removeHook: function (id) {
         PosnicPro.delete({ url: 'webhooks/' + id, data: JSON.stringify({}) }, function (r) {
             PosnicPro.alert((r && r.type) || 'success', (r && r.message) || 'Webhook removed');
             PosnicPro.integrations.loadHooks();
-        }, function () { PosnicPro.alert('error', 'Could not remove the webhook.'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_remove_the_webhook', 'Could not remove the webhook.')); });
     }
 };
 
@@ -5062,7 +5062,7 @@ PosnicPro.modifiers = {
             var rows = (r && r.data) || [];
             PosnicPro.modifiers._cache = rows;
             if (!rows.length) {
-                $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-muted">No modifier groups yet - the kitchen menu starts here.</td></tr>');
+                $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_no_modifier_groups_yet_the_kitchen_menu_st">No modifier groups yet - the kitchen menu starts here.</lang></td></tr>');
                 return;
             }
             var html = '';
@@ -5082,7 +5082,7 @@ PosnicPro.modifiers = {
             });
             $('#modifier_groups_body').html(html);
         }, function () {
-            $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load modifier groups.</td></tr>');
+            $('#modifier_groups_body').html('<tr><td colspan="4" class="text-center text-danger"><lang class="lang_could_not_load_modifier_groups">Could not load modifier groups.</lang></td></tr>');
         });
     },
     openEditor: function (id) {
@@ -5093,32 +5093,32 @@ PosnicPro.modifiers = {
             return '<div class="form-row mb-1 mod-opt-row">'
                 + '<div class="col-7"><input type="text" class="form-control form-control-sm mod-opt-name" maxlength="60" placeholder="e.g. Extra cheese" value="' + esc(o.name) + '"></div>'
                 + '<div class="col-4"><input type="number" step="0.01" class="form-control form-control-sm mod-opt-delta" placeholder="+/- price" value="' + (Number(o.price_delta) || 0) + '"></div>'
-                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger mod-opt-remove" aria-label="Remove"><i class="feather icon-x"></i></a></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger mod-opt-remove" aria-label="Remove" data-t-aria-label="lang_remove"><i class="feather icon-x"></i></a></div>'
                 + '</div>';
         };
         $('#modifier_editor_modal').remove();
         $('body').append(
             '<div class="modal fade close_on_esc" id="modifier_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">'
             + '<div class="modal-dialog" role="document"><div class="modal-content">'
-            + '<div class="modal-header"><h5 class="modal-title">' + (id ? 'Edit' : 'New') + ' Modifier Group</h5>'
-            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            + '<div class="modal-header"><h5 class="modal-title">' + (id ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_addvariant_title', 'New')) + ' Modifier Group</h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
             + '<div class="modal-body">'
             + '<input type="hidden" id="mod_edit_id" value="' + esc(id || '') + '">'
-            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Group name</label>'
+            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_group_name">Group name</lang></label>'
             + '<input type="text" class="form-control" id="mod_edit_name" maxlength="60" placeholder="e.g. Toppings" value="' + esc(g.name || '') + '"></div>'
             + '<div class="form-row">'
-            + '<div class="form-group col-6"><label style="font-weight:600; font-size:.85rem;">Min picks</label>'
+            + '<div class="form-group col-6"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_min_picks">Min picks</lang></label>'
             + '<input type="number" min="0" class="form-control" id="mod_edit_min" value="' + (g.min || 0) + '"></div>'
             + '<div class="form-group col-6"><label style="font-weight:600; font-size:.85rem;">Max picks <small class="text-muted">(0 = no limit)</small></label>'
             + '<input type="number" min="0" class="form-control" id="mod_edit_max" value="' + (g.max || 0) + '"></div>'
             + '</div>'
-            + '<label style="font-weight:600; font-size:.85rem;">Options</label>'
+            + '<label style="font-weight:600; font-size:.85rem;"><lang class="lang_options">Options</lang></label>'
             + '<div id="mod_edit_options">' + ((g.options && g.options.length) ? g.options.map(optionRow).join('') : optionRow()) + '</div>'
             + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="mod_opt_add">+ Option</button>'
             + '</div>'
             + '<div class="modal-footer">'
-            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>'
-            + '<button type="button" class="btn btn-outline-primary" id="mod_edit_save" onclick="PosnicPro.modifiers.save();">Save</button>'
+            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>'
+            + '<button type="button" class="btn btn-outline-primary" id="mod_edit_save" onclick="PosnicPro.modifiers.save();"><lang class="lang_save_title">Save</lang></button>'
             + '</div></div></div></div>'
         );
         $('#modifier_editor_modal').modal('show');
@@ -5189,7 +5189,7 @@ PosnicPro.pricelists = {
             var rows = (r && r.data) || [];
             PosnicPro.pricelists._cache = rows;
             if (!rows.length) {
-                $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-muted">No price lists yet - wholesale pricing starts here.</td></tr>');
+                $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_no_price_lists_yet_wholesale_pricing_start">No price lists yet - wholesale pricing starts here.</lang></td></tr>');
                 return;
             }
             var html = '';
@@ -5207,7 +5207,7 @@ PosnicPro.pricelists = {
             });
             $('#pricelists_body').html(html);
         }, function () {
-            $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-danger">Could not load price lists.</td></tr>');
+            $('#pricelists_body').html('<tr><td colspan="4" class="text-center text-danger"><lang class="lang_could_not_load_price_lists">Could not load price lists.</lang></td></tr>');
         });
     },
     openEditor: function (id) {
@@ -5216,21 +5216,21 @@ PosnicPro.pricelists = {
         var overrideRow = function (o) {
             o = o || { item_id: '', item_name: '', price: '' };
             return '<div class="form-row mb-1 pl-ov-row">'
-                + '<div class="col-7"><input type="text" class="form-control form-control-sm pl-ov-name" placeholder="Type to search an item" value="' + esc(o.item_name) + '" data-itemid="' + esc(o.item_id) + '"></div>'
-                + '<div class="col-4"><input type="number" min="0" step="0.01" class="form-control form-control-sm pl-ov-price" placeholder="Price" value="' + (o.price === '' ? '' : (Number(o.price) || 0)) + '"></div>'
-                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger pl-ov-remove" aria-label="Remove"><i class="feather icon-x"></i></a></div>'
+                + '<div class="col-7"><input type="text" class="form-control form-control-sm pl-ov-name" placeholder="Type to search an item" data-t-placeholder="lang_type_to_search_an_item" value="' + esc(o.item_name) + '" data-itemid="' + esc(o.item_id) + '"></div>'
+                + '<div class="col-4"><input type="number" min="0" step="0.01" class="form-control form-control-sm pl-ov-price" placeholder="Price" data-t-placeholder="lang_price_title" value="' + (o.price === '' ? '' : (Number(o.price) || 0)) + '"></div>'
+                + '<div class="col-1"><a href="javascript:void(0);" class="text-danger pl-ov-remove" aria-label="Remove" data-t-aria-label="lang_remove"><i class="feather icon-x"></i></a></div>'
                 + '</div>';
         };
         $('#pricelist_editor_modal').remove();
         $('body').append(
             '<div class="modal fade close_on_esc" id="pricelist_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">'
             + '<div class="modal-dialog" role="document"><div class="modal-content">'
-            + '<div class="modal-header"><h5 class="modal-title">' + (id ? 'Edit' : 'New') + ' Price List</h5>'
-            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            + '<div class="modal-header"><h5 class="modal-title">' + (id ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_addvariant_title', 'New')) + ' Price List</h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
             + '<div class="modal-body">'
             + '<input type="hidden" id="pl_edit_id" value="' + esc(id || '') + '">'
-            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Customer category</label>'
-            + '<select class="form-control" id="pl_edit_category"><option value="">Loading&hellip;</option></select></div>'
+            + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;"><lang class="lang_customer_category">Customer category</lang></label>'
+            + '<select class="form-control" id="pl_edit_category"><option value="" data-t="lang_loading">Loading&hellip;</option></select></div>'
             + '<div class="form-group"><label style="font-weight:600; font-size:.85rem;">Percent off <small class="text-muted">(negative = markup; 0 = item prices only)</small></label>'
             + '<input type="number" step="0.01" class="form-control" id="pl_edit_percent" value="' + (l.percent_off || 0) + '"></div>'
             + '<label style="font-weight:600; font-size:.85rem;">Exact item prices <small class="text-muted">(win over the percentage)</small></label>'
@@ -5238,8 +5238,8 @@ PosnicPro.pricelists = {
             + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="pl_ov_add">+ Item price</button>'
             + '</div>'
             + '<div class="modal-footer">'
-            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>'
-            + '<button type="button" class="btn btn-outline-primary" onclick="PosnicPro.pricelists.save();">Save</button>'
+            + '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>'
+            + '<button type="button" class="btn btn-outline-primary" onclick="PosnicPro.pricelists.save();"><lang class="lang_save_title">Save</lang></button>'
             + '</div></div></div></div>'
         );
         $('#pricelist_editor_modal').modal('show');
@@ -5267,9 +5267,9 @@ PosnicPro.pricelists = {
                 var sel = String(c.id) === String(l.customer_category_id) ? ' selected' : '';
                 opts += '<option value="' + esc(c.id) + '" data-name="' + esc(c.name) + '"' + sel + '>' + esc(c.name) + '</option>';
             });
-            $('#pl_edit_category').html(opts || '<option value="">No customer categories yet</option>');
+            $('#pl_edit_category').html(opts || '<option value="" data-t="lang_no_customer_categories_yet">No customer categories yet</option>');
         }, function () {
-            $('#pl_edit_category').html('<option value="">Could not load categories</option>');
+            $('#pl_edit_category').html('<option value="" data-t="lang_could_not_load_categories">Could not load categories</option>');
         });
     },
     save: function () {
@@ -5304,7 +5304,7 @@ PosnicPro.pricelists = {
         PosnicPro.delete({ url: 'setting/priceLists/' + id, data: JSON.stringify({}) }, function (r) {
             PosnicPro.alert((r && r.type) || 'error', (r && r.message) || '');
             PosnicPro.pricelists.load();
-        }, function () { PosnicPro.alert('error', 'Could not delete the list.'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_delete_the_list', 'Could not delete the list.')); });
     }
 };
 $(document).on('click', '.pl-edit-btn', function () { PosnicPro.pricelists.openEditor($(this).data('id')); });
@@ -5600,20 +5600,20 @@ PosnicPro.features = {
         var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
         var ctx = PosnicPro.features.runningContext();
         if (ctx === 'desktop') {
-            return '<b>You are in the desktop app.</b> Your data lives on this computer, so ' +
+            return '<b><lang class="lang_you_are_in_the_desktop_app">You are in the desktop app.</lang></b> Your data lives on this computer, so ' +
                 'selling works with no internet at all. The same shop also opens in any web ' +
                 'browser - the address is in your welcome email, and under ' +
-                '<b>My Account</b> on posnic.com.';
+                '<b><lang class="lang_my_account">My Account</lang></b> on posnic.com.';
         }
         if (ctx === 'web') {
-            return '<b>You are in the web version.</b> The address of this shop is ' +
+            return '<b><lang class="lang_you_are_in_the_web_version">You are in the web version.</lang></b> The address of this shop is ' +
                 '<b>' + esc(window.location.hostname) + '</b> - it opens on any computer or ' +
                 'phone, so share it with your staff. For a till that keeps selling when the ' +
                 'internet drops, the free desktop app is at <b>posnic.com/download</b>.';
         }
-        return '<b>You are on the shop network.</b> This till runs from the shop computer ' +
+        return '<b><lang class="lang_you_are_on_the_shop_network">You are on the shop network.</lang></b> This till runs from the shop computer ' +
             'and works with no internet. If you signed up on posnic.com, the same shop ' +
-            'also opens in any browser - the address is under <b>My Account</b> there.';
+            'also opens in any browser - the address is under <b><lang class="lang_my_account">My Account</lang></b> there.';
     },
 
     setupSummary: function () {
@@ -5928,7 +5928,7 @@ PosnicPro.features = {
         if (PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
             PosnicPro.settings.syncDemoDataAfterSave(true, {
                 inlineTarget: '#feature_intro_demo_bg_status',
-                title: 'Adding sample data'
+                title: PosnicPro.i18n.t('lang_adding_sample_data', 'Adding sample data')
             });
             return;
         }
@@ -6155,7 +6155,7 @@ PosnicPro.features = {
                     PosnicPro.settings.syncDemoDataAfterSave(wantedDemo);
                 }
                 $('#feature_intro_modal').modal('hide');
-                PosnicPro.alert('success', 'Feature switches saved');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_feature_switches_saved', 'Feature switches saved'));
                 /* Only on a SAVED shop, and only when asked: a failed save
                    must never start a tour, and Save-alone must never grow
                    an uninvited one. */
@@ -6297,7 +6297,7 @@ $(document).on('change', '#quote_signature_file', function () {
     var f = this.files && this.files[0];
     if (!f) { return; }
     if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', 'Keep the signature under 300 KB - a small PNG works best.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
         $(this).val('');
         return;
     }
@@ -6383,7 +6383,7 @@ PosnicPro.settings.loadSharing = function () {
         });
         $('#sharing_status').text('');
     }, function () {
-        $('#sharing_status').text('Could not read the current setting.');
+        $('#sharing_status').text(PosnicPro.i18n.t('lang_could_not_read_the_current_setting', 'Could not read the current setting.'));
     });
 };
 
@@ -6405,7 +6405,7 @@ PosnicPro.settings.saveSharing = function () {
         payload[key] = $('#set_' + key).is(':checked');
     });
     $('#sharing_save_btn').prop('disabled', true);
-    $('#sharing_status').text('Saving ...');
+    $('#sharing_status').text(PosnicPro.i18n.t('lang_saving', 'Saving ...'));
     PosnicPro.put({ url: 'settings/group/sharing', data: JSON.stringify(payload) }, function (r) {
         $('#sharing_save_btn').prop('disabled', false);
         $('#sharing_status').text(r.type === 'success' ? 'Saved. Applies to every shop.' : '');
@@ -6818,7 +6818,7 @@ PosnicPro.settings._shotNext = function (img) {
     var $strip = $img.closest('.fd-shots');
     var key = $strip.attr('data-shot-key');
     var n = Number($img.attr('data-shot-n') || 0);
-    if (!key || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
+    if (!/^[a-z0-9_-]+$/i.test(key || '') || !n || n >= PosnicPro.settings.MAX_SHOTS) { return; }
     if ($strip.find('[data-shot-n="' + (n + 1) + '"]').length) { return; }
     $('<img>')
         .attr('src', 'static/images/features/' + key + '-' + (n + 1) + '.png')
@@ -6842,7 +6842,7 @@ PosnicPro.settings.openFeaturePage = function ($card) {
     $('#fp_tagline').text(info.tagline || desc);
     var on = $main.is(':checked');
     $('#fp_master').prop('checked', on);
-    $('#fp_state').text(on ? 'On' : 'Off')
+    $('#fp_state').text(on ? PosnicPro.i18n.t('lang_on', 'On') : PosnicPro.i18n.t('lang_off', 'Off'))
         .toggleClass('badge-success', on)
         .toggleClass('badge-light', !on);
 
@@ -6886,13 +6886,13 @@ PosnicPro.settings.openFeaturePage = function ($card) {
             + ' onerror="PosnicPro.settings._shotMissing(this);">'
             + '</div>';
     }
-    infoHtml += '<div class="q-label">About</div><p class="fd-text">' + esc(info.about || desc) + '</p>';
+    infoHtml += '<div class="q-label"><lang class="lang_about">About</lang></div><p class="fd-text">' + esc(info.about || desc) + '</p>';
     if ((info.benefits || []).length) {
-        infoHtml += '<div class="q-label">Why use it</div><ul class="fd-list">'
+        infoHtml += '<div class="q-label"><lang class="lang_why_use_it">Why use it</lang></div><ul class="fd-list">'
             + info.benefits.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>';
     }
     if ((info.how || []).length) {
-        infoHtml += '<div class="q-label">How it works</div><ol class="fd-list">'
+        infoHtml += '<div class="q-label"><lang class="lang_how_it_works">How it works</lang></div><ol class="fd-list">'
             + info.how.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ol>';
     }
     /*
@@ -6965,7 +6965,7 @@ $(document).on('change', '#fp_master', function () {
     var on = $(this).is(':checked');
     $c.find('.module-card-head input.custom-control-input').first()
         .prop('checked', on).trigger('change');
-    $('#fp_state').text(on ? 'On' : 'Off')
+    $('#fp_state').text(on ? PosnicPro.i18n.t('lang_on', 'On') : PosnicPro.i18n.t('lang_off', 'Off'))
         .toggleClass('badge-success', on)
         .toggleClass('badge-light', !on);
 });
@@ -7022,7 +7022,7 @@ PosnicPro.settings.demoProgress = {
                 '  <div class="modal-dialog modal-dialog-centered modal-sm" role="document">' +
                 '    <div class="modal-content">' +
                 '      <div class="modal-body text-center" style="padding:26px 22px;">' +
-                '        <h5 id="demo_progress_title" style="margin:0 0 6px;font-size:16px;">Adding the sample data</h5>' +
+                '        <h5 id="demo_progress_title" style="margin:0 0 6px;font-size:16px;"><lang class="lang_adding_the_sample_data">Adding the sample data</lang></h5>' +
                 '        <p id="demo_progress_step" class="text-muted"' +
                 '           style="font-size:13px;margin:0 0 14px;">Getting ready…</p>' +
                 '        <div class="demo-progress-track"><div id="demo_progress_bar"' +
@@ -7105,7 +7105,7 @@ PosnicPro.settings.demoProgress = {
             }
             return;
         }
-        self._set(100, ok ? 'Done' : 'Stopped');
+        self._set(100, ok ? PosnicPro.i18n.t('lang_done', 'Done') : PosnicPro.i18n.t('lang_stopped', 'Stopped'));
         /* A beat at 100% so the bar is seen to finish rather than vanishing
            mid-way, which reads as a crash. */
         window.setTimeout(function () {
@@ -7163,7 +7163,7 @@ PosnicPro.settings.demoPacks = {
         }, function () {
             /* Said out loud rather than left on "Loading…" forever, which
                reads as a screen that is still working. */
-            $('#demo_pack_choice').html('<option value="">Could not load the list</option>');
+            $('#demo_pack_choice').html('<option value="" data-t="lang_could_not_load_the_list">Could not load the list</option>');
             $('#demo_pack_install').prop('disabled', true);
         });
     },
@@ -7206,7 +7206,7 @@ PosnicPro.settings.demoPacks = {
         var key = self._current || $('#demo_pack_choice').val();
         if (!key) { return; }
         swal({
-            title: 'Reset the sample data?',
+            title: PosnicPro.i18n.t('lang_reset_the_sample_data', 'Reset the sample data?'),
             text: 'The current samples are removed and a fresh set for the same trade is installed. Anything you have edited, sold or received yourself is kept.',
             showCancelButton: true,
             confirmButtonClass: 'btn btn-primary',
@@ -7231,7 +7231,7 @@ PosnicPro.settings.demoPacks = {
             : pack.products + ' products in ' + pack.categories + ' categories'
               + (pack.photos ? ', ' + pack.photos + ' with photographs' : '');
         $('#demo_pack_summary').text(
-            key === self._current ? line + ' — this is what you have now' : line
+            key === self._current ? line + ' (this is what you have now)' : line
         );
         $('#demo_pack_install').text(
             key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'
@@ -7250,7 +7250,7 @@ PosnicPro.settings.demoPacks = {
          * find its samples changed by a button it pressed to read the label.
          */
         swal({
-            title: 'Replace the sample data with ' + label + '?',
+            title: PosnicPro.i18n.t('lang_replace_the_sample_data_with', 'Replace the sample data with ') + label + '?',
             text: 'Your own products are not touched. Samples you have edited, sold or received are kept.',
             showCancelButton: true,
             confirmButtonClass: 'btn btn-primary',
@@ -7349,9 +7349,73 @@ $(document).on('click', '#demo_pack_reset', function () {
  * referenced by a real transaction. Whatever survives stays hidden by the
  * read filter while the switch is off, so refusal never means reappearing.
  */
+/*
+ * Quotes and Invoices are two halves of one job.
+ *
+ * A shop that prices work before doing it also bills for it afterwards: the
+ * quote is the promise, the invoice is the claim, and the same customer sees
+ * both. Somebody who finds one switch has usually not thought about the other,
+ * and discovers it months later - or never.
+ *
+ * So turning one on offers the other. Three rules keep an offer from becoming
+ * nagging:
+ *
+ *   only on the way ON. Switching Invoices off says nothing about Quotes.
+ *   only when the partner is OFF. Otherwise there is nothing to offer.
+ *   only once per visit, per pair. "No" is an answer, and asking a second
+ *     time tells somebody their answer was not heard.
+ *
+ * Nothing is written here. The switch is feedback; Save is what saves - which
+ * is the rule every other card on this page already follows.
+ */
+PosnicPro.settings._partners = {
+    quotes_enable: {
+        other: 'invoices_enable',
+        title: 'Turn on Invoices as well?', titleKey: 'lang_turn_on_invoices_as_well',
+        text: 'Quotes price the work before you do it; invoices bill for it afterwards, '
+            + 'and show you who still owes. Shops that use one usually want both.',
+        yes: 'Turn on Invoices',
+    },
+    invoices_enable: {
+        other: 'quotes_enable',
+        title: 'Turn on Quotes as well?', titleKey: 'lang_turn_on_quotes_as_well',
+        text: 'Invoices bill for work you have done; quotes price it beforehand, so the '
+            + 'customer agrees before you start. Shops that use one usually want both.',
+        yes: 'Turn on Quotes',
+    },
+};
+PosnicPro.settings._partnerAsked = {};
+
+PosnicPro.settings.suggestPartner = function (checkbox) {
+    var pair = PosnicPro.settings._partners[checkbox && checkbox.id];
+    if (!pair || !checkbox.checked) return;
+    if (PosnicPro.settings._partnerAsked[checkbox.id]) return;
+
+    var $other = $('#' + pair.other);
+    if (!$other.length || $other.is(':checked')) return;
+
+    PosnicPro.settings._partnerAsked[checkbox.id] = true;
+    swal({
+        title: pair.titleKey ? PosnicPro.i18n.t(pair.titleKey, pair.title) : pair.title,
+        text: pair.text,
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-primary',
+        cancelButtonClass: 'btn btn-light m-l-10',
+        confirmButtonText: pair.yes,
+        cancelButtonText: 'Not now'
+        /* SweetAlert v6 REJECTS on cancel. Without the second handler, saying
+           "Not now" is an unhandled rejection on a screen where the person
+           did nothing wrong. */
+    }).then(function () {
+        $other.prop('checked', true).trigger('change');
+    }, function () {
+        /* Declined. The flag above means we do not ask again this visit. */
+    });
+};
+
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
-        title: 'Switch off Demo Data and remove the samples?',
+        title: PosnicPro.i18n.t('lang_switch_off_demo_data_and_remove_the_sample', 'Switch off Demo Data and remove the samples?'),
         text: 'The sample records created for the demo - products, sales, quotes, customers and suppliers - will be removed. Anything you have edited, sold or received yourself is kept.',
         showCancelButton: true,
         confirmButtonClass: 'btn btn-danger',
@@ -7426,7 +7490,10 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
    deferPreview comment above. */
 $(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
     $('#v-pills-kiosk img[data-defer-src]').each(function () {
-        $(this).attr('src', $(this).attr('data-defer-src')).removeAttr('data-defer-src');
+        var source = $(this).attr('data-defer-src') || '';
+        if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
+            $(this).attr('src', source).removeAttr('data-defer-src');
+        }
     });
 });
 
@@ -7454,7 +7521,7 @@ $(document).on('click', '#analytics_save', function () {
         analytics_ga_id: String($('#analytics_ga_id').val() || '').trim().toUpperCase()
     };
     if (payload.analytics_enable && !/^G-[A-Z0-9]{4,14}$/.test(payload.analytics_ga_id)) {
-        PosnicPro.alert('error', 'The Google Analytics id should look like G-XXXXXXXXXX');
+        PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_google_analytics_id_should_look_like_g', 'The Google Analytics id should look like G-XXXXXXXXXX'));
         return;
     }
     PosnicPro.put({
@@ -7467,6 +7534,6 @@ $(document).on('click', '#analytics_save', function () {
             PosnicPro.alert(response.type, response.message);
         }
     }, function () {
-        PosnicPro.alert('error', 'Could not save the analytics settings');
+        PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_analytics_settings', 'Could not save the analytics settings'));
     });
 });

@@ -192,9 +192,59 @@ try {
   notes.push(`could not read config.js: ${e.message}`);
 }
 
+/* ------------------------------------------- the words the server writes --- */
+
+/*
+ * languages/server/<code>.json answers the sentences the API sends, keyed by
+ * the English sentence itself. Two things can go wrong that a reviewer cannot
+ * see: the encoding, as always, and a key that has been retyped rather than
+ * copied - which fails silently, because the fallback is that same English.
+ */
+const SERVER_DIR = path.join(LANG_DIR, 'server');
+let serverFiles = [];
+if (fs.existsSync(SERVER_DIR)) {
+  const catalogue = path.join(SERVER_DIR, '_english.json');
+  let known = null;
+  try {
+    known = new Set(Object.keys(JSON.parse(fs.readFileSync(catalogue, 'utf8'))));
+  } catch (e) {
+    notes.push('languages/server/_english.json could not be read, so the message keys were not checked: ' + e.message);
+  }
+  serverFiles = fs.readdirSync(SERVER_DIR).filter((f) => /^[a-z]{2}\.json$/.test(f)).sort();
+  for (const file of serverFiles) {
+    const where = 'languages/server/' + file;
+    let dict;
+    try {
+      dict = JSON.parse(fs.readFileSync(path.join(SERVER_DIR, file), 'utf8'));
+    } catch (e) {
+      fail(where, 'is not valid JSON: ' + e.message,
+        'open it in an editor that shows JSON errors, or paste it into jsonlint.com');
+      continue;
+    }
+    for (const [english, said] of Object.entries(dict)) {
+      if (typeof said !== 'string' || !said.trim()) {
+        fail(where, 'has no translation for ' + JSON.stringify(english.slice(0, 50)),
+          'remove the line, or translate it - a blank value is not the same as leaving it out');
+        continue;
+      }
+      if (looksLikeMojibake(said)) {
+        fail(where, 'looks like mojibake for ' + JSON.stringify(english.slice(0, 40)) + ': ' + JSON.stringify(said.slice(0, 40)),
+          'save the file as UTF-8, not ANSI or Windows-1252, and translate that line again');
+      }
+      if (known && !known.has(english)) {
+        fail(where, 'answers a sentence the server does not send: ' + JSON.stringify(english.slice(0, 60)),
+          'copy the English exactly from languages/server/_english.json - retyping it means the translation is never found');
+      }
+    }
+  }
+}
+
 /* -------------------------------------------------------------- the word --- */
 
 console.log(`Checked ${files.length} language file(s): ${files.join(', ')}`);
+if (serverFiles.length) {
+  console.log(`Checked ${serverFiles.length} server-message file(s): ${serverFiles.join(', ')}`);
+}
 
 for (const n of notes) console.log(`  note: ${n}`);
 

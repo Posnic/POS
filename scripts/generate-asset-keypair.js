@@ -26,16 +26,38 @@ const root = path.join(__dirname, '..');
 const pubPath = path.join(root, 'src', 'asset-signing-key.pub');
 const privPath = path.join(root, 'asset-signing-key.private.pem');
 
-if (fs.existsSync(pubPath)) {
+const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+let pubFd;
+let privFd;
+try {
+  pubFd = fs.openSync(pubPath, 'wx', 0o644);
+} catch (error) {
+  if (error.code !== 'EEXIST') throw error;
   console.error('asset-signing-key.pub already exists. Key rotation orphans every');
   console.error('installed till until its next full installer - if you really mean');
   console.error('to rotate, delete the old key first and ship an installer release.');
   process.exit(1);
 }
 
-const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
-fs.writeFileSync(pubPath, publicKey.export({ type: 'spki', format: 'pem' }));
-fs.writeFileSync(privPath, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
+try {
+  privFd = fs.openSync(privPath, 'wx', 0o600);
+  fs.writeFileSync(pubFd, publicKey.export({ type: 'spki', format: 'pem' }));
+  fs.writeFileSync(privFd, privateKey.export({ type: 'pkcs8', format: 'pem' }));
+} catch (error) {
+  if (pubFd !== undefined) fs.closeSync(pubFd);
+  if (privFd !== undefined) fs.closeSync(privFd);
+  pubFd = privFd = undefined;
+  fs.rmSync(pubPath, { force: true });
+  if (error.code !== 'EEXIST') fs.rmSync(privPath, { force: true });
+  if (error.code === 'EEXIST') {
+    console.error('asset-signing-key.private.pem already exists; no keys were changed.');
+    process.exit(1);
+  }
+  throw error;
+} finally {
+  if (pubFd !== undefined) fs.closeSync(pubFd);
+  if (privFd !== undefined) fs.closeSync(privFd);
+}
 
 console.log('Wrote asset-signing-key.pub (commit this).');
 console.log('Wrote asset-signing-key.private.pem (DO NOT COMMIT).');

@@ -1,6 +1,6 @@
 <div id="infobar-settings-sidebar-category" class="infobar-settings-sidebar scroll_width" style="z-index: 1005">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span id="category_title">Add</span>&nbsp;<lang class="lang_category_title">Category</lang></h4>
+        <h4 id="exampleModalCenterTitle"><span id="category_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_category_title">Category</lang></h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="category">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
         </a>
@@ -42,12 +42,12 @@
                             <lang class="lang_name_title"> Name </lang> 
                             <span class="text-danger">*</span> 
                         </label>
-                        <input type="text" class="form-control border-control" name="name" id="category_name" minlength="3" maxlength="50" placeholder="Enter the name"  autocomplete="off" required>
+                        <input type="text" class="form-control border-control" name="name" id="category_name" minlength="3" maxlength="50" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name"  autocomplete="off" required>
                         <label class="form-control-placeholder d-block m-t-10">
                             <lang class="lang_tile_color">Colour on the sale screen</lang>
                         </label>
                         <div id="category_tile_swatches">
-                            <span class="tile-swatch" data-color="" title="None" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#fff;border:1px dashed #aab;border-radius:4px;margin-right:6px;"></span>
+                            <span class="tile-swatch" data-color="" title="None" data-t-title="lang_none" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#fff;border:1px dashed #aab;border-radius:4px;margin-right:6px;"></span>
                             <span class="tile-swatch" data-color="#e74c3c" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#e74c3c;border-radius:4px;margin-right:6px;"></span>
                             <span class="tile-swatch" data-color="#e91e63" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#e91e63;border-radius:4px;margin-right:6px;"></span>
                             <span class="tile-swatch" data-color="#f39c12" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#f39c12;border-radius:4px;margin-right:6px;"></span>
@@ -63,10 +63,10 @@
                             <lang class="lang_tile_shape">Shape</lang>
                         </label>
                         <div id="category_tile_shapes">
-                            <span class="tile-shape" data-shape="square" title="Square" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:3px;margin-right:6px;"></span>
-                            <span class="tile-shape" data-shape="rounded" title="Rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
-                            <span class="tile-shape" data-shape="circle" title="Circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
-                            <span class="tile-shape" data-shape="diamond" title="Diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="square" title="Square" data-t-title="lang_square" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:3px;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="rounded" title="Rounded" data-t-title="lang_rounded" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:10px;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="circle" title="Circle" data-t-title="lang_circle" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;border-radius:50%;margin-right:6px;"></span>
+                            <span class="tile-shape" data-shape="diamond" title="Diamond" data-t-title="lang_diamond" style="width:28px;height:28px;display:inline-block;cursor:pointer;background:#8a94a6;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);margin-right:6px;"></span>
                         </div>
                         <input type="hidden" name="tile_shape" id="category_tile_shape" value="">
                         <input type="hidden" name="id" id="category_id">
@@ -116,7 +116,7 @@
                         <label for="category_description">
                             <lang class="lang_description_title"> Description </lang>
                         </label>
-                        <textarea name="description" id="category_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description"></textarea>
+                        <textarea name="description" id="category_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description" data-t-placeholder="lang_enter_the_description"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -133,7 +133,7 @@
                 <div class="form-row" id="show_last_created_category" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a category. <a href="#" id="last_created_category">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_category">Saved a category.</lang> <a href="#" id="last_created_category"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>

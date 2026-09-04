@@ -41,15 +41,15 @@ PosnicPro.listFilter = {
      * alternative silently moves a whole day between "this week" and "last".
      * ------------------------------------------------------------------- */
     PRESETS: [
-        { key: 'all', label: 'All time' },
-        { key: 'today', label: 'Today' },
-        { key: 'yesterday', label: 'Yesterday' },
-        { key: 'week', label: 'This week' },
-        { key: 'month', label: 'This month' },
-        { key: 'year', label: 'This year' },
-        { key: 'last7', label: 'Last 7 days' },
-        { key: 'last30', label: 'Last 30 days' },
-        { key: 'custom', label: 'Custom range' }
+        { key: 'all', label: 'All time', t: 'lang_all_time_2' },
+        { key: 'today', label: 'Today', t: 'lang_this_day' },
+        { key: 'yesterday', label: 'Yesterday', t: 'lang_yesterday' },
+        { key: 'week', label: 'This week', t: 'lang_roster_thisweek' },
+        { key: 'month', label: 'This month', t: 'lang_this_month_2' },
+        { key: 'year', label: 'This year', t: 'lang_this_year' },
+        { key: 'last7', label: 'Last 7 days', t: 'lang_last_7_days' },
+        { key: 'last30', label: 'Last 30 days', t: 'lang_last_30_days' },
+        { key: 'custom', label: 'Custom range', t: 'lang_custom_range' }
     ],
 
     _startOfDay: function (d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; },
@@ -320,7 +320,7 @@ PosnicPro.listFilter = {
         var $panel = $(cfg.container);
         if (!$panel.length) return;
 
-        var fields = cfg.searchFields || [{ value: 'all', label: 'All fields' }];
+        var fields = cfg.searchFields || [{ value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') }];
         /* A single row. The bar sits in the page header between the title and
            the buttons, so it has to read as one strip of controls - stacked
            rows there would push the header open and misalign against both. */
@@ -337,7 +337,7 @@ PosnicPro.listFilter = {
                     + esc(f.label) + '</option>';
             }).join('')
             + '  </select>'
-            + '  <label class="lf-exact mb-0" title="Match the whole value, not part of it">'
+            + '  <label class="lf-exact mb-0" title="Match the whole value, not part of it" data-t-title="lang_match_the_whole_value_not_part_of_it">'
             + '    <input type="checkbox" class="lf-exact-cb"' + (st.exact ? ' checked' : '') + '> Exact'
             + '  </label>';
 
@@ -350,7 +350,8 @@ PosnicPro.listFilter = {
                 + '  <div class="lf-preset-wrap">'
                 + '    <select class="form-control form-control-sm lf-preset">'
                 + LF.PRESETS.map(function (p) {
-                    return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '') + '>'
+                    return '<option value="' + p.key + '"' + (st.preset === p.key ? ' selected' : '')
+                        + (p.t ? ' data-t="' + p.t + '"' : '') + '>'
                         + esc(p.label) + '</option>';
                 }).join('')
                 + '    </select>'
@@ -365,7 +366,7 @@ PosnicPro.listFilter = {
                 + (st.from ? ' min="' + forInput(st.from) + '"' : '') + '>'
                 + '    </div>'
                 + '  </div>'
-                + '  <button type="button" class="btn btn-sm btn-light border lf-clear">Clear</button>';
+                + '  <button type="button" class="btn btn-sm btn-light border lf-clear"><lang class="lang_clear_title">Clear</lang></button>';
         }
         html += '</div>';
 
@@ -658,7 +659,7 @@ PosnicPro.listFilter = {
 
     LF.ENTITIES = {
         customer: {
-            title: 'Choose customer',
+            title: 'Choose customer', t: 'lang_choose_customer_2',
             icon: 'icon-users',
             rows: function () {
                 var r = recents('recent_customers').map(function (c) {
@@ -697,7 +698,7 @@ PosnicPro.listFilter = {
             }
         },
         item: {
-            title: 'Choose item',
+            title: 'Choose item', t: 'lang_choose_item',
             icon: 'icon-box',
             rows: function () {
                 /* price, not sku: that is what the sale screen actually
@@ -710,7 +711,7 @@ PosnicPro.listFilter = {
             }
         },
         supplier: {
-            title: 'Choose supplier',
+            title: 'Choose supplier', t: 'lang_choose_supplier',
             icon: 'icon-truck',
             rows: function () {
                 return uniq(recents('recent_suppliers').map(function (s) {
@@ -784,12 +785,12 @@ PosnicPro.listFilter = {
                     + (r.note ? '<span class="lf-pick-note">' + esc(r.note) + '</span>' : '')
                     + '</a>';
             }).join('')
-            : '<div class="lf-pick-empty">Nothing matches - press Enter to search anyway</div>';
+            : '<div class="lf-pick-empty"><lang class="lang_nothing_matches_press_enter_to_search_anyw">Nothing matches - press Enter to search anyway</lang></div>';
 
         $box.html(
             '<div class="lf-pick-head">'
-            + '<span class="lf-pick-title"><i class="feather ' + esc(e.icon) + ' mr-1"></i>' + esc(e.title) + '</span>'
-            + '<a href="javascript:void(0)" class="lf-pick-x" title="Close">&times;</a>'
+            + '<span class="lf-pick-title"><i class="feather ' + esc(e.icon) + ' mr-1"></i>' + (e.t ? '<lang class="' + e.t + '">' + esc(e.title) + '</lang>' : esc(e.title)) + '</span>'
+            + '<a href="javascript:void(0)" class="lf-pick-x" title="Close" data-t-title="lang_close_title">&times;</a>'
             + '</div>'
             + '<div class="lf-pick-list">' + body + '</div>'
         ).show();

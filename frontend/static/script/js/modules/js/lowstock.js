@@ -38,12 +38,12 @@ PosnicPro.lowstockitems = {
             return;
         }
         /* deep link before the list landed - the item record fills in */
-        PosnicPro.listDoc.open({ key: 'lowstockitems', id: id, title: 'Item', actions: actions });
+        PosnicPro.listDoc.open({ key: 'lowstockitems', id: id, title: PosnicPro.i18n.t('lang_newitem_title', 'Item'), actions: actions });
         PosnicPro.ACLForModule('receiving');
         PosnicPro.get('items/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3">Could not open this item.</div>');
+                PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_item">Could not open this item.</lang></div>');
                 return;
             }
             PosnicPro.listDoc.title('lowstockitems', d.name || 'Item');
@@ -57,7 +57,7 @@ PosnicPro.lowstockitems = {
                 image: d.image
             }));
         }, function () {
-            PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3">Could not open this item.</div>');
+            PosnicPro.listDoc.body('lowstockitems', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_item">Could not open this item.</lang></div>');
         });
     },
     _docBody: function (r) {
@@ -67,17 +67,17 @@ PosnicPro.lowstockitems = {
             + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:8px; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
             + '<div style="flex:1 1 auto; min-width:0;">'
             + PosnicPro.listDoc.stats([
-                { v: '<span style="color:var(--theme-danger-color, #c0392b);">' + esc(r.available_quantity) + '</span>', l: 'Left in stock' },
-                { v: esc(r.itemid || '—'), l: 'SKU' }
+                { v: '<span style="color:var(--theme-danger-color, #c0392b);">' + esc(r.available_quantity) + '</span>', l: PosnicPro.i18n.t('lang_left_in_stock', 'Left in stock') },
+                { v: esc(r.itemid || '—'), l: PosnicPro.i18n.t('lang_sku_title', 'SKU') }
             ])
             + '</div></div>'
             + PosnicPro.listDoc.grid([
-                { label: 'Identity', lines: [
+                { label: PosnicPro.i18n.t('lang_identity', 'Identity'), lines: [
                     r.category_name ? '<div>' + esc(r.category_name) + '</div>' : '',
                     '<div class="q-muted">' + esc(r.name) + '</div>'
                 ] },
-                { label: 'Supply', lines: [
-                    r.supplier_name ? '<div>' + esc(r.supplier_name) + '</div>' : '<div class="q-muted">No supplier on record</div>'
+                { label: PosnicPro.i18n.t('lang_supply', 'Supply'), lines: [
+                    r.supplier_name ? '<div>' + esc(r.supplier_name) + '</div>' : '<div class="q-muted"><lang class="lang_no_supplier_on_record">No supplier on record</lang></div>'
                 ] }
             ])
             + PosnicPro.listDoc.link('Open in Item List', "hasher.setHash('items/" + esc(r._id) + "');");
@@ -90,13 +90,13 @@ PosnicPro.lowstockitems = {
             key: 'lowstockitems',
             container: '#lowstockitems_filter_panel',
             button: '#lowstockitems_filter_btn',
-            searchPlaceholder: 'Search item, SKU, supplier or category',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_item_sku_supplier_or_category', 'Search item, SKU, supplier or category'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'name', label: 'Item' },
-                { value: 'itemid', label: 'SKU' },
-                { value: 'supplier_name', label: 'Supplier' },
-                { value: 'category_name', label: 'Category' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'name', label: PosnicPro.i18n.t('lang_newitem_title', 'Item') },
+                { value: 'itemid', label: PosnicPro.i18n.t('lang_sku_title', 'SKU') },
+                { value: 'supplier_name', label: PosnicPro.i18n.t('lang_newsupplier_title', 'Supplier') },
+                { value: 'category_name', label: PosnicPro.i18n.t('lang_newcategory_title', 'Category') }
             ],
             onChange: function () { PosnicPro.lowstockitems.loadList(1); }
         });
@@ -122,14 +122,14 @@ PosnicPro.lowstockitems = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('lowstockitems') > 0;
                 $('#lowstockitems_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No low-stock items match this filter.' : 'Nothing is running low - every item is above its alert level.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_low_stock_items_match_this_filter', 'No low-stock items match this filter.') : PosnicPro.i18n.t('lang_nothing_is_running_low_every_item_is_above', 'Nothing is running low - every item is above its alert level.')) + '</div>');
                 $('#lowstockitems_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th style="width:44px;"></th><th>Item</th><th class="ls-col-sku">SKU</th>'
-                + '<th class="ls-col-supplier">Supplier</th><th class="ls-col-category">Category</th>'
-                + '<th class="text-right">Left</th><th style="width:110px;"></th></tr></thead><tbody>';
+                + '<thead><tr><th style="width:44px;"></th><th><lang class="lang_newitem_title">Item</lang></th><th class="ls-col-sku"><lang class="lang_sku_title">SKU</lang></th>'
+                + '<th class="ls-col-supplier"><lang class="lang_newsupplier_title">Supplier</lang></th><th class="ls-col-category"><lang class="lang_newcategory_title">Category</lang></th>'
+                + '<th class="text-right"><lang class="lang_left">Left</lang></th><th style="width:110px;"></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var img = (r.image && r.image !== 'item.svg') ? r.image : 'static/images/default/item.svg';
                 html += '<tr class="md-row lowstockitems-row highlight-select'
@@ -149,14 +149,14 @@ PosnicPro.lowstockitems = {
             PosnicPro.ACLForModule('receiving');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#lowstockitems_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load the low stock list - try again.</div>');
+            $('#lowstockitems_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_the_low_stock_list_try_agai">Could not load the low stock list - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.lowstockitems;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' item running low' : ' items running low');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_item_running_low', 'item running low') : PosnicPro.i18n.t('lang_items_running_low', 'items running low'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')

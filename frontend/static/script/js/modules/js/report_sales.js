@@ -61,7 +61,7 @@ PosnicPro.salereport = {
 
         if (!startDate || !endDate) {
             loader.find(".loadingSpinner:first").remove();
-            PosnicPro.alert('error', 'Select a valid date range');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_a_valid_date_range', 'Select a valid date range'));
             return;
         }
         var table = $('#view_salereport');
@@ -99,7 +99,7 @@ PosnicPro.salereport = {
                         if (rowTotal === 0) {
                             $('.reportsale_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportsale_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportsale_norecord', 'No Records on ' + dateRange);
                             $('#reportsale_img_hide,.reportsale_norecord').show();
 
                         } else {
@@ -117,7 +117,7 @@ PosnicPro.salereport = {
                             var row = response.data.list[i];
                             var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                             var updateDate = PosnicPro.convertDate(row.string_date);
-                            var trow = '<tr><td><i class="exploder"><span class="feather icon-plus-circle"></span></i></td> <td scope="row">' + row_no + '</td>  <td><a href="#/salereport/' + row._id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details">' + row.sales_id + '</i></a></td> <td class="export-date">' + updateDate + '</td> <td>' + row.customer_name + '</td> <td class="text-right"><a class="sale_color" href="tel:' + row.customer_phone + '">' + row.customer_phone + '</a></td> <td class="export-total-item text-center">' + row.number_of_items + '</td> <td class="export-price text-right">' + currency + '&nbsp;<span class="number">' + (row.extra_discount || 0) + '</span></td> <td class="export-price text-right">' + currency + '&nbsp;<span class="number">' + row.items_total + '</span></td> </tr><tr class="explode hide"><td style="background: #f9f8f8; display: none;"  colspan="12"><table class="table table-striped" cellspacing="0" width="100%" id="' + row._id + 'reportaction"><thead><tr><th>Item name</th><th class="text-center">SKU</th><th class="text-right">Price</th><th class="text-right">Qty</th><th class="text-right">Discount</th><th class="text-right">Tax [%]</th><th class="text-right">Total</th></tr></thead><tbody></tbody></table></td></tr>';
+                            var trow = '<tr><td><i class="exploder"><span class="feather icon-plus-circle"></span></i></td> <td scope="row">' + row_no + '</td>  <td><a href="#/salereport/' + row._id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details" data-t-title="lang_view_details_2">' + row.sales_id + '</i></a></td> <td class="export-date">' + updateDate + '</td> <td>' + row.customer_name + '</td> <td class="text-right"><a class="sale_color" href="tel:' + row.customer_phone + '">' + row.customer_phone + '</a></td> <td class="export-total-item text-center">' + row.number_of_items + '</td> <td class="export-price text-right">' + currency + '&nbsp;<span class="number">' + (row.extra_discount || 0) + '</span></td> <td class="export-price text-right">' + currency + '&nbsp;<span class="number">' + row.items_total + '</span></td> </tr><tr class="explode hide"><td style="background: #f9f8f8; display: none;"  colspan="12"><table class="table table-striped" cellspacing="0" width="100%" id="' + row._id + 'reportaction"><thead><tr><th><lang class="lang_item_name">Item name</lang></th><th class="text-center"><lang class="lang_sku_title">SKU</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th><th class="text-right"><lang class="lang_discount_title">Discount</lang></th><th class="text-right">Tax [%]</th><th class="text-right"><lang class="lang_total_title">Total</lang></th></tr></thead><tbody></tbody></table></td></tr>';
                             $('#view_salereport').children('tbody').append(trow);
                             for (var j = 0; j < row.items.length; j++) {
                                 var val = row.items[j];
@@ -221,7 +221,7 @@ PosnicPro.salereport = {
             try {
                 response = jQuery.parseJSON(xhr.responseText || '{}');
             } catch (e) {
-                response = { type: 'error', message: 'Request failed' };
+                response = { type: 'error', message: PosnicPro.i18n.t('lang_request_failed', 'Request failed') };
             }
             PosnicPro.alert(response.type || 'error', response.message || 'Request failed');
         });
@@ -284,7 +284,7 @@ PosnicPro.instantreport = {
                         if (rowTotal === 0) {
                             $('.reportsale_instheader').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportinstance_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportinstance_norecord', 'No Records on ' + dateRange);
                             $('#reportinstance_img_hide,.reportinstance_norecord').show();
 
                         } else {
@@ -300,7 +300,7 @@ PosnicPro.instantreport = {
                         for (var i = 0; i < response.data.list.length; i++) {
                             var row = response.data.list[i];
                             var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                            var trow = '<tr> <td scope="row">' + row_no + '</td><td><a href="#/instantreport/' + row._id + '/details"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details">' + row.sales_id + '<i></a></td> <td>' + row.date + '</td> <td>' + row.customer_name + '</td> <td>' + row.user_name + '</td> <td class="text-center">' + row.total_qty + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td></tr>';
+                            var trow = '<tr> <td scope="row">' + row_no + '</td><td><a href="#/instantreport/' + row._id + '/details"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details" data-t-title="lang_view_details_2">' + row.sales_id + '<i></a></td> <td>' + row.date + '</td> <td>' + row.customer_name + '</td> <td>' + row.user_name + '</td> <td class="text-center">' + row.total_qty + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.total_amount + '</span></td></tr>';
                             $('#view_instantreport').children('tbody').append(trow);
                         }
                         $('span.number').number(true, 2);
@@ -512,7 +512,7 @@ $(document).ready(function () {
         .data("daterangepicker")
         .setEndDate(moment().endOf("day"));
       $("#view_sale_report_daterange span").html(
-        '<span>Today</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
+        '<span><lang class="lang_this_day">Today</lang></span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
           moment().startOf("day").format("YYYY/MM/DD h:mm A") +
           " - " +
           moment().endOf("day").format("YYYY/MM/DD h:mm A") +
@@ -564,4 +564,3 @@ $(document).on("click", "#view_salereport tbody tr td .exploder", function () {
     }
 });
 //end
-

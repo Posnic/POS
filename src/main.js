@@ -185,7 +185,14 @@ function redactSecrets(value) {
   return String(value)
     .replace(/(mongodb(?:\+srv)?:\/\/[^:\s/]+:)[^@\s/]+@/gi, '$1[REDACTED]@')
     .replace(/(authorization["']?\s*[:=]\s*["']?bearer\s+)[^\s"',}]+/gi, '$1[REDACTED]')
-    .replace(/((?:gh_token|jwt_secret|session_secret)["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, '$1[REDACTED]');
+    .replace(/((?:register_userpassword|db_password|dbPassword|password|passphrase|access_token|refresh_token|api[_-]?key|gh_token|jwt_secret|session_secret|client_secret|cookie)["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, '$1[REDACTED]');
+}
+
+function sanitizeLogText(value) {
+  return redactSecrets(value)
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
 }
 
 function formatLogValue(value, seen = new WeakSet()) {
@@ -201,24 +208,24 @@ function formatLogValue(value, seen = new WeakSet()) {
       stack: value.stack,
       cause: value.cause
     };
-    return redactSecrets(JSON.stringify(details, null, 2));
+    return sanitizeLogText(JSON.stringify(details));
   }
 
   if (typeof value === 'object' && value !== null) {
     try {
-      return redactSecrets(JSON.stringify(value, (_key, nestedValue) => {
+      return sanitizeLogText(JSON.stringify(value, (_key, nestedValue) => {
         if (typeof nestedValue === 'object' && nestedValue !== null) {
           if (seen.has(nestedValue)) return '[Circular]';
           seen.add(nestedValue);
         }
         return nestedValue;
-      }, 2));
+      }));
     } catch (error) {
       return `[Unserializable ${value.constructor?.name || 'Object'}: ${error.message}]`;
     }
   }
 
-  return redactSecrets(value);
+  return sanitizeLogText(value);
 }
 
 function ensureDailyLog() {
@@ -1689,13 +1696,17 @@ ipcMain.handle('connectors:disable', async (event, payload) => {
     const file = path.join(app.getPath('userData'), 'connector-runtime', name + '.config.json');
     /* Keep the token so re-enabling does not force a fresh mint; enabled:false
        is the whole decision - no config match, no start. */
-    if (fs.existsSync(file)) {
-      try {
-        const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
-        fs.writeFileSync(file, JSON.stringify({ ...cfg, enabled: false }, null, 2));
-      } catch (e) {
-        fs.rmSync(file, { force: true });
-      }
+    let fd;
+    try {
+      fd = fs.openSync(file, 'r+');
+      const cfg = JSON.parse(fs.readFileSync(fd, 'utf8'));
+      const disabled = JSON.stringify({ ...cfg, enabled: false }, null, 2);
+      fs.ftruncateSync(fd, 0);
+      fs.writeFileSync(fd, disabled, 'utf8');
+    } catch (e) {
+      if (e.code !== 'ENOENT') fs.rmSync(file, { force: true });
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
     }
     connectorSupervisor.stop(name);
     return { ok: true, connectors: connectorSupervisor.status() };
@@ -2958,27 +2969,16 @@ function openLogViewer() {
 const LOG_VIEW_MAX_BYTES = 2 * 1024 * 1024;
 
 ipcMain.handle('logs:read', () => {
+  let fd;
   try {
-    if (!fs.existsSync(LOG_FILE)) {
-      return { ok: true, lines: [], path: LOG_FILE, truncated: false };
-    }
-    const size = fs.statSync(LOG_FILE).size;
+    fd = fs.openSync(LOG_FILE, 'r');
+    const size = fs.fstatSync(fd).size;
     const truncated = size > LOG_VIEW_MAX_BYTES;
-    let text;
-    if (truncated) {
-      const fd = fs.openSync(LOG_FILE, 'r');
-      try {
-        const buf = Buffer.alloc(LOG_VIEW_MAX_BYTES);
-        fs.readSync(fd, buf, 0, LOG_VIEW_MAX_BYTES, size - LOG_VIEW_MAX_BYTES);
-        text = buf.toString('utf8');
-        /* The first line of a mid-file read is usually half a line. */
-        text = text.slice(text.indexOf('\n') + 1);
-      } finally {
-        fs.closeSync(fd);
-      }
-    } else {
-      text = fs.readFileSync(LOG_FILE, 'utf8');
-    }
+    const bytes = truncated ? LOG_VIEW_MAX_BYTES : size;
+    const buf = Buffer.alloc(bytes);
+    fs.readSync(fd, buf, 0, bytes, truncated ? size - bytes : 0);
+    let text = buf.toString('utf8');
+    if (truncated) text = text.slice(text.indexOf('\n') + 1);
     return {
       ok: true,
       path: LOG_FILE,
@@ -2986,7 +2986,12 @@ ipcMain.handle('logs:read', () => {
       lines: text.split(/\r?\n/).filter((l) => l.length),
     };
   } catch (err) {
+    if (err.code === 'ENOENT') {
+      return { ok: true, lines: [], path: LOG_FILE, truncated: false };
+    }
     return { ok: false, error: err.message };
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 });
 
@@ -3271,17 +3276,19 @@ function collectDiagnostics() {
 
 /* The last of the log, capped so a report stays sendable. */
 function tailLog(bytes = 200_000) {
+  let fd;
   try {
-    if (!fs.existsSync(LOG_FILE)) return '(no log file)';
-    const stat = fs.statSync(LOG_FILE);
+    fd = fs.openSync(LOG_FILE, 'r');
+    const stat = fs.fstatSync(fd);
     const start = Math.max(0, stat.size - bytes);
-    const fd = fs.openSync(LOG_FILE, 'r');
     const buf = Buffer.alloc(stat.size - start);
     fs.readSync(fd, buf, 0, buf.length, start);
-    fs.closeSync(fd);
     return buf.toString('utf8');
   } catch (e) {
+    if (e.code === 'ENOENT') return '(no log file)';
     return '(log unreadable: ' + e.message + ')';
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 }
 
@@ -4609,6 +4616,26 @@ function startServer() {
    */
   process.env.POSNIC_DESKTOP = '1';
   process.env.POSNIC_APP_VERSION = app.getVersion();
+
+  /*
+   * Is this till enrolled with Posnic Cloud?
+   *
+   * The API cannot work this out for itself. resolveMode() answers 'desktop'
+   * before it looks at anything else, so a paying Cloud customer's till reports
+   * edition 'community' - correct for the update channel, wrong for "show me my
+   * account". Only the shell knows, because only the shell reads this file.
+   *
+   * Read once at startup rather than per request: /api/runtime-info is
+   * unauthenticated and is hit before login, so it must stay cheap. A till that
+   * pairs later gets the flag on its next start, which is the same restart the
+   * sync agent needs anyway.
+   */
+  try {
+    const cloud = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
+    if (cloud && cloud.gatewayUrl && cloud.deviceToken) process.env.POSNIC_SYNC_PAIRED = '1';
+  } catch (e) {
+    /* No file, or unreadable: not paired, which is the safe answer. */
+  }
 
   /*
    * Decide which frontend to serve, before the API starts serving it.

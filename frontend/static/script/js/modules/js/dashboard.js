@@ -524,7 +524,7 @@ PosnicPro.dashboard = {
                         $("#outstandingCustomersModal").modal('hide');
                     }
                 } else {
-                    $("#lstRecentActivities").text('Outstanding customer details are empty');
+                    $("#lstRecentActivities").text(PosnicPro.i18n.t('lang_outstanding_customer_details_are_empty', 'Outstanding customer details are empty'));
                     $("#lstRecentActivities").css({"color": "#2554C7"});
                 }
                 $('span.number').number(true, 2);
@@ -616,13 +616,13 @@ PosnicPro.dashboard = {
      * amount in the wrong currency.
      */
     periodLabel: function (filter) {
-        return { day: 'Today', week: 'This Week', month: 'This Month', year: 'This Year' }[filter] || 'Today';
+        return { day: PosnicPro.i18n.t('lang_this_day', 'Today'), week: PosnicPro.i18n.t('lang_this_week', 'This Week'), month: PosnicPro.i18n.t('lang_this_month', 'This Month'), year: PosnicPro.i18n.t('lang_year', 'This Year') }[filter] || PosnicPro.i18n.t('lang_this_day', 'Today');
     },
 
     // Time-of-day greeting, worked out on the client so it costs no request.
     greeting: function () {
         var h = new Date().getHours();
-        var wish = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
+        var wish = h < 12 ? PosnicPro.i18n.t('lang_good_morning', 'Good Morning') : h < 17 ? PosnicPro.i18n.t('lang_good_afternoon', 'Good Afternoon') : h < 21 ? PosnicPro.i18n.t('lang_good_evening', 'Good Evening') : PosnicPro.i18n.t('lang_good_night', 'Good Night');
         // Greet the logged-in USER by first name, not the shop/branch name.
         var name = (PosnicPro.local.get('userfirstname') || PosnicPro.local.get('username') || '').trim();
         $('#dashboard_greeting').text(wish + (name ? ', ' + name : ''));
@@ -683,7 +683,7 @@ PosnicPro.dashboard = {
         var tbody = $('#tblBestSellingProducts tbody');
         if (!tbody.length) { return; }
         if (!items.length) {
-            tbody.html('<tr><td colspan="4" class="text-center text-muted" style="padding:16px;">No sales in this period</td></tr>');
+            tbody.html('<tr><td colspan="4" class="text-center text-muted" style="padding:16px;"><lang class="lang_no_sales_in_this_period">No sales in this period</lang></td></tr>');
             return;
         }
         var html = '';
@@ -793,6 +793,44 @@ function posnicLanguageStyling(code) {
  * The menu keeps its English entry if this fails: an unreadable list should
  * cost the OTHER languages, never leave a shop with no way to choose at all.
  */
+/*
+ * Offer the shop's Posnic account, to the person who owns it.
+ *
+ * Two conditions, and both matter.
+ *
+ * The SERVER decides whether this installation has an account, because only it
+ * can tell the difference that matters: a till paired to Cloud reports its mode
+ * as 'desktop', not 'cloud' - so a frontend test on edition would hide the link
+ * from exactly the paying customers it is for. features.account carries the
+ * answer, and a white-labelled build always answers false, since that shop was
+ * not sold anything called Posnic.
+ *
+ * The BROWSER decides whether this person should see it. A cashier has no
+ * business being shown the subscription and the bill.
+ *
+ * Failure is silence. If runtime-info cannot be read the item stays hidden,
+ * which is the same outcome as a community install and costs nobody anything.
+ */
+(function showAccountLink() {
+    var item = document.getElementById('posnic_account_item');
+    if (!item || typeof fetch !== 'function') return;
+    if (PosnicPro.local.get('usertype') !== 'super_admin') return;
+
+    /*
+     * API_URL, not a relative path. This page is served from /public, so
+     * 'api/runtime-info' would resolve to /public/api/runtime-info, 404, land
+     * in the catch below, and hide the link forever without anyone noticing -
+     * which is exactly how a feature ships dead.
+     */
+    var base = (typeof API_URL === 'string' && API_URL) || '/';
+    fetch(base + 'api/runtime-info')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+            if (info && info.features && info.features.account) item.style.display = '';
+        })
+        .catch(function () { /* hidden, which is the safe answer */ });
+}());
+
 (function buildLanguageMenu() {
     var menu = document.getElementById('change_language');
     if (!menu || typeof fetch !== 'function') return;
@@ -948,15 +986,18 @@ $("#logout").on("click", function () {
  * a per-browser choice, never a stored "done" that can lie.
  */
 PosnicPro.dashboard.SETUP_CARDS = {
+    /* Labels as <lang> markup, not t(): this object is built when the module
+       loads, before any language pack has arrived, and the cards are drawn
+       as HTML - so the observer translates them on the screen instead. */
     /* {branch} resolves to THIS till's branch at render - the outlet card
        lands on the outlet's own edit page, not on a settings section that
        no longer exists ("#/settings/branches" was the broken page the owner
        walked into from the desktop). */
-    outlet: { label: 'Set up your outlet info', hint: 'Address and phone print on receipts', hash: '#/branches/{branch}/edit' },
-    items: { label: 'Add your first items', hint: 'Or import them from a file', hash: '#/items/new' },
-    receipt: { label: 'Add your logo', hint: 'It shows on receipts and the dashboard', hash: '#/branches/{branch}/edit' },
-    employees: { label: 'Add your employees', hint: 'Each gets their own login and role', hash: '#/users' },
-    taxes: { label: 'Set up taxes', hint: 'Rates apply to every sale automatically', hash: '#/settings/taxmodule' }
+    outlet: { label: '<lang class="lang_set_up_your_outlet_info">Set up your outlet info</lang>', hint: '<lang class="lang_address_and_phone_print_on_receipts">Address and phone print on receipts</lang>', hash: '#/branches/{branch}/edit' },
+    items: { label: '<lang class="lang_add_your_first_items">Add your first items</lang>', hint: '<lang class="lang_or_import_them_from_a_file">Or import them from a file</lang>', hash: '#/items/new' },
+    receipt: { label: '<lang class="lang_add_your_logo">Add your logo</lang>', hint: '<lang class="lang_it_shows_on_receipts_and_the_dashboard">It shows on receipts and the dashboard</lang>', hash: '#/branches/{branch}/edit' },
+    employees: { label: '<lang class="lang_add_your_employees">Add your employees</lang>', hint: '<lang class="lang_each_gets_their_own_login_and_role">Each gets their own login and role</lang>', hash: '#/users' },
+    taxes: { label: '<lang class="lang_set_up_taxes">Set up taxes</lang>', hint: '<lang class="lang_rates_apply_to_every_sale_automatically">Rates apply to every sale automatically</lang>', hash: '#/settings/taxmodule' }
 };
 PosnicPro.dashboard.loadSetupChecklist = function () {
     if (PosnicPro.local.get('setup_checklist_dismissed') === 'true') { return; }

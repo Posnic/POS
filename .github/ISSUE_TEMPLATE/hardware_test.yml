@@ -1,0 +1,138 @@
+name: Hardware test report
+description: Report one exact checkout device tested with an official Posnic release
+title: "[Hardware test]: "
+labels: ["hardware", "documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for one receipt printer, barcode scanner, cash drawer,
+        weighing scale, customer display, or other checkout device. A report is
+        community evidence, not certification. Use synthetic transactions and
+        remove customer, payment, credential, address, phone, and business data
+        from every attachment. Never submit card data or test a live payment
+        terminal in a public issue.
+
+        Read the [hardware matrix](https://github.com/Posnic/POS/blob/main/docs/HARDWARE_MATRIX.md)
+        before testing. Maintainers classify reviewed results as reproduced,
+        community-observed, partial, failed, or not applicable.
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Test and privacy checks
+      options:
+        - label: I tested an official Posnic release from the public releases page.
+          required: true
+        - label: I used synthetic data and removed private or business-sensitive information from every attachment.
+          required: true
+        - label: This report contains no card data and no live payment-terminal test.
+          required: true
+
+  - type: input
+    id: release
+    attributes:
+      label: Posnic release and package
+      description: Give the version and exact installer or package filename.
+      placeholder: "Example: v1.3.0, Posnic-Setup-1.3.0.exe"
+    validations:
+      required: true
+
+  - type: input
+    id: operating_system
+    attributes:
+      label: Operating system
+      description: Give the operating system, edition, architecture, and build where available.
+      placeholder: "Example: Windows 11 Pro 24H2, x64, build 26100"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device_type
+    attributes:
+      label: Device type
+      options:
+        - Receipt printer
+        - Barcode scanner
+        - Cash drawer
+        - Weighing scale
+        - Customer display
+        - Other checkout device
+    validations:
+      required: true
+
+  - type: textarea
+    id: device_identity
+    attributes:
+      label: Exact device identity
+      description: Include manufacturer, model, hardware revision, firmware, and regional variant where known.
+      placeholder: |
+        Manufacturer:
+        Model:
+        Hardware revision:
+        Firmware:
+        Regional variant:
+    validations:
+      required: true
+
+  - type: textarea
+    id: connection
+    attributes:
+      label: Connection and driver
+      description: Include the connection method, cable or adapter, driver name and version, and relevant Posnic configuration.
+      placeholder: |
+        Connection:
+        Cable or adapter:
+        Driver and version:
+        Posnic configuration:
+    validations:
+      required: true
+
+  - type: textarea
+    id: procedure
+    attributes:
+      label: Repeatable test procedure
+      description: Start from launching Posnic and number every action needed to reproduce the test.
+      placeholder: |
+        1. Launch Posnic.
+        2. ...
+        3. Repeat the complete test ... times.
+    validations:
+      required: true
+
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and observed result
+      description: State what should happen, what happened, and the number of successful attempts out of total attempts.
+      placeholder: |
+        Expected:
+        Observed:
+        Successful attempts / total attempts:
+    validations:
+      required: true
+
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Restart, reconnect, and fallback
+      description: Record the result after restarting Posnic, disconnecting and reconnecting the device, and using the documented fallback.
+      placeholder: |
+        Application restart:
+        Disconnect and reconnect:
+        Device or computer restart:
+        Fallback:
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and remaining limitations
+      description: Attach redacted logs or screenshots, then list failures, workarounds, and behavior that was not tested.
+      placeholder: |
+        Evidence:
+        Failures or workarounds:
+        Not tested:
+    validations:
+      required: true

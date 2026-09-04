@@ -144,6 +144,24 @@ fictional transactions and remove customer data, payment data, credentials,
 tokens, production logs and database files before attaching anything. Security
 problems still go through [SECURITY.md](SECURITY.md), never a public issue.
 
+## Human attribution only
+
+Posnic credits people, not tools. Do not list an AI assistant, agent, model,
+bot, automation, or coding tool as an author, contributor, co-author, reviewer,
+maintainer, credit, or DCO sign-off. Commit trailers and project metadata must
+name the human contributor only.
+
+Remove assistant signature footers before committing. If a maintainer asks how
+a change was produced, describe tool use in the pull-request body as context,
+not contributor credit.
+
+Run `npm run check:attribution` before opening a pull request. The same rule runs
+in CI and in the local Git hooks after installing them with:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Sign your commits (DCO)
 
 We use the [Developer Certificate of Origin](https://developercertificate.org/).

@@ -78,14 +78,14 @@ PosnicPro.customers = {
             key: 'customers',
             container: '#customers_filter_panel',
             button: '#customers_filter_btn',
-            searchPlaceholder: 'Search name, phone or email',
-            dateField: 'Added',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
+            dateField: PosnicPro.i18n.t('lang_added', 'Added'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'name', label: 'Name' },
-                { value: 'phone', label: 'Phone' },
-                { value: 'email', label: 'Email' },
-                { value: 'address', label: 'Address' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'phone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') },
+                { value: 'email', label: PosnicPro.i18n.t('lang_email_title', 'Email') },
+                { value: 'address', label: PosnicPro.i18n.t('lang_address_title', 'Address') }
             ],
             onChange: function () { PosnicPro.customers.loadList(1); }
         });
@@ -112,16 +112,16 @@ PosnicPro.customers = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('customers') > 0;
                 $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No customers match this filter.' : 'No customers yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_customers_match_this_filter', 'No customers match this filter.') : PosnicPro.i18n.t('lang_no_customers_yet_press_new_to_add_the_firs', 'No customers yet - press New to add the first.')) + '</div>');
                 $('#customers_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="c-col-phone">Phone</th>'
-                + '<th class="c-col-email">Email</th><th class="c-col-address">Address</th><th class="text-center">Dues</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="c-col-phone"><lang class="lang_phone_title">Phone</lang></th>'
+                + '<th class="c-col-email"><lang class="lang_email_title">Email</lang></th><th class="c-col-address"><lang class="lang_address_title">Address</lang></th><th class="text-center"><lang class="lang_dues">Dues</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var due = Number(r.partial_balance) > 0
-                    ? '<span class="rs-pill unpaid">Due</span>'
+                    ? '<span class="rs-pill unpaid"><lang class="lang_due">Due</lang></span>'
                     : '<span class="q-muted">-</span>';
                 html += '<tr class="md-row customers-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -136,14 +136,14 @@ PosnicPro.customers = {
             $('#customers_list_rows').html(html);
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load customers - try again.</div>');
+            $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_customers_try_again">Could not load customers - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.customers;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' customer' : ' customers');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_customer', 'customer') : PosnicPro.i18n.t('lang_customers', 'customers'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -207,16 +207,16 @@ PosnicPro.customers = {
         if (window.location.hash.slice(2) !== 'customers/' + id) {
             hasher.setHash('customers/' + id);
         }
-        $('#customers_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        $('#customers_doc').html('<div class="text-center text-muted" style="padding:60px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         PosnicPro.get('customers/' + id, function (response) {
             if (response.type !== 'success') {
-                $('#customers_doc').html('<div class="text-danger p-4">Could not open this customer.</div>');
+                $('#customers_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_customer">Could not open this customer.</lang></div>');
                 return;
             }
             PosnicPro.customers.renderCustomerDoc(response.data);
             PosnicPro.ACLForModule('customer');
         }, function () {
-            $('#customers_doc').html('<div class="text-danger p-4">Could not open this customer.</div>');
+            $('#customers_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_customer">Could not open this customer.</lang></div>');
         });
     },
     closeDoc: function () {
@@ -231,10 +231,10 @@ PosnicPro.customers = {
     renderCustomerDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var id = String(d._id || PosnicPro.customers._openDocId);
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#customers_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#customers_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.name) + '</span>'
             + (Number(d.partial_balance) > 0 ? '<span class="rs-pill unpaid">Dues ' + PosnicPro.local.get('currencySign') + '&nbsp;' + Number(d.partial_balance).toFixed(2) + '</span>' : '')
             + '<span class="ml-auto"></span>'
@@ -243,30 +243,30 @@ PosnicPro.customers = {
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="write" onclick="hasher.setHash(\'customers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item text-danger" data-module="customer" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.customers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
-            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.customers.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.customers.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         var strip = '<div class="p-void-strip" id="c_delete_strip" style="display:none;">'
             + '<span>Delete <b>' + esc(d.name) + '</b>? Their sales stay on record; only the customer card goes.</span>'
             + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.customers.deleteConfirm(\'' + esc(id) + '\');">Delete customer</button>'
             + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#c_delete_strip\').slideUp(120);">Cancel</button>'
             + '</div>';
-        var contact = '<div class="q-block"><div class="q-label">Contact</div>'
+        var contact = '<div class="q-block"><div class="q-label"><lang class="lang_contact">Contact</lang></div>'
             + (real(d.phone) ? '<div><a href="tel:' + esc(d.phone) + '">' + esc(d.phone) + '</a></div>' : '')
             + (real(d.email) ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '')
             + (real(d.address) ? '<div class="q-muted">' + esc(d.address) + '</div>' : '')
             + (real(d.state) ? '<div class="q-muted">' + esc(d.state) + (real(d.country) ? ', ' + esc(d.country) : '') + '</div>' : '')
             + '</div>';
         var tax = (real(d.gst_type) || real(d.gst_number))
-            ? '<div class="q-block"><div class="q-label">Tax</div>'
+            ? '<div class="q-block"><div class="q-label"><lang class="lang_module_tax">Tax</lang></div>'
                 + (real(d.gst_type) ? '<div>' + esc(d.gst_type) + '</div>' : '')
                 + (real(d.gst_number) ? '<div class="q-muted">' + taxLabel + ': ' + esc(d.gst_number) + '</div>' : '')
                 + '</div>'
             : '';
-        var record = '<div class="q-block"><div class="q-label">On record</div>'
+        var record = '<div class="q-block"><div class="q-label"><lang class="lang_on_record">On record</lang></div>'
             + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
             + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
             + '<div class="q-muted" id="c_doc_loyalty"></div>'
@@ -274,8 +274,8 @@ PosnicPro.customers = {
         var body = '<div class="s-doc-body"><div class="q-sheet s-sheet">'
             + '<div class="s-doc-stats" id="c_doc_stats"></div>'
             + '<div class="s-doc-grid">' + contact + tax + record + '</div>'
-            + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
-            + '<div id="c_doc_sales" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '<div class="q-label" style="margin-top:18px;"><lang class="lang_recent_sales">Recent sales</lang></div>'
+            + '<div id="c_doc_sales" class="text-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>'
             + '</div></div>';
         $('#customers_doc').html(toolbar + strip + body);
         PosnicPro.customers.loadRecentSales(id, d);
@@ -306,18 +306,18 @@ PosnicPro.customers = {
             var row = ((r.data || {}).list || [])[0] || {};
             $('#c_doc_stats').html(
                 '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + (Number(row.sales_payment) || 0).toFixed(2) + '</div>'
-                + '<div class="s-stat-label">Lifetime sales</div></div>'
+                + '<div class="s-stat-label"><lang class="lang_lifetime_sales">Lifetime sales</lang></div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + (Number(row.sales_count) || 0) + '</div>'
-                + '<div class="s-stat-label">' + (Number(row.sales_count) === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat-label">' + (Number(row.sales_count) === 1 ? PosnicPro.i18n.t('lang_newsale_title', 'Sale') : PosnicPro.i18n.t('lang_rgrp_sales', 'Sales')) + '</div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + (Number(row.sales_avg) || 0).toFixed(2) + '</div>'
-                + '<div class="s-stat-label">Average sale</div></div>'
+                + '<div class="s-stat-label"><lang class="lang_average_sale">Average sale</lang></div></div>'
                 + (Number(row.refund_payment) > 0
                     ? '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + Number(row.refund_payment).toFixed(2) + '</div>'
-                        + '<div class="s-stat-label">Refunded</div></div>'
+                        + '<div class="s-stat-label"><lang class="lang_refunded">Refunded</lang></div></div>'
                     : '')
                 + (dues > 0
                     ? '<div class="s-stat"><div class="s-stat-value" style="color: var(--theme-danger-color, #c0392b);">' + cur + '&nbsp;' + dues.toFixed(2) + '</div>'
-                        + '<div class="s-stat-label">Dues</div></div>'
+                        + '<div class="s-stat-label"><lang class="lang_dues">Dues</lang></div></div>'
                     : '')
             );
         }, function () { $('#c_doc_stats').html(''); });
@@ -331,11 +331,11 @@ PosnicPro.customers = {
             var list = ((response && response.data) || {}).list || [];
             var total = Number((response.data || {}).total) || list.length;
             if (!list.length) {
-                $('#c_doc_sales').html('<div class="text-muted">No sales for this customer yet.</div>');
+                $('#c_doc_sales').html('<div class="text-muted"><lang class="lang_no_sales_for_this_customer_yet">No sales for this customer yet.</lang></div>');
                 return;
             }
             var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Sale #</th><th>Status</th><th class="text-right">Date</th><th class="text-right">Total</th>'
+                + '<th><lang class="lang_sale">Sale #</lang></th><th><lang class="lang_userstatus">Status</lang></th><th class="text-right"><lang class="lang_date_title">Date</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '</tr></thead><tbody>';
             list.forEach(function (r) {
                 var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid' || Number(r.partial_balance) > 0;
@@ -343,8 +343,8 @@ PosnicPro.customers = {
                 var pill = refunded
                     ? '<span class="rs-pill hold">' + esc(r.sale_process) + '</span>'
                     : unpaid
-                        ? '<span class="rs-pill unpaid">Unpaid</span>'
-                        : '<span class="rs-pill paid">Paid</span>';
+                        ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>'
+                        : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
                 html += '<tr>'
                     + '<td>' + esc(r.sales_id || '') + '</td>'
                     + '<td>' + pill + '</td>'
@@ -359,7 +359,7 @@ PosnicPro.customers = {
             }
             $('#c_doc_sales').html(html);
         }, function () {
-            $('#c_doc_sales').html('<div class="text-muted">Sales history unavailable.</div>');
+            $('#c_doc_sales').html('<div class="text-muted"><lang class="lang_sales_history_unavailable">Sales history unavailable.</lang></div>');
         });
     },
     deleteAsk: function () {
@@ -1093,15 +1093,15 @@ PosnicPro.transactiondetails = {
                         let salesPending = row.pending !== undefined ? row.pending : 0.00;
                         let saleTotal = row.sale_total !== undefined ? row.sale_total : 0.00;
                         let image_path = (row.transaction_image !== "category.svg") ? row.transaction_image : 'static/images/default/' + row.transaction_image;
-                        let deleteTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Delete Transaction" onclick="return PosnicPro.transactiondetails.removeTransactionDetails(\'' + row._id + '\');" class="point-cursor mobile_tooltip text-danger"><i class="feather icon-trash"></i></a>';
-                        let deleteSaleTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Connected with sale" class="point-cursor mobile_tooltip text-secondary" style="cursor: default;"><i class="feather icon-link"></i></a>';
+                        let deleteTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Delete Transaction" data-t-title="lang_delete_transaction" onclick="return PosnicPro.transactiondetails.removeTransactionDetails(\'' + row._id + '\');" class="point-cursor mobile_tooltip text-danger"><i class="feather icon-trash"></i></a>';
+                        let deleteSaleTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Connected with sale" data-t-title="lang_connected_with_sale" class="point-cursor mobile_tooltip text-secondary" style="cursor: default;"><i class="feather icon-link"></i></a>';
                         let row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                        let type = (row.type === 'in') ? '<span class="badge badge-success-inverse">Credit</span>'
-                                : (row.type === 'out' && row.sale_id !== '') ? '<span class="badge badge-info-inverse">Sale - Debit</span>'
-                                : (row.type === 'out') ? '<span class="badge badge-danger-inverse">Debit</span>'
-                                : '<span class="badge badge-warning-inverse">Sale - Due</span>';
+                        let type = (row.type === 'in') ? '<span class="badge badge-success-inverse"><lang class="lang_credit_title">Credit</lang></span>'
+                                : (row.type === 'out' && row.sale_id !== '') ? '<span class="badge badge-info-inverse"><lang class="lang_sale_debit">Sale - Debit</lang></span>'
+                                : (row.type === 'out') ? '<span class="badge badge-danger-inverse"><lang class="lang_debit_title">Debit</lang></span>'
+                                : '<span class="badge badge-warning-inverse"><lang class="lang_sale_due">Sale - Due</lang></span>';
                         let trash = (row.sale_id !== '') ? deleteSaleTransaction : deleteTransaction;
-                        let connect = (row.sale_id !== '') ? '<span class="badge badge-secondary">Sale Bill</span>' : '';
+                        let connect = (row.sale_id !== '') ? '<span class="badge badge-secondary"><lang class="lang_sale_bill">Sale Bill</lang></span>' : '';
                         let trow = '<tr> <td scope="row">' + row_no + '</td><td>' + row.string_date + '<br>' + connect + '</td><td class="text-center">' + (row.description || '') + '</td>\n\
                                     <td class="text-left">' + type + '</td><td class="text-center">' +
                                 (row.type === 'out' ? '-' : '+') + currency + '&nbsp;' + row.amount + '</td>\n\
@@ -1291,7 +1291,7 @@ PosnicPro.closesalesdetails = {
         });
         if (PosnicPro.closesalesdetails.fixedwalletbalance < checkedWalletBalance) {
             $(element).prop("checked", false);
-            PosnicPro.alert('warning', 'Not enough wallet balance.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_not_enough_wallet_balance', 'Not enough wallet balance.'));
             var removeRmIndex = PosnicPro.closesalesdetails.partialy_checkbox.map(function (item) {
                 return item.id === $(element).val() ? $(element).val() : '';
             }).indexOf($(element).val());
@@ -1305,7 +1305,7 @@ PosnicPro.closesalesdetails = {
     paymentClose: function () {
 
         if (PosnicPro.closesalesdetails.partialy_checkbox.length === 0) {
-            PosnicPro.alert('error', 'Select a sale.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_a_sale', 'Select a sale.'));
             return false;
         }
         let customer_id = currentHash.split('/');

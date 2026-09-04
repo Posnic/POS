@@ -77,14 +77,14 @@ PosnicPro.suppliers = {
             key: 'suppliers',
             container: '#suppliers_filter_panel',
             button: '#suppliers_filter_btn',
-            searchPlaceholder: 'Search name, phone or email',
-            dateField: 'Added',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
+            dateField: PosnicPro.i18n.t('lang_added', 'Added'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'name', label: 'Name' },
-                { value: 'phone', label: 'Phone' },
-                { value: 'email', label: 'Email' },
-                { value: 'address', label: 'Address' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'phone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') },
+                { value: 'email', label: PosnicPro.i18n.t('lang_email_title', 'Email') },
+                { value: 'address', label: PosnicPro.i18n.t('lang_address_title', 'Address') }
             ],
             onChange: function () { PosnicPro.suppliers.loadList(1); }
         });
@@ -105,13 +105,13 @@ PosnicPro.suppliers = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('suppliers') > 0;
                 $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No suppliers match this filter.' : 'No suppliers yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_suppliers_match_this_filter', 'No suppliers match this filter.') : PosnicPro.i18n.t('lang_no_suppliers_yet_press_new_to_add_the_firs', 'No suppliers yet - press New to add the first.')) + '</div>');
                 $('#suppliers_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="s-col-phone">Phone</th>'
-                + '<th class="s-col-email">Email</th><th class="s-col-address">Address</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="s-col-phone"><lang class="lang_phone_title">Phone</lang></th>'
+                + '<th class="s-col-email"><lang class="lang_email_title">Email</lang></th><th class="s-col-address"><lang class="lang_address_title">Address</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 html += '<tr class="md-row suppliers-row highlight-select' + (self._openDocId === String(r._id) ? ' is-active' : '') + '"'
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -125,14 +125,14 @@ PosnicPro.suppliers = {
             $('#suppliers_list_rows').html(html);
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load suppliers - try again.</div>');
+            $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_suppliers_try_again">Could not load suppliers - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.suppliers;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' supplier' : ' suppliers');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_supplier_2', 'supplier') : PosnicPro.i18n.t('lang_suppliers', 'suppliers'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -196,16 +196,16 @@ PosnicPro.suppliers = {
         if (window.location.hash.slice(2) !== 'suppliers/' + id) {
             hasher.setHash('suppliers/' + id);
         }
-        $('#suppliers_doc').html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        $('#suppliers_doc').html('<div class="text-center text-muted" style="padding:60px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         PosnicPro.get('suppliers/' + id, function (response) {
             if (response.type !== 'success') {
-                $('#suppliers_doc').html('<div class="text-danger p-4">Could not open this supplier.</div>');
+                $('#suppliers_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_supplier">Could not open this supplier.</lang></div>');
                 return;
             }
             PosnicPro.suppliers.renderSupplierDoc(response.data);
             PosnicPro.ACLForModule('supplier');
         }, function () {
-            $('#suppliers_doc').html('<div class="text-danger p-4">Could not open this supplier.</div>');
+            $('#suppliers_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_supplier">Could not open this supplier.</lang></div>');
         });
     },
     closeDoc: function () {
@@ -220,46 +220,46 @@ PosnicPro.suppliers = {
     renderSupplierDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var id = String(d._id || PosnicPro.suppliers._openDocId);
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#suppliers_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#suppliers_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.name) + '</span>'
             + '<span class="ml-auto"></span>'
             + '<button type="button" class="btn btn-sm btn-light" data-module="supplier" data-access="write" onclick="hasher.setHash(\'suppliers/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>'
             + '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item text-danger" data-module="supplier" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.suppliers.deleteAsk();"><i class="feather icon-trash mr-2"></i>Delete</a>'
             + '</div></div>'
-            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" aria-label="Close" onclick="PosnicPro.suppliers.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.suppliers.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         var strip = '<div class="p-void-strip" id="s_delete_strip" style="display:none;">'
             + '<span>Delete <b>' + esc(d.name) + '</b>? Their purchases stay on record; only the supplier card goes.</span>'
             + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.suppliers.deleteConfirm(\'' + esc(id) + '\');">Delete supplier</button>'
             + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#s_delete_strip\').slideUp(120);">Cancel</button>'
             + '</div>';
-        var contact = '<div class="q-block"><div class="q-label">Contact</div>'
+        var contact = '<div class="q-block"><div class="q-label"><lang class="lang_contact">Contact</lang></div>'
             + (real(d.phone) ? '<div><a href="tel:' + esc(d.phone) + '">' + esc(d.phone) + '</a></div>' : '')
             + (real(d.email) ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '')
             + (real(d.address) ? '<div class="q-muted">' + esc(d.address) + '</div>' : '')
             + (real(d.state) ? '<div class="q-muted">' + esc(d.state) + (real(d.country) ? ', ' + esc(d.country) : '') + '</div>' : '')
             + '</div>';
         var tax = (real(d.gst_type) || real(d.gst_number))
-            ? '<div class="q-block"><div class="q-label">Tax</div>'
+            ? '<div class="q-block"><div class="q-label"><lang class="lang_module_tax">Tax</lang></div>'
                 + (real(d.gst_type) ? '<div>' + esc(d.gst_type) + '</div>' : '')
                 + (real(d.gst_number) ? '<div class="q-muted">' + taxLabel + ': ' + esc(d.gst_number) + '</div>' : '')
                 + '</div>'
             : '';
-        var record = '<div class="q-block"><div class="q-label">On record</div>'
+        var record = '<div class="q-block"><div class="q-label"><lang class="lang_on_record">On record</lang></div>'
             + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
             + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
             + '</div>';
         var body = '<div class="s-doc-body"><div class="q-sheet s-sheet">'
             + '<div class="s-doc-stats" id="s_doc_stats"></div>'
             + '<div class="s-doc-grid">' + contact + tax + record + '</div>'
-            + '<div class="q-label" style="margin-top:18px;">Recent purchases</div>'
-            + '<div id="s_doc_purchases" class="text-muted" style="font-size:13px;">Loading ...</div>'
+            + '<div class="q-label" style="margin-top:18px;"><lang class="lang_recent_purchases">Recent purchases</lang></div>'
+            + '<div id="s_doc_purchases" class="text-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>'
             + '</div></div>';
         $('#suppliers_doc').html(toolbar + strip + body);
         PosnicPro.suppliers.loadRecentPurchases(id);
@@ -289,16 +289,16 @@ PosnicPro.suppliers = {
                 '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + spend.toFixed(2) + '</div>'
                 + '<div class="s-stat-label">Purchased' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
-                + '<div class="s-stat-label">' + (total === 1 ? 'Purchase' : 'Purchases') + '</div></div>'
+                + '<div class="s-stat-label">' + (total === 1 ? PosnicPro.i18n.t('lang_newpurchase_title', 'Purchase') : PosnicPro.i18n.t('lang_po_title', 'Purchases')) + '</div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + (last ? esc(String(last).slice(0, 10)) : '\u2014') + '</div>'
-                + '<div class="s-stat-label">Last purchase</div></div>'
+                + '<div class="s-stat-label"><lang class="lang_last_purchase">Last purchase</lang></div></div>'
             );
             if (!list.length) {
-                $('#s_doc_purchases').html('<div class="text-muted">No purchases from this supplier yet.</div>');
+                $('#s_doc_purchases').html('<div class="text-muted"><lang class="lang_no_purchases_from_this_supplier_yet">No purchases from this supplier yet.</lang></div>');
                 return;
             }
             var html = '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Purchase #</th><th>Status</th><th class="text-right">Date</th><th class="text-right">Total</th>'
+                + '<th><lang class="lang_purchase_2">Purchase #</lang></th><th><lang class="lang_userstatus">Status</lang></th><th class="text-right"><lang class="lang_date_title">Date</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '</tr></thead><tbody>';
             list.slice(0, 5).forEach(function (r) {
                 var docId = r._id || r.id || '';
@@ -311,7 +311,7 @@ PosnicPro.suppliers = {
                         + (st === 'open' ? 'Ordered' : esc(r.receiving_status)) + '</span>'
                     : '';
                 html += '<tr class="s-doc-purchase-row"'
-                    + (docId ? ' data-doc="' + esc(docId) + '" style="cursor:pointer;" title="Preview this purchase"' : '')
+                    + (docId ? ' data-doc="' + esc(docId) + '" style="cursor:pointer;" title="Preview this purchase" data-t-title="lang_preview_this_purchase"' : '')
                     + '>'
                     + '<td>' + esc(no) + '</td>'
                     + '<td>' + pill + '</td>'
@@ -326,7 +326,7 @@ PosnicPro.suppliers = {
             }
             $('#s_doc_purchases').html(html);
         }, function () {
-            $('#s_doc_purchases').html('<div class="text-muted">Purchase history unavailable.</div>');
+            $('#s_doc_purchases').html('<div class="text-muted"><lang class="lang_purchase_history_unavailable">Purchase history unavailable.</lang></div>');
         });
     },
     /*
@@ -338,26 +338,26 @@ PosnicPro.suppliers = {
         var open = $row.next('.s-doc-preview-tr');
         if (open.length) { open.remove(); return; }
         $('#suppliers_doc .s-doc-preview-tr').remove();
-        var $tr = $('<tr class="s-doc-preview-tr"><td colspan="4"><div class="s-doc-preview"><div class="text-muted" style="padding:16px;">Loading ...</div></div></td></tr>');
+        var $tr = $('<tr class="s-doc-preview-tr"><td colspan="4"><div class="s-doc-preview"><div class="text-muted" style="padding:16px;"><lang class="lang_loading_4">Loading ...</lang></div></div></td></tr>');
         $row.after($tr);
         var $box = $tr.find('.s-doc-preview');
         PosnicPro.get('receivings/' + docId, function (response) {
             if (response.type !== 'success' || !response.data) {
-                $box.html('<div class="text-muted" style="padding:16px;">Could not load this purchase.</div>');
+                $box.html('<div class="text-muted" style="padding:16px;"><lang class="lang_could_not_load_this_purchase">Could not load this purchase.</lang></div>');
                 return;
             }
             $box.html(
                 '<div class="s-doc-preview-bar">'
-                + '<span class="q-muted">Preview</span>'
+                + '<span class="q-muted"><lang class="lang_preview">Preview</lang></span>'
                 + '<span class="s-doc-preview-actions">'
                 + '<a href="javascript:void(0)" onclick="hasher.setHash(\'purchaseorders/' + String(docId) + '\');">Open in Purchases <i class="feather icon-arrow-right"></i></a>'
-                + '<a href="javascript:void(0)" class="s-preview-close" onclick="$(this).closest(\'.s-doc-preview-tr\').remove();" aria-label="Close preview"><i class="feather icon-x"></i></a>'
+                + '<a href="javascript:void(0)" class="s-preview-close" onclick="$(this).closest(\'.s-doc-preview-tr\').remove();" aria-label="Close preview" data-t-aria-label="lang_close_preview"><i class="feather icon-x"></i></a>'
                 + '</span>'
                 + '</div>'
                 + PosnicPro.purchaseorders.buildPurchaseSheet(response.data)
             );
         }, function () {
-            $box.html('<div class="text-muted" style="padding:16px;">Could not load this purchase.</div>');
+            $box.html('<div class="text-muted" style="padding:16px;"><lang class="lang_could_not_load_this_purchase">Could not load this purchase.</lang></div>');
         });
     },
     deleteAsk: function () {

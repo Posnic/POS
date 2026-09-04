@@ -6,6 +6,7 @@
   "desktopName": "com.posnic.app.desktop",
   "scripts": {
     "postinstall": "node scripts/enable-installer-extraction-details.js",
+    "prepare": "husky",
     "start": "electron .",
     "dev": "node scripts/dev-server.js",
     "test:auth": "node --test tests/startup-auth.test.js",
@@ -48,12 +49,17 @@
     "release:windows": "node scripts/release-windows.js",
     "release:ship": "node scripts/release-ship.js",
     "scan:secrets": "node scripts/scan-git-history.js",
+    "check:attribution": "node scripts/check-ai-attribution.js --all --commits",
     "badges": "node scripts/check-badges.js",
     "badges:fix": "node scripts/check-badges.js --fix",
     "check:advisories": "node scripts/check-advisories.js",
     "release:sbom": "node scripts/generate-release-sboms.js",
     "art": "node scripts/make-installer-art.js",
     "recover": "node scripts/recover-access.js"
+  },
+  "lint-staged": {
+    "*.{js,cjs,mjs,json,html,css,md,yml,yaml}": "prettier --write",
+    "api/{src,tests}/**/*.js": "node scripts/lint-staged-api.js"
   },
   "build": {
     "appId": "com.posnic.app",
@@ -505,10 +511,13 @@
     "7zip-bin": "^5.2.0",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
+    "husky": "^9.1.7",
     "icon-gen": "^5.0.0",
     "jquery": "^3.7.1",
     "jsdom": "^30.0.1",
+    "lint-staged": "^16.2.6",
     "png-to-ico": "^3.0.2",
+    "prettier": "^3.9.6",
     "sharp": "^0.35.3"
   },
   "dependencies": {

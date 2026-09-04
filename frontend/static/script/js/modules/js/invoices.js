@@ -33,7 +33,7 @@ PosnicPro.invoices = {
        bill - TAX INVOICE under GST, INVOICE elsewhere. */
     _title: function (inv) {
         if (!inv || inv.status === 'draft') { return 'PROFORMA INVOICE'; }
-        return PosnicPro.local.get('gst_action') === 'enable' ? 'TAX INVOICE' : 'INVOICE';
+        return PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_tax_invoice', 'TAX INVOICE') : PosnicPro.i18n.t('lang_invoice', 'INVOICE');
     },
     _pill: function (inv) {
         var s = inv.status;
@@ -112,7 +112,7 @@ PosnicPro.invoices = {
         PosnicPro.invoices._ed = PosnicPro.invoices._edBlank();
         PosnicPro.invoices._edShell();
         PosnicPro.invoices._edClearForm();
-        $('#ie_title').text('New invoice');
+        $('#ie_title').text(PosnicPro.i18n.t('lang_new_invoice', 'New invoice'));
         /* Terms and the due date come from the shop's invoice settings on
            save; the box shows the terms it will get so they can be changed. */
         $('#ie_terms').val(PosnicPro.local.get('invoice_terms') || '');
@@ -123,7 +123,7 @@ PosnicPro.invoices = {
     showEdit: function (id) {
         PosnicPro.get({ url: 'invoices/' + id, data: {} }, function (r) {
             var inv = r && r.data;
-            if (!inv) { PosnicPro.alert('error', 'Invoice not found'); return; }
+            if (!inv) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_invoice_not_found', 'Invoice not found')); return; }
             if (!PosnicPro.invoices._editable(inv)) {
                 PosnicPro.alert('warning', 'This invoice is ' + PosnicPro.invoices._label(inv.status).toLowerCase() + ' - it can no longer be edited.');
                 hasher.setHash('invoices/' + id);
@@ -171,7 +171,7 @@ PosnicPro.invoices = {
             $('#ie_due_date').val(PosnicPro.invoices._iso(inv.due_date));
             PosnicPro.quotes._loadTaxList(function () { PosnicPro.invoices.edRender(); });
             PosnicPro.invoices.edRender();
-        }, function () { PosnicPro.alert('error', 'Could not load the invoice'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_invoice', 'Could not load the invoice')); });
     },
     edRender: function () {
         var ed = PosnicPro.invoices._ed;
@@ -180,12 +180,12 @@ PosnicPro.invoices = {
         var html = '';
         ed.lines.forEach(function (l, i) {
             html += '<tr data-i="' + i + '">'
-                + '<td><span class="qe-l-grip" title="Drag to reorder">&#x2630;</span>'
-                + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? 'Custom line name' : 'Item') + '" value="' + esc(l.item_name) + '">'
-                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" value="' + esc(l.description) + '">'
+                + '<td><span class="qe-l-grip" title="Drag to reorder" data-t-title="lang_drag_to_reorder">&#x2630;</span>'
+                + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? PosnicPro.i18n.t('lang_custom_line_name', 'Custom line name') : PosnicPro.i18n.t('lang_newitem_title', 'Item')) + '" value="' + esc(l.item_name) + '">'
+                + '<input type="text" class="qe-l-desc form-control form-control-sm mt-1" maxlength="500" placeholder="Description (optional)" data-t-placeholder="lang_description_optional" value="' + esc(l.description) + '">'
                 + (l.kind === 'custom'
                     ? '<select class="qe-l-taxsel form-control form-control-sm mt-1" style="max-width:170px;">'
-                        + '<option value="">No tax</option>'
+                        + '<option value="" data-t="lang_no_tax">No tax</option>'
                         + ((PosnicPro.quotes._taxList || []).map(function (t) {
                             var sel = Number(l.tax_value) > 0 && String(l.tax_name) === String(t.tax_name) ? ' selected' : '';
                             return '<option value="' + esc(t.tax_value) + '" data-name="' + esc(t.tax_name) + '"' + sel + '>'
@@ -209,10 +209,10 @@ PosnicPro.invoices = {
                 + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
                 + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>'
                 + '<td class="text-right qe-l-total" style="white-space:nowrap; padding-top:12px;">' + PosnicPro.quotes._edLineTotal(l).toFixed(2) + '</td>'
-                + '<td><button type="button" class="btn qe-l-del" title="Remove line">&times;</button></td>'
+                + '<td><button type="button" class="btn qe-l-del" title="Remove line" data-t-title="lang_remove_line">&times;</button></td>'
                 + '</tr>';
         });
-        $('#ie_lines').html(html || '<tr><td colspan="6" class="text-center text-muted">Search an item above, or add a custom line.</td></tr>');
+        $('#ie_lines').html(html || '<tr><td colspan="6" class="text-center text-muted"><lang class="lang_search_an_item_above_or_add_a_custom_line">Search an item above, or add a custom line.</lang></td></tr>');
         var chtml = '';
         ed.charges.forEach(function (c, i) {
             chtml += '<div class="input-group input-group-sm mb-1 qe-charge" data-i="' + i + '">'
@@ -226,7 +226,7 @@ PosnicPro.invoices = {
                 + '<div class="input-group-append"><button type="button" class="btn btn-outline-danger qe-c-del">&times;</button></div>'
                 + '</div>';
         });
-        $('#ie_charges').html(chtml || '<div class="text-muted small mb-1">No charges yet - add GST, freight, installation, anything, under its own name.</div>');
+        $('#ie_charges').html(chtml || '<div class="text-muted small mb-1"><lang class="lang_no_charges_yet_add_gst_freight_installatio">No charges yet - add GST, freight, installation, anything, under its own name.</lang></div>');
         PosnicPro.invoices.edRecalc();
     },
     /* The same arithmetic the server stores (document-math.computeTotals). */
@@ -273,7 +273,7 @@ PosnicPro.invoices = {
         if (!ed) { return; }
         var esc = PosnicPro.invoices._esc;
         var money = PosnicPro.invoices._money;
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var logo = PosnicPro.local.get('branchimage');
         var custName = $.trim($('#ie_cust_name').val());
         var due = $('#ie_due_date').val();
@@ -292,19 +292,19 @@ PosnicPro.invoices = {
                     + (gst ? '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>' : '');
             })()
             + '</div>'
-            + '<div class="q-title-block"><div class="q-doc-title">INVOICE</div>'
+            + '<div class="q-title-block"><div class="q-doc-title"><lang class="lang_invoice">INVOICE</lang></div>'
             + '<div class="q-num">' + esc(ed.invoice_id || 'New') + '</div>'
-            + (due ? '<div class="q-muted">Due: ' + esc(due.split('-').reverse().join('/')) + '</div>' : '<div class="q-muted">Due: per your invoice settings</div>')
+            + (due ? '<div class="q-muted">Due: ' + esc(due.split('-').reverse().join('/')) + '</div>' : '<div class="q-muted"><lang class="lang_due_per_your_invoice_settings">Due: per your invoice settings</lang></div>')
             + (ref ? '<div class="q-muted">Ref: ' + esc(ref) + '</div>' : '')
             + '</div></div>'
-            + '<div class="q-billto"><div class="q-label">Bill To</div>'
+            + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
             + '<div class="q-cust">' + (esc(custName) || 'Walk-in customer') + '</div>'
             + '<div class="q-muted">' + esc($.trim($('#ie_cust_address').val())) + '</div>'
             + '<div class="q-muted">' + esc($.trim($('#ie_cust_phone').val()))
             + ($.trim($('#ie_cust_gstin').val()) ? ' &middot; ' + taxLabel + ': ' + esc($.trim($('#ie_cust_gstin').val())) : '') + '</div>'
             + '</div>'
-            + '<table class="q-items"><thead><tr><th>#</th><th>Item</th><th class="text-right">Qty</th>'
-            + '<th class="text-right">Price</th><th class="text-right">Amount</th></tr></thead><tbody>';
+            + '<table class="q-items"><thead><tr><th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+            + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr></thead><tbody>';
         ed.lines.forEach(function (l, i) {
             var note = esc(l.description || '');
             if (l.dtype && Number(l.dval) > 0) {
@@ -321,33 +321,33 @@ PosnicPro.invoices = {
                 + '<td class="text-right">' + money(PosnicPro.quotes._edLineTotal(l)) + '</td></tr>';
         });
         h += '</tbody><tfoot>'
-            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td><td class="text-right">' + money(m.subtotal) + '</td></tr>'
             + (m.taxRows && m.taxRows.length
                 ? m.taxRows.map(function (t) {
                     return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
                 }).join('')
-                : (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Tax</td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : ''))
+                : (m.taxSum > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(m.taxSum) + '</td></tr>' : ''))
             + (m.qdisc > 0 ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount' + (m.dtype === 'percent' ? ' (' + m.dval + '%)' : '') + '</td><td class="text-right">-' + money(m.qdisc) + '</td></tr>' : '');
         m.chargeRows.forEach(function (c) {
             h += '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(c.name) + '</td><td class="text-right">' + (c.sign === -1 ? '-' : '') + money(c.computed) + '</td></tr>';
         });
-        h += '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th><th class="text-right">' + money(m.total) + '</th></tr>'
+        h += '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th><th class="text-right">' + money(m.total) + '</th></tr>'
             + '</tfoot></table>';
         var pay = $.trim($('#ie_payment').val());
         var bank = $.trim($('#ie_bank').val());
         var terms = $.trim($('#ie_terms').val());
         var notes = $.trim($('#ie_notes').val());
         if (pay || bank) {
-            h += '<div class="q-block m-t-10"><div class="q-label">Payment details</div>'
+            h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
                 + (pay ? '<div>' + esc(pay) + '</div>' : '')
                 + (bank ? '<div class="q-muted">' + esc(bank) + '</div>' : '') + '</div>';
         }
-        if (terms) { h += '<div class="q-block m-t-10"><div class="q-label">Terms &amp; conditions</div>' + esc(terms) + '</div>'; }
-        if (notes) { h += '<div class="q-block m-t-10"><div class="q-label">Notes</div>' + esc(notes) + '</div>'; }
+        if (terms) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + esc(terms) + '</div>'; }
+        if (notes) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(notes) + '</div>'; }
         var sig = PosnicPro.local.get('quotesignature');
         if (sig) {
             h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
-                + '<div class="q-sign">Authorised signatory</div>';
+                + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>';
         }
         $('#ie_preview').html(h);
     },
@@ -372,7 +372,7 @@ PosnicPro.invoices = {
                 tax_type: String(d.tax_type || '').toLowerCase().indexOf('ex') === 0 ? 'exclusive' : 'inclusive'
             });
             PosnicPro.invoices.edRender();
-        }, function () { PosnicPro.alert('error', 'Could not load that item'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_that_item', 'Could not load that item')); });
     },
     edAddCharge: function () {
         if (!PosnicPro.invoices._ed) { return; }
@@ -390,7 +390,7 @@ PosnicPro.invoices = {
         var lines = ed.lines.filter(function (l) {
             return (String(l.item_name).trim() || l.item_id) && Number(l.qty) > 0;
         });
-        if (!lines.length) { PosnicPro.alert('warning', 'Add at least one line with a name and quantity.'); return; }
+        if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_line_with_a_name_and_quan', 'Add at least one line with a name and quantity.')); return; }
         var payload = {
             lines: lines.map(function (l) {
                 var out = {
@@ -458,7 +458,7 @@ PosnicPro.invoices = {
             PosnicPro.invoices.renderList();
         }, function () {
             if (mine !== PosnicPro.invoices._seq) { return; }
-            $('#invoices_list_rows').text('Could not load invoices - try again.');
+            $('#invoices_list_rows').text(PosnicPro.i18n.t('lang_could_not_load_invoices_try_again', 'Could not load invoices - try again.'));
         });
     },
     /* What the shop is owed, in the chip strip: the two numbers this page
@@ -493,8 +493,8 @@ PosnicPro.invoices = {
         var d = function (v) { return v ? new Date(v).toLocaleDateString('en-IN') : '-'; };
         var html = '<div class="table-responsive"><table class="table table-borderless">'
             + '<thead><tr>'
-            + '<th>Invoice #</th><th>Customer</th><th class="i-col-date">Date</th><th class="i-col-due">Due</th>'
-            + '<th class="text-right">Total</th><th class="text-right i-col-balance">Balance</th><th class="text-center">Status</th>'
+            + '<th><lang class="lang_invoice_2">Invoice #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="i-col-date"><lang class="lang_date_title">Date</lang></th><th class="i-col-due"><lang class="lang_due">Due</lang></th>'
+            + '<th class="text-right"><lang class="lang_total_title">Total</lang></th><th class="text-right i-col-balance"><lang class="lang_balance">Balance</lang></th><th class="text-center"><lang class="lang_userstatus">Status</lang></th>'
             + '</tr></thead><tbody>';
         rows.forEach(function (inv) {
             /* a proforma is not a receivable: only issued invoices show a balance */
@@ -523,7 +523,7 @@ PosnicPro.invoices = {
         };
         var label;
         if (total !== null) {
-            label = total + (total === 1 ? ' invoice' : ' invoices');
+            label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_invoice_4', 'invoice') : PosnicPro.i18n.t('lang_invoices', 'invoices'));
             if (pages > 1) { label = 'Page ' + cur + ' of ' + pages + ' · ' + label; }
         } else {
             var first = (cur - 1) * lim + 1;
@@ -573,7 +573,7 @@ PosnicPro.invoices = {
             .filter('[data-id="' + id + '"]').addClass('is-active');
         PosnicPro.get({ url: 'invoices/' + id, data: {} }, function (r) {
             var inv = r && r.data;
-            if (!inv) { PosnicPro.alert('error', 'Invoice not found'); return; }
+            if (!inv) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_invoice_not_found', 'Invoice not found')); return; }
             PosnicPro.invoices._current = inv;
             $('#invoices_list_rows tr.invoices-row').removeClass('is-active')
                 .filter('[data-id="' + String(inv._id) + '"]').addClass('is-active');
@@ -582,7 +582,7 @@ PosnicPro.invoices = {
             PosnicPro.ACLForModule('sales');
             $('#invoices_view_card').show();
             if (PosnicPro.invoices._editable(inv)) { PosnicPro.invoices._pvInitSort(); }
-        }, function () { PosnicPro.alert('error', 'Could not load the invoice'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_invoice', 'Could not load the invoice')); });
     },
     /* The on-screen A4: seller and INVOICE block, bill-to, lines, totals,
        what was paid and what is due, the sale it was recorded as, footer. */
@@ -592,7 +592,7 @@ PosnicPro.invoices = {
         var d = PosnicPro.invoices._d;
         var open = PosnicPro.invoices._editable(inv);
         var booked = PosnicPro.invoices._booked(inv);
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var ed = function (f, val, ph) {
             if (!open) { return esc(val) || '<span class="text-muted">-</span>'; }
             return '<span class="q-edit" contenteditable="true" data-f="' + f + '" data-ph="' + ph + '">' + (esc(val) || '') + '</span>';
@@ -629,7 +629,7 @@ PosnicPro.invoices = {
             + (stamp ? '<div class="q-status' + (inv.status === 'paid' ? ' is-paid' : '') + '">' + esc(stamp) + '</div>' : '')
             + '</div>'
             + '</div>'
-            + '<div class="q-billto"><div class="q-label">Bill To</div>'
+            + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
             + '<div class="q-cust">' + ed('customer_name', inv.customer_name || 'Walk-in customer', 'Customer name') + '</div>'
             + '<div class="q-muted">' + ed('customer_address', inv.customer_address, 'Address') + '</div>'
             + '<div class="q-muted">Phone: ' + ed('customer_phone', inv.customer_phone, 'phone')
@@ -637,8 +637,8 @@ PosnicPro.invoices = {
             + '<div class="q-muted">Email: ' + ed('customer_email', inv.customer_email, 'email') + '</div>'
             + '</div>'
             + '<div class="table-responsive"><table class="q-items"><thead><tr>'
-            + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
-            + '<th class="text-right">Unit price</th><th class="text-right">Amount</th>'
+            + '<th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+            + '<th class="text-right"><lang class="lang_unit_price">Unit price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
         (inv.items || []).forEach(function (l, i) {
             var note = esc(l.description || '');
@@ -656,7 +656,7 @@ PosnicPro.invoices = {
                 + '<td class="text-right">' + money(l.line_total) + '</td></tr>';
         });
         body += '</tbody><tfoot>'
-            + '<tr class="q-sub"><td colspan="4" class="text-right">Subtotal</td>'
+            + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
             + '<td class="text-right">' + money(inv.subtotal) + '</td></tr>'
             + (inv.discount && inv.discount.computed > 0
                 ? '<tr class="q-sub"><td colspan="4" class="text-right">Discount'
@@ -670,16 +670,16 @@ PosnicPro.invoices = {
             + (function () {
                 if (!(Number(inv.tax_total) > 0)) { return ''; }
                 var rows = PosnicPro.quotes._taxBreakup(inv.items, function (l) { return Number(l.tax_amount) || 0; });
-                if (!rows.length) { rows = [{ label: 'Tax', amount: Number(inv.tax_total) }]; }
+                if (!rows.length) { rows = [{ label: PosnicPro.i18n.t('lang_module_tax', 'Tax'), amount: Number(inv.tax_total) }]; }
                 return rows.map(function (t) {
                     return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(t.label) + '</td><td class="text-right">' + money(t.amount) + '</td></tr>';
                 }).join('');
             })()
-            + '<tr class="q-grand"><th colspan="4" class="text-right">TOTAL</th>'
+            + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
             + '<th class="text-right">' + money(inv.total) + '</th></tr>'
             + (booked
-                ? '<tr class="q-sub"><td colspan="4" class="text-right">Paid</td><td class="text-right">' + money(inv.paid_amount) + '</td></tr>'
-                    + '<tr class="q-grand"><th colspan="4" class="text-right">BALANCE DUE</th><th class="text-right">' + money(inv.balance) + '</th></tr>'
+                ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_paid">Paid</lang></td><td class="text-right">' + money(inv.paid_amount) + '</td></tr>'
+                    + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_balance_due_2">BALANCE DUE</lang></th><th class="text-right">' + money(inv.balance) + '</th></tr>'
                 : '')
             + '</tfoot></table></div>'
             + (booked
@@ -691,14 +691,14 @@ PosnicPro.invoices = {
             + (inv.status === 'cancelled' && inv.cancel_reason ? '<div class="q-muted m-t-5">Cancelled: ' + esc(inv.cancel_reason) + '</div>' : '')
             + (function () {
                 var sections = {
-                    payment: '<div class="q-label">Payment details</div>'
+                    payment: '<div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
                         + '<div>' + ed('payment_method', inv.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
                         + '<div class="q-muted">' + ed('bank_details', inv.bank_details, 'Account name, number, IFSC') + '</div>',
-                    terms: '<div class="q-label">Terms &amp; conditions</div>' + ed('terms', inv.terms, 'e.g. Payment within 30 days of the invoice date.'),
+                    terms: '<div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + ed('terms', inv.terms, 'e.g. Payment within 30 days of the invoice date.'),
                     custom: (inv.custom_blocks || []).map(function (b) {
                         return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';
                     }).join(''),
-                    notes: inv.notes ? '<div class="q-label">Notes</div>' + esc(inv.notes) : ''
+                    notes: inv.notes ? '<div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(inv.notes) : ''
                 };
                 var tokens = ['payment', 'terms', 'custom', 'notes'];
                 var order = [];
@@ -715,7 +715,7 @@ PosnicPro.invoices = {
             })()
             + (PosnicPro.local.get('quotesignature')
                 ? '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + esc(PosnicPro.local.get('quotesignature')) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
-                    + '<div class="q-sign">Authorised signatory</div>'
+                    + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>'
                 : '')
             + '</div>';
         return body;
@@ -728,7 +728,7 @@ PosnicPro.invoices = {
         if (inv.status === 'paid') { return 'PAID'; }
         if (inv.status === 'cancelled') { return 'CANCELLED'; }
         if (inv.is_overdue) { return 'OVERDUE'; }
-        return inv.status === 'partial' ? 'PARTIALLY PAID' : 'UNPAID';
+        return inv.status === 'partial' ? PosnicPro.i18n.t('lang_partially_paid_3', 'PARTIALLY PAID') : PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID');
     },
     /* One primary action per state (the quotes rule): Issue while it is a
        proforma, Record payment while it is owed. Sending copies lives under
@@ -777,10 +777,10 @@ PosnicPro.invoices = {
         visible += share;
         if (moreItems) { visible += menu('More', moreItems, 'write||delete'); }
         if (open) {
-            visible += '<button type="button" class="btn btn-sm btn-light border" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();">Record payment</button>'
-                + '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.invoices.issue();">Issue invoice</button>';
+            visible += '<button type="button" class="btn btn-sm btn-light border" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();"><lang class="lang_record_payment">Record payment</lang></button>'
+                + '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.invoices.issue();"><lang class="lang_issue_invoice">Issue invoice</lang></button>';
         } else if (owed) {
-            visible += '<button type="button" class="btn btn-sm btn-success" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();">Record payment</button>';
+            visible += '<button type="button" class="btn btn-sm btn-success" data-module="sales" data-access="write" onclick="PosnicPro.invoices.payOpen();"><lang class="lang_record_payment">Record payment</lang></button>';
         }
         return visible;
     },
@@ -884,19 +884,19 @@ PosnicPro.invoices = {
             ].filter(Boolean),
             stamp: PosnicPro.invoices._stamp(inv),
             afterTotal: booked ? [
-                { label: 'Paid', value: PosnicPro.invoices._pdfMoney(inv.paid_amount) },
-                { label: 'BALANCE DUE', value: PosnicPro.invoices._pdfMoney(inv.balance), bold: true }
+                { label: PosnicPro.i18n.t('lang_paid', 'Paid'), value: PosnicPro.invoices._pdfMoney(inv.paid_amount) },
+                { label: PosnicPro.i18n.t('lang_balance_due_2', 'BALANCE DUE'), value: PosnicPro.invoices._pdfMoney(inv.balance), bold: true }
             ] : []
         };
     },
     _withDoc: function (use) {
         var inv = PosnicPro.invoices._current;
-        if (!inv) { PosnicPro.alert('warning', 'Open an invoice first.'); return; }
+        if (!inv) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_open_an_invoice_first', 'Open an invoice first.')); return; }
         PosnicPro.lazy.load('jspdf').then(function () {
             var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
                 : (typeof window.jsPDF === 'function') ? window.jsPDF
                 : (typeof window.jspdf === 'function') ? window.jspdf : null;
-            if (!C) { PosnicPro.alert('error', 'PDF tools not loaded - refresh and retry.'); return; }
+            if (!C) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_pdf_tools_not_loaded_refresh_and_retry', 'PDF tools not loaded - refresh and retry.')); return; }
             var src = PosnicPro.local.get('branchimage');
             var done = false;
             var go = function (logo) {
@@ -924,7 +924,7 @@ PosnicPro.invoices = {
             if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
             var url = doc.output('bloburl');
             var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', 'Allow pop-ups so the invoice can print.'); }
+            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_invoice_can_print', 'Allow pop-ups so the invoice can print.')); }
         });
     },
     print: function () {
@@ -936,7 +936,7 @@ PosnicPro.invoices = {
     emailInvoice: function () {
         var inv = PosnicPro.invoices._current || {};
         PosnicPro.reportExport.email('invoices_view_body', {
-            title: (inv.status === 'draft' ? 'Proforma invoice ' : 'Invoice ') + (inv.invoice_id || ''),
+            title: (inv.status === 'draft' ? PosnicPro.i18n.t('lang_proforma_invoice', 'Proforma invoice ') : PosnicPro.i18n.t('lang_invoice_3', 'Invoice ')) + (inv.invoice_id || ''),
             filename: (inv.invoice_id || 'invoice').toLowerCase(),
             to: inv.customer_email || ''
         }, PosnicPro.invoices._withDoc);
@@ -976,7 +976,7 @@ PosnicPro.invoices = {
         var shop = PosnicPro.local.get('branchname') || 'Our shop';
         var openWa = function (msg) { window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); };
         var owed = PosnicPro.invoices._booked(inv) ? Number(inv.balance || 0) : Number(inv.total || 0);
-        var head = (inv.status === 'draft' ? 'Proforma invoice ' : 'Invoice ') + (inv.invoice_id || '') + ' from ' + shop
+        var head = (inv.status === 'draft' ? PosnicPro.i18n.t('lang_proforma_invoice', 'Proforma invoice ') : PosnicPro.i18n.t('lang_invoice_3', 'Invoice ')) + (inv.invoice_id || '') + ' from ' + shop
             + '\nTotal: ' + Number(inv.total || 0).toFixed(2)
             + (inv.status === 'paid' ? '\nPaid - thank you' : '\nBalance due: ' + owed.toFixed(2)
                 + (inv.due_date ? ' by ' + new Date(inv.due_date).toLocaleDateString('en-IN') : ''));
@@ -1039,7 +1039,7 @@ PosnicPro.invoices = {
         PosnicPro.request({ method: 'DELETE', url: 'invoices/' + inv._id, data: '{}' }, function (r) {
             PosnicPro.alert(r.type, r.message);
             if (r.type === 'success') { hasher.setHash('invoices'); PosnicPro.invoices.showDataTablePage(); }
-        }, function () { PosnicPro.alert('error', 'Could not delete the invoice'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_delete_the_invoice', 'Could not delete the invoice')); });
     },
     /* Record payment: the strip asks how much (the balance, or less), how,
        and with what reference; the sale behind the invoice is paid down and
@@ -1059,7 +1059,7 @@ PosnicPro.invoices = {
         var inv = PosnicPro.invoices._current;
         if (!inv) { return; }
         var amount = parseFloat($('#ie_pay_amount').val());
-        if (!(amount > 0)) { PosnicPro.alert('warning', 'Enter the amount received.'); return; }
+        if (!(amount > 0)) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_the_amount_received', 'Enter the amount received.')); return; }
         var $btn = $('#ie_pay_confirm').prop('disabled', true);
         PosnicPro.post({
             url: 'invoices/' + inv._id + '/payment',
@@ -1106,7 +1106,7 @@ PosnicPro.invoices = {
                     unit_price: parseFloat(String($('#addSalesLineItemPrice_' + itemid).text()).replace(/,/g, '')) || 0
                 };
             }).get().filter(Boolean);
-            if (!lines.length) { PosnicPro.alert('warning', 'Add at least one item, then save the invoice.'); return false; }
+            if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item_then_save_the_invoic', 'Add at least one item, then save the invoice.')); return false; }
             var payload = {
                 items: lines,
                 customer_id: $('#sales_new_customer_id').val() || '',
@@ -1142,12 +1142,12 @@ PosnicPro.invoices.mountFilters = function () {
         key: 'invoices',
         container: '#invoices_filter_panel',
         button: '#invoices_filter_btn',
-        searchPlaceholder: 'Search customer or invoice #',
-        dateField: 'Created',
+        searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_invoice', 'Search customer or invoice #'),
+        dateField: PosnicPro.i18n.t('lang_created', 'Created'),
         searchFields: [
-            { value: 'all', label: 'All fields' },
-            { value: 'invoice_id', label: 'Invoice #' },
-            { value: 'customer_name', label: 'Customer' }
+            { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+            { value: 'invoice_id', label: PosnicPro.i18n.t('lang_invoice_2', 'Invoice #') },
+            { value: 'customer_name', label: PosnicPro.i18n.t('lang_newcustomer_title', 'Customer') }
         ],
         typeahead: 'customer',
         typeaheadField: 'customer_name',
@@ -1158,11 +1158,11 @@ PosnicPro.invoices.mountFilters = function () {
     });
     PosnicPro.listSort.mount('invoices', {
         options: [
-            { v: 'due_asc', l: 'Due: soonest first', i: 'clock' },
-            { v: 'due_desc', l: 'Due: latest first', i: 'calendar' },
-            { v: 'balance_desc', l: 'Largest balance first', i: 'arrow-down' },
-            { v: 'total_desc', l: 'Highest amount first', i: 'arrow-down' },
-            { v: 'total_asc', l: 'Lowest amount first', i: 'arrow-up' }
+            { v: 'due_asc', l: PosnicPro.i18n.t('lang_due_soonest_first', 'Due: soonest first'), i: 'clock' },
+            { v: 'due_desc', l: PosnicPro.i18n.t('lang_due_latest_first', 'Due: latest first'), i: 'calendar' },
+            { v: 'balance_desc', l: PosnicPro.i18n.t('lang_largest_balance_first', 'Largest balance first'), i: 'arrow-down' },
+            { v: 'total_desc', l: PosnicPro.i18n.t('lang_highest_amount_first', 'Highest amount first'), i: 'arrow-down' },
+            { v: 'total_asc', l: PosnicPro.i18n.t('lang_lowest_amount_first', 'Lowest amount first'), i: 'arrow-up' }
         ],
         onChange: function () { PosnicPro.invoices.load(); }
     });

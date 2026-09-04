@@ -118,7 +118,8 @@
             "static/script/js/routes.js",
             "static/script/js/core/analytics-inject.js",
             "static/script/js/core/signup-link.js",
-            "static/script/js/core/demo-mode.js"
+            "static/script/js/core/demo-mode.js",
+            "static/script/js/core/desktop-nudge.js"
         ]
     },
     "login": {

@@ -181,9 +181,13 @@ adds a new failure, fix that before asking for review.
    [research](INDIA_EINVOICING_RESEARCH.md), the
    [readiness inventory](INDIA_EINVOICING_READINESS.md) and the
    [design](INDIA_EINVOICING_DESIGN.md) first; the design names the fixtures
-   and the order of PRs.
+   and the order of PRs. For GST returns, read the
+   [return gap analysis](INDIA_GST_RETURNS_GAPS.md), which lists the work in
+   dependency order.
 2. Use synthetic records only. Do not post real GSTINs, invoices, customer data,
-   portal credentials, logs, or database files.
+   portal credentials, logs, or database files. The e-invoice fixtures in
+   `api/tests/fixtures/einvoice/` are the pattern: invented names, and GSTINs
+   built with a real check digit so a checksum test means something.
 3. Keep offline preparation separate from online portal submission.
 4. Add or update focused tests in `api/tests/unit/services/` or the matching
    controller/repository test folder.
@@ -193,6 +197,12 @@ adds a new failure, fix that before asking for review.
    cd api
    npm test -- tests/unit/services/tax-engine.test.js tests/unit/services/tax-profiles.test.js tests/unit/services/tax-regime.test.js
    npm test
+   ```
+
+   For e-invoice work, the focused suites are:
+
+   ```bash
+   cd api && npm test -- tests/unit/services/einvoice-
    ```
 
 ### UI or workflow PR
@@ -216,6 +226,9 @@ adds a new failure, fix that before asking for review.
 4. Do not call a device certified unless the maintainer accepts the evidence.
 
 ### Connector or AI PR
+
+Before proposing an external app or connector, read the
+[app review checklist](APP_REVIEW_CHECKLIST.md). It shows the required review information and synthetic examples of a submission that passes or fails.
 
 1. Start with design in [#33](https://github.com/Posnic/POS/issues/33) or
    [#34](https://github.com/Posnic/POS/issues/34).
@@ -243,13 +256,20 @@ Before opening a PR:
 3. Link the issue and state which acceptance criteria or PR slice is covered.
 4. Add or update a focused test when code behavior changes.
 5. Run the checks that match your change type.
-6. Sign off commits:
+6. Keep attribution human-only. Do not credit an AI tool as an author,
+   contributor, co-author, reviewer, signer, or release-note credit. Run:
+
+   ```bash
+   npm run check:attribution
+   ```
+
+7. Sign off commits:
 
    ```bash
    git commit -s -m "Explain why this change exists"
    ```
 
-7. Fill in the pull request template with what changed and how you tested it.
+8. Fill in the pull request template with what changed and how you tested it.
 
 ## After it is merged
 

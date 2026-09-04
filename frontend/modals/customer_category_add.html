@@ -1,6 +1,6 @@
 <div id="infobar-settings-sidebar-customercategory" class="infobar-settings-sidebar scroll_width" style="z-index: 1005">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span id="customercategory_title">Add</span>&nbsp;<lang class="lang_customer_category_title">Customer Category</lang></h4>
+        <h4 id="exampleModalCenterTitle"><span id="customercategory_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_customer_category_title">Customer Category</lang></h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="customercategory">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
         </a>
@@ -16,7 +16,7 @@
                             <lang class="lang_name_title"> Name </lang> 
                             <span class="text-danger">*</span> 
                         </label>
-                        <input type="text" class="form-control border-control" name="name" id="customercategory_name" minlength="3" maxlength="50" placeholder="Enter the name"  autocomplete="off" required>
+                        <input type="text" class="form-control border-control" name="name" id="customercategory_name" minlength="3" maxlength="50" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name"  autocomplete="off" required>
                         <input type="hidden" name="id" id="customercategory_id">
                     </div>
                 </div>
@@ -25,7 +25,7 @@
                         <label for="customercategory_description">
                             <lang class="lang_description_title"> Description </lang>
                         </label>
-                        <textarea name="description" id="customercategory_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description"></textarea>
+                        <textarea name="description" id="customercategory_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description" data-t-placeholder="lang_enter_the_description"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -42,7 +42,7 @@
                 <div class="form-row" id="show_last_created_customercategory" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a customer group. <a href="#" id="last_created_customercategory">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_customer_group">Saved a customer group.</lang> <a href="#" id="last_created_customercategory"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>
