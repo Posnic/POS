@@ -104,7 +104,11 @@ function codemod(src) {
   /* object-literal labels: sort options (l), filter fields (label), page and
      modal titles, placeholders, onboarding hints. All consumed at mount time,
      through esc() or .text(), so t() is the right form, not markup. */
-  src = src.replace(new RegExp("\\b(l|label|title|placeholder|searchPlaceholder|hint|message|dateField)(\\s*:\\s*)'(" + TXT + ")'", 'g'), (m, prop, sep, text) => {
+  src = src.replace(new RegExp("\\b(l|label|title|placeholder|searchPlaceholder|hint|message|dateField)(\\s*:\\s*)'(" + TXT + ")'", 'g'), (m, prop, sep, text, offset) => {
+    /* already carries its key: `label: 'Sales', t: 'lang_rgrp_sales'` is the
+       form config data must use, because a t() here would run at load. */
+    const after = src.slice(offset + m.length, offset + m.length + 40);
+    if (/^,\s*(t|titleKey)\s*:/.test(after)) return m;
     if (!isWords(text)) return m; n++; return prop + sep + t(text);
   });
   /* a ternary between two plain literals */
