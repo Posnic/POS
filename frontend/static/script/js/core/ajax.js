@@ -155,7 +155,8 @@ PosnicPro.request = function (params, callback, failure = null) {
                 PosnicPro.users.createCookie('loginuser', '', -1);
                 if (!onAuthPage) {
                     var reason = (response && response.message)
-                        || 'Your session has ended. Please sign in again.';
+                        || PosnicPro.i18n.t('lang_your_session_has_ended_please_sign_in_ag',
+                            'Your session has ended. Please sign in again.');
                     window.location = 'login.html?msg=' + encodeURIComponent(reason)
                         + '&type=error';
                     return false;   // nothing below can help once we are leaving
@@ -178,20 +179,20 @@ PosnicPro.request = function (params, callback, failure = null) {
                      * person what happened and lets them carry on.
                      */
                     if (xhr.status === 0) {
-                        PosnicPro.alert('error', 'No connection. Check the network and try again - nothing was saved.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_no_connection_check_the_network_and_try_ag', 'No connection. Check the network and try again - nothing was saved.'));
                     } else if (xhr.status === 403) {
-                        PosnicPro.alert('error', 'You do not have permission for that.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_do_not_have_permission_for_that', 'You do not have permission for that.'));
                     } else if (xhr.status === 404) {
-                        PosnicPro.alert('error', 'That could not be found. Try refreshing the page.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_that_could_not_be_found_try_refreshing_the', 'That could not be found. Try refreshing the page.'));
                     } else if (xhr.status >= 500) {
-                        PosnicPro.alert('error', 'The server hit a problem. Try again in a moment.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_server_hit_a_problem_try_again_in_a_mo', 'The server hit a problem. Try again in a moment.'));
                     } else if (error === 'timeout') {
-                        PosnicPro.alert('error', 'The server took too long. Try again.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_server_took_too_long_try_again', 'The server took too long. Try again.'));
                     } else if (error === 'abort') {
                         return false; // a cancelled request is not an error to shout about
                     } else {
                         console.error('Unhandled request failure:', xhr.status, xhr.responseText);
-                        PosnicPro.alert('error', 'Something went wrong. Try again, and check the network if it keeps happening.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_something_went_wrong_try_again_and_check_t', 'Something went wrong. Try again, and check the network if it keeps happening.'));
                     }
                     return false;
                 }

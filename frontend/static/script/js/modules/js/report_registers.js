@@ -46,7 +46,9 @@ PosnicPro.registerreport = {
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             PosnicPro.appendReportTableBody('registerreport');
             var daterange = $(".view_register_report_daterange").val();
-            $('.view_registerreport_date_filter_value').html('<span class="field-value-color">Date Range</span> ' + ' : ' + daterange + '').addClass('date-filter-border').show();
+            var $dateFilter = $('.view_registerreport_date_filter_value').empty();
+            $('<span class="field-value-color"><lang class="lang_date_range">Date Range</lang></span>').appendTo($dateFilter);
+            $dateFilter.append(document.createTextNode(' : ' + daterange)).addClass('date-filter-border').show();
             var fields = daterange.split('-');
             var table = $('#view_registerreport');
             if (type === 'registerreportexport') {
@@ -89,7 +91,7 @@ PosnicPro.registerreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportregister_header').hide();
-                            $('.reportregister_norecord').empty().append('<div class="text-center text-dark"> <p>No Records </p></div>');
+                            $('.reportregister_norecord').empty().append('<div class="text-center text-dark"> <p><lang class="lang_no_records">No Records </lang></p></div>');
                             $('#reportregister_img_hide,.reportregister_norecord').show();
                         } else {
                             $('.reportregister_norecord').empty();

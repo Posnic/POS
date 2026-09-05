@@ -37,11 +37,11 @@ $('#saveButton').click(function () {
             PosnicPro.device_setup.autoFocus();
         }
         else {
-            PosnicPro.alert('error', 'You are not authorized to do this.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_are_not_authorized_to_do_this', 'You are not authorized to do this.'));
         }
     }
     else {
-        PosnicPro.alert('error', 'You are not authorized to do this.');
+        PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_are_not_authorized_to_do_this', 'You are not authorized to do this.'));
     }
 });
 $('#device_edit_reset').click(function () {
@@ -55,11 +55,11 @@ $('#device_edit_reset').click(function () {
     PosnicPro.alert('Success', 'Device AutoFocus Reset Successfully..');
         }
         else {
-            PosnicPro.alert('error', 'You are not authorized to do this.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_are_not_authorized_to_do_this', 'You are not authorized to do this.'));
         }
     }
     else {
-        PosnicPro.alert('error', 'You are not authorized to do this.');
+        PosnicPro.alert('error', PosnicPro.i18n.t('lang_you_are_not_authorized_to_do_this', 'You are not authorized to do this.'));
     }
 });
 

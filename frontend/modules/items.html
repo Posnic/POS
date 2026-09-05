@@ -4,7 +4,7 @@
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
                 <div class="col-auto">
-                    <h4 class="page-title break_title mb-0"> <lang class="lang_itemdetail_title">Item List</lang></h4>
+                    <h4 class="page-title break_title mb-0"> <lang class="lang_item_master_title">Item List</lang></h4>
                 </div>
                 <div class="col">
                     <div id="items_filter_panel" class="lf-panel" style="display:none;"></div>
@@ -21,17 +21,17 @@
                     <div class="widgetbar">
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
-                            data-toggle="tooltip" title="Import from CSV/Excel" aria-label="Import items">
+                            data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import items" data-t-aria-label="lang_import_items">
                             <i class="feather icon-download"></i>
                         </a>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" title="Export CSV" aria-label="Export CSV">
+                            aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
                             <i class="feather icon-share"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportCsv(); return false;">This page (what is shown)</a>
-                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportAllCsv(); return false;">Everything matching the filter</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportAllCsv(); return false;"><lang class="lang_everything_matching_the_filter">Everything matching the filter</lang></a>
                         </div>
                         </div>
                         <!-- The catalogue levers that used to hide across
@@ -39,19 +39,19 @@
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false" data-module="item" data-access="write"
-                                title="Catalogue tools">
-                                <i class="feather icon-tool mr-2"></i>Tools
+                                title="Catalogue tools" data-t-title="lang_catalogue_tools">
+                                <i class="feather icon-tool mr-2"></i><lang class="lang_tools">Tools</lang>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i>Bulk price update</a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i>Stock adjustment</a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i>Bulk stock update</a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></a>
                             </div>
                         </div>
                         <span id="items_sort_host"></span>
                         <button type="button" id="items_filter_btn" class="btn btn-primary-rgba lf-btn"
-                                data-toggle="tooltip" title="Filter items">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                                data-toggle="tooltip" title="Filter items" data-t-title="lang_filter_items">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                         <!-- The hub's three add doors in ONE dropdown (owner-
                              approved regroup) - and gated by the ITEM acl,
@@ -59,13 +59,13 @@
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false" data-module="item" data-access="write"
-                                title="Add items">
+                                title="Add items" data-t-title="lang_add_items">
                                 <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
-                                <a class="dropdown-item" href="#/items/new" onclick="PosnicPro.items.addItemButton();"><i class="feather icon-box mr-2"></i>Standard item</a>
-                                <a class="dropdown-item" href="#/quickitems"><i class="feather icon-zap mr-2"></i>Quick add</a>
-                                <a class="dropdown-item" href="#/bulkitems"><i class="feather icon-layers mr-2"></i>Bulk add</a>
+                                <a class="dropdown-item" href="#/items/new" onclick="PosnicPro.items.addItemButton();"><i class="feather icon-box mr-2"></i><lang class="lang_standard_item">Standard item</lang></a>
+                                <a class="dropdown-item" href="#/quickitems"><i class="feather icon-zap mr-2"></i><lang class="lang_quick_add">Quick add</lang></a>
+                                <a class="dropdown-item" href="#/bulkitems"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_add">Bulk add</lang></a>
                             </div>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
         <div id="items_split">
             <div class="card m-b-30 md-rail" id="items_list_card">
                 <div class="card-body">
-                    <div id="items_list_rows" class="md-rail-rows text-muted">Loading items ...</div>
+                    <div id="items_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_items">Loading items ...</lang></div>
                     <div class="q-pager" id="items_list_paging"></div>
                 </div>
             </div>
@@ -108,8 +108,8 @@
             <form method='post' onsubmit='return PosnicPro.items.printLabelBarcode();'>
                 <div class="modal-header">
                     <h5 class="modal-title"><lang class="lang_printbarcode"> Print<span class="barcodeHeading">  </span> Barcode</lang></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                        <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                     </button>
                 </div>
                 <!--start modal-body-->
@@ -121,7 +121,7 @@
                                 <div class="col-md-12">
                                     <div class="pull-right m-r-10">
                                         <button class="btn btn-primary hidden-print" onclick="return PosnicPro.items.printLabelBarcode();">
-                                            <span class="glyphicon glyphicon-print" aria-hidden="true"></span> Print
+                                            <span class="glyphicon glyphicon-print" aria-hidden="true"></span> <lang class="lang_printed">Print</lang>
                                         </button>
                                     </div>
                                 </div>
@@ -131,7 +131,7 @@
                             <div style="text-align: center; padding: 20px;">
                                 <div style="margin-bottom: 10px;">
                                     <small id="label-dimensions" style="color: #666; font-weight: bold;">
-                                        Label Size: <span id="preview-width">1.96</span>" × <span id="preview-height">1.96</span>"
+                                        <lang class="lang_label_size">Label Size:</lang> <span id="preview-width">1.96</span>" × <span id="preview-height">1.96</span>"
                                     </small>
                                 </div>
 
@@ -154,7 +154,7 @@
                 ">
                                         <div style="width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                             <p class="text-align fontfamily" style="font-size:0.9em; text-align:center; margin: 1px 0; line-height: 1.1;">
-                                                <span id="branch-name">posnic innovation pvt ltd.</span>
+                                                <span id="branch-name"><lang class="lang_posnic_innovation_pvt_ltd">Posnic Innovation Pvt Ltd.</lang></span>
                                             </p>
                                             <div style="flex: 1; display: flex; align-items: center; justify-content: center; max-height: 60%;">
                                                 <svg id="labelBarcode" style="max-width:95%; max-height:100%; display: block;"></svg>
@@ -178,11 +178,11 @@
                                 </div>
 
                                 <div style="margin-top: 10px;">
-                                    <small style="color: #666;">Preview scaled to fit screen (actual print size indicated above)</small>
+                                    <small style="color: #666;"><lang class="lang_preview_scaled_to_fit_screen_actual_print">Preview scaled to fit screen (actual print size indicated above)</lang></small>
                                 </div>
                             </div>
 
-                            <span id="invalid" style="display:none; color: red; text-align: center;">Not valid data for this barcode type!</span>
+                            <span id="invalid" style="display:none; color: red; text-align: center;"><lang class="lang_not_valid_data_for_this_barcode_type">Not valid data for this barcode type!</lang></span>
                         </div>
                     </div>
 
@@ -191,25 +191,25 @@
                             <div class="col-md-8">
                                 <div class="input-group margin-bottom-sm">
                                     <span class="input-group-addon"><i class="barcode_icons fa fa-barcode fa-fw"></i></span>
-                                    <input class="form-control" id="userInput" type="text" value="Example 12345" placeholder="Barcode" autofocus>
+                                    <input class="form-control" id="userInput" type="text" value="Example 12345" placeholder="Barcode" data-t-placeholder="lang_barcode_title" autofocus>
                                     <span class="input-group-btn">
-                                        <select class="form-control border-control barcode-select" id="barcodeLabelType" title="CODE128">
-                                            <option value="CODE128">CODE128 auto</option>
-                                            <option value="CODE128A">CODE128 A</option>
-                                            <option value="CODE128B">CODE128 B</option>
-                                            <option value="CODE128C">CODE128 C</option>
-                                            <option value="EAN13">EAN13</option>
-                                            <option value="EAN8">EAN8</option>
-                                            <option value="UPC">UPC</option>
-                                            <option value="CODE39">CODE39</option>
-                                            <option value="ITF14">ITF14</option>
-                                            <option value="ITF">ITF</option>
-                                            <option value="MSI">MSI</option>
-                                            <option value="MSI10">MSI10</option>
-                                            <option value="MSI11">MSI11</option>
-                                            <option value="MSI1010">MSI1010</option>
-                                            <option value="MSI1110">MSI1110</option>
-                                            <option value="pharmacode">Pharmacode</option>
+                                        <select class="form-control border-control barcode-select" id="barcodeLabelType" title="CODE128" data-t-title="lang_code128">
+                                            <option value="CODE128"><lang class="lang_code128_auto">CODE128 auto</lang></option>
+                                            <option value="CODE128A"><lang class="lang_code128_a">CODE128 A</lang></option>
+                                            <option value="CODE128B"><lang class="lang_code128_b">CODE128 B</lang></option>
+                                            <option value="CODE128C"><lang class="lang_code128_c">CODE128 C</lang></option>
+                                            <option value="EAN13"><lang class="lang_ean13">EAN13</lang></option>
+                                            <option value="EAN8"><lang class="lang_ean8">EAN8</lang></option>
+                                            <option value="UPC"><lang class="lang_upc">UPC</lang></option>
+                                            <option value="CODE39"><lang class="lang_code39">CODE39</lang></option>
+                                            <option value="ITF14"><lang class="lang_itf14">ITF14</lang></option>
+                                            <option value="ITF"><lang class="lang_itf">ITF</lang></option>
+                                            <option value="MSI"><lang class="lang_msi">MSI</lang></option>
+                                            <option value="MSI10"><lang class="lang_msi10">MSI10</lang></option>
+                                            <option value="MSI11"><lang class="lang_msi11">MSI11</lang></option>
+                                            <option value="MSI1010"><lang class="lang_msi1010">MSI1010</lang></option>
+                                            <option value="MSI1110"><lang class="lang_msi1110">MSI1110</lang></option>
+                                            <option value="pharmacode"><lang class="lang_pharmacode">Pharmacode</lang></option>
                                         </select>
                                     </span>
                                 </div>
@@ -222,7 +222,7 @@
                                 <label><lang class="lang_name_title">Name </lang></label>
                             </div>
                             <div class="col-md-8 col-xs-12 input-container">
-                                <input id="branch-value" class="form-control border-control" type="text" value="posnic innovation pvt ltd." aria-label="Branch"/>
+                                <input id="branch-value" class="form-control border-control" type="text" value="posnic innovation pvt ltd." aria-label="Branch" data-t-aria-label="lang_newbranch_title"/>
                             </div>
                         </div>
 
@@ -230,25 +230,25 @@
                         <div class="row">
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
                                 <label><lang class="lang_price_title">Price </lang></label>
-                                <input id="price-value" class="form-control border-control" type="text" aria-label="Price"/>
+                                <input id="price-value" class="form-control border-control" type="text" aria-label="Price" data-t-aria-label="lang_price_title"/>
                             </div>
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
-                                <label><lang class="lang_price_title">MRP </lang></label>
-                                <input id="mrp-price-value" class="form-control border-control" type="text" aria-label="Mrp price"/>
+                                <label><lang class="lang_mrp">MRP </lang></label>
+                                <input id="mrp-price-value" class="form-control border-control" type="text" aria-label="Mrp price" data-t-aria-label="lang_mrp_price"/>
                             </div>
                         </div>
 
                         <!-- Exp Date -->
                         <div class="row">
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
-                                <label  for="mfg_checkbox">Mfg Date</label>
+                                <label  for="mfg_checkbox"><lang class="lang_mfg_date">Mfg Date</lang></label>
                                 <input  type="checkbox" id="mfg_checkbox" onclick="PosnicPro.items.mfgCheckbox(this.checked);">
-                                <input id="mfg-date-value" class="form-control border-control" type="text" aria-label="Mfg date"/>
+                                <input id="mfg-date-value" class="form-control border-control" type="text" aria-label="Mfg date" data-t-aria-label="lang_mfg_date_2"/>
                             </div>
                             <div class="col-md-4 col-xs-12 col-md-offset-1 form-group">
-                                <label  for="exp_checkbox">Exp Date</label>
+                                <label  for="exp_checkbox"><lang class="lang_exp_date">Exp Date</lang></label>
                                 <input  type="checkbox" id="exp_checkbox" onclick="PosnicPro.items.expCheckbox(this.checked);">
-                                <input id="exp-date-value" class="form-control border-control" type="text" aria-label="Exp date"/>
+                                <input id="exp-date-value" class="form-control border-control" type="text" aria-label="Exp date" data-t-aria-label="lang_exp_date_2"/>
                             </div>
                         </div>
 
@@ -277,66 +277,66 @@
                                                 <!-- Document width & Document height-->
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Document width</label>
-                                                        <input id="document_width" name="document_width" class="form-control" type="number" value="1.96" aria-label="Document width"/>
+                                                        <label><lang class="lang_document_width">Document width</lang></label>
+                                                        <input id="document_width" name="document_width" class="form-control" type="number" value="1.96" aria-label="Document width" data-t-aria-label="lang_document_width"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Document height</label>
-                                                        <input id="document_height" class="form-control" type="number" value="1.18" aria-label="Document height"/>
+                                                        <label><lang class="lang_document_height">Document height</lang></label>
+                                                        <input id="document_height" class="form-control" type="number" value="1.18" aria-label="Document height" data-t-aria-label="lang_document_height"/>
                                                     </div>
                                                 </div>
 
                                                 <!-- Margin Top & Margin Bottom-->
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Margin Top</label>
-                                                        <input id="margin_top" class="form-control border-control" type="number" value=0 aria-label="Margin top"/>
+                                                        <label><lang class="lang_margin_top">Margin Top</lang></label>
+                                                        <input id="margin_top" class="form-control border-control" type="number" value=0 aria-label="Margin top" data-t-aria-label="lang_margin_top_2"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Margin Bottom</label>
-                                                        <input id="margin_bottom" class="form-control border-control" type="number" value=0 aria-label="Margin bottom"/>
+                                                        <label><lang class="lang_margin_bottom">Margin Bottom</lang></label>
+                                                        <input id="margin_bottom" class="form-control border-control" type="number" value=0 aria-label="Margin bottom" data-t-aria-label="lang_margin_bottom_2"/>
                                                     </div>
                                                 </div>
 
                                                 <!-- Margin Left & Margin Right-->
                                                 <div class="row">
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Margin Left</label>
-                                                        <input id="margin_left" class="form-control border-control" type="number" value=0 aria-label="Margin left"/>
+                                                        <label><lang class="lang_margin_left">Margin Left</lang></label>
+                                                        <input id="margin_left" class="form-control border-control" type="number" value=0 aria-label="Margin left" data-t-aria-label="lang_margin_left_2"/>
                                                     </div>
                                                     <div class="col-md-5 col-xs-12 col-md-offset-1 form-group">
-                                                        <label>Margin Right</label>
-                                                        <input id="margin_right" class="form-control border-control" type="number" value=0 aria-label="Margin right"/>
+                                                        <label><lang class="lang_margin_right">Margin Right</lang></label>
+                                                        <input id="margin_right" class="form-control border-control" type="number" value=0 aria-label="Margin right" data-t-aria-label="lang_margin_right_2"/>
                                                     </div>
                                                 </div>
 
                                                 <!-- Bar width -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barwidth">Bar Width</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-width" class="range-type" type="range" min="1" max="3.5" step="0.01" value="2.11" aria-label="Bar width"/></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-width" class="range-type" type="range" min="1" max="3.5" step="0.01" value="2.11" aria-label="Bar width" data-t-aria-label="lang_bar_width"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-width-display"></span></p></div>
                                                 </div>
                                                 <!-- Height -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_barheight">Bar Height</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-height" class="range-type" type="range" min="10" max="120" step="1" value="43" aria-label="Bar height"/></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-height" class="range-type" type="range" min="10" max="120" step="1" value="43" aria-label="Bar height" data-t-aria-label="lang_bar_height"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-height-display"></span></p></div>
                                                 </div>
                                                 <!-- Margin -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_margin">Margin</lang></label></div>
-                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-margin" class="range-type" type="range" min="0" max="25" step="0.01" value="1" aria-label="Bar margin"/></div>
+                                                    <div class="col-md-7 col-xs-11 slider-container"><input id="bar-margin" class="range-type" type="range" min="0" max="25" step="0.01" value="1" aria-label="Bar margin" data-t-aria-label="lang_bar_margin"/></div>
                                                     <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-margin-display"></span></p></div>
                                                 </div>
                                                 <!-- Background (color) -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_background">Background</lang></label></div>
-                                                    <div class="col-md-8 col-xs-12 input-container"><input id="background-color" class="form-control border-control color" value="#FFFFFF" aria-label="Background color"/></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="background-color" class="form-control border-control color" value="#FFFFFF" aria-label="Background color" data-t-aria-label="lang_background_color"/></div>
                                                 </div>
                                                 <!-- Line color -->
                                                 <div class="row">
                                                     <div class="col-md-12 col-xs-12 col-md-offset-1 description-text"><label><lang class="lang_linecolor">Line Color</lang></label></div>
-                                                    <div class="col-md-8 col-xs-12 input-container"><input id="line-color" class="form-control border-control color" value="#000000" aria-label="Line color"/></div>
+                                                    <div class="col-md-8 col-xs-12 input-container"><input id="line-color" class="form-control border-control color" value="#000000" aria-label="Line color" data-t-aria-label="lang_line_color"/></div>
                                                 </div>
                                                 <div id="font-options" style="margin-top: 10px;">
                                                     <!-- Text align -->
@@ -344,9 +344,9 @@
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_textalign">Text Align</lang></label></div>
                                                         <div class="col-md-8 center-text">
                                                             <div class="btn-group btn-group-md" role="toolbar" style="border:1px solid;">
-                                                                <button type="button" class="btn text-align" value="left">Left</button>
-                                                                <button type="button" class="btn btn-primary text-align" value="center">Center</button>
-                                                                <button type="button" class="btn text-align" value="right">Right</button>
+                                                                <button type="button" class="btn text-align" value="left"><lang class="lang_align_left">Left</lang></button>
+                                                                <button type="button" class="btn btn-primary text-align" value="center"><lang class="lang_center">Center</lang></button>
+                                                                <button type="button" class="btn text-align" value="right"><lang class="lang_right">Right</lang></button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -354,20 +354,20 @@
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_font">Font</lang></label></div>
                                                         <div class="col-md-8 center-text">
-                                                            <select class="form-control border-control" id="font" style="font-family: monospace" aria-label="Font">
-                                                                <option value="monospace" style="font-family: monospace" selected="selected">Monospace</option>
-                                                                <option value="sans-serif" style="font-family: sans-serif">Sans-serif</option>
-                                                                <option value="serif" style="font-family: serif">Serif</option>
-                                                                <option value="fantasy" style="font-family: fantasy">Fantasy</option>
-                                                                <option value="cursive" style="font-family: cursive">Cursive</option>
-                                                                <option value="Arial" style="font-family: Arial">Arial</option>
-                                                                <option value="Georgia" style="font-family: Georgia">Georgia</option>
-                                                                <option value="Times New Roman" style="font-family: 'Times New Roman'">Times New Roman</option>
-                                                                <option value="Verdana" style="font-family: Verdana">Verdana</option>
-                                                                <option value="Tahoma" style="font-family: Tahoma">Tahoma</option>
-                                                                <option value="Courier New" style="font-family: 'Courier New'">Courier New</option>
-                                                                <option value="Trebuchet MS" style="font-family: 'Trebuchet MS'">Trebuchet MS</option>
-                                                                <option value="Impact" style="font-family: Impact">Impact</option>
+                                                            <select class="form-control border-control" id="font" style="font-family: monospace" aria-label="Font" data-t-aria-label="lang_font">
+                                                                <option value="monospace" style="font-family: monospace" selected="selected"><lang class="lang_monospace">Monospace</lang></option>
+                                                                <option value="sans-serif" style="font-family: sans-serif"><lang class="lang_sans_serif">Sans-serif</lang></option>
+                                                                <option value="serif" style="font-family: serif"><lang class="lang_serif">Serif</lang></option>
+                                                                <option value="fantasy" style="font-family: fantasy"><lang class="lang_fantasy">Fantasy</lang></option>
+                                                                <option value="cursive" style="font-family: cursive"><lang class="lang_cursive">Cursive</lang></option>
+                                                                <option value="Arial" style="font-family: Arial"><lang class="lang_arial">Arial</lang></option>
+                                                                <option value="Georgia" style="font-family: Georgia"><lang class="lang_georgia">Georgia</lang></option>
+                                                                <option value="Times New Roman" style="font-family: 'Times New Roman'"><lang class="lang_times_new_roman">Times New Roman</lang></option>
+                                                                <option value="Verdana" style="font-family: Verdana"><lang class="lang_verdana">Verdana</lang></option>
+                                                                <option value="Tahoma" style="font-family: Tahoma"><lang class="lang_tahoma">Tahoma</lang></option>
+                                                                <option value="Courier New" style="font-family: 'Courier New'"><lang class="lang_courier_new">Courier New</lang></option>
+                                                                <option value="Trebuchet MS" style="font-family: 'Trebuchet MS'"><lang class="lang_trebuchet_ms">Trebuchet MS</lang></option>
+                                                                <option value="Impact" style="font-family: Impact"><lang class="lang_impact">Impact</lang></option>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-1"></div>
@@ -375,13 +375,13 @@
                                                     <!-- Font size -->
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_fontsize">Font Size</lang></label></div>
-                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-fontSize" class="range-type" type="range" min="3" max="22" step="1" value="12" aria-label="Bar fontSize"/></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-fontSize" class="range-type" type="range" min="3" max="22" step="1" value="12" aria-label="Bar fontSize" data-t-aria-label="lang_bar_fontsize"/></div>
                                                         <div class="col-md-2 col-xs-2 value-text"><p><span id="bar-fontSize-display"></span></p></div>
                                                     </div>
                                                     <!-- Text margin -->
                                                     <div class="row">
                                                         <div class="col-md-12 col-md-offset-1 col-xs-12 col-xs-offset-0 description-text"><label><lang class="lang_textmargin">Text Margin</lang></label></div>
-                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-text-margin" class="range-type" type="range" min="-2" max="40" step="0.5" value="1" aria-label="Bar text margin"/></div>
+                                                        <div class="col-md-7 col-xs-11 slider-container"><input id="bar-text-margin" class="range-type" type="range" min="-2" max="40" step="0.5" value="1" aria-label="Bar text margin" data-t-aria-label="lang_bar_text_margin"/></div>
                                                         <div class="col-md-2 col-xs-2 col-xs-11 value-text"><p><span id="bar-text-margin-display"></span></p></div>
                                                     </div>
                                                 </div>
@@ -414,56 +414,56 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="feather icon-trending-up mr-2"></i>Bulk price update</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <form onsubmit="return PosnicPro.items.submitBulkPrice();">
                 <div class="modal-body">
                     <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
-                        Raise or lower prices for many items at once. Every change is kept in each item's price history.
+                        <lang class="lang_raise_or_lower_prices_for_many_items_at_on">Raise or lower prices for many items at once. Every change is kept in each item's price history.</lang>
                     </p>
 
                     <div class="form-group">
-                        <label class="f-w-6">Which items</label>
+                        <label class="f-w-6"><lang class="lang_which_items">Which items</lang></label>
                         <div>
                             <label class="mr-4" style="font-weight:normal;">
-                                <input type="radio" name="bulk_price_scope" value="all" checked onclick="PosnicPro.items.toggleBulkCategory();"> All items
+                                <input type="radio" name="bulk_price_scope" value="all" checked onclick="PosnicPro.items.toggleBulkCategory();"> <lang class="lang_all_items">All items</lang>
                             </label>
                             <label style="font-weight:normal;">
-                                <input type="radio" name="bulk_price_scope" value="category" onclick="PosnicPro.items.toggleBulkCategory();"> One category
+                                <input type="radio" name="bulk_price_scope" value="category" onclick="PosnicPro.items.toggleBulkCategory();"> <lang class="lang_one_category">One category</lang>
                             </label>
                         </div>
                     </div>
 
                     <div class="form-group bulk-price-category-row" style="display:none;">
-                        <label class="f-w-6">Category</label>
-                        <select class="form-control" id="bulk_price_category" style="width:100%;" aria-label="Bulk price category"></select>
+                        <label class="f-w-6"><lang class="lang_newcategory_title">Category</lang></label>
+                        <select class="form-control" id="bulk_price_category" style="width:100%;" aria-label="Bulk price category" data-t-aria-label="lang_bulk_price_category"></select>
                     </div>
 
                     <div class="form-group">
-                        <label class="f-w-6">Price to change</label>
-                        <select class="form-control" id="bulk_price_field" aria-label="Bulk price field">
-                            <option value="selling_price" selected>Selling Price</option>
-                            <option value="mrp_price">MRP price</option>
-                            <option value="company_price">Company price</option>
+                        <label class="f-w-6"><lang class="lang_price_to_change">Price to change</lang></label>
+                        <select class="form-control" id="bulk_price_field" aria-label="Bulk price field" data-t-aria-label="lang_bulk_price_field">
+                            <option value="selling_price" selected><lang class="lang_selling_price">Selling Price</lang></option>
+                            <option value="mrp_price"><lang class="lang_mrp_price_2">MRP price</lang></option>
+                            <option value="company_price"><lang class="lang_company_price">Company price</lang></option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label class="f-w-6">Change by</label>
+                        <label class="f-w-6"><lang class="lang_change_by">Change by</lang></label>
                         <div class="row">
                             <div class="col-4">
-                                <select class="form-control" id="bulk_price_direction" aria-label="Bulk price direction">
-                                    <option value="increase" selected>Increase</option>
-                                    <option value="decrease">Decrease</option>
+                                <select class="form-control" id="bulk_price_direction" aria-label="Bulk price direction" data-t-aria-label="lang_bulk_price_direction">
+                                    <option value="increase" selected><lang class="lang_increase">Increase</lang></option>
+                                    <option value="decrease"><lang class="lang_decrease">Decrease</lang></option>
                                 </select>
                             </div>
                             <div class="col-4">
-                                <select class="form-control" id="bulk_price_op" onchange="PosnicPro.items.bulkPriceOpChanged();" aria-label="Bulk price op">
-                                    <option value="percent" selected>by %</option>
-                                    <option value="amount">by amount</option>
+                                <select class="form-control" id="bulk_price_op" onchange="PosnicPro.items.bulkPriceOpChanged();" aria-label="Bulk price op" data-t-aria-label="lang_bulk_price_op">
+                                    <option value="percent" selected><lang class="lang_by_2">by %</lang></option>
+                                    <option value="amount"><lang class="lang_by_amount">by amount</lang></option>
                                 </select>
                             </div>
                             <div class="col-4">
@@ -480,7 +480,7 @@
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-weight:normal; font-size:13px; display:flex; align-items:center; gap:8px; cursor:pointer;">
                             <input type="checkbox" id="bulk_price_skip" checked style="width:auto; margin:0;">
-                            Skip items that would end up above MRP or below cost
+                            <lang class="lang_skip_items_that_would_end_up_above_mrp_or">Skip items that would end up above MRP or below cost</lang>
                         </label>
                     </div>
 
@@ -488,18 +488,18 @@
                     <div id="bulk_price_check_result" style="display:none; margin-bottom:10px;"></div>
 
                     <div class="alert alert-warning" style="font-size:12px; padding:8px 12px; margin-bottom:0;">
-                        This changes every matching item and is not undone in one click. Prices never drop below zero.
+                        <lang class="lang_this_changes_every_matching_item_and_is_no">This changes every matching item and is not undone in one click. Prices never drop below zero.</lang>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
-                        <i class="feather icon-x-circle mr-2"></i>Cancel
+                        <i class="feather icon-x-circle mr-2"></i><lang class="lang_cancel_title">Cancel</lang>
                     </button>
                     <button type="button" id="bulk_price_check" class="btn btn-outline-secondary" onclick="PosnicPro.items.checkBulkPrice();">
-                        <i class="feather icon-search mr-2"></i>Check feasibility
+                        <i class="feather icon-search mr-2"></i><lang class="lang_check_feasibility">Check feasibility</lang>
                     </button>
                     <button type="submit" id="bulk_price_submit" class="btn btn-outline-primary">
-                        <i class="feather icon-check-circle mr-2"></i>Update prices
+                        <i class="feather icon-check-circle mr-2"></i><lang class="lang_update_prices">Update prices</lang>
                     </button>
                 </div>
             </form>
@@ -513,53 +513,53 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="feather icon-layers mr-2"></i>Bulk stock update</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <form onsubmit="return PosnicPro.items.submitBulkStock();">
                 <div class="modal-body">
                     <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
-                        Add to or remove from stock for many items at once. Every change to a stock-tracked item is kept in its stock log, along with your note.
+                        <lang class="lang_add_to_or_remove_from_stock_for_many_items">Add to or remove from stock for many items at once. Every change to a stock-tracked item is kept in its stock log, along with your note.</lang>
                     </p>
 
                     <div class="form-group">
-                        <label class="f-w-6">Which items</label>
+                        <label class="f-w-6"><lang class="lang_which_items">Which items</lang></label>
                         <div>
                             <label class="mr-4" style="font-weight:normal;">
-                                <input type="radio" name="bulk_stock_scope" value="all" checked onclick="PosnicPro.items.toggleBulkStockCategory();"> All items
+                                <input type="radio" name="bulk_stock_scope" value="all" checked onclick="PosnicPro.items.toggleBulkStockCategory();"> <lang class="lang_all_items">All items</lang>
                             </label>
                             <label style="font-weight:normal;">
-                                <input type="radio" name="bulk_stock_scope" value="category" onclick="PosnicPro.items.toggleBulkStockCategory();"> One category
+                                <input type="radio" name="bulk_stock_scope" value="category" onclick="PosnicPro.items.toggleBulkStockCategory();"> <lang class="lang_one_category">One category</lang>
                             </label>
                         </div>
                     </div>
 
                     <div class="form-group bulk-stock-category-row" style="display:none;">
-                        <label class="f-w-6">Category</label>
-                        <select class="form-control" id="bulk_stock_category" style="width:100%;" aria-label="Bulk stock category"></select>
+                        <label class="f-w-6"><lang class="lang_newcategory_title">Category</lang></label>
+                        <select class="form-control" id="bulk_stock_category" style="width:100%;" aria-label="Bulk stock category" data-t-aria-label="lang_bulk_stock_category"></select>
                     </div>
 
                     <div class="form-group">
-                        <label class="f-w-6">Change by</label>
+                        <label class="f-w-6"><lang class="lang_change_by">Change by</lang></label>
                         <div class="row">
                             <div class="col-4">
-                                <select class="form-control" id="bulk_stock_direction" aria-label="Bulk stock direction">
-                                    <option value="increase" selected>Add</option>
-                                    <option value="decrease">Remove</option>
+                                <select class="form-control" id="bulk_stock_direction" aria-label="Bulk stock direction" data-t-aria-label="lang_bulk_stock_direction">
+                                    <option value="increase" selected><lang class="lang_nav_add">Add</lang></option>
+                                    <option value="decrease"><lang class="lang_remove">Remove</lang></option>
                                 </select>
                             </div>
                             <div class="col-4">
-                                <select class="form-control" id="bulk_stock_op" onchange="PosnicPro.items.bulkStockOpChanged();" aria-label="Bulk stock op">
-                                    <option value="amount" selected>by quantity</option>
-                                    <option value="percent">by %</option>
+                                <select class="form-control" id="bulk_stock_op" onchange="PosnicPro.items.bulkStockOpChanged();" aria-label="Bulk stock op" data-t-aria-label="lang_bulk_stock_op">
+                                    <option value="amount" selected><lang class="lang_by_quantity">by quantity</lang></option>
+                                    <option value="percent"><lang class="lang_by_2">by %</lang></option>
                                 </select>
                             </div>
                             <div class="col-4">
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text bulk-stock-unit">Qty</span>
+                                        <span class="input-group-text bulk-stock-unit"><lang class="lang_qty_title">Qty</lang></span>
                                     </div>
                                     <input type="number" min="0" step="0.01" class="form-control" id="bulk_stock_value" placeholder="0" required>
                                 </div>
@@ -568,7 +568,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="f-w-6">Note / reason <span class="text-muted" style="font-weight:normal;">(optional)</span></label>
+                        <label class="f-w-6"><lang class="lang_note_reason">Note / reason</lang> <span class="text-muted" style="font-weight:normal;"><lang class="lang_optional">(optional)</lang></span></label>
                         <textarea class="form-control" id="bulk_stock_note" rows="2" maxlength="500" placeholder="e.g. New delivery from supplier, invoice #1234 - shown in the stock history"></textarea>
                     </div>
 
@@ -576,18 +576,18 @@
                     <div id="bulk_stock_check_result" style="display:none; margin-bottom:10px;"></div>
 
                     <div class="alert alert-warning" style="font-size:12px; padding:8px 12px; margin-bottom:0;">
-                        This changes every matching item and is not undone in one click. Stock never drops below zero.
+                        <lang class="lang_this_changes_every_matching_item_and_is_no_2">This changes every matching item and is not undone in one click. Stock never drops below zero.</lang>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
-                        <i class="feather icon-x-circle mr-2"></i>Cancel
+                        <i class="feather icon-x-circle mr-2"></i><lang class="lang_cancel_title">Cancel</lang>
                     </button>
                     <button type="button" id="bulk_stock_check" class="btn btn-outline-secondary" onclick="PosnicPro.items.checkBulkStock();">
-                        <i class="feather icon-search mr-2"></i>Check
+                        <i class="feather icon-search mr-2"></i><lang class="lang_check">Check</lang>
                     </button>
                     <button type="submit" id="bulk_stock_submit" class="btn btn-outline-primary">
-                        <i class="feather icon-check-circle mr-2"></i>Update stock
+                        <i class="feather icon-check-circle mr-2"></i><lang class="lang_update_stock">Update stock</lang>
                     </button>
                 </div>
             </form>
@@ -603,26 +603,26 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true"><lang class="lang_text">&times;</lang></span></button>
             </div>
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label for="stock_adjust_reason"><lang class="lang_stock_adjust_reason">Reason</lang></label>
                         <select class="form-control" id="stock_adjust_reason" onchange="PosnicPro.items.adjReasonChanged();">
-                            <option value="Inventory count">Inventory count</option>
-                            <option value="Loss">Loss</option>
-                            <option value="Damage">Damage</option>
-                            <option value="Stock found">Stock found</option>
-                            <option value="__custom__">Custom reason…</option>
+                            <option value="Inventory count"><lang class="lang_inventory_count">Inventory count</lang></option>
+                            <option value="Loss"><lang class="lang_loss">Loss</lang></option>
+                            <option value="Damage"><lang class="lang_damage">Damage</lang></option>
+                            <option value="Stock found"><lang class="lang_stock_found">Stock found</lang></option>
+                            <option value="__custom__"><lang class="lang_custom_reason">Custom reason…</lang></option>
                         </select>
                         <div id="stock_adjust_custom_wrap" style="display:none;" class="mt-1">
                             <input type="text" class="form-control form-control-sm mb-1" id="stock_adjust_custom"
-                                maxlength="60" placeholder="Reason (e.g. Theft, Expiry)" autocomplete="off">
-                            <select class="form-control form-control-sm" id="stock_adjust_mode" onchange="PosnicPro.items.renderAdjRows();" aria-label="Stock adjust mode">
-                                <option value="subtract">Removes stock</option>
-                                <option value="add">Adds stock</option>
-                                <option value="set">Sets stock to the count</option>
+                                maxlength="60" placeholder="Reason (e.g. Theft, Expiry)" data-t-placeholder="lang_reason_e_g_theft_expiry" autocomplete="off">
+                            <select class="form-control form-control-sm" id="stock_adjust_mode" onchange="PosnicPro.items.renderAdjRows();" aria-label="Stock adjust mode" data-t-aria-label="lang_stock_adjust_mode">
+                                <option value="subtract"><lang class="lang_removes_stock">Removes stock</lang></option>
+                                <option value="add"><lang class="lang_adds_stock">Adds stock</lang></option>
+                                <option value="set"><lang class="lang_sets_stock_to_the_count">Sets stock to the count</lang></option>
                             </select>
                         </div>
                     </div>
@@ -634,7 +634,7 @@
                 </div>
                 <div class="form-group">
                     <input type="text" class="form-control" id="stock_adjust_search"
-                        placeholder="Search item by name, SKU or barcode" autocomplete="off">
+                        placeholder="Search item by name, SKU or barcode" data-t-placeholder="lang_search_item_by_name_sku_or_barcode" autocomplete="off">
                 </div>
                 <div class="tablewrap" style="overflow-x:auto;">
                     <table class="table table-sm">
@@ -642,19 +642,19 @@
                             <tr>
                                 <th><lang class="lang_item_title">Item</lang></th>
                                 <th class="text-right"><lang class="lang_instock_title">In stock</lang></th>
-                                <th class="text-right" style="width:120px;" id="stock_adjust_qty_head">Counted</th>
+                                <th class="text-right" style="width:120px;" id="stock_adjust_qty_head"><lang class="lang_counted">Counted</lang></th>
                                 <th class="text-right"><lang class="lang_stockafter_title">Stock after</lang></th>
                                 <th style="width:36px;"></th>
                             </tr>
                         </thead>
                         <tbody id="stock_adjust_rows">
-                            <tr><td colspan="5" class="text-center text-muted">Search and pick items to adjust.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted"><lang class="lang_search_and_pick_items_to_adjust">Search and pick items to adjust.</lang></td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
                 <button type="button" class="btn btn-outline-primary" id="stock_adjust_submit"
                     onclick="PosnicPro.items.submitStockAdjustment();">
                     <i class="feather icon-check-circle mr-2"></i><lang class="lang_stock_adjust_do">Adjust</lang>

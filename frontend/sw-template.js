@@ -1,5 +1,5 @@
 /*
- * Posnic service worker — TEMPLATE. The build (gulpfile.js/sw.js) writes the
+ * Posnic service worker - TEMPLATE. The build (gulpfile.js/sw.js) writes the
  * real public/sw.js from this file, stamping __BUILD_HASH__ with a digest of
  * the built bundles. Do not edit public/sw.js by hand.
  *
@@ -9,7 +9,7 @@
  *    navigation) installs the new worker, and activate() below deletes every
  *    cache from previous builds. Heavy bundles (script/dashboard.js is the
  *    big one) are served instantly from cache, yet can never survive an
- *    update — exactly the versioned-cache pattern Workbox precaching uses.
+ *    update - exactly the versioned-cache pattern Workbox precaching uses.
  *  - Only same-origin STATIC assets are ever cached. Pages and every /api
  *    request always go to the network: a till must never see a stale price,
  *    sale, or permission because of a cache.
@@ -113,8 +113,12 @@ const REFERENCE = /^\/(api\/)?setting\/getJSON(Country|State|Currency|TimeZone|G
  * costs the other nine shops nothing. Same stale-while-revalidate treatment as
  * the reference data above - answered instantly from cache, refreshed behind
  * the answer, and swept wholesale by the versioned cache name on release.
+ *
+ * msg-<code>.json rides along: it is the same shop's language, holding the
+ * sentences the server sends. Left out, a Tamil till that lost its connection
+ * would keep its screens in Tamil and answer every save in English.
  */
-const LANGUAGE_PACK = /\/languages\/[a-z]{2}(-[A-Za-z]{2,4})?\.json$/;
+const LANGUAGE_PACK = /\/languages\/(msg-)?[a-z]{2}(-[A-Za-z]{2,4})?\.json$/;
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -190,7 +194,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  /* Static assets only — never pages, never /api. */
+  /* Static assets only - never pages, never /api. */
   if (!/^\/(static|style|script|fonts|images)\//.test(url.pathname)) return;
 
   event.respondWith(

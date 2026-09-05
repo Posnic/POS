@@ -17,10 +17,48 @@
                 : 'http://localhost:5555/';
         </script>
 
-        <title> <lang class="lang_login_title"> Login Here </lang> </title>
+        <title>Posnic POS - Offline POS & Billing Software</title>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Posnic POS is offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta name="keywords" content="POS, Billing Software, Offline POS, Online/Offline POS, open source POS">
+        <meta name="application-name" content="Posnic POS">
+        <meta name="author" content="Posnic">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="https://www.posnic.io/">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Posnic POS">
+        <meta property="og:title" content="Posnic POS - Offline POS & Billing Software">
+        <meta property="og:description" content="Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta property="og:url" content="https://www.posnic.io/">
+        <meta property="og:image" content="https://www.posnic.io/static/images/icons-pwa/icon-512.png">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="Posnic POS - Offline POS & Billing Software">
+        <meta name="twitter:description" content="Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.">
+        <meta name="twitter:image" content="https://www.posnic.io/static/images/icons-pwa/icon-512.png">
+        <script type="application/ld+json" id="posnic-software-schema">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Posnic POS",
+            "description": "Offline-first open source POS and billing software for retail stores, restaurants, and small businesses.",
+            "url": "https://www.posnic.io/",
+            "codeRepository": "https://github.com/Posnic/POS",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Windows, macOS, Linux, Web",
+            "softwareVersion": "1.6.1",
+            "license": "https://github.com/Posnic/POS/blob/develop/LICENSE",
+            "isAccessibleForFree": true,
+            "keywords": [
+                "POS",
+                "Billing Software",
+                "Offline POS",
+                "Online/Offline POS",
+                "open source POS"
+            ]
+        }
+        </script>
         <!-- App favicon -->
         <link rel="shortcut icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
         <link rel="icon" href="static/images/favicon/favicon.ico" type="image/x-icon">
@@ -86,7 +124,7 @@
                                         </div>
 
                                         <form id="Branch_selection_form" enctype="multipart/form-data" style="display:none;">
-                                            <h4 class="text-primary my-4">Select branch </h4>
+                                            <h4 class="text-primary my-4"><lang class="lang_select_branch">Select branch</lang> </h4>
                                             <div class="custom-layout-setting">
                                                 <div class="row align-items-center pb-3 multi_branch_selection">
 
@@ -97,12 +135,12 @@
                                         <form id="login_form" method="post">
                                             <h4 class="text-primary my-4"><lang class="lang_login">Login</lang></h4>
                                             <div class="form-group loader-login">
-                                                <input type="text" class="form-control border-control" id="username" name="username" minlength="3" maxlength="250" placeholder="Enter username (or) email here" autocomplete="username" required>
+                                                <input type="text" class="form-control border-control" id="username" name="username" minlength="3" maxlength="250" placeholder="Enter username (or) email here" data-t-placeholder="lang_enter_username_or_email_here" autocomplete="username" required>
                                             </div>
 
                                             <div class="form-group right-inner-addon input-container">
                                                 <span class="btn addon_btnview current-show_hide_password"> <i class="fa fa-eye-slash"></i></span>
-                                                <input type="password" class="form-control border-control" id="password" name="password" minlength="5" maxlength="20" placeholder="Enter password here" required autocomplete="current-password">
+                                                <input type="password" class="form-control border-control" id="password" name="password" minlength="5" maxlength="20" placeholder="Enter password here" data-t-placeholder="lang_enter_password_here" required autocomplete="current-password">
                                             </div>    
                                             <div class="form-row mb-3">
                                                 <div class="col-sm-6">
@@ -125,7 +163,7 @@
                                             <h4 class="text-primary my-4"><lang class="lang_forgot">Forgot Password !</lang> </h4>
                                             <p class="mb-4" style="font-weight: 510;"><lang class="lang_forget_description">Enter the email address below to receive reset password instructions.</lang></p>
                                             <div class="form-group">
-                                                <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" required>
+                                                <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" data-t-placeholder="lang_enter_email_here" required>
                                             </div>                          
                                             <button type="submit" class="btn btn-success btn-lg btn-block font-18"><lang class="lang_foget_mail">Reset Password</lang></button>
                                             <p class="mb-0 mt-3"><lang class="lang_remeber_password">Already have a POSNIC account? </lang><a id="Loginslide" href="#"><lang class="lang_login_title">Log in </lang></a></p>
@@ -133,7 +171,7 @@
 
 
                                         <form id="registerselect_form" style="display:none;"> 
-                                            <h4 class="text-primary my-4">Select Register </h4>
+                                            <h4 class="text-primary my-4"><lang class="lang_select_register">Select Register</lang> </h4>
                                             <div id="form_regsiter_selction">                                                                            
                                                 <div class="form-group col-md-12 text-center">
                                                     <select id="choose_register_model" class="custom-select border-control choose_register_model" data-placedataholder="Select Register" style="width: 100%;border: 1px solid #eae8e8;">
@@ -142,7 +180,7 @@
                                             </div>
 
                                             <div class="form-group col-md-12 text-left">
-                                                <label for="opening_float" class="text_white">Opening Float </label>
+                                                <label for="opening_float" class="text_white"><lang class="lang_opening_float">Opening Float</lang> </label>
                                                 <input type="text" class="form-control border-control allow_decimal text-right" id="opening_float" name="opening_float" minlength="1" maxlength="10" value="0.00" placeholder="0.00">
                                             </div> 
                                             <div class="form-group col-md-12">
@@ -155,11 +193,11 @@
                                         <div class="row">
                                             <div class="col-sm-12">                                        
                                                 <div id="user_error_slide" style="display:none;">
-                                                    <h4 class="text-primary my-4">Sign-in is blocked ! </h4>
-                                                    <p class="text-danger text-left"> You've tried to sign in too many times with an incorrect account or password. </p>
-                                                    <p class="text-left"> Sign-in with <span class="user-text-update text-success font-18">satheesh</span> entered the wrong password too many times. </p>
-                                                    <p id="redirect_slide" style="color:#3a5de1; cursor:pointer ;margin-top:-15px;">Reset your password? </p>
-                                                    <p> Another posnic account ?<a id="redirect_login" href="#">Log in</a> </p>
+                                                    <h4 class="text-primary my-4"><lang class="lang_sign_in_is_blocked">Sign-in is blocked !</lang> </h4>
+                                                    <p class="text-danger text-left"> <lang class="lang_you_ve_tried_to_sign_in_too_many_times_wit">You've tried to sign in too many times with an incorrect account or password.</lang> </p>
+                                                    <p class="text-left"> <lang class="lang_sign_in_with">Sign-in with</lang> <span class="user-text-update text-success font-18"><lang class="lang_satheesh">satheesh</lang></span> <lang class="lang_entered_the_wrong_password_too_many_times">entered the wrong password too many times.</lang> </p>
+                                                    <p id="redirect_slide" style="color:#3a5de1; cursor:pointer ;margin-top:-15px;"><lang class="lang_reset_your_password">Reset your password?</lang> </p>
+                                                    <p> <lang class="lang_another_posnic_account">Another posnic account ?</lang><a id="redirect_login" href="#"><lang class="lang_log_in">Log in</lang></a> </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -168,7 +206,7 @@
                                              hidden until the list is in so an empty box never shows. -->
                                         <div class="text-center mt-3">
                                             <select id="language_select" class="form-control form-control-sm d-inline-block w-auto"
-                                                aria-label="Language" style="display:none"></select>
+                                                aria-label="Language" data-t-aria-label="lang_language" style="display:none"></select>
                                         </div>
                                     </div>
                                 </div>
@@ -375,22 +413,22 @@
         /* a faint oversized glyph bleeding off the corner - depth, not noise */
         '<svg viewBox="0 0 24 24" style="position:absolute;right:-14px;bottom:-18px;width:110px;height:110px;opacity:.08;" fill="none" stroke="#fff" stroke-width="1.3">' +
           '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4M6 8h8M6 11h5"/></svg>' +
-        '<a href="#" id="posnic_app_card_x" aria-label="Do not show again" style="position:absolute;top:8px;right:11px;' +
+        '<a href="#" id="posnic_app_card_x" aria-label="Do not show again" data-t-aria-label="lang_do_not_show_again" style="position:absolute;top:8px;right:11px;' +
           'color:rgba(255,255,255,.55);text-decoration:none;font-size:15px;line-height:1;">&times;</a>' +
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">' +
           '<div style="flex:0 0 auto;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);' +
             'display:flex;align-items:center;justify-content:center;">' +
             '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#8ab4ff" stroke-width="1.8" stroke-linecap="round">' +
               '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 10.5l2 2 4-4"/></svg></div>' +
-          '<div><div style="font-size:15px;font-weight:700;letter-spacing:.01em;">Faster at the counter</div>' +
-          '<div style="font-size:12.5px;color:#aebedd;">The free desktop till</div></div></div>' +
+          '<div><div style="font-size:15px;font-weight:700;letter-spacing:.01em;"><lang class="lang_faster_at_the_counter">Faster at the counter</lang></div>' +
+          '<div style="font-size:12.5px;color:#aebedd;"><lang class="lang_the_free_desktop_till">The free desktop till</lang></div></div></div>' +
         '<div style="font-size:13px;line-height:1.5;color:#d7e0f2;margin-bottom:13px;position:relative;">' +
-          'Works fully offline and drives printers, barcode scanners and cash drawers - built for the shop computer.</div>' +
+          '<lang class="lang_works_fully_offline_and_drives_printers_ba">Works fully offline and drives printers, barcode scanners and cash drawers - built for the shop computer.</lang></div>' +
         '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:relative;">' +
           '<a href="https://web.posnic.com/download.html" style="flex:1 1 auto;text-align:center;background:#fff;color:#16203a;' +
-            'text-decoration:none;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:8px;">Download free</a>' +
+            'text-decoration:none;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:8px;"><lang class="lang_download_free">Download free</lang></a>' +
           '<a href="#" id="posnic_app_card_open" style="flex:0 0 auto;color:#8ab4ff;text-decoration:none;font-size:12.5px;">' +
-            'I have it &mdash; open</a></div>';
+            '<lang class="lang_i_have_it_open">I have it, open</lang></a></div>';
 
       form.insertAdjacentElement('afterend', el);
       document.getElementById('posnic_app_card_open').onclick = function () { location.href = 'posnic://open'; return false; };

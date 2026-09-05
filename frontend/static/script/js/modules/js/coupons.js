@@ -45,7 +45,7 @@ PosnicPro.coupons = {
     var sign = PosnicPro.coupons.currencySign();
     var body = $('#coupons_table_body').empty();
     if (!rows.length) {
-      body.append('<tr><td colspan="6" class="text-center text-muted py-3">No coupons yet.</td></tr>');
+      body.append('<tr><td colspan="6" class="text-center text-muted py-3"><lang class="lang_no_coupons_yet">No coupons yet.</lang></td></tr>');
       return;
     }
     rows.forEach(function (c) {
@@ -56,11 +56,11 @@ PosnicPro.coupons = {
         (c.end_date ? PosnicPro.coupons.fmtDate(c.end_date) : '…');
       var used = (c.times_used || 0) + (Number(c.usage_limit) > 0 ? ' / ' + c.usage_limit : '');
       var active = c.active
-        ? '<span class="badge badge-success-inverse">Active</span>'
-        : '<span class="badge badge-danger-inverse">Off</span>';
+        ? '<span class="badge badge-success-inverse"><lang class="lang_active">Active</lang></span>'
+        : '<span class="badge badge-danger-inverse"><lang class="lang_off">Off</lang></span>';
       var actions =
-        '<a href="javascript:void(0)" class="point-cursor mr-2 coupon-edit" data-id="' + c._id + '" title="Edit"><i class="feather icon-edit"></i></a>' +
-        '<a href="javascript:void(0)" class="point-cursor text-danger coupon-del" data-id="' + c._id + '" title="Delete"><i class="feather icon-trash"></i></a>';
+        '<a href="javascript:void(0)" class="point-cursor mr-2 coupon-edit" data-id="' + c._id + '" title="Edit" data-t-title="lang_edit_title"><i class="feather icon-edit"></i></a>' +
+        '<a href="javascript:void(0)" class="point-cursor text-danger coupon-del" data-id="' + c._id + '" title="Delete" data-t-title="lang_delete"><i class="feather icon-trash"></i></a>';
       body.append(
         '<tr>' +
           '<td><strong>' + PosnicPro.coupons.esc(c.code) + '</strong>' +
@@ -82,7 +82,7 @@ PosnicPro.coupons = {
   newForm: function () {
     PosnicPro.coupons.fill({ type: 'percent', active: true });
     $('#coupon_form_id').val('');
-    $('#coupon_form_title').text('New coupon');
+    $('#coupon_form_title').text(PosnicPro.i18n.t('lang_new_coupon', 'New coupon'));
     $('#coupons_form_wrap').show();
     $('#coupon_code').focus();
   },
@@ -94,7 +94,7 @@ PosnicPro.coupons = {
     if (!c) return;
     PosnicPro.coupons.fill(c);
     $('#coupon_form_id').val(c._id);
-    $('#coupon_form_title').text('Edit coupon');
+    $('#coupon_form_title').text(PosnicPro.i18n.t('lang_edit_coupon', 'Edit coupon'));
     $('#coupons_form_wrap').show();
   },
 
@@ -137,7 +137,7 @@ PosnicPro.coupons = {
   save: function () {
     var data = PosnicPro.coupons.collect();
     if (!data.code) {
-      PosnicPro.alert('error', 'A coupon code is required.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_a_coupon_code_is_required', 'A coupon code is required.'));
       return;
     }
     var id = $('#coupon_form_id').val();

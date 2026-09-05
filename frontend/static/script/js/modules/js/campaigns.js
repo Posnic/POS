@@ -77,7 +77,7 @@ PosnicPro.campaigns = {
   render: function (rows) {
     var body = $('#campaigns_table_body').empty();
     if (!rows.length) {
-      body.append('<tr><td colspan="6" class="text-center text-muted py-3">No campaigns yet.</td></tr>');
+      body.append('<tr><td colspan="6" class="text-center text-muted py-3"><lang class="lang_no_campaigns_yet">No campaigns yet.</lang></td></tr>');
       return;
     }
     rows.forEach(function (c) {
@@ -91,8 +91,8 @@ PosnicPro.campaigns = {
           '<td>' + PosnicPro.campaigns.statusBadge(c.status) + '</td>' +
           '<td class="small">' + reach + '</td>' +
           '<td class="text-center text-nowrap">' +
-            '<a href="javascript:void(0)" class="point-cursor mr-2 campaign-edit" data-id="' + c._id + '" title="Open"><i class="feather icon-edit"></i></a>' +
-            '<a href="javascript:void(0)" class="point-cursor text-danger campaign-del" data-id="' + c._id + '" title="Delete"><i class="feather icon-trash"></i></a>' +
+            '<a href="javascript:void(0)" class="point-cursor mr-2 campaign-edit" data-id="' + c._id + '" title="Open" data-t-title="lang_open"><i class="feather icon-edit"></i></a>' +
+            '<a href="javascript:void(0)" class="point-cursor text-danger campaign-del" data-id="' + c._id + '" title="Delete" data-t-title="lang_delete"><i class="feather icon-trash"></i></a>' +
           '</td>' +
         '</tr>'
       );
@@ -104,7 +104,7 @@ PosnicPro.campaigns = {
   newForm: function () {
     PosnicPro.campaigns.fill({ channel: 'whatsapp', segment: { type: 'all' } });
     $('#campaign_form_id').val('');
-    $('#campaign_form_title').text('New campaign');
+    $('#campaign_form_title').text(PosnicPro.i18n.t('lang_new_campaign', 'New campaign'));
     $('#campaign_preview_out').empty();
     $('#campaigns_form_wrap').show();
     $('#campaign_name').focus();
@@ -117,7 +117,7 @@ PosnicPro.campaigns = {
     if (!c) return;
     PosnicPro.campaigns.fill(c);
     $('#campaign_form_id').val(c._id);
-    $('#campaign_form_title').text(c.status === 'sent' || c.status === 'partial' ? 'Campaign (sent)' : 'Edit campaign');
+    $('#campaign_form_title').text(c.status === 'sent' || c.status === 'partial' ? PosnicPro.i18n.t('lang_campaign_sent', 'Campaign (sent)') : PosnicPro.i18n.t('lang_edit_campaign', 'Edit campaign'));
     $('#campaign_preview_out').empty();
     $('#campaigns_form_wrap').show();
   },
@@ -168,11 +168,11 @@ PosnicPro.campaigns = {
   save: function (after) {
     var data = PosnicPro.campaigns.collect();
     if (!data.name) {
-      PosnicPro.alert('error', 'A campaign name is required.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_a_campaign_name_is_required', 'A campaign name is required.'));
       return;
     }
     if (!data.message) {
-      PosnicPro.alert('error', 'A message is required.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_a_message_is_required', 'A message is required.'));
       return;
     }
     var id = $('#campaign_form_id').val();
@@ -214,7 +214,7 @@ PosnicPro.campaigns = {
       $('#campaign_preview_out').html(
         '<div class="alert alert-info mb-0"><strong>' + d.reachable + '</strong> reachable of ' + d.total +
           ' in this segment' + (names.length ? ' &middot; e.g. ' + names.join(', ') : '') +
-          '<div class="small text-muted mt-1">Opt-outs and customers with no phone are skipped automatically.</div></div>'
+          '<div class="small text-muted mt-1"><lang class="lang_opt_outs_and_customers_with_no_phone_are_s">Opt-outs and customers with no phone are skipped automatically.</lang></div></div>'
       );
     });
   },
@@ -235,7 +235,7 @@ PosnicPro.campaigns = {
         var d = res.data || {};
         PosnicPro.alert(
           'success',
-          (dryRun ? 'Dry run: ' : 'Sent: ') + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
+          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
         );
         PosnicPro.campaigns.load();
       });
@@ -245,7 +245,7 @@ PosnicPro.campaigns = {
   schedule: function () {
     var when = $('#campaign_schedule_at').val();
     if (!when) {
-      PosnicPro.alert('error', 'Pick a date and time to schedule.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_pick_a_date_and_time_to_schedule', 'Pick a date and time to schedule.'));
       return;
     }
     PosnicPro.campaigns.save(function (data) {

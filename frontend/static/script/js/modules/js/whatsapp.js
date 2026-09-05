@@ -22,7 +22,7 @@ PosnicPro.whatsapp = {
         const deviceId = $('#whatsapp_device_id').val().trim();
         
         if (!deviceId) {
-            PosnicPro.alert('error', 'Please enter a Device ID');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_a_device_id', 'Please enter a Device ID'));
             return;
         }
 
@@ -37,7 +37,7 @@ PosnicPro.whatsapp = {
             this.hideConnectLoading();
             $('#whatsapp_connect_btn').prop('disabled', false).html('<i class="feather icon-link mr-1"></i> Connect WhatsApp');
             $('#whatsapp_refresh_status').prop('disabled', false);
-            PosnicPro.alert('error', 'Please select a branch before connecting WhatsApp');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_select_a_branch_before_connecting_w', 'Please select a branch before connecting WhatsApp'));
             return;
         }
 
@@ -56,7 +56,7 @@ PosnicPro.whatsapp = {
                 // Start polling for QR code
                 this.startQRPolling();
                 
-                PosnicPro.alert('success', 'Connecting to WhatsApp...');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_connecting_to_whatsapp', 'Connecting to WhatsApp...'));
             } else {
                 $('#whatsapp_connect_btn').prop('disabled', false).html('<i class="feather icon-link"></i> Connect WhatsApp');
                 PosnicPro.alert('error', response.message || 'Failed to initialize connection');
@@ -76,7 +76,7 @@ PosnicPro.whatsapp = {
             
             if (attempts > maxAttempts) {
                 clearInterval(this.qrCheckInterval);
-                PosnicPro.alert('error', 'QR code generation timeout. Please try again.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_qr_code_generation_timeout_please_try_agai', 'QR code generation timeout. Please try again.'));
                 this.resetUI();
                 return;
             }
@@ -125,7 +125,7 @@ PosnicPro.whatsapp = {
         
         if (!deviceId) {
             if (!silent) {
-                PosnicPro.alert('error', 'Please enter a Device ID');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_a_device_id', 'Please enter a Device ID'));
             }
             return;
         }
@@ -178,7 +178,7 @@ PosnicPro.whatsapp = {
                 // Display QR code
                 $('#whatsapp_qr_code').html(`
                     <img loading="lazy" decoding="async" src="${response.data.qr_code}" alt="WhatsApp QR Code" style="max-width:300px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-                    <p class="mt-3 text-muted">Scan this QR code with WhatsApp on your phone</p>
+                    <p class="mt-3 text-muted"><lang class="lang_scan_this_qr_code_with_whatsapp_on_your_ph">Scan this QR code with WhatsApp on your phone</lang></p>
                 `);
                 
                 // Start status polling if not already started
@@ -247,7 +247,7 @@ PosnicPro.whatsapp = {
         
         this.updateStatusBadge('connected', true);
         
-        PosnicPro.alert('success', 'WhatsApp connected');
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_whatsapp_connected', 'WhatsApp connected'));
     },
 
     /**
@@ -257,7 +257,7 @@ PosnicPro.whatsapp = {
         const deviceId = this.deviceId || $('#whatsapp_device_id').val().trim();
         
         if (!deviceId) {
-            PosnicPro.alert('error', 'Device ID not found');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_device_id_not_found', 'Device ID not found'));
             return;
         }
 
@@ -275,7 +275,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 this.resetUI();
-                PosnicPro.alert('success', 'WhatsApp disconnected');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_whatsapp_disconnected', 'WhatsApp disconnected'));
             } else {
                 $('#whatsapp_disconnect_btn').prop('disabled', false).html('<i class="feather icon-log-out"></i> Disconnect');
                 PosnicPro.alert('error', response.message || 'Failed to disconnect');
@@ -303,9 +303,9 @@ PosnicPro.whatsapp = {
         $('#whatsapp_device_id').prop('disabled', false);
         $('#whatsapp_qr_code').html(`
             <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
+                <span class="sr-only"><lang class="lang_loading_2">Loading...</lang></span>
             </div>
-            <p class="mt-2">Generating QR Code...</p>
+            <p class="mt-2"><lang class="lang_generating_qr_code">Generating QR Code...</lang></p>
         `);
 
         // Hide Send WhatsApp Message tab
@@ -324,12 +324,12 @@ PosnicPro.whatsapp = {
         const message = $('#whatsapp_message_text').val().trim();
         
         if (!deviceId) {
-            PosnicPro.alert('error', 'Please connect WhatsApp first');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_connect_whatsapp_first', 'Please connect WhatsApp first'));
             return;
         }
         
         if (!phoneNumber) {
-            PosnicPro.alert('error', 'Please enter phone number');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_phone_number', 'Please enter phone number'));
             return;
         }
         
@@ -349,7 +349,7 @@ PosnicPro.whatsapp = {
             // Send custom message
             this.sendCustomMessage(deviceId, phoneNumber, message);
         } else {
-            PosnicPro.alert('error', 'Please enter message or select a template');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_message_or_select_a_template', 'Please enter message or select a template'));
             return;
         }
     },
@@ -435,7 +435,7 @@ PosnicPro.whatsapp = {
             <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                 <i class="feather icon-${icon} mr-2"></i>
                 ${message}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" data-t-aria-label="lang_close_title">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -500,7 +500,7 @@ PosnicPro.whatsapp = {
             checkbox.prop('disabled', false);
             
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'WhatsApp receipt setting saved');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_whatsapp_receipt_setting_saved', 'WhatsApp receipt setting saved'));
             } else {
                 // Revert checkbox state if save failed
                 checkbox.prop('checked', !isEnabled);
@@ -630,10 +630,10 @@ PosnicPro.whatsapp = {
                     <td>${messagePreview}</td>
                     <td>${createdDate}</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="PosnicPro.whatsapp.editTemplate('${template._id}')" aria-label="Edit">
+                        <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="PosnicPro.whatsapp.editTemplate('${template._id}')" aria-label="Edit" data-t-aria-label="lang_edit_title">
                             <i class="feather icon-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.whatsapp.deleteTemplate('${template._id}')" aria-label="Delete">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="PosnicPro.whatsapp.deleteTemplate('${template._id}')" aria-label="Delete" data-t-aria-label="lang_delete">
                             <i class="feather icon-trash"></i>
                         </button>
                     </td>
@@ -649,7 +649,7 @@ PosnicPro.whatsapp = {
         // Update test message template dropdown
         const testSelect = $('#whatsapp_test_template');
         testSelect.empty();
-        testSelect.append('<option value="">Select a template...</option>');
+        testSelect.append('<option value="" data-t="lang_select_a_template">Select a template...</option>');
 
         templates.forEach(template => {
             testSelect.append(`<option value="${template._id}">${template.name}</option>`);
@@ -677,7 +677,7 @@ PosnicPro.whatsapp = {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Add WhatsApp Template</h5>
+                            <h5 class="modal-title"><lang class="lang_add_whatsapp_template">Add WhatsApp Template</lang></h5>
                             <button type="button" class="close" data-dismiss="modal">
                                 <span>&times;</span>
                             </button>
@@ -688,11 +688,11 @@ PosnicPro.whatsapp = {
                                 <input type="text" class="form-control" id="template_name" maxlength="100" required>
                             </div>
                             <div class="form-group">
-                                <label for="template_type">Template Type</label>
+                                <label for="template_type"><lang class="lang_template_type">Template Type</lang></label>
                                 <select class="form-control" id="template_type" onchange="PosnicPro.whatsapp.setDefaultTemplateContent()">
-                                    <option value="">Select Template Type</option>
-                                    <option value="sales_receipt">Sales Receipt</option>
-                                    <option value="payment_reminder">Payment Reminder</option>
+                                    <option value="" data-t="lang_select_template_type">Select Template Type</option>
+                                    <option value="sales_receipt" data-t="lang_sales_receipt_2">Sales Receipt</option>
+                                    <option value="payment_reminder" data-t="lang_payment_reminder">Payment Reminder</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -705,8 +705,8 @@ PosnicPro.whatsapp = {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" onclick="PosnicPro.whatsapp.saveTemplate()">Save Template</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
+                            <button type="button" class="btn btn-primary" onclick="PosnicPro.whatsapp.saveTemplate()"><lang class="lang_save_template">Save Template</lang></button>
                         </div>
                     </div>
                 </div>
@@ -751,7 +751,7 @@ PosnicPro.whatsapp = {
         const templateType = $('#template_type').val();
 
         if (!name || !message) {
-            PosnicPro.alert('error', 'Enter a template name and message.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_template_name_and_message', 'Enter a template name and message.'));
             return;
         }
 
@@ -769,7 +769,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 $('#whatsappTemplateModal').modal('hide');
-                PosnicPro.alert('success', 'Template saved');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_template_saved', 'Template saved'));
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -783,7 +783,7 @@ PosnicPro.whatsapp = {
     editTemplate: function(templateId) {
         const template = this.templates.find(t => t._id === templateId);
         if (!template) {
-            PosnicPro.alert('error', 'Template not found');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_template_not_found', 'Template not found'));
             return;
         }
 
@@ -793,7 +793,7 @@ PosnicPro.whatsapp = {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Edit WhatsApp Template</h5>
+                            <h5 class="modal-title"><lang class="lang_edit_whatsapp_template">Edit WhatsApp Template</lang></h5>
                             <button type="button" class="close" data-dismiss="modal">
                                 <span>&times;</span>
                             </button>
@@ -805,9 +805,9 @@ PosnicPro.whatsapp = {
                                 <input type="text" class="form-control" id="template_name" value="${template.name}" maxlength="100" required>
                             </div>
                             <div class="form-group">
-                                <label for="template_type">Template Type</label>
+                                <label for="template_type"><lang class="lang_template_type">Template Type</lang></label>
                                 <select class="form-control" id="template_type" onchange="PosnicPro.whatsapp.setDefaultTemplateContent()">
-                                    <option value="">Select Template Type</option>
+                                    <option value="" data-t="lang_select_template_type">Select Template Type</option>
                                     <option value="sales_receipt" ${template.template_type === 'sales_receipt' ? 'selected' : ''}>Sales Receipt</option>
                                     <option value="payment_reminder" ${template.template_type === 'payment_reminder' ? 'selected' : ''}>Payment Reminder</option>
                                 </select>
@@ -822,8 +822,8 @@ PosnicPro.whatsapp = {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" onclick="PosnicPro.whatsapp.updateTemplate()">Update Template</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
+                            <button type="button" class="btn btn-primary" onclick="PosnicPro.whatsapp.updateTemplate()"><lang class="lang_update_template">Update Template</lang></button>
                         </div>
                     </div>
                 </div>
@@ -850,7 +850,7 @@ PosnicPro.whatsapp = {
         const templateType = $('#template_type').val();
 
         if (!name || !message) {
-            PosnicPro.alert('error', 'Enter a template name and message.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_template_name_and_message', 'Enter a template name and message.'));
             return;
         }
 
@@ -867,7 +867,7 @@ PosnicPro.whatsapp = {
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
                 $('#whatsappTemplateModal').modal('hide');
-                PosnicPro.alert('success', 'Template updated');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_template_updated', 'Template updated'));
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -954,7 +954,7 @@ PosnicPro.whatsapp = {
 
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Template deleted');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_template_deleted', 'Template deleted'));
                 this.loadTemplates(); // Reload templates
             } else {
                 PosnicPro.alert('error', response.message);
@@ -992,7 +992,7 @@ PosnicPro.whatsapp = {
         const selectedTemplate = $('#whatsapp_test_template').val();
 
         if (!phoneNumber) {
-            PosnicPro.alert('error', 'Please enter a phone number');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_a_phone_number', 'Please enter a phone number'));
             return;
         }
 
@@ -1004,7 +1004,7 @@ PosnicPro.whatsapp = {
             // Send custom message
             this.sendTestCustomMessage(phoneNumber, message);
         } else {
-            PosnicPro.alert('error', 'Please enter message or select a template');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_message_or_select_a_template', 'Please enter message or select a template'));
             return;
         }
     },
@@ -1028,7 +1028,7 @@ PosnicPro.whatsapp = {
             $('#whatsapp_test_send_btn').prop('disabled', false).html('<i class="feather icon-send mr-2"></i> Send Test Message');
             
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Test message sent');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_test_message_sent', 'Test message sent'));
                 this.clearTestForm();
             } else {
                 PosnicPro.alert('error', response.message);
@@ -1055,7 +1055,7 @@ PosnicPro.whatsapp = {
             $('#whatsapp_test_send_btn').prop('disabled', false).html('<i class="feather icon-send mr-2"></i> Send Test Message');
             
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Test template message sent successfully!');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_test_template_message_sent_successfully', 'Test template message sent successfully!'));
                 this.clearTestForm();
             } else {
                 PosnicPro.alert('error', response.message);

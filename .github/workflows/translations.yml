@@ -35,9 +35,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -64,12 +64,15 @@ jobs:
       - name: Nothing outside the language files changed
         continue-on-error: true
         env:
+          BASE: ${{ github.event.pull_request.base.sha }}
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
         run: |
           # A translation PR that also edits application code is not a
           # translation PR. Saying so here is quicker and kinder than a
           # reviewer noticing on the third read.
+          git fetch --no-tags --depth=1 origin "$BASE" >/dev/null 2>&1 || true
+          CHANGED=$(git diff --name-only "$BASE" HEAD || git diff --name-only HEAD~1 HEAD)
           CHANGED=$(gh pr diff "$PR" --name-only) || {
             echo "::notice::Could not read the file list; skipping this check."
             exit 0

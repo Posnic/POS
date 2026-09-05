@@ -42,8 +42,8 @@ PosnicPro.paymentreport = {
         $("#payment_transaction_cash_mode").empty();
         let paymentMethod = "";
         let reportPaymentType = PosnicPro.configPaymentType || [];
-        $('#payment_transaction_cash_mode').append('<option value="All" selected="selected">All</option>');
-        $('#payment_transaction_cash_mode').append('<option value="Cash">Cash</option>');
+        $('#payment_transaction_cash_mode').append('<option value="All" selected="selected" data-t="lang_report_all">All</option>');
+        $('#payment_transaction_cash_mode').append('<option value="Cash" data-t="lang_cash_title">Cash</option>');
         if (Array.isArray(reportPaymentType) && reportPaymentType.length !== 0) {
             $.each(reportPaymentType, function (key, val) {
                 paymentMethod = '<option value="' + val.payment_value + '">' + val.payment_value + ' </option>';
@@ -76,7 +76,7 @@ PosnicPro.paymentreport = {
                     if (rowTotal === 0) {
                         $('.reportpayment_header').hide();
                         let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                        $('.reportpayment_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpayment_norecord', 'No Records on ' + dateRange);
                         $('#reportpayment_img_hide,.reportpayment_norecord').show();
 
                     } else {
@@ -102,7 +102,7 @@ PosnicPro.paymentreport = {
 
                         $('span.number').number(true, 2);
                     } else {
-                        $("#salePaymentType tbody").append('<tr><td colspan="4"><div class="text-center text-dark"><p class="table_cart_content text-primary">Your cash details are empty</p></div></td></tr>');
+                        $("#salePaymentType tbody").append('<tr><td colspan="4"><div class="text-center text-dark"><p class="table_cart_content text-primary"><lang class="lang_your_cash_details_are_empty">Your cash details are empty</lang></p></div></td></tr>');
                     }
 
                 } else {
@@ -169,7 +169,7 @@ PosnicPro.paymentransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentstatus_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymenttransc_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpaymenttransc_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymenttransc_img_hide,.reportpaymenttransc_norecord').show();
 
                         } else {
@@ -278,7 +278,7 @@ PosnicPro.paymentreturntransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentreturn_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymentreturntransction_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportpaymentreturntransction_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymentreturntransction_img_hide,.reportpaymentreturntransction_norecord').show();
 
                         } else {

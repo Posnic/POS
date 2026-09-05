@@ -19,10 +19,10 @@
                 </div>
                 <div class="col-lg-6 text-right">
                     <a href="#/bulkitems" class="btn btn-primary-rgba">
-                        <i class="feather icon-grid mr-2"></i>Add many at once
+                        <i class="feather icon-grid mr-2"></i><lang class="lang_add_many_at_once">Add many at once</lang>
                     </a>
                     <a href="#/items/new" class="btn btn-primary-rgba">
-                        <i class="feather icon-sliders mr-2"></i>Full form
+                        <i class="feather icon-sliders mr-2"></i><lang class="lang_full_form">Full form</lang>
                     </a>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                         <div class="card-body">
                             <form id="qa_form" autocomplete="off" onsubmit="return PosnicPro.quickitems.save();">
                                 <div class="form-group">
-                                    <label for="qa_name">Item name <span class="text-danger">*</span></label>
+                                    <label for="qa_name"><lang class="lang_item_name">Item name</lang> <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="qa_name" maxlength="100"
                                            placeholder="e.g. Sugar 1kg" autocomplete="off">
                                     <small class="form-text text-muted" id="qa_name_hint"></small>
@@ -44,14 +44,14 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="form-group">
-                                            <label for="qa_selling_price">Selling Price</label>
+                                            <label for="qa_selling_price"><lang class="lang_selling_price">Selling Price</lang></label>
                                             <input type="number" step="0.01" min="0" class="form-control"
                                                    id="qa_selling_price" placeholder="0.00" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="form-group">
-                                            <label for="qa_quantity">Quantity in stock</label>
+                                            <label for="qa_quantity"><lang class="lang_quantity_in_stock">Quantity in stock</lang></label>
                                             <input type="number" step="0.001" min="0" class="form-control"
                                                    id="qa_quantity" placeholder="0" autocomplete="off">
                                         </div>
@@ -67,7 +67,7 @@
                                 <div class="form-group">
                                     <a href="javascript:void(0);" id="qa_more_toggle"
                                        onclick="PosnicPro.quickitems.toggleMore();">
-                                        <i class="feather icon-chevron-down mr-1"></i>More fields
+                                        <i class="feather icon-chevron-down mr-1"></i><lang class="lang_more_fields">More fields</lang>
                                     </a>
                                 </div>
 
@@ -75,14 +75,14 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_company_price">Cost Price</label>
+                                                <label for="qa_company_price"><lang class="lang_cost_price">Cost Price</lang></label>
                                                 <input type="number" step="0.01" min="0" class="form-control"
                                                        id="qa_company_price" placeholder="0.00">
                                             </div>
                                         </div>
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_mrp_price">MRP</label>
+                                                <label for="qa_mrp_price"><lang class="lang_mrp">MRP</lang></label>
                                                 <input type="number" step="0.01" min="0" class="form-control"
                                                        id="qa_mrp_price" placeholder="0.00">
                                             </div>
@@ -91,14 +91,14 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_barcode">Barcode</label>
+                                                <label for="qa_barcode"><lang class="lang_barcode_title">Barcode</lang></label>
                                                 <input type="text" class="form-control" id="qa_barcode"
-                                                       maxlength="100" placeholder="Scan or type">
+                                                       maxlength="100" placeholder="Scan or type" data-t-placeholder="lang_scan_or_type">
                                             </div>
                                         </div>
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_sku">SKU</label>
+                                                <label for="qa_sku"><lang class="lang_sku_title">SKU</lang></label>
                                                 <input type="text" class="form-control" id="qa_sku" maxlength="100">
                                             </div>
                                         </div>
@@ -106,19 +106,19 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_category">Category</label>
+                                                <label for="qa_category"><lang class="lang_newcategory_title">Category</lang></label>
                                                 <select class="form-control" id="qa_category"></select>
                                             </div>
                                         </div>
                                         <div class="col-6">
                                             <div class="form-group">
-                                                <label for="qa_unit">Unit</label>
+                                                <label for="qa_unit"><lang class="lang_unit_title">Unit</lang></label>
                                                 <select class="form-control" id="qa_unit"></select>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="qa_tax">Tax</label>
+                                        <label for="qa_tax"><lang class="lang_module_tax">Tax</lang></label>
                                         <select class="form-control" id="qa_tax"></select>
                                     </div>
                                     <div class="form-group">
@@ -126,7 +126,7 @@
                                             <input type="checkbox" class="custom-control-input"
                                                    id="qa_track_inventory" checked>
                                             <label class="custom-control-label" for="qa_track_inventory">
-                                                Track inventory
+                                                <lang class="lang_track_inventory">Track inventory</lang>
                                             </label>
                                         </div>
                                     </div>
@@ -134,10 +134,10 @@
 
                                 <div class="form-group mb-0">
                                     <button type="submit" class="btn btn-primary" id="qa_save">
-                                        <i class="feather icon-plus mr-2"></i>Add item
+                                        <i class="feather icon-plus mr-2"></i><lang class="lang_add_item">Add item</lang>
                                     </button>
                                     <span class="text-muted ml-3" style="font-size:12px;">
-                                        Enter saves and clears the form for the next one
+                                        <lang class="lang_enter_saves_and_clears_the_form_for_the_ne">Enter saves and clears the form for the next one</lang>
                                     </span>
                                 </div>
                             </form>
@@ -149,7 +149,7 @@
                     <div class="card m-b-30">
                         <div class="card-body">
                             <h5 class="card-title mb-3">
-                                Added just now <span class="text-muted" id="qa_count"></span>
+                                <lang class="lang_added_just_now">Added just now</lang> <span class="text-muted" id="qa_count"></span>
                             </h5>
                             <!--
                                 A running list of what this sitting has produced.
@@ -158,7 +158,7 @@
                                 reach it afterwards without leaving the page.
                             -->
                             <div id="qa_recent" class="text-muted" style="max-height:520px;overflow:auto;">
-                                Nothing added yet.
+                                <lang class="lang_nothing_added_yet">Nothing added yet.</lang>
                             </div>
                         </div>
                     </div>
@@ -178,14 +178,14 @@
                 <div class="col-lg-7 text-right">
                     <button type="button" class="btn btn-primary-rgba" id="bulk_columns_toggle"
                             onclick="PosnicPro.bulkitems.toggleColumns();">
-                        <i class="feather icon-columns mr-2"></i>More columns
+                        <i class="feather icon-columns mr-2"></i><lang class="lang_more_columns">More columns</lang>
                     </button>
                     <button type="button" class="btn btn-danger-rgba" onclick="PosnicPro.bulkitems.clear();">
-                        <i class="feather icon-trash-2 mr-2"></i>Clear
+                        <i class="feather icon-trash-2 mr-2"></i><lang class="lang_clear_title">Clear</lang>
                     </button>
                     <button type="button" class="btn btn-primary" id="bulk_save"
                             onclick="PosnicPro.bulkitems.saveAll();">
-                        <i class="feather icon-save mr-2"></i>Save all
+                        <i class="feather icon-save mr-2"></i><lang class="lang_save_all">Save all</lang>
                     </button>
                 </div>
             </div>
@@ -195,11 +195,11 @@
             <div class="card m-b-30">
                 <div class="card-body">
                     <p class="text-muted" style="font-size:13px;">
-                        A name and a price is all an item needs. Type in the last row and the
+                        <lang class="lang_a_name_and_a_price_is_all_an_item_needs_ty">A name and a price is all an item needs. Type in the last row and the
                         grid grows another. You can also paste a block of cells straight from
-                        a spreadsheet. If your list is already a file,
-                        <a href="#/items" onclick="PosnicPro.importTableFile('items');">import
-                        the CSV</a> instead - that takes the full set of fields.
+                        a spreadsheet. If your list is already a file,</lang>
+                        <a href="#/items" onclick="PosnicPro.importTableFile('items');"><lang class="lang_import_the_csv">import
+                        the CSV</lang></a> <lang class="lang_instead_that_takes_the_full_set_of_fields">instead - that takes the full set of fields.</lang>
                     </p>
 
                     <div id="bulk_status"></div>
@@ -209,13 +209,13 @@
                             <thead>
                                 <tr>
                                     <th style="width:32px;">#</th>
-                                    <th>Item name <span class="text-danger">*</span></th>
-                                    <th style="width:130px;">Selling Price</th>
-                                    <th class="bulk-extra" style="width:120px;display:none;">Cost Price</th>
-                                    <th class="bulk-extra" style="width:110px;display:none;">Quantity</th>
-                                    <th class="bulk-extra" style="width:150px;display:none;">Barcode</th>
-                                    <th class="bulk-extra" style="width:150px;display:none;">Category</th>
-                                    <th style="width:150px;">Status</th>
+                                    <th><lang class="lang_item_name">Item name</lang> <span class="text-danger">*</span></th>
+                                    <th style="width:130px;"><lang class="lang_selling_price">Selling Price</lang></th>
+                                    <th class="bulk-extra" style="width:120px;display:none;"><lang class="lang_cost_price">Cost Price</lang></th>
+                                    <th class="bulk-extra" style="width:110px;display:none;"><lang class="lang_quantity">Quantity</lang></th>
+                                    <th class="bulk-extra" style="width:150px;display:none;"><lang class="lang_barcode_title">Barcode</lang></th>
+                                    <th class="bulk-extra" style="width:150px;display:none;"><lang class="lang_newcategory_title">Category</lang></th>
+                                    <th style="width:150px;"><lang class="lang_userstatus">Status</lang></th>
                                 </tr>
                             </thead>
                             <tbody id="bulk_rows"></tbody>

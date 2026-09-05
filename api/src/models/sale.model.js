@@ -1835,7 +1835,7 @@ Sale.getQrStatusModel = async function (id) {
 
 /**
  * PHP: kioskOrderModel($data)
- * Process a kiosk order — calculate item totals, generate sales_id,
+ * Process a kiosk order - calculate item totals, generate sales_id,
  * find/create customer, insert sale document, return receipt data.
  * Ported from Api/src/model/sales_model.php lines 8297-8764.
  */

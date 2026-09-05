@@ -51,9 +51,9 @@
                     'background:#16203a;color:#fff;font:12.5px/1.4 system-ui,Segoe UI,Arial,sans-serif;' +
                     'padding:7px 14px;text-align:center;');
                 bar.innerHTML =
-                    'Public demo — everything resets on the hour. ' +
+                    'Public demo. Everything resets on the hour. ' +
                     '<a href="' + signupHref('demo_bar') + '" style="color:#8ab4ff;font-weight:600;">Create your free shop</a>' +
-                    '<span style="opacity:.65;"> · no credit card — and the offline desktop till is free forever</span>';
+                    '<span style="opacity:.65;"> · no credit card, and the offline desktop till is free forever</span>';
                 document.body.appendChild(bar);
                 document.body.style.paddingBottom = '34px';
 
@@ -116,9 +116,9 @@
                                         'padding:26px 24px 20px;font:14px/1.55 system-ui,Segoe UI,Arial,sans-serif;' +
                                         'box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;');
                                     card.innerHTML =
-                                        '<div style="font-size:19px;font-weight:700;margin-bottom:8px;">Making this shop yours?</div>' +
-                                        '<div style="margin-bottom:18px;">Create your own free shop in a minute. No credit card, no commitment — ' +
-                                        'if you never renew, you simply continue on the free Community Edition.</div>' +
+                                        '<div style="font-size:19px;font-weight:700;margin-bottom:8px;"><lang class="lang_making_this_shop_yours">Making this shop yours?</lang></div>' +
+                                        '<div style="margin-bottom:18px;">Create your own free shop in a minute. No credit card, no commitment. ' +
+                                        'If you never renew, you simply continue on the free Community Edition.</div>' +
                                         '<a href="' + signupHref('demo_nudge') + '" target="_blank" rel="noopener" style="display:block;' +
                                         'background:#16203a;color:#fff;text-decoration:none;font-weight:600;padding:11px;border-radius:7px;margin-bottom:10px;">' +
                                         'Create my free shop</a>' +

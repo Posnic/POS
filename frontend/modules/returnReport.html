@@ -17,7 +17,7 @@
                 <div class="col-lg-5 col-xl-5 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-branch display-current-branch return_branch_value" multiple="multiple"
                             data-placeholder="Select Branch" name="return_branch_value[]" id="return_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -30,7 +30,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -56,8 +56,8 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="salesreturn_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="return-line" role="tabpanel" aria-labelledby="return-tab-line">
                                 <!-- start table -->
@@ -76,13 +76,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="returnreport_exportbtn"
-                                                           data-id="returnreportexport" onclick="PosnicPro.returnreport.returnReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="returnreportexport" onclick="PosnicPro.returnreport.returnReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -112,24 +112,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnreport_page_total"></span></b>
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_returnreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_returnreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-returnreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-returnreport text-dark"> 0 </span>&nbsp; 
-                                                        rows selected  
+                                                        <span class="showing-value-returnreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp; 
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -155,13 +155,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="returnproductreport_exportbtn"
-                                                           data-id="returnproductreportexport" onclick="PosnicPro.returnproductreport.returnproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="returnproductreportexport" onclick="PosnicPro.returnproductreport.returnproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -181,7 +181,7 @@
                                             <div class="reportreproduct_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
                                             </div>
                                             <thead class="reportresalepro_header">
-                                                <tr><th>#</th><th>ID</th><th>Date</th><th>Product Name</th><th>Supplier</th><th>Qty</th><th class="text-right">Total Amount</th></tr>
+                                                <tr><th>#</th><th>ID</th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_product_name">Product Name</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th><lang class="lang_qty_title">Qty</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>
                                             </thead>
                                             <tbody class="report-thead-tfoot table-body reportresalepro_header"></tbody>
                                         </table>
@@ -194,24 +194,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnproductreport_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_returnproductreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_returnproductreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-returnproductreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-returnproductreport text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-returnproductreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example"> 
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example"> 
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -250,27 +250,27 @@
                                         <table class="table mb-1">
                                             <tbody>
                                                 <tr>
-                                                    <th scope="row" class="p-3">Branch : <span class="branch_view_name_return text-info"></span> </th>
+                                                    <th scope="row" class="p-3"><lang class="lang_branch_3">Branch :</lang> <span class="branch_view_name_return text-info"></span> </th>
                                                 </tr>
                                                 <tr>
-                                                    <th scope="row" class="p-3">User : <span class="user_view_name_return text-info"></span> </th>
+                                                    <th scope="row" class="p-3"><lang class="lang_user_3">User :</lang> <span class="user_view_name_return text-info"></span> </th>
                                                 </tr>
                                             </tbody>
                                         </table>
                                         <table class="table mb-1">
-                                            <thead class="header_blue"><tr><th colspan="4">Customer Details</th></tr></thead>
+                                            <thead class="header_blue"><tr><th colspan="4"><lang class="lang_pending_customer_detail">Customer Details</lang></th></tr></thead>
                                             <tbody>
                                                 <tr>
-                                                    <th scope="row" class="p-2">Name : <span class="customer_view_name_return text-info"></span> </th>
+                                                    <th scope="row" class="p-2"><lang class="lang_name_2">Name :</lang> <span class="customer_view_name_return text-info"></span> </th>
                                                 </tr>
                                                 <tr id="customer_view_phone_return">
-                                                    <th scope="row" class="p-2">phone : <span class="customer_view_phone_return text-info"></span>&nbsp;<a class="customer_view_phone_icon_return" aria-label="Call customer"><i class="feather icon-phone mr-2"></i></a></th>
+                                                    <th scope="row" class="p-2"><lang class="lang_phone_2">phone :</lang> <span class="customer_view_phone_return text-info"></span>&nbsp;<a class="customer_view_phone_icon_return" aria-label="Call customer" data-t-aria-label="lang_call_customer"><i class="feather icon-phone mr-2"></i></a></th>
                                                 </tr>
                                                 <tr id="customer_view_email_return">
-                                                    <th scope="row" class="p-2">email : <span class="customer_view_email_return text-info"></span>&nbsp;<a class="customer_view_email_icon_return" aria-label="Send message"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
+                                                    <th scope="row" class="p-2"><lang class="lang_email_3">email :</lang> <span class="customer_view_email_return text-info"></span>&nbsp;<a class="customer_view_email_icon_return" aria-label="Send message" data-t-aria-label="lang_send_message"><i class="feather icon-message-square mr-2 pointer"></i></a></th>
                                                 </tr>
                                                 <tr id="customer_view_address_return">
-                                                    <th scope="row" class="p-2">Address : <span class="customer_view_address_return text-info"></span></th>
+                                                    <th scope="row" class="p-2"><lang class="lang_address_2">Address :</lang> <span class="customer_view_address_return text-info"></span></th>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -284,7 +284,7 @@
                         <div class="portlet light slider-portlet-vh">
                             <div class="portlet-title margin-bottom-0">
                                 <div class="caption caption-basic font-green-meadow">
-                                    <span class="caption-subject bold uppercase">Product history</span>
+                                    <span class="caption-subject bold uppercase"><lang class="lang_product_history">Product history</lang></span>
                                 </div>
                                 <div class="actions">
                                     <div class="inline-block text-left">
@@ -325,24 +325,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnproductdetails_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_returnproductdetails_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_returnproductdetails_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-returnproductdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-returnproductdetails text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-returnproductdetails text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="returnproductdetails" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -367,8 +367,8 @@
                         <lang class="lang_returndetail_title">Return Details</lang>
                     </span>
                 </h5>
-                <button type="button" class="close" data-id="returnproduct" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-id="returnproduct" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">                
@@ -381,7 +381,7 @@
                                     <div class="invoice-head">
                                         <div class="row">
                                             <div class="col-12 col-md-7 col-lg-7">
-                                                <h4> <lang class="lang_customerdetails_title">Customer Details</lang></h4>
+                                                <h4> <lang class="lang_pending_customer_detail">Customer Details</lang></h4>
                                                 <p><b><span class="text-primary" id="return_product_customer_name_view"></span></b></p>
                                                 <p><span id="return_product_customer_address_view"></span></p>
                                                 <p><span id="return_product_customer_phone_view"></span></p>
@@ -389,7 +389,7 @@
                                             </div>
                                             <div class="col-12 col-md-5 col-lg-5">
                                                 <div class="invoice-name">
-                                                    <p class="mb-1">No : <span class="badge badge-primary-inverse">#<span id="return_product_id_view"></span></span></p>
+                                                    <p class="mb-1"><lang class="lang_number">No :</lang> <span class="badge badge-primary-inverse">#<span id="return_product_id_view"></span></span></p>
                                                     <p class="mb-0"><span id="return_product_date_view"></span></p>
                                                 </div>
                                             </div>
@@ -407,14 +407,14 @@
                                     <div class="invoice-summary">
                                         <div class="table-responsive">
                                             <table id="return_product_table" class="table table-borderless m-sticky-first"> 
-                                                <h4><span><lang class="lang_returnitemdetail_title">Item Details</lang></span></h4>
+                                                <h4><span><lang class="lang_item_details">Item Details</lang></span></h4>
                                                 <thead>
                                                     <tr class="row100 head">
                                                         <th><lang class="lang_name_title">Name</lang></th>
                                                 <th class="text-right"><lang class="lang_price_title">Price</lang></th>
                                                 <th class="text-center"><lang class="lang_qty_title">Qty</lang></th>                                                
                                                 <th class="text-right"><lang class="lang_discount_title">Discount</lang></th>
-                                                <th class="text-right"><lang class="lang_tax_title">Tax</lang></th>
+                                                <th class="text-right"><lang class="lang_module_tax">Tax</lang></th>
                                                 <th class="text-right"><lang class="lang_total_title">Total</lang></th>
                                                 </tr>
                                                 </thead>
@@ -430,19 +430,19 @@
                                                 <table class="table table-borderless m-sticky-first">
                                                     <tbody>
                                                         <tr>
-                                                            <td>Sub Total :</td>
+                                                            <td><lang class="lang_subtotal_title">Sub Total :</lang></td>
                                                             <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span id="return_product_subtotal_amount_view">0.00</span></td>
                                                         </tr>
                                                         <tr class="discount-print-hideshow">
-                                                            <td>Discount :</td>
+                                                            <td><lang class="lang_discount_3">Discount :</lang></td>
                                                             <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span class="sales-return-discount-value">0.00</span></td>
                                                         </tr>
                                                         <tr class="tax-print-hideshow">
-                                                            <td>Tax :</td> 
+                                                            <td><lang class="lang_tax">Tax :</lang></td> 
                                                             <td class="text-right"><span class="sign display-currency"></span>&nbsp;<span id="return_product_tax_view"></span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="f-w-7 font-18"><h5>Total Amount :</h5></td>
+                                                            <td class="f-w-7 font-18"><h5><lang class="lang_total_amount_2">Total Amount :</lang></h5></td>
                                                             <td class="f-w-7 font-18 text-right"><h5><span class="sign display-currency"></span>&nbsp;<span id="return_product_total_amount_view">0.00</span></h5></td>
                                                         </tr>
                                                     </tbody>

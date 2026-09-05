@@ -41,7 +41,7 @@ PosnicPro.roles = {
             PosnicPro.roles.listCache = (res && res.data) || [];
             PosnicPro.roles.renderList();
         }, function () {
-            $('#roles_admin_body').html('<tr><td colspan="5" class="text-center text-danger">Could not load roles.</td></tr>');
+            $('#roles_admin_body').html('<tr><td colspan="5" class="text-center text-danger"><lang class="lang_could_not_load_roles">Could not load roles.</lang></td></tr>');
         });
     },
     renderList: function () {
@@ -65,14 +65,14 @@ PosnicPro.roles = {
                 + (PosnicPro.listDoc.activeId('roles') === String(id) ? ' is-active' : '') + '" data-id="' + esc(id) + '" style="cursor:pointer;">'
                 + '<td style="font-weight:600; white-space:nowrap;">' + esc(r.name) + '</td>'
                 + '<td class="rl-col-type">' + (r.is_system
-                    ? '<span class="badge badge-primary-inverse">System</span>'
-                    : '<span class="badge badge-success-inverse">Custom</span>') + '</td>'
+                    ? '<span class="badge badge-primary-inverse"><lang class="lang_system">System</lang></span>'
+                    : '<span class="badge badge-success-inverse"><lang class="lang_custom_2">Custom</lang></span>') + '</td>'
                 + '<td class="rl-col-desc" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + esc(r.description || '') + '</td>'
                 + '<td class="rl-col-auth q-muted" style="white-space:nowrap;">' + esc(authority) + '</td>'
                 + '</tr>';
         });
         $('#roles_admin_body').html(html
-            || '<tr><td colspan="5" class="text-center text-muted">No roles yet.</td></tr>');
+            || '<tr><td colspan="5" class="text-center text-muted"><lang class="lang_no_roles_yet">No roles yet.</lang></td></tr>');
         if (PosnicPro.roles._pendingDoc) {
             var pending = PosnicPro.roles._pendingDoc;
             PosnicPro.roles._pendingDoc = null;
@@ -105,8 +105,8 @@ PosnicPro.roles = {
         if (pos.refund_max_amount > 0) { caps.push('Refund up to ' + pos.refund_max_amount); }
         var body = PosnicPro.listDoc.table(
             PosnicPro.listDoc.row('Type', r.is_system
-                ? '<span class="badge badge-primary-inverse">System</span>'
-                : '<span class="badge badge-success-inverse">Custom</span>')
+                ? '<span class="badge badge-primary-inverse"><lang class="lang_system">System</lang></span>'
+                : '<span class="badge badge-success-inverse"><lang class="lang_custom_2">Custom</lang></span>')
             + PosnicPro.listDoc.row('Description', esc(r.description || '-'))
             + PosnicPro.listDoc.row('Till authority', allowed.length ? allowed.join(' ') : 'Everything needs a manager')
             + PosnicPro.listDoc.row('Needs a manager', mgr.length ? mgr.join(' ') : '')
@@ -114,12 +114,12 @@ PosnicPro.roles = {
         var canWrite = PosnicPro.checkAccess('user', 'write')
             || ['super_admin', 'admin', 'manager'].indexOf(PosnicPro.local.get('usertype')) !== -1;
         var actions = canWrite
-            ? '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Clone as custom role" aria-label="Clone"'
+            ? '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Clone as custom role" data-t-title="lang_clone_as_custom_role" aria-label="Clone" data-t-aria-label="lang_clone"'
                 + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\', true);"><i class="feather icon-copy"></i></button>'
-                + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this role" aria-label="Edit"'
+                + '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Edit this role" data-t-title="lang_edit_this_role" aria-label="Edit" data-t-aria-label="lang_edit_title"'
                 + ' onclick="PosnicPro.roles.openEditor(\'' + esc(roleId) + '\');"><i class="feather icon-edit-2"></i></button>'
                 + (r.is_system ? ''
-                    : '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Delete this role" aria-label="Delete"'
+                    : '<button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="Delete this role" data-t-title="lang_delete_this_role_2" aria-label="Delete" data-t-aria-label="lang_delete"'
                         + ' onclick="PosnicPro.listDoc.close(\'roles\'); PosnicPro.roles.remove(\'' + esc(roleId) + '\');"><i class="feather icon-trash-2"></i></button>')
             : '';
         PosnicPro.listDoc.open({ key: 'roles', id: roleId, title: r.name, actions: actions, body: body });
@@ -182,7 +182,7 @@ PosnicPro.roles = {
     },
     save: function () {
         var name = ($('#role_editor_name').val() || '').trim();
-        if (!name) { PosnicPro.alert('warning', 'Give the role a name.'); return; }
+        if (!name) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_give_the_role_a_name', 'Give the role a name.')); return; }
         var access = {};
         PosnicPro.roles.MODULES.forEach(function (m) {
             access[m] = {
@@ -226,7 +226,7 @@ PosnicPro.roles = {
     },
     remove: function (roleId) {
         swal({
-            title: 'Delete this role?',
+            title: PosnicPro.i18n.t('lang_delete_this_role', 'Delete this role?'),
             text: 'A role still assigned to users cannot be deleted.',
             showCancelButton: true,
             confirmButtonClass: 'btn btn-danger',
@@ -242,7 +242,7 @@ PosnicPro.roles = {
                     var response = jQuery.parseJSON(xhr.responseText);
                     PosnicPro.alert(response.type || 'error', response.message);
                 } catch (e) {
-                    PosnicPro.alert('error', 'Could not delete the role.');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_delete_the_role', 'Could not delete the role.'));
                 }
             });
         }, function () {});

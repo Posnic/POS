@@ -37,7 +37,7 @@ PosnicPro.gstrOne = {
             }
             var rows = response.data || [];
             if (!rows.length) {
-                PosnicPro.alert('warning', 'No B2B invoices in this period - nothing to file.');
+                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_b2b_invoices_in_this_period_nothing_to', 'No B2B invoices in this period - nothing to file.'));
                 return;
             }
             var gstArray = {
@@ -61,7 +61,7 @@ PosnicPro.gstrOne = {
             PosnicPro.alert('success', invoiceCount + ' invoice(s) for ' + rows.length + ' GSTIN(s) exported');
         }, function () {
             loader.find(".loadingSpinner:first").remove();
-            PosnicPro.alert('error', 'Could not build the GSTR-1 file');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_build_the_gstr_1_file', 'Could not build the GSTR-1 file'));
         });
     },
 
@@ -119,14 +119,14 @@ PosnicPro.gstrOne = {
                 loader.find(".loadingSpinner:first").remove();
 
                 var one = dateOne.split('-');
-                $('.from-month').html(one[0]);
-                $('.from-year').html(one[1]);
+                $('.from-month').text(one[0]);
+                $('.from-year').text(one[1]);
                 var two = dateTwo.split('-');
-                $('.to-month').html(two[0]);
-                $('.to-year').html(two[1]);
-                $(".legal-name").html(PosnicPro.local.get('branchname'));
+                $('.to-month').text(two[0]);
+                $('.to-year').text(two[1]);
+                $(".legal-name").text(PosnicPro.local.get('branchname'));
                 var gstn_number = $('#branch_gstin_number').val();
-                $(".company_gstin").html(gstn_number);
+                $(".company_gstin").text(gstn_number);
                 var currency = PosnicPro.local.get('currencySign');
 
                 //4a item detail table

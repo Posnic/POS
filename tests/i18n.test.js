@@ -324,7 +324,8 @@ test('the language-pack pattern matches packs and nothing else', () => {
   assert.ok(m, 'LANGUAGE_PACK is not a literal regex');
   // eslint-disable-next-line no-eval
   const re = eval(m[1]);
-  for (const good of ['/languages/ta.json', '/languages/hi.json', '/languages/pt-BR.json']) {
+  for (const good of ['/languages/ta.json', '/languages/hi.json', '/languages/pt-BR.json',
+    '/languages/msg-ta.json', '/languages/msg-fr.json']) {
     assert.ok(re.test(good), 'should match ' + good);
   }
   /* Not user uploads, not scripts, not anything that merely says "languages". */
@@ -556,23 +557,30 @@ test('the RTL stylesheet rides the pages a shopkeeper sees, and loads last', () 
   assert.deepEqual(unscoped, [], 'rules not scoped under [dir="rtl"]: ' + unscoped.join(' | '));
 });
 
-test('no language pack has fallen behind the UI', () => {
+test('no language pack slips below the point it reached', () => {
   /*
-   * 2026-09-02: every pack answered every key. From here a gap is a string
-   * added to the UI without its translations. The floor is 95% rather than
-   * 100% so a new key does not block the feature that needs it - but it does
-   * mean somebody has to run
+   * A ratchet, not a floor. tests/i18n-coverage-baseline.json records where
+   * every pack stood the last time translations were merged; a pack may only
+   * go up from there. A flat floor would sit red for as long as the UI is
+   * being tagged faster than the packs are filled - and a red test everybody
+   * has learned to ignore protects nothing.
    *
-   *     node tests/tools/i18n-coverage.js --worksheet <code>
+   * One point of slack covers key churn: a screen edit that renames a key
+   * costs a pack a fraction of a percent before anybody has had a chance to
+   * translate the new name.
    *
-   * before the gap grows into a screen of English again.
+   *     node tests/tools/i18n-coverage.js --worksheet <code>   what is missing
+   *     node tests/tools/i18n-coverage.js --write-baseline     after merging
    */
   const { report } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
-  const rows = report().rows.filter((r) => !r.error && r.lang !== '_glossary');
-  assert.ok(rows.length >= 13, 'expected the thirteen packs, found ' + rows.length);
-  const behind = rows.filter((r) => r.coverage < 95)
-    .map((r) => `${r.lang} at ${r.coverage}% (e.g. ${r.missing.slice(0, 3).join(', ')})`);
-  assert.deepEqual(behind, [], 'packs below 95%:\n  ' + behind.join('\n  '));
+  const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, 'i18n-coverage-baseline.json'), 'utf8'));
+  const rows = report().rows.filter((r) => !r.error && !r.lang.startsWith('_'));
+  assert.ok(rows.length >= 17, 'expected the seventeen packs, found ' + rows.length);
+  const slipped = rows.filter((r) => r.coverage < (baseline[r.lang] || 0) - 1)
+    .map((r) => r.lang + ' at ' + r.coverage + '% (baseline ' + baseline[r.lang] + '%)');
+  assert.deepEqual(slipped, [], 'packs below their baseline:\n  ' + slipped.join('\n  '));
+  const unknown = rows.filter((r) => !(r.lang in baseline)).map((r) => r.lang);
+  assert.deepEqual(unknown, [], 'packs with no baseline (run --write-baseline): ' + unknown.join(', '));
 });
 
 
@@ -602,4 +610,323 @@ test('the English map the console edits against is not stale', () => {
   const changed = Object.keys(expected).filter((k) => k in actual && actual[k] !== expected[k]);
   assert.deepEqual({ missing, extra, changed }, { missing: [], extra: [], changed: [] },
     'languages/_english.json is out of date - run: node tests/tools/i18n-coverage.js --write-english');
+});
+
+/* ------------------------------------------- what JavaScript draws, too --- */
+
+test('the runtime watches for markup drawn after load', () => {
+  const watchFn = member('watch');
+  assert.match(watchFn, /MutationObserver/, 'watch() does not observe the document');
+  assert.match(watchFn, /if \(!PosnicPro\.i18n\._dict\) return/, 'English still pays for the observer');
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /^PosnicPro\.i18n\.watch\(\);/m, 'nothing starts the observer');
+});
+
+test('attributes people read are translated', () => {
+  assert.match(i18nSource(), /_attrs: \['placeholder', 'title', 'aria-label'\]/, 'the attribute list is missing');
+  assert.match(member('apply'), /data-t-' \+ attrs\[a\]/, 'apply() ignores data-t-<attr>');
+  assert.match(member('restore'), /data-en-' \+ attrs\[a\]/, 'restore() ignores the kept attributes');
+});
+
+test('the coverage tool counts keys JavaScript renders as markup', () => {
+  const tool = fs.readFileSync(path.join(__dirname, 'tools', 'i18n-coverage.js'), 'utf8');
+  assert.match(tool, /JavaScript renders markup too/, 'JS <lang> tags are not counted');
+  assert.match(tool, /data-t-\(placeholder\|title\|aria-label\)/, 'attribute keys are not counted');
+});
+
+test('the screens the owner checked carry keys, not bare English', () => {
+  /*
+   * develop.posnic.io, 2026-09-02: the dashboard greeting and totals, the
+   * quick-action buttons, the sales list headers, the receipt panel and the
+   * supplier list were English in every language. Each is pinned here by a
+   * string that must now be reachable through a key.
+   */
+  const html = (f) => fs.readFileSync(path.join(FRONTEND, 'modules', f), 'utf8');
+  const js = (f) => fs.readFileSync(path.join(MODULES, f), 'utf8');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Totals<\/lang>/, 'Totals is bare');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Gross profit<\/lang>/, 'Gross profit is bare');
+  assert.match(html('dashboard.html'), /<lang class="[^"]+">Sales History<\/lang>/, 'Sales History button is bare');
+  assert.match(js('dashboard.js'), /i18n\.t\('[^']+', 'Good Morning'\)/, 'the greeting is bare');
+  assert.match(js('sales.js'), /<th><lang class="[^"]+">Bill #<\/lang><\/th>/, 'the sales list header is bare');
+  assert.match(js('sales.js'), /<lang class="[^"]+">Subtotal<\/lang>/, 'the receipt panel is bare');
+  assert.match(js('suppliers.js'), /<th><lang class="[^"]+">Name<\/lang><\/th>/, 'the supplier list header is bare');
+  const core = fs.readFileSync(CORE, 'utf8');
+  assert.match(core, /_sort_label"><lang class="[^"]+">Sort<\/lang>/, 'the Sort control is bare');
+});
+
+/* ------------------------------------------- nothing bare on the screen --- */
+
+test('no template carries English a pack cannot reach', () => {
+  /*
+   * develop.posnic.io, 2026-09-02: the owner picked Tamil and found the
+   * dashboard totals, the list headers, the receipt panel and the supplier
+   * screen still in English. None of it was inside <lang>, so no pack could
+   * reach it. Every template was swept; this holds the sweep. A new screen
+   * that adds bare text fails here, and the fix is one command:
+   *
+   *     node tests/tools/i18n-tag.js --write
+   *
+   * The number is zero, and stays zero. It was a budget of two while a false
+   * positive stood in the report - an onclick handler holding a > that the
+   * text scan read as prose. That is fixed, so the guard can say what it
+   * means: every word on every template is reachable by a language pack.
+   */
+  const { report } = require(path.join(__dirname, 'tools', 'i18n-gaps.js'));
+  const data = report();
+  const shown = data.rows.map((r) => r.file + ': ' + r.found.map((x) => x.text).slice(0, 3).join(' | '));
+  assert.equal(data.total, 0, 'bare English the packs cannot reach (' + data.total + '):\n  ' + shown.join('\n  '));
+});
+
+test('the sweep tools live in the repository', () => {
+  for (const tool of ['i18n-tag.js', 'i18n-tag-js.js', 'i18n-gaps.js', 'i18n-screen.js', 'i18n-collisions.js', 'i18n-server-text.js']) {
+    const file = path.join(__dirname, 'tools', tool);
+    assert.ok(fs.existsSync(file), tool + ' is missing');
+    assert.ok(!/[A-Z]:[\\/]/.test(fs.readFileSync(file, 'utf8')), tool + ' carries a machine-specific path');
+  }
+});
+
+test('no module asks for a translation while it is still loading', () => {
+  /*
+   * This one shipped, and it took the whole dashboard down.
+   *
+   * PosnicPro.js is a single object literal thousands of lines long. A t()
+   * call written INSIDE that literal runs while the literal is still being
+   * built, at which point the name PosnicPro is not bound yet - so
+   * PosnicPro.i18n throws, the rest of the file never executes, and the app
+   * boots with an empty core object. Nothing catches it: the page simply
+   * stops working.
+   *
+   * It is wrong even where it does not throw. A t() evaluated at load resolves
+   * before any pack has been fetched, freezing English into a config object
+   * that switching language afterwards can never reach.
+   *
+   * So config data carries plain English and is translated where it is
+   * rendered; t() belongs inside functions, which run when they are called.
+   *
+   * Detected by running each module against a stub that answers every global,
+   * so nothing else can throw, and watching which t() calls fire. Guessing
+   * from braces was tried first and quietly missed the fifty-six calls that
+   * caused the outage.
+   *
+   *     node tests/tools/i18n-load-time.js            what fires, and where
+   *     node tests/tools/i18n-load-time.js --write    move them back to English
+   */
+  const { total, sitesByFile } = require(path.join(__dirname, 'tools', 'i18n-load-time.js'));
+  const detail = Object.entries(sitesByFile)
+    .map(([file, sites]) => file + ': ' + sites.map((x) => 'line ' + x.line + ' "' + x.english + '"').join(', '));
+  assert.equal(total, 0, 't() runs while these modules are still loading:\n  ' + detail.join('\n  '));
+});
+
+test('a brand is spelled, not translated', () => {
+  /*
+   * Six translators in a row reported the same fight, and each one lost it
+   * differently: "Provider Way2sms", "TextLocal", "Msimbo wa Pharmacode",
+   * "Stile Turbo C", "بوابة Razorpay". None of them was being careless. The
+   * validator they worked against rejects a value identical to its English -
+   * the right default, since that is what a skipped row looks like - and it
+   * had no exemption for a proper noun, so the only way to pass was to change
+   * the name. A payment tab that no longer names the payment provider.
+   *
+   * languages/_glossary.json carries the list, and this is the exemption:
+   * where a key's whole English IS one of those names, every pack spells it
+   * the same way. Descriptive names are deliberately absent from that list -
+   * Soft Dark, Warm Night and Diamond are words, and a theme picker in Thai
+   * should read in Thai.
+   */
+  const glossary = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, '_glossary.json'), 'utf8'));
+  const english = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, '_english.json'), 'utf8'));
+  assert.ok(Array.isArray(glossary.brands) && glossary.brands.length, 'the glossary lists no brands');
+  const brands = new Set(glossary.brands.map((b) => b.toLowerCase()));
+  const keys = Object.keys(english).filter((k) => brands.has(String(english[k]).trim().toLowerCase()));
+  assert.ok(keys.length, 'no key carries a brand as its whole English');
+
+  const wrong = [];
+  for (const file of fs.readdirSync(LANGUAGES_DIR).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+    const pack = JSON.parse(fs.readFileSync(path.join(LANGUAGES_DIR, file), 'utf8'));
+    for (const key of keys) {
+      const value = pack[key];
+      if (typeof value !== 'string' || value.trim() === '') continue;   // untranslated is fine
+      if (value !== english[key]) {
+        wrong.push(file.slice(0, 2) + '.' + key + ' = ' + JSON.stringify(value)
+          + ', should be ' + JSON.stringify(english[key]));
+      }
+    }
+  }
+  assert.deepEqual(wrong, [], 'a brand was rewritten:\n  ' + wrong.join('\n  '));
+});
+
+test('one key, one meaning', () => {
+  /*
+   * A <lang> tag says two things at once: which words to show in English, and
+   * which key every other language is looked up by. Give two DIFFERENT labels
+   * the same key and English stays right on both screens while every other
+   * language is wrong on one of them - invisibly, because the person who can
+   * see it is not the person reviewing the diff.
+   *
+   * The branch form was the worst of it. City carried lang_supply_title, State
+   * carried lang_customer_title, Country carried lang_address_title. Read in
+   * English the form is correct. Pick any other language and City reads
+   * "Supplier list", State reads "Customers", Country reads "Address". Two
+   * hundred and thirteen labels were in that state across seventy-eight keys,
+   * including the nineteen columns called Tax, which every pack had been asked
+   * to translate as "Denomination Field".
+   *
+   * languages/_english.json decides which meaning keeps the key, because that
+   * file is what every translator was shown - so it is what the packs already
+   * say. The fix for a new one is one command:
+   *
+   *     node tests/tools/i18n-collisions.js --write
+   */
+  const { plan } = require(path.join(__dirname, 'tools', 'i18n-collisions.js'));
+  const { byKey, moves } = plan();
+  const shown = [...byKey]
+    .filter(([, g]) => g.size > 1)
+    .map(([key, g]) => key + ': ' + [...g.keys()].map((t) => JSON.stringify(t)).join(' vs '));
+  assert.deepEqual(shown, [], moves.length + ' label(s) carry a key that means something else:\n  ' + shown.join('\n  '));
+});
+
+test('every key written into a page is a key the tooling can see', () => {
+  /*
+   * Sixty-three tooltips nobody could translate.
+   *
+   * The coverage scan looked for a whole tag - <button ... > - and then for
+   * the data-t-title inside it. A module builds most of its buttons by
+   * concatenating strings, so the tag is split across three literals and there
+   * is no closing > to find. Every action tooltip and screen-reader label on
+   * the list pages fell out of the count: Edit this branch, Delete this
+   * category, View expense, Print bill, Show on kiosk. Not one of them was in
+   * any pack, no worksheet ever offered them, and coverage said 100%.
+   *
+   * A key that the tooling cannot see is worse than a missing translation,
+   * because nothing reports it. So: anything written as a key in the source is
+   * a key the scan must find.
+   */
+  const { keysUsed } = require(path.join(__dirname, 'tools', 'i18n-coverage.js'));
+  const used = keysUsed().used;
+  const unseen = new Map();
+  const written = new RegExp('<lang class="([A-Za-z0-9_-]+)">' + '|data-t(?:-(?:placeholder|title|aria-label))?="([A-Za-z0-9_-]+)"' + "|i18n\\.t\\(\\s*['\"]([A-Za-z0-9_-]+)['\"]", 'g');
+
+  const look = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { if (!/^(node_modules|public|vendor|plugins|lazy)$/.test(e.name)) look(full); continue; }
+      if (!/\.(html|js)$/.test(e.name) || /\.min\.js$/.test(e.name)) continue;
+      /* a comment showing what a tag looks like is documentation, not a key */
+      const src = fs.readFileSync(full, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/<!--[\s\S]*?-->/g, '');
+      for (const m of src.matchAll(written)) {
+        const key = m[1] || m[2] || m[3];
+        if (!used.has(key) && !unseen.has(key)) unseen.set(key, path.relative(FRONTEND, full).replace(/\\/g, '/'));
+      }
+    }
+  };
+  look(FRONTEND);
+
+  const shown = [...unseen].map(([key, file]) => key + ' (' + file + ')');
+  assert.deepEqual(shown, [], shown.length + ' key(s) are written into a page but invisible to the sweep:\n  ' + shown.join('\n  '));
+});
+
+test('the modules have nothing left to tag', () => {
+  /*
+   * The JavaScript sweep reported the same seventy-five sites on every run and
+   * offered to fix them by wrapping each one in t(). All seventy-five were
+   * already correct: they are config data written at the top of a module,
+   * where a t() call runs before any pack exists - the failure that took the
+   * dashboard down - so they carry the key beside the English instead,
+   *
+   *     { hash: 'salereport', label: 'Sales', t: 'lang_rgrp_sales' }
+   *
+   * and the render site does the asking. A tool that always cries wolf teaches
+   * people to ignore it, and running --write on that one reintroduces the
+   * outage. It knows the shape now, so its count means something: zero, or a
+   * screen somebody added without a sweep.
+   *
+   *     node tests/tools/i18n-tag-js.js --write
+   */
+  const tool = path.join(__dirname, 'tools', 'i18n-tag-js.js');
+  const run = spawnSync(process.execPath, [tool], { encoding: 'utf8', cwd: path.join(__dirname, '..') });
+  assert.equal(run.status, 0, 'the sweep did not run:\n' + (run.stderr || ''));
+  const line = (run.stdout || '').split('\n').find((l) => l.startsWith('sites changed:')) || '';
+  assert.match(line, /^sites changed: 0 /, 'JavaScript still writes English no pack can reach:\n' + run.stdout);
+});
+
+/* ------------------------------------------- the words the server writes --- */
+
+test("the server writes its own sentences, and they can be answered here", () => {
+  /*
+   * Every save, delete and refusal a shopkeeper sees is a toast, and the words
+   * in it come from the API: { type: 'success', message: 'Customer added
+   * successfully' }. The frontend prints that string as it arrives - five
+   * hundred and seventy-six call sites do - so no <lang> tag and no key can
+   * reach it. It was English in every language, on the messages a cashier
+   * reads most often.
+   *
+   * The API cannot carry the key itself. It is deployed separately, so a till
+   * on a new build talking to a server one release behind would be handed a
+   * key it has never seen and would print it raw. The ENGLISH is the identity
+   * instead, which is what gettext has done for thirty years.
+   */
+  const say = member('say');
+  /* the member as written, given a PosnicPro of its own to look inside */
+  const build = (says) => {
+    const PosnicPro = { i18n: null };
+    // eslint-disable-next-line no-new-func
+    PosnicPro.i18n = new Function('PosnicPro', 'return ({' + say.replace(/,\s*$/, '') + '});')(PosnicPro);
+    PosnicPro.i18n._says = says;
+    PosnicPro.i18n._saysIndex = null;
+    return PosnicPro.i18n.say;
+  };
+  const run = (says, text) => build(says)(text);
+
+  assert.equal(run(null, 'Customer added successfully'), 'Customer added successfully',
+    "with no pack loaded the English from the server must come through unchanged");
+  assert.equal(run({}, 'Customer added successfully'), 'Customer added successfully',
+    'an empty pack must not swallow the message');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'Customer added successfully'), 'Client ajouté');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'customer   added successfully'), 'Client ajouté',
+    'a message that gained a capital or a double space is the same sentence');
+  assert.equal(run({ 'Customer added successfully': 'Client ajouté' }, 'Something else entirely'), 'Something else entirely',
+    'a sentence this build has never heard of must print as it arrived');
+});
+
+test('the toast asks for the server sentence in this language', () => {
+  const core = fs.readFileSync(CORE, 'utf8');
+  const alert = core.slice(core.indexOf('    alert: function ('), core.indexOf('    defaultcustomerSet: function'));
+  assert.ok(alert.length > 100, 'PosnicPro.alert is missing');
+  assert.match(alert, /text: PosnicPro\.i18n\.say\(text\)/,
+    'the toast prints the server sentence without asking for a translation');
+});
+
+test('the list of what the server says is current', () => {
+  /*
+   * The English is the lookup key, so a message that changed wording on the
+   * server is a message no pack can answer any more. Re-extracting is the fix:
+   *
+   *     node tests/tools/i18n-server-text.js --write
+   */
+  const tool = require(path.join(__dirname, 'tools', 'i18n-server-text.js'));
+  const found = [...tool.collect().keys()].sort();
+  const file = path.join(LANGUAGES_DIR, 'server', '_english.json');
+  assert.ok(fs.existsSync(file), 'languages/server/_english.json is missing');
+  const listed = Object.keys(JSON.parse(fs.readFileSync(file, 'utf8'))).sort();
+  const gone = listed.filter((m) => !found.includes(m));
+  const fresh = found.filter((m) => !listed.includes(m));
+  assert.deepEqual({ gone, fresh }, { gone: [], fresh: [] },
+    'languages/server/_english.json is out of date - run: node tests/tools/i18n-server-text.js --write');
+});
+
+test('no server pack answers a sentence the server never sends', () => {
+  const file = path.join(LANGUAGES_DIR, 'server', '_english.json');
+  if (!fs.existsSync(file)) return;
+  const known = new Set(Object.keys(JSON.parse(fs.readFileSync(file, 'utf8'))));
+  const dir = path.join(LANGUAGES_DIR, 'server');
+  const stray = [];
+  for (const f of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+    const pack = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    for (const english of Object.keys(pack)) {
+      if (!known.has(english)) stray.push(f.slice(0, 2) + ': ' + JSON.stringify(english.slice(0, 60)));
+    }
+  }
+  assert.deepEqual(stray, [], 'a translation is keyed by a sentence the server does not send:\n  ' + stray.join('\n  '));
 });

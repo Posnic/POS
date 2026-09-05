@@ -14,7 +14,11 @@ const APPROVED_ACTIONS = new Map([
   ['actions/checkout', '3d3c42e5aac5ba805825da76410c181273ba90b1'],
   ['ossf/scorecard-action', '2d1146689b8cda280b9bc96326124645441f03bc'],
   ['actions/upload-artifact', '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'],
-  ['github/codeql-action/upload-sarif', 'f205ea1c3313d32999d8d6a48b4f6530d4437b38'],
+  /* v4.37.9. Verified against upstream before approving: the annotated tag
+     v4.37.9 in github/codeql-action dereferences to this commit. That check is
+     the entire point of this map, so do it again for the next bump rather than
+     trusting the trailing comment in the workflow. */
+  ['github/codeql-action/upload-sarif', 'cdf488f595d80d6e07e03d4674febd5ab45fa938'],
 ]);
 
 test('Scorecard runs only on supported default-branch and scheduled triggers', () => {

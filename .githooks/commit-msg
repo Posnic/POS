@@ -1,0 +1,3 @@
+#!/bin/sh
+# Keep commit metadata attributed to the human contributor.
+exec node "$(dirname "$0")/../scripts/check-ai-attribution.js" --message-file "$1"

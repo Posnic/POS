@@ -7,20 +7,20 @@
                 <aside class="first-run-visual" aria-hidden="true">
                     <img src="static/images/onboarding/shop-ready-photo.jpg" alt="">
                     <div class="first-run-visual-copy">
-                        <b>Ready for the first sale</b>
-                        <span>Pick the starter data and features, then begin billing.</span>
+                        <b><lang class="lang_ready_for_the_first_sale">Ready for the first sale</lang></b>
+                        <span><lang class="lang_pick_the_starter_data_and_features_then_be">Pick the starter data and features, then begin billing.</lang></span>
                     </div>
                 </aside>
                 <section class="first-run-main">
                     <div class="first-run-head">
-                        <button type="button" class="first-run-close" id="feature_intro_close" aria-label="Skip setup and start selling">&times;</button>
+                        <button type="button" class="first-run-close" id="feature_intro_close" aria-label="Skip setup and start selling" data-t-aria-label="lang_skip_setup_and_start_selling"><lang class="lang_text">&times;</lang></button>
                         <div class="first-run-mark"><i class="mdi mdi-store"></i></div>
                         <h5 class="first-run-title" id="feature_intro_title">
                             <lang class="lang_feature_intro_title">Your shop is ready</lang>
                         </h5>
                         <p class="first-run-sub" id="feature_intro_sub"></p>
-                        <div class="first-run-progress" aria-label="Setup assistant progress">
-                            <span id="feature_intro_step_label">Step 1 of 3</span>
+                        <div class="first-run-progress" aria-label="Setup assistant progress" data-t-aria-label="lang_setup_assistant_progress">
+                            <span id="feature_intro_step_label"><lang class="lang_step_1_of_3">Step 1 of 3</lang></span>
                             <i data-intro-dot="0" class="is-active"></i>
                             <i data-intro-dot="1"></i>
                             <i data-intro-dot="2"></i>
@@ -28,21 +28,21 @@
                     </div>
                     <div class="modal-body first-run-body">
                         <section class="first-run-step is-active" data-intro-step="sample">
-                            <p class="first-run-lead">Start with realistic products, customers and sample sales. You can remove the samples later when you are ready for real billing.</p>
+                            <p class="first-run-lead"><lang class="lang_start_with_realistic_products_customers_an">Start with realistic products, customers and sample sales. You can remove the samples later when you are ready for real billing.</lang></p>
                             <div class="first-run-question" id="feature_intro_demo_question">
                                 <div>
-                                    <b>Install sample data?</b>
-                                    <span>Recommended for a first look. It gives the sale screen something useful immediately.</span>
-                                    <small id="feature_intro_demo_status">Sample data selected. It will install in the background after Next.</small>
+                                    <b><lang class="lang_install_sample_data">Install sample data?</lang></b>
+                                    <span><lang class="lang_recommended_for_a_first_look_it_gives_the">Recommended for a first look. It gives the sale screen something useful immediately.</lang></span>
+                                    <small id="feature_intro_demo_status"><lang class="lang_sample_data_selected_it_will_install_in_th">Sample data selected. It will install in the background after Next.</lang></small>
                                 </div>
-                                <div class="first-run-choice" role="group" aria-label="Sample data choice">
+                                <div class="first-run-choice" role="group" aria-label="Sample data choice" data-t-aria-label="lang_sample_data_choice">
                                     <button type="button" class="first-run-choice-card is-selected" id="feature_intro_demo_yes">
-                                        <b>Use sample data</b>
-                                        <span>Best for trying the till now</span>
+                                        <b><lang class="lang_use_sample_data">Use sample data</lang></b>
+                                        <span><lang class="lang_best_for_trying_the_till_now">Best for trying the till now</lang></span>
                                     </button>
                                     <button type="button" class="first-run-choice-card" id="feature_intro_demo_no">
-                                        <b>Start clean</b>
-                                        <span>No sample records</span>
+                                        <b><lang class="lang_start_clean">Start clean</lang></b>
+                                        <span><lang class="lang_no_sample_records">No sample records</lang></span>
                                     </button>
                                 </div>
                                 <input type="checkbox" class="feature-intro-toggle" id="fi_module_demo_data_enable"
@@ -52,32 +52,32 @@
                         <section class="first-run-step" data-intro-step="features">
                             <p class="first-run-lead" id="feature_intro_lead"></p>
                             <label class="first-run-filter" for="feature_intro_filter">
-                                <span>Search features</span>
-                                <input type="search" id="feature_intro_filter" autocomplete="off" placeholder="Search features">
+                                <span><lang class="lang_search_features">Search features</lang></span>
+                                <input type="search" id="feature_intro_filter" autocomplete="off" placeholder="Search features" data-t-placeholder="lang_search_features">
                             </label>
                             <div id="feature_intro_list" class="first-run-list"></div>
                         </section>
                         <section class="first-run-step" data-intro-step="settings">
-                            <p class="first-run-lead">These starter settings are already filled from your signup location. You can correct them now if they are wrong, or later from Settings.</p>
-                            <div class="first-run-locale" id="feature_intro_locale_form" aria-label="Starter shop settings">
+                            <p class="first-run-lead"><lang class="lang_these_starter_settings_are_already_filled">These starter settings are already filled from your signup location. You can correct them now if they are wrong, or later from Settings.</lang></p>
+                            <div class="first-run-locale" id="feature_intro_locale_form" aria-label="Starter shop settings" data-t-aria-label="lang_starter_shop_settings">
                                 <label>
-                                    <span>Country</span>
+                                    <span><lang class="lang_country_title">Country</lang></span>
                                     <select id="feature_intro_country" class="form-control border-control"></select>
                                 </label>
                                 <label>
-                                    <span>State / region</span>
+                                    <span><lang class="lang_state_region">State / region</lang></span>
                                     <select id="feature_intro_state" class="form-control border-control"></select>
                                 </label>
                                 <label>
-                                    <span>Currency</span>
+                                    <span><lang class="lang_currency_title">Currency</lang></span>
                                     <select id="feature_intro_currency" class="form-control border-control"></select>
                                 </label>
                                 <label>
-                                    <span>Timezone</span>
+                                    <span><lang class="lang_timezone">Timezone</lang></span>
                                     <select id="feature_intro_timezone" class="form-control border-control"></select>
                                 </label>
                                 <label>
-                                    <span>Date format</span>
+                                    <span><lang class="lang_date_format">Date format</lang></span>
                                     <select id="feature_intro_date" class="form-control border-control"></select>
                                 </label>
                             </div>
@@ -87,8 +87,8 @@
                     <div class="first-run-foot">
                         <div class="first-run-demo-status" id="feature_intro_demo_bg_status" hidden aria-live="polite">
                             <div>
-                                <b id="feature_intro_demo_bg_title">Adding sample data</b>
-                                <span id="feature_intro_demo_bg_step">Preparing...</span>
+                                <b id="feature_intro_demo_bg_title"><lang class="lang_adding_sample_data">Adding sample data</lang></b>
+                                <span id="feature_intro_demo_bg_step"><lang class="lang_preparing">Preparing...</lang></span>
                             </div>
                             <div class="demo-progress-track"><div id="feature_intro_demo_bg_bar" class="demo-progress-bar"></div></div>
                         </div>
@@ -100,10 +100,10 @@
                                 <lang class="lang_feature_intro_skip">Skip setup</lang>
                             </button>
                             <button type="button" class="btn btn-outline-secondary" id="feature_intro_back" hidden>
-                                Back
+                                <lang class="lang_back_title">Back</lang>
                             </button>
                             <button type="button" class="btn btn-primary" id="feature_intro_next">
-                                Next
+                                <lang class="lang_next">Next</lang>
                             </button>
                             <button type="button" class="btn btn-outline-primary" id="feature_intro_tour" hidden>
                                 <lang class="lang_feature_intro_tour">Save &amp; show me around</lang>

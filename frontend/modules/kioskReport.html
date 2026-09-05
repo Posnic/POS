@@ -24,14 +24,14 @@
                     <select class="floating-input select2 load-branch display-current-branch kiosk_branch_value"
                         multiple="multiple" data-placeholder="Select Branch" name="kiosk_branch_value[]"
                         id="kiosk_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <select class="form-control kiosk_method_filter" name="kiosk_method" id="kiosk_method" aria-label="Kiosk method">
-                        <option value="">All Methods</option>
-                        <option value="Kiosk">Kiosk</option>
-                        <option value="Self-Order">Self-Order</option>
+                    <select class="form-control kiosk_method_filter" name="kiosk_method" id="kiosk_method" aria-label="Kiosk method" data-t-aria-label="lang_kiosk_method">
+                        <option value=""><lang class="lang_all_methods">All Methods</lang></option>
+                        <option value="Kiosk"><lang class="lang_module_kiosk">Kiosk</lang></option>
+                        <option value="Self-Order"><lang class="lang_self_order">Self-Order</lang></option>
                     </select>
                 </div>                
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -48,7 +48,7 @@
                     <div class="widgetbar">
                         <button type="button"
                             class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
-                            data-toggle="tooltip" title="Filter">
+                            data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -96,11 +96,11 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="kiosks_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for
-                                    full access to all features.</p>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for
+                                    full access to all features.</lang></p>
                                 <a href="javascript:void(0)"
                                     onclick="return PosnicPro.users.accountGoToWebsiteURL(this);"
-                                    class="btn btn-primary">Upgrade to Premium</a>
+                                    class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="kiosk-view-line" role="tabpanel"
                                 aria-labelledby="kiosk-view-tab-line">
@@ -125,7 +125,7 @@
                                                             data-access="read" data-id="kioskreport"
                                                             onclick="PosnicPro.refreshReportDatatable(this);"
                                                             class="add_new_tooltip" data-toggle="tooltip"
-                                                            title="Refresh">
+                                                            title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
@@ -135,7 +135,7 @@
                                                             data-id="kioskreportexport"
                                                             onclick="PosnicPro.kioskreport.viewReportkioskExport(this);"
                                                             class="kiosk_color dash_kiosk_count" data-toggle="tooltip"
-                                                            title="Export All To CSV">
+                                                            title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -164,12 +164,12 @@
                                                         <th></th>
                                                         <th>#</th>
                                                         <th>ID</th>
-                                                        <th>Date</th>
-                                                        <th>Customer Phone</th>
-                                                        <th class="text-center">Items</th>
-                                                        <th>Sales Type</th>
-                                                        <th>Order Type</th>
-                                                        <th class="text-right">Total</th>
+                                                        <th><lang class="lang_date_title">Date</lang></th>
+                                                        <th><lang class="lang_customer_phone">Customer Phone</lang></th>
+                                                        <th class="text-center"><lang class="lang_itemdetail_title">Items</lang></th>
+                                                        <th><lang class="lang_sales_type">Sales Type</lang></th>
+                                                        <th><lang class="lang_ordertype_title">Order Type</lang></th>
+                                                        <th class="text-right"><lang class="lang_total_title">Total</lang></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -186,17 +186,17 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing
+                                                    <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_kioskreport_page_total"></span></b>
-                                                    to
+                                                    <lang class="lang_to">to</lang>
                                                     <b><span id="view_kioskreport_page_perpage_total"></span></b>
-                                                    of
+                                                    <lang class="lang_of">of</lang>
                                                     <b><span id="view_kioskreport_total"></span></b>
-                                                    entries
+                                                    <lang class="lang_entries">entries</lang>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
                                                         <button class="btn previous page-item text-dark-gradient f-w-7"
                                                             data-id="kioskreport"
@@ -226,7 +226,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Sales (Include Tax)
+                                                    <lang class="lang_sales_include_tax">Sales (Include Tax)</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="The amount of all kiosks, including tax.The refund amount,refund tax collected amount  will not have been removed from the kiosks amount.">
@@ -246,7 +246,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Net Sales
+                                                    <lang class="lang_net_sales">Net Sales</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="The amount of all kiosks, including tax.The refund amount  and tax amount will have been removed .">
@@ -266,7 +266,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Sales (Exclude Tax)
+                                                    <lang class="lang_sales_exclude_tax">Sales (Exclude Tax)</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="The amount of all kiosks, excluding tax.The refund amount will not have been removed from the kiosks amount.">
@@ -286,7 +286,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Net Sales Tax
+                                                    <lang class="lang_net_sales_tax">Net Sales Tax</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="The amount of all tax and net kiosks tax = Total tax -  Refunded kiosks tax.">
@@ -306,7 +306,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Discounts
+                                                    <lang class="lang_discounts">Discounts</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="The discount of all kiosks .The refunded kiosks discount will not have been removed from the sum.">
@@ -324,7 +324,7 @@
                                     <div class="col-lg-6 col-xl-3">
                                         <div class="card  shadow-sm mb-2">
                                             <div class="card-body">
-                                                <h6 class="text-primary fw-bold">Gross Profit</h6>
+                                                <h6 class="text-primary fw-bold"><lang class="lang_gross_profit_2">Gross Profit</lang></h6>
                                                 <h4 class="mt-3 text-dark"><span class="sign display-currency"></span>
                                                     <span id="kiosk_summary_profit">0</span>
                                                 </h4>
@@ -338,7 +338,7 @@
                                             <div class="card-body">
                                                 <h6
                                                     class="text-primary fw-bold d-flex justify-content-between align-items-center">
-                                                    Refunds
+                                                    <lang class="lang_refund">Refunds</lang>
                                                     <span class="summary_toolsize" data-toggle="tooltip"
                                                         data-placement="top" title=""
                                                         data-original-title="All kiosks amount which was refunded  full return and  partial return added excluding tax.">
@@ -356,7 +356,7 @@
                                     <div class="col-lg-6 col-xl-3">
                                         <div class="card  shadow-sm mb-2">
                                             <div class="card-body">
-                                                <h6 class="text-primary fw-bold">COGS</h6>
+                                                <h6 class="text-primary fw-bold"><lang class="lang_cogs">COGS</lang></h6>
                                                 <h4 class="mt-3 text-dark"><span class="sign display-currency"></span>
                                                     <span id="kiosk_summary_companyprice">0</span>
                                                 </h4>
@@ -368,7 +368,7 @@
                                     <div class="col-lg-6 col-xl-3">
                                         <div class="card  shadow-sm mb-2">
                                             <div class="card-body">
-                                                <h6 class="text-primary fw-bold">UPI / QR Pay</h6>
+                                                <h6 class="text-primary fw-bold"><lang class="lang_upi_qr_pay">UPI / QR Pay</lang></h6>
                                                 <h4 class="mt-3 text-dark"><span class="sign display-currency"></span>
                                                     <span id="kiosk_summary_qrprice">0</span>
                                                 </h4>
@@ -380,7 +380,7 @@
                                     <div class="col-lg-6 col-xl-3">
                                         <div class="card  shadow-sm mb-2">
                                             <div class="card-body">
-                                                <h6 class="text-primary fw-bold">Cash</h6>
+                                                <h6 class="text-primary fw-bold"><lang class="lang_cash_title">Cash</lang></h6>
                                                 <h4 class="mt-3 text-dark"><span class="sign display-currency"></span>
                                                     <span id="kiosk_summary_cashprice">0</span>
                                                 </h4>

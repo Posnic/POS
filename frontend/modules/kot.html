@@ -12,16 +12,16 @@
                     <div class="widgetbar text-right">
                         <button type="button" class="btn btn-primary-rgba mr-2" onclick="PosnicPro.kot.refreshTables()">
                             <i class="feather icon-refresh-cw mr-2"></i>
-                            <lang class="lang_refresh_title">Refresh</lang>
+                            <lang class="lang_wf_refresh">Refresh</lang>
                         </button>
                         <button type="button" class="btn btn-info-rgba mr-2"
                             onclick="window.location.hash='#/kothistory'">
                             <i class="feather icon-list mr-2"></i>
-                            KOT History
+                            <lang class="lang_kothistory_title">KOT History</lang>
                         </button>
                         <button type="button" class="btn btn-success" onclick="PosnicPro.kot.openBlankKOT()">
                             <i class="feather icon-plus mr-2"></i>
-                            Add KOT
+                            <lang class="lang_add_kot">Add KOT</lang>
                         </button>
                     </div>
                 </div>
@@ -36,18 +36,18 @@
             <div class="col-lg-6 col-md-7"
                 style="padding: 20px; border-right: 2px solid #e9ecef; min-height: 200px; overflow-y: auto; background: white;">
                 <div class="loader-table-kot">
-                    <h3 class="mb-4" style="font-weight: 700;">Tables</h3>
+                    <h3 class="mb-4" style="font-weight: 700;"><lang class="lang_tables">Tables</lang></h3>
                     <div id="kot_tables_grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;">
                         <!-- Table boxes will be loaded here -->
                     </div>
                     <div class="text-center" id="kot_no_tables" style="display:none; padding: 40px 20px;">
                         <i class="feather icon-coffee"
                             style="font-size: 64px; color: #dee2e6; margin-bottom: 20px;"></i>
-                        <h5 style="color: #6c757d; font-weight: 600; margin-bottom: 10px;">No Active Orders</h5>
+                        <h5 style="color: #6c757d; font-weight: 600; margin-bottom: 10px;"><lang class="lang_no_active_orders">No Active Orders</lang></h5>
                         <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
-                            Click the <strong style="color: #28a745;">+ Add KOT</strong> button above to start taking
-                            orders<br>
-                            and begin your service!
+                            <lang class="lang_click_the">Click the</lang> <strong style="color: #28a745;"><lang class="lang_add_kot_2">+ Add KOT</lang></strong> <lang class="lang_button_above_to_start_taking_orders">button above to start taking
+                            orders</lang><br>
+                            <lang class="lang_and_begin_your_service">and begin your service!</lang>
                         </p>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                 <div id="kot_table_details">
                     <div class="text-center" style="padding: 60px 20px;">
                         <i class="feather icon-arrow-left" style="font-size: 48px; color: #dee2e6;"></i>
-                        <p class="text-muted mt-3">Select a table from the left to view KOT details</p>
+                        <p class="text-muted mt-3"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p>
                     </div>
                 </div>
             </div>
@@ -77,8 +77,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_addnewkot_title">Add New KOT</lang> - <span id="kot_pax_table_number"></span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -87,7 +87,7 @@
                         <lang class="lang_pax_title">Number of PAX</lang> <span class="text-danger">*</span>
                     </label>
                     <input type="number" class="form-control" id="kot_pax_input" min="1" max="50" value="2" required>
-                    <small class="form-text text-muted">Enter the number of people</small>
+                    <small class="form-text text-muted"><lang class="lang_enter_the_number_of_people">Enter the number of people</lang></small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -113,8 +113,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_table_title">Table</lang>: <span id="table_kot_number"></span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -143,7 +143,7 @@
                                             <lang class="lang_ordertype_title">Order Type</lang>
                                         </th>
                                         <th width="10%" class="text-center">
-                                            <lang class="lang_pax_title">PAX</lang>
+                                            <lang class="lang_pax">PAX</lang>
                                         </th>
                                         <th width="15%" class="text-center">
                                             <lang class="lang_status_title">Status</lang>
@@ -182,10 +182,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <lang class="lang_discount_title">Apply Discount</lang>
+                    <lang class="lang_apply_discount">Apply Discount</lang>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -197,8 +197,8 @@
                         </label>
                         <select class="form-control" id="kot_discount_type">
 
-                            <option value="percent">Percentage (%)</option>
-                            <option value="amount">Fixed Amount</option>
+                            <option value="percent"><lang class="lang_percentage">Percentage (%)</lang></option>
+                            <option value="amount"><lang class="lang_fixed_amount">Fixed Amount</lang></option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -243,8 +243,8 @@
                 <h5 class="modal-title">
                     <lang class="lang_kotdetails_title">KOT Details</lang> - <span id="kot_view_sales_id"></span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">
@@ -262,14 +262,14 @@
                                 <lang class="lang_table_title">Table</lang>:
                             </strong> <span id="kot_view_table_number"></span></p>
                         <p><strong>
-                                <lang class="lang_pax_title">PAX</lang>:
+                                <lang class="lang_pax">PAX</lang>:
                             </strong> <span id="kot_view_pax"></span></p>
                     </div>
                 </div>
                 <div class="row mb-2" id="kot_view_discount_section" style="display: none;">
                     <div class="col-12">
                         <div class="alert alert-warning" style="padding: 8px 12px; margin-bottom: 0;">
-                            <strong><i class="feather icon-tag"></i> Discount Applied:</strong>
+                            <strong><i class="feather icon-tag"></i> <lang class="lang_discount_applied">Discount Applied:</lang></strong>
                             <span id="kot_view_discount_text"></span>
                         </div>
                     </div>
@@ -288,7 +288,7 @@
                                             <lang class="lang_item_title">Item</lang>
                                         </th>
                                         <th width="30%" class="text-center">
-                                            <lang class="lang_quantity_title">Quantity</lang>
+                                            <lang class="lang_quantity">Quantity</lang>
                                         </th>
                                     </tr>
                                 </thead>
@@ -335,22 +335,22 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background:#4e73df; color:#fff;">
-                <h5 class="modal-title">Delete Record</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><lang class="lang_deleterecord_title">Delete Record</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title" style="color:#fff;">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
 
             <div class="modal-body text-center" style="padding: 30px 20px;">
-                <h5 style="font-weight:600; margin-bottom: 10px;">Are you sure want to delete this record ?</h5>
+                <h5 style="font-weight:600; margin-bottom: 10px;"><lang class="lang_are_you_sure_want_to_delete_this_record">Are you sure want to delete this record ?</lang></h5>
             </div>
 
             <div class="modal-footer" style="justify-content:center; gap: 12px;">
                 <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
-                    <i class="feather icon-x mr-2"></i> Close
+                    <i class="feather icon-x mr-2"></i> <lang class="lang_close_title">Close</lang>
                 </button>
                 <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.kot.confirmClearDiscount()">
-                    <i class="feather icon-send mr-2"></i> Proceed
+                    <i class="feather icon-send mr-2"></i> <lang class="lang_proceed_title">Proceed</lang>
                 </button>
             </div>
         </div>
@@ -364,22 +364,22 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background:#e74a3b; color:#fff;">
-                <h5 class="modal-title">Delete Item</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><lang class="lang_delete_item">Delete Item</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title" style="color:#fff;">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
 
             <div class="modal-body text-center" style="padding: 30px 20px;">
-                <h5 style="font-weight:600; margin-bottom: 10px;">Are you sure want to delete this item?</h5>
+                <h5 style="font-weight:600; margin-bottom: 10px;"><lang class="lang_are_you_sure_want_to_delete_this_item">Are you sure want to delete this item?</lang></h5>
             </div>
 
             <div class="modal-footer" style="justify-content:center; gap: 12px;">
                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
-                    <i class="feather icon-x mr-2"></i> Close
+                    <i class="feather icon-x mr-2"></i> <lang class="lang_close_title">Close</lang>
                 </button>
                 <button type="button" class="btn btn-danger" onclick="PosnicPro.kot.confirmDeleteItem()">
-                    <i class="feather icon-trash-2 mr-2"></i> Delete
+                    <i class="feather icon-trash-2 mr-2"></i> <lang class="lang_delete">Delete</lang>
                 </button>
             </div>
         </div>
@@ -392,9 +392,9 @@
     <div class="modal-dialog modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Item</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title"><lang class="lang_additem_title">Add Item</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body" style="padding-top: 0;">
@@ -403,14 +403,14 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="feather icon-search"></i></span>
                         </div>
-                        <input type="text" class="form-control" id="kot_item_search" placeholder="Search items by name or code..." autocomplete="off">
+                        <input type="text" class="form-control" id="kot_item_search" placeholder="Search items by name or code..." data-t-placeholder="lang_search_items_by_name_or_code" autocomplete="off">
                     </div>
                 </div>
                 <div id="kot_item_search_results" class="list-group list-group-flush mt-2">
                     <!-- Results will be loaded here -->
                     <div class="text-center text-muted mt-4">
                         <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
-                        <p class="mt-2">Type to search for items</p>
+                        <p class="mt-2"><lang class="lang_type_to_search_for_items">Type to search for items</lang></p>
                     </div>
                 </div>
             </div>

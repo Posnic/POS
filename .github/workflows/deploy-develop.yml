@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -53,6 +53,17 @@ jobs:
         run: |
           npm --prefix frontend install --no-audit --no-fund
           cd frontend && npx gulp build
+
+      - name: Check discovery files
+        run: |
+          set -e
+          for f in \
+            frontend/public/robots.txt \
+            frontend/public/sitemap.xml \
+            frontend/public/llms.txt
+          do
+            test -s "$f" || { echo "missing or empty after build: $f"; exit 1; }
+          done
 
       - name: Setup SSH
         run: |

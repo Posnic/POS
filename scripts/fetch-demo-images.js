@@ -34,6 +34,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
 const https = require('https');
 const sharp = require('sharp');
 
@@ -150,8 +151,10 @@ async function info(title) {
   const ii = page && page.imageinfo && page.imageinfo[0];
   if (!ii) return null;
   const meta = ii.extmetadata || {};
-  const plain = (k) =>
-    meta[k] && meta[k].value ? String(meta[k].value).replace(/<[^>]*>/g, '').trim() : '';
+  const plain = (k) => {
+    if (!meta[k] || !meta[k].value) return '';
+    return JSDOM.fragment(String(meta[k].value)).textContent.trim();
+  };
   return {
     title,
     mime: ii.mime,

@@ -1,7 +1,7 @@
 <!-- start supplier modal -->
 <div id="infobar-settings-sidebar-branch" class="infobar-settings-sidebar scroll_width">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
-        <h4 id="exampleModalCenterTitle"><span id="branch_title">Add</span>&nbsp;<lang class="lang_branch_title">Branch</lang></h4>
+        <h4 id="exampleModalCenterTitle"><span id="branch_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_branch_title">Branch</lang></h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="branch">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
         </a>
@@ -15,7 +15,7 @@
                             <lang class="lang_name_title"> Name </lang>
                             <span class="text-danger">*</span> 
                         </label>
-                        <input type="text" class="form-control border-control branch-trigger" name="name" id="name_branch" minlength="3" maxlength="250" placeholder="Enter the name" required>
+                        <input type="text" class="form-control border-control branch-trigger" name="name" id="name_branch" minlength="3" maxlength="250" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name" required>
                         <input type="hidden" name="id" id="branch_id">
                         <input type="hidden" name="logo" id="branch_logo">
                     </div>
@@ -26,14 +26,14 @@
                             <lang class="lang_phone_title"> Phone </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="tel" class="form-control border-control branch-trigger allow_phone_validate"  name="phone" id="branch_phone" minlength="3" maxlength="20" placeholder="Enter the phone" required>
+                        <input type="tel" class="form-control border-control branch-trigger allow_phone_validate"  name="phone" id="branch_phone" minlength="3" maxlength="20" placeholder="Enter the phone" data-t-placeholder="lang_enter_the_phone" required>
                     </div>
                     <div class="form-group col-md-6">
                         <label for="branch_email">
                             <lang class="lang_email_title"> Email </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="email" class="form-control border-control branch-trigger" name="email" id="branch_email"  maxlength="50" placeholder="Enter the email" required>
+                        <input type="email" class="form-control border-control branch-trigger" name="email" id="branch_email"  maxlength="50" placeholder="Enter the email" data-t-placeholder="lang_enter_the_email" required>
                     </div>
                 </div>
                 <div class="form-row">
@@ -43,7 +43,7 @@
                             <span class="text-danger">*</span>
                         </label>
                         <textarea name="address" id="branch_address" 
-                                  class="form-control border-control branch-trigger" minlength="3" maxlength="500" placeholder="Enter the address"></textarea>
+                                  class="form-control border-control branch-trigger" minlength="3" maxlength="500" placeholder="Enter the address" data-t-placeholder="lang_enter_the_address"></textarea>
                     </div>
                 </div>
                 <div class="form-row">
@@ -91,17 +91,17 @@
                             <input type="checkbox" class="custom-control-input" id="share_customers" name="share_customers" checked>
                             <label class="custom-control-label" for="share_customers">
                                 <lang class="lang_sharecustomers_title">Customers</lang>
-                                <small class="form-text text-muted mb-0">One record per person across every shop - same balance, same loyalty.</small>
+                                <small class="form-text text-muted mb-0"><lang class="lang_one_record_per_person_across_every_shop_sa">One record per person across every shop - same balance, same loyalty.</lang></small>
                             </label>
                         </div>
                         <div class="custom-control custom-checkbox mb-1">
                             <input type="checkbox" class="custom-control-input" id="share_suppliers" name="share_suppliers" checked>
                             <label class="custom-control-label" for="share_suppliers">
                                 <lang class="lang_sharesuppliers_title">Suppliers</lang>
-                                <small class="form-text text-muted mb-0">The people you buy from are usually the same everywhere.</small>
+                                <small class="form-text text-muted mb-0"><lang class="lang_the_people_you_buy_from_are_usually_the_sa">The people you buy from are usually the same everywhere.</lang></small>
                             </label>
                         </div>
-                        <small class="form-text text-muted mt-2 mb-0">Applies to all your shops, and can be changed later in Settings.</small>
+                        <small class="form-text text-muted mt-2 mb-0"><lang class="lang_applies_to_all_your_shops_and_can_be_chang">Applies to all your shops, and can be changed later in Settings.</lang></small>
                         <hr class="my-3">
                         <!-- Stock is NOT a sharing switch, and this is why: a
                              count sits on one shelf, in one building. What a new
@@ -112,10 +112,10 @@
                             <lang class="lang_copyitems_title">Start with the same products as</lang>
                         </label>
                         <select class="form-control border-control" name="copy_items_from" id="copy_items_from">
-                            <option value="">Nothing - I will add products myself</option>
+                            <option value=""><lang class="lang_nothing_i_will_add_products_myself">Nothing - I will add products myself</lang></option>
                         </select>
-                        <small class="form-text text-muted">Copies the product list, prices, tax and categories.
-                            Stock counts start at zero - those are counted here, not copied.</small>
+                        <small class="form-text text-muted"><lang class="lang_copies_the_product_list_prices_tax_and_cat">Copies the product list, prices, tax and categories.
+                            Stock counts start at zero - those are counted here, not copied.</lang></small>
                     </fieldset>
                 </div>
                 <div class="form-row">
@@ -139,7 +139,7 @@
                 <div class="form-row" id="show_last_created_branch" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a shop. <a href="#" id="last_created_branch">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_shop">Saved a shop.</lang> <a href="#" id="last_created_branch"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>
@@ -185,23 +185,23 @@
                                 <td><span id="branch_view_store_email"></span>&nbsp;<a id="branch_view_store_email_icon"><i class="feather icon-message-square mr-2 pointer"></i></a></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_country_title"> Website  </lang> :</th>
+                                    <th scope="row"><lang class="lang_website_title"> Website  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_website_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_state_title">Address   </lang> :</th>
+                                    <th scope="row"><lang class="lang_address_title">Address   </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_store_address"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_address_title">Country   </lang> :</th>
+                                    <th scope="row"><lang class="lang_country">Country   </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_country"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_customer_title">State   </lang> :</th>
+                                    <th scope="row"><lang class="lang_state">State   </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_state"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_supply_title">City  </lang> :</th>
+                                    <th scope="row"><lang class="lang_city_title">City  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_city_value"></span></td>
                                 </tr>
 
@@ -228,48 +228,48 @@
                             <table class="table table-border table-striped mb-0">
                                 <tbody>
                                     <tr>
-                                        <th scope="row"><lang class="lang_name_title">Default  Customer</lang> :</th>
+                                        <th scope="row"><lang class="lang_defaultcust_title">Default  Customer</lang> :</th>
                                 <td><span id="branch_view_customername"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_phone_title">Default  Supplier</lang> :</th>
+                                    <th scope="row"><lang class="lang_defaultsupply_title">Default  Supplier</lang> :</th>
                                 <td><span id="branch_view_suppliername"></span>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_email_title"> Register </lang> :</th>
+                                    <th scope="row"><lang class="lang_register"> Register </lang> :</th>
                                 <td><span id="branch_view_register_value"></span>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_country_title"> Currency </lang> :</th>
+                                    <th scope="row"><lang class="lang_currency_title"> Currency </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_currency_text_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_state_title"> Currency Type  </lang> :</th>
+                                    <th scope="row"><lang class="lang_currency_type"> Currency Type  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_currency_type_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_address_title"> Time Zone  </lang> :</th>
+                                    <th scope="row"><lang class="lang_timezone_title"> Time Zone  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_time_zone_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_customer_title"> Print Type </lang> :</th>
+                                    <th scope="row"><lang class="lang_print_type"> Print Type </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_print_type_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_supply_title">  Printing Address  </lang> :</th>
+                                    <th scope="row"><lang class="lang_printadd_title">  Printing Address  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_printing_address_value"></span></td>
                                 </tr>
 
                                 <tr>
-                                    <th scope="row"><lang class="lang_register_title">  Low Stock Notification Range  </lang> :</th>
+                                    <th scope="row"><lang class="lang_lowstocknotify_title">  Low Stock Notification Range  </lang> :</th>
                                 <td class="address-text-wrap"><span id="branch_view_notification_range_value"></span></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><lang class="lang_cratedate_title"> Date Format </lang> :</th>
+                                    <th scope="row"><lang class="lang_date_format"> Date Format </lang> :</th>
                                 <td><span id="branch_view_dateformat_text_value"></span></td>
                                 </tr>
 <!--                                <tr>
-                                    <th scope="row"><lang class="lang_update_title"> Time Format </lang> :</th>
+                                    <th scope="row"><lang class="lang_time_format"> Time Format </lang> :</th>
                                 <td><span id="branch_view_time_format_value"></span></td>
                                 </tr>-->
                                 </tbody>

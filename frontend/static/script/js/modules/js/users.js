@@ -60,17 +60,17 @@ PosnicPro.users = {
     openDoc: function (id) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var mine = PosnicPro.local.get('userid') === String(id);
-        PosnicPro.listDoc.open({ key: 'users', id: id, title: 'Employee' });
+        PosnicPro.listDoc.open({ key: 'users', id: id, title: PosnicPro.i18n.t('lang_employee_2', 'Employee') });
         PosnicPro.get('users/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('users', '<div class="text-danger p-3">Could not open this employee.</div>');
+                PosnicPro.listDoc.body('users', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_employee">Could not open this employee.</lang></div>');
                 return;
             }
             var img = (d.image && d.image !== 'user.svg') ? d.image : 'static/images/default/user.svg';
             var status = d.activate === true
-                ? '<span class="badge badge-success-inverse">Active</span>'
-                : '<span class="badge badge-danger-inverse">Inactive</span>';
+                ? '<span class="badge badge-success-inverse"><lang class="lang_active">Active</lang></span>'
+                : '<span class="badge badge-danger-inverse"><lang class="lang_inactive_2">Inactive</lang></span>';
             var branches = $.map(d.branch_access || [], function (b) { return b && b.branch_name; });
             var registers = $.map(d.registers || [], function (r) { return (r && r.register_name) || null; });
             var lastLogin = d.lastLogin || d.last_login;
@@ -83,9 +83,9 @@ PosnicPro.users = {
                 id: id,
                 title: d.username || 'Employee',
                 pills: status,
-                actions: (mine ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="write" data-toggle="tooltip" title="Edit this employee" aria-label="Edit"'
+                actions: (mine ? '' : '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="write" data-toggle="tooltip" title="Edit this employee" data-t-title="lang_edit_this_employee" aria-label="Edit" data-t-aria-label="lang_edit_title"'
                         + ' onclick="hasher.setHash(\'users/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>')
-                    + (canDelete ? '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="delete" data-toggle="tooltip" title="Delete this employee" aria-label="Delete"'
+                    + (canDelete ? '<button type="button" class="btn btn-sm btn-light" data-module="user" data-access="delete" data-toggle="tooltip" title="Delete this employee" data-t-title="lang_delete_this_employee" aria-label="Delete" data-t-aria-label="lang_delete"'
                         + ' onclick="PosnicPro.listDoc.close(\'users\'); hasher.setHash(\'users/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>' : '')
             });
             PosnicPro.ACLForModule('user');
@@ -94,33 +94,33 @@ PosnicPro.users = {
                 + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:50%; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
                 + '<div style="flex:1 1 auto; min-width:0;">'
                 + '<div class="s-doc-stats" id="u_doc_stats">'
-                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '\u2014') + '</div><div class="s-stat-label">Role</div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '\u2014') + '</div><div class="s-stat-label"><lang class="lang_role">Role</lang></div></div>'
                 + '</div>'
                 + '</div></div>'
                 + PosnicPro.listDoc.grid([
-                    { label: 'Contact', lines: [
-                        d.email ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '<div class="q-muted">No email on record</div>',
+                    { label: PosnicPro.i18n.t('lang_contact', 'Contact'), lines: [
+                        d.email ? '<div><a href="mailto:' + esc(d.email) + '">' + esc(d.email) + '</a></div>' : '<div class="q-muted"><lang class="lang_no_email_on_record">No email on record</lang></div>',
                         (d.firstname || d.lastname) ? '<div class="q-muted">' + esc([d.firstname, d.lastname].filter(Boolean).join(' ')) + '</div>' : ''
                     ] },
-                    { label: 'Access', lines: [
-                        branches.length ? '<div>' + esc(branches.join(', ')) + '</div>' : '<div class="q-muted">No branch access</div>',
+                    { label: PosnicPro.i18n.t('lang_access', 'Access'), lines: [
+                        branches.length ? '<div>' + esc(branches.join(', ')) + '</div>' : '<div class="q-muted"><lang class="lang_no_branch_access">No branch access</lang></div>',
                         registers.length ? '<div class="q-muted">Registers: ' + esc(registers.join(', ')) + '</div>'
-                            : '<div class="q-muted">All registers of the branch</div>'
+                            : '<div class="q-muted"><lang class="lang_all_registers_of_the_branch">All registers of the branch</lang></div>'
                     ] },
-                    { label: 'On record', lines: [
+                    { label: PosnicPro.i18n.t('lang_on_record', 'On record'), lines: [
                         d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '',
                         lastLogin ? '<div class="q-muted">Last login ' + esc(PosnicPro.convertDate(lastLogin)) + '</div>' : ''
                     ] }
                 ])
                 + PosnicPro.users._permsBlock(d)
-                + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
-                + '<div id="u_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>'
-                + '<div class="q-label" style="margin-top:18px;">Login history</div>'
-                + '<div id="u_doc_logins" class="q-muted" style="font-size:13px;">Loading ...</div>');
+                + '<div class="q-label" style="margin-top:18px;"><lang class="lang_recent_sales">Recent sales</lang></div>'
+                + '<div id="u_doc_sales" class="q-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>'
+                + '<div class="q-label" style="margin-top:18px;"><lang class="lang_login_history">Login history</lang></div>'
+                + '<div id="u_doc_logins" class="q-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>');
             PosnicPro.users.loadRecentSales(id);
             PosnicPro.users.loadLoginHistory(id);
         }, function () {
-            PosnicPro.listDoc.body('users', '<div class="text-danger p-3">Could not open this employee.</div>');
+            PosnicPro.listDoc.body('users', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_employee">Could not open this employee.</lang></div>');
         });
     },
     /* What this employee may DO, read from the same access matrix the
@@ -142,9 +142,9 @@ PosnicPro.users = {
         });
         var pos = access.pos || {};
         var tillCount = Object.keys(pos).filter(function (k) { return pos[k] === true; }).length;
-        return '<div class="q-label" style="margin-top:18px;">Permissions</div>'
+        return '<div class="q-label" style="margin-top:18px;"><lang class="lang_permissions">Permissions</lang></div>'
             + '<div style="font-size:13px; line-height:2;">'
-            + (chips.length ? chips.join(' ') : '<span class="q-muted">No module access granted</span>')
+            + (chips.length ? chips.join(' ') : '<span class="q-muted"><lang class="lang_no_module_access_granted">No module access granted</lang></span>')
             + (tillCount ? '<div class="q-muted" style="font-size:12px;">' + tillCount + ' till action' + (tillCount === 1 ? '' : 's') + ' without a manager</div>' : '')
             + '</div>';
     },
@@ -169,7 +169,7 @@ PosnicPro.users = {
         }, function (response) {
             var list = (response && response.data && response.data.list) || [];
             if (!list.length) {
-                $('#u_doc_logins').html('No sign-ins in the last 90 days.');
+                $('#u_doc_logins').html(PosnicPro.i18n.t('lang_no_sign_ins_in_the_last_90_days', 'No sign-ins in the last 90 days.'));
                 return;
             }
             var rows = list.map(function (r) {
@@ -183,10 +183,10 @@ PosnicPro.users = {
             }).join('');
             $('#u_doc_logins').removeClass('q-muted').html(
                 '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Signed in</th><th>Outlet</th><th>Device</th><th>IP</th>'
+                + '<th><lang class="lang_signed_in">Signed in</lang></th><th><lang class="lang_outlet">Outlet</lang></th><th><lang class="lang_device">Device</lang></th><th><lang class="lang_ip">IP</lang></th>'
                 + '</tr></thead><tbody>' + rows + '</tbody></table>');
         }, function () {
-            $('#u_doc_logins').html('Login history unavailable.');
+            $('#u_doc_logins').html(PosnicPro.i18n.t('lang_login_history_unavailable', 'Login history unavailable.'));
         });
     },
     loadRecentSales: function (id) {
@@ -200,7 +200,7 @@ PosnicPro.users = {
             var list = (t && t.list) || [];
             var total = (t && Number(t.total)) || 0;
             if (!list.length) {
-                $('#u_doc_sales').html('No sales rung up yet.');
+                $('#u_doc_sales').html(PosnicPro.i18n.t('lang_no_sales_rung_up_yet', 'No sales rung up yet.'));
                 return;
             }
             var value = 0;
@@ -216,15 +216,15 @@ PosnicPro.users = {
             }).join('');
             $('#u_doc_stats').append(
                 '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
-                + '<div class="s-stat-label">' + (total === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat-label">' + (total === 1 ? PosnicPro.i18n.t('lang_newsale_title', 'Sale') : PosnicPro.i18n.t('lang_rgrp_sales', 'Sales')) + '</div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + value.toFixed(2) + '</div>'
                 + '<div class="s-stat-label">Rung up' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
             $('#u_doc_sales').removeClass('q-muted').html(
                 '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Bill #</th><th>Date</th><th>Process</th><th class="text-right">Total</th>'
+                + '<th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_process_title">Process</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '</tr></thead><tbody>' + rows + '</tbody></table>');
         }, function () {
-            $('#u_doc_sales').html('Sales history unavailable.');
+            $('#u_doc_sales').html(PosnicPro.i18n.t('lang_sales_history_unavailable', 'Sales history unavailable.'));
         });
     },
     /* The name the OLD table machinery answered to - save flows and the
@@ -243,11 +243,11 @@ PosnicPro.users = {
             key: 'users',
             container: '#users_filter_panel',
             button: '#users_filter_btn',
-            searchPlaceholder: 'Search name or email',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_or_email', 'Search name or email'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'username', label: 'Name' },
-                { value: 'email', label: 'Email' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'username', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'email', label: PosnicPro.i18n.t('lang_email_title', 'Email') }
             ],
             onChange: function () { PosnicPro.users.loadList(1); }
         });
@@ -268,20 +268,20 @@ PosnicPro.users = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('users') > 0;
                 $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No employees match this filter.' : 'No employees yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_employees_match_this_filter', 'No employees match this filter.') : PosnicPro.i18n.t('lang_no_employees_yet_press_new_to_add_the_firs', 'No employees yet - press New to add the first.')) + '</div>');
                 $('#users_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th style="width:44px;"></th><th>Name</th><th class="us-col-email">Email</th>'
-                + '<th class="text-center">Role</th><th class="text-center">Status</th></tr></thead><tbody>';
+                + '<thead><tr><th style="width:44px;"></th><th><lang class="lang_name_title">Name</lang></th><th class="us-col-email"><lang class="lang_email_title">Email</lang></th>'
+                + '<th class="text-center"><lang class="lang_role">Role</lang></th><th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var img = (r.image && r.image !== 'user.svg') ? r.image : 'static/images/default/user.svg';
                 var roleClass = r.usertype === 'super_admin' ? 'badge badge-success-inverse'
                     : r.usertype === 'admin' ? 'badge badge-primary-inverse' : 'badge badge-info-inverse';
                 var status = r.activate === true
-                    ? '<span class="badge badge-success-inverse">Active</span>'
-                    : '<span class="badge badge-danger-inverse">Inactive</span>';
+                    ? '<span class="badge badge-success-inverse"><lang class="lang_active">Active</lang></span>'
+                    : '<span class="badge badge-danger-inverse"><lang class="lang_inactive_2">Inactive</lang></span>';
                 html += '<tr class="md-row users-row highlight-select'
                     + (PosnicPro.listDoc.activeId('users') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:32px; height:32px; object-fit:cover; border-radius:50%;" alt=""></td>'
@@ -296,14 +296,14 @@ PosnicPro.users = {
             PosnicPro.ACLForModule('user');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load employees - try again.</div>');
+            $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_employees_try_again">Could not load employees - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.users;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' employee' : ' employees');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_employee', 'employee') : PosnicPro.i18n.t('lang_employees', 'employees'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
@@ -500,11 +500,11 @@ PosnicPro.users = {
         if (data.activate === true) {
             $('#user-access').removeClass('badge-danger').addClass('badge-success');
             $('#user-view-access').removeClass('fa-times').addClass('fa-check');
-            $('#text-change-access-user').html('Active');
+            $('#text-change-access-user').html(PosnicPro.i18n.t('lang_active', 'Active'));
         } else {
             $('#user-access').removeClass('badge-success').addClass('badge-danger');
             $('#user-view-access').removeClass('fa-check').addClass('fa-times');
-            $('#text-change-access-user').html('InActive');
+            $('#text-change-access-user').html(PosnicPro.i18n.t('lang_inactive', 'InActive'));
         }
         $('#user_branch_type').text(branchAccessText);
         var registerAccess = [];
@@ -563,7 +563,7 @@ PosnicPro.users = {
         PosnicPro.get(params, function (response) {
             loader.find(".loadingSpinner:first").remove();
             if (response.type === 'success') {
-                $('#user_button_title,#submit_user_img').text('Update');
+                $('#user_button_title,#submit_user_img').text(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
                 $("#check_password").val('no');
                 $('#users_new').modal('show');
                 $('#admin_table').show();
@@ -726,7 +726,7 @@ PosnicPro.users = {
         var $sel = $('#choose_register');
         if (!$sel.length) { return; }
         if (!$sel.data('select2')) {
-            $sel.select2({ placeholder: 'Select Register', width: '100%' });
+            $sel.select2({ placeholder: PosnicPro.i18n.t('lang_select_register', 'Select Register'), width: '100%' });
         }
         var branches = $('#branchtype').select2('data') || [];
         var ids = $.map(branches, function (b) { return b.id; });
@@ -825,7 +825,7 @@ PosnicPro.users = {
             $boxes.prop('disabled', false).css({ 'pointer-events': 'auto', opacity: 1 });
             $('.userAccessLabel').show();
             $('.pos-action-box, #pos_discount_max_percent, #pos_refund_max_amount').prop('disabled', false);
-            $('#pos_mgr_hint').text('Custom: tick exactly what this user may do without a manager.');
+            $('#pos_mgr_hint').text(PosnicPro.i18n.t('lang_custom_tick_exactly_what_this_user_may_do', 'Custom: tick exactly what this user may do without a manager.'));
             PosnicPro.users.updatePinRowVisibility();
             return;
         }
@@ -855,12 +855,12 @@ PosnicPro.users = {
     setManagerPin: function () {
         var userId = $('#users_id').val();
         if (!userId) {
-            PosnicPro.alert('warning', 'Save the user first, then set a PIN.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_save_the_user_first_then_set_a_pin', 'Save the user first, then set a PIN.'));
             return;
         }
         var pin = $('#user_manager_pin').val();
         if (!pin || !/^\d{4,8}$/.test(pin)) {
-            PosnicPro.alert('warning', 'Enter a 4 to 8 digit PIN.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_4_to_8_digit_pin', 'Enter a 4 to 8 digit PIN.'));
             return;
         }
         $('#user_manager_pin_btn').prop('disabled', true);
@@ -878,7 +878,7 @@ PosnicPro.users = {
     _postRfid: function (cardUid) {
         var userId = $('#users_id').val();
         if (!userId) {
-            PosnicPro.alert('warning', 'Save the user first, then assign a card.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_save_the_user_first_then_assign_a_card', 'Save the user first, then assign a card.'));
             return;
         }
         $('#user_rfid_btn,#user_rfid_clear_btn').prop('disabled', true);
@@ -895,7 +895,7 @@ PosnicPro.users = {
     setRfid: function () {
         var card = $('#user_rfid_uid').val();
         if (!card || !card.trim()) {
-            PosnicPro.alert('warning', 'Swipe or type a card, then Assign.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_swipe_or_type_a_card_then_assign', 'Swipe or type a card, then Assign.'));
             return;
         }
         PosnicPro.users._postRfid(card.trim());
@@ -907,12 +907,12 @@ PosnicPro.users = {
     setRate: function () {
         var userId = $('#users_id').val();
         if (!userId) {
-            PosnicPro.alert('warning', 'Save the user first, then set a wage.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_save_the_user_first_then_set_a_wage', 'Save the user first, then set a wage.'));
             return;
         }
         var rate = $('#user_hourly_rate').val();
         if (rate === '' || isNaN(rate) || Number(rate) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid wage (0 or more).');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_valid_wage_0_or_more', 'Enter a valid wage (0 or more).'));
             return;
         }
         $('#user_wage_btn').prop('disabled', true);
@@ -929,7 +929,7 @@ PosnicPro.users = {
     setTargets: function () {
         var userId = $('#users_id').val();
         if (!userId) {
-            PosnicPro.alert('warning', 'Save the user first, then set targets.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_save_the_user_first_then_set_targets', 'Save the user first, then set targets.'));
             return;
         }
         $('#user_targets_btn').prop('disabled', true);
@@ -955,7 +955,7 @@ PosnicPro.users = {
         $('#user_manager_pin, #user_rfid_uid, #user_hourly_rate').val('');
         $('#user_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
-        $('#user_button_title,#submit_user_img').text('Save');
+        $('#user_button_title,#submit_user_img').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $("#users_password,#users_retype_password").css({cursor: "auto"}).removeAttr('disabled');
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $("#check_password").val('yes');
@@ -1026,11 +1026,11 @@ PosnicPro.users = {
                 });
             } else {
                 $('#email').focus();
-                PosnicPro.alert('error', 'Enter a valid email address.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_valid_email_address', 'Enter a valid email address.'));
             }
         } else {
             $('#email').focus();
-            PosnicPro.alert('error', 'Fill in the required fields.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_fill_in_the_required_fields', 'Fill in the required fields.'));
         }
     },
 
@@ -1050,8 +1050,8 @@ PosnicPro.users = {
             var row = list[i];
             var name = row.register_name;
             var suffix = '';
-            if (row.in_use && row.in_use_by_me) suffix = ' — your open session';
-            else if (row.in_use) suffix = ' — in use' + (row.in_use_by ? ' by ' + row.in_use_by : '');
+            if (row.in_use && row.in_use_by_me) suffix = ' (your open session)';
+            else if (row.in_use) suffix = ' (in use' + (row.in_use_by ? ' by ' + row.in_use_by : '') + ')';
             html += '<option id="' + row.register_id + '" value="' + row.register_id + '"' +
                 ' data-inuse="' + (row.in_use ? '1' : '') + '"' +
                 ' data-inuseby="' + $('<span>').text(row.in_use_by || '').html() + '"' +
@@ -1075,7 +1075,7 @@ PosnicPro.users = {
                         '. Choose another register, or ask them to close it first.')
                         .show();
                 } else if ($opt.data('mine')) {
-                    $note.text('This is your open session - opening will resume it.').show();
+                    $note.text(PosnicPro.i18n.t('lang_this_is_your_open_session_opening_will_res', 'This is your open session - opening will resume it.')).show();
                 } else {
                     $note.hide();
                 }
@@ -1451,11 +1451,11 @@ PosnicPro.users = {
                 });
             } else {
                 $('#password').focus();
-                PosnicPro.alert('error', 'Please enter password');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_password', 'Please enter password'));
             }
         } else {
             $('#username').focus();
-            PosnicPro.alert('error', 'Please enter username');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_enter_username', 'Please enter username'));
         }
     },
     selectedBranch: function (response) {
@@ -1475,7 +1475,7 @@ PosnicPro.users = {
             $('#containerbar_sso').show();
             $('#login_form,#forgotslide').hide();
             $('#Loginslide,#Branch_selection_form').show();
-            $('.formhead').html('Choose Branch');
+            $('.formhead').html(PosnicPro.i18n.t('lang_choosebranch_title', 'Choose Branch'));
             PosnicPro.get('users/userBranchSelection', function (response) {
                 PosnicPro.useBranchList = true;
                 var data = response.data;
@@ -1762,11 +1762,11 @@ PosnicPro.users = {
                     }
                 });
             } else {
-                PosnicPro.alert('error', 'Passwords do not match.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_passwords_do_not_match', 'Passwords do not match.'));
                 $('#update_new_password').focus();
             }
         } else {
-            PosnicPro.alert('error', 'Fill in the required fields.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_fill_in_the_required_fields', 'Fill in the required fields.'));
         }
     },
     /*Change user account password*/
@@ -1831,18 +1831,11 @@ PosnicPro.users = {
         return null;
     },
     generateApiKey: function () {
-        var date = new Date().getTime();
-        if (window.performance && typeof window.performance.now === "function")
-        {
-            date += performance.now();
-        }
-
-        var apikey = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c)
-        {
-            var r = (date + Math.random() * 16) % 16 | 0;
-            date = Math.floor(date / 16);
-            return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-        });
+        var bytes = new Uint8Array(20);
+        window.crypto.getRandomValues(bytes);
+        var apikey = Array.from(bytes, function (byte) {
+            return byte.toString(16).padStart(2, '0');
+        }).join('');
         $('#users_api').val(apikey);
     },
     clickNormalForm: function () {
@@ -1963,11 +1956,11 @@ PosnicPro.users = {
 
             if ($("#app_name").val().length <= 2) {
                 $("#error_app_name").show();
-                $("#error_app_name").html('<label for="app_name" class="error" style="">App Name must be at least 3 Characters</label>');
+                $("#error_app_name").html('<label for="app_name" class="error" style=""><lang class="lang_app_name_must_be_at_least_3_characters">App Name must be at least 3 Characters</lang></label>');
                 $("#app_name").css('border-color', 'rgb(249, 97, 109)').focus();
             } else if ($("#users_api").val().length <= 29) {
                 $("#error_users_api").show();
-                $("#error_users_api").html('<label for="app_name" class="error" style="">Api key must be at least 30 Characters</label>');
+                $("#error_users_api").html('<label for="app_name" class="error" style=""><lang class="lang_api_key_must_be_at_least_30_characters">Api key must be at least 30 Characters</lang></label>');
                 $("#users_api").css('border-color', 'rgb(249, 97, 109)').focus();
             } else {
                 $("#error_app_name,#error_users_api").hide();
@@ -1984,12 +1977,12 @@ PosnicPro.users = {
 
             if ($("#app_name").val() === '') {
                 $("#error_app_name").show();
-                $("#error_app_name").html('<label for="app_name" class="error" style="">App Name must be at least 3 Characters</label>');
+                $("#error_app_name").html('<label for="app_name" class="error" style=""><lang class="lang_app_name_must_be_at_least_3_characters">App Name must be at least 3 Characters</lang></label>');
                 $("#app_name").css('border-color', 'rgb(249, 97, 109)').focus();
             }
             if ($("#users_api").val() === '') {
                 $("#error_users_api").show();
-                $("#error_users_api").html('<label for="app_name" class="error" style="">Api key must be at least 30 Characters</label>');
+                $("#error_users_api").html('<label for="app_name" class="error" style=""><lang class="lang_api_key_must_be_at_least_30_characters">Api key must be at least 30 Characters</lang></label>');
                 $("#users_api").css('border-color', 'rgb(249, 97, 109)').focus();
             }
         }

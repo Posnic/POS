@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Posnic - POS</title>
+    <title><lang class="lang_posnic_title">Posnic - POS</lang></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta content="Posnic - Point of Sale" name="description" />
     <meta content="Posnic" name="author" />
@@ -46,12 +46,12 @@
                             <a class="nav-link active" id="v-pills-ecommerce-tab" data-toggle="pill" href="#" role="tab"
                                 aria-controls="v-pills-ecommerce" aria-selected="false"><img
                                     src="static/images/svg-icon/category.svg" class="img-fluid" alt="Catalog Display"
-                                    data-toggle="tooltip" data-placement="top" title="Catalog Display"></a>
+                                    data-toggle="tooltip" data-placement="top" title="Catalog Display" data-t-title="lang_customersearch_title"></a>
                         </div>
                     </div>
                     <div class="vertical-menu-detail">
                         <div class="logobar">
-                            <h1 class="title_h2">Posnic</h1>
+                            <h1 class="title_h2"><lang class="lang_posnic">Posnic</lang></h1>
                         </div>
                         <div class="tab-content" id="v-pills-tabContent">
                             <div class="tab-pane fade show active" id="v-pills-ecommerce" role="tabpanel"
@@ -65,7 +65,7 @@
                                     <li class="active"><a href="javascript:void(0)"
                                             onclick="return PosnicPro.customersearch.productListFunction();"><img
                                                 src="static/images/svg-icon/dashboard.svg" class="img-fluid"
-                                                alt="dashboard">All Product</a></li>
+                                                alt="dashboard"><lang class="lang_all_product">All Product</lang></a></li>
                                 </ul>
                             </div>
                         </div>
@@ -84,7 +84,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-12">
                         <div class="mobile-logobar">
-                            <h1 class="title_h2">Posnic</h1>
+                            <h1 class="title_h2"><lang class="lang_posnic">Posnic</lang></h1>
                         </div>
                         <div class="mobile-togglebar">
                             <ul class="list-inline mb-0">
@@ -160,8 +160,8 @@
                                                     <form>
                                                         <div class="input-group">
                                                             <input type="search" class="form-control"
-                                                                id="sales_new_item_name" placeholder="Search"
-                                                                aria-label="Search" aria-describedby="button-addon3">
+                                                                id="sales_new_item_name" placeholder="Search" data-t-placeholder="lang_search"
+                                                                aria-label="Search" data-t-aria-label="lang_search" aria-describedby="button-addon3">
                                                             <div class="input-group-append">
                                                                 <i class="btn"><i class="feather icon-search"></i></i>
                                                             </div>
@@ -214,16 +214,16 @@
 
                                     <div class="col-lg-12 col-xl-6">
                                         <div class="hint-text">
-                                            Pages
+                                            <lang class="lang_pages">Pages</lang>
                                             <b><span id="view_customersearch_page_total"></span></b>
-                                            total of
+                                            <lang class="lang_total_of">total of</lang>
                                             <input type="hidden" id="view_customersearch_total_pages">
                                             <b><span id="view_customersearch_total"></span></b>
-                                            entries
+                                            <lang class="lang_entries">entries</lang>
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <nav aria-label="Page navigation example">
+                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                             <ul class="pagination mb-0">
                                                 <button class="btn previous page-item text-dark-gradient f-w-7"
                                                     onclick="PosnicPro.customersearch.previousPage()"> <i
@@ -252,8 +252,8 @@
                 <footer class="footer">
                     <p class="mb-0">
                         <script>document.write(new Date().getFullYear());</script> © <a href="http://www.posnic.com/"
-                            class="text-secondary mb-0" target="_blank">Posnic Innovations Pvt
-                            Ltd - All Rights Reserved</a>
+                            class="text-secondary mb-0" target="_blank"><lang class="lang_posnic_innovations_pvt_ltd_all_rights_rese">Posnic Innovations Pvt
+                            Ltd - All Rights Reserved</lang></a>
                 </footer>
             </div>
             <!-- End Footerbar -->
@@ -270,8 +270,8 @@
                     <div class="col-md-12 col-lg-12 col-xl-12">
                         <div class="card m-b-30">
                             <div class="card-body">
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                                 </button>
                                 <div class="row">
                                     <div class="col-lg-6 col-xl-5" id="list_scroll_image">
@@ -293,15 +293,15 @@
                                                             class="current-currency">₹</span>&nbsp;</sup><span
                                                         id="item_view_sellingprice"
                                                         class="font-18 text-dark-gradient"></span></strike> <span
-                                                    class="text-dark font-18">Just</span></span> <sup
+                                                    class="text-dark font-18"><lang class="lang_just">Just</lang></span></span> <sup
                                                 class="font-16"><span class="current-currency">₹</span>&nbsp;</sup><span
                                                 id="item_view_sellingprice_discount"></span></p>
 
                                         <div class="button-list mt-5 mb-5">
                                             <span class="badge badge-success-inverse font-17"
-                                                id="available_stock_display">In Stock</span>
+                                                id="available_stock_display"><lang class="lang_in_stock">In Stock</lang></span>
                                             <span class="badge badge-danger-inverse font-17" id="no_stock_display"
-                                                style="display:none;">Sold Out</span>
+                                                style="display:none;"><lang class="lang_sold_out">Sold Out</lang></span>
                                         </div>
 
                                     </div>
@@ -313,7 +313,7 @@
                     <div class="col-lg-12">
                         <div class="card m-b-30">
                             <div class="card-header">
-                                <h5 class="card-title">Product Details</h5>
+                                <h5 class="card-title"><lang class="lang_product_details">Product Details</lang></h5>
                             </div>
                             <div class="card-body">
                                 <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine" role="tablist">
@@ -321,12 +321,12 @@
                                         <a class="nav-link active" id="description-tab-line" data-toggle="tab"
                                             href="#description-line" role="tab" aria-controls="description-line"
                                             aria-selected="true"><i
-                                                class="feather icon-file-text mr-2"></i>Description</a>
+                                                class="feather icon-file-text mr-2"></i><lang class="lang_description_title">Description</lang></a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link" id="guide-tab-line" data-toggle="tab" href="#guide-line"
                                             role="tab" aria-controls="guide-line" aria-selected="false"><i
-                                                class="feather icon-book-open mr-2"></i>Branch</a>
+                                                class="feather icon-book-open mr-2"></i><lang class="lang_newbranch_title">Branch</lang></a>
                                     </li>
                                 </ul>
                                 <div class="tab-content" id="defaultTabContentLine">
@@ -341,7 +341,7 @@
                                         aria-labelledby="guide-tab-line">
 
                                         <div class="button-list">
-                                            <p>click branch details</p>
+                                            <p><lang class="lang_click_branch_details">click branch details</lang></p>
                                             <span class="show-branch-list">
                                             </span>
                                         </div>
@@ -367,7 +367,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-danger" data-dismiss="modal"><i
-                            class="feather icon-x-circle mr-2"></i> Close</button>
+                            class="feather icon-x-circle mr-2"></i> <lang class="lang_close_title">Close</lang></button>
                 </div>
             </div>
         </div>
