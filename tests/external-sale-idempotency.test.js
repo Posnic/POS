@@ -137,6 +137,28 @@ test('STATE 4b: deliberate order revision with advanced version produces distinc
   assert.notStrictEqual(envelope1.idempotencyKey, envelope2.idempotencyKey);
 });
 
+test('STATE 4c: same payload with an advanced version starts a new import', () => {
+  const firstImport = readFixture('first-import.json');
+
+  const envelopeV1 = buildSaleImportEnvelope(firstImport);
+  const envelopeV2 = buildSaleImportEnvelope({ ...firstImport, version: 2 });
+
+  assert.strictEqual(envelopeV1.payloadHash, envelopeV2.payloadHash);
+  assert.notStrictEqual(envelopeV1.idempotencyKey, envelopeV2.idempotencyKey);
+
+  const evalResult = evaluateIdempotency({
+    existingRecord: {
+      saleId: 'pos_sale_rec_1001',
+      idempotencyKey: envelopeV1.idempotencyKey,
+      payloadHash: envelopeV1.payloadHash,
+    },
+    incomingEnvelope: envelopeV2,
+  });
+
+  assert.strictEqual(evalResult.outcome, IDEMPOTENCY_OUTCOMES.NEW_IMPORT);
+  assert.strictEqual(evalResult.action, 'PROCEED_CREATE');
+});
+
 test('STATE 5: unrelated order produces isolated identity', () => {
   const orderA = readFixture('first-import.json');
   const orderB = readFixture('unrelated-order.json');
@@ -146,6 +168,30 @@ test('STATE 5: unrelated order produces isolated identity', () => {
 
   assert.notStrictEqual(envelopeA.idempotencyKey, envelopeB.idempotencyKey);
   assert.notStrictEqual(envelopeA.payloadHash, envelopeB.payloadHash);
+});
+
+test('STATE 5b: unrelated order with the same payload starts a new import', () => {
+  const orderA = readFixture('first-import.json');
+  const envelopeA = buildSaleImportEnvelope(orderA);
+  const envelopeB = buildSaleImportEnvelope({
+    ...orderA,
+    externalOrderId: 'SYNTH-ORD-8802',
+  });
+
+  assert.strictEqual(envelopeA.payloadHash, envelopeB.payloadHash);
+  assert.notStrictEqual(envelopeA.idempotencyKey, envelopeB.idempotencyKey);
+
+  const evalResult = evaluateIdempotency({
+    existingRecord: {
+      saleId: 'pos_sale_rec_1001',
+      idempotencyKey: envelopeA.idempotencyKey,
+      payloadHash: envelopeA.payloadHash,
+    },
+    incomingEnvelope: envelopeB,
+  });
+
+  assert.strictEqual(evalResult.outcome, IDEMPOTENCY_OUTCOMES.NEW_IMPORT);
+  assert.strictEqual(evalResult.action, 'PROCEED_CREATE');
 });
 
 test('STATE 6: different provider or store isolates identity and avoids collisions', () => {

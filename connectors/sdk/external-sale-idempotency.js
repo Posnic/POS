@@ -175,6 +175,13 @@ function evaluateIdempotency({ existingRecord, incomingEnvelope }) {
     };
   }
 
+  if (existingRecord.idempotencyKey !== incomingEnvelope.idempotencyKey) {
+    return {
+      outcome: IDEMPOTENCY_OUTCOMES.NEW_IMPORT,
+      action: 'PROCEED_CREATE',
+    };
+  }
+
   const incomingHash = incomingEnvelope.payloadHash || hashPayload(incomingEnvelope.payload);
   const existingHash = existingRecord.payloadHash || hashPayload(existingRecord.payload);
 
