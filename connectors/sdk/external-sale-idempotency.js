@@ -55,7 +55,7 @@ function canonicalize(value) {
     return value.map(canonicalize);
   }
   const sortedKeys = Object.keys(value).sort();
-  const result = {};
+  const result = Object.create(null);
   for (const key of sortedKeys) {
     result[key] = canonicalize(value[key]);
   }

@@ -217,6 +217,12 @@ test('deterministic hashing: object key order does not alter payload hash', () =
   assert.strictEqual(hashPayload(payload1), hashPayload(payload2));
 });
 
+test('deterministic hashing: preserves own __proto__ payload properties', () => {
+  const payloadWithProtoKey = JSON.parse('{"a":1,"__proto__":{"polluted":true}}');
+
+  assert.notStrictEqual(hashPayload(payloadWithProtoKey), hashPayload({ a: 1 }));
+});
+
 test('input validation: refuses invalid or dangerous tokens', () => {
   assert.throws(() => generateIdempotencyKey({}), /provider must be a non-empty string/);
   assert.throws(() => generateIdempotencyKey({ provider: 'shopify' }), /store must be a non-empty string/);
