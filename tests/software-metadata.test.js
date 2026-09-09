@@ -43,8 +43,8 @@ test('CodeMeta identifies point-of-sale scope without promoting development as r
   assert.equal(metadata.isSourceCodeOf?.['@type'], 'SoftwareApplication');
   assert.equal(metadata.isSourceCodeOf?.name, 'Posnic POS');
   assert.equal(metadata.isSourceCodeOf?.url, 'https://posnic.io/');
-  assert.match(metadata.developmentStatus, /active development/i);
-  assert.match(metadata.developmentStatus, /not a tagged release/i);
+  assert.equal(metadata.developmentStatus, 'active');
+  assert.doesNotMatch(metadata.developmentStatus, /not a tagged release/i);
   assert.doesNotMatch(JSON.stringify(metadata), /aggregateRating|reviewRating|customer count/i);
 });
 
