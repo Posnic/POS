@@ -856,6 +856,33 @@
                                         </label>
                                     </div>
 
+                                    <!--
+                                        Separate from the one above on purpose.
+                                        That decides whether a thing can be
+                                        ORDERED; this decides whether it is
+                                        LISTED. A restaurant lists the dish that
+                                        is off tonight, because a menu with
+                                        holes reads as a kitchen out of food.
+                                    -->
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_show_on_menu"
+                                            name="item_show_on_menu" checked>
+                                        <label class="custom-control-label" for="item_show_on_menu">
+                                            <lang class="lang_show_on_menu">Show on menu</lang>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label for="item_diet"><lang class="lang_diet_mark">Diet</lang></label>
+                                        <select class="form-control border-control" id="item_diet" name="item_diet">
+                                            <option value=""><lang class="lang_diet_unset">Not marked</lang></option>
+                                            <option value="veg"><lang class="lang_diet_veg">Vegetarian</lang></option>
+                                            <option value="non_veg"><lang class="lang_diet_non_veg">Non-vegetarian</lang></option>
+                                            <option value="egg"><lang class="lang_diet_egg">Contains egg</lang></option>
+                                            <option value="vegan"><lang class="lang_diet_vegan">Vegan</lang></option>
+                                        </select>
+                                    </div>
+
                                     <div class="form-group col-md-4">
                                         <input type="checkbox" class="custom-control-input" id="item_negative_stock"
                                             name="item_negative_stock">

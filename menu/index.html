@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#111827" />
+    <meta name="robots" content="index, follow" />
+    <title>Menu</title>
+
+    <!--
+        The whole stylesheet is inline, and deliberately.
+
+        This page is opened on a phone at a table, often on a bad connection,
+        and it has exactly one job: show the food quickly. A second request for
+        a stylesheet is a second chance to be slow, and the file is small enough
+        that inlining costs less than the round trip.
+
+        It is also why there is no framework here. A menu is a list.
+    -->
+    <style>
+      :root {
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --raised: #f9fafb;
+        --ink: #111827;
+        --ink-soft: #6b7280;
+        --line: #e5e7eb;
+        --accent: #111827;
+        --veg: #0f8a3d;
+        --non-veg: #b91c1c;
+        --egg: #b45309;
+        --radius: 12px;
+        --pad: 16px;
+      }
+
+      /*
+            Dark mode from the phone's own setting. A menu read across a dinner
+            table in the evening is the common case, and a white page at full
+            brightness is the thing people put face down.
+        */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b0f19;
+          --surface: #111827;
+          --raised: #1a2234;
+          --ink: #f3f4f6;
+          --ink-soft: #9ca3af;
+          --line: #263041;
+          --accent: #f3f4f6;
+          --veg: #34d27b;
+          --non-veg: #f87171;
+          --egg: #fbbf24;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Respect a reduced-motion preference: the only animation here is the
+           smooth scroll to a category, and for some people that is nausea. */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto !important;
+        }
+        * {
+          transition: none !important;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        html {
+          scroll-behavior: smooth;
+        }
+      }
+
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 var(--pad);
+      }
+
+      /* ---- masthead ------------------------------------------------- */
+
+      .masthead {
+        padding: 28px 0 16px;
+        text-align: center;
+      }
+
+      .shop-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto 10px;
+        display: block;
+        background: var(--raised);
+      }
+
+      .shop-name {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .shop-sub {
+        margin: 4px 0 0;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+
+      /* ---- the shop's own message (closed, opens at, menu only) ------ */
+
+      .notice {
+        margin: 12px 0 0;
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        background: var(--raised);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        font-size: 14px;
+        text-align: center;
+      }
+
+      /* ---- sticky controls ------------------------------------------ */
+
+      /*
+            Search and categories travel with the reader. On a long menu the
+            alternative is scrolling back to the top to change section, which is
+            what makes a digital menu worse than the paper one it replaced.
+        */
+      .controls {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        padding-top: 10px;
+      }
+
+      .search-row {
+        position: relative;
+        padding-bottom: 10px;
+      }
+
+      .search {
+        width: 100%;
+        padding: 12px 40px 12px 40px;
+        font-size: 16px; /* 16px or iOS zooms the whole page on focus */
+        color: var(--ink);
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        outline-offset: 2px;
+      }
+
+      .search::placeholder {
+        color: var(--ink-soft);
+      }
+
+      .search-icon,
+      .search-clear {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-top: -5px;
+        color: var(--ink-soft);
+        line-height: 1;
+      }
+
+      .search-icon {
+        left: 14px;
+        pointer-events: none;
+      }
+
+      .search-clear {
+        right: 8px;
+        border: 0;
+        background: transparent;
+        color: var(--ink-soft);
+        font-size: 22px;
+        padding: 4px 10px;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+
+      .search-clear[hidden] {
+        display: none;
+      }
+
+      .cats {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .cats::-webkit-scrollbar {
+        display: none;
+      }
+
+      .cat {
+        flex: 0 0 auto;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .cat[aria-current="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--bg);
+      }
+
+      /* ---- sections and dishes -------------------------------------- */
+
+      .section {
+        padding-top: 26px;
+      }
+
+      /* Clears the sticky bar when a category is jumped to, so the heading
+           does not land underneath it. */
+      .section > h2 {
+        scroll-margin-top: 118px;
+      }
+
+      .section h2 {
+        margin: 0 0 2px;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .section-count {
+        color: var(--ink-soft);
+        font-size: 13px;
+        margin: 0 0 10px;
+      }
+
+      .dishes {
+        display: grid;
+        gap: 10px;
+      }
+
+      @media (min-width: 720px) {
+        .dishes {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .dish {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        width: 100%;
+        padding: 12px;
+        text-align: left;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .dish:hover {
+        background: var(--raised);
+      }
+
+      .dish-body {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .dish-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+        font-size: 16px;
+      }
+
+      .dish-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dish-desc {
+        margin: 3px 0 0;
+        color: var(--ink-soft);
+        font-size: 14px;
+        /* Two lines on the card; the whole thing in the detail sheet. A
+               menu where every dish shows a paragraph cannot be scanned. */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .dish-price {
+        margin: 6px 0 0;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .dish-thumb {
+        flex: 0 0 auto;
+        width: 76px;
+        height: 76px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: var(--raised);
+      }
+
+      .dish[data-available="false"] {
+        opacity: 0.62;
+      }
+
+      .off-today {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: var(--raised);
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        font-size: 12px;
+      }
+
+      /* ---- the dot --------------------------------------------------
+            Indian menus mark this by law and customers look for it before
+            they read the name. A square outline with a filled circle is the
+            shape people already recognise, so it is drawn rather than named.
+        */
+      .diet {
+        flex: 0 0 auto;
+        width: 14px;
+        height: 14px;
+        border: 1.5px solid currentColor;
+        border-radius: 3px;
+        display: inline-grid;
+        place-items: center;
+      }
+
+      .diet::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .diet-veg {
+        color: var(--veg);
+      }
+      .diet-non_veg {
+        color: var(--non-veg);
+      }
+      .diet-egg {
+        color: var(--egg);
+      }
+      .diet-vegan {
+        color: var(--veg);
+        border-radius: 50%;
+      }
+
+      /* ---- states ---------------------------------------------------- */
+
+      .state {
+        padding: 64px 20px;
+        text-align: center;
+        color: var(--ink-soft);
+      }
+
+      .state strong {
+        display: block;
+        color: var(--ink);
+        font-size: 17px;
+        margin-bottom: 4px;
+      }
+
+      .foot {
+        padding: 40px 0 32px;
+        text-align: center;
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      /* ---- detail sheet ---------------------------------------------- */
+
+      dialog.sheet {
+        width: min(520px, 100%);
+        margin: auto auto 0;
+        padding: 0;
+        border: 0;
+        background: var(--surface);
+        color: var(--ink);
+        border-radius: 16px 16px 0 0;
+      }
+
+      @media (min-width: 720px) {
+        dialog.sheet {
+          margin: auto;
+          border-radius: 16px;
+        }
+      }
+
+      dialog.sheet::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .sheet-img {
+        width: 100%;
+        max-height: 260px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .sheet-body {
+        padding: 18px 20px 24px;
+      }
+
+      .sheet-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .sheet-desc {
+        margin: 10px 0 0;
+        color: var(--ink-soft);
+        font-size: 15px;
+        white-space: pre-line;
+      }
+
+      .sheet-price {
+        margin: 14px 0 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .sheet-close {
+        margin: 18px 0 0;
+        width: 100%;
+        padding: 12px;
+        font: inherit;
+        font-weight: 600;
+        color: var(--bg);
+        background: var(--accent);
+        border: 0;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header class="masthead">
+        <img id="shop-logo" class="shop-logo" alt="" hidden />
+        <h1 id="shop-name" class="shop-name">Menu</h1>
+        <p id="shop-sub" class="shop-sub" hidden></p>
+        <p id="notice" class="notice" role="status" hidden></p>
+      </header>
+    </div>
+
+    <div id="controls" class="controls" hidden>
+      <div class="wrap">
+        <div class="search-row">
+          <span class="search-icon" aria-hidden="true">&#9906;</span>
+          <label class="search-label" for="search" hidden
+            >Search the menu</label
+          >
+          <input
+            id="search"
+            class="search"
+            type="search"
+            autocomplete="off"
+            placeholder="Search dishes"
+          />
+          <button
+            id="search-clear"
+            class="search-clear"
+            type="button"
+            hidden
+            aria-label="Clear search"
+          >
+            &times;
+          </button>
+        </div>
+        <nav id="cats" class="cats" aria-label="Menu sections"></nav>
+      </div>
+    </div>
+
+    <main class="wrap">
+      <!-- Announced to a screen reader when a search changes what is shown;
+             a sighted reader sees the list change, and this is the equivalent. -->
+      <p
+        id="result-count"
+        class="state"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></p>
+      <div id="menu"></div>
+      <div id="state" class="state">
+        <strong>Loading the menu</strong>
+        One moment.
+      </div>
+    </main>
+
+    <p class="foot" id="foot" hidden></p>
+
+    <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+      <img id="sheet-img" class="sheet-img" alt="" hidden />
+      <div class="sheet-body">
+        <div class="sheet-title">
+          <span id="sheet-diet"></span><span id="sheet-title"></span>
+        </div>
+        <p id="sheet-desc" class="sheet-desc" hidden></p>
+        <p id="sheet-price" class="sheet-price"></p>
+        <button id="sheet-close" class="sheet-close" type="button">
+          Close
+        </button>
+      </div>
+    </dialog>
+
+    <script src="config.js"></script>
+    <script src="menu.js"></script>
+  </body>
+</html>

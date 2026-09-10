@@ -32,6 +32,30 @@ const itemSchema = new mongoose.Schema(
     track_inventory: { type: Boolean, default: false },
     negative_stock: { type: Boolean, default: false },
     image: { type: String, trim: true },
+
+    /*
+     * Whether this appears on the shop's public menu.
+     *
+     * SEPARATE FROM `ecommerce`, which decides whether a thing can be ordered.
+     * A restaurant's menu is not its ordering catalogue: a dish can be listed
+     * and not sold - market price, or off tonight - and the menu should still
+     * say what the kitchen cooks. So this defaults to true and a shop excludes
+     * the few lines that are not dishes: packaging, staff meals, the "misc"
+     * entry every till accumulates.
+     */
+    show_on_menu: { type: Boolean, default: true },
+
+    /*
+     * The dot. `veg`, `non_veg`, `egg`, `vegan`, or empty for "not said".
+     *
+     * Not decoration. Indian menus mark this by law and customers look for it
+     * before they read the name; a menu without it is not one an Indian
+     * restaurant can put on a table. Elsewhere it reads as the dietary marking
+     * a good menu carries anyway. Empty is honest, and better than a wrong
+     * mark on a dish somebody cannot eat.
+     */
+    diet: { type: String, trim: true, default: '' },
+
     license: { type: mongoose.Schema.Types.ObjectId, ref: 'License' },
     is_active: { type: Boolean, default: true },
   },
@@ -120,6 +144,8 @@ class ItemModel {
     unit_id: { type: 'String', select: true },
     track_inventory: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
+    show_on_menu: { type: 'Boolean', select: true },
+    diet: { type: 'String', select: true },
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },
     sort_order: { type: 'Number', select: true },

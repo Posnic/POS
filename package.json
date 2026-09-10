@@ -304,6 +304,14 @@
         ]
       },
       {
+        "from": "menu",
+        "to": "menu",
+        "filter": [
+          "**/*",
+          "!**/*.md"
+        ]
+      },
+      {
         "from": "frontend",
         "to": "frontend",
         "filter": [

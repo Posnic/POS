@@ -744,6 +744,8 @@ PosnicPro.items = {
             cover_image: $('#item_logo').val(),
             inventory: $('#item_track_inventory').is(':checked'),
             ecommerce: $('#item_ecommerce').is(':checked'),
+            show_on_menu: $('#item_show_on_menu').is(':checked'),
+            diet: String($('#item_diet').val() || ''),
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
@@ -1013,6 +1015,8 @@ PosnicPro.items = {
                     cover_image: $('#item_logo').val(),
                     inventory: $('#item_track_inventory').is(':checked'),
                     ecommerce: $('#item_ecommerce').is(':checked'),
+                    show_on_menu: $('#item_show_on_menu').is(':checked'),
+                    diet: String($('#item_diet').val() || ''),
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
@@ -1553,6 +1557,10 @@ PosnicPro.items = {
                 }
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
+                /* Absent means shown: an item saved before this field existed
+                   belongs on the menu, which is what a menu is for. */
+                $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
+                $('#item_diet').val(data.diet || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
@@ -2205,6 +2213,10 @@ PosnicPro.items = {
                 }
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
+                /* Absent means shown: an item saved before this field existed
+                   belongs on the menu, which is what a menu is for. */
+                $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
+                $('#item_diet').val(data.diet || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);

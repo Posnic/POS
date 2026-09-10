@@ -1509,22 +1509,32 @@ app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCac
  * had to wipe its catalogue whenever it noticed a different branch. A customer
  * who ordered at two Posnic shops collided with themselves.
  *
- * Two paths, one bundle. `/order` is the canonical one. `/menu` exists so a
- * shop that takes orders can still print a browse-only code for a window
- * display: the page treats that path as a request to hide the cart. It can
- * only narrow, never grant, and the server decides either way - qrOrder
- * refuses on the shop's settings, not on which URL the customer arrived by.
+ * TWO PAGES, NOT ONE BUNDLE WEARING TWO NAMES.
+ *
+ * `/menu` used to be `/order` with the cart hidden. That is a worse menu than
+ * the paper it replaces: it carries 1,500 lines of IndexedDB, a cart and two
+ * payment integrations to render a list of dishes, and it reads as a shop
+ * that has taken its ordering away rather than as a menu.
+ *
+ * So they are separate bundles with separate jobs. `/order` transacts.
+ * `/menu` is read-only: what the kitchen cooks, searchable, by category, with
+ * the veg mark, and nothing on it that starts an order. A shop with ordering
+ * switched on can still print a `/menu` code for its window; a shop in menu
+ * mode has only ever needed this one.
  *
  * Mounted BEFORE the root API router, which answers `/items/...` and friends,
  * because that router is mounted at '/' and would otherwise see these paths
  * first. express.static redirects `/order` to `/order/` on its own, which is
- * what makes the bundle's relative asset paths resolve.
+ * what makes each bundle's relative asset paths resolve.
  */
 const ORDER_BUNDLE = path.join(__dirname, '..', 'order');
+const MENU_BUNDLE = path.join(__dirname, '..', 'menu');
+if (fs.existsSync(MENU_BUNDLE)) {
+  app.use('/menu', express.static(MENU_BUNDLE, { setHeaders: assetCacheHeaders }));
+}
 if (fs.existsSync(ORDER_BUNDLE)) {
   const orderStatic = express.static(ORDER_BUNDLE, { setHeaders: assetCacheHeaders });
   app.use('/order', orderStatic);
-  app.use('/menu', orderStatic);
 
   /*
    * `/order/AZ100` - the store address as a path segment rather than a query
@@ -1548,7 +1558,16 @@ if (fs.existsSync(ORDER_BUNDLE)) {
     return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
   };
   app.use('/order', serveOrderPage);
-  app.use('/menu', serveOrderPage);
+}
+
+/* `/menu/AZ100`, for the same reason and with the same guard: a path segment
+   express.static has no file for, and only one shaped like a store address. */
+if (fs.existsSync(MENU_BUNDLE)) {
+  const STORE_ADDRESS = /^\/[A-Za-z0-9]{3,6}$/;
+  app.use('/menu', (req, res, next) => {
+    if (!STORE_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(MENU_BUNDLE, 'index.html'));
+  });
 }
 
 // Also mount API routes at root for backward compatibility

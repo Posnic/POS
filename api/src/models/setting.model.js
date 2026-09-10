@@ -4771,6 +4771,17 @@ class SettingModel extends BaseModel {
        * the only field on it and matters a great deal now that the mode, the
        * pause and the opening hours are saved through the same door.
        */
+      if (data.store_id && !onlineOrdering.storeIdIsAvailable(data.store_id)) {
+        /* A word this resource already uses for one of its own paths. The
+           clash is invisible until the one shop that chose it cannot be
+           reached, so it is refused at the point of choosing. */
+        return {
+          status: false,
+          data: null,
+          message: 'That store address is reserved. Please choose another.',
+        };
+      }
+
       if (data.store_id) {
         const exists = await collection.findOne({
           _id: { $ne: this.normalizeId(this.branchId) },

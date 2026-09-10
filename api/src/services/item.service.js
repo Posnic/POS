@@ -767,6 +767,16 @@ class ItemService {
     }
   }
 
+  /** The shop's public menu, for reading rather than ordering. */
+  async publicMenu(params = {}) {
+    try {
+      return await this.repository.publicMenu(params);
+    } catch (error) {
+      console.error('Error in ItemService.publicMenu:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async storefront(params = {}) {
     try {
       const result = await this.repository.storefront(params);

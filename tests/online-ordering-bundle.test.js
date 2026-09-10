@@ -396,3 +396,111 @@ test('a plain /order resolves to one branch, and refuses to guess between severa
     "'/' must be declared before '/:storeId', or the default lookup 404s as a shop named ''"
   );
 });
+
+test('the menu is its own bundle, not the ordering page with the cart hidden', () => {
+  /*
+   * `/menu` used to be `/order` with a class on <html>. That drags 1,500 lines
+   * of IndexedDB, a cart and two payment integrations along to render a list of
+   * dishes, and it reads as a shop that has taken its ordering away rather than
+   * as a menu.
+   */
+  const MENU = path.join(ROOT, 'menu');
+  for (const f of ['index.html', 'menu.js', 'config.js']) {
+    assert.ok(fs.existsSync(path.join(MENU, f)), `menu/${f} is missing`);
+  }
+
+  const js = fs.readFileSync(path.join(MENU, 'menu.js'), 'utf8');
+  const html = fs.readFileSync(path.join(MENU, 'index.html'), 'utf8');
+
+  /*
+   * Read-only means read-only. Nothing here may start an order.
+   *
+   * Comments stripped first. The file opens by explaining that it has no cart,
+   * and a check that cannot tell code from prose reads its own documentation as
+   * the violation - which has happened three times in this suite now, so it is
+   * worth fixing properly rather than rewording the comment.
+   */
+  const code = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  for (const forbidden of ['addToCart', 'checkout', 'cart', 'razorpay', 'phonepe']) {
+    assert.ok(
+      !code.toLowerCase().includes(forbidden.toLowerCase()),
+      `menu.js has ${forbidden} in its code; the menu must not be able to order`
+    );
+  }
+  assert.ok(!code.includes('indexedDB'), 'the menu should not carry a database');
+
+  /* And it must not quietly become the order bundle again. */
+  const app = fs.readFileSync(APP_JS, 'utf8');
+  assert.ok(
+    !app.includes("app.use('/menu', orderStatic)"),
+    '/menu is being served the ordering bundle again'
+  );
+  assert.match(app, /app\.use\('\/menu', express\.static\(MENU_BUNDLE/);
+
+  /* The things that make it a good menu rather than a list. */
+  assert.match(html, /type="search"/, 'the menu lost its search box');
+  assert.match(js, /IntersectionObserver/, 'the category chips no longer follow the reader');
+  assert.match(js, /diet-/, 'the veg mark is gone');
+  assert.match(html, /prefers-color-scheme/, 'dark mode is gone');
+  assert.match(html, /aria-live/, 'the search result count is no longer announced');
+});
+
+test('the menu bundle ships with the packaged desktop app', () => {
+  /* The community edition is the whole reason this lives in POS rather than a
+     repo of its own. A self-hoster gets it at localhost/menu or not at all. */
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const entry = (pkg.build.extraResources || []).find((e) => e && e.from === 'menu');
+  assert.ok(entry, 'package.json build.extraResources has no entry for the menu bundle');
+  assert.strictEqual(entry.to, 'menu');
+});
+
+test('a shop cannot take a store address this resource already uses', () => {
+  /*
+   * A store address is 3-6 alphanumerics sitting directly under
+   * /online-ordering/, which is where this resource's own sub-paths live. A
+   * shop that chose `menu` would answer its own menu route. The clash is
+   * invisible until that one shop cannot be reached.
+   */
+  const { storeIdIsAvailable, RESERVED_STORE_IDS } = require('../api/src/utils/online-ordering');
+  assert.ok(RESERVED_STORE_IDS.includes('menu'), 'menu is no longer reserved');
+  assert.strictEqual(storeIdIsAvailable('menu'), false);
+  assert.strictEqual(storeIdIsAvailable('MENU'), false, 'the check must not be case sensitive');
+  assert.strictEqual(storeIdIsAvailable('AZ100'), true);
+
+  const routes = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'routes', 'online-ordering.routes.js'),
+    'utf8'
+  );
+  assert.ok(
+    routes.indexOf("router.get('/menu'") < routes.indexOf("router.get('/:storeId'"),
+    "'/menu' must be declared before '/:storeId' or a store address swallows it"
+  );
+
+  const model = fs.readFileSync(path.join(ROOT, 'api', 'src', 'models', 'setting.model.js'), 'utf8');
+  assert.match(
+    model,
+    /storeIdIsAvailable/,
+    'the save path no longer refuses a reserved store address'
+  );
+});
+
+test('the menu lists what the kitchen cooks, not what is orderable', () => {
+  /*
+   * The two are different documents. A restaurant lists the dish that is off
+   * tonight; a menu with holes in it reads as a kitchen that has run out.
+   */
+  const repo = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'repositories', 'item.repository.js'),
+    'utf8'
+  );
+  const at = repo.indexOf('async publicMenu');
+  const end = repo.indexOf('async storefront');
+  assert.ok(at !== -1 && end > at, 'publicMenu has gone or moved after storefront');
+  const body = repo.slice(at, end);
+
+  assert.match(body, /show_on_menu: \{ \$ne: false \}/, 'the menu no longer filters on show_on_menu');
+  assert.ok(
+    !body.includes('ecommerce: true'),
+    'the menu is filtering on orderability, which hides dishes that are merely off today'
+  );
+});

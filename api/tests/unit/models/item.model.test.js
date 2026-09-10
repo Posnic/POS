@@ -786,7 +786,7 @@ describe('Item.LegacyItemModel › class identity', () => {
     // + gtin/gtin14 (PIM1: the GLOBAL identifier, kept apart from barcode_id
     // because that one may hold an in-store code or free text - see
     // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(65);
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(67);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
@@ -835,6 +835,8 @@ describe('Item.LegacyItemModel › fields — publicly selectable fields (select
     'unit_id',
     'track_inventory',
     'ecommerce',
+    'show_on_menu',
+    'diet',
     'isAvailable',
     'negative_stock',
     'sort_order',
@@ -916,6 +918,8 @@ describe('Item.LegacyItemModel › fields — type definitions', () => {
   test.each([
     ['track_inventory', 'Boolean'],
     ['ecommerce', 'Boolean'],
+    ['show_on_menu', 'Boolean'],
+    ['diet', 'String'],
     ['isAvailable', 'Boolean'],
     ['negative_stock', 'Boolean'],
   ])('field "%s" has type "Boolean"', (field, type) => {

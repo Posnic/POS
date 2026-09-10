@@ -53,6 +53,20 @@ router.get('/', bind(controller.defaultStorefront));
  * openable in a browser. The old shape was a POST carrying the store id in a
  * JSON body, which meant a customer's menu could not be a URL.
  */
+/*
+ * The public menu: what the kitchen cooks, for reading.
+ *
+ * A different document from the storefront above, which answers with what can
+ * be ordered right now. A menu lists the dish that is off tonight too, because
+ * a menu with holes in it reads as a kitchen that has run out of food.
+ *
+ * Both forms declared BEFORE `/:storeId`. `menu` is a legal-looking store
+ * address, so without the ordering here a shop could never reach its own menu -
+ * and `menu` is refused as a store address for the same reason.
+ */
+router.get('/menu', bind(controller.defaultMenu));
+router.get('/:storeId/menu', bind(controller.menu));
+
 router.get('/:storeId', bind(controller.storefront));
 
 /*

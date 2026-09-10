@@ -122,6 +122,42 @@ class OnlineOrderingController {
     }
   }
 
+  /**
+   * The public menu for one branch.
+   *
+   * Answers whether or not the shop is taking orders, because a menu is worth
+   * reading either way - and a customer standing outside a closed restaurant
+   * looking at what it serves is the whole point of putting one online.
+   */
+  async menu(req, res) {
+    try {
+      const result = await itemService.publicMenu({ storeId: req.params.storeId });
+      return this.respond(res, result);
+    } catch (error) {
+      console.error('Error in online ordering menu:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /** The same, for a `/menu` URL that names no branch. */
+  async defaultMenu(req, res) {
+    try {
+      const { storeId, reason } = await itemService.defaultStoreId();
+      if (!storeId) {
+        const message =
+          reason === 'ambiguous'
+            ? 'This shop has several branches. Please use the link or code for the one you want.'
+            : 'This shop has not published a menu yet.';
+        return res.status(404).json({ type: 'error', message, data: { reason } });
+      }
+      const result = await itemService.publicMenu({ storeId });
+      return this.respond(res, result);
+    } catch (error) {
+      console.error('Error in online ordering defaultMenu:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async createOrder(req, res) {
     try {
       /*

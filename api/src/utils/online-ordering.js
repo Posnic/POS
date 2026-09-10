@@ -153,6 +153,39 @@ function hasStoreId(config) {
   return !!(config && String(config.store_id || '').trim());
 }
 
+/*
+ * Store addresses a shop may not choose.
+ *
+ * A store address is 3 to 6 letters or numbers and sits directly under
+ * `/online-ordering/`, which is also where this resource's own sub-paths live.
+ * A shop that picked `menu` would answer its own menu route; one that picked
+ * `order` would sit where the ordering page is served. The collision is
+ * invisible until the one shop that chose that word cannot be reached, so the
+ * words are refused at the point of choosing instead.
+ *
+ * Kept deliberately short. Reserving half the dictionary to guard against
+ * routes that do not exist is its own kind of trap.
+ */
+const RESERVED_STORE_IDS = Object.freeze([
+  'menu',
+  'order',
+  'orders',
+  'device',
+  'api',
+  'admin',
+  'public',
+  'static',
+  'null',
+]);
+
+/** Is this a store address a shop is allowed to take? */
+function storeIdIsAvailable(value) {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
+  return !!v && !RESERVED_STORE_IDS.includes(v);
+}
+
 /**
  * order or menu.
  *
@@ -483,6 +516,8 @@ module.exports = {
   isOpenAt,
   storefront,
   hasStoreId,
+  RESERVED_STORE_IDS,
+  storeIdIsAvailable,
   nextOpeningFrom,
   normalizeFulfilment,
   normalizeHours,

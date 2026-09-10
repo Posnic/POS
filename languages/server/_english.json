@@ -1825,6 +1825,9 @@
   "That shop has no items yet": [
     "src/services/catalogue-copy.js"
   ],
+  "That store address is reserved. Please choose another.": [
+    "src/models/setting.model.js"
+  ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
   ],

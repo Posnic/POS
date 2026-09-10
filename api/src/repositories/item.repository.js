@@ -5,6 +5,22 @@ const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
 const onlineOrdering = require('../utils/online-ordering');
+
+/*
+ * The diet mark, or nothing.
+ *
+ * Only the four words the menu knows how to draw. Anything else is stored as
+ * empty rather than passed through: an unknown value renders as no mark at
+ * all, and a dish that LOOKS unmarked because of a typo is worse than one that
+ * is honestly unmarked - somebody with an allergy reads both the same way.
+ */
+const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const onlineOrderingDiet = (value) => {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
+  return DIET_MARKS.includes(v) ? v : '';
+};
 const {
   DEFAULTS,
   ITEM_STATUS,
@@ -1549,6 +1565,11 @@ class ItemRepository extends BaseModel {
         description: (data.description || '').trim(),
         track_inventory: Boolean(data.inventory),
         ecommerce: Boolean(data.ecommerce),
+        /* Absent means shown. A menu whose default is "hidden" starts empty
+           and stays empty until somebody ticks every dish, which is not a
+           default anybody wants from a feature whose job is to list things. */
+        show_on_menu: data.show_on_menu !== false && data.show_on_menu !== 'false',
+        diet: onlineOrderingDiet(data.diet),
         isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
@@ -3359,6 +3380,132 @@ class ItemRepository extends BaseModel {
        customer the wrong branch's menu, prices and opening hours is worse
        than telling them the address is incomplete. */
     return { storeId: null, reason: 'ambiguous' };
+  }
+  /**
+   * The shop's public menu: what the kitchen cooks, for reading.
+   *
+   * NOT THE ORDERING CATALOGUE, and the difference is the point.
+   *
+   * `storefront` above answers with what can be ordered right now: items ticked
+   * for the online channel and currently available. A menu is a different
+   * document. A restaurant lists what it cooks, including the dish that is off
+   * tonight and the one priced at market rate, because a menu with holes in it
+   * reads as a restaurant that has run out of food.
+   *
+   * So this filters on `show_on_menu`, which defaults to true, and a shop
+   * excludes the handful of lines that are not dishes rather than opting each
+   * dish in one at a time.
+   *
+   * Sorted by the shop's own `sort_order` and then by name, so a menu reads in
+   * the order the shop arranged it rather than the order Mongo happened to
+   * return.
+   */
+  async publicMenu(params = {}) {
+    const storeId = params.storeId;
+    try {
+      const branchCollection = await this.getCollection('branches');
+      const branchDoc = await branchCollection.findOne({
+        'online_ordering.store_id': storeId,
+      });
+
+      if (!branchDoc) {
+        return { status: false, message: 'No shop found at this address', data: null };
+      }
+
+      const config = onlineOrdering.storefront(branchDoc);
+      const collection = await this.getCollection(this.collectionName);
+
+      const match = {
+        $and: [
+          { 'branch_access.branch_id': branchDoc._id },
+          { item_status: { $ne: ITEM_STATUS.INSTANT } },
+          { license: branchDoc.license },
+          { del_status: { $nin: [1, '1', true] } },
+          { is_deleted: { $ne: true } },
+          /* Absent means shown. A shop that has never opened this screen still
+             gets a complete menu, which is the only sensible default for a
+             feature whose whole job is to list things. */
+          { show_on_menu: { $ne: false } },
+        ],
+      };
+
+      const rows = await collection
+        .find(match, {
+          projection: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            image: 1,
+            selling_price: 1,
+            discount_amount: 1,
+            discount_percentage: 1,
+            category_id: 1,
+            category_name: 1,
+            sort_order: 1,
+            diet: 1,
+            isAvailable: 1,
+            ecommerce: 1,
+          },
+        })
+        .sort({ sort_order: 1, name: 1 })
+        .toArray();
+
+      /* Grouped here rather than on the page: the page should render what it
+         is given, and the grouping is the same work whoever does it. */
+      const byCategory = new Map();
+      for (const row of rows) {
+        const key = String(row.category_id || 'uncategorised');
+        if (!byCategory.has(key)) {
+          byCategory.set(key, {
+            id: key,
+            name: row.category_name || '',
+            items: [],
+          });
+        }
+        byCategory.get(key).items.push({
+          id: String(row._id),
+          name: row.name || '',
+          description: row.description || '',
+          image: row.image || '',
+          price: Number(row.selling_price) || 0,
+          diet: String(row.diet || ''),
+          /* Shown on the menu but not orderable right now. The page says so
+             rather than hiding the dish, because "we have it, not tonight" is
+             information a customer wants. */
+          available: row.isAvailable !== false,
+        });
+      }
+
+      /* A category with no visible items is not a heading worth printing. */
+      const categories = [...byCategory.values()].filter((c) => c.items.length);
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          store: {
+            store_id: config?.store_id || '',
+            name: branchDoc.branch_name || branchDoc.name || '',
+            logo: config?.logo || '',
+            banner: config?.banner || '',
+            /* The shop's own currency symbol. Hardcoding a rupee sign is how
+               a menu in Nairobi prices its food in the wrong money. */
+            currency: branchDoc.currency_text || branchDoc.currency || '',
+          },
+          /* The channel state travels with the menu so the page can say "opens
+             at 6" without a second request, and so a shop that also takes
+             orders can offer that link from here. */
+          channel: onlineOrdering.channelState(config, {
+            timeZone: branchDoc.time_zone,
+          }),
+          categories,
+          item_count: rows.length,
+        },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.publicMenu:', error);
+      return { status: false, message: error.message, data: null };
+    }
   }
 
   async storefront(params = {}) {

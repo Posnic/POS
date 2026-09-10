@@ -82,6 +82,10 @@ const ALLOWED_ANONYMOUS = {
      * shop's own equipment needs, and it sits behind ensureKioskKey.
      */
     '/', '/:storeId', '/:storeId/orders',
+    /* The public menu, read-only and anonymous for the same reason: it is the
+       thing a customer reads at a table. It exposes dish names, descriptions
+       and prices - what the shop already prints on paper and hands out. */
+    '/menu', '/:storeId/menu',
   ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
