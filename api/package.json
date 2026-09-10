@@ -69,7 +69,7 @@
     "mongoose-paginate-v2": "^1.9.5",
     "morgan": "^1.12.0",
     "multer": "^2.3.0",
-    "nodemailer": "^9.0.6",
+    "nodemailer": "^9.1.1",
     "pdfkit": "^0.20.1",
     "pug": "^3.0.4",
     "qrcode": "^1.5.4",
@@ -112,6 +112,7 @@
       "uuid": "^11.1.1"
     },
     "deepmerge-ts": "^8.0.0",
-    "qs": "^6.16.0"
+    "qs": "^6.16.0",
+    "js-yaml": "^4.3.2"
   }
 }
