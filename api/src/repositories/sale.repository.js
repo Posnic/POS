@@ -7863,7 +7863,11 @@ class SalesRepository {
       /* An amended table order needs a fresh ticket in the kitchen just as much
          as a new one does, and the same event carries it. */
       if (updateResult.modifiedCount > 0) {
-        notifyKotReady({ branchId: String(updateFields.branch_id || orderDoc?.branch_id || ''), saleId: String(orderId), reason: 'updated' });
+        notifyKotReady({
+          branchId: String(updateFields.branch_id || orderDoc?.branch_id || ''),
+          saleId: String(orderId),
+          reason: 'updated',
+        });
       }
 
       return updateResult.modifiedCount > 0
