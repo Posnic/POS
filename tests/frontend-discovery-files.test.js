@@ -32,18 +32,18 @@ test('frontend source carries machine-readable discovery files for the app domai
   const robots = read(FRONTEND, 'robots.txt');
   assert.match(robots, /^User-agent: \*/m);
   assert.match(robots, /^Allow: \/$/m);
-  assert.match(robots, /^Sitemap: https:\/\/www\.posnic\.io\/sitemap\.xml$/m);
+  assert.match(robots, /^Sitemap: https:\/\/www\.posnic\.com\/sitemap\.xml$/m);
 
   const sitemap = read(FRONTEND, 'sitemap.xml');
   assert.match(sitemap, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
   assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
-  assert.match(sitemap, /<loc>https:\/\/www\.posnic\.io\/<\/loc>/);
-  assert.match(sitemap, /<loc>https:\/\/www\.posnic\.io\/login\.html<\/loc>/);
-  assert.doesNotMatch(sitemap, /<loc>https:\/\/posnic\.com\//);
+  assert.match(sitemap, /<loc>https:\/\/www\.posnic\.com\/<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/www\.posnic\.com\/login\.html<\/loc>/);
+  assert.doesNotMatch(sitemap, /<loc>https:\/\/(?:www\.)?posnic\.io\//);
 
   const llms = read(FRONTEND, 'llms.txt');
   assert.match(llms, /^# Posnic POS$/m);
-  assert.match(llms, /^Canonical app domain: https:\/\/posnic\.io\/$/m);
+  assert.match(llms, /^Canonical website: https:\/\/www\.posnic\.com\/$/m);
   assert.match(llms, /^Preferred backlink target: https:\/\/www\.posnic\.com\/$/m);
   assert.match(llms, /^Official GitHub source: https:\/\/github\.com\/Posnic\/POS$/m);
   assert.match(llms, /POS; Billing Software; Offline POS; Online\/Offline POS; open source POS/);
@@ -68,11 +68,11 @@ test('public app entry pages expose canonical POS metadata', () => {
     assert.match(html, new RegExp(`<meta name="description" content="${POSNIC_SEO_DESCRIPTION}">`));
     assert.match(html, new RegExp(`<meta name="keywords" content="${keywordContent}">`));
     assert.match(html, /<meta name="robots" content="index, follow">/);
-    assert.match(html, /<link rel="canonical" href="https:\/\/www\.posnic\.io\/">/);
+    assert.match(html, /<link rel="canonical" href="https:\/\/www\.posnic\.com\/">/);
   }
 
   assert.match(login, /<meta property="og:title" content="Posnic POS - Offline POS & Billing Software">/);
-  assert.match(login, /<meta property="og:url" content="https:\/\/www\.posnic\.io\/">/);
+  assert.match(login, /<meta property="og:url" content="https:\/\/www\.posnic\.com\/">/);
   assert.match(login, /<meta name="twitter:card" content="summary">/);
   assert.match(login, /<meta name="twitter:title" content="Posnic POS - Offline POS & Billing Software">/);
 
@@ -80,7 +80,7 @@ test('public app entry pages expose canonical POS metadata', () => {
   assert.equal(softwareSchema['@context'], 'https://schema.org');
   assert.equal(softwareSchema['@type'], 'SoftwareApplication');
   assert.equal(softwareSchema.name, 'Posnic POS');
-  assert.equal(softwareSchema.url, 'https://www.posnic.io/');
+  assert.equal(softwareSchema.url, 'https://www.posnic.com/');
   assert.equal(softwareSchema.codeRepository, 'https://github.com/Posnic/POS');
   assert.equal(softwareSchema.applicationCategory, 'BusinessApplication');
   assert.equal(softwareSchema.softwareVersion, '1.6.1');
