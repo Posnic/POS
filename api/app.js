@@ -1525,6 +1525,30 @@ if (fs.existsSync(ORDER_BUNDLE)) {
   const orderStatic = express.static(ORDER_BUNDLE, { setHeaders: assetCacheHeaders });
   app.use('/order', orderStatic);
   app.use('/menu', orderStatic);
+
+  /*
+   * `/order/AZ100` - the store address as a path segment rather than a query
+   * string.
+   *
+   * express.static answers 404 for it, because there is no file of that name,
+   * so the page has to be served for anything under these paths that is not a
+   * real asset. The page then reads the address out of its own URL.
+   *
+   * Only a single segment, and only one that looks like a store address, so
+   * this cannot become a catch-all that swallows a genuinely missing asset and
+   * answers HTML where a script was expected - which fails in the browser as
+   * a syntax error and sends whoever debugs it looking in the wrong place.
+   *
+   * A relative asset path still resolves: from `/order/AZ100` the browser
+   * treats the last segment as a file, so `assets/x` is `/order/assets/x`.
+   */
+  const STORE_ADDRESS = /^\/[A-Za-z0-9]{3,6}$/;
+  const serveOrderPage = (req, res, next) => {
+    if (!STORE_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
+  };
+  app.use('/order', serveOrderPage);
+  app.use('/menu', serveOrderPage);
 }
 
 // Also mount API routes at root for backward compatibility

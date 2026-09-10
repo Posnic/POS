@@ -3310,6 +3310,57 @@ class ItemRepository extends BaseModel {
    * with a second, narrower shape. Nothing sent it. It is gone rather than
    * carried.
    */
+  /**
+   * Which branch a storefront URL with no store address means.
+   *
+   * Most shops have one branch, and making every one of them print a code -
+   * in a URL and inside a QR code - to say which of their single branch they
+   * mean is friction paid by the many for the sake of the few. So `/order`
+   * resolves here, and only a shop with several branches has to be explicit.
+   *
+   * ORDER MATTERS. A setting the shop actually made beats anything inferred,
+   * because inference is a convenience and being overruled by a guess is how
+   * a chain ends up serving its second branch's menu at its main address.
+   *
+   * @returns {{storeId: string|null, reason: string}}
+   */
+  async defaultStoreId() {
+    const branchCollection = await this.getCollection('branches');
+    const configured = await branchCollection
+      .find(
+        { 'online_ordering.store_id': { $nin: [null, ''] } },
+        { projection: { _id: 1, branch_name: 1, 'online_ordering.store_id': 1 } }
+      )
+      .toArray();
+
+    if (!configured.length) return { storeId: null, reason: 'none_configured' };
+
+    /* 1. What the shop chose. */
+    try {
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ online_ordering_default_store: { $nin: [null, ''] } });
+      const chosen = doc && String(doc.online_ordering_default_store).trim();
+      if (chosen && configured.some((b) => String(b.online_ordering?.store_id) === chosen)) {
+        return { storeId: chosen, reason: 'configured' };
+      }
+    } catch (e) {
+      /* No settings document yet is not an error - a new shop has none - so
+         fall through to the single-branch case, which is what it will be. */
+      console.warn('[storefront] could not read the default store setting:', e.message);
+    }
+
+    /* 2. Only one branch takes online orders, so there is nothing ambiguous
+       to resolve. */
+    if (configured.length === 1) {
+      return { storeId: String(configured[0].online_ordering.store_id), reason: 'only_one' };
+    }
+
+    /* 3. Several, and nobody said which. Refusing beats picking: showing a
+       customer the wrong branch's menu, prices and opening hours is worse
+       than telling them the address is incomplete. */
+    return { storeId: null, reason: 'ambiguous' };
+  }
+
   async storefront(params = {}) {
     const storeId = params.storeId;
     try {

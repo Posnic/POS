@@ -479,7 +479,7 @@ class ItemService {
         variant_value: String(row.variant_value || '').trim(),
         variant_parent_name: parentName,
       };
-       
+
       const result = await this.addItem({ data: payload, branchId, licenseId, user });
       const newId =
         result &&
@@ -487,7 +487,6 @@ class ItemService {
         result.data &&
         (result.data._id || result.data.id || result.data);
       if (!result || !result.status || !newId) {
-         
         await this.repository
           .hardDeleteItems(created, { licenseId })
           .catch((e) => console.error('Family rollback failed:', e.message));
@@ -755,6 +754,16 @@ class ItemService {
         data: null,
         message: error.message,
       };
+    }
+  }
+
+  /** Which branch `/order` with no store address means. */
+  async defaultStoreId() {
+    try {
+      return await this.repository.defaultStoreId();
+    } catch (error) {
+      console.error('Error in ItemService.defaultStoreId:', error);
+      return { storeId: null, reason: 'error' };
     }
   }
 

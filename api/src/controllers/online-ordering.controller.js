@@ -77,6 +77,34 @@ class OnlineOrderingController {
     }
   }
 
+  /**
+   * The storefront a URL with no store address means.
+   *
+   * The two failures are told apart on purpose, because they need different
+   * words in front of a customer and different actions from the shop: a shop
+   * that has never set up online ordering is not the same as a chain that has
+   * several branches and has not said which one this address belongs to.
+   */
+  async defaultStorefront(req, res) {
+    try {
+      const { storeId, reason } = await itemService.defaultStoreId();
+
+      if (!storeId) {
+        const message =
+          reason === 'ambiguous'
+            ? 'This shop has several branches. Please use the link or code for the one you want.'
+            : 'This shop is not taking online orders yet.';
+        return res.status(404).json({ type: 'error', message, data: { reason } });
+      }
+
+      const result = await itemService.storefront({ storeId });
+      return this.respond(res, result, OnlineOrderingController.present);
+    } catch (error) {
+      console.error('Error in online ordering defaultStorefront:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async deviceStorefront(req, res) {
     try {
       const result = await itemService.storefront({ storeId: req.params.storeId });

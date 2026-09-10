@@ -289,6 +289,10 @@ const CHANNELS = [
      businesses orders arrive through. Data, deliberately: a new aggregator
      must never be a release. */
   'sales_channel_partners',
+  /* The store address `/order` means when the URL names no branch. Only a
+     shop with several branches needs it: with one, there is nothing to
+     resolve. */
+  'online_ordering_default_store',
 ];
 
 const GROUPS = {

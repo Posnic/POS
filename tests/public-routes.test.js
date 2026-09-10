@@ -81,7 +81,7 @@ const ALLOWED_ANONYMOUS = {
      * `/:storeId/device` is NOT here: it carries the extra fields only the
      * shop's own equipment needs, and it sits behind ensureKioskKey.
      */
-    '/:storeId', '/:storeId/orders',
+    '/', '/:storeId', '/:storeId/orders',
   ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
@@ -103,16 +103,17 @@ const ALLOWED_ANONYMOUS = {
     '/forgotPassword',
   ],
   'items.routes.js': [
-    // The pairing handshake a kiosk, QR page or phone makes before it has a key.
-    '/accesskiosk', '/accessQr', '/accessMobileApp',
+    // The pairing handshake a phone makes before it has a key. /accesskiosk is
+    // NOT here any more: it carries the shop machines' menu and now sits
+    // behind ensureKioskKey. /accessQr is gone entirely - the storefront moved
+    // to the online-ordering resource.
+    '/accessMobileApp',
   ],
   'sales.routes.js': [
     // getNewSale refuses an anonymous caller inside the handler (403 without
-    // sales.write). qrOrder is anonymous BY DESIGN - a customer's phone has no
-    // credentials - and is gated in the repository instead: only a branch with
-    // a configured QR identity (kiosk.store_id) accepts orders, so a shop that
-    // never enabled QR ordering exposes nothing.
-    '/qrOrder', '/getNewSale',
+    // sales.write). /qrOrder is gone - anonymous ordering moved to the
+    // online-ordering resource, which is listed above with its reasons.
+    '/getNewSale',
   ],
   'base.routes.js': [
     // Liveness only. "/" says it is running; "/health" reports status, time and

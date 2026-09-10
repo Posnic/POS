@@ -34,6 +34,18 @@ const { ensureKioskKey } = require('../middleware/kiosk-key');
 const bind = (handler) => handler.bind(controller);
 
 /*
+ * The shop's default storefront, for a URL that names no branch.
+ *
+ * Most shops have exactly one branch, and making all of them print a code to
+ * say which of their single branch they mean is friction paid by the many for
+ * the few. `/order` lands here; `/order/AZ100` names one explicitly.
+ *
+ * Declared BEFORE `/:storeId`, or Express reads the empty path as a store
+ * address and every default lookup becomes a 404 for a shop called "".
+ */
+router.get('/', bind(controller.defaultStorefront));
+
+/*
  * The storefront: who this shop is, whether it is taking orders, and what is
  * on the menu.
  *

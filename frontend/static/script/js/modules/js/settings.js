@@ -7808,6 +7808,7 @@ PosnicPro.salesChannels = {
             var values = (response && response.data && response.data.values) || {};
             self.renderChannels(values.sales_channels_enabled);
             self.renderPartners(values.sales_channel_partners);
+            $("#online_ordering_default_store").val(values.online_ordering_default_store || "");
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
@@ -7837,7 +7838,13 @@ PosnicPro.salesChannels = {
             });
         });
 
-        return { sales_channels_enabled: enabled, sales_channel_partners: partners };
+        return {
+            sales_channels_enabled: enabled,
+            sales_channel_partners: partners,
+            /* Empty is a real answer: it means "work it out", which is right
+               for the one-branch shops that are most of them. */
+            online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim()
+        };
     },
 
     save: function () {

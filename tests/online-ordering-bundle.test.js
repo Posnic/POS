@@ -317,3 +317,82 @@ test('the channels settings group exists and owns its two keys', () => {
   assert.strictEqual(groupOf('sales_channels_enabled'), 'channels');
   assert.strictEqual(groupOf('sales_channel_partners'), 'channels');
 });
+
+test('a store address can be a path segment, and a missing file still 404s', () => {
+  /*
+   * `/order/AZ100` puts the shop's address where it belongs, and prints
+   * smaller inside a QR code than `?branch=AZ100`.
+   *
+   * express.static answers 404 for it - there is no file of that name - so the
+   * page is served for a path that LOOKS like a store address, and only then.
+   * A blanket catch-all would answer HTML for a genuinely missing script,
+   * which the browser reports as a syntax error and sends whoever debugs it
+   * looking in entirely the wrong place.
+   */
+  const src = fs.readFileSync(APP_JS, 'utf8');
+  const guard = src.match(/const STORE_ADDRESS = (\/\^[^;]+\/);/);
+  assert.ok(guard, 'the store-address path guard is gone from app.js');
+
+  const re = new RegExp(guard[1].slice(1, -1));
+  assert.ok(re.test('/AZ100'), 'a real store address is no longer served the page');
+  assert.ok(re.test('/az1'), 'a short store address is no longer served the page');
+
+  /* The two that matter. A missing script must stay a 404: answered with HTML
+     it becomes a syntax error in the browser and sends whoever debugs it
+     looking in the wrong place entirely. */
+  assert.ok(!re.test('/notafile.js'), 'a missing script would be answered with HTML');
+  assert.ok(!re.test('/toolongtobeastore'), 'the guard stopped bounding the length');
+  assert.ok(!re.test('/a/b'), 'a nested path would be served the page');
+
+  /* `/assets` is six alphanumerics and DOES match, deliberately: express.static
+     is mounted first and answers for anything that exists, so only paths with
+     no file behind them ever reach this guard. */
+  assert.ok(
+    src.indexOf("app.use('/order', orderStatic)") < src.indexOf('const STORE_ADDRESS'),
+    'the static mount must come first, or real assets get the page instead'
+  );
+});
+
+test('the page finds its store address in the path, the query, or the default', () => {
+  const src = readBundle('assets/index/script.js');
+  assert.match(src, /window\.location\.pathname/, 'the path form is no longer read');
+  assert.match(src, /get\("branch"\)/, 'the older query form stopped being honoured');
+  assert.match(src, /\/online-ordering`/, 'the default-branch lookup is gone');
+
+  /*
+   * The dead end this replaced: a spinner that turned forever, driven by an
+   * input and a button that had been removed from index.html releases ago.
+   *
+   * Comments stripped first. The code explains what it replaced and names
+   * those elements while doing so, and a test that cannot tell code from prose
+   * would read the explanation as a relapse.
+   */
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  for (const dead of ['branch-id', 'submit-btn']) {
+    assert.ok(!code.includes(dead), `${dead} is back, and index.html has no such element`);
+  }
+});
+
+test('a plain /order resolves to one branch, and refuses to guess between several', () => {
+  const controller = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'controllers', 'online-ordering.controller.js'),
+    'utf8'
+  );
+  assert.match(controller, /defaultStorefront/, 'the default storefront handler is gone');
+  /* The two failures need different words in front of a customer: a shop that
+     never set this up is not a chain that has several branches and named
+     none. */
+  assert.match(controller, /ambiguous/, 'the several-branches case is no longer told apart');
+
+  const routes = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'routes', 'online-ordering.routes.js'),
+    'utf8'
+  );
+  const rootAt = routes.indexOf("router.get('/'");
+  const byIdAt = routes.indexOf("router.get('/:storeId'");
+  assert.ok(rootAt !== -1 && byIdAt !== -1, 'the storefront routes moved');
+  assert.ok(
+    rootAt < byIdAt,
+    "'/' must be declared before '/:storeId', or the default lookup 404s as a shop named ''"
+  );
+});
