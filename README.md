@@ -165,7 +165,7 @@ clear), **keep port 27017 off the internet**, and **restore a backup once** to
 prove it is a backup rather than a file.
 
 **Self-hosting does not include sync between tills or branches.** That is
-[Posnic Cloud](https://posnic.com/pricing.html). A self-hosted Posnic is one
+[Posnic Cloud](https://www.posnic.com/pricing). A self-hosted Posnic is one
 database several people use at once — which is what most single-shop setups
 actually want — not several databases kept in step.
 
@@ -281,7 +281,7 @@ little back is what keeps the next release coming.
 |                                                            |                                                                                  |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | ☕ **[Buy us a chai](https://github.com/sponsors/Posnic)** | one-off or monthly, from a dollar up                                             |
-| ☁️ **[Posnic Cloud](https://posnic.com/pricing)**          | sync, off-site backups, remote dashboards — the paid service that funds this one |
+| ☁️ **[Posnic Cloud](https://www.posnic.com/pricing)**      | sync, off-site backups, remote dashboards — the paid service that funds this one |
 | 🏢 **Commercial licence**                                  | keep your modifications private — **info@posnic.com**                            |
 
 Sponsors are named in releases unless they would rather not be.
