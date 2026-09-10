@@ -33,7 +33,10 @@ describe('nodemailer transport contract', () => {
 
   function makeEmail() {
     /* The constructor wants a user and a url; neither affects the transport. */
-    return new Email({ email: 'shopkeeper@example.com', name: 'Shopkeeper' }, 'https://example.com/reset');
+    return new Email(
+      { email: 'shopkeeper@example.com', name: 'Shopkeeper' },
+      'https://example.com/reset'
+    );
   }
 
   test('the installed nodemailer is a real module, not a mock', () => {
