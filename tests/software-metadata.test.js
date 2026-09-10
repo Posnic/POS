@@ -32,7 +32,7 @@ test('CodeMeta keeps source, support and licence identity canonical', () => {
     'https://github.com/Posnic/POS/actions',
   );
   assert.equal(metadata.author?.name, 'Posnic Innovations Private Limited');
-  assert.equal(metadata.author?.url, 'https://posnic.com/about');
+  assert.equal(metadata.author?.url, 'https://www.posnic.com/about');
   assert.equal(metadata.publisher?.name, metadata.author?.name);
 });
 

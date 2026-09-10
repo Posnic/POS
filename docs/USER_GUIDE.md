@@ -362,7 +362,7 @@ and settings stay consistent across every till and branch, and you get a
 dashboard you can check from anywhere.
 
 Without Cloud, each till is complete and independent. With it, they are one
-business. Details at [posnic.com](https://posnic.com).
+business. Details at [posnic.com](https://www.posnic.com).
 
 ---
 

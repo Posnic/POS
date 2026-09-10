@@ -35,7 +35,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const DATASET_HOST = process.env.POSNIC_DATASET_BASE || 'https://posnic.com/dataset';
+const DATASET_HOST = process.env.POSNIC_DATASET_BASE || 'https://www.posnic.com/dataset';
 const FETCH_TIMEOUT_MS = 12000;
 const MAX_ZIP_BYTES = 25 * 1024 * 1024;
 

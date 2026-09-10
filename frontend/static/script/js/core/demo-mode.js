@@ -41,7 +41,7 @@
                             return window.PosnicSignupLink.signupUrl(info, surface);
                         }
                     } catch (e) { /* fall through */ }
-                    return 'https://posnic.com/signup.html';
+                    return 'https://www.posnic.com/signup.html';
                 };
 
                 var bar = document.createElement('div');
