@@ -2628,6 +2628,7 @@ class UsersController extends BaseController {
    */
   async kioskMobileLogin(req, res) {
     const mongoose = require('mongoose');
+    const crypto = require('crypto');
     const db = currentConnection(mongoose.connection).db;
     const loginCheckCollection = db.collection('login_check');
 
@@ -2771,10 +2772,58 @@ class UsersController extends BaseController {
 
         const filteredBranches = joinedBranches.filter((row) => row.branch_id);
 
+        /*
+         * A credential, because the app cannot work without one.
+         *
+         * This endpoint proved who the user is - username, password and the
+         * activate flag - and then told them nothing they could present again.
+         * The table-ordering app went on to call getTablesWithActiveOrders,
+         * getListKot, getOrderHistory and updateOrder with `credentials:
+         * 'include'` and no cookie to include: those routes sit behind
+         * protectOrKioskKey, which refuses an anonymous caller, so the phone
+         * signed in successfully and then loaded nothing.
+         *
+         * The same JWT the browser sign-in issues (users.controller
+         * legacyVerifyLogin -> param.jwt_token), for the same user, read back
+         * by optionalProtect from the Authorization header. Nothing here is
+         * granted that a sign-in at the till would not grant: the token names
+         * this user, and every handler still applies that user's own branch
+         * access and permissions.
+         */
+        const jwtToken = signLegacyToken(recordsFiltered, req);
+
+        /*
+         * Which shop this is, in a form that is the same on the till and in
+         * the cloud and identifies nobody by itself.
+         *
+         * The phone is allowed to move between the shop's own LAN server and
+         * the shop's cloud address as the Wi-Fi comes and goes. That is only
+         * safe if it can tell that the server it just found holds the SAME
+         * shop - a phone that silently latched onto a different Posnic on the
+         * same network would show one shop's orders under another's name.
+         *
+         * The licence is the tenancy key, identical in the local database and
+         * its synced cloud copy, so a hash of it answers "same shop?" exactly.
+         * It is truncated and hashed rather than sent raw because the phone
+         * only ever needs to COMPARE it, and an id that never leaves the
+         * server cannot leak from a stolen handset.
+         */
+        const shopKey = recordsFiltered.license
+          ? crypto
+              .createHash('sha256')
+              .update(String(recordsFiltered.license))
+              .digest('hex')
+              .slice(0, 16)
+          : null;
+
         return res.status(200).json({
           type: 'success',
           message: 'Successfully login',
           data: filteredBranches,
+          // Named to match legacyVerifyLogin so a client can read one field
+          // whichever door it came in through.
+          jwt_token: jwtToken,
+          shop_key: shopKey,
         });
       } else {
         const currentCount = getIpAddress?.login_count || 0;
