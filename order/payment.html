@@ -4,12 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+
+        Pinned to the mount rather than left to the arriving URL, so one file
+        serves the shop address, a table and a venue alike.
+    -->
+    <base href="/order/" />
     <title>QR Payment</title>
     <link href="assets/bootstrap.min.css" rel="stylesheet">
     <script src="assets/jquery-3.6.0.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
+    <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
     <script src="indexedDB.js?v=20260709-fastrefresh"></script>
     <link href="assets/payment/style.css" rel="stylesheet">

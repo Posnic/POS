@@ -42,3 +42,59 @@ html.posnic-browse-only .content-wrapper {
     text-align: center;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* ------------------------------------------------------- the destination
+ *
+ * Where the food is going, for an order from a hotel room or another partner
+ * venue. Editable, because a code can be photographed, shared or stuck on the
+ * wrong door, and the guest is the only one who knows which room they are
+ * actually in.
+ *
+ * Quiet by default. It is a confirmation, not a form: most customers should
+ * read it, agree with it, and move on.
+ */
+
+.destination {
+    margin: 12px 16px;
+    padding: 14px 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.destination-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+.destination-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.destination-field span {
+    min-width: 64px;
+    font-size: 14px;
+    color: #475569;
+}
+
+.destination-field input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 16px; /* 16px or iOS zooms the page on focus */
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+}
+
+.destination-note {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}

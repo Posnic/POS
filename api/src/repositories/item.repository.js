@@ -6,6 +6,8 @@ const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
+const partnerVenues = require('../utils/partner-venues');
+const salesChannels = require('../utils/sales-channels');
 
 /*
  * The diet mark, or nothing.
@@ -3432,6 +3434,26 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * The shop's partner venues: hotels, offices, anywhere not its own floor.
+   *
+   * Read from settings for the same reason the serving periods are: a chain
+   * ties up with a hotel as a business, not as one branch. An empty list is
+   * the normal state and costs one lookup.
+   */
+  async shopVenues() {
+    try {
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ partner_venues: { $exists: true } });
+      return partnerVenues.normalizeVenues((doc && doc.partner_venues) || []);
+    } catch (e) {
+      /* No venues is the safe answer as well as the common one: house prices,
+         nothing owed to anybody. */
+      console.warn('[menu] could not read partner venues:', e.message);
+      return [];
+    }
+  }
+
   async publicMenu(params = {}) {
     const storeId = params.storeId;
     try {
@@ -3492,6 +3514,21 @@ class ItemRepository extends BaseModel {
        * the kitchen is, not about where the customer is holding their phone.
        */
       const dayparts = await this.shopDayparts();
+
+      /*
+       * Which prices this reader sees.
+       *
+       * A menu printed for a hotel room has to show the price that room will
+       * actually be charged. Showing the house price and adding the markup at
+       * checkout is how a customer finds out about it at the worst possible
+       * moment - and a guest who feels overcharged complains to the hotel,
+       * which is the relationship this whole feature exists to protect.
+       */
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: params.table, venue: params.venue, unit: params.unit },
+        await this.shopVenues()
+      );
+
       const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const nowDay = localNow.day();
       const nowMinutes = localNow.hours() * 60 + localNow.minutes();
@@ -3523,7 +3560,7 @@ class ItemRepository extends BaseModel {
           name: row.name || '',
           description: row.description || '',
           image: row.image || '',
-          price: Number(row.selling_price) || 0,
+          price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
           diet: String(row.diet || ''),
           /* Shown on the menu but not orderable right now, for either reason:
              the shop marked it unavailable, or it is not its time of day. The
@@ -3606,6 +3643,19 @@ class ItemRepository extends BaseModel {
           channel: onlineOrdering.channelState(config, {
             timeZone: branchDoc.time_zone,
           }),
+          /* Who is reading, where they are sitting, and whether these prices
+             are the house's. Null venue means the shop's own floor. */
+          service_point: {
+            label: servicePoint.label || '',
+            venue: servicePoint.venue
+              ? {
+                  code: servicePoint.venue.code,
+                  name: servicePoint.venue.name,
+                  unit_label: servicePoint.venue.unit_label,
+                  unit: servicePoint.unit || '',
+                }
+              : null,
+          },
           categories,
           item_count: rows.length,
         },
@@ -3791,6 +3841,61 @@ class ItemRepository extends BaseModel {
 
       const results = await collection.aggregate(pipeline).toArray();
 
+      /*
+       * The prices THIS service point pays.
+       *
+       * Done in JavaScript after the aggregation rather than inside it. The
+       * pipeline derives four numbers from the selling price - the price, the
+       * discount, the tax and the final - and threading a markup through all
+       * four in aggregation syntax would be four chances to get it subtly
+       * wrong, in a language nobody can step through.
+       *
+       * Only the SELLING PRICE is marked up. A fixed discount of 20 stays 20,
+       * exactly as the order endpoint treats it, because the two must agree to
+       * the paisa: a page that quotes one total and a server that charges
+       * another is the single worst bug this feature can have.
+       */
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: params.table, venue: params.venue, unit: params.unit },
+        await this.shopVenues()
+      );
+
+      if (servicePoint.venue) {
+        const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
+        for (const group of results) {
+          group.items = (group.items || []).map((item) => {
+            const price = partnerVenues.priceFor(item.price, servicePoint.venue);
+            const fixed = Number(item.discount_amount) || 0;
+            const discount = money(
+              fixed > 0 ? fixed : price * ((Number(item.discount_percentage) || 0) / 100)
+            );
+            const taxable = price - discount;
+            const rate = (Number(item.tax) || 0) / 100;
+            const taxPrice = item.tax_type === 'inclusive' ? 0 : money(taxable * rate);
+            return {
+              ...item,
+              price,
+              discount_price: discount,
+              tax_price: taxPrice,
+              final_price: money(item.tax_type === 'exclusive' ? taxable + taxPrice : taxable),
+            };
+          });
+        }
+      }
+
+      /* What a customer pays on top of the food, so the page can show a
+         delivery fee and a free-delivery threshold before checkout rather
+         than surprising somebody with it at the last step. */
+      let charges = {};
+      try {
+        const settings = await this.getCollection('settings');
+        const doc = await settings.findOne({ channel_charges: { $exists: true } });
+        charges = salesChannels.normalizeCharges((doc && doc.channel_charges) || {});
+      } catch (e) {
+        console.warn('[storefront] could not read charges:', e.message);
+        charges = salesChannels.normalizeCharges({});
+      }
+
       // Fetch configured tables for this branch/license
       let tableorders = [];
       try {
@@ -3836,6 +3941,28 @@ class ItemRepository extends BaseModel {
           }),
           products: results,
           tableorders,
+          /*
+           * Where this customer is sitting, and whether the prices above are
+           * the house's. The page shows the destination at checkout and lets
+           * it be corrected - a guest can photograph the code in room 123 and
+           * send it to a friend in 456, and the food should follow the guest
+           * rather than the link.
+           */
+          service_point: {
+            label: servicePoint.label || '',
+            venue: servicePoint.venue
+              ? {
+                  code: servicePoint.venue.code,
+                  name: servicePoint.venue.name,
+                  unit_label: servicePoint.venue.unit_label,
+                  unit: servicePoint.unit || '',
+                  ask_floor: servicePoint.venue.ask_floor === true,
+                  address: servicePoint.venue.address || '',
+                  delivery_note: servicePoint.venue.delivery_note || '',
+                }
+              : null,
+          },
+          charges,
           /*
            * Which ways a customer may pay. Public, because the page cannot
            * draw a checkout without knowing them, and safe to be public

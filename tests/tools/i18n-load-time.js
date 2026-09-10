@@ -87,8 +87,13 @@ for (const dir of DIRS) {
     }
     if (!fired.size) continue;
     total += fired.size;
-    sitesByFile[name] = list.map((n) => ({ line: sites[n].line, english: sites[n].english }));
+    /* The sorted list first: reading it a line earlier threw "Cannot access
+       'list' before initialization", so the moment this tool actually found
+       something it crashed instead of reporting it. It only fires when a file
+       asks for a translation at load time, which is exactly the case it was
+       written for. */
     const list = [...fired].sort((a, b) => a - b);
+    sitesByFile[name] = list.map((n) => ({ line: sites[n].line, english: sites[n].english }));
     report.push(name.padEnd(26) + String(fired.size).padStart(4)
       + '   lines ' + list.slice(0, 4).map((n) => sites[n].line).join(', ') + (list.length > 4 ? ', ...' : ''));
     if (write) {

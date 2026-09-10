@@ -128,6 +128,7 @@ const { HardwareManager } = require('./hardware-manager');
 const { setupHardwareIPC } = require('./hardware-ipc');
 const MongoDBManager = require('./mongodb-manager');
 const KOTManager = require('./kot-manager');
+const { OrderAlert } = require('./order-alert');
 const SyncAgentManager = require('./sync-agent-manager');
 const { AssetUpdater } = require('./asset-updater');
 
@@ -533,6 +534,7 @@ let mainWindow;
 let apiServer;
 let hardwareManager;
 let kotManager;
+let orderAlert;
 let hardwareWindow;
 let backupWindow;
 let mongoDBManager;
@@ -4393,6 +4395,29 @@ app.whenReady().then(async () => {
   // Initialize KOT manager
   kotManager = new KOTManager();
   console.log('KOTManager initialized');
+
+  /*
+   * The sound an online order makes.
+   *
+   * Constructed here, before any window exists, because it listens on the
+   * process event bus - the API runs in this process and emits there when an
+   * order arrives - and hands the tone to whatever window is open at the time.
+   * A till with no window open makes no sound, which is right: there is nobody
+   * standing there to hear it.
+   */
+  orderAlert = new OrderAlert({ getWindow: () => mainWindow });
+  console.log('OrderAlert initialized');
+
+  /* Somebody dealt with the queue. The alarm repeats until it is empty, and
+     this is how the page says an order stopped waiting. */
+  ipcMain.handle('order-alert:resolve', (_event, saleId) => {
+    if (orderAlert) orderAlert.resolve(saleId);
+    return true;
+  });
+  ipcMain.handle('order-alert:clear', () => {
+    if (orderAlert) orderAlert.clear();
+    return true;
+  });
 
   // Setup IPC handlers
   setupHardwareIPC(hardwareManager, kotManager);

@@ -61,6 +61,7 @@
         "modules/salesReport.html",
         "modules/sales_read.html",
         "modules/kot.html",
+        "modules/onlineOrders.html",
         "modules/kothistory.html",
         "modules/sales_write.html",
         "modules/settings_write.html",

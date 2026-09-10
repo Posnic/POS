@@ -304,6 +304,16 @@ const CHANNELS = [
      auto - see utils/order-approval for why that is the survivable
      direction. */
   'online_order_approval',
+  /* [{ code, name, unit_label, address, delivery_note, ask_floor,
+     price_adjust_percent, commission_percent, enabled }] - hotels, offices and
+     anywhere else that is not the shop's own floor. The code is what a printed
+     QR carries (/order/AZ100/venue/RC/123), so it has to outlive a rename of
+     the building. See utils/partner-venues.js. */
+  'partner_venues',
+  /* Delivery, packing and service fees, keyed by FULFILMENT rather than by
+     channel: what a shop charges depends on whether somebody drives the food
+     somewhere, not on which app the order came through. */
+  'channel_charges',
 ];
 
 const GROUPS = {

@@ -7,6 +7,16 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#111827" />
+    <!--
+      WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+      A menu can be printed for a hotel room as well as a table, so this page
+      is served at /menu/AZ100, /menu/AZ100/table/5 and
+      /menu/AZ100/venue/RC/123 from one file. Without a base, a relative script
+      on the deepest of those resolves under a directory that does not exist,
+      and the page loads blank with nothing in the console anybody reads.
+    -->
+    <base href="/menu/" />
     <meta name="robots" content="index, follow" />
     <title>Menu</title>
 
@@ -152,6 +162,18 @@
         color: var(--ink);
         font-size: 14px;
         text-align: center;
+      }
+
+      /*
+            Quieter than the shop's own notice above it. "Prices shown for the
+            Royal Club Hotel" is context, not an alert - a banner that shouts
+            reads like a warning, and there is nothing wrong.
+        */
+      .venue-note {
+        background: transparent;
+        border-style: dashed;
+        color: var(--ink-soft);
+        font-size: 13px;
       }
 
       /* ---- sticky controls ------------------------------------------ */
@@ -516,6 +538,9 @@
         <h1 id="shop-name" class="shop-name">Menu</h1>
         <p id="shop-sub" class="shop-sub" hidden></p>
         <p id="notice" class="notice" role="status" hidden></p>
+        <!-- Whose prices these are. Shown only for a hotel room or another
+             partner venue, where they are not the house's. -->
+        <p id="venue-note" class="notice venue-note" hidden></p>
       </header>
     </div>
 

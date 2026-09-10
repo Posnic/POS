@@ -13,6 +13,7 @@ const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const salesChannels = require('../utils/sales-channels');
+const partnerVenues = require('../utils/partner-venues');
 
 /* The fallback when channelState has no sentence of its own. It never should,
    but a refusal with an empty message would tell a customer nothing. */
@@ -7191,6 +7192,19 @@ class SalesRepository {
         kiosk_table_id,
         dine_type,
         person_count,
+        /*
+         * Where the customer is sitting, read by the page out of the URL it
+         * was opened on.
+         *
+         *   /order/AZ100/table/5        no venue: the shop's own floor
+         *   /order/AZ100/venue/RC/123   Royal Club Hotel, room 123
+         *
+         * `destination` is what the customer CONFIRMED at checkout, which may
+         * correct the room the link claimed. See utils/partner-venues.
+         */
+        venue,
+        unit,
+        destination,
       } = data;
 
       if (!branch) {
@@ -7279,6 +7293,41 @@ class SalesRepository {
         console.warn('[order] could not read the approval setting:', e.message);
       }
 
+      /*
+       * Whose floor this order is coming from, and what it costs to get there.
+       *
+       * A restaurant's own table nine and room 123 of the hotel across the
+       * road arrive through the same storefront and are not the same order:
+       * the room pays the agreed markup, the hotel is owed its cut, and
+       * somebody has to carry the food over.
+       *
+       * Both are read here rather than trusted from the page. The customer's
+       * phone tells us WHICH venue the code named; it does not get to say what
+       * that venue's markup is.
+       */
+      let venues = [];
+      let shopCharges = {};
+      try {
+        const settingsCollection = db.collection('settings');
+        const venueDoc = await settingsCollection.findOne({ partner_venues: { $exists: true } });
+        venues = partnerVenues.normalizeVenues((venueDoc && venueDoc.partner_venues) || []);
+        const chargeDoc = await settingsCollection.findOne({ channel_charges: { $exists: true } });
+        shopCharges = (chargeDoc && chargeDoc.channel_charges) || {};
+      } catch (e) {
+        /* No venues and no fees is the normal state for a shop with one
+           dining room, and it is also the safe answer if this fails: house
+           prices, nothing added, nothing owed. */
+        console.warn('[order] could not read venues or charges:', e.message);
+      }
+
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: kiosk_table_no, venue, unit },
+        venues
+      );
+      /* Where the food actually goes, as the customer confirmed it. Null for
+         the shop's own floor, which needs no address. */
+      const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
+
       const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
@@ -7337,7 +7386,22 @@ class SalesRepository {
           };
         }
 
-        const sellingPrice = Number(itemDoc.selling_price || 0);
+        /*
+         * The price THIS service point pays.
+         *
+         * A hotel room is quoted the marked-up price, because the hotel takes
+         * a cut of it and the restaurant is not paying that out of a plate of
+         * biryani. The shop's own tables are quoted the house price, which is
+         * what priceFor returns when there is no venue.
+         *
+         * Applied to the selling price before anything is split out of it, so
+         * tax, discount and the inclusive/exclusive arithmetic below all work
+         * on the number the customer was actually shown.
+         */
+        const sellingPrice = partnerVenues.priceFor(
+          Number(itemDoc.selling_price || 0),
+          servicePoint.venue
+        );
         const taxRate = Number(itemDoc.tax || 0);
         const discountAmount = Number(itemDoc.discount_amount || 0);
         const discountPercentage = Number(itemDoc.discount_percentage || 0);
@@ -7377,7 +7441,44 @@ class SalesRepository {
       const itemDiscountTotal = round(
         saleItems.reduce((s, i) => s + Number(i.item_discount || 0), 0)
       );
-      const finalTotal = round(saleItems.reduce((s, i) => s + i.total, 0) - discountAmt);
+      const foodTotal = round(saleItems.reduce((s, i) => s + i.total, 0) - discountAmt);
+
+      /*
+       * What this order owes on top of the food.
+       *
+       * Keyed by FULFILMENT, not by channel: a fee exists because somebody
+       * drives the food somewhere, not because the order arrived through a
+       * particular app. The same storefront serves a table (no fee), a
+       * takeaway (a packing charge, maybe) and a hotel room (delivery).
+       *
+       * Checked here as well as on the page. A minimum order is a rule about
+       * what the shop is willing to send out, and a stale tab or a direct POST
+       * must not get past it.
+       */
+      const fulfilment = salesChannels.normalizeFulfilment(data.fulfilment || order || dine_type);
+      const charge = salesChannels.chargesFor(fulfilment, foodTotal, shopCharges);
+      if (!charge.allowed) {
+        return {
+          status: false,
+          data: { state: 'below_minimum', minimum: charge.minimum },
+          message: `Orders for this start at ${charge.minimum}.`,
+        };
+      }
+      const deliveryFee = round(charge.fee);
+      const finalTotal = round(foodTotal + deliveryFee);
+
+      /*
+       * What the venue is owed, worked out once and stored on the order.
+       *
+       * On the FOOD, not on the delivery fee: the fee covers the restaurant's
+       * own cost of carrying the food across the road, and paying a
+       * commission on a cost is paying twice for the same trip.
+       *
+       * Stored rather than computed at report time, because the rate can
+       * change: a hotel that renegotiates in March must not silently restate
+       * what it was owed in February.
+       */
+      const venueCommission = partnerVenues.commissionFor(foodTotal, servicePoint.venue);
       const branchName = branchDoc.name || branchDoc.branch_name || '';
 
       const now = new Date();
@@ -7440,12 +7541,18 @@ class SalesRepository {
          */
         ...salesChannels.describeSale({
           channel: salesChannels.CHANNEL.ONLINE,
-          fulfilment: data.fulfilment || order || dine_type,
+          fulfilment,
           sale_method,
         }),
         dine_type: dine_type || 'Dine-in',
-        table_number: kiosk_table_no || '',
+        /* The service point, in the words the kitchen and the driver read.
+           A hotel room says the hotel and the room; the shop's own table says
+           the table, exactly as it always did. */
+        table_number: servicePoint.label || kiosk_table_no || '',
         table_id: kiosk_table_id || '',
+        venue: deliverTo,
+        venue_commission: venueCommission,
+        delivery_fee: deliveryFee,
         person_count: person_count || 0,
         items: saleItems,
         subtotal,
@@ -7527,12 +7634,281 @@ class SalesRepository {
           subtotal,
           discount: round(itemDiscountTotal + discountAmt),
           tax: totalTax,
+          delivery_fee: deliveryFee,
           total: finalTotal,
+          /* Echoed back so the confirmation screen can say "we will bring it
+             to Royal Club Hotel, Room 123" rather than repeating what the
+             customer typed and hoping it was recorded. */
+          deliver_to: deliverTo,
           payment_status: data.payment_status || 'Paid',
         },
       };
     } catch (error) {
       console.error('Error in createOnlineOrder:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * What this shop owes its venues and its aggregators, over a date range.
+   *
+   * THE REPORT THAT MAKES A TIE-UP POSSIBLE.
+   *
+   * A restaurant with nine tables agrees a deal with the hotel across the road
+   * and, at the end of the month, somebody has to work out what is owed. Doing
+   * that from a sales list is an evening of arithmetic and a disagreement; the
+   * hotel has its own number, and neither side can check the other's.
+   *
+   * Grouped by venue AND by partner, because a shop can owe both on the same
+   * day: a hotel takes a cut of the orders from its rooms, an aggregator takes
+   * a cut of the ones from its app, and they are unrelated deals.
+   *
+   * READS THE STORED COMMISSION, never recomputes it. The rate was agreed when
+   * the order was placed; a hotel that renegotiates in March must not restate
+   * what it was owed in February, and a report that recalculates would do
+   * exactly that, silently, with no way to notice.
+   */
+  async commissionReport(value = {}) {
+    try {
+      const baseModel = new BaseModel('sales');
+      const { FromDate, ToDate } = formatDate(
+        value.starting_date,
+        value.ending_date,
+        BaseModel.currentTimeZone || 'Asia/Kolkata'
+      );
+
+      const branchIds = [];
+      if (Array.isArray(value.branchid)) {
+        value.branchid.forEach((id) => {
+          if (id && mongoose.Types.ObjectId.isValid(String(id))) {
+            branchIds.push(new mongoose.Types.ObjectId(String(id)));
+          }
+        });
+      }
+
+      const range = {
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
+        license: BaseModel.license,
+      };
+      if (branchIds.length) range.branch_id = { $in: branchIds };
+
+      const collection = await baseModel.getCollection('sales');
+
+      /* One row per venue: what its guests spent, and what the shop owes. */
+      const venues = await collection
+        .aggregate([
+          { $match: { ...range, 'venue.venue_code': { $exists: true, $ne: '' } } },
+          {
+            $group: {
+              _id: '$venue.venue_code',
+              name: { $first: '$venue.venue_name' },
+              orders: { $sum: 1 },
+              sales: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
+              commission: { $sum: { $toDouble: { $ifNull: ['$venue_commission', 0] } } },
+            },
+          },
+          { $sort: { commission: -1 } },
+        ])
+        .toArray();
+
+      /* And one per aggregator, from the commission the sale recorded when it
+         was made. */
+      const partners = await collection
+        .aggregate([
+          { $match: { ...range, channel_partner: { $nin: [null, ''] } } },
+          {
+            $group: {
+              _id: '$channel_partner',
+              orders: { $sum: 1 },
+              sales: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
+              commission: { $sum: { $toDouble: { $ifNull: ['$channel_commission', 0] } } },
+            },
+          },
+          { $sort: { commission: -1 } },
+        ])
+        .toArray();
+
+      const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      const shape = (rows, kind) =>
+        rows.map((row) => ({
+          kind,
+          code: String(row._id || ''),
+          name: row.name || String(row._id || ''),
+          orders: Number(row.orders) || 0,
+          sales: money(row.sales),
+          commission: money(row.commission),
+          /* What the shop actually keeps. The number the report exists for:
+             a month that looks like 90,000 of sales through partners is
+             67,500 once their cut is out, and a shop planning on the first
+             figure is planning on money it never had. */
+          net: money((Number(row.sales) || 0) - (Number(row.commission) || 0)),
+        }));
+
+      const rows = [...shape(venues, 'venue'), ...shape(partners, 'partner')];
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          rows,
+          totals: {
+            orders: rows.reduce((sum, r) => sum + r.orders, 0),
+            sales: money(rows.reduce((sum, r) => sum + r.sales, 0)),
+            commission: money(rows.reduce((sum, r) => sum + r.commission, 0)),
+            net: money(rows.reduce((sum, r) => sum + r.net, 0)),
+          },
+        },
+      };
+    } catch (error) {
+      console.error('Error in commissionReport:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * Orders waiting for somebody to say yes.
+   *
+   * The queue behind the alarm. A shop in manual mode holds every incoming
+   * online order until a person accepts it, and this is the only place those
+   * orders are visible - the kitchen has not been told, so a ticket never
+   * printed and the sales list is not where anybody would look.
+   *
+   * Newest LAST, deliberately. A queue is worked from the top, and the person
+   * who has been waiting longest should be served first.
+   */
+  async pendingOnlineOrders({ branchId } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const salesCollection = db.collection('sales');
+
+      const filter = {
+        order_state: orderApproval.ORDER_STATE.PENDING,
+        ...activeTenantFilter(),
+      };
+      const branch = branchId || BaseModel.currentBranch;
+      if (branch && ObjectId.isValid(String(branch))) {
+        filter.branch_id = new ObjectId(String(branch));
+      }
+
+      const rows = await salesCollection
+        .find(filter, {
+          projection: {
+            _id: 1,
+            sales_id: 1,
+            token_id: 1,
+            table_number: 1,
+            venue: 1,
+            items: 1,
+            total: 1,
+            delivery_fee: 1,
+            notes: 1,
+            customer_phone: 1,
+            fulfilment: 1,
+            created_date: 1,
+            order_state_at: 1,
+          },
+        })
+        .sort({ created_date: 1 })
+        .limit(100)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: rows.map((row) => ({
+          sale_id: String(row._id),
+          sales_id: row.sales_id || '',
+          token_id: row.token_id || '',
+          /* Where it is going, in the words a person reads: a table number, or
+             the hotel and the room. */
+          destination: (row.venue && row.venue.label) || row.table_number || '',
+          venue_name: (row.venue && row.venue.venue_name) || '',
+          delivery_note: (row.venue && row.venue.delivery_note) || '',
+          fulfilment: row.fulfilment || '',
+          items: (row.items || []).map((item) => ({
+            name: item.item_name || item.name || '',
+            quantity: Number(item.item_quantity || item.quantity || 0),
+          })),
+          total: Number(row.total) || 0,
+          delivery_fee: Number(row.delivery_fee) || 0,
+          note: row.notes || '',
+          customer_phone: row.customer_phone || '',
+          placed_at: row.created_date || row.order_state_at || null,
+        })),
+      };
+    } catch (error) {
+      console.error('Error in pendingOnlineOrders:', error);
+      return { status: false, message: error.message, data: [] };
+    }
+  }
+
+  /**
+   * Accepting or turning away an order that was held.
+   *
+   * The kitchen is told exactly once, on the move from pending to accepted.
+   * utils/order-approval decides whether the move is legal and whether it
+   * prints, so a double-tap on a slow screen cannot produce two tickets - and
+   * two tickets for one order is two lots of food.
+   */
+  async decideOnOrder({ saleId, decision, reason } = {}) {
+    try {
+      if (!saleId || !ObjectId.isValid(String(saleId))) {
+        return { status: false, message: 'Enter must correct order id', data: null };
+      }
+
+      const db = await BaseModel.getDb();
+      const salesCollection = db.collection('sales');
+      const _id = new ObjectId(String(saleId));
+
+      const sale = await salesCollection.findOne(
+        { _id, ...activeTenantFilter() },
+        { projection: { order_state: 1, branch_id: 1 } }
+      );
+      if (!sale) {
+        return { status: false, message: 'Order not found', data: null };
+      }
+
+      const move = orderApproval.transition(sale.order_state, decision);
+      if (!move.allowed) {
+        return {
+          status: false,
+          message: move.reason || 'That order cannot be changed',
+          data: { state: move.state },
+        };
+      }
+
+      await salesCollection.updateOne(
+        { _id, ...activeTenantFilter() },
+        {
+          $set: {
+            order_state: move.state,
+            order_state_at: new Date(),
+            order_state_by: BaseModel.loggedUserName || '',
+            order_state_reason: String(reason || '').slice(0, 300),
+          },
+        }
+      );
+
+      if (move.printKitchenTicket) {
+        /* The printer is in this process. Telling it now rather than letting it
+           find the ticket on its next poll is the whole point of accepting an
+           order by hand: the customer is already waiting. */
+        notifyKotReady({
+          branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
+          saleId: String(saleId),
+          reason: 'approved',
+        });
+      }
+
+      return {
+        status: true,
+        message:
+          move.state === orderApproval.ORDER_STATE.ACCEPTED ? 'Order accepted' : 'Order rejected',
+        data: { sale_id: String(saleId), state: move.state, printed: move.printKitchenTicket },
+      };
+    } catch (error) {
+      console.error('Error in decideOnOrder:', error);
       return { status: false, message: error.message, data: null };
     }
   }

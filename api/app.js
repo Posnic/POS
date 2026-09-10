@@ -1471,7 +1471,24 @@ if (fs.existsSync(ORDER_BUNDLE)) {
    * A relative asset path still resolves: from `/order/AZ100` the browser
    * treats the last segment as a file, so `assets/x` is `/order/assets/x`.
    */
-  const STORE_ADDRESS = /^\/[A-Za-z0-9]{3,6}$/;
+  /*
+   * Every shape a printed code can carry.
+   *
+   *   /AZ100                  the shop
+   *   /AZ100/table/5          its own table five
+   *   /AZ100/venue/RC/123     Royal Club Hotel, room 123
+   *
+   * Still bounded, and still not a catch-all: a missing script under these
+   * paths stays a 404 rather than being answered with HTML, which in a browser
+   * surfaces as a syntax error pointing at entirely the wrong file.
+   *
+   * The page reads the parts out of its own URL. It can only do that because
+   * index.html carries a <base href="/order/">: without it, a relative asset
+   * on a three-segment URL would resolve to /order/AZ100/venue/assets/... and
+   * the page would load nothing at all.
+   */
+  const STORE_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
   const serveOrderPage = (req, res, next) => {
     if (!STORE_ADDRESS.test(req.path)) return next();
     return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
@@ -1482,9 +1499,12 @@ if (fs.existsSync(ORDER_BUNDLE)) {
 /* `/menu/AZ100`, for the same reason and with the same guard: a path segment
    express.static has no file for, and only one shaped like a store address. */
 if (fs.existsSync(MENU_BUNDLE)) {
-  const STORE_ADDRESS = /^\/[A-Za-z0-9]{3,6}$/;
+  /* The same shapes, so a menu can be printed for a hotel room and show that
+     room the prices it will actually be charged. */
+  const MENU_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
   app.use('/menu', (req, res, next) => {
-    if (!STORE_ADDRESS.test(req.path)) return next();
+    if (!MENU_ADDRESS.test(req.path)) return next();
     return res.sendFile(path.join(MENU_BUNDLE, 'index.html'));
   });
 }

@@ -4,11 +4,25 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+
+        Pinned to the mount rather than left to the arriving URL, so one file
+        serves the shop address, a table and a venue alike.
+    -->
+    <base href="/order/" />
     <title>Cart Summary</title>
     <script src="assets/jquery-3.6.0.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
+    <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
     <script src="indexedDB.js?v=20260709-fastrefresh"></script>
     <script src="assets/cart/script.js"></script>
@@ -38,6 +52,35 @@
 
         <div class="cart-items" id="cart-summary">
             <!-- Cart items will be dynamically inserted here -->
+        </div>
+
+        <!--
+            WHERE THE FOOD IS GOING, when it is not going to a table here.
+
+            Shown only for a hotel room or another partner venue, and only
+            after the shop has said so - a table needs no address, and an
+            empty destination box on every dine-in order is a field people
+            learn to skip.
+
+            EDITABLE, and that is the point. A guest photographs the code in
+            room 123 and sends it to a friend in 456. A code gets stuck on the
+            wrong door during a refit. Record only what the link said and the
+            food goes to the wrong room, with nothing anywhere showing that the
+            link and the guest disagreed.
+        -->
+        <div class="destination" id="destination" hidden>
+            <div class="destination-title" id="destination-title"></div>
+            <label class="destination-field">
+                <span id="destination-unit-label">Room</span>
+                <input type="text" id="destination-unit" inputmode="text"
+                       autocomplete="off" maxlength="24" />
+            </label>
+            <label class="destination-field" id="destination-floor-field" hidden>
+                <span>Floor</span>
+                <input type="text" id="destination-floor" inputmode="text"
+                       autocomplete="off" maxlength="20" />
+            </label>
+            <p class="destination-note" id="destination-note" hidden></p>
         </div>
 
         <div class="cart-actions">

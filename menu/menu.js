@@ -37,29 +37,58 @@
   /* ---------------------------------------------------------------- data */
 
   /**
-   * The store address this menu is for.
+   * Which shop this menu is for, and where the reader is sitting.
    *
-   * `/menu/AZ100` names a branch. `/menu` means the shop's default, which the
-   * server resolves - most shops have one branch and should not have to print
-   * a code to say which of their one branch they mean.
+   *   /menu                     the shop's default branch
+   *   /menu/AZ100               that branch
+   *   /menu/AZ100/table/5       its own table five
+   *   /menu/AZ100/venue/RC/123  Royal Club Hotel, room 123
+   *
+   * The last one is why this reads the whole path rather than the last
+   * segment: a hotel room is quoted a different price, and taking the last
+   * segment of the URL would have asked the server for a shop called "123".
+   *
+   * Where the customer is sitting travels as a query parameter rather than as
+   * part of the resource, because it qualifies the read - the same menu,
+   * priced for where you are - rather than naming a different one.
    */
-  function storeAddress() {
-    var last =
-      String(window.location.pathname || "")
-        .split("/")
-        .filter(Boolean)
-        .pop() || "";
-    if (/^[A-Za-z0-9]{3,6}$/.test(last) && last !== "menu") return last;
-    return new URLSearchParams(window.location.search).get("branch") || null;
+  function readUrl() {
+    var parts = String(window.location.pathname || "")
+      .split("/")
+      .filter(Boolean);
+    if (parts[0] === "menu") parts.shift();
+
+    var query = new URLSearchParams(window.location.search);
+    var point = {
+      store: /^[A-Za-z0-9]{3,6}$/.test(parts[0] || "")
+        ? parts[0]
+        : query.get("branch") || null,
+      table: query.get("table") || "",
+      venue: query.get("venue") || "",
+      unit: query.get("unit") || "",
+    };
+
+    if (parts[1] === "table") point.table = parts[2] || "";
+    if (parts[1] === "venue") {
+      point.venue = parts[2] || "";
+      point.unit = parts[3] || "";
+    }
+    return point;
   }
 
   function endpoint() {
-    var store = storeAddress();
+    var point = readUrl();
+    var query = new URLSearchParams();
+    ["table", "venue", "unit"].forEach(function (key) {
+      if (point[key]) query.set(key, point[key]);
+    });
+    var suffix = query.toString();
     return (
       CONFIG.API_BASE_URL +
       "/online-ordering" +
-      (store ? "/" + encodeURIComponent(store) : "") +
-      "/menu"
+      (point.store ? "/" + encodeURIComponent(point.store) : "") +
+      "/menu" +
+      (suffix ? "?" + suffix : "")
     );
   }
 
@@ -223,6 +252,25 @@
       el("notice").hidden = false;
     }
 
+    /*
+     * Whose prices these are.
+     *
+     * A hotel room is quoted the marked-up price, and the guest is told so
+     * here rather than finding out at checkout. Saying it plainly is also the
+     * honest thing: the hotel is providing the service, and a guest who
+     * understands that complains to nobody.
+     */
+    var point = data.service_point || {};
+    if (point.venue) {
+      el("venue-note").textContent =
+        "Prices shown for " +
+        point.venue.name +
+        (point.venue.unit
+          ? ", " + point.venue.unit_label + " " + point.venue.unit
+          : "");
+      el("venue-note").hidden = false;
+    }
+
     if (!state.categories.length) {
       showState(
         "No dishes yet",
@@ -347,7 +395,10 @@
 
     var chips = {};
     document.querySelectorAll(".cat").forEach(function (a) {
-      chips[a.getAttribute("href").replace("#cat-", "")] = a;
+      /* From the last "#cat-" rather than a strict prefix strip: getAttribute
+         gives the literal attribute, but a.href would give the resolved URL,
+         and the two must not be able to disagree about which chip this is. */
+      chips[a.getAttribute("href").replace(/^.*#cat-/, "")] = a;
     });
 
     var observer = new IntersectionObserver(
@@ -410,6 +461,31 @@
   /* ---------------------------------------------------------------- wire */
 
   document.addEventListener("click", function (e) {
+    /*
+     * The category chips, scrolled by hand.
+     *
+     * They are anchors to `#cat-<id>`, which is the right markup: a screen
+     * reader announces a link to a section, and the headings are real targets.
+     * But this page carries a <base href="/menu/"> so that its assets resolve
+     * on a deep URL, and a base makes the browser resolve "#cat-x" against
+     * IT - so on /menu/AZ100/venue/RC/123 a chip would navigate to /menu/ and
+     * throw away both the branch and the room.
+     *
+     * Handling it here keeps the markup honest and the URL intact.
+     */
+    var chip = e.target.closest && e.target.closest(".cat");
+    if (chip) {
+      var target = document.getElementById(
+        chip.getAttribute("href").replace(/^.*#/, ""),
+      );
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.focus({ preventScroll: true });
+      }
+      return;
+    }
+
     var dish = e.target.closest && e.target.closest(".dish");
     if (dish) {
       openSheet(dish.getAttribute("data-id"));

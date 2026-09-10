@@ -4,6 +4,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+
+        Pinned to the mount rather than left to the arriving URL, so one file
+        serves the shop address, a table and a venue alike.
+    -->
+    <base href="/order/" />
     <title>Receipt - PDF</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>

@@ -4826,6 +4826,54 @@
                                                                 <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
                                                                     <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add partner</lang>
                                                                 </button>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    Hotels, offices, anywhere that is not this shop's own floor.
+
+                                                                    The code is what a printed QR carries
+                                                                    (/order/AZ100/venue/RC/123), so it has to outlive a
+                                                                    rename of the building. Markup and commission are two
+                                                                    numbers on purpose: a shop may mark up 12 and pay 10.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_partner_venues">Hotels and other venues</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
+                                                                </small>
+                                                                <div id="partner_venue_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
+                                                                </button>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    Fees, keyed by how the food gets there rather than by
+                                                                    which app the order came through. A delivery charge is
+                                                                    not a property of "online".
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
+                                                                </small>
+                                                                <div id="channel_charge_rows"></div>
+
+                                                                <hr class="my-3">
+
+                                                                <h6 class="mb-1"><lang class="lang_order_approval">New online orders</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_order_approval_help">Send straight to the kitchen, or hold each order until somebody accepts it. Holding raises an alarm on the till so a waiting order is not missed.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_approval"><lang class="lang_when_an_order_arrives">When an order arrives</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_approval">
+                                                                            <option value="auto"><lang class="lang_order_approval_auto">Send to the kitchen straight away</lang></option>
+                                                                            <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="card-footer text-right">

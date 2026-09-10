@@ -120,8 +120,17 @@ test('the customer page uses the online-ordering resource', () => {
    */
   const src = readBundle('indexedDB.js');
   assert.ok(
-    src.includes('/online-ordering/${encodeURIComponent(branchId)}`'),
+    src.includes('/online-ordering/${encodeURIComponent(branchId)}${servicePoint}`'),
     'the storefront is no longer fetched from the online-ordering resource'
+  );
+
+  /* The read has to be made FOR a service point, or a hotel room is quoted
+     house prices and only told the marked-up total at checkout. */
+  assert.match(src, /KioskServicePoint\.query\(\)/, 'the storefront read lost its service point');
+  assert.match(
+    src,
+    /KioskServicePoint\.orderFields\(\)/,
+    'the order no longer says which venue and room it came from'
   );
   assert.ok(
     src.includes('/online-ordering/${encodeURIComponent(branchId)}/orders`'),
@@ -185,7 +194,10 @@ test('every local asset a page asks for is in the bundle', () => {
   const problems = [];
 
   for (const page of htmlPages()) {
-    const src = readBundle(page);
+    /* The <base> is the one absolute href that belongs here: it is what makes
+       every other reference on the page relative to the mount rather than to
+       whatever URL the customer arrived on. Its own value is checked below. */
+    const src = readBundle(page).replace(/<base\b[^>]*>/gi, '');
     const refs = [...src.matchAll(/(?:src|href)\s*=\s*"([^"]+)"/g)].map((m) => m[1]);
 
     for (const ref of refs) {
@@ -206,6 +218,94 @@ test('every local asset a page asks for is in the bundle', () => {
   }
 
   assert.deepStrictEqual(problems, [], problems.join('\n'));
+});
+
+test('a page served three segments deep still finds its own assets', () => {
+  /*
+   * THE PRECONDITION FOR EVERY PRINTED CODE THAT IS NOT JUST THE SHOP.
+   *
+   *   /order/AZ100                 the shop
+   *   /order/AZ100/table/5         its own table five
+   *   /order/AZ100/venue/RC/123    Royal Club Hotel, room 123
+   *
+   * All three are answered with the same index.html. Relative paths resolve
+   * against the URL in the address bar, so on the third shape `assets/x.js`
+   * would be fetched from /order/AZ100/venue/assets/x.js - a 404 for every
+   * script and stylesheet at once. The page still renders its empty shell, so
+   * this fails as a blank screen rather than an error anybody reports.
+   *
+   * The <base> is what stops it. Without one, widening the route guard in
+   * app.js silently breaks the routes it was widened to serve.
+   */
+  for (const page of htmlPages()) {
+    const src = readBundle(page);
+    const base = src.match(/<base\b[^>]*href\s*=\s*"([^"]*)"/i);
+    assert.ok(base, `order/${page} has no <base>, so a venue or table URL will load nothing`);
+    assert.strictEqual(base[1], '/order/', `order/${page} points its base somewhere else`);
+
+    /* Before anything that fetches. A <base> after the first stylesheet applies
+       to everything except that stylesheet, which is a bug that hides. */
+    const firstRef = src.search(/<(?:link|script|img)\b[^>]*(?:src|href)=/i);
+    assert.ok(
+      firstRef === -1 || src.search(/<base\b/i) < firstRef,
+      `order/${page} declares its base after the first asset it loads`
+    );
+  }
+
+  const menuHtml = fs.readFileSync(path.join(ROOT, 'menu', 'index.html'), 'utf8');
+  const menuBase = menuHtml.match(/<base\b[^>]*href\s*=\s*"([^"]*)"/i);
+  assert.ok(menuBase, 'menu/index.html has no <base>');
+  assert.strictEqual(menuBase[1], '/menu/');
+});
+
+test('both bundles answer a table and a venue address, and nothing wider', () => {
+  /*
+   * The guards in app.js are deliberately not catch-alls. A missing script
+   * under these paths has to stay a 404: answer it with index.html and the
+   * browser reports a syntax error in a file that is fine, and whoever debugs
+   * it spends the evening in the wrong place.
+   */
+  const src = fs.readFileSync(APP_JS, 'utf8');
+  const guards = [...src.matchAll(/const (?:STORE|MENU)_ADDRESS =\s*(\/\^[^\n;]+);/g)];
+  assert.strictEqual(guards.length, 2, 'the order and menu route guards moved or merged');
+
+  for (const [, literal] of guards) {
+    // eslint-disable-next-line no-eval
+    const re = eval(literal);
+
+    for (const good of [
+      '/AZ100',
+      '/az1',
+      '/AZ100/table/5',
+      '/AZ100/venue/RC/123',
+      '/AZ100/venue/RC',
+    ]) {
+      assert.ok(re.test(good), `${literal} no longer serves ${good}`);
+    }
+    for (const bad of [
+      '/notafile.js',
+      '/toolongtobeastore',
+      '/assets/kiosk-core.js',
+      '/AZ100/assets/app.js',
+      '/AZ100/venue/RC/123/extra',
+      '/AZ100/table',
+      '/a/b',
+    ]) {
+      assert.ok(!re.test(bad), `${literal} swallows ${bad}, which should stay a 404`);
+    }
+  }
+
+  /* `/assets` on its own is six alphanumerics and DOES match, deliberately:
+     express.static is mounted first and answers for anything that exists, so
+     only paths with no file behind them ever reach these guards. */
+  assert.ok(
+    src.indexOf("app.use('/order', orderStatic)") < src.indexOf('const STORE_ADDRESS'),
+    'the static mount must come first, or real assets get the page instead'
+  );
+  assert.ok(
+    src.indexOf("app.use('/menu', express.static(MENU_BUNDLE") < src.indexOf('const MENU_ADDRESS'),
+    'the menu static mount must come first, or real assets get the page instead'
+  );
 });
 
 test('the order-only pages hand the customer back to the menu', () => {
@@ -316,41 +416,6 @@ test('the channels settings group exists and owns its two keys', () => {
   assert.ok(GROUPS.channels, 'the channels settings group is gone');
   assert.strictEqual(groupOf('sales_channels_enabled'), 'channels');
   assert.strictEqual(groupOf('sales_channel_partners'), 'channels');
-});
-
-test('a store address can be a path segment, and a missing file still 404s', () => {
-  /*
-   * `/order/AZ100` puts the shop's address where it belongs, and prints
-   * smaller inside a QR code than `?branch=AZ100`.
-   *
-   * express.static answers 404 for it - there is no file of that name - so the
-   * page is served for a path that LOOKS like a store address, and only then.
-   * A blanket catch-all would answer HTML for a genuinely missing script,
-   * which the browser reports as a syntax error and sends whoever debugs it
-   * looking in entirely the wrong place.
-   */
-  const src = fs.readFileSync(APP_JS, 'utf8');
-  const guard = src.match(/const STORE_ADDRESS = (\/\^[^;]+\/);/);
-  assert.ok(guard, 'the store-address path guard is gone from app.js');
-
-  const re = new RegExp(guard[1].slice(1, -1));
-  assert.ok(re.test('/AZ100'), 'a real store address is no longer served the page');
-  assert.ok(re.test('/az1'), 'a short store address is no longer served the page');
-
-  /* The two that matter. A missing script must stay a 404: answered with HTML
-     it becomes a syntax error in the browser and sends whoever debugs it
-     looking in the wrong place entirely. */
-  assert.ok(!re.test('/notafile.js'), 'a missing script would be answered with HTML');
-  assert.ok(!re.test('/toolongtobeastore'), 'the guard stopped bounding the length');
-  assert.ok(!re.test('/a/b'), 'a nested path would be served the page');
-
-  /* `/assets` is six alphanumerics and DOES match, deliberately: express.static
-     is mounted first and answers for anything that exists, so only paths with
-     no file behind them ever reach this guard. */
-  assert.ok(
-    src.indexOf("app.use('/order', orderStatic)") < src.indexOf('const STORE_ADDRESS'),
-    'the static mount must come first, or real assets get the page instead'
-  );
 });
 
 test('the page finds its store address in the path, the query, or the default', () => {

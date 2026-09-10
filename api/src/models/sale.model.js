@@ -621,6 +621,35 @@ const saleSchema = new mongoose.Schema(
       default: 0,
     },
 
+    /*
+     * The hotel, office or other building this order came from, copied onto
+     * the sale rather than looked up from settings when a report runs.
+     *
+     * A hotel that renegotiates in March must not restate what it was owed in
+     * February, and a standing delivery note that changes next month must not
+     * rewrite what last month's driver was told. Null for the shop's own
+     * tables, which are not anybody's venue. See utils/partner-venues.js.
+     */
+    venue: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
+    /* What that venue is owed on this order, in money, at the rate agreed
+       when it was placed. Separate from channel_commission: an aggregator and
+       a hotel can both take a cut of the same order. */
+    venue_commission: {
+      type: Number,
+      default: 0,
+    },
+
+    /* Delivery, packing or service, charged on top of the food. Keyed off
+       fulfilment rather than channel - see utils/sales-channels.js. */
+    delivery_fee: {
+      type: Number,
+      default: 0,
+    },
+
     denomination_values: {
       type: mongoose.Schema.Types.Mixed,
     },
@@ -1041,6 +1070,9 @@ class LegacySaleModel {
     channel_partner: { type: 'String', select: true },
     fulfilment: { type: 'String', select: true },
     channel_commission: { type: 'Number', select: true },
+    venue: { type: 'Object', select: true },
+    venue_commission: { type: 'Number', select: true },
+    delivery_fee: { type: 'Number', select: true },
     order: { type: 'String', select: true },
     multi_payment: { type: 'Array', select: true },
     table_id: { type: 'String', select: true },

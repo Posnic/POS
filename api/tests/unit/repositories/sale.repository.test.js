@@ -867,6 +867,361 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(true);
       expect(r.data.sale_id).toBeDefined();
     });
+
+    /*
+     * ORDERS FROM SOMEBODY ELSE'S BUILDING.
+     *
+     * A restaurant with nine tables ties up with the hotel across the road.
+     * The hotel's rooms order through the same storefront and are not the same
+     * orders: the room pays the agreed markup, the hotel is owed its cut, and
+     * the food has to get to a room number rather than a table.
+     *
+     * These are the money tests. A markup that quietly becomes a commission,
+     * or a table billed to a hotel, is an argument with a partner business
+     * rather than a bug report.
+     */
+    const ROYAL = {
+      code: 'RC',
+      name: 'Royal Club Hotel',
+      unit_label: 'Room',
+      ask_floor: true,
+      address: '12 Beach Road',
+      delivery_note: 'Use the service lift',
+      price_adjust_percent: 10,
+      commission_percent: 10,
+    };
+
+    /* The settings live in several documents, each found by the key it holds,
+       so the mock has to answer by key rather than with one canned document. */
+    const settingsHolding = (docs) => {
+      if (!collections.settings) collections.settings = mkCol();
+      collections.settings.findOne.mockImplementation(async (filter) => {
+        const key = Object.keys(filter || {})[0];
+        return key in docs ? { [key]: docs[key] } : null;
+      });
+    };
+
+    const openShopSelling = (price) => {
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        online_ordering: { store_id: 'SHOP1', mode: 'order' },
+      });
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+      if (!collections.items) collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        name: 'Biryani',
+        selling_price: price,
+        tax: 0,
+        tax_type: 'exclusive',
+      });
+    };
+
+    const placed = () => collections.sales.insertOne.mock.calls[0][0];
+
+    test('a hotel room pays the markup, and the hotel is owed its cut', async () => {
+      openShopSelling(280);
+      settingsHolding({ partner_venues: [ROYAL] });
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        venue: 'RC',
+        unit: '123',
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.status).toBe(true);
+      expect(r.data.total).toBe(308);
+      expect(placed().venue_commission).toBe(30.8);
+      expect(placed().venue.venue_name).toBe('Royal Club Hotel');
+    });
+
+    test('the shop own table pays the house price and owes nobody', async () => {
+      openShopSelling(280);
+      settingsHolding({ partner_venues: [ROYAL] });
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        kiosk_table_no: '5',
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.data.total).toBe(280);
+      expect(placed().venue).toBeNull();
+      expect(placed().venue_commission).toBe(0);
+      expect(placed().table_number).toBe('5');
+    });
+
+    /*
+     * A code printed before the settings changed must not become a phantom
+     * markup. House price and no commission is the safe direction: a customer
+     * charged the normal price is a bad QR code, a customer charged a markup
+     * nobody agreed is a complaint.
+     */
+    test('a venue nobody recognises falls back to house prices', async () => {
+      openShopSelling(280);
+      settingsHolding({ partner_venues: [ROYAL] });
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        venue: 'GONE',
+        unit: '9',
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.data.total).toBe(280);
+      expect(placed().venue).toBeNull();
+    });
+
+    /*
+     * THE ONE THE DESTINATION STEP EXISTS FOR.
+     *
+     * A guest photographs the code in room 123 and sends it to a friend in
+     * 456. Record only what the link said and the food goes to the wrong room,
+     * with nothing anywhere showing that the link and the guest disagreed.
+     */
+    test('the room the customer confirmed beats the room the link named', async () => {
+      openShopSelling(100);
+      settingsHolding({ partner_venues: [ROYAL] });
+
+      await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        venue: 'RC',
+        unit: '123',
+        destination: { unit: '456', floor: '4' },
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(placed().venue.unit).toBe('456');
+      expect(placed().venue.label).toBe('Royal Club Hotel, Room 456, floor 4');
+      /* Copied onto the order, not looked up when the ticket prints: a note
+         that changes next month must not rewrite what tonight's driver was
+         told. */
+      expect(placed().venue.delivery_note).toBe('Use the service lift');
+    });
+
+    test('a delivery fee is added to the total, not folded into the food', async () => {
+      openShopSelling(200);
+      settingsHolding({ channel_charges: { delivery: { fee: 40 } } });
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        fulfilment: 'delivery',
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.data.total).toBe(240);
+      expect(r.data.delivery_fee).toBe(40);
+      /* The food is still the food. A report that cannot separate them cannot
+         tell a busy kitchen from an expensive courier. */
+      expect(placed().sales_sub_total).toBe(200);
+    });
+
+    test('an order under the minimum is refused before anything is charged', async () => {
+      openShopSelling(100);
+      settingsHolding({ channel_charges: { delivery: { fee: 40, min_order: 300 } } });
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        fulfilment: 'delivery',
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.status).toBe(false);
+      expect(r.data.state).toBe('below_minimum');
+      expect(r.data.minimum).toBe(300);
+    });
+
+    test('a shop with no venues and no fees is unaffected by any of it', async () => {
+      /* The common case, and the one that must cost nothing: one dining room,
+         no partners, no delivery. */
+      openShopSelling(280);
+      settingsHolding({});
+
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+
+      expect(r.data.total).toBe(280);
+      expect(r.data.delivery_fee).toBe(0);
+      expect(placed().venue).toBeNull();
+    });
+  });
+
+  /*
+   * THE QUEUE BEHIND THE ALARM.
+   *
+   * A shop in manual mode holds every incoming online order until a person
+   * accepts it. The kitchen has not been told, so no ticket printed and the
+   * sales list is not where anybody would look - this queue is the only place
+   * those orders exist on a screen.
+   */
+  describe('pendingOnlineOrders', () => {
+    const rows = (list) => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          limit: jest.fn().mockReturnValue({
+            toArray: jest.fn().mockResolvedValue(list),
+          }),
+        }),
+      });
+    };
+
+    test('it asks only for orders nobody has decided on yet', async () => {
+      rows([]);
+      await salesRepository.pendingOnlineOrders({ branchId: FAKE_BRANCH });
+      expect(collections.sales.find.mock.calls[0][0].order_state).toBe('pending');
+    });
+
+    test('the oldest is first, because that customer has waited longest', async () => {
+      rows([]);
+      await salesRepository.pendingOnlineOrders({ branchId: FAKE_BRANCH });
+      const chain = collections.sales.find.mock.results[0].value;
+      expect(chain.sort).toHaveBeenCalledWith({ created_date: 1 });
+    });
+
+    test('a hotel order reads as the hotel and the room, not as a code', async () => {
+      /* Somebody at a till has three seconds to decide. "Royal Club Hotel,
+         Room 123" is a decision; "rc/123" is a lookup. */
+      rows([
+        {
+          _id: FAKE_ID,
+          sales_id: 'SID1',
+          venue: { label: 'Royal Club Hotel, Room 123', venue_name: 'Royal Club Hotel' },
+          items: [{ item_name: 'Biryani', item_quantity: 2 }],
+          total: 308,
+        },
+      ]);
+      const r = await salesRepository.pendingOnlineOrders({});
+      expect(r.data[0].destination).toBe('Royal Club Hotel, Room 123');
+      expect(r.data[0].items[0].name).toBe('Biryani');
+    });
+
+    test('a table order still reads as its table', async () => {
+      rows([{ _id: FAKE_ID, table_number: '5', items: [], total: 280 }]);
+      const r = await salesRepository.pendingOnlineOrders({});
+      expect(r.data[0].destination).toBe('5');
+    });
+  });
+
+  /*
+   * THE REPORT THAT MAKES A TIE-UP POSSIBLE.
+   *
+   * At the end of the month somebody has to work out what the hotel is owed.
+   * Doing it from a sales list is an evening of arithmetic and a
+   * disagreement, because the hotel has its own number and neither side can
+   * check the other's.
+   */
+  describe('commissionReport', () => {
+    const aggregates = function (venueRows, partnerRows) {
+      if (!collections.sales) collections.sales = mkCol();
+      let call = 0;
+      collections.sales.aggregate.mockImplementation(function () {
+        call += 1;
+        return { toArray: jest.fn().mockResolvedValue(call === 1 ? venueRows : partnerRows) };
+      });
+    };
+
+    const range = { starting_date: '2026-01-01', ending_date: '2026-01-31', branchid: [] };
+
+    test('a hotel is one row, with what it brought in and what it is owed', async () => {
+      aggregates(
+        [{ _id: 'rc', name: 'Royal Club Hotel', orders: 40, sales: 12320, commission: 1120 }],
+        []
+      );
+      const r = await salesRepository.commissionReport(range);
+      expect(r.status).toBe(true);
+      expect(r.data.rows[0].name).toBe('Royal Club Hotel');
+      expect(r.data.rows[0].commission).toBe(1120);
+      /* What the shop actually keeps: the number the report exists for. */
+      expect(r.data.rows[0].net).toBe(11200);
+    });
+
+    /*
+     * A shop can owe a hotel and an aggregator on the same day. They are
+     * unrelated deals, and one report answers one question: what is going out
+     * of this month's takings.
+     */
+    test('venues and aggregators are both counted, and told apart', async () => {
+      aggregates(
+        [{ _id: 'rc', name: 'Royal Club Hotel', orders: 10, sales: 3000, commission: 300 }],
+        [{ _id: 'swiggy', orders: 20, sales: 9000, commission: 2250 }]
+      );
+      const r = await salesRepository.commissionReport(range);
+      expect(r.data.rows.map(function (row) { return row.kind; })).toEqual(['venue', 'partner']);
+      expect(r.data.totals.commission).toBe(2550);
+      expect(r.data.totals.orders).toBe(30);
+    });
+
+    test('a month with no partners at all is an empty report, not an error', async () => {
+      aggregates([], []);
+      const r = await salesRepository.commissionReport(range);
+      expect(r.status).toBe(true);
+      expect(r.data.rows).toEqual([]);
+      expect(r.data.totals.commission).toBe(0);
+    });
+  });
+
+  describe('decideOnOrder', () => {
+    const held = (state) => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockResolvedValue({
+        _id: FAKE_ID,
+        order_state: state,
+        branch_id: FAKE_BRANCH,
+      });
+    };
+
+    test('accepting a held order records it and prints the ticket', async () => {
+      held('pending');
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      expect(r.status).toBe(true);
+      expect(r.data.state).toBe('accepted');
+      expect(r.data.printed).toBe(true);
+    });
+
+    test('rejecting one records it and prints nothing', async () => {
+      held('pending');
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'rejected' });
+      expect(r.data.state).toBe('rejected');
+      expect(r.data.printed).toBe(false);
+    });
+
+    /*
+     * THE ONE THAT COSTS FOOD.
+     *
+     * A double-tap on a slow screen is the ordinary way this happens, and two
+     * tickets for one order is two lots of it cooked.
+     */
+    test('accepting twice does not print twice', async () => {
+      held('accepted');
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      expect(r.status).toBe(true);
+      expect(r.data.printed).toBe(false);
+    });
+
+    /* Rejecting food the kitchen has already started is a conversation and
+       then a void, which is a different operation with a different audit
+       trail. This must not quietly stand in for it. */
+    test('an accepted order cannot be rejected out from under the kitchen', async () => {
+      held('accepted');
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'rejected' });
+      expect(r.status).toBe(false);
+      expect(r.data.state).toBe('accepted');
+    });
+
+    test('an order that is not there is said so, not silently accepted', async () => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockResolvedValue(null);
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      expect(r.status).toBe(false);
+      expect(r.message).toBe('Order not found');
+    });
   });
 
   describe('itemExpiryReportPage', () => {

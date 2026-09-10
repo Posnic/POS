@@ -2854,6 +2854,19 @@ PosnicPro = {
             }
         }
     },
+    /*
+     * The approval queue in the sidebar, only for a shop that holds orders.
+     *
+     * Gated on the approval MODE rather than on the restaurant switch. A shop
+     * that sends orders straight to the kitchen never has anything waiting, so
+     * the entry would open an empty screen for ever; a retail shop selling
+     * online with approval on needs it as much as a restaurant does.
+     */
+    applyOrderQueueVisibility: function () {
+        var holds = PosnicPro.local.get('online_order_approval') === 'manual';
+        $('#online_orders_menu').toggle(holds);
+    },
+
     applyKotVisibility: function (enabled) {
         $('#v-pills-tableorder-tab').toggle(!!enabled);
         PosnicPro.applyModuleSidebar();
@@ -4807,6 +4820,7 @@ $(document).ready(function () {
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
+    PosnicPro.applyOrderQueueVisibility();
 });
 
 /*Import Csv File Into Table By Type of Table Request*/

@@ -537,8 +537,20 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
          * store address in a JSON body, sent to a verb named after the code
          * that happened to scan it.
          */
+        /*
+         * Where the customer is sitting travels with the read.
+         *
+         * A hotel room is quoted the marked-up price it will actually be
+         * charged, so the menu has to be fetched FOR that room. Showing house
+         * prices and adding the markup at checkout is how a guest finds out
+         * about it at the worst possible moment.
+         */
+        const servicePoint = window.KioskServicePoint
+            ? window.KioskServicePoint.query()
+            : '';
+
         const response = await fetch(
-            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(branchId)}`,
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(branchId)}${servicePoint}`,
             { method: "GET", headers: { "Accept": "application/json" } }
         );
 
@@ -558,6 +570,14 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
              */
             if (result.data.channel && window.KioskChannel) {
                 window.KioskChannel.save(result.data.channel);
+            }
+
+            /* And the shop's description of where this customer is sitting -
+               the venue's real name, what it calls a room, whether it needs a
+               floor. The checkout screen shows it back and lets it be
+               corrected. */
+            if (window.KioskServicePoint) {
+                window.KioskServicePoint.remember(result.data);
             }
 
             const categories = (result.data.menu && result.data.menu.categories) || [];
@@ -1264,6 +1284,16 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
                 sale_method: 'Self-Order',
                 order: orderType,
                 note: note,
+                /*
+                 * Which venue and room the printed code named, and what the
+                 * customer confirmed at checkout if they corrected it. Only
+                 * the identity travels: the server looks up what that venue's
+                 * markup and commission are, so nothing here can change what
+                 * anybody is charged or owed.
+                 */
+                ...(window.KioskServicePoint
+                    ? window.KioskServicePoint.orderFields()
+                    : {}),
             })
         }
         );

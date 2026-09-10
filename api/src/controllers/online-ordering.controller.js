@@ -21,6 +21,27 @@ const itemService = require('../services/item.service');
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 
+/**
+ * Where the customer is sitting, as their own URL described it.
+ *
+ * The page is served at /order/AZ100/table/5 and /order/AZ100/venue/RC/123 and
+ * passes those parts back here as query parameters, because the API resource
+ * is addressed by store id and a service point is a QUALIFIER on the read, not
+ * a different resource: the same menu, priced for where you are sitting.
+ *
+ * Only the identity travels. The phone says which venue the printed code
+ * named; it does not get to say what that venue's markup is, and the server
+ * looks up the terms itself.
+ */
+function servicePointFrom(req) {
+  const q = (req && req.query) || {};
+  return {
+    table: String(q.table || '').slice(0, 24),
+    venue: String(q.venue || '').slice(0, 12),
+    unit: String(q.unit || '').slice(0, 24),
+  };
+}
+
 class OnlineOrderingController {
   /* The reply's own shape, built once so the public and device versions can
      never disagree about anything but the device block. */
@@ -36,6 +57,11 @@ class OnlineOrderingController {
         advertisement: store.advertisement || '',
       },
       channel: data.channel,
+      /* Where this customer is sitting, and what a delivery costs them. Both
+         echoed back so the page never has to work out a price the server will
+         later disagree with. */
+      service_point: data.service_point || { label: '', venue: null },
+      charges: data.charges || {},
       /* Which ways the customer may pay. On/off flags, no credentials, so
          the page can draw its checkout without a privileged call. */
       payment: data.payment || {},
@@ -69,7 +95,10 @@ class OnlineOrderingController {
 
   async storefront(req, res) {
     try {
-      const result = await itemService.storefront({ storeId: req.params.storeId });
+      const result = await itemService.storefront({
+        storeId: req.params.storeId,
+        ...servicePointFrom(req),
+      });
       return this.respond(res, result, OnlineOrderingController.present);
     } catch (error) {
       console.error('Error in online ordering storefront:', error);
@@ -97,7 +126,7 @@ class OnlineOrderingController {
         return res.status(404).json({ type: 'error', message, data: { reason } });
       }
 
-      const result = await itemService.storefront({ storeId });
+      const result = await itemService.storefront({ storeId, ...servicePointFrom(req) });
       return this.respond(res, result, OnlineOrderingController.present);
     } catch (error) {
       console.error('Error in online ordering defaultStorefront:', error);
@@ -107,7 +136,10 @@ class OnlineOrderingController {
 
   async deviceStorefront(req, res) {
     try {
-      const result = await itemService.storefront({ storeId: req.params.storeId });
+      const result = await itemService.storefront({
+        storeId: req.params.storeId,
+        ...servicePointFrom(req),
+      });
       return this.respond(res, result, (data) => ({
         ...OnlineOrderingController.present(data),
         /* Only for the shop's own equipment: which printer the ticket goes
@@ -131,7 +163,10 @@ class OnlineOrderingController {
    */
   async menu(req, res) {
     try {
-      const result = await itemService.publicMenu({ storeId: req.params.storeId });
+      const result = await itemService.publicMenu({
+        storeId: req.params.storeId,
+        ...servicePointFrom(req),
+      });
       return this.respond(res, result);
     } catch (error) {
       console.error('Error in online ordering menu:', error);
@@ -150,7 +185,7 @@ class OnlineOrderingController {
             : 'This shop has not published a menu yet.';
         return res.status(404).json({ type: 'error', message, data: { reason } });
       }
-      const result = await itemService.publicMenu({ storeId });
+      const result = await itemService.publicMenu({ storeId, ...servicePointFrom(req) });
       return this.respond(res, result);
     } catch (error) {
       console.error('Error in online ordering defaultMenu:', error);

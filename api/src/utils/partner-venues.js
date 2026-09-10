@@ -69,6 +69,33 @@ function normalizeVenue(input) {
     price_adjust_percent: clampPercent(input.price_adjust_percent),
     /* Owing a venue less than nothing is not a deal, it is a typo. */
     commission_percent: clampPercent(input.commission_percent, 0),
+
+    /*
+     * What this building calls the thing a guest is sitting in. "Room" in a
+     * hotel, "Suite", "Desk" in an office, "Cabin" on a boat. One word, so the
+     * page can say "Room 123" rather than the generic "unit 123", which reads
+     * like a warehouse.
+     */
+    unit_label:
+      String(input.unit_label || 'Room')
+        .trim()
+        .slice(0, 20) || 'Room',
+
+    /* Where the building is, and how to get in once you are there. Constant
+       per venue, which is the whole reason this is configured here and not on
+       two hundred rooms. */
+    address: String(input.address || '')
+      .trim()
+      .slice(0, 300),
+    delivery_note: String(input.delivery_note || '')
+      .trim()
+      .slice(0, 300),
+
+    /* Some buildings need a floor and most do not. Asking everybody for one
+       is a field most guests leave blank, and a blank field trains people to
+       skip the ones that matter. */
+    ask_floor: input.ask_floor === true,
+
     enabled: input.enabled !== false,
   };
 }
@@ -163,9 +190,66 @@ function commissionFor(total, venue) {
   return Math.round(amount * (percent / 100) * 100) / 100;
 }
 
+/**
+ * Where the food is actually going, as the CUSTOMER confirmed it.
+ *
+ * THE URL CAN LIE, and this is the function that stops it mattering.
+ *
+ * A guest photographs the code in room 123 and sends it to a friend in 456. A
+ * code gets stuck on the wrong door during a refit. A link is shared in a group
+ * chat. If an order records only what the link claimed, the food goes to the
+ * wrong room and the restaurant gets the complaint, and nothing anywhere would
+ * show that the link and the guest disagreed.
+ *
+ * So the page shows the destination and lets it be corrected, and this records
+ * what came back. The URL is the DEFAULT, never the answer.
+ *
+ * @param {object} servicePoint  from resolveServicePoint
+ * @param {object} [confirmed]   what the customer actually said
+ * @returns {object|null} null for the shop's own floor, which needs no address
+ */
+function confirmDestination(servicePoint, confirmed = {}) {
+  const venue = servicePoint && servicePoint.venue;
+  if (!venue) return null;
+
+  /* What the customer typed wins over what the link said. An empty correction
+     is not a correction: somebody clearing a field by accident must not blank
+     the only address the kitchen has. */
+  const unit = String(confirmed.unit || '').trim() || String(servicePoint.unit || '').trim();
+  const floor = venue.ask_floor
+    ? String(confirmed.floor || '')
+        .trim()
+        .slice(0, 20)
+    : '';
+
+  const parts = [venue.name];
+  if (unit) parts.push(`${venue.unit_label} ${unit}`);
+  if (floor) parts.push(`floor ${floor}`);
+
+  return {
+    venue_code: venue.code,
+    venue_name: venue.name,
+    unit_label: venue.unit_label,
+    unit,
+    floor,
+    address: venue.address,
+    /* The standing instruction, copied ONTO the order rather than looked up
+       when the ticket prints. A note that changes next month must not rewrite
+       what last month's driver was told. */
+    delivery_note: venue.delivery_note,
+    /* One line, assembled once, because the ticket, the receipt and the
+       driver's screen should not each build it slightly differently. */
+    label: parts.join(', '),
+    /* Whether the guest actually confirmed, or the link simply went
+       unchallenged. Worth knowing when a delivery goes wrong. */
+    confirmed: !!(confirmed && (confirmed.unit || confirmed.floor)),
+  };
+}
+
 module.exports = {
   clampPercent,
   commissionFor,
+  confirmDestination,
   normalizeCode,
   normalizeVenue,
   normalizeVenues,

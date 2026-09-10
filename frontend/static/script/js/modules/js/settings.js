@@ -7802,19 +7802,155 @@ PosnicPro.salesChannels = {
         $('#sales_channel_partner_rows').html(list.map(self.partnerRow).join(''));
     },
 
+    /*
+     * A venue: a hotel, an office, anywhere that is not this shop's own floor.
+     *
+     * THE CODE IS THE IDENTITY. It is what a printed QR carries
+     * (/order/AZ100/venue/RC/123), so it has to survive a rename of the
+     * building - which is why it is typed rather than derived from the name
+     * the way a partner id is.
+     *
+     * MARKUP AND COMMISSION ARE TWO FIELDS. The obvious design gives a venue
+     * one percentage and uses it for both. That is one common deal and not the
+     * only one: a restaurant may mark up 12 and pay 10, keeping two points; it
+     * may mark up nothing and pay 8 out of its own margin to win the tie-up.
+     * One field would decide that negotiation on the shop's behalf.
+     */
+    venueRow: function (venue) {
+        var v = venue || {};
+        var safe = function (value) { return $('<div>').text(value || '').html(); };
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+        var floorId = 'venue_floor_' + Math.random().toString(36).slice(2, 9);
+
+        return '<div class="card border mb-2 partner-venue-row"><div class="card-body py-2">' +
+            '<div class="form-row align-items-end">' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_name', 'Venue name') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-name" value="' + safe(v.name) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_code', 'Code') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-code" maxlength="12" placeholder="RC" data-t-placeholder="lang_rc" value="' + safe(v.code) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_unit_label', 'Calls a unit') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-unit-label" maxlength="20" placeholder="Room" data-t-placeholder="lang_room" value="' + safe(v.unit_label || 'Room') + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_markup', 'Guest pays extra') + '</label>' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="-100" max="100" step="0.01" class="form-control venue-markup" placeholder="0" value="' + (Number(v.price_adjust_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_commission', 'You owe them') + '</label>' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="0" max="100" step="0.01" class="form-control venue-commission" placeholder="0" value="' + (Number(v.commission_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '</div>' +
+            '<div class="form-row align-items-end">' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_address', 'Address') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-address" maxlength="300" value="' + safe(v.address) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_delivery_note', 'Note for whoever delivers') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-note" maxlength="300" placeholder="' + t('lang_venue_delivery_note_hint', 'Use the service lift') + '" value="' + safe(v.delivery_note) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<div class="custom-control custom-checkbox">' +
+            '<input type="checkbox" class="custom-control-input venue-ask-floor" id="' + floorId + '"' + (v.ask_floor === true ? ' checked' : '') + '>' +
+            '<label class="custom-control-label small" for="' + floorId + '">' + t('lang_venue_ask_floor', 'Ask for a floor') + '</label>' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group col-md-1 text-right">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-partner-venue" aria-label="' + t('lang_remove_venue', 'Remove venue') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div>' +
+            '</div></div></div>';
+    },
+
+    renderVenues: function (venues) {
+        var self = PosnicPro.salesChannels;
+        var list = Array.isArray(venues) ? venues : [];
+        $('#partner_venue_rows').html(list.map(self.venueRow).join(''));
+    },
+
+    /*
+     * What a customer pays on top of the food, per FULFILMENT.
+     *
+     * Not per channel, and that is the part that is easy to get wrong and
+     * expensive to change later. A delivery fee exists because somebody drives
+     * the food somewhere, not because the order came through a particular app:
+     * the same storefront serves a table, a takeaway and a hotel room.
+     */
+    /* Ids only. The names are looked up inside chargeRow, because a literal
+       here would be built when this file loads - before the language pack has
+       arrived - and every shop would see English whatever it chose. */
+    FULFILMENTS: ['dine_in', 'takeaway', 'pickup', 'delivery'],
+
+    chargeRow: function (id, rule) {
+        var r = rule || {};
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+        var money = function (value) { return Number(value) > 0 ? Number(value) : ''; };
+        var names = {
+            dine_in: t('lang_fulfilment_dine_in', 'Dine in'),
+            takeaway: t('lang_fulfilment_takeaway', 'Takeaway'),
+            pickup: t('lang_fulfilment_pickup', 'Pickup'),
+            delivery: t('lang_fulfilment_delivery', 'Delivery')
+        };
+
+        return '<div class="form-row align-items-end mb-2 channel-charge-row" data-fulfilment="' + id + '">' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<span class="small">' + (names[id] || id) + '</span>' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-fee" placeholder="' + t('lang_charge_fee', 'Fee') + '" value="' + money(r.fee) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-free-above" placeholder="' + t('lang_charge_free_above', 'Free above') + '" value="' + money(r.free_above) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-min-order" placeholder="' + t('lang_charge_min_order', 'Minimum order') + '" value="' + money(r.min_order) + '">' +
+            '</div>' +
+            '</div>';
+    },
+
+    renderCharges: function (charges) {
+        var self = PosnicPro.salesChannels;
+        var table = charges || {};
+        $('#channel_charge_rows').html(self.FULFILMENTS.map(function (id) {
+            return self.chargeRow(id, table[id]);
+        }).join(''));
+    },
+
     load: function () {
         var self = PosnicPro.salesChannels;
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             var values = (response && response.data && response.data.values) || {};
             self.renderChannels(values.sales_channels_enabled);
             self.renderPartners(values.sales_channel_partners);
+            self.renderVenues(values.partner_venues);
+            self.renderCharges(values.channel_charges);
             $("#online_ordering_default_store").val(values.online_ordering_default_store || "");
+            /* Anything that is not exactly "manual" is auto, which is what the
+               server makes of it too - see utils/order-approval for why that is
+               the survivable direction. */
+            var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
+            $("#online_order_approval").val(approval);
+            /* Remembered so the sidebar can decide without a request on every
+               page load: the approval queue is only worth a menu entry for a
+               shop that actually holds orders. */
+            PosnicPro.local.set('online_order_approval', approval);
+            PosnicPro.applyOrderQueueVisibility();
             PosnicPro.dayparts.render(values.menu_dayparts);
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
             self.renderChannels(['pos']);
             self.renderPartners([]);
+            self.renderVenues([]);
+            self.renderCharges({});
         });
     },
 
@@ -7839,13 +7975,50 @@ PosnicPro.salesChannels = {
             });
         });
 
+        var venues = [];
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.venue-name').val() || '').trim();
+            /* Normalised here exactly as the server normalises it: a venue
+               typed as "RC " and a code printed as "rc" have to be the same
+               venue, or a hotel's orders split across two half-totals. */
+            var code = String($row.find('.venue-code').val() || '')
+                .trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            if (!name || !code) return;
+
+            venues.push({
+                code: code,
+                name: name,
+                unit_label: String($row.find('.venue-unit-label').val() || 'Room').trim() || 'Room',
+                price_adjust_percent: Number($row.find('.venue-markup').val()) || 0,
+                commission_percent: Number($row.find('.venue-commission').val()) || 0,
+                address: String($row.find('.venue-address').val() || '').trim(),
+                delivery_note: String($row.find('.venue-note').val() || '').trim(),
+                ask_floor: $row.find('.venue-ask-floor').is(':checked'),
+                enabled: true
+            });
+        });
+
+        var charges = {};
+        $('.channel-charge-row').each(function () {
+            var $row = $(this);
+            charges[$row.data('fulfilment')] = {
+                fee: Number($row.find('.charge-fee').val()) || 0,
+                free_above: Number($row.find('.charge-free-above').val()) || 0,
+                min_order: Number($row.find('.charge-min-order').val()) || 0
+            };
+        });
+
         return {
             sales_channels_enabled: enabled,
             sales_channel_partners: partners,
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
             online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
-            menu_dayparts: PosnicPro.dayparts.collect()
+            menu_dayparts: PosnicPro.dayparts.collect(),
+            partner_venues: venues,
+            channel_charges: charges,
+            online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
         };
     },
 
@@ -7860,6 +8033,11 @@ PosnicPro.salesChannels = {
         }, function (response) {
             loader.find('.loadingSpinner').remove();
             if (response.type === 'success') {
+                /* The menu follows the setting immediately: turning approval on
+                   and then hunting for where the orders went is exactly the
+                   confusion this screen exists to prevent. */
+                PosnicPro.local.set('online_order_approval', $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto');
+                PosnicPro.applyOrderQueueVisibility();
                 PosnicPro.alert('success', response.message || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
             } else {
                 PosnicPro.alert('error', response.message);
@@ -7876,6 +8054,14 @@ PosnicPro.salesChannels = {
    shop may never touch this screen, and the request would be wasted. */
 $(document).on('click', '#channels-tab-line', function () {
     PosnicPro.salesChannels.load();
+});
+
+$(document).on('click', '#add_partner_venue', function () {
+    $('#partner_venue_rows').append(PosnicPro.salesChannels.venueRow({}));
+});
+
+$(document).on('click', '.remove-partner-venue', function () {
+    $(this).closest('.partner-venue-row').remove();
 });
 
 $(document).on('click', '#add_channel_partner', function () {

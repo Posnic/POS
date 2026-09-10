@@ -12,11 +12,25 @@
  *                       say which of its one branch it means
  */
 function storeAddressFromUrl() {
-    const path = String(window.location.pathname || '');
-    /* The last segment, when it looks like a store address rather than one of
-       the page names this bundle is made of. */
-    const segment = path.split('/').filter(Boolean).pop() || '';
-    if (/^[A-Za-z0-9]{3,6}$/.test(segment) && !/\./.test(segment)) return segment;
+    /*
+     * The FIRST segment after the mount, not the last.
+     *
+     *   /order/AZ100                 the shop
+     *   /order/AZ100/table/5         its own table five
+     *   /order/AZ100/venue/RC/123    Royal Club Hotel, room 123
+     *
+     * This read the LAST segment once, which is right for exactly the first of
+     * those and asks the server for a shop called "123" on the third. Where
+     * the customer is sitting is a separate reading, done by
+     * assets/service-point.js; it is not part of the shop's address.
+     */
+    const parts = String(window.location.pathname || '')
+        .split('/')
+        .filter(Boolean);
+    if (parts[0] === 'order' || parts[0] === 'menu') parts.shift();
+
+    const first = parts[0] || '';
+    if (/^[A-Za-z0-9]{3,6}$/.test(first) && !/\./.test(first)) return first;
 
     return new URLSearchParams(window.location.search).get("branch") || null;
 }

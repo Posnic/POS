@@ -593,6 +593,9 @@
     "src/models/receiving.model.js",
     "src/repositories/sale.repository.js"
   ],
+  "Enter must correct order id": [
+    "src/repositories/sale.repository.js"
+  ],
   "Enter the amount received": [
     "src/services/invoice-sync.js"
   ],

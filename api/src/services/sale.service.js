@@ -3758,6 +3758,12 @@ module.exports = {
     salesRepository.createOnlineOrder(data, {
       SaleModel: getModel(SaleModel),
     }),
+  /* What the shop owes its hotels and its aggregators over a date range. */
+  commissionReport: async (params = {}) => salesRepository.commissionReport(params),
+  /* The approval queue: orders held back from the kitchen, and the decision
+     that releases or turns away one of them. */
+  pendingOnlineOrders: async (params = {}) => salesRepository.pendingOnlineOrders(params),
+  decideOnOrder: async (params = {}) => salesRepository.decideOnOrder(params),
   getNewSaleModel: async ({ SaleModel } = {}) =>
     salesRepository.getNewSaleModel({
       SaleModel: getModel(SaleModel),

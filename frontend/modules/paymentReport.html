@@ -82,7 +82,16 @@
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="payment-return-tab-line" data-toggle="tab" href="#payment-return-line" role="tab" aria-controls="payment-return-line" aria-selected="false" onClick="PosnicPro.paymentreturntransaction.paymentReturnTabClick();"><i class="feather icon-credit-card mr-1"></i><lang class="lang_return_sale_payment_transactions">Return Sale Payment Transactions</lang> </a>
                             </li>
-                            
+                            <!--
+                                What the shop owes its hotels and its
+                                aggregators. In Money rather than Sales
+                                because it answers "what is going out of this
+                                month's takings", not "what did we sell".
+                            -->
+                            <li class="nav-item">
+                                <a class="nav-link report_tab_font" id="commission-tab-line" data-toggle="tab" href="#commission-line" role="tab" aria-controls="commission-line" aria-selected="false" onClick="PosnicPro.commissionreport.load();"><i class="feather icon-percent mr-1"></i><lang class="lang_commission_owed">Commission owed</lang></a>
+                            </li>
+
                         </ul>
                         <div class="tab-content loader-sales-payment-report" id="defaultTabContentLine">
                             <div id="payment_upgrade" class="text-center mt-4">
@@ -124,6 +133,29 @@
                                     <!-- End table -->
                                 </div>
 
+                            </div>
+                            <!--
+                                One row per hotel and per aggregator. Sales is
+                                what their customers spent, commission is what
+                                the shop owes them, and net is what it actually
+                                keeps - the number the report exists for.
+                            -->
+                            <div class="tab-pane fade loader-commission-report" id="commission-line" role="tabpanel" aria-labelledby="commission-tab-line">
+                                <div class="table-responsive">
+                                    <table id="commissionReport" class="table table-borderless m-sticky-first">
+                                        <thead>
+                                            <tr>
+                                                <th><lang class="lang_partner_or_venue">Hotel or partner</lang></th>
+                                                <th class="text-right"><lang class="lang_orders">Orders</lang></th>
+                                                <th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th>
+                                                <th class="text-right"><lang class="lang_commission_owed">Commission owed</lang></th>
+                                                <th class="text-right"><lang class="lang_you_keep">You keep</lang></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="commission_report_body"></tbody>
+                                        <tfoot id="commission_report_foot"></tfoot>
+                                    </table>
+                                </div>
                             </div>
                             <div class="tab-pane fade loader-receiving-payment-report" id="payment-status-line" role="tabpanel" aria-labelledby="payment-status-tab-line">
                                 <!-- start table -->
