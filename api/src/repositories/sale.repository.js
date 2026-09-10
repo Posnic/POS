@@ -8,6 +8,7 @@ const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const onlineOrdering = require('../utils/online-ordering');
+const salesChannels = require('../utils/sales-channels');
 
 /* The fallback when channelState has no sentence of its own. It never should,
    but a refusal with an empty message would tell a customer nothing. */
@@ -7354,7 +7355,20 @@ class SalesRepository {
         sale_process: 'KOT',
         payment_status: data.payment_status || 'Paid',
         payment_mode: data.payment_status || 'Cash',
-        sale_method: sale_method || 'Table-Order',
+        /*
+         * The customer's own device, through the shop's own storefront.
+         *
+         * `order` carries what the page asked for - dine in, takeaway - and
+         * that is the FULFILMENT, not the channel: a QR code at a table and
+         * the same page from somebody's sofa are one channel with two
+         * answers to "how does this reach them". `sale_method` is still
+         * written, in step, by describeSale.
+         */
+        ...salesChannels.describeSale({
+          channel: salesChannels.CHANNEL.ONLINE,
+          fulfilment: data.fulfilment || order || dine_type,
+          sale_method,
+        }),
         dine_type: dine_type || 'Dine-in',
         table_number: kiosk_table_no || '',
         table_id: kiosk_table_id || '',
@@ -8721,11 +8735,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const filters = {
@@ -8787,11 +8813,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const condition = {
@@ -8956,11 +8994,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const condition = {

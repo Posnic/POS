@@ -7721,3 +7721,163 @@ $(document).on('click', '.kiosk-pause-btn', function () {
 $(document).on('click', '#kiosk_pause_resume', function () {
     PosnicPro.settings.onlineOrdering.renderPause('');
 });
+
+/*
+ * Sales channels: the ways this shop takes orders, and the outside businesses
+ * that send it some.
+ *
+ * Reads and writes the `channels` settings group, so this screen cannot touch
+ * a key belonging to another one. The vocabulary is the server's - see
+ * api/src/utils/sales-channels.js - and is mirrored here only for labels.
+ */
+PosnicPro.salesChannels = {
+    /* Labels as <lang> markup, not t(): this object is built when the module
+       loads, before any language pack has arrived, and the rows are drawn as
+       HTML so the observer translates them on screen. Same rule, and the same
+       reason, as PosnicPro.dashboard.SETUP_CARDS. */
+    CHANNELS: [
+        { id: 'pos', label: '<lang class="lang_channel_pos">Point of sale</lang>' },
+        { id: 'kiosk', label: '<lang class="lang_channel_kiosk">Kiosk machine</lang>' },
+        { id: 'tableside', label: '<lang class="lang_channel_tableside">Captain app</lang>' },
+        { id: 'online', label: '<lang class="lang_channel_online">Online and QR</lang>' },
+        { id: 'phone', label: '<lang class="lang_channel_phone">Phone order</lang>' },
+        { id: 'whatsapp', label: '<lang class="lang_channel_whatsapp">WhatsApp</lang>' },
+        { id: 'marketplace', label: '<lang class="lang_channel_marketplace">Delivery partner</lang>' },
+        { id: 'ecommerce', label: '<lang class="lang_channel_ecommerce">Own webshop</lang>' }
+    ],
+
+    /* The only two that mean nothing without naming the business involved. */
+    PARTNER_CHANNELS: ['marketplace', 'ecommerce'],
+
+    renderChannels: function (enabled) {
+        var self = PosnicPro.salesChannels;
+        var chosen = Array.isArray(enabled) ? enabled : [];
+        var html = '';
+        self.CHANNELS.forEach(function (c) {
+            var checked = chosen.indexOf(c.id) !== -1 ? ' checked' : '';
+            html +=
+                '<div class="form-group col-md-4">' +
+                '<div class="custom-control custom-checkbox">' +
+                '<input type="checkbox" class="custom-control-input sales-channel-box" ' +
+                'id="channel_' + c.id + '" value="' + c.id + '"' + checked + '>' +
+                '<label class="custom-control-label" for="channel_' + c.id + '">' + c.label + '</label>' +
+                '</div></div>';
+        });
+        $('#sales_channels_list').html(html);
+    },
+
+    partnerRow: function (partner) {
+        var self = PosnicPro.salesChannels;
+        var p = partner || {};
+        var options = self.PARTNER_CHANNELS.map(function (id) {
+            var match = self.CHANNELS.filter(function (c) { return c.id === id; })[0];
+            var sel = String(p.channel || 'marketplace') === id ? ' selected' : '';
+            return '<option value="' + id + '"' + sel + '>' + (match ? match.label : id) + '</option>';
+        }).join('');
+
+        /* The name is escaped through jQuery rather than interpolated raw: it
+           is whatever the shop typed, and it comes back out into markup. */
+        var safeLabel = $('<div>').text(p.label || '').html();
+
+        return '<div class="form-row align-items-end mb-2 channel-partner-row">' +
+            '<div class="form-group col-md-4">' +
+            '<input type="text" class="form-control form-control-sm partner-label" placeholder="' + PosnicPro.i18n.t('lang_partner_name', 'Partner name') + '" value="' + safeLabel + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<select class="form-control form-control-sm partner-channel">' + options + '</select>' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="0" max="100" step="0.01" class="form-control partner-commission" placeholder="0" value="' + (Number(p.commission_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '<div class="form-group col-md-2">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-channel-partner" aria-label="' + PosnicPro.i18n.t('lang_remove_partner', 'Remove partner') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div></div>';
+    },
+
+    renderPartners: function (partners) {
+        var self = PosnicPro.salesChannels;
+        var list = Array.isArray(partners) ? partners : [];
+        $('#sales_channel_partner_rows').html(list.map(self.partnerRow).join(''));
+    },
+
+    load: function () {
+        var self = PosnicPro.salesChannels;
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            self.renderChannels(values.sales_channels_enabled);
+            self.renderPartners(values.sales_channel_partners);
+        }, function () {
+            /* A shop that has never saved these has nothing stored yet, which
+               is not an error. Draw the till, which every shop has. */
+            self.renderChannels(['pos']);
+            self.renderPartners([]);
+        });
+    },
+
+    collect: function () {
+        var enabled = [];
+        $('.sales-channel-box:checked').each(function () { enabled.push($(this).val()); });
+
+        var partners = [];
+        $('.channel-partner-row').each(function () {
+            var $row = $(this);
+            var label = String($row.find('.partner-label').val() || '').trim();
+            if (!label) return;
+            partners.push({
+                /* Derived from the name exactly as the server derives it, so
+                   "Swiggy" and "swiggy " cannot become two partners and two
+                   half-totals in one report. */
+                id: label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+                label: label,
+                channel: $row.find('.partner-channel').val(),
+                commission_percent: Number($row.find('.partner-commission').val()) || 0,
+                enabled: true
+            });
+        });
+
+        return { sales_channels_enabled: enabled, sales_channel_partners: partners };
+    },
+
+    save: function () {
+        var loader = $('.loader-view-saleschannels');
+        loader.find('.loadingSpinner').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        PosnicPro.put({
+            url: 'settings/group/channels',
+            data: JSON.stringify(PosnicPro.salesChannels.collect())
+        }, function (response) {
+            loader.find('.loadingSpinner').remove();
+            if (response.type === 'success') {
+                PosnicPro.alert('success', response.message || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+            } else {
+                PosnicPro.alert('error', response.message);
+            }
+        }, function () {
+            loader.find('.loadingSpinner').remove();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_channel_settings', 'Could not save the channel settings'));
+        });
+        return false;
+    }
+};
+
+/* Loaded when the tab is opened rather than on every settings page view: the
+   shop may never touch this screen, and the request would be wasted. */
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.salesChannels.load();
+});
+
+$(document).on('click', '#add_channel_partner', function () {
+    $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({}));
+});
+
+$(document).on('click', '.remove-channel-partner', function () {
+    $(this).closest('.channel-partner-row').remove();
+});
+
+$(document).on('submit', '#sales_channels_form', function (e) {
+    e.preventDefault();
+    return PosnicPro.salesChannels.save();
+});

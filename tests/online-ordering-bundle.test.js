@@ -261,20 +261,59 @@ test('the self-service machines keep the endpoints they already call', () => {
   );
 });
 
-test('the kiosk report still counts both self-service channels', () => {
+test('the self-service report counts both channels, history included', () => {
   /*
-   * A machine sale is stamped `Kiosk` and a customer's own phone `Self-Order`.
-   * The report covers both, which is why naming it after either one alone is
-   * wrong. If this list is ever narrowed, a whole channel silently stops being
-   * reported and the totals just quietly get smaller.
+   * A machine sale is a `kiosk` order and a customer's own phone an `online`
+   * one. The report covers both, which is why naming it after either alone is
+   * wrong. Narrow this list and a whole channel silently stops being reported:
+   * no error, the totals just get smaller.
+   *
+   * All three queries go through channelFilter rather than testing
+   * `sale_method` themselves, because that is what also reaches the years of
+   * sales written before `channel` existed.
    */
   const repo = fs.readFileSync(
     path.join(ROOT, 'api', 'src', 'repositories', 'sale.repository.js'),
     'utf8'
   );
-  const matches = repo.match(/sale_method:\s*\{\s*\$in:\s*\['Kiosk',\s*'Self-Order'\]\s*\}/g) || [];
-  assert.ok(
-    matches.length >= 3,
-    `the kiosk report no longer counts both channels (found ${matches.length} of the 3 queries)`
+  const matches =
+    repo.match(/salesChannels\.channelFilter\(salesChannels\.SELF_SERVICE_CHANNELS\)/g) || [];
+  assert.strictEqual(
+    matches.length,
+    3,
+    `the self-service reports no longer count both channels (${matches.length} of 3 queries)`
   );
+
+  /* And the set is the two of them, not one. */
+  const { SELF_SERVICE_CHANNELS, CHANNEL } = require('../api/src/utils/sales-channels');
+  assert.deepStrictEqual(SELF_SERVICE_CHANNELS, [CHANNEL.KIOSK, CHANNEL.ONLINE]);
+});
+
+test('every order path records which channel it came from', () => {
+  /*
+   * A sale with no channel is invisible to every channel report, and there is
+   * nothing to see: it looks like a sale that simply did not happen. The kiosk
+   * path used to store whatever `sale_method` the machine sent and nothing
+   * else, so a machine that forgot the field wrote a sale nobody could count.
+   */
+  const paths = {
+    'api/src/models/sale.model.js': 'the kiosk machine',
+    'api/src/repositories/sale.repository.js': 'the online storefront',
+    'api/src/services/sale.service.js': 'the till and the captain app',
+  };
+  for (const [file, what] of Object.entries(paths)) {
+    const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    assert.match(
+      src,
+      /salesChannels\.describeSale\(/,
+      `${what} no longer records a channel (${file})`
+    );
+  }
+});
+
+test('the channels settings group exists and owns its two keys', () => {
+  const { GROUPS, groupOf } = require('../api/src/services/settings-groups');
+  assert.ok(GROUPS.channels, 'the channels settings group is gone');
+  assert.strictEqual(groupOf('sales_channels_enabled'), 'channels');
+  assert.strictEqual(groupOf('sales_channel_partners'), 'channels');
 });

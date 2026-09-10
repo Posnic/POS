@@ -269,6 +269,28 @@ const TAX = [
   'us_resale_certificate', // the shop's own resale certificate number
 ];
 
+/*
+ * Which ways this shop sells, and who it sells through.
+ *
+ * Its own group rather than a handful of FEATURES toggles, because the
+ * partner list is not a switch: it carries a commission rate that money
+ * reports read. A 500 rupee order through an aggregator at 25% is 375 to the
+ * shop, and a report with nowhere to learn that overstates earnings by more
+ * the more the shop grows on aggregators.
+ *
+ * See utils/sales-channels.js for the vocabulary these values come from.
+ */
+const CHANNELS = [
+  /* The channel ids this shop uses: pos, kiosk, tableside, online, phone,
+     whatsapp, marketplace, ecommerce. A list rather than one toggle per
+     channel, so adding a channel is not a new settings key. */
+  'sales_channels_enabled',
+  /* [{ id, label, channel, commission_percent, enabled }] - the outside
+     businesses orders arrive through. Data, deliberately: a new aggregator
+     must never be a release. */
+  'sales_channel_partners',
+];
+
 const GROUPS = {
   features: FEATURES,
   preferences: PREFERENCES,
@@ -276,6 +298,7 @@ const GROUPS = {
   secrets: SECRETS,
   sharing: SHARING,
   tax: TAX,
+  channels: CHANNELS,
 };
 
 /* key -> group, built once so lookups are not a scan per key */
@@ -299,6 +322,7 @@ const splitByGroup = (payload = {}) => {
     secrets: {},
     sharing: {},
     tax: {},
+    channels: {},
     unknown: {},
   };
   for (const [key, value] of Object.entries(payload || {})) {
@@ -317,6 +341,7 @@ module.exports = {
   DOCUMENTS,
   SECRETS,
   SHARING,
+  CHANNELS,
   BRANCH_CREDENTIALS,
   CLEAR_SECRET,
   coerceFeatureToggle,

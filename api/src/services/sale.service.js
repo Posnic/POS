@@ -10,6 +10,7 @@ const branchesRepository = require('../repositories/branch.repository');
 const salesRepository = require('../repositories/sale.repository');
 const { ERROR_MESSAGES } = require('../constants/sales.constants');
 const { PAYMENT_STATUS, SALE_STATUS } = require('../constants');
+const salesChannels = require('../utils/sales-channels');
 const { NotFoundError, BadRequestError } = require('../utils/appError');
 const { toNumberExpression } = require('../helpers/sales.helper');
 
@@ -1062,8 +1063,24 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
           ? { charges: existingSale.charges }
           : {}),
 
-      // ...
-      sale_method: saleMethod,
+      /*
+       * The channel this sale came through.
+       *
+       * `saleMethod` above is the legacy word, and for most callers it is
+       * still the only thing sent: a captain's app sends `Table-Order`, the
+       * till sends nothing and defaults to `Live-Order`. describeSale reads
+       * that language, records the three modern fields, and writes
+       * `sale_method` back in step so the two readers cannot disagree.
+       *
+       * A caller that knows better - an aggregator integration - sends
+       * `channel` and `channel_partner`, and those win.
+       */
+      ...salesChannels.describeSale({
+        channel: data.channel,
+        partner: data.channel_partner,
+        fulfilment: data.fulfilment || data.dine_type,
+        sale_method: saleMethod,
+      }),
       was_kot_proceeded: wasKotProceeded,
       // Cash register / multi-payment mirrors.
       // cashregister_id is set above; it was written twice in this one object

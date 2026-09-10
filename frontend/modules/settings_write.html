@@ -4746,6 +4746,11 @@
                                             <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"
                                                 role="tablist">
                                                 <li class="nav-item">
+                                                    <a class="nav-link" id="channels-tab-line" data-toggle="tab"
+                                                        href="#channels-line" role="tab"
+                                                        aria-controls="channels-line" aria-selected="false"><i class="feather icon-share-2 mr-1"></i><lang class="lang_channels_tab">Channels</lang></a>
+                                                </li>
+                                                <li class="nav-item">
                                                     <a class="nav-link active" id="kioskaccount-tab-line"
                                                         data-toggle="tab" href="#kioskaccount-line" role="tab"
                                                         aria-controls="kioskaccount-line"
@@ -4769,6 +4774,33 @@
                                                 </li>
                                             </ul>
                                             <div class="tab-content" id="defaultTabContentLine">
+                                                <div class="tab-pane fade" id="channels-line" role="tabpanel"
+                                                    aria-labelledby="channels-tab-line">
+                                                    <form class="validate" method="POST" name="sales_channels_form"
+                                                        id="sales_channels_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-body loader-view-saleschannels">
+                                                                <h6 class="mb-2"><lang class="lang_channels_in_use">Ways this shop takes orders</lang></h6>
+                                                                <div class="form-row" id="sales_channels_list"></div>
+
+                                                                <hr class="my-3">
+
+                                                                <h6 class="mb-1"><lang class="lang_channel_partners">Partners</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
+                                                                </small>
+                                                                <div id="sales_channel_partner_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add partner</lang>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-footer text-right">
+                                                            <button type="submit" class="btn btn-outline-primary"><i
+                                                                    class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang></button>
+                                                        </div>
+                                                    </form>
+                                                </div>
                                                 <div class="tab-pane fade show active" id="kioskaccount-line"
                                                     role="tabpanel" aria-labelledby="kioskaccount-tab-line">
                                                     <form class="validate" method="POST" name="kioskaccount_form"

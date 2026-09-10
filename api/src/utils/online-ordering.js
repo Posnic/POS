@@ -63,15 +63,13 @@ const MODE = Object.freeze({ ORDER: 'order', MENU: 'menu' });
  *
  * Each type is also just a list of extra fields at checkout - a table number
  * for dine in, an address for delivery - which is a form, not an architecture.
+ *
+ * DEFINED ONCE, in utils/sales-channels, because fulfilment is not a property
+ * of this channel: a till sale is taken away, a Swiggy order is delivered. Two
+ * copies of the list would be two things to keep in step, and the one that
+ * drifted would silently mean a different thing on a report than on a page.
  */
-const FULFILMENT = Object.freeze({
-  DINE_IN: 'dine_in',
-  TAKEAWAY: 'takeaway',
-  PICKUP: 'pickup',
-  DELIVERY: 'delivery',
-});
-
-const FULFILMENT_VALUES = Object.freeze(Object.values(FULFILMENT));
+const { FULFILMENT, FULFILMENT_VALUES } = require('./sales-channels');
 
 /* What the page offers when a shop has not chosen. Dine in and takeaway,
    because that is the pair the customer page has always presented and the
