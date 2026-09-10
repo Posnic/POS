@@ -234,3 +234,47 @@ test('the page fails open, because the server is the control', () => {
     'the channel state no longer treats an absent verdict as open'
   );
 });
+
+test('the self-service machines keep the endpoints they already call', () => {
+  /*
+   * The machines in shops are a live channel taking real money, and they are
+   * deployed: they cannot be updated from here.
+   *
+   * They place orders through POST /sales/kioskOrder and read their menu
+   * through POST /items/accesskiosk. Deleting the second left them able to
+   * sell but unable to load a menu, which is the sort of break that shows up
+   * as a shop ringing support rather than as a failing test. Both stay, both
+   * behind the kiosk key.
+   */
+  const items = fs.readFileSync(path.join(ROOT, 'api', 'src', 'routes', 'items.routes.js'), 'utf8');
+  const sales = fs.readFileSync(path.join(ROOT, 'api', 'src', 'routes', 'sales.routes.js'), 'utf8');
+
+  assert.match(
+    items,
+    /router\.post\('\/accesskiosk',\s*ensureKioskKey/,
+    'the machines lost their menu endpoint, or it lost its kiosk-key guard'
+  );
+  assert.match(
+    sales,
+    /router\.post\('\/kioskOrder',\s*ensureKioskKey/,
+    'the machines lost their order endpoint, or it lost its kiosk-key guard'
+  );
+});
+
+test('the kiosk report still counts both self-service channels', () => {
+  /*
+   * A machine sale is stamped `Kiosk` and a customer's own phone `Self-Order`.
+   * The report covers both, which is why naming it after either one alone is
+   * wrong. If this list is ever narrowed, a whole channel silently stops being
+   * reported and the totals just quietly get smaller.
+   */
+  const repo = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'repositories', 'sale.repository.js'),
+    'utf8'
+  );
+  const matches = repo.match(/sale_method:\s*\{\s*\$in:\s*\['Kiosk',\s*'Self-Order'\]\s*\}/g) || [];
+  assert.ok(
+    matches.length >= 3,
+    `the kiosk report no longer counts both channels (found ${matches.length} of the 3 queries)`
+  );
+});

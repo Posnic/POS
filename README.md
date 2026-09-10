@@ -24,7 +24,7 @@ before making a package-level licence statement.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-608%20endpoints-blue)](docs/API.md)
+[![API](https://img.shields.io/badge/REST%20API-609%20endpoints-blue)](docs/API.md)
 [![Source licence](https://img.shields.io/badge/source%20licence-AGPL--3.0-blue)](LICENSE)
 [![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
@@ -96,30 +96,30 @@ without granting marketing reuse.
 
 ## Features
 
-| | |
-|---|---|
-| **Selling** | Fast keyboard and touch billing, barcode scanning, returns, part payments, held bills, quick sale |
-| **Stock** | Items, variants, categories, purchases, supplier returns, inventory logs, low-stock alerts |
-| **Customers** | Customer accounts, categories with their own pricing, outstanding balances |
-| **Tax** | GST invoices, IGST and CGST/SGST, HSN codes, GST reports for filing |
-| **Restaurants** | Kitchen order tickets, table management, kiosk and customer displays |
-| **Hardware** | Documented paths for thermal printers, barcode scanners, cash drawers, weighing scales and second displays; verify the exact device in the [hardware matrix](docs/HARDWARE_MATRIX.md) |
-| **Reports** | Sales, purchases, inventory, expenses, profit, staff activity — all exportable |
-| **Branches** | Multiple outlets, per-branch stock, staff roles and permissions |
+|                 |                                                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Selling**     | Fast keyboard and touch billing, barcode scanning, returns, part payments, held bills, quick sale                                                                                     |
+| **Stock**       | Items, variants, categories, purchases, supplier returns, inventory logs, low-stock alerts                                                                                            |
+| **Customers**   | Customer accounts, categories with their own pricing, outstanding balances                                                                                                            |
+| **Tax**         | GST invoices, IGST and CGST/SGST, HSN codes, GST reports for filing                                                                                                                   |
+| **Restaurants** | Kitchen order tickets, table management, kiosk and customer displays                                                                                                                  |
+| **Hardware**    | Documented paths for thermal printers, barcode scanners, cash drawers, weighing scales and second displays; verify the exact device in the [hardware matrix](docs/HARDWARE_MATRIX.md) |
+| **Reports**     | Sales, purchases, inventory, expenses, profit, staff activity — all exportable                                                                                                        |
+| **Branches**    | Multiple outlets, per-branch stock, staff roles and permissions                                                                                                                       |
 
 ## Install
 
 Posnic installs two ways, both free and both the same AGPL-3.0 software.
 **Most shops want the desktop app.**
 
-| | **Desktop** | **Your own server** |
-|---|---|---|
-| Install | Download and run | One command on Ubuntu |
-| Used from | That computer | A browser on any till, tablet or phone on the network |
-| Data lives | That computer | Your server |
-| Needs internet | No | No — your own network is enough |
-| Somebody maintains it | No | **You** — updates, backups, certificate |
-| Sync between shops | Posnic Cloud | Posnic Cloud |
+|                       | **Desktop**      | **Your own server**                                   |
+| --------------------- | ---------------- | ----------------------------------------------------- |
+| Install               | Download and run | One command on Ubuntu                                 |
+| Used from             | That computer    | A browser on any till, tablet or phone on the network |
+| Data lives            | That computer    | Your server                                           |
+| Needs internet        | No               | No — your own network is enough                       |
+| Somebody maintains it | No               | **You** — updates, backups, certificate               |
+| Sync between shops    | Posnic Cloud     | Posnic Cloud                                          |
 
 A server is not a better desktop; it is a machine somebody has to look after. If
 one person rings up sales on one computer, the desktop app is the right answer
@@ -136,8 +136,8 @@ for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 Verify your download against `SHA256SUMS.txt`. For releases that provide an
 artifact-bound SBOM and provenance, follow the [release verification guide](docs/VERIFY_RELEASE.md).
 
-> **Windows** may warn that the publisher is unrecognised: *More info* → *Run
-> anyway*. **macOS**: *System Settings → Privacy & Security → Open Anyway*.
+> **Windows** may warn that the publisher is unrecognised: _More info_ → _Run
+> anyway_. **macOS**: _System Settings → Privacy & Security → Open Anyway_.
 > **Linux**: make the `.AppImage` executable, or install the `.deb`.
 
 First launch takes a few minutes while it sets up its database. After that,
@@ -204,16 +204,16 @@ The desktop packages have a zero software price and no trial clock. Posnic's own
 source is AGPL-3.0-only, while bundled components keep their separate licences.
 **Posnic Cloud** is a paid service for shops that want more than one till.
 
-| | Posnic (this repo) | Posnic Cloud |
-|---|---|---|
-| Selected local workflows and local operational records | ✅ | ✅ |
-| Local database and backups | ✅ | ✅ |
-| Documented printer, scanner, drawer and scale paths | ✅ | ✅ |
-| GST invoicing and reports | ✅ | ✅ |
-| Runs on your own server, used from a browser | ✅ | ✅ |
-| Sync across tills and branches | | ✅ |
-| Off-site backups, remote dashboard | | ✅ |
-| Installer under your own brand | | ✅ |
+|                                                        | Posnic (this repo) | Posnic Cloud |
+| ------------------------------------------------------ | ------------------ | ------------ |
+| Selected local workflows and local operational records | ✅                 | ✅           |
+| Local database and backups                             | ✅                 | ✅           |
+| Documented printer, scanner, drawer and scale paths    | ✅                 | ✅           |
+| GST invoicing and reports                              | ✅                 | ✅           |
+| Runs on your own server, used from a browser           | ✅                 | ✅           |
+| Sync across tills and branches                         |                    | ✅           |
+| Off-site backups, remote dashboard                     |                    | ✅           |
+| Installer under your own brand                         |                    | ✅           |
 
 Both ways of running Posnic — [desktop and your own server](#install) — sit in
 the left column. Neither is a trial and neither expires.
@@ -224,38 +224,38 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 
 ## Documentation
 
-| | |
-|---|---|
-| [User guide](docs/USER_GUIDE.md) | Running a shop with Posnic, first sale to closing the till |
-| [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) | Local setup, test commands, issue map, PR flow and safety rules |
-| [Developer guide](docs/DEVELOPMENT.md) | Setup, tests, conventions, good first issues |
-| [Architecture](docs/ARCHITECTURE.md) | How it fits together, and the parts that bite |
-| [REST API](docs/API.md) | 608 endpoints, generated from the routes |
-| [Hardware](docs/HARDWARE_MATRIX.md) | Printers, scanners, drawers, scales — and how far each claim is checked |
-| [India e-invoicing](docs/INDIA_EINVOICING_DESIGN.md) | Research, readiness inventory and design for GST e-invoicing as an optional feature; no live IRP submission is built |
-| [India GST return gaps](docs/INDIA_GST_RETURNS_GAPS.md) | What the GST reports compute today, measured against GSTR-1, 3B and 9 |
-| [India government integration](docs/INDIA_GOVERNMENT_INTEGRATION.md) | How software is registered with the GST system, what each route requires, and when to apply |
-| [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
-| [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
-| [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
-| [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
-| [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
-| [Incident response](docs/INCIDENT_RESPONSE.md) | Who decides, who is told, and when |
-| [Terms of use](docs/TERMS_OF_USE.md) | Customer terms for Posnic Cloud |
-| [Subprocessors](docs/SUBPROCESSORS.md) | Who else can touch your data. For the local edition: nobody |
-| [Cloud operations](docs/CLOUD_OPERATIONS.md) | What the paid service is made of, and what is still to be decided |
-| [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md) | For customers who need a written DPA |
-| [Contributing](.github/CONTRIBUTING.md) | How to get a change merged |
-| [Public roadmap](docs/ROADMAP.md) | Current priorities, evidence gaps and structured ways to help |
-| [Citation metadata](CITATION.cff) | Human and tool-readable citation identity for exact releases or commits |
-| [Adoption evidence](docs/ADOPTION_EVIDENCE.md) | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe |
-| [Support](.github/SUPPORT.md) | Where to ask, and what happens to your issue |
-| [Governance](docs/GOVERNANCE.md) | Who decides what, and what we have promised |
-| [Privacy](docs/PRIVACY.md) | What the app collects, and what it does not |
-| [Security](.github/SECURITY.md) | What Posnic protects, what it cannot, and reporting a vulnerability |
-| [Third-party notices](THIRD-PARTY-NOTICES.md) | Separately licensed software included in release packages |
-| [CodeMeta](codemeta.json) | Machine-readable product, publisher, source, licence and platform identity |
-| [Code of conduct](.github/CODE_OF_CONDUCT.md) | How we treat each other |
+|                                                                      |                                                                                                                      |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [User guide](docs/USER_GUIDE.md)                                     | Running a shop with Posnic, first sale to closing the till                                                           |
+| [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md)             | Local setup, test commands, issue map, PR flow and safety rules                                                      |
+| [Developer guide](docs/DEVELOPMENT.md)                               | Setup, tests, conventions, good first issues                                                                         |
+| [Architecture](docs/ARCHITECTURE.md)                                 | How it fits together, and the parts that bite                                                                        |
+| [REST API](docs/API.md)                                              | 609 endpoints, generated from the routes                                                                             |
+| [Hardware](docs/HARDWARE_MATRIX.md)                                  | Printers, scanners, drawers, scales — and how far each claim is checked                                              |
+| [India e-invoicing](docs/INDIA_EINVOICING_DESIGN.md)                 | Research, readiness inventory and design for GST e-invoicing as an optional feature; no live IRP submission is built |
+| [India GST return gaps](docs/INDIA_GST_RETURNS_GAPS.md)              | What the GST reports compute today, measured against GSTR-1, 3B and 9                                                |
+| [India government integration](docs/INDIA_GOVERNMENT_INTEGRATION.md) | How software is registered with the GST system, what each route requires, and when to apply                          |
+| [Backups](docs/BACKUP_POLICY.md)                                     | What is backed up, when, and what it does not protect you from                                                       |
+| [Disaster recovery](docs/DISASTER_RECOVERY.md)                       | Getting back to working, with RPO and RTO as numbers                                                                 |
+| [Release runbook](docs/RELEASE_RUNBOOK.md)                           | How a release goes out, and four ways to take one back                                                               |
+| [Release verification](docs/VERIFY_RELEASE.md)                       | Match a package to its checksum, CycloneDX inventory, provenance and component licences                              |
+| [Support lifecycle](docs/SUPPORT_LIFECYCLE.md)                       | Which versions get fixes, and for how long                                                                           |
+| [Incident response](docs/INCIDENT_RESPONSE.md)                       | Who decides, who is told, and when                                                                                   |
+| [Terms of use](docs/TERMS_OF_USE.md)                                 | Customer terms for Posnic Cloud                                                                                      |
+| [Subprocessors](docs/SUBPROCESSORS.md)                               | Who else can touch your data. For the local edition: nobody                                                          |
+| [Cloud operations](docs/CLOUD_OPERATIONS.md)                         | What the paid service is made of, and what is still to be decided                                                    |
+| [Data processing addendum](docs/DATA_PROCESSING_ADDENDUM.md)         | For customers who need a written DPA                                                                                 |
+| [Contributing](.github/CONTRIBUTING.md)                              | How to get a change merged                                                                                           |
+| [Public roadmap](docs/ROADMAP.md)                                    | Current priorities, evidence gaps and structured ways to help                                                        |
+| [Citation metadata](CITATION.cff)                                    | Human and tool-readable citation identity for exact releases or commits                                              |
+| [Adoption evidence](docs/ADOPTION_EVIDENCE.md)                       | How real deployment reports are scoped, reviewed, cited, corrected and kept privacy-safe                             |
+| [Support](.github/SUPPORT.md)                                        | Where to ask, and what happens to your issue                                                                         |
+| [Governance](docs/GOVERNANCE.md)                                     | Who decides what, and what we have promised                                                                          |
+| [Privacy](docs/PRIVACY.md)                                           | What the app collects, and what it does not                                                                          |
+| [Security](.github/SECURITY.md)                                      | What Posnic protects, what it cannot, and reporting a vulnerability                                                  |
+| [Third-party notices](THIRD-PARTY-NOTICES.md)                        | Separately licensed software included in release packages                                                            |
+| [CodeMeta](codemeta.json)                                            | Machine-readable product, publisher, source, licence and platform identity                                           |
+| [Code of conduct](.github/CODE_OF_CONDUCT.md)                        | How we treat each other                                                                                              |
 
 ## Contributing
 
@@ -278,11 +278,11 @@ Posnic is built by a small team in Tamil Nadu, India, and given away because a
 shop should not have to rent its own till. If it saves you money, sending a
 little back is what keeps the next release coming.
 
-| | |
-|---|---|
-| ☕ **[Buy us a chai](https://github.com/sponsors/Posnic)** | one-off or monthly, from a dollar up |
-| ☁️ **[Posnic Cloud](https://posnic.com/pricing)** | sync, off-site backups, remote dashboards — the paid service that funds this one |
-| 🏢 **Commercial licence** | keep your modifications private — **info@posnic.com** |
+|                                                            |                                                                                  |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| ☕ **[Buy us a chai](https://github.com/sponsors/Posnic)** | one-off or monthly, from a dollar up                                             |
+| ☁️ **[Posnic Cloud](https://posnic.com/pricing)**          | sync, off-site backups, remote dashboards — the paid service that funds this one |
+| 🏢 **Commercial licence**                                  | keep your modifications private — **info@posnic.com**                            |
 
 Sponsors are named in releases unless they would rather not be.
 
@@ -290,12 +290,12 @@ Sponsors are named in releases unless they would rather not be.
 
 **Posnic Innovations**, Tamil Nadu, India.
 
-| | |
-|---|---|
-| Sales and licensing | **info@posnic.com** |
-| Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
-| Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
-| Web | [posnic.io](https://posnic.io/) · [posnic.com](https://posnic.com) |
+|                     |                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Sales and licensing | **info@posnic.com**                                                                            |
+| Support             | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions)    |
+| Security            | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
+| Web                 | [posnic.io](https://posnic.io/) · [posnic.com](https://posnic.com)                             |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays

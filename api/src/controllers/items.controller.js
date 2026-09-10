@@ -827,6 +827,48 @@ class ItemsController extends BaseController {
     }
   }
 
+  /**
+   * The menu, for a self-service machine standing in a shop.
+   *
+   * Kept in the shape it has always answered in, because the machines are
+   * already out there and cannot be updated from here. `GET
+   * /online-ordering/:storeId/device` is the endpoint to build anything new
+   * against; this one is the same query wearing the old names, so there is
+   * still a single storefront implementation rather than two that can drift.
+   *
+   * Guarded by the kiosk key at the route, which is what distinguishes a
+   * machine the shop owns from a stranger with a store address.
+   */
+  async accesskiosk(req, res) {
+    try {
+      const response = await this.service.storefront({ storeId: req.body.branch });
+
+      if (response.status !== true) {
+        return this.error(res, response.message, 404, response.data);
+      }
+
+      const data = response.data || {};
+      return this.success(
+        res,
+        {
+          products: data.products || [],
+          kiosk_images: {
+            logo: data.store?.logo || '',
+            banner: data.store?.banner || '',
+            homebanner: data.store?.homebanner || '',
+            advertisement: data.store?.advertisement || '',
+          },
+          kiosk_payment: data.payment || {},
+          kiosk_print: data.print || {},
+        },
+        response.message
+      );
+    } catch (error) {
+      console.error('Error in accesskiosk:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async accessMobileApp(req, res) {
     try {
       const response = await this.service.accessMobileApp(req.body.branch);

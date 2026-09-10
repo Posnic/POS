@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const itemsController = require('../controllers/items.controller');
 const { protect } = require('../middleware/auth');
+const { ensureKioskKey } = require('../middleware/kiosk-key');
 const {
   validateCreateItem,
   validateUpdateItem,
@@ -30,6 +31,23 @@ const bindController = (handler, controller = itemsController) => {
 // These endpoints authenticate via their own headers (e.g. kioskkey)
 // and must be registered BEFORE the protect middleware.
 router.post('/accessMobileApp', bindController(itemsController.accessMobileApp));
+
+/*
+ * The self-service MACHINES in shops, which are a live channel taking real
+ * money, and which this route was briefly deleted out from under.
+ *
+ * The storefront moved to `GET /online-ordering/:storeId/device`, and that is
+ * the endpoint to build against. This one stays because the machines are
+ * already deployed and cannot be updated from here: they place orders through
+ * `POST /sales/kioskOrder`, which never moved, and they read their menu
+ * through this. Removing it left them able to sell but unable to load a menu.
+ *
+ * It answers in the OLD shape on purpose. A machine parsing `kiosk_images`
+ * would be no better off receiving a correctly-named `store` it has never
+ * heard of. The query underneath is the new one, so there is still only a
+ * single storefront implementation.
+ */
+router.post('/accesskiosk', ensureKioskKey, bindController(itemsController.accesskiosk));
 
 // Protect all remaining item routes to ensure req.user context is available
 router.use(protect);
