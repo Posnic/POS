@@ -6,6 +6,8 @@ const BaseModel = require('../models/base.model');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { notifyOrderAttention } = require('../helpers/order-attention');
+const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
@@ -7259,6 +7261,24 @@ class SalesRepository {
            served all day, which is also the safe answer if this fails. */
         console.warn('[order] could not read serving periods:', e.message);
       }
+      /*
+       * Does an order from this shop go straight to the kitchen?
+       *
+       * Read from the same settings document as the serving periods. If it
+       * cannot be read at all, approvalMode answers AUTO - see
+       * utils/order-approval for why that is the survivable direction.
+       */
+      let approvalSetting = 'auto';
+      try {
+        const settingsCollection = db.collection('settings');
+        const approvalDoc = await settingsCollection.findOne({
+          online_order_approval: { $exists: true },
+        });
+        approvalSetting = (approvalDoc && approvalDoc.online_order_approval) || 'auto';
+      } catch (e) {
+        console.warn('[order] could not read the approval setting:', e.message);
+      }
+
       const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
@@ -7451,10 +7471,49 @@ class SalesRepository {
 
       const insertedId = insertResult.insertedId.toString();
 
-      /* The printer is in this process. Tell it now rather than letting it find
-         this ticket on its next poll - a kitchen ticket that arrives after the
-         customer does is the whole reason this is event driven. */
-      notifyKotReady({ branchId: String(branchObjectId), saleId: insertedId, reason: 'created' });
+      /*
+       * The kitchen is told only if this shop lets orders through on their own.
+       *
+       * The order is SAVED either way. Approval gates the ticket, not the
+       * record: refusing to save would lose a customer's order on a network
+       * they cannot see and cannot retry into, where holding it means the worst
+       * case is a wait and a queue somebody can act on.
+       *
+       * A ticket printed is food started and food started is money spent, which
+       * is why a shop taking orders from a hotel across the road wants to look
+       * first - is the kitchen still open, is that dish really on, is this a
+       * prank at 2am.
+       */
+      const arrival = orderApproval.decideOnArrival(approvalSetting);
+
+      await salesCollection.updateOne(
+        { _id: insertResult.insertedId },
+        { $set: { order_state: arrival.state, order_state_at: new Date() } }
+      );
+
+      if (arrival.printKitchenTicket) {
+        /* The printer is in this process. Tell it now rather than letting it
+           find this ticket on its next poll - a kitchen ticket that arrives
+           after the customer does is the whole reason this is event driven. */
+        notifyKotReady({ branchId: String(branchObjectId), saleId: insertedId, reason: 'created' });
+      }
+
+      /*
+       * And make a noise, either way.
+       *
+       * Auto-approved is a short chime: the ticket is already printing, so this
+       * only has to tell whoever is at the till that it happened. Waiting is an
+       * alarm, because nobody is watching a screen they have no reason to be
+       * watching - the owner's words were "looking at another page, or watching
+       * a movie".
+       */
+      notifyOrderAttention({
+        branchId: String(branchObjectId),
+        saleId: insertedId,
+        alert: arrival.alert,
+        state: arrival.state,
+        total: finalTotal,
+      });
 
       return {
         status: true,
