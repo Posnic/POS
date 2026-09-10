@@ -2656,8 +2656,7 @@ class UsersController extends BaseController {
           return res.status(429).json({
             error: {
               code: 'TOO_MANY_ATTEMPTS',
-              message:
-                'You tried to sign in too many times with an incorrect account or password',
+              message: 'You tried to sign in too many times with an incorrect account or password',
             },
           });
         }
@@ -2856,8 +2855,7 @@ class UsersController extends BaseController {
           return res.status(429).json({
             error: {
               code: 'TOO_MANY_ATTEMPTS',
-              message:
-                'You tried to sign in too many times with an incorrect account or password',
+              message: 'You tried to sign in too many times with an incorrect account or password',
             },
           });
         }
