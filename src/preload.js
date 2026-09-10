@@ -91,6 +91,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   printer: {
     list:       () => ipcRenderer.invoke('printer:list'),
     getDefault: () => ipcRenderer.invoke('printer:get-default'),
+    getPaperSizes: () => ipcRenderer.invoke('printer:get-paper-sizes'),
     setDefault: (name) => ipcRenderer.invoke('printer:set-default', name),
     print:      (htmlContent, options) => ipcRenderer.invoke('printer:print', htmlContent, options),
     // Receipts go as ESC/POS on the desktop: no page, no scaling, no driver
