@@ -633,50 +633,6 @@ describe('ItemRepository', () => {
     });
   });
 
-  describe('accessKiosk', () => {
-    test('returns kiosk data', async () => {
-      const branchCol = {
-        findOne: jest.fn().mockResolvedValue({
-          _id: FAKE_ID,
-          license: FAKE_LICENSE,
-          kiosk: [
-            {
-              store_id: 's1',
-              logo: '',
-              banner: '',
-              homebanner: '',
-              advertisement: '',
-              payment_cod: '',
-              payment_razorpay: '',
-              payment_number: '',
-              printer_name: '',
-            },
-          ],
-        }),
-      };
-      repo.getCollection.mockImplementation((n) =>
-        n === 'branches' ? Promise.resolve(branchCol) : Promise.resolve(col)
-      );
-      col.aggregate.mockReturnValue(
-        mkAgg([{ category_id: FAKE_ID, category_name: 'A', items: [] }])
-      );
-      const r = await repo.accessKiosk('s1');
-      expect(r.status).toBe(true);
-    });
-    test('returns not found when branch missing', async () => {
-      const branchCol = { findOne: jest.fn().mockResolvedValue(null) };
-      repo.getCollection.mockImplementation((n) =>
-        n === 'branches' ? Promise.resolve(branchCol) : Promise.resolve(col)
-      );
-      const r = await repo.accessKiosk('s1');
-      expect(r.status).toBe(false);
-    });
-    test('returns error on exception', async () => {
-      repo.getCollection.mockRejectedValueOnce(new Error('fail'));
-      const r = await repo.accessKiosk('s1');
-      expect(r.status).toBe(false);
-    });
-  });
 
   describe('updateKioskStatus', () => {
     test('updates status', async () => {
@@ -736,22 +692,6 @@ describe('ItemRepository', () => {
     });
   });
 
-  describe('accessQr', () => {
-    test('returns qr data', async () => {
-      col.findOne.mockResolvedValue({ _id: FAKE_ID, name: 'A' });
-      const r = await repo.accessQr({ projectType: 'store', branch: FAKE_BRANCH });
-      expect(r.status).toBe(true);
-    });
-    test('returns error without branch', async () => {
-      const r = await repo.accessQr({});
-      expect(r.status).toBe(false);
-    });
-    test('returns error on exception', async () => {
-      repo.getCollection.mockRejectedValueOnce(new Error('fail'));
-      const r = await repo.accessQr({ projectType: 'store', branch: FAKE_BRANCH });
-      expect(r.status).toBe(false);
-    });
-  });
 
   describe('accessMobileApp', () => {
     test('returns mobile app data', async () => {

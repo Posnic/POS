@@ -3124,283 +3124,6 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async accessKiosk(branchStoreId) {
-    try {
-      const branchCollection = await this.getCollection('branches');
-      const branchDoc = await branchCollection.findOne({
-        'kiosk.store_id': branchStoreId,
-      });
-
-      if (!branchDoc) {
-        return { status: false, message: 'Branch not found', data: null };
-      }
-
-      const collection = await this.getCollection(this.collectionName);
-      const filter = {
-        $and: [
-          { 'branch_access.branch_id': branchDoc._id },
-          { item_status: { $ne: ITEM_STATUS.INSTANT } },
-          { ecommerce: true },
-          { isAvailable: true },
-          { license: branchDoc.license },
-        ],
-      };
-
-      const pipeline = [
-        { $match: filter },
-        {
-          $group: {
-            _id: { category_id: '$category_id', category_name: '$category_name' },
-            items: {
-              $push: {
-                id: '$_id',
-                name: '$name',
-                price: '$selling_price',
-                discount_percentage: '$discount_percentage',
-                discount_amount: '$discount_amount',
-                tax: '$tax',
-                tax_type: '$tax_type',
-                img: '$image',
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            category_id: '$_id.category_id',
-            category_name: '$_id.category_name',
-            items: {
-              $map: {
-                input: '$items',
-                as: 'item',
-                in: {
-                  id: '$$item.id',
-                  name: '$$item.name',
-                  img: '$$item.img',
-                  // Selling price after discount (rounded to 2 decimals)
-                  price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $gt: ['$$item.discount_amount', 0] },
-                          then: { $subtract: ['$$item.price', '$$item.discount_amount'] },
-                          else: {
-                            $cond: {
-                              if: { $gt: ['$$item.discount_percentage', 0] },
-                              then: {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $multiply: [
-                                      '$$item.price',
-                                      { $divide: ['$$item.discount_percentage', 100] },
-                                    ],
-                                  },
-                                ],
-                              },
-                              else: '$$item.price',
-                            },
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Discount amount
-                  discount_price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $gt: ['$$item.discount_amount', 0] },
-                          then: '$$item.discount_amount',
-                          else: {
-                            $multiply: [
-                              '$$item.price',
-                              { $divide: ['$$item.discount_percentage', 100] },
-                            ],
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Tax price (calculated, not deducted)
-                  tax_price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $eq: ['$$item.tax_type', 'inclusive'] },
-                          then: {
-                            $multiply: [
-                              {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $cond: {
-                                      if: { $gt: ['$$item.discount_amount', 0] },
-                                      then: '$$item.discount_amount',
-                                      else: {
-                                        $multiply: [
-                                          '$$item.price',
-                                          { $divide: ['$$item.discount_percentage', 100] },
-                                        ],
-                                      },
-                                    },
-                                  },
-                                ],
-                              },
-                              { $divide: ['$$item.tax', { $add: [100, '$$item.tax'] }] },
-                            ],
-                          },
-                          else: {
-                            $multiply: [
-                              {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $cond: {
-                                      if: { $gt: ['$$item.discount_amount', 0] },
-                                      then: '$$item.discount_amount',
-                                      else: {
-                                        $multiply: [
-                                          '$$item.price',
-                                          { $divide: ['$$item.discount_percentage', 100] },
-                                        ],
-                                      },
-                                    },
-                                  },
-                                ],
-                              },
-                              { $divide: ['$$item.tax', 100] },
-                            ],
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Final price shown to customer
-                  final_price: {
-                    $round: [
-                      {
-                        $let: {
-                          vars: {
-                            base: {
-                              $cond: {
-                                if: { $gt: ['$$item.discount_amount', 0] },
-                                then: { $subtract: ['$$item.price', '$$item.discount_amount'] },
-                                else: {
-                                  $cond: {
-                                    if: { $gt: ['$$item.discount_percentage', 0] },
-                                    then: {
-                                      $subtract: [
-                                        '$$item.price',
-                                        {
-                                          $multiply: [
-                                            '$$item.price',
-                                            { $divide: ['$$item.discount_percentage', 100] },
-                                          ],
-                                        },
-                                      ],
-                                    },
-                                    else: '$$item.price',
-                                  },
-                                },
-                              },
-                            },
-                          },
-                          in: {
-                            $cond: {
-                              if: { $eq: ['$$item.tax_type', 'exclusive'] },
-                              then: {
-                                $add: [
-                                  '$$base',
-                                  { $multiply: ['$$base', { $divide: ['$$item.tax', 100] }] },
-                                ],
-                              },
-                              else: '$$base',
-                            },
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-      ];
-
-      const results = await collection.aggregate(pipeline).toArray();
-      const roundMoney = (value) => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
-      const normalizeQrItemPrice = (item) => {
-        const sellingPrice = Number(item.price || 0);
-        const tax = Number(item.tax || 0);
-        const discountAmount = Number(item.discount_amount || 0);
-        const discountPercentage = Number(item.discount_percentage || 0);
-        const isInclusive = item.tax_type === 'inclusive';
-        const basePrice = isInclusive && tax > 0 ? sellingPrice / (1 + tax / 100) : sellingPrice;
-        const discountPrice =
-          discountAmount > 0 ? discountAmount : basePrice * (discountPercentage / 100);
-        const taxableBase = basePrice - discountPrice;
-        const taxPrice = taxableBase * (tax / 100);
-        const finalPrice = isInclusive ? taxableBase * (1 + tax / 100) : taxableBase + taxPrice;
-
-        return {
-          ...item,
-          price: roundMoney(basePrice),
-          discount_price: roundMoney(discountPrice),
-          tax_price: roundMoney(taxPrice),
-          final_price: roundMoney(finalPrice),
-        };
-      };
-      results.forEach((category) => {
-        category.items = Array.isArray(category.items)
-          ? category.items.map(normalizeQrItemPrice)
-          : [];
-      });
-
-      // Get kiosk settings
-      let kioskImages = {};
-      let kioskPayment = {};
-      let kioskPrint = {};
-      if (branchDoc.kiosk) {
-        const kioskEntry = branchDoc.kiosk.find((k) => k.store_id === branchStoreId);
-        if (kioskEntry) {
-          kioskImages = {
-            logo: kioskEntry.logo || '',
-            banner: kioskEntry.banner || '',
-            homebanner: kioskEntry.homebanner || '',
-            advertisement: kioskEntry.advertisement || '',
-          };
-          kioskPayment = {
-            cod: kioskEntry.payment_cod || '',
-            razorpay: kioskEntry.payment_razorpay || '',
-            number: kioskEntry.payment_number || '',
-          };
-          kioskPrint = { printer_name: kioskEntry.printer_name || '' };
-        }
-      }
-
-      return {
-        status: true,
-        message: 'Get products details',
-        data: {
-          products: results,
-          kiosk_images: kioskImages,
-          kiosk_payment: kioskPayment,
-          kiosk_print: kioskPrint,
-        },
-      };
-    } catch (error) {
-      console.error('Error in ItemRepository.accessKiosk:', error);
-      return { status: false, message: error.message, data: null };
-    }
-  }
-
   async updateKioskStatus(id, status) {
     try {
       if (!id || !ObjectId.isValid(id)) {
@@ -3582,118 +3305,44 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async accessQr(params = {}) {
-    const projectType = params.projectType;
-    const branch = params.branch;
-
-    // Helper: find branch by kiosk.store_id first, then fallback to _id
-    const findBranch = async () => {
-      const branchCollection = await this.getCollection('branches');
-      let doc = await branchCollection.findOne({ 'kiosk.store_id': branch });
-      if (!doc && ObjectId.isValid(branch)) {
-        doc = await branchCollection.findOne({ _id: new ObjectId(branch) });
-      }
-      if (!doc) {
-        const total = await branchCollection.countDocuments({});
-        const sample = await branchCollection
-          .find({}, { projection: { _id: 1, branch_name: 1, 'kiosk.store_id': 1 } })
-          .limit(5)
-          .toArray();
-      }
-      return { branchCollection, doc };
-    };
-
-    if (projectType === 'stock') {
-      try {
-        const { doc: branchDoc } = await findBranch();
-
-        if (!branchDoc) {
-          return { status: false, message: 'Branch not found', data: null };
-        }
-
-        const collection = await this.getCollection(this.collectionName);
-        const filter = {
-          $and: [
-            { 'branch_access.branch_id': branchDoc._id },
-            { item_status: { $ne: ITEM_STATUS.INSTANT } },
-            { license: branchDoc.license },
-          ],
-        };
-
-        const pipeline = [
-          { $match: filter },
-          {
-            $group: {
-              _id: {
-                category_id: '$category_id',
-                category_name: '$category_name',
-              },
-              items: {
-                $push: {
-                  id: '$_id',
-                  name: '$name',
-                  price: '$selling_price',
-                  discount_percentage: '$discount_percentage',
-                  discount_amount: '$discount_amount',
-                  tax: '$tax',
-                  tax_type: '$tax_type',
-                  img: '$image',
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              category_id: '$_id.category_id',
-              category_name: '$_id.category_name',
-              items: 1,
-            },
-          },
-        ];
-
-        const results = await collection.aggregate(pipeline).toArray();
-
-        return {
-          status: true,
-          message: 'Get products details',
-          data: { products: results },
-        };
-      } catch (error) {
-        console.error('Error in ItemRepository.accessQr (stock):', error);
-        return { status: false, message: error.message, data: null };
-      }
-    }
-    // Non-stock project: lookup branch (with ObjectId fallback) then return items
+  /**
+   * A shop's storefront: who it is, whether it is taking orders, and the menu.
+   *
+   * Addressed ONLY by the public store address. There used to be a fallback
+   * to the branch's raw database id, which appears in every authenticated
+   * response and is no secret - so a branch that had deliberately never
+   * opened a channel could still be read by anyone who had seen its id. The
+   * store address is the opt-in, and nothing else opens this door.
+   *
+   * A `projectType: 'stock'` variant used to answer from the same method
+   * with a second, narrower shape. Nothing sent it. It is gone rather than
+   * carried.
+   */
+  async storefront(params = {}) {
+    const storeId = params.storeId;
     try {
-      const { doc: branchDoc } = await findBranch();
+      const branchCollection = await this.getCollection('branches');
+      const branchDoc = await branchCollection.findOne({
+        'online_ordering.store_id': storeId,
+      });
 
       if (!branchDoc) {
-        return { status: false, message: 'Branch not found', data: null };
+        return { status: false, message: 'No shop found at this address', data: null };
       }
 
-      /*
-       * Both shapes, in one place. `branch.kiosk` is an array everywhere the
-       * application writes it, but older fixtures and one now-fixed guard read
-       * it as an object, so the resolver accepts either and everything else
-       * stops guessing.
-       */
-      const kioskEntry = onlineOrdering.kioskEntry(branchDoc, branch);
+      const config = onlineOrdering.storefront(branchDoc);
 
       /*
-       * Deliberately NOT `hasStoreId(kioskEntry)`.
+       * The menu is the items the shop ticked for the online channel, and
+       * nothing else.
        *
-       * This flag decides whether the catalogue is narrowed to items ticked
-       * for the online channel. It has always been true only when the caller
-       * addressed the branch by its STORE ID, so a shop reached by raw
-       * ObjectId sees every item. Widening it to "this branch has a kiosk at
-       * all" would empty the menu of every shop that never ticked the box on
-       * its items, which is a live regression dressed up as a tidy-up.
-       *
-       * The channel state below uses the resolved entry regardless, because a
-       * shop that is closed is closed however you addressed it.
+       * This narrowing used to apply only when the caller named the STORE
+       * ADDRESS: the same branch reached by its database id answered with the
+       * whole catalogue instead, back-of-house lines included. One public
+       * endpoint must not hold two ideas of what is public, and there is only
+       * one way in now anyway.
        */
-      const hasKiosk = !!kioskEntry && String(kioskEntry.store_id || '') === String(branch);
+      const hasKiosk = onlineOrdering.hasStoreId(config);
       const collection = await this.getCollection(this.collectionName);
 
       const baseFilter = [
@@ -3861,27 +3510,21 @@ class ItemRepository extends BaseModel {
           tableorder_fields: doc.tableorder_fields || [],
         }));
       } catch (e) {
-        console.warn('[accessQr] Failed to fetch tableorders:', e.message);
+        console.warn('[storefront] Failed to fetch tableorders:', e.message);
       }
 
       return {
         status: true,
-        message: 'Get products details',
+        message: 'OK',
         data: {
-          products: results,
-          kiosk_images: {
-            logo: kioskEntry?.logo || '',
-            banner: kioskEntry?.banner || '',
-            homebanner: kioskEntry?.homebanner || '',
-            advertisement: kioskEntry?.advertisement || '',
-          },
-          kiosk_payment: {
-            cod: kioskEntry?.payment_cod || '',
-            razorpay: kioskEntry?.payment_razorpay || '',
-            number: kioskEntry?.payment_number || '',
-          },
-          kiosk_print: {
-            printer_name: kioskEntry?.printer_name || '',
+          /* Who the shop is, as the customer sees it. */
+          store: {
+            store_id: config?.store_id || '',
+            name: branchDoc.branch_name || branchDoc.name || '',
+            logo: config?.logo || '',
+            banner: config?.banner || '',
+            homebanner: config?.homebanner || '',
+            advertisement: config?.advertisement || '',
           },
           /*
            * What the page is allowed to do, decided here rather than on the
@@ -3890,14 +3533,37 @@ class ItemRepository extends BaseModel {
            * what it is told; the order endpoint runs the same computation
            * again before it accepts anything.
            */
-          online_ordering: onlineOrdering.channelState(kioskEntry, {
+          channel: onlineOrdering.channelState(config, {
             timeZone: branchDoc.time_zone,
           }),
+          products: results,
           tableorders,
+          /*
+           * Which ways a customer may pay. Public, because the page cannot
+           * draw a checkout without knowing them, and safe to be public
+           * because these are on/off flags - there is no key or secret among
+           * them.
+           *
+           * Coerced to real booleans. They have been stored as the STRINGS
+           * 'true' and 'false' at different times, and the string 'false' is
+           * truthy, so a page testing the raw value would offer a payment
+           * method the shop had switched off.
+           */
+          payment: {
+            cod: config?.payment_cod === true || config?.payment_cod === 'true',
+            razorpay: config?.payment_razorpay === true || config?.payment_razorpay === 'true',
+            number: config?.payment_number === true || config?.payment_number === 'true',
+          },
+          /* Device-only: which printer the shop's own terminal sends its
+             ticket to. Meaningless to a customer's phone, so it leaves only
+             through the door that costs this installation's kiosk key. */
+          print: {
+            printer_name: config?.printer_name || '',
+          },
         },
       };
     } catch (error) {
-      console.error('Error in ItemRepository.accessQr (non-stock):', error);
+      console.error('Error in ItemRepository.storefront:', error);
       return { status: false, message: error.message, data: null };
     }
   }

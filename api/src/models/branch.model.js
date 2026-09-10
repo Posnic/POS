@@ -1,5 +1,6 @@
 const { searchPattern } = require('../utils/safe-search');
 const { Schema, Types } = require('mongoose');
+const onlineOrdering = require('../utils/online-ordering');
 /*
  * Registered through defineModel rather than mongoose.model, so the model
  * resolves against the shop in context.
@@ -65,7 +66,20 @@ const branchSchema = new Schema(
 
     // Additional fields from PHP model
     email_fields: { type: Array, default: [] },
-    kiosk: { type: Array, default: [] },
+
+    /*
+     * This branch's online ordering channel: its public store id, whether it is
+     * taking orders, when, how the order reaches the customer, and the branding
+     * the customer's page wears.
+     *
+     * An OBJECT. It was `kiosk`, an Array that never held more than one entry
+     * and was matched by branch_id inside a document that is already one
+     * branch. That shape cost a defect that refused every order ever placed
+     * against this API, because one reader treated it as an array and another
+     * as an object. Renamed outright rather than migrated: no shop was using
+     * the channel, so there was nothing to carry forward.
+     */
+    online_ordering: { type: Schema.Types.Mixed, default: null },
     sortname: { type: String },
     default_tax: { type: Schema.Types.ObjectId },
 
@@ -999,7 +1013,7 @@ class BranchModel {
         dateformat_text: '01/01/2018 -- dd/mm/yyyy',
         time_format: 'enable',
         payment_gateway: [],
-        kiosk: [],
+        online_ordering: onlineOrdering.defaultConfig(),
 
         /*
          * Written out, not left to the read-time default.
@@ -1179,29 +1193,24 @@ class BranchModel {
       // For simplicity, update branch with references
       // Note: Tax default ID logic in PHP relies on the inserted tax. Skipping exact tax default for now.
 
-      const kioskData = [
-        {
-          branch_id: branchId,
-          user_id: user._id,
-          user_name: user.username,
-
-          /*
-           * Written out, not left to the read-time default, for the same
-           * reason the till-lock fields above are.
-           *
-           * Sync replaces whole documents: the winning side's copy is written
-           * over the other in full, so a field the winner does not carry is
-           * not merged, it is deleted. A branch created without these would
-           * lose its online-ordering settings the first time it was edited on
-           * the other side, and absent reads the same as "order, never paused,
-           * no schedule" through the API - so nothing would complain, and the
-           * shop would simply find itself taking orders again.
-           */
-          mode: 'order',
-          paused_until: null,
-          hours: null,
-        },
-      ];
+      /*
+       * The channel, written out in full rather than left to a read-time
+       * default.
+       *
+       * Sync replaces whole documents: the winning side's copy is written over
+       * the other in full, so a field the winner does not carry is not merged,
+       * it is deleted. A branch created without these would lose its settings
+       * the first time it was edited on the other side, and absent reads the
+       * same as "order, never paused, no schedule" through the API - so nothing
+       * would complain, and the shop would simply find itself taking orders
+       * again.
+       */
+      const onlineOrderingData = {
+        ...onlineOrdering.defaultConfig(),
+        branch_id: branchId,
+        user_id: user._id,
+        user_name: user.username,
+      };
 
       await this.model.updateOne(
         { _id: branchId },
@@ -1211,7 +1220,7 @@ class BranchModel {
             default_customer: customerId,
             default_supplier: supplierId,
             default_tax: defaultTaxId,
-            kiosk: kioskData,
+            online_ordering: onlineOrderingData,
           },
         }
       );

@@ -1508,8 +1508,8 @@ const resolveKioskBranch = async (branchId) => {
   for (const name of collections) {
     const collection = currentConnection(mongoose.connection).collection(name);
     const query = queryId
-      ? { $or: [{ 'kiosk.store_id': branchId }, { _id: queryId }] }
-      : { 'kiosk.store_id': branchId };
+      ? { $or: [{ 'online_ordering.store_id': branchId }, { _id: queryId }] }
+      : { 'online_ordering.store_id': branchId };
     const branch = await collection.findOne(query);
     if (branch) return branch;
   }
@@ -1844,7 +1844,7 @@ Sale.kioskOrderModel = async function (data) {
     const ObjectId = mongoose.Types.ObjectId;
     const branchCollection = currentConnection(mongoose.connection).collection('branches');
     const branchDoc = await branchCollection.findOne({
-      'kiosk.store_id': data.branch,
+      'online_ordering.store_id': data.branch,
     });
     if (!branchDoc) {
       return { status: false, data: null, message: 'Branch not found' };
@@ -2104,9 +2104,8 @@ Sale.kioskOrderModel = async function (data) {
     const updateData = {
       date: mongoDate,
       sale_process: 'Add',
-      user_id: branchDoc.kiosk && branchDoc.kiosk[0] ? branchDoc.kiosk[0].user_id || null : null,
-      user_name:
-        branchDoc.kiosk && branchDoc.kiosk[0] ? branchDoc.kiosk[0].user_name || null : null,
+      user_id: branchDoc.online_ordering ? branchDoc.online_ordering.user_id || null : null,
+      user_name: branchDoc.online_ordering ? branchDoc.online_ordering.user_name || null : null,
       category_id: customerCategoryId,
       category_name: customerCategoryName,
       referrer_id: customerReferrerId,

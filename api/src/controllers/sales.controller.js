@@ -6862,26 +6862,6 @@ class SalesController extends BaseController {
   }
 
   /**
-   * PHP: qrOrder()
-   * Process QR order
-   */
-  async qrOrder(req, res) {
-    try {
-      const SaleModel = this.model || Sale;
-      const response = await salesService.qrOrderModel(req.body, { SaleModel });
-
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404);
-      }
-    } catch (error) {
-      console.error('Error in qrOrder:', error);
-      return this.error(res, error.message, 500);
-    }
-  }
-
-  /**
    * PHP: getNewSale()
    * Get new sale
    */

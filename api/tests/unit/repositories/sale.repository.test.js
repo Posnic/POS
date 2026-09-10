@@ -741,16 +741,16 @@ describe('SalesRepository', () => {
     });
   });
 
-  describe('qrOrderModel', () => {
+  describe('createOnlineOrder', () => {
     test('returns error when no branch', async () => {
-      const r = await salesRepository.qrOrderModel({});
+      const r = await salesRepository.createOnlineOrder({});
       expect(r.status).toBe(false);
       expect(r.message).toBe('Branch is required');
     });
     test('returns error when branch not found', async () => {
       if (!collections.branches) collections.branches = mkCol();
       collections.branches.findOne.mockResolvedValue(null);
-      const r = await salesRepository.qrOrderModel({ branch: FAKE_BRANCH });
+      const r = await salesRepository.createOnlineOrder({ branch: FAKE_BRANCH });
       expect(r.status).toBe(false);
       expect(r.message).toBe('Branch not found');
     });
@@ -760,7 +760,7 @@ describe('SalesRepository', () => {
       // a stranger to put orders on its kitchen queue.
       if (!collections.branches) collections.branches = mkCol();
       collections.branches.findOne.mockResolvedValue({ _id: FAKE_BRANCH, name: 'Main' });
-      const r = await salesRepository.qrOrderModel({
+      const r = await salesRepository.createOnlineOrder({
         branch: FAKE_BRANCH,
         items: [
           { item_id: FAKE_ITEM, item_name: 'Test', item_quantity: 1, item_price: 10, gst: 1 },
@@ -788,7 +788,7 @@ describe('SalesRepository', () => {
       collections.branches.findOne.mockResolvedValue({
         _id: FAKE_BRANCH,
         name: 'Main',
-        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', mode: 'order' }],
+        online_ordering: { store_id: 'SHOP1', mode: 'order' },
       });
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
@@ -801,7 +801,7 @@ describe('SalesRepository', () => {
         tax_type: 'exclusive',
         branch_id: FAKE_BRANCH,
       });
-      const r = await salesRepository.qrOrderModel({
+      const r = await salesRepository.createOnlineOrder({
         branch: FAKE_BRANCH,
         items: [
           { item_id: FAKE_ITEM, item_name: 'Test', item_quantity: 1, item_price: 10, gst: 1 },
@@ -815,9 +815,9 @@ describe('SalesRepository', () => {
       collections.branches.findOne.mockResolvedValue({
         _id: FAKE_BRANCH,
         name: 'Main',
-        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', mode: 'menu' }],
+        online_ordering: { store_id: 'SHOP1', mode: 'menu' },
       });
-      const r = await salesRepository.qrOrderModel({
+      const r = await salesRepository.createOnlineOrder({
         branch: FAKE_BRANCH,
         items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
       });
@@ -830,9 +830,9 @@ describe('SalesRepository', () => {
       collections.branches.findOne.mockResolvedValue({
         _id: FAKE_BRANCH,
         name: 'Main',
-        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', paused_until: until }],
+        online_ordering: { store_id: 'SHOP1', paused_until: until },
       });
-      const r = await salesRepository.qrOrderModel({
+      const r = await salesRepository.createOnlineOrder({
         branch: FAKE_BRANCH,
         items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
       });
@@ -844,7 +844,7 @@ describe('SalesRepository', () => {
       collections.branches.findOne.mockResolvedValue({
         _id: FAKE_BRANCH,
         name: 'Main',
-        kiosk: { store_id: 'QR-STORE-1' },
+        online_ordering: { store_id: 'SHOP1' },
       });
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
@@ -858,7 +858,7 @@ describe('SalesRepository', () => {
         tax: 0,
         tax_type: 'exclusive',
       });
-      const r = await salesRepository.qrOrderModel({
+      const r = await salesRepository.createOnlineOrder({
         branch: FAKE_BRANCH,
         items: [
           { item_id: FAKE_ITEM, item_name: 'Test', item_quantity: 1, item_price: 10, gst: 1 },

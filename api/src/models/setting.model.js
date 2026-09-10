@@ -4593,29 +4593,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-
-            /* Written out rather than defaulted at read time: sync replaces
-               whole documents, and a field the winning copy does not carry is
-               deleted rather than merged. See branch.model.js. */
-            mode: 'order',
-            paused_until: null,
-            hours: null,
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4623,24 +4624,24 @@ class SettingModel extends BaseModel {
       const updateFields = {};
 
       if (data.kiosk_logo && typeof data.kiosk_logo === 'string' && data.kiosk_logo.trim()) {
-        updateFields['kiosk.$[elem].logo'] = data.kiosk_logo.trim();
+        updateFields['online_ordering.logo'] = data.kiosk_logo.trim();
       }
       if (data.kiosk_banner && typeof data.kiosk_banner === 'string' && data.kiosk_banner.trim()) {
-        updateFields['kiosk.$[elem].banner'] = data.kiosk_banner.trim();
+        updateFields['online_ordering.banner'] = data.kiosk_banner.trim();
       }
       if (
         data.kiosk_homebanner &&
         typeof data.kiosk_homebanner === 'string' &&
         data.kiosk_homebanner.trim()
       ) {
-        updateFields['kiosk.$[elem].homebanner'] = data.kiosk_homebanner.trim();
+        updateFields['online_ordering.homebanner'] = data.kiosk_homebanner.trim();
       }
       if (
         data.kiosk_advertisement &&
         typeof data.kiosk_advertisement === 'string' &&
         data.kiosk_advertisement.trim()
       ) {
-        updateFields['kiosk.$[elem].advertisement'] = data.kiosk_advertisement.trim();
+        updateFields['online_ordering.advertisement'] = data.kiosk_advertisement.trim();
       }
 
       if (Object.keys(updateFields).length > 0) {
@@ -4649,10 +4650,7 @@ class SettingModel extends BaseModel {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: updateFields },
-          {
-            arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-          }
+          { $set: updateFields }
         );
       }
 
@@ -4735,29 +4733,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-
-            /* Written out rather than defaulted at read time: sync replaces
-               whole documents, and a field the winning copy does not carry is
-               deleted rather than merged. See branch.model.js. */
-            mode: 'order',
-            paused_until: null,
-            hours: null,
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4775,16 +4774,14 @@ class SettingModel extends BaseModel {
       if (data.store_id) {
         const exists = await collection.findOne({
           _id: { $ne: this.normalizeId(this.branchId) },
-          kiosk: {
-            $elemMatch: { store_id: data.store_id },
-          },
+          'online_ordering.store_id': data.store_id,
         });
 
         if (exists) {
           return {
             status: false,
             data: null,
-            message: 'A kiosk with this Store ID already exists',
+            message: 'Another branch is already using this store address',
           };
         }
       }
@@ -4793,57 +4790,30 @@ class SettingModel extends BaseModel {
       const updateData = {};
 
       if (data.store_id !== undefined) {
-        updateData['kiosk.$[elem].store_id'] = data.store_id;
+        updateData['online_ordering.store_id'] = data.store_id;
       }
 
       /*
-       * What this channel is for, and when it is taking orders.
+       * Mode, pause, hours and fulfilment, normalised in one place.
        *
-       * Each field is written only when the caller sent it, so a screen that
-       * saves the store id alone cannot blank the schedule - the same rule the
-       * branch credential fields follow, and for the same reason.
+       * Only keys the caller actually sent come back, so a screen that saves
+       * the store id alone cannot blank the schedule - the same rule the branch
+       * credential fields follow, and for the same reason.
        *
-       * `mode` is normalised to one of two known words rather than stored as
-       * whatever arrived. A boolean here would be a trap: 'false' as a string
-       * reads as ON through `!== false`, which this estate has paid for before.
+       * The normalising itself lives in the util beside the code that READS
+       * these values, so a value can never be stored in a shape the reader does
+       * not expect. Clock strings become minutes past midnight; a mode becomes
+       * one of two known words rather than whatever arrived; an unparseable
+       * pause is refused here rather than shutting the shop silently later.
        */
-      if (data.mode !== undefined) {
-        updateData['kiosk.$[elem].mode'] = onlineOrdering.normalizeMode(data.mode);
+      let normalized;
+      try {
+        normalized = onlineOrdering.normalizeSettings(data);
+      } catch (err) {
+        return { status: false, data: null, message: err.message };
       }
-
-      /*
-       * A pause is a moment, never a flag.
-       *
-       * A boolean gets switched on during a Friday rush and found still on the
-       * following Tuesday with nobody able to say why orders stopped. A
-       * timestamp lifts itself. Sending null or an empty string clears it,
-       * which is how "resume now" is expressed.
-       */
-      if (data.paused_until !== undefined) {
-        const raw = data.paused_until;
-        if (raw === null || raw === '' || raw === false) {
-          updateData['kiosk.$[elem].paused_until'] = null;
-        } else {
-          const at = raw instanceof Date ? raw : new Date(raw);
-          if (Number.isNaN(at.getTime())) {
-            return {
-              status: false,
-              data: null,
-              message: 'Pause time is not a valid date',
-            };
-          }
-          updateData['kiosk.$[elem].paused_until'] = at;
-        }
-      }
-
-      /*
-       * Opening hours arrive as clock strings and are stored as minutes past
-       * midnight, normalised and sorted. Anything unparseable is dropped here
-       * rather than at read time, so a schedule that looks wrong in the console
-       * looks wrong immediately instead of silently shutting the shop later.
-       */
-      if (data.hours !== undefined) {
-        updateData['kiosk.$[elem].hours'] = onlineOrdering.normalizeHours(data.hours);
+      for (const [key, value] of Object.entries(normalized)) {
+        updateData[`online_ordering.${key}`] = value;
       }
 
       if (Object.keys(updateData).length === 0) {
@@ -4853,17 +4823,13 @@ class SettingModel extends BaseModel {
           message: 'No valid fields provided for update',
         };
       }
-
-      // Perform update using arrayFilters
+      // Perform the update
       await collection.updateOne(
         {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {
@@ -4890,29 +4856,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-
-            /* Written out rather than defaulted at read time: sync replaces
-               whole documents, and a field the winning copy does not carry is
-               deleted rather than merged. See branch.model.js. */
-            mode: 'order',
-            paused_until: null,
-            hours: null,
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4936,13 +4903,13 @@ class SettingModel extends BaseModel {
         ];
       }
 
-      updateData['kiosk.$[elem].printer_names'] = printers;
+      updateData['online_ordering.printer_names'] = printers;
 
       // Backward compatibility
       if (printers.length > 0) {
-        updateData['kiosk.$[elem].printer_name'] = printers[0];
+        updateData['online_ordering.printer_name'] = printers[0];
       } else {
-        updateData['kiosk.$[elem].printer_name'] = null;
+        updateData['online_ordering.printer_name'] = null;
       }
 
       // Perform update using array filter
@@ -4951,10 +4918,7 @@ class SettingModel extends BaseModel {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {
@@ -4981,29 +4945,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-
-            /* Written out rather than defaulted at read time: sync replaces
-               whole documents, and a field the winning copy does not carry is
-               deleted rather than merged. See branch.model.js. */
-            mode: 'order',
-            paused_until: null,
-            hours: null,
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -5013,7 +4978,7 @@ class SettingModel extends BaseModel {
 
       for (const field of allowedFields) {
         if (data[field] !== undefined) {
-          updateData[`kiosk.$[elem].${field}`] = Boolean(data[field]);
+          updateData[`online_ordering.${field}`] = Boolean(data[field]);
         }
       }
 
@@ -5031,10 +4996,7 @@ class SettingModel extends BaseModel {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {

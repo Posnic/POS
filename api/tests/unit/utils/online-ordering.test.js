@@ -11,12 +11,15 @@ const {
   MODE,
   STATE,
   channelState,
+  defaultConfig,
   isOpenAt,
-  kioskEntry,
+  storefront,
   hasStoreId,
   nextOpeningFrom,
+  normalizeFulfilment,
   normalizeHours,
   normalizeMode,
+  normalizeSettings,
   normalizeTimeZone,
   normalizeWindows,
   toClock,
@@ -46,39 +49,111 @@ function week(overrides = {}) {
   });
 }
 
-describe('kioskEntry', () => {
-  /*
-   * The bug this module exists for. branch.kiosk is an array in every write
-   * path in the application, and the order guard read it as an object, so
-   * every QR order was refused.
-   */
-  test('reads the array shape the application actually writes', () => {
-    const branch = { kiosk: [{ store_id: 'QR-1', mode: 'order' }] };
-    expect(kioskEntry(branch).store_id).toBe('QR-1');
-    expect(hasStoreId(kioskEntry(branch))).toBe(true);
+describe('storefront', () => {
+  test('reads the channel off a branch', () => {
+    const branch = { online_ordering: { store_id: 'SHOP1', mode: 'order' } };
+    expect(storefront(branch).store_id).toBe('SHOP1');
+    expect(hasStoreId(storefront(branch))).toBe(true);
   });
 
-  test('still reads the object shape older fixtures use', () => {
-    expect(kioskEntry({ kiosk: { store_id: 'QR-1' } }).store_id).toBe('QR-1');
-  });
-
-  test('prefers the entry matching the store id when several exist', () => {
-    const branch = { kiosk: [{ store_id: 'A' }, { store_id: 'B' }] };
-    expect(kioskEntry(branch, 'B').store_id).toBe('B');
-  });
-
-  test('an empty array is not a configured kiosk', () => {
-    expect(kioskEntry({ kiosk: [] })).toBeNull();
-    expect(hasStoreId(kioskEntry({ kiosk: [] }))).toBe(false);
-  });
-
-  test('a branch with no kiosk field at all is not a configured kiosk', () => {
-    expect(kioskEntry({})).toBeNull();
+  test('a branch with no channel has none', () => {
+    expect(storefront({})).toBeNull();
+    expect(storefront({ online_ordering: null })).toBeNull();
     expect(hasStoreId(null)).toBe(false);
   });
 
-  test('an entry with a blank store id has not opted in', () => {
+  /*
+   * THE SHAPE THAT COST AN OUTAGE.
+   *
+   * This lived in `branch.kiosk` as an array of one, matched by a branch_id
+   * stored inside a document that was already that branch. The order endpoint
+   * read it as an object, `branch.kiosk.store_id`, which is `undefined` on an
+   * array - so it refused every order ever placed against this API, and the
+   * unit test agreed with the reader that was wrong.
+   *
+   * An array arriving here now is not a shape to tolerate, it is a bug to
+   * surface. Nothing writes one.
+   */
+  test('an array is not a channel, whatever is in it', () => {
+    expect(storefront({ online_ordering: [{ store_id: 'SHOP1' }] })).toBeNull();
+    expect(storefront({ online_ordering: [] })).toBeNull();
+  });
+
+  test('a channel with no store address has not opted in', () => {
     expect(hasStoreId({ store_id: '   ' })).toBe(false);
+    expect(hasStoreId({ mode: 'order' })).toBe(false);
+  });
+});
+
+describe('normalizeFulfilment', () => {
+  /*
+   * The field that lets one channel serve a restaurant and a clothes shop
+   * without a "restaurant mode" anywhere in the code.
+   */
+  test('keeps known types in a fixed order, whatever order they arrive in', () => {
+    expect(normalizeFulfilment(['delivery', 'dine_in'])).toEqual(['dine_in', 'delivery']);
+  });
+
+  test('drops duplicates and anything it does not recognise', () => {
+    expect(normalizeFulfilment(['pickup', 'pickup', 'teleport'])).toEqual(['pickup']);
+  });
+
+  test('an unset list means the pair the page has always offered', () => {
+    expect(normalizeFulfilment(undefined)).toEqual(['dine_in', 'takeaway']);
+    expect(normalizeFulfilment('delivery')).toEqual(['dine_in', 'takeaway']);
+  });
+
+  /* Offering nothing would take no orders at all, which is what menu mode is
+     for and is never what an empty list meant. */
+  test('an empty list falls back rather than shutting the channel', () => {
+    expect(normalizeFulfilment([])).toEqual(['dine_in', 'takeaway']);
+    expect(normalizeFulfilment(['nonsense'])).toEqual(['dine_in', 'takeaway']);
+  });
+});
+
+describe('defaultConfig', () => {
+  test('a new branch carries every field, written out', () => {
+    /* Sync replaces whole documents, so a field the winning copy does not
+       carry is deleted rather than merged, and absent reads the same as the
+       default through the API. Writing them out is what makes the setting
+       survive an edit on the other side. */
+    const config = defaultConfig();
+    for (const key of ['store_id', 'mode', 'paused_until', 'hours', 'fulfilment']) {
+      expect(Object.prototype.hasOwnProperty.call(config, key)).toBe(true);
+    }
+    expect(config.mode).toBe(MODE.ORDER);
+    expect(config.paused_until).toBeNull();
+    expect(config.hours).toBeNull();
+  });
+
+  test('two branches do not share one array', () => {
+    /* A frozen module-level default handed out by reference would let one
+       shop's edit reach every shop created since the process booted. */
+    const a = defaultConfig();
+    const b = defaultConfig();
+    a.fulfilment.push('delivery');
+    expect(b.fulfilment).toEqual(['dine_in', 'takeaway']);
+  });
+});
+
+describe('normalizeSettings', () => {
+  test('returns only what the caller sent', () => {
+    expect(normalizeSettings({ mode: 'menu' })).toEqual({ mode: 'menu' });
+    expect(normalizeSettings({})).toEqual({});
+  });
+
+  test('clears a pause when asked to resume', () => {
+    expect(normalizeSettings({ paused_until: null }).paused_until).toBeNull();
+    expect(normalizeSettings({ paused_until: '' }).paused_until).toBeNull();
+  });
+
+  test('refuses a pause it cannot read rather than storing rubbish', () => {
+    expect(() => normalizeSettings({ paused_until: 'whenever' })).toThrow(/valid date/);
+  });
+
+  test('clock strings become minutes past midnight', () => {
+    const out = normalizeSettings({ hours: { mon: [{ open: '11:00', close: '15:00' }] } });
+    expect(out.hours.mon).toEqual([{ open: 660, close: 900 }]);
   });
 });
 

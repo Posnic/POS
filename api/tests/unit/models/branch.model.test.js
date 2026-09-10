@@ -269,8 +269,21 @@ describe('Branch schema — default values', () => {
     expect(sp('payment_gateway').defaultValue()).toEqual([]);
   });
 
-  test('kiosk defaults to []', () => {
-    expect(sp('kiosk').defaultValue()).toEqual([]);
+  /*
+   * Was `kiosk`, an Array that never held more than one entry and was matched
+   * by a branch_id stored inside a document that was already that branch. Two
+   * readers disagreed about whether it was an array or an object, and the
+   * disagreement refused every online order this API ever received.
+   *
+   * A plain object now, defaulting to null so "no channel" stays
+   * distinguishable from "a channel with nothing filled in".
+   */
+  test('online_ordering defaults to null', () => {
+    expect(sp('online_ordering').defaultValue).toBe(null);
+  });
+
+  test('no kiosk array survives to be mistaken for an object', () => {
+    expect(sp('kiosk')).toBeUndefined();
   });
 
   test('auto_sms defaults to false', () => {

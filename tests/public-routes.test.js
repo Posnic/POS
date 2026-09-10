@@ -65,6 +65,24 @@ const ALLOWED_ANONYMOUS = {
     // the forgot-password flow: both require the emailed one-time user_key
     '/getUserKeyDetails', '/updateNewPassword',
   ],
+  'online-ordering.routes.js': [
+    /*
+     * A shop's storefront and its order door, both anonymous by design: a
+     * customer standing at a table has no credentials and never will.
+     *
+     * The STORE ADDRESS in the path is the opt-in and the whole guard. A
+     * branch that never chose one cannot be reached here at all, and a
+     * branch's raw database id - which appears in every authenticated
+     * response and is no secret - buys nothing. The order door additionally
+     * refuses whenever the shop says it is not accepting: menu mode, paused,
+     * or outside opening hours, all recomputed server-side on every request
+     * regardless of what the page believed when it drew its cart.
+     *
+     * `/:storeId/device` is NOT here: it carries the extra fields only the
+     * shop's own equipment needs, and it sits behind ensureKioskKey.
+     */
+    '/:storeId', '/:storeId/orders',
+  ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
     // BEFORE auth works. Stores nothing, per-IP budgeted, truncated,
@@ -223,8 +241,8 @@ test('anonymous qrOrder only serves branches that are open to it', () => {
    */
   const src = fs.readFileSync(
     path.join(__dirname, '..', 'api', 'src', 'repositories', 'sale.repository.js'), 'utf8');
-  const start = src.indexOf('async qrOrderModel');
-  assert.ok(start >= 0, 'qrOrderModel has gone or been renamed');
+  const start = src.indexOf('async createOnlineOrder');
+  assert.ok(start >= 0, 'createOnlineOrder has gone or been renamed');
   const insertAt = src.indexOf('insertOne', start);
   const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 6000);
 
@@ -233,10 +251,10 @@ test('anonymous qrOrder only serves branches that are open to it', () => {
   assert.match(beforeCreate, /if\s*\(\s*!\s*\w*[sS]tate\.accepting\s*\)/,
     'qrOrder no longer refuses when the channel says it is not accepting');
 
-  /* And the branch must still be resolved through the shape-tolerant reader,
-     not by reaching into `.kiosk` and hoping it is an object. */
-  assert.match(beforeCreate, /onlineOrdering\.kioskEntry\(/,
-    'the kiosk entry is being read directly again - that is the array/object bug');
+  /* And the channel must be read through the one accessor, not by reaching
+     into the branch document and hoping about its shape. */
+  assert.match(beforeCreate, /onlineOrdering\.storefront\(/,
+    'the channel is being read directly again - that is how the array/object bug happened');
 
   /* Comments stripped first. The code above this gate explains the old bug and
      names the expression that caused it, and a test that cannot tell code from

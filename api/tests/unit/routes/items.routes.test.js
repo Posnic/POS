@@ -1,8 +1,6 @@
 'use strict';
 
 jest.mock('../../../src/controllers/items.controller', () => ({
-  accesskiosk: jest.fn(),
-  accessQr: jest.fn(),
   accessMobileApp: jest.fn(),
   getAll: jest.fn(),
   itemLowStockTable: jest.fn(),
@@ -54,7 +52,6 @@ describe('items.routes', () => {
       .map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);
     expect(paths).toEqual(
       expect.arrayContaining([
-        'post /accesskiosk',
         'get /',
         'post /itemsImport',
         'post /exportItems',

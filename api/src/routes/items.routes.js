@@ -29,8 +29,6 @@ const bindController = (handler, controller = itemsController) => {
 // --- Public / self-authenticated routes (kiosk, QR, mobile) ---
 // These endpoints authenticate via their own headers (e.g. kioskkey)
 // and must be registered BEFORE the protect middleware.
-router.post('/accesskiosk', bindController(itemsController.accesskiosk));
-router.post('/accessQr', bindController(itemsController.accessQr));
 router.post('/accessMobileApp', bindController(itemsController.accessMobileApp));
 
 // Protect all remaining item routes to ensure req.user context is available

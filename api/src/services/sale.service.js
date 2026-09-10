@@ -3737,8 +3737,8 @@ module.exports = {
   multiKitchenPrintModel: async (branchId) => salesRepository.multiKitchenPrintModel(branchId),
   markKitchenPrintedModel: async (saleIds, printedIndexes) =>
     salesRepository.markKitchenPrintedModel(saleIds, printedIndexes),
-  qrOrderModel: async (data, { SaleModel } = {}) =>
-    salesRepository.qrOrderModel(data, {
+  createOnlineOrder: async (data, { SaleModel } = {}) =>
+    salesRepository.createOnlineOrder(data, {
       SaleModel: getModel(SaleModel),
     }),
   getNewSaleModel: async ({ SaleModel } = {}) =>

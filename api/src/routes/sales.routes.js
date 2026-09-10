@@ -114,7 +114,6 @@ router.post(
 );
 
 // ── Kiosk / mobile-app routes (no JWT auth required, branch_id in body) ──
-router.post('/qrOrder', bindController(salesController.qrOrder));
 /*
  * getNewSale sits in the no-JWT block but its handler requires sales:write.
  * With no auth middleware at all, req.user was never populated - so the
@@ -451,7 +450,7 @@ router.post(
   bindController(salesController.fetchRazorPayQrStatusMobile)
 );
 
-// (qrOrder, getNewSale, getOrderHistory, updateOrder, searchProducts, getFrequentItems moved before protect above)
+// (getNewSale, getOrderHistory, updateOrder, searchProducts, getFrequentItems moved before protect above)
 
 // PHP: kotDiscountReports() - Get KOT discount reports
 router.get('/kotDiscountReports', bindController(salesController.kotDiscountReports));

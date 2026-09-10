@@ -532,38 +532,6 @@ class ItemsController extends BaseController {
     }
   }
 
-  async accesskiosk(req, res) {
-    try {
-      // Per installation, set by the desktop app at startup. It used to be a
-      // constant here, which meant every till in the world accepted the same
-      // key and reading the source was enough to call this endpoint on any of
-      // them. Read at call time, since main.js sets it while starting.
-      const kioskKey = req.headers['kioskkey'];
-      const expected = currentSecret('KIOSK_API_KEY', process.env.KIOSK_API_KEY) || null;
-      if (!expected || kioskKey !== expected) {
-        // 401, not 403: a wrong or missing kiosk key is failed AUTHENTICATION
-        // of the kiosk device. 403 is reserved for a signed-in user who lacks
-        // a permission (the browser client signs out on 401 by design).
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
-      }
-
-      const response = await this.service.accessKiosk(req.body.branch);
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404, response.data);
-      }
-    } catch (error) {
-      console.error('Error in accesskiosk:', error);
-      return this.error(res, error.message, 500);
-    }
-  }
-
-  /**
-   * PHP: instanceItemInsert()
-   * Create a new instant item and return it in PHP-compatible shape.
-   * Frontend expects { type: 'success', data: { id, name, ... } }.
-   */
   async instanceItemInsert(req, res) {
     try {
       await this.ensureContext(req);
@@ -855,28 +823,6 @@ class ItemsController extends BaseController {
       return this.error(res, ERROR_MESSAGES.ITEM_NOT_FOUND, 404, response?.data || null);
     } catch (error) {
       console.error('Error in getOnlineItemsAjaxList:', error);
-      return this.error(res, error.message, 500);
-    }
-  }
-
-  async accessQr(req, res) {
-    try {
-      const projectType = req.body.project_type || null;
-      const isStockProject = projectType === 'stock';
-      const branch = req.body.branch;
-
-      const response = await this.service.accessQr({
-        projectType,
-        branch,
-      });
-
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404, response.data);
-      }
-    } catch (error) {
-      console.error('Error in accessQr:', error);
       return this.error(res, error.message, 500);
     }
   }

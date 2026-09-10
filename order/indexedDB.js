@@ -424,7 +424,9 @@ async function getKioskImages() {
 }
 
 function updateKioskImageUI(data = {}) {
-    const apiBaseUrl = (CONFIG.API_BASE_URL || "https://api.posnic.io").replace(/\/$/, "");
+    /* The page's own origin, with no fallback. A hardcoded host here would
+       quietly serve one shop its images from another shop's server. */
+    const apiBaseUrl = String(CONFIG.API_BASE_URL || "").replace(/\/$/, "");
     const getImagePath = (val, fallback) => {
         try {
             if (!val || typeof val !== "string" || val.trim() === "") return `images/${fallback}`;
@@ -526,15 +528,19 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             }
         }
 
-        // ✅ Fetch products from API
-        const response = await fetch(`${CONFIG.API_BASE_URL}/items/accessQr`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            body: JSON.stringify({ branch: branchId, })
-        });
+        /*
+         * The shop's storefront: who it is, whether it is taking orders, and
+         * the menu.
+         *
+         * A GET on the store's own address, so a customer's menu is a URL that
+         * can be linked, cached and opened. It used to be a POST carrying the
+         * store address in a JSON body, sent to a verb named after the code
+         * that happened to scan it.
+         */
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(branchId)}`,
+            { method: "GET", headers: { "Accept": "application/json" } }
+        );
 
         const result = await readJsonResponse(response, "Product sync");
         console.log("🔄 API Response:", result);
@@ -546,17 +552,16 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
              * The shop's verdict on whether it is taking orders, applied
              * before anything is drawn.
              *
-             * An older server does not send this block. That is not an error
-             * and must not be treated as "closed": the page carries on as
-             * though ordering is on, and qrOrder refuses if it is not. See
+             * If the block is missing the page carries on as though ordering
+             * is on, and the order endpoint refuses if it is not. See
              * assets/channel-state.js for why it fails open here.
              */
-            if (result.data.online_ordering && window.KioskChannel) {
-                window.KioskChannel.save(result.data.online_ordering);
+            if (result.data.channel && window.KioskChannel) {
+                window.KioskChannel.save(result.data.channel);
             }
 
-            const categories = result.data.products;
-            const kioskImages = result.data.kiosk_images;
+            const categories = (result.data.menu && result.data.menu.categories) || [];
+            const kioskImages = result.data.store;
 
             if (kioskImages) {
                 const normalizeKioskImage = (url, fallback) => {
@@ -599,7 +604,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             // ✅ Save branch & products in IndexedDB
             let productChanges = null;
-            await saveData(BRANCH_STORE, [{ id: branchId, kioskPayment: result.data.kiosk_payment }]);
+            await saveData(BRANCH_STORE, [{ id: branchId, kioskPayment: result.data.payment }]);
             if (silent) {
                 productChanges = await syncChangedProducts(products);
                 const totalChanges = productChanges.inserted + productChanges.updated + productChanges.deleted;
@@ -616,7 +621,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             console.log("✅ Product data updated successfully!");
 
-            const kioskPayment = result.data.kiosk_payment;
+            const kioskPayment = result.data.payment;
             if (kioskPayment) {
                 await saveKioskPaymentToIndexedDB(kioskPayment);
             }
@@ -1241,14 +1246,15 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
         const orderAttemptId = getOrCreateOrderAttemptId();
 
         // 🚀 Send checkout request
-        const response = await fetch(`${CONFIG.API_BASE_URL}/sales/qrOrder`, {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(branchId)}/orders`,
+            {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
             body: JSON.stringify({
-                branch: branchId,
                 items: payload,
                 customerMobile: '+91' + savedNumber,
                 transactionId: transactionId,
@@ -1259,7 +1265,8 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
                 order: orderType,
                 note: note,
             })
-        });
+        }
+        );
 
         const result = await readJsonResponse(response, "Checkout");
 

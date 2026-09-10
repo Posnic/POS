@@ -11,9 +11,6 @@
   "A group with this name already exists.": [
     "src/models/setting.model.js"
   ],
-  "A kiosk with this Store ID already exists": [
-    "src/models/setting.model.js"
-  ],
   "A parked cart cannot be paid": [
     "src/services/invoice-sync.js"
   ],
@@ -129,6 +126,9 @@
   ],
   "An invoice id is required": [
     "src/repositories/quote.repository.js"
+  ],
+  "Another branch is already using this store address": [
+    "src/models/setting.model.js"
   ],
   "Another customer with this email already exists": [
     "src/services/customer.service.js"
@@ -250,7 +250,6 @@
     "src/models/branch.model.js",
     "src/models/sale.model.js",
     "src/models/setting.model.js",
-    "src/repositories/item.repository.js",
     "src/repositories/sale.repository.js"
   ],
   "Branch not found for the given branch/store ID.": [
@@ -715,9 +714,6 @@
   "Get payment sales transaction details successfully": [
     "src/repositories/sale.repository.js"
   ],
-  "Get products details": [
-    "src/repositories/item.repository.js"
-  ],
   "Get store details successfully": [
     "src/controllers/branches.controller.js"
   ],
@@ -1120,6 +1116,9 @@
   "No sales data found for the period": [
     "src/models/dashboard.model.js"
   ],
+  "No shop found at this address": [
+    "src/repositories/item.repository.js"
+  ],
   "No shop in context": [
     "app.js"
   ],
@@ -1313,9 +1312,6 @@
     "src/models/setting.model.js"
   ],
   "Passwords do not match": [
-    "src/models/setting.model.js"
-  ],
-  "Pause time is not a valid date": [
     "src/models/setting.model.js"
   ],
   "Payment Gateway Updated": [

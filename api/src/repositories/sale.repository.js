@@ -6995,7 +6995,7 @@ class SalesRepository {
         });
       }
       if (!branchData) {
-        branchData = await branchCollection.findOne({ 'kiosk.store_id': branchId });
+        branchData = await branchCollection.findOne({ 'online_ordering.store_id': branchId });
       }
       if (!branchData) {
         return {
@@ -7167,7 +7167,7 @@ class SalesRepository {
     }
   }
 
-  async qrOrderModel(data, { SaleModel } = {}) {
+  async createOnlineOrder(data, { SaleModel } = {}) {
     try {
       const db = await BaseModel.getDb();
 
@@ -7194,8 +7194,8 @@ class SalesRepository {
 
       const branchCollection = db.collection('branches');
       const branchSelector = ObjectId.isValid(String(branch))
-        ? { $or: [{ _id: new ObjectId(String(branch)) }, { 'kiosk.store_id': branch }] }
-        : { 'kiosk.store_id': branch };
+        ? { $or: [{ _id: new ObjectId(String(branch)) }, { 'online_ordering.store_id': branch }] }
+        : { 'online_ordering.store_id': branch };
       if (BaseModel.license) branchSelector.license = BaseModel.license;
       const branchDoc = await branchCollection.findOne(branchSelector);
 
@@ -7216,14 +7216,15 @@ class SalesRepository {
        * courtesy. This is the control, and it runs the same computation so the
        * two cannot drift.
        *
-       * `branch.kiosk` is an ARRAY. It was read here as an object
-       * (`branchDoc.kiosk.store_id`), which is undefined on an array, so this
-       * guard fired for every branch and refused every order. It survived
-       * because live kiosk traffic still reaches the legacy PHP API, and
-       * because the unit test mocked an object shape nothing in this
-       * application writes.
+       * The config used to live in `branch.kiosk`, an array of one, and this
+       * guard read it as an object (`branchDoc.kiosk.store_id`). That is
+       * `undefined` on an array, so it fired for every branch and refused
+       * every order ever placed against this API. It survived because live
+       * traffic still reached the old PHP backend and because the unit test
+       * mocked the object shape nothing wrote. The field is a plain object
+       * now, so the two readers cannot disagree again.
        */
-      const onlineEntry = onlineOrdering.kioskEntry(branchDoc, branch);
+      const onlineEntry = onlineOrdering.storefront(branchDoc);
       const onlineState = onlineOrdering.channelState(onlineEntry, {
         timeZone: branchDoc.time_zone,
       });
@@ -7314,7 +7315,7 @@ class SalesRepository {
         salesId = await this.generateSalesIdForBranch(branchObjectId);
       } catch (e) {
         console.error(
-          'Failed to generate sequential sales_id for qrOrder; using fallback SID timestamp:',
+          'Failed to generate sequential sales_id for an online order; using fallback SID timestamp:',
           e.message
         );
         salesId = `SID${now.getTime()}`;
@@ -7399,7 +7400,7 @@ class SalesRepository {
         },
       };
     } catch (error) {
-      console.error('Error in qrOrderModel:', error);
+      console.error('Error in createOnlineOrder:', error);
       return { status: false, message: error.message, data: null };
     }
   }
