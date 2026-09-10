@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
+const { notifyKotReady } = require('../helpers/kot-notify');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
@@ -7450,6 +7451,11 @@ class SalesRepository {
 
       const insertedId = insertResult.insertedId.toString();
 
+      /* The printer is in this process. Tell it now rather than letting it find
+         this ticket on its next poll - a kitchen ticket that arrives after the
+         customer does is the whole reason this is event driven. */
+      notifyKotReady({ branchId: String(branchObjectId), saleId: insertedId, reason: 'created' });
+
       return {
         status: true,
         message: 'Order placed successfully',
@@ -7947,6 +7953,16 @@ class SalesRepository {
         { _id: orderObjectId },
         { $set: updateFields }
       );
+
+      /* An amended table order needs a fresh ticket in the kitchen just as much
+         as a new one does, and the same event carries it. */
+      if (updateResult.modifiedCount > 0) {
+        notifyKotReady({
+          branchId: String(updateFields.branch_id || orderDoc?.branch_id || ''),
+          saleId: String(orderId),
+          reason: 'updated',
+        });
+      }
 
       return updateResult.modifiedCount > 0
         ? {

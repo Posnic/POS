@@ -410,11 +410,63 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   });
 
   // ── KOT Handlers ─────────────────────────────────────
-  ipcMain.handle('kot:get-config', async () => {
-    if (!kotManager) {
-      return { branchId: '', printerNames: [], apiUrl: `http://127.0.0.1:${Number(process.env.PORT) || 5555}/api` };
+  /**
+   * The branches this installation actually has.
+   *
+   * Read straight from the local database rather than over HTTP: the branches
+   * route sits behind `protect`, and this window has no session to present.
+   * Same connection details the cloud data check uses.
+   */
+  async function readLocalBranches() {
+    let client = null;
+    try {
+      const { MongoClient } = require('mongodb');
+      let uri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
+      const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
+      if (fs.existsSync(credFile)) {
+        try {
+          const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+          if (creds.uri) uri = creds.uri;
+        } catch (e) { /* fall through to the default */ }
+      }
+      client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
+      await client.connect();
+      const rows = await client.db('PosnicPro').collection('branches')
+        .find({}, { projection: { branch_name: 1 } }).toArray();
+      return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
+    } catch (e) {
+      /* A shop with no database yet is a normal state during setup, not a
+         fault. The screen still works; it just cannot offer a list. */
+      return [];
+    } finally {
+      if (client) { try { await client.close(); } catch (e) { /* ignore */ } }
     }
-    return await kotManager.loadConfig();
+  }
+
+  ipcMain.handle('kot:get-branches', async () => readLocalBranches());
+
+  ipcMain.handle('kot:get-config', async () => {
+    const fallback = { branchId: '', printerNames: [], apiUrl: `http://127.0.0.1:${Number(process.env.PORT) || 5555}/api` };
+    const cfg = kotManager ? await kotManager.loadConfig() : fallback;
+
+    /*
+     * Answer the branch question instead of asking it.
+     *
+     * This screen used to demand a 24 character ObjectId, typed by hand, before
+     * a kitchen printer would work - a leftover from Hardware Manager being a
+     * separate application that had no way of knowing which shop it served.
+     * It runs inside the till now, so it can look.
+     *
+     * One branch, which is nearly every shop, is chosen outright. Several, and
+     * the list is returned so the screen can offer names rather than ids.
+     */
+    const branches = await readLocalBranches();
+    cfg.branches = branches;
+    if (!cfg.branchId && branches.length === 1) {
+      cfg.branchId = branches[0].id;
+      cfg.branchAutoSelected = true;
+    }
+    return cfg;
   });
 
   ipcMain.handle('kot:start-polling', async (event, config) => {

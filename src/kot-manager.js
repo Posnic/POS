@@ -26,6 +26,18 @@ function kotApiUrl() {
   return `http://127.0.0.1:${port}/api`;
 }
 
+/*
+ * How often to poll when nothing has happened.
+ *
+ * This used to be five seconds because polling was the only way a ticket could
+ * ever reach the printer. Sales now announce themselves the moment they are
+ * saved, so this is only the net that catches what the event missed - a ticket
+ * written while the app was starting, or one whose print failed. Thirty seconds
+ * is frequent enough to recover an order and quiet enough to stop hammering the
+ * API all day.
+ */
+const KOT_FALLBACK_POLL_MS = 30000;
+
 class KOTManager {
   constructor() {
     this.pollingTimer = null;
@@ -41,6 +53,19 @@ class KOTManager {
 
     // Dedup: track printed job hashes
     this.printedJobs = new Set();
+
+    /*
+     * The API is require()d into this same process, so a sale that needs a
+     * kitchen ticket can say so directly instead of us asking every few
+     * seconds. See api/src/helpers/kot-notify.js for why `process` is the bus.
+     *
+     * The poll underneath stays, slowed down: it is also what recovers a ticket
+     * that failed to print, or one saved while the app was starting. Losing an
+     * order is worse than printing it a little late, so the safety net stays.
+     */
+    this._kotNudgeTimer = null;
+    this._onKotCreated = (payload) => this._onKotEvent(payload);
+    try { process.on('posnic:kot-created', this._onKotCreated); } catch (e) { /* never fatal */ }
 
     const base = this._getWritablePath();
     this.configPath = path.join(base, 'kot-config.json');
@@ -305,6 +330,39 @@ class KOTManager {
     return this.kotCounter;
   }
 
+  // ─── Event driven ─────────────────────────────────────────────────────────
+
+  /**
+   * A sale just asked for a kitchen ticket.
+   *
+   * Debounced rather than printed inline: a table of six sending six courses
+   * produces six events in a moment, and each poll already fetches every
+   * pending ticket. One pass shortly after the last event prints them all,
+   * where six immediate passes would race each other for the same printer.
+   *
+   * A branch arriving on the event is used when nothing is configured, which is
+   * what lets the Branch ID field stop being something a shopkeeper types.
+   */
+  _onKotEvent(payload = {}) {
+    if (!this.isPolling || !this.config) return;
+
+    if (!this.config.branchId && payload.branchId) {
+      this.config.branchId = String(payload.branchId);
+      console.log('[KOT] branch taken from the sale:', this.config.branchId);
+    }
+
+    if (this._kotNudgeTimer) return;
+    this._kotNudgeTimer = setTimeout(() => {
+      this._kotNudgeTimer = null;
+      if (!this.isPolling) return;
+      console.log('[KOT] sale event -> printing now (' + (payload.reason || 'created') + ')');
+      /* Cancel the scheduled poll so this pass replaces it rather than running
+         alongside it and fetching the same tickets twice. */
+      if (this.pollingTimer) { clearTimeout(this.pollingTimer); this.pollingTimer = null; }
+      this._poll();
+    }, 250);
+  }
+
   // ─── Polling lifecycle ────────────────────────────────────────────────────
 
   async startPolling(config) {
@@ -320,6 +378,10 @@ class KOTManager {
     if (this.pollingTimer) {
       clearTimeout(this.pollingTimer);
       this.pollingTimer = null;
+    }
+    if (this._kotNudgeTimer) {
+      clearTimeout(this._kotNudgeTimer);
+      this._kotNudgeTimer = null;
     }
     this.isPolling = false;
     console.log('[KOT] Polling stopped');
@@ -366,7 +428,7 @@ class KOTManager {
 
       const sales = Array.isArray(data?.data) ? data.data : [];
       if (sales.length === 0) {
-        this.pollingTimer = setTimeout(() => this._poll(), 5000);
+        this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
         return;
       }
 
@@ -449,7 +511,7 @@ class KOTManager {
       this.lastPollStatus = 'error: ' + err.message;
     }
 
-    this.pollingTimer = setTimeout(() => this._poll(), 5000);
+    this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
   }
 
   // ─── Silent print ─────────────────────────────────────────────────────────
