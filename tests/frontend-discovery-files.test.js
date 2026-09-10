@@ -44,7 +44,7 @@ test('frontend source carries machine-readable discovery files for the app domai
   const llms = read(FRONTEND, 'llms.txt');
   assert.match(llms, /^# Posnic POS$/m);
   assert.match(llms, /^Canonical app domain: https:\/\/posnic\.io\/$/m);
-  assert.match(llms, /^Preferred backlink target: https:\/\/posnic\.io\/$/m);
+  assert.match(llms, /^Preferred backlink target: https:\/\/www\.posnic\.com\/$/m);
   assert.match(llms, /^Official GitHub source: https:\/\/github\.com\/Posnic\/POS$/m);
   assert.match(llms, /POS; Billing Software; Offline POS; Online\/Offline POS; open source POS/);
 

@@ -53,7 +53,7 @@ test('AppStream copy is useful, factual and backed by a real product screenshot'
   assert.equal(screenshot.getAttribute('height'), '1032');
   assert.match(screenshot.textContent.trim(), /^https:\/\/raw\.githubusercontent\.com\/Posnic\/POS\/[0-9a-f]{40}\//);
   assert.ok(urls.length >= 4 && urls.every((url) => url.startsWith('https://')));
-  assert.ok(urls.includes('https://posnic.io/'));
+  assert.ok(urls.includes('https://www.posnic.com/'));
   assert.ok(keywords.includes('billing software'));
   assert.ok(keywords.includes('offline POS'));
   assert.ok(keywords.includes('online/offline POS'));

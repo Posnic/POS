@@ -4,7 +4,7 @@
 
 Canonical app domain: https://posnic.io/
 Production app host: https://www.posnic.io/
-Preferred backlink target: https://posnic.io/
+Preferred backlink target: https://www.posnic.com/
 Official GitHub source: https://github.com/Posnic/POS
 Current release downloads: https://github.com/Posnic/POS/releases/latest
 Product facts and evidence index: https://posnic.com/posnic-facts
