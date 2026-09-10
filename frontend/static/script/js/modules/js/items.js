@@ -743,7 +743,6 @@ PosnicPro.items = {
             category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
             cover_image: $('#item_logo').val(),
             inventory: $('#item_track_inventory').is(':checked'),
-            sales_channel: $('#item_sales_channel').is(':checked'),
             ecommerce: $('#item_ecommerce').is(':checked'),
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
@@ -1013,7 +1012,6 @@ PosnicPro.items = {
                     category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
                     cover_image: $('#item_logo').val(),
                     inventory: $('#item_track_inventory').is(':checked'),
-                    sales_channel: $('#item_sales_channel').is(':checked'),
                     ecommerce: $('#item_ecommerce').is(':checked'),
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
@@ -1300,15 +1298,6 @@ PosnicPro.items = {
             $('#item-view-access').removeClass('fa-check').addClass('fa-times');
             $('#inventory-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
         }
-        if (data.sales_channel === true) {
-            $('#channel-access').removeClass('badge-danger').addClass('badge-success');
-            $('#item-view-channel-access').removeClass('fa-times').addClass('fa-check');
-            $('#channel-access-item').html(PosnicPro.i18n.t('lang_on_2', 'ON'));
-        } else {
-            $('#channel-access').removeClass('badge-success').addClass('badge-danger');
-            $('#item-view-channel-access').removeClass('fa-check').addClass('fa-times');
-            $('#channel-access-item').html(PosnicPro.i18n.t('lang_off_2', 'OFF'));
-        }
         if (data.ecommerce === true) {
             $('#ecommerce-access').removeClass('badge-danger').addClass('badge-success');
             $('#item-view-ecommerce-access').removeClass('fa-times').addClass('fa-check');
@@ -1563,7 +1552,6 @@ PosnicPro.items = {
                     );
                 }
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
-                (data.sales_channel === true) ? $('#item_sales_channel').prop('checked', true) : $('#item_sales_channel').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
@@ -2216,7 +2204,6 @@ PosnicPro.items = {
                     $('#default_tax').show();
                 }
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
-                (data.sales_channel === true) ? $('#item_sales_channel').prop('checked', true) : $('#item_sales_channel').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);

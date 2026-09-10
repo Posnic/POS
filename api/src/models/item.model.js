@@ -119,7 +119,6 @@ class ItemModel {
     unit: { type: 'String', select: true },
     unit_id: { type: 'String', select: true },
     track_inventory: { type: 'Boolean', select: true },
-    sales_channel: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },

@@ -628,7 +628,6 @@ class InstallModel extends BaseModel {
             sort_order: parseInt(itemValue.sort_order),
             description: itemValue.description,
             track_inventory: true,
-            sales_channel: true,
             ecommerce: false,
             updated_date: now,
             updated_by: username,
@@ -735,7 +734,6 @@ class InstallModel extends BaseModel {
         description:
           'Fortune Sunlite Oil is refined sunflower oil that is healthy and tasty. Its high boiling point implies that sunflower oil holds onto its nutritional content even at higher temperatures, making it an excellent choice for the Indian cooking style.',
         track_inventory: true,
-        sales_channel: true,
         ecommerce: false,
         name: 'Fortune Sunlite Refined Sunflower Oil 1L',
         updated_date: now,

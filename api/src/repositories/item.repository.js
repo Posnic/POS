@@ -1548,7 +1548,6 @@ class ItemRepository extends BaseModel {
         sort_order: parseInt(data.position, 10) || 0,
         description: (data.description || '').trim(),
         track_inventory: Boolean(data.inventory),
-        sales_channel: Boolean(data.sales_channel),
         ecommerce: Boolean(data.ecommerce),
         isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
@@ -2411,10 +2410,6 @@ class ItemRepository extends BaseModel {
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           stockCondition,
-          // sales_channel filter removed: it was implemented as a misused
-          // boolean, not the intended multi-channel (POS/kiosk/e-commerce)
-          // selector, so it silently hid items from New Sale. To be
-          // reintroduced as a proper channel model later.
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
       };
@@ -2542,7 +2537,6 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
-          { sales_channel: true },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ],
       };
@@ -2718,7 +2712,6 @@ class ItemRepository extends BaseModel {
         track_inventory: false,
         // Instant lines sell any quantity - stock never blocks them.
         negative_stock: true,
-        sales_channel: true,
         ecommerce: false,
         item_status: ITEM_STATUS.INSTANT,
       };
@@ -3183,7 +3176,6 @@ class ItemRepository extends BaseModel {
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
         },
-        // sales_channel filter removed for New Sale (see getOnlineItemsAjaxList).
         { category_id: categoryObjectId },
       ];
 
@@ -3576,7 +3568,6 @@ class ItemRepository extends BaseModel {
       const filter = {
         'branch_access.branch_id': branchObjectId,
         item_status: { $ne: ITEM_STATUS.INSTANT },
-        sales_channel: true,
       };
 
       const items = await collection
@@ -4760,7 +4751,6 @@ class ItemRepository extends BaseModel {
               : 999999,
           description: '',
           track_inventory: true,
-          sales_channel: true,
           ecommerce: false,
           negative_stock: false,
           updated_date: now,
@@ -4777,7 +4767,7 @@ class ItemRepository extends BaseModel {
              image/multi_image (the export has no image column, so a CSV can
              never carry one - overwriting them is exactly the bug), the
              created_* provenance, and the behaviour flags (track_inventory,
-             item_status, sales_channel, ecommerce, negative_stock,
+             item_status, ecommerce, negative_stock,
              description) which the CSV does not include and must not be reset
              to their insert-time defaults. */
           const setFields = {
