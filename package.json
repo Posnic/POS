@@ -120,6 +120,7 @@
       "src/print-window-guard.js",
       "src/print-pdf.js",
       "src/escpos-receipt.js",
+    "src/printer-targets.js",
       "src/escpos-report.js",
       "src/preload.js",
       "package.json",
