@@ -12,7 +12,9 @@ const {
   CHANNEL,
   FULFILMENT,
   SELF_SERVICE_CHANNELS,
+  amountToFreeDelivery,
   channelFilter,
+  chargesFor,
   channelOf,
   commissionOn,
   describeSale,
@@ -219,5 +221,77 @@ describe('commissionOn', () => {
 
   test('nonsense in does not produce NaN out', () => {
     expect(commissionOn('abc', 'xyz')).toEqual({ commission: 0, net: 0 });
+  });
+});
+
+describe('delivery and fees', () => {
+  const SHOP = {
+    delivery: { fee: 40, free_above: 500, min_order: 200 },
+    pickup: { fee: 0, min_order: 0 },
+  };
+
+  /*
+   * THE AXIS IS FULFILMENT, NOT CHANNEL, and this is the pair that shows why.
+   * The same online storefront charges for delivery and nothing for pickup.
+   * Put the fee on the channel and a shop taking dine-in QR orders starts
+   * billing delivery on food carried six feet.
+   */
+  test('the same channel charges for delivery and not for pickup', () => {
+    expect(chargesFor('delivery', 300, SHOP).fee).toBe(40);
+    expect(chargesFor('pickup', 300, SHOP).fee).toBe(0);
+  });
+
+  test('waived above the threshold', () => {
+    const out = chargesFor('delivery', 600, SHOP);
+    expect(out).toMatchObject({ fee: 0, waived: true, allowed: true });
+  });
+
+  /* A minimum not met means this fulfilment is not on offer, not that it
+     costs more - so the order is refused rather than silently surcharged. */
+  test('below the minimum the fulfilment is refused, not surcharged', () => {
+    const out = chargesFor('delivery', 150, SHOP);
+    expect(out.allowed).toBe(false);
+    expect(out.minimum).toBe(200);
+  });
+
+  /*
+   * An aggregator's rider is their fee, charged to the customer by them. If
+   * the shop adds its own the customer is billed twice, once by each of us -
+   * which is why a partner's table REPLACES the shop's rather than merging.
+   * A merge could not express zero.
+   */
+  test('a partner can override the fee to nothing', () => {
+    expect(chargesFor('delivery', 300, SHOP, { delivery: { fee: 0 } }).fee).toBe(0);
+  });
+
+  test('a partner override applies only to the fulfilment it names', () => {
+    expect(chargesFor('pickup', 300, SHOP, { delivery: { fee: 99 } }).fee).toBe(0);
+  });
+
+  test('an unknown fulfilment costs nothing rather than guessing', () => {
+    expect(chargesFor('teleport', 300, SHOP)).toMatchObject({ fee: 0, allowed: true });
+  });
+
+  test('a shop with nothing configured charges nothing', () => {
+    expect(chargesFor('delivery', 300, {}).fee).toBe(0);
+    expect(chargesFor('delivery', 300, null).allowed).toBe(true);
+  });
+
+  describe('amountToFreeDelivery', () => {
+    /* "Add 120 more for free delivery" is worth more to a shop than the 40 it
+       would have charged, and every app the customer has used says it. */
+    test('says how much more is needed', () => {
+      expect(amountToFreeDelivery('delivery', 380, SHOP)).toBe(120);
+    });
+
+    test('nothing to say once the threshold is passed', () => {
+      expect(amountToFreeDelivery('delivery', 500, SHOP)).toBe(0);
+      expect(amountToFreeDelivery('delivery', 900, SHOP)).toBe(0);
+    });
+
+    test('nothing to say where there is no fee or no threshold', () => {
+      expect(amountToFreeDelivery('pickup', 10, SHOP)).toBe(0);
+      expect(amountToFreeDelivery('delivery', 10, { delivery: { fee: 40 } })).toBe(0);
+    });
   });
 });

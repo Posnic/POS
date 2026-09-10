@@ -284,6 +284,114 @@ function commissionOn(total, percent) {
   return { commission, net: Math.round((amount - commission) * 100) / 100 };
 }
 
+/* ------------------------------------------------------- delivery and fees
+ *
+ * What a customer pays on top of the food.
+ *
+ * THE AXIS IS FULFILMENT, NOT CHANNEL. This is the part that is easy to get
+ * wrong and expensive to change later.
+ *
+ * A delivery fee is not a property of "online". The same online storefront
+ * charges for delivery, charges nothing for pickup, and charges nothing again
+ * when the customer is sitting at a table. Put the fee on the channel and a
+ * shop taking dine-in QR orders starts adding a delivery fee to food carried
+ * six feet.
+ *
+ * It is not a property of the fulfilment alone either. `delivery` through the
+ * shop's own storefront is the shop's own rider and the shop's own fee;
+ * `delivery` through an aggregator is their rider, their fee, charged to the
+ * customer by them - the shop must add nothing or the customer is billed
+ * twice, once by each of us.
+ *
+ * So charges live at the intersection: a shop-wide table keyed by fulfilment,
+ * and any partner may override it. A marketplace partner overriding delivery
+ * to zero is the normal case and the reason the override exists.
+ *
+ * THREE NUMBERS, which is what every system a customer has used already has:
+ *
+ *   fee          flat charge for this fulfilment
+ *   free_above   order value at which the fee is waived, 0 for never
+ *   min_order    below which this fulfilment is refused, 0 for no minimum
+ *
+ * Deliberately not distance bands. They need an address, a map and a
+ * geocoding bill, and a shop that needs them has outgrown a flat fee anyway.
+ */
+
+/** One fulfilment's charges, cleaned up. */
+function normalizeCharge(input) {
+  const money = (v) => Math.max(0, Math.round((Number(v) || 0) * 100) / 100);
+  return {
+    fee: money(input && input.fee),
+    free_above: money(input && input.free_above),
+    min_order: money(input && input.min_order),
+  };
+}
+
+/** The whole table, one entry per fulfilment type the shop offers. */
+function normalizeCharges(input) {
+  const out = {};
+  for (const type of FULFILMENT_VALUES) {
+    out[type] = normalizeCharge((input && input[type]) || {});
+  }
+  return out;
+}
+
+/**
+ * What this order owes on top of the food, and whether it may be placed.
+ *
+ * @param {string} fulfilment   dine_in, takeaway, pickup, delivery
+ * @param {number} subtotal     the food, at whatever price the customer sees
+ * @param {object} charges      the shop's table
+ * @param {object} [override]   a partner's table, where one exists
+ * @returns {{fee: number, waived: boolean, allowed: boolean, minimum: number}}
+ */
+function chargesFor(fulfilment, subtotal, charges, override) {
+  const type = normalizeFulfilment(fulfilment);
+  const amount = Number(subtotal) || 0;
+
+  /*
+   * A partner's table replaces the shop's for that fulfilment, rather than
+   * merging into it. Merging would mean a partner could not set a fee of zero
+   * without it reading as "not configured, use the shop's" - and zero is
+   * exactly what an aggregator needs to say.
+   */
+  const table = override && override[type] ? normalizeCharges(override) : normalizeCharges(charges);
+  const rule = table[type] || normalizeCharge({});
+
+  if (!type) return { fee: 0, waived: false, allowed: true, minimum: 0 };
+
+  /* Refused before anything is charged: a minimum the order does not meet
+     means this fulfilment is not on offer, not that it costs more. */
+  if (rule.min_order > 0 && amount < rule.min_order) {
+    return { fee: rule.fee, waived: false, allowed: false, minimum: rule.min_order };
+  }
+
+  const waived = rule.free_above > 0 && amount >= rule.free_above;
+  return {
+    fee: waived ? 0 : rule.fee,
+    waived,
+    allowed: true,
+    minimum: rule.min_order,
+  };
+}
+
+/**
+ * What to tell a customer who is short of a free-delivery threshold.
+ *
+ * "Add 120 more for free delivery" is worth more to a shop than the 40 it
+ * would have charged, and every system the customer has used says it.
+ * Returns 0 when there is nothing to say.
+ */
+function amountToFreeDelivery(fulfilment, subtotal, charges, override) {
+  const type = normalizeFulfilment(fulfilment);
+  if (!type) return 0;
+  const table = override && override[type] ? normalizeCharges(override) : normalizeCharges(charges);
+  const rule = table[type];
+  if (!rule || !(rule.free_above > 0) || !(rule.fee > 0)) return 0;
+  const short = rule.free_above - (Number(subtotal) || 0);
+  return short > 0 ? Math.round(short * 100) / 100 : 0;
+}
+
 module.exports = {
   CHANNEL,
   CHANNEL_VALUES,
@@ -296,7 +404,11 @@ module.exports = {
   SELF_SERVICE_CHANNELS,
   channelFilter,
   channelOf,
+  amountToFreeDelivery,
+  chargesFor,
   commissionOn,
+  normalizeCharge,
+  normalizeCharges,
   describeSale,
   normalizeChannel,
   normalizeFulfilment,
