@@ -7,6 +7,11 @@ const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
+const onlineOrdering = require('../utils/online-ordering');
+
+/* The fallback when channelState has no sentence of its own. It never should,
+   but a refusal with an empty message would tell a customer nothing. */
+const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
 
 const activeTenantFilter = () => ({
   ...(BaseModel.license ? { license: BaseModel.license } : {}),
@@ -7198,15 +7203,36 @@ class SalesRepository {
         return { status: false, message: 'Branch not found', data: null };
       }
       /*
-       * QR ordering is opt-in. This endpoint is anonymous by design (a
-       * customer's phone has no credentials), so the ONLY thing standing
-       * between the internet and a shop's kitchen queue is this: a branch
-       * that never configured a QR identity must not accept orders addressed
-       * by its raw database id, which appears in every authenticated response
-       * and is no secret.
+       * Online ordering is opt-in, and it can be shut for four unrelated
+       * reasons. This endpoint is anonymous by design (a customer's phone has
+       * no credentials) and reachable from the internet, so the ONLY thing
+       * standing between a stranger and a shop's kitchen queue is this check:
+       * a branch that never configured an online identity must not accept
+       * orders addressed by its raw database id, which appears in every
+       * authenticated response and is no secret. Nor may a shop that is in
+       * menu mode, paused, or outside its opening hours.
+       *
+       * The customer's page hides its cart in all of those states. That is a
+       * courtesy. This is the control, and it runs the same computation so the
+       * two cannot drift.
+       *
+       * `branch.kiosk` is an ARRAY. It was read here as an object
+       * (`branchDoc.kiosk.store_id`), which is undefined on an array, so this
+       * guard fired for every branch and refused every order. It survived
+       * because live kiosk traffic still reaches the legacy PHP API, and
+       * because the unit test mocked an object shape nothing in this
+       * application writes.
        */
-      if (!branchDoc.kiosk || !branchDoc.kiosk.store_id) {
-        return { status: false, message: 'QR ordering is not enabled for this branch', data: null };
+      const onlineEntry = onlineOrdering.kioskEntry(branchDoc, branch);
+      const onlineState = onlineOrdering.channelState(onlineEntry, {
+        timeZone: branchDoc.time_zone,
+      });
+      if (!onlineState.accepting) {
+        return {
+          status: false,
+          message: onlineState.message || ONLINE_ORDERING_DISABLED,
+          data: { state: onlineState.state, opens_at: onlineState.opens_at },
+        };
       }
       const branchObjectId = branchDoc._id;
 

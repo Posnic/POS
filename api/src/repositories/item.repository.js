@@ -4,6 +4,7 @@ const BaseModel = require('../models/base.model');
 const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
+const onlineOrdering = require('../utils/online-ordering');
 const {
   DEFAULTS,
   ITEM_STATUS,
@@ -1243,7 +1244,6 @@ class ItemRepository extends BaseModel {
         )
         .toArray();
       for (const cat of demoCats) {
-        // eslint-disable-next-line no-await-in-loop
         const remaining = await items.countDocuments({
           category_id: cat._id,
           'branch_access.branch_id': branch,
@@ -1256,7 +1256,6 @@ class ItemRepository extends BaseModel {
           del_status: { $nin: [1, '1', true] },
         });
         if (remaining === 0) {
-          // eslint-disable-next-line no-await-in-loop
           await cats.deleteOne({ _id: cat._id, license });
           categoriesRemoved++;
         }
@@ -1285,7 +1284,6 @@ class ItemRepository extends BaseModel {
         )
         .toArray();
       for (const u of demoUnits) {
-        // eslint-disable-next-line no-await-in-loop
         const remaining = await items.countDocuments({
           /* unit_id is an ObjectId on rows the seed wrote and a string on
              rows some editors write; matching one shape silently keeps or
@@ -1296,7 +1294,6 @@ class ItemRepository extends BaseModel {
           del_status: { $nin: [1, '1', true] },
         });
         if (remaining === 0) {
-          // eslint-disable-next-line no-await-in-loop
           await unitsCol.deleteOne({ _id: u._id, license });
           unitsRemoved++;
         }
@@ -3675,12 +3672,28 @@ class ItemRepository extends BaseModel {
         return { status: false, message: 'Branch not found', data: null };
       }
 
-      const kioskEntry = Array.isArray(branchDoc.kiosk)
-        ? branchDoc.kiosk.find((entry) => String(entry?.store_id || '') === String(branch))
-        : branchDoc.kiosk && String(branchDoc.kiosk?.store_id || '') === String(branch)
-          ? branchDoc.kiosk
-          : null;
-      const hasKiosk = !!kioskEntry;
+      /*
+       * Both shapes, in one place. `branch.kiosk` is an array everywhere the
+       * application writes it, but older fixtures and one now-fixed guard read
+       * it as an object, so the resolver accepts either and everything else
+       * stops guessing.
+       */
+      const kioskEntry = onlineOrdering.kioskEntry(branchDoc, branch);
+
+      /*
+       * Deliberately NOT `hasStoreId(kioskEntry)`.
+       *
+       * This flag decides whether the catalogue is narrowed to items ticked
+       * for the online channel. It has always been true only when the caller
+       * addressed the branch by its STORE ID, so a shop reached by raw
+       * ObjectId sees every item. Widening it to "this branch has a kiosk at
+       * all" would empty the menu of every shop that never ticked the box on
+       * its items, which is a live regression dressed up as a tidy-up.
+       *
+       * The channel state below uses the resolved entry regardless, because a
+       * shop that is closed is closed however you addressed it.
+       */
+      const hasKiosk = !!kioskEntry && String(kioskEntry.store_id || '') === String(branch);
       const collection = await this.getCollection(this.collectionName);
 
       const baseFilter = [
@@ -3870,6 +3883,16 @@ class ItemRepository extends BaseModel {
           kiosk_print: {
             printer_name: kioskEntry?.printer_name || '',
           },
+          /*
+           * What the page is allowed to do, decided here rather than on the
+           * phone. The customer's clock can be wrong or set deliberately, so
+           * "are we open" is never computed in the browser. The page renders
+           * what it is told; the order endpoint runs the same computation
+           * again before it accepts anything.
+           */
+          online_ordering: onlineOrdering.channelState(kioskEntry, {
+            timeZone: branchDoc.time_zone,
+          }),
           tableorders,
         },
       };

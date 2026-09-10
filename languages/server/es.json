@@ -451,7 +451,6 @@
   "QR Code Generate successfully": "Código QR generado correctamente",
   "QR code ID is required": "El ID del código QR es obligatorio",
   "QR code closed successfully": "Código QR cerrado correctamente",
-  "QR ordering is not enabled for this branch": "Los pedidos por QR no están habilitados para esta sucursal",
   "QR status retrieved successfully": "Estado del QR obtenido correctamente",
   "Quantity updated": "Cantidad actualizada",
   "Quote ": "Cotización ",

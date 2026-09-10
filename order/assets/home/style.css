@@ -1,0 +1,75 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: url() no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Segoe UI", sans-serif;
+    overflow: hidden;
+}
+
+.overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 60px;
+    border-radius: 20px;
+    display: flex;
+    gap: 80px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.option-card {
+    background: white;
+    width: 280px;
+    height: 320px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transition: 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.option-card:hover {
+    transform: scale(1.05);
+}
+
+.option-card img {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+.option-card p {
+    font-size: 26px;
+    font-weight: bold;
+    color: #212529;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .overlay {
+        padding: 30px;
+        gap: 40px;
+    }
+
+    .option-card {
+        width: 220px;
+        height: 260px;
+    }
+
+    .option-card img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .option-card p {
+        font-size: 22px;
+    }
+}

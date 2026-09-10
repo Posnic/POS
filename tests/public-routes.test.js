@@ -198,26 +198,54 @@ test('the routes that leaked are specifically closed', () => {
   }
 });
 
-test('anonymous qrOrder only serves branches that opted into QR', () => {
+test('anonymous qrOrder only serves branches that are open to it', () => {
   /*
    * qrOrder is anonymous by design - a customer's phone has no credentials -
-   * so the gate lives in the repository: no configured QR identity
+   * so the gate lives in the repository: no configured online identity
    * (kiosk.store_id), no order. Without it, any branch's raw ObjectId (which
    * appears in every authenticated response and is no secret) was enough for
    * a stranger to put orders on its kitchen queue. Asserted here because the
    * repository's own unit file sits in jest's CI ignore list.
+   *
+   * THIS TEST USED TO PIN THE BUG.
+   *
+   * It asserted on the literal source of the old guard,
+   * `!branchDoc.kiosk || !branchDoc.kiosk.store_id`. That expression reads an
+   * ARRAY field as an object - `branch.kiosk` is an array in every write path
+   * in the application - so it was `undefined` every time, the gate fired for
+   * every branch, and qrOrder refused every order. Pinned by source text, the
+   * defect was protected rather than the property.
+   *
+   * So this now asserts the PROPERTY: the gate runs before anything is
+   * created, and it refuses unless the shared state engine says the shop is
+   * accepting. That engine is exercised properly in
+   * api/tests/unit/utils/online-ordering.test.js, including the array shape.
    */
   const src = fs.readFileSync(
     path.join(__dirname, '..', 'api', 'src', 'repositories', 'sale.repository.js'), 'utf8');
   const start = src.indexOf('async qrOrderModel');
   assert.ok(start >= 0, 'qrOrderModel has gone or been renamed');
   const insertAt = src.indexOf('insertOne', start);
-  const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 4000);
+  const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 6000);
 
-  assert.match(beforeCreate, /branchDoc\.kiosk\s*\|\|\s*!branchDoc\.kiosk\.store_id/,
-    'the QR opt-in gate is gone - any branch id would accept anonymous orders again');
-  assert.ok(beforeCreate.includes('QR ordering is not enabled for this branch'),
-    'the refusal message changed or moved after order creation');
+  assert.match(beforeCreate, /onlineOrdering\.channelState\(/,
+    'the opt-in gate is gone - any branch id would accept anonymous orders again');
+  assert.match(beforeCreate, /if\s*\(\s*!\s*\w*[sS]tate\.accepting\s*\)/,
+    'qrOrder no longer refuses when the channel says it is not accepting');
+
+  /* And the branch must still be resolved through the shape-tolerant reader,
+     not by reaching into `.kiosk` and hoping it is an object. */
+  assert.match(beforeCreate, /onlineOrdering\.kioskEntry\(/,
+    'the kiosk entry is being read directly again - that is the array/object bug');
+
+  /* Comments stripped first. The code above this gate explains the old bug and
+     names the expression that caused it, and a test that cannot tell code from
+     prose would read that explanation as a relapse. */
+  const code = beforeCreate
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  assert.ok(!/branchDoc\.kiosk\.store_id/.test(code),
+    'branchDoc.kiosk is an array; reading .store_id off it refuses every order');
 });
 
 test('the kiosk key is compared in constant time', () => {

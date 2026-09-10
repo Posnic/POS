@@ -921,6 +921,8 @@ var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
 var store_id = kioskData.store_id || "";
 $("#kioskstore_id").val(store_id);
 
+PosnicPro.settings.onlineOrdering.load(kioskData);
+
 // ----- Kiosk printers: build rows from array -----
 var printers = [];
 
@@ -1470,6 +1472,156 @@ if ($wrapper.length) {
         });
         return false;
     },
+    /*
+     * Online ordering: what the page is for, whether it is paused, and when it
+     * is open.
+     *
+     * All three ride on the kiosk account form, so they save through the door
+     * that already existed rather than a new endpoint. The server normalises
+     * everything again - this is a form, not a validator.
+     */
+    onlineOrdering: {
+        /*
+         * Labels as <lang> markup, not t(), the same as
+         * PosnicPro.dashboard.SETUP_CARDS.
+         *
+         * This object is built when the module loads. A t() call here runs
+         * while PosnicPro is still being assembled, so the name is not bound
+         * yet and the rest of the file never executes - the outage
+         * tests/i18n.test.js was written for. It is wrong even where it does
+         * not throw, because it resolves before any pack has arrived and
+         * freezes English into the object. The rows are drawn as HTML, so the
+         * observer translates them on screen instead.
+         */
+        DAYS: [
+            { key: 'mon', label: '<lang class="lang_monday">Monday</lang>' },
+            { key: 'tue', label: '<lang class="lang_tuesday">Tuesday</lang>' },
+            { key: 'wed', label: '<lang class="lang_wednesday">Wednesday</lang>' },
+            { key: 'thu', label: '<lang class="lang_thursday">Thursday</lang>' },
+            { key: 'fri', label: '<lang class="lang_friday">Friday</lang>' },
+            { key: 'sat', label: '<lang class="lang_saturday">Saturday</lang>' },
+            { key: 'sun', label: '<lang class="lang_sunday">Sunday</lang>' }
+        ],
+
+        /* Minutes past midnight is what the server stores; the inputs are
+           <input type="time">, which speaks "HH:MM". */
+        toClock: function (minutes) {
+            if (minutes === null || minutes === undefined || minutes === '') return '';
+            if (typeof minutes === 'string') return minutes;
+            var n = Number(minutes);
+            if (!isFinite(n)) return '';
+            var h = Math.floor(n / 60) % 24;
+            var m = Math.trunc(n) % 60;
+            return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+        },
+
+        /*
+         * Two windows a day, because that is the shape of a working day here:
+         * lunch and dinner. One pair per day cannot express it, and a shop
+         * that needs three can say so and we will widen the row - the stored
+         * format is already a list.
+         */
+        renderGrid: function (hours) {
+            var self = PosnicPro.settings.onlineOrdering;
+            var $grid = $('#kiosk_hours_grid');
+            if (!$grid.length) return;
+
+            var html = '';
+            self.DAYS.forEach(function (day) {
+                var windows = (hours && hours[day.key]) || [];
+                var first = windows[0] || {};
+                var second = windows[1] || {};
+                html +=
+                    '<div class="form-row align-items-center mb-1" data-day="' + day.key + '">' +
+                    /* label already carries its own <lang> markup */
+                    '<div class="col-3">' + day.label + '</div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-open" data-slot="0" value="' + self.toClock(first.open) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-close" data-slot="0" value="' + self.toClock(first.close) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-open" data-slot="1" value="' + self.toClock(second.open) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-close" data-slot="1" value="' + self.toClock(second.close) + '"></div>' +
+                    '</div>';
+            });
+            $grid.html(html);
+        },
+
+        /** Show what a pause is doing, in words, with the time it lifts. */
+        renderPause: function (pausedUntil) {
+            var $status = $('#kiosk_pause_status');
+            if (!$status.length) return;
+            $('#kiosk_paused_until').val(pausedUntil || '');
+
+            if (!pausedUntil) {
+                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
+                return;
+            }
+            var at = new Date(pausedUntil);
+            if (isNaN(at.getTime()) || at.getTime() <= Date.now()) {
+                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
+                return;
+            }
+            $status.text(
+                PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
+                at.toLocaleString()
+            );
+        },
+
+        /** Toggle the controls that only mean something when taking orders. */
+        syncMode: function () {
+            var ordering = $('#kiosk_mode').val() !== 'menu';
+            $('.kiosk-ordering-only').toggle(ordering);
+            $('#kiosk_hours_grid').toggle(ordering && $('#kiosk_hours_enable').is(':checked'));
+        },
+
+        load: function (kioskData) {
+            var self = PosnicPro.settings.onlineOrdering;
+            var data = kioskData || {};
+
+            $('#kiosk_mode').val(data.mode === 'menu' ? 'menu' : 'order');
+
+            var hours = data.hours || null;
+            $('#kiosk_hours_enable').prop('checked', !!hours);
+            self.renderGrid(hours);
+            self.renderPause(data.paused_until || '');
+            self.syncMode();
+        },
+
+        /**
+         * The form's answer, in the shape the API stores.
+         *
+         * `hours: null` when the schedule is switched off, which is how a shop
+         * says "always open" - distinct from a week with every day empty,
+         * which would shut it forever.
+         */
+        collect: function () {
+            var self = PosnicPro.settings.onlineOrdering;
+            var mode = $('#kiosk_mode').val() === 'menu' ? 'menu' : 'order';
+            var out = {
+                mode: mode,
+                paused_until: $('#kiosk_paused_until').val() || null
+            };
+
+            if (mode === 'menu' || !$('#kiosk_hours_enable').is(':checked')) {
+                out.hours = null;
+                return out;
+            }
+
+            var hours = {};
+            $('#kiosk_hours_grid [data-day]').each(function () {
+                var $row = $(this);
+                var windows = [];
+                $row.find('.kiosk-hours-open').each(function () {
+                    var slot = $(this).data('slot');
+                    var open = $(this).val();
+                    var close = $row.find('.kiosk-hours-close[data-slot="' + slot + '"]').val();
+                    if (open && close) windows.push({ open: open, close: close });
+                });
+                hours[$row.data('day')] = windows;
+            });
+            out.hours = hours;
+            return out;
+        }
+    },
+
     kioskAccountSettings: function () {
         const storeId = $('#kioskstore_id').val().trim();
         // const secretKey = $('#kiosksecret_key').val().trim();
@@ -1487,10 +1639,10 @@ if ($wrapper.length) {
             return false;
         }
 
-        const data = {
+        const data = $.extend({
             store_id: storeId,
             // secret_key: secretKey
-        };
+        }, PosnicPro.settings.onlineOrdering.collect());
 
         const params = {
             url: 'setting/kioskAccountSettings',
@@ -7536,4 +7688,36 @@ $(document).on('click', '#analytics_save', function () {
     }, function () {
         PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_analytics_settings', 'Could not save the analytics settings'));
     });
+});
+
+/*
+ * Online ordering controls on the kiosk account tab.
+ *
+ * Delegated from document because the tab's markup is part of the settings
+ * module and is not in the DOM when this file runs.
+ */
+$(document).on('change', '#kiosk_mode, #kiosk_hours_enable', function () {
+    PosnicPro.settings.onlineOrdering.syncMode();
+});
+
+/*
+ * Pausing writes a moment, not a flag, and the presets are the only way to set
+ * it. "Rest of today" is the end of the day in the browser's own zone, which is
+ * the shop's zone in every case that matters; the server re-reads the branch
+ * timezone when it decides whether the pause is still running.
+ */
+$(document).on('click', '.kiosk-pause-btn', function () {
+    var minutes = Number($(this).data('minutes'));
+    var until;
+    if (minutes > 0) {
+        until = new Date(Date.now() + minutes * 60000);
+    } else {
+        until = new Date();
+        until.setHours(23, 59, 59, 999);
+    }
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+});
+
+$(document).on('click', '#kiosk_pause_resume', function () {
+    PosnicPro.settings.onlineOrdering.renderPause('');
 });

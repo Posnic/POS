@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receipt - PDF</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @page {
+            size: A5 landscape;
+            margin: 15mm;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            max-width: 100%;
+            padding: 20px;
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .receipt-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d3232a;
+            margin-bottom: 5px;
+        }
+
+        .receipt-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .receipt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .order-type {
+            display: inline-block;
+            padding: 8px 20px;
+            background-color: #f8f8f8;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 10px 0;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .items-table th {
+            text-align: left;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .items-table .right {
+            text-align: right;
+        }
+
+        .totals-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .totals-table td {
+            padding: 8px 0;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+        }
+
+        .totals-table .value {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .grand-total {
+            font-size: 18px;
+            color: #d3232a;
+            border-top: 2px solid #ddd;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ccc, transparent);
+            margin: 15px 0;
+        }
+
+        .download-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background-color: #d3232a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .download-btn:hover {
+            background-color: #b01d23;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="receipt-content">
+        <div class="receipt-header">
+            <div class="receipt-title" id="branchName"></div>
+            <div class="receipt-subtitle">Transaction Receipt</div>
+        </div>
+
+        <div class="receipt-info">
+            <div class="text-start">
+                <strong>Token No:</strong> <span id="orderToken">---</span><br />
+                <strong>Date:</strong> <span id="orderDate"></span>
+            </div>
+            <div class="order-type" id="orderTypePrint"></div>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="right">Price</th>
+                    <th class="right">Tax</th>
+                    <th class="right">Disc</th>
+                    <th class="right">Qty</th>
+                    <th class="right">Total</th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <!-- Items will be injected here -->
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <table class="totals-table">
+            <tr>
+                <td class="label">No. of Items:</td>
+                <td class="value" id="totalItems">0</td>
+            </tr>
+            <tr>
+                <td class="label">Total Quantity:</td>
+                <td class="value" id="totalQty">0</td>
+            </tr>
+            <tr>
+                <td class="label">Subtotal:</td>
+                <td class="value" id="subtotal">₹0.00</td>
+            </tr>
+            <tr>
+                <td class="label">Discount:</td>
+                <td class="value" id="discount">₹0.00</td>
+            </tr>
+            <tr>
+                <td class="label">Tax:</td>
+                <td class="value" id="tax">₹0.00</td>
+            </tr>
+            <tr>
+                <td class="label grand-total">Grand Total:</td>
+                <td class="value grand-total" id="total">₹0.00</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            Thank you! Visit again.
+            <div class="powered"><b>Powered by <strong>Posnic</strong><br /><span>https://www.posnic.com</span></b>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

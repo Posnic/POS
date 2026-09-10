@@ -296,6 +296,14 @@
         ]
       },
       {
+        "from": "order",
+        "to": "order",
+        "filter": [
+          "**/*",
+          "!**/*.md"
+        ]
+      },
+      {
         "from": "frontend",
         "to": "frontend",
         "filter": [

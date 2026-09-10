@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kiosk Home</title>
+  <link href="assets/bootstrap.min.css" rel="stylesheet" />
+  <script src="assets/jquery-3.6.0.min.js"></script>
+  <script src="config.js"></script>
+    <link href="assets/channel-state.css" rel="stylesheet">
+    <script src="assets/channel-state.js"></script>
+  <script src="assets/kiosk-core.js"></script>
+  <script src="indexedDB.js?v=20260709-fastrefresh"></script>
+  <link href="assets/home/style.css" rel="stylesheet" />
+</head>
+
+<body class="home-page">
+  <div class="overlay">
+    <div class="option-card" onclick="selectOrderType('DINE IN')">
+      <img src="images/dinein.png" alt="Dine In" />
+      <p>Dine In</p>
+    </div>
+    <div class="option-card" onclick="selectOrderType('PARCEL')">
+      <img src="images/parcel.png" alt="Parcel" />
+      <p>Take Away</p>
+    </div>
+  </div>
+
+  <script>
+    clearOrderAttemptId();
+    Object.keys(sessionStorage)
+      .filter(key => key.startsWith('printed_'))
+      .forEach(key => sessionStorage.removeItem(key));
+    sessionStorage.removeItem('kioskReceipt');
+    sessionStorage.removeItem('kioskReceiptPrinted');
+    sessionStorage.removeItem('kiosk_mobile_number');
+    sessionStorage.removeItem('qr_id');
+    localStorage.removeItem('kioskReceipt');
+    localStorage.removeItem('kiosk_mobile_number');
+    localStorage.removeItem('qr_id');
+
+    function selectOrderType(type) {
+      localStorage.setItem('orderType', type);
+      window.location.href = 'products.html';
+    }
+  </script>
+
+  <script src="assets/home/script.js?v=20260709-fastrefresh"></script>
+
+</body>
+
+</html>

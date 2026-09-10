@@ -1184,6 +1184,22 @@ class BranchModel {
           branch_id: branchId,
           user_id: user._id,
           user_name: user.username,
+
+          /*
+           * Written out, not left to the read-time default, for the same
+           * reason the till-lock fields above are.
+           *
+           * Sync replaces whole documents: the winning side's copy is written
+           * over the other in full, so a field the winner does not carry is
+           * not merged, it is deleted. A branch created without these would
+           * lose its online-ordering settings the first time it was edited on
+           * the other side, and absent reads the same as "order, never paused,
+           * no schedule" through the API - so nothing would complain, and the
+           * shop would simply find itself taking orders again.
+           */
+          mode: 'order',
+          paused_until: null,
+          hours: null,
         },
       ];
 

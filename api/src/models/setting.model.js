@@ -6,6 +6,7 @@ const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
 const { recordAudit } = require('../utils/audit-trail');
 const { publicPageUrl } = require('../utils/public-url');
+const onlineOrdering = require('../utils/online-ordering');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -4599,6 +4600,13 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             user_id: this.normalizeId(this.user?._id),
             user_name: this.user?.username || '',
+
+            /* Written out rather than defaulted at read time: sync replaces
+               whole documents, and a field the winning copy does not carry is
+               deleted rather than merged. See branch.model.js. */
+            mode: 'order',
+            paused_until: null,
+            hours: null,
           },
         ];
 
@@ -4734,6 +4742,13 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             user_id: this.normalizeId(this.user?._id),
             user_name: this.user?.username || '',
+
+            /* Written out rather than defaulted at read time: sync replaces
+               whole documents, and a field the winning copy does not carry is
+               deleted rather than merged. See branch.model.js. */
+            mode: 'order',
+            paused_until: null,
+            hours: null,
           },
         ];
 
@@ -4746,9 +4761,20 @@ class SettingModel extends BaseModel {
         );
       }
 
-      // Check for duplicate store_id
+      /*
+       * Check for a duplicate store id, excluding this branch's own.
+       *
+       * The exclusion is not a nicety. The form posts the store id on every
+       * save, so without it a branch collided with itself: change anything
+       * else on this tab, press save, and the answer was "A kiosk with this
+       * Store ID already exists" - about the id the branch already had. That
+       * made the tab a one-shot, which mattered little when the store id was
+       * the only field on it and matters a great deal now that the mode, the
+       * pause and the opening hours are saved through the same door.
+       */
       if (data.store_id) {
         const exists = await collection.findOne({
+          _id: { $ne: this.normalizeId(this.branchId) },
           kiosk: {
             $elemMatch: { store_id: data.store_id },
           },
@@ -4768,6 +4794,56 @@ class SettingModel extends BaseModel {
 
       if (data.store_id !== undefined) {
         updateData['kiosk.$[elem].store_id'] = data.store_id;
+      }
+
+      /*
+       * What this channel is for, and when it is taking orders.
+       *
+       * Each field is written only when the caller sent it, so a screen that
+       * saves the store id alone cannot blank the schedule - the same rule the
+       * branch credential fields follow, and for the same reason.
+       *
+       * `mode` is normalised to one of two known words rather than stored as
+       * whatever arrived. A boolean here would be a trap: 'false' as a string
+       * reads as ON through `!== false`, which this estate has paid for before.
+       */
+      if (data.mode !== undefined) {
+        updateData['kiosk.$[elem].mode'] = onlineOrdering.normalizeMode(data.mode);
+      }
+
+      /*
+       * A pause is a moment, never a flag.
+       *
+       * A boolean gets switched on during a Friday rush and found still on the
+       * following Tuesday with nobody able to say why orders stopped. A
+       * timestamp lifts itself. Sending null or an empty string clears it,
+       * which is how "resume now" is expressed.
+       */
+      if (data.paused_until !== undefined) {
+        const raw = data.paused_until;
+        if (raw === null || raw === '' || raw === false) {
+          updateData['kiosk.$[elem].paused_until'] = null;
+        } else {
+          const at = raw instanceof Date ? raw : new Date(raw);
+          if (Number.isNaN(at.getTime())) {
+            return {
+              status: false,
+              data: null,
+              message: 'Pause time is not a valid date',
+            };
+          }
+          updateData['kiosk.$[elem].paused_until'] = at;
+        }
+      }
+
+      /*
+       * Opening hours arrive as clock strings and are stored as minutes past
+       * midnight, normalised and sorted. Anything unparseable is dropped here
+       * rather than at read time, so a schedule that looks wrong in the console
+       * looks wrong immediately instead of silently shutting the shop later.
+       */
+      if (data.hours !== undefined) {
+        updateData['kiosk.$[elem].hours'] = onlineOrdering.normalizeHours(data.hours);
       }
 
       if (Object.keys(updateData).length === 0) {
@@ -4821,6 +4897,13 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             user_id: this.normalizeId(this.user?._id),
             user_name: this.user?.username || '',
+
+            /* Written out rather than defaulted at read time: sync replaces
+               whole documents, and a field the winning copy does not carry is
+               deleted rather than merged. See branch.model.js. */
+            mode: 'order',
+            paused_until: null,
+            hours: null,
           },
         ];
 
@@ -4905,6 +4988,13 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             user_id: this.normalizeId(this.user?._id),
             user_name: this.user?.username || '',
+
+            /* Written out rather than defaulted at read time: sync replaces
+               whole documents, and a field the winning copy does not carry is
+               deleted rather than merged. See branch.model.js. */
+            mode: 'order',
+            paused_until: null,
+            hours: null,
           },
         ];
 

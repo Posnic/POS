@@ -1,0 +1,40 @@
+# What prettier must not touch.
+#
+# The pre-commit hook runs `prettier --write` over every staged js/json/html/
+# css/md file. On a file prettier has never formatted, that is not a tidy-up -
+# it is a whole-file rewrite. One commit here reformatted 11,516 of the 11,920
+# lines of frontend/modules/settings_write.html to add a form, which buries the
+# change and takes git blame with it. The two commits before it touched that
+# same file surgically, 2 lines and 42 lines, which is what review needs.
+
+# Vendored from the Posnic/QR repository. It has to stay byte-comparable with
+# its source so the copy can be diffed and re-synced; reformatting it here
+# makes every future sync a manual merge.
+order/
+
+# Hand-written jQuery-era markup and modules. Prettier rewrites these wholesale
+# and they are edited constantly, so blame matters more than style here.
+frontend/modules/
+frontend/layouts/
+frontend/modals/
+frontend/static/script/
+frontend/*.html
+
+# Written by the i18n tools, which have their own formatting and rewrite these
+# on every run. Letting prettier reformat them starts a war between the two.
+languages/
+
+# The app test suite: 143 of its 145 files are not prettier-formatted, so the
+# hook rewrites whole files the first time anyone touches one. These tests are
+# mostly prose explaining what broke and why the check exists, and that history
+# is worth more than uniform quote style.
+#
+# api/ is deliberately NOT here: it has its own prettier config and its files
+# really are formatted, so the hook does the small job it was meant to do.
+tests/
+
+# Build output, never source.
+frontend/public/
+dist/
+builds/
+node_modules/

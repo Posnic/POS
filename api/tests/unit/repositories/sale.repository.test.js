@@ -755,7 +755,7 @@ describe('SalesRepository', () => {
       expect(r.message).toBe('Branch not found');
     });
     test('a branch that never configured QR refuses anonymous orders', async () => {
-      // The endpoint is anonymous by design; the QR identity is the opt-in.
+      // The endpoint is anonymous by design; the online identity is the opt-in.
       // Without this, any branch's raw ObjectId - no secret - was enough for
       // a stranger to put orders on its kitchen queue.
       if (!collections.branches) collections.branches = mkCol();
@@ -767,7 +767,77 @@ describe('SalesRepository', () => {
         ],
       });
       expect(r.status).toBe(false);
-      expect(r.message).toBe('QR ordering is not enabled for this branch');
+      expect(r.message).toMatch(/not enabled for this branch/);
+      expect(r.data.state).toBe('disabled');
+    });
+    /*
+     * THE SHAPE THIS FILE GOT WRONG.
+     *
+     * branch.kiosk is declared as an Array, seeded as an array, and written by
+     * the settings screen with arrayFilters. Every write path produces an
+     * array. This suite mocked an object, so `!branchDoc.kiosk.store_id` -
+     * undefined on a real array - passed here and refused every order in
+     * production. Nobody noticed because live kiosk traffic still goes to the
+     * legacy PHP API.
+     *
+     * The array case is now the one that proves ordering works, and the object
+     * case is kept only to show the resolver still tolerates it.
+     */
+    test('the array shape the settings screen actually writes can order', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', mode: 'order' }],
+      });
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+      if (!collections.items) collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        name: 'Test',
+        selling_price: 10,
+        tax: 0,
+        tax_type: 'exclusive',
+        branch_id: FAKE_BRANCH,
+      });
+      const r = await salesRepository.qrOrderModel({
+        branch: FAKE_BRANCH,
+        items: [
+          { item_id: FAKE_ITEM, item_name: 'Test', item_quantity: 1, item_price: 10, gst: 1 },
+        ],
+      });
+      expect(r.status).toBe(true);
+      expect(r.data.sale_id).toBeDefined();
+    });
+    test('menu mode refuses orders however they are addressed', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', mode: 'menu' }],
+      });
+      const r = await salesRepository.qrOrderModel({
+        branch: FAKE_BRANCH,
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+      expect(r.status).toBe(false);
+      expect(r.data.state).toBe('menu_only');
+    });
+    test('a live pause refuses orders and says when it lifts', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      const until = new Date(Date.now() + 30 * 60000);
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        kiosk: [{ branch_id: FAKE_BRANCH, store_id: 'QR-STORE-1', paused_until: until }],
+      });
+      const r = await salesRepository.qrOrderModel({
+        branch: FAKE_BRANCH,
+        items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+      });
+      expect(r.status).toBe(false);
+      expect(r.data.state).toBe('paused');
     });
     test('creates QR order successfully', async () => {
       if (!collections.branches) collections.branches = mkCol();

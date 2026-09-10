@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cart Summary</title>
+    <script src="assets/jquery-3.6.0.min.js"></script>
+    <script src="config.js"></script>
+    <link href="assets/channel-state.css" rel="stylesheet">
+    <script src="assets/channel-state.js"></script>
+    <script src="assets/kiosk-core.js"></script>
+    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
+    <script src="assets/cart/script.js"></script>
+    <link href="assets/cart/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Page Loader -->
+    <div id="page-loader">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Popup -->
+    <div id="popup">
+        ⚠️ Need more? Our counter staff is happy to help!
+        <button onclick="hidePopup()" aria-label="Close popup">&times;</button>
+    </div>
+
+    <div class="container">
+
+        <div class="cart-header">
+            <button class="back-btn" onclick="window.location.href='products.html'">← Back</button>
+            <div class="cart-title">Shopping Cart</div>
+            <div style="width: 60px;"></div>
+        </div>
+
+        <div class="cart-items" id="cart-summary">
+            <!-- Cart items will be dynamically inserted here -->
+        </div>
+
+        <div class="cart-actions">
+            <button class="cancel-btn" id="cancel-btn" onclick="onCancelClick()">Cancel</button>
+            <div class="summary-display" id="summary-display">
+                0 Items | ₹0.00
+            </div>
+            <button class="checkout-btn" id="next-btn" onclick="window.location.href='payment.html'">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="cancelModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 class="modal-title">Cancel Order</h3>
+            <p class="modal-message">Are you sure you want to cancel the order?</p>
+            <div class="modal-buttons">
+                <button id="confirmCancel" class="modal-btn confirm" onclick="confirmCancelOrder()">Yes, Cancel</button>
+                <button id="closeModal" class="modal-btn cancel" onclick="closeCancelModal()">No</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

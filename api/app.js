@@ -1499,6 +1499,34 @@ app.use(
 );
 app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
 
+/*
+ * The shop's own online ordering page.
+ *
+ * Served from the shop's origin so it is the same origin as the API it calls:
+ * no CORS list to keep per shop, and - the part that actually bit customers -
+ * no shared browser storage. The kiosk used to live on one host for the whole
+ * estate, where IndexedDB is per-origin and therefore shared, which is why it
+ * had to wipe its catalogue whenever it noticed a different branch. A customer
+ * who ordered at two Posnic shops collided with themselves.
+ *
+ * Two paths, one bundle. `/order` is the canonical one. `/menu` exists so a
+ * shop that takes orders can still print a browse-only code for a window
+ * display: the page treats that path as a request to hide the cart. It can
+ * only narrow, never grant, and the server decides either way - qrOrder
+ * refuses on the shop's settings, not on which URL the customer arrived by.
+ *
+ * Mounted BEFORE the root API router, which answers `/items/...` and friends,
+ * because that router is mounted at '/' and would otherwise see these paths
+ * first. express.static redirects `/order` to `/order/` on its own, which is
+ * what makes the bundle's relative asset paths resolve.
+ */
+const ORDER_BUNDLE = path.join(__dirname, '..', 'order');
+if (fs.existsSync(ORDER_BUNDLE)) {
+  const orderStatic = express.static(ORDER_BUNDLE, { setHeaders: assetCacheHeaders });
+  app.use('/order', orderStatic);
+  app.use('/menu', orderStatic);
+}
+
 // Also mount API routes at root for backward compatibility
 app.use('/', apiRouter);
 

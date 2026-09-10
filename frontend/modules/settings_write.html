@@ -4802,6 +4802,51 @@
 
                                                                     </div>
                                                                 </div> -->
+
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="kiosk_mode"><lang class="lang_online_ordering_mode">What this page is for</lang></label>
+                                                                        <select class="form-control border-control" id="kiosk_mode" name="kiosk_mode">
+                                                                            <option value="order"><lang class="lang_online_ordering_mode_order">Take orders</lang></option>
+                                                                            <option value="menu"><lang class="lang_online_ordering_mode_menu">Show the menu only</lang></option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_online_ordering_mode_help">Menu only shows prices and items with no cart. Customers order at the counter.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!--
+                                                                    Pause is a time, never a switch. A switch flipped
+                                                                    during a Friday rush is still off on Tuesday and
+                                                                    nobody can say why the orders stopped.
+                                                                -->
+                                                                <div class="form-row kiosk-ordering-only">
+                                                                    <div class="form-group col-9">
+                                                                        <label><lang class="lang_online_ordering_pause">Taking orders right now</lang></label>
+                                                                        <div id="kiosk_pause_status" class="mb-2 text-muted"></div>
+                                                                        <div class="btn-group" role="group">
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="30"><lang class="lang_online_ordering_pause_30">30 min</lang></button>
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="60"><lang class="lang_online_ordering_pause_60">1 hour</lang></button>
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="0"><lang class="lang_online_ordering_pause_today">Rest of today</lang></button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="kiosk_pause_resume"><lang class="lang_online_ordering_resume">Resume now</lang></button>
+                                                                        </div>
+                                                                        <input type="hidden" id="kiosk_paused_until" name="kiosk_paused_until">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-row kiosk-ordering-only">
+                                                                    <div class="form-group col-12">
+                                                                        <div class="custom-control custom-checkbox mb-2">
+                                                                            <input type="checkbox" class="custom-control-input" id="kiosk_hours_enable" name="kiosk_hours_enable">
+                                                                            <label class="custom-control-label" for="kiosk_hours_enable"><lang class="lang_online_ordering_hours">Only take orders during set hours</lang></label>
+                                                                        </div>
+                                                                        <div id="kiosk_hours_grid" class="kiosk-hours-grid"></div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_online_ordering_hours_help">Leave a day empty to stay closed that day. A closing time earlier than the opening time means it closes the next morning.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="card-footer text-right">

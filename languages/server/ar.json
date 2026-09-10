@@ -451,7 +451,6 @@
   "QR Code Generate successfully": "تم إنشاء رمز QR بنجاح",
   "QR code ID is required": "معرّف رمز QR (ID) مطلوب",
   "QR code closed successfully": "تم إغلاق رمز QR بنجاح",
-  "QR ordering is not enabled for this branch": "الطلب عبر QR غير مفعّل لهذا الفرع",
   "QR status retrieved successfully": "تم جلب حالة QR بنجاح",
   "Quantity updated": "تم تحديث الكمية",
   "Quote ": "عرض السعر ",
