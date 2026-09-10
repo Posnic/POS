@@ -111,3 +111,59 @@ test('the branch is looked up rather than demanded from the shopkeeper', () => {
   assert.ok(!/Branch ID is required/.test(html),
     'the screen still demands a Branch ID');
 });
+
+/*
+ * The tests above prove the sale SPEAKS. This one proves the printer LISTENS,
+ * which is the half that actually prints a ticket.
+ *
+ * It was missing, and its absence is the dangerous kind: every other test would
+ * still pass with the subscription deleted, and the only symptom in a real
+ * kitchen is that nothing prints until the fallback poll comes round.
+ *
+ * KOTManager reaches for electron at require time, so electron is stubbed
+ * through the module loader before it is pulled in.
+ */
+test('the printer listens: an event triggers a print pass, and a burst collapses into one', async () => {
+  const Module = require('node:module');
+  const realLoad = Module._load;
+  Module._load = function (request, parent, isMain) {
+    if (request === 'electron') {
+      return { app: { getPath: () => require('node:os').tmpdir(), getName: () => 'posnic-test' }, BrowserWindow: class {} };
+    }
+    return realLoad.apply(this, arguments);
+  };
+
+  let KOTManager;
+  try {
+    delete require.cache[require.resolve('../src/kot-manager.js')];
+    KOTManager = require('../src/kot-manager.js');
+  } finally {
+    Module._load = realLoad;
+  }
+
+  const manager = new KOTManager();
+  try {
+    let polls = 0;
+    manager._poll = async () => { polls += 1; };
+    manager.isPolling = true;
+    manager.config = { branchId: '', printerNames: ['POS-80C'] };
+
+    /* Six courses leaving one table fire six events. Each poll already fetches
+       every pending ticket, so one pass must serve them all rather than six
+       racing for the same printer. */
+    for (let i = 0; i < 6; i += 1) {
+      process.emit('posnic:kot-created', { branchId: '69227da6e7ad2d46290fef84', reason: 'created', at: Date.now() });
+    }
+
+    assert.equal(polls, 0, 'the debounce did not hold; it printed before collapsing the burst');
+    await new Promise((r) => setTimeout(r, 400));
+
+    assert.equal(polls, 1, 'six events should print once, not ' + polls + ' times');
+    assert.equal(manager.config.branchId, '69227da6e7ad2d46290fef84',
+      'the branch was not taken from the sale, so the shopkeeper still has to type it');
+  } finally {
+    manager.stopPolling();
+    if (manager._kotNudgeTimer) clearTimeout(manager._kotNudgeTimer);
+    delete require.cache[require.resolve('../src/kot-manager.js')];
+  }
+});
