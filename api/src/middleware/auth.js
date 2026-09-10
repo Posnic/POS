@@ -93,6 +93,11 @@ const signToken = (id) => {
   });
 };
 
+/* Lives in its own dependency-free file so the number in the token and the
+   number a client is told cannot drift apart, and so it is testable without
+   installing the API. */
+const { jwtLifetimeSeconds } = require('../utils/token-lifetime');
+
 // Legacy-style JWT including encrypted session_id in the payload.
 // This mirrors the PHP design where JWT carries an encrypted session id
 // for fast session restoration, while still keeping the 'id' field
@@ -485,6 +490,7 @@ const createPasswordResetToken = () => {
 module.exports = {
   signToken,
   signLegacyToken,
+  jwtLifetimeSeconds,
   createSendToken,
   auth,
   protect,
