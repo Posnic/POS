@@ -3473,11 +3473,56 @@ class ItemRepository extends BaseModel {
              rather than hiding the dish, because "we have it, not tonight" is
              information a customer wants. */
           available: row.isAvailable !== false,
+          /* Internal, stripped before the page sees it: only the category
+             ranking above needs it. */
+          _sort: Number(row.sort_order) || 0,
         });
       }
 
-      /* A category with no visible items is not a heading worth printing. */
-      const categories = [...byCategory.values()].filter((c) => c.items.length);
+      /*
+       * The order the sections appear in.
+       *
+       * This came out ALPHABETICAL at first, which put Breads before Starters:
+       * stable, and wrong in a way any restaurant would notice immediately.
+       * Categories carry no sort field of their own in this schema, so the
+       * order has to come from somewhere real rather than from the order Mongo
+       * happened to return the first item of each.
+       *
+       * The categories collection answers it. A shop creates Starters, then
+       * Mains, then Breads, then Desserts - it builds its menu in the order it
+       * thinks about the menu - and an ObjectId sorts by creation time, so
+       * creation order IS the shop's own order. A `sort_order` on the category
+       * wins where one exists, for a shop that has arranged them deliberately.
+       *
+       * A category that no longer exists sorts last rather than vanishing: a
+       * heading with dishes under it belongs on the menu whatever the
+       * categories collection thinks.
+       */
+      const categoryRank = new Map();
+      try {
+        const categoryCollection = await this.getCollection('categories');
+        const known = await categoryCollection
+          .find({}, { projection: { _id: 1, sort_order: 1 } })
+          .sort({ sort_order: 1, _id: 1 })
+          .toArray();
+        known.forEach((c, i) => categoryRank.set(String(c._id), i));
+      } catch (e) {
+        /* No categories collection is not an error - the fallback below is
+           still deterministic. */
+        console.warn('[menu] could not read category order:', e.message);
+      }
+
+      const categories = [...byCategory.values()]
+        .filter((c) => c.items.length)
+        .map((c) => ({
+          ...c,
+          _rank: categoryRank.has(c.id) ? categoryRank.get(c.id) : Number.MAX_SAFE_INTEGER,
+        }))
+        .sort((a, b) => a._rank - b._rank || String(a.name).localeCompare(String(b.name)))
+        .map(({ _rank, ...c }) => ({
+          ...c,
+          items: c.items.map(({ _sort, ...item }) => item),
+        }));
 
       return {
         status: true,

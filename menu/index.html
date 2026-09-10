@@ -60,6 +60,14 @@
         box-sizing: border-box;
       }
 
+      /* `hidden` is only a default of display:none, so ANY display rule beats
+         it - and .shop-logo sets display:block, which is why a shop with no
+         logo showed an empty grey circle. Said once, here, rather than
+         remembered at every element that might be hidden. */
+      [hidden] {
+        display: none !important;
+      }
+
       html {
         -webkit-text-size-adjust: 100%;
       }
@@ -503,7 +511,20 @@
     <div id="controls" class="controls" hidden>
       <div class="wrap">
         <div class="search-row">
-          <span class="search-icon" aria-hidden="true">&#9906;</span>
+          <svg
+            class="search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-3.5-3.5"></path>
+          </svg>
           <label class="search-label" for="search" hidden
             >Search the menu</label
           >
