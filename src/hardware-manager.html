@@ -556,9 +556,15 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label style="font-size:15px;font-weight:700;color:#2c3e50;">🏪 Branch ID:</label>
+                        <label style="font-size:15px;font-weight:700;color:#2c3e50;">🏪 Branch:</label>
+                        <select id="kotBranchSelect"
+                            style="margin-top:8px;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;width:100%;"></select>
+                        <!-- Kept for the case the list cannot be read (a till still being set
+                             up has no database yet). Hidden whenever branches are known, so
+                             nobody is asked to type an ObjectId by hand. -->
                         <input type="text" id="kotBranchId" placeholder="Enter Branch ID"
-                            style="margin-top:8px;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;width:100%;">
+                            style="display:none;margin-top:8px;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;width:100%;">
+                        <div id="kotBranchHint" style="margin-top:6px;font-size:12px;color:#6b7280;"></div>
                     </div>
                     <div class="form-group">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1547,13 +1553,13 @@
         }
 
         async function kotStart() {
-            const branchId    = document.getElementById('kotBranchId').value.trim();
+            const branchId    = kotSelectedBranchId();
             // Empty means "wherever the app is"; the manager resolves that
             // itself rather than us guessing a port here.
             const apiUrl      = document.getElementById('kotApiUrl').value.trim();
             const printerNames = _kotCheckedPrinters();
 
-            if (!branchId) { kotShowStatus('Branch ID is required.', 'warn'); return; }
+            if (!branchId) { kotShowStatus('No branch found for this till. Open the shop once, then try again.', 'warn'); return; }
             if (!printerNames.length) { kotShowStatus('Select at least one printer.', 'warn'); return; }
 
             kotShowStatus('Starting KOT polling...', 'info');
@@ -1608,9 +1614,50 @@
             } catch (e) { /* ignore */ }
         }
 
+        /*
+         * Which branch this till prints for.
+         *
+         * The dropdown is the answer whenever the branches could be read. The
+         * text box behind it exists only for a till whose database is not up
+         * yet, so a shopkeeper is never asked to type a 24 character id that
+         * the application already knows.
+         */
+        function kotSelectedBranchId() {
+            const sel = document.getElementById('kotBranchSelect');
+            if (sel && sel.style.display !== 'none' && sel.value) return sel.value;
+            return document.getElementById('kotBranchId').value.trim();
+        }
+
+        function kotRenderBranches(branches, savedId) {
+            const sel  = document.getElementById('kotBranchSelect');
+            const box  = document.getElementById('kotBranchId');
+            const hint = document.getElementById('kotBranchHint');
+            if (!sel) return;
+
+            if (!branches.length) {
+                sel.style.display = 'none';
+                box.style.display = '';
+                hint.textContent  = 'No branches found yet. Open the shop once and reopen this window.';
+                return;
+            }
+
+            sel.style.display = '';
+            box.style.display = 'none';
+            sel.innerHTML = branches
+                .map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; })
+                .join('');
+            sel.value = savedId && branches.some(function (b) { return b.id === savedId; })
+                ? savedId : branches[0].id;
+
+            hint.textContent = branches.length === 1
+                ? 'Using ' + branches[0].name + ', the only branch on this till.'
+                : 'Choose which branch this computer prints tickets for.';
+        }
+
         async function kotInit() {
             try {
                 const cfg = await window.electronAPI.kot.getConfig();
+                kotRenderBranches(cfg.branches || [], cfg.branchId || '');
                 if (cfg.branchId) document.getElementById('kotBranchId').value = cfg.branchId;
                 if (cfg.apiUrl)   document.getElementById('kotApiUrl').value   = cfg.apiUrl;
 
