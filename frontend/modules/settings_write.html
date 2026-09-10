@@ -4785,6 +4785,24 @@
 
                                                                 <hr class="my-3">
 
+                                                                <!--
+                                                                    Serving periods. Defined once here;
+                                                                    each dish says which it belongs to.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_serving_periods">Serving periods</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
+                                                                </small>
+                                                                <div id="menu_daypart_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
+                                                                </button>
+                                                                <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
+                                                                    <lang class="lang_use_usual_periods">Use the usual three</lang>
+                                                                </button>
+
+                                                                <hr class="my-3">
+
                                                                 <h6 class="mb-1"><lang class="lang_default_branch">Default branch</lang></h6>
                                                                 <small class="form-text text-muted mb-2">
                                                                     <lang class="lang_default_branch_help">The store address a plain /order link means. Leave empty if you have one branch.</lang>
@@ -4877,6 +4895,19 @@
                                                                             <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="60"><lang class="lang_online_ordering_pause_60">1 hour</lang></button>
                                                                             <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="0"><lang class="lang_online_ordering_pause_today">Rest of today</lang></button>
                                                                             <button type="button" class="btn btn-outline-success btn-sm" id="kiosk_pause_resume"><lang class="lang_online_ordering_resume">Resume now</lang></button>
+                                                                        </div>
+                                                                        <div class="mt-2">
+                                                                            <!--
+                                                                                One click, for the moment the
+                                                                                kitchen is under water. Stops
+                                                                                for TODAY, not for ever: a
+                                                                                switch with no end is one
+                                                                                somebody finds still off on
+                                                                                Tuesday.
+                                                                            -->
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm" id="stop_taking_orders">
+                                                                                <i class="feather icon-pause-circle mr-1"></i><lang class="lang_stop_taking_orders">Stop taking orders</lang>
+                                                                            </button>
                                                                         </div>
                                                                         <input type="hidden" id="kiosk_paused_until" name="kiosk_paused_until">
                                                                     </div>

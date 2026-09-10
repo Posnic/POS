@@ -7,6 +7,7 @@ const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
+const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const salesChannels = require('../utils/sales-channels');
 
@@ -7238,6 +7239,29 @@ class SalesRepository {
       }
       const branchObjectId = branchDoc._id;
 
+      /*
+       * The serving periods, and the clock they are judged against.
+       *
+       * Read once for the whole order rather than per line, and in the
+       * BRANCH's timezone - whether it is lunchtime is a question about where
+       * the kitchen is, not where the customer is holding their phone.
+       */
+      let servingPeriods = [];
+      try {
+        const settingsCollection = db.collection('settings');
+        const settingsDoc = await settingsCollection.findOne({ menu_dayparts: { $exists: true } });
+        servingPeriods = onlineOrdering.normalizeDayparts(
+          (settingsDoc && settingsDoc.menu_dayparts) || []
+        );
+      } catch (e) {
+        /* No periods configured is the normal state and means everything is
+           served all day, which is also the safe answer if this fails. */
+        console.warn('[order] could not read serving periods:', e.message);
+      }
+      const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
+      const orderDay = orderLocal.day();
+      const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
+
       // Generate token ID
       const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
 
@@ -7260,6 +7284,35 @@ class SalesRepository {
             status: false,
             data: null,
             message: 'This product has already been removed, so you can not modify anything.',
+          };
+        }
+
+        /*
+         * Breakfast at four in the afternoon.
+         *
+         * The page greys out a dish outside its serving period, and that is a
+         * courtesy - a stale tab, a shared link, or somebody posting straight
+         * to this endpoint all reach here with a dosa in the basket long after
+         * the griddle is cold. The kitchen finds out when the ticket prints,
+         * which is the worst moment for everyone.
+         *
+         * Named in the refusal, because "something in your order is not
+         * available" sends a customer hunting through their own basket.
+         */
+        const timing = onlineOrdering.itemAvailability(
+          itemDoc,
+          servingPeriods,
+          orderDay,
+          orderMinutes
+        );
+        if (!timing.available) {
+          const when = timing.periods.length
+            ? ` It is served at ${timing.periods.join(' and ')}.`
+            : '';
+          return {
+            status: false,
+            data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
+            message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
           };
         }
 

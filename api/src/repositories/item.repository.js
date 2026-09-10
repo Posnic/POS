@@ -4,6 +4,7 @@ const BaseModel = require('../models/base.model');
 const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
+const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 
 /*
@@ -1570,6 +1571,17 @@ class ItemRepository extends BaseModel {
            default anybody wants from a feature whose job is to list things. */
         show_on_menu: data.show_on_menu !== false && data.show_on_menu !== 'false',
         diet: onlineOrderingDiet(data.diet),
+        /* Ids into the shop's own serving periods. Empty means all day, which
+           is most of a menu. */
+        daypart_ids: Array.isArray(data.daypart_ids)
+          ? data.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
+          : [],
+        /* The kitchen's standing instruction for this dish, never the
+           customer's note - that rides on the order line. */
+        prep_note: String(data.prep_note || '')
+          .trim()
+          .slice(0, 200),
+        prep_minutes: Math.max(0, Math.min(480, Number(data.prep_minutes) || 0)),
         isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
@@ -3400,6 +3412,26 @@ class ItemRepository extends BaseModel {
    * the order the shop arranged it rather than the order Mongo happened to
    * return.
    */
+  /**
+   * The shop's serving periods: breakfast, lunch, dinner.
+   *
+   * Stored with the other channel settings rather than per branch, because a
+   * chain serves breakfast at breakfast time everywhere. An empty list is the
+   * normal state - most shops serve everything all day - and costs one lookup.
+   */
+  async shopDayparts() {
+    try {
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ menu_dayparts: { $exists: true } });
+      return onlineOrdering.normalizeDayparts((doc && doc.menu_dayparts) || []);
+    } catch (e) {
+      /* No settings document yet is not an error, and a shop with no periods
+         serves everything all day - which is the safe answer either way. */
+      console.warn('[menu] could not read serving periods:', e.message);
+      return [];
+    }
+  }
+
   async publicMenu(params = {}) {
     const storeId = params.storeId;
     try {
@@ -3445,10 +3477,24 @@ class ItemRepository extends BaseModel {
             diet: 1,
             isAvailable: 1,
             ecommerce: 1,
+            daypart_ids: 1,
+            prep_minutes: 1,
           },
         })
         .sort({ sort_order: 1, name: 1 })
         .toArray();
+
+      /*
+       * Which serving periods are running right now.
+       *
+       * Computed once for the whole menu rather than per dish, and in the
+       * BRANCH's timezone, because "is it lunchtime" is a question about where
+       * the kitchen is, not about where the customer is holding their phone.
+       */
+      const dayparts = await this.shopDayparts();
+      const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
+      const nowDay = localNow.day();
+      const nowMinutes = localNow.hours() * 60 + localNow.minutes();
 
       /* Grouped here rather than on the page: the page should render what it
          is given, and the grouping is the same work whoever does it. */
@@ -3462,6 +3508,16 @@ class ItemRepository extends BaseModel {
             items: [],
           });
         }
+        /*
+         * A dish outside its serving period is SHOWN, and told on.
+         *
+         * Hiding it makes a restaurant look like it does not serve breakfast
+         * at all. Someone reading the menu at four in the afternoon wants to
+         * know that breakfast exists and runs seven to eleven, which is a
+         * reason to come back rather than a dead end.
+         */
+        const timing = onlineOrdering.itemAvailability(row, dayparts, nowDay, nowMinutes);
+
         byCategory.get(key).items.push({
           id: String(row._id),
           name: row.name || '',
@@ -3469,10 +3525,17 @@ class ItemRepository extends BaseModel {
           image: row.image || '',
           price: Number(row.selling_price) || 0,
           diet: String(row.diet || ''),
-          /* Shown on the menu but not orderable right now. The page says so
-             rather than hiding the dish, because "we have it, not tonight" is
-             information a customer wants. */
-          available: row.isAvailable !== false,
+          /* Shown on the menu but not orderable right now, for either reason:
+             the shop marked it unavailable, or it is not its time of day. The
+             page says which, because "we have it, not now" and "we have it,
+             not today" are different things to a customer. */
+          available: row.isAvailable !== false && timing.available,
+          /* The periods this dish belongs to, so the page can say "Breakfast
+             only" rather than leaving a greyed-out dish unexplained. */
+          served_in: timing.periods,
+          /* Roughly how long the kitchen needs. Zero means the shop has not
+             said, and the page shows nothing rather than guessing. */
+          prep_minutes: Number(row.prep_minutes) || 0,
           /* Internal, stripped before the page sees it: only the category
              ranking above needs it. */
           _sort: Number(row.sort_order) || 0,

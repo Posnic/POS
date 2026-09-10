@@ -139,9 +139,28 @@
     var desc = item.description
       ? '<p class="dish-desc">' + escapeHtml(item.description) + "</p>"
       : "";
-    var off =
-      item.available === false
-        ? '<span class="off-today">Not available today</span>'
+    /*
+     * WHY a dish is greyed out, not just that it is.
+     *
+     * "Breakfast only, 7:00 AM to 11:00 AM" is a reason to come back
+     * tomorrow. An unexplained grey card is a dead end, and the customer
+     * assumes the restaurant has run out.
+     */
+    var off = "";
+    if (item.available === false) {
+      var served = (item.served_in || []).join(" and ");
+      off =
+        '<span class="off-today">' +
+        escapeHtml(served ? served + " only" : "Not available today") +
+        "</span>";
+    }
+
+    /* How long the kitchen needs, when the shop has said. */
+    var prep =
+      Number(item.prep_minutes) > 0
+        ? '<span class="prep">' +
+          escapeHtml("~" + item.prep_minutes + " min") +
+          "</span>"
         : "";
 
     return (
@@ -161,7 +180,7 @@
       '<span class="dish-price">' +
       escapeHtml(money(item.price)) +
       "</span>" +
-      (off ? "<br>" + off : "") +
+      (off || prep ? "<br>" + off + (off && prep ? " " : "") + prep : "") +
       "</span>" +
       thumb +
       "</button>"

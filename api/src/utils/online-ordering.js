@@ -307,6 +307,109 @@ function isOpenAt(hours, dayIndex, minutes) {
   return false;
 }
 
+/* ------------------------------------------------------------------ dayparts
+ *
+ * Breakfast, lunch, dinner: when a dish is actually served.
+ *
+ * WHY NAMED PERIODS AND NOT HOURS PER ITEM.
+ *
+ * The obvious shape is a week of opening hours on every item, and it is
+ * unusable: two hundred dishes times seven days is an afternoon of data entry
+ * a shop will never do, and the first time breakfast moves by half an hour
+ * they would edit it two hundred times. A shop thinks in periods - "this is a
+ * breakfast dish" - so that is what it says, once per dish, and the period
+ * carries the hours.
+ *
+ * It is also how every system a restaurant already knows does it. Toast calls
+ * them menu schedules, Square calls them availability periods, the aggregators
+ * call them menu timings. Same idea, and the shop has met it before.
+ *
+ * The hours inside a period are the SAME shape and the same engine as the
+ * shop's opening hours, midnight crossing included, because "served from 6pm
+ * to 1am" is exactly as ordinary as a bar being open then.
+ */
+
+/**
+ * A shop's serving periods, cleaned up.
+ *
+ * An id that survives editing is what items point at, so it is kept as given
+ * rather than derived from the name - renaming Breakfast to "Morning" must not
+ * silently unassign every breakfast dish.
+ */
+function normalizeDayparts(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  return list
+    .map((d) => {
+      const id = String((d && d.id) || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      const name = String((d && d.name) || '').trim();
+      if (!id || !name || seen.has(id)) return null;
+      seen.add(id);
+      return { id, name, hours: normalizeHours(d.hours) };
+    })
+    .filter(Boolean);
+}
+
+/**
+ * Is this daypart being served at this moment?
+ *
+ * A period with no hours is always on. That is deliberate: a half-configured
+ * period should not silently take dishes off the menu, and "we have not set
+ * the times yet" is far more common than "this period is never served".
+ */
+function daypartIsOn(daypart, dayIndex, minutes) {
+  if (!daypart) return false;
+  return isOpenAt(daypart.hours, dayIndex, minutes);
+}
+
+/**
+ * Which of a shop's periods are being served right now.
+ *
+ * @returns {Set<string>} of daypart ids
+ */
+function activeDayparts(dayparts, dayIndex, minutes) {
+  const on = new Set();
+  for (const d of normalizeDayparts(dayparts)) {
+    if (daypartIsOn(d, dayIndex, minutes)) on.add(d.id);
+  }
+  return on;
+}
+
+/**
+ * Can this item be ordered right now, and if not, when?
+ *
+ * An item in no period is always available - the overwhelming majority of a
+ * menu - so the cost of this feature falls only on the dishes that need it.
+ *
+ * A dish outside its window is NOT hidden. A customer reading a menu at 4pm
+ * wants to know that breakfast exists and runs 7 to 11, and hiding it makes
+ * the restaurant look like it does not serve breakfast at all. So the answer
+ * carries the period names, and the page says so.
+ *
+ * @returns {{available: boolean, periods: string[]}}
+ */
+function itemAvailability(item, dayparts, dayIndex, minutes) {
+  const ids = Array.isArray(item && item.daypart_ids)
+    ? item.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
+    : [];
+
+  if (!ids.length) return { available: true, periods: [] };
+
+  const all = normalizeDayparts(dayparts);
+  const mine = all.filter((d) => ids.includes(d.id));
+
+  /* Pointing at periods the shop has since deleted is the same as pointing at
+     none: the alternative is a dish nothing can ever serve. */
+  if (!mine.length) return { available: true, periods: [] };
+
+  const available = mine.some((d) => daypartIsOn(d, dayIndex, minutes));
+  return { available, periods: mine.map((d) => d.name) };
+}
+
 /**
  * When does it open next?
  *
@@ -516,6 +619,10 @@ module.exports = {
   isOpenAt,
   storefront,
   hasStoreId,
+  activeDayparts,
+  daypartIsOn,
+  itemAvailability,
+  normalizeDayparts,
   RESERVED_STORE_IDS,
   storeIdIsAvailable,
   nextOpeningFrom,

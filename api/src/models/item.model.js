@@ -56,6 +56,32 @@ const itemSchema = new mongoose.Schema(
      */
     diet: { type: String, trim: true, default: '' },
 
+    /*
+     * When this is served: breakfast, lunch, dinner. Empty means always, which
+     * is most of a menu - the cost of this feature falls only on the dishes
+     * that need it.
+     *
+     * Ids into the shop's own list of periods rather than hours per item: two
+     * hundred dishes times seven days is data entry no shop will do, and the
+     * first time breakfast moves half an hour they would edit it two hundred
+     * times.
+     */
+    daypart_ids: { type: [String], default: [] },
+
+    /*
+     * A standing instruction to the kitchen, printed on every ticket for this
+     * dish. "Serve with mint chutney." "Always ask how they want it cooked."
+     *
+     * Not the same as the note a customer types with an order - that is
+     * sale.item_description and already exists. This one belongs to the dish
+     * and nobody has to remember it.
+     */
+    prep_note: { type: String, trim: true, default: '' },
+
+    /* Roughly how long it takes, in minutes, so an order can say when it will
+       be ready. Zero means the shop has not said, and nothing guesses. */
+    prep_minutes: { type: Number, default: 0 },
+
     license: { type: mongoose.Schema.Types.ObjectId, ref: 'License' },
     is_active: { type: Boolean, default: true },
   },
@@ -146,6 +172,9 @@ class ItemModel {
     ecommerce: { type: 'Boolean', select: true },
     show_on_menu: { type: 'Boolean', select: true },
     diet: { type: 'String', select: true },
+    daypart_ids: { type: 'Array', select: true },
+    prep_note: { type: 'String', select: true },
+    prep_minutes: { type: 'Number', select: true },
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },
     sort_order: { type: 'Number', select: true },

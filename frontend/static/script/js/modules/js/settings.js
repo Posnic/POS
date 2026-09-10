@@ -7809,6 +7809,7 @@ PosnicPro.salesChannels = {
             self.renderChannels(values.sales_channels_enabled);
             self.renderPartners(values.sales_channel_partners);
             $("#online_ordering_default_store").val(values.online_ordering_default_store || "");
+            PosnicPro.dayparts.render(values.menu_dayparts);
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
@@ -7843,7 +7844,8 @@ PosnicPro.salesChannels = {
             sales_channel_partners: partners,
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
-            online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim()
+            online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
+            menu_dayparts: PosnicPro.dayparts.collect()
         };
     },
 
@@ -7887,4 +7889,144 @@ $(document).on('click', '.remove-channel-partner', function () {
 $(document).on('submit', '#sales_channels_form', function (e) {
     e.preventDefault();
     return PosnicPro.salesChannels.save();
+});
+
+/*
+ * Serving periods: breakfast, lunch, dinner.
+ *
+ * Defined once here, and each dish says which it belongs to. The alternative -
+ * hours on every item - is data entry no shop will do, and moving breakfast
+ * half an hour would mean editing two hundred dishes.
+ */
+PosnicPro.dayparts = {
+    /* What a shop almost always means by these words, offered on first use so
+       the common case is one click rather than fourteen time pickers. */
+    SUGGESTED: [
+        { id: 'breakfast', name: 'Breakfast', from: '07:00', to: '11:00' },
+        { id: 'lunch', name: 'Lunch', from: '12:00', to: '15:30' },
+        { id: 'dinner', name: 'Dinner', from: '19:00', to: '23:00' }
+    ],
+
+    DAYS: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+
+    toClock: function (minutes) {
+        if (minutes === null || minutes === undefined || minutes === '') return '';
+        if (typeof minutes === 'string') return minutes;
+        var n = Number(minutes);
+        if (!isFinite(n)) return '';
+        return ('0' + (Math.floor(n / 60) % 24)).slice(-2) + ':' + ('0' + (Math.trunc(n) % 60)).slice(-2);
+    },
+
+    /*
+     * One pair of times for the whole week, because that is what a restaurant
+     * means: lunch is lunch every day. A shop that genuinely varies by day
+     * still gets a correct week stored - the same shape the opening hours use -
+     * it just cannot type it here yet.
+     */
+    firstWindow: function (hours) {
+        var self = PosnicPro.dayparts;
+        if (!hours) return { from: '', to: '' };
+        for (var i = 0; i < self.DAYS.length; i++) {
+            var list = hours[self.DAYS[i]];
+            if (list && list.length) {
+                return { from: self.toClock(list[0].open), to: self.toClock(list[0].close) };
+            }
+        }
+        return { from: '', to: '' };
+    },
+
+    weekOf: function (from, to) {
+        var self = PosnicPro.dayparts;
+        if (!from || !to) return null;
+        var week = {};
+        self.DAYS.forEach(function (d) { week[d] = [{ open: from, close: to }]; });
+        return week;
+    },
+
+    rowHtml: function (part) {
+        var self = PosnicPro.dayparts;
+        var p = part || {};
+        var win = self.firstWindow(p.hours);
+        var safeName = $('<div>').text(p.name || '').html();
+
+        return '<div class="form-row align-items-end mb-2 daypart-row" data-id="' +
+            $('<div>').text(p.id || '').html() + '">' +
+            '<div class="form-group col-md-4">' +
+            '<input type="text" class="form-control form-control-sm daypart-name" value="' + safeName + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<input type="time" class="form-control form-control-sm daypart-from" value="' + win.from + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<input type="time" class="form-control form-control-sm daypart-to" value="' + win.to + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-daypart" aria-label="' +
+            PosnicPro.i18n.t('lang_remove_period', 'Remove period') +
+            '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div></div>';
+    },
+
+    render: function (parts) {
+        var self = PosnicPro.dayparts;
+        var list = Array.isArray(parts) && parts.length ? parts : [];
+        $('#menu_daypart_rows').html(list.map(self.rowHtml).join(''));
+        /* Offer the usual three only when there are none: a shop that has
+           deliberately deleted lunch should not be handed it back. */
+        $('#suggest_dayparts').toggle(list.length === 0);
+    },
+
+    collect: function () {
+        var self = PosnicPro.dayparts;
+        var out = [];
+        $('.daypart-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.daypart-name').val() || '').trim();
+            if (!name) return;
+            var from = $row.find('.daypart-from').val();
+            var to = $row.find('.daypart-to').val();
+            out.push({
+                /* The id survives a rename, so calling Breakfast "Morning"
+                   does not silently unassign every breakfast dish. */
+                id: $row.data('id') || name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+                name: name,
+                hours: self.weekOf(from, to)
+            });
+        });
+        return out;
+    }
+};
+
+$(document).on('click', '#add_daypart', function () {
+    $('#menu_daypart_rows').append(PosnicPro.dayparts.rowHtml({}));
+    $('#suggest_dayparts').hide();
+});
+
+$(document).on('click', '#suggest_dayparts', function () {
+    var self = PosnicPro.dayparts;
+    self.render(self.SUGGESTED.map(function (s) {
+        return { id: s.id, name: s.name, hours: self.weekOf(s.from, s.to) };
+    }));
+});
+
+$(document).on('click', '.remove-daypart', function () {
+    $(this).closest('.daypart-row').remove();
+});
+
+/*
+ * Stop taking orders, in one click.
+ *
+ * Sets the pause to the end of today rather than for ever. A switch with no
+ * end is one somebody flips during a Friday rush and finds still off the
+ * following Tuesday, with nobody able to say why the orders stopped - which is
+ * why the underlying field is a moment and not a flag.
+ */
+$(document).on('click', '#stop_taking_orders', function () {
+    var until = new Date();
+    until.setHours(23, 59, 59, 999);
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+    PosnicPro.alert(
+        'success',
+        PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
+    );
 });

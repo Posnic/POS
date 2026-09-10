@@ -293,6 +293,12 @@ const CHANNELS = [
      shop with several branches needs it: with one, there is nothing to
      resolve. */
   'online_ordering_default_store',
+  /* Serving periods - breakfast, lunch, dinner - as
+     [{ id, name, hours }]. Items point at these by id rather than carrying
+     hours of their own: two hundred dishes times seven days is data entry no
+     shop will do, and moving breakfast half an hour would mean editing every
+     one of them. */
+  'menu_dayparts',
 ];
 
 const GROUPS = {

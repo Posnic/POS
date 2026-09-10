@@ -872,6 +872,34 @@
                                         </label>
                                     </div>
 
+                                    <!--
+                                        Restaurant only. The serving periods
+                                        come from Settings; a dish in none of
+                                        them is served all day, which is most
+                                        of a menu.
+                                    -->
+                                    <div class="form-group col-md-4 restaurant-only">
+                                        <label for="item_dayparts"><lang class="lang_served_at">Served at</lang></label>
+                                        <select class="form-control border-control select2" id="item_dayparts"
+                                            name="item_dayparts" multiple="multiple"
+                                            data-placeholder="All day" data-t-placeholder="lang_all_day"></select>
+                                    </div>
+
+                                    <div class="form-group col-md-4 restaurant-only">
+                                        <label for="item_prep_minutes"><lang class="lang_prep_minutes">Preparation time (minutes)</lang></label>
+                                        <input type="number" min="0" max="480" class="form-control border-control"
+                                            id="item_prep_minutes" name="item_prep_minutes">
+                                    </div>
+
+                                    <div class="form-group col-md-8 restaurant-only">
+                                        <label for="item_prep_note"><lang class="lang_prep_note">Note for the kitchen</lang></label>
+                                        <input type="text" class="form-control border-control" id="item_prep_note"
+                                            name="item_prep_note" maxlength="200">
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_prep_note_help">Printed on every ticket for this dish. The customer never sees it.</lang>
+                                        </small>
+                                    </div>
+
                                     <div class="form-group col-md-4">
                                         <label for="item_diet"><lang class="lang_diet_mark">Diet</lang></label>
                                         <select class="form-control border-control" id="item_diet" name="item_diet">

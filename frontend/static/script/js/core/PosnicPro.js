@@ -2785,6 +2785,17 @@ PosnicPro = {
             .toggle(PosnicPro.local.get('table_options') === 'enable');
 
         /*
+         * Fields that only mean something to a restaurant: serving periods,
+         * preparation time, the kitchen note. A grocer has no breakfast menu,
+         * and a form full of questions that do not apply is how a shop learns
+         * to skip the whole section.
+         *
+         * The same switch that shows the KOT report, because that is what
+         * "this shop is a restaurant" already means here.
+         */
+        $('.restaurant-only').toggle(PosnicPro.local.get('table_options') === 'enable');
+
+        /*
          * Themes module, applied in REAL TIME: off hides the header theme
          * button and the shop drops to the default look immediately. The
          * saved choice is never wiped (applyTheme, not applyPreset), so

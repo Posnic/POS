@@ -15,6 +15,8 @@ const {
   isOpenAt,
   storefront,
   hasStoreId,
+  itemAvailability,
+  normalizeDayparts,
   nextOpeningFrom,
   normalizeFulfilment,
   normalizeHours,
@@ -463,5 +465,78 @@ describe('channelState', () => {
       expect(s.mode).toBe(MODE.ORDER);
       expect(s.time_zone).toBe(IST);
     }
+  });
+});
+
+describe('serving periods', () => {
+  const BREAKFAST = { id: 'breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } };
+  const DINNER = { id: 'dinner', name: 'Dinner', hours: { mon: [{ open: '19:00', close: '01:00' }] } };
+  const PARTS = [BREAKFAST, DINNER];
+  const MON = 1;
+  const TUE = 2;
+
+  test('a dish in no period is served all day', () => {
+    /* Most of a menu. The cost of this feature must fall only on the dishes
+       that actually need it. */
+    expect(itemAvailability({}, PARTS, MON, 16 * 60)).toEqual({ available: true, periods: [] });
+    expect(itemAvailability({ daypart_ids: [] }, PARTS, MON, 16 * 60).available).toBe(true);
+  });
+
+  test('a breakfast dish is on at breakfast and off at teatime', () => {
+    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 8 * 60).available).toBe(true);
+    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 16 * 60).available).toBe(false);
+  });
+
+  /* Why it names the period: an unexplained grey card reads as "they have run
+     out", where "Breakfast only" is a reason to come back. */
+  test('an unavailable dish still says when it is served', () => {
+    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 16 * 60).periods).toEqual([
+      'Breakfast',
+    ]);
+  });
+
+  test('a period that runs past midnight is still on after midnight', () => {
+    /* Dinner 19:00-01:00 on Monday is being served at 00:30 on Tuesday. Same
+       arithmetic as a bar's opening hours, and the same trap. */
+    expect(itemAvailability({ daypart_ids: ['dinner'] }, PARTS, TUE, 30).available).toBe(true);
+  });
+
+  test('a dish in two periods needs only one of them to be on', () => {
+    const both = { daypart_ids: ['breakfast', 'dinner'] };
+    expect(itemAvailability(both, PARTS, MON, 8 * 60).available).toBe(true);
+    expect(itemAvailability(both, PARTS, MON, 20 * 60).available).toBe(true);
+    expect(itemAvailability(both, PARTS, MON, 16 * 60).available).toBe(false);
+  });
+
+  /* A dish pointing only at deleted periods must not become unorderable for
+     ever - that is a dish nothing can ever serve. */
+  test('a dish pointing at a period the shop deleted is served all day', () => {
+    expect(itemAvailability({ daypart_ids: ['brunch'] }, PARTS, MON, 16 * 60).available).toBe(true);
+  });
+
+  test('a period with no hours set is on rather than silently off', () => {
+    /* Half-configured must not take dishes off the menu: "we have not set the
+       times yet" is far more common than "this is never served". */
+    const vague = [{ id: 'allday', name: 'All day' }];
+    expect(itemAvailability({ daypart_ids: ['allday'] }, vague, MON, 3 * 60).available).toBe(true);
+  });
+
+  describe('normalizeDayparts', () => {
+    test('keeps id, name and a normalised week', () => {
+      const [p] = normalizeDayparts([{ id: 'Breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } }]);
+      expect(p.id).toBe('breakfast');
+      expect(p.hours.mon).toEqual([{ open: 420, close: 660 }]);
+    });
+
+    test('drops anything with no id or no name, and any duplicate', () => {
+      expect(normalizeDayparts([{ name: 'No id' }])).toEqual([]);
+      expect(normalizeDayparts([{ id: 'a', name: '' }])).toEqual([]);
+      expect(normalizeDayparts([{ id: 'a', name: 'A' }, { id: 'a', name: 'Again' }])).toHaveLength(1);
+    });
+
+    test('a non-list is no periods', () => {
+      expect(normalizeDayparts(null)).toEqual([]);
+      expect(normalizeDayparts('breakfast')).toEqual([]);
+    });
   });
 });
