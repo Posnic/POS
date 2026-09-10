@@ -390,29 +390,25 @@
                     <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">
                         🖨️ Printer for sale receipts
                     </div>
-                    <div style="display:flex;gap:12px;align-items:center;">
-                        <select id="rpPrinterSelect"
-                            style="flex:1;padding:14px 16px;border:2px solid #e9ecef;border-radius:10px;font-size:15px;background:#fff;color:#2c3e50;">
-                            <option value="default" id="rpDefaultOption">System default printer</option>
-                        </select>
+                    <div style="font-size:13px;color:#9ca3af;margin-bottom:12px;">
+                        Tick every printer a receipt should go to. Each one keeps its own
+                        paper and its own number of copies, so a counter roll and an
+                        office copy can come off the same sale.
+                    </div>
+                    <div id="rpPrinterList"
+                        style="max-height:230px;overflow-y:auto;border:2px solid #e9ecef;border-radius:10px;background:#fff;padding:6px;">
+                        <div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">
+                            Press Reload to list the printers on this computer.
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
                         <button class="btn btn-secondary" onclick="rpLoadPrinters()"
-                            style="padding:14px 22px;border-radius:10px;">🔄 Reload</button>
+                            style="padding:12px 20px;border-radius:10px;">🔄 Reload</button>
+                        <span id="rpSummary" style="font-size:13px;color:#6b7280;"></span>
                     </div>
                     <div style="font-size:13px;color:#9ca3af;margin-top:10px;">
                         Applies to this computer only. Other counters keep their own.
-                    </div>
-                </div>
-
-                <div style="background:#f8f9fb;padding:24px;border-radius:16px;margin-bottom:20px;">
-                    <div style="font-weight:700;color:#2c3e50;margin-bottom:6px;">📏 Paper width</div>
-                    <div style="font-size:13px;color:#9ca3af;margin-bottom:14px;">
-                        Measure the roll or read it off the box. This is what stops the
-                        amount column printing off the right edge.
-                    </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <label class="rp-paper"><input type="radio" name="rpWidth" value="80" checked> 80mm roll</label>
-                        <label class="rp-paper"><input type="radio" name="rpWidth" value="58"> 58mm roll</label>
-                        <label class="rp-paper"><input type="radio" name="rpWidth" value="a4"> A4 sheet</label>
+                        Paper width is what stops the amount column printing off the right edge.
                     </div>
                 </div>
 
@@ -1326,59 +1322,80 @@
             el.textContent = msg;
         }
 
-        async function rpLoadPrinters() {
-            const sel = document.getElementById('rpPrinterSelect');
-            const wanted = sel.value;
+        async function rpLoadPrinters(saved) {
             try {
+                await _loadPaperSizes();
                 const list = await window.electronAPI.printer.list();
-                sel.querySelectorAll('option:not([value="default"])').forEach((o) => o.remove());
-                (list || []).forEach((p) => {
-                    const opt = document.createElement('option');
-                    opt.value = p.name;
-                    opt.textContent = (p.displayName || p.name) + (p.isDefault ? ` (${OS_DEFAULT_LABEL})` : '');
-                    sel.appendChild(opt);
-                });
-                if (wanted) sel.value = wanted;
-                if (!sel.value) sel.value = 'default';
+                /* Keep what is already ticked when this is a manual reload, so
+                   pressing Reload never quietly discards a configuration. */
+                const keep = saved !== undefined ? saved : _collectTargets('rpPrinterList');
+                _renderTargetRows('rpPrinterList', 'rp', list, keep,
+                    'No printers found on this computer.');
+                rpUpdateSummary();
                 rpShowStatus(`Found ${(list || []).length} printer(s)`, (list || []).length ? 'success' : 'warn');
             } catch (e) {
                 rpShowStatus('Could not read the printer list: ' + e.message, 'error');
             }
         }
 
-        async function rpInit() {
-            await rpLoadPrinters();
-            if (!rpPref()) return;
-            try {
-                const printer = await rpPref().get('receipt_printer');
-                const width = await rpPref().get('print_width');
+        function rpUpdateSummary() {
+            const el = document.getElementById('rpSummary');
+            if (el) el.textContent = _describeTargets(_collectTargets('rpPrinterList'));
+        }
 
-                const sel = document.getElementById('rpPrinterSelect');
-                if (printer) {
-                    sel.value = printer;
-                    // Unplugged or renamed since it was chosen: the select falls
-                    // silently back to blank, so say what happened instead.
-                    if (sel.value !== printer) {
-                        sel.value = 'default';
-                        rpShowStatus(`Saved printer "${printer}" is not connected. Using the ${OS_DEFAULT_LABEL}.`, 'warn');
+        async function rpInit() {
+            if (!rpPref()) { await rpLoadPrinters([]); return; }
+            try {
+                /* The per-printer list if this machine has been configured since
+                   the update, otherwise the single printer and width it has been
+                   using all along - so an existing till shows its real setup
+                   rather than an empty screen. */
+                const savedJson = await rpPref().get('receipt_printers');
+                let saved = [];
+                if (savedJson) {
+                    try { saved = JSON.parse(savedJson) || []; } catch (e) { saved = []; }
+                }
+                if (!saved.length) {
+                    const printer = await rpPref().get('receipt_printer');
+                    const width = await rpPref().get('print_width');
+                    if (printer && printer !== 'default') {
+                        saved = [{ name: printer, copies: 1, pageSize: width || '80mm' }];
                     }
                 }
-                if (width) {
-                    const radio = document.querySelector(`input[name="rpWidth"][value="${width}"]`);
-                    if (radio) radio.checked = true;
-                }
-            } catch (e) {
+                await rpLoadPrinters(saved);
+
+                /* A printer unplugged or renamed since it was chosen leaves no
+                   row to tick, and saying nothing there reads as though it was
+                   never configured. */
+                const shown = _collectTargets('rpPrinterList').map(function (t) { return t.name.toLowerCase(); });
+                const missing = saved
+                    .map(function (t) { return String(t.name || '').toLowerCase(); })
+                    .filter(function (n) { return n && shown.indexOf(n) === -1; });
+                if (missing.length) {
+                    rpShowStatus('Saved printer' + (missing.length > 1 ? 's' : '') + ' '
+                        + missing.join(', ') + ' not connected. Tick another or reconnect it.', 'warn');
+                }            } catch (e) {
                 console.warn('rpInit:', e.message);
             }
         }
 
         async function rpSave() {
-            const printer = document.getElementById('rpPrinterSelect').value || 'default';
-            const width = (document.querySelector('input[name="rpWidth"]:checked') || {}).value || '80';
+            const targets = _collectTargets('rpPrinterList');
+            if (!targets.length) { rpShowStatus('Tick at least one printer first.', 'warn'); return; }
             try {
-                await rpPref().set('receipt_printer', printer);
-                await rpPref().set('print_width', width);
-                rpShowStatus('Saved. The till picks this up on its next receipt.', 'success');
+                await rpPref().set('receipt_printers', JSON.stringify(targets));
+                /*
+                 * The two original keys are written as well, set to the first
+                 * printer. A till still running the previous build reads only
+                 * those, and would otherwise stop printing the moment this is
+                 * saved - an upgrade that breaks the counter is worse than one
+                 * that ignores the new setting.
+                 */
+                await rpPref().set('receipt_printer', targets[0].name || 'default');
+                await rpPref().set('print_width', targets[0].pageSize || '80mm');
+                rpUpdateSummary();
+                rpShowStatus('Saved. ' + _describeTargets(targets)
+                    + ' The till picks this up on its next receipt.', 'success');
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }
@@ -1400,15 +1417,23 @@
          * widest it gets, and a total that has to stay hard right.
          */
         async function rpTestPrint() {
-            const printer = document.getElementById('rpPrinterSelect').value || 'default';
-            const width = (document.querySelector('input[name="rpWidth"]:checked') || {}).value || '80';
-
-            if (printer === 'default') {
-                rpShowStatus(`Choose a printer first: a receipt cannot be sent to the ${OS_DEFAULT_LABEL}.`, 'warn');
+            /* Test the first ticked printer on its own paper. Testing all of
+               them would spend a sheet per printer to answer one question,
+               which is whether this machine can reach a printer at all. */
+            const targets = _collectTargets('rpPrinterList');
+            if (!targets.length) {
+                rpShowStatus('Tick a printer first, then run the test.', 'warn');
                 return;
             }
-            if (width === 'a4') {
-                rpShowStatus('A4 receipts still print as a page. This test is for thermal rolls.', 'info');
+            const printer = targets[0].name;
+            const width = String(targets[0].pageSize || '80mm').replace(/mm$/, '');
+
+            if (!printer) {
+                rpShowStatus(`Choose a named printer: a receipt cannot be sent to the ${OS_DEFAULT_LABEL}.`, 'warn');
+                return;
+            }
+            if (!/^\d+$/.test(width)) {
+                rpShowStatus('Sheet sizes print as a page, not as raw bytes. This test is for thermal rolls.', 'info');
                 return;
             }
 
@@ -1512,32 +1537,134 @@
         }
 
         function _kotCheckedPrinters() {
-            return Array.from(document.querySelectorAll('#kotPrinterList input[type=checkbox]:checked')).map(cb => cb.value);
+            /* Targets now: each ticked printer with its own copies and paper. */
+            return _collectTargets('kotPrinterList');
         }
 
-        function _kotRenderPrinterList(list, savedNames) {
-            const container = document.getElementById('kotPrinterList');
+        /*
+         * One printer row, shared by the Receipt and KOT tabs.
+         *
+         * Both tabs were asking the same question and answering it differently:
+         * KOT offered a list of printers and no settings, Receipt offered one
+         * printer and a paper size that applied to it alone. Neither could say
+         * "two copies to the pass on 80mm, one to the office on A4", which is
+         * the ordinary case in a restaurant.
+         *
+         * So a row is a printer plus its own copies and its own paper. Size has
+         * to be per row: once several printers can be picked, one global size
+         * is wrong for all but one of them.
+         */
+        let _paperSizeCache = null;
+
+        async function _loadPaperSizes() {
+            if (_paperSizeCache) return _paperSizeCache;
+            try {
+                _paperSizeCache = await window.electronAPI.printer.getPaperSizes();
+            } catch (e) {
+                /* The catalogue comes from the main process so the screen can
+                   never offer a size the print layer will not honour. If it
+                   cannot be read, fall back to the two that cover almost every
+                   till rather than showing an empty menu. */
+                console.warn('[hardware] paper sizes unavailable:', e.message);
+                _paperSizeCache = {
+                    sizes: [{ key: '80mm', label: '80mm roll' }, { key: 'a4', label: 'A4 sheet' }],
+                    defaultSize: '80mm', maxCopies: 20
+                };
+            }
+            return _paperSizeCache;
+        }
+
+        function _sizeOptions(selected) {
+            const cat = _paperSizeCache || { sizes: [], defaultSize: '80mm' };
+            const want = String(selected || cat.defaultSize).toLowerCase();
+            return cat.sizes.map(sz =>
+                '<option value="' + sz.key + '"' + (sz.key === want ? ' selected' : '') + '>'
+                + sz.label + '</option>').join('');
+        }
+
+        /* Saved targets, keyed by lowercase printer name, so a row can find its
+           own settings whatever order the printer list comes back in. */
+        function _targetsByName(saved) {
+            const map = new Map();
+            (Array.isArray(saved) ? saved : []).forEach(t => {
+                if (typeof t === 'string') map.set(t.toLowerCase(), { name: t, copies: 1, pageSize: null });
+                else if (t && t.name !== undefined) map.set(String(t.name).toLowerCase(), t);
+            });
+            return map;
+        }
+
+        function _renderTargetRows(containerId, idPrefix, list, saved, emptyText) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
             if (!list || !list.length) {
-                container.innerHTML = '<div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">No printers found.</div>';
+                container.innerHTML = '<div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">'
+                    + (emptyText || 'No printers found.') + '</div>';
                 return;
             }
+            const savedMap = _targetsByName(saved);
             container.innerHTML = '';
-            list.forEach((p, i) => {
-                const name    = p.name;
-                const label   = (p.displayName || p.name) + (p.isDefault ? ' ⭐ Default' : '');
-                const checked = (savedNames || []).includes(name);
-                const id      = 'kotCb_' + i;
-                const row     = document.createElement('label');
-                row.htmlFor   = id;
-                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;';
+
+            list.forEach((pr, i) => {
+                const name = pr.name;
+                const label = (pr.displayName || pr.name) + (pr.isDefault ? ' \u2b50 Default' : '');
+                const mine = savedMap.get(String(name).toLowerCase());
+                const checked = !!mine;
+                const id = idPrefix + 'Cb_' + i;
+
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;transition:background .15s;';
                 row.onmouseenter = () => row.style.background = '#eef2ff';
                 row.onmouseleave = () => row.style.background = '';
-                row.innerHTML = `
-                    <input type="checkbox" id="${id}" value="${name}" ${checked ? 'checked' : ''}
-                        style="width:16px;height:16px;accent-color:#667eea;cursor:pointer;flex-shrink:0;">
-                    <span style="font-size:14px;color:#374151;font-weight:${p.isDefault ? '700' : '500'};">${label}</span>`;
+                row.innerHTML =
+                    '<input type="checkbox" id="' + id + '" data-printer-name="' + String(name).replace(/"/g, '&quot;') + '"'
+                        + (checked ? ' checked' : '')
+                        + ' style="width:16px;height:16px;accent-color:#667eea;cursor:pointer;flex-shrink:0;">'
+                    + '<label for="' + id + '" style="flex:1;min-width:0;font-size:14px;color:#374151;cursor:pointer;'
+                        + 'font-weight:' + (pr.isDefault ? '700' : '500') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+                        + label + '</label>'
+                    + '<span style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+                        + '<span style="font-size:12px;color:#6b7280;">Copies</span>'
+                        + '<input type="number" class="' + idPrefix + '-copies" min="1" max="'
+                            + ((_paperSizeCache && _paperSizeCache.maxCopies) || 20) + '" value="'
+                            + ((mine && mine.copies) || 1) + '"'
+                            + ' style="width:56px;padding:5px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;text-align:center;">'
+                        + '<select class="' + idPrefix + '-size" style="padding:5px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">'
+                            + _sizeOptions(mine && mine.pageSize) + '</select>'
+                    + '</span>';
                 container.appendChild(row);
             });
+        }
+
+        /* Only ticked rows, each with the numbers typed beside it. */
+        function _collectTargets(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return [];
+            return Array.from(container.children).reduce((out, row) => {
+                const cb = row.querySelector('input[type=checkbox]');
+                if (!cb || !cb.checked) return out;
+                const copiesEl = row.querySelector('input[type=number]');
+                const sizeEl = row.querySelector('select');
+                out.push({
+                    name: cb.getAttribute('data-printer-name') || '',
+                    copies: Math.max(1, parseInt(copiesEl && copiesEl.value, 10) || 1),
+                    pageSize: (sizeEl && sizeEl.value) || '80mm'
+                });
+                return out;
+            }, []);
+        }
+
+        /* "3 sheets across 2 printers" - the number that tells a shop whether
+           they have configured what they meant to. */
+        function _describeTargets(targets) {
+            if (!targets.length) return 'No printer selected.';
+            const sheets = targets.reduce((n, t) => n + (t.copies || 1), 0);
+            return sheets + (sheets === 1 ? ' sheet' : ' sheets')
+                + ' across ' + targets.length + (targets.length === 1 ? ' printer' : ' printers') + '.';
+        }
+
+        function _kotRenderPrinterList(list, saved) {
+            _renderTargetRows('kotPrinterList', 'kot', list, saved,
+                'No printers found. Connect one and press Load Printers.');
         }
 
         async function kotLoadPrinters() {
@@ -1561,10 +1688,18 @@
 
             if (!branchId) { kotShowStatus('No branch found for this till. Open the shop once, then try again.', 'warn'); return; }
             if (!printerNames.length) { kotShowStatus('Select at least one printer.', 'warn'); return; }
+            kotShowStatus('Starting. ' + _describeTargets(printerNames), 'info');
 
             kotShowStatus('Starting KOT polling...', 'info');
             try {
-                await window.electronAPI.kot.startPolling({ branchId, printerNames, apiUrl });
+                /* printers[] carries the per-printer settings; printerNames stays
+                   populated so a till running an older main process still gets
+                   its list rather than nothing. */
+                await window.electronAPI.kot.startPolling({
+                    branchId, apiUrl,
+                    printers: printerNames,
+                    printerNames: printerNames.map(t => t.name)
+                });
                 kotShowStatus('✅ KOT polling started! Listening for new orders every 5 seconds.', 'success');
                 kotUpdateButtons(true);
                 kotRefreshStatus();
@@ -1663,7 +1798,7 @@
 
                 // Load printers and pre-check saved ones
                 const list = await window.electronAPI.printer.list();
-                _kotRenderPrinterList(list, cfg.printerNames || []);
+                _kotRenderPrinterList(list, cfg.printers && cfg.printers.length ? cfg.printers : (cfg.printerNames || []));
 
                 // If config exists, auto-start polling
                 if (cfg.branchId && cfg.printerNames && cfg.printerNames.length) {
