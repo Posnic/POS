@@ -295,7 +295,7 @@ Sponsors are named in releases unless they would rather not be.
 | Sales and licensing | **info@posnic.com** |
 | Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
 | Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
-| Web | [www.posnic.com](https://www.posnic.com/) · [Web app](https://posnic.io/) |
+| Web | [www.posnic.com](https://www.posnic.com/) |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays
