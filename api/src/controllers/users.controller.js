@@ -6,7 +6,7 @@ const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
-const { createSendToken, signLegacyToken } = require('../middleware/auth');
+const { createSendToken, signLegacyToken, jwtLifetimeSeconds } = require('../middleware/auth');
 const httpStatus = require('http-status');
 const { AppError } = require('../utils/appError');
 const { ObjectId } = require('mongodb');
@@ -2622,6 +2622,18 @@ class UsersController extends BaseController {
     try {
       const { username, password } = req.body || {};
 
+      /* Refuse an empty submission before it costs a database round trip and a
+         bcrypt comparison. String(undefined) is the literal "undefined", which
+         this used to go on and look up as a username. */
+      if (!username || !password) {
+        return res.status(400).json({
+          error: {
+            code: 'MISSING_CREDENTIALS',
+            message: 'A username and password are both required',
+          },
+        });
+      }
+
       const myusername = String(username).trim();
       const mypassword = Buffer.from(String(password).trim()).toString('base64');
 
@@ -2636,10 +2648,17 @@ class UsersController extends BaseController {
 
       if (getIpAddress && process.env.NODE_ENV === 'production') {
         if (getIpAddress.banned > currentTime) {
-          return res.status(404).json({
-            type: 'error',
-            message: 'You tried to sign in too many times with an incorrect account or password',
-            data: 'incorrect',
+          /* 429 with Retry-After, which is what "wait and try again" means on
+             the wire. This answered 404 - there is no such endpoint - so a
+             client could not tell a lockout from a wrong address, and had
+             nothing to act on but the message text. */
+          res.set('Retry-After', String(Math.max(1, getIpAddress.banned - currentTime)));
+          return res.status(429).json({
+            error: {
+              code: 'TOO_MANY_ATTEMPTS',
+              message:
+                'You tried to sign in too many times with an incorrect account or password',
+            },
           });
         }
       }
@@ -2757,7 +2776,7 @@ class UsersController extends BaseController {
           joinedBranches.push(row);
         }
 
-        const filteredBranches = joinedBranches.filter((row) => row.branch_id);
+        const branches = joinedBranches.filter((row) => row.branch_id);
 
         /*
          * A credential, because the app cannot work without one.
@@ -2803,29 +2822,43 @@ class UsersController extends BaseController {
               .slice(0, 16)
           : null;
 
+        /*
+         * A bearer-token response, in the shape anything expects one.
+         *
+         * The old body was the house PHP envelope, {type, message, data}, with
+         * the branches in `data` and no credential at all. Its only consumer
+         * is the table-ordering app, rewritten alongside this, so there is
+         * nothing to keep compatible and no reason to carry a 2014 envelope
+         * onto a surface being built today.
+         */
         return res.status(200).json({
-          type: 'success',
-          message: 'Successfully login',
-          data: filteredBranches,
-          // Named to match legacyVerifyLogin so a client can read one field
-          // whichever door it came in through.
-          jwt_token: jwtToken,
-          shop_key: shopKey,
+          tokenType: 'Bearer',
+          token: jwtToken,
+          expiresIn: jwtLifetimeSeconds(),
+          shopKey,
+          user: {
+            id: String(recordsFiltered._id),
+            name: recordsFiltered.username || recordsFiltered.email || '',
+          },
+          branches,
         });
       } else {
         const currentCount = getIpAddress?.login_count || 0;
         const newCount = currentCount + 1;
 
         if (newCount >= 7) {
-          const expireTime = currentTime + 60;
+          const lockoutSeconds = 60;
           await loginCheckCollection.updateOne(
             { ip_address: ip },
-            { $set: { login_count: 0, banned: expireTime } }
+            { $set: { login_count: 0, banned: currentTime + lockoutSeconds } }
           );
-          return res.status(404).json({
-            type: 'error',
-            message: 'You tried to sign in too many times with an incorrect account or password',
-            data: 'incorrect',
+          res.set('Retry-After', String(lockoutSeconds));
+          return res.status(429).json({
+            error: {
+              code: 'TOO_MANY_ATTEMPTS',
+              message:
+                'You tried to sign in too many times with an incorrect account or password',
+            },
           });
         }
 
@@ -2834,18 +2867,23 @@ class UsersController extends BaseController {
           { $set: { login_count: newCount } }
         );
 
-        return res.status(404).json({
-          type: 'error',
-          message: LOGIN_FAILED_MESSAGE,
-          data: null,
+        /* 401. A wrong password is failed authentication, and every HTTP
+           client already knows what to do with that. Answering 404 made a
+           wrong password indistinguishable from a wrong address, which is
+           exactly the confusion a handset hits when it has been pointed at
+           the wrong server. */
+        return res.status(401).json({
+          error: { code: 'INVALID_CREDENTIALS', message: LOGIN_FAILED_MESSAGE },
         });
       }
     } catch (error) {
       console.error('Error in UsersController.kioskMobileLogin:', error);
-      return res.status(404).json({
-        type: 'error',
-        message: error.message || 'An error occurred',
-        data: null,
+      /* 500, and no internal detail. This branch is reached when the database
+         is unreachable or a document is malformed; reporting that as 404 sent
+         every client looking for a fault in its own URL, and echoing
+         error.message handed a stranger the shape of the failure. */
+      return res.status(500).json({
+        error: { code: 'SERVER_ERROR', message: 'Could not complete the sign-in' },
       });
     }
   }

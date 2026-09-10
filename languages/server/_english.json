@@ -23,6 +23,9 @@
   "A sale id is required": [
     "src/repositories/invoice.repository.js"
   ],
+  "A username and password are both required": [
+    "src/controllers/users.controller.js"
+  ],
   "A valid id is required": [
     "src/repositories/shift.repository.js"
   ],
@@ -375,6 +378,9 @@
   ],
   "Could not check the sales history, so nothing was removed.": [
     "src/repositories/item.repository.js"
+  ],
+  "Could not complete the sign-in": [
+    "src/controllers/users.controller.js"
   ],
   "Could not create \"": [
     "src/services/item.service.js"
