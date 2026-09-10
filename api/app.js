@@ -178,6 +178,23 @@ app.use((req, res, next) => {
 });
 
 /*
+ * Cross-origin headers, before anything a browser reads cross-origin.
+ *
+ * This used to sit six hundred lines below, after the session and the static
+ * mounts. Everything in the API router was covered; the three discovery
+ * endpoints immediately below this line were not, because they are registered
+ * early on purpose. A phone looking for the till on the shop Wi-Fi asks
+ * /api/runtime-info whether an address is a Posnic server, and the answer was
+ * thrown away by the browser for want of one header.
+ *
+ * Preflights now short-circuit here rather than after the session middleware,
+ * which is both correct and cheaper: an OPTIONS request carries no cookie
+ * worth resolving.
+ */
+const { corsHeaders, isAllowedOrigin } = require('./src/middleware/cors-origins');
+app.use(corsHeaders);
+
+/*
  * Health, for a supervisor rather than a person. Registered here, before the
  * rate limiter and before the API router, for three reasons.
  *
@@ -878,104 +895,6 @@ app.use(
     },
   })
 );
-
-// CORS configuration - Handle OPTIONS preflight requests first
-const defaultAllowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5000',
-  'http://localhost:5173',
-  'http://localhost:5555',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5555',
-  'http://qro.dev.posnic.io',
-  'https://qro.dev.posnic.io',
-  'http://qro.dev.posnic.io:5000',
-  'https://qro.dev.posnic.io:5000',
-  // Legacy Pro frontend. Keep both schemes while the development site is
-  // still served over HTTP.
-  'http://pro.dev.posnic.io',
-  'https://pro.dev.posnic.io',
-];
-
-// CORS_ORIGIN extends the application defaults instead of replacing them.
-// Replacing the list caused deployed frontends to lose access whenever an
-// environment-specific origin was configured.
-const configuredAllowedOrigins = (process.env.CORS_ORIGIN || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins])];
-
-const isPrivateNetworkOrigin = (origin = '') => {
-  try {
-    const { protocol, hostname } = new URL(origin);
-    return (
-      (protocol === 'http:' || protocol === 'https:') &&
-      (hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-        /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-        /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname))
-    );
-  } catch (_) {
-    return false;
-  }
-};
-
-// A request from the page this very app served is same-origin: the browser
-// sends Origin on POST even then, and an exact-match allowlist cannot contain
-// a customer's own domain, so sign-in on a white-label domain failed with
-// "Not allowed by CORS" no matter what password was typed. Comparing the
-// Origin host against the Host we were reached on grants nothing extra -- a
-// cross-site page cannot forge Origin -- and needs no config per new domain.
-const isSameOriginRequest = (origin, req) => {
-  if (!origin) return false;
-  try {
-    // req.headers.host is what the browser asked for; behind Cloudflare and
-    // nginx that is still the customer's domain, which is what we want.
-    return new URL(origin).host === String(req.headers.host || '').toLowerCase();
-  } catch (_) {
-    return false;
-  }
-};
-
-const isAllowedOrigin = (origin, req) =>
-  allowedOrigins.includes(origin) ||
-  isPrivateNetworkOrigin(origin) ||
-  isSameOriginRequest(origin, req);
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // In development, allow all origins
-  if (process.env.NODE_ENV !== 'production') {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  } else {
-    // In production, only allow specific origins
-    if (origin && isAllowedOrigin(origin, req)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else if (!origin) {
-      // Allow requests with no origin (curl, mobile apps, etc.)
-      res.header('Access-Control-Allow-Origin', allowedOrigins[0]);
-    }
-  }
-
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, X-Device-Id, X-Branch-Id, kioskkey'
-  );
-  res.header('Access-Control-Allow-Credentials', 'true');
-
-  // Handle OPTIONS method for preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  next();
-});
 
 // Regular CORS for all other requests.
 // Built per request so the same-origin check can see the Host we were reached

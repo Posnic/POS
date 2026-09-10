@@ -65,6 +65,23 @@ const ACCEPTED = {
        js-yaml 5 rather than us carrying this indefinitely. Re-check then. */
     expires: '2026-11-01',
   },
+  'GHSA-7pqw-9j4j-h8q3': {
+    package: 'extract-zip',
+    via: '@puppeteer/browsers',
+    reason:
+      'Arbitrary file write through symlink entries in a zip - the same class ' +
+      'of flaw, in the same package, on the same path as GHSA-jmr9-qjv8-65gv ' +
+      'below, and accepted for the same reason. extract-zip is reached only ' +
+      'through whatsapp-web.js -> puppeteer -> @puppeteer/browsers, which uses ' +
+      "it to unpack a Chromium build fetched from Google's servers over HTTPS. " +
+      'Triggering it means controlling that download, and an attacker who can ' +
+      'do that has better options than a symlink. CI never runs it at all: ' +
+      'PUPPETEER_SKIP_DOWNLOAD=1 is set in ci.yml. No fixed version exists - ' +
+      '2.0.1 is still the latest published release - so the only "fix" on ' +
+      'offer is a major bump of whatsapp-web.js, breaking WhatsApp receipts to ' +
+      'close a path that needs an archive we only ever fetch from Google.',
+    expires: '2027-02-01',
+  },
   'GHSA-jmr9-qjv8-65gv': {
     package: 'extract-zip',
     via: '@puppeteer/browsers',
