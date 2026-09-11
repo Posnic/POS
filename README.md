@@ -125,6 +125,10 @@ A server is not a better desktop; it is a machine somebody has to look after. If
 one person rings up sales on one computer, the desktop app is the right answer
 and always will be.
 
+For a fuller comparison of local desktop, self-hosted network, and managed
+operation, read the [Offline POS vs Online/Offline POS deployment
+guide](https://posnic.github.io/offline-vs-online-pos.html).
+
 ### Desktop
 
 Download the package for your platform from
