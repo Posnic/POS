@@ -49,3 +49,11 @@ src/
 # reflows the whole file, so adding one script reads as 349 changed lines.
 frontend/pages_css_js_map.json
 frontend/pages_html_map.json
+
+# Generated from the routes by api/scripts/generate-api-docs.js, and checked by
+# CI with `docs:check`, which regenerates and diffs. Letting the hook reformat
+# them means the committed file can never match the generator again: the tables
+# come out padded, the emphasis markers change, and docs:check fails on every
+# pull request that touches a route. Same reason as languages/ above.
+docs/API.md
+docs/openapi.json
