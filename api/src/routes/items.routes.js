@@ -60,6 +60,19 @@ router.use(protect);
  * normal session: deciding what a channel sells is a shop decision made by a
  * person who is signed in, never by the anonymous storefront.
  */
+/*
+ * The emoji a name suggests, for the item form's live preview.
+ *
+ * A round trip rather than the same keyword table shipped twice. The guess
+ * decides what a CUSTOMER sees on the menu; a second copy in the browser is a
+ * second copy that can drift, and the drift shows up as a shopkeeper being
+ * shown one picture while their customers are shown another - which is the
+ * kind of bug nobody reports because nobody can see both screens at once.
+ *
+ * Declared before '/:id' so that route does not swallow it.
+ */
+router.get('/icon-suggestion', bindController(itemsController.iconSuggestion));
+
 router.get('/channel', bindController(itemsController.channelItems));
 router.post('/channel', bindController(itemsController.setChannelForItems));
 router.post('/:id/channel-hours', bindController(itemsController.setChannelHours));

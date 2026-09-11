@@ -9,6 +9,7 @@ const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
 const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
+const dishIcons = require('../utils/dish-icons');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -921,6 +922,19 @@ class ItemsController extends BaseController {
       console.error('Error in accesskiosk:', error);
       return this.error(res, error.message, 500);
     }
+  }
+
+  /**
+   * What emoji this name suggests, so the item form can show it while it is
+   * being typed.
+   *
+   * The suggestion is a pure function of the name - no database, no branch, no
+   * item - which is why it can answer this cheaply on every keystroke the form
+   * chooses to send.
+   */
+  async iconSuggestion(req, res) {
+    const name = String(req.query.name || '').slice(0, 200);
+    return this.success(res, { name, icon: dishIcons.guess(name) }, 'success');
   }
 
   async accessMobileApp(req, res) {

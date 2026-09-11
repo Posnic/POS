@@ -614,6 +614,30 @@
                                              image is uploaded - the label already promised that,
                                              and a control that cannot affect anything should not
                                              ask for a decision. -->
+                                        <!-- A picture for a dish nobody photographed.
+                                             Sits beside the image because it answers the same
+                                             question, and above colour and shape because it is
+                                             the better answer: a hashed colour means nothing and
+                                             a picture of a dosa means dosa. Pre-filled from the
+                                             NAME, so a three hundred item menu is decorated
+                                             without anybody opening this form. -->
+                                        <div id="item_icon_row" class="mt-3">
+                                            <label class="form-control-placeholder d-block">
+                                                <lang class="lang_item_icon_title">Icon (when there is no photo)</lang>
+                                            </label>
+                                            <div class="d-flex align-items-center" style="gap:10px;">
+                                                <span id="item_icon_preview"
+                                                    style="width:44px;height:44px;border:1px solid #d0d7de;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;background:#fff;"></span>
+                                                <small id="item_icon_note" class="text-muted"></small>
+                                                <button type="button" id="item_icon_clear" class="btn btn-link p-0 ml-auto"
+                                                    style="font-size:12px;display:none;">
+                                                    <lang class="lang_use_suggested">Use the suggested one</lang>
+                                                </button>
+                                            </div>
+                                            <input type="hidden" id="item_icon" name="item_icon" value="">
+                                            <div id="item_icon_choices" class="d-flex flex-wrap mt-2" style="gap:4px;"></div>
+                                        </div>
+
                                         <div id="item_tile_fallback" class="mt-3">
                                             <!-- The tile this item will actually get. Without it
                                                  the swatches sit unselected and "no image" reads

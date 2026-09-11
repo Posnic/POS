@@ -82,6 +82,21 @@ const itemSchema = new mongoose.Schema(
     diet: { type: String, trim: true, default: '' },
 
     /*
+     * A picture for a dish nobody photographed.
+     *
+     * One emoji. A shop with three hundred items will upload no photographs -
+     * that is not laziness, it is three hundred photographs for a list that
+     * changes every season - so the menu card is blank today for almost every
+     * item in the estate. An emoji costs one short string, renders in colour
+     * at any size in both themes, and needs no storage at all.
+     *
+     * Empty is the normal state and is not a gap: utils/dish-icons.js reads
+     * the NAME and suggests one, so a menu is decorated without anybody
+     * touching it. This field only holds the ones a shop disagreed with.
+     */
+    icon: { type: String, trim: true, default: '' },
+
+    /*
      * When this is served: breakfast, lunch, dinner. Empty means always, which
      * is most of a menu - the cost of this feature falls only on the dishes
      * that need it.
@@ -199,6 +214,7 @@ class ItemModel {
     channel_off: { type: 'Array', select: true },
     channel_hours: { type: 'Object', select: true },
     diet: { type: 'String', select: true },
+    icon: { type: 'String', select: true },
     daypart_ids: { type: 'Array', select: true },
     prep_note: { type: 'String', select: true },
     prep_minutes: { type: 'Number', select: true },
