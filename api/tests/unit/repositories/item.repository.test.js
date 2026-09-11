@@ -1494,6 +1494,61 @@ describe('ItemRepository', () => {
    * turn out to hold, so the guard is a property of the CALLING ROUTE and
    * cannot be lost by a store address happening to look like an id.
    */
+  /*
+   * WHAT A WAITER IS SHOWN, AND WHAT A CUSTOMER IS SHOWN.
+   *
+   * `ecommerce` is the box a shop ticks to say "sell this on the internet".
+   * Requiring it is right for a customer's phone. It is wrong for the captain
+   * app, which is staff standing in the shop selling the shop's own catalogue.
+   *
+   * The moment a shop configured a store address, every handset in the
+   * building reported "No products found for this branch. Please contact admin
+   * to configure items" - about a shop with a full menu. A waiter cannot act
+   * on that and the admin has nothing to fix.
+   */
+  describe('who the online-ordering tick applies to', () => {
+    const salesChannels = require('../../../src/utils/sales-channels');
+
+    /* The $match the aggregation was built with, for one channel. */
+    const filterFor = async (channel) => {
+      const branch = { _id: FAKE_ID, license: FAKE_ID, online_ordering: { store_id: 'AZ100' } };
+      jest.spyOn(repo, '_storefrontBranch').mockResolvedValue(branch);
+      col.aggregate.mockReturnValue(mkAgg([]));
+      await repo.storefront(channel ? { channel } : {});
+      const pipeline = col.aggregate.mock.calls[0][0];
+      return JSON.stringify(pipeline[0].$match);
+    };
+
+    test('a CUSTOMER sees only what the shop put online', async () => {
+      const match = await filterFor(salesChannels.CHANNEL.ONLINE);
+      expect(match).toContain('ecommerce');
+      expect(match).toContain('isAvailable');
+    });
+
+    test('a WAITER sees the shop catalogue, not the online subset', async () => {
+      /* The bug, reported from a real handset: a shop with a store address and
+         a full menu showed a captain app with nothing in it. */
+      const match = await filterFor(salesChannels.CHANNEL.TABLESIDE);
+      expect(match).not.toContain('ecommerce');
+      expect(match).not.toContain('isAvailable');
+    });
+
+    test('the default is still the customer, so nothing deployed changes', async () => {
+      /* accesskiosk and the storefront pass no channel and must keep the
+         narrowing they have always had. */
+      const match = await filterFor(null);
+      expect(match).toContain('ecommerce');
+    });
+
+    test('both are still scoped to the branch and the licence', async () => {
+      for (const channel of [salesChannels.CHANNEL.ONLINE, salesChannels.CHANNEL.TABLESIDE]) {
+        const match = await filterFor(channel);
+        expect(match).toContain('branch_access.branch_id');
+        expect(match).toContain('license');
+      }
+    });
+  });
+
   describe('_storefrontBranch', () => {
     test('a public caller names a STORE ADDRESS, and only that is looked up', async () => {
       await repo._storefrontBranch({ storeId: 'AZ100' });
