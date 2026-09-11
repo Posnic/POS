@@ -130,6 +130,9 @@
   "An invoice id is required": [
     "src/repositories/quote.repository.js"
   ],
+  "An item name is needed first": [
+    "src/services/ai-item-description.js"
+  ],
   "Another branch is already using this store address": [
     "src/models/setting.model.js"
   ],
@@ -2014,6 +2017,9 @@
     "src/repositories/sale.repository.js"
   ],
   "This shop has not set up an AI provider": [
+    "src/services/ai.service.js"
+  ],
+  "This shop has reached its monthly AI spending limit": [
     "src/services/ai.service.js"
   ],
   "This shop transcribes on the handset, not on the server": [

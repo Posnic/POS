@@ -3,7 +3,102 @@ PosnicPro.items = {
     imageParams: [],
     form_data: new FormData(),
     itemAction: 'add',
+
+    /*
+     * Whether this shop can draft descriptions at all.
+     *
+     * Asked once per form open and cached for the session. The shop pays its
+     * own AI provider, so a shop with no key must not see the button: a
+     * control that fails when pressed is worse than one that was never there,
+     * especially on a screen somebody is using with a customer waiting.
+     */
+    _aiAvailable: null,
+
+    aiRefresh: function () {
+        var $btn = $('#items_ai_describe');
+        if (!$btn.length) { return; }
+
+        if (PosnicPro.items._aiAvailable !== null) {
+            $btn.toggle(PosnicPro.items._aiAvailable === true);
+            return;
+        }
+        PosnicPro.get('items/aiAvailability', {}, function (r) {
+            var ok = !!(r && r.data && r.data.available);
+            PosnicPro.items._aiAvailable = ok;
+            $btn.toggle(ok);
+        }, function () {
+            /* Could not ask, so do not offer. An unanswered question about a
+               paid feature is a no. */
+            PosnicPro.items._aiAvailable = false;
+            $btn.hide();
+        });
+    },
+
+    /*
+     * Draft a description from what is already on the form.
+     *
+     * Deliberately reads the FORM, not a saved item: the most useful moment
+     * for this is while a new item is being typed, before anything has been
+     * saved at all. The text lands in the textarea and is saved only when the
+     * person saves the item, like anything else they typed there.
+     */
+    aiDescribe: function () {
+        var $btn = $('#items_ai_describe');
+        var $field = $('#items_description');
+        var name = $.trim($('#items_name').val() || '');
+
+        if (!name) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_the_item_name_first', 'Enter the item name first'));
+            return;
+        }
+        /* Typing over somebody's own words without asking is the kind of
+           thing that makes people stop trusting a button. */
+        if ($.trim($field.val() || '') !== ''
+            && !window.confirm('Replace the description that is already there?')) {
+            return;
+        }
+
+        var original = $btn.html();
+        $btn.html('<i class="fa fa-spinner fa-spin mr-1"></i>Writing...').css('pointer-events', 'none');
+
+        PosnicPro.post({
+            url: 'items/aiDescription',
+            data: JSON.stringify({
+                name: name,
+                category_name: $.trim($('#items_category option:selected').text() || ''),
+                brand: $.trim($('#items_brand').val() || ''),
+                unit: $.trim($('#items_unit option:selected').text() || ''),
+                diet: $.trim($('input[name="item_diet"]:checked').val() || ''),
+                language: (PosnicPro.local && PosnicPro.local.get('language')) || ''
+            })
+        }, function (response) {
+            $btn.html(original).css('pointer-events', '');
+            if (response && response.type === 'success' && response.data && response.data.description) {
+                $field.val(response.data.description).trigger('change');
+                /* The label floats only when the field is not empty, and it
+                   was empty a moment ago. */
+                $field.focus();
+                return;
+            }
+            PosnicPro.alert('warning', (response && response.message) || 'Could not draft a description');
+        }, function (xhr) {
+            $btn.html(original).css('pointer-events', '');
+            var message = 'Could not draft a description';
+            try {
+                var body = JSON.parse((xhr && xhr.responseText) || '{}');
+                if (body && body.message) { message = body.message; }
+            } catch (e) { /* the default sentence is the fallback */ }
+            PosnicPro.alert('warning', message);
+            /* A shop that has run out of budget or turned AI off should stop
+               being offered the button for the rest of the session. */
+            if (xhr && xhr.status === 400) {
+                PosnicPro.items._aiAvailable = false;
+                $('#items_ai_describe').hide();
+            }
+        });
+    },
     showAdd: function () {
+        PosnicPro.items.aiRefresh();
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         loader.find(".loadingSpinner:first").remove();
@@ -54,6 +149,7 @@ PosnicPro.items = {
         PosnicPro.items.cloneItem(id);
     },
     showEdit: function (id) {
+        PosnicPro.items.aiRefresh();
         var loader = $(".loader-item");
         loader.find(".loadingSpinner:first").remove();
         $('#product_without_variant').prop('checked', true);

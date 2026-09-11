@@ -144,6 +144,15 @@ router.get('/getDataChanges', bindController(itemsController.getDataChanges));
 // PHP: itemsImport() - Bulk import
 router.post('/itemsImport', bindController(itemsController.itemsImport));
 
+// POST /api/items/aiDescription - draft a description for an item being
+// filled in. Writes nothing; the text lands in the form for a person to
+// edit and save. Gated on item.write because it spends the shop's own
+// AI balance. Availability lives here too, so the screen can decide
+// whether to show the button at all; it moves to its own route when a
+// second screen needs it.
+router.post('/aiDescription', bindController(itemsController.aiDescription));
+router.get('/aiAvailability', bindController(itemsController.aiAvailability));
+
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
 

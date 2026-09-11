@@ -141,6 +141,12 @@ const PREFERENCES = [
      nothing and pays nobody. See services/ai.service.js. */
   'ai_provider',
   'ai_model',
+  /* A monthly ceiling on what AI may spend, in the shop's own currency,
+     enforced before each call. The money is the shop's - we charge nothing
+     for AI and the key is theirs - so this is a promise to them rather than
+     a control on us. Empty means uncapped, which is their decision to make.
+     See services/ai-budget.js. */
+  'ai_monthly_cap',
 ];
 
 const DOCUMENTS = [
