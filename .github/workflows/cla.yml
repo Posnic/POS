@@ -37,7 +37,7 @@ jobs:
           path-to-signatures: signatures/v1/cla.json
           path-to-document: https://github.com/Posnic/POS/blob/main/.github/CLA.md
           branch: cla-signatures
-          allowlist: dependabot[bot],github-actions[bot],sridharkalaibala
+          allowlist: dependabot[bot],github-actions[bot],sridharkalaibala,sridharposnic
           custom-notsigned-prcomment: >
             Thank you for this. Before it can be merged we need a one-line
             signature on our
