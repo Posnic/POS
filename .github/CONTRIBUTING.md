@@ -171,8 +171,25 @@ Sign each commit with `git commit -s`, which adds:
 Signed-off-by: Your Name <you@example.com>
 ```
 
-By signing off you certify you have the right to submit the code under the
-project licence (AGPL-3.0-only).
+By signing off you certify that the work is yours to submit and that you have
+the right to contribute it on the terms below.
+
+## Sign the CLA, once
+
+Alongside the DCO we ask for a one-line signature on the
+[Contributor Licence Agreement](CLA.md). A bot asks for it on your first pull
+request and remembers it afterwards.
+
+**You keep the copyright in your work.** It is a licence, not an assignment, and
+you stay free to use and publish your own contribution anywhere else. What it
+adds beyond the DCO is the right to *sublicense*: Posnic publishes this project
+under AGPL-3.0 and intends to keep doing so, and the same right lets us ship a
+branded, signed and supported build commercially. That paid edition is what pays
+for the work on the open one. Without the sublicense right we could not offer it
+at all.
+
+Your contribution stays available to everyone under AGPL-3.0 regardless. Nothing
+in the agreement lets us take that away.
 
 ## What makes a great bug report
 
