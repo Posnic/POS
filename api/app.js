@@ -178,6 +178,23 @@ app.use((req, res, next) => {
 });
 
 /*
+ * Cross-origin headers, before anything a browser reads cross-origin.
+ *
+ * This used to sit six hundred lines below, after the session and the static
+ * mounts. Everything in the API router was covered; the three discovery
+ * endpoints immediately below this line were not, because they are registered
+ * early on purpose. A phone looking for the till on the shop Wi-Fi asks
+ * /api/runtime-info whether an address is a Posnic server, and the answer was
+ * thrown away by the browser for want of one header.
+ *
+ * Preflights now short-circuit here rather than after the session middleware,
+ * which is both correct and cheaper: an OPTIONS request carries no cookie
+ * worth resolving.
+ */
+const { corsHeaders, isAllowedOrigin } = require('./src/middleware/cors-origins');
+app.use(corsHeaders);
+
+/*
  * Health, for a supervisor rather than a person. Registered here, before the
  * rate limiter and before the API router, for three reasons.
  *
@@ -210,6 +227,19 @@ app.use((req, res, next) => {
  * tenant-free by design - the login page and the update machinery read it
  * before any authentication exists.
  */
+/*
+ * The page a till shows so a staff phone can be pointed at this shop.
+ *
+ * Mounted here, beside the other endpoints a device reaches before it has any
+ * credential, and for the same reasons: it must not be rate limited, must not
+ * depend on the API router mounting, and its path has to be one a person can
+ * be told over the phone.
+ *
+ * Public, and safe to be. The code carries an ADDRESS, not a credential - the
+ * same thing the browser's URL bar already shows anyone looking at the till.
+ */
+app.use(['/pair', '/api/pair'], require('./src/routes/pair.routes'));
+
 app.get('/api/runtime-info', async (req, res) => {
   const { buildRuntimeInfo } = require('./src/utils/runtime-info');
   const info = buildRuntimeInfo();
@@ -879,104 +909,6 @@ app.use(
   })
 );
 
-// CORS configuration - Handle OPTIONS preflight requests first
-const defaultAllowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5000',
-  'http://localhost:5173',
-  'http://localhost:5555',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5555',
-  'http://qro.dev.posnic.io',
-  'https://qro.dev.posnic.io',
-  'http://qro.dev.posnic.io:5000',
-  'https://qro.dev.posnic.io:5000',
-  // Legacy Pro frontend. Keep both schemes while the development site is
-  // still served over HTTP.
-  'http://pro.dev.posnic.io',
-  'https://pro.dev.posnic.io',
-];
-
-// CORS_ORIGIN extends the application defaults instead of replacing them.
-// Replacing the list caused deployed frontends to lose access whenever an
-// environment-specific origin was configured.
-const configuredAllowedOrigins = (process.env.CORS_ORIGIN || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins])];
-
-const isPrivateNetworkOrigin = (origin = '') => {
-  try {
-    const { protocol, hostname } = new URL(origin);
-    return (
-      (protocol === 'http:' || protocol === 'https:') &&
-      (hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-        /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-        /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname))
-    );
-  } catch (_) {
-    return false;
-  }
-};
-
-// A request from the page this very app served is same-origin: the browser
-// sends Origin on POST even then, and an exact-match allowlist cannot contain
-// a customer's own domain, so sign-in on a white-label domain failed with
-// "Not allowed by CORS" no matter what password was typed. Comparing the
-// Origin host against the Host we were reached on grants nothing extra -- a
-// cross-site page cannot forge Origin -- and needs no config per new domain.
-const isSameOriginRequest = (origin, req) => {
-  if (!origin) return false;
-  try {
-    // req.headers.host is what the browser asked for; behind Cloudflare and
-    // nginx that is still the customer's domain, which is what we want.
-    return new URL(origin).host === String(req.headers.host || '').toLowerCase();
-  } catch (_) {
-    return false;
-  }
-};
-
-const isAllowedOrigin = (origin, req) =>
-  allowedOrigins.includes(origin) ||
-  isPrivateNetworkOrigin(origin) ||
-  isSameOriginRequest(origin, req);
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // In development, allow all origins
-  if (process.env.NODE_ENV !== 'production') {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  } else {
-    // In production, only allow specific origins
-    if (origin && isAllowedOrigin(origin, req)) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else if (!origin) {
-      // Allow requests with no origin (curl, mobile apps, etc.)
-      res.header('Access-Control-Allow-Origin', allowedOrigins[0]);
-    }
-  }
-
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, X-Device-Id, X-Branch-Id, kioskkey'
-  );
-  res.header('Access-Control-Allow-Credentials', 'true');
-
-  // Handle OPTIONS method for preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  next();
-});
-
 // Regular CORS for all other requests.
 // Built per request so the same-origin check can see the Host we were reached
 // on; the static option form only receives the Origin header.
@@ -1498,6 +1430,97 @@ app.use(
   express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders })
 );
 app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
+
+/*
+ * The shop's own online ordering page.
+ *
+ * Served from the shop's origin so it is the same origin as the API it calls:
+ * no CORS list to keep per shop, and - the part that actually bit customers -
+ * no shared browser storage. The kiosk used to live on one host for the whole
+ * estate, where IndexedDB is per-origin and therefore shared, which is why it
+ * had to wipe its catalogue whenever it noticed a different branch. A customer
+ * who ordered at two Posnic shops collided with themselves.
+ *
+ * TWO PAGES, NOT ONE BUNDLE WEARING TWO NAMES.
+ *
+ * `/menu` used to be `/order` with the cart hidden. That is a worse menu than
+ * the paper it replaces: it carries 1,500 lines of IndexedDB, a cart and two
+ * payment integrations to render a list of dishes, and it reads as a shop
+ * that has taken its ordering away rather than as a menu.
+ *
+ * So they are separate bundles with separate jobs. `/order` transacts.
+ * `/menu` is read-only: what the kitchen cooks, searchable, by category, with
+ * the veg mark, and nothing on it that starts an order. A shop with ordering
+ * switched on can still print a `/menu` code for its window; a shop in menu
+ * mode has only ever needed this one.
+ *
+ * Mounted BEFORE the root API router, which answers `/items/...` and friends,
+ * because that router is mounted at '/' and would otherwise see these paths
+ * first. express.static redirects `/order` to `/order/` on its own, which is
+ * what makes each bundle's relative asset paths resolve.
+ */
+const ORDER_BUNDLE = path.join(__dirname, '..', 'order');
+const MENU_BUNDLE = path.join(__dirname, '..', 'menu');
+if (fs.existsSync(MENU_BUNDLE)) {
+  app.use('/menu', express.static(MENU_BUNDLE, { setHeaders: assetCacheHeaders }));
+}
+if (fs.existsSync(ORDER_BUNDLE)) {
+  const orderStatic = express.static(ORDER_BUNDLE, { setHeaders: assetCacheHeaders });
+  app.use('/order', orderStatic);
+
+  /*
+   * `/order/AZ100` - the store address as a path segment rather than a query
+   * string.
+   *
+   * express.static answers 404 for it, because there is no file of that name,
+   * so the page has to be served for anything under these paths that is not a
+   * real asset. The page then reads the address out of its own URL.
+   *
+   * Only a single segment, and only one that looks like a store address, so
+   * this cannot become a catch-all that swallows a genuinely missing asset and
+   * answers HTML where a script was expected - which fails in the browser as
+   * a syntax error and sends whoever debugs it looking in the wrong place.
+   *
+   * A relative asset path still resolves: from `/order/AZ100` the browser
+   * treats the last segment as a file, so `assets/x` is `/order/assets/x`.
+   */
+  /*
+   * Every shape a printed code can carry.
+   *
+   *   /AZ100                  the shop
+   *   /AZ100/table/5          its own table five
+   *   /AZ100/venue/RC/123     Royal Club Hotel, room 123
+   *
+   * Still bounded, and still not a catch-all: a missing script under these
+   * paths stays a 404 rather than being answered with HTML, which in a browser
+   * surfaces as a syntax error pointing at entirely the wrong file.
+   *
+   * The page reads the parts out of its own URL. It can only do that because
+   * index.html carries a <base href="/order/">: without it, a relative asset
+   * on a three-segment URL would resolve to /order/AZ100/venue/assets/... and
+   * the page would load nothing at all.
+   */
+  const STORE_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+  const serveOrderPage = (req, res, next) => {
+    if (!STORE_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
+  };
+  app.use('/order', serveOrderPage);
+}
+
+/* `/menu/AZ100`, for the same reason and with the same guard: a path segment
+   express.static has no file for, and only one shaped like a store address. */
+if (fs.existsSync(MENU_BUNDLE)) {
+  /* The same shapes, so a menu can be printed for a hotel room and show that
+     room the prices it will actually be charged. */
+  const MENU_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+  app.use('/menu', (req, res, next) => {
+    if (!MENU_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(MENU_BUNDLE, 'index.html'));
+  });
+}
 
 // Also mount API routes at root for backward compatibility
 app.use('/', apiRouter);

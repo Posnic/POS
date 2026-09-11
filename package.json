@@ -83,6 +83,7 @@
     "files": [
       "src/main.js",
       "src/ipc-guard.js",
+      "src/order-alert.js",
       "src/splash.js",
       "src/shutdown-state.js",
       "src/scheduled-task.js",
@@ -120,6 +121,7 @@
       "src/print-window-guard.js",
       "src/print-pdf.js",
       "src/escpos-receipt.js",
+      "src/printer-targets.js",
       "src/escpos-report.js",
       "src/preload.js",
       "package.json",
@@ -293,6 +295,22 @@
         "to": "api/.wwebjs_cache",
         "filter": [
           "**/*"
+        ]
+      },
+      {
+        "from": "order",
+        "to": "order",
+        "filter": [
+          "**/*",
+          "!**/*.md"
+        ]
+      },
+      {
+        "from": "menu",
+        "to": "menu",
+        "filter": [
+          "**/*",
+          "!**/*.md"
         ]
       },
       {
@@ -515,21 +533,22 @@
     "icon-gen": "^5.0.0",
     "jquery": "^3.7.1",
     "jsdom": "^30.0.1",
-    "lint-staged": "^16.2.6",
+    "lint-staged": "^17.5.0",
     "png-to-ico": "^3.0.2",
     "prettier": "^3.9.6",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4"
   },
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
-    "mongodb": "7.5.0",
-    "pdf-to-printer": "^5.8.0",
+    "mongodb": "7.6.0",
+    "pdf-to-printer": "^5.8.1",
     "serialport": "^13.0.0"
   },
   "overrides": {
-    "sharp": "$sharp"
+    "sharp": "$sharp",
+    "js-yaml": "^4.3.2"
   },
   "repository": {
     "type": "git",
@@ -538,7 +557,7 @@
   "bugs": {
     "url": "https://github.com/Posnic/POS/issues"
   },
-  "homepage": "https://posnic.io/",
+  "homepage": "https://www.posnic.com/",
   "keywords": [
     "pos",
     "open-source-pos",

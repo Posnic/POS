@@ -6,7 +6,7 @@ const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
-const { createSendToken, signLegacyToken } = require('../middleware/auth');
+const { createSendToken, signLegacyToken, jwtLifetimeSeconds } = require('../middleware/auth');
 const httpStatus = require('http-status');
 const { AppError } = require('../utils/appError');
 const { ObjectId } = require('mongodb');
@@ -2615,11 +2615,24 @@ class UsersController extends BaseController {
    */
   async kioskMobileLogin(req, res) {
     const mongoose = require('mongoose');
+    const crypto = require('crypto');
     const db = currentConnection(mongoose.connection).db;
     const loginCheckCollection = db.collection('login_check');
 
     try {
       const { username, password } = req.body || {};
+
+      /* Refuse an empty submission before it costs a database round trip and a
+         bcrypt comparison. String(undefined) is the literal "undefined", which
+         this used to go on and look up as a username. */
+      if (!username || !password) {
+        return res.status(400).json({
+          error: {
+            code: 'MISSING_CREDENTIALS',
+            message: 'A username and password are both required',
+          },
+        });
+      }
 
       const myusername = String(username).trim();
       const mypassword = Buffer.from(String(password).trim()).toString('base64');
@@ -2635,10 +2648,16 @@ class UsersController extends BaseController {
 
       if (getIpAddress && process.env.NODE_ENV === 'production') {
         if (getIpAddress.banned > currentTime) {
-          return res.status(404).json({
-            type: 'error',
-            message: 'You tried to sign in too many times with an incorrect account or password',
-            data: 'incorrect',
+          /* 429 with Retry-After, which is what "wait and try again" means on
+             the wire. This answered 404 - there is no such endpoint - so a
+             client could not tell a lockout from a wrong address, and had
+             nothing to act on but the message text. */
+          res.set('Retry-After', String(Math.max(1, getIpAddress.banned - currentTime)));
+          return res.status(429).json({
+            error: {
+              code: 'TOO_MANY_ATTEMPTS',
+              message: 'You tried to sign in too many times with an incorrect account or password',
+            },
           });
         }
       }
@@ -2708,26 +2727,25 @@ class UsersController extends BaseController {
           const branchCollection = db.collection('branches');
           const cursor = await branchCollection
             .find({
-              'kiosk.branch_id': { $in: branchIds },
+              _id: { $in: branchIds },
+              online_ordering: { $ne: null },
             })
             .toArray();
 
           for (const doc of cursor) {
-            if (doc.kiosk && Array.isArray(doc.kiosk)) {
-              for (const kioskEntry of doc.kiosk) {
-                if (!kioskEntry.branch_id) continue;
-
-                const bid = String(kioskEntry.branch_id);
-
-                kioskMap[bid] = {
-                  store_id: kioskEntry.store_id || null,
-                  user_id: String(recordsFiltered._id),
-                  user_name: recordsFiltered.username || null,
-                  payment_cod: kioskEntry.payment_cod || null,
-                  payment_number: kioskEntry.payment_number || null,
-                  payment_razorpay: kioskEntry.payment_razorpay || null,
-                };
-              }
+            /* One channel per branch, so the branch document IS the key. It
+               used to be an array searched by a branch_id stored inside it,
+               which is the branch the document already was. */
+            const config = doc.online_ordering;
+            if (config && typeof config === 'object') {
+              kioskMap[String(doc._id)] = {
+                store_id: config.store_id || null,
+                user_id: String(recordsFiltered._id),
+                user_name: recordsFiltered.username || null,
+                payment_cod: config.payment_cod || null,
+                payment_number: config.payment_number || null,
+                payment_razorpay: config.payment_razorpay || null,
+              };
             }
           }
         }
@@ -2756,27 +2774,88 @@ class UsersController extends BaseController {
           joinedBranches.push(row);
         }
 
-        const filteredBranches = joinedBranches.filter((row) => row.branch_id);
+        const branches = joinedBranches.filter((row) => row.branch_id);
 
+        /*
+         * A credential, because the app cannot work without one.
+         *
+         * This endpoint proved who the user is - username, password and the
+         * activate flag - and then told them nothing they could present again.
+         * The table-ordering app went on to call getTablesWithActiveOrders,
+         * getListKot, getOrderHistory and updateOrder with `credentials:
+         * 'include'` and no cookie to include: those routes sit behind
+         * protectOrKioskKey, which refuses an anonymous caller, so the phone
+         * signed in successfully and then loaded nothing.
+         *
+         * The same JWT the browser sign-in issues (users.controller
+         * legacyVerifyLogin -> param.jwt_token), for the same user, read back
+         * by optionalProtect from the Authorization header. Nothing here is
+         * granted that a sign-in at the till would not grant: the token names
+         * this user, and every handler still applies that user's own branch
+         * access and permissions.
+         */
+        const jwtToken = signLegacyToken(recordsFiltered, req);
+
+        /*
+         * Which shop this is, in a form that is the same on the till and in
+         * the cloud and identifies nobody by itself.
+         *
+         * The phone is allowed to move between the shop's own LAN server and
+         * the shop's cloud address as the Wi-Fi comes and goes. That is only
+         * safe if it can tell that the server it just found holds the SAME
+         * shop - a phone that silently latched onto a different Posnic on the
+         * same network would show one shop's orders under another's name.
+         *
+         * The licence is the tenancy key, identical in the local database and
+         * its synced cloud copy, so a hash of it answers "same shop?" exactly.
+         * It is truncated and hashed rather than sent raw because the phone
+         * only ever needs to COMPARE it, and an id that never leaves the
+         * server cannot leak from a stolen handset.
+         */
+        const shopKey = recordsFiltered.license
+          ? crypto
+              .createHash('sha256')
+              .update(String(recordsFiltered.license))
+              .digest('hex')
+              .slice(0, 16)
+          : null;
+
+        /*
+         * A bearer-token response, in the shape anything expects one.
+         *
+         * The old body was the house PHP envelope, {type, message, data}, with
+         * the branches in `data` and no credential at all. Its only consumer
+         * is the table-ordering app, rewritten alongside this, so there is
+         * nothing to keep compatible and no reason to carry a 2014 envelope
+         * onto a surface being built today.
+         */
         return res.status(200).json({
-          type: 'success',
-          message: 'Successfully login',
-          data: filteredBranches,
+          tokenType: 'Bearer',
+          token: jwtToken,
+          expiresIn: jwtLifetimeSeconds(),
+          shopKey,
+          user: {
+            id: String(recordsFiltered._id),
+            name: recordsFiltered.username || recordsFiltered.email || '',
+          },
+          branches,
         });
       } else {
         const currentCount = getIpAddress?.login_count || 0;
         const newCount = currentCount + 1;
 
         if (newCount >= 7) {
-          const expireTime = currentTime + 60;
+          const lockoutSeconds = 60;
           await loginCheckCollection.updateOne(
             { ip_address: ip },
-            { $set: { login_count: 0, banned: expireTime } }
+            { $set: { login_count: 0, banned: currentTime + lockoutSeconds } }
           );
-          return res.status(404).json({
-            type: 'error',
-            message: 'You tried to sign in too many times with an incorrect account or password',
-            data: 'incorrect',
+          res.set('Retry-After', String(lockoutSeconds));
+          return res.status(429).json({
+            error: {
+              code: 'TOO_MANY_ATTEMPTS',
+              message: 'You tried to sign in too many times with an incorrect account or password',
+            },
           });
         }
 
@@ -2785,18 +2864,23 @@ class UsersController extends BaseController {
           { $set: { login_count: newCount } }
         );
 
-        return res.status(404).json({
-          type: 'error',
-          message: LOGIN_FAILED_MESSAGE,
-          data: null,
+        /* 401. A wrong password is failed authentication, and every HTTP
+           client already knows what to do with that. Answering 404 made a
+           wrong password indistinguishable from a wrong address, which is
+           exactly the confusion a handset hits when it has been pointed at
+           the wrong server. */
+        return res.status(401).json({
+          error: { code: 'INVALID_CREDENTIALS', message: LOGIN_FAILED_MESSAGE },
         });
       }
     } catch (error) {
       console.error('Error in UsersController.kioskMobileLogin:', error);
-      return res.status(404).json({
-        type: 'error',
-        message: error.message || 'An error occurred',
-        data: null,
+      /* 500, and no internal detail. This branch is reached when the database
+         is unreachable or a document is malformed; reporting that as 404 sent
+         every client looking for a fault in its own URL, and echoing
+         error.message handed a stranger the shape of the failure. */
+      return res.status(500).json({
+        error: { code: 'SERVER_ERROR', message: 'Could not complete the sign-in' },
       });
     }
   }
@@ -2938,7 +3022,10 @@ class UsersController extends BaseController {
        * SSO_URL still overrides, for local work against a dev website.
        */
       const ssoUrlFromEnv = process.env.SSO_URL;
-      const siteBase = (process.env.POSNIC_SITE_URL || 'https://posnic.com').replace(/\/+$/, '');
+      const siteBase = (process.env.POSNIC_SITE_URL || 'https://www.posnic.com').replace(
+        /\/+$/,
+        ''
+      );
       const domainName = ssoUrlFromEnv || `${siteBase}/api/sso/token`;
 
       console.log('[ssoClientLogin] Calling SSO API:', domainName);

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+
+        Pinned to the mount rather than left to the arriving URL, so one file
+        serves the shop address, a table and a venue alike.
+    -->
+    <base href="/order/" />
+    <title>Self-Ordering Kiosk</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <script src="assets/jquery-3.6.0.min.js"></script>
+    <script src="config.js"></script>
+    <link href="assets/channel-state.css" rel="stylesheet">
+    <script src="assets/channel-state.js"></script>
+    <script src="assets/service-point.js"></script>
+    <script src="assets/kiosk-core.js"></script>
+    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
+    <link href="assets/products/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- Page Loader -->
+    <div id="page-loader">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Popup -->
+    <div id="popup">
+        ⚠️ Need more? Our counter staff is happy to help!
+        <button onclick="hidePopup()" aria-label="Close popup">&times;</button>
+    </div>
+
+    <!-- 🔻 Add this wrapper for scrollable content -->
+    <div class="content-wrapper">
+        <!-- Fixed Mobile Header -->
+        <div class="mobile-header">
+            <div class="store-title">Self-Ordering</div>
+            <div class="mobile-cart next-page">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="mobile-cart-count">0</span>
+            </div>
+        </div>
+
+        <!-- Fixed Categories -->
+        <section class="section-block fixed-categories">
+            <h2 class="section-heading">Menu Categories</h2>
+            <div class="category-scroll-container" id="category-list">
+                <!-- Categories dynamically injected -->
+            </div>
+        </section>
+
+        <!-- Fixed Our Menu Heading -->
+        <section class="section-block fixed-heading">
+            <h2 class="section-heading" id="category-heading">Our Menu</h2>
+        </section>
+
+        <!-- Scrollable product list -->
+        <div class="scrollable-products">
+            <div class="container product-grid" id="product-list"></div>
+        </div>
+    </div>
+
+
+
+    <!-- Cart Footer -->
+    <div class="cart-footer">
+        <button class="btn-home" onclick="window.location.href='home.html'">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <div class="floating-cart next-page">
+            <i class="fas fa-shopping-cart"></i> <span id="cart-qty">0</span> | ₹<span id="cart-total">0.00</span>
+        </div>
+        <button class="btn checkout-btn btn-lg" id="next-btn" onclick="window.location.href='cart.html'">
+            Next <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <script src="assets/products/script.js?v=20260709-fastrefresh"></script>
+</body>
+
+
+</html>

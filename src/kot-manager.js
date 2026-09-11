@@ -9,6 +9,7 @@ const os = require('os');
    silently - caught, reported, and nothing printed. */
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const { normalizeTargets, pageSizeFor } = require('./printer-targets');
 
 /*
  * Where our own API is listening, right now.
@@ -26,6 +27,18 @@ function kotApiUrl() {
   return `http://127.0.0.1:${port}/api`;
 }
 
+/*
+ * How often to poll when nothing has happened.
+ *
+ * This used to be five seconds because polling was the only way a ticket could
+ * ever reach the printer. Sales now announce themselves the moment they are
+ * saved, so this is only the net that catches what the event missed - a ticket
+ * written while the app was starting, or one whose print failed. Thirty seconds
+ * is frequent enough to recover an order and quiet enough to stop hammering the
+ * API all day.
+ */
+const KOT_FALLBACK_POLL_MS = 30000;
+
 class KOTManager {
   constructor() {
     this.pollingTimer = null;
@@ -41,6 +54,19 @@ class KOTManager {
 
     // Dedup: track printed job hashes
     this.printedJobs = new Set();
+
+    /*
+     * The API is require()d into this same process, so a sale that needs a
+     * kitchen ticket can say so directly instead of us asking every few
+     * seconds. See api/src/helpers/kot-notify.js for why `process` is the bus.
+     *
+     * The poll underneath stays, slowed down: it is also what recovers a ticket
+     * that failed to print, or one saved while the app was starting. Losing an
+     * order is worse than printing it a little late, so the safety net stays.
+     */
+    this._kotNudgeTimer = null;
+    this._onKotCreated = (payload) => this._onKotEvent(payload);
+    try { process.on('posnic:kot-created', this._onKotCreated); } catch (e) { /* never fatal */ }
 
     const base = this._getWritablePath();
     this.configPath = path.join(base, 'kot-config.json');
@@ -82,7 +108,10 @@ class KOTManager {
       const date    = new Date(entry.time).toISOString().slice(0, 10);
       const logPath = this._getLogPath(date);
       let   logs    = [];
-      if (fs.existsSync(logPath)) { try { logs = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { logs = []; } }
+      /* Read first rather than asking whether it exists: the answer can stop
+         being true before the read, and an absent log is the ordinary case on
+         the first ticket of the day. */
+      try { logs = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { logs = []; }
       logs.push(entry);
       fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
     } catch (e) { console.error('[KOT] Failed to write log:', e.message); }
@@ -91,22 +120,27 @@ class KOTManager {
   getLogs(date) {
     try {
       const logPath = this._getLogPath(date);
-      if (fs.existsSync(logPath)) return JSON.parse(fs.readFileSync(logPath, 'utf8'));
-    } catch (e) { /* ignore */ }
+      return JSON.parse(fs.readFileSync(logPath, 'utf8'));
+    } catch (e) { /* no log for that day, or it went away mid-read */ }
     return [];
   }
 
   deleteLog(date, logId) {
     try {
       const logPath = this._getLogPath(date);
-      if (fs.existsSync(logPath)) {
-        let logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-        logs     = logs.filter(l => l.id !== logId);
-        fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
-        return { success: true };
+      let logs;
+      try {
+        logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
+      } catch (e) {
+        /* ENOENT is "no log for that day", which is the message this always
+           gave; anything else is a real read failure and says so. */
+        if (e && e.code === 'ENOENT') return { success: false, error: 'Log file not found' };
+        throw e;
       }
+      logs = logs.filter((l) => l.id !== logId);
+      fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
+      return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
-    return { success: false, error: 'Log file not found' };
   }
 
   async _waitForPrintPage(webContents) {
@@ -178,7 +212,7 @@ class KOTManager {
     return result;
   }
 
-  async _printToDeviceWithFallback(printWindow, deviceName) {
+  async _printToDeviceWithFallback(printWindow, deviceName, pageSizeKey) {
     const baseOptions = {
       silent: true,
       printBackground: true,
@@ -186,9 +220,12 @@ class KOTManager {
       deviceName
     };
 
+    /* The paper this printer is actually loaded with, rather than 80mm for
+       everyone. A kitchen on a 58mm roll was being handed an 80mm page and
+       relying on the driver to shrink it. */
     let result = await this._sendPrintJob(printWindow, {
       ...baseOptions,
-      pageSize: { width: 80000, height: 1000000 }
+      pageSize: pageSizeFor(pageSizeKey)
     });
 
     if (!result.success) {
@@ -305,6 +342,39 @@ class KOTManager {
     return this.kotCounter;
   }
 
+  // ─── Event driven ─────────────────────────────────────────────────────────
+
+  /**
+   * A sale just asked for a kitchen ticket.
+   *
+   * Debounced rather than printed inline: a table of six sending six courses
+   * produces six events in a moment, and each poll already fetches every
+   * pending ticket. One pass shortly after the last event prints them all,
+   * where six immediate passes would race each other for the same printer.
+   *
+   * A branch arriving on the event is used when nothing is configured, which is
+   * what lets the Branch ID field stop being something a shopkeeper types.
+   */
+  _onKotEvent(payload = {}) {
+    if (!this.isPolling || !this.config) return;
+
+    if (!this.config.branchId && payload.branchId) {
+      this.config.branchId = String(payload.branchId);
+      console.log('[KOT] branch taken from the sale:', this.config.branchId);
+    }
+
+    if (this._kotNudgeTimer) return;
+    this._kotNudgeTimer = setTimeout(() => {
+      this._kotNudgeTimer = null;
+      if (!this.isPolling) return;
+      console.log('[KOT] sale event -> printing now (' + (payload.reason || 'created') + ')');
+      /* Cancel the scheduled poll so this pass replaces it rather than running
+         alongside it and fetching the same tickets twice. */
+      if (this.pollingTimer) { clearTimeout(this.pollingTimer); this.pollingTimer = null; }
+      this._poll();
+    }, 250);
+  }
+
   // ─── Polling lifecycle ────────────────────────────────────────────────────
 
   async startPolling(config) {
@@ -320,6 +390,10 @@ class KOTManager {
     if (this.pollingTimer) {
       clearTimeout(this.pollingTimer);
       this.pollingTimer = null;
+    }
+    if (this._kotNudgeTimer) {
+      clearTimeout(this._kotNudgeTimer);
+      this._kotNudgeTimer = null;
     }
     this.isPolling = false;
     console.log('[KOT] Polling stopped');
@@ -366,7 +440,7 @@ class KOTManager {
 
       const sales = Array.isArray(data?.data) ? data.data : [];
       if (sales.length === 0) {
-        this.pollingTimer = setTimeout(() => this._poll(), 5000);
+        this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
         return;
       }
 
@@ -449,7 +523,7 @@ class KOTManager {
       this.lastPollStatus = 'error: ' + err.message;
     }
 
-    this.pollingTimer = setTimeout(() => this._poll(), 5000);
+    this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
   }
 
   // ─── Silent print ─────────────────────────────────────────────────────────
@@ -489,16 +563,40 @@ class KOTManager {
       await printWindow.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`);
       await this._waitForPrintPage(printWindow.webContents);
 
-      let names = (Array.isArray(printerNames) ? printerNames : []).filter(Boolean)
-        .map(name => String(name).trim())
-        .map(name => name.toUpperCase() === 'POS-80C' ? '' : name);
-      if (!names.length) names = [''];
+      /*
+       * Each printer carries its own paper and its own copy count now, so a
+       * kitchen roll and a pass copy are one configuration rather than two
+       * incompatible ones.
+       *
+       * The name POS-80C used to be rewritten to '' here, which quietly sent
+       * the job to the SYSTEM DEFAULT instead of the printer the shop chose.
+       * It is the factory name on a great many generic 80mm printers, so any
+       * shop that never renamed theirs was printing somewhere else and had no
+       * way to tell. If a device name is genuinely unreachable the print fails
+       * and says so, which is recoverable; silently printing elsewhere is not.
+       */
+      const targets = normalizeTargets(
+        Array.isArray(printerNames) && printerNames.length
+          ? { printers: printerNames }
+          : this.config || {},
+        '80mm'
+      );
+
+      /* Flattened so one entry is one sheet: two copies is two passes through
+         the same printer, which is what the driver expects for a roll. */
+      const jobs = [];
+      for (const t of targets) {
+        for (let c = 0; c < t.copies; c += 1) {
+          jobs.push({ name: t.name, pageSize: t.pageSize, copy: c + 1, of: t.copies });
+        }
+      }
 
       await new Promise((resolve) => {
         let idx = 0;
         const next = async () => {
-          const deviceName = names[idx];
-          const result = await this._printToDeviceWithFallback(printWindow, deviceName);
+          const job = jobs[idx];
+          const deviceName = job.name;
+          const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize);
           if (!result.success) {
             console.error(`[KOT] Print failed (${deviceName}):`, result.reason);
             printerResults.push({ name: deviceName, status: 'failed', reason: result.reason || 'unknown' });
@@ -507,23 +605,7 @@ class KOTManager {
             printerResults.push({ name: deviceName, status: 'success' });
           }
           idx++;
-          if (idx < names.length) next(); else resolve();
-          return;
-          printWindow.webContents.print(
-            { silent: true, printBackground: true, margins: { marginType: 'none' },
-              pageSize: { width: 288000, height: 1000000 }, deviceName },
-            (ok, reason) => {
-              if (!ok) {
-                console.error(`[KOT] Print failed (${deviceName}):`, reason);
-                printerResults.push({ name: deviceName, status: 'failed', reason: reason || 'unknown' });
-              } else {
-                console.log(`[KOT] Printed → ${deviceName}`);
-                printerResults.push({ name: deviceName, status: 'success' });
-              }
-              idx++;
-              if (idx < names.length) next(); else resolve();
-            }
-          );
+          if (idx < jobs.length) next(); else resolve();
         };
         next();
       });

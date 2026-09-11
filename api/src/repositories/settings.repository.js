@@ -38,6 +38,7 @@ const COLLECTION_OF = Object.freeze({
   secrets: 'branch_secrets',
   sharing: 'branch_sharing',
   tax: 'branch_tax',
+  channels: 'branch_channels',
 });
 
 class SettingsRepository extends BaseModel {

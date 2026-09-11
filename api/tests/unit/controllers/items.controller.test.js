@@ -31,7 +31,6 @@ jest.mock('../../../src/services/item.service', () =>
     deleteItems: jest.fn(),
     getItemsByCategory: jest.fn(),
     updateItem: jest.fn(),
-    accessKiosk: jest.fn(),
     createInstantItem: jest.fn(),
     deleteInstantItem: jest.fn(),
     updateKioskStatus: jest.fn(),
@@ -40,7 +39,6 @@ jest.mock('../../../src/services/item.service', () =>
     itemSearchPage: jest.fn(),
     getOnlineSalesItems: jest.fn(),
     getOnlineItemsAjaxList: jest.fn(),
-    accessQr: jest.fn(),
     accessMobileApp: jest.fn(),
     updateItemQuantity: jest.fn(),
     categoryItemsReportTable: jest.fn(),
@@ -746,99 +744,10 @@ describe('itemLowStockTable', () => {
 });
 
 // =============================================================================
-// accesskiosk
 // =============================================================================
 
-describe('accesskiosk', () => {
-  /*
-   * Any value serves, because the key is no longer a constant in the source.
-   * It is generated per installation and passed in through the environment, so
-   * what matters is that the header must match whatever this install was
-   * given - not that it equals one particular published string.
-   */
-  const KIOSK_KEY = 'kiosk-key-for-this-test-run';
-  const previousKey = process.env.KIOSK_API_KEY;
-
-  beforeEach(() => {
-    process.env.KIOSK_API_KEY = KIOSK_KEY;
-  });
-  afterAll(() => {
-    if (previousKey === undefined) delete process.env.KIOSK_API_KEY;
-    else process.env.KIOSK_API_KEY = previousKey;
-  });
-
-  test('refuses when this install has no kiosk key configured', async () => {
-    delete process.env.KIOSK_API_KEY;
-    const req = mockReq({ headers: { kioskkey: KIOSK_KEY }, body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accesskiosk(req, res);
-    // 401, not 403: a kiosk key is device AUTHENTICATION, not a permission.
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  test('returns 200 on valid kiosk key + service success', async () => {
-    svc.accessKiosk.mockResolvedValue({ status: true, data: {}, message: 'ok' });
-    const req = mockReq({ headers: { kioskkey: KIOSK_KEY }, body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accesskiosk(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('returns 401 for invalid kiosk key', async () => {
-    const req = mockReq({ headers: { kioskkey: 'wrongkey' }, body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accesskiosk(req, res);
-    expect(svc.accessKiosk).not.toHaveBeenCalled();
-    // 401, not 403: a kiosk key is device AUTHENTICATION, not a permission.
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  test('returns 404 when service reports failure', async () => {
-    svc.accessKiosk.mockResolvedValue({ status: false, data: null, message: 'not found' });
-    const req = mockReq({ headers: { kioskkey: KIOSK_KEY }, body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accesskiosk(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test('returns 500 when service throws', async () => {
-    svc.accessKiosk.mockRejectedValue(new Error('crash'));
-    const req = mockReq({ headers: { kioskkey: KIOSK_KEY }, body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accesskiosk(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
-
 // =============================================================================
-// accessQr
 // =============================================================================
-
-describe('accessQr', () => {
-  test('returns 200 on success', async () => {
-    svc.accessQr.mockResolvedValue({ status: true, data: {}, message: 'ok' });
-    const req = mockReq({ body: { project_type: 'stock', branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accessQr(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test('returns 404 when service fails', async () => {
-    svc.accessQr.mockResolvedValue({ status: false, data: null, message: 'not found' });
-    const req = mockReq({ body: { branch: VALID_BRANCH } });
-    const res = mockRes();
-    await ctrl.accessQr(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test('returns 500 when service throws', async () => {
-    svc.accessQr.mockRejectedValue(new Error('crash'));
-    const req = mockReq({ body: {} });
-    const res = mockRes();
-    await ctrl.accessQr(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
 
 // =============================================================================
 // accessMobileApp

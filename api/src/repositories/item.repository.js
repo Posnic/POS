@@ -4,6 +4,26 @@ const BaseModel = require('../models/base.model');
 const demoData = require('../services/demo-data');
 const Item = require('../models/item.model');
 const Branch = require('../models/branch.model');
+const moment = require('moment-timezone');
+const onlineOrdering = require('../utils/online-ordering');
+const partnerVenues = require('../utils/partner-venues');
+const salesChannels = require('../utils/sales-channels');
+
+/*
+ * The diet mark, or nothing.
+ *
+ * Only the four words the menu knows how to draw. Anything else is stored as
+ * empty rather than passed through: an unknown value renders as no mark at
+ * all, and a dish that LOOKS unmarked because of a typo is worse than one that
+ * is honestly unmarked - somebody with an allergy reads both the same way.
+ */
+const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const onlineOrderingDiet = (value) => {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
+  return DIET_MARKS.includes(v) ? v : '';
+};
 const {
   DEFAULTS,
   ITEM_STATUS,
@@ -1243,7 +1263,6 @@ class ItemRepository extends BaseModel {
         )
         .toArray();
       for (const cat of demoCats) {
-        // eslint-disable-next-line no-await-in-loop
         const remaining = await items.countDocuments({
           category_id: cat._id,
           'branch_access.branch_id': branch,
@@ -1256,7 +1275,6 @@ class ItemRepository extends BaseModel {
           del_status: { $nin: [1, '1', true] },
         });
         if (remaining === 0) {
-          // eslint-disable-next-line no-await-in-loop
           await cats.deleteOne({ _id: cat._id, license });
           categoriesRemoved++;
         }
@@ -1285,7 +1303,6 @@ class ItemRepository extends BaseModel {
         )
         .toArray();
       for (const u of demoUnits) {
-        // eslint-disable-next-line no-await-in-loop
         const remaining = await items.countDocuments({
           /* unit_id is an ObjectId on rows the seed wrote and a string on
              rows some editors write; matching one shape silently keeps or
@@ -1296,7 +1313,6 @@ class ItemRepository extends BaseModel {
           del_status: { $nin: [1, '1', true] },
         });
         if (remaining === 0) {
-          // eslint-disable-next-line no-await-in-loop
           await unitsCol.deleteOne({ _id: u._id, license });
           unitsRemoved++;
         }
@@ -1551,8 +1567,23 @@ class ItemRepository extends BaseModel {
         sort_order: parseInt(data.position, 10) || 0,
         description: (data.description || '').trim(),
         track_inventory: Boolean(data.inventory),
-        sales_channel: Boolean(data.sales_channel),
         ecommerce: Boolean(data.ecommerce),
+        /* Absent means shown. A menu whose default is "hidden" starts empty
+           and stays empty until somebody ticks every dish, which is not a
+           default anybody wants from a feature whose job is to list things. */
+        show_on_menu: data.show_on_menu !== false && data.show_on_menu !== 'false',
+        diet: onlineOrderingDiet(data.diet),
+        /* Ids into the shop's own serving periods. Empty means all day, which
+           is most of a menu. */
+        daypart_ids: Array.isArray(data.daypart_ids)
+          ? data.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
+          : [],
+        /* The kitchen's standing instruction for this dish, never the
+           customer's note - that rides on the order line. */
+        prep_note: String(data.prep_note || '')
+          .trim()
+          .slice(0, 200),
+        prep_minutes: Math.max(0, Math.min(480, Number(data.prep_minutes) || 0)),
         isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
@@ -2414,10 +2445,6 @@ class ItemRepository extends BaseModel {
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           stockCondition,
-          // sales_channel filter removed: it was implemented as a misused
-          // boolean, not the intended multi-channel (POS/kiosk/e-commerce)
-          // selector, so it silently hid items from New Sale. To be
-          // reintroduced as a proper channel model later.
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
       };
@@ -2545,7 +2572,6 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
-          { sales_channel: true },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ],
       };
@@ -2721,7 +2747,6 @@ class ItemRepository extends BaseModel {
         track_inventory: false,
         // Instant lines sell any quantity - stock never blocks them.
         negative_stock: true,
-        sales_channel: true,
         ecommerce: false,
         item_status: ITEM_STATUS.INSTANT,
       };
@@ -3127,283 +3152,6 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async accessKiosk(branchStoreId) {
-    try {
-      const branchCollection = await this.getCollection('branches');
-      const branchDoc = await branchCollection.findOne({
-        'kiosk.store_id': branchStoreId,
-      });
-
-      if (!branchDoc) {
-        return { status: false, message: 'Branch not found', data: null };
-      }
-
-      const collection = await this.getCollection(this.collectionName);
-      const filter = {
-        $and: [
-          { 'branch_access.branch_id': branchDoc._id },
-          { item_status: { $ne: ITEM_STATUS.INSTANT } },
-          { ecommerce: true },
-          { isAvailable: true },
-          { license: branchDoc.license },
-        ],
-      };
-
-      const pipeline = [
-        { $match: filter },
-        {
-          $group: {
-            _id: { category_id: '$category_id', category_name: '$category_name' },
-            items: {
-              $push: {
-                id: '$_id',
-                name: '$name',
-                price: '$selling_price',
-                discount_percentage: '$discount_percentage',
-                discount_amount: '$discount_amount',
-                tax: '$tax',
-                tax_type: '$tax_type',
-                img: '$image',
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            category_id: '$_id.category_id',
-            category_name: '$_id.category_name',
-            items: {
-              $map: {
-                input: '$items',
-                as: 'item',
-                in: {
-                  id: '$$item.id',
-                  name: '$$item.name',
-                  img: '$$item.img',
-                  // Selling price after discount (rounded to 2 decimals)
-                  price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $gt: ['$$item.discount_amount', 0] },
-                          then: { $subtract: ['$$item.price', '$$item.discount_amount'] },
-                          else: {
-                            $cond: {
-                              if: { $gt: ['$$item.discount_percentage', 0] },
-                              then: {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $multiply: [
-                                      '$$item.price',
-                                      { $divide: ['$$item.discount_percentage', 100] },
-                                    ],
-                                  },
-                                ],
-                              },
-                              else: '$$item.price',
-                            },
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Discount amount
-                  discount_price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $gt: ['$$item.discount_amount', 0] },
-                          then: '$$item.discount_amount',
-                          else: {
-                            $multiply: [
-                              '$$item.price',
-                              { $divide: ['$$item.discount_percentage', 100] },
-                            ],
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Tax price (calculated, not deducted)
-                  tax_price: {
-                    $round: [
-                      {
-                        $cond: {
-                          if: { $eq: ['$$item.tax_type', 'inclusive'] },
-                          then: {
-                            $multiply: [
-                              {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $cond: {
-                                      if: { $gt: ['$$item.discount_amount', 0] },
-                                      then: '$$item.discount_amount',
-                                      else: {
-                                        $multiply: [
-                                          '$$item.price',
-                                          { $divide: ['$$item.discount_percentage', 100] },
-                                        ],
-                                      },
-                                    },
-                                  },
-                                ],
-                              },
-                              { $divide: ['$$item.tax', { $add: [100, '$$item.tax'] }] },
-                            ],
-                          },
-                          else: {
-                            $multiply: [
-                              {
-                                $subtract: [
-                                  '$$item.price',
-                                  {
-                                    $cond: {
-                                      if: { $gt: ['$$item.discount_amount', 0] },
-                                      then: '$$item.discount_amount',
-                                      else: {
-                                        $multiply: [
-                                          '$$item.price',
-                                          { $divide: ['$$item.discount_percentage', 100] },
-                                        ],
-                                      },
-                                    },
-                                  },
-                                ],
-                              },
-                              { $divide: ['$$item.tax', 100] },
-                            ],
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                  // Final price shown to customer
-                  final_price: {
-                    $round: [
-                      {
-                        $let: {
-                          vars: {
-                            base: {
-                              $cond: {
-                                if: { $gt: ['$$item.discount_amount', 0] },
-                                then: { $subtract: ['$$item.price', '$$item.discount_amount'] },
-                                else: {
-                                  $cond: {
-                                    if: { $gt: ['$$item.discount_percentage', 0] },
-                                    then: {
-                                      $subtract: [
-                                        '$$item.price',
-                                        {
-                                          $multiply: [
-                                            '$$item.price',
-                                            { $divide: ['$$item.discount_percentage', 100] },
-                                          ],
-                                        },
-                                      ],
-                                    },
-                                    else: '$$item.price',
-                                  },
-                                },
-                              },
-                            },
-                          },
-                          in: {
-                            $cond: {
-                              if: { $eq: ['$$item.tax_type', 'exclusive'] },
-                              then: {
-                                $add: [
-                                  '$$base',
-                                  { $multiply: ['$$base', { $divide: ['$$item.tax', 100] }] },
-                                ],
-                              },
-                              else: '$$base',
-                            },
-                          },
-                        },
-                      },
-                      2,
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-      ];
-
-      const results = await collection.aggregate(pipeline).toArray();
-      const roundMoney = (value) => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
-      const normalizeQrItemPrice = (item) => {
-        const sellingPrice = Number(item.price || 0);
-        const tax = Number(item.tax || 0);
-        const discountAmount = Number(item.discount_amount || 0);
-        const discountPercentage = Number(item.discount_percentage || 0);
-        const isInclusive = item.tax_type === 'inclusive';
-        const basePrice = isInclusive && tax > 0 ? sellingPrice / (1 + tax / 100) : sellingPrice;
-        const discountPrice =
-          discountAmount > 0 ? discountAmount : basePrice * (discountPercentage / 100);
-        const taxableBase = basePrice - discountPrice;
-        const taxPrice = taxableBase * (tax / 100);
-        const finalPrice = isInclusive ? taxableBase * (1 + tax / 100) : taxableBase + taxPrice;
-
-        return {
-          ...item,
-          price: roundMoney(basePrice),
-          discount_price: roundMoney(discountPrice),
-          tax_price: roundMoney(taxPrice),
-          final_price: roundMoney(finalPrice),
-        };
-      };
-      results.forEach((category) => {
-        category.items = Array.isArray(category.items)
-          ? category.items.map(normalizeQrItemPrice)
-          : [];
-      });
-
-      // Get kiosk settings
-      let kioskImages = {};
-      let kioskPayment = {};
-      let kioskPrint = {};
-      if (branchDoc.kiosk) {
-        const kioskEntry = branchDoc.kiosk.find((k) => k.store_id === branchStoreId);
-        if (kioskEntry) {
-          kioskImages = {
-            logo: kioskEntry.logo || '',
-            banner: kioskEntry.banner || '',
-            homebanner: kioskEntry.homebanner || '',
-            advertisement: kioskEntry.advertisement || '',
-          };
-          kioskPayment = {
-            cod: kioskEntry.payment_cod || '',
-            razorpay: kioskEntry.payment_razorpay || '',
-            number: kioskEntry.payment_number || '',
-          };
-          kioskPrint = { printer_name: kioskEntry.printer_name || '' };
-        }
-      }
-
-      return {
-        status: true,
-        message: 'Get products details',
-        data: {
-          products: results,
-          kiosk_images: kioskImages,
-          kiosk_payment: kioskPayment,
-          kiosk_print: kioskPrint,
-        },
-      };
-    } catch (error) {
-      console.error('Error in ItemRepository.accessKiosk:', error);
-      return { status: false, message: error.message, data: null };
-    }
-  }
-
   async updateKioskStatus(id, status) {
     try {
       if (!id || !ObjectId.isValid(id)) {
@@ -3463,7 +3211,6 @@ class ItemRepository extends BaseModel {
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
         },
-        // sales_channel filter removed for New Sale (see getOnlineItemsAjaxList).
         { category_id: categoryObjectId },
       ];
 
@@ -3585,102 +3332,365 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async accessQr(params = {}) {
-    const projectType = params.projectType;
-    const branch = params.branch;
+  /**
+   * A shop's storefront: who it is, whether it is taking orders, and the menu.
+   *
+   * Addressed ONLY by the public store address. There used to be a fallback
+   * to the branch's raw database id, which appears in every authenticated
+   * response and is no secret - so a branch that had deliberately never
+   * opened a channel could still be read by anyone who had seen its id. The
+   * store address is the opt-in, and nothing else opens this door.
+   *
+   * A `projectType: 'stock'` variant used to answer from the same method
+   * with a second, narrower shape. Nothing sent it. It is gone rather than
+   * carried.
+   */
+  /**
+   * Which branch a storefront URL with no store address means.
+   *
+   * Most shops have one branch, and making every one of them print a code -
+   * in a URL and inside a QR code - to say which of their single branch they
+   * mean is friction paid by the many for the sake of the few. So `/order`
+   * resolves here, and only a shop with several branches has to be explicit.
+   *
+   * ORDER MATTERS. A setting the shop actually made beats anything inferred,
+   * because inference is a convenience and being overruled by a guess is how
+   * a chain ends up serving its second branch's menu at its main address.
+   *
+   * @returns {{storeId: string|null, reason: string}}
+   */
+  async defaultStoreId() {
+    const branchCollection = await this.getCollection('branches');
+    const configured = await branchCollection
+      .find(
+        { 'online_ordering.store_id': { $nin: [null, ''] } },
+        { projection: { _id: 1, branch_name: 1, 'online_ordering.store_id': 1 } }
+      )
+      .toArray();
 
-    // Helper: find branch by kiosk.store_id first, then fallback to _id
-    const findBranch = async () => {
-      const branchCollection = await this.getCollection('branches');
-      let doc = await branchCollection.findOne({ 'kiosk.store_id': branch });
-      if (!doc && ObjectId.isValid(branch)) {
-        doc = await branchCollection.findOne({ _id: new ObjectId(branch) });
-      }
-      if (!doc) {
-        const total = await branchCollection.countDocuments({});
-        const sample = await branchCollection
-          .find({}, { projection: { _id: 1, branch_name: 1, 'kiosk.store_id': 1 } })
-          .limit(5)
-          .toArray();
-      }
-      return { branchCollection, doc };
-    };
+    if (!configured.length) return { storeId: null, reason: 'none_configured' };
 
-    if (projectType === 'stock') {
-      try {
-        const { doc: branchDoc } = await findBranch();
-
-        if (!branchDoc) {
-          return { status: false, message: 'Branch not found', data: null };
-        }
-
-        const collection = await this.getCollection(this.collectionName);
-        const filter = {
-          $and: [
-            { 'branch_access.branch_id': branchDoc._id },
-            { item_status: { $ne: ITEM_STATUS.INSTANT } },
-            { license: branchDoc.license },
-          ],
-        };
-
-        const pipeline = [
-          { $match: filter },
-          {
-            $group: {
-              _id: {
-                category_id: '$category_id',
-                category_name: '$category_name',
-              },
-              items: {
-                $push: {
-                  id: '$_id',
-                  name: '$name',
-                  price: '$selling_price',
-                  discount_percentage: '$discount_percentage',
-                  discount_amount: '$discount_amount',
-                  tax: '$tax',
-                  tax_type: '$tax_type',
-                  img: '$image',
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              category_id: '$_id.category_id',
-              category_name: '$_id.category_name',
-              items: 1,
-            },
-          },
-        ];
-
-        const results = await collection.aggregate(pipeline).toArray();
-
-        return {
-          status: true,
-          message: 'Get products details',
-          data: { products: results },
-        };
-      } catch (error) {
-        console.error('Error in ItemRepository.accessQr (stock):', error);
-        return { status: false, message: error.message, data: null };
-      }
-    }
-    // Non-stock project: lookup branch (with ObjectId fallback) then return items
+    /* 1. What the shop chose. */
     try {
-      const { doc: branchDoc } = await findBranch();
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ online_ordering_default_store: { $nin: [null, ''] } });
+      const chosen = doc && String(doc.online_ordering_default_store).trim();
+      if (chosen && configured.some((b) => String(b.online_ordering?.store_id) === chosen)) {
+        return { storeId: chosen, reason: 'configured' };
+      }
+    } catch (e) {
+      /* No settings document yet is not an error - a new shop has none - so
+         fall through to the single-branch case, which is what it will be. */
+      console.warn('[storefront] could not read the default store setting:', e.message);
+    }
+
+    /* 2. Only one branch takes online orders, so there is nothing ambiguous
+       to resolve. */
+    if (configured.length === 1) {
+      return { storeId: String(configured[0].online_ordering.store_id), reason: 'only_one' };
+    }
+
+    /* 3. Several, and nobody said which. Refusing beats picking: showing a
+       customer the wrong branch's menu, prices and opening hours is worse
+       than telling them the address is incomplete. */
+    return { storeId: null, reason: 'ambiguous' };
+  }
+  /**
+   * The shop's public menu: what the kitchen cooks, for reading.
+   *
+   * NOT THE ORDERING CATALOGUE, and the difference is the point.
+   *
+   * `storefront` above answers with what can be ordered right now: items ticked
+   * for the online channel and currently available. A menu is a different
+   * document. A restaurant lists what it cooks, including the dish that is off
+   * tonight and the one priced at market rate, because a menu with holes in it
+   * reads as a restaurant that has run out of food.
+   *
+   * So this filters on `show_on_menu`, which defaults to true, and a shop
+   * excludes the handful of lines that are not dishes rather than opting each
+   * dish in one at a time.
+   *
+   * Sorted by the shop's own `sort_order` and then by name, so a menu reads in
+   * the order the shop arranged it rather than the order Mongo happened to
+   * return.
+   */
+  /**
+   * The shop's serving periods: breakfast, lunch, dinner.
+   *
+   * Stored with the other channel settings rather than per branch, because a
+   * chain serves breakfast at breakfast time everywhere. An empty list is the
+   * normal state - most shops serve everything all day - and costs one lookup.
+   */
+  async shopDayparts() {
+    try {
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ menu_dayparts: { $exists: true } });
+      return onlineOrdering.normalizeDayparts((doc && doc.menu_dayparts) || []);
+    } catch (e) {
+      /* No settings document yet is not an error, and a shop with no periods
+         serves everything all day - which is the safe answer either way. */
+      console.warn('[menu] could not read serving periods:', e.message);
+      return [];
+    }
+  }
+
+  /**
+   * The shop's partner venues: hotels, offices, anywhere not its own floor.
+   *
+   * Read from settings for the same reason the serving periods are: a chain
+   * ties up with a hotel as a business, not as one branch. An empty list is
+   * the normal state and costs one lookup.
+   */
+  async shopVenues() {
+    try {
+      const settings = await this.getCollection('settings');
+      const doc = await settings.findOne({ partner_venues: { $exists: true } });
+      return partnerVenues.normalizeVenues((doc && doc.partner_venues) || []);
+    } catch (e) {
+      /* No venues is the safe answer as well as the common one: house prices,
+         nothing owed to anybody. */
+      console.warn('[menu] could not read partner venues:', e.message);
+      return [];
+    }
+  }
+
+  async publicMenu(params = {}) {
+    const storeId = params.storeId;
+    try {
+      const branchCollection = await this.getCollection('branches');
+      const branchDoc = await branchCollection.findOne({
+        'online_ordering.store_id': storeId,
+      });
 
       if (!branchDoc) {
-        return { status: false, message: 'Branch not found', data: null };
+        return { status: false, message: 'No shop found at this address', data: null };
       }
 
-      const kioskEntry = Array.isArray(branchDoc.kiosk)
-        ? branchDoc.kiosk.find((entry) => String(entry?.store_id || '') === String(branch))
-        : branchDoc.kiosk && String(branchDoc.kiosk?.store_id || '') === String(branch)
-          ? branchDoc.kiosk
-          : null;
-      const hasKiosk = !!kioskEntry;
+      const config = onlineOrdering.storefront(branchDoc);
+      const collection = await this.getCollection(this.collectionName);
+
+      const match = {
+        $and: [
+          { 'branch_access.branch_id': branchDoc._id },
+          { item_status: { $ne: ITEM_STATUS.INSTANT } },
+          { license: branchDoc.license },
+          { del_status: { $nin: [1, '1', true] } },
+          { is_deleted: { $ne: true } },
+          /* Absent means shown. A shop that has never opened this screen still
+             gets a complete menu, which is the only sensible default for a
+             feature whose whole job is to list things. */
+          { show_on_menu: { $ne: false } },
+        ],
+      };
+
+      const rows = await collection
+        .find(match, {
+          projection: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            image: 1,
+            selling_price: 1,
+            discount_amount: 1,
+            discount_percentage: 1,
+            category_id: 1,
+            category_name: 1,
+            sort_order: 1,
+            diet: 1,
+            isAvailable: 1,
+            ecommerce: 1,
+            daypart_ids: 1,
+            prep_minutes: 1,
+          },
+        })
+        .sort({ sort_order: 1, name: 1 })
+        .toArray();
+
+      /*
+       * Which serving periods are running right now.
+       *
+       * Computed once for the whole menu rather than per dish, and in the
+       * BRANCH's timezone, because "is it lunchtime" is a question about where
+       * the kitchen is, not about where the customer is holding their phone.
+       */
+      const dayparts = await this.shopDayparts();
+
+      /*
+       * Which prices this reader sees.
+       *
+       * A menu printed for a hotel room has to show the price that room will
+       * actually be charged. Showing the house price and adding the markup at
+       * checkout is how a customer finds out about it at the worst possible
+       * moment - and a guest who feels overcharged complains to the hotel,
+       * which is the relationship this whole feature exists to protect.
+       */
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: params.table, venue: params.venue, unit: params.unit },
+        await this.shopVenues()
+      );
+
+      const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
+      const nowDay = localNow.day();
+      const nowMinutes = localNow.hours() * 60 + localNow.minutes();
+
+      /* Grouped here rather than on the page: the page should render what it
+         is given, and the grouping is the same work whoever does it. */
+      const byCategory = new Map();
+      for (const row of rows) {
+        const key = String(row.category_id || 'uncategorised');
+        if (!byCategory.has(key)) {
+          byCategory.set(key, {
+            id: key,
+            name: row.category_name || '',
+            items: [],
+          });
+        }
+        /*
+         * A dish outside its serving period is SHOWN, and told on.
+         *
+         * Hiding it makes a restaurant look like it does not serve breakfast
+         * at all. Someone reading the menu at four in the afternoon wants to
+         * know that breakfast exists and runs seven to eleven, which is a
+         * reason to come back rather than a dead end.
+         */
+        const timing = onlineOrdering.itemAvailability(row, dayparts, nowDay, nowMinutes);
+
+        byCategory.get(key).items.push({
+          id: String(row._id),
+          name: row.name || '',
+          description: row.description || '',
+          image: row.image || '',
+          price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
+          diet: String(row.diet || ''),
+          /* Shown on the menu but not orderable right now, for either reason:
+             the shop marked it unavailable, or it is not its time of day. The
+             page says which, because "we have it, not now" and "we have it,
+             not today" are different things to a customer. */
+          available: row.isAvailable !== false && timing.available,
+          /* The periods this dish belongs to, so the page can say "Breakfast
+             only" rather than leaving a greyed-out dish unexplained. */
+          served_in: timing.periods,
+          /* Roughly how long the kitchen needs. Zero means the shop has not
+             said, and the page shows nothing rather than guessing. */
+          prep_minutes: Number(row.prep_minutes) || 0,
+          /* Internal, stripped before the page sees it: only the category
+             ranking above needs it. */
+          _sort: Number(row.sort_order) || 0,
+        });
+      }
+
+      /*
+       * The order the sections appear in.
+       *
+       * This came out ALPHABETICAL at first, which put Breads before Starters:
+       * stable, and wrong in a way any restaurant would notice immediately.
+       * Categories carry no sort field of their own in this schema, so the
+       * order has to come from somewhere real rather than from the order Mongo
+       * happened to return the first item of each.
+       *
+       * The categories collection answers it. A shop creates Starters, then
+       * Mains, then Breads, then Desserts - it builds its menu in the order it
+       * thinks about the menu - and an ObjectId sorts by creation time, so
+       * creation order IS the shop's own order. A `sort_order` on the category
+       * wins where one exists, for a shop that has arranged them deliberately.
+       *
+       * A category that no longer exists sorts last rather than vanishing: a
+       * heading with dishes under it belongs on the menu whatever the
+       * categories collection thinks.
+       */
+      const categoryRank = new Map();
+      try {
+        const categoryCollection = await this.getCollection('categories');
+        const known = await categoryCollection
+          .find({}, { projection: { _id: 1, sort_order: 1 } })
+          .sort({ sort_order: 1, _id: 1 })
+          .toArray();
+        known.forEach((c, i) => categoryRank.set(String(c._id), i));
+      } catch (e) {
+        /* No categories collection is not an error - the fallback below is
+           still deterministic. */
+        console.warn('[menu] could not read category order:', e.message);
+      }
+
+      const categories = [...byCategory.values()]
+        .filter((c) => c.items.length)
+        .map((c) => ({
+          ...c,
+          _rank: categoryRank.has(c.id) ? categoryRank.get(c.id) : Number.MAX_SAFE_INTEGER,
+        }))
+        .sort((a, b) => a._rank - b._rank || String(a.name).localeCompare(String(b.name)))
+        .map(({ _rank, ...c }) => ({
+          ...c,
+          items: c.items.map(({ _sort, ...item }) => item),
+        }));
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          store: {
+            store_id: config?.store_id || '',
+            name: branchDoc.branch_name || branchDoc.name || '',
+            logo: config?.logo || '',
+            banner: config?.banner || '',
+            /* The shop's own currency symbol. Hardcoding a rupee sign is how
+               a menu in Nairobi prices its food in the wrong money. */
+            currency: branchDoc.currency_text || branchDoc.currency || '',
+          },
+          /* The channel state travels with the menu so the page can say "opens
+             at 6" without a second request, and so a shop that also takes
+             orders can offer that link from here. */
+          channel: onlineOrdering.channelState(config, {
+            timeZone: branchDoc.time_zone,
+          }),
+          /* Who is reading, where they are sitting, and whether these prices
+             are the house's. Null venue means the shop's own floor. */
+          service_point: {
+            label: servicePoint.label || '',
+            venue: servicePoint.venue
+              ? {
+                  code: servicePoint.venue.code,
+                  name: servicePoint.venue.name,
+                  unit_label: servicePoint.venue.unit_label,
+                  unit: servicePoint.unit || '',
+                }
+              : null,
+          },
+          categories,
+          item_count: rows.length,
+        },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.publicMenu:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  async storefront(params = {}) {
+    const storeId = params.storeId;
+    try {
+      const branchCollection = await this.getCollection('branches');
+      const branchDoc = await branchCollection.findOne({
+        'online_ordering.store_id': storeId,
+      });
+
+      if (!branchDoc) {
+        return { status: false, message: 'No shop found at this address', data: null };
+      }
+
+      const config = onlineOrdering.storefront(branchDoc);
+
+      /*
+       * The menu is the items the shop ticked for the online channel, and
+       * nothing else.
+       *
+       * This narrowing used to apply only when the caller named the STORE
+       * ADDRESS: the same branch reached by its database id answered with the
+       * whole catalogue instead, back-of-house lines included. One public
+       * endpoint must not hold two ideas of what is public, and there is only
+       * one way in now anyway.
+       */
+      const hasKiosk = onlineOrdering.hasStoreId(config);
       const collection = await this.getCollection(this.collectionName);
 
       const baseFilter = [
@@ -3831,6 +3841,61 @@ class ItemRepository extends BaseModel {
 
       const results = await collection.aggregate(pipeline).toArray();
 
+      /*
+       * The prices THIS service point pays.
+       *
+       * Done in JavaScript after the aggregation rather than inside it. The
+       * pipeline derives four numbers from the selling price - the price, the
+       * discount, the tax and the final - and threading a markup through all
+       * four in aggregation syntax would be four chances to get it subtly
+       * wrong, in a language nobody can step through.
+       *
+       * Only the SELLING PRICE is marked up. A fixed discount of 20 stays 20,
+       * exactly as the order endpoint treats it, because the two must agree to
+       * the paisa: a page that quotes one total and a server that charges
+       * another is the single worst bug this feature can have.
+       */
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: params.table, venue: params.venue, unit: params.unit },
+        await this.shopVenues()
+      );
+
+      if (servicePoint.venue) {
+        const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
+        for (const group of results) {
+          group.items = (group.items || []).map((item) => {
+            const price = partnerVenues.priceFor(item.price, servicePoint.venue);
+            const fixed = Number(item.discount_amount) || 0;
+            const discount = money(
+              fixed > 0 ? fixed : price * ((Number(item.discount_percentage) || 0) / 100)
+            );
+            const taxable = price - discount;
+            const rate = (Number(item.tax) || 0) / 100;
+            const taxPrice = item.tax_type === 'inclusive' ? 0 : money(taxable * rate);
+            return {
+              ...item,
+              price,
+              discount_price: discount,
+              tax_price: taxPrice,
+              final_price: money(item.tax_type === 'exclusive' ? taxable + taxPrice : taxable),
+            };
+          });
+        }
+      }
+
+      /* What a customer pays on top of the food, so the page can show a
+         delivery fee and a free-delivery threshold before checkout rather
+         than surprising somebody with it at the last step. */
+      let charges = {};
+      try {
+        const settings = await this.getCollection('settings');
+        const doc = await settings.findOne({ channel_charges: { $exists: true } });
+        charges = salesChannels.normalizeCharges((doc && doc.channel_charges) || {});
+      } catch (e) {
+        console.warn('[storefront] could not read charges:', e.message);
+        charges = salesChannels.normalizeCharges({});
+      }
+
       // Fetch configured tables for this branch/license
       let tableorders = [];
       try {
@@ -3848,33 +3913,82 @@ class ItemRepository extends BaseModel {
           tableorder_fields: doc.tableorder_fields || [],
         }));
       } catch (e) {
-        console.warn('[accessQr] Failed to fetch tableorders:', e.message);
+        console.warn('[storefront] Failed to fetch tableorders:', e.message);
       }
 
       return {
         status: true,
-        message: 'Get products details',
+        message: 'OK',
         data: {
+          /* Who the shop is, as the customer sees it. */
+          store: {
+            store_id: config?.store_id || '',
+            name: branchDoc.branch_name || branchDoc.name || '',
+            logo: config?.logo || '',
+            banner: config?.banner || '',
+            homebanner: config?.homebanner || '',
+            advertisement: config?.advertisement || '',
+          },
+          /*
+           * What the page is allowed to do, decided here rather than on the
+           * phone. The customer's clock can be wrong or set deliberately, so
+           * "are we open" is never computed in the browser. The page renders
+           * what it is told; the order endpoint runs the same computation
+           * again before it accepts anything.
+           */
+          channel: onlineOrdering.channelState(config, {
+            timeZone: branchDoc.time_zone,
+          }),
           products: results,
-          kiosk_images: {
-            logo: kioskEntry?.logo || '',
-            banner: kioskEntry?.banner || '',
-            homebanner: kioskEntry?.homebanner || '',
-            advertisement: kioskEntry?.advertisement || '',
-          },
-          kiosk_payment: {
-            cod: kioskEntry?.payment_cod || '',
-            razorpay: kioskEntry?.payment_razorpay || '',
-            number: kioskEntry?.payment_number || '',
-          },
-          kiosk_print: {
-            printer_name: kioskEntry?.printer_name || '',
-          },
           tableorders,
+          /*
+           * Where this customer is sitting, and whether the prices above are
+           * the house's. The page shows the destination at checkout and lets
+           * it be corrected - a guest can photograph the code in room 123 and
+           * send it to a friend in 456, and the food should follow the guest
+           * rather than the link.
+           */
+          service_point: {
+            label: servicePoint.label || '',
+            venue: servicePoint.venue
+              ? {
+                  code: servicePoint.venue.code,
+                  name: servicePoint.venue.name,
+                  unit_label: servicePoint.venue.unit_label,
+                  unit: servicePoint.unit || '',
+                  ask_floor: servicePoint.venue.ask_floor === true,
+                  address: servicePoint.venue.address || '',
+                  delivery_note: servicePoint.venue.delivery_note || '',
+                }
+              : null,
+          },
+          charges,
+          /*
+           * Which ways a customer may pay. Public, because the page cannot
+           * draw a checkout without knowing them, and safe to be public
+           * because these are on/off flags - there is no key or secret among
+           * them.
+           *
+           * Coerced to real booleans. They have been stored as the STRINGS
+           * 'true' and 'false' at different times, and the string 'false' is
+           * truthy, so a page testing the raw value would offer a payment
+           * method the shop had switched off.
+           */
+          payment: {
+            cod: config?.payment_cod === true || config?.payment_cod === 'true',
+            razorpay: config?.payment_razorpay === true || config?.payment_razorpay === 'true',
+            number: config?.payment_number === true || config?.payment_number === 'true',
+          },
+          /* Device-only: which printer the shop's own terminal sends its
+             ticket to. Meaningless to a customer's phone, so it leaves only
+             through the door that costs this installation's kiosk key. */
+          print: {
+            printer_name: config?.printer_name || '',
+          },
         },
       };
     } catch (error) {
-      console.error('Error in ItemRepository.accessQr (non-stock):', error);
+      console.error('Error in ItemRepository.storefront:', error);
       return { status: false, message: error.message, data: null };
     }
   }
@@ -3887,7 +4001,6 @@ class ItemRepository extends BaseModel {
       const filter = {
         'branch_access.branch_id': branchObjectId,
         item_status: { $ne: ITEM_STATUS.INSTANT },
-        sales_channel: true,
       };
 
       const items = await collection
@@ -5071,7 +5184,6 @@ class ItemRepository extends BaseModel {
               : 999999,
           description: '',
           track_inventory: true,
-          sales_channel: true,
           ecommerce: false,
           negative_stock: false,
           updated_date: now,
@@ -5088,7 +5200,7 @@ class ItemRepository extends BaseModel {
              image/multi_image (the export has no image column, so a CSV can
              never carry one - overwriting them is exactly the bug), the
              created_* provenance, and the behaviour flags (track_inventory,
-             item_status, sales_channel, ecommerce, negative_stock,
+             item_status, ecommerce, negative_stock,
              description) which the CSV does not include and must not be reset
              to their insert-time defaults. */
           const setFields = {

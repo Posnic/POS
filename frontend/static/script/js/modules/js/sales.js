@@ -1257,7 +1257,7 @@
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
             '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax" data-t-title="lang_edit_price_qty_discount_tax"><i class="feather icon-edit-2"></i></a>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
+            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
             '    <td name ="addSalesLineItemUnit" id="addSalesLineItemUnit_' + id + '" class="text-center">' + item_unit + '</td>' +
             '    <td name ="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="font_size14" ' + kotHideStyle + '>' + mrpPrice.toFixed(2) + inlinePrice + '</td>' +
@@ -5272,7 +5272,7 @@ PosnicPro.sales.quantity = {
         }
         item_Unit = (typeof (item_Unit) != "undefined" && item_Unit !== null) ? item_Unit : "qty";
         var rowHTMLLine = '<tr id="touch_row_return_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-            '    <td id="returnSalesLineItemName_' + id + '" data-id="' + item_name + '" class="font_size14" width="30%">' + item_name + '</td>' +
+            '    <td id="returnSalesLineItemName_' + id + '" data-id="' + PosnicPro.escapeHtml(item_name) + '" class="font_size14" width="30%">' + PosnicPro.escapeHtml(item_name) + '</td>' +
             '    <td id="returnSalesLineItemQty_' + id + '" class="text-center font_size14">' + item_quantity + '</td>' +
             '    <td name ="returnSalesLineItemUnit" id="returnSalesLineItemUnit_' + id + '">' + item_Unit + '</td>' +
             '    <td id="returnSalesLineItemPrice_' + id + '" class="text-center font_size14">' + price.toFixed(2) + '</td>' +
@@ -5462,7 +5462,7 @@ PosnicPro.sales.quantity = {
             '</div>';
         var removeLineItem = '<button type="button" class="btn-danger-rgba mb-1" onclick="PosnicPro.sales.quantity.removeReturnsalesLineRowItems(\'' + id + '\');" aria-label="Move to returns" data-t-aria-label="lang_move_to_returns"><i class="feather icon-arrow-right-circle"></i></button>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + item_name + '" width="30%">' + item_name + '</td>' +
+            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" width="30%">' + PosnicPro.escapeHtml(item_name) + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
             '    <td name ="addSalesLineItemUnit" id="addSalesLineItemUnit_' + id + '">' + item_Unit + '</td>' +
             '    <td name ="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="text-center font_size14">' + itemLineprice + '</td>' +
@@ -5638,7 +5638,7 @@ PosnicPro.sales.quantity = {
             item_Unit = (typeof (item_Unit) != "undefined" && item_Unit !== null) ? item_Unit : "qty";
             $('#addSalesLineTotal_' + id).text(updateSalesLineTotal);
             var rowHTMLLine = '<tr id="touch_row_return_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-                '    <td id="returnSalesLineItemName_' + id + '" class="font_size14" width="30%">' + item_name + '</td>' +
+                '    <td id="returnSalesLineItemName_' + id + '" class="font_size14" width="30%">' + PosnicPro.escapeHtml(item_name) + '</td>' +
                 '    <td id="returnSalesLineItemQty_' + id + '" class="text-center font_size14">' + item_return_all_quantity + '</td>' +
                 '    <td name ="returnSalesLineItemUnit" id="returnSalesLineItemUnit_' + id + '">' + item_Unit + '</td>' +
                 '    <td id="returnSalesLineItemPrice_' + id + '" class="text-center font_size14">' + itemLineprice + '</td>' +
@@ -5759,7 +5759,7 @@ PosnicPro.sales.quantity = {
         }
         item_unit = (typeof (item_unit) != "undefined" && item_unit !== null) ? item_unit : "qty";
         var rowHTMLLine = '<tr id="touch_row_return_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-            '    <td id="returnSalesLineItemName_' + id + '" class="font_size14" width="30%">' + item_name + '</td>' +
+            '    <td id="returnSalesLineItemName_' + id + '" class="font_size14" width="30%">' + PosnicPro.escapeHtml(item_name) + '</td>' +
             '    <td id="returnSalesLineItemQty_' + id + '" class="text-center font_size14">' + item_quantity + '</td>' +
             '    <td id="returnSalesLineItemUnit_' + id + '" class="text-center font_size14">' + item_unit + '</td>' +
             '    <td id="returnSalesLineItemPrice_' + id + '" class="text-center font_size14">' + item_price + '</td>' +

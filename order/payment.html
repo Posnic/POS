@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+
+        Pinned to the mount rather than left to the arriving URL, so one file
+        serves the shop address, a table and a venue alike.
+    -->
+    <base href="/order/" />
+    <title>QR Payment</title>
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <script src="assets/jquery-3.6.0.min.js"></script>
+    <script src="config.js"></script>
+    <link href="assets/channel-state.css" rel="stylesheet">
+    <script src="assets/channel-state.js"></script>
+    <script src="assets/service-point.js"></script>
+    <script src="assets/kiosk-core.js"></script>
+    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
+    <link href="assets/payment/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Loader shown on button click -->
+    <div id="page-loader-overlay" style="display: none;">
+        <div class="payment-loader-card" role="status" aria-live="polite">
+            <div class="loader"></div>
+            <div class="payment-loader-title">Preparing payment</div>
+            <div class="payment-loader-message">Please wait and do not close this page.</div>
+        </div>
+    </div>
+
+    <div class="fullscreen-wrapper" id="mobile-wrapper" style="display: none;">
+        <div class="payment-box">
+            <div class="header-text">RECEIPT</div>
+            <input type="text" id="mobile-fullnumber" class="mobile-input" placeholder="Enter Mobile Number"
+                maxlength="10" readonly style="display: none;">
+            <div id="mobile-number" class="mobile-display">Enter Mobile Number</div>
+            <div class="keypad">
+                <button onclick="addNumber(1)">1</button>
+                <button onclick="addNumber(2)">2</button>
+                <button onclick="addNumber(3)">3</button>
+                <button onclick="addNumber(4)">4</button>
+                <button onclick="addNumber(5)">5</button>
+                <button onclick="addNumber(6)">6</button>
+                <button onclick="addNumber(7)">7</button>
+                <button onclick="addNumber(8)">8</button>
+                <button onclick="addNumber(9)">9</button>
+                <button onclick="clearNumber()">C</button>
+                <button onclick="addNumber(0)">0</button>
+                <button onclick="deleteNumber()">&#x232B;</button>
+            </div>
+            <button class="proceed-btn" id="proceed-btn" onclick="submitRazorPayMobile()" disabled>PROCEED TO
+                PAYMENT</button>
+            <button class="back-btn" onclick="window.location.href='cart.html'">BACK TO CART</button>
+        </div>
+    </div>
+    <!-- Alert Section -->
+    <div id="alertBox" class="kiosk-alert d-none">
+        <div class="alert-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div id="alertText" class="alert-message">
+            Something went wrong. Please try again.
+        </div>
+        <div class="alert-actions">
+            <button class="back-btn" onclick="window.location.href='cart.html'">
+                BACK TO CART
+            </button>
+        </div>
+    </div>
+
+    <script src="assets/payment/script.js?v=20260709-fastrefresh"></script>
+</body>
+
+</html>

@@ -1,0 +1,233 @@
+function getSessionReceipt() {
+    try {
+        const storedReceipt = sessionStorage.getItem("kioskReceipt");
+        return storedReceipt ? JSON.parse(storedReceipt) : null;
+    } catch (error) {
+        console.error("Invalid receipt data in session storage:", error);
+        sessionStorage.removeItem("kioskReceipt");
+        return null;
+    }
+}
+
+const receiptData = getSessionReceipt();
+const orderType = localStorage.getItem("orderType");
+
+// Get the current URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const urlToken = urlParams.get("token");
+const receiptToken = receiptData?.tokenId ?? receiptData?.token_id ?? receiptData?.token;
+const hasValidReceiptAccess = Boolean(
+    receiptData &&
+    urlToken &&
+    receiptToken &&
+    String(urlToken) === String(receiptToken)
+);
+
+if (!hasValidReceiptAccess) {
+    sessionStorage.removeItem("kioskReceipt");
+    localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
+    window.location.replace("access-denied.html");
+}
+
+async function renderAndPrint() {
+    if (!hasValidReceiptAccess || !receiptData?.items) {
+        document.body.innerHTML = "<p style='text-align:center'>No receipt data found.</p>";
+        return;
+    }
+
+    const token = String(receiptToken || receiptData.tokenId || "000");
+
+    // ✅ Prevent re-downloading for same token
+    const printedFlagKey = `printed_${token}`;
+    if (sessionStorage.getItem(printedFlagKey) === "true") {
+        console.log("🛑 PDF already downloaded for token:", token);
+        return;
+    }
+
+    const formatted = new Date().toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+
+    $("#branch-name").text(receiptData.branch_name || "POS");
+    $("#orderDate").text(formatted);
+    $("#orderTime").text(formatted);
+    $("#token-id").text(token);
+    $("#tokenId").text(token);
+    $("#paymentTypePrint").text(receiptData.payment_status || receiptData.paymentStatus || "Cash");
+
+    const itemsContainer = document.getElementById("items");
+
+    itemsContainer.innerHTML = `
+        <div class="item header-row">        
+            <div class="item-name">Item Name</div>
+            <div class="item-qty">Qty</div>
+            <div class="item-amt">Amount</div>
+        </div>
+    `;
+
+    receiptData.items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const qty = item.item_quantity || 1;
+        const totalTax = item.item_tax || 0;
+
+        let discount = 0;
+        if (item.item_discount && item.item_discount > 0) {
+            discount = item.item_discount;
+        } else if (item.item_discount_percentage && item.item_discount_percentage > 0) {
+            discount = item.item_discount_percentage;
+        }
+
+        const itemTax = totalTax / qty;
+        const itemDisc = discount / qty;
+        const totalLine = `₹${item.item_total.toFixed(2)}`;
+
+        const subInfoParts = [];
+        subInfoParts.push(`₹${item.item_base_price.toFixed(2)}`);
+        if (itemTax > 0) subInfoParts.push(`₹${itemTax.toFixed(2)} tax`);
+        if (itemDisc > 0) subInfoParts.push(`-₹${itemDisc.toFixed(2)} disc`);
+
+        const itemName = document.createElement("div");
+        itemName.className = "item-name";
+        itemName.appendChild(document.createTextNode(String(item.item_name ?? "Unknown")));
+
+        if (subInfoParts.length) {
+            const subInfo = document.createElement("div");
+            subInfo.className = "sub-info";
+            subInfo.textContent = subInfoParts.join(" | ");
+            itemName.appendChild(subInfo);
+        }
+
+        const itemQuantity = document.createElement("div");
+        itemQuantity.className = "item-qty";
+        itemQuantity.textContent = String(qty);
+
+        const itemAmount = document.createElement("div");
+        itemAmount.className = "item-amt";
+        itemAmount.textContent = totalLine;
+
+        row.append(itemName, itemQuantity, itemAmount);
+        itemsContainer.appendChild(row);
+    });
+
+    $("#subtotal").text(`₹${receiptData.subtotal.toFixed(2)}`);
+    $("#discount").text(`-₹${receiptData.discount.toFixed(2)}`);
+    $("#tax").text(`₹${receiptData.tax.toFixed(2)}`);
+    $("#total").text(`₹${receiptData.total.toFixed(2)}`);
+    $("#orderTypePrint").text(orderType);
+
+    // ✅ Generate PDF after 1s
+    setTimeout(async () => {
+        try {
+            await generatePdfFromHtmlFile();
+            sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
+        } catch (error) {
+            console.error("Receipt PDF generation failed:", error);
+            alert(error.message || "Receipt PDF could not be generated.");
+        }
+    }, 1000);
+}
+
+
+async function generatePdfFromHtmlFile() {
+
+    // 1. Fetch the HTML file content
+    const response = await fetch('receipt.html');
+    if (!response.ok) {
+        throw new Error(`Receipt template failed to load (${response.status} ${response.statusText}).`);
+    }
+    const htmlContent = await response.text();
+
+    const parser = new DOMParser();
+    const externalDoc = parser.parseFromString(htmlContent, 'text/html');
+    const $externalDoc = $(externalDoc);
+
+    // Use jQuery to find and update the elements
+    $externalDoc.find('#branchName').text(receiptData.branch_name);
+    $externalDoc.find('#orderToken').text(receiptData.tokenId);
+    $externalDoc.find('#orderDate').text(new Date().toLocaleString());
+    $externalDoc.find('#orderTypePrint').text(orderType);
+    $externalDoc.find('#subtotal').text("₹" + receiptData.subtotal.toFixed(2));
+    $externalDoc.find('#discount').text("-₹" + receiptData.discount.toFixed(2));
+    $externalDoc.find('#tax').text("₹" + receiptData.tax.toFixed(2));
+    $externalDoc.find('#total').text("₹" + receiptData.total.toFixed(2));
+
+    const $itemsBody = $externalDoc.find('#items-body');
+
+    // Add item rows
+    receiptData.items.forEach(item => {
+        const totalTax = item.item_tax || 0;
+        let discount = 0;
+        if (item.item_discount && item.item_discount > 0) {
+            discount = item.item_discount;
+        } else if (item.item_discount_percentage && item.item_discount_percentage > 0) {
+            discount = item.item_discount_percentage;
+        }
+        const total = item.item_total * item.item_quantity;
+        const quantity = item.item_quantity || 0;
+        const itemTax = totalTax / quantity;
+        const itemDisc = discount / quantity;
+        const $tr = $("<tr>");
+        $("<td>").text(String(item.item_name ?? "Unknown")).appendTo($tr);
+        $("<td>").addClass("right").text(`₹${item.item_base_price.toFixed(2)}`).appendTo($tr);
+        $("<td>").addClass("right").text(`₹${itemTax.toFixed(2)}`).appendTo($tr);
+        $("<td>").addClass("right").text(`-₹${itemDisc.toFixed(2)}`).appendTo($tr);
+        $("<td>").addClass("right").text(String(quantity)).appendTo($tr);
+        $("<td>").addClass("right").text(`₹${item.item_total.toFixed(2)}`).appendTo($tr);
+        $itemsBody.append($tr);
+    });
+
+    // Total items and total quantity
+    if (receiptData.items) {
+        $externalDoc.find('#totalItems').text(receiptData.items.length);
+        const totalQty = receiptData.items.reduce((sum, item) => sum + item.item_quantity, 0);
+        $externalDoc.find('#totalQty').text(totalQty);
+    }
+
+    const updatedHtml = externalDoc.documentElement.outerHTML;
+
+    // 2. Create a temporary element to hold the content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = updatedHtml;
+    // tempDiv.style.display = 'none';
+    document.body.appendChild(tempDiv);
+
+    // 3. PDF options
+    const opt = {
+        margin: 10,
+        filename: 'receipt.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+    };
+
+    // 4. Generate and download PDF
+    await html2pdf().set(opt).from(tempDiv).save();
+
+    // ✅ Step 1: Set the printed flag
+    sessionStorage.setItem("kioskReceiptPrinted", "true");
+
+    // 5. Clean up
+    document.body.removeChild(tempDiv);
+}
+
+if (hasValidReceiptAccess) {
+    document.addEventListener("DOMContentLoaded", renderAndPrint);
+}
+function clearReceiptAndGo(url) {
+    if (receiptToken) sessionStorage.removeItem(`printed_${String(receiptToken)}`);
+    sessionStorage.removeItem("kioskReceiptPrinted");
+    sessionStorage.removeItem("kioskReceipt");
+    sessionStorage.removeItem("kiosk_mobile_number");
+    sessionStorage.removeItem("qr_id");
+    localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
+    localStorage.removeItem("kiosk_mobile_number");
+    localStorage.removeItem("qr_id");
+    window.location.href = url;
+}

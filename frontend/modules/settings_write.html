@@ -2570,7 +2570,7 @@
                                             <div class="module-subs">
                                                 <div class="custom-control custom-switch">
                                                     <input type="checkbox" class="custom-control-input" id="module_channels_kiosk_enable" name="module_channels_kiosk_enable">
-                                                    <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk">Kiosk</lang></label>
+                                                    <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk_and_online">Kiosk and online ordering</lang></label>
                                                 </div>
                                             </div>
                                         </div>
@@ -4746,6 +4746,11 @@
                                             <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"
                                                 role="tablist">
                                                 <li class="nav-item">
+                                                    <a class="nav-link" id="channels-tab-line" data-toggle="tab"
+                                                        href="#channels-line" role="tab"
+                                                        aria-controls="channels-line" aria-selected="false"><i class="feather icon-share-2 mr-1"></i><lang class="lang_channels_tab">Channels</lang></a>
+                                                </li>
+                                                <li class="nav-item">
                                                     <a class="nav-link active" id="kioskaccount-tab-line"
                                                         data-toggle="tab" href="#kioskaccount-line" role="tab"
                                                         aria-controls="kioskaccount-line"
@@ -4769,6 +4774,114 @@
                                                 </li>
                                             </ul>
                                             <div class="tab-content" id="defaultTabContentLine">
+                                                <div class="tab-pane fade" id="channels-line" role="tabpanel"
+                                                    aria-labelledby="channels-tab-line">
+                                                    <form class="validate" method="POST" name="sales_channels_form"
+                                                        id="sales_channels_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-body loader-view-saleschannels">
+                                                                <h6 class="mb-2"><lang class="lang_channels_in_use">Ways this shop takes orders</lang></h6>
+                                                                <div class="form-row" id="sales_channels_list"></div>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    Serving periods. Defined once here;
+                                                                    each dish says which it belongs to.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_serving_periods">Serving periods</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
+                                                                </small>
+                                                                <div id="menu_daypart_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
+                                                                </button>
+                                                                <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
+                                                                    <lang class="lang_use_usual_periods">Use the usual three</lang>
+                                                                </button>
+
+                                                                <hr class="my-3">
+
+                                                                <h6 class="mb-1"><lang class="lang_default_branch">Default branch</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_default_branch_help">The store address a plain /order link means. Leave empty if you have one branch.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-4">
+                                                                        <label for="online_ordering_default_store"><lang class="lang_default_store_address">Store address</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="online_ordering_default_store"
+                                                                            autocomplete="off"
+                                                                            pattern="^[A-Za-z0-9]{3,6}$" maxlength="6">
+                                                                    </div>
+                                                                </div>
+
+                                                                <hr class="my-3">
+
+                                                                <h6 class="mb-1"><lang class="lang_channel_partners">Partners</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
+                                                                </small>
+                                                                <div id="sales_channel_partner_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add partner</lang>
+                                                                </button>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    Hotels, offices, anywhere that is not this shop's own floor.
+
+                                                                    The code is what a printed QR carries
+                                                                    (/order/AZ100/venue/RC/123), so it has to outlive a
+                                                                    rename of the building. Markup and commission are two
+                                                                    numbers on purpose: a shop may mark up 12 and pay 10.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_partner_venues">Hotels and other venues</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
+                                                                </small>
+                                                                <div id="partner_venue_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
+                                                                </button>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    Fees, keyed by how the food gets there rather than by
+                                                                    which app the order came through. A delivery charge is
+                                                                    not a property of "online".
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
+                                                                </small>
+                                                                <div id="channel_charge_rows"></div>
+
+                                                                <hr class="my-3">
+
+                                                                <h6 class="mb-1"><lang class="lang_order_approval">New online orders</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_order_approval_help">Send straight to the kitchen, or hold each order until somebody accepts it. Holding raises an alarm on the till so a waiting order is not missed.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_approval"><lang class="lang_when_an_order_arrives">When an order arrives</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_approval">
+                                                                            <option value="auto"><lang class="lang_order_approval_auto">Send to the kitchen straight away</lang></option>
+                                                                            <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-footer text-right">
+                                                            <button type="submit" class="btn btn-outline-primary"><i
+                                                                    class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang></button>
+                                                        </div>
+                                                    </form>
+                                                </div>
                                                 <div class="tab-pane fade show active" id="kioskaccount-line"
                                                     role="tabpanel" aria-labelledby="kioskaccount-tab-line">
                                                     <form class="validate" method="POST" name="kioskaccount_form"
@@ -4802,6 +4915,64 @@
 
                                                                     </div>
                                                                 </div> -->
+
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-9">
+                                                                        <label for="kiosk_mode"><lang class="lang_online_ordering_mode">What this page is for</lang></label>
+                                                                        <select class="form-control border-control" id="kiosk_mode" name="kiosk_mode">
+                                                                            <option value="order"><lang class="lang_online_ordering_mode_order">Take orders</lang></option>
+                                                                            <option value="menu"><lang class="lang_online_ordering_mode_menu">Show the menu only</lang></option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_online_ordering_mode_help">Menu only shows prices and items with no cart. Customers order at the counter.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!--
+                                                                    Pause is a time, never a switch. A switch flipped
+                                                                    during a Friday rush is still off on Tuesday and
+                                                                    nobody can say why the orders stopped.
+                                                                -->
+                                                                <div class="form-row kiosk-ordering-only">
+                                                                    <div class="form-group col-9">
+                                                                        <label><lang class="lang_online_ordering_pause">Taking orders right now</lang></label>
+                                                                        <div id="kiosk_pause_status" class="mb-2 text-muted"></div>
+                                                                        <div class="btn-group" role="group">
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="30"><lang class="lang_online_ordering_pause_30">30 min</lang></button>
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="60"><lang class="lang_online_ordering_pause_60">1 hour</lang></button>
+                                                                            <button type="button" class="btn btn-outline-secondary btn-sm kiosk-pause-btn" data-minutes="0"><lang class="lang_online_ordering_pause_today">Rest of today</lang></button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="kiosk_pause_resume"><lang class="lang_online_ordering_resume">Resume now</lang></button>
+                                                                        </div>
+                                                                        <div class="mt-2">
+                                                                            <!--
+                                                                                One click, for the moment the
+                                                                                kitchen is under water. Stops
+                                                                                for TODAY, not for ever: a
+                                                                                switch with no end is one
+                                                                                somebody finds still off on
+                                                                                Tuesday.
+                                                                            -->
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm" id="stop_taking_orders">
+                                                                                <i class="feather icon-pause-circle mr-1"></i><lang class="lang_stop_taking_orders">Stop taking orders</lang>
+                                                                            </button>
+                                                                        </div>
+                                                                        <input type="hidden" id="kiosk_paused_until" name="kiosk_paused_until">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-row kiosk-ordering-only">
+                                                                    <div class="form-group col-12">
+                                                                        <div class="custom-control custom-checkbox mb-2">
+                                                                            <input type="checkbox" class="custom-control-input" id="kiosk_hours_enable" name="kiosk_hours_enable">
+                                                                            <label class="custom-control-label" for="kiosk_hours_enable"><lang class="lang_online_ordering_hours">Only take orders during set hours</lang></label>
+                                                                        </div>
+                                                                        <div id="kiosk_hours_grid" class="kiosk-hours-grid"></div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_online_ordering_hours_help">Leave a day empty to stay closed that day. A closing time earlier than the opening time means it closes the next morning.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="card-footer text-right">

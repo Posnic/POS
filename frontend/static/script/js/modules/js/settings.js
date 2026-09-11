@@ -921,6 +921,8 @@ var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
 var store_id = kioskData.store_id || "";
 $("#kioskstore_id").val(store_id);
 
+PosnicPro.settings.onlineOrdering.load(kioskData);
+
 // ----- Kiosk printers: build rows from array -----
 var printers = [];
 
@@ -1470,6 +1472,156 @@ if ($wrapper.length) {
         });
         return false;
     },
+    /*
+     * Online ordering: what the page is for, whether it is paused, and when it
+     * is open.
+     *
+     * All three ride on the kiosk account form, so they save through the door
+     * that already existed rather than a new endpoint. The server normalises
+     * everything again - this is a form, not a validator.
+     */
+    onlineOrdering: {
+        /*
+         * Labels as <lang> markup, not t(), the same as
+         * PosnicPro.dashboard.SETUP_CARDS.
+         *
+         * This object is built when the module loads. A t() call here runs
+         * while PosnicPro is still being assembled, so the name is not bound
+         * yet and the rest of the file never executes - the outage
+         * tests/i18n.test.js was written for. It is wrong even where it does
+         * not throw, because it resolves before any pack has arrived and
+         * freezes English into the object. The rows are drawn as HTML, so the
+         * observer translates them on screen instead.
+         */
+        DAYS: [
+            { key: 'mon', label: '<lang class="lang_monday">Monday</lang>' },
+            { key: 'tue', label: '<lang class="lang_tuesday">Tuesday</lang>' },
+            { key: 'wed', label: '<lang class="lang_wednesday">Wednesday</lang>' },
+            { key: 'thu', label: '<lang class="lang_thursday">Thursday</lang>' },
+            { key: 'fri', label: '<lang class="lang_friday">Friday</lang>' },
+            { key: 'sat', label: '<lang class="lang_saturday">Saturday</lang>' },
+            { key: 'sun', label: '<lang class="lang_sunday">Sunday</lang>' }
+        ],
+
+        /* Minutes past midnight is what the server stores; the inputs are
+           <input type="time">, which speaks "HH:MM". */
+        toClock: function (minutes) {
+            if (minutes === null || minutes === undefined || minutes === '') return '';
+            if (typeof minutes === 'string') return minutes;
+            var n = Number(minutes);
+            if (!isFinite(n)) return '';
+            var h = Math.floor(n / 60) % 24;
+            var m = Math.trunc(n) % 60;
+            return ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+        },
+
+        /*
+         * Two windows a day, because that is the shape of a working day here:
+         * lunch and dinner. One pair per day cannot express it, and a shop
+         * that needs three can say so and we will widen the row - the stored
+         * format is already a list.
+         */
+        renderGrid: function (hours) {
+            var self = PosnicPro.settings.onlineOrdering;
+            var $grid = $('#kiosk_hours_grid');
+            if (!$grid.length) return;
+
+            var html = '';
+            self.DAYS.forEach(function (day) {
+                var windows = (hours && hours[day.key]) || [];
+                var first = windows[0] || {};
+                var second = windows[1] || {};
+                html +=
+                    '<div class="form-row align-items-center mb-1" data-day="' + day.key + '">' +
+                    /* label already carries its own <lang> markup */
+                    '<div class="col-3">' + day.label + '</div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-open" data-slot="0" value="' + self.toClock(first.open) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-close" data-slot="0" value="' + self.toClock(first.close) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-open" data-slot="1" value="' + self.toClock(second.open) + '"></div>' +
+                    '<div class="col-2"><input type="time" class="form-control form-control-sm kiosk-hours-close" data-slot="1" value="' + self.toClock(second.close) + '"></div>' +
+                    '</div>';
+            });
+            $grid.html(html);
+        },
+
+        /** Show what a pause is doing, in words, with the time it lifts. */
+        renderPause: function (pausedUntil) {
+            var $status = $('#kiosk_pause_status');
+            if (!$status.length) return;
+            $('#kiosk_paused_until').val(pausedUntil || '');
+
+            if (!pausedUntil) {
+                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
+                return;
+            }
+            var at = new Date(pausedUntil);
+            if (isNaN(at.getTime()) || at.getTime() <= Date.now()) {
+                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
+                return;
+            }
+            $status.text(
+                PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
+                at.toLocaleString()
+            );
+        },
+
+        /** Toggle the controls that only mean something when taking orders. */
+        syncMode: function () {
+            var ordering = $('#kiosk_mode').val() !== 'menu';
+            $('.kiosk-ordering-only').toggle(ordering);
+            $('#kiosk_hours_grid').toggle(ordering && $('#kiosk_hours_enable').is(':checked'));
+        },
+
+        load: function (kioskData) {
+            var self = PosnicPro.settings.onlineOrdering;
+            var data = kioskData || {};
+
+            $('#kiosk_mode').val(data.mode === 'menu' ? 'menu' : 'order');
+
+            var hours = data.hours || null;
+            $('#kiosk_hours_enable').prop('checked', !!hours);
+            self.renderGrid(hours);
+            self.renderPause(data.paused_until || '');
+            self.syncMode();
+        },
+
+        /**
+         * The form's answer, in the shape the API stores.
+         *
+         * `hours: null` when the schedule is switched off, which is how a shop
+         * says "always open" - distinct from a week with every day empty,
+         * which would shut it forever.
+         */
+        collect: function () {
+            var self = PosnicPro.settings.onlineOrdering;
+            var mode = $('#kiosk_mode').val() === 'menu' ? 'menu' : 'order';
+            var out = {
+                mode: mode,
+                paused_until: $('#kiosk_paused_until').val() || null
+            };
+
+            if (mode === 'menu' || !$('#kiosk_hours_enable').is(':checked')) {
+                out.hours = null;
+                return out;
+            }
+
+            var hours = {};
+            $('#kiosk_hours_grid [data-day]').each(function () {
+                var $row = $(this);
+                var windows = [];
+                $row.find('.kiosk-hours-open').each(function () {
+                    var slot = $(this).data('slot');
+                    var open = $(this).val();
+                    var close = $row.find('.kiosk-hours-close[data-slot="' + slot + '"]').val();
+                    if (open && close) windows.push({ open: open, close: close });
+                });
+                hours[$row.data('day')] = windows;
+            });
+            out.hours = hours;
+            return out;
+        }
+    },
+
     kioskAccountSettings: function () {
         const storeId = $('#kioskstore_id').val().trim();
         // const secretKey = $('#kiosksecret_key').val().trim();
@@ -1487,10 +1639,10 @@ if ($wrapper.length) {
             return false;
         }
 
-        const data = {
+        const data = $.extend({
             store_id: storeId,
             // secret_key: secretKey
-        };
+        }, PosnicPro.settings.onlineOrdering.collect());
 
         const params = {
             url: 'setting/kioskAccountSettings',
@@ -7536,4 +7688,531 @@ $(document).on('click', '#analytics_save', function () {
     }, function () {
         PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_analytics_settings', 'Could not save the analytics settings'));
     });
+});
+
+/*
+ * Online ordering controls on the kiosk account tab.
+ *
+ * Delegated from document because the tab's markup is part of the settings
+ * module and is not in the DOM when this file runs.
+ */
+$(document).on('change', '#kiosk_mode, #kiosk_hours_enable', function () {
+    PosnicPro.settings.onlineOrdering.syncMode();
+});
+
+/*
+ * Pausing writes a moment, not a flag, and the presets are the only way to set
+ * it. "Rest of today" is the end of the day in the browser's own zone, which is
+ * the shop's zone in every case that matters; the server re-reads the branch
+ * timezone when it decides whether the pause is still running.
+ */
+$(document).on('click', '.kiosk-pause-btn', function () {
+    var minutes = Number($(this).data('minutes'));
+    var until;
+    if (minutes > 0) {
+        until = new Date(Date.now() + minutes * 60000);
+    } else {
+        until = new Date();
+        until.setHours(23, 59, 59, 999);
+    }
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+});
+
+$(document).on('click', '#kiosk_pause_resume', function () {
+    PosnicPro.settings.onlineOrdering.renderPause('');
+});
+
+/*
+ * Sales channels: the ways this shop takes orders, and the outside businesses
+ * that send it some.
+ *
+ * Reads and writes the `channels` settings group, so this screen cannot touch
+ * a key belonging to another one. The vocabulary is the server's - see
+ * api/src/utils/sales-channels.js - and is mirrored here only for labels.
+ */
+PosnicPro.salesChannels = {
+    /* Labels as <lang> markup, not t(): this object is built when the module
+       loads, before any language pack has arrived, and the rows are drawn as
+       HTML so the observer translates them on screen. Same rule, and the same
+       reason, as PosnicPro.dashboard.SETUP_CARDS. */
+    CHANNELS: [
+        { id: 'pos', label: '<lang class="lang_channel_pos">Point of sale</lang>' },
+        { id: 'kiosk', label: '<lang class="lang_channel_kiosk">Kiosk machine</lang>' },
+        { id: 'tableside', label: '<lang class="lang_channel_tableside">Captain app</lang>' },
+        { id: 'online', label: '<lang class="lang_channel_online">Online and QR</lang>' },
+        { id: 'phone', label: '<lang class="lang_channel_phone">Phone order</lang>' },
+        { id: 'whatsapp', label: '<lang class="lang_channel_whatsapp">WhatsApp</lang>' },
+        { id: 'marketplace', label: '<lang class="lang_channel_marketplace">Delivery partner</lang>' },
+        { id: 'ecommerce', label: '<lang class="lang_channel_ecommerce">Own webshop</lang>' }
+    ],
+
+    /* The only two that mean nothing without naming the business involved. */
+    PARTNER_CHANNELS: ['marketplace', 'ecommerce'],
+
+    renderChannels: function (enabled) {
+        var self = PosnicPro.salesChannels;
+        var chosen = Array.isArray(enabled) ? enabled : [];
+        var html = '';
+        self.CHANNELS.forEach(function (c) {
+            var checked = chosen.indexOf(c.id) !== -1 ? ' checked' : '';
+            html +=
+                '<div class="form-group col-md-4">' +
+                '<div class="custom-control custom-checkbox">' +
+                '<input type="checkbox" class="custom-control-input sales-channel-box" ' +
+                'id="channel_' + c.id + '" value="' + c.id + '"' + checked + '>' +
+                '<label class="custom-control-label" for="channel_' + c.id + '">' + c.label + '</label>' +
+                '</div></div>';
+        });
+        $('#sales_channels_list').html(html);
+    },
+
+    partnerRow: function (partner) {
+        var self = PosnicPro.salesChannels;
+        var p = partner || {};
+        var options = self.PARTNER_CHANNELS.map(function (id) {
+            var match = self.CHANNELS.filter(function (c) { return c.id === id; })[0];
+            var sel = String(p.channel || 'marketplace') === id ? ' selected' : '';
+            return '<option value="' + id + '"' + sel + '>' + (match ? match.label : id) + '</option>';
+        }).join('');
+
+        /* The name is escaped through jQuery rather than interpolated raw: it
+           is whatever the shop typed, and it comes back out into markup. */
+        var safeLabel = $('<div>').text(p.label || '').html();
+
+        return '<div class="form-row align-items-end mb-2 channel-partner-row">' +
+            '<div class="form-group col-md-4">' +
+            '<input type="text" class="form-control form-control-sm partner-label" placeholder="' + PosnicPro.i18n.t('lang_partner_name', 'Partner name') + '" value="' + safeLabel + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<select class="form-control form-control-sm partner-channel">' + options + '</select>' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="0" max="100" step="0.01" class="form-control partner-commission" placeholder="0" value="' + (Number(p.commission_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '<div class="form-group col-md-2">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-channel-partner" aria-label="' + PosnicPro.i18n.t('lang_remove_partner', 'Remove partner') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div></div>';
+    },
+
+    renderPartners: function (partners) {
+        var self = PosnicPro.salesChannels;
+        var list = Array.isArray(partners) ? partners : [];
+        $('#sales_channel_partner_rows').html(list.map(self.partnerRow).join(''));
+    },
+
+    /*
+     * A venue: a hotel, an office, anywhere that is not this shop's own floor.
+     *
+     * THE CODE IS THE IDENTITY. It is what a printed QR carries
+     * (/order/AZ100/venue/RC/123), so it has to survive a rename of the
+     * building - which is why it is typed rather than derived from the name
+     * the way a partner id is.
+     *
+     * MARKUP AND COMMISSION ARE TWO FIELDS. The obvious design gives a venue
+     * one percentage and uses it for both. That is one common deal and not the
+     * only one: a restaurant may mark up 12 and pay 10, keeping two points; it
+     * may mark up nothing and pay 8 out of its own margin to win the tie-up.
+     * One field would decide that negotiation on the shop's behalf.
+     */
+    venueRow: function (venue) {
+        var v = venue || {};
+        var safe = function (value) { return $('<div>').text(value || '').html(); };
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+        var floorId = 'venue_floor_' + Math.random().toString(36).slice(2, 9);
+
+        return '<div class="card border mb-2 partner-venue-row"><div class="card-body py-2">' +
+            '<div class="form-row align-items-end">' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_name', 'Venue name') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-name" value="' + safe(v.name) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_code', 'Code') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-code" maxlength="12" placeholder="RC" data-t-placeholder="lang_rc" value="' + safe(v.code) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_unit_label', 'Calls a unit') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-unit-label" maxlength="20" placeholder="Room" data-t-placeholder="lang_room" value="' + safe(v.unit_label || 'Room') + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_markup', 'Guest pays extra') + '</label>' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="-100" max="100" step="0.01" class="form-control venue-markup" placeholder="0" value="' + (Number(v.price_adjust_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '<div class="form-group col-md-2">' +
+            '<label class="small mb-1">' + t('lang_venue_commission', 'You owe them') + '</label>' +
+            '<div class="input-group input-group-sm">' +
+            '<input type="number" min="0" max="100" step="0.01" class="form-control venue-commission" placeholder="0" value="' + (Number(v.commission_percent) || '') + '">' +
+            '<div class="input-group-append"><span class="input-group-text">%</span></div>' +
+            '</div></div>' +
+            '</div>' +
+            '<div class="form-row align-items-end">' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_address', 'Address') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-address" maxlength="300" value="' + safe(v.address) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-4">' +
+            '<label class="small mb-1">' + t('lang_venue_delivery_note', 'Note for whoever delivers') + '</label>' +
+            '<input type="text" class="form-control form-control-sm venue-note" maxlength="300" placeholder="' + t('lang_venue_delivery_note_hint', 'Use the service lift') + '" value="' + safe(v.delivery_note) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<div class="custom-control custom-checkbox">' +
+            '<input type="checkbox" class="custom-control-input venue-ask-floor" id="' + floorId + '"' + (v.ask_floor === true ? ' checked' : '') + '>' +
+            '<label class="custom-control-label small" for="' + floorId + '">' + t('lang_venue_ask_floor', 'Ask for a floor') + '</label>' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group col-md-1 text-right">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-partner-venue" aria-label="' + t('lang_remove_venue', 'Remove venue') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div>' +
+            '</div></div></div>';
+    },
+
+    renderVenues: function (venues) {
+        var self = PosnicPro.salesChannels;
+        var list = Array.isArray(venues) ? venues : [];
+        $('#partner_venue_rows').html(list.map(self.venueRow).join(''));
+    },
+
+    /*
+     * What a customer pays on top of the food, per FULFILMENT.
+     *
+     * Not per channel, and that is the part that is easy to get wrong and
+     * expensive to change later. A delivery fee exists because somebody drives
+     * the food somewhere, not because the order came through a particular app:
+     * the same storefront serves a table, a takeaway and a hotel room.
+     */
+    /* Ids only. The names are looked up inside chargeRow, because a literal
+       here would be built when this file loads - before the language pack has
+       arrived - and every shop would see English whatever it chose. */
+    FULFILMENTS: ['dine_in', 'takeaway', 'pickup', 'delivery'],
+
+    chargeRow: function (id, rule) {
+        var r = rule || {};
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+        var money = function (value) { return Number(value) > 0 ? Number(value) : ''; };
+        var names = {
+            dine_in: t('lang_fulfilment_dine_in', 'Dine in'),
+            takeaway: t('lang_fulfilment_takeaway', 'Takeaway'),
+            pickup: t('lang_fulfilment_pickup', 'Pickup'),
+            delivery: t('lang_fulfilment_delivery', 'Delivery')
+        };
+
+        return '<div class="form-row align-items-end mb-2 channel-charge-row" data-fulfilment="' + id + '">' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<span class="small">' + (names[id] || id) + '</span>' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-fee" placeholder="' + t('lang_charge_fee', 'Fee') + '" value="' + money(r.fee) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-free-above" placeholder="' + t('lang_charge_free_above', 'Free above') + '" value="' + money(r.free_above) + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3 mb-1">' +
+            '<input type="number" min="0" step="0.01" class="form-control form-control-sm charge-min-order" placeholder="' + t('lang_charge_min_order', 'Minimum order') + '" value="' + money(r.min_order) + '">' +
+            '</div>' +
+            '</div>';
+    },
+
+    renderCharges: function (charges) {
+        var self = PosnicPro.salesChannels;
+        var table = charges || {};
+        $('#channel_charge_rows').html(self.FULFILMENTS.map(function (id) {
+            return self.chargeRow(id, table[id]);
+        }).join(''));
+    },
+
+    load: function () {
+        var self = PosnicPro.salesChannels;
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            self.renderChannels(values.sales_channels_enabled);
+            self.renderPartners(values.sales_channel_partners);
+            self.renderVenues(values.partner_venues);
+            self.renderCharges(values.channel_charges);
+            $("#online_ordering_default_store").val(values.online_ordering_default_store || "");
+            /* Anything that is not exactly "manual" is auto, which is what the
+               server makes of it too - see utils/order-approval for why that is
+               the survivable direction. */
+            var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
+            $("#online_order_approval").val(approval);
+            /* Remembered so the sidebar can decide without a request on every
+               page load: the approval queue is only worth a menu entry for a
+               shop that actually holds orders. */
+            PosnicPro.local.set('online_order_approval', approval);
+            PosnicPro.applyOrderQueueVisibility();
+            PosnicPro.dayparts.render(values.menu_dayparts);
+        }, function () {
+            /* A shop that has never saved these has nothing stored yet, which
+               is not an error. Draw the till, which every shop has. */
+            self.renderChannels(['pos']);
+            self.renderPartners([]);
+            self.renderVenues([]);
+            self.renderCharges({});
+        });
+    },
+
+    collect: function () {
+        var enabled = [];
+        $('.sales-channel-box:checked').each(function () { enabled.push($(this).val()); });
+
+        var partners = [];
+        $('.channel-partner-row').each(function () {
+            var $row = $(this);
+            var label = String($row.find('.partner-label').val() || '').trim();
+            if (!label) return;
+            partners.push({
+                /* Derived from the name exactly as the server derives it, so
+                   "Swiggy" and "swiggy " cannot become two partners and two
+                   half-totals in one report. */
+                id: label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+                label: label,
+                channel: $row.find('.partner-channel').val(),
+                commission_percent: Number($row.find('.partner-commission').val()) || 0,
+                enabled: true
+            });
+        });
+
+        var venues = [];
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.venue-name').val() || '').trim();
+            /* Normalised here exactly as the server normalises it: a venue
+               typed as "RC " and a code printed as "rc" have to be the same
+               venue, or a hotel's orders split across two half-totals. */
+            var code = String($row.find('.venue-code').val() || '')
+                .trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            if (!name || !code) return;
+
+            venues.push({
+                code: code,
+                name: name,
+                unit_label: String($row.find('.venue-unit-label').val() || 'Room').trim() || 'Room',
+                price_adjust_percent: Number($row.find('.venue-markup').val()) || 0,
+                commission_percent: Number($row.find('.venue-commission').val()) || 0,
+                address: String($row.find('.venue-address').val() || '').trim(),
+                delivery_note: String($row.find('.venue-note').val() || '').trim(),
+                ask_floor: $row.find('.venue-ask-floor').is(':checked'),
+                enabled: true
+            });
+        });
+
+        var charges = {};
+        $('.channel-charge-row').each(function () {
+            var $row = $(this);
+            charges[$row.data('fulfilment')] = {
+                fee: Number($row.find('.charge-fee').val()) || 0,
+                free_above: Number($row.find('.charge-free-above').val()) || 0,
+                min_order: Number($row.find('.charge-min-order').val()) || 0
+            };
+        });
+
+        return {
+            sales_channels_enabled: enabled,
+            sales_channel_partners: partners,
+            /* Empty is a real answer: it means "work it out", which is right
+               for the one-branch shops that are most of them. */
+            online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
+            menu_dayparts: PosnicPro.dayparts.collect(),
+            partner_venues: venues,
+            channel_charges: charges,
+            online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
+        };
+    },
+
+    save: function () {
+        var loader = $('.loader-view-saleschannels');
+        loader.find('.loadingSpinner').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        PosnicPro.put({
+            url: 'settings/group/channels',
+            data: JSON.stringify(PosnicPro.salesChannels.collect())
+        }, function (response) {
+            loader.find('.loadingSpinner').remove();
+            if (response.type === 'success') {
+                /* The menu follows the setting immediately: turning approval on
+                   and then hunting for where the orders went is exactly the
+                   confusion this screen exists to prevent. */
+                PosnicPro.local.set('online_order_approval', $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto');
+                PosnicPro.applyOrderQueueVisibility();
+                PosnicPro.alert('success', response.message || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+            } else {
+                PosnicPro.alert('error', response.message);
+            }
+        }, function () {
+            loader.find('.loadingSpinner').remove();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_channel_settings', 'Could not save the channel settings'));
+        });
+        return false;
+    }
+};
+
+/* Loaded when the tab is opened rather than on every settings page view: the
+   shop may never touch this screen, and the request would be wasted. */
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.salesChannels.load();
+});
+
+$(document).on('click', '#add_partner_venue', function () {
+    $('#partner_venue_rows').append(PosnicPro.salesChannels.venueRow({}));
+});
+
+$(document).on('click', '.remove-partner-venue', function () {
+    $(this).closest('.partner-venue-row').remove();
+});
+
+$(document).on('click', '#add_channel_partner', function () {
+    $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({}));
+});
+
+$(document).on('click', '.remove-channel-partner', function () {
+    $(this).closest('.channel-partner-row').remove();
+});
+
+$(document).on('submit', '#sales_channels_form', function (e) {
+    e.preventDefault();
+    return PosnicPro.salesChannels.save();
+});
+
+/*
+ * Serving periods: breakfast, lunch, dinner.
+ *
+ * Defined once here, and each dish says which it belongs to. The alternative -
+ * hours on every item - is data entry no shop will do, and moving breakfast
+ * half an hour would mean editing two hundred dishes.
+ */
+PosnicPro.dayparts = {
+    /* What a shop almost always means by these words, offered on first use so
+       the common case is one click rather than fourteen time pickers. */
+    SUGGESTED: [
+        { id: 'breakfast', name: 'Breakfast', from: '07:00', to: '11:00' },
+        { id: 'lunch', name: 'Lunch', from: '12:00', to: '15:30' },
+        { id: 'dinner', name: 'Dinner', from: '19:00', to: '23:00' }
+    ],
+
+    DAYS: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+
+    toClock: function (minutes) {
+        if (minutes === null || minutes === undefined || minutes === '') return '';
+        if (typeof minutes === 'string') return minutes;
+        var n = Number(minutes);
+        if (!isFinite(n)) return '';
+        return ('0' + (Math.floor(n / 60) % 24)).slice(-2) + ':' + ('0' + (Math.trunc(n) % 60)).slice(-2);
+    },
+
+    /*
+     * One pair of times for the whole week, because that is what a restaurant
+     * means: lunch is lunch every day. A shop that genuinely varies by day
+     * still gets a correct week stored - the same shape the opening hours use -
+     * it just cannot type it here yet.
+     */
+    firstWindow: function (hours) {
+        var self = PosnicPro.dayparts;
+        if (!hours) return { from: '', to: '' };
+        for (var i = 0; i < self.DAYS.length; i++) {
+            var list = hours[self.DAYS[i]];
+            if (list && list.length) {
+                return { from: self.toClock(list[0].open), to: self.toClock(list[0].close) };
+            }
+        }
+        return { from: '', to: '' };
+    },
+
+    weekOf: function (from, to) {
+        var self = PosnicPro.dayparts;
+        if (!from || !to) return null;
+        var week = {};
+        self.DAYS.forEach(function (d) { week[d] = [{ open: from, close: to }]; });
+        return week;
+    },
+
+    rowHtml: function (part) {
+        var self = PosnicPro.dayparts;
+        var p = part || {};
+        var win = self.firstWindow(p.hours);
+        var safeName = $('<div>').text(p.name || '').html();
+
+        return '<div class="form-row align-items-end mb-2 daypart-row" data-id="' +
+            $('<div>').text(p.id || '').html() + '">' +
+            '<div class="form-group col-md-4">' +
+            '<input type="text" class="form-control form-control-sm daypart-name" value="' + safeName + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<input type="time" class="form-control form-control-sm daypart-from" value="' + win.from + '">' +
+            '</div>' +
+            '<div class="form-group col-md-3">' +
+            '<input type="time" class="form-control form-control-sm daypart-to" value="' + win.to + '">' +
+            '</div>' +
+            '<div class="form-group col-md-2">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-daypart" aria-label="' +
+            PosnicPro.i18n.t('lang_remove_period', 'Remove period') +
+            '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
+            '</div></div>';
+    },
+
+    render: function (parts) {
+        var self = PosnicPro.dayparts;
+        var list = Array.isArray(parts) && parts.length ? parts : [];
+        $('#menu_daypart_rows').html(list.map(self.rowHtml).join(''));
+        /* Offer the usual three only when there are none: a shop that has
+           deliberately deleted lunch should not be handed it back. */
+        $('#suggest_dayparts').toggle(list.length === 0);
+    },
+
+    collect: function () {
+        var self = PosnicPro.dayparts;
+        var out = [];
+        $('.daypart-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.daypart-name').val() || '').trim();
+            if (!name) return;
+            var from = $row.find('.daypart-from').val();
+            var to = $row.find('.daypart-to').val();
+            out.push({
+                /* The id survives a rename, so calling Breakfast "Morning"
+                   does not silently unassign every breakfast dish. */
+                id: $row.data('id') || name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
+                name: name,
+                hours: self.weekOf(from, to)
+            });
+        });
+        return out;
+    }
+};
+
+$(document).on('click', '#add_daypart', function () {
+    $('#menu_daypart_rows').append(PosnicPro.dayparts.rowHtml({}));
+    $('#suggest_dayparts').hide();
+});
+
+$(document).on('click', '#suggest_dayparts', function () {
+    var self = PosnicPro.dayparts;
+    self.render(self.SUGGESTED.map(function (s) {
+        return { id: s.id, name: s.name, hours: self.weekOf(s.from, s.to) };
+    }));
+});
+
+$(document).on('click', '.remove-daypart', function () {
+    $(this).closest('.daypart-row').remove();
+});
+
+/*
+ * Stop taking orders, in one click.
+ *
+ * Sets the pause to the end of today rather than for ever. A switch with no
+ * end is one somebody flips during a Friday rush and finds still off the
+ * following Tuesday, with nobody able to say why the orders stopped - which is
+ * why the underlying field is a moment and not a flag.
+ */
+$(document).on('click', '#stop_taking_orders', function () {
+    var until = new Date();
+    until.setHours(23, 59, 59, 999);
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+    PosnicPro.alert(
+        'success',
+        PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
+    );
 });

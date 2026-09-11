@@ -1,0 +1,59 @@
+<!--
+    ORDERS WAITING FOR SOMEBODY TO SAY YES.
+
+    A shop in manual mode holds every incoming online order until a person
+    accepts it. The kitchen has not been told, so no ticket printed and the
+    sales list is not where anybody would think to look: this queue is the only
+    place those orders exist on a screen.
+
+    CARDS, NOT A TABLE. Every other list in this product is a table, and this is
+    deliberately not one. A row of columns is for comparing records; this screen
+    is for making one decision about one order, in a few seconds, often standing
+    up. What goes where, what was ordered, what it comes to, accept or reject.
+
+    The oldest is at the TOP, because that customer has been waiting longest.
+-->
+<div class="vertical-layout page_loader" id="onlineorders_new" style="display: none">
+    <div id="containerbar">
+        <div class="breadcrumbbar crumbbar_padding">
+            <div class="row align-items-center row_filter">
+                <div class="col-lg-6 col-xl-6">
+                    <h4 class="page-title break_title">
+                        <lang class="lang_online_orders_waiting">Online orders waiting</lang>
+                    </h4>
+                </div>
+                <div class="col-lg-6 col-xl-6 text-right">
+                    <button type="button" class="btn btn-primary-rgba" id="onlineorders_refresh"
+                        onclick="PosnicPro.onlineorders.load();">
+                        <i class="feather icon-refresh-cw mr-1" aria-hidden="true"></i>
+                        <lang class="lang_refresh_title">Update</lang>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentbar">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-xl-12">
+                <div class="card m-b-30">
+                    <div class="card-body loader-view-onlineorders">
+                        <!--
+                            The whole screen is one live region. A till that is
+                            not being watched is the entire reason this feature
+                            exists, and somebody using a screen reader gets the
+                            same "an order arrived" that everybody else gets
+                            from the alarm.
+                        -->
+                        <div id="onlineorders_list" aria-live="polite"></div>
+
+                        <div id="onlineorders_empty" class="text-center text-muted py-5" style="display:none;">
+                            <i class="feather icon-check-circle mb-2" style="font-size:32px;" aria-hidden="true"></i>
+                            <p class="mb-0"><lang class="lang_no_orders_waiting">Nothing is waiting. New online orders will appear here.</lang></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

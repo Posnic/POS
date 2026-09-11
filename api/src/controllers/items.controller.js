@@ -532,38 +532,6 @@ class ItemsController extends BaseController {
     }
   }
 
-  async accesskiosk(req, res) {
-    try {
-      // Per installation, set by the desktop app at startup. It used to be a
-      // constant here, which meant every till in the world accepted the same
-      // key and reading the source was enough to call this endpoint on any of
-      // them. Read at call time, since main.js sets it while starting.
-      const kioskKey = req.headers['kioskkey'];
-      const expected = currentSecret('KIOSK_API_KEY', process.env.KIOSK_API_KEY) || null;
-      if (!expected || kioskKey !== expected) {
-        // 401, not 403: a wrong or missing kiosk key is failed AUTHENTICATION
-        // of the kiosk device. 403 is reserved for a signed-in user who lacks
-        // a permission (the browser client signs out on 401 by design).
-        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 401);
-      }
-
-      const response = await this.service.accessKiosk(req.body.branch);
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404, response.data);
-      }
-    } catch (error) {
-      console.error('Error in accesskiosk:', error);
-      return this.error(res, error.message, 500);
-    }
-  }
-
-  /**
-   * PHP: instanceItemInsert()
-   * Create a new instant item and return it in PHP-compatible shape.
-   * Frontend expects { type: 'success', data: { id, name, ... } }.
-   */
   async instanceItemInsert(req, res) {
     try {
       await this.ensureContext(req);
@@ -859,24 +827,44 @@ class ItemsController extends BaseController {
     }
   }
 
-  async accessQr(req, res) {
+  /**
+   * The menu, for a self-service machine standing in a shop.
+   *
+   * Kept in the shape it has always answered in, because the machines are
+   * already out there and cannot be updated from here. `GET
+   * /online-ordering/:storeId/device` is the endpoint to build anything new
+   * against; this one is the same query wearing the old names, so there is
+   * still a single storefront implementation rather than two that can drift.
+   *
+   * Guarded by the kiosk key at the route, which is what distinguishes a
+   * machine the shop owns from a stranger with a store address.
+   */
+  async accesskiosk(req, res) {
     try {
-      const projectType = req.body.project_type || null;
-      const isStockProject = projectType === 'stock';
-      const branch = req.body.branch;
+      const response = await this.service.storefront({ storeId: req.body.branch });
 
-      const response = await this.service.accessQr({
-        projectType,
-        branch,
-      });
-
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
+      if (response.status !== true) {
         return this.error(res, response.message, 404, response.data);
       }
+
+      const data = response.data || {};
+      return this.success(
+        res,
+        {
+          products: data.products || [],
+          kiosk_images: {
+            logo: data.store?.logo || '',
+            banner: data.store?.banner || '',
+            homebanner: data.store?.homebanner || '',
+            advertisement: data.store?.advertisement || '',
+          },
+          kiosk_payment: data.payment || {},
+          kiosk_print: data.print || {},
+        },
+        response.message
+      );
     } catch (error) {
-      console.error('Error in accessQr:', error);
+      console.error('Error in accesskiosk:', error);
       return this.error(res, error.message, 500);
     }
   }

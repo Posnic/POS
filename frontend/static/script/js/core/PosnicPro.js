@@ -1623,6 +1623,33 @@ PosnicPro = {
      */
 
 
+    /*
+     * Make a value safe to drop into an HTML string.
+     *
+     * The sale screen builds rows by concatenating HTML and handing it to
+     * jQuery, and the product name goes in raw - both as text and inside a
+     * data-id attribute. An item called
+     *
+     *     <img src=x onerror=...>
+     *
+     * therefore runs on the till, and an item name is not a trusted string:
+     * it arrives from the item screen and from CSV import, so the person who
+     * types it need not be the person standing at the counter.
+     *
+     * Quotes are escaped as well as angle brackets because these values land
+     * in attributes too, where a bare " ends the attribute and everything
+     * after it is markup.
+     */
+    escapeHtml: function (value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     minmax: function (value, min, max) {
         var text = String(value);
 
@@ -2785,6 +2812,17 @@ PosnicPro = {
             .toggle(PosnicPro.local.get('table_options') === 'enable');
 
         /*
+         * Fields that only mean something to a restaurant: serving periods,
+         * preparation time, the kitchen note. A grocer has no breakfast menu,
+         * and a form full of questions that do not apply is how a shop learns
+         * to skip the whole section.
+         *
+         * The same switch that shows the KOT report, because that is what
+         * "this shop is a restaurant" already means here.
+         */
+        $('.restaurant-only').toggle(PosnicPro.local.get('table_options') === 'enable');
+
+        /*
          * Themes module, applied in REAL TIME: off hides the header theme
          * button and the shop drops to the default look immediately. The
          * saved choice is never wiped (applyTheme, not applyPreset), so
@@ -2843,6 +2881,19 @@ PosnicPro = {
             }
         }
     },
+    /*
+     * The approval queue in the sidebar, only for a shop that holds orders.
+     *
+     * Gated on the approval MODE rather than on the restaurant switch. A shop
+     * that sends orders straight to the kitchen never has anything waiting, so
+     * the entry would open an empty screen for ever; a retail shop selling
+     * online with approval on needs it as much as a restaurant does.
+     */
+    applyOrderQueueVisibility: function () {
+        var holds = PosnicPro.local.get('online_order_approval') === 'manual';
+        $('#online_orders_menu').toggle(holds);
+    },
+
     applyKotVisibility: function (enabled) {
         $('#v-pills-tableorder-tab').toggle(!!enabled);
         PosnicPro.applyModuleSidebar();
@@ -2864,10 +2915,17 @@ PosnicPro = {
         }
         return Promise.all([
             window.electronAPI.preferences.get('receipt_printer'),
-            window.electronAPI.preferences.get('print_width')
+            window.electronAPI.preferences.get('print_width'),
+            /* The per-printer list: each printer with its own copies and paper.
+               Kept beside the two legacy keys rather than replacing them, so a
+               till that has not been reconfigured still prints exactly as it
+               did, and one that has can send a counter copy and an office copy
+               from the same sale. */
+            window.electronAPI.preferences.get('receipt_printers')
         ]).then(function (values) {
             if (values[0]) PosnicPro.local.set('receipt_printer', values[0]);
             if (values[1]) PosnicPro.local.set('print_width', values[1]);
+            PosnicPro.local.set('receipt_printers', values[2] || '');
             return true;
         }).catch(function (e) {
             // Printing still works off whatever was mirrored last time.
@@ -3110,6 +3168,23 @@ PosnicPro = {
                     paperWidth: width,
                     docName: 'Receipt ' + (sale.billNo || '')
                 };
+
+                /*
+                 * When the shop has configured printers individually, send the
+                 * whole list and let the main process fan it out. printerName
+                 * stays populated so nothing downstream has to care which shape
+                 * arrived, and a malformed value is ignored rather than
+                 * allowed to stop a sale printing.
+                 */
+                try {
+                    var saved = PosnicPro.local.get('receipt_printers');
+                    if (saved) {
+                        var list = JSON.parse(saved);
+                        if (Array.isArray(list) && list.length) opts.printers = list;
+                    }
+                } catch (e) {
+                    console.warn('[Print] ignoring unreadable printer list:', e.message);
+                }
                 if (cfg && cfg.autoOpenOnSale) {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;
@@ -4796,6 +4871,7 @@ $(document).ready(function () {
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
+    PosnicPro.applyOrderQueueVisibility();
 });
 
 /*Import Csv File Into Table By Type of Table Request*/

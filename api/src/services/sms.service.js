@@ -161,7 +161,7 @@ class SmsService {
 
     try {
       const url = 'https://api.brevo.com/v3/transactionalSMS/sms';
-      const receiptUrl = `www.posnic.io/customersMailPrint.html?id=${encryptedId}`;
+      const receiptUrl = `www.posnic.com/customersMailPrint.html?id=${encryptedId}`;
 
       const payload = {
         sender: config.sms.brevo.sender,
@@ -203,7 +203,7 @@ class SmsService {
     try {
       // Remove '+' from phone number (matching PHP line 2708)
       const userPhone = data.customer_sms_fullphone.replace('+', '');
-      const receiptUrl = `www.posnic.io/customersMailPrint.html?id=${encryptedId}`;
+      const receiptUrl = `www.posnic.com/customersMailPrint.html?id=${encryptedId}`;
 
       // Construct payload (matching PHP lines 2711-2723)
       const payload = {

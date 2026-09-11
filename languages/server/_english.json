@@ -11,9 +11,6 @@
   "A group with this name already exists.": [
     "src/models/setting.model.js"
   ],
-  "A kiosk with this Store ID already exists": [
-    "src/models/setting.model.js"
-  ],
   "A parked cart cannot be paid": [
     "src/services/invoice-sync.js"
   ],
@@ -22,6 +19,9 @@
   ],
   "A sale id is required": [
     "src/repositories/invoice.repository.js"
+  ],
+  "A username and password are both required": [
+    "src/controllers/users.controller.js"
   ],
   "A valid id is required": [
     "src/repositories/shift.repository.js"
@@ -129,6 +129,9 @@
   ],
   "An invoice id is required": [
     "src/repositories/quote.repository.js"
+  ],
+  "Another branch is already using this store address": [
+    "src/models/setting.model.js"
   ],
   "Another customer with this email already exists": [
     "src/services/customer.service.js"
@@ -250,7 +253,6 @@
     "src/models/branch.model.js",
     "src/models/sale.model.js",
     "src/models/setting.model.js",
-    "src/repositories/item.repository.js",
     "src/repositories/sale.repository.js"
   ],
   "Branch not found for the given branch/store ID.": [
@@ -375,6 +377,9 @@
   ],
   "Could not check the sales history, so nothing was removed.": [
     "src/repositories/item.repository.js"
+  ],
+  "Could not complete the sign-in": [
+    "src/controllers/users.controller.js"
   ],
   "Could not create \"": [
     "src/services/item.service.js"
@@ -588,6 +593,9 @@
     "src/models/receiving.model.js",
     "src/repositories/sale.repository.js"
   ],
+  "Enter must correct order id": [
+    "src/repositories/sale.repository.js"
+  ],
   "Enter the amount received": [
     "src/services/invoice-sync.js"
   ],
@@ -714,9 +722,6 @@
   ],
   "Get payment sales transaction details successfully": [
     "src/repositories/sale.repository.js"
-  ],
-  "Get products details": [
-    "src/repositories/item.repository.js"
   ],
   "Get store details successfully": [
     "src/controllers/branches.controller.js"
@@ -1120,6 +1125,9 @@
   "No sales data found for the period": [
     "src/models/dashboard.model.js"
   ],
+  "No shop found at this address": [
+    "src/repositories/item.repository.js"
+  ],
   "No shop in context": [
     "app.js"
   ],
@@ -1233,6 +1241,12 @@
   ],
   "Nothing to write": [
     "src/repositories/settings.repository.js"
+  ],
+  "Online ordering is not available for this shop.": [
+    "src/utils/online-ordering.js"
+  ],
+  "Online ordering is not enabled for this branch.": [
+    "src/utils/online-ordering.js"
   ],
   "Only a draft can be deleted - an issued invoice is reversed on its sale": [
     "src/repositories/invoice.repository.js"
@@ -1421,9 +1435,6 @@
   ],
   "QR code closed successfully": [
     "src/models/sale.model.js"
-  ],
-  "QR ordering is not enabled for this branch": [
-    "src/repositories/sale.repository.js"
   ],
   "QR status retrieved successfully": [
     "src/models/sale.model.js"
@@ -1823,6 +1834,9 @@
   "That shop has no items yet": [
     "src/services/catalogue-copy.js"
   ],
+  "That store address is reserved. Please choose another.": [
+    "src/models/setting.model.js"
+  ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
   ],
@@ -1911,6 +1925,9 @@
   ],
   "This item details already exist in our system": [
     "src/repositories/item.repository.js"
+  ],
+  "This menu is for viewing only. Please order at the counter.": [
+    "src/utils/online-ordering.js"
   ],
   "This password already exist. Please choose another": [
     "src/repositories/user.repository.js"

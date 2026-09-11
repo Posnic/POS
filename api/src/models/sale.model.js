@@ -6,6 +6,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { toJSON, paginate } = require('./plugins');
 const { PAYMENT_STATUS } = require('../constants');
 const { SALE_PROCESS_VALUES } = require('../constants/sales.constants');
+const salesChannels = require('../utils/sales-channels');
 const BaseModel = require('./base.model');
 const { sendEmail } = require('../utils/email');
 
@@ -572,10 +573,83 @@ const saleSchema = new mongoose.Schema(
     person_count: {
       type: mongoose.Schema.Types.Mixed, // Can be string or number
     },
+    /*
+     * Where this sale came from, kept for as long as anything reads it.
+     *
+     * Superseded by `channel` / `channel_partner` / `fulfilment` below, and
+     * still written in step with them by utils/sales-channels so a reader of
+     * either finds the same answer. Years of sales carry only this.
+     */
     sale_method: {
       type: String,
       trim: true,
     },
+
+    /*
+     * Where the order was captured: pos, kiosk, tableside, online, phone,
+     * whatsapp, marketplace, ecommerce. See utils/sales-channels.js for why
+     * this is three fields rather than one.
+     */
+    channel: {
+      type: String,
+      trim: true,
+    },
+
+    /* The outside business it arrived through - swiggy, zomato, ondc,
+       opencart - and null for the shop's own channels. Separate from
+       `channel` so a new aggregator is a row of settings, not a release. */
+    channel_partner: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    /* How the customer gets it: dine_in, takeaway, pickup, delivery.
+       Independent of the channel, so a QR code at a table and the same page
+       from somebody's sofa need not be different channels. */
+    fulfilment: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    /* What an aggregator kept, in money, at the rate configured when the sale
+       was made. Stored rather than recomputed: a partner's rate changes, and
+       last month's report must not change with it. */
+    channel_commission: {
+      type: Number,
+      default: 0,
+    },
+
+    /*
+     * The hotel, office or other building this order came from, copied onto
+     * the sale rather than looked up from settings when a report runs.
+     *
+     * A hotel that renegotiates in March must not restate what it was owed in
+     * February, and a standing delivery note that changes next month must not
+     * rewrite what last month's driver was told. Null for the shop's own
+     * tables, which are not anybody's venue. See utils/partner-venues.js.
+     */
+    venue: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
+    /* What that venue is owed on this order, in money, at the rate agreed
+       when it was placed. Separate from channel_commission: an aggregator and
+       a hotel can both take a cut of the same order. */
+    venue_commission: {
+      type: Number,
+      default: 0,
+    },
+
+    /* Delivery, packing or service, charged on top of the food. Keyed off
+       fulfilment rather than channel - see utils/sales-channels.js. */
+    delivery_fee: {
+      type: Number,
+      default: 0,
+    },
+
     denomination_values: {
       type: mongoose.Schema.Types.Mixed,
     },
@@ -992,6 +1066,13 @@ class LegacySaleModel {
     return_extra_discount: { type: 'Number', select: true },
     extra_discount_type: { type: 'String', select: true },
     sale_method: { type: 'String', select: true },
+    channel: { type: 'String', select: true },
+    channel_partner: { type: 'String', select: true },
+    fulfilment: { type: 'String', select: true },
+    channel_commission: { type: 'Number', select: true },
+    venue: { type: 'Object', select: true },
+    venue_commission: { type: 'Number', select: true },
+    delivery_fee: { type: 'Number', select: true },
     order: { type: 'String', select: true },
     multi_payment: { type: 'Array', select: true },
     table_id: { type: 'String', select: true },
@@ -1508,8 +1589,8 @@ const resolveKioskBranch = async (branchId) => {
   for (const name of collections) {
     const collection = currentConnection(mongoose.connection).collection(name);
     const query = queryId
-      ? { $or: [{ 'kiosk.store_id': branchId }, { _id: queryId }] }
-      : { 'kiosk.store_id': branchId };
+      ? { $or: [{ 'online_ordering.store_id': branchId }, { _id: queryId }] }
+      : { 'online_ordering.store_id': branchId };
     const branch = await collection.findOne(query);
     if (branch) return branch;
   }
@@ -1844,7 +1925,7 @@ Sale.kioskOrderModel = async function (data) {
     const ObjectId = mongoose.Types.ObjectId;
     const branchCollection = currentConnection(mongoose.connection).collection('branches');
     const branchDoc = await branchCollection.findOne({
-      'kiosk.store_id': data.branch,
+      'online_ordering.store_id': data.branch,
     });
     if (!branchDoc) {
       return { status: false, data: null, message: 'Branch not found' };
@@ -2104,9 +2185,8 @@ Sale.kioskOrderModel = async function (data) {
     const updateData = {
       date: mongoDate,
       sale_process: 'Add',
-      user_id: branchDoc.kiosk && branchDoc.kiosk[0] ? branchDoc.kiosk[0].user_id || null : null,
-      user_name:
-        branchDoc.kiosk && branchDoc.kiosk[0] ? branchDoc.kiosk[0].user_name || null : null,
+      user_id: branchDoc.online_ordering ? branchDoc.online_ordering.user_id || null : null,
+      user_name: branchDoc.online_ordering ? branchDoc.online_ordering.user_name || null : null,
       category_id: customerCategoryId,
       category_name: customerCategoryName,
       referrer_id: customerReferrerId,
@@ -2126,7 +2206,20 @@ Sale.kioskOrderModel = async function (data) {
       payment_status: paymentStatus,
       payment_pending: paymentPending,
       payment_mode: data.payment_status,
-      sale_method: data.sale_method,
+      /*
+       * A machine standing in the shop, so the channel is known here rather
+       * than taken on trust from the device.
+       *
+       * It used to store `data.sale_method` verbatim and nothing else, which
+       * meant a machine that forgot to send it wrote nothing at all - and the
+       * self-service report counts by channel, so that sale simply was not in
+       * it. No error, just a smaller total.
+       */
+      ...salesChannels.describeSale({
+        channel: salesChannels.CHANNEL.KIOSK,
+        fulfilment: data.fulfilment || data.dine_type,
+        sale_method: data.sale_method,
+      }),
       sales_description: '',
       payment_description: '',
       sales_total: Math.round(saleTotAmount * 100) / 100,
