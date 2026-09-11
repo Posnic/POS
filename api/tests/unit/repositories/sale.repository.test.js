@@ -1153,7 +1153,11 @@ describe('SalesRepository', () => {
         [{ _id: 'swiggy', orders: 20, sales: 9000, commission: 2250 }]
       );
       const r = await salesRepository.commissionReport(range);
-      expect(r.data.rows.map(function (row) { return row.kind; })).toEqual(['venue', 'partner']);
+      expect(
+        r.data.rows.map(function (row) {
+          return row.kind;
+        })
+      ).toEqual(['venue', 'partner']);
       expect(r.data.totals.commission).toBe(2550);
       expect(r.data.totals.orders).toBe(30);
     });

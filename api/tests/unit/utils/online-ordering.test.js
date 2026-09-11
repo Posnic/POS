@@ -469,8 +469,16 @@ describe('channelState', () => {
 });
 
 describe('serving periods', () => {
-  const BREAKFAST = { id: 'breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } };
-  const DINNER = { id: 'dinner', name: 'Dinner', hours: { mon: [{ open: '19:00', close: '01:00' }] } };
+  const BREAKFAST = {
+    id: 'breakfast',
+    name: 'Breakfast',
+    hours: { mon: [{ open: '07:00', close: '11:00' }] },
+  };
+  const DINNER = {
+    id: 'dinner',
+    name: 'Dinner',
+    hours: { mon: [{ open: '19:00', close: '01:00' }] },
+  };
   const PARTS = [BREAKFAST, DINNER];
   const MON = 1;
   const TUE = 2;
@@ -483,8 +491,12 @@ describe('serving periods', () => {
   });
 
   test('a breakfast dish is on at breakfast and off at teatime', () => {
-    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 8 * 60).available).toBe(true);
-    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 16 * 60).available).toBe(false);
+    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 8 * 60).available).toBe(
+      true
+    );
+    expect(itemAvailability({ daypart_ids: ['breakfast'] }, PARTS, MON, 16 * 60).available).toBe(
+      false
+    );
   });
 
   /* Why it names the period: an unexplained grey card reads as "they have run
@@ -523,7 +535,9 @@ describe('serving periods', () => {
 
   describe('normalizeDayparts', () => {
     test('keeps id, name and a normalised week', () => {
-      const [p] = normalizeDayparts([{ id: 'Breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } }]);
+      const [p] = normalizeDayparts([
+        { id: 'Breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } },
+      ]);
       expect(p.id).toBe('breakfast');
       expect(p.hours.mon).toEqual([{ open: 420, close: 660 }]);
     });
@@ -531,7 +545,12 @@ describe('serving periods', () => {
     test('drops anything with no id or no name, and any duplicate', () => {
       expect(normalizeDayparts([{ name: 'No id' }])).toEqual([]);
       expect(normalizeDayparts([{ id: 'a', name: '' }])).toEqual([]);
-      expect(normalizeDayparts([{ id: 'a', name: 'A' }, { id: 'a', name: 'Again' }])).toHaveLength(1);
+      expect(
+        normalizeDayparts([
+          { id: 'a', name: 'A' },
+          { id: 'a', name: 'Again' },
+        ])
+      ).toHaveLength(1);
     });
 
     test('a non-list is no periods', () => {

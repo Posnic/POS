@@ -1332,7 +1332,7 @@ class InstallService {
         for (const value of wantedUnits) {
           if (unitMap[value]) continue;
           const label = UNIT_LABELS[value] || value.charAt(0).toUpperCase() + value.slice(1);
-           
+
           unitMap[value] = await this.repository.insertUnit({
             demo_pack: packTag,
             demo_seeded_at: now,

@@ -633,7 +633,6 @@ describe('ItemRepository', () => {
     });
   });
 
-
   describe('updateKioskStatus', () => {
     test('updates status', async () => {
       col.findOneAndUpdate = jest.fn().mockResolvedValue({ value: { _id: FAKE_ID } });
@@ -691,7 +690,6 @@ describe('ItemRepository', () => {
       expect(r.status).toBe(false);
     });
   });
-
 
   describe('accessMobileApp', () => {
     test('returns mobile app data', async () => {

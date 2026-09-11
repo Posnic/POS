@@ -83,6 +83,7 @@
     "files": [
       "src/main.js",
       "src/ipc-guard.js",
+      "src/order-alert.js",
       "src/splash.js",
       "src/shutdown-state.js",
       "src/scheduled-task.js",
