@@ -177,6 +177,23 @@ router.get(
   bindController(salesController.getCustomerPrint)
 );
 
+/*
+ * Turn a clip of a waiter's voice into text, using the shop's own account.
+ *
+ * Behind the same guard as the other handset routes: a signed-in user or the
+ * shop's own equipment. This spends the shop's money per call, so anonymous
+ * traffic has no business here.
+ *
+ * The key never leaves the server; that is the whole reason this endpoint
+ * exists rather than the app calling a provider itself.
+ */
+router.post(
+  '/transcribe',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.transcribe)
+);
+
 router.use(protect);
 
 // POST /api/sales - Create a new sale
