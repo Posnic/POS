@@ -104,3 +104,58 @@ test('the page is reachable without a credential', () => {
   assert.ok(mountedAt < limiterAt,
     'a page a shop reloads while setting up handsets must not be rate limited');
 });
+
+/*
+ * THE CODE ON THE WALL SAYS https, WHATEVER EXPRESS THINKS IT IS SERVING.
+ *
+ * nginx terminates TLS and forwards plain http, so `req.protocol` reads `http`
+ * unless `trust proxy` is on - and that is only on when NODE_ENV says
+ * production. Every other instance printed a QR saying
+ * `http://shop.posnic.io/api`; a phone scanned it, the address 301'd to https,
+ * the handset reported that nothing answered, and the shop was told to check
+ * whether their till was running.
+ *
+ * Reading X-Forwarded-Proto instead would have fixed one instance and left the
+ * next to be found the same way. A PUBLIC host reached over the internet is
+ * https - not a fact about a deployment, but what makes an address safe to put
+ * on a wall for waiters to scan. So it is decided by what kind of address it
+ * is, and no header or environment can get it wrong.
+ */
+
+test('a public host is https even when Express thinks it is serving http', () => {
+  for (const protocol of ['http', 'https', undefined, '']) {
+    const { targets, cloud } = pairingTargets(
+      { host: 'develop.posnic.io', protocol, port: 5555 },
+      LOCAL
+    );
+    assert.equal(cloud, true);
+    assert.equal(targets[0].url, 'https://develop.posnic.io/api');
+  }
+});
+
+test('a till on the shop Wi-Fi stays http, because it holds no certificate', () => {
+  /* The reason the app declares NSAllowsLocalNetworking and cleartext for
+     local addresses at all. Forcing https here would break every LAN till. */
+  const { targets, cloud } = pairingTargets(
+    { host: '192.168.1.5:5555', protocol: 'https', port: 5555 },
+    LOCAL
+  );
+  assert.equal(cloud, false);
+  for (const target of targets) assert.match(target.url, /^http:\/\//);
+});
+
+test('no QR ever carries a scheme the address cannot answer on', () => {
+  /* The rule stated once: public means https, private means http, and there
+     is no third case where a guess is made. */
+  const cases = [
+    ['develop.posnic.io', 'https:'],
+    ['shop.posnic.io:443', 'https:'],
+    ['10.0.0.9:5555', 'http:'],
+    ['172.16.4.2:5555', 'http:'],
+    ['192.168.0.3:5555', 'http:'],
+  ];
+  for (const [host, scheme] of cases) {
+    const { targets } = pairingTargets({ host, port: 5555 }, LOCAL);
+    assert.equal(new URL(targets[0].url).protocol, scheme, `${host} got the wrong scheme`);
+  }
+});
