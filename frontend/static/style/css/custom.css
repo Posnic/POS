@@ -6724,3 +6724,47 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     #v-pills-modules .fg-controls { justify-content: flex-start; }
     #v-pills-modules .fg-search { flex: 1 1 100%; }
 }
+
+/*
+ * WHERE YOU ARE, in the left menu.
+ *
+ * `active` and `:hover` were styled identically - the same primary colour on
+ * the same transparent background - so "the page you are on" and "the item
+ * your mouse is over" looked the same. On a settings screen, where every page
+ * looks like every other settings page, that left the menu saying nothing at
+ * the moment it was most needed.
+ *
+ * The rail is what separates them. Hover stays a colour change, because hover
+ * is a question; active gets a bar and a tint, because active is an answer.
+ *
+ * !important throughout: custom.css loads BEFORE theme-variables.css, so an
+ * override here loses to the theme unless it says so. That has bitten this
+ * file before.
+ */
+.vertical-menu > li > a.active,
+.vertical-menu > li.active > a {
+  background-color: rgba(80, 111, 228, 0.08) !important;
+  background-color: color-mix(in srgb, var(--theme-primary-color, #506fe4) 8%, transparent) !important;
+  font-weight: 600 !important;
+  position: relative;
+}
+
+/* The bar. On a pseudo-element, so it costs the row no layout and cannot
+   shift the label by a pixel when it appears. */
+.vertical-menu > li > a.active::before,
+.vertical-menu > li.active > a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--theme-primary-color, #506fe4);
+}
+
+/* Hovering the page you are already on should not un-mark it. */
+.vertical-menu > li:hover > a.active {
+  background-color: rgba(80, 111, 228, 0.12) !important;
+  background-color: color-mix(in srgb, var(--theme-primary-color, #506fe4) 12%, transparent) !important;
+}
