@@ -982,6 +982,19 @@ class ItemsController extends BaseController {
           /* The floor plan. The captain app reads this to draw its tables, and
              is the only caller that ever did. */
           tableorders: data.tableorders || [],
+          /*
+           * Whether this shop's handsets may listen, and in what language.
+           *
+           * WHERE THE AUDIO GOES, never which vendor transcribes it. A handset
+           * told the vendor is a handset that will eventually be asked to hold
+           * the key for it, and telling one phone tells every phone in the
+           * building. See utils/voice-settings.js.
+           *
+           * Sent with the menu because that is the one call every handset
+           * already makes on every start, so a shop that changes this setting
+           * has it in force by the next time a waiter opens the app.
+           */
+          voice: data.voice || {},
         },
         response.message
       );

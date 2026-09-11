@@ -19,6 +19,7 @@
  */
 
 const SettingsRepository = require('../repositories/settings.repository');
+const voiceSettings = require('../utils/voice-settings');
 
 /*
  * The module exports the CLASS, not a ready-made instance.
@@ -139,6 +140,21 @@ async function transcribe(request, context) {
 
   if (!provider || provider === 'off') {
     return { status: false, message: 'Voice ordering is not set up for this shop', data: null };
+  }
+  if (provider === 'server') {
+    /*
+     * A handset's word, not a shop's choice.
+     *
+     * `server` is what the HANDSET is told - where to send the audio - and it
+     * is never what a shop saves. Seeing it here means something wrote the
+     * handset's vocabulary into the shop's setting, and the shop would be
+     * billed by a vendor nobody chose. See utils/voice-settings.js.
+     */
+    return {
+      status: false,
+      message: 'Voice ordering is not set up for this shop',
+      data: null,
+    };
   }
   if (provider === 'device') {
     /* Named rather than falling through to "unknown provider", which would
