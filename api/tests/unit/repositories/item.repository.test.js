@@ -1543,18 +1543,27 @@ describe('ItemRepository', () => {
     test('a shop with no gateway takes payment at the counter', async () => {
       /* The page refused every such shop: "has not set up a way to pay
          online yet", which turned the ordering page into a menu. */
-      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: false, payment_cod: false }, 'enable');
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: false, payment_cod: false },
+        'enable'
+      );
       expect(data.payment.offline).toBe(true);
     });
 
     test('a shop that takes online payment and switched offline off is prepaid only', async () => {
-      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: true, payment_cod: false }, 'enable');
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: true, payment_cod: false },
+        'enable'
+      );
       expect(data.payment.offline).toBe(false);
       expect(data.payment.razorpay).toBe(true);
     });
 
     test('a shop that takes online payment and left offline on offers both', async () => {
-      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: true, payment_cod: true }, 'enable');
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: true, payment_cod: true },
+        'enable'
+      );
       expect(data.payment.offline).toBe(true);
     });
   });
