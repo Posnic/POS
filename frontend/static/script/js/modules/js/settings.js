@@ -8539,3 +8539,93 @@ $(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder', funct
 $(document).on('click', '#save_dayparts', function () {
     PosnicPro.servingPeriods.save();
 });
+
+/*
+ * The delivery platforms and webshops most shops actually mean.
+ *
+ * Mirrors KNOWN_PARTNERS in api/src/utils/sales-channels.js. The ids have to
+ * match, because they are what a sale stores and what the commission report
+ * groups by: a shop that types "Swiggy" one day and "swiggy" the next ends up
+ * with two rows holding half a month each.
+ *
+ * A preset is a starting point, not a restriction. A shop with a local
+ * aggregator nobody has heard of still adds one by hand - the whole reason
+ * partners are DATA rather than features is that a new one must never be a
+ * release.
+ */
+PosnicPro.partnerPresets = {
+    /*
+     * BRAND NAMES, NOT UI TEXT.
+     *
+     * Swiggy is Swiggy in Tamil. These are never translated and never wrapped
+     * in t() - which also keeps them out of the load-time trap, because a t()
+     * call in a literal here runs before any language pack exists.
+     *
+     * The auto-tagger will offer to wrap them every time somebody runs it.
+     * Say no. They belong beside the other proper nouns in _glossary.json,
+     * not in a translator's queue.
+     */
+    LIST: [
+        { id: 'swiggy', label: 'Swiggy', channel: 'marketplace' },
+        { id: 'zomato', label: 'Zomato', channel: 'marketplace' },
+        { id: 'ondc', label: 'ONDC', channel: 'marketplace' },
+        { id: 'magicpin', label: 'magicpin', channel: 'marketplace' },
+        { id: 'opencart', label: 'OpenCart', channel: 'ecommerce' },
+        { id: 'woocommerce', label: 'WooCommerce', channel: 'ecommerce' },
+        { id: 'shopify', label: 'Shopify', channel: 'ecommerce' }
+    ],
+
+    render: function () {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#partner_presets').html(
+            '<span class="small text-muted mr-2">' + t('lang_add_quickly', 'Add quickly') + ':</span>'
+            + PosnicPro.partnerPresets.LIST.map(function (p) {
+                return '<button type="button" class="btn btn-outline-secondary btn-sm mr-1 mb-1 partner-preset" '
+                    + 'data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '" '
+                    + 'data-channel="' + esc(p.channel) + '">'
+                    + '<i class="feather icon-plus mr-1"></i>' + esc(p.label) + '</button>';
+            }).join('')
+        );
+        PosnicPro.partnerPresets.markUsed();
+    },
+
+    /* A platform already in the list is shown as used rather than hidden: a
+       shop looking for Swiggy should find it either way, and learn that it is
+       already there instead of adding a second one. */
+    markUsed: function () {
+        var taken = {};
+        $('.channel-partner-row .partner-label').each(function () {
+            var name = String($(this).val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            if (name) { taken[name] = true; }
+        });
+        $('.partner-preset').each(function () {
+            var used = !!taken[$(this).data('id')];
+            $(this).prop('disabled', used).toggleClass('btn-outline-secondary', !used)
+                .toggleClass('btn-secondary-rgba', used);
+        });
+    }
+};
+
+$(document).on('click', '.partner-preset', function () {
+    var $b = $(this);
+    $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({
+        label: $b.data('label'),
+        channel: $b.data('channel'),
+        /* No rate guessed. What Swiggy charges this shop is what this shop
+           negotiated, and a plausible default is the kind of number that gets
+           saved unread and then disagrees with an invoice. */
+        commission_percent: 0,
+        enabled: true
+    }));
+    PosnicPro.partnerPresets.markUsed();
+});
+
+$(document).on('input', '.partner-label', function () {
+    PosnicPro.partnerPresets.markUsed();
+});
+
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.partnerPresets.render();
+});

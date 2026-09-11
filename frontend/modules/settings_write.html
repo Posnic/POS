@@ -4877,9 +4877,21 @@
                                                                 <small class="form-text text-muted mb-2">
                                                                     <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
                                                                 </small>
+                                                                <!--
+                                                                    The platforms most shops mean, one tap each.
+
+                                                                    Typing "Swiggy" by hand is how one shop ends up
+                                                                    with Swiggy, swiggy and Swigy as three rows of
+                                                                    the same report, each holding a third of the
+                                                                    month. A preset carries the id the server already
+                                                                    knows and the channel it belongs to, so the only
+                                                                    thing left to type is the rate that was agreed.
+                                                                -->
+                                                                <div class="mb-2" id="partner_presets"></div>
+
                                                                 <div id="sales_channel_partner_rows"></div>
                                                                 <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
-                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add partner</lang>
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add another</lang>
                                                                 </button>
 
                                                                 <hr class="my-3">

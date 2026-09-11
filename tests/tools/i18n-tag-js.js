@@ -71,6 +71,23 @@ const isWords = (t) => /[A-Za-z]{2,}/.test(t) && !/[{}'"+`]/.test(t);
    type the API stores, an HTTP method, a date format, a CSV export cell. */
 const DENY = new Set(['Received|Open', 'Take away|Dine-in', 'Active|Inactive', 'PUT|POST',
   'FullReturn|PartialReturn', 'MM/DD/YYYY|DD/MM/YYYY']);
+/*
+ * Proper nouns. Swiggy is Swiggy in Tamil.
+ *
+ * Without this the tagger wraps every brand name it meets, which puts rows in
+ * a translator's queue that have exactly one correct answer - the English -
+ * and costs somebody the time to work that out for each one. Worse, a brand
+ * sitting in a config literal gets its t() call run at LOAD time, before any
+ * pack exists, which is a separate check failing for a string that was never
+ * going to change.
+ *
+ * Grows whenever a platform is added beside it in the settings presets.
+ */
+const BRANDS = new Set([
+  'Swiggy', 'Zomato', 'ONDC', 'magicpin', 'OpenCart', 'WooCommerce', 'Shopify',
+  'Posnic', 'WhatsApp', 'Razorpay', 'PhonePe', 'Google', 'Windows', 'Android',
+]);
+
 const TAGS = 'th|td|label|h[1-6]|small|strong|b|em|span|button|a|p|li|legend|div';
 
 function codemod(src) {
@@ -114,6 +131,7 @@ function codemod(src) {
        form config data must use, because a t() here would run at load. */
     const after = src.slice(offset + m.length, offset + m.length + 40);
     if (/^,\s*(t|titleKey)\s*:/.test(after)) return m;
+    if (BRANDS.has(text)) return m;
     if (!isWords(text)) return m; n++; return prop + sep + t(text);
   });
   /* a ternary between two plain literals */
