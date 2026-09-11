@@ -291,3 +291,30 @@ test('menu mode hides the controls that only mean something when ordering', () =
   oo.syncMode();
   assert.strictEqual($('.kiosk-ordering-only').css('display'), 'none');
 });
+
+test('a store id arriving from the server draws the addresses too', () => {
+  /*
+   * The load path sets the box with `$("#kioskstore_id").val(store_id)`, and
+   * .val() fires no event - so the 'input change' handler that keeps the
+   * addresses current while somebody types does not run for it.
+   *
+   * Clicking through the sidebar happens to work, because the click handler
+   * fires after the settings have loaded. Opening #/settings/onlineordering
+   * directly does not: the pane is shown before the data arrives, the box is
+   * empty at that moment, and nothing runs again afterwards. A shop with a
+   * store id saved months ago would see no addresses at all.
+   *
+   * Static, because the load path needs the whole settings page. What it
+   * checks is precise: the call sits with the assignment it depends on.
+   */
+  const src = fs.readFileSync(SETTINGS, 'utf8');
+  const at = src.indexOf('$("#kioskstore_id").val(store_id);');
+  assert.notStrictEqual(at, -1, 'the store id is no longer loaded the way this test expects');
+
+  const after = src.slice(at, at + 600);
+  assert.match(
+    after,
+    /storefrontLinks\(\)/,
+    'the store id loads without drawing the addresses, so a direct link to Online Ordering shows none'
+  );
+});
