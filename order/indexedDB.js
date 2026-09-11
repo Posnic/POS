@@ -80,19 +80,109 @@ let appErrorRetryAction = null;
 let appErrorKind = null;
 let orderProcessingActive = false;
 
+/* ------------------------------------------------------------- the shop
+ *
+ * Who the shop is and what money it takes, as the storefront read said.
+ * Stored with the branch row so every page - the menu, the order, paying -
+ * writes a price the same way without asking the server again.
+ */
+const shop = { name: "", currency: "", currencyCode: "" };
+
+async function rememberShop() {
+    try {
+        const rows = await getData(BRANCH_STORE);
+        const branch = rows && rows[0] ? rows[0] : {};
+        shop.name = String(branch.name || "");
+        shop.currency = String(branch.currency || "");
+        shop.currencyCode = String(branch.currency_code || "");
+    } catch (error) {
+        /* No branch row yet is not an error; the fetch that stores one will
+           be along in a moment. */
+    }
+    return shop;
+}
+
+/*
+ * A price, in the shop's own money.
+ *
+ * A SYMBOL sits against the number - "₹280", the way every bill in the
+ * country writes it - and a CODE or a word keeps its space: "Rs 280". The
+ * rupee is the fallback for a shop that has not said, because this product
+ * grew up in India and a blank beside a price is worse than a guess.
+ */
+function money(amount) {
+    const n = Number(amount) || 0;
+    const text = n % 1 === 0 ? String(n) : n.toFixed(2);
+    const unit = shop.currency || "₹";
+    return /^[A-Za-z]/.test(unit) ? unit + " " + text : unit + text;
+}
+
+/* The words behind the veg mark, for a screen reader and for the sheet. */
+const DIET_WORDS = {
+    veg: "Vegetarian",
+    non_veg: "Non-vegetarian",
+    egg: "Contains egg",
+    vegan: "Vegan"
+};
+
+function dietMarkHtml(diet) {
+    const key = String(diet || "");
+    if (!DIET_WORDS[key]) return "";
+    return `<span class="product-diet diet-${escapeHtml(key)}" role="img" aria-label="${DIET_WORDS[key]}"></span>`;
+}
+
+/* The shop's name and logo at the top of the ordering page, in place of
+   "Self-Ordering", which named the software and not the restaurant. */
+async function paintShop() {
+    await rememberShop();
+    const name = document.getElementById("shop-name");
+    if (!name) return;
+
+    if (shop.name) {
+        name.textContent = shop.name;
+        document.title = shop.name + " · Order";
+    }
+
+    const sub = document.getElementById("shop-sub");
+    if (sub && typeof allProducts === "function") {
+        const count = allProducts().length;
+        sub.textContent = count + (count === 1 ? " item" : " items");
+        sub.hidden = count === 0;
+    }
+
+    try {
+        const images = await getKioskImages();
+        const logo = document.getElementById("shop-logo");
+        const raw = images && typeof images.logo === "string" ? images.logo.trim() : "";
+        if (logo && raw && raw !== "default-product.png" && raw !== "images/default-product.png") {
+            const apiBaseUrl = String(CONFIG.API_BASE_URL || "").replace(/\/$/, "");
+            const src = /^(https?:|data:|blob:)/i.test(raw)
+                ? raw
+                : raw.startsWith("/") ? `${apiBaseUrl}${raw}` : `${apiBaseUrl}/${raw.replace(/^uploads\//, "uploads/")}`;
+            logo.addEventListener("error", () => { logo.hidden = true; }, { once: true });
+            logo.src = getSafeImageUrl(src, "");
+            logo.hidden = !logo.src;
+        }
+    } catch (error) {
+        /* A logo that will not load is a logo that stays hidden. */
+    }
+}
+
 function ensureAppStateStyles() {
     if (document.getElementById("app-state-styles")) return;
     const style = document.createElement("style");
     style.id = "app-state-styles";
+    /* Ink on paper, like the rest of the page. This carried the orange
+       gradient after every other gradient was gone. */
     style.textContent = `
-        .app-state-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(255,255,255,.96); font-family: Arial,sans-serif; text-align: center; }
-        .app-state-card { width: min(460px, 100%); padding: 32px; border-radius: 20px; background: #fff; box-shadow: 0 12px 40px rgba(0,0,0,.18); }
-        .app-state-icon { font-size: 52px; margin-bottom: 12px; }
-        .app-state-title { margin: 0 0 12px; color: #2b160d; font-size: 28px; }
-        .app-state-message { margin: 0; color: #555; font-size: 17px; line-height: 1.5; white-space: pre-line; }
-        .app-state-button { margin-top: 24px; width: 100%; padding: 14px 18px; border: 0; border-radius: 10px; background: linear-gradient(90deg,#ff7e5f,#feb47b); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
+        .app-state-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(255,255,255,.96); font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; text-align: center; color: #111827; }
+        .app-state-card { width: min(420px, 100%); padding: 28px 24px; border-radius: 16px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 24px rgba(17,24,39,.14); }
+        .app-state-icon { font-size: 40px; margin-bottom: 10px; }
+        .app-state-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+        .app-state-message { margin: 0; color: #6b7280; font-size: 15px; line-height: 1.5; white-space: pre-line; }
+        .app-state-button { margin-top: 20px; width: 100%; min-height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: #111827; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
         .app-state-button:disabled { opacity: .55; cursor: wait; }
-        .app-state-spinner { width: 54px; height: 54px; margin: 0 auto 20px; border: 6px solid #f1e4de; border-top-color: #ff7e5f; border-radius: 50%; animation: app-state-spin 1s linear infinite; }
+        .app-state-spinner { width: 40px; height: 40px; margin: 0 auto 16px; border: 4px solid #e5e7eb; border-top-color: #111827; border-radius: 50%; animation: app-state-spin .9s linear infinite; }
         @keyframes app-state-spin { to { transform: rotate(360deg); } }
     `;
     document.head.appendChild(style);
@@ -337,7 +427,10 @@ async function syncChangedProducts(newProducts) {
         "discount_price",
         "tax_price",
         "img",
-        "category_name"
+        "category_name",
+        "available",
+        "description",
+        "diet"
     ];
 
     return new Promise((resolve, reject) => {
@@ -603,9 +696,15 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 }, !silent);
             }
 
+            /* The shop, as the page shows it: the name at the top and the
+               money beside every price. */
+            const storeInfo = result.data.store || {};
+
             categories.forEach(category => {
                 category.items.forEach(item => {
-                    let imageSrc = (!item.img || item.img.trim() === "" || item.img === "item.svg") ? "images/default-product.png" : item.img;
+                    /* Empty when there is no photograph, so the card can draw
+                       the dish's icon instead of a grey placeholder. */
+                    const imageSrc = (!item.img || String(item.img).trim() === "" || item.img === "item.svg") ? "" : String(item.img).trim();
                     const itemId = typeof item.id === "string"
                         ? item.id
                         : (item.id?.$oid || item._id?.$oid || item._id || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -625,6 +724,13 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                         description: item.description || "",
                         prep_minutes: Number(item.prep_minutes) || 0,
                         ordered_count: Number(item.ordered_count) || 0,
+                        /* Every photo, the drawn icon for a dish with none,
+                           and whether it is on right now - the same three
+                           things the menu shows, so the two pages agree. */
+                        photos: Array.isArray(item.photos) ? item.photos.filter(Boolean) : [],
+                        icon: item.icon || "",
+                        available: item.available !== false,
+                        served_in: Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [],
                         category_name: category.category_name
                     });
                 });
@@ -632,7 +738,14 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             // ✅ Save branch & products in IndexedDB
             let productChanges = null;
-            await saveData(BRANCH_STORE, [{ id: branchId, kioskPayment: result.data.payment }]);
+            await saveData(BRANCH_STORE, [{
+                id: branchId,
+                kioskPayment: result.data.payment,
+                name: storeInfo.name || "",
+                currency: storeInfo.currency || "",
+                currency_code: storeInfo.currency_code || ""
+            }]);
+            await rememberShop();
             if (silent) {
                 productChanges = await syncChangedProducts(products);
                 const totalChanges = productChanges.inserted + productChanges.updated + productChanges.deleted;
@@ -730,6 +843,8 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
                     ...item,
                     name: updatedProduct.name,
                     img: updatedProduct.img,
+                    icon: updatedProduct.icon || "",
+                    diet: updatedProduct.diet || "",
                     price: updatedProduct.price,
                     tax_price: updatedProduct.tax_price,
                 };
@@ -748,24 +863,34 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
     renderCart(syncedCart);             // 🔄 Re-render cart UI with synced data
 }
 
-// ✅ Optimized renderCart function
+/*
+ * The order, drawn: one row per dish, the sums under them, the bar at the
+ * foot. Also keeps the counts on the ordering page in step, because the same
+ * data feeds both and this is the one place that reads it.
+ */
 async function renderCart(cartData = null) {
     if (window.POSNIC_SILENT_REFRESH) return;
 
     try {
         if (!cartData) {
-            cartData = await getCartData(); // ✅ Fetch only if not already available
+            cartData = await getCartData();
         }
+        await rememberShop();
 
         let totalPrice = 0;
+        let totalTax = 0;
         let totalQty = 0;
         let html = "";
 
         if (cartData.length === 0) {
             $("#next-btn").prop("disabled", true);
-            $("#cart-summary").html("<p class='text-center'>Cart is empty</p>");
-            $("#cart-total,#cart-qty,#mobile-cart-count").text("0.00");
-            $("#summary-display").text(`0 Items | ₹0.00`);
+            $("#cart-summary").html(
+                '<div class="empty-order"><strong>Your order is empty</strong>Taking you back to the menu.</div>'
+            );
+            $("#bill").prop("hidden", true);
+            $("#cart-total").text(money(0));
+            $("#cart-qty,#mobile-cart-count").text("0");
+            $("#summary-display").text(`0 items · ${money(0)}`);
             setTimeout(() => {
                 window.location.href = "products.html";
             }, 2000);
@@ -778,31 +903,30 @@ async function renderCart(cartData = null) {
             const price = Number(item.price) || 0;
             const lineTotal = quantity * price;
             totalPrice += lineTotal;
+            totalTax += (Number(item.tax_price) || 0) * quantity;
             totalQty += quantity;
 
-            const itemName = String(item.name ?? "Unknown");
-            const displayName = itemName.length > 25 ? itemName.substring(0, 25) + '...' : itemName;
             const safeItemId = escapeHtml(itemId);
-            const safeItemName = escapeHtml(displayName);
-            const safeImageUrl = escapeHtml(getSafeImageUrl(item.img));
+            const safeItemName = escapeHtml(String(item.name ?? "Unknown"));
+            const picture = item.img
+                ? `<img src="${escapeHtml(getSafeImageUrl(item.img))}" alt="" class="item-image">`
+                : `<span class="item-icon" aria-hidden="true">${escapeHtml(item.icon || "")}</span>`;
 
             html += `
                 <div class="cart-item" data-item-id="${safeItemId}">
-                    <img src="${safeImageUrl}" alt="${safeItemName}" class="item-image">
-                    
+                    ${picture}
                     <div class="item-content">
                         <div class="item-details">
-                            <div class="item-name">${safeItemName}</div>
+                            <div class="item-name">${dietMarkHtml(item.diet)}<span>${safeItemName}</span></div>
                             <div class="item-prices">
-                                <span class="unit-price">₹${price.toFixed(2)} per item</span>
-                                <span class="total-price">₹${lineTotal.toFixed(2)}</span>
+                                <span class="unit-price">${escapeHtml(money(price))} each</span>
+                                <span class="total-price">${escapeHtml(money(lineTotal))}</span>
                             </div>
                         </div>
-                        
-                        <div class="quantity-control">
-                            <button class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="-1">-</button>
+                        <div class="quantity-control" aria-label="Quantity">
+                            <button type="button" class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="-1" aria-label="One fewer">&minus;</button>
                             <span class="qty-value">${quantity}</span>
-                            <button class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="1">+</button>
+                            <button type="button" class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="1" aria-label="One more">+</button>
                         </div>
                     </div>
                 </div>`;
@@ -813,9 +937,25 @@ async function renderCart(cartData = null) {
         }
 
         $("#cart-summary").html(html);
-        $("#summary-display").text(`${totalQty} Items | ₹${totalPrice.toFixed(2)}`);
-        $('#cart-qty,#mobile-cart-count').html(totalQty);
-        $("#cart-total").text(totalPrice.toFixed(2));
+
+        /*
+         * The sums. The line prices already carry any tax that is added on
+         * top, so "Items" is the food and "Taxes" is the part of the total
+         * that is tax - shown only when there is any, because a row reading
+         * "Taxes ₹0" is a row that makes people wonder.
+         */
+        const itemsWord = totalQty === 1 ? "item" : "items";
+        $("#bill-items").text(money(totalPrice - totalTax));
+        $("#bill-tax").text(money(totalTax));
+        $("#bill-tax-row").prop("hidden", totalTax <= 0);
+        $("#bill-items-row").prop("hidden", totalTax <= 0);
+        $("#bill-total").text(money(totalPrice));
+        $("#bill").prop("hidden", false);
+
+        $("#summary-display").text(`${totalQty} ${itemsWord} · ${money(totalPrice)}`);
+        $("#cart-qty,#mobile-cart-count").text(totalQty);
+        $("#cart-total").text(money(totalPrice));
+        $("#next-btn").prop("disabled", false);
         const loader = document.getElementById('page-loader');
         if (loader) loader.style.display = 'none';
 
@@ -888,16 +1028,14 @@ async function patchVisibleProductsFromData(updatedProducts = [], changedProduct
         const $card = $(".product-card").filter((_, card) => String($(card).attr("data-id")) === String(product.id));
         if (!$card.length) return;
 
-        $card.find(".product-price").text(`₹${Number(product.price || 0).toFixed(2)}`);
-        const productName = String(product.name || "Unknown");
-        const displayName = productName.length > 25 ? productName.substring(0, 25) + "..." : productName;
-        $card.find(".product-title").text(displayName);
-        const $image = $card.find("img").first();
-        const safeImageUrl = getSafeImageUrl(product.img);
-        if ($image.length && $image.attr("src") !== safeImageUrl) {
-            $image.attr("src", safeImageUrl);
+        $card.find(".product-price").text(money(product.price));
+        $card.find(".product-name").text(String(product.name || "Unknown"));
+        $card.attr("data-available", product.available === false ? "false" : "true");
+        const $image = $card.find(".product-media img").first();
+        if (product.img && $image.length) {
+            const safeImageUrl = getSafeImageUrl(product.img);
+            if ($image.attr("src") !== safeImageUrl) $image.attr("src", safeImageUrl);
         }
-        $image.attr("alt", displayName);
     });
 
     await updateCart();
@@ -961,13 +1099,19 @@ async function loadProducts() {
         categories.set(categoryKey, categoryName);
     });
 
+    /* The chip strip on a phone and the rail on a wide screen carry the
+       same sections; one delegated handler answers both. Buttons, so a
+       keyboard and a screen reader get them too. */
     const $categoryList = $("#category-list").empty();
+    const $categoryRail = $("#category-rail").empty();
     categories.forEach((categoryName, categoryKey) => {
-        $("<div>")
+        const chip = $("<button>")
+            .attr("type", "button")
             .addClass("category-item")
             .attr("data-category", categoryKey)
-            .text(categoryName)
-            .appendTo($categoryList);
+            .text(categoryName);
+        chip.appendTo($categoryList);
+        if ($categoryRail.length) chip.clone().appendTo($categoryRail);
     });
 
     // ✅ Retrieve last active category from localStorage
@@ -1004,8 +1148,9 @@ async function showCategory(category, element) {
         return;
     }
 
+    /* Lit in both lists, so the rail and the strip never disagree. */
     $(".category-item").removeClass("active");
-    $(element).addClass("active");
+    $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === String(category)).addClass("active");
 
     // ✅ Update heading dynamically
     let categoryName = $(element).text();
@@ -1038,30 +1183,47 @@ async function renderProductCards(list) {
         const quantity = cartItem ? Number(cartItem.quantity) || 0 : 0;
         const activeClass = quantity > 0 ? "active" : "";
 
-        const productName = String(product.name ?? "Unknown");
-        const displayName = productName.length > 25 ? productName.substring(0, 25) + '...' : productName;
         const safeProductId = escapeHtml(productId);
-        const safeProductName = escapeHtml(displayName);
-        const safeImageUrl = escapeHtml(getSafeImageUrl(product.img));
+        const safeProductName = escapeHtml(String(product.name ?? "Unknown"));
+        const description = String(product.description || "");
         const price = Number(product.price) || 0;
 
-        /* The veg mark, drawn as the square-and-circle people already look for
-           before they read the name. Absent when the shop has not said, which
-           is not the same as "not vegetarian". */
-        const diet = String(product.diet || "");
-        const dietMark = diet
-            ? `<span class="product-diet diet-${escapeHtml(diet)}" role="img" aria-label="${escapeHtml(diet.replace("_", "-"))}"></span>`
-            : "";
+        /*
+         * Off its hours: shown, greyed, and told why. Hiding it makes a
+         * restaurant look like it does not serve breakfast at all.
+         */
+        const available = product.available !== false;
+        const served = Array.isArray(product.served_in) ? product.served_in.filter(Boolean) : [];
+        const meta = [];
+        if (!available) {
+            meta.push(served.length ? served.join(" and ") + " only" : "Not available right now");
+        } else if (Number(product.prep_minutes) > 0) {
+            meta.push("~" + Number(product.prep_minutes) + " min");
+        }
+
+        /* A photograph if the shop uploaded one, the drawn icon if not, and
+           the old placeholder only when there is neither. */
+        const media = product.img
+            ? `<img src="${escapeHtml(getSafeImageUrl(product.img))}" alt="" loading="lazy" decoding="async">`
+            : product.icon
+                ? `<span class="product-icon" aria-hidden="true">${escapeHtml(product.icon)}</span>`
+                : `<img src="images/default-product.png" alt="" loading="lazy">`;
 
         html += `
-        <div class="product-card ${activeClass}" data-id="${safeProductId}">
-            <img src="${safeImageUrl}" alt="${safeProductName}">
-            <p class="product-title">${dietMark}${safeProductName}</p>
-            <div class="product-price">₹${price.toFixed(2)}</div>
-            <div class="cart-controls">
-                <button class="btn-decrease" data-id="${safeProductId}" ${quantity <= 0 ? 'disabled' : ''}>-</button>
-                <span class="product-qty" data-id="${safeProductId}" style="font-size: 18px; font-weight: bold;">${quantity}</span>
-                <button class="btn-increase" data-id="${safeProductId}">+</button>
+        <div class="product-card ${activeClass}" data-id="${safeProductId}" data-qty="${quantity}" data-available="${available ? "true" : "false"}" role="button" tabindex="0">
+            <div class="product-body">
+                <p class="product-title">${dietMarkHtml(product.diet)}<span class="product-name">${safeProductName}</span></p>
+                ${description ? `<p class="product-desc">${escapeHtml(description)}</p>` : ""}
+                <p class="product-price">${escapeHtml(money(price))}</p>
+                ${meta.length ? `<div class="product-meta">${meta.map(m => `<span>${escapeHtml(m)}</span>`).join("")}</div>` : ""}
+            </div>
+            <div class="product-media">
+                ${media}
+                <div class="cart-controls" aria-label="Quantity">
+                    <button type="button" class="btn-decrease" data-id="${safeProductId}" aria-label="One fewer" ${quantity <= 0 ? 'disabled' : ''}>&minus;</button>
+                    <span class="product-qty" data-id="${safeProductId}" aria-live="polite">${quantity}</span>
+                    <button type="button" class="btn-increase" data-id="${safeProductId}" aria-label="Add one"><span class="add-word">Add</span><span class="add-plus" aria-hidden="true">+</span></button>
+                </div>
             </div>
         </div>`;
     }
@@ -1097,11 +1259,15 @@ async function updateQuantity(id, change) {
     updateCart();
 
     // ✅ Update UI quantity text
-    $(".product-qty").filter((_, element) => String($(element).attr("data-id")) === String(id)).text(item.quantity);
+    const $qty = $(".product-qty").filter((_, element) => String($(element).attr("data-id")) === String(id));
+    $qty.text(item.quantity);
+    pop($qty);
+    pop($("#mobile-cart-count"));
 
-    // ✅ Disable or enable "-" button
+    /* The card's state: the pill reads "Add" at zero and "- n +" above it. */
     const $decreaseBtn = $(".btn-decrease").filter((_, element) => String($(element).attr("data-id")) === String(id));
     const $productCard = $(".product-card").filter((_, element) => String($(element).attr("data-id")) === String(id));
+    $productCard.attr("data-qty", String(item.quantity));
     if (item.quantity === 0) {
         $decreaseBtn.prop("disabled", true);
         $productCard.removeClass("active");
@@ -1109,6 +1275,47 @@ async function updateQuantity(id, change) {
         $decreaseBtn.prop("disabled", false);
         $productCard.addClass("active");
     }
+
+    /* Said out loud, so the open sheet can follow without reaching in. */
+    document.dispatchEvent(new CustomEvent("posnic:order-changed", {
+        detail: { id: String(id), quantity: item.quantity }
+    }));
+}
+
+/* A number that changed pops once, so the eye is told which one. */
+function pop($el) {
+    if (!$el || !$el.length) return;
+    $el.removeClass("pop");
+    void $el[0].offsetWidth;
+    $el.addClass("pop");
+}
+
+/*
+ * The order so far, on a wide screen, where the bottom bar would be on a
+ * phone: one line per dish, the total, and the way on.
+ */
+function renderOrderPanel(cartData) {
+    const lines = document.getElementById("order-panel-lines");
+    if (!lines) return;
+
+    const rows = (cartData || []).filter(item => (Number(item.quantity) || 0) > 0);
+    if (!rows.length) {
+        lines.innerHTML = '<p class="order-panel-empty">Nothing yet. Add a dish to start.</p>';
+    } else {
+        lines.innerHTML = rows.map(item => {
+            const quantity = Number(item.quantity) || 0;
+            const lineTotal = quantity * (Number(item.price) || 0);
+            return `<div class="panel-line" data-item-id="${escapeHtml(String(item.id ?? ""))}">
+                <span class="panel-line-qty">${quantity}&times;</span>
+                <span class="panel-line-name">${escapeHtml(String(item.name ?? "Unknown"))}</span>
+                <span class="panel-line-total">${escapeHtml(money(lineTotal))}</span>
+            </div>`;
+        }).join("");
+    }
+
+    const total = rows.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
+    $("#order-panel-total").text(money(total));
+    $("#order-panel-next").prop("disabled", rows.length === 0);
 }
 
 async function updateCart(cartData = null) {
@@ -1128,20 +1335,24 @@ async function updateCart(cartData = null) {
             )).text(item.quantity);
         });
 
-        if (totalQty === 0) {
-            $(".next-page")
-                .addClass("disabled")
-                .off("click"); // disables click handler
-        } else {
-            $(".next-page").on("click", () => window.location.href = 'cart.html');
-            $(".next-page").removeClass("disabled");
-        }
-
+        /*
+         * The bar: gone while there is nothing in it, back the moment there
+         * is. The click that opens the order is bound once, by the page
+         * script, and only answers while the class is off - this used to
+         * bind a fresh handler on every change and never let go of the old
+         * ones.
+         */
+        const itemsWord = totalQty === 1 ? "item" : "items";
+        $(".next-page").toggleClass("disabled", totalQty === 0);
+        $("#bill-bar").toggleClass("is-empty", totalQty === 0);
+        $("#mobile-cart-count").attr("data-zero", totalQty === 0 ? "true" : "false");
 
         $("#cart-qty,#mobile-cart-count").text(totalQty);
-        $("#cart-total").text(totalPrice.toFixed(2));
-        $("#summary-display").text(`${totalQty} Items | ₹${totalPrice.toFixed(2)}`);
+        $("#cart-qty-word").text(itemsWord);
+        $("#cart-total").text(money(totalPrice));
+        $("#summary-display").text(`${totalQty} ${itemsWord} · ${money(totalPrice)}`);
         $("#next-btn").prop("disabled", totalQty === 0);
+        renderOrderPanel(storedCart);
     } catch (error) {
         console.error("❌ Error updating cart:", error);
     }
@@ -1255,7 +1466,7 @@ async function confirmCancelOrder() {
     const cartSummary = document.getElementById("cart-summary");
     if (cartSummary) cartSummary.innerHTML = ""; // Clear cart UI
     const summaryDisplay = document.getElementById("summary-display");
-    if (summaryDisplay) summaryDisplay.textContent = "0 Items | ₹0.00"; // Reset summary
+    if (summaryDisplay) summaryDisplay.textContent = `0 items · ${money(0)}`;
     closeCancelModal(); // Close the modal
 
     // Optional redirect to products page
@@ -1744,6 +1955,9 @@ async function refreshProductView() {
     }
 
     document.getElementById("product-search-clear").hidden = !searching;
+    /* The mic and the clear button share one corner of the field. */
+    var mic = document.getElementById("product-search-mic");
+    if (mic && mic.getAttribute("data-supported") === "true") mic.hidden = searching;
 }
 
 $(document).on("input", "#product-search", function () {

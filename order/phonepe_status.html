@@ -1,158 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-    <title>PhonePe Payment Status</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Payment status</title>
+    <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/jquery-3.7.1.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
     <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
-    <script src="indexedDB.js?v=20260713-api-errors"></script>
-    <style>
-        /* Updated background color */
-        body {
-            background: linear-gradient(to right, #ff7e5f, #feb47b);
-            font-family: Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 90%;
-            width: 400px;
-            margin: auto;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            text-align: center;
-        }
-
-        h3 {
-            color: #333;
-        }
-
-        .status-icon {
-            font-size: 60px;
-            margin: 15px 0;
-        }
-
-        .success {
-            color: #28a745;
-            /* Bootstrap success green */
-        }
-
-        .error {
-            color: #dc3545;
-            /* Bootstrap danger red */
-        }
-
-        .pending {
-            color: #ffc107;
-            /* Bootstrap warning yellow */
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #007bff;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Responsive design */
-        @media (max-width: 600px) {
-            .container {
-                width: 90%;
-                padding: 15px;
-            }
-
-            .status-icon {
-                font-size: 50px;
-            }
-
-            .loader {
-                width: 50px;
-                height: 50px;
-            }
-
-            h3 {
-                font-size: 18px;
-            }
-        }
-    </style>
+    <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
 <body>
-    <div class="container">
-        <h3>Payment Status</h3>
-        <div id="statusContainer">
-            <div class="loader" id="loading"></div>
-            <div id="statusMessage" style="display: none;">
-                <i id="statusIcon" class="status-icon"></i>
-                <p id="statusText" class="fw-bold"></p>
-            </div>
+    <!--
+        Where a PhonePe payment comes back to. The same card as every other
+        wait on these pages; it used to be its own page with its own gradient,
+        Bootstrap from one CDN, jQuery from another and an icon font from a
+        third, to show one line of text.
+    -->
+    <main class="done" id="statusContainer">
+        <div class="loader" id="loading" role="status" aria-label="Checking the payment" style="margin: 24px auto;"></div>
+        <div id="statusMessage" hidden>
+            <div class="done-mark" id="statusIcon" aria-hidden="true"></div>
+            <h1 id="statusText">Checking the payment</h1>
         </div>
-        <button class="btn btn-primary mt-3" onclick="window.location.href='cart.html'">Close</button>
-    </div>
+        <div class="button-group">
+            <button type="button" class="btn-secondary" onclick="window.location.href='cart.html'">Back to your order</button>
+        </div>
+    </main>
 
     <script>
-
         async function PhonepeStatus() {
             await loadEnvConfig();
 
-            document.getElementById("loading").style.display = "inline-block";
-            document.getElementById("statusMessage").style.display = "none";
+            document.getElementById("loading").hidden = false;
+            document.getElementById("statusMessage").hidden = true;
 
             try {
                 const branches = await getData(BRANCH_STORE);
                 const brancheId = branches[0]?.id;
-                console.log("Branch ID:", brancheId);
 
                 if (!brancheId) {
                     throw new Error("Branch ID is missing");
                 }
 
                 const transactionId = await getFirstPhonePeId();
-                console.log("Transaction ID:", transactionId);
-
                 if (!transactionId) {
-                    console.error("❌ No valid transaction ID found!");
+                    displayStatus("ERROR", "No payment to check.");
                     return;
                 }
 
@@ -173,48 +82,47 @@
                 displayStatus(result.data.code);
 
                 if (result.data.code === "PAYMENT_SUCCESS" && result.data.data.state === "COMPLETED") {
-                    console.log("Payment successful, redirecting to checkout...");
                     checkout(result.data.transectionId);
                 }
 
             } catch (error) {
-                console.error("❌ Error checking payment status:", error);
+                console.error("Error checking payment status:", error);
                 displayStatus("ERROR", error.message);
             }
         }
 
+        /* One mark and one line. A tick for paid, nothing for pending, and
+           the reason when it failed. */
         function displayStatus(status, errorMessage = "") {
-            document.getElementById("loading").style.display = "none";
-            document.getElementById("statusMessage").style.display = "block";
+            document.getElementById("loading").hidden = true;
+            document.getElementById("statusMessage").hidden = false;
 
-            let statusIcon = document.getElementById("statusIcon");
-            let statusText = document.getElementById("statusText");
+            const mark = document.getElementById("statusIcon");
+            const text = document.getElementById("statusText");
+            const TICK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"></path></svg>';
+            const CROSS = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 
             switch (status) {
                 case "PAYMENT_SUCCESS":
-                    statusIcon.className = "status-icon success bi bi-check-circle";
-                    statusText.innerText = "Payment Successful!";
+                    mark.innerHTML = TICK;
+                    mark.style.color = "";
+                    mark.style.borderColor = "";
+                    text.textContent = "Payment received";
                     break;
                 case "PAYMENT_PENDING":
-                    statusIcon.className = "status-icon pending bi bi-hourglass-split";
-                    statusText.innerText = "Payment Pending...";
-                    break;
-                case "PAYMENT_ERROR":
-                case "ERROR":
-                    statusIcon.className = "status-icon error bi bi-x-circle";
-                    statusText.innerText = errorMessage || "Payment Failed!";
+                    mark.innerHTML = "";
+                    text.textContent = "Payment still pending";
                     break;
                 default:
-                    statusIcon.className = "status-icon error bi bi-exclamation-triangle";
-                    statusText.innerText = "Unknown Status!";
+                    mark.innerHTML = CROSS;
+                    mark.style.color = "#b91c1c";
+                    mark.style.borderColor = "#b91c1c";
+                    text.textContent = errorMessage || "Payment failed";
                     break;
             }
         }
 
         PhonepeStatus();
     </script>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 </body>
-
 </html>

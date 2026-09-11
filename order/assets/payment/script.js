@@ -7,6 +7,29 @@ let paymentSubmissionPromise = null;
 let isRazorpayPaymentActive = false;
 const RAZORPAY_PAYMENT_TIMEOUT_MS = 5 * 60 * 1000;
 
+/*
+ * What this page has to ask for, and what the button will say.
+ *
+ * Decided once, when the shop's payment methods come back, and read by
+ * everything below: whether a number is needed at all, which way the money
+ * goes, and the total - so the button can say "Pay ₹340" rather than
+ * "PROCEED TO PAYMENT", and can say "Place order" when nothing is being paid
+ * here.
+ */
+const payState = { razorpay: false, cash: false, phoneRequired: true, total: 0, items: 0 };
+const DEFAULT_MOBILE = "9494111161";
+
+function paintProceed() {
+    const button = document.getElementById("proceed-btn");
+    if (button) {
+        button.textContent = payState.razorpay ? `Pay ${money(payState.total)}` : "Place order";
+    }
+    const total = document.getElementById("pay-total");
+    if (total) total.textContent = money(payState.total);
+    const items = document.getElementById("pay-items");
+    if (items) items.textContent = `${payState.items} ${payState.items === 1 ? "item" : "items"}`;
+}
+
 localStorage.removeItem("kiosk_mobile_number"); // Remove data left by older versions.
 sessionStorage.removeItem("kiosk_mobile_number");
 
@@ -26,6 +49,8 @@ function paintOrderType() {
     });
     const box = document.getElementById("eating-how");
     if (box && chosen) box.removeAttribute("data-missing");
+    const missing = document.getElementById("eating-how-missing");
+    if (missing && chosen) missing.hidden = true;
 }
 
 function presetOrderType() {
@@ -45,7 +70,9 @@ function ensureOrderType() {
         box.setAttribute("data-missing", "true");
         if (typeof box.scrollIntoView === "function") box.scrollIntoView({ block: "center" });
     }
-    if (typeof showAlert === "function") showAlert("Choose dine in or take away first.");
+    /* Said beside the question, not in a banner that hides the page. */
+    const missing = document.getElementById("eating-how-missing");
+    if (missing) missing.hidden = false;
     return false;
 }
 
@@ -168,44 +195,58 @@ function loadRazorpayCheckout() {
     });
 }
 
-function maskMobileNumber(number) {
-    const len = number.length;
-    if (len === 0) return "Enter Mobile Number";
-    if (len <= 2) return number;
-    if (len <= 4) return number.substring(0, 2) + 'X'.repeat(len - 2);
-    if (len <= 6) return number.substring(0, 2) + 'XX' + number.substring(4, len);
-    if (len <= 9) return number.substring(0, 2) + 'XX' + number.substring(4, 6) + 'X'.repeat(len - 6);
-    if (len === 10) return number.substring(0, 2) + 'XX' + number.substring(4, 6) + 'XXX' + number.substring(9);
-    return number;
+/*
+ * The number as it is typed: "98765 43210", the way it is printed on a card.
+ *
+ * Shown, not masked. The masking - "98XX56XXX1" - was a kiosk's answer to a
+ * queue reading over a shoulder, and it made the one thing a customer needs
+ * to do with a number they have just typed, check it, impossible. A phone
+ * number is not a PIN.
+ */
+function formatMobileNumber(number) {
+    const digits = String(number || "");
+    if (!digits) return "";
+    return digits.length > 5 ? digits.slice(0, 5) + " " + digits.slice(5) : digits;
+}
+
+function paintNumber() {
+    const box = document.getElementById("mobile-number");
+    if (box) {
+        box.textContent = enteredNumber ? formatMobileNumber(enteredNumber) : "Enter mobile number";
+        box.setAttribute("data-empty", enteredNumber ? "false" : "true");
+    }
+    $("#mobile-fullnumber").val(enteredNumber);
 }
 
 function addNumber(num) {
     if (enteredNumber.length < 10) {
         enteredNumber += num;
-        $("#mobile-number").text(maskMobileNumber(enteredNumber));
-        $("#mobile-fullnumber").val(enteredNumber);
+        paintNumber();
     }
     validateNumber();
 }
 
 function deleteNumber() {
     enteredNumber = enteredNumber.slice(0, -1);
-    $("#mobile-number").text(maskMobileNumber(enteredNumber));
-    $("#mobile-fullnumber").val(enteredNumber);
+    paintNumber();
     validateNumber();
 }
 
 function clearNumber() {
     enteredNumber = "";
-    $("#mobile-number").text("Enter Mobile Number");
-    $("#mobile-fullnumber").val("");
-    $("#proceed-btn").prop("disabled", true);
+    paintNumber();
     sessionStorage.removeItem("kiosk_mobile_number");
+    validateNumber();
 }
 
+function numberIsValid() {
+    return /^[6-9]\d{9}$/.test(enteredNumber);
+}
+
+/* The button waits for a number only when the shop asked for one. */
 function validateNumber() {
     const paymentBusy = Boolean(paymentSubmissionPromise) || isRazorpayPaymentActive;
-    $("#proceed-btn").prop("disabled", paymentBusy || !/^[6-9]\d{9}$/.test(enteredNumber));
+    $("#proceed-btn").prop("disabled", paymentBusy || (payState.phoneRequired && !numberIsValid()));
 }
 
 async function submitRazorPayMobile() {
@@ -235,11 +276,12 @@ async function performPaymentSubmission() {
         const branchId = branches[0]?.id;
         const productsRefreshed = await fetchAndStoreBranch(branchId, false);
         if (!productsRefreshed) throw new Error("Could not refresh branch data before payment.");
-        if (!/^[6-9]\d{9}$/.test(enteredNumber)) {
+        if (payState.phoneRequired && !numberIsValid()) {
             alert("Please enter a valid 10-digit mobile number starting with 6-9.");
             return;
         }
-        sessionStorage.setItem("kiosk_mobile_number", enteredNumber);
+        const number = payState.phoneRequired ? enteredNumber : DEFAULT_MOBILE;
+        sessionStorage.setItem("kiosk_mobile_number", number);
 
         const kioskPayment = await getLatestKioskPayment(branchId);
         const totalAmount = await calculateCartTotal();
@@ -251,7 +293,7 @@ async function performPaymentSubmission() {
         });
 
         if (isRazorpayEnabled(kioskPayment)) {
-            const paymentStarted = await createRazorPayMobile(totalAmount, branchId, enteredNumber);
+            const paymentStarted = await createRazorPayMobile(totalAmount, branchId, number);
             if (!paymentStarted) throw new Error("Razorpay payment could not be started.");
         } else if (isCashEnabled(kioskPayment)) {
             await checkout("", "Cash");
@@ -306,10 +348,10 @@ async function createRazorPayMobile(amount, branchId, number) {
         "currency": "INR",
         "order_id": result.data.id,
         "theme": {
-            "color": "#3399cc"
+            "color": "#111827"
         },
         "prefill": {
-            "contact": enteredNumber,  // Replace with actual contact if available 
+            "contact": number,  // Replace with actual contact if available 
         },
         "modal": {
             "ondismiss": function () {
@@ -451,20 +493,19 @@ async function calculateCartTotal() {
 
 document.addEventListener("DOMContentLoaded", () => {
     enteredNumber = "";
-    $("#mobile-number").text("Enter Mobile Number");
-    $("#mobile-fullnumber").val("");
+    paintNumber();
     validateNumber();
 });
 
+/* Something the shop has to fix, in place of the form. */
 function showAlert(message) {
     const alertText = document.getElementById("alertText");
     const alertBox = document.getElementById("alertBox");
-    const backToCart = document.getElementById("backtocart-nopayment");
+    const wrapper = document.getElementById("mobile-wrapper");
 
-    if (alertText) alertText.innerText = message;
-    if (alertBox) alertBox.classList.remove("d-none");
-    if (backToCart) backToCart.classList.remove("d-none");
-    document.body.classList.add("alert-background"); // apply alert-specific body style
+    if (alertText) alertText.textContent = message;
+    if (alertBox) alertBox.hidden = false;
+    if (wrapper) wrapper.style.display = "none";
 }
 
 
@@ -484,30 +525,49 @@ function showAlert(message) {
     console.log("Kiosk payment config", { kioskPayment, razorpayEnabled, cashEnabled, showPhoneInput });
     if (!razorpayEnabled && !cashEnabled) {
         mobileWrapper.style.display = "none";
-        showAlert("No payment methods are available. Please contact the branch.");
+        showAlert("This shop has not set up a way to pay online yet. Please order at the counter.");
         if (backBtn) backBtn.style.display = "inline-block";
         return;
     }
     const totalAmount = await calculateCartTotal();
-    const defaultMobile = "9494111161";
-    console.log(showPhoneInput);
-    if (cashEnabled && !razorpayEnabled && !showPhoneInput) {
+    const cartLines = await getCartData();
+    payState.razorpay = razorpayEnabled;
+    payState.cash = cashEnabled;
+    payState.phoneRequired = showPhoneInput;
+    payState.total = totalAmount;
+    payState.items = cartLines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+
+    /*
+     * THE QUESTION CANNOT BE SKIPPED.
+     *
+     * With no number wanted, this page used to go straight to the payment -
+     * which was fine while the door had already asked dine-in-or-take-away.
+     * The door no longer asks, so a shop that wants no number would have sent
+     * every order to the kitchen with no answer. If the code that was scanned
+     * did not settle it, the page stays up long enough to ask.
+     */
+    presetOrderType();
+    const needsType = !localStorage.getItem("orderType");
+
+    if (!showPhoneInput && !needsType) {
         document.getElementById('page-loader-overlay').style.display = 'flex';
         mobileWrapper.style.display = "none";
-        sessionStorage.setItem("kiosk_mobile_number", defaultMobile);
-        await checkout("", "Cash");
-        return;
-    }
-    if (!showPhoneInput) {
-        console.log("No phone input required, proceeding with default mobile number.");
-        document.getElementById('page-loader-overlay').style.display = 'flex';
-        mobileWrapper.style.display = "none";
-        sessionStorage.setItem("kiosk_mobile_number", defaultMobile);
-        const paymentStarted = await createRazorPayMobile(totalAmount, branchId, defaultMobile);
+        sessionStorage.setItem("kiosk_mobile_number", DEFAULT_MOBILE);
+        if (cashEnabled && !razorpayEnabled) {
+            await checkout("", "Cash");
+            return;
+        }
+        const paymentStarted = await createRazorPayMobile(totalAmount, branchId, DEFAULT_MOBILE);
         if (!paymentStarted) throw new Error("Razorpay payment could not be started.");
         return;
     }
-    mobileWrapper.style.display = "inline-block";
+
+    const phoneSection = document.getElementById("phone-section");
+    if (phoneSection) phoneSection.hidden = !showPhoneInput;
+    paintOrderType();
+    paintProceed();
+    validateNumber();
+    mobileWrapper.style.display = "block";
 })().catch(error => {
     console.error("Payment page initialization failed:", error);
     showAppErrorScreen(

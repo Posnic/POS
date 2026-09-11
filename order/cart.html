@@ -1,58 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-    <title>Cart Summary</title>
-    <script src="assets/jquery-3.6.0.min.js"></script>
+    <title>Your order</title>
+    <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/jquery-3.7.1.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
     <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
-    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
-    <script src="assets/cart/script.js"></script>
-    <link href="assets/cart/style.css" rel="stylesheet">
+    <script src="indexedDB.js?v=20260912-design"></script>
+    <script src="assets/cart/script.js?v=20260912-design"></script>
 </head>
 
 <body>
 
-    <!-- Page Loader -->
     <div id="page-loader">
-        <div class="loader"></div>
+        <div class="loader" role="status" aria-label="Loading your order"></div>
     </div>
 
-    <!-- Popup -->
-    <div id="popup">
-        ⚠️ Need more? Our counter staff is happy to help!
-        <button onclick="hidePopup()" aria-label="Close popup">&times;</button>
+    <div id="popup" role="status">
+        Need more than that? The counter can help.
+        <button type="button" onclick="hidePopup()" aria-label="Close">&times;</button>
     </div>
 
-    <div class="container">
+    <!-- A way back, the page's name, nothing else. It was "Shopping Cart",
+         which is what a website calls it; a person at a table has an order. -->
+    <header class="page-head">
+        <button type="button" class="icon-btn" aria-label="Back to the menu"
+                onclick="window.location.href='products.html'">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+        </button>
+        <h1>Your order</h1>
+        <span class="page-head-spacer"></span>
+    </header>
 
-        <div class="cart-header">
-            <button class="back-btn" onclick="window.location.href='products.html'">← Back</button>
-            <div class="cart-title">Shopping Cart</div>
-            <div style="width: 60px;"></div>
-        </div>
-
-        <div class="cart-items" id="cart-summary">
-            <!-- Cart items will be dynamically inserted here -->
-        </div>
+    <main class="wrap content-wrapper">
+        <!-- One row per dish: picture, name, price each, the line, the pill. -->
+        <section class="lines" id="cart-summary"></section>
 
         <!--
             WHERE THE FOOD IS GOING, when it is not going to a table here.
@@ -68,7 +67,7 @@
             food goes to the wrong room, with nothing anywhere showing that the
             link and the guest disagreed.
         -->
-        <div class="destination" id="destination" hidden>
+        <section class="destination" id="destination" hidden>
             <div class="destination-title" id="destination-title"></div>
             <label class="destination-field">
                 <span id="destination-unit-label">Room</span>
@@ -81,29 +80,44 @@
                        autocomplete="off" maxlength="20" />
             </label>
             <p class="destination-note" id="destination-note" hidden></p>
-        </div>
+        </section>
 
-        <div class="cart-actions">
-            <button class="cancel-btn" id="cancel-btn" onclick="onCancelClick()">Cancel</button>
-            <div class="summary-display" id="summary-display">
-                0 Items | ₹0.00
-            </div>
-            <button class="checkout-btn" id="next-btn" onclick="window.location.href='payment.html'">Checkout</button>
-        </div>
-    </div>
+        <!-- The sums. Taxes shown only where there are any to show. -->
+        <section class="bill" id="bill" hidden aria-label="Bill">
+            <div class="bill-row" id="bill-items-row"><span>Items</span><span id="bill-items"></span></div>
+            <div class="bill-row" id="bill-tax-row" hidden><span>Taxes</span><span id="bill-tax"></span></div>
+            <div class="bill-row bill-total"><span>Total</span><span id="bill-total"></span></div>
+        </section>
 
-    <!-- Cancel Modal -->
-    <div id="cancelModal" class="modal" style="display: none;">
+        <!-- Possible, not invited: a quiet text button, and a question before
+             it does anything. -->
+        <div class="order-clear">
+            <button type="button" class="btn-text is-danger" id="cancel-btn" onclick="onCancelClick()">Clear the order</button>
+        </div>
+    </main>
+
+    <footer class="cart-actions">
+        <div class="summary-display" id="summary-display"></div>
+        <button type="button" class="btn-primary checkout-btn" id="next-btn"
+                onclick="window.location.href='payment.html'">
+            Continue
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6"></path>
+            </svg>
+        </button>
+    </footer>
+
+    <div id="cancelModal" class="modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
         <div class="modal-content">
-            <h3 class="modal-title">Cancel Order</h3>
-            <p class="modal-message">Are you sure you want to cancel the order?</p>
+            <h3 class="modal-title" id="cancel-title">Clear the order?</h3>
+            <p class="modal-message">Everything you have added will be removed.</p>
             <div class="modal-buttons">
-                <button id="confirmCancel" class="modal-btn confirm" onclick="confirmCancelOrder()">Yes, Cancel</button>
-                <button id="closeModal" class="modal-btn cancel" onclick="closeCancelModal()">No</button>
+                <button type="button" id="confirmCancel" class="modal-btn confirm" onclick="confirmCancelOrder()">Yes, clear it</button>
+                <button type="button" id="closeModal" class="modal-btn cancel" onclick="closeCancelModal()">Keep it</button>
             </div>
         </div>
     </div>
 
 </body>
-
 </html>

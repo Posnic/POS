@@ -1,101 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-    <title>QR Payment</title>
-    <link href="assets/bootstrap.min.css" rel="stylesheet">
-    <script src="assets/jquery-3.6.0.min.js"></script>
+    <title>Almost done</title>
+    <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/jquery-3.7.1.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
     <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
-    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
-    <link href="assets/payment/style.css" rel="stylesheet">
+    <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
 <body>
 
-    <!-- Loader shown on button click -->
+    <!-- Up while a payment is being set up, so a second tap cannot start a second one. -->
     <div id="page-loader-overlay" style="display: none;">
         <div class="payment-loader-card" role="status" aria-live="polite">
             <div class="loader"></div>
-            <div class="payment-loader-title">Preparing payment</div>
-            <div class="payment-loader-message">Please wait and do not close this page.</div>
+            <div class="payment-loader-title">Setting up your payment</div>
+            <div class="payment-loader-message">One moment. Please keep this page open.</div>
         </div>
     </div>
 
-    <div class="fullscreen-wrapper" id="mobile-wrapper" style="display: none;">
-        <div class="payment-box">
-            <!--
-                DINE IN OR TAKE AWAY, ASKED HERE AND NOT AT THE DOOR.
+    <header class="page-head">
+        <button type="button" class="icon-btn" aria-label="Back to your order"
+                onclick="window.location.href='cart.html'">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+        </button>
+        <h1>Almost done</h1>
+        <span class="page-head-spacer"></span>
+    </header>
 
-                It used to be the first screen, before a single dish. Owner:
-                "first show menu and let him choose in some step." This is the
-                step. Pre-answered when the code that was scanned said which
-                table, because a customer at table five is eating in.
-            -->
-            <div class="eating-how" id="eating-how" role="radiogroup" aria-label="How are you eating?">
-                <div class="eating-how-title">How are you eating?</div>
-                <div class="eating-how-choices">
-                    <button type="button" class="eating-how-btn" data-order-type="DINE IN" aria-pressed="false">Dine in</button>
-                    <button type="button" class="eating-how-btn" data-order-type="PARCEL" aria-pressed="false">Take away</button>
-                </div>
+    <main class="pay" id="mobile-wrapper" style="display: none;">
+        <!--
+            DINE IN OR TAKE AWAY, ASKED HERE AND NOT AT THE DOOR.
+
+            It used to be the first screen, before a single dish. Owner:
+            "first show menu and let him choose in some step." This is the
+            step. Pre-answered when the code that was scanned said which
+            table, because a customer at table five is eating in.
+        -->
+        <section class="pay-section eating-how" id="eating-how" role="radiogroup" aria-label="How are you eating?">
+            <span class="field-label">How are you eating?</span>
+            <div class="eating-how-choices">
+                <button type="button" class="eating-how-btn" data-order-type="DINE IN" aria-pressed="false">Dine in</button>
+                <button type="button" class="eating-how-btn" data-order-type="PARCEL" aria-pressed="false">Take away</button>
             </div>
-            <div class="header-text">RECEIPT</div>
-            <input type="text" id="mobile-fullnumber" class="mobile-input" placeholder="Enter Mobile Number"
-                maxlength="10" readonly style="display: none;">
-            <div id="mobile-number" class="mobile-display">Enter Mobile Number</div>
-            <div class="keypad">
-                <button onclick="addNumber(1)">1</button>
-                <button onclick="addNumber(2)">2</button>
-                <button onclick="addNumber(3)">3</button>
-                <button onclick="addNumber(4)">4</button>
-                <button onclick="addNumber(5)">5</button>
-                <button onclick="addNumber(6)">6</button>
-                <button onclick="addNumber(7)">7</button>
-                <button onclick="addNumber(8)">8</button>
-                <button onclick="addNumber(9)">9</button>
-                <button onclick="clearNumber()">C</button>
-                <button onclick="addNumber(0)">0</button>
-                <button onclick="deleteNumber()">&#x232B;</button>
+            <p class="eating-how-missing" id="eating-how-missing" hidden>Choose one to continue.</p>
+        </section>
+
+        <!-- What is being paid for, so the number on the button is not the
+             first time the customer sees it. -->
+        <section class="pay-section bill-brief">
+            <span class="bill-brief-items" id="pay-items">Your order</span>
+            <span class="bill-brief-total" id="pay-total"></span>
+        </section>
+
+        <!--
+            THE NUMBER, only when the shop asks for one.
+
+            Typed on the page's own keys rather than the phone's keyboard,
+            because the same page runs on the shop's touchscreen where there
+            is no keyboard - and on a phone the keys are under the thumb where
+            the keyboard would have been. Digits are shown, not masked: a
+            phone number is not a PIN, and a customer needs to see they typed
+            it right.
+        -->
+        <section class="pay-section" id="phone-section">
+            <label class="field-label" for="mobile-fullnumber">Your mobile number</label>
+            <p class="field-help">For this order only, so the shop can reach you about it.</p>
+            <div class="phone-field">
+                <span class="phone-prefix">+91</span>
+                <div id="mobile-number" class="mobile-display" data-empty="true" aria-live="polite">Enter mobile number</div>
             </div>
-            <button class="proceed-btn" id="proceed-btn" onclick="submitRazorPayMobile()" disabled>PROCEED TO
-                PAYMENT</button>
-            <button class="back-btn" onclick="window.location.href='cart.html'">BACK TO CART</button>
+            <input type="tel" id="mobile-fullnumber" class="visually-hidden" tabindex="-1" aria-hidden="true" maxlength="10" readonly>
+            <div class="keypad" aria-label="Number keys">
+                <button type="button" onclick="addNumber(1)">1</button>
+                <button type="button" onclick="addNumber(2)">2</button>
+                <button type="button" onclick="addNumber(3)">3</button>
+                <button type="button" onclick="addNumber(4)">4</button>
+                <button type="button" onclick="addNumber(5)">5</button>
+                <button type="button" onclick="addNumber(6)">6</button>
+                <button type="button" onclick="addNumber(7)">7</button>
+                <button type="button" onclick="addNumber(8)">8</button>
+                <button type="button" onclick="addNumber(9)">9</button>
+                <button type="button" class="key-soft" onclick="clearNumber()">Clear</button>
+                <button type="button" onclick="addNumber(0)">0</button>
+                <button type="button" class="key-soft" onclick="deleteNumber()" aria-label="Delete the last digit">&#x232B;</button>
+            </div>
+        </section>
+
+        <div class="pay-actions">
+            <!-- Says what happens: "Pay ₹340" or "Place order". Filled in once
+                 the shop's payment methods are known. -->
+            <button type="button" class="btn-primary btn-block proceed-btn" id="proceed-btn"
+                    onclick="submitRazorPayMobile()" disabled>Continue</button>
+            <button type="button" class="btn-secondary btn-block back-btn"
+                    onclick="window.location.href='cart.html'">Back to your order</button>
         </div>
-    </div>
-    <!-- Alert Section -->
-    <div id="alertBox" class="kiosk-alert d-none">
-        <div class="alert-icon">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
+    </main>
+
+    <!-- Something the shop has to fix, said plainly, with the way back. -->
+    <div id="alertBox" class="kiosk-alert" hidden role="alert">
+        <div class="alert-icon" aria-hidden="true">&#9888;</div>
         <div id="alertText" class="alert-message">
             Something went wrong. Please try again.
         </div>
         <div class="alert-actions">
-            <button class="back-btn" onclick="window.location.href='cart.html'">
-                BACK TO CART
+            <button type="button" class="btn-secondary back-btn" onclick="window.location.href='cart.html'">
+                Back to your order
             </button>
         </div>
     </div>
 
-    <script src="assets/payment/script.js?v=20260709-fastrefresh"></script>
+    <script src="assets/payment/script.js?v=20260912-design"></script>
 </body>
-
 </html>
