@@ -219,6 +219,13 @@ async function settingsFor(context) {
       .toLowerCase(),
     model: String(chosen.ai_model || '').trim(),
     key: String(keys.ai_api_key || '').trim(),
+    /* Read here rather than in a second trip of its own: this function has
+       the preferences in hand already, and a model call is something a
+       person is waiting at. */
+    cap: (() => {
+      const n = Number(chosen.ai_monthly_cap);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    })(),
   };
 }
 
@@ -305,8 +312,7 @@ async function ask(request, context) {
      Unnamed callers are recorded together rather than refused: a missing
      label is our bug and must not cost a shopkeeper a working feature. */
   const feature = String(request.feature || 'unlabelled');
-  const { provider, key, model } = await settingsFor(context);
-  const cap = await budget.capFor(context);
+  const { provider, key, model, cap } = await settingsFor(context);
 
   if (!provider || provider === 'off') {
     return { status: false, message: 'This shop has not set up an AI provider', data: null };
@@ -329,13 +335,18 @@ async function ask(request, context) {
    * them that a loop in our code cannot run up their bill. Checked afterwards
    * it would be a report of the damage instead of a brake.
    */
-  const room = await budget.withinCap(context, cap);
-  if (!room.ok) {
-    return {
-      status: false,
-      message: 'This shop has reached its monthly AI spending limit',
-      data: null,
-    };
+  /* Only when a cap exists. A shop that set none has not asked to be
+     stopped, and reading its month of usage to learn that would put a
+     database round trip in front of every call for nothing. */
+  if (cap) {
+    const room = await budget.withinCap(context, cap);
+    if (!room.ok) {
+      return {
+        status: false,
+        message: 'This shop has reached its monthly AI spending limit',
+        data: null,
+      };
+    }
   }
 
   const prompt = String(request.prompt || '').slice(0, MAX_PROMPT_CHARS);
@@ -351,18 +362,23 @@ async function ask(request, context) {
     const answer = await run({ prompt, system: request.system, images, key, model });
     const text = answer && answer.text;
     if (!text) return { status: false, message: 'The AI service had no answer', data: null };
-    /* Recorded after the fact because the counts only exist afterwards, and
-       never allowed to lose an answer the shop has already paid for. */
-    let costMinor = 0;
-    try {
-      costMinor = await budget.record(
-        { feature, model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut },
-        context
-      );
-    } catch (error) {
-      console.error('[ai] could not record usage:', error.message);
-    }
-    return { status: true, data: { text, cost_minor: costMinor } };
+    /*
+     * The meter is written down, and deliberately does not come back.
+     *
+     * This module's contract is that a caller gets words and nothing else -
+     * not the key, not which provider answered, not what it cost. Widening
+     * the response to carry a number would be the first crack in that, and
+     * the cost has a better home anyway: a row per feature per month that a
+     * settings screen can read whenever somebody wants to know.
+     *
+     * Not awaited. A shopkeeper waiting for a description should not also
+     * wait for our bookkeeping, and a failed write under-counts a month by
+     * one call rather than losing an answer they have already paid for.
+     */
+    budget
+      .record({ feature, model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut }, context)
+      .catch((error) => console.error('[ai] could not record usage:', error.message));
+    return { status: true, data: { text } };
   } catch (error) {
     /* The provider's own message can carry the request, and sometimes the
        key, back to a browser. One sentence, and the detail stays in the log

@@ -138,27 +138,7 @@ async function record({ feature, model, tokensIn, tokensOut, payer }, context) {
   return minor;
 }
 
-/**
- * The ceiling this shop set, or null if it set none.
- *
- * Read here rather than passed in, so a caller cannot forget it and get an
- * uncapped call by omission.
- */
-async function capFor(context) {
-  const SettingsRepository = require('../repositories/settings.repository');
-  if (!repo) repo = new SettingsRepository();
-  const preferences = await repo.resolveGroup('preferences', context);
-  /* data.values, not data: reading the wrong one finds nothing and quietly
-     uncaps every shop that set a limit. */
-  const values = (preferences && preferences.status && preferences.data.values) || {};
-  const cap = Number(values.ai_monthly_cap);
-  return Number.isFinite(cap) && cap > 0 ? cap : null;
-}
-
-let repo = null;
-
 module.exports = {
-  capFor,
   spentThisMonth,
   withinCap,
   record,

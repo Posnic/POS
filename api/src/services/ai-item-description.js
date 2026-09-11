@@ -105,7 +105,7 @@ ${ai.DATA_GUARD}`,
   let text = String(result.data.text || '').trim();
   if (text.length > 1000) text = `${text.slice(0, 997)}...`;
 
-  return { status: true, data: { description: text, cost_minor: result.data.cost_minor || 0 } };
+  return { status: true, data: { description: text } };
 }
 
 module.exports = { draft, payloadFor, SYSTEM, FEATURE, TARGET_CHARS };
