@@ -6724,3 +6724,88 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     #v-pills-modules .fg-controls { justify-content: flex-start; }
     #v-pills-modules .fg-search { flex: 1 1 100%; }
 }
+
+/*
+ * FEATURES, IN COLOUR.
+ *
+ * The grouped page was still pale: tiles tinted at twelve percent, grey
+ * glyphs, and every off card grayscaled - which on a page where most
+ * features ARE off is a wall of grey. Owner: "dull colors and icons making
+ * very annoying".
+ *
+ * So every feature now owns a colour, carried as --fg-accent on its own card
+ * (the group keeps one for its heading). The tile is a solid gradient of it
+ * with a white glyph, on or off. State is no longer told by grey: an ON card
+ * has the glow under its tile, the coloured top edge, the wash and the chip;
+ * an OFF card has the same colour, quieter, and comes to full strength on
+ * hover. The page reads as a set of coloured things some of which are lit,
+ * rather than a set of grey things some of which are blue.
+ *
+ * Later than the block above on purpose: same selectors, so these win.
+ */
+#v-pills-modules .module-card {
+    --fg-deep: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a);
+    border-color: rgba(127, 127, 127, 0.16);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 6px 18px rgba(16, 24, 40, 0.05);
+}
+#v-pills-modules .module-card:hover {
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.13);
+}
+#v-pills-modules .module-ico,
+#v-pills-modules .module-card:not(.is-off) .module-ico {
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg,
+        var(--fg-accent, var(--theme-primary-color, #506fe4)),
+        var(--fg-deep, var(--fg-accent, var(--theme-primary-color, #506fe4))));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 6px 16px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 38%, transparent);
+    filter: none;
+    transition: filter .18s ease, opacity .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .module-ico,
+    #v-pills-modules .module-card:not(.is-off) .module-ico {
+        background: var(--fg-accent, var(--theme-primary-color, #506fe4));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
+    }
+}
+#v-pills-modules .module-ico i { color: #fff; font-size: 23px; line-height: 1; }
+/* Any image glyph still in a tile becomes white on its colour. */
+#v-pills-modules .module-ico img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
+#v-pills-modules .module-card:hover .module-ico { transform: scale(1.04); }
+
+/* Off: its colour, quieter. Not grey. */
+#v-pills-modules .module-card.is-off { opacity: 1; }
+#v-pills-modules .module-card.is-off .module-ico {
+    filter: saturate(0.5);
+    opacity: 0.82;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+#v-pills-modules .module-card.is-off .module-title { color: var(--theme-text-secondary, #3d4a60); }
+#v-pills-modules .module-card.is-off .module-desc { opacity: 0.85; }
+#v-pills-modules .module-card.is-off:hover .module-ico { filter: none; opacity: 1; }
+
+/* The group heading gets the same tile at its own size, so the heading and
+   its cards are visibly one family. */
+#v-pills-modules .fg-head-ico {
+    color: #fff;
+    background: linear-gradient(135deg,
+        var(--fg-accent, var(--theme-primary-color, #506fe4)),
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a));
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 30%, transparent);
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .fg-head-ico { background: var(--fg-accent, var(--theme-primary-color, #506fe4)); }
+}
+/* The feature page dialog copies the tile in; give it the same look there. */
+#feature_detail_modal .fd-ico i, #fp_icon i { color: #fff; }
+#fp_icon .module-ico, #feature_detail_modal .fd-ico .module-ico { width: 48px; height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+    #v-pills-modules .module-ico { transition: none; }
+    #v-pills-modules .module-card:hover .module-ico { transform: none; }
+}

@@ -90,7 +90,7 @@ test('the switch carries nothing but a switch', () => {
    * page, and this test is here because putting them in the card is exactly
    * the shortcut somebody takes when the page feels like too much work.
    */
-  const card = html.match(/<div class="module-card">(?:(?!<\/div>\s*<div class="module-card">)[\s\S])*?id="ai_enabled"[\s\S]*?<\/p>/);
+  const card = html.match(/<div class="module-card"[^>]*>(?:(?!<\/div>\s*<div class="module-card"[^>]*>)[\s\S])*?id="ai_enabled"[\s\S]*?<\/p>/);
   assert.ok(card, 'the AI card could not be isolated');
   assert.ok(!/<select|<input(?![^>]*type="checkbox")|<button/.test(card[0]),
     'the AI Features card has grown a control; settings belong on the AI page');
