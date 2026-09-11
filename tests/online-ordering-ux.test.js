@@ -251,6 +251,7 @@ test('the order page draws each line and the sums, hiding a tax row of nothing',
 
   assert.strictEqual(document.getElementById('bill').hidden, false);
   assert.strictEqual(document.getElementById('bill-tax-row').hidden, true, 'a row reading "Taxes ₹0"');
+  assert.ok(document.getElementById('bill').classList.contains('bill-plain'), 'a divider hangs above a total with nothing over it');
   assert.strictEqual(document.getElementById('bill-total').textContent, '₹680');
   assert.strictEqual(document.getElementById('summary-display').textContent, '3 items · ₹680');
 });
@@ -261,6 +262,7 @@ test('tax that is added on top is shown as its own row', async () => {
   });
   await box.renderCart();
   assert.strictEqual(document.getElementById('bill-tax-row').hidden, false);
+  assert.ok(!document.getElementById('bill').classList.contains('bill-plain'));
   assert.strictEqual(document.getElementById('bill-items').textContent, '₹280');
   assert.strictEqual(document.getElementById('bill-tax').textContent, '₹14');
   assert.strictEqual(document.getElementById('bill-total').textContent, '₹294');
@@ -311,6 +313,12 @@ test('a wide screen gets a wide layout: a rail, a grid and the order beside it',
   assert.match(wide, /\.category-rail\s*\{[^}]*position:\s*sticky/, 'the rail does not stay put');
   assert.match(wide, /\.order-panel\s*\{[^}]*position:\s*sticky/, 'the order panel does not stay put');
   assert.match(wide, /\.cart-footer\s*\{\s*display:\s*none/, 'the phone bar is still there on a laptop');
+  /* The grid is the ordering page's alone. On the order page it scattered
+     the lines, the bill and the clear button across three columns. */
+  assert.match(wide, /\.order-layout\s*\{[^}]*display:\s*grid/, 'the three columns are not scoped to the ordering page');
+  assert.ok(!/\.content-wrapper\s*\{[^}]*display:\s*grid/.test(wide), 'every page with a content-wrapper gets the three columns');
+  assert.match(read('products.html'), /class="content-wrapper order-layout"/);
+  assert.ok(!read('cart.html').includes('order-layout'), 'the order page took the three-column grid');
 
   const html = read('products.html');
   for (const id of ['category-rail', 'order-panel', 'order-panel-lines', 'order-panel-total', 'order-panel-next']) {
