@@ -558,7 +558,7 @@
     el("state").hidden = true;
     el("controls").hidden = false;
 
-    el("cats").innerHTML = state.categories
+    var chips = state.categories
       .map(function (c, i) {
         return (
           '<a class="cat" href="#cat-' +
@@ -571,6 +571,10 @@
         );
       })
       .join("");
+    el("cats").innerHTML = chips;
+    /* The same links down the left on a wide screen. */
+    var rail = el("cats-rail");
+    if (rail) rail.innerHTML = chips;
 
     el("menu").innerHTML = state.categories
       .map(function (c) {
@@ -874,6 +878,7 @@
     /* The categories navigate a list that narrowing has just rearranged, so
        they step aside until it is cleared. */
     el("cats").hidden = narrowed;
+    if (el("cats-rail")) el("cats-rail").hidden = narrowed;
 
     var counter = el("result-count");
     if (!narrowed) {
@@ -964,12 +969,15 @@
   function watchSections() {
     if (!("IntersectionObserver" in window)) return;
 
+    /* Every chip for a section - the strip's and the rail's - so both light
+       up together. */
     var chips = {};
     document.querySelectorAll(".cat").forEach(function (a) {
       /* From the last "#cat-" rather than a strict prefix strip: getAttribute
          gives the literal attribute, but a.href would give the resolved URL,
          and the two must not be able to disagree about which chip this is. */
-      chips[a.getAttribute("href").replace(/^.*#cat-/, "")] = a;
+      var key = a.getAttribute("href").replace(/^.*#cat-/, "");
+      (chips[key] = chips[key] || []).push(a);
     });
 
     var observer = new IntersectionObserver(
@@ -978,14 +986,16 @@
           if (!entry.isIntersecting) return;
           var id = entry.target.getAttribute("data-cat");
           Object.keys(chips).forEach(function (key) {
-            chips[key].removeAttribute("aria-current");
+            chips[key].forEach(function (a) {
+              a.removeAttribute("aria-current");
+            });
           });
-          if (chips[id]) {
-            chips[id].setAttribute("aria-current", "true");
+          (chips[id] || []).forEach(function (a) {
+            a.setAttribute("aria-current", "true");
             /* Keep the active chip in view, or on a long menu it
                        scrolls off the strip and the reader loses their place. */
-            chips[id].scrollIntoView({ block: "nearest", inline: "center" });
-          }
+            a.scrollIntoView({ block: "nearest", inline: "center" });
+          });
         });
       },
       { rootMargin: "-120px 0px -70% 0px" },
