@@ -1042,7 +1042,7 @@ if ($wrapper.length) {
                  */
                 var deferPreview = function (sel, src) {
                     var $img = $(sel);
-                    if ($('#v-pills-onlineordering').hasClass('active')) {
+                    if ($('#v-pills-kioskmachine').hasClass('active')) {
                         $img.attr('src', src).css('display', 'block');
                     } else {
                         $img.attr('data-defer-src', src).css('display', 'block');
@@ -1638,14 +1638,15 @@ if ($wrapper.length) {
 
         /** Toggle the controls that only mean something when taking orders. */
         syncMode: function () {
-            var ordering = $('#kiosk_mode').val() !== 'menu';
+            /*
+             * Always ordering. The "can customers order from this page"
+             * dropdown is gone: /order takes orders and /menu shows the menu,
+             * both live whenever online ordering is on, and a shop that wants
+             * to stop taking orders presses the button for that. The name
+             * stays so the callers that wire hours to it need not change.
+             */
+            var ordering = true;
             $('.kiosk-ordering-only').toggle(ordering);
-            /* One sentence per answer, and only the chosen one on screen. The
-               single line that used to sit here described MENU mode whatever
-               was selected, so a shop reading it while set to "take orders"
-               was told its page had no cart. */
-            $('#kiosk_mode_help_order').toggle(ordering);
-            $('#kiosk_mode_help_menu').toggle(!ordering);
             var hours = ordering && $('#kiosk_hours_enable').is(':checked');
             $('#kiosk_hours_grid').toggle(hours);
             /* The sentence explaining the grid goes with the grid. */
@@ -1656,7 +1657,6 @@ if ($wrapper.length) {
             var self = PosnicPro.settings.onlineOrdering;
             var data = kioskData || {};
 
-            $('#kiosk_mode').val(data.mode === 'menu' ? 'menu' : 'order');
 
             var hours = data.hours || null;
             $('#kiosk_hours_enable').prop('checked', !!hours);
@@ -1674,7 +1674,11 @@ if ($wrapper.length) {
          */
         collect: function () {
             var self = PosnicPro.settings.onlineOrdering;
-            var mode = $('#kiosk_mode').val() === 'menu' ? 'menu' : 'order';
+            /* Sent as 'order' on every save, on purpose. A shop saved as
+               'menu' under the old dropdown heals to the two-page model the
+               first time it presses Save, and the server's reader keeps a
+               known word rather than whatever a missing element answers. */
+            var mode = 'order';
             var out = {
                 mode: mode,
                 paused_until: $('#kiosk_paused_until').val() || null
@@ -7819,8 +7823,8 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
 
 /* The kiosk pane pays for its own artwork, on first open only - see the
    deferPreview comment above. */
-$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering', function () {
-    $('#v-pills-onlineordering img[data-defer-src]').each(function () {
+$(document).on('click', '#v-pills-kioskmachine-tab, #manage_sec_kioskmachine', function () {
+    $('#v-pills-kioskmachine img[data-defer-src]').each(function () {
         var source = $(this).attr('data-defer-src') || '';
         if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
             $(this).attr('src', source).removeAttr('data-defer-src');
@@ -7992,7 +7996,7 @@ $(document).on('click', '#voice_save', function () {
  * Delegated from document because the tab's markup is part of the settings
  * module and is not in the DOM when this file runs.
  */
-$(document).on('change', '#kiosk_mode, #kiosk_hours_enable', function () {
+$(document).on('change', '#kiosk_hours_enable', function () {
     PosnicPro.settings.onlineOrdering.syncMode();
 });
 

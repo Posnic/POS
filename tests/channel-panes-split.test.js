@@ -467,3 +467,43 @@ test('a pause that is not saved yet says so', () => {
     'the marker never clears, so it warns about a pause that was saved'
   );
 });
+
+test('branding lives under Kiosk Machine, and the artwork loads there', () => {
+  /*
+   * Owner: "branding not belongs to online ordering. it belongs to kiosk
+   * right?" Checked rather than assumed: the QR menu draws only the logo;
+   * the home banner, banner and advertisement are read by the kiosk bundle's
+   * home screen and nothing else. So the tab moved.
+   *
+   * Two things have to move with it or the tab is a dead screen: the
+   * handler that promotes data-defer-src to src when the pane opens (or the
+   * previews never load), and the check that decides whether to defer at all.
+   */
+  const kiosk = SETTINGS_HTML.indexOf('id="v-pills-kioskmachine"');
+  const online = SETTINGS_HTML.indexOf('id="v-pills-onlineordering"');
+  const tab = SETTINGS_HTML.indexOf('id="kioskimage-tab-line"');
+  const pane = SETTINGS_HTML.indexOf('id="kioskimage-line"');
+  assert.ok(kiosk > -1 && tab > -1 && pane > -1, 'the kiosk pane or the branding tab is gone');
+  assert.ok(tab > kiosk && pane > kiosk, 'the Branding tab is not inside the Kiosk Machine pane');
+  assert.ok(!(tab > online && tab < kiosk), 'the Branding tab is still under Online Ordering');
+
+  assert.match(
+    SETTINGS_JS,
+    /#v-pills-kioskmachine-tab, #manage_sec_kioskmachine', function \(\) \{\s*\$\('#v-pills-kioskmachine img\[data-defer-src\]'\)/,
+    'opening Kiosk Machine no longer loads the deferred branding previews'
+  );
+  assert.match(
+    SETTINGS_JS,
+    /\$\('#v-pills-kioskmachine'\)\.hasClass\('active'\)/,
+    'the defer check still asks whether Online Ordering is open'
+  );
+});
+
+test('there is no "can customers order" switch: both pages are always live', () => {
+  /* Owner: "always both order and menu." Two addresses, both live whenever
+     online ordering is on; stopping orders is the button. A dropdown that
+     could turn the ordering page into a menu made the second address
+     pointless. */
+  assert.doesNotMatch(SETTINGS_HTML, /id="kiosk_mode"/, 'the menu-only dropdown is back');
+  assert.doesNotMatch(SETTINGS_JS, /\$\('#kiosk_mode'\)/, 'the JS still reads the dropdown that was removed');
+});
