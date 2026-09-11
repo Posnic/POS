@@ -42,6 +42,21 @@
 
     <div class="fullscreen-wrapper" id="mobile-wrapper" style="display: none;">
         <div class="payment-box">
+            <!--
+                DINE IN OR TAKE AWAY, ASKED HERE AND NOT AT THE DOOR.
+
+                It used to be the first screen, before a single dish. Owner:
+                "first show menu and let him choose in some step." This is the
+                step. Pre-answered when the code that was scanned said which
+                table, because a customer at table five is eating in.
+            -->
+            <div class="eating-how" id="eating-how" role="radiogroup" aria-label="How are you eating?">
+                <div class="eating-how-title">How are you eating?</div>
+                <div class="eating-how-choices">
+                    <button type="button" class="eating-how-btn" data-order-type="DINE IN" aria-pressed="false">Dine in</button>
+                    <button type="button" class="eating-how-btn" data-order-type="PARCEL" aria-pressed="false">Take away</button>
+                </div>
+            </div>
             <div class="header-text">RECEIPT</div>
             <input type="text" id="mobile-fullnumber" class="mobile-input" placeholder="Enter Mobile Number"
                 maxlength="10" readonly style="display: none;">

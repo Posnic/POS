@@ -10,6 +10,57 @@ const RAZORPAY_PAYMENT_TIMEOUT_MS = 5 * 60 * 1000;
 localStorage.removeItem("kiosk_mobile_number"); // Remove data left by older versions.
 sessionStorage.removeItem("kiosk_mobile_number");
 
+/* ---------------------------------------------------------- how you eat */
+
+/*
+ * The answer lives in localStorage.orderType, which checkout() reads, exactly
+ * where home.html used to put it. Pre-answered from the code that was scanned:
+ * a table or a room means dining in. Otherwise the customer picks, and paying
+ * waits until they have - an order with no type is a ticket the kitchen has
+ * to guess about.
+ */
+function paintOrderType() {
+    const chosen = localStorage.getItem("orderType") || "";
+    document.querySelectorAll(".eating-how-btn").forEach((button) => {
+        button.setAttribute("aria-pressed", button.getAttribute("data-order-type") === chosen ? "true" : "false");
+    });
+    const box = document.getElementById("eating-how");
+    if (box && chosen) box.removeAttribute("data-missing");
+}
+
+function presetOrderType() {
+    if (localStorage.getItem("orderType")) return;
+    try {
+        const point = window.KioskServicePoint && KioskServicePoint.read ? KioskServicePoint.read() : null;
+        if (point && (point.table || point.venue)) localStorage.setItem("orderType", "DINE IN");
+    } catch (e) {
+        /* no service point on this page is not an error */
+    }
+}
+
+function ensureOrderType() {
+    if (localStorage.getItem("orderType")) return true;
+    const box = document.getElementById("eating-how");
+    if (box) {
+        box.setAttribute("data-missing", "true");
+        if (typeof box.scrollIntoView === "function") box.scrollIntoView({ block: "center" });
+    }
+    if (typeof showAlert === "function") showAlert("Choose dine in or take away first.");
+    return false;
+}
+
+document.addEventListener("click", (event) => {
+    const button = event.target && event.target.closest ? event.target.closest(".eating-how-btn") : null;
+    if (!button) return;
+    localStorage.setItem("orderType", button.getAttribute("data-order-type"));
+    paintOrderType();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    presetOrderType();
+    paintOrderType();
+});
+
 function stopRazorpayPolling() {
     razorpayPollingController?.stop();
     razorpayPollingController = null;
@@ -158,6 +209,7 @@ function validateNumber() {
 }
 
 async function submitRazorPayMobile() {
+    if (!ensureOrderType()) return;
     if (paymentSubmissionPromise || isRazorpayPaymentActive) {
         console.warn("Payment submission already in progress.");
         return paymentSubmissionPromise;
@@ -174,6 +226,7 @@ async function submitRazorPayMobile() {
 }
 
 async function performPaymentSubmission() {
+    if (!ensureOrderType()) return;
     const loaderOverlay = document.getElementById('page-loader-overlay');
     if (loaderOverlay) loaderOverlay.style.display = 'flex';
     console.log("🔗 Submitting QR request with mobile number:", enteredNumber);

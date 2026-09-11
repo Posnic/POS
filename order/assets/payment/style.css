@@ -167,6 +167,47 @@ body {
     font-weight: bold;
 }
 
+/*
+ * How you are eating. Two plain buttons, one of them pressed.
+ *
+ * Ink and line only, and the chosen one is filled - no colour is spent on a
+ * question with two answers. Sized for a thumb.
+ */
+.eating-how {
+    margin: 0 0 14px;
+}
+.eating-how-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 8px;
+}
+.eating-how-choices {
+    display: flex;
+    gap: 8px;
+}
+.eating-how-btn {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.eating-how-btn[aria-pressed="true"] {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #fff;
+}
+.eating-how[data-missing="true"] .eating-how-btn {
+    border-color: #b45309;
+}
+
 #page-loader-overlay {
     position: fixed;
     top: 0;
