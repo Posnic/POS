@@ -168,6 +168,10 @@ function loadRegistryFromFile() {
   console.log(`[shard] serving ${next.size} hostname(s) from ${REGISTRY_FILE}`);
 }
 
+/* Every name a shop answers to, from data rather than concatenation. The
+   reasoning, and what it replaced, is in the module itself. */
+const { hostsFor } = require('./src/utils/shop-hosts');
+
 async function loadRegistry() {
   if (REGISTRY_FILE) return loadRegistryFromFile();
   const query = { provisioned: true, subdomain: { $exists: true, $nin: [null, ''] } };
@@ -176,7 +180,7 @@ async function loadRegistry() {
     .db(CONTROL_DB)
     .collection('tenants')
     .find(query)
-    .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, webDomain: 1 })
+    .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, webDomain: 1, hosts: 1 })
     .toArray();
 
   const key = masterKey();
@@ -212,10 +216,10 @@ async function loadRegistry() {
       secrets,
     };
 
-    next.set(`${t.subdomain}.posnic.io`, entry);
-    /* A custom domain points at the same shop. Registered too, so a customer on
-       their own domain is not a second lookup path that can drift. */
-    if (t.webDomain) next.set(String(t.webDomain).toLowerCase(), entry);
+    /* Every name this shop answers to reaches the same entry, so a customer on
+       their own domain is not a second lookup path that can drift away from the
+       first. */
+    for (const host of hostsFor(t)) next.set(host, entry);
   }
 
   byHost.clear();

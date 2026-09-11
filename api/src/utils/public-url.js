@@ -36,9 +36,32 @@
  * we can see.
  */
 
-/* The domains this company serves shops on. A host must end in one of these,
-   or be exactly one of them, before it may appear in an email we send. */
-const OWNED_SUFFIXES = ['.posnic.io', '.posnic.com', '.posnic.in'];
+/*
+ * The domains this company serves shops on. A host must end in one of these,
+ * or be exactly one of them, before it may appear in an email we send.
+ *
+ * The three built in are ours and always have been. The rest come from
+ * SHOP_BASE_DOMAINS, the same variable the shard reads to decide which names a
+ * shop answers to, so the two cannot disagree: a shop served at
+ * cusxyz.xbill.in would otherwise be told its own address is untrusted and
+ * send no link at all, which is the dead-link failure this file exists to
+ * prevent.
+ *
+ * A reseller's customer on their own domain still goes through
+ * PUBLIC_EXTRA_DOMAINS below. That list is per-instance and set by hand, which
+ * does not scale to a channel; the plan to make it per-shop is a separate
+ * change and this one does not pretend to make it.
+ */
+const BUILT_IN_SUFFIXES = ['.posnic.io', '.posnic.com', '.posnic.in'];
+
+function ownedSuffixes() {
+  const configured = String(process.env.SHOP_BASE_DOMAINS || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase().replace(/^\.+/, ''))
+    .filter(Boolean)
+    .map((d) => `.${d}`);
+  return [...new Set([...BUILT_IN_SUFFIXES, ...configured])];
+}
 
 /* Custom domains a shop has been given (pos.sbala.in and the like). Comma
    separated, because they are rare and an operator sets them by hand. */
@@ -59,7 +82,7 @@ function isOwnHost(host) {
     .toLowerCase()
     .split(':')[0];
   if (!bare) return false;
-  if (OWNED_SUFFIXES.some((s) => bare.endsWith(s))) return true;
+  if (ownedSuffixes().some((s) => bare.endsWith(s))) return true;
   if (allowedCustomDomains().includes(bare)) return true;
   /* Local development, where there is no domain to own. */
   return bare === 'localhost' || bare === '127.0.0.1';
