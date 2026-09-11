@@ -696,6 +696,73 @@
   }
 
   /**
+   * The photo, whole, with a way out.
+   *
+   * The strip crops every picture to one band so the sheet reads as a list.
+   * That is right for scanning and wrong for deciding - a customer looking at
+   * a dish wants the picture the shop actually took, not the middle of it. So
+   * a tap opens it contained on a dark ground, and the close button carries
+   * its own background because a plain glyph vanishes on a photograph of
+   * roughly half of everything.
+   */
+  function openViewer(src, alt) {
+    var viewer = el("viewer");
+    var img = el("viewer-img");
+    if (!viewer || !img || !src) return;
+    img.setAttribute("src", src);
+    img.setAttribute("alt", alt || "");
+    if (typeof viewer.showModal === "function") viewer.showModal();
+    else viewer.setAttribute("open", "open");
+  }
+
+  function closeViewer() {
+    var viewer = el("viewer");
+    if (!viewer) return;
+    if (typeof viewer.close === "function") viewer.close();
+    else viewer.removeAttribute("open");
+    /* Dropped rather than left behind: a phone that has been through a few
+       dishes should not be holding every photo it has opened. */
+    var img = el("viewer-img");
+    if (img) img.removeAttribute("src");
+  }
+
+  /* Delegated, because the strip is rebuilt for every dish. */
+  (function wireViewer() {
+    var strip = el("sheet-strip");
+    if (strip) {
+      strip.addEventListener("click", function (e) {
+        var img = e.target && e.target.closest ? e.target.closest("img") : null;
+        if (img) openViewer(img.getAttribute("src"), img.getAttribute("alt"));
+      });
+    }
+
+    var single = el("sheet-img");
+    if (single) {
+      single.addEventListener("click", function () {
+        openViewer(single.getAttribute("src"), single.getAttribute("alt"));
+      });
+    }
+
+    var close = el("viewer-close");
+    if (close) close.addEventListener("click", closeViewer);
+
+    var viewer = el("viewer");
+    if (viewer) {
+      /* Tapping the dark around the photo closes it, the way every photo
+         viewer a customer has already used does. The photo itself does not,
+         or a mis-tap while looking shuts it. */
+      viewer.addEventListener("click", function (e) {
+        if (e.target === viewer) closeViewer();
+      });
+      /* Escape already closes a <dialog>; this clears the src with it. */
+      viewer.addEventListener("close", function () {
+        var img = el("viewer-img");
+        if (img) img.removeAttribute("src");
+      });
+    }
+  })();
+
+  /**
    * Every photo of a dish, in a strip you push sideways.
    *
    * Falls back to the single cover image when a shop has uploaded only one,
