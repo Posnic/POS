@@ -68,3 +68,53 @@ function showDestination() {
     unit.addEventListener('input', save);
     floor.addEventListener('input', save);
 }
+
+
+/* ------------------------------------------------------------- the notes
+ *
+ * A note on one line, and a note for the whole order. Both are kept the
+ * moment they change: the order page is a separate page from the one that
+ * sends, and a note behind a Confirm button is a note half of people lose.
+ */
+(function wireNotes() {
+    let noteFor = "";
+    const el = (id) => document.getElementById(id);
+
+    document.addEventListener("click", async (e) => {
+        const btn = e.target && e.target.closest ? e.target.closest(".line-note-btn") : null;
+        if (!btn) return;
+        noteFor = String(btn.getAttribute("data-item-id") || "");
+        const sheet = el("note-sheet");
+        if (!sheet) return;
+        const line = (await getCartData()).find((row) => String(row.id) === noteFor);
+        if (el("note-for")) el("note-for").textContent = line ? String(line.name || "") : "";
+        if (el("note-text")) el("note-text").value = line && line.note ? line.note : "";
+        if (typeof sheet.showModal === "function") sheet.showModal();
+        else sheet.setAttribute("open", "open");
+        if (el("note-text")) el("note-text").focus();
+    });
+
+    const close = () => {
+        const sheet = el("note-sheet");
+        if (!sheet) return;
+        if (typeof sheet.close === "function") sheet.close();
+        else sheet.removeAttribute("open");
+    };
+
+    document.addEventListener("click", async (e) => {
+        if (!e.target) return;
+        if (e.target.id === "note-save") {
+            await setCartItemNote(noteFor, el("note-text") ? el("note-text").value : "");
+            close();
+        } else if (e.target.id === "note-cancel" || e.target.id === "note-sheet") {
+            close();
+        }
+    });
+
+    document.addEventListener("input", (e) => {
+        if (!e.target || e.target.id !== "order-note") return;
+        const text = String(e.target.value || "").trim().slice(0, 300);
+        if (text) localStorage.setItem("note", text);
+        else localStorage.removeItem("note");
+    });
+})();

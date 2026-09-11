@@ -86,7 +86,7 @@ let orderProcessingActive = false;
  * Stored with the branch row so every page - the menu, the order, paying -
  * writes a price the same way without asking the server again.
  */
-const shop = { name: "", currency: "", currencyCode: "" };
+const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {} };
 
 async function rememberShop() {
     try {
@@ -95,6 +95,11 @@ async function rememberShop() {
         shop.name = String(branch.name || "");
         shop.currency = String(branch.currency || "");
         shop.currencyCode = String(branch.currency_code || "");
+        /* What kind of shop, which decides the words and the questions. */
+        shop.kind = branch.kind === "retail" ? "retail" : "restaurant";
+        shop.notes = branch.notes === true;
+        shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
+        shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
     } catch (error) {
         /* No branch row yet is not an error; the fetch that stores one will
            be along in a moment. */
@@ -115,6 +120,37 @@ function money(amount) {
     const text = n % 1 === 0 ? String(n) : n.toFixed(2);
     const unit = shop.currency || "₹";
     return /^[A-Za-z]/.test(unit) ? unit + " " + text : unit + text;
+}
+
+/*
+ * The words a shop uses.
+ *
+ * A restaurant has dishes on a menu; a shop has items in a catalogue. The
+ * same page serves both, and calling a ball pen a dish is how a page tells
+ * a shopkeeper it was not made for them.
+ */
+function words() {
+    if (shop.kind === "retail") {
+        return { one: "item", many: "items", menu: "Products", heading: "All products", kitchen: "the shop" };
+    }
+    return { one: "dish", many: "dishes", menu: "Menu", heading: "Our Menu", kitchen: "the kitchen" };
+}
+
+/* Where the customer is, as the printed code said: "Table 5", or a room. */
+function placeLabel() {
+    try {
+        if (!window.KioskServicePoint) return "";
+        const point = window.KioskServicePoint.read();
+        if (point.venue) {
+            const place = window.KioskServicePoint.describe();
+            if (place && place.name) return place.name + (point.unit ? ", " + (place.unit_label || "Room") + " " + point.unit : "");
+            return point.venue + (point.unit ? " " + point.unit : "");
+        }
+        if (point.table) return "Table " + point.table;
+    } catch (e) {
+        /* No service point on this page is not an error. */
+    }
+    return "";
 }
 
 /* The words behind the veg mark, for a screen reader and for the sheet. */
@@ -138,23 +174,32 @@ async function paintShop() {
     const name = document.getElementById("shop-name");
     if (!name) return;
 
+    const w = words();
     if (shop.name) {
         name.textContent = shop.name;
         document.title = shop.name + " · Order";
+    } else {
+        name.textContent = w.menu;
     }
 
     const sub = document.getElementById("shop-sub");
     if (sub && typeof allProducts === "function") {
-        const all = allProducts();
-        const count = all.length;
-        /* "Dishes" in a kitchen, "items" in a shop - the same page serves a
-           stationer, and the same test the menu uses decides which: a veg
-           mark, a preparation time or a serving period is a kitchen. */
-        const kitchen = all.some(p => p.diet || Number(p.prep_minutes) > 0 || (p.served_in || []).length > 0);
-        const word = count === 1 ? (kitchen ? "dish" : "item") : (kitchen ? "dishes" : "items");
-        sub.textContent = count + " " + word;
+        const count = allProducts().length;
+        sub.textContent = count + " " + (count === 1 ? w.one : w.many);
         sub.hidden = count === 0;
     }
+
+    /* "Table 5", from the code that was scanned, beside the shop's name -
+       so a customer knows the page knows where they are sitting. */
+    const place = document.getElementById("shop-place");
+    if (place) {
+        const label = placeLabel();
+        place.textContent = label;
+        place.hidden = !label;
+    }
+
+    const heading = document.getElementById("category-heading");
+    if (heading && heading.textContent === "Our Menu") heading.textContent = w.heading;
 
     try {
         const images = await getKioskImages();
@@ -749,7 +794,14 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 kioskPayment: result.data.payment,
                 name: storeInfo.name || "",
                 currency: storeInfo.currency || "",
-                currency_code: storeInfo.currency_code || ""
+                currency_code: storeInfo.currency_code || "",
+                /* A restaurant or a shop, whether the kitchen takes a note,
+                   and how the food may travel. */
+                kind: storeInfo.kind === "retail" ? "retail" : "restaurant",
+                notes: !!(result.data.features && result.data.features.notes),
+                fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
+                    ? result.data.channel.fulfilment
+                    : []
             }]);
             await rememberShop();
             /* A browser that already had the menu draws the header from the
@@ -925,6 +977,20 @@ async function renderCart(cartData = null) {
                 ? `<img src="${escapeHtml(getSafeImageUrl(item.img))}" alt="" class="item-image">`
                 : `<span class="item-icon" aria-hidden="true">${escapeHtml(item.icon || "")}</span>`;
 
+            /*
+             * A note for the kitchen, on the line it is about.
+             *
+             * "Less spicy", "no onion", "cut in half" - the customisation a
+             * table asks for out loud and this page had no way to take. Only
+             * where there is a kitchen to read it; a stationer gets an order
+             * note at the foot instead.
+             */
+            const note = String(item.note || "").trim();
+            const noteHtml = shop.notes
+                ? (note ? `<div class="item-note">${escapeHtml(note)}</div>` : "") +
+                  `<button type="button" class="line-note-btn" data-item-id="${safeItemId}">${note ? "Edit note" : "Add a note"}</button>`
+                : "";
+
             html += `
                 <div class="cart-item" data-item-id="${safeItemId}">
                     ${picture}
@@ -935,6 +1001,7 @@ async function renderCart(cartData = null) {
                                 <span class="unit-price">${escapeHtml(money(price))} each</span>
                                 <span class="total-price">${escapeHtml(money(lineTotal))}</span>
                             </div>
+                            ${noteHtml}
                         </div>
                         <div class="quantity-control" aria-label="Quantity">
                             <button type="button" class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="-1" aria-label="One fewer">&minus;</button>
@@ -970,12 +1037,34 @@ async function renderCart(cartData = null) {
         $("#cart-qty,#mobile-cart-count").text(totalQty);
         $("#cart-total").text(money(totalPrice));
         $("#next-btn").prop("disabled", false);
+
+        /* The note for the whole order: for the kitchen where there is one,
+           for the shop where there is not. */
+        const noteBox = document.getElementById("order-note-box");
+        if (noteBox) {
+            noteBox.hidden = false;
+            const label = document.getElementById("order-note-label");
+            if (label) label.textContent = shop.kind === "retail" ? "A note for the shop" : "A note for the kitchen";
+            const field = document.getElementById("order-note");
+            if (field && !field.value) field.value = localStorage.getItem("note") || "";
+        }
+
         const loader = document.getElementById('page-loader');
         if (loader) loader.style.display = 'none';
 
     } catch (error) {
         console.error("❌ Error rendering cart:", error);
     }
+}
+
+/** A note on one line of the order, kept with the line. */
+async function setCartItemNote(id, text) {
+    const cartData = await getCartData();
+    const line = cartData.find(item => String(item.id) === String(id));
+    if (!line) return;
+    line.note = String(text || "").trim().slice(0, 200);
+    await saveCartData(cartData);
+    renderCart(cartData);
 }
 
 $(document).on("click", ".cart-quantity-btn", async function () {
@@ -1332,6 +1421,25 @@ function renderOrderPanel(cartData) {
     $("#order-panel-next").prop("disabled", rows.length === 0);
 }
 
+/*
+ * Which sections have something in the order, and how much.
+ *
+ * A small count on the chip - in the strip and in the rail - so a customer
+ * three sections away can see at a glance that two things from Starters are
+ * already on the bill. Owner: "keep that category with little highlight that
+ * some items we added from that category."
+ */
+function markCategories(cartData) {
+    if (typeof products !== "object" || !products) return;
+    const byId = new Map((cartData || []).map(line => [String(line.id), Number(line.quantity) || 0]));
+    Object.keys(products).forEach(key => {
+        const count = (products[key] || []).reduce((sum, p) => sum + (byId.get(String(p.id)) || 0), 0);
+        $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === key)
+            .attr("data-count", String(count))
+            .toggleClass("has-items", count > 0);
+    });
+}
+
 async function updateCart(cartData = null) {
     let totalQty = 0;
     let totalPrice = 0;
@@ -1367,6 +1475,7 @@ async function updateCart(cartData = null) {
         $("#summary-display").text(`${totalQty} ${itemsWord} · ${money(totalPrice)}`);
         $("#next-btn").prop("disabled", totalQty === 0);
         renderOrderPanel(storedCart);
+        markCategories(storedCart);
     } catch (error) {
         console.error("❌ Error updating cart:", error);
     }
@@ -1539,7 +1648,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             return {
                 item_id: item.id,
                 item_quantity: item.quantity,
-                gst: item.tax_price * item.quantity
+                gst: item.tax_price * item.quantity,
+                /* What the customer asked for on this line; printed on the
+                   kitchen ticket under the dish. */
+                item_note: String(item.note || "").trim().slice(0, 200)
             };
         });
 
@@ -1547,7 +1659,17 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
         const branches = await getData(BRANCH_STORE);
         const branchId = branches.length > 0 ? branches[0].id : null;
         const orderType = localStorage.getItem("orderType");
-        const note = localStorage.getItem('note');
+        /* "null" is what setItem(null) stores, and it was reaching tickets. */
+        const rawNote = localStorage.getItem('note');
+        const note = rawNote && rawNote !== "null" ? String(rawNote).trim().slice(0, 300) : "";
+        /* How the food travels and, for a delivery, to whom. Chosen on the
+           payment page; the table comes from the printed code first and a
+           typed table number second. */
+        const fulfilment = localStorage.getItem("order_fulfilment") || "";
+        const point = window.KioskServicePoint ? window.KioskServicePoint.orderFields() : {};
+        const table = String(point.table || localStorage.getItem("order_table") || "").trim();
+        const customerName = String(localStorage.getItem("order_customer_name") || "").trim().slice(0, 80);
+        const customerAddress = String(localStorage.getItem("order_customer_address") || "").trim().slice(0, 300);
 
         const productsRefreshed = await fetchAndStoreBranch(branchId, false);
         if (!productsRefreshed) return false;
@@ -1578,6 +1700,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
                 payment_status: paymentStatus,
                 sale_method: 'Self-Order',
                 order: orderType,
+                fulfilment: fulfilment,
+                table: table,
+                customer_name: customerName,
+                customer_address: customerAddress,
                 note: note,
                 /*
                  * Which venue and room the printed code named, and what the

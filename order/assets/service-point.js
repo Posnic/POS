@@ -184,6 +184,15 @@
     function orderFields() {
         var point = read();
         return {
+            /*
+             * THE TABLE, which this did not carry.
+             *
+             * A code printed for table five sent the venue and the room
+             * fields and not the table, so a QR order from the shop's own
+             * floor reached the kitchen with no table on the ticket - the
+             * one thing a table code exists to say.
+             */
+            table: point.table || '',
             venue: point.venue || '',
             unit: point.unit || '',
             destination: point.destination || null,

@@ -89,6 +89,14 @@
             <div class="bill-row bill-total"><span>Total</span><span id="bill-total"></span></div>
         </section>
 
+        <!-- What the kitchen (or the shop) should know about the whole order.
+             Kept as it is typed; the order carries whatever is here. -->
+        <section class="order-note-box" id="order-note-box" hidden>
+            <label class="field-label" for="order-note" id="order-note-label">A note for the kitchen</label>
+            <textarea id="order-note" class="note-field" rows="2" maxlength="300"
+                      placeholder="Anything we should know?"></textarea>
+        </section>
+
         <!-- Possible, not invited: a quiet text button, and a question before
              it does anything. -->
         <div class="order-clear">
@@ -107,6 +115,21 @@
             </svg>
         </button>
     </footer>
+
+    <!-- A note on one line: "less spicy", "no onion". -->
+    <dialog id="note-sheet" class="sheet" aria-labelledby="note-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-body">
+            <h2 class="sheet-title" id="note-title">A note for this dish</h2>
+            <p class="sheet-desc" id="note-for"></p>
+            <textarea id="note-text" class="note-field" rows="3" maxlength="200"
+                      placeholder="Less spicy, no onion, cut in half..."></textarea>
+            <div class="pay-actions">
+                <button type="button" class="btn-primary btn-block" id="note-save">Save note</button>
+                <button type="button" class="btn-secondary btn-block" id="note-cancel">Cancel</button>
+            </div>
+        </div>
+    </dialog>
 
     <div id="cancelModal" class="modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
         <div class="modal-content">

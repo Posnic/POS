@@ -61,7 +61,7 @@ function liftConst(src, name) {
  * The products page in jsdom, with real jQuery and the real render functions,
  * and a fake catalogue and order behind them.
  */
-function page(html, { cart = [], branch = {} } = {}) {
+function page(html, { cart = [], branch = {}, products = {} } = {}) {
   const dom = new JSDOM(read(html), { url: 'https://shop.example/order/' + html, runScripts: 'outside-only' });
   const { window } = dom;
   window.eval(read('assets/jquery-3.7.1.min.js'));
@@ -71,9 +71,12 @@ function page(html, { cart = [], branch = {} } = {}) {
     'const BRANCH_STORE = "branch";',
     lift(src, 'escapeHtml'),
     lift(src, 'getSafeImageUrl'),
-    'const shop = { name: "", currency: "", currencyCode: "" };',
+    'const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {} };',
     lift(src, 'rememberShop'),
     lift(src, 'money'),
+    lift(src, 'words'),
+    lift(src, 'markCategories'),
+    lift(src, 'setCartItemNote'),
     liftConst(src, 'DIET_WORDS'),
     lift(src, 'dietMarkHtml'),
     lift(src, 'pop'),
@@ -91,6 +94,9 @@ function page(html, { cart = [], branch = {} } = {}) {
     console,
     setTimeout: () => 0,
     getCartData: async () => JSON.parse(JSON.stringify(cart)),
+    saveCartData: async () => {},
+    products,
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     getData: async (store) => (store === 'branch' ? [{ id: 'b1', ...branch }] : []),
     CustomEvent: window.CustomEvent,
     Number,
@@ -384,13 +390,13 @@ test('the button says what happens, and the question cannot be skipped', () => {
    * the door asked dine-in-or-take-away, and a kitchen ticket with no answer
    * once it did not. The auto path now waits for the answer.
    */
-  assert.match(js, /const needsType = !localStorage\.getItem\("orderType"\)/);
-  assert.match(js, /if \(!showPhoneInput && !needsType\)/, 'the auto path skips the dine-in question');
+  assert.match(js, /const settled = choices\.length === 1/, 'the auto path no longer asks whether anything is left to ask');
+  assert.match(js, /if \(!showPhoneInput && !needsType && oneWayToPay && settled\)/, 'the auto path skips a question');
   /* The number is shown, not masked into "98XX56XXX1". */
   assert.ok(!js.includes('maskMobileNumber'), 'the number is masked again');
   assert.match(js, /function formatMobileNumber/);
   /* And it is asked for only when the shop wants it. */
-  assert.match(js, /payState\.phoneRequired && !numberIsValid\(\)/);
+  assert.match(js, /phoneWanted\(\) && !numberIsValid\(\)/);
 });
 
 test('the number is grouped the way it is printed', () => {
@@ -414,4 +420,149 @@ test('the pages speak to a person at a table, not to a shopping website', () => 
   assert.ok(!read('thankyou.html').includes('Payment Successful'));
   assert.match(read('thankyou.html'), /Order placed/);
   assert.match(read('thankyou.html'), /Show this at the counter/);
+});
+
+/* --------------------------------------------- a restaurant, or a shop */
+
+test('a restaurant line takes a note for the kitchen; a shop line does not', async () => {
+  /* Owner: "no way to add customization ... that will be printed in kot". */
+  const { document, box } = page('cart.html', {
+    cart: [{ id: 'p1', name: 'Paneer Tikka', price: 280, tax_price: 0, quantity: 1, note: 'less spicy' }],
+    branch: { kind: 'restaurant', notes: true },
+  });
+  await box.rememberShop();
+  await box.renderCart();
+  const row = document.querySelector('.cart-item');
+  assert.strictEqual(row.querySelector('.item-note').textContent, 'less spicy');
+  assert.strictEqual(row.querySelector('.line-note-btn').textContent, 'Edit note');
+  assert.strictEqual(document.getElementById('order-note-label').textContent, 'A note for the kitchen');
+
+  const shopPage = page('cart.html', {
+    cart: [{ id: 'p1', name: 'Ball Pen', price: 80, tax_price: 0, quantity: 1 }],
+    branch: { kind: 'retail', notes: false },
+  });
+  await shopPage.box.rememberShop();
+  await shopPage.box.renderCart();
+  assert.ok(!shopPage.document.querySelector('.line-note-btn'), 'a stationer was offered a kitchen note');
+  assert.strictEqual(shopPage.document.getElementById('order-note-label').textContent, 'A note for the shop');
+});
+
+test('a category with something in the order carries the count', async () => {
+  /* Owner: "keep that category with little highlight that some items we
+     added from that category." */
+  const { document, box } = page('products.html', {
+    products: { starters: [{ id: 'p1' }, { id: 'p3' }], breads: [{ id: 'p2' }] },
+  });
+  document.getElementById('category-list').innerHTML =
+    '<button class="category-item" data-category="starters">Starters</button>' +
+    '<button class="category-item" data-category="breads">Breads</button>';
+  document.getElementById('category-rail').innerHTML =
+    '<button class="category-item" data-category="starters">Starters</button>';
+
+  await box.updateCart([
+    { id: 'p1', name: 'Paneer Tikka', price: 280, quantity: 2 },
+    { id: 'p3', name: 'Chicken 65', price: 290, quantity: 1 },
+  ]);
+  const chips = document.querySelectorAll('.category-item[data-category="starters"]');
+  assert.strictEqual(chips.length, 2, 'the strip and the rail both carry the chip');
+  chips.forEach((chip) => {
+    assert.strictEqual(chip.getAttribute('data-count'), '3');
+    assert.ok(chip.classList.contains('has-items'));
+  });
+  const breads = document.querySelector('.category-item[data-category="breads"]');
+  assert.strictEqual(breads.getAttribute('data-count'), '0');
+  assert.ok(!breads.classList.contains('has-items'));
+
+  await box.updateCart([]);
+  assert.ok(!document.querySelector('.category-item.has-items'), 'an emptied order left a count behind');
+});
+
+test('the words follow the kind of shop', async () => {
+  const kitchen = page('products.html', { branch: { kind: 'restaurant' } });
+  await kitchen.box.rememberShop();
+  assert.deepStrictEqual(kitchen.box.words().many, 'dishes');
+  const shop = page('products.html', { branch: { kind: 'retail' } });
+  await shop.box.rememberShop();
+  assert.deepStrictEqual(shop.box.words().many, 'items');
+  assert.strictEqual(shop.box.words().menu, 'Products');
+});
+
+/* ------------------------------------------------- how the food travels */
+
+function payBox() {
+  const js = read('assets/payment/script.js');
+  const code = [
+    'const money = (n) => "₹" + n;',
+    /* var, not const: a const in a vm script is not a property of its
+       global, and the tests reach in through the global. */
+    liftConst(js, 'payState').replace('const payState', 'var payState'),
+    lift(js, 'fulfilmentChoices'),
+    lift(js, 'fulfilmentLabel'),
+    lift(js, 'orderTypeFor'),
+    lift(js, 'offlineLabel'),
+  ].join('\n');
+  const sandbox = { Set, String, Array, Number };
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+  return sandbox;
+}
+
+test('a restaurant offers the table, the counter and delivery, in its own words', () => {
+  const box = payBox();
+  box.payState.kind = 'restaurant';
+  box.payState.fulfilment = ['dine_in', 'takeaway', 'delivery'];
+  assert.deepStrictEqual(Array.from(box.fulfilmentChoices()), ['dine_in', 'takeaway', 'delivery']);
+  box.payState.tableFromCode = '5';
+  assert.strictEqual(box.fulfilmentLabel('dine_in'), 'Bring it to table 5');
+  box.payState.tableFromCode = '';
+  assert.strictEqual(box.fulfilmentLabel('dine_in'), 'Bring it to my table');
+  assert.strictEqual(box.fulfilmentLabel('takeaway'), "I'll collect it at the counter");
+  assert.strictEqual(box.orderTypeFor('dine_in'), 'DINE IN');
+  assert.strictEqual(box.orderTypeFor('takeaway'), 'PARCEL');
+});
+
+test('a shop offers collection and delivery, and is never asked about a table', () => {
+  const box = payBox();
+  box.payState.kind = 'retail';
+  box.payState.fulfilment = ['dine_in', 'takeaway', 'delivery'];
+  /* The shop's own switches say dine-in and takeaway, as the defaults do;
+     for a shop that means collect or deliver. */
+  assert.deepStrictEqual(Array.from(box.fulfilmentChoices()), ['pickup', 'delivery']);
+  assert.strictEqual(box.fulfilmentLabel('pickup'), "I'll collect it from the shop");
+  box.payState.chosen = 'delivery';
+  assert.strictEqual(box.offlineLabel(), 'Pay on delivery');
+  box.payState.chosen = 'pickup';
+  assert.strictEqual(box.offlineLabel(), 'Pay when collecting');
+});
+
+test('a shop that never set the ways gets the sensible default for its kind', () => {
+  const box = payBox();
+  box.payState.kind = 'retail';
+  box.payState.fulfilment = [];
+  assert.deepStrictEqual(Array.from(box.fulfilmentChoices()), ['pickup']);
+  box.payState.kind = 'restaurant';
+  assert.deepStrictEqual(Array.from(box.fulfilmentChoices()), ['dine_in', 'takeaway']);
+});
+
+test('paying offline finishes an order, and the table on the code reaches it', () => {
+  const js = read('assets/payment/script.js');
+  assert.ok(!js.includes('has not set up a way to pay online yet'), 'a shop with no gateway is still turned away');
+  assert.match(js, /offline: razorpay \? cod : true|kioskPayment\.offline/, 'the page does not read the offline flag');
+  assert.match(js, /payingOnline\(\)/, 'the button does not follow the chosen way to pay');
+  assert.match(js, /if \(!ensureDetails\(\)\) return;/, 'a delivery can go without an address');
+
+  const db = read('indexedDB.js');
+  assert.match(db, /item_note: String\(item\.note/, 'the note on a line is not sent');
+  assert.match(db, /fulfilment: fulfilment,\s*table: table,/, 'how the food travels and the table are not sent');
+  assert.match(db, /customer_name: customerName/, 'a delivery goes without a name');
+  assert.match(read('assets/service-point.js'), /table: point\.table \|\| '',/, 'the table on the printed code is not carried into the order');
+  assert.match(read('assets/index/script.js'), /if \(note\) localStorage\.setItem\('note', note\);/, 'a plain link stores the word "null" as the note');
+
+  const html = read('payment.html');
+  for (const id of ['table-field', 'table-number', 'delivery-form', 'customer-name', 'customer-address', 'pay-method', 'pay-offline-btn']) {
+    assert.match(html, new RegExp('id="' + id + '"'), 'payment.html has no #' + id);
+  }
+  assert.match(read('products.html'), /id="dish-note"/, 'the dish sheet has nowhere for a note');
+  assert.match(read('products.html'), /id="shop-place"/, 'the page has nowhere to say which table');
+  assert.match(read('cart.html'), /id="order-note"/, 'the order page has nowhere for a note');
 });

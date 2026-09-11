@@ -137,7 +137,7 @@
         const served = Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [];
         if (served.length) rows.push(["Served at", served.join(", ")]);
         if (Number(item.prep_minutes) > 0) rows.push(["Takes about", `${Number(item.prep_minutes)} minutes`]);
-        if (item.category_name) rows.push(["Section", item.category_name]);
+        if (item.category_name) rows.push(["Category", item.category_name]);
 
         const list = el("dish-facts");
         list.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join("");
@@ -152,11 +152,16 @@
         el("dish-qty").textContent = String(q);
     }
 
+    /* The note typed for a dish that is not on the bill yet, carried onto
+       the line when it is added. */
+    let pendingNote = "";
+
     async function openDish(id) {
         const item = findProduct(id);
         const sheet = el("dish");
         if (!item || !sheet) return;
         openId = String(id);
+        pendingNote = "";
 
         showPhotos(item);
         el("dish-diet").innerHTML = dietMark(item.diet);
@@ -179,6 +184,13 @@
 
         const line = (await getCartData()).find((row) => String(row.id) === openId);
         paintSheetQty(line ? line.quantity : 0);
+
+        const noteBox = el("dish-note-box");
+        if (noteBox) {
+            noteBox.hidden = !(shop.notes && available);
+            const field = el("dish-note");
+            if (field) field.value = line && line.note ? line.note : "";
+        }
 
         if (typeof sheet.showModal === "function") sheet.showModal();
         else sheet.setAttribute("open", "open");
@@ -204,7 +216,25 @@
         openDish(String($(this).attr("data-id") || ""));
     });
 
-    $(document).on("click", "#dish-more", () => change(openId, 1));
+    $(document).on("click", "#dish-more", async () => {
+        const id = openId;
+        await change(id, 1);
+        /* A note typed before the first Add now has a line to live on. */
+        if (pendingNote && id) {
+            await setCartItemNote(id, pendingNote);
+            pendingNote = "";
+        }
+    });
+
+    /* The note, kept as it is typed: on the line if there is one, held
+       for the first Add if there is not. */
+    document.addEventListener("input", async (e) => {
+        if (!e.target || e.target.id !== "dish-note" || !openId) return;
+        const text = String(e.target.value || "");
+        const line = (await getCartData()).find((row) => String(row.id) === openId);
+        if (line) await setCartItemNote(openId, text);
+        else pendingNote = text;
+    });
     $(document).on("click", "#dish-less", () => change(openId, -1));
     $(document).on("click", "#dish-close", closeDish);
 

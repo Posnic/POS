@@ -1338,7 +1338,7 @@
         : "Available",
     ]);
 
-    if (item.categoryName) rows.push(["Section", item.categoryName]);
+    if (item.categoryName) rows.push(["Category", item.categoryName]);
 
     list.innerHTML = rows
       .map(function (pair) {
