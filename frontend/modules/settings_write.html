@@ -2411,313 +2411,436 @@
                         <div class="tab-pane fade" id="v-pills-modules" role="tabpanel"
                             aria-labelledby="v-pills-modules-tab">
                                                         <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
-                                    <div>
-                                        <small class="text-muted"><lang class="lang_modules_hint">A feature that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></small>
-                                        <!-- The tour, re-runnable. First-run offers it once; anyone
-                                             showing a new cashier around should not need a new shop. -->
-                                        <button type="button" class="btn btn-sm btn-outline-primary ml-2"
-                                            id="features_take_tour"
-                                            onclick="PosnicPro.tour.firstRun();">
-                                            <lang class="lang_take_tour">Take the tour</lang>
-                                        </button>
-                                    </div>
-                                    <div id="modules_branch_wrap" style="display:none; min-width:220px;">
-                                        <label for="modules_branch_select" class="mb-0" style="font-size:.78rem; font-weight:600;"><lang class="lang_modules_branch">Branch</lang></label>
-                                        <select class="form-control form-control-sm" id="modules_branch_select"
-                                            onchange="PosnicPro.settings.modulesBranchChanged();"></select>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div id="modules_remote_note" class="alert alert-info py-2" style="display:none;">
-                                        <i class="feather icon-info mr-1"></i><span></span>
-                                    </div>
-                                    <input type="text" class="form-control mb-3" id="modules_search"
-                                        placeholder="Search features…" data-t-placeholder="lang_search_features_2" autocomplete="off" style="max-width:320px;"
+                            <!--
+                                GROUPED, NOT LISTED.
+                            
+                                Twenty-three switches in one flat grid is a page you scan twice: once
+                                to find the feature and once to work out what it is next to. They sit
+                                here by the question a shopkeeper arrives with - selling, money,
+                                customers, kitchen, where else they sell, staff, and Posnic itself.
+                            
+                                A group is a heading and a grid, nothing else. Every card is still the
+                                same switch-and-description it was, byte for byte, in a different
+                                container: the switches-only rule (features-list-is-switches.test.js)
+                                and the AI card guard both find cards by the exact module-card class
+                                marker, and headers carry no input or button, so neither can mistake
+                                a header for a card.
+                            
+                                The accent is a CSS variable on the section, so a card only ever asks
+                                "what colour am I" and the answer is wherever it happens to sit.
+                            -->
+                        <div class="card-header fg-toolbar">
+                            <div class="fg-summary">
+                                <div class="fg-summary-num"><span id="fg_on_count">0</span><span class="fg-summary-of">/ <span id="fg_total_count">0</span></span></div>
+                                <div class="fg-summary-lbl"><lang class="lang_fg_features_on">features switched on</lang></div>
+                                <div class="fg-meter" aria-hidden="true"><span id="fg_meter_bar"></span></div>
+                            </div>
+                            <div class="fg-controls">
+                                <div class="fg-search">
+                                    <i class="feather icon-search" aria-hidden="true"></i>
+                                    <input type="text" class="form-control" id="modules_search"
+                                        placeholder="Search features…" data-t-placeholder="lang_search_features_2" autocomplete="off"
                                         oninput="PosnicPro.settings.filterModuleCards(this.value);">
-                                    <div class="module-grid">
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/user.svg" alt="workforce" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_staffshifts_title">Workforce</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="staff_shifts_enable" name="staff_shifts_enable">
-                                                    <label class="custom-control-label" for="staff_shifts_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_staff_clock_in_out_from_the_header_clock_l">Staff clock in/out from the header clock; labour report and payroll exports.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/cash-register.svg" alt="cash register" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_cashregister_enable">Cash Register</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="cash_register_enable" name="cash_register_enable">
-                                                    <label class="custom-control-label" for="cash_register_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_till_sessions_floats_and_register_reports">Till sessions, floats and register reports. Off: sales work without any register ceremony.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-zap"></i></span>
-                                                <div class="module-title"><lang class="lang_quicksale_enable">Quick Sale</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="quick_sale_enable" name="quick_sale_enable">
-                                                    <label class="custom-control-label" for="quick_sale_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_type_an_amount_take_payment_the_busy_count">Type an amount, take payment - the busy-counter pad on the sale screen.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-file-text"></i></span>
-                                                <div class="module-title"><lang class="lang_quotes_enable">Quotes</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="quotes_enable" name="quotes_enable">
-                                                    <label class="custom-control-label" for="quotes_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_price_an_offer_today_convert_it_to_a_sale">Price an offer today, convert it to a sale when the customer says yes.</lang></p>
-</div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-file"></i></span>
-                                                <div class="module-title"><lang class="lang_invoices_enable">Invoices</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="invoices_enable" name="invoices_enable">
-                                                    <label class="custom-control-label" for="invoices_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_bill_a_customer_now_get_paid_later_and_see">Bill a customer now, get paid later - and see who still owes you.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-plus-square"></i></span>
-                                                <div class="module-title"><lang class="lang_custom_charges_enable">Custom charges</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="custom_charges_enable" name="custom_charges_enable">
-                                                    <label class="custom-control-label" for="custom_charges_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_parcel_service_or_delivery_charges_added_o">Parcel, service or delivery charges added on a sale. Sales that already carry charges stay editable even when this is off.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/authentication.svg" alt="till lock" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="till_lock_enable" name="till_lock_enable">
-                                                    <label class="custom-control-label" for="till_lock_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_staff_unlock_with_a_4_digit_pin_instead_of">Staff unlock with a 4-digit PIN instead of a password.</lang></p>
-                                            
-                                        </div>
-
-                                        <div class="module-card" data-module="plan" data-access="read">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="restaurant" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_modules_restaurant">Restaurant</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="table_options" name="table_options">
-                                                    <label class="custom-control-label" for="table_options"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_dine_in_orders_by_table_kots_to_the_kitche">Dine-in orders by table, KOTs to the kitchen.</lang>
-                                                
-                                            </p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/tax.svg" alt="tax" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_tax">Tax</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_tax_enable" name="module_tax_enable">
-                                                    <label class="custom-control-label" for="module_tax_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_tax_rates_and_tax_groups_off_hides_both_se">Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/credit.svg" alt="credit" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_credit">Customer Credit</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_credit_enable" name="module_credit_enable">
-                                                    <label class="custom-control-label" for="module_credit_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_credit_limits_and_payment_reminders">Credit limits and payment reminders.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/crm.svg" alt="marketing" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_customer_marketing">Customer Marketing</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
-                                                    <label class="custom-control-label" for="module_marketing_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_loyalty_rewards_coupons_cashback_and_campa">Loyalty &amp; rewards, coupons, cashback and campaigns.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/email.svg" alt="messaging" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_messaging">Messaging</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_messaging_enable" name="module_messaging_enable">
-                                                    <label class="custom-control-label" for="module_messaging_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_sms_whatsapp_and_email_providers_and_sends">SMS, WhatsApp and email providers and sends.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="online ordering" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_online_ordering">Online Ordering</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_online_ordering_enable" name="module_online_ordering_enable">
-                                                    <label class="custom-control-label" for="module_online_ordering_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_module_online_ordering_desc">A QR code on the table or a link customers open on their phone. Your menu, your prices, your kitchen.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/monitor.svg" alt="kiosk machine" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_kiosk_machine">Kiosk Machine</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_kiosk_enable" name="module_kiosk_enable">
-                                                    <label class="custom-control-label" for="module_kiosk_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_module_kiosk_machine_desc">A self-service terminal standing in your shop. It shows the same storefront and prints to its own kitchen printer.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="captain app" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_captain">Captain App</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_captain_enable" name="module_captain_enable">
-                                                    <label class="custom-control-label" for="module_captain_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_module_captain_desc">Your staff taking orders at the table on a phone, straight to the kitchen.</lang></p>
-
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/passenger.svg" alt="delivery partners" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_delivery_partners">Delivery Partners</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_delivery_partners_enable" name="module_delivery_partners_enable">
-                                                    <label class="custom-control-label" for="module_delivery_partners_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_module_delivery_partners_desc">Swiggy, Zomato and the rest. Record what each one keeps so a report can show what you actually earned.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/ecommerce.svg" alt="webshop" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_webshop">Webshop</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_webshop_enable" name="module_webshop_enable">
-                                                    <label class="custom-control-label" for="module_webshop_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_module_webshop_desc">An online shop of your own - OpenCart, WooCommerce - sending its orders here.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/theme.svg" alt="themes" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_themes">Themes</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_themes_enable" name="module_themes_enable">
-                                                    <label class="custom-control-label" for="module_themes_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_theme_appearance_presets_custom_colours_an">Theme &amp; Appearance - presets, custom colours and dark modes.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-file-text"></i></span>
-                                                <div class="module-title"><lang class="lang_expense_title">Cash Book</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_cashbook_enable" name="module_cashbook_enable">
-                                                    <label class="custom-control-label" for="module_cashbook_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_the_expense_ledger_off_hides_cash_book_and">The expense ledger. Off hides Cash Book and its report; recorded entries keep and profit settings still decide whether they count.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-trash-2"></i></span>
-                                                <div class="module-title"><lang class="lang_module_recyclebin">Recycle Bin</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_recyclebin_enable" name="module_recyclebin_enable">
-                                                    <label class="custom-control-label" for="module_recyclebin_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_keep_deleted_records_for_restore_off_delet">Keep deleted records for restore. Off: deleted records are NOT retained - deletes still sync, but cannot be undone.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-package"></i></span>
-                                                <div class="module-title"><lang class="lang_module_demo_data">Demo Data</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_demo_data_enable" name="module_demo_data_enable">
-                                                    <label class="custom-control-label" for="module_demo_data_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_the_sample_products_your_shop_started_with">The sample products your shop started with. Switching off asks first, then removes the samples - products, sales, quotes, customers, suppliers. Anything you have edited or already sold is kept. Switch back on for a fresh set.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/supermarket.svg" alt="weighing scale" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_weightmachine_title">Weighing Scale</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="hardware_weight_machine_enable" name="hardware_weight_machine_enable">
-                                                    <label class="custom-control-label" for="hardware_weight_machine_enable"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_weight_embedded_barcodes_and_scale_reads_n">Weight-embedded barcodes and scale reads. Needs the hardware manager on the till.</lang></p>
-                                        </div>
-
-                                        <div class="module-card">
-                                            <div class="module-card-head">
-                                                <span class="module-ico"><i class="feather icon-zap"></i></span>
-                                                <div class="module-title"><lang class="lang_module_ai">AI assistance</lang></div>
-                                                <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="ai_enabled" name="ai_enabled">
-                                                    <label class="custom-control-label" for="ai_enabled"></label>
-                                                </div>
-                                            </div>
-                                            <p class="module-desc"><lang class="lang_ai_module_desc">Writes item descriptions for you. You bring your own AI account and pay that provider directly; we charge nothing. Set it up on the AI assistance page.</lang></p>
-                                        </div>
-
+                                </div>
+                                <!-- List chrome, not a card: the switches-only rule scopes to cards. -->
+                                <div class="fg-chips" role="group">
+                                    <button type="button" class="fg-chip is-active" data-fg-filter="all"><lang class="lang_fg_all">All</lang></button>
+                                    <button type="button" class="fg-chip" data-fg-filter="on"><lang class="lang_on">On</lang></button>
+                                    <button type="button" class="fg-chip" data-fg-filter="off"><lang class="lang_off">Off</lang></button>
+                                </div>
+                                <!-- The tour, re-runnable. First-run offers it once; anyone
+                                     showing a new cashier around should not need a new shop. -->
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    id="features_take_tour"
+                                    onclick="PosnicPro.tour.firstRun();">
+                                    <lang class="lang_take_tour">Take the tour</lang>
+                                </button>
+                                <div id="modules_branch_wrap" style="display:none; min-width:220px;">
+                                    <label for="modules_branch_select" class="mb-0" style="font-size:.78rem; font-weight:600;"><lang class="lang_modules_branch">Branch</lang></label>
+                                    <select class="form-control form-control-sm" id="modules_branch_select"
+                                        onchange="PosnicPro.settings.modulesBranchChanged();"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="fg-hint"><lang class="lang_modules_hint">A feature that is off disappears from the menus. Nothing is deleted - switch it back on and everything returns.</lang></p>
+                            <div id="modules_remote_note" class="alert alert-info py-2" style="display:none;">
+                                <i class="feather icon-info mr-1"></i><span></span>
+                            </div>
+                            <div id="fg_empty" class="fg-empty" style="display:none;">
+                                <lang class="lang_fg_no_match">No feature matches that. Try another word, or show all.</lang>
+                            </div>
+                            <section class="module-group" data-group="selling" style="--fg-accent: var(--theme-primary-color, #506fe4);">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-shopping-cart"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_selling">Selling</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_selling_sub">The till itself: how a sale is rung up, priced and paid.</lang></p>
                                     </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-zap"></i></span>
+                                                    <div class="module-title"><lang class="lang_quicksale_enable">Quick Sale</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="quick_sale_enable" name="quick_sale_enable">
+                                                        <label class="custom-control-label" for="quick_sale_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_type_an_amount_take_payment_the_busy_count">Type an amount, take payment - the busy-counter pad on the sale screen.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/cash-register.svg" alt="cash register" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_cashregister_enable">Cash Register</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="cash_register_enable" name="cash_register_enable">
+                                                        <label class="custom-control-label" for="cash_register_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_till_sessions_floats_and_register_reports">Till sessions, floats and register reports. Off: sales work without any register ceremony.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-file-text"></i></span>
+                                                    <div class="module-title"><lang class="lang_quotes_enable">Quotes</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="quotes_enable" name="quotes_enable">
+                                                        <label class="custom-control-label" for="quotes_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_price_an_offer_today_convert_it_to_a_sale">Price an offer today, convert it to a sale when the customer says yes.</lang></p>
+    </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-file"></i></span>
+                                                    <div class="module-title"><lang class="lang_invoices_enable">Invoices</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="invoices_enable" name="invoices_enable">
+                                                        <label class="custom-control-label" for="invoices_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_bill_a_customer_now_get_paid_later_and_see">Bill a customer now, get paid later - and see who still owes you.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-plus-square"></i></span>
+                                                    <div class="module-title"><lang class="lang_custom_charges_enable">Custom charges</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="custom_charges_enable" name="custom_charges_enable">
+                                                        <label class="custom-control-label" for="custom_charges_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_parcel_service_or_delivery_charges_added_o">Parcel, service or delivery charges added on a sale. Sales that already carry charges stay editable even when this is off.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/supermarket.svg" alt="weighing scale" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_weightmachine_title">Weighing Scale</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="hardware_weight_machine_enable" name="hardware_weight_machine_enable">
+                                                        <label class="custom-control-label" for="hardware_weight_machine_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_weight_embedded_barcodes_and_scale_reads_n">Weight-embedded barcodes and scale reads. Needs the hardware manager on the till.</lang></p>
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="money" style="--fg-accent: #0b8271;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-percent"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_money">Money and tax</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_money_sub">What you charge, what you owe, and what is owed to you.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/tax.svg" alt="tax" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_tax">Tax</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_tax_enable" name="module_tax_enable">
+                                                        <label class="custom-control-label" for="module_tax_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_tax_rates_and_tax_groups_off_hides_both_se">Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/credit.svg" alt="credit" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_credit">Customer Credit</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_credit_enable" name="module_credit_enable">
+                                                        <label class="custom-control-label" for="module_credit_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_credit_limits_and_payment_reminders">Credit limits and payment reminders.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-file-text"></i></span>
+                                                    <div class="module-title"><lang class="lang_expense_title">Cash Book</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_cashbook_enable" name="module_cashbook_enable">
+                                                        <label class="custom-control-label" for="module_cashbook_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_the_expense_ledger_off_hides_cash_book_and">The expense ledger. Off hides Cash Book and its report; recorded entries keep and profit settings still decide whether they count.</lang></p>
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="customers" style="--fg-accent: #c43d7c;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-users"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_customers">Customers</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_customers_sub">Bringing people back, and reaching them between visits.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/crm.svg" alt="marketing" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_customer_marketing">Customer Marketing</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_marketing_enable" name="module_marketing_enable">
+                                                        <label class="custom-control-label" for="module_marketing_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_loyalty_rewards_coupons_cashback_and_campa">Loyalty &amp; rewards, coupons, cashback and campaigns.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/email.svg" alt="messaging" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_messaging">Messaging</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_messaging_enable" name="module_messaging_enable">
+                                                        <label class="custom-control-label" for="module_messaging_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_sms_whatsapp_and_email_providers_and_sends">SMS, WhatsApp and email providers and sends.</lang></p>
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="kitchen" style="--fg-accent: #b9651a;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-grid"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_kitchen">Kitchen and floor</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_kitchen_sub">Tables, tickets to the kitchen, and staff taking orders on the floor.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card" data-module="plan" data-access="read">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="restaurant" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_modules_restaurant">Restaurant</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="table_options" name="table_options">
+                                                        <label class="custom-control-label" for="table_options"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_dine_in_orders_by_table_kots_to_the_kitche">Dine-in orders by table, KOTs to the kitchen.</lang>
+                                                
+                                                </p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="captain app" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_captain">Captain App</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_captain_enable" name="module_captain_enable">
+                                                        <label class="custom-control-label" for="module_captain_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_module_captain_desc">Your staff taking orders at the table on a phone, straight to the kitchen.</lang></p>
+
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="channels" style="--fg-accent: #7c5cd6;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-globe"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_channels">Where you sell</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_channels_sub">Every door besides the counter. Each one is its own switch.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="online ordering" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_online_ordering">Online Ordering</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_online_ordering_enable" name="module_online_ordering_enable">
+                                                        <label class="custom-control-label" for="module_online_ordering_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_module_online_ordering_desc">A QR code on the table or a link customers open on their phone. Your menu, your prices, your kitchen.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/monitor.svg" alt="kiosk machine" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_kiosk_machine">Kiosk Machine</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_kiosk_enable" name="module_kiosk_enable">
+                                                        <label class="custom-control-label" for="module_kiosk_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_module_kiosk_machine_desc">A self-service terminal standing in your shop. It shows the same storefront and prints to its own kitchen printer.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/passenger.svg" alt="delivery partners" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_delivery_partners">Delivery Partners</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_delivery_partners_enable" name="module_delivery_partners_enable">
+                                                        <label class="custom-control-label" for="module_delivery_partners_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_module_delivery_partners_desc">Swiggy, Zomato and the rest. Record what each one keeps so a report can show what you actually earned.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/ecommerce.svg" alt="webshop" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_webshop">Webshop</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_webshop_enable" name="module_webshop_enable">
+                                                        <label class="custom-control-label" for="module_webshop_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_module_webshop_desc">An online shop of your own - OpenCart, WooCommerce - sending its orders here.</lang></p>
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="staff" style="--fg-accent: #4f6b8f;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-shield"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_staff">Staff and security</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_staff_sub">Who is on shift, and who can do what at the till.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/user.svg" alt="workforce" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_staffshifts_title">Workforce</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="staff_shifts_enable" name="staff_shifts_enable">
+                                                        <label class="custom-control-label" for="staff_shifts_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_staff_clock_in_out_from_the_header_clock_l">Staff clock in/out from the header clock; labour report and payroll exports.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/authentication.svg" alt="till lock" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_tilllock_title">Till PIN Lock</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="till_lock_enable" name="till_lock_enable">
+                                                        <label class="custom-control-label" for="till_lock_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_staff_unlock_with_a_4_digit_pin_instead_of">Staff unlock with a 4-digit PIN instead of a password.</lang></p>
+                                            
+                                            </div>
+                                </div>
+                            </section>
+
+                            <section class="module-group" data-group="workspace" style="--fg-accent: #2f8a4c;">
+                                <header class="fg-head">
+                                    <span class="fg-head-ico" aria-hidden="true"><i class="feather icon-sliders"></i></span>
+                                    <div class="fg-head-text">
+                                        <h6 class="fg-head-title"><lang class="lang_fg_workspace">Workspace</lang></h6>
+                                        <p class="fg-head-sub"><lang class="lang_fg_workspace_sub">How Posnic itself looks, helps, and keeps what you delete.</lang></p>
+                                    </div>
+                                    <span class="fg-head-count" data-fg-count></span>
+                                </header>
+                                <div class="module-grid">
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><img src="static/images/svg-icon/theme.svg" alt="themes" loading="lazy" decoding="async"></span>
+                                                    <div class="module-title"><lang class="lang_module_themes">Themes</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_themes_enable" name="module_themes_enable">
+                                                        <label class="custom-control-label" for="module_themes_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_theme_appearance_presets_custom_colours_an">Theme &amp; Appearance - presets, custom colours and dark modes.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-zap"></i></span>
+                                                    <div class="module-title"><lang class="lang_module_ai">AI assistance</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="ai_enabled" name="ai_enabled">
+                                                        <label class="custom-control-label" for="ai_enabled"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_ai_module_desc">Writes item descriptions for you. You bring your own AI account and pay that provider directly; we charge nothing. Set it up on the AI assistance page.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-trash-2"></i></span>
+                                                    <div class="module-title"><lang class="lang_module_recyclebin">Recycle Bin</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_recyclebin_enable" name="module_recyclebin_enable">
+                                                        <label class="custom-control-label" for="module_recyclebin_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_keep_deleted_records_for_restore_off_delet">Keep deleted records for restore. Off: deleted records are NOT retained - deletes still sync, but cannot be undone.</lang></p>
+                                            </div>
+
+                                            <div class="module-card">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-package"></i></span>
+                                                    <div class="module-title"><lang class="lang_module_demo_data">Demo Data</lang></div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="module_demo_data_enable" name="module_demo_data_enable">
+                                                        <label class="custom-control-label" for="module_demo_data_enable"></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc"><lang class="lang_the_sample_products_your_shop_started_with">The sample products your shop started with. Switching off asks first, then removes the samples - products, sales, quotes, customers, suppliers. Anything you have edited or already sold is kept. Switch back on for a fresh set.</lang></p>
+                                            </div>
+                                </div>
+                            </section>
+
                                 </div>
                                 <div class="card-footer text-right">
                                     <button type="button" class="btn btn-outline-primary"

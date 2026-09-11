@@ -2275,10 +2275,28 @@ if ($("#sale_quick_edit").is(":checked")) {
     /* ON cards vivid, OFF cards greyed - the state must read before the
        labels do. Driven by each card's main switch. */
     refreshModuleCards: function () {
+        var on = 0, total = 0;
         $('#v-pills-modules .module-card').each(function () {
             var $main = $(this).find('.module-card-head input.custom-control-input').first();
-            $(this).toggleClass('is-off', !$main.is(':checked'));
+            var off = !$main.is(':checked');
+            $(this).toggleClass('is-off', off);
+            total += 1;
+            if (!off) { on += 1; }
         });
+        /* The page's own headline: how much of Posnic this shop has switched
+           on. A number and a bar, because "14 of 23" is read faster than
+           fourteen chips are counted. */
+        $('#fg_on_count').text(on);
+        $('#fg_total_count').text(total);
+        $('#fg_meter_bar').css('width', total ? Math.round(on * 100 / total) + '%' : '0%');
+        /* And per group, so a heading says "2 / 4" before a card is read. */
+        $('#v-pills-modules .module-group').each(function () {
+            var n = $(this).find('.module-card').length;
+            var k = $(this).find('.module-card:not(.is-off)').length;
+            $(this).find('[data-fg-count]').html('<b>' + k + '</b> / ' + n)
+                .toggleClass('is-none', k === 0);
+        });
+        PosnicPro.settings.applyModuleVisibility();
     },
     applyModuleNav: function () {
         PosnicPro.settings.refreshModuleCards();
@@ -6557,7 +6575,39 @@ PosnicPro.settings.filterModuleCards = function (query) {
         var hit = !q || $(this).text().toLowerCase().indexOf(q) !== -1;
         $(this).toggleClass('search-miss', !hit);
     });
+    PosnicPro.settings.applyModuleVisibility();
 };
+
+/*
+ * What is shown is the search AND the chip, worked out in one place.
+ *
+ * Search marks a card search-miss; the All / On / Off chip marks it
+ * filter-miss. Neither knows about the other, so a group whose every card is
+ * hidden by one or the other would keep its heading on an empty grid - which
+ * reads as "this group has nothing in it" rather than "nothing here matched".
+ * This runs after either changes and hides the heading with its cards.
+ */
+PosnicPro.settings._moduleFilter = 'all';
+PosnicPro.settings.applyModuleVisibility = function () {
+    var f = PosnicPro.settings._moduleFilter || 'all';
+    $('#v-pills-modules .module-card').each(function () {
+        var off = $(this).hasClass('is-off');
+        $(this).toggleClass('filter-miss', (f === 'on' && off) || (f === 'off' && !off));
+    });
+    $('#v-pills-modules .module-group').each(function () {
+        var visible = $(this).find('.module-card').not('.search-miss, .filter-miss').length;
+        $(this).toggleClass('group-empty', visible === 0);
+    });
+    var any = $('#v-pills-modules .module-card').not('.search-miss, .filter-miss').length;
+    $('#fg_empty').toggle(any === 0);
+};
+
+$(document).on('click', '#v-pills-modules .fg-chip', function () {
+    PosnicPro.settings._moduleFilter = $(this).attr('data-fg-filter') || 'all';
+    $('#v-pills-modules .fg-chip').removeClass('is-active');
+    $(this).addClass('is-active');
+    PosnicPro.settings.applyModuleVisibility();
+});
 
 /* The settings header names whichever page the pill opened. */
 $(document).on('shown.bs.tab', '#v-pills-tab a[data-toggle="pill"]', function () {
