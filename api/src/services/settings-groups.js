@@ -130,6 +130,10 @@ const PREFERENCES = [
      able to show which one is chosen, and the NAME of a provider is not a
      credential. Its key is in SECRETS, where it can never be read back. */
   'voice_provider',
+  /* The language a recogniser is told to expect. One told the wrong locale
+     mishears NUMBERS before it mishears anything else, and a number is half of
+     every order. See utils/voice-settings.js. */
+  'voice_language',
   /* The model a shop has an account with, and which one to use. Preferences
      and not secrets for the same reason as the voice pair: the NAME of a
      provider is not a credential, and a screen has to be able to show which

@@ -7790,6 +7790,108 @@ $(document).on('click', '#analytics_save', function () {
 });
 
 /*
+ * The Voice ordering card (Integrations tab).
+ *
+ * ONE dropdown for the shopkeeper, because they are choosing a thing they can
+ * name - nothing, the phone, or a company they have an account with - not an
+ * architecture. What that means for where the audio travels is derived on the
+ * server; see api/src/utils/voice-settings.js for why those two vocabularies
+ * must not be the same field.
+ *
+ * The key goes through the SECRETS group, which is write-only: it is read back
+ * as "configured" and never as a value, so a saved key cannot be recovered
+ * from this screen by anybody who can open it. Sending an empty key means
+ * LEAVE IT ALONE, or the first person to change the language would blank the
+ * shop's credential.
+ *
+ * Delegated handlers only: this pane is part of the settings module and is not
+ * in the DOM when this file runs, which is the dead-selector trap.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+PosnicPro.settings.voice = {
+    /* The key field only means something for a provider that needs one. A
+       control that cannot affect anything should not ask for a decision. */
+    syncKeyRow: function () {
+        var paid = ['openai', 'google'].indexOf($('#voice_provider').val() || '') !== -1;
+        $('#voice_key_row').toggle(paid);
+    },
+
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var v = response.data.values || response.data;
+            $('#voice_provider').val(v.voice_provider || 'device');
+            $('#voice_language').val(v.voice_language || 'en-IN');
+            PosnicPro.settings.voice.syncKeyRow();
+        }, function () { /* the card still lets you choose and save */ });
+
+        /* Which secrets EXIST, never what they are. */
+        PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var saved = (response.data.configured || {}).voice_api_key === true;
+            $('#voice_api_key').attr('placeholder', saved
+                ? PosnicPro.i18n.t('lang_int_voice_key_saved', 'A key is saved. Type a new one to replace it.')
+                : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
+        }, function () { /* the placeholder is a courtesy, not the feature */ });
+
+        $('#voice_saved_note').hide();
+    },
+
+    save: function () {
+        var provider = $('#voice_provider').val() || 'device';
+        var key = String($('#voice_api_key').val() || '');
+
+        PosnicPro.put({
+            url: 'settings/group/preferences',
+            data: JSON.stringify({
+                voice_provider: provider,
+                voice_language: String($('#voice_language').val() || '').trim() || 'en-IN'
+            })
+        }, function (response) {
+            if (response.type !== 'success') {
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            /* An empty key means LEAVE THE SAVED ONE ALONE. The field loads
+               blank because the value is never sent to a browser, so writing
+               that emptiness through would blank the shop's credential the
+               first time anybody changed the language. */
+            if (!key) {
+                $('#voice_saved_note').show();
+                $('#voice_api_key').val('');
+                return;
+            }
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ voice_api_key: key })
+            }, function (second) {
+                if (second.type === 'success') {
+                    $('#voice_saved_note').show();
+                    $('#voice_api_key').val('');
+                    PosnicPro.settings.voice.load();
+                } else {
+                    PosnicPro.alert(second.type, second.message);
+                }
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_key', 'Could not save the voice key'));
+            });
+        }, function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_settings', 'Could not save the voice settings'));
+        });
+    }
+};
+
+$(document).on('shown.bs.tab', 'a[href="#int-sub-voice"]', function () {
+    PosnicPro.settings.voice.load();
+});
+$(document).on('change', '#voice_provider', function () {
+    PosnicPro.settings.voice.syncKeyRow();
+});
+$(document).on('click', '#voice_save', function () {
+    PosnicPro.settings.voice.save();
+});
+
+/*
  * Online ordering controls on the kiosk account tab.
  *
  * Delegated from document because the tab's markup is part of the settings

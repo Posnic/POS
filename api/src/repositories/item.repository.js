@@ -20,6 +20,7 @@ const salesChannels = require('../utils/sales-channels');
  */
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
 const dishIcons = require('../utils/dish-icons');
+const voiceSettings = require('../utils/voice-settings');
 
 const onlineOrderingDiet = (value) => {
   const v = String(value || '')
@@ -4030,6 +4031,32 @@ class ItemRepository extends BaseModel {
     return branches.findOne({ 'online_ordering.store_id': storeId });
   }
 
+  /**
+   * The voice settings a handset is allowed to see.
+   *
+   * Read through the settings repository so branch overrides and account-level
+   * inheritance work the way they do everywhere else - a chain that sets this
+   * once for every shop should not have to be set again per branch.
+   *
+   * A read that fails answers with the default rather than throwing. A menu
+   * that will not load because a settings lookup failed is a far worse outcome
+   * than a handset that falls back to its own recogniser.
+   */
+  async voiceForHandset(branchDoc) {
+    try {
+      const SettingsRepository = require('./settings.repository');
+      const settings = new SettingsRepository();
+      const read = await settings.resolveGroup('preferences', {
+        branchId: branchDoc._id,
+        licenseId: branchDoc.license,
+      });
+      return voiceSettings.forHandset((read && read.status && read.data.values) || {});
+    } catch (e) {
+      console.warn('[storefront] could not read the voice settings:', e.message);
+      return voiceSettings.forHandset({});
+    }
+  }
+
   async storefront(params = {}) {
     try {
       const branchDoc = await this._storefrontBranch(params);
@@ -4349,6 +4376,15 @@ class ItemRepository extends BaseModel {
           }),
           products: results,
           tableorders,
+          /*
+           * Whether this shop's handsets may listen, and in what language.
+           *
+           * WHERE THE AUDIO GOES, never which vendor transcribes it and never
+           * the key. A handset told the vendor is a handset that will
+           * eventually be asked to hold the key for it, and telling one phone
+           * tells every phone in the building. See utils/voice-settings.js.
+           */
+          voice: await this.voiceForHandset(branchDoc),
           /*
            * Where this customer is sitting, and whether the prices above are
            * the house's. The page shows the destination at checkout and lets
