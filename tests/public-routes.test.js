@@ -119,6 +119,14 @@ const ALLOWED_ANONYMOUS = {
     // online-ordering resource, which is listed above with its reasons.
     '/getNewSale',
   ],
+  'pair.routes.js': [
+    // The page a till shows so a staff phone can be pointed at this shop.
+    // It carries an ADDRESS, not a credential - the same thing the till's own
+    // browser address bar shows anybody standing at it. Requiring a login
+    // would mean a handset cannot be paired until somebody signs in on the
+    // till, which is backwards: pairing is what happens before anyone can.
+    '/',
+  ],
   'base.routes.js': [
     // Liveness only. "/" says it is running; "/health" reports status, time and
     // uptime to a stranger and keeps the version, platform and memory figures
@@ -391,7 +399,13 @@ test('registration cannot be reached, or self-promoted, by a stranger', () => {
   const body = create.slice(0, create.indexOf('});'));
 
   for (const claimed of ['role', 'usertype', 'access', 'license']) {
-    assert.ok(!new RegExp(`${claimed}:\s*req\.body\.`).test(body),
+    /* Double-escaped on purpose. In a TEMPLATE LITERAL "\\s" collapses to a
+       bare "s" and "\\." to ".", so this pattern used to demand a literal
+       letter s and treat the dot as "any character" - it would sail straight
+       past "role: req.body.role", which is the exact line it exists to catch.
+       A guard that cannot fail is worse than no guard, because it reads as
+       one. */
+    assert.ok(!new RegExp(`${claimed}:\\s*req\\.body\\.`).test(body),
       `register takes ${claimed} from the request body - privilege is granted, not claimed`);
   }
 });

@@ -108,7 +108,10 @@ class KOTManager {
       const date    = new Date(entry.time).toISOString().slice(0, 10);
       const logPath = this._getLogPath(date);
       let   logs    = [];
-      if (fs.existsSync(logPath)) { try { logs = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { logs = []; } }
+      /* Read first rather than asking whether it exists: the answer can stop
+         being true before the read, and an absent log is the ordinary case on
+         the first ticket of the day. */
+      try { logs = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { logs = []; }
       logs.push(entry);
       fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
     } catch (e) { console.error('[KOT] Failed to write log:', e.message); }
@@ -117,22 +120,27 @@ class KOTManager {
   getLogs(date) {
     try {
       const logPath = this._getLogPath(date);
-      if (fs.existsSync(logPath)) return JSON.parse(fs.readFileSync(logPath, 'utf8'));
-    } catch (e) { /* ignore */ }
+      return JSON.parse(fs.readFileSync(logPath, 'utf8'));
+    } catch (e) { /* no log for that day, or it went away mid-read */ }
     return [];
   }
 
   deleteLog(date, logId) {
     try {
       const logPath = this._getLogPath(date);
-      if (fs.existsSync(logPath)) {
-        let logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-        logs     = logs.filter(l => l.id !== logId);
-        fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
-        return { success: true };
+      let logs;
+      try {
+        logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
+      } catch (e) {
+        /* ENOENT is "no log for that day", which is the message this always
+           gave; anything else is a real read failure and says so. */
+        if (e && e.code === 'ENOENT') return { success: false, error: 'Log file not found' };
+        throw e;
       }
+      logs = logs.filter((l) => l.id !== logId);
+      fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
+      return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
-    return { success: false, error: 'Log file not found' };
   }
 
   async _waitForPrintPage(webContents) {
