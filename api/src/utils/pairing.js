@@ -40,8 +40,9 @@ function localAddresses() {
 }
 
 const escapeHtml = (value) =>
-  String(value).replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  String(value).replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
   );
 
 /**
@@ -90,6 +91,5 @@ function pairingTargets(request, addresses) {
     })),
   };
 }
-
 
 module.exports = { localAddresses, isPrivateHost, pairingTargets, escapeHtml };
