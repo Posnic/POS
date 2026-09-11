@@ -2862,7 +2862,13 @@ PosnicPro = {
         $('#dashboard_best_col').toggleClass('col-md-8', creditOn).toggleClass('col-md-12', !creditOn);
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
         $('#manage_li_messagingmodule').toggle(on('module_messaging_enable'));
-        $('#manage_li_kiosk').toggle(on('module_channels_enable'));
+        /* Each channel's entry follows its own feature switch. module_channels_enable
+           is the derived roof - true when any of them is on - so gating on it here
+           would show all four the moment a shop enabled one. */
+        $('#manage_li_onlineordering').toggle(on('module_online_ordering_enable'));
+        $('#manage_li_kioskmachine').toggle(on('module_kiosk_enable'));
+        $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
+        $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
         /* One system, owner's rule: a feature's card explains it; a

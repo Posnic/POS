@@ -33,7 +33,13 @@ PosnicPro.settings = {
          * routes to the page that owns it now; a key nobody knows lands on
          * Core Settings rather than on rubble.
          */
-        var LEGACY_SECTIONS = { branches: 'branches', outlet: 'branches' };
+        var LEGACY_SECTIONS = {
+            branches: 'branches',
+            outlet: 'branches',
+            /* #/settings/kiosk was the one channels page. It is four pages now;
+               the storefront settings that address mostly meant are here. */
+            kiosk: 'onlineordering',
+        };
         if (LEGACY_SECTIONS[key]) {
             hasher.setHash(LEGACY_SECTIONS[key]);
             return;
@@ -1005,7 +1011,7 @@ if ($wrapper.length) {
                  */
                 var deferPreview = function (sel, src) {
                     var $img = $(sel);
-                    if ($('#v-pills-kiosk').hasClass('active')) {
+                    if ($('#v-pills-onlineordering').hasClass('active')) {
                         $img.attr('src', src).css('display', 'block');
                     } else {
                         $img.attr('data-defer-src', src).css('display', 'block');
@@ -2210,9 +2216,12 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
         $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
-        // The entry is the CHANNELS roof now (kiosk is its content), so it
-        // gates on the module alone.
-        $('#v-pills-kiosk-tab').toggle(on('module_channels_enable'));
+        // One pill per channel, each on its own feature switch - the same
+        // rule the Manage sidebar uses, so the two rails never disagree.
+        $('#v-pills-onlineordering-tab').toggle(on('module_online_ordering_enable'));
+        $('#v-pills-kioskmachine-tab').toggle(on('module_kiosk_enable'));
+        $('#v-pills-deliverypartners-tab').toggle(on('module_delivery_partners_enable'));
+        $('#v-pills-webshop-tab').toggle(on('module_webshop_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
@@ -7177,19 +7186,16 @@ PosnicPro.settings.FEATURE_HOME = {
     module_marketing_enable: ['marketingmodule', 'Marketing'],
     module_messaging_enable: ['messagingmodule', 'Messaging'],
     /*
-     * All five point at the one channels page for now.
+     * Each channel's card opens that channel's own page.
      *
-     * The Features page is split; the settings pages behind it are not, yet.
-     * Pointing a switch at a section that does not exist is worse than
-     * pointing it somewhere honest: openSection falls back to Core Settings
-     * for a key it does not know, so the Configure link would quietly take
-     * somebody to the wrong screen with no sign anything was wrong.
+     * The Captain app is the exception and stays pointed at Restaurant: it is
+     * the tables it runs on, not a storefront of its own.
      */
-    module_online_ordering_enable: ['kiosk', 'Online Ordering'],
-    module_kiosk_enable: ['kiosk', 'Kiosk Machine'],
+    module_online_ordering_enable: ['onlineordering', 'Online Ordering'],
+    module_kiosk_enable: ['kioskmachine', 'Kiosk Machine'],
     module_captain_enable: ['tableorder', 'Captain App'],
-    module_delivery_partners_enable: ['kiosk', 'Delivery Partners'],
-    module_webshop_enable: ['kiosk', 'Webshop'],
+    module_delivery_partners_enable: ['deliverypartners', 'Delivery Partners'],
+    module_webshop_enable: ['webshop', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
@@ -7739,8 +7745,8 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
 
 /* The kiosk pane pays for its own artwork, on first open only - see the
    deferPreview comment above. */
-$(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
-    $('#v-pills-kiosk img[data-defer-src]').each(function () {
+$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering', function () {
+    $('#v-pills-onlineordering img[data-defer-src]').each(function () {
         var source = $(this).attr('data-defer-src') || '';
         if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
             $(this).attr('src', source).removeAttr('data-defer-src');
@@ -7950,22 +7956,15 @@ PosnicPro.salesChannels = {
     /* The only two that mean nothing without naming the business involved. */
     PARTNER_CHANNELS: ['marketplace', 'ecommerce'],
 
-    renderChannels: function (enabled) {
-        var self = PosnicPro.salesChannels;
-        var chosen = Array.isArray(enabled) ? enabled : [];
-        var html = '';
-        self.CHANNELS.forEach(function (c) {
-            var checked = chosen.indexOf(c.id) !== -1 ? ' checked' : '';
-            html +=
-                '<div class="form-group col-md-4">' +
-                '<div class="custom-control custom-checkbox">' +
-                '<input type="checkbox" class="custom-control-input sales-channel-box" ' +
-                'id="channel_' + c.id + '" value="' + c.id + '"' + checked + '>' +
-                '<label class="custom-control-label" for="channel_' + c.id + '">' + c.label + '</label>' +
-                '</div></div>';
-        });
-        $('#sales_channels_list').html(html);
-    },
+    /*
+     * CHANNELS stays, renderChannels went.
+     *
+     * The list is still the vocabulary - partnerRow labels its kinds from it -
+     * but a shop no longer ticks channels on a settings screen. The Features
+     * page decides which channels exist; a second set of checkboxes behind it
+     * was the duplicate that made this page feel like one big "Sales Channels"
+     * screen in the first place.
+     */
 
     partnerRow: function (partner) {
         var self = PosnicPro.salesChannels;
@@ -7997,10 +7996,25 @@ PosnicPro.salesChannels = {
             '</div></div>';
     },
 
+    /*
+     * ONE list of partners, drawn into two screens.
+     *
+     * A partner row already says which kind it is - an aggregator that
+     * delivers, or a webshop the shop runs itself - so Delivery Partners and
+     * Webshop are two views of the same stored list rather than two lists to
+     * keep in step. collect() reads `.channel-partner-row` wherever it sits,
+     * so a save from either screen still writes both.
+     */
     renderPartners: function (partners) {
         var self = PosnicPro.salesChannels;
         var list = Array.isArray(partners) ? partners : [];
-        $('#sales_channel_partner_rows').html(list.map(self.partnerRow).join(''));
+        var apps = [];
+        var shops = [];
+        list.forEach(function (p) {
+            (String((p || {}).channel) === 'ecommerce' ? shops : apps).push(p);
+        });
+        $('#sales_channel_partner_rows').html(apps.map(self.partnerRow).join(''));
+        $('#webshop_partner_rows').html(shops.map(self.partnerRow).join(''));
     },
 
     /*
@@ -8129,7 +8143,6 @@ PosnicPro.salesChannels = {
         var self = PosnicPro.salesChannels;
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             var values = (response && response.data && response.data.values) || {};
-            self.renderChannels(values.sales_channels_enabled);
             self.renderPartners(values.sales_channel_partners);
             self.renderVenues(values.partner_venues);
             self.renderCharges(values.channel_charges);
@@ -8151,7 +8164,6 @@ PosnicPro.salesChannels = {
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
-            self.renderChannels(['pos']);
             self.renderPartners([]);
             self.renderVenues([]);
             self.renderCharges({});
@@ -8159,9 +8171,6 @@ PosnicPro.salesChannels = {
     },
 
     collect: function () {
-        var enabled = [];
-        $('.sales-channel-box:checked').each(function () { enabled.push($(this).val()); });
-
         var partners = [];
         $('.channel-partner-row').each(function () {
             var $row = $(this);
@@ -8214,7 +8223,17 @@ PosnicPro.salesChannels = {
         });
 
         return {
-            sales_channels_enabled: enabled,
+            /*
+             * sales_channels_enabled is DELIBERATELY ABSENT, for exactly the
+             * reason menu_dayparts is below.
+             *
+             * The "ways this shop takes orders" checkboxes were a second place
+             * to choose channels after the Features cards, so they went. Their
+             * markup is gone, which means collecting the key here would send an
+             * empty list and quietly wipe whatever a shop had chosen - the
+             * item channel picker reads it. The group endpoint writes only
+             * what it is given, so leaving it out keeps the stored value.
+             */
             sales_channel_partners: partners,
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
@@ -8281,14 +8300,84 @@ $(document).on('click', '#add_channel_partner', function () {
     $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({}));
 });
 
+$(document).on('click', '#add_webshop_partner', function () {
+    $('#webshop_partner_rows').append(PosnicPro.salesChannels.partnerRow({ channel: 'ecommerce' }));
+});
+
+/* Change a row's kind and it belongs on the other screen. Moving it there is
+   the honest answer: leaving an "Own webshop" row sitting under Delivery
+   Partners is how a shop ends up believing it saved something it cannot find. */
+$(document).on('change', '.partner-channel', function () {
+    var $row = $(this).closest('.channel-partner-row');
+    var target = $(this).val() === 'ecommerce' ? '#webshop_partner_rows' : '#sales_channel_partner_rows';
+    if (!$row.parent().is(target)) { $row.appendTo(target); }
+});
+
 $(document).on('click', '.remove-channel-partner', function () {
     $(this).closest('.channel-partner-row').remove();
 });
 
-$(document).on('submit', '#sales_channels_form', function (e) {
-    e.preventDefault();
+/*
+ * EVERY channel screen saves the whole group, and that is deliberate.
+ *
+ * collect() reads the DOM by class, and the panes are hidden rather than
+ * removed, so it sees every row wherever it sits. That means a save from the
+ * webshop screen still writes the aggregators, the venues and the charges
+ * exactly as they stand - which is what the one big form did before the split.
+ * Collecting only the open pane would be the change that quietly wipes the
+ * others, which is the bug this codebase has already paid for twice.
+ */
+$(document).on(
+    'submit',
+    '#online_orders_form, #delivery_partners_form, #webshop_partners_form',
+    function (e) {
+        e.preventDefault();
+        return PosnicPro.salesChannels.save();
+    }
+);
+
+/* Venues and delivery charges sit on the Restaurant page, as cards with their
+   own Save rather than a form - the same shape the serving periods use. */
+$(document).on('click', '.save-channel-settings', function () {
     return PosnicPro.salesChannels.save();
 });
+
+/*
+ * WHICH PRODUCTS THIS CHANNEL SELLS, shown inside the channel you are in.
+ *
+ * One copy of the screen, borrowed by whichever pane is open. Four copies
+ * would mean four sets of the same ids, and a duplicate id is how a screen
+ * starts writing to the wrong form - this page already carries one such
+ * landmine and does not need three more.
+ */
+PosnicPro.salesChannels.PANE_CHANNEL = {
+    'v-pills-onlineordering': 'online',
+    'v-pills-kioskmachine': 'kiosk',
+    'v-pills-deliverypartners': 'marketplace',
+    'v-pills-webshop': 'ecommerce'
+};
+
+PosnicPro.salesChannels.lendProducts = function (paneId) {
+    var channel = PosnicPro.salesChannels.PANE_CHANNEL[paneId];
+    if (!channel) { return; }
+    var $host = $('#' + paneId + ' .channel-products-host').first();
+    var $block = $('#channel_items_block');
+    if (!$host.length || !$block.length) { return; }
+    if (!$block.parent().is($host)) { $block.appendTo($host); }
+    /* Preselected, because a shopkeeper who opened Kiosk Machine is asking
+       about the kiosk. The picker still lets them look at another one. */
+    if ($('#channel_items_channel').length) {
+        $('#channel_items_channel').val(channel).trigger('change');
+    }
+};
+
+$(document).on(
+    'shown.bs.tab',
+    '#v-pills-onlineordering-tab, #v-pills-kioskmachine-tab, #v-pills-deliverypartners-tab, #v-pills-webshop-tab',
+    function () {
+        PosnicPro.salesChannels.lendProducts(String($(this).attr('href') || '').replace('#', ''));
+    }
+);
 
 /*
  * Serving periods: breakfast, lunch, dinner.
