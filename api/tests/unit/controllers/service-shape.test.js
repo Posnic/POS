@@ -41,9 +41,7 @@ function stripComments(src) {
 
 /** Which service methods a controller's source actually calls. */
 function methodsCalledOn(controllerFile, variableName) {
-  const src = stripComments(
-    fs.readFileSync(path.join(SRC, 'controllers', controllerFile), 'utf8')
-  );
+  const src = stripComments(fs.readFileSync(path.join(SRC, 'controllers', controllerFile), 'utf8'));
   const called = new Set();
   for (const m of src.matchAll(new RegExp(`\\b${variableName}\\.(\\w+)\\s*\\(`, 'g'))) {
     called.add(m[1]);
