@@ -114,9 +114,6 @@ const MARKUP = `<!doctype html><html><body>
     <a class="storefront-open" data-target="storefront_menu_url" href="#"></a>
   </div>
 
-  <select id="kiosk_mode"><option value="order" selected>order</option><option value="menu">menu</option></select>
-  <small id="kiosk_mode_help_order"></small>
-  <small id="kiosk_mode_help_menu" style="display:none;"></small>
   <div class="kiosk-ordering-only">
     <span id="kiosk_pause_status" class="badge badge-pill"></span>
     <span id="kiosk_pause_unsaved" style="display:none;"></span>
@@ -310,11 +307,15 @@ test('the hours help hides with the grid it explains', () => {
   assert.notStrictEqual($('#kiosk_hours_help').css('display'), 'none');
 });
 
-test('menu mode hides the controls that only mean something when ordering', () => {
+test('there is no menu-only mode; the ordering controls are always shown', () => {
+  /*
+   * The "can customers order from this page" dropdown is gone. /order takes
+   * orders and /menu shows the menu, both live whenever online ordering is
+   * on; stopping orders is the button. So there is nothing that hides these.
+   */
   const { $, oo } = screen();
-  $('#kiosk_mode').val('menu');
   oo.syncMode();
-  assert.strictEqual($('.kiosk-ordering-only').css('display'), 'none');
+  assert.notStrictEqual($('.kiosk-ordering-only').css('display'), 'none');
 });
 
 test('a store id arriving from the server draws the addresses too', () => {
@@ -456,21 +457,12 @@ test('the prefix is this shop, not a placeholder domain', () => {
   assert.strictEqual($('#storefront_url_prefix').text(), 'kirana.example.com/order/');
 });
 
-test('the help under the mode describes the answer that is chosen', () => {
-  /*
-   * One line used to sit there describing MENU mode whatever was selected - so
-   * a shop set to "take orders" was told its page had no cart.
-   */
-  const { $, oo } = screen();
-
-  oo.syncMode();
-  assert.notStrictEqual($('#kiosk_mode_help_order').css('display'), 'none', 'the ordering answer is not explained');
-  assert.strictEqual($('#kiosk_mode_help_menu').css('display'), 'none', 'the page explains the option nobody picked');
-
-  $('#kiosk_mode').val('menu');
-  oo.syncMode();
-  assert.strictEqual($('#kiosk_mode_help_order').css('display'), 'none');
-  assert.notStrictEqual($('#kiosk_mode_help_menu').css('display'), 'none');
+test('every save says "order", so a shop saved as menu-only heals', () => {
+  /* The server keeps a known word rather than whatever a missing element
+     answers, and the old menu-only value is replaced the first time the shop
+     presses Save. */
+  const { oo } = screen();
+  assert.strictEqual(oo.collect().mode, 'order');
 });
 
 test('the storefront tab reads the field the server actually stores', () => {

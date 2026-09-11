@@ -5004,11 +5004,6 @@
                                                         aria-selected="true"><i class="feather icon-shopping-bag mr-1"></i><lang class="lang_storefront">Storefront</lang></a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="kioskimage-tab-line" data-toggle="tab"
-                                                        href="#kioskimage-line" role="tab" aria-controls="kioskimage-line"
-                                                        aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_branding">Branding</lang></a>
-                                                </li>
-                                                <li class="nav-item">
                                                     <a class="nav-link" id="kioskpayment-tab-line" data-toggle="tab"
                                                         href="#kioskpayment-line" role="tab" aria-controls="kioskpayment-line"
                                                         aria-selected="false"><i class="feather icon-credit-card mr-1"></i><lang class="lang_payment_2">Payment</lang></a>
@@ -5127,30 +5122,17 @@
                                                                     </div>
                                                                 </div> -->
 
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <!--
-                                                                            "What this page is for" is not a question
-                                                                            anybody can answer, and the sentence under
-                                                                            it described the option you had NOT picked -
-                                                                            so the page explained the wrong thing to
-                                                                            whoever was reading it. Ask the actual
-                                                                            question, and let the answer explain itself.
-                                                                        -->
-                                                                        <label for="kiosk_mode"><lang class="lang_can_customers_order">Can customers order from this page?</lang></label>
-                                                                        <select class="form-control border-control" id="kiosk_mode" name="kiosk_mode">
-                                                                            <option value="order"><lang class="lang_mode_take_orders">Yes, they can order</lang></option>
-                                                                            <option value="menu"><lang class="lang_mode_menu_only">No, just show the menu</lang></option>
-                                                                        </select>
-                                                                        <small class="form-text text-muted" id="kiosk_mode_help_order">
-                                                                            <lang class="lang_mode_take_orders_help">Customers pick what they want, add it to a cart and send you the order.</lang>
-                                                                        </small>
-                                                                        <small class="form-text text-muted" id="kiosk_mode_help_menu" style="display:none;">
-                                                                            <lang class="lang_mode_menu_only_help">Dishes and prices only, with no cart. Customers read it and order at the counter.</lang>
-                                                                        </small>
-                                                                    </div>
-                                                                </div>
+                                                <!--
+                                                    THERE IS NO "MENU ONLY" SWITCH ANY MORE.
 
+                                                    A dropdown here asked whether customers could order from
+                                                    "this page", as if there were one page. There are two:
+                                                    /order takes orders and /menu shows the menu, and both are
+                                                    live the moment online ordering is on. Owner: "always both
+                                                    order and menu." A shop that wants to stop taking orders
+                                                    presses the button for that, below, and the menu stays up
+                                                    - which is the whole point of having two addresses.
+                                                -->
                                                                 <!--
                                                                     Pause is a time, never a switch. A switch flipped
                                                                     during a Friday rush is still off on Tuesday and
@@ -5212,114 +5194,6 @@
                                                         <div class="card-footer text-right">
                                                             <button type="submit" class="btn btn-outline-primary"><i
                                                                     class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang></button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                                <div class="tab-pane fade" id="kioskimage-line" role="tabpanel"
-                                                    aria-labelledby="kioskimage-tab-line">
-                                                    <form enctype="multipart/form-data" method="post"
-                                                        name="kiosk_settings_form" id="kiosk_settings_form">
-                                                        <!--
-                                                            ONE SET OF PICTURES, NOT THE KIOSK'S.
-
-                                                        These were headed "Kiosk ..." from when the kiosk was
-                                                        the only thing that had a storefront. The QR menu, the
-                                                        ordering page and the kiosk all draw the same four
-                                                        images - a shop has one look, not one per device - so
-                                                        they are named for what they are and say where they
-                                                        show up.
-                                                    -->
-                                                    <small class="form-text text-muted mb-3">
-                                                        <lang class="lang_storefront_images_help">These four pictures are what a customer sees on your ordering page, your QR menu and the kiosk screen. One set for all of them, so the shop looks the same wherever somebody meets it.</lang>
-                                                    </small>
-                                                        <div class="row loader-view-kioskimage">
-
-                                                            <!-- Home page banner Upload -->
-                                                            <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_storefront_home_banner">Home banner</lang></h6>
-                                                                <div class="profilebox py-3">
-                                                                    <input type="file" name="kiosk_homebanner"
-                                                                        id="kiosk_homebanner" accept="image/*"
-                                                                        class="d-none">
-                                                                    <label for="kiosk_homebanner"
-                                                                        class="btn btn-success-rgba"><i
-                                                                            class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('homebanner')" aria-label="Delete">
-                                                                <i class="feather icon-trash"></i>
-                                                            </a> -->
-                                                                    <img id="preview_homebanner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                                                        class="img-fluid mt-2 d-block mx-auto"
-                                                                        style="max-height: 120px; display: none;"
-                                                                        alt="Logo Preview" loading="lazy" decoding="async">
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Logo Upload -->
-                                                            <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_storefront_logo">Logo</lang></h6>
-                                                                <div class="profilebox py-3">
-                                                                    <input type="file" name="kiosk_logo" id="kiosk_logo"
-                                                                        accept="image/*" class="d-none">
-                                                                    <label for="kiosk_logo"
-                                                                        class="btn btn-success-rgba"><i
-                                                                            class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('logo')" aria-label="Delete">
-                                                                <i class="feather icon-trash"></i>
-                                                            </a> -->
-                                                                    <img id="preview_logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                                                        class="img-fluid mt-2 d-block mx-auto"
-                                                                        style="max-height: 120px; display: none;"
-                                                                        alt="Logo Preview" loading="lazy" decoding="async">
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Banner Upload -->
-                                                            <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_storefront_banner">Banner</lang></h6>
-                                                                <div class="profilebox py-3">
-                                                                    <input type="file" name="kiosk_banner"
-                                                                        id="kiosk_banner" accept="image/*"
-                                                                        class="d-none">
-                                                                    <label for="kiosk_banner"
-                                                                        class="btn btn-success-rgba"><i
-                                                                            class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('banner')" aria-label="Delete">
-                                                                <i class="feather icon-trash"></i>
-                                                            </a> -->
-                                                                    <img id="preview_banner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                                                        class="img-fluid mt-2 d-block mx-auto"
-                                                                        style="max-height: 120px; display: none;"
-                                                                        alt="Banner Preview" loading="lazy" decoding="async">
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Advertisement Upload -->
-                                                            <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_storefront_advertisement">Advertisement</lang></h6>
-                                                                <div class="profilebox py-3">
-                                                                    <input type="file" name="kiosk_advertisement"
-                                                                        id="kiosk_advertisement" accept="image/*"
-                                                                        class="d-none">
-                                                                    <label for="kiosk_advertisement"
-                                                                        class="btn btn-success-rgba"><i
-                                                                            class="feather icon-edit"></i></label>
-                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('advertisement')" aria-label="Delete">
-                                                                <i class="feather icon-trash"></i>
-                                                            </a> -->
-                                                                    <img id="preview_advertisement" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                                                                        class="img-fluid mt-2 d-block mx-auto"
-                                                                        style="max-height: 120px; display: none;"
-                                                                        alt="Advertisement Preview" loading="lazy" decoding="async">
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-
-                                                        <!-- Submit Button -->
-                                                        <div class="card-footer text-right">
-                                                            <button type="submit" class="btn btn-outline-primary">
-                                                                <i class="feather icon-save mr-2"></i> <lang class="lang_save_title">Save</lang>
-                                                            </button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -5450,13 +5324,18 @@
                                         </div>
                                         <div class="card-body">
                                             <small class="form-text text-muted mb-3">
-                                                <lang class="lang_kiosk_shares_storefront">The store id, images, payment methods and opening hours are the same ones online ordering uses, so they are set once under Online Ordering. Only the printer is the machine's own.</lang>
+                                                <lang class="lang_kiosk_own_settings">The store id, payment methods and opening hours are set once under Online Ordering and the kiosk uses the same ones. The pictures on its screen and its printer are the machine's own, and they are here.</lang>
                                             </small>
                                             <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
                                                 <li class="nav-item">
                                                     <a class="nav-link active" id="kioskprint-tab-line" data-toggle="tab"
                                                         href="#kioskprint-line" role="tab" aria-controls="kioskprint-line"
                                                         aria-selected="true"><i class="feather icon-printer mr-1"></i><lang class="lang_kiosk_printer">Kiosk printer</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="kioskimage-tab-line" data-toggle="tab"
+                                                        href="#kioskimage-line" role="tab" aria-controls="kioskimage-line"
+                                                        aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_branding">Branding</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskproducts-tab-line" data-toggle="tab"
@@ -5525,6 +5404,114 @@
                                                         <div class="card-footer text-right">
                                                             <button type="submit" class="btn btn-outline-primary">
                                                                 <i class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="tab-pane fade" id="kioskimage-line" role="tabpanel"
+                                                    aria-labelledby="kioskimage-tab-line">
+                                                    <form enctype="multipart/form-data" method="post"
+                                                        name="kiosk_settings_form" id="kiosk_settings_form">
+                                                        <!--
+                                                            ONE SET OF PICTURES, NOT THE KIOSK'S.
+
+                                                        These were headed "Kiosk ..." from when the kiosk was
+                                                        the only thing that had a storefront. The QR menu, the
+                                                        ordering page and the kiosk all draw the same four
+                                                        images - a shop has one look, not one per device - so
+                                                        they are named for what they are and say where they
+                                                        show up.
+                                                    -->
+                                                    <small class="form-text text-muted mb-3">
+                                                        <lang class="lang_kiosk_images_help">The home banner, banner and advertisement fill the kiosk screen while nobody is using it. The logo is the one picture your QR menu also shows.</lang>
+                                                    </small>
+                                                        <div class="row loader-view-kioskimage">
+
+                                                            <!-- Home page banner Upload -->
+                                                            <div class="col-md-6 text-center">
+                                                                <h6><lang class="lang_storefront_home_banner">Home banner</lang></h6>
+                                                                <div class="profilebox py-3">
+                                                                    <input type="file" name="kiosk_homebanner"
+                                                                        id="kiosk_homebanner" accept="image/*"
+                                                                        class="d-none">
+                                                                    <label for="kiosk_homebanner"
+                                                                        class="btn btn-success-rgba"><i
+                                                                            class="feather icon-edit"></i></label>
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('homebanner')" aria-label="Delete">
+                                                                <i class="feather icon-trash"></i>
+                                                            </a> -->
+                                                                    <img id="preview_homebanner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                                                                        class="img-fluid mt-2 d-block mx-auto"
+                                                                        style="max-height: 120px; display: none;"
+                                                                        alt="Logo Preview" loading="lazy" decoding="async">
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Logo Upload -->
+                                                            <div class="col-md-6 text-center">
+                                                                <h6><lang class="lang_storefront_logo">Logo</lang></h6>
+                                                                <div class="profilebox py-3">
+                                                                    <input type="file" name="kiosk_logo" id="kiosk_logo"
+                                                                        accept="image/*" class="d-none">
+                                                                    <label for="kiosk_logo"
+                                                                        class="btn btn-success-rgba"><i
+                                                                            class="feather icon-edit"></i></label>
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('logo')" aria-label="Delete">
+                                                                <i class="feather icon-trash"></i>
+                                                            </a> -->
+                                                                    <img id="preview_logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                                                                        class="img-fluid mt-2 d-block mx-auto"
+                                                                        style="max-height: 120px; display: none;"
+                                                                        alt="Logo Preview" loading="lazy" decoding="async">
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Banner Upload -->
+                                                            <div class="col-md-6 text-center">
+                                                                <h6><lang class="lang_storefront_banner">Banner</lang></h6>
+                                                                <div class="profilebox py-3">
+                                                                    <input type="file" name="kiosk_banner"
+                                                                        id="kiosk_banner" accept="image/*"
+                                                                        class="d-none">
+                                                                    <label for="kiosk_banner"
+                                                                        class="btn btn-success-rgba"><i
+                                                                            class="feather icon-edit"></i></label>
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('banner')" aria-label="Delete">
+                                                                <i class="feather icon-trash"></i>
+                                                            </a> -->
+                                                                    <img id="preview_banner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                                                                        class="img-fluid mt-2 d-block mx-auto"
+                                                                        style="max-height: 120px; display: none;"
+                                                                        alt="Banner Preview" loading="lazy" decoding="async">
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Advertisement Upload -->
+                                                            <div class="col-md-6 text-center">
+                                                                <h6><lang class="lang_storefront_advertisement">Advertisement</lang></h6>
+                                                                <div class="profilebox py-3">
+                                                                    <input type="file" name="kiosk_advertisement"
+                                                                        id="kiosk_advertisement" accept="image/*"
+                                                                        class="d-none">
+                                                                    <label for="kiosk_advertisement"
+                                                                        class="btn btn-success-rgba"><i
+                                                                            class="feather icon-edit"></i></label>
+                                                                    <!-- <a href="javascript:void(0)" class="btn btn-danger-rgba" onclick="PosnicPro.kiosk.removeImagePreview('advertisement')" aria-label="Delete">
+                                                                <i class="feather icon-trash"></i>
+                                                            </a> -->
+                                                                    <img id="preview_advertisement" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                                                                        class="img-fluid mt-2 d-block mx-auto"
+                                                                        style="max-height: 120px; display: none;"
+                                                                        alt="Advertisement Preview" loading="lazy" decoding="async">
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <!-- Submit Button -->
+                                                        <div class="card-footer text-right">
+                                                            <button type="submit" class="btn btn-outline-primary">
+                                                                <i class="feather icon-save mr-2"></i> <lang class="lang_save_title">Save</lang>
                                                             </button>
                                                         </div>
                                                     </form>
