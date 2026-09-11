@@ -198,6 +198,76 @@ describe('the key does not come back out', () => {
   });
 });
 
+describe('the shop menu reaches the recogniser', () => {
+  /*
+   * The cheapest accuracy in the whole feature, and free from every provider.
+   * A model told that "biryani" and "uthappam" are words that exist in this
+   * room stops reaching for the ordinary English that sounds like them.
+   */
+  const menuHints = require('../../../src/services/menu-hints');
+  const context = { branchId: 'b', licenseId: 'l' };
+
+  beforeEach(() => {
+    jest
+      .spyOn(menuHints, 'phrasesFor')
+      .mockResolvedValue(['Chicken Biryani', 'Masala Dosa', 'Rasmalai']);
+  });
+
+  test('Whisper is given them as a prompt', async () => {
+    configured('openai', 'sk-live');
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ text: 'ok' }) });
+
+    await service.transcribe({ audio: 'AAAA' }, context);
+    const form = global.fetch.mock.calls[0][1].body;
+    expect(form.get('prompt')).toContain('Chicken Biryani');
+    expect(form.get('prompt')).toContain('Rasmalai');
+  });
+
+  test('Google is given them as phrase hints, mildly boosted', async () => {
+    /* Enough to prefer a real dish over the English word that sounds like it,
+       not enough to hear a dish in a sentence that had none. */
+    configured('google', 'sk-live');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ candidates: [], results: [] }),
+    });
+
+    await service.transcribe({ audio: 'AAAA' }, context).catch(() => {});
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.config.speechContexts[0].phrases).toContain('Masala Dosa');
+    expect(body.config.speechContexts[0].boost).toBeGreaterThan(0);
+  });
+
+  test('a shop with no readable menu is transcribed anyway', async () => {
+    /* An improvement, not a dependency. */
+    menuHints.phrasesFor.mockResolvedValue([]);
+    configured('openai', 'sk-live');
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ text: 'ok' }) });
+
+    await expect(service.transcribe({ audio: 'AAAA' }, context)).resolves.toEqual({
+      status: true,
+      data: { text: 'ok' },
+    });
+    expect(global.fetch.mock.calls[0][1].body.get('prompt')).toBeNull();
+  });
+
+  test('nothing but NAMES is sent', async () => {
+    /* This list rides with every clip, so the rule has to be one somebody can
+       hold in their head: if it is not a name on the shop's menu, it does not
+       go. */
+    configured('google', 'sk-live');
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [] }) });
+
+    await service.transcribe({ audio: 'AAAA' }, context).catch(() => {});
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.config.speechContexts[0].phrases).toEqual([
+      'Chicken Biryani',
+      'Masala Dosa',
+      'Rasmalai',
+    ]);
+  });
+});
+
 describe('every provider keeps the same shape', () => {
   /* A provider that needed its request or its reply special-cased upstream
      would leak which one a shop uses to the handset, which is the thing this

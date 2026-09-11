@@ -20,6 +20,7 @@
 
 const SettingsRepository = require('../repositories/settings.repository');
 const voiceSettings = require('../utils/voice-settings');
+const menuHints = require('./menu-hints');
 
 /*
  * The module exports the CLASS, not a ready-made instance.
@@ -52,11 +53,15 @@ const TIMEOUT_MS = 20000;
 const PROVIDERS = {
   /* Whisper. Chosen as the first because it is one call, takes the audio as
      it arrives from a browser, and needs no project or region set up. */
-  async openai({ audio, mimeType, language, key }) {
+  async openai({ audio, mimeType, language, key, hints }) {
     const form = new FormData();
     form.append('file', new Blob([audio], { type: mimeType }), 'order.webm');
     form.append('model', 'whisper-1');
     if (language) form.append('language', String(language).split('-')[0]);
+    /* The shop's own dish names, which is the cheapest accuracy there is: a
+       model told that "biryani" and "uthappam" are words that exist in this
+       room stops reaching for the ordinary English that sounds like them. */
+    if (hints) form.append('prompt', hints);
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -71,7 +76,7 @@ const PROVIDERS = {
 
   /* Google Speech-to-Text, v1 recognize. Takes base64 inline, which is what
      arrives, so no upload step. */
-  async google({ audio, language, key }) {
+  async google({ audio, language, key, phrases }) {
     const response = await fetch(
       `https://speech.googleapis.com/v1/speech:recognize?key=${encodeURIComponent(key)}`,
       {
@@ -83,6 +88,13 @@ const PROVIDERS = {
             sampleRateHertz: 48000,
             languageCode: language || 'en-IN',
             model: 'latest_short',
+            /* The shop's own dish names. Free, and worth more than changing
+               provider. The boost is deliberately mild: enough to prefer a
+               real dish over the English word that sounds like it, not enough
+               to hear a dish in a sentence that had none. */
+            ...(phrases && phrases.length
+              ? { speechContexts: [{ phrases: phrases.slice(0, 500), boost: 10 }] }
+              : {}),
           },
           audio: { content: audio.toString('base64') },
         }),
@@ -187,11 +199,22 @@ async function transcribe(request, context) {
   }
 
   try {
+    /*
+     * What this shop sells, told to the recogniser before it guesses.
+     *
+     * Read here rather than inside a provider so every provider gets the same
+     * list and none has to know where it came from. A menu that could not be
+     * read is a slightly worse transcription, never a failed one.
+     */
+    const phrases = await menuHints.phrasesFor(context);
+
     const text = await run({
       audio,
       mimeType: request.mimeType || 'audio/webm',
       language: request.language,
       key,
+      phrases,
+      hints: menuHints.promptFrom(phrases),
     });
     return { status: true, data: { text } };
   } catch (error) {
