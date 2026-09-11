@@ -128,6 +128,7 @@
   "lang_ai_howto_3_again": "Cree una clave y péguela arriba. Puede volver a abrir esa página más tarde si necesita verla.",
   "lang_ai_howto_3_once": "Cree una clave y péguela arriba. Se muestra una sola vez, cópiela antes de cerrar esa página.",
   "lang_ai_howto_cost": "Una descripción de artículo cuesta alrededor de una décima de centavo de dólar, que es la moneda en la que facturan los proveedores. Con uno o dos dólares de saldo cubre un mes de uso normal.",
+  "lang_ai_howto_show": "¿Cómo consigo una clave?",
   "lang_ai_key": "Clave API",
   "lang_ai_key_saved": "Hay una clave guardada. Escriba una nueva para reemplazarla.",
   "lang_ai_module_desc": "Escribe descripciones de artículos por usted. Usted aporta su propia cuenta de IA y paga directamente a ese proveedor; nosotros no cobramos nada. Configúrelo en la página Asistencia de IA.",

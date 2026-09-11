@@ -2416,13 +2416,15 @@ class ItemsController extends BaseController {
       };
       if (!context.branchId) return this.success(res, { available: false, reason: 'no_branch' });
 
-      const state = await ai.availability(context);
-      return this.success(res, state);
+      /* available(), not availability(). It answers a boolean; the shape the
+         screen reads is built here. */
+      const available = await ai.available(context);
+      return this.success(res, { available: available === true });
     } catch (error) {
-      console.error('Error in aiAvailability:', error);
+      console.error('[ai] aiAvailability failed, so the button will stay hidden:', error);
       /* Absent, not broken: a screen that cannot ask should simply not offer
          the button rather than show an error nobody can act on. */
-      return this.success(res, { available: false, reason: 'unavailable' });
+      return this.success(res, { available: false, reason: 'error' });
     }
   }
 

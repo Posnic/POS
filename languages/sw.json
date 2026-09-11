@@ -128,6 +128,7 @@
   "lang_ai_howto_3_again": "Tengeneza ufunguo na ubandike hapo juu. Unaweza kufungua ukurasa huo tena baadaye ukihitaji kuuona.",
   "lang_ai_howto_3_once": "Tengeneza ufunguo na ubandike hapo juu. Huonyeshwa mara moja tu, unakili kabla ya kufunga ukurasa huo.",
   "lang_ai_howto_cost": "Maelezo ya bidhaa moja hugharimu takriban sehemu ya kumi ya senti ya dola, sarafu ambayo watoa huduma hutoza. Salio la dola moja au mbili hutosha mwezi mzima wa matumizi ya kawaida.",
+  "lang_ai_howto_show": "Nipateje ufunguo?",
   "lang_ai_key": "Ufunguo wa API",
   "lang_ai_key_saved": "Ufunguo umehifadhiwa. Andika mpya ili kuubadilisha.",
   "lang_ai_module_desc": "Huandika maelezo ya bidhaa kwa niaba yako. Unatumia akaunti yako ya AI na kumlipa mtoa huduma huyo moja kwa moja; sisi hatutozi chochote. Iweke kwenye ukurasa wa Msaada wa AI.",

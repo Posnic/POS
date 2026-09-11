@@ -128,6 +128,7 @@
   "lang_ai_howto_3_again": "Erstellen Sie einen Schlüssel und fügen Sie ihn oben ein. Sie können die Seite später erneut öffnen, wenn Sie ihn noch einmal sehen müssen.",
   "lang_ai_howto_3_once": "Erstellen Sie einen Schlüssel und fügen Sie ihn oben ein. Er wird nur einmal angezeigt, kopieren Sie ihn vor dem Schließen der Seite.",
   "lang_ai_howto_cost": "Eine Artikelbeschreibung kostet etwa ein Zehntel eines US-Cents, und in dieser Währung rechnen die Anbieter ab. Ein bis zwei Dollar Guthaben decken einen Monat normale Nutzung.",
+  "lang_ai_howto_show": "Wie bekomme ich einen Schlüssel?",
   "lang_ai_key": "API-Schlüssel",
   "lang_ai_key_saved": "Ein Schlüssel ist gespeichert. Geben Sie einen neuen ein, um ihn zu ersetzen.",
   "lang_ai_module_desc": "Schreibt Artikelbeschreibungen für Sie. Sie bringen Ihr eigenes KI-Konto mit und zahlen direkt an diesen Anbieter; wir berechnen nichts. Einrichtung auf der Seite KI-Unterstützung.",

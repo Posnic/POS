@@ -9125,7 +9125,16 @@ PosnicPro.settings.ai = {
     syncRows: function () {
         var on = !!$('#ai_provider').val();
         var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
-        $('#ai_key_help').toggle(on && !!where);
+        /*
+         * Open while there is no key, put away once there is one. Somebody
+         * who has already pasted a key came back for the limit or the
+         * meter, and should not have to scroll past three steps they have
+         * done to reach them.
+         */
+        var needsHelp = on && !!where && !PosnicPro.settings.ai._keySaved;
+        $('#ai_key_help').toggle(needsHelp || PosnicPro.settings.ai._howtoOpen === true);
+        $('#ai_howto_toggle_row').toggle(on && !!where && !!PosnicPro.settings.ai._keySaved
+            && PosnicPro.settings.ai._howtoOpen !== true);
         if (where) {
             $('#ai_key_link').attr('href', where.url).text(where.name);
             $('#ai_howto_2').text(where.paid
@@ -9140,6 +9149,9 @@ PosnicPro.settings.ai = {
     },
 
     load: function () {
+        /* Collapsed again on every visit. Opening it was a request for this
+           look at the page, not a preference to remember. */
+        PosnicPro.settings.ai._howtoOpen = false;
         PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var v = response.data.values || response.data;
@@ -9152,6 +9164,8 @@ PosnicPro.settings.ai = {
         PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var saved = (response.data.configured || {}).ai_api_key === true;
+            PosnicPro.settings.ai._keySaved = saved;
+            PosnicPro.settings.ai.syncRows();
             $('#ai_api_key').attr('placeholder', saved
                 ? PosnicPro.i18n.t('lang_ai_key_saved', 'A key is saved. Type a new one to replace it.')
                 : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
@@ -9239,6 +9253,12 @@ $(document).on('shown.bs.tab', 'a[href="#v-pills-ai"]', function () {
     PosnicPro.settings.ai.load();
 });
 $(document).on('change', '#ai_provider', function () {
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_howto_toggle', function () {
+    /* One way: opened on request, and it stays open for as long as they
+       are on the page. Closing it again is what leaving the page does. */
+    PosnicPro.settings.ai._howtoOpen = true;
     PosnicPro.settings.ai.syncRows();
 });
 $(document).on('click', '#ai_save', function () {
