@@ -370,3 +370,39 @@ test('razorpay is enabled by having a key, not by failing to save one', () => {
     'a failed key save still leaves Razorpay offered to customers'
   );
 });
+
+test('every settings link in the markup lands on a real page', () => {
+  /*
+   * The same rule as the FEATURE_HOME check, over the links written by hand.
+   *
+   * openSection falls back to Core Settings for a key it does not recognise,
+   * so a link to a page that is not there does not break - it quietly takes
+   * somebody somewhere else.
+   *
+   * What this catches and what it does not: a link to a page that does not
+   * EXIST fails here. A link to a real page that no longer holds the thing it
+   * promises does not, and cannot - the Captain App page pointed its voice
+   * ordering link at Integrations one commit before voice moved to Features,
+   * and Integrations is a real page, so only reading it caught that. Worth
+   * having anyway: the cheap half of the problem is the half that ships.
+   */
+  const defined = panes();
+  /* Old addresses that route on purpose - openSection redirects these. */
+  const legacy = new Set(
+    [...SETTINGS_JS.matchAll(/^\s*(\w+): '([\w-]+)',?\s*$/gm)]
+      .filter(() => true)
+      .map((m) => m[1])
+      .filter((k) => SETTINGS_JS.includes(`LEGACY_SECTIONS`) && ['branches', 'outlet', 'kiosk'].includes(k))
+  );
+
+  const dangling = [];
+  for (const m of SETTINGS_HTML.matchAll(/href="#\/settings\/([\w-]+)"/g)) {
+    if (!defined.has(m[1]) && !legacy.has(m[1])) dangling.push(m[1]);
+  }
+
+  assert.deepStrictEqual(
+    [...new Set(dangling)],
+    [],
+    `these links land on Core Settings instead of where they say: ${[...new Set(dangling)].join(', ')}`
+  );
+});
