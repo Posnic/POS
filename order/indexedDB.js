@@ -524,7 +524,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
         if (existingBranches.some(b => b.id === branchId)) {
             console.log("🔹 Branch exists. Checking for product updates...");
             if (redirect) {
-                window.location.href = "home.html"; // ✅ First-time redirect
+                window.location.href = "products.html"; // first time in: the menu, not a question
             }
         }
 
@@ -668,7 +668,17 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             if (!silent) await loadProducts();
 
             if (redirect) {
-                window.location.href = "home.html";
+                /*
+                 * THE MENU FIRST.
+                 *
+                 * This went to home.html - Dine In or Take Away, before a
+                 * single dish had been seen. Owner: "take away or here no
+                 * need to ask first itself." The question moved to the
+                 * payment page, where it is answered once and at the point it
+                 * matters; home.html stays for a screen that wants an attract
+                 * page, but nothing routes a scanned code through it.
+                 */
+                window.location.href = "products.html";
                 hideLoader(); // ✅ Hide loader after redirect
             }
             if (!silent) hideAppErrorScreen();
@@ -902,7 +912,41 @@ async function loadProducts() {
     const storedProducts = await getData("products");
 
     if (storedProducts.length === 0) {
-        console.error("❌ No products found in IndexedDB!");
+        /*
+         * NOTHING STORED YET IS A REASON TO FETCH, NOT TO STOP.
+         *
+         * This logged an error and returned - and the spinner it returned
+         * behind stayed up for ever, because the only thing that hides it is
+         * the cart render at the end of this function. That is what every
+         * first-time visitor to products.html saw: a wheel, and the console
+         * line "No products found in IndexedDB!" that nobody reads.
+         *
+         * The branch is known (it was stored on arrival), so ask the server
+         * for its menu once; the fetch calls back into here when the rows
+         * are saved. If there is no branch either, say so on screen with a
+         * way back to the start, and take the wheel down.
+         */
+        console.warn("No products stored yet; fetching the menu.");
+        const loader = document.getElementById("page-loader");
+        const branches = await getData("branch").catch(() => []);
+        const branchId = branches && branches[0] && branches[0].id;
+        if (branchId && !loadProducts._fetching) {
+            loadProducts._fetching = true;
+            try {
+                await fetchAndStoreBranch(branchId, false);
+            } finally {
+                loadProducts._fetching = false;
+            }
+            return;
+        }
+        if (loader) loader.style.display = "none";
+        if (typeof showAppErrorScreen === "function") {
+            showAppErrorScreen(
+                "Menu not loaded",
+                "Scan the code on the table again, or ask at the counter.",
+                () => { window.location.href = "index.html"; }
+            );
+        }
         return;
     }
 
