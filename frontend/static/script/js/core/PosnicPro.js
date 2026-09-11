@@ -2867,6 +2867,7 @@ PosnicPro = {
            would show all four the moment a shop enabled one. */
         $('#manage_li_onlineordering').toggle(on('module_online_ordering_enable'));
         $('#manage_li_kioskmachine').toggle(on('module_kiosk_enable'));
+        $('#manage_li_captainapp').toggle(on('module_captain_enable'));
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
