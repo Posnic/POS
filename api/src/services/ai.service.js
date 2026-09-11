@@ -225,8 +225,7 @@ async function settingsFor(context) {
      * giving a switch that cannot be turned off.
      */
     enabled: !(
-      flags.ai_enabled === false
-        || String(flags.ai_enabled).trim().toLowerCase() === 'false'
+      flags.ai_enabled === false || String(flags.ai_enabled).trim().toLowerCase() === 'false'
     ),
     provider: String(chosen.ai_provider || '')
       .trim()
