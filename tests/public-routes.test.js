@@ -119,6 +119,14 @@ const ALLOWED_ANONYMOUS = {
     // online-ordering resource, which is listed above with its reasons.
     '/getNewSale',
   ],
+  'pair.routes.js': [
+    // The page a till shows so a staff phone can be pointed at this shop.
+    // It carries an ADDRESS, not a credential - the same thing the till's own
+    // browser address bar shows anybody standing at it. Requiring a login
+    // would mean a handset cannot be paired until somebody signs in on the
+    // till, which is backwards: pairing is what happens before anyone can.
+    '/',
+  ],
   'base.routes.js': [
     // Liveness only. "/" says it is running; "/health" reports status, time and
     // uptime to a stranger and keeps the version, platform and memory figures

@@ -227,6 +227,19 @@ app.use(corsHeaders);
  * tenant-free by design - the login page and the update machinery read it
  * before any authentication exists.
  */
+/*
+ * The page a till shows so a staff phone can be pointed at this shop.
+ *
+ * Mounted here, beside the other endpoints a device reaches before it has any
+ * credential, and for the same reasons: it must not be rate limited, must not
+ * depend on the API router mounting, and its path has to be one a person can
+ * be told over the phone.
+ *
+ * Public, and safe to be. The code carries an ADDRESS, not a credential - the
+ * same thing the browser's URL bar already shows anyone looking at the till.
+ */
+app.use(['/pair', '/api/pair'], require('./src/routes/pair.routes'));
+
 app.get('/api/runtime-info', async (req, res) => {
   const { buildRuntimeInfo } = require('./src/utils/runtime-info');
   const info = buildRuntimeInfo();
