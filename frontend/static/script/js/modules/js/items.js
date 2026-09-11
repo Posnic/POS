@@ -18,18 +18,23 @@ PosnicPro.items = {
         var $btn = $('#items_ai_describe');
         if (!$btn.length) { return; }
 
-        if (PosnicPro.items._aiAvailable !== null) {
-            $btn.toggle(PosnicPro.items._aiAvailable === true);
+        /* Only a YES is remembered. A no is re-asked every time the form
+           opens, because the thing that turns it into a yes is the
+           shopkeeper walking to settings and pasting a key - and after
+           that they come straight back here expecting a button. */
+        if (PosnicPro.items._aiAvailable === true) {
+            $btn.show();
             return;
         }
         PosnicPro.get('items/aiAvailability', {}, function (r) {
             var ok = !!(r && r.data && r.data.available);
-            PosnicPro.items._aiAvailable = ok;
+            PosnicPro.items._aiAvailable = ok ? true : null;
             $btn.toggle(ok);
         }, function () {
-            /* Could not ask, so do not offer. An unanswered question about a
-               paid feature is a no. */
-            PosnicPro.items._aiAvailable = false;
+            /* Could not ask, so do not offer - but do not remember it
+               either. A network blip must not hide the button for the rest
+               of the session. */
+            PosnicPro.items._aiAvailable = null;
             $btn.hide();
         });
     },
@@ -89,10 +94,12 @@ PosnicPro.items = {
                 if (body && body.message) { message = body.message; }
             } catch (e) { /* the default sentence is the fallback */ }
             PosnicPro.alert('warning', message);
-            /* A shop that has run out of budget or turned AI off should stop
-               being offered the button for the rest of the session. */
+            /* A refusal - over the monthly cap, key removed, AI switched
+               off - means hide it now, but ask again next time the form
+               opens. Remembering the no would keep the button hidden after
+               the shopkeeper has fixed whatever caused it. */
             if (xhr && xhr.status === 400) {
-                PosnicPro.items._aiAvailable = false;
+                PosnicPro.items._aiAvailable = null;
                 $('#items_ai_describe').hide();
             }
         });
