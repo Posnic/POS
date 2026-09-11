@@ -180,9 +180,79 @@ $(document).ready(function () {
         crossroads.resetState()
     });
 
+    /*
+     * SAY WHERE YOU ARE, in the left menu.
+     *
+     * The highlight was set in exactly one place: a shown.bs.tab handler in
+     * settings.js, which fires when somebody CLICKS a pill. So it was right
+     * after a click and wrong every other way a page is reached - a refresh, a
+     * bookmark, the back button, a Features switch that routes you to the page
+     * it configures, or any hasher.setHash() in the code. Land on
+     * #/settings/tableorder any of those ways and the menu said nothing at
+     * all, which on a settings screen that looks like every other settings
+     * screen leaves nothing to tell you which one you are on.
+     *
+     * Done HERE because this is the one place every route change passes
+     * through, whatever caused it. One rule, no list of callers to keep up to
+     * date, and nothing to forget when a page is added.
+     */
+    function markSidebar(hash) {
+        var $menu = $('.vertical-menu');
+        if (!$menu.length) { return; }
+
+        $menu.find('> li').removeClass('active');
+        $menu.find('a.active').removeClass('active');
+
+        /*
+         * The longest matching prefix, so a page below a section still lights
+         * the section: #/settings/tableorder/tables has no menu entry of its
+         * own and belongs under Restaurant.
+         */
+        var parts = String(hash || '').split('/');
+        var link = null;
+        while (parts.length && !link) {
+            var candidate = $menu.find('a[href="#/' + parts.join('/') + '"]').first();
+            if (candidate.length) { link = candidate; break; }
+            parts.pop();
+        }
+        if (!link) { return; }
+
+        link.addClass('active');
+        link.closest('li').addClass('active');
+
+        /*
+         * And open the rail panel it lives in, or the highlight is on a list
+         * nobody can see. A refresh resets the rail to its first tab, so
+         * without this the marked entry sits inside a hidden pane.
+         *
+         * The pane is switched, never the hash: settings.js listens for
+         * shown.bs.tab and writes the hash back, so driving the tab from a
+         * hash change is a loop waiting to happen. That listener is delegated
+         * from #settings and this rail is not inside it, but the rule is worth
+         * keeping anyway - a route handler that navigates is a route handler
+         * that fights the user.
+         */
+        var pane = link.closest('.tab-pane');
+        if (pane.length && !pane.hasClass('active')) {
+            var rail = $('.vertical-menu-icon [href="#' + pane.attr('id') + '"]');
+            if (rail.length && rail.tab) { rail.tab('show'); }
+        }
+    }
+
     function parseHash(newHash, oldHash) {
         currentHash = newHash;
-        crossroads.parse(newHash)
+        crossroads.parse(newHash);
+        /*
+         * After the route, not before. A route may redirect - a Features
+         * switch lands on #/settings/modules - and marking first would light
+         * the page nobody ended up on.
+         */
+        try {
+            markSidebar(newHash);
+        } catch (e) {
+            /* A menu that fails to highlight must never stop a page loading. */
+            console.warn('[routes] could not mark the sidebar:', e && e.message);
+        }
     }
 
     hasher.initialized.add(parseHash);

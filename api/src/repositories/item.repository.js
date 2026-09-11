@@ -4393,6 +4393,21 @@ class ItemRepository extends BaseModel {
           products: results,
           tableorders,
           /*
+           * WHETHER THIS SHOP RUNS TABLES AT ALL.
+           *
+           * An empty `tableorders` has two completely different meanings: a
+           * restaurant that has not typed its tables in yet, and a shop that
+           * does not do table service and never will. The handset could not
+           * tell them apart, so a waiter signing in at a grocer got the same
+           * blank screen as a waiter at a restaurant whose manager had not
+           * finished setting up - and neither was told which.
+           *
+           * Sent as the branch's own switch rather than inferred from the
+           * count, so the app can say the true thing: turn Restaurant on, or
+           * add your tables.
+           */
+          table_service: branchDoc.table_options === true,
+          /*
            * Whether this shop's handsets may listen, and in what language.
            *
            * WHERE THE AUDIO GOES, never which vendor transcribes it and never

@@ -986,6 +986,15 @@ class ItemsController extends BaseController {
              is the only caller that ever did. */
           tableorders: data.tableorders || [],
           /*
+           * Whether this shop does table service at all.
+           *
+           * An empty floor plan means two different things - a restaurant
+           * mid-setup, and a shop that does not seat anybody - and a handset
+           * that cannot tell them apart shows the same blank screen for both.
+           * With this it can say which, and what to do about it.
+           */
+          table_service: data.table_service === true,
+          /*
            * Whether this shop's handsets may listen, and in what language.
            *
            * WHERE THE AUDIO GOES, never which vendor transcribes it. A handset
