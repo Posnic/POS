@@ -527,3 +527,111 @@ test('the sheet can open a photo full size, and close it again', () => {
   assert.match(js, /viewer-close.*addEventListener|addEventListener\("click", closeViewer\)/s,
     'the close button is not wired');
 });
+
+/* ------------------------------------------------ searching is a place you go */
+
+/** Type into the search box the way a person does, and let the page settle. */
+async function typeSearch(window, term) {
+  const input = window.document.getElementById('search');
+  input.value = term;
+  input.dispatchEvent(new window.Event('focus'));
+  input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+  return input;
+}
+
+test('search answers with a dense list, where the eye already is', async () => {
+  /*
+   * Owner: "40 dishes found. i see that in big space. its not good."
+   *
+   * The counter sat alone over a screen of white while the matches waited
+   * below the fold, because the results were the same tall browsing cards.
+   * With a keyboard covering half a phone that is one or two dishes visible.
+   */
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  await typeSearch(window, 'paneer');
+
+  const results = document.getElementById('results');
+  assert.strictEqual(results.hidden, false, 'searching did not produce a result list');
+  assert.strictEqual(document.getElementById('menu').hidden, true, 'the browsing cards are still on screen');
+
+  const rows = results.querySelectorAll('.result');
+  assert.strictEqual(rows.length, 1, `expected one match, drew ${rows.length}`);
+  assert.match(rows[0].textContent, /Paneer Tikka/);
+  /* Name, section and price on one line - what a list is for. */
+  assert.match(rows[0].textContent, /Rs 280/);
+});
+
+test('leaving the search puts the menu back', async () => {
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  await typeSearch(window, 'paneer');
+  assert.strictEqual(document.getElementById('menu').hidden, true);
+
+  document.getElementById('search-back').dispatchEvent(new window.Event('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+
+  assert.strictEqual(document.getElementById('menu').hidden, false, 'the menu did not come back');
+  assert.strictEqual(document.getElementById('results').hidden, true, 'the results stayed up');
+  assert.strictEqual(document.getElementById('search').value, '', 'the term was left behind');
+  assert.ok(!document.body.classList.contains('searching'), 'the page is still in search mode');
+});
+
+test('the shop name and the section chips stand down while typing', async () => {
+  /* They are for arriving, not for looking something up, and on a phone they
+     are the difference between two results visible and eight. */
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  await typeSearch(window, 'pan');
+  assert.ok(document.body.classList.contains('searching'), 'the page never entered search mode');
+});
+
+test('a search result opens the same dish sheet a card does', async () => {
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  await typeSearch(window, 'paneer');
+
+  const row = document.querySelector('.result');
+  row.dispatchEvent(new window.Event('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+
+  assert.match(document.getElementById('sheet-title').textContent, /Paneer Tikka/);
+});
+
+test('tapping outside the sheet closes it', async () => {
+  /* Owner: "clicking on the outside area we can close the item deails page."
+     A <dialog> fills the viewport, so the shade around the panel IS the
+     dialog - a click landing on it and nothing inside means "away". */
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  document.querySelector('.dish').dispatchEvent(new window.Event('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+
+  const sheet = document.getElementById('sheet');
+  let closed = false;
+  sheet.close = () => {
+    closed = true;
+  };
+  sheet.dispatchEvent(new window.Event('click', { bubbles: true }));
+  assert.ok(closed, 'a tap on the shade around the sheet did not close it');
+});
+
+test('the sheet says when a dish is served and how long it takes', async () => {
+  /* Somebody who has opened a dish is deciding, and these are what decide it. */
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  document.querySelector('.dish').dispatchEvent(new window.Event('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+
+  const facts = document.getElementById('sheet-facts');
+  assert.strictEqual(facts.hidden, false, 'the dish says nothing beyond its price');
+  assert.match(facts.textContent, /Vegetarian/, 'the diet is not stated');
+  assert.match(facts.textContent, /15 minutes/, 'how long the kitchen needs is not stated');
+  assert.match(facts.textContent, /Available/, 'whether it can be had right now is not stated');
+});
+
+test('the microphone stays hidden where the browser has no recogniser', async () => {
+  /* A button that does nothing is worse than no button. jsdom has no speech
+     engine, which is exactly the case this must get right. */
+  const { document } = await render('/menu/AZ100', REPLY);
+  assert.strictEqual(
+    document.getElementById('search-mic').hidden,
+    true,
+    'a microphone is offered that cannot listen'
+  );
+});

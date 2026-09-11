@@ -239,6 +239,224 @@
     );
   }
 
+  /**
+   * One search result: a small square, a name, its section, the price.
+   *
+   * Deliberately not the menu card. A card is for browsing - it earns its
+   * height with a picture and a description. Search is somebody asking whether
+   * this kitchen has a thing, with the keyboard eating half the screen, so the
+   * answer has to be a list they can run their eye down.
+   */
+  function resultHtml(item) {
+    var thumb = item.image
+      ? '<img class="result-thumb" src="' +
+        escapeHtml(item.image) +
+        '" alt="" loading="lazy" decoding="async">'
+      : '<span class="result-icon" aria-hidden="true">' +
+        escapeHtml(item.icon || "") +
+        "</span>";
+
+    /* The section it came from, because "Chicken 65" means something
+       different under Starters than under Biryani - and when it is not
+       available, why, which is the more useful thing to say. */
+    var meta = item.categoryName || "";
+    if (item.available === false) {
+      var served = (item.served_in || []).join(" and ");
+      meta = served ? served + " only" : "Not available today";
+    } else if (Number(item.prep_minutes) > 0) {
+      meta = meta
+        ? meta + "  -  ~" + item.prep_minutes + " min"
+        : "~" + item.prep_minutes + " min";
+    }
+
+    return (
+      '<button type="button" class="result" data-id="' +
+      escapeHtml(item.id) +
+      '" data-available="' +
+      (item.available === false ? "false" : "true") +
+      '">' +
+      thumb +
+      '<span class="result-body">' +
+      '<span class="result-name">' +
+      dietMark(item.diet) +
+      escapeHtml(item.name) +
+      "</span>" +
+      '<span class="result-meta">' +
+      escapeHtml(meta) +
+      "</span>" +
+      "</span>" +
+      '<span class="result-price">' +
+      escapeHtml(money(item.price)) +
+      "</span>" +
+      "</button>"
+    );
+  }
+
+  /**
+   * How many dishes a section shows before it offers the rest.
+   *
+   * Enough to tell what the section IS, few enough that the next one is on
+   * the same screen. A shop with four hundred lines has categories of forty,
+   * and forty of anything buries everything after it.
+   */
+  var FOLD_AT = 6;
+
+  /**
+   * Fold every long section, and leave the short ones alone.
+   *
+   * Runs on the rendered menu rather than at build time so the button can
+   * count what is actually visible after the filters have had their say.
+   */
+  function foldSections() {
+    document.querySelectorAll(".section").forEach(function (section) {
+      var row = section.querySelector(".dishes");
+      if (!row) return;
+
+      var dishes = [].slice
+        .call(row.querySelectorAll(".dish"))
+        .filter(function (d) {
+          return !d.hidden;
+        });
+
+      var button = section.querySelector(".more-in-section");
+      var hidden = Math.max(0, dishes.length - FOLD_AT);
+
+      /* Expanded by hand stays expanded: somebody who opened Biryani does not
+         want it shut again because they toggled a filter. */
+      if (section.getAttribute("data-open") === "true" || hidden === 0) {
+        dishes.forEach(function (d) {
+          d.style.display = "";
+        });
+        if (button) button.hidden = true;
+        return;
+      }
+
+      dishes.forEach(function (d, i) {
+        d.style.display = i < FOLD_AT ? "" : "none";
+      });
+
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        button.className = "more-in-section";
+        row.parentNode.insertBefore(button, row.nextSibling);
+      }
+      button.hidden = false;
+      button.textContent = "Show all " + dishes.length;
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var more =
+      e.target && e.target.closest
+        ? e.target.closest(".more-in-section")
+        : null;
+    if (!more) return;
+    var section = more.closest(".section");
+    if (!section) return;
+    section.setAttribute("data-open", "true");
+    foldSections();
+  });
+
+  /**
+   * Searching is a mode, and the page says so.
+   *
+   * The bar rises to the top, the shop name and the section chips stand down,
+   * and a back arrow appears. On a phone with the keyboard up, that is the
+   * difference between two results visible and eight.
+   */
+  function setSearching(on) {
+    document.body.classList.toggle("searching", !!on);
+    var back = el("search-back");
+    if (back) back.hidden = !on;
+  }
+
+  (function wireSearchMode() {
+    var input = el("search");
+    var back = el("search-back");
+    if (input) {
+      input.addEventListener("focus", function () {
+        setSearching(true);
+      });
+    }
+    if (back) {
+      back.addEventListener("click", function () {
+        if (input) {
+          input.value = "";
+          input.blur();
+        }
+        state.query = "";
+        setSearching(false);
+        applyView();
+      });
+    }
+  })();
+
+  /**
+   * Speak the dish instead of spelling it.
+   *
+   * The browser's own recogniser - the engine behind the keyboard's dictation
+   * key. Nothing leaves the phone, there is no account and no key. Where the
+   * browser has none the button stays hidden, because a microphone that does
+   * nothing is worse than no microphone.
+   */
+  (function wireMic() {
+    var Recognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    var mic = el("search-mic");
+    var input = el("search");
+    if (!Recognition || !mic || !input) return;
+
+    mic.hidden = false;
+    var listening = null;
+
+    mic.addEventListener("click", function () {
+      if (listening) {
+        listening.stop();
+        return;
+      }
+      var rec = new Recognition();
+      /* The page's own language, so a Tamil menu is not transcribed as
+         English - the recogniser mishears NUMBERS first when told the wrong
+         one, and a number is half of what people search for. */
+      rec.lang = document.documentElement.lang || "en";
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+
+      rec.onstart = function () {
+        listening = rec;
+        mic.setAttribute("data-listening", "true");
+        setSearching(true);
+      };
+      rec.onresult = function (e) {
+        var said = "";
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          said += e.results[i][0].transcript;
+        }
+        said = said.trim();
+        if (!said) return;
+        input.value = said;
+        /* Straight through the normal path, so a spoken word is searched the
+           same way a typed one is - fuzziness and all. */
+        applySearch(said);
+      };
+      rec.onerror = function () {
+        /* Refused permission, no network for the engine that needs one, or
+           simply nothing said. None of them is worth an alert on a menu. */
+      };
+      rec.onend = function () {
+        listening = null;
+        mic.removeAttribute("data-listening");
+      };
+
+      try {
+        rec.start();
+      } catch (err) {
+        /* Already running, which the spec throws for. Nothing to do. */
+      }
+    });
+  })();
+
   function render(data) {
     state.categories = data.categories || [];
     state.currency = (data.store && data.store.currency) || "";
@@ -540,6 +758,49 @@
 
     var narrowed = !!q || state.vegOnly || state.availableOnly;
 
+    /*
+     * Searching gets a list; browsing keeps the cards.
+     *
+     * The counter used to sit alone above a screen of white while the matches
+     * waited below the fold - "40 dishes found" and nothing to look at. The
+     * rows go where the eye already is.
+     */
+    var results = el("results");
+    var menu = el("menu");
+    if (q) {
+      /*
+       * Read the cards, not the catalogue.
+       *
+       * The filters and the search have just decided which dishes survive, and
+       * they recorded that on the cards. Re-deriving it here would be a second
+       * implementation of the same rule, free to disagree with the first -
+       * state.flat holds { cat, item } wrappers rather than items, and the
+       * first version of this read `item.id` off the wrapper and matched
+       * nothing at all.
+       */
+      var matched = [];
+      [].slice
+        .call(document.querySelectorAll(".dish"))
+        .filter(function (card) {
+          return !card.hidden;
+        })
+        .forEach(function (card) {
+          var item = lookup(card.getAttribute("data-id"));
+          if (item) matched.push(item);
+        });
+      matched.sort(function (a, b) {
+        return (scores[b.id] || 0) - (scores[a.id] || 0);
+      });
+      results.innerHTML = matched.map(resultHtml).join("");
+      results.hidden = false;
+      menu.hidden = true;
+    } else {
+      results.hidden = true;
+      results.innerHTML = "";
+      menu.hidden = false;
+      foldSections();
+    }
+
     el("search-clear").hidden = !q;
     /* The categories navigate a list that narrowing has just rearranged, so
        they step aside until it is cleared. */
@@ -668,6 +929,13 @@
 
   /* --------------------------------------------------------- detail sheet */
 
+  function closeSheet() {
+    var sheet = el("sheet");
+    if (!sheet) return;
+    if (typeof sheet.close === "function") sheet.close();
+    else sheet.removeAttribute("open");
+  }
+
   function openSheet(id) {
     var found = state.flat.filter(function (row) {
       return String(row.item.id) === String(id);
@@ -687,6 +955,8 @@
     el("sheet-price").textContent =
       money(item.price) +
       (item.available === false ? "  -  not available today" : "");
+
+    showFacts(item);
 
     showGoesWith(item);
 
@@ -899,16 +1169,32 @@
       return;
     }
 
-    var dish = e.target.closest && e.target.closest(".dish");
+    /* A card on the menu, or a row in the search results: both are the dish. */
+    var dish =
+      e.target.closest &&
+      (e.target.closest(".dish") || e.target.closest(".result"));
     if (dish) {
       openSheet(dish.getAttribute("data-id"));
       return;
     }
 
     if (e.target.id === "sheet-close") {
-      var sheet = el("sheet");
-      if (typeof sheet.close === "function") sheet.close();
-      else sheet.removeAttribute("open");
+      closeSheet();
+      return;
+    }
+
+    /*
+     * Tapping the dark outside the sheet closes it.
+     *
+     * A <dialog> element fills the whole viewport - the shade around the panel
+     * IS the dialog, so a click landing on the dialog itself and not on
+     * anything inside it means somebody tapped away. Every sheet a customer
+     * has ever used behaves this way, and reaching for a small x with one
+     * thumb does not.
+     */
+    if (e.target.id === "sheet") {
+      closeSheet();
+      return;
     }
 
     if (e.target.id === "search-clear") {
@@ -929,6 +1215,65 @@
    * and inventing three dishes to fill the space would be recommending at
    * random - which a diner notices immediately and stops trusting.
    */
+  /**
+   * Everything else the shop has said about this dish.
+   *
+   * A customer who has opened a dish is deciding, and four things decide it:
+   * whether they can eat it, when it is served, how long it will take, and
+   * whether it is on right now. Each row appears only when the shop has
+   * actually answered - a heading over an empty value is worse than a shorter
+   * list, because it reads as a shop that could not be bothered.
+   */
+  function showFacts(item) {
+    var list = el("sheet-facts");
+    if (!list) return;
+
+    var rows = [];
+
+    var diet =
+      item.diet === "veg"
+        ? "Vegetarian"
+        : item.diet === "vegan"
+          ? "Vegan"
+          : item.diet === "nonveg"
+            ? "Non-vegetarian"
+            : "";
+    if (diet) rows.push(["Diet", diet]);
+
+    /* "Breakfast and Lunch" is a reason to come back; a grey card is a dead
+       end that reads as "they have run out". */
+    var served = (item.served_in || []).filter(Boolean);
+    if (served.length) rows.push(["Served at", served.join(", ")]);
+
+    if (Number(item.prep_minutes) > 0) {
+      rows.push(["Takes about", item.prep_minutes + " minutes"]);
+    }
+
+    rows.push([
+      "Right now",
+      item.available === false
+        ? served.length
+          ? "Not being served - " + served.join(" and ") + " only"
+          : "Not available today"
+        : "Available",
+    ]);
+
+    if (item.categoryName) rows.push(["Section", item.categoryName]);
+
+    list.innerHTML = rows
+      .map(function (pair) {
+        return (
+          "<dt>" +
+          escapeHtml(pair[0]) +
+          "</dt><dd>" +
+          escapeHtml(pair[1]) +
+          "</dd>"
+        );
+      })
+      .join("");
+    list.hidden = rows.length === 0;
+  }
+
   function showGoesWith(item) {
     var box = el("goes-with");
     if (!box) return;

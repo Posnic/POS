@@ -325,6 +325,174 @@
 
       /* ---- the photo strip -------------------------------------------- */
 
+      /* ------------------------------------------------ search as a place */
+
+      .search-back,
+      .search-mic {
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--muted);
+        font-size: 17px;
+        cursor: pointer;
+      }
+
+      .search-mic svg {
+        width: 19px;
+        height: 19px;
+        fill: currentColor;
+      }
+
+      .search-mic[data-listening="true"] {
+        color: #fff;
+        background: #c0392b;
+      }
+
+      /*
+        While searching, the shop's name and the section chips go.
+
+        They are for arriving, not for looking something up, and on a phone
+        with the keyboard open they are the difference between two results
+        and eight.
+      */
+      body.searching .head,
+      body.searching .cats,
+      body.searching .tools {
+        display: none;
+      }
+
+      body.searching .controls {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding-top: 8px;
+        background: var(--bg);
+      }
+
+      /* ------------------------------------------------------ result rows */
+
+      .results {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .result {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        padding: 10px 4px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .result:last-child {
+        border-bottom: 0;
+      }
+
+      .result-thumb,
+      .result-icon {
+        flex: 0 0 auto;
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: var(--raised);
+      }
+
+      .result-icon {
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+      }
+
+      .result-body {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .result-name {
+        display: block;
+        font-weight: 600;
+        /* One line: a wrapped name turns a dense list back into a sparse one. */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .result-meta {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .result-price {
+        flex: 0 0 auto;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .result[data-available="false"] .result-name,
+      .result[data-available="false"] .result-price {
+        color: var(--muted);
+      }
+
+      /* --------------------------------------------- long sections fold up */
+
+      /*
+        A section with forty dishes buries the next one.
+
+        Somebody scrolling a menu is looking for the SHAPE of it - what kinds
+        of thing this kitchen makes - and cannot see that if one category
+        fills four screens. The first few show, the rest are one tap away.
+      */
+      .more-in-section {
+        display: block;
+        width: 100%;
+        margin: 4px 0 2px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* What the shop has said about a dish, in pairs. */
+      .sheet-facts {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 14px;
+        margin: 12px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+      }
+
+      .sheet-facts dt {
+        color: var(--muted);
+      }
+
+      .sheet-facts dd {
+        margin: 0;
+      }
+
       .sheet-gallery {
         margin: -4px 0 14px;
       }
@@ -854,6 +1022,23 @@
     <div id="controls" class="controls" hidden>
       <div class="wrap">
         <div class="search-row">
+          <!--
+            A BACK ARROW, because searching is a place you go.
+
+            The keyboard takes half a phone, so while somebody is typing, the
+            shop name and the section chips are a waste of the half that is
+            left. The bar rises to the top, the results take the rest, and this
+            is the way out - the shape every food app has already taught people.
+          -->
+          <button
+            type="button"
+            id="search-back"
+            class="search-back"
+            aria-label="Back to the menu"
+            hidden
+          >
+            &#8592;
+          </button>
           <svg
             class="search-icon"
             width="16"
@@ -878,6 +1063,27 @@
             autocomplete="off"
             placeholder="Search dishes"
           />
+          <!--
+            Speak instead of type, using the browser's own recogniser.
+
+            Nothing is sent anywhere and no account is needed - this is the
+            engine behind the keyboard's own dictation key. Hidden outright
+            where the browser has none, because a microphone that does nothing
+            is worse than no microphone at all.
+          -->
+          <button
+            type="button"
+            id="search-mic"
+            class="search-mic"
+            aria-label="Search by voice"
+            hidden
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"
+              />
+            </svg>
+          </button>
           <button
             id="search-clear"
             class="search-clear"
@@ -937,6 +1143,16 @@
         aria-live="polite"
         hidden
       ></p>
+      <!--
+        SEARCH RESULTS ARE A LIST, NOT A GRID OF CARDS.
+
+        The menu's cards are built for browsing: a picture, a description, room
+        to breathe. Search is the opposite job - somebody has a word in mind
+        and wants to know whether this kitchen has it, with a keyboard covering
+        half the screen. So results get their own dense rows: a small square
+        photo, the name, its section, the price. Eight fit where two cards did.
+      -->
+      <div id="results" class="results" hidden></div>
       <div id="menu"></div>
       <div id="state" class="state">
         <strong>Loading the menu</strong>
@@ -968,6 +1184,17 @@
         </div>
         <p id="sheet-desc" class="sheet-desc" hidden></p>
         <p id="sheet-price" class="sheet-price"></p>
+
+        <!--
+          Everything else the shop has said about this dish.
+
+          A customer who has stopped to open a dish is deciding, and the things
+          that decide it are: can I eat it, when is it served, how long will it
+          take, and is it on right now. Each one is drawn only when the shop
+          has actually answered - an empty row of headings is worse than a
+          short list.
+        -->
+        <dl id="sheet-facts" class="sheet-facts" hidden></dl>
 
         <!--
           What people order with this, from the shop's own sales. Hidden
