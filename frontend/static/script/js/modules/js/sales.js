@@ -11390,9 +11390,59 @@ PosnicPro.sales.syncNotesCellSpan = function () {
     if (!$cell.length) { return; }
     var extraVisible = $('.add-disc-row').is(':visible');
     $cell.attr('rowspan', extraVisible ? 3 : 2);
+    PosnicPro.sales.syncDiscountNoteChip(extraVisible);
+};
+
+/*
+ * "Discount note" only exists once there is a discount to explain.
+ *
+ * The chip sat beside Payment note and Sale note from the moment the screen
+ * loaded, so a cashier could write a note about a discount nobody had given.
+ * The note then described nothing, and on a busy counter an action that does
+ * not apply yet is read as one that is broken.
+ *
+ * It follows the discount row, which is the same signal the rowspan above
+ * already uses - so the chip appears the instant a discount is added and goes
+ * again if it is removed. The wording changes with the note itself: a blank
+ * one invites a note, an existing one offers to change it, which is the
+ * difference between "what happens if I press this" and knowing.
+ *
+ * Hidden by inline display rather than a class, because syncActionTooltips
+ * below reads btn.style.display to decide whether the tooltip wrapper should
+ * follow - a class would leave a tooltip floating over nothing.
+ */
+PosnicPro.sales.syncDiscountNoteChip = function (hasDiscount) {
+    var $chip = $('#click_discount_description');
+    if (!$chip.length) { return; }
+
+    if (hasDiscount === undefined) {
+        hasDiscount = $('.add-disc-row').is(':visible');
+    }
+
+    $chip.get(0).style.display = hasDiscount ? '' : 'none';
+
+    if (hasDiscount) {
+        var note = $.trim($('#discount_description').val() || $('#discount_description').text() || '');
+        var $label = $chip.find('lang');
+        var text = note ? PosnicPro.i18n.t('lang_edit_note', 'Edit note') : PosnicPro.i18n.t('lang_add_note', 'Add note');
+        /* The translated span is left in place and only its text replaced, so
+           the language layer still finds the element it expects. */
+        if ($label.length) { $label.text(text); } else { $chip.text(text); }
+        $chip.attr('data-label', note ? PosnicPro.i18n.t('lang_edit_discount_note', 'Edit discount note') : PosnicPro.i18n.t('lang_add_discount_note', 'Add discount note'));
+    }
+
+    if (PosnicPro.sales.syncActionTooltips) { PosnicPro.sales.syncActionTooltips(); }
 };
 $(document).on('click', '#sale_add_discount', function () {
     setTimeout(function () { PosnicPro.sales.syncNotesCellSpan(); }, 80);
+});
+/* Removing a discount hides the row again, and typing a note changes the
+   chip from "Add" to "Edit", so both are followed rather than only the add. */
+$(document).on('click', '.add-disc-row .remove-discount, #sale_remove_discount', function () {
+    setTimeout(function () { PosnicPro.sales.syncNotesCellSpan(); }, 80);
+});
+$(document).on('change blur', '#discount_description', function () {
+    PosnicPro.sales.syncDiscountNoteChip();
 });
 /*
  * Keep each action's tooltip wrapper in step with its button.
