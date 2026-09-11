@@ -145,8 +145,14 @@ async function paintShop() {
 
     const sub = document.getElementById("shop-sub");
     if (sub && typeof allProducts === "function") {
-        const count = allProducts().length;
-        sub.textContent = count + (count === 1 ? " item" : " items");
+        const all = allProducts();
+        const count = all.length;
+        /* "Dishes" in a kitchen, "items" in a shop - the same page serves a
+           stationer, and the same test the menu uses decides which: a veg
+           mark, a preparation time or a serving period is a kitchen. */
+        const kitchen = all.some(p => p.diet || Number(p.prep_minutes) > 0 || (p.served_in || []).length > 0);
+        const word = count === 1 ? (kitchen ? "dish" : "item") : (kitchen ? "dishes" : "items");
+        sub.textContent = count + " " + word;
         sub.hidden = count === 0;
     }
 
@@ -949,6 +955,7 @@ async function renderCart(cartData = null) {
         $("#bill-tax").text(money(totalTax));
         $("#bill-tax-row").prop("hidden", totalTax <= 0);
         $("#bill-items-row").prop("hidden", totalTax <= 0);
+        $("#bill").toggleClass("bill-plain", totalTax <= 0);
         $("#bill-total").text(money(totalPrice));
         $("#bill").prop("hidden", false);
 
