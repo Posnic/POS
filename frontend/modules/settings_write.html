@@ -83,10 +83,25 @@
                                     onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i>
                                     <lang class="lang_module_messaging">Messaging</lang>
                                 </a>
-                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kiosk-tab"
-                                    data-toggle="pill" href="#v-pills-kiosk" role="tab" aria-controls="v-pills-kiosk"
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-onlineordering-tab"
+                                    data-toggle="pill" href="#v-pills-onlineordering" role="tab" aria-controls="v-pills-onlineordering"
+                                    aria-selected="false"><i class="feather icon-shopping-bag mr-2"></i>
+                                    <lang class="lang_module_online_ordering">Online Ordering</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-kioskmachine-tab"
+                                    data-toggle="pill" href="#v-pills-kioskmachine" role="tab" aria-controls="v-pills-kioskmachine"
                                     aria-selected="false"><i class="feather icon-monitor mr-2"></i>
-                                    <lang class="lang_module_channels">Sales Channels</lang>
+                                    <lang class="lang_module_kiosk_machine">Kiosk Machine</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-deliverypartners-tab"
+                                    data-toggle="pill" href="#v-pills-deliverypartners" role="tab" aria-controls="v-pills-deliverypartners"
+                                    aria-selected="false"><i class="feather icon-truck mr-2"></i>
+                                    <lang class="lang_module_delivery_partners">Delivery Partners</lang>
+                                </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-webshop-tab"
+                                    data-toggle="pill" href="#v-pills-webshop" role="tab" aria-controls="v-pills-webshop"
+                                    aria-selected="false"><i class="feather icon-globe mr-2"></i>
+                                    <lang class="lang_module_webshop">Webshop</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write" id="v-pills-theme-tab"
                                     data-toggle="pill" href="#v-pills-theme" role="tab" aria-controls="v-pills-theme"
@@ -2951,6 +2966,67 @@
                                     </div>
                                 </div>
                             </div>
+                            <!--
+                                VENUES AND DELIVERY CHARGES LIVE HERE, not under a channel.
+
+                                A hotel you deliver into is reachable from the QR code, the phone and
+                                every aggregator, and a delivery charge is a property of HOW the food
+                                travels rather than of which app the order came through. Both would
+                                have to be copied into the next channel within a month if they sat
+                                inside one. Same reasoning as the serving periods above.
+                            -->
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_partner_venues">Hotels and other venues</lang></h5>
+                                </div>
+                                <div class="card-body loader-view-saleschannels">
+                                    <!--
+                                        Hotels, offices, anywhere that is not this shop's own floor.
+
+                                        The code is what a printed QR carries
+                                        (/order/AZ100/venue/RC/123), so it has to outlive a
+                                        rename of the building. Markup and commission are two
+                                        numbers on purpose: a shop may mark up 12 and pay 10.
+                                    -->
+                                    <h6 class="mb-1"><lang class="lang_partner_venues">Hotels and other venues</lang></h6>
+                                    <small class="form-text text-muted mb-2">
+                                        <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
+                                    </small>
+                                    <div id="partner_venue_rows"></div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
+                                        <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
+                                    </button>
+
+                                    <div class="text-right mt-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
+                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h5>
+                                </div>
+                                <div class="card-body loader-view-saleschannels">
+                                    <!--
+                                        Fees, keyed by how the food gets there rather than by
+                                        which app the order came through. A delivery charge is
+                                        not a property of "online".
+                                    -->
+                                    <h6 class="mb-1"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h6>
+                                    <small class="form-text text-muted mb-2">
+                                        <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
+                                    </small>
+                                    <div id="channel_charge_rows"></div>
+
+                                    <div class="text-right mt-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
+                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Modifier groups (V2): the menu's option sets - Toppings, Spice level. -->
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
@@ -4846,214 +4922,44 @@
                         <!-- General Tab End -->
 
                         <!-- Kiosk Setting Tab Start -->
-                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-kiosk"
-                            role="tabpanel" aria-labelledby="v-pills-qr-tab">
+                        <!-- Online Ordering -->
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-onlineordering"
+                            role="tabpanel" aria-labelledby="v-pills-onlineordering-tab">
                             <div class="order-box">
                                 <div class="col-md-12 col-lg-12 col-xl-12">
                                     <div class="card m-b-30">
                                         <div class="card-header">
-                                            <h5 class="card-title"><lang class="lang_channels_settings">Channels and ordering</lang></h5>
+                                            <h5 class="card-title"><lang class="lang_module_online_ordering">Online Ordering</lang></h5>
                                         </div>
                                         <div class="card-body">
-                                            <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"
-                                                role="tablist">
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="channels-tab-line" data-toggle="tab"
-                                                        href="#channels-line" role="tab"
-                                                        aria-controls="channels-line" aria-selected="false"><i class="feather icon-share-2 mr-1"></i><lang class="lang_channels_and_products">Channels and products</lang></a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a class="nav-link active" id="kioskaccount-tab-line"
-                                                        data-toggle="tab" href="#kioskaccount-line" role="tab"
-                                                        aria-controls="kioskaccount-line"
+                                                    <a class="nav-link active" id="kioskaccount-tab-line" data-toggle="tab"
+                                                        href="#kioskaccount-line" role="tab" aria-controls="kioskaccount-line"
                                                         aria-selected="true"><i class="feather icon-shopping-bag mr-1"></i><lang class="lang_storefront">Storefront</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskimage-tab-line" data-toggle="tab"
-                                                        href="#kioskimage-line" role="tab"
-                                                        aria-controls="kioskimage-line" aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_branding">Branding</lang></a>
+                                                        href="#kioskimage-line" role="tab" aria-controls="kioskimage-line"
+                                                        aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_branding">Branding</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskpayment-tab-line" data-toggle="tab"
-                                                        href="#kioskpayment-line" role="tab"
-                                                        aria-controls="kioskpayment-line"
+                                                        href="#kioskpayment-line" role="tab" aria-controls="kioskpayment-line"
                                                         aria-selected="false"><i class="feather icon-credit-card mr-1"></i><lang class="lang_payment_2">Payment</lang></a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="kioskprint-tab-line" data-toggle="tab"
-                                                        href="#kioskprint-line" role="tab"
-                                                        aria-controls="kioskprint-line" aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_kiosk_printer">Kiosk printer</lang></a>
+                                                    <a class="nav-link" id="onlineorders-tab-line" data-toggle="tab"
+                                                        href="#onlineorders-line" role="tab" aria-controls="onlineorders-line"
+                                                        aria-selected="false"><i class="feather icon-bell mr-1"></i><lang class="lang_order_approval">New online orders</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="onlineproducts-tab-line" data-toggle="tab"
+                                                        href="#onlineproducts-line" role="tab" aria-controls="onlineproducts-line"
+                                                        aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
                                                 </li>
                                             </ul>
-                                            <div class="tab-content" id="defaultTabContentLine">
-                                                <div class="tab-pane fade" id="channels-line" role="tabpanel"
-                                                    aria-labelledby="channels-tab-line">
-                                                    <form class="validate" method="POST" name="sales_channels_form"
-                                                        id="sales_channels_form">
-                                                        <div class="card border m-b-30">
-                                                            <div class="card-body loader-view-saleschannels">
-                                                                <h6 class="mb-2"><lang class="lang_channels_in_use">Ways this shop takes orders</lang></h6>
-                                                                <div class="form-row" id="sales_channels_list"></div>
-
-                                                                <hr class="my-3">
-
-
-                                                                <h6 class="mb-1"><lang class="lang_default_branch">Default branch</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_default_branch_help">The store address a plain /order link means. Leave empty if you have one branch.</lang>
-                                                                </small>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-md-4">
-                                                                        <label for="online_ordering_default_store"><lang class="lang_default_store_address">Store address</lang></label>
-                                                                        <input type="text" class="form-control border-control" id="online_ordering_default_store"
-                                                                            autocomplete="off"
-                                                                            pattern="^[A-Za-z0-9]{3,6}$" maxlength="6">
-                                                                    </div>
-                                                                </div>
-
-                                                                <hr class="my-3">
-
-                                                                <h6 class="mb-1"><lang class="lang_channel_partners">Partners</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
-                                                                </small>
-                                                                <!--
-                                                                    The platforms most shops mean, one tap each.
-
-                                                                    Typing "Swiggy" by hand is how one shop ends up
-                                                                    with Swiggy, swiggy and Swigy as three rows of
-                                                                    the same report, each holding a third of the
-                                                                    month. A preset carries the id the server already
-                                                                    knows and the channel it belongs to, so the only
-                                                                    thing left to type is the rate that was agreed.
-                                                                -->
-                                                                <div class="mb-2" id="partner_presets"></div>
-
-                                                                <div id="sales_channel_partner_rows"></div>
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
-                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add another</lang>
-                                                                </button>
-
-                                                                <hr class="my-3">
-
-                                                                <!--
-                                                                    Hotels, offices, anywhere that is not this shop's own floor.
-
-                                                                    The code is what a printed QR carries
-                                                                    (/order/AZ100/venue/RC/123), so it has to outlive a
-                                                                    rename of the building. Markup and commission are two
-                                                                    numbers on purpose: a shop may mark up 12 and pay 10.
-                                                                -->
-                                                                <h6 class="mb-1"><lang class="lang_partner_venues">Hotels and other venues</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
-                                                                </small>
-                                                                <div id="partner_venue_rows"></div>
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
-                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
-                                                                </button>
-
-                                                                <hr class="my-3">
-
-                                                                <!--
-                                                                    Fees, keyed by how the food gets there rather than by
-                                                                    which app the order came through. A delivery charge is
-                                                                    not a property of "online".
-                                                                -->
-                                                                <h6 class="mb-1"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
-                                                                </small>
-                                                                <div id="channel_charge_rows"></div>
-
-                                                                <hr class="my-3">
-
-                                                                <!--
-                                                                    WHAT EACH CHANNEL SELLS.
-
-                                                                    An item is on every channel unless a shop says
-                                                                    otherwise, so this screen is for recording the
-                                                                    exceptions - and doing it in bulk, because a shop
-                                                                    with four hundred lines is never going to open
-                                                                    four hundred item pages to keep cigarettes off
-                                                                    Swiggy.
-                                                                -->
-                                                                <h6 class="mb-1"><lang class="lang_products_on_channel">What each channel sells</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_products_on_channel_help">Everything is sold everywhere unless you say otherwise. Pick a channel, find the lines that are different, and switch them off.</lang>
-                                                                </small>
-
-                                                                <div class="form-row align-items-end">
-                                                                    <div class="form-group col-md-3">
-                                                                        <label for="channel_items_channel"><lang class="lang_channel">Channel</lang></label>
-                                                                        <select class="form-control form-control-sm" id="channel_items_channel"></select>
-                                                                    </div>
-                                                                    <div class="form-group col-md-3">
-                                                                        <label for="channel_items_category"><lang class="lang_category">Category</lang></label>
-                                                                        <select class="form-control form-control-sm" id="channel_items_category">
-                                                                            <option value=""><lang class="lang_report_all">All</lang></option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group col-md-4">
-                                                                        <label for="channel_items_search"><lang class="lang_search">Search</lang></label>
-                                                                        <input type="search" class="form-control form-control-sm" id="channel_items_search"
-                                                                            placeholder="Part of a name" data-t-placeholder="lang_part_of_a_name">
-                                                                    </div>
-                                                                    <div class="form-group col-md-2">
-                                                                        <button type="button" class="btn btn-primary-rgba btn-sm btn-block" id="channel_items_find">
-                                                                            <lang class="lang_show_matching">Show</lang>
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div id="channel_items_wrap" style="display:none;">
-                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                        <div class="custom-control custom-checkbox">
-                                                                            <input type="checkbox" class="custom-control-input" id="channel_items_all">
-                                                                            <label class="custom-control-label small" for="channel_items_all">
-                                                                                <lang class="lang_select_all">Select all</lang>
-                                                                            </label>
-                                                                        </div>
-                                                                        <div>
-                                                                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" id="channel_items_off">
-                                                                                <lang class="lang_remove_from_channel">Do not sell here</lang>
-                                                                            </button>
-                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="channel_items_on">
-                                                                                <lang class="lang_add_to_channel">Sell here</lang>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="table-responsive" style="max-height:340px;overflow-y:auto;">
-                                                                        <table class="table table-sm table-borderless mb-0">
-                                                                            <tbody id="channel_items_rows"></tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                    <p class="small text-muted mt-2 mb-0" id="channel_items_count"></p>
-                                                                </div>
-
-                                                                <hr class="my-3">
-
-                                                                <h6 class="mb-1"><lang class="lang_order_approval">New online orders</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_order_approval_help">Send straight to the kitchen, or hold each order until somebody accepts it. Holding raises an alarm on the till so a waiting order is not missed.</lang>
-                                                                </small>
-                                                                <div class="form-row">
-                                                                    <div class="form-group col-md-5">
-                                                                        <label for="online_order_approval"><lang class="lang_when_an_order_arrives">When an order arrives</lang></label>
-                                                                        <select class="form-control border-control" id="online_order_approval">
-                                                                            <option value="auto"><lang class="lang_order_approval_auto">Send to the kitchen straight away</lang></option>
-                                                                            <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-footer text-right">
-                                                            <button type="submit" class="btn btn-outline-primary"><i
-                                                                    class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang></button>
-                                                        </div>
-                                                    </form>
-                                                </div>
+                                            <div class="tab-content">
                                                 <div class="tab-pane fade show active" id="kioskaccount-line"
                                                     role="tabpanel" aria-labelledby="kioskaccount-tab-line">
                                                     <form class="validate" method="POST" name="kioskaccount_form"
@@ -5294,7 +5200,85 @@
                                                         </div>
                                                     </form>
                                                 </div>
-                                                <div class="tab-pane fade" id="kioskprint-line" role="tabpanel"
+                                                <div class="tab-pane fade" id="onlineorders-line" role="tabpanel"
+                                                    aria-labelledby="onlineorders-tab-line">
+                                                    <form class="validate" method="POST" name="online_orders_form" id="online_orders_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-body loader-view-saleschannels">
+                                                                <h6 class="mb-1"><lang class="lang_default_branch">Default branch</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_default_branch_help">The store address a plain /order link means. Leave empty if you have one branch.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-4">
+                                                                        <label for="online_ordering_default_store"><lang class="lang_default_store_address">Store address</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="online_ordering_default_store"
+                                                                            autocomplete="off"
+                                                                            pattern="^[A-Za-z0-9]{3,6}$" maxlength="6">
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <h6 class="mb-1"><lang class="lang_order_approval">New online orders</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_order_approval_help">Send straight to the kitchen, or hold each order until somebody accepts it. Holding raises an alarm on the till so a waiting order is not missed.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_approval"><lang class="lang_when_an_order_arrives">When an order arrives</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_approval">
+                                                                            <option value="auto"><lang class="lang_order_approval_auto">Send to the kitchen straight away</lang></option>
+                                                                            <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-footer text-right">
+                                                                <button type="submit" class="btn btn-outline-primary">
+                                                                    <i class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="tab-pane fade" id="onlineproducts-line" role="tabpanel"
+                                                    aria-labelledby="onlineproducts-tab-line">
+                                                    <div class="channel-products-host"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kiosk Machine -->
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-kioskmachine"
+                            role="tabpanel" aria-labelledby="v-pills-kioskmachine-tab">
+                            <div class="order-box">
+                                <div class="col-md-12 col-lg-12 col-xl-12">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title"><lang class="lang_module_kiosk_machine">Kiosk Machine</lang></h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <small class="form-text text-muted mb-3">
+                                                <lang class="lang_kiosk_shares_storefront">The store id, images, payment methods and opening hours are the same ones online ordering uses, so they are set once under Online Ordering. Only the printer is the machine's own.</lang>
+                                            </small>
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" id="kioskprint-tab-line" data-toggle="tab"
+                                                        href="#kioskprint-line" role="tab" aria-controls="kioskprint-line"
+                                                        aria-selected="true"><i class="feather icon-printer mr-1"></i><lang class="lang_kiosk_printer">Kiosk printer</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="kioskproducts-tab-line" data-toggle="tab"
+                                                        href="#kioskproducts-line" role="tab" aria-controls="kioskproducts-line"
+                                                        aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="kioskprint-line" role="tabpanel"
                                                     aria-labelledby="kioskprint-tab-line">
                                                     <!--
                                                         The ONE genuinely
@@ -5358,6 +5342,10 @@
                                                         </div>
                                                     </form>
                                                 </div>
+                                                <div class="tab-pane fade" id="kioskproducts-line" role="tabpanel"
+                                                    aria-labelledby="kioskproducts-tab-line">
+                                                    <div class="channel-products-host"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -5365,7 +5353,200 @@
                             </div>
                         </div>
 
-                        <!-- Kiosk Setting Tab End -->
+                        <!-- Delivery Partners -->
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-deliverypartners"
+                            role="tabpanel" aria-labelledby="v-pills-deliverypartners-tab">
+                            <div class="order-box">
+                                <div class="col-md-12 col-lg-12 col-xl-12">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title"><lang class="lang_module_delivery_partners">Delivery Partners</lang></h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" id="deliveryapps-tab-line" data-toggle="tab"
+                                                        href="#deliveryapps-line" role="tab" aria-controls="deliveryapps-line"
+                                                        aria-selected="true"><i class="feather icon-truck mr-1"></i><lang class="lang_delivery_apps">Apps</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="deliveryproducts-tab-line" data-toggle="tab"
+                                                        href="#deliveryproducts-line" role="tab" aria-controls="deliveryproducts-line"
+                                                        aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="deliveryapps-line" role="tabpanel"
+                                                    aria-labelledby="deliveryapps-tab-line">
+                                                    <form class="validate" method="POST" name="delivery_partners_form" id="delivery_partners_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-body loader-view-saleschannels">
+                                                                <h6 class="mb-1"><lang class="lang_channel_partners">Partners</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
+                                                                </small>
+                                                                <!--
+                                                                    The platforms most shops mean, one tap each.
+
+                                                                    Typing "Swiggy" by hand is how one shop ends up
+                                                                    with Swiggy, swiggy and Swigy as three rows of
+                                                                    the same report, each holding a third of the
+                                                                    month. A preset carries the id the server already
+                                                                    knows and the channel it belongs to, so the only
+                                                                    thing left to type is the rate that was agreed.
+                                                                -->
+                                                                <div class="mb-2" id="partner_presets"></div>
+
+                                                                <div id="sales_channel_partner_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add another</lang>
+                                                                </button>
+
+                                                            </div>
+                                                            <div class="card-footer text-right">
+                                                                <button type="submit" class="btn btn-outline-primary">
+                                                                    <i class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="tab-pane fade" id="deliveryproducts-line" role="tabpanel"
+                                                    aria-labelledby="deliveryproducts-tab-line">
+                                                    <div class="channel-products-host"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Webshop -->
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-webshop"
+                            role="tabpanel" aria-labelledby="v-pills-webshop-tab">
+                            <div class="order-box">
+                                <div class="col-md-12 col-lg-12 col-xl-12">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title"><lang class="lang_module_webshop">Webshop</lang></h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" id="webshopapps-tab-line" data-toggle="tab"
+                                                        href="#webshopapps-line" role="tab" aria-controls="webshopapps-line"
+                                                        aria-selected="true"><i class="feather icon-globe mr-1"></i><lang class="lang_webshops">Webshops</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="webshopproducts-tab-line" data-toggle="tab"
+                                                        href="#webshopproducts-line" role="tab" aria-controls="webshopproducts-line"
+                                                        aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="webshopapps-line" role="tabpanel"
+                                                    aria-labelledby="webshopapps-tab-line">
+                                                    <form class="validate" method="POST" name="webshop_partners_form" id="webshop_partners_form">
+                                                        <div class="card border m-b-30">
+                                                            <div class="card-body loader-view-saleschannels">
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_webshop_rows_help">A shop you run yourself - OpenCart, WooCommerce, your own site. The commission is what the platform keeps, so a report can show what you actually earned.</lang>
+                                                                </small>
+                                                                <div id="webshop_partner_rows"></div>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_webshop_partner">
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_webshop">Add webshop</lang>
+                                                                </button>
+                                                            </div>
+                                                            <div class="card-footer text-right">
+                                                                <button type="submit" class="btn btn-outline-primary">
+                                                                    <i class="feather icon-save mr-2"></i><lang class="lang_save_title">Save</lang>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="tab-pane fade" id="webshopproducts-line" role="tabpanel"
+                                                    aria-labelledby="webshopproducts-tab-line">
+                                                    <div class="channel-products-host"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- The products screen, parked. A channel pane borrows it when opened. -->
+                        <div id="channel_products_parking" style="display:none;">
+                            <div id="channel_items_block">
+                                                                <!--
+                                                                    WHAT EACH CHANNEL SELLS.
+
+                                                                    An item is on every channel unless a shop says
+                                                                    otherwise, so this screen is for recording the
+                                                                    exceptions - and doing it in bulk, because a shop
+                                                                    with four hundred lines is never going to open
+                                                                    four hundred item pages to keep cigarettes off
+                                                                    Swiggy.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_products_on_channel">What each channel sells</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_products_on_channel_help">Everything is sold everywhere unless you say otherwise. Pick a channel, find the lines that are different, and switch them off.</lang>
+                                                                </small>
+
+                                                                <div class="form-row align-items-end">
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_channel"><lang class="lang_channel">Channel</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_channel"></select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_category"><lang class="lang_category">Category</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_category">
+                                                                            <option value=""><lang class="lang_report_all">All</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-4">
+                                                                        <label for="channel_items_search"><lang class="lang_search">Search</lang></label>
+                                                                        <input type="search" class="form-control form-control-sm" id="channel_items_search"
+                                                                            placeholder="Part of a name" data-t-placeholder="lang_part_of_a_name">
+                                                                    </div>
+                                                                    <div class="form-group col-md-2">
+                                                                        <button type="button" class="btn btn-primary-rgba btn-sm btn-block" id="channel_items_find">
+                                                                            <lang class="lang_show_matching">Show</lang>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div id="channel_items_wrap" style="display:none;">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <div class="custom-control custom-checkbox">
+                                                                            <input type="checkbox" class="custom-control-input" id="channel_items_all">
+                                                                            <label class="custom-control-label small" for="channel_items_all">
+                                                                                <lang class="lang_select_all">Select all</lang>
+                                                                            </label>
+                                                                        </div>
+                                                                        <div>
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" id="channel_items_off">
+                                                                                <lang class="lang_remove_from_channel">Do not sell here</lang>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="channel_items_on">
+                                                                                <lang class="lang_add_to_channel">Sell here</lang>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="table-responsive" style="max-height:340px;overflow-y:auto;">
+                                                                        <table class="table table-sm table-borderless mb-0">
+                                                                            <tbody id="channel_items_rows"></tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                    <p class="small text-muted mt-2 mb-0" id="channel_items_count"></p>
+                                                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Channel settings end: one pane each, above. -->
 
                         <!-- Theme Settings Tab Start -->
                         <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-theme"
