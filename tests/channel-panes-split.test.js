@@ -406,3 +406,64 @@ test('every settings link in the markup lands on a real page', () => {
     `these links land on Core Settings instead of where they say: ${[...new Set(dangling)].join(', ')}`
   );
 });
+
+test('the pause control shows one state and only the actions that fit it', () => {
+  /*
+   * It used to show four buttons of equal weight at all times - three pause
+   * lengths and a Resume - plus a fifth red one underneath that did the same
+   * thing as "Rest of today". Resume was offered to a shop that was already
+   * accepting, which is a button for undoing something that has not happened.
+   */
+  assert.match(SETTINGS_HTML, /id="kiosk_pause_actions"/, 'the pause actions are not grouped');
+  assert.match(SETTINGS_HTML, /id="kiosk_resume_actions"/, 'the resume action is not grouped');
+
+  const render = SETTINGS_JS.match(/renderPause: function[\s\S]*?\n        \},/);
+  assert.ok(render, 'renderPause is no longer a shape this test can read');
+  assert.match(render[0], /#kiosk_pause_actions'\)\.toggle\(!paused\)/, 'pausing is offered while already paused');
+  assert.match(render[0], /#kiosk_resume_actions'\)\.toggle\(paused\)/, 'resuming is offered to a shop that never stopped');
+
+  /* The duplicate is gone, along with its handler. */
+  assert.doesNotMatch(SETTINGS_HTML, /id="stop_taking_orders"/, 'the duplicate stop button is back');
+  assert.doesNotMatch(
+    SETTINGS_JS,
+    /on\('click', '#stop_taking_orders'/,
+    'a handler waits on the stop button that was removed'
+  );
+});
+
+test('a pause that is not saved yet says so', () => {
+  /*
+   * THE ONE THAT MATTERED.
+   *
+   * A pause is stored with the rest of the form. The old standalone button
+   * announced "Orders stopped for today" in a SUCCESS toast and stored
+   * nothing, so a kitchen under water could read that as done, walk away, and
+   * have orders still arriving. The marker stays on screen instead of fading,
+   * and goes when the form is actually saved.
+   */
+  assert.match(SETTINGS_HTML, /id="kiosk_pause_unsaved"/, 'nothing says a pause is unsaved');
+
+  const render = SETTINGS_JS.match(/renderPause: function[\s\S]*?\n        \},/)[0];
+  assert.match(render, /renderPause: function \(pausedUntil, changed\)/, 'renderPause cannot tell a click from a load');
+  assert.match(render, /#kiosk_pause_unsaved'\)\.toggle\(!!changed\)/, 'the marker does not follow the change');
+
+  /* Every button that changes the pause passes changed = true. */
+  for (const handler of ['.kiosk-pause-btn', '#kiosk_pause_resume']) {
+    const at = SETTINGS_JS.indexOf(`on('click', '${handler}'`);
+    assert.notStrictEqual(at, -1, `no handler for ${handler}`);
+    const body = SETTINGS_JS.slice(at, at + 500);
+    /* Not [^)]* - the argument is often until.toISOString(), whose own
+       bracket ends the class and made this match nothing. */
+    assert.match(
+      body,
+      /renderPause\([\s\S]*?,\s*true\)/,
+      `${handler} changes the pause without saying it is unsaved`
+    );
+  }
+
+  assert.match(
+    SETTINGS_JS,
+    /#kiosk_pause_unsaved'\)\.hide\(\)/,
+    'the marker never clears, so it warns about a pause that was saved'
+  );
+});
