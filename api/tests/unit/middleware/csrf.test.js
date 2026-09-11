@@ -42,7 +42,9 @@ describe('CSRF middleware', () => {
   });
 
   test('does not impose a browser token on an explicit bearer-token client', () => {
-    const req = request({ get: jest.fn((name) => (name === 'authorization' ? 'Bearer token' : undefined)) });
+    const req = request({
+      get: jest.fn((name) => (name === 'authorization' ? 'Bearer token' : undefined)),
+    });
     const next = jest.fn();
     protect(req, response(), next);
     expect(next).toHaveBeenCalled();
