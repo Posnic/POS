@@ -192,6 +192,10 @@ app.use((req, res, next) => {
  * worth resolving.
  */
 const { corsHeaders, isAllowedOrigin } = require('./src/middleware/cors-origins');
+const {
+  protect: csrfProtect,
+  RESPONSE_HEADER: CSRF_RESPONSE_HEADER,
+} = require('./src/middleware/csrf');
 app.use(corsHeaders);
 
 /*
@@ -909,6 +913,12 @@ app.use(
   })
 );
 
+/* Cookie-backed writes need a token that another site cannot read. The
+   frontend learns it from the CORS-exposed response header and reflects it on
+   subsequent unsafe requests; bearer-token and API-key callers are unaffected.
+ */
+app.use(csrfProtect);
+
 // Regular CORS for all other requests.
 // Built per request so the same-origin check can see the Host we were reached
 // on; the static option form only receives the Origin header.
@@ -939,7 +949,7 @@ const buildCorsOptions = (req) => ({
     'X-Branch-Id',
     'kioskkey',
   ],
-  exposedHeaders: ['set-cookie'],
+  exposedHeaders: ['set-cookie', CSRF_RESPONSE_HEADER],
 });
 app.use(cors((req, callback) => callback(null, buildCorsOptions(req))));
 
