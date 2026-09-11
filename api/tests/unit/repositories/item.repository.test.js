@@ -1522,15 +1522,22 @@ describe('ItemRepository', () => {
     };
 
     test('the Restaurant module makes it a restaurant, with a note for the kitchen', async () => {
-      const data = await storefrontFor({ store_id: 'AZ100' }, 'enable');
-      expect(data.store.kind).toBe('restaurant');
-      expect(data.features.notes).toBe(true);
+      /* The Features page saves the switch as the STRING 'true'; older saves
+         hold a boolean; the console's own cache says 'enable'. The first cut
+         read only the cache's word and made every shop a shop. */
+      for (const stored of ['true', true, 'enable', 1]) {
+        const data = await storefrontFor({ store_id: 'AZ100' }, stored);
+        expect(data.store.kind).toBe('restaurant');
+        expect(data.features.notes).toBe(true);
+      }
     });
 
     test('without it the page is told this is a shop', async () => {
-      const data = await storefrontFor({ store_id: 'AZ100' }, 'disable');
-      expect(data.store.kind).toBe('retail');
-      expect(data.features.notes).toBe(false);
+      for (const stored of ['false', false, 'disable', undefined, '']) {
+        const data = await storefrontFor({ store_id: 'AZ100' }, stored);
+        expect(data.store.kind).toBe('retail');
+        expect(data.features.notes).toBe(false);
+      }
     });
 
     test('a shop with no gateway takes payment at the counter', async () => {
