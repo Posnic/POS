@@ -3305,8 +3305,32 @@
 
                                     <div class="form-group" id="ai_key_row" style="max-width:460px; display:none;">
                                         <label for="ai_api_key"><lang class="lang_ai_key">API key</lang></label>
+                                        <!--
+                                            KEY ON FILE.
+
+                                            The key is never sent back to a browser, so this row is the
+                                            only way the page can say one exists. Before it, a saved key
+                                            and no key looked identical: the same empty box every visit,
+                                            with a placeholder as the only tell. Owner: "if AI already
+                                            have value then show some indication... just showing same
+                                            form everytime how user will know?"
+
+                                            While a key is saved the box is hidden. Replace brings it
+                                            back empty; Remove sends the API's clear sentinel, because an
+                                            empty value means "leave the saved credential alone" and
+                                            removal has to be said on purpose.
+                                        -->
+                                        <div id="ai_key_status" class="ai-key-status" style="display:none;">
+                                            <span class="ai-key-badge"><i class="feather icon-check-circle"></i><lang class="lang_ai_key_on_file">A key is saved</lang></span>
+                                            <span class="ai-key-hint"><lang class="lang_ai_key_on_file_hint">It is never shown again, not even to you.</lang></span>
+                                            <span class="ai-key-actions">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="ai_key_replace"><i class="feather icon-edit mr-1"></i><lang class="lang_ai_key_replace">Replace</lang></button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" id="ai_key_remove"><i class="feather icon-x mr-1"></i><lang class="lang_ai_key_remove">Remove</lang></button>
+                                            </span>
+                                        </div>
                                         <input type="password" id="ai_api_key" class="form-control border-control"
                                             autocomplete="new-password" placeholder="Paste the key from your provider" data-t-placeholder="lang_paste_the_key_from_your_provider">
+                                        <a href="javascript:void(0)" id="ai_key_cancel" class="small" style="display:none;"><lang class="lang_ai_key_keep">Keep the saved key</lang></a>
                                     </div>
 
                                     <!-- How to get a key.
