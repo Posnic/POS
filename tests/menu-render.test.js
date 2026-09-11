@@ -471,3 +471,59 @@ test('a photo beats the icon rather than sitting beside it', async () => {
   assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
   assert.strictEqual(document.getElementById('sheet-icon').hidden, true);
 });
+
+test('a dish carries every photo, not the cover plus broken icons', () => {
+  /*
+   * THE BUG, AS THE OWNER SAW IT: "second images not loaded properly".
+   *
+   * `multi_image` is an array of OBJECTS - { name, cover } - and has been
+   * since the item form learned to take a set. The first version of the menu's
+   * photo list mapped it with String(src), which turns an object into the
+   * literal text "[object Object]". The cover came through because that one IS
+   * a string, so every dish showed its first photo and a broken icon for each
+   * of the rest.
+   *
+   * Nothing failed. The API answered 200 with a list of valid-looking strings;
+   * only a browser trying to fetch one could tell.
+   */
+  const { photoList } = require('../api/src/utils/online-ordering');
+
+  assert.deepStrictEqual(
+    photoList({ image: 'a.jpg', multi_image: [{ name: 'a.jpg', cover: 'yes' }, { name: 'b.jpg' }] }),
+    ['a.jpg', 'b.jpg'],
+    'the object shape multi_image actually has is not read'
+  );
+
+  /* Old rows carry bare strings; both shapes exist in the wild. */
+  assert.deepStrictEqual(photoList({ image: 'a.jpg', multi_image: ['b.jpg'] }), ['a.jpg', 'b.jpg']);
+
+  /* The cover is usually also the first of the set - one photo, not a
+     two-photo carousel of the same picture. */
+  assert.deepStrictEqual(photoList({ image: 'a.jpg', multi_image: [{ name: 'a.jpg' }] }), ['a.jpg']);
+
+  assert.deepStrictEqual(photoList({}), [], 'a dish with no photo gets an empty list, not [""]');
+
+  /* Nothing may come back that a browser cannot fetch. */
+  const mixed = photoList({ image: 'a.jpg', multi_image: [{ cover: 'yes' }, null, { name: '  ' }, { name: 'c.png' }] });
+  assert.ok(
+    mixed.every((src) => typeof src === 'string' && src.trim() && !src.includes('[object')),
+    `photoList produced something unfetchable: ${JSON.stringify(mixed)}`
+  );
+  assert.deepStrictEqual(mixed, ['a.jpg', 'c.png']);
+});
+
+test('the sheet can open a photo full size, and close it again', () => {
+  /* Owner: "if i click alone image lets show original big image. and close
+     button." The strip crops to one band so the sheet reads as a list; that
+     is wrong for deciding, so the whole picture is a tap away. */
+  const html = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'menu', 'menu.js'), 'utf8');
+
+  assert.match(html, /id="viewer"/, 'there is nothing to show a photo full size in');
+  assert.match(html, /id="viewer-close"/, 'the full size photo has no way out');
+  assert.match(html, /object-fit: contain/, 'the opened photo is cropped like the strip it came from');
+
+  assert.match(js, /function openViewer/, 'nothing opens the viewer');
+  assert.match(js, /viewer-close.*addEventListener|addEventListener\("click", closeViewer\)/s,
+    'the close button is not wired');
+});

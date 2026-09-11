@@ -89,6 +89,7 @@ const TRACKED_FIELDS = [
  * Handles all database operations for items
  * Separates data access logic from business logic
  */
+
 class ItemRepository extends BaseModel {
   constructor() {
     super('items');
@@ -3869,13 +3870,7 @@ class ItemRepository extends BaseModel {
            * alone: a gallery belongs where somebody has stopped to look, not
            * in a list being scanned.
            */
-          photos: [
-            ...new Set(
-              [row.image, ...(Array.isArray(row.multi_image) ? row.multi_image : [])]
-                .map((src) => String(src || '').trim())
-                .filter(Boolean)
-            ),
-          ],
+          photos: onlineOrdering.photoList(row),
           price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
           diet: String(row.diet || ''),
           /*
