@@ -28,8 +28,10 @@ describe('the hostnames a shop answers to', () => {
     /* A reseller's customer is at cusxyz.xbill.in. The posnic.io name stays,
        because support needs a name that does not depend on whose customer this
        is, and because taking it away would break links already sent. */
-    expect(hostsFor({ subdomain: 'cusxyz' }, { SHOP_BASE_DOMAINS: 'posnic.io,xbill.in' }))
-      .toEqual(['cusxyz.posnic.io', 'cusxyz.xbill.in']);
+    expect(hostsFor({ subdomain: 'cusxyz' }, { SHOP_BASE_DOMAINS: 'posnic.io,xbill.in' })).toEqual([
+      'cusxyz.posnic.io',
+      'cusxyz.xbill.in',
+    ]);
   });
 
   it('takes an explicit list first, and a customer domain last', () => {
@@ -48,17 +50,24 @@ describe('the hostnames a shop answers to', () => {
      * up, so anything stored differently is simply never found.
      */
     const hosts = hostsFor(
-      { subdomain: 'cusxyz', hosts: ['  CusXyz.Xbill.IN ', 'cusxyz.xbill.in'], webDomain: 'Shop.ABC.com:443' },
+      {
+        subdomain: 'cusxyz',
+        hosts: ['  CusXyz.Xbill.IN ', 'cusxyz.xbill.in'],
+        webDomain: 'Shop.ABC.com:443',
+      },
       { SHOP_BASE_DOMAINS: 'xbill.in' }
     );
     expect(hosts).toEqual(['cusxyz.xbill.in', 'shop.abc.com']);
   });
 
   it('leads with a dot on a base domain without producing a double dot', () => {
-    expect(baseDomains({ SHOP_BASE_DOMAINS: '.xbill.in, .pluskb.com' }))
-      .toEqual(['xbill.in', 'pluskb.com']);
-    expect(hostsFor({ subdomain: 'cusxyz' }, { SHOP_BASE_DOMAINS: '.xbill.in' }))
-      .toEqual(['cusxyz.xbill.in']);
+    expect(baseDomains({ SHOP_BASE_DOMAINS: '.xbill.in, .pluskb.com' })).toEqual([
+      'xbill.in',
+      'pluskb.com',
+    ]);
+    expect(hostsFor({ subdomain: 'cusxyz' }, { SHOP_BASE_DOMAINS: '.xbill.in' })).toEqual([
+      'cusxyz.xbill.in',
+    ]);
   });
 
   it('gives a nameless tenant no names, rather than a guess', () => {
@@ -73,7 +82,11 @@ describe('the hostnames a shop answers to', () => {
   it('ignores empty entries instead of registering the empty string', () => {
     /* `next.set('', entry)` would be matched by any request whose Host header
        we failed to parse. */
-    expect(hostsFor({ subdomain: 'cusxyz', hosts: ['', '   ', null], webDomain: '' }, { SHOP_BASE_DOMAINS: 'xbill.in' }))
-      .toEqual(['cusxyz.xbill.in']);
+    expect(
+      hostsFor(
+        { subdomain: 'cusxyz', hosts: ['', '   ', null], webDomain: '' },
+        { SHOP_BASE_DOMAINS: 'xbill.in' }
+      )
+    ).toEqual(['cusxyz.xbill.in']);
   });
 });
