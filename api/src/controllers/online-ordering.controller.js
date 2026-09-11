@@ -17,7 +17,18 @@
  * first client's history.
  */
 
-const itemService = require('../services/item.service');
+/*
+ * ItemService is a CLASS, not a ready-made instance.
+ *
+ * sale.service.js next door exports a plain object, so `salesService.foo()`
+ * works straight off the require. This one does not, and requiring it the same
+ * way makes every method `undefined`: the storefront, the menu and the default
+ * branch lookup all became "itemService.defaultStoreId is not a function" the
+ * moment a real request arrived. The unit tests never saw it because they mock
+ * the service, so the shape only shows up in production.
+ */
+const ItemService = require('../services/item.service');
+const itemService = new ItemService();
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 
