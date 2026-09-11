@@ -752,3 +752,20 @@ test('the mic gives way to the clear button once there is something to clear', a
   box.dispatchEvent(new window.Event('input', { bubbles: true }));
   assert.strictEqual(mic.hidden, false, 'the mic did not come back');
 });
+
+test('searching takes the shop name down and keeps the count to one line', () => {
+  /*
+   * Owner, phone screenshot: the name and "31 items" still up with the
+   * keyboard open, and "2 dishes found" a whole screen tall between the box
+   * and the first row. The hide rule named .head, a class nothing has; the
+   * count wore the loading state's 64px padding.
+   */
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.match(html, /body\.searching \.masthead/, 'the shop name stays up while searching');
+  assert.ok(!/body\.searching \.head\b/.test(html), 'the hide rule names a class nothing has');
+  assert.match(html, /id="result-count"\s+class="result-count"/, 'the count wears the loading state');
+  const rule = html.match(/\.result-count\s*\{([^}]*)\}/);
+  assert.ok(rule, 'no rule for the count');
+  assert.match(rule[1], /padding:\s*6px 4px 2px/, 'the count is not tight under the box');
+  assert.match(html, /\.results\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, 'a wide screen gets one column of results');
+});

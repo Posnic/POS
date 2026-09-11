@@ -405,8 +405,12 @@
         with the keyboard open they are the difference between two results
         and eight.
       */
-      body.searching .head,
+      /* .masthead, which is the class the header actually has. This said
+         .head, which nothing has, so the shop's name and count stayed on a
+         phone whose keyboard had already taken half the screen. */
+      body.searching .masthead,
       body.searching .cats,
+      body.searching .cats-rail,
       body.searching .tools {
         display: none;
       }
@@ -421,9 +425,45 @@
 
       /* ------------------------------------------------------ result rows */
 
+      /*
+        "2 dishes found", tight under the box.
+
+        This wore the loading state's class - 64px of padding above and
+        below, centred - so the first result sat a whole screen down on a
+        phone. It is one quiet line now, and the rows start right under it.
+      */
+      .result-count {
+        margin: 0;
+        padding: 6px 4px 2px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        text-align: left;
+      }
+
+      .result-count strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        margin-bottom: 2px;
+      }
+
       .results {
         display: flex;
         flex-direction: column;
+      }
+
+      /* Room for two columns of rows on a tablet or a laptop; on a phone
+         the keyboard has half the screen and one column reads faster. */
+      @media (min-width: 720px) {
+        .results {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: 24px;
+        }
+
+        .result:last-child {
+          border-bottom: 1px solid var(--line);
+        }
       }
 
       .result {
@@ -1544,7 +1584,7 @@
              a sighted reader sees the list change, and this is the equivalent. -->
         <p
           id="result-count"
-          class="state"
+          class="result-count"
           role="status"
           aria-live="polite"
           hidden
