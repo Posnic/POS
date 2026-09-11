@@ -888,7 +888,11 @@ class InstallService {
       module_marketing_enable: false,
       module_messaging_enable: false,
       module_channels_enable: false,
-      module_channels_kiosk_enable: false,
+      module_online_ordering_enable: false,
+      module_kiosk_enable: false,
+      module_captain_enable: false,
+      module_delivery_partners_enable: false,
+      module_webshop_enable: false,
       module_cashbook_enable: false,
 
       /*

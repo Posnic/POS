@@ -580,7 +580,11 @@ PosnicPro.settings = {
                         module_marketing_enable: response.data['module_marketing_enable'] !== false,
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
                         module_channels_enable: response.data['module_channels_enable'] !== false,
-                        module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
+                        module_online_ordering_enable: response.data['module_online_ordering_enable'] !== false,
+                        module_kiosk_enable: response.data['module_kiosk_enable'] !== false,
+                        module_captain_enable: response.data['module_captain_enable'] !== false,
+                        module_delivery_partners_enable: response.data['module_delivery_partners_enable'] !== false,
+                        module_webshop_enable: response.data['module_webshop_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
                         module_demo_data_enable: response.data['module_demo_data_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
@@ -853,8 +857,11 @@ PosnicPro.settings = {
                 $('#module_credit_enable').prop('checked', data.module_credit_enable !== false);
                 $('#module_marketing_enable').prop('checked', data.module_marketing_enable !== false);
                 $('#module_messaging_enable').prop('checked', data.module_messaging_enable !== false);
-                $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
-                $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
+                $('#module_online_ordering_enable').prop('checked', data.module_online_ordering_enable !== false);
+                $('#module_kiosk_enable').prop('checked', data.module_kiosk_enable !== false);
+                $('#module_captain_enable').prop('checked', data.module_captain_enable !== false);
+                $('#module_delivery_partners_enable').prop('checked', data.module_delivery_partners_enable !== false);
+                $('#module_webshop_enable').prop('checked', data.module_webshop_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
                 $('#module_demo_data_enable').prop('checked', data.module_demo_data_enable !== false);
                 /* What it was BEFORE anybody touched it. Turning demo data
@@ -883,7 +890,11 @@ PosnicPro.settings = {
                     module_marketing_enable: data.module_marketing_enable !== false,
                     module_messaging_enable: data.module_messaging_enable !== false,
                     module_channels_enable: data.module_channels_enable !== false,
-                    module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
+                    module_online_ordering_enable: data.module_online_ordering_enable !== false,
+                    module_kiosk_enable: data.module_kiosk_enable !== false,
+                    module_captain_enable: data.module_captain_enable !== false,
+                    module_delivery_partners_enable: data.module_delivery_partners_enable !== false,
+                    module_webshop_enable: data.module_webshop_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
                     module_demo_data_enable: data.module_demo_data_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
@@ -1781,7 +1792,12 @@ if ($wrapper.length) {
         'staff_shifts_enable', 'staff_tips_enable', 'staff_roster_enable',
         'cash_register_enable', 'till_lock_enable',
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
-        'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
+        'module_messaging_enable',
+        'module_online_ordering_enable', 'module_kiosk_enable', 'module_captain_enable',
+        'module_delivery_partners_enable', 'module_webshop_enable',
+        /* Derived from the five above, but still saved: the reports that span
+           channels read it. */
+        'module_channels_enable',
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
         'module_demo_data_enable',
         'quick_sale_enable',
@@ -1959,8 +1975,14 @@ if ($wrapper.length) {
                 module_credit_enable: $('#module_credit_enable').is(':checked') ? 'true' : 'false',
                 module_marketing_enable: $('#module_marketing_enable').is(':checked') ? 'true' : 'false',
                 module_messaging_enable: $('#module_messaging_enable').is(':checked') ? 'true' : 'false',
-                module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
-                module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
+                /* Derived, not switched: on when the shop uses any channel
+                   at all. The reports that span channels read it. */
+                module_channels_enable: ($('#module_online_ordering_enable').is(':checked') || $('#module_kiosk_enable').is(':checked') || $('#module_captain_enable').is(':checked') || $('#module_delivery_partners_enable').is(':checked') || $('#module_webshop_enable').is(':checked')) ? 'true' : 'false',
+                module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked') ? 'true' : 'false',
+                module_kiosk_enable: $('#module_kiosk_enable').is(':checked') ? 'true' : 'false',
+                module_captain_enable: $('#module_captain_enable').is(':checked') ? 'true' : 'false',
+                module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked') ? 'true' : 'false',
+                module_webshop_enable: $('#module_webshop_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
                 module_demo_data_enable: $('#module_demo_data_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
@@ -2082,8 +2104,12 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_credit_enable: $('#module_credit_enable').is(':checked'),
                     module_marketing_enable: $('#module_marketing_enable').is(':checked'),
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
-                    module_channels_enable: $('#module_channels_enable').is(':checked'),
-                    module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
+                    module_channels_enable: $('#module_online_ordering_enable').is(':checked') || $('#module_kiosk_enable').is(':checked') || $('#module_captain_enable').is(':checked') || $('#module_delivery_partners_enable').is(':checked') || $('#module_webshop_enable').is(':checked'),
+                    module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked'),
+                    module_kiosk_enable: $('#module_kiosk_enable').is(':checked'),
+                    module_captain_enable: $('#module_captain_enable').is(':checked'),
+                    module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked'),
+                    module_webshop_enable: $('#module_webshop_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
                     module_demo_data_enable: $('#module_demo_data_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
@@ -5495,7 +5521,11 @@ PosnicPro.features = {
         ['module_credit_enable', 'Customer credit', 'Sell on account and settle later.'],
         ['module_marketing_enable', 'Marketing', 'Campaigns, coupons and customer pricing.'],
         ['module_messaging_enable', 'Messaging', 'Receipts and notices by WhatsApp or SMS.'],
-        ['module_channels_enable', 'Sales channels', 'Kiosk, QR ordering and online lists.'],
+        ['module_online_ordering_enable', 'Online ordering', 'A QR code or a link customers open on their phone.'],
+        ['module_kiosk_enable', 'Kiosk machine', 'A self-service terminal standing in your shop.'],
+        ['module_captain_enable', 'Captain app', 'Staff taking orders at the table on a phone.'],
+        ['module_delivery_partners_enable', 'Delivery partners', 'Swiggy, Zomato and the rest, with what each keeps.'],
+        ['module_webshop_enable', 'Webshop', 'An online shop of your own sending orders here.'],
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
@@ -6730,18 +6760,74 @@ PosnicPro.settings.featureInfo = {
             'It offers to send at the end of each sale'
         ]
     },
-    module_channels_enable: {
-        tagline: 'Let customers order themselves - kiosk, QR menu, or a public list.',
-        about: 'Selling without a cashier standing at the screen. A kiosk authenticates with its own key rather than a login, so a tablet on the counter can take orders without holding a staff account.',
+    module_online_ordering_enable: {
+        tagline: 'A QR code on the table, or a link customers open on their phone.',
+        about: 'Your own storefront, served by your own till, at your own address. Customers read the menu and order from it; the order arrives in the list your staff already work from. Print a code for a table, or for a hotel room across the road that pays its own agreed price.',
         benefits: [
-            'A kiosk signs in with its own key, never a staff password',
-            'QR ordering from the table, into the same sale flow',
-            'Orders land in the list your staff already work from'
+            'Your menu and your prices, with no commission to anybody',
+            'Open and close it on a schedule, or pause it in one tap on a busy night',
+            'Hold each order for approval, with an alarm so a waiting one is not missed'
         ],
         how: [
-            'Turn it on - Channels appears under settings',
-            'Register the device and give it its key',
-            'Point a tablet or a QR code at it and take orders'
+            'Turn it on, then set a short store address under Channels',
+            'Print the code - one per table, or one for the window',
+            'Decide whether orders go straight to the kitchen or wait for a person'
+        ]
+    },
+    module_kiosk_enable: {
+        tagline: 'A self-service machine standing in your shop.',
+        about: 'A terminal a customer uses themselves, showing the same storefront as your online ordering with its own kitchen printer behind it. It signs in with the installation key rather than a staff password, so a machine on the counter never holds somebody login.',
+        benefits: [
+            'The machine signs in with its own key, never a staff password',
+            'Same menu and prices as everywhere else, kept in one place',
+            'Its own printer, so tickets go to the right kitchen'
+        ],
+        how: [
+            'Turn on Online Ordering first - the machine shows that storefront',
+            'Turn this on and choose the printer the machine should use',
+            'Stand the machine up and point it at your store address'
+        ]
+    },
+    module_captain_enable: {
+        tagline: 'Your staff taking orders at the table, on a phone.',
+        about: 'The captain app runs on a phone your waiters carry. They take the order at the table and it reaches the kitchen without anybody walking to the till, which is the walk that loses a table its starter.',
+        benefits: [
+            'The order reaches the kitchen from where the customer is sitting',
+            'No queue at the one till during a rush',
+            'Tables and covers recorded as the order is taken'
+        ],
+        how: [
+            'Turn it on and set up your tables under Restaurant',
+            'Install the app on the phones your staff carry',
+            'Point it at this shop and sign each waiter in'
+        ]
+    },
+    module_delivery_partners_enable: {
+        tagline: 'Swiggy, Zomato and the rest, with what each one keeps.',
+        about: 'Orders that arrive through somebody else app. Recording the commission is the point: a month that looks like ninety thousand through partners is sixty-seven and a half once their cut is out, and a shop planning on the first figure is planning on money it never had.',
+        benefits: [
+            'One row per partner, so a new aggregator is never a software update',
+            'The rate is stored on each order, so last month report cannot change',
+            'A report showing what you actually earned, not what was rung up'
+        ],
+        how: [
+            'Turn it on and add each partner with the rate you agreed',
+            'Keep taking their orders however you take them today',
+            'Read what you owe under Reports, Money, Commission owed'
+        ]
+    },
+    module_webshop_enable: {
+        tagline: 'An online shop of your own, sending its orders here.',
+        about: 'A webshop you run yourself - OpenCart, WooCommerce - handing its orders to this till so stock and takings stay in one place instead of two systems that disagree by Friday.',
+        benefits: [
+            'One stock figure, not one in the shop and another on the website',
+            'Web orders in the same list as everything else',
+            'Reports that count the website beside the counter'
+        ],
+        how: [
+            'Turn it on and add your shop under Channels',
+            'Connect it under Integrations, where the keys live',
+            'Check the first order lands before you announce it'
         ]
     },
     module_cashbook_enable: {
@@ -7090,7 +7176,20 @@ PosnicPro.settings.FEATURE_HOME = {
     module_credit_enable: ['credit', 'Customer Credit'],
     module_marketing_enable: ['marketingmodule', 'Marketing'],
     module_messaging_enable: ['messagingmodule', 'Messaging'],
-    module_channels_enable: ['kiosk', 'Sales Channels'],
+    /*
+     * All five point at the one channels page for now.
+     *
+     * The Features page is split; the settings pages behind it are not, yet.
+     * Pointing a switch at a section that does not exist is worse than
+     * pointing it somewhere honest: openSection falls back to Core Settings
+     * for a key it does not know, so the Configure link would quietly take
+     * somebody to the wrong screen with no sign anything was wrong.
+     */
+    module_online_ordering_enable: ['kiosk', 'Online Ordering'],
+    module_kiosk_enable: ['kiosk', 'Kiosk Machine'],
+    module_captain_enable: ['tableorder', 'Captain App'],
+    module_delivery_partners_enable: ['kiosk', 'Delivery Partners'],
+    module_webshop_enable: ['kiosk', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
