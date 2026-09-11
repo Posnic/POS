@@ -3983,13 +3983,39 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * Which branch a storefront request means.
+   *
+   * THE STORE ADDRESS IS THE ONLY WAY IN FROM OUTSIDE, and that is the point.
+   * A branch's raw database id appears in every authenticated response and is
+   * no secret, so accepting one from an anonymous caller would let anybody who
+   * had ever seen an id read a shop that deliberately never opened a channel.
+   *
+   * `branchId` is the staff door beside it. A route may pass it only after it
+   * has established that the caller works for this shop - a signed-in user, or
+   * the installation's own kiosk key. Such a caller is already entitled to
+   * this branch's catalogue; they can read it off the till. Making their shop
+   * publish a PUBLIC store address before the captain app could list a menu
+   * would be a rule protecting nobody from anybody.
+   *
+   * The two are separate parameters rather than one that accepts either,
+   * because then the guard is a property of the CALLER and cannot be lost by a
+   * value turning out to look like the other kind.
+   */
+  async _storefrontBranch({ storeId, branchId }) {
+    const branches = await this.getCollection('branches');
+    if (branchId) {
+      const selector = ObjectId.isValid(String(branchId))
+        ? { _id: new ObjectId(String(branchId)) }
+        : { 'online_ordering.store_id': String(branchId) };
+      return branches.findOne(selector);
+    }
+    return branches.findOne({ 'online_ordering.store_id': storeId });
+  }
+
   async storefront(params = {}) {
-    const storeId = params.storeId;
     try {
-      const branchCollection = await this.getCollection('branches');
-      const branchDoc = await branchCollection.findOne({
-        'online_ordering.store_id': storeId,
-      });
+      const branchDoc = await this._storefrontBranch(params);
 
       if (!branchDoc) {
         return { status: false, message: 'No shop found at this address', data: null };

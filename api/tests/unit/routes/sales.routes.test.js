@@ -132,4 +132,27 @@ describe('sales.routes', () => {
       ])
     );
   });
+
+  /*
+   * The captain app's order. Deleted once already on the grounds that nobody
+   * was using the channel, while signed builds of the app were being installed
+   * on phones that cannot be updated from here. `kioskOrder` beside it
+   * survived the same refactor, for the same reason, one device along.
+   */
+  test('the captain handsets can still place an order', () => {
+    const paths = router.stack
+      .filter((layer) => layer.route)
+      .map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);
+    expect(paths).toContain('post /qrOrder');
+  });
+
+  test('and it is NOT anonymous, which is the one thing that changed', () => {
+    const { protectOrKioskKey } = require('../../../src/middleware/sales.validation');
+    const layer = router.stack.find(
+      (l) => l.route && l.route.path === '/qrOrder' && l.route.methods.post
+    );
+    /* It used to write a real sale against a branch named only by its database
+       id, for anybody who asked. */
+    expect(layer.route.stack.map((h) => h.handle)).toContain(protectOrKioskKey);
+  });
 });
