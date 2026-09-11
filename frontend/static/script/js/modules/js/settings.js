@@ -9095,11 +9095,46 @@ $(document).on(
  */
 PosnicPro.settings = PosnicPro.settings || {};
 PosnicPro.settings.ai = {
+    /*
+     * Where each provider actually hands out a key.
+     *
+     * Deep links rather than a home page: "create an account and find the
+     * API section" is the step people give up on, and every one of these
+     * consoles buries it somewhere different.
+     */
+    KEY_PAGES: {
+        anthropic: {
+            url: 'https://console.anthropic.com/settings/keys', name: 'Anthropic Console',
+            paid: true, shownOnce: true
+        },
+        openai: {
+            url: 'https://platform.openai.com/api-keys', name: 'OpenAI Platform',
+            paid: true, shownOnce: true
+        },
+        /* Gemini has a free tier and shows the key again later, so two of
+           the three steps read differently for it. */
+        google: {
+            url: 'https://aistudio.google.com/apikey', name: 'Google AI Studio',
+            paid: false, shownOnce: false
+        }
+    },
+
     /* The key, the limit and the meter only mean something once a provider is
        chosen. Controls that cannot affect anything should not ask for a
        decision. */
     syncRows: function () {
         var on = !!$('#ai_provider').val();
+        var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
+        $('#ai_key_help').toggle(on && !!where);
+        if (where) {
+            $('#ai_key_link').attr('href', where.url).text(where.name);
+            $('#ai_howto_2').text(where.paid
+                ? PosnicPro.i18n.t('lang_ai_howto_2_paid', 'Add credit or a payment method. A key with no balance behind it fails on the first press.')
+                : PosnicPro.i18n.t('lang_ai_howto_2_free', 'There is a free allowance to start with, so you can try it before adding any payment method.'));
+            $('#ai_howto_3').text(where.shownOnce
+                ? PosnicPro.i18n.t('lang_ai_howto_3_once', 'Create a key and paste it above. It is shown once, so copy it before closing that page.')
+                : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
+        }
         $('#ai_key_row,#ai_cap_row').toggle(on);
         $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
     },
