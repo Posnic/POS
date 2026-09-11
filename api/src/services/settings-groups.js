@@ -130,6 +130,13 @@ const PREFERENCES = [
      able to show which one is chosen, and the NAME of a provider is not a
      credential. Its key is in SECRETS, where it can never be read back. */
   'voice_provider',
+  /* The model a shop has an account with, and which one to use. Preferences
+     and not secrets for the same reason as the voice pair: the NAME of a
+     provider is not a credential, and a screen has to be able to show which
+     one is in force. Off by default - a shop that configured nothing gets
+     nothing and pays nobody. See services/ai.service.js. */
+  'ai_provider',
+  'ai_model',
 ];
 
 const DOCUMENTS = [
@@ -155,6 +162,11 @@ const SECRETS = [
      to the shop until somebody reads the invoice. See
      services/transcribe.service.js. */
   'voice_api_key',
+  /* The model key. Here rather than in a page or a handset for the same
+     reason as every other key in this list: one shipped to clients cannot be
+     rotated without reinstalling all of them, and a leak is billed to the shop
+     until somebody reads the invoice. */
+  'ai_api_key',
 ];
 
 /* Now that an empty value means "leave the saved credential alone", clearing
