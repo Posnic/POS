@@ -814,9 +814,11 @@
         gap: 10px;
       }
 
+      /* minmax(0, 1fr): a bare 1fr cannot shrink below a one-line dish name,
+         and a long name would push the second column out of the page. */
       @media (min-width: 720px) {
         .dishes {
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
 
@@ -853,6 +855,8 @@
       }
 
       .dish-name {
+        flex: 1 1 auto;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

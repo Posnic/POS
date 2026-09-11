@@ -752,6 +752,13 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 currency_code: storeInfo.currency_code || ""
             }]);
             await rememberShop();
+            /* A browser that already had the menu draws the header from the
+               branch row it stored last time, which on an older row has no
+               name - so the page said "Menu" until the next visit. The name
+               is painted the moment the fresh row is in. */
+            if (typeof paintShop === "function" && document.getElementById("shop-name")) {
+                await paintShop();
+            }
             if (silent) {
                 productChanges = await syncChangedProducts(products);
                 const totalChanges = productChanges.inserted + productChanges.updated + productChanges.deleted;
