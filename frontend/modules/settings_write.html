@@ -2613,51 +2613,6 @@
                                             </div>
                                             <p class="module-desc"><lang class="lang_module_captain_desc">Your staff taking orders at the table on a phone, straight to the kitchen.</lang></p>
 
-                                            <!-- Voice ordering belongs to the captain app, so it lives
-                                                 inside the captain app's card. It was briefly under
-                                                 Integrations because it can hold a third-party key,
-                                                 which is filing it by how it is BUILT rather than by
-                                                 what it IS: a shopkeeper looking for it goes to where
-                                                 they switched the captain app on, not to a page about
-                                                 webhooks and API tokens. The card dims itself when the
-                                                 module is off, so these controls stop asking for a
-                                                 decision that cannot take effect. -->
-                                            <div class="module-subs">
-                                                <div class="form-group mb-0" style="min-width:230px;">
-                                                    <label for="voice_provider" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_int_voice_provider">Say the order: who listens</lang>
-                                                    </label>
-                                                    <select id="voice_provider" class="form-control form-control-sm border-control">
-                                                        <option value="device"><lang class="lang_int_voice_device">The phone itself - free, works offline</lang></option>
-                                                        <option value="openai"><lang class="lang_int_voice_openai">OpenAI Whisper - your own account</lang></option>
-                                                        <option value="google"><lang class="lang_int_voice_google">Google Speech-to-Text - your own account</lang></option>
-                                                        <option value="off"><lang class="lang_int_voice_off">Off - no microphone button</lang></option>
-                                                    </select>
-                                                </div>
-
-                                                <div class="form-group mb-0" style="min-width:120px;">
-                                                    <label for="voice_language" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_int_voice_language">Language</lang>
-                                                    </label>
-                                                    <input type="text" id="voice_language" class="form-control form-control-sm border-control"
-                                                        maxlength="20" placeholder="en-IN" data-t-placeholder="lang_en_in" autocomplete="off">
-                                                </div>
-
-                                                <div class="form-group mb-0" id="voice_key_row" style="min-width:230px; display:none;">
-                                                    <label for="voice_api_key" style="font-size:12.5px;" class="mb-1">
-                                                        <lang class="lang_int_voice_key">API key</lang>
-                                                    </label>
-                                                    <input type="password" id="voice_api_key" class="form-control form-control-sm border-control"
-                                                        autocomplete="new-password" placeholder="Paste the key from your provider" data-t-placeholder="lang_paste_the_key_from_your_provider">
-                                                </div>
-
-                                                <div class="form-group mb-0 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-sm btn-primary" id="voice_save"><lang class="lang_int_voice_save">Save</lang></button>
-                                                    <span class="text-success ml-2" id="voice_saved_note" style="display:none; font-size:12px;"><lang class="lang_int_voice_saved">Saved - handsets pick this up next time they open the menu.</lang></span>
-                                                </div>
-
-                                                <small class="text-muted d-block w-100" style="font-size:12px;"><lang class="lang_int_voice_hint">A waiter holds a button and says the order instead of tapping it. The phone's own recognition is free, works without internet and needs no account - choose a paid service only if your dining room is loud. The key is saved on this server and never sent to a phone.</lang></small>
-                                            </div>
                                         </div>
 
                                         <div class="module-card">
@@ -5601,6 +5556,11 @@
                                                         href="#captainproducts-line" role="tab" aria-controls="captainproducts-line"
                                                         aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
                                                 </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="captainvoice-tab-line" data-toggle="tab"
+                                                        href="#captainvoice-line" role="tab" aria-controls="captainvoice-line"
+                                                        aria-selected="false"><i class="feather icon-mic mr-1"></i><lang class="lang_captain_voice">Voice ordering</lang></a>
+                                                </li>
                                             </ul>
                                             <div class="tab-content">
                                                 <div class="tab-pane fade show active" id="captainhandsets-line" role="tabpanel"
@@ -5637,6 +5597,45 @@
                                                     aria-labelledby="captainproducts-tab-line">
                                                     <div class="channel-products-host"></div>
                                                 </div>
+
+                                                <div class="tab-pane fade" id="captainvoice-line" role="tabpanel"
+                                                    aria-labelledby="captainvoice-tab-line">
+                                                    <div class="card border m-b-30">
+                                                        <div class="card-body">
+                                                            <h6 class="mb-1"><lang class="lang_captain_voice_title">Let a waiter say the order</lang></h6>
+                                                            <small class="form-text text-muted mb-3">
+                                                                <lang class="lang_int_voice_hint">A waiter holds a button and says the order instead of tapping it. The phone's own recognition is free, works without internet and needs no account - choose a paid service only if your dining room is loud. The key is saved on this server and never sent to a phone.</lang>
+                                                            </small>
+
+                                                            <div class="form-group" style="max-width:420px;">
+                                                                <label for="voice_provider"><lang class="lang_int_voice_provider">Who listens</lang></label>
+                                                                <select id="voice_provider" class="form-control border-control">
+                                                                    <option value="device"><lang class="lang_int_voice_device">The phone itself - free, works offline</lang></option>
+                                                                    <option value="openai"><lang class="lang_int_voice_openai">OpenAI Whisper - your own account</lang></option>
+                                                                    <option value="google"><lang class="lang_int_voice_google">Google Speech-to-Text - your own account</lang></option>
+                                                                    <option value="off"><lang class="lang_int_voice_off">Off - no microphone button</lang></option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="form-group" style="max-width:420px;">
+                                                                <label for="voice_language"><lang class="lang_int_voice_language">Language</lang></label>
+                                                                <input type="text" id="voice_language" class="form-control border-control"
+                                                                    maxlength="20" placeholder="en-IN" data-t-placeholder="lang_en_in" autocomplete="off">
+                                                                <small class="form-text text-muted"><lang class="lang_int_voice_language_hint">en-IN, ta-IN, hi-IN, en-US. A recogniser told the wrong language mishears numbers before anything else, and a number is half of every order.</lang></small>
+                                                            </div>
+
+                                                            <div class="form-group" id="voice_key_row" style="max-width:420px; display:none;">
+                                                                <label for="voice_api_key"><lang class="lang_int_voice_key">API key</lang></label>
+                                                                <input type="password" id="voice_api_key" class="form-control border-control"
+                                                                    autocomplete="new-password" placeholder="Paste the key from your provider" data-t-placeholder="lang_paste_the_key_from_your_provider">
+                                                            </div>
+
+                                                            <button type="button" class="btn btn-primary" id="voice_save"><lang class="lang_int_voice_save">Save</lang></button>
+                                                            <span class="text-success ml-2" id="voice_saved_note" style="display:none;"><lang class="lang_int_voice_saved">Saved - handsets pick this up next time they open the menu.</lang></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
