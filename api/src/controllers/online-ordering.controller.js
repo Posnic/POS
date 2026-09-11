@@ -67,6 +67,10 @@ class OnlineOrderingController {
         banner: store.banner || '',
         homebanner: store.homebanner || '',
         advertisement: store.advertisement || '',
+        /* The symbol beside every price and the ISO code, so the ordering
+           page writes the shop's money rather than a hardcoded rupee. */
+        currency: store.currency || '',
+        currency_code: store.currency_code || '',
       },
       channel: data.channel,
       /* Where this customer is sitting, and what a delivery costs them. Both

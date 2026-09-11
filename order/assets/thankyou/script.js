@@ -31,7 +31,7 @@ if (!hasValidReceiptAccess) {
 
 async function renderAndPrint() {
     if (!hasValidReceiptAccess || !receiptData?.items) {
-        document.body.innerHTML = "<p style='text-align:center'>No receipt data found.</p>";
+        document.body.innerHTML = "<main class='access-denied'><h1>Nothing to show here</h1><p>This receipt is not from an order placed on this phone.</p><a href='products.html' class='btn-primary'>See the menu</a></main>";
         return;
     }
 
