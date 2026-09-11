@@ -9042,3 +9042,126 @@ $(document).on(
         PosnicPro.partnerPresets.render();
     }
 );
+
+/*
+ * Turning AI on, which is the step that was missing.
+ *
+ * The item screen has had a "Write it for me" button since the seam landed,
+ * hidden until the shop has a provider and a key - and there was nowhere to
+ * put either, so it could never appear. An engine with no ignition.
+ *
+ * Posnic charges nothing for AI. The shop brings its own account and pays the
+ * provider directly, which is why this works on every plan including the free
+ * and self-hosted one, and why the limit below is a courtesy to the shopkeeper
+ * rather than a control on us: it is their money.
+ *
+ * Delegated handlers only: this pane is part of the settings module and is not
+ * in the DOM when this file runs, which is the dead-selector trap.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+PosnicPro.settings.ai = {
+    /* The key, the limit and the meter only mean something once a provider is
+       chosen. Controls that cannot affect anything should not ask for a
+       decision. */
+    syncRows: function () {
+        var on = !!$('#ai_provider').val();
+        $('#ai_key_row,#ai_cap_row').toggle(on);
+        $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
+    },
+
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var v = response.data.values || response.data;
+            $('#ai_provider').val(v.ai_provider || '');
+            $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
+            PosnicPro.settings.ai.syncRows();
+        }, function () { /* the card still lets you choose and save */ });
+
+        /* Which secrets EXIST, never what they are. */
+        PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var saved = (response.data.configured || {}).ai_api_key === true;
+            $('#ai_api_key').attr('placeholder', saved
+                ? PosnicPro.i18n.t('lang_ai_key_saved', 'A key is saved. Type a new one to replace it.')
+                : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
+        }, function () { /* the placeholder is a courtesy, not the feature */ });
+
+        PosnicPro.settings.ai.loadSpend();
+        $('#ai_saved_note').hide();
+    },
+
+    /* What it has cost so far, because somebody spending their own money is
+       entitled to watch the meter without leaving the page. */
+    loadSpend: function () {
+        PosnicPro.get('items/aiSpend', {}, function (response) {
+            var rows = (response && response.data && response.data.features) || [];
+            var host = $('#ai_spend_table').empty();
+            if (!rows.length) { PosnicPro.settings.ai.syncRows(); return; }
+            var html = '';
+            for (var i = 0; i < rows.length; i += 1) {
+                html += '<div>' + PosnicPro.escapeHtml(rows[i].feature)
+                    + ': ' + PosnicPro.escapeHtml(rows[i].spent) + '</div>';
+            }
+            host.html(html);
+            PosnicPro.settings.ai.syncRows();
+        }, function () { /* no meter is not a broken page */ });
+    },
+
+    save: function () {
+        var provider = $('#ai_provider').val() || '';
+        var key = String($('#ai_api_key').val() || '');
+        var cap = String($('#ai_monthly_cap').val() || '').trim();
+
+        PosnicPro.put({
+            url: 'settings/group/preferences',
+            data: JSON.stringify({
+                ai_provider: provider,
+                /* Empty means no limit, which is a real choice and not the
+                   absence of one, so it is sent as an empty string rather
+                   than skipped. */
+                ai_monthly_cap: cap
+            })
+        }, function (response) {
+            if (response.type !== 'success') {
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            /* An empty key means LEAVE THE SAVED ONE ALONE. The field loads
+               blank because the value is never sent to a browser, so writing
+               that emptiness through would blank the shop's credential the
+               first time anybody changed the limit. */
+            if (!key) {
+                $('#ai_saved_note').show();
+                $('#ai_api_key').val('');
+                return;
+            }
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ ai_api_key: key })
+            }, function (second) {
+                if (second.type === 'success') {
+                    $('#ai_saved_note').show();
+                    $('#ai_api_key').val('');
+                    PosnicPro.settings.ai.load();
+                } else {
+                    PosnicPro.alert(second.type, second.message);
+                }
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_ai_key', 'Could not save the AI key'));
+            });
+        }, function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_ai_settings', 'Could not save the AI settings'));
+        });
+    }
+};
+
+$(document).on('shown.bs.tab', 'a[href="#v-pills-ai"]', function () {
+    PosnicPro.settings.ai.load();
+});
+$(document).on('change', '#ai_provider', function () {
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_save', function () {
+    PosnicPro.settings.ai.save();
+});

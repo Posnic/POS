@@ -113,6 +113,12 @@
                                     aria-selected="false" onclick="PosnicPro.themeManager.loadThemeSettingsUI();"><i class="feather icon-droplet mr-2"></i>
                                     <lang class="lang_module_themes">Themes</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="branch" data-access="write"
+                                    id="v-pills-ai-tab" data-toggle="pill" href="#v-pills-ai" role="tab"
+                                    aria-controls="v-pills-ai" aria-selected="false"><i
+                                        class="feather icon-zap mr-2"></i>
+                                    <lang class="lang_module_ai">AI assistance</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read"
                                     id="v-pills-recyclebin-tab" data-toggle="pill" href="#v-pills-recyclebin" role="tab"
                                     aria-controls="v-pills-recyclebin" aria-selected="false"
@@ -3099,6 +3105,48 @@
                         
 
                         <!-- Recycle Bin Tab Start -->
+                        <div class="tab-pane fade" id="v-pills-ai" role="tabpanel"
+                            aria-labelledby="v-pills-ai-tab">
+                            <div class="card border m-b-30">
+                                <div class="card-body">
+                                    <h6 class="mb-1"><lang class="lang_ai_title">Let the software write and read for you</lang></h6>
+                                    <small class="form-text text-muted mb-3">
+                                        <lang class="lang_ai_hint">We charge nothing for this. You bring your own account with an AI provider and pay them directly, so it works on every plan including the free one, and nothing is billed to you by us. The key is saved on this server, is never sent to a browser, and is never shown again once saved.</lang>
+                                    </small>
+
+                                    <div class="form-group" style="max-width:460px;">
+                                        <label for="ai_provider"><lang class="lang_ai_provider">Who answers</lang></label>
+                                        <select id="ai_provider" class="form-control border-control">
+                                            <option value=""><lang class="lang_ai_off">Off - no AI buttons anywhere</lang></option>
+                                            <option value="anthropic"><lang class="lang_ai_anthropic">Anthropic Claude - your own account</lang></option>
+                                            <option value="openai"><lang class="lang_ai_openai">OpenAI - your own account</lang></option>
+                                            <option value="google"><lang class="lang_ai_google">Google Gemini - your own account</lang></option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group" id="ai_key_row" style="max-width:460px; display:none;">
+                                        <label for="ai_api_key"><lang class="lang_ai_key">API key</lang></label>
+                                        <input type="password" id="ai_api_key" class="form-control border-control"
+                                            autocomplete="new-password" placeholder="Paste the key from your provider" data-t-placeholder="lang_paste_the_key_from_your_provider">
+                                    </div>
+
+                                    <div class="form-group" id="ai_cap_row" style="max-width:460px; display:none;">
+                                        <label for="ai_monthly_cap"><lang class="lang_ai_cap">Monthly limit</lang></label>
+                                        <input type="number" id="ai_monthly_cap" class="form-control border-control"
+                                            min="0" step="1" placeholder="Leave empty for no limit" data-t-placeholder="lang_leave_empty_for_no_limit" autocomplete="off">
+                                        <small class="form-text text-muted"><lang class="lang_ai_cap_hint">The most this may spend from your account in a month. We stop before the call, not after. Your provider's own dashboard is the final word on the bill.</lang></small>
+                                    </div>
+
+                                    <div class="form-group" id="ai_spend_row" style="max-width:460px; display:none;">
+                                        <label><lang class="lang_ai_spent">Spent this month</lang></label>
+                                        <div id="ai_spend_table" class="small text-muted"></div>
+                                    </div>
+
+                                    <button type="button" class="btn btn-primary" id="ai_save"><lang class="lang_ai_save">Save</lang></button>
+                                    <span class="text-success ml-2" id="ai_saved_note" style="display:none;"><lang class="lang_ai_saved">Saved. The AI buttons appear on the item screen from now on.</lang></span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="tab-pane fade" data-module="branch" data-access="write" id="v-pills-recyclebin"
                             role="tabpanel" aria-labelledby="v-pills-recyclebin-tab">
                             <div class="card">

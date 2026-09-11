@@ -13,6 +13,7 @@ const dishIcons = require('../utils/dish-icons');
 const { CHANNEL } = require('../utils/sales-channels');
 const ai = require('../services/ai.service');
 const itemDescription = require('../services/ai-item-description');
+const budget = require('../services/ai-budget');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -2422,6 +2423,41 @@ class ItemsController extends BaseController {
       /* Absent, not broken: a screen that cannot ask should simply not offer
          the button rather than show an error nobody can act on. */
       return this.success(res, { available: false, reason: 'unavailable' });
+    }
+  }
+
+  /**
+   * What AI has cost this shop this month, per feature.
+   *
+   * The shop is spending its own money with its own provider, so it is
+   * entitled to see the meter without leaving the settings page. Figures are
+   * ours, computed from the token counts each call reported at list prices;
+   * the provider's own dashboard is the final word on the bill, and the
+   * settings card says so.
+   */
+  async aiSpend(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.query?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.success(res, { features: [] });
+
+      const spend = await budget.spentThisMonth(context);
+      const features = Object.entries(spend.byFeature || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([feature, minor]) => ({
+          feature,
+          /* Whole currency units with two decimals: the caller is a person
+             reading a number, not code doing arithmetic on it. */
+          spent: (minor / 100).toFixed(2),
+        }));
+      return this.success(res, { features, total: (spend.total / 100).toFixed(2) });
+    } catch (error) {
+      console.error('Error in aiSpend:', error);
+      /* A meter that cannot be read is not a broken settings page. */
+      return this.success(res, { features: [] });
     }
   }
 }
