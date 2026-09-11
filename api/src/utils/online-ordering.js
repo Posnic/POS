@@ -580,6 +580,36 @@ function normalizeSettings(input = {}) {
   return out;
 }
 
+/*
+ * The alphabet a person can read off a printed card and type back.
+ *
+ * No O or 0, no I, L or 1: this code goes under a QR on a table tent, and the
+ * one thing it must survive is somebody reading it out over the phone.
+ */
+const STORE_ID_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/**
+ * A store id nobody had to think of.
+ *
+ * A shop should never meet an empty box asking for an identifier it has to
+ * invent - that question has no good answer, and the field spent its life
+ * blank, which meant no menu and no ordering page. Five characters out of
+ * thirty-one is twenty-eight million; a shop's handful of branches will not
+ * collide, and the caller checks anyway, because "not with these odds" is how
+ * two branches end up sharing a storefront.
+ *
+ * Matches the ^[A-Za-z0-9]{3,6}$ the form and the route already accept, so a
+ * generated id is nothing the rest of the system has to learn about.
+ */
+function newStoreId(random = Math.random) {
+  let out = '';
+  for (let i = 0; i < 5; i += 1) {
+    out +=
+      STORE_ID_ALPHABET[Math.floor(random() * STORE_ID_ALPHABET.length) % STORE_ID_ALPHABET.length];
+  }
+  return out;
+}
+
 /**
  * A brand new branch's channel, written out in full.
  *
@@ -634,6 +664,8 @@ function photoList(row) {
 }
 
 module.exports = {
+  newStoreId,
+  STORE_ID_ALPHABET,
   photoList,
   DAY_KEYS,
   DEFAULT_FULFILMENT,

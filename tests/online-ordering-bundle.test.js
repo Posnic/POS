@@ -628,3 +628,29 @@ test('an empty product store fetches the menu instead of spinning for ever', () 
   /* Once. A fetch that finds nothing must not call back into a fetch. */
   assert.match(empty, /_fetching/, 'nothing stops the fetch from recursing');
 });
+
+/* ------------------------------------------ a store id nobody had to invent */
+
+test('a branch with no store id is given one the first time its settings are read', () => {
+  /*
+   * Owner: "first store id dont wait for customer based store just assign
+   * something." Every branch sat with a blank id - so no menu and no ordering
+   * page - until a shopkeeper invented a code in a box that did not say what
+   * it was for. getOneStore is the settings screen's read, so the heal lives
+   * there: the box is full the first time anyone looks.
+   */
+  const model = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'models', 'branch.model.js'), 'utf8');
+  const read = model.slice(model.indexOf('async getBranchDetails('));
+  const heal = read.slice(0, read.indexOf('simplifyDocument'));
+
+  assert.match(heal, /newStoreId\(\)/, 'a blank store id is left blank');
+  /* Unique within the shop: two branches on one address would share a
+     storefront, and "not with these odds" is how that happens. */
+  assert.match(heal, /'online_ordering\.store_id'/, 'the other branches are not checked for a collision');
+  assert.match(heal, /taken\.has\(assigned\)/, 'a colliding id is not retried');
+  /* Written back, so the next read and the customer's /menu agree. */
+  assert.match(heal, /updateOne\([\s\S]*store_id/, 'the assigned id is not stored');
+  /* Best-effort, like the toggle repair beside it: failing to assign must
+     not fail the read. */
+  assert.match(heal, /catch \(assignErr\)/, 'a failed assignment would fail the whole settings read');
+});
