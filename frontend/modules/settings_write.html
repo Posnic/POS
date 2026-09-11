@@ -4992,6 +4992,54 @@
 
                                                                     </div>
                                                                 </div>
+
+                                                                <!--
+                                                                    BOTH ADDRESSES, ALWAYS.
+
+                                                                    /order takes orders; /menu is the same catalogue
+                                                                    with no cart, for a shop that wants a QR on the
+                                                                    table without running a delivery business. They are
+                                                                    two pages, not two modes of one - so a shop can
+                                                                    print the menu code for its window and the ordering
+                                                                    code for its flyer at the same time, and stopping
+                                                                    orders never takes the menu down with it.
+
+                                                                    Built from API_URL rather than a relative path:
+                                                                    the packaged desktop build serves this console from
+                                                                    file://, where a relative link points at the disk.
+                                                                -->
+                                                                <div class="form-row" id="storefront_links_row" style="display:none;">
+                                                                    <div class="form-group col-12">
+                                                                        <label><lang class="lang_storefront_links">Your two addresses</lang></label>
+                                                                        <div class="mb-2">
+                                                                            <div class="input-group input-group-sm">
+                                                                                <div class="input-group-prepend">
+                                                                                    <span class="input-group-text" id="storefront_order_label"><i class="feather icon-shopping-cart mr-1" aria-hidden="true"></i><lang class="lang_storefront_link_order">Takes orders</lang></span>
+                                                                                </div>
+                                                                                <input type="text" class="form-control" id="storefront_order_url" readonly aria-labelledby="storefront_order_label">
+                                                                                <div class="input-group-append">
+                                                                                    <button type="button" class="btn btn-outline-secondary copy-storefront-link" data-target="storefront_order_url" aria-label="Copy this address" data-t-aria-label="lang_copy_this_address"><i class="feather icon-copy" aria-hidden="true"></i></button>
+                                                                                    <a class="btn btn-outline-secondary storefront-open" data-target="storefront_order_url" href="#" target="_blank" rel="noopener" aria-label="Open this page" data-t-aria-label="lang_open_this_page"><i class="feather icon-external-link" aria-hidden="true"></i></a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <div class="input-group input-group-sm">
+                                                                                <div class="input-group-prepend">
+                                                                                    <span class="input-group-text" id="storefront_menu_label"><i class="feather icon-book-open mr-1" aria-hidden="true"></i><lang class="lang_storefront_link_menu">Menu only</lang></span>
+                                                                                </div>
+                                                                                <input type="text" class="form-control" id="storefront_menu_url" readonly aria-labelledby="storefront_menu_label">
+                                                                                <div class="input-group-append">
+                                                                                    <button type="button" class="btn btn-outline-secondary copy-storefront-link" data-target="storefront_menu_url" aria-label="Copy this address" data-t-aria-label="lang_copy_this_address"><i class="feather icon-copy" aria-hidden="true"></i></button>
+                                                                                    <a class="btn btn-outline-secondary storefront-open" data-target="storefront_menu_url" href="#" target="_blank" rel="noopener" aria-label="Open this page" data-t-aria-label="lang_open_this_page"><i class="feather icon-external-link" aria-hidden="true"></i></a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_storefront_links_help">Both work as soon as online ordering is on. The menu address never shows a cart, so it stays useful when you stop taking orders. Print whichever one you want on the table or in the window.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
                                                                 <!-- <div class="form-row">
                                                                     <div class="form-group col-9">
                                                                         <label for="kiosksecret_key">Secret Key</label>
@@ -5075,11 +5123,24 @@
                                                     aria-labelledby="kioskimage-tab-line">
                                                     <form enctype="multipart/form-data" method="post"
                                                         name="kiosk_settings_form" id="kiosk_settings_form">
+                                                        <!--
+                                                            ONE SET OF PICTURES, NOT THE KIOSK'S.
+
+                                                        These were headed "Kiosk ..." from when the kiosk was
+                                                        the only thing that had a storefront. The QR menu, the
+                                                        ordering page and the kiosk all draw the same four
+                                                        images - a shop has one look, not one per device - so
+                                                        they are named for what they are and say where they
+                                                        show up.
+                                                    -->
+                                                    <small class="form-text text-muted mb-3">
+                                                        <lang class="lang_storefront_images_help">These four pictures are what a customer sees on your ordering page, your QR menu and the kiosk screen. One set for all of them, so the shop looks the same wherever somebody meets it.</lang>
+                                                    </small>
                                                         <div class="row loader-view-kioskimage">
 
                                                             <!-- Home page banner Upload -->
                                                             <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_kiosk_home_banner">Kiosk Home Banner</lang></h6>
+                                                                <h6><lang class="lang_storefront_home_banner">Home banner</lang></h6>
                                                                 <div class="profilebox py-3">
                                                                     <input type="file" name="kiosk_homebanner"
                                                                         id="kiosk_homebanner" accept="image/*"
@@ -5099,7 +5160,7 @@
 
                                                             <!-- Logo Upload -->
                                                             <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_kiosk_logo">Kiosk Logo</lang></h6>
+                                                                <h6><lang class="lang_storefront_logo">Logo</lang></h6>
                                                                 <div class="profilebox py-3">
                                                                     <input type="file" name="kiosk_logo" id="kiosk_logo"
                                                                         accept="image/*" class="d-none">
@@ -5118,7 +5179,7 @@
 
                                                             <!-- Banner Upload -->
                                                             <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_kiosk_banner">Kiosk Banner</lang></h6>
+                                                                <h6><lang class="lang_storefront_banner">Banner</lang></h6>
                                                                 <div class="profilebox py-3">
                                                                     <input type="file" name="kiosk_banner"
                                                                         id="kiosk_banner" accept="image/*"
@@ -5138,7 +5199,7 @@
 
                                                             <!-- Advertisement Upload -->
                                                             <div class="col-md-6 text-center">
-                                                                <h6><lang class="lang_kiosk_advertisement">Kiosk Advertisement</lang></h6>
+                                                                <h6><lang class="lang_storefront_advertisement">Advertisement</lang></h6>
                                                                 <div class="profilebox py-3">
                                                                     <input type="file" name="kiosk_advertisement"
                                                                         id="kiosk_advertisement" accept="image/*"
@@ -5173,6 +5234,14 @@
                                                         <div class="row loader-view-kioskpayment">
 
                                                             <div class="col-md-12 mb-3">
+                                                                <!--
+                                                                    SHARED, like the pictures on the Branding tab.
+                                                                    How somebody pays does not change because they
+                                                                    tapped a kiosk instead of scanning a code.
+                                                                -->
+                                                                <small class="form-text text-muted mb-3">
+                                                                    <lang class="lang_payment_shared_help">How a customer pays is the same on your ordering page, your QR menu and the kiosk screen. One set of methods for all of them.</lang>
+                                                                </small>
                                                                 <label for="payment_number"
                                                                     class="font-weight-bold d-block mb-2"><lang class="lang_customer_detail_control">Customer
                                                                     detail control</lang></label>
@@ -5199,6 +5268,16 @@
                                                                         value="Razorpay" disabled>
                                                                     <label class="custom-control-label"
                                                                         for="payment_razorpay"><lang class="lang_razorpay">Razorpay</lang></label>
+                                                                    <!--
+                                                                        A greyed-out switch with no reason beside it is
+                                                                        a support call. The key lives under Core
+                                                                        Settings > Payment Gateway, and until it is
+                                                                        there Razorpay cannot be offered to a customer -
+                                                                        so say that, and say where.
+                                                                    -->
+                                                                    <small class="form-text text-muted" id="razorpay_needs_key" style="display:none;">
+                                                                        <lang class="lang_razorpay_needs_key">Add your Razorpay key id and secret under Core Settings, Payment Gateway, and this can be switched on.</lang>
+                                                                    </small>
                                                                 </div>
                                                             </div>
 

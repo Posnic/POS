@@ -1337,11 +1337,15 @@ if ($wrapper.length) {
                 PosnicPro.getBranchDropdownOption();
                 PosnicPro.denom.denomTable();
                 PosnicPro.tableOrders.tableOrdersTable();
-                if (!data.payment_gateway || typeof data.payment_gateway.key === "undefined" || data.payment_gateway.key.trim() === '') {
-                    $('#payment_razorpay').prop('disabled', true);
-                } else {
-                    $('#payment_razorpay').prop('disabled', false);
-                }             
+                /* Razorpay can only be offered once the shop's key is stored.
+                   The switch was simply greyed out, which tells a shopkeeper
+                   nothing about why or where to fix it - so the reason shows
+                   with it. See lang_razorpay_needs_key in the markup. */
+                var hasGatewayKey = !!(data.payment_gateway
+                    && typeof data.payment_gateway.key === 'string'
+                    && data.payment_gateway.key.trim() !== '');
+                $('#payment_razorpay').prop('disabled', !hasGatewayKey);
+                $('#razorpay_needs_key').toggle(!hasGatewayKey);
 
                 //var countryDetail = $('#setting_country').select2("data");
                 //PosnicPro.settings.loadSelectSettingState(countryDetail[0].element.attributes['data-setting-id'].value);
@@ -2611,12 +2615,20 @@ loadSelectSettingCurrency: function (force) {
         };
         PosnicPro.post(params, function (response) {
             if (response.type === 'success') {
-                $('#payment_razorpay').prop('disabled', true);
+                /* A key has just been saved, so the switch it gates can come
+                   back. This had it backwards and disabled Razorpay on the one
+                   event that should have enabled it. */
+                $('#payment_razorpay').prop('disabled', false);
+                $('#razorpay_needs_key').hide();
                 localStorage.setItem("payment_gateway", response.data);
                 (response.data === 'true') ? $('.qr_btn').show() : $('.qr_btn').hide();
                 loader.find(".loadingSpinner:first").remove();
             } else {
-                $('#payment_razorpay').prop('disabled', false);
+                /* The key was not stored, so nothing gates open. The old code
+                   enabled Razorpay here - offering a customer a gateway the
+                   shop has no working key for. */
+                $('#payment_razorpay').prop('disabled', true).prop('checked', false);
+                $('#razorpay_needs_key').show();
             }
             PosnicPro.alert(response.type, response.message);
         }, function (xhr) {
@@ -8287,9 +8299,29 @@ PosnicPro.salesChannels = {
     }
 };
 
-/* Loaded when the tab is opened rather than on every settings page view: the
-   shop may never touch this screen, and the request would be wasted. */
-$(document).on('click', '#channels-tab-line', function () {
+/*
+ * Every screen that shows part of the channels group has to load it.
+ *
+ * This hung off '#channels-tab-line' - the one combined tab the split deleted.
+ * Nothing called load() after that, so Delivery Partners came up with no
+ * partners, Restaurant with no venues and no delivery charges, and the default
+ * branch and approval boxes empty. Worse than looking broken: collect() reads
+ * those same rows out of the DOM, so the next Save would have written the
+ * empty screen back and erased every partner, venue and charge the shop had.
+ *
+ * Restaurant is in this list because the venues and charges live there now.
+ * Loaded on entry rather than on every settings view: a shop may never open
+ * these, and the request would be wasted.
+ */
+PosnicPro.salesChannels.ENTRIES =
+    '#v-pills-onlineordering-tab, #manage_sec_onlineordering, ' +
+    '#v-pills-kioskmachine-tab, #manage_sec_kioskmachine, ' +
+    '#v-pills-captainapp-tab, #manage_sec_captainapp, ' +
+    '#v-pills-deliverypartners-tab, #manage_sec_deliverypartners, ' +
+    '#v-pills-webshop-tab, #manage_sec_webshop, ' +
+    '#v-pills-tableorder-tab, #manage_sec_tableorder';
+
+$(document).on('click', PosnicPro.salesChannels.ENTRIES, function () {
     PosnicPro.salesChannels.load();
 });
 
@@ -8313,6 +8345,70 @@ $(document).on('click', '#add_channel_partner', function () {
  * would simply do nothing. API_URL is the shop's own server either way. Built
  * on click rather than at load because API_URL is not set until sign-in.
  */
+/*
+ * The shop's two public addresses, shown where the store id is typed.
+ *
+ * A shop that has just set a store id has no way to find out what to print on
+ * the table. It was reachable only by knowing the shape of the URL, which is
+ * the kind of thing that gets asked on a support call forever.
+ *
+ * Both are shown at once because they are two pages and not two modes: /order
+ * transacts, /menu is the same catalogue with no cart. Stopping orders leaves
+ * the menu standing, which is the whole point of having both.
+ */
+PosnicPro.settings.storefrontLinks = function () {
+    var id = String($('#kioskstore_id').val() || '').trim();
+    var row = $('#storefront_links_row');
+    if (!row.length) { return; }
+    if (!/^[A-Za-z0-9]{3,6}$/.test(id)) {
+        /* Nothing to print yet. An address with a blank where the code goes is
+           worse than no address: somebody will copy it. */
+        row.hide();
+        return;
+    }
+    /* API_URL, never a relative path - the desktop build serves this console
+       from file://, where "/order/AZ100" points at the local disk. */
+    var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+    if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+    $('#storefront_order_url').val(base + '/order/' + id);
+    $('#storefront_menu_url').val(base + '/menu/' + id);
+    row.show();
+};
+
+/* Redrawn as it is typed, so the address is right before the save rather than
+   after a reload nobody thinks to do. */
+$(document).on('input change', '#kioskstore_id', function () {
+    PosnicPro.settings.storefrontLinks();
+});
+
+$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering, #kioskaccount-tab-line', function () {
+    PosnicPro.settings.storefrontLinks();
+});
+
+$(document).on('click', '.copy-storefront-link', function () {
+    var input = document.getElementById($(this).data('target'));
+    if (!input) { return; }
+    var text = input.value || '';
+    var said = function () {
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_link_copied', 'Address copied'));
+    };
+    /* navigator.clipboard needs a secure context, which a shop on plain http
+       over its own LAN is not. The textarea fallback is what actually runs
+       there, so it is not dead code. */
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(said, function () { input.select(); });
+        return;
+    }
+    input.select();
+    try { document.execCommand('copy'); said(); } catch (e) { /* the text is selected; they can copy it */ }
+});
+
+$(document).on('click', '.storefront-open', function (e) {
+    e.preventDefault();
+    var input = document.getElementById($(this).data('target'));
+    if (input && input.value) { window.open(input.value, '_blank', 'noopener'); }
+});
+
 $(document).on('click', '#open_pairing_screen', function (e) {
     e.preventDefault();
     var base = (typeof API_URL === 'string' && API_URL) || '/';
@@ -8384,11 +8480,21 @@ PosnicPro.salesChannels.lendProducts = function (paneId) {
     var $block = $('#channel_items_block');
     if (!$host.length || !$block.length) { return; }
     if (!$block.parent().is($host)) { $block.appendTo($host); }
-    /* Preselected, because a shopkeeper who opened Kiosk Machine is asking
-       about the kiosk. The picker still lets them look at another one. */
-    if ($('#channel_items_channel').length) {
+    if (!PosnicPro.channelItems) { return; }
+
+    PosnicPro.channelItems.fillCategories();
+    /*
+     * Preselect AFTER the options exist.
+     *
+     * Setting a value a select has no option for is a silent no-op, so doing
+     * this before the list arrives leaves the box on whatever it was showing
+     * and the shopkeeper edits the wrong channel's items. Same trap as
+     * itemChannels.set() on the item page, and the reason fillChannels takes
+     * a callback at all.
+     */
+    PosnicPro.channelItems.fillChannels(function () {
         $('#channel_items_channel').val(channel).trigger('change');
-    }
+    });
 };
 
 $(document).on(
@@ -8554,19 +8660,22 @@ $(document).on('click', '#stop_taking_orders', function () {
 PosnicPro.channelItems = {
     /* Filled from the shop's own channels and partners, so a shop that does
        not use Swiggy is never offered it. */
-    fillChannels: function () {
+    fillChannels: function (done) {
         var channels = (PosnicPro.itemChannels && PosnicPro.itemChannels._options) || null;
         var draw = function (options) {
             $('#channel_items_channel').html(options.map(function (o) {
                 return '<option value="' + $('<div>').text(o.id).html() + '">'
                     + $('<div>').text(o.label).html() + '</option>';
             }).join(''));
+            if (done) { done(); }
         };
         if (channels) { draw(channels); return; }
         if (PosnicPro.itemChannels) {
             PosnicPro.itemChannels.load(function () {
                 draw(PosnicPro.itemChannels._options || []);
             });
+        } else if (done) {
+            done();
         }
     },
 
@@ -8673,10 +8782,17 @@ PosnicPro.channelItems = {
     }
 };
 
-$(document).on('click', '#channels-tab-line', function () {
-    PosnicPro.channelItems.fillChannels();
-    PosnicPro.channelItems.fillCategories();
-});
+/*
+ * The screen fills when a channel pane lends it, not on a tab that is gone.
+ *
+ * This used to hang off '#channels-tab-line', the tab id of the one combined
+ * "Channels and products" screen. The split deleted that tab, so nothing ever
+ * called fillChannels again: the Channel box came up empty, Show found nothing,
+ * and the whole tab read as broken - which is exactly how it was reported.
+ *
+ * Binding to the pane that borrows the screen means it cannot come apart the
+ * same way again: the thing that shows the screen is the thing that fills it.
+ */
 
 $(document).on('click', '#channel_items_find', function () {
     PosnicPro.channelItems.find();
@@ -8838,6 +8954,14 @@ $(document).on('input', '.partner-label', function () {
     PosnicPro.partnerPresets.markUsed();
 });
 
-$(document).on('click', '#channels-tab-line', function () {
-    PosnicPro.partnerPresets.render();
-});
+/* The one-tap Swiggy/Zomato/OpenCart buttons, on the two screens that show
+   partner rows. Bound to the deleted tab, they simply never drew - which is
+   why Delivery Partners offered nothing but "Add another". */
+$(document).on(
+    'click',
+    '#v-pills-deliverypartners-tab, #manage_sec_deliverypartners, ' +
+        '#v-pills-webshop-tab, #manage_sec_webshop',
+    function () {
+        PosnicPro.partnerPresets.render();
+    }
+);

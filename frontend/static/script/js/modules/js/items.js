@@ -5313,36 +5313,78 @@ PosnicPro.itemChannels = {
         return key ? PosnicPro.i18n.t(key, channel.en) : channel.en;
     },
 
+    /*
+     * WHICH CHANNELS THIS SHOP ACTUALLY RUNS, from the features it switched on.
+     *
+     * This used to read `sales_channels_enabled` - a checkbox list on the old
+     * combined settings page. That page is gone and so are the checkboxes: a
+     * shop chooses its channels on the Features page now, one card each. Left
+     * alone this offered every channel in the vocabulary to every shop,
+     * including three it had switched off, which is not a list anybody can
+     * choose from sensibly.
+     *
+     * pos, phone and whatsapp have no feature switch because they need no
+     * setting up - somebody rings, somebody messages, somebody walks in - so
+     * they are always offered.
+     */
+    liveChannels: function () {
+        var s = {};
+        try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
+        /* Absent means on, the same rule the sidebar and the pills use: a key
+           a shop has never touched must not read as a channel it switched off. */
+        var on = function (k) { return s[k] !== false; };
+
+        var live = ['pos', 'phone', 'whatsapp'];
+        if (on('module_kiosk_enable')) { live.push('kiosk'); }
+        if (on('module_captain_enable')) { live.push('tableside'); }
+        if (on('module_online_ordering_enable')) { live.push('online'); }
+        if (on('module_delivery_partners_enable')) { live.push('marketplace'); }
+        if (on('module_webshop_enable')) { live.push('ecommerce'); }
+        return live;
+    },
+
     load: function (done) {
         var self = PosnicPro.itemChannels;
         if (self._options) { self.fill(); if (done) { done(); } return; }
 
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             var values = (response && response.data && response.data.values) || {};
-            var enabled = values.sales_channels_enabled || [];
+            var live = self.liveChannels();
             var partners = values.sales_channel_partners || [];
 
             var options = self.CHANNELS
-                .filter(function (c) { return !enabled.length || enabled.indexOf(c.id) !== -1; })
+                .filter(function (c) { return live.indexOf(c.id) !== -1; })
                 .map(function (c) {
                     return { id: c.id, label: self.labelFor(c) };
                 });
 
             /* Each partner by name, so "not on Swiggy" is one tick rather than
-               taking the item off every aggregator at once. */
+               taking the item off every aggregator at once - but only while the
+               feature that owns its kind is on. Offering Swiggy to a shop with
+               delivery partners switched off is the same noise as offering the
+               channel itself. */
             partners.forEach(function (p) {
-                if (p && p.id && p.enabled !== false) {
-                    options.push({ id: p.id, label: p.label || p.id });
-                }
+                if (!p || !p.id || p.enabled === false) { return; }
+                var kind = String(p.channel || 'marketplace');
+                if (live.indexOf(kind) === -1) { return; }
+                options.push({ id: p.id, label: p.label || p.id });
             });
 
             self._options = options;
             self.fill();
             if (done) { done(); }
         }, function () {
-            /* No settings yet is not an error: a shop that has configured
-               nothing has nothing to exclude from. */
-            self._options = [];
+            /*
+             * The settings call failed, which is not the same as "this shop has
+             * no channels". Falling back to an empty list used to make the box
+             * look like a shop that sells nowhere; the features are in local
+             * storage and do not need the server, so answer from those and lose
+             * only the partners.
+             */
+            var live = self.liveChannels();
+            self._options = self.CHANNELS
+                .filter(function (c) { return live.indexOf(c.id) !== -1; })
+                .map(function (c) { return { id: c.id, label: self.labelFor(c) }; });
             self.fill();
             if (done) { done(); }
         });
