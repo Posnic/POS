@@ -6,12 +6,18 @@ name: Deploy api (Lightsail)
 on:
   push:
     branches: [main]
-    # The bundles are here for the same reason the rsync above ships them: the
-    # API serves /menu and /order from these directories, so a change to either
-    # is a change to what customers see. Without them a menu-only commit would
-    # pass CI, merge, and simply never reach a shop - the workflow would not
-    # even run, which is a quieter failure than the one that caused all this.
-    paths: ["api/**", "menu/**", "order/**"]
+    paths:
+      - "api/**"
+      # The API serves /menu and /order from these, so a change to either is
+      # a change to what customers see. Without them a menu-only commit
+      # passes CI, merges, and the workflow never even starts.
+      - "menu/**"
+      - "order/**"
+      # And the workflow itself, the way deploy-frontend.yml already does.
+      # A change to HOW the API deploys otherwise sits unused until some
+      # unrelated api/ commit happens to carry it out - so the one commit
+      # that most needs proving is the one that never runs.
+      - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
 
 # Least privilege for GITHUB_TOKEN.
