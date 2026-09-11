@@ -747,6 +747,7 @@ PosnicPro.items = {
             show_on_menu: $('#item_show_on_menu').is(':checked'),
             diet: String($('#item_diet').val() || ''),
             daypart_ids: $('#item_dayparts').val() || [],
+            channel_off: $('#item_channel_off').val() || [],
             prep_note: String($('#item_prep_note').val() || '').trim(),
             prep_minutes: Number($('#item_prep_minutes').val()) || 0,
             negative_stock: $('#item_negative_stock').is(':checked'),
@@ -1021,6 +1022,7 @@ PosnicPro.items = {
                     show_on_menu: $('#item_show_on_menu').is(':checked'),
                     diet: String($('#item_diet').val() || ''),
                     daypart_ids: $('#item_dayparts').val() || [],
+                    channel_off: $('#item_channel_off').val() || [],
                     prep_note: String($('#item_prep_note').val() || '').trim(),
                     prep_minutes: Number($('#item_prep_minutes').val()) || 0,
                     negative_stock: $('#item_negative_stock').is(':checked'),
@@ -1568,6 +1570,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
@@ -2227,6 +2230,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
@@ -5137,3 +5141,121 @@ $(document).on('change', '.kiosk-toggle', function () {
 $(document).on('click', '#items_list_rows tr.items-row', function () {
     PosnicPro.items.openDoc($(this).data('id'));
 });
+
+
+/*
+ * The channels an item can be kept off.
+ *
+ * Filled from the shop's own channel settings rather than a list in this file:
+ * a shop that does not use Swiggy should never be offered it, and a partner
+ * added last week has to appear here without a release.
+ *
+ * Loaded once and cached. The item form opens dozens of times in a session and
+ * the answer does not change between two of them.
+ */
+PosnicPro.itemChannels = {
+    _options: null,
+
+    /*
+     * Ids only, with the English kept beside each one rather than resolved.
+     *
+     * A t() call in a literal here runs when this file LOADS, which is before
+     * the language pack has arrived - so every shop would see English whatever
+     * it chose. The lookup happens in labelFor(), at render time.
+     */
+    CHANNELS: [
+        { id: 'pos', en: 'Point of sale' },
+        { id: 'online', en: 'Online and QR' },
+        { id: 'kiosk', en: 'Kiosk machine' },
+        { id: 'tableside', en: 'Captain app' },
+        { id: 'phone', en: 'Phone order' },
+        { id: 'whatsapp', en: 'WhatsApp' },
+        { id: 'marketplace', en: 'Delivery partners' },
+        { id: 'ecommerce', en: 'Webshop' }
+    ],
+
+    /*
+     * The key is spelled out per channel rather than built by concatenation.
+     *
+     * A key assembled at runtime is invisible to the translation sweep: the
+     * tooling reads the source looking for literals, finds 'lang_channel_' and
+     * has no idea what follows it, so none of these would ever appear on a
+     * translator's screen. Eight lines of literal beats eight untranslatable
+     * labels.
+     */
+    KEYS: {
+        pos: 'lang_channel_pos',
+        online: 'lang_channel_online',
+        kiosk: 'lang_channel_kiosk',
+        tableside: 'lang_channel_tableside',
+        phone: 'lang_channel_phone',
+        whatsapp: 'lang_channel_whatsapp',
+        marketplace: 'lang_channel_marketplace',
+        ecommerce: 'lang_channel_ecommerce'
+    },
+
+    labelFor: function (channel) {
+        var key = PosnicPro.itemChannels.KEYS[channel.id];
+        return key ? PosnicPro.i18n.t(key, channel.en) : channel.en;
+    },
+
+    load: function (done) {
+        var self = PosnicPro.itemChannels;
+        if (self._options) { self.fill(); if (done) { done(); } return; }
+
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            var enabled = values.sales_channels_enabled || [];
+            var partners = values.sales_channel_partners || [];
+
+            var options = self.CHANNELS
+                .filter(function (c) { return !enabled.length || enabled.indexOf(c.id) !== -1; })
+                .map(function (c) {
+                    return { id: c.id, label: self.labelFor(c) };
+                });
+
+            /* Each partner by name, so "not on Swiggy" is one tick rather than
+               taking the item off every aggregator at once. */
+            partners.forEach(function (p) {
+                if (p && p.id && p.enabled !== false) {
+                    options.push({ id: p.id, label: p.label || p.id });
+                }
+            });
+
+            self._options = options;
+            self.fill();
+            if (done) { done(); }
+        }, function () {
+            /* No settings yet is not an error: a shop that has configured
+               nothing has nothing to exclude from. */
+            self._options = [];
+            self.fill();
+            if (done) { done(); }
+        });
+    },
+
+    fill: function () {
+        var $sel = $('#item_channel_off');
+        if (!$sel.length) { return; }
+        var chosen = $sel.val() || [];
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        $sel.html((PosnicPro.itemChannels._options || []).map(function (o) {
+            return '<option value="' + esc(o.id) + '">' + esc(o.label) + '</option>';
+        }).join(''));
+        $sel.val(chosen).trigger('change');
+    },
+
+    /*
+     * Setting the value has to WAIT for the options to exist.
+     *
+     * select2 silently drops any id it has no option for, so setting before
+     * the list loads leaves the box empty - and the next save writes that
+     * empty box back, quietly putting the item on sale everywhere the shop
+     * had switched it off.
+     */
+    set: function (values) {
+        PosnicPro.itemChannels.load(function () {
+            $('#item_channel_off').val(values || []).trigger('change');
+        });
+    }
+};

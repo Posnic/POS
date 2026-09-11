@@ -4903,6 +4903,71 @@
 
                                                                 <hr class="my-3">
 
+                                                                <!--
+                                                                    WHAT EACH CHANNEL SELLS.
+
+                                                                    An item is on every channel unless a shop says
+                                                                    otherwise, so this screen is for recording the
+                                                                    exceptions - and doing it in bulk, because a shop
+                                                                    with four hundred lines is never going to open
+                                                                    four hundred item pages to keep cigarettes off
+                                                                    Swiggy.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_products_on_channel">What each channel sells</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_products_on_channel_help">Everything is sold everywhere unless you say otherwise. Pick a channel, find the lines that are different, and switch them off.</lang>
+                                                                </small>
+
+                                                                <div class="form-row align-items-end">
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_channel"><lang class="lang_channel">Channel</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_channel"></select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_category"><lang class="lang_category">Category</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_category">
+                                                                            <option value=""><lang class="lang_report_all">All</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-4">
+                                                                        <label for="channel_items_search"><lang class="lang_search">Search</lang></label>
+                                                                        <input type="search" class="form-control form-control-sm" id="channel_items_search"
+                                                                            placeholder="Part of a name" data-t-placeholder="lang_part_of_a_name">
+                                                                    </div>
+                                                                    <div class="form-group col-md-2">
+                                                                        <button type="button" class="btn btn-primary-rgba btn-sm btn-block" id="channel_items_find">
+                                                                            <lang class="lang_show_matching">Show</lang>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div id="channel_items_wrap" style="display:none;">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <div class="custom-control custom-checkbox">
+                                                                            <input type="checkbox" class="custom-control-input" id="channel_items_all">
+                                                                            <label class="custom-control-label small" for="channel_items_all">
+                                                                                <lang class="lang_select_all">Select all</lang>
+                                                                            </label>
+                                                                        </div>
+                                                                        <div>
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" id="channel_items_off">
+                                                                                <lang class="lang_remove_from_channel">Do not sell here</lang>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="channel_items_on">
+                                                                                <lang class="lang_add_to_channel">Sell here</lang>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="table-responsive" style="max-height:340px;overflow-y:auto;">
+                                                                        <table class="table table-sm table-borderless mb-0">
+                                                                            <tbody id="channel_items_rows"></tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                    <p class="small text-muted mt-2 mb-0" id="channel_items_count"></p>
+                                                                </div>
+
+                                                                <hr class="my-3">
+
                                                                 <h6 class="mb-1"><lang class="lang_order_approval">New online orders</lang></h6>
                                                                 <small class="form-text text-muted mb-2">
                                                                     <lang class="lang_order_approval_help">Send straight to the kitchen, or hold each order until somebody accepts it. Holding raises an alarm on the till so a waiting order is not missed.</lang>

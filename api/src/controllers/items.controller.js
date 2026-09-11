@@ -212,6 +212,60 @@ class ItemsController extends BaseController {
    * List items with pagination and optional filters
    * GET /items (legacy default endpoint)
    */
+  /**
+   * The catalogue, seen from one channel.
+   *
+   * A shop with four hundred lines is not going to open four hundred item
+   * pages to decide what goes on Swiggy, so the work is doable from the
+   * channel's own side, filtered the way a shop thinks about its catalogue:
+   * by category, or by typing part of a name.
+   */
+  async channelItems(req, res) {
+    try {
+      const response = await this.service.channelItems({
+        channel: req.query.channel,
+        categoryId: req.query.category_id,
+        search: req.query.search,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Turning a filtered set on or off for that channel in one go. */
+  async setChannelForItems(req, res) {
+    try {
+      const body = req.body || {};
+      const response = await this.service.setChannelForItems({
+        channel: body.channel,
+        itemIds: body.item_ids,
+        on: body.on,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** The hours one item keeps on one channel. */
+  async setChannelHours(req, res) {
+    try {
+      const body = req.body || {};
+      const response = await this.service.setChannelHours({
+        itemId: req.params.id,
+        channel: body.channel,
+        window: body.window,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async getAll(req, res) {
     try {
       await this.ensureContext(req);

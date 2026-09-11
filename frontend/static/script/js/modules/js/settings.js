@@ -8315,3 +8315,152 @@ $(document).on('click', '#stop_taking_orders', function () {
         PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
     );
 });
+
+/*
+ * WHAT EACH CHANNEL SELLS.
+ *
+ * An item is on every channel the shop runs unless somebody says otherwise, so
+ * this screen records exceptions - and it records them in BULK, because a shop
+ * with four hundred lines is never going to open four hundred item pages to
+ * keep cigarettes off Swiggy.
+ *
+ * The filters are the ones a shop already thinks in: a category, or part of a
+ * name. Not a page number.
+ */
+PosnicPro.channelItems = {
+    /* Filled from the shop's own channels and partners, so a shop that does
+       not use Swiggy is never offered it. */
+    fillChannels: function () {
+        var channels = (PosnicPro.itemChannels && PosnicPro.itemChannels._options) || null;
+        var draw = function (options) {
+            $('#channel_items_channel').html(options.map(function (o) {
+                return '<option value="' + $('<div>').text(o.id).html() + '">'
+                    + $('<div>').text(o.label).html() + '</option>';
+            }).join(''));
+        };
+        if (channels) { draw(channels); return; }
+        if (PosnicPro.itemChannels) {
+            PosnicPro.itemChannels.load(function () {
+                draw(PosnicPro.itemChannels._options || []);
+            });
+        }
+    },
+
+    fillCategories: function () {
+        PosnicPro.get({ url: 'categories', data: { limit: 500 } }, function (response) {
+            var rows = (response && response.data && (response.data.list || response.data)) || [];
+            if (!Array.isArray(rows)) { return; }
+            var all = '<option value="">' + PosnicPro.i18n.t('lang_report_all', 'All') + '</option>';
+            $('#channel_items_category').html(all + rows.map(function (c) {
+                return '<option value="' + $('<div>').text(c._id || c.id).html() + '">'
+                    + $('<div>').text(c.name || '').html() + '</option>';
+            }).join(''));
+        }, function () { /* no categories is not an error */ });
+    },
+
+    find: function () {
+        var self = PosnicPro.channelItems;
+        var channel = $('#channel_items_channel').val();
+        if (!channel) { return; }
+
+        PosnicPro.get({
+            url: 'items/channel',
+            data: {
+                channel: channel,
+                category_id: $('#channel_items_category').val() || '',
+                search: $('#channel_items_search').val() || ''
+            }
+        }, function (response) {
+            var data = (response && response.data) || { items: [] };
+            self.render(data.items || []);
+        }, function () {
+            $('#channel_items_rows').html('');
+            $('#channel_items_wrap').hide();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_items', 'Could not load the items.'));
+        });
+    },
+
+    render: function (items) {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#channel_items_rows').html(items.map(function (item) {
+            /* The state shown is what the shop DECIDED, not what happens to be
+               true at four in the afternoon: somebody configuring a catalogue
+               is not asking about the clock. */
+            var mark = item.on
+                ? '<span class="badge badge-success-inverse">' + t('lang_sold_here', 'Sold here') + '</span>'
+                : '<span class="badge badge-danger-inverse">' + t('lang_not_sold_here', 'Not sold here') + '</span>';
+            var hours = item.hours
+                ? ' <span class="small text-muted">' + esc(item.hours.from) + ' - ' + esc(item.hours.to) + '</span>'
+                : '';
+
+            return '<tr>'
+                + '<td style="width:36px;"><div class="custom-control custom-checkbox">'
+                + '<input type="checkbox" class="custom-control-input channel-item-pick" '
+                + 'id="ci_' + esc(item.id) + '" value="' + esc(item.id) + '">'
+                + '<label class="custom-control-label" for="ci_' + esc(item.id) + '"></label>'
+                + '</div></td>'
+                + '<td>' + esc(item.name) + hours + '</td>'
+                + '<td class="text-muted small">' + esc(item.category_name) + '</td>'
+                + '<td class="text-right">' + mark + '</td>'
+                + '</tr>';
+        }).join(''));
+
+        $('#channel_items_count').text(items.length + ' ' + t('lang_items_found', 'items'));
+        $('#channel_items_all').prop('checked', false);
+        $('#channel_items_wrap').toggle(items.length > 0);
+        if (!items.length) {
+            PosnicPro.alert('info', t('lang_no_items_match', 'Nothing matches that filter.'));
+        }
+    },
+
+    apply: function (on) {
+        var self = PosnicPro.channelItems;
+        var ids = $('.channel-item-pick:checked').map(function () { return this.value; }).get();
+        if (!ids.length) {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_at_least_one_item', 'Select at least one item.'));
+            return;
+        }
+
+        PosnicPro.post({
+            url: 'items/channel',
+            data: JSON.stringify({
+                channel: $('#channel_items_channel').val(),
+                item_ids: ids,
+                on: on
+            })
+        }, function (response) {
+            if (response && response.type === 'success') {
+                /* Says how many actually moved, not how many were selected:
+                   "40 selected, 3 changed" is the honest answer when most were
+                   already where the shop wanted them. */
+                var d = response.data || {};
+                PosnicPro.alert('success', response.message + ' (' + (d.changed || 0) + ')');
+                self.find();
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function (xhr) {
+            var body = xhr && xhr.responseJSON;
+            PosnicPro.alert('error', (body && body.message)
+                || PosnicPro.i18n.t('lang_could_not_update_the_items', 'Could not update the items.'));
+        });
+    }
+};
+
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.channelItems.fillChannels();
+    PosnicPro.channelItems.fillCategories();
+});
+
+$(document).on('click', '#channel_items_find', function () {
+    PosnicPro.channelItems.find();
+});
+
+$(document).on('change', '#channel_items_all', function () {
+    $('.channel-item-pick').prop('checked', $(this).is(':checked'));
+});
+
+$(document).on('click', '#channel_items_on', function () { PosnicPro.channelItems.apply(true); });
+$(document).on('click', '#channel_items_off', function () { PosnicPro.channelItems.apply(false); });

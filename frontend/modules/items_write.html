@@ -885,6 +885,26 @@
                                             data-placeholder="All day" data-t-placeholder="lang_all_day"></select>
                                     </div>
 
+                                    <!--
+                                        Which channels do NOT sell this.
+                                    
+                                        Exceptions, not memberships: an item is on every
+                                        channel the shop runs unless it is ticked here.
+                                        A shop of two hundred lines should not have to
+                                        say "yes" six times per item to sell anything,
+                                        and a channel switched on next month should sell
+                                        the whole catalogue rather than nothing.
+                                    -->
+                                    <div class="form-group col-md-8">
+                                        <label for="item_channel_off"><lang class="lang_not_sold_on">Not sold on</lang></label>
+                                        <select class="form-control border-control select2" id="item_channel_off"
+                                            name="item_channel_off" multiple="multiple"
+                                            data-placeholder="Sold on every channel" data-t-placeholder="lang_sold_everywhere"></select>
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_not_sold_on_help">Leave empty to sell it everywhere. Pick a channel or a delivery partner to keep this item off it.</lang>
+                                        </small>
+                                    </div>
+                                    
                                     <div class="form-group col-md-4 restaurant-only">
                                         <label for="item_prep_minutes"><lang class="lang_prep_minutes">Preparation time (minutes)</lang></label>
                                         <input type="number" min="0" max="480" class="form-control border-control"

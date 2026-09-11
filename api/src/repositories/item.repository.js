@@ -7,6 +7,7 @@ const Branch = require('../models/branch.model');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const partnerVenues = require('../utils/partner-venues');
+const itemChannels = require('../utils/item-channels');
 const salesChannels = require('../utils/sales-channels');
 
 /*
@@ -1578,6 +1579,17 @@ class ItemRepository extends BaseModel {
         daypart_ids: Array.isArray(data.daypart_ids)
           ? data.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
           : [],
+        /*
+         * The channels this item is NOT sold on.
+         *
+         * Normalised here rather than trusted, because it arrives from a form
+         * and reaches a Mongo query: an id nobody recognises is dropped, so a
+         * typo can never quietly take an item off sale everywhere. Sync
+         * replaces whole documents, so this has to be written on every save or
+         * it is deleted by the next one. See utils/item-channels.js.
+         */
+        channel_off: itemChannels.normalizeOff(data.channel_off),
+        channel_hours: itemChannels.normalizeHours(data.channel_hours),
         /* The kitchen's standing instruction for this dish, never the
            customer's note - that rides on the order line. */
         prep_note: String(data.prep_note || '')
@@ -3454,6 +3466,180 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * Which items a channel sells, and which it does not.
+   *
+   * The screen behind "show me everything on Swiggy" - a shop with four
+   * hundred lines is not going to open four hundred item pages, so the work has
+   * to be doable from the channel's own side, filtered the way a shop thinks
+   * about its catalogue: by category, or by typing part of a name.
+   */
+  async channelItems(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      if (!channel) {
+        return { status: false, message: 'Enter must correct channel', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const match = {
+        $and: [
+          { license: BaseModel.license },
+          NOT_DELETED,
+          { is_deleted: { $ne: true } },
+          { item_status: { $ne: ITEM_STATUS.INSTANT } },
+        ],
+      };
+
+      if (params.categoryId && ObjectId.isValid(String(params.categoryId))) {
+        match.$and.push({ category_id: new ObjectId(String(params.categoryId)) });
+      }
+      if (params.search) {
+        /* Through safe-search, because this string came off a form and a
+           regex assembled from user input is a denial of service waiting for
+           somebody to paste the wrong thing. */
+        match.$and.push({ name: searchPattern(params.search) });
+      }
+
+      const rows = await collection
+        .find(match, {
+          projection: {
+            _id: 1,
+            name: 1,
+            category_name: 1,
+            selling_price: 1,
+            channel_off: 1,
+            channel_hours: 1,
+          },
+        })
+        .sort({ name: 1 })
+        .limit(500)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          channel,
+          items: rows.map((row) => {
+            const state = itemChannels.availableOn(row, channel);
+            return {
+              id: String(row._id),
+              name: row.name || '',
+              category_name: row.category_name || '',
+              price: Number(row.selling_price) || 0,
+              /* Whether this channel sells it at all. The clock is not
+                 consulted here: a shop configuring its catalogue wants to see
+                 what it has decided, not what happens to be true at 4pm. */
+              on: state.reason !== 'not_on_channel',
+              hours: (row.channel_hours || {})[channel] || null,
+            };
+          }),
+          total: rows.length,
+        },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.channelItems:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * Turning a whole filtered set on or off for one channel.
+   *
+   * WRITES ONLY WHAT CHANGES. "Sell everything on Swiggy" over four hundred
+   * items should touch the handful that were off, not four hundred documents:
+   * sync replaces whole documents, so every needless write is a chance to lose
+   * a field somebody else changed a second earlier.
+   */
+  async setChannelForItems(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      if (!channel) {
+        return { status: false, message: 'Enter must correct channel', data: null };
+      }
+      const on = params.on !== false && params.on !== 'false';
+
+      const ids = (Array.isArray(params.itemIds) ? params.itemIds : [])
+        .filter((id) => ObjectId.isValid(String(id)))
+        .map((id) => new ObjectId(String(id)));
+
+      if (!ids.length) {
+        return { status: false, message: 'Select at least one item', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const rows = await collection
+        .find(
+          { _id: { $in: ids }, license: BaseModel.license },
+          { projection: { _id: 1, channel_off: 1 } }
+        )
+        .toArray();
+
+      let changed = 0;
+      for (const row of rows) {
+        const next = itemChannels.setChannel(row.channel_off, channel, on);
+        if (!next.changed) continue;
+        await collection.updateOne(
+          { _id: row._id, license: BaseModel.license },
+          { $set: { channel_off: next.value, updated_date: new Date() } }
+        );
+        changed += 1;
+      }
+
+      return {
+        status: true,
+        message: on ? 'Items added to this channel' : 'Items removed from this channel',
+        data: { channel, on, matched: rows.length, changed },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.setChannelForItems:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * The window one item keeps on one channel.
+   *
+   * Separate from the on/off above because it is a different decision made at
+   * a different moment: a shop switches a line off an app in a second, and
+   * sits down to think about lunch hours.
+   */
+  async setChannelHours(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      const itemId = String(params.itemId || '');
+      if (!channel || !ObjectId.isValid(itemId)) {
+        return { status: false, message: 'Enter must correct item id', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const row = await collection.findOne(
+        { _id: new ObjectId(itemId), license: BaseModel.license },
+        { projection: { channel_hours: 1 } }
+      );
+      if (!row) return { status: false, message: 'Item not found', data: null };
+
+      const hours = itemChannels.normalizeHours(row.channel_hours);
+      /* An empty window CLEARS: "all day" is said by leaving the boxes blank,
+         and storing a half-written one would hide the item instead. */
+      const wanted = itemChannels.normalizeHours({ [channel]: params.window || {} });
+
+      if (wanted[channel]) hours[channel] = wanted[channel];
+      else delete hours[channel];
+
+      await collection.updateOne(
+        { _id: new ObjectId(itemId), license: BaseModel.license },
+        { $set: { channel_hours: hours, updated_date: new Date() } }
+      );
+
+      return { status: true, message: 'Saved', data: { channel, hours: hours[channel] || null } };
+    } catch (error) {
+      console.error('Error in ItemRepository.setChannelHours:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
   async publicMenu(params = {}) {
     const storeId = params.storeId;
     try {
@@ -3480,6 +3666,10 @@ class ItemRepository extends BaseModel {
              gets a complete menu, which is the only sensible default for a
              feature whose whole job is to list things. */
           { show_on_menu: { $ne: false } },
+          /* And not a line this shop has taken off the online channel. Absent
+             means included, so a shop that has never touched it loses
+             nothing. See utils/item-channels.js. */
+          itemChannels.channelFilter(salesChannels.CHANNEL.ONLINE),
         ],
       };
 
@@ -3703,6 +3893,16 @@ class ItemRepository extends BaseModel {
         baseFilter.push({ ecommerce: true });
         baseFilter.push({ isAvailable: true });
       }
+
+      /*
+       * And whatever this shop has taken off this channel by hand.
+       *
+       * The storefront is reached by a customer's phone and by the shop's own
+       * machine, which are two different channels with two different answers:
+       * a line a shop will not put online may still be perfectly fine on the
+       * terminal by the counter.
+       */
+      baseFilter.push(itemChannels.channelFilter(params.channel || salesChannels.CHANNEL.ONLINE));
 
       const pipeline = [
         { $match: { $and: baseFilter } },
