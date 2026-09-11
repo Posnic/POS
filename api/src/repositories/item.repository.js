@@ -4109,7 +4109,21 @@ class ItemRepository extends BaseModel {
         licenseId: branchDoc.license,
       });
       const values = (read && read.status && read.data && read.data.values) || {};
-      return values.table_options === 'enable' ? 'restaurant' : 'retail';
+      /*
+       * Stored as the STRING 'true' by the Features page, as a boolean by
+       * older saves, and as 'enable' only in the console's own cache. The
+       * first cut of this read 'enable' and made every shop a shop.
+       */
+      const raw = values.table_options;
+      const on =
+        raw === true ||
+        raw === 1 ||
+        ['true', 'enable', 'enabled', '1', 'on', 'yes'].includes(
+          String(raw == null ? '' : raw)
+            .trim()
+            .toLowerCase()
+        );
+      return on ? 'restaurant' : 'retail';
     } catch (e) {
       console.warn('[storefront] could not read the shop kind:', e.message);
       return 'retail';
