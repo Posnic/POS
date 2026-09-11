@@ -1027,6 +1027,9 @@
   "New password and confirmation are required": [
     "src/controllers/users.controller.js"
   ],
+  "No API key is saved for the voice provider": [
+    "src/services/transcribe.service.js"
+  ],
   "No IDs provided": [
     "src/models/expense.model.js",
     "src/models/receiving.model.js",
@@ -1044,6 +1047,9 @@
   ],
   "No SMS provider configured (brevo or msg91)": [
     "src/services/sms.service.js"
+  ],
+  "No audio was sent": [
+    "src/services/transcribe.service.js"
   ],
   "No branch IDs provided": [
     "src/models/branch.model.js"
@@ -1841,6 +1847,9 @@
   "That key does not belong to an API user.": [
     "src/middleware/api-key.js"
   ],
+  "That recording is too long": [
+    "src/services/transcribe.service.js"
+  ],
   "That shop has no items yet": [
     "src/services/catalogue-copy.js"
   ],
@@ -1849,6 +1858,9 @@
   ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
+  ],
+  "The audio could not be read": [
+    "src/services/transcribe.service.js"
   ],
   "The family needs a product name.": [
     "src/services/item.service.js"
@@ -1864,6 +1876,9 @@
   ],
   "The user belonging to this token no longer exists. Please log in again.": [
     "src/middleware/auth.js"
+  ],
+  "The voice service did not answer": [
+    "src/services/transcribe.service.js"
   ],
   "Theme settings not updated": [
     "src/controllers/settings.controller.js"
@@ -1982,6 +1997,9 @@
   ],
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
+  ],
+  "This shop transcribes on the handset, not on the server": [
+    "src/services/transcribe.service.js"
   ],
   "This supplier details already exist in our system": [
     "src/models/supplier-legacy.model.js"
@@ -2208,6 +2226,9 @@
   ],
   "Variant value \"": [
     "src/services/item.service.js"
+  ],
+  "Voice ordering is not set up for this shop": [
+    "src/services/transcribe.service.js"
   ],
   "Webhook registered. Store the secret now - it is not shown again.": [
     "app.js"

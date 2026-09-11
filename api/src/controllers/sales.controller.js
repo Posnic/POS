@@ -37,6 +37,7 @@ const CashbackService = require('../services/cashback.service');
 const cashbackService = new CashbackService();
 const { createActivityLog } = require('../utils/activityLogger');
 const { AuditService, AUDIT_EVENTS } = require('../services/audit.service');
+const transcribeService = require('../services/transcribe.service');
 const { canPos } = require('../utils/pos-permission.util');
 const { isApprovedFor } = require('../utils/approval-token.util');
 const sessionFilterUtil = require('../utils/session-filter.util');
@@ -7178,6 +7179,31 @@ class SalesController extends BaseController {
     } catch (error) {
       console.error('Error in kotTablewiseDetails:', error);
       return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * Turn a clip of a waiter's voice into text.
+   *
+   * The shop's provider and key are read on this side and never travel; the
+   * handset sends audio and gets words back. See
+   * services/transcribe.service.js for why that is not negotiable.
+   */
+  async transcribe(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await transcribeService.transcribe(req.body || {}, context);
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, 'Transcribed');
+    } catch (error) {
+      console.error('Error in transcribe:', error);
+      return this.error(res, 'Could not transcribe', 500);
     }
   }
 

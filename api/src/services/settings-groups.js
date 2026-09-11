@@ -124,6 +124,12 @@ const PREFERENCES = [
   'sms_auto_send_time',
   'sms_retry_period',
   'sms_max_retries',
+  /* Voice ordering (captain app). Which transcriber the shop uses - 'device'
+     for the handset's own recogniser, 'openai' or 'google' for a paid one,
+     'off' to hide the mic. A preference and not a secret: a screen has to be
+     able to show which one is chosen, and the NAME of a provider is not a
+     credential. Its key is in SECRETS, where it can never be read back. */
+  'voice_provider',
 ];
 
 const DOCUMENTS = [
@@ -143,6 +149,12 @@ const SECRETS = [
   'email_smtp_username',
   'email_smtp_password',
   'email_smtp_from',
+  /* The transcription key, for a shop that picked a paid provider. It is here
+     rather than in the handset on purpose: a key shipped to phones cannot be
+     rotated without reinstalling every one of them, and a leaked one is billed
+     to the shop until somebody reads the invoice. See
+     services/transcribe.service.js. */
+  'voice_api_key',
 ];
 
 /* Now that an empty value means "leave the saved credential alone", clearing
