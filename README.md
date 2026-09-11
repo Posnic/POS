@@ -15,7 +15,7 @@ network.
 Posnic's own source is AGPL-3.0-only. Release packages also bundle separately
 licensed components, including MongoDB Community Server under SSPL-1.0. Review
 the [package notices](THIRD-PARTY-NOTICES.md) and
-[reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json)
+[reproduced package evidence](https://www.posnic.com/assets/posnic-package-license-evidence.json)
 before making a package-level licence statement.
 
 [![CI](https://github.com/Posnic/POS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Posnic/POS/actions/workflows/ci.yml)
@@ -39,7 +39,7 @@ shop with a week of sample trading, running the same code as this repository;
 ring up sales, break things freely, and the whole shop is restored on the
 hour. Outbound email, SMS and password changes are switched off there.
 
-[Website](https://posnic.io/) · [Product facts](https://posnic.com/posnic-facts) · [Package evidence](https://posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
+[Website](https://www.posnic.com/) · [Product facts](https://www.posnic.com/posnic-facts) · [Package evidence](https://www.posnic.com/assets/posnic-package-license-evidence.json) · [CodeMeta metadata](codemeta.json) · [Citation metadata](CITATION.cff) · [Roadmap](docs/ROADMAP.md) · [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) · [User guide](docs/USER_GUIDE.md) · [Developer guide](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Discussions](https://github.com/Posnic/POS/discussions)
 
 </div>
 
@@ -50,7 +50,7 @@ hour. Outbound email, SMS and password changes are switched off there.
 ![A completed cash sale in Posnic v1.3.0](docs/images/offline-sale-v1-3-0.png)
 
 This synthetic cash sale was completed and reopened during the bounded
-[offline workflow verification](https://posnic.com/posnic-facts). The published
+[offline workflow verification](https://www.posnic.com/posnic-facts). The published
 test notes state what was blocked, what passed and what the result does not
 prove.
 
@@ -61,7 +61,7 @@ v1.3.0 Windows test, one synthetic cash sale completed and reopened while
 external hosts were blocked inside Electron. This does not prove an
 operating-system-wide outage, complete shift, payment-terminal path, power-loss
 recovery or every workflow. Review the
-[versioned evidence and limitations](https://posnic.com/posnic-facts).
+[versioned evidence and limitations](https://www.posnic.com/posnic-facts).
 
 - **Free local edition.** The v1.3.0 desktop packages have no trial clock and
   have a zero software price. Posnic's own source is AGPL-3.0-only; packaged
@@ -85,8 +85,8 @@ production information.
 
 ### Reviewing Posnic independently?
 
-Use the public [review brief](https://posnic.com/assets/posnic-independent-review-brief.txt)
-and [24-control protocol](https://posnic.com/assets/posnic-independent-review-protocol.csv)
+Use the public [review brief](https://www.posnic.com/assets/posnic-independent-review-brief.txt)
+and [24-control protocol](https://www.posnic.com/assets/posnic-independent-review-protocol.csv)
 with the exact release, package filename and SHA-256 you tested. Review access
 does not require payment, positive coverage, a backlink or advance approval.
 Publish failures, conflicts and untested areas beside successful results. An
@@ -165,7 +165,7 @@ clear), **keep port 27017 off the internet**, and **restore a backup once** to
 prove it is a backup rather than a file.
 
 **Self-hosting does not include sync between tills or branches.** That is
-[Posnic Cloud](https://posnic.com/pricing.html). A self-hosted Posnic is one
+[Posnic Cloud](https://www.posnic.com/pricing.html). A self-hosted Posnic is one
 database several people use at once — which is what most single-shop setups
 actually want — not several databases kept in step.
 
@@ -281,7 +281,7 @@ little back is what keeps the next release coming.
 | | |
 |---|---|
 | ☕ **[Buy us a chai](https://github.com/sponsors/Posnic)** | one-off or monthly, from a dollar up |
-| ☁️ **[Posnic Cloud](https://posnic.com/pricing)** | sync, off-site backups, remote dashboards — the paid service that funds this one |
+| ☁️ **[Posnic Cloud](https://www.posnic.com/pricing)** | sync, off-site backups, remote dashboards — the paid service that funds this one |
 | 🏢 **Commercial licence** | keep your modifications private — **info@posnic.com** |
 
 Sponsors are named in releases unless they would rather not be.
@@ -295,7 +295,7 @@ Sponsors are named in releases unless they would rather not be.
 | Sales and licensing | **info@posnic.com** |
 | Support | [SUPPORT.md](.github/SUPPORT.md) · [Discussions](https://github.com/Posnic/POS/discussions) |
 | Security | **security@posnic.com** — privately, never a public issue ([SECURITY.md](.github/SECURITY.md)) |
-| Web | [posnic.io](https://posnic.io/) · [posnic.com](https://posnic.com) |
+| Web | [www.posnic.com](https://www.posnic.com/) |
 
 Paid setup, migration from an existing till, hardware selection, custom
 reporting and white-labelled installers are all available. The software stays

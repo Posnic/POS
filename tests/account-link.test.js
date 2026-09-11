@@ -105,7 +105,8 @@ test('the menu item ships hidden and links out safely', () => {
 
   assert.match(item[0], /style="display:none;"/,
     'the item ships visible, so a community shop would see it before any check runs');
-  assert.match(item[0], /href="https:\/\/posnic\.com\/account"/, 'it does not link to the account page');
+  assert.match(item[0], /href="https:\/\/www\.posnic\.com\/account"/,
+    'it does not link to the canonical account page');
   assert.match(item[0], /target="_blank"/, 'it should open in a new tab, not replace the till');
   assert.match(item[0], /rel="noopener noreferrer"/,
     'a target=_blank link without noopener hands the opener to the other page');

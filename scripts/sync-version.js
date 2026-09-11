@@ -4,9 +4,9 @@
  * One version, written everywhere it is stated.
  *
  * package.json is not the only file that names the release. codemeta.json
- * states it twice (version and softwareVersion) plus a sentence about whether
- * it is tagged, CITATION.cff states it again, and the generated OpenAPI spec
- * carries it in info.version. Three separate tests assert they all agree, and
+ * states it twice (version and softwareVersion), CITATION.cff states it again,
+ * and the generated OpenAPI spec carries it in info.version. Three separate
+ * tests assert they all agree, and
  * CI regenerates the docs and fails on any diff.
  *
  * The first real run of `release:ship` bumped package.json alone and CI
@@ -50,9 +50,6 @@ function edit(file, replacements) {
 edit('codemeta.json', [
   [/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`],
   [/^(\s*"softwareVersion":\s*")[^"]+(")/m, `$1${version}$2`],
-  /* The sentence names the version too, so it goes stale in its own way. */
-  [/^(\s*"developmentStatus":\s*"active development; package version )[^ ]+( )/m,
-    `$1${version}$2`],
 ]);
 
 edit('CITATION.cff', [[/^(version:\s*).+$/m, `$1${version}`]]);

@@ -3023,7 +3023,10 @@ class UsersController extends BaseController {
        * SSO_URL still overrides, for local work against a dev website.
        */
       const ssoUrlFromEnv = process.env.SSO_URL;
-      const siteBase = (process.env.POSNIC_SITE_URL || 'https://posnic.com').replace(/\/+$/, '');
+      const siteBase = (process.env.POSNIC_SITE_URL || 'https://www.posnic.com').replace(
+        /\/+$/,
+        ''
+      );
       const domainName = ssoUrlFromEnv || `${siteBase}/api/sso/token`;
 
       console.log('[ssoClientLogin] Calling SSO API:', domainName);

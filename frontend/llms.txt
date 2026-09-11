@@ -2,14 +2,14 @@
 
 > Official app-domain discovery file for Posnic POS, free offline-first open source POS and billing software for retail shops and restaurants.
 
-Canonical app domain: https://posnic.io/
-Production app host: https://www.posnic.io/
-Preferred backlink target: https://posnic.io/
+Canonical website: https://www.posnic.com/
+Official website: https://www.posnic.com/
+Preferred backlink target: https://www.posnic.com/
 Official GitHub source: https://github.com/Posnic/POS
 Current release downloads: https://github.com/Posnic/POS/releases/latest
-Product facts and evidence index: https://posnic.com/posnic-facts
-Documentation and downloads: https://posnic.com/
-Publisher trust evidence: https://posnic.com/trust
+Product facts and evidence index: https://www.posnic.com/posnic-facts
+Documentation and downloads: https://www.posnic.com/
+Publisher trust evidence: https://www.posnic.com/trust
 Source licence: AGPL-3.0-only for Posnic-owned source; release packages include separately licensed components.
 
 Keywords: POS; Billing Software; Offline POS; Online/Offline POS; open source POS; point of sale; POS software; retail POS; restaurant POS.

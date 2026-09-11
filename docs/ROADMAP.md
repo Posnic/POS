@@ -48,9 +48,9 @@ Status: **in validation**
 - Keep payment-provider authorization and settlement outside an offline claim.
 
 Start with the
-[vendor-neutral POS acceptance fixture](https://posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
+[vendor-neutral POS acceptance fixture](https://www.posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
 and review the
-[machine-readable partial Posnic result](https://posnic.com/assets/posnic-development-pos-acceptance-fixture-2026-08-22.json).
+[machine-readable partial Posnic result](https://www.posnic.com/assets/posnic-development-pos-acceptance-fixture-2026-08-22.json).
 Then reproduce it on a named package and submit a
 [POS acceptance run](https://github.com/Posnic/POS/issues/new?template=pos_acceptance_run.yml).
 
@@ -133,9 +133,9 @@ Status: **planned**
 | Hardware | Protocol and source-test evidence plus a versioned matrix | No named device is automatically certified |
 
 The maintained evidence index is
-[Posnic product facts](https://posnic.com/posnic-facts). The comparison and test
+[Posnic product facts](https://www.posnic.com/posnic-facts). The comparison and test
 method is the
-[open-source POS benchmark](https://posnic.com/open-source-pos-benchmark).
+[open-source POS benchmark](https://www.posnic.com/open-source-pos-benchmark).
 
 ## How roadmap work is accepted
 

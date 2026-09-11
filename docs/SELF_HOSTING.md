@@ -28,7 +28,7 @@ be.
 ### What self-hosting does not include
 
 **Sync between tills or branches is not part of this.** That is
-[Posnic Cloud](https://posnic.com/pricing.html), and it is a paid service.
+[Posnic Cloud](https://www.posnic.com/pricing.html), and it is a paid service.
 
 A self-hosted Posnic is **one database that several people use at once**, which
 is what most single-shop setups actually want. It is not several databases kept
