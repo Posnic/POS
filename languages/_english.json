@@ -139,6 +139,7 @@
   "lang_ai_key": "API key",
   "lang_ai_key_saved": "A key is saved. Type a new one to replace it.",
   "lang_ai_module_desc": "Writes item descriptions for you. You bring your own AI account and pay that provider directly; we charge nothing. Set it up on the AI assistance page.",
+  "lang_ai_not_subscription": "A Claude Pro or ChatGPT Plus subscription does not work here. Those pay for the chat website; an API key is billed separately and, for this kind of use, usually costs far less.",
   "lang_ai_off": "Off - no AI buttons anywhere",
   "lang_ai_openai": "OpenAI - your own account",
   "lang_ai_provider": "Who answers",

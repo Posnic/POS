@@ -131,6 +131,7 @@
   "lang_ai_key": "Kunci API",
   "lang_ai_key_saved": "Sebuah kunci sudah tersimpan. Ketik yang baru untuk menggantinya.",
   "lang_ai_module_desc": "Menulis deskripsi barang untuk Anda. Anda memakai akun AI Anda sendiri dan membayar penyedia itu langsung; kami tidak memungut biaya. Atur di halaman Bantuan AI.",
+  "lang_ai_not_subscription": "Langganan Claude Pro atau ChatGPT Plus tidak berlaku di sini. Itu membayar situs obrolannya; kunci API ditagih terpisah dan, untuk penggunaan seperti ini, biasanya jauh lebih murah.",
   "lang_ai_off": "Mati - tidak ada tombol AI",
   "lang_ai_openai": "OpenAI - akun Anda sendiri",
   "lang_ai_provider": "Siapa yang menjawab",

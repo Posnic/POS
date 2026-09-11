@@ -96,3 +96,15 @@ test('the help is hidden until a provider is chosen', () => {
   assert.match(html, /id="ai_key_help"[^>]*display:none/, 'the help block starts visible');
   assert.match(js, /\$\('#ai_key_help'\)\.toggle\(/, 'nothing shows or hides the help block');
 });
+
+test('it says plainly that a chat subscription is not an API key', () => {
+  /*
+   * The likeliest misunderstanding on this page. A shop already paying for
+   * Claude Pro or ChatGPT Plus will reasonably assume it covers this, try
+   * that login, and fail - and the providers' own support pages call the
+   * subscription-versus-API split the commonest source of confusion on an
+   * invoice. Cheaper to say here than to discover.
+   */
+  assert.match(html, /lang_ai_not_subscription/,
+    'nothing warns that a chat subscription will not work as an API key');
+});

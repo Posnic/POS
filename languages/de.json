@@ -131,6 +131,7 @@
   "lang_ai_key": "API-Schlüssel",
   "lang_ai_key_saved": "Ein Schlüssel ist gespeichert. Geben Sie einen neuen ein, um ihn zu ersetzen.",
   "lang_ai_module_desc": "Schreibt Artikelbeschreibungen für Sie. Sie bringen Ihr eigenes KI-Konto mit und zahlen direkt an diesen Anbieter; wir berechnen nichts. Einrichtung auf der Seite KI-Unterstützung.",
+  "lang_ai_not_subscription": "Ein Claude Pro- oder ChatGPT Plus-Abo funktioniert hier nicht. Diese bezahlen die Chat-Website; ein API-Schlüssel wird getrennt abgerechnet und kostet für diese Art der Nutzung meist deutlich weniger.",
   "lang_ai_off": "Aus - keine KI-Schaltflächen",
   "lang_ai_openai": "OpenAI - Ihr eigenes Konto",
   "lang_ai_provider": "Wer antwortet",
