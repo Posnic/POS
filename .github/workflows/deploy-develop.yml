@@ -120,6 +120,25 @@ jobs:
                 done
           done
           REMOTE
+          # The sandbox's own nginx config lives in the repository (scripts/sandbox),
+          # and the banner it injects is part of what people come here to see. Applied
+          # on every deploy when the box allows it; otherwise noted and skipped, never
+          # failed - a banner is not a reason to withhold a build.
+          rsync -az \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            scripts/sandbox/nginx-develop.conf "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:/tmp/nginx-develop.conf"
+          ssh -i ~/.ssh/develop.pem "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}" 'bash -s' <<'NGINX'
+          if sudo -n true 2>/dev/null; then
+            if ! sudo cmp -s /tmp/nginx-develop.conf /etc/nginx/sites-available/develop; then
+              sudo cp /tmp/nginx-develop.conf /etc/nginx/sites-available/develop \
+                && sudo nginx -t && sudo systemctl reload nginx && echo "nginx: config applied"
+            else
+              echo "nginx: config unchanged"
+            fi
+          else
+            echo "nginx: no passwordless sudo on this box; apply scripts/sandbox/nginx-develop.conf by hand"
+          fi
+          NGINX
           # The customer-facing bundles. api/app.js serves these from '../menu'
           # and '../order' behind an fs.existsSync guard, so leaving them out
           # was not an error - it was a silent 404 on every /menu and /order

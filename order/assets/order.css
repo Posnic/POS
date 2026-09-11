@@ -274,7 +274,14 @@ select:focus-visible,
   z-index: 10;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
-  padding-top: env(safe-area-inset-top);
+  /* Never flush with the top of the screen: with the shop's name gone in
+     search mode the field was first, and its top border sat under the
+     browser's address bar. */
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+
+body.searching .top {
+  padding-top: max(12px, env(safe-area-inset-top));
 }
 
 .top-row {
@@ -319,6 +326,22 @@ select:focus-visible,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* "Table 5", beside the count, from the code that was scanned. */
+.shop-place {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.shop-place[hidden] {
+  display: none;
 }
 
 /* The order, at the top right: a glyph with the count on it. */
@@ -456,7 +479,7 @@ body.searching .fixed-heading {
 .order-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 8px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -472,8 +495,8 @@ body.searching .fixed-heading {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 6px 12px;
+  min-height: 32px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -506,15 +529,21 @@ body.searching .fixed-heading {
 }
 
 .order-result-count {
-  margin: 8px 0 0;
-  font-size: 13px;
+  margin: 0;
+  padding: 8px 4px 2px;
+  font-size: 12px;
   color: var(--ink-soft);
+  text-align: right;
+}
+
+body.searching .order-search {
+  padding-bottom: 8px;
 }
 
 /* ------------------------------------------------------------- categories */
 
 .fixed-categories {
-  padding-bottom: 10px;
+  padding: 2px 0 8px;
 }
 
 .category-scroll-container {
@@ -550,6 +579,44 @@ body.searching .fixed-heading {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
+}
+
+/* A count on a section that has something in the order: a small ink
+   bubble, white on the active chip. Drawn from the attribute the bill
+   update writes, so a chip never has to be rebuilt. */
+.category-item {
+  position: relative;
+}
+
+.category-item.has-items::after {
+  content: attr(data-count);
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  animation: qty-pop 0.28s ease;
+}
+
+.category-item.active.has-items::after {
+  background: var(--on-accent);
+  color: var(--accent);
+}
+
+.category-rail .category-item.has-items::after {
+  position: static;
+  margin-left: auto;
+  border: 0;
 }
 
 /* --------------------------------------------------------------- sections */
@@ -1139,13 +1206,29 @@ dialog.sheet::backdrop {
   font-size: 14px;
 }
 
+.sheet-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 .sheet-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   z-index: 1;
-  background: rgba(255, 255, 255, 0.92);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ink);
   box-shadow: var(--shadow-1);
+}
+
+.sheet-close svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.2;
 }
 
 /* ----------------------------------------------------------- your order */
@@ -1497,6 +1580,72 @@ dialog.sheet::backdrop {
   margin: 8px 0 0;
   color: var(--warn);
   font-size: 13px;
+}
+
+/* More than two ways stack; two sit side by side. */
+.eating-how-choices {
+  flex-wrap: wrap;
+}
+
+.eating-how-choices .eating-how-btn {
+  flex: 1 1 calc(50% - 4px);
+  min-width: 140px;
+  padding: 0 12px;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+/* A field that appears under a choice: the table, the address. */
+.sub-field {
+  margin-top: 12px;
+}
+
+.sub-field .field-label {
+  margin-top: 8px;
+}
+
+.text-field,
+.note-field {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.text-field::placeholder,
+.note-field::placeholder {
+  color: var(--ink-soft);
+}
+
+/* The note on a line of the order, and the way to add one. */
+.item-note {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink);
+  white-space: pre-line;
+}
+
+.line-note-btn {
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.order-note-box {
+  margin: 12px 0 0;
 }
 
 /* What is being paid for, in one line, so the number on the button below

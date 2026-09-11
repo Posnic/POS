@@ -55,13 +55,37 @@
             step. Pre-answered when the code that was scanned said which
             table, because a customer at table five is eating in.
         -->
-        <section class="pay-section eating-how" id="eating-how" role="radiogroup" aria-label="How are you eating?">
-            <span class="field-label">How are you eating?</span>
-            <div class="eating-how-choices">
-                <button type="button" class="eating-how-btn" data-order-type="DINE IN" aria-pressed="false">Dine in</button>
-                <button type="button" class="eating-how-btn" data-order-type="PARCEL" aria-pressed="false">Take away</button>
+        <!--
+            HOW IT TRAVELS, in the shop's own terms.
+
+            A restaurant offers the table the code was printed for, the
+            counter, or delivery; a shop offers collection or delivery. The
+            choices are built from what the shop switched on, so a shop that
+            does not deliver is never asked to. A table from the printed code
+            is chosen already; a customer with no code is asked which table.
+        -->
+        <section class="pay-section eating-how" id="eating-how" role="radiogroup" aria-label="How would you like it?">
+            <span class="field-label" id="eating-how-title">How would you like it?</span>
+            <div class="eating-how-choices" id="eating-how-choices">
+                <button type="button" class="eating-how-btn" data-order-type="DINE IN" data-fulfilment="dine_in" aria-pressed="false">Bring it to my table</button>
+                <button type="button" class="eating-how-btn" data-order-type="PARCEL" data-fulfilment="takeaway" aria-pressed="false">I'll collect it at the counter</button>
             </div>
             <p class="eating-how-missing" id="eating-how-missing" hidden>Choose one to continue.</p>
+
+            <div class="sub-field" id="table-field" hidden>
+                <label class="field-label" for="table-number">Which table?</label>
+                <input type="text" id="table-number" class="text-field" inputmode="text" autocomplete="off"
+                       maxlength="12" placeholder="Table number">
+            </div>
+
+            <div class="sub-field" id="delivery-form" hidden>
+                <label class="field-label" for="customer-name">Your name</label>
+                <input type="text" id="customer-name" class="text-field" autocomplete="name" maxlength="80"
+                       placeholder="Name">
+                <label class="field-label" for="customer-address">Where to deliver</label>
+                <textarea id="customer-address" class="note-field" rows="3" maxlength="300"
+                          autocomplete="street-address" placeholder="Door, street, landmark"></textarea>
+            </div>
         </section>
 
         <!-- What is being paid for, so the number on the button is not the
@@ -102,6 +126,16 @@
                 <button type="button" class="key-soft" onclick="clearNumber()">Clear</button>
                 <button type="button" onclick="addNumber(0)">0</button>
                 <button type="button" class="key-soft" onclick="deleteNumber()" aria-label="Delete the last digit">&#x232B;</button>
+            </div>
+        </section>
+
+        <!-- Only when the shop takes money both ways: paid now, or paid at
+             the counter, on delivery, or when collecting. -->
+        <section class="pay-section" id="pay-method" role="radiogroup" aria-label="How will you pay?" hidden>
+            <span class="field-label">How will you pay?</span>
+            <div class="eating-how-choices">
+                <button type="button" class="eating-how-btn pay-method-btn" data-pay="online" aria-pressed="false">Pay now</button>
+                <button type="button" class="eating-how-btn pay-method-btn" data-pay="offline" aria-pressed="false" id="pay-offline-btn">Pay at the counter</button>
             </div>
         </section>
 

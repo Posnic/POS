@@ -53,6 +53,33 @@ async function renderAndPrint() {
         hour12: true
     });
 
+    /*
+     * What happens next, in the customer's terms: to the table, at the
+     * counter, from the shop, or on its way; and what is still owed if the
+     * order was not paid here.
+     */
+    (function sayWhatHappensNext() {
+        const fulfilment = localStorage.getItem("order_fulfilment") || (orderType === "DINE IN" ? "dine_in" : "");
+        const table = localStorage.getItem("order_table") || (receiptData.table_number || "");
+        const lead = document.getElementById("done-lead");
+        const pay = document.getElementById("done-pay");
+        let text = "The kitchen has it. Show this at the counter.";
+        if (fulfilment === "dine_in") text = table ? `The kitchen has it. We'll bring it to table ${table}.` : "The kitchen has it. We'll bring it to your table.";
+        else if (fulfilment === "takeaway") text = "The kitchen has it. Collect it at the counter when your token is called.";
+        else if (fulfilment === "pickup") text = "Your order is in. Collect it from the shop when it's ready.";
+        else if (fulfilment === "delivery") text = "Your order is in. It's on its way as soon as it's ready.";
+        if (lead) lead.textContent = text;
+        if (pay && localStorage.getItem("order_pay") === "offline" && receiptData.total != null) {
+            const amount = "\u20b9" + Number(receiptData.total).toFixed(2).replace(/\.00$/, "");
+            pay.textContent = fulfilment === "delivery"
+                ? `Pay ${amount} on delivery.`
+                : (fulfilment === "pickup" || fulfilment === "takeaway")
+                    ? `Pay ${amount} when you collect it.`
+                    : `Pay ${amount} at the counter.`;
+            pay.hidden = false;
+        }
+    })();
+
     $("#branch-name").text(receiptData.branch_name || "POS");
     $("#orderDate").text(formatted);
     $("#orderTime").text(formatted);
@@ -226,6 +253,9 @@ function clearReceiptAndGo(url) {
     sessionStorage.removeItem("kioskReceipt");
     sessionStorage.removeItem("kiosk_mobile_number");
     sessionStorage.removeItem("qr_id");
+    ["order_fulfilment", "order_table", "order_pay", "order_customer_name", "order_customer_address", "note"].forEach((key) =>
+        localStorage.removeItem(key)
+    );
     localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
     localStorage.removeItem("kiosk_mobile_number");
     localStorage.removeItem("qr_id");

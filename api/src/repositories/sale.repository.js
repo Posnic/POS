@@ -7233,6 +7233,12 @@ class SalesRepository {
         venue,
         unit,
         destination,
+        /* The shop's own table, as the printed code named it (the customer
+           page) - the captain app says it as kiosk_table_no. */
+        table,
+        /* Who a delivery goes to. The phone is customerMobile above. */
+        customer_name,
+        customer_address,
       } = data;
 
       if (!branch) {
@@ -7389,7 +7395,7 @@ class SalesRepository {
       }
 
       const servicePoint = partnerVenues.resolveServicePoint(
-        { table: kiosk_table_no, venue, unit },
+        { table: String(kiosk_table_no || table || '').trim(), venue, unit },
         venues
       );
       /* Where the food actually goes, as the customer confirmed it. Null for
@@ -7513,7 +7519,19 @@ class SalesRepository {
           unit_price: round(baseUnitPrice),
           tax_amount: taxAmt,
           total: itemTotal,
-          item_description: itemDoc.description || item.item_description || '',
+          /*
+           * THE CUSTOMER'S NOTE, not the catalogue's blurb.
+           *
+           * The kitchen ticket prints this line under the dish. It carried
+           * the item's marketing description - "charred on skewers, with
+           * mint chutney" on every ticket - and it carried it INSTEAD of
+           * anything the waiter or the customer had typed, because the
+           * catalogue text won the ||. "Less spicy" is what a kitchen needs
+           * to read; the description it already knows.
+           */
+          item_description: String(item.item_note || item.item_description || '')
+            .trim()
+            .slice(0, 200),
           // receipt-facing fields
           item_base_price: round(baseUnitPrice),
           item_quantity: qty,
@@ -7657,7 +7675,12 @@ class SalesRepository {
         extra_discount_type: 'price',
         discount_description: kiosk_discount_description || '',
         customer_phone: customerMobile || '',
-        notes: note || '',
+        /* For a delivery: who, and where. */
+        customer_name: String(customer_name || '').trim().slice(0, 80),
+        customer_address: String(customer_address || '').trim().slice(0, 300),
+        /* "null" is what a page stores when it stores nothing, and it was
+           reaching tickets as a note. */
+        notes: note && String(note) !== 'null' ? String(note).trim().slice(0, 300) : '',
         order: order || '',
         date: now,
         created_date: now,

@@ -71,7 +71,12 @@ class OnlineOrderingController {
            page writes the shop's money rather than a hardcoded rupee. */
         currency: store.currency || '',
         currency_code: store.currency_code || '',
+        /* A restaurant or a shop. Absent on an older server reads as a
+           restaurant, which is what the page assumed before it could ask. */
+        kind: store.kind === 'retail' ? 'retail' : 'restaurant',
       },
+      /* What this shop offers beyond the list - a note for the kitchen. */
+      features: data.features || { notes: false },
       channel: data.channel,
       /* Where this customer is sitting, and what a delivery costs them. Both
          echoed back so the page never has to work out a price the server will

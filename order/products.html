@@ -68,7 +68,7 @@
                         <img id="shop-logo" class="shop-logo" alt="" hidden>
                         <div class="shop-text">
                             <h1 id="shop-name" class="shop-name">Menu</h1>
-                            <p id="shop-sub" class="shop-sub" hidden></p>
+                            <p class="shop-sub"><span id="shop-sub" hidden></span><span id="shop-place" class="shop-place" hidden></span></p>
                         </div>
                     </div>
                     <!-- The order so far, as a glyph with the count on it. -->
@@ -187,7 +187,9 @@
     -->
     <dialog id="dish" class="sheet" aria-labelledby="dish-title">
         <div class="sheet-handle" aria-hidden="true"></div>
-        <button type="button" id="dish-close" class="icon-btn sheet-close" aria-label="Close">&times;</button>
+        <button type="button" id="dish-close" class="icon-btn sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
         <div id="dish-gallery" hidden>
             <div class="sheet-strip" id="dish-strip"></div>
             <div class="sheet-dots" id="dish-dots" aria-hidden="true"></div>
@@ -197,6 +199,14 @@
             <h2 class="sheet-title"><span id="dish-diet"></span><span id="dish-title"></span></h2>
             <p id="dish-desc" class="sheet-desc" hidden></p>
             <dl id="dish-facts" class="sheet-facts" hidden></dl>
+            <!-- "Less spicy", "no onion": a note the kitchen reads under the
+                 dish. Only where there is a kitchen. Kept as it is typed, and
+                 carried onto the line the moment the dish is added. -->
+            <div class="sheet-note" id="dish-note-box" hidden>
+                <label class="field-label" for="dish-note">A note for the kitchen</label>
+                <textarea id="dish-note" class="note-field" rows="2" maxlength="200"
+                          placeholder="Less spicy, no onion, cut in half..."></textarea>
+            </div>
             <div class="sheet-foot">
                 <p class="sheet-price" id="dish-price"></p>
                 <div class="sheet-add" id="dish-add" data-qty="0" aria-label="Quantity">

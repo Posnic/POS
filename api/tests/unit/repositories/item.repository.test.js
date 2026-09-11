@@ -1506,6 +1506,52 @@ describe('ItemRepository', () => {
    * to configure items" - about a shop with a full menu. A waiter cannot act
    * on that and the admin has nothing to fix.
    */
+  describe('what kind of shop, and whether paying offline finishes an order', () => {
+    const SettingsRepository = require('../../../src/repositories/settings.repository');
+
+    const storefrontFor = async (online_ordering, tableOptions) => {
+      const branch = { _id: FAKE_ID, license: FAKE_ID, online_ordering };
+      jest.spyOn(repo, '_storefrontBranch').mockResolvedValue(branch);
+      jest
+        .spyOn(SettingsRepository.prototype, 'resolveGroup')
+        .mockResolvedValue({ status: true, data: { values: { table_options: tableOptions } } });
+      col.aggregate.mockReturnValue(mkAgg([]));
+      const result = await repo.storefront({});
+      expect(result.status).toBe(true);
+      return result.data;
+    };
+
+    test('the Restaurant module makes it a restaurant, with a note for the kitchen', async () => {
+      const data = await storefrontFor({ store_id: 'AZ100' }, 'enable');
+      expect(data.store.kind).toBe('restaurant');
+      expect(data.features.notes).toBe(true);
+    });
+
+    test('without it the page is told this is a shop', async () => {
+      const data = await storefrontFor({ store_id: 'AZ100' }, 'disable');
+      expect(data.store.kind).toBe('retail');
+      expect(data.features.notes).toBe(false);
+    });
+
+    test('a shop with no gateway takes payment at the counter', async () => {
+      /* The page refused every such shop: "has not set up a way to pay
+         online yet", which turned the ordering page into a menu. */
+      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: false, payment_cod: false }, 'enable');
+      expect(data.payment.offline).toBe(true);
+    });
+
+    test('a shop that takes online payment and switched offline off is prepaid only', async () => {
+      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: true, payment_cod: false }, 'enable');
+      expect(data.payment.offline).toBe(false);
+      expect(data.payment.razorpay).toBe(true);
+    });
+
+    test('a shop that takes online payment and left offline on offers both', async () => {
+      const data = await storefrontFor({ store_id: 'AZ100', payment_razorpay: true, payment_cod: true }, 'enable');
+      expect(data.payment.offline).toBe(true);
+    });
+  });
+
   describe('what a customer is shown, and what a waiter is shown', () => {
     const salesChannels = require('../../../src/utils/sales-channels');
 

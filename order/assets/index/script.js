@@ -38,8 +38,12 @@ function storeAddressFromUrl() {
 async function checkBranchFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const branchId = storeAddressFromUrl();
+    /* Only when the link carried one. setItem(null) stores the word
+       "null", and "null" is truthy, so every order placed from a plain
+       link went to the kitchen with the note "null" on it. */
     const note = urlParams.get("notes");
-    localStorage.setItem('note', note);
+    if (note) localStorage.setItem('note', note);
+    else localStorage.removeItem('note');
 
     if (branchId) {
         console.log("🔗 Branch from QR URL:", branchId);

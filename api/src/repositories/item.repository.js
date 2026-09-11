@@ -3970,6 +3970,8 @@ class ItemRepository extends BaseModel {
             currency_code: currencyLabel.currencyCode(
               branchDoc.currency_text || branchDoc.currency
             ),
+            /* "31 dishes" for a kitchen, "31 items" for a shop. */
+            kind: await this.shopKind(branchDoc),
           },
           /* The channel state travels with the menu so the page can say "opens
              at 6" without a second request, and so a shop that also takes
@@ -4084,6 +4086,36 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * A restaurant, or a shop.
+   *
+   * The Restaurant module on the Features page - stored as
+   * `table_options: 'enable'` - is the one switch that says food is cooked
+   * here and carried to a table. The customer pages change shape on it: a
+   * restaurant orders DISHES to a TABLE and takes a note for the kitchen; a
+   * shop sells ITEMS to be collected or delivered. Read through the settings
+   * repository, like the handset's voice settings, so a chain that set it
+   * once does not have to set it per branch. Absent reads as a shop, which
+   * is what the console does with the same key.
+   *
+   * @returns {Promise<'restaurant'|'retail'>}
+   */
+  async shopKind(branchDoc) {
+    try {
+      const SettingsRepository = require('./settings.repository');
+      const settings = new SettingsRepository();
+      const read = await settings.resolveGroup('features', {
+        branchId: branchDoc._id,
+        licenseId: branchDoc.license,
+      });
+      const values = (read && read.status && read.data && read.data.values) || {};
+      return values.table_options === 'enable' ? 'restaurant' : 'retail';
+    } catch (e) {
+      console.warn('[storefront] could not read the shop kind:', e.message);
+      return 'retail';
+    }
+  }
+
   async storefront(params = {}) {
     try {
       const branchDoc = await this._storefrontBranch(params);
@@ -4093,6 +4125,7 @@ class ItemRepository extends BaseModel {
       }
 
       const config = onlineOrdering.storefront(branchDoc);
+      const kind = await this.shopKind(branchDoc);
 
       /*
        * The menu is the items the shop ticked for the online channel, and
@@ -4441,6 +4474,14 @@ class ItemRepository extends BaseModel {
             currency_code: currencyLabel.currencyCode(
               branchDoc.currency_text || branchDoc.currency
             ),
+            /* A restaurant or a shop; the page's words and questions follow. */
+            kind,
+          },
+          /* What this kind of shop offers on top of the list: a note for the
+             kitchen, on each line and on the order, where there is a
+             kitchen to read it. */
+          features: {
+            notes: kind === 'restaurant',
           },
           /*
            * What the page is allowed to do, decided here rather than on the
@@ -4511,11 +4552,27 @@ class ItemRepository extends BaseModel {
            * truthy, so a page testing the raw value would offer a payment
            * method the shop had switched off.
            */
-          payment: {
-            cod: config?.payment_cod === true || config?.payment_cod === 'true',
-            razorpay: config?.payment_razorpay === true || config?.payment_razorpay === 'true',
-            number: config?.payment_number === true || config?.payment_number === 'true',
-          },
+          payment: (() => {
+            const cod = config?.payment_cod === true || config?.payment_cod === 'true';
+            const razorpay = config?.payment_razorpay === true || config?.payment_razorpay === 'true';
+            return {
+              cod,
+              razorpay,
+              number: config?.payment_number === true || config?.payment_number === 'true',
+              /*
+               * PAYING OFFLINE FINISHES AN ORDER.
+               *
+               * At the counter, on delivery, when collecting: that is how
+               * most of these shops take money, and the page used to refuse
+               * every shop with no gateway - "has not set up a way to pay
+               * online yet" - which turned the ordering page into a menu.
+               * Offline is on unless the shop takes online payment AND has
+               * switched the offline box off, which is the one case where
+               * "prepaid only" means something.
+               */
+              offline: razorpay ? cod : true,
+            };
+          })(),
           /* Device-only: which printer the shop's own terminal sends its
              ticket to. Meaningless to a customer's phone, so it leaves only
              through the door that costs this installation's kiosk key. */

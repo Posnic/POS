@@ -679,6 +679,12 @@ class KOTManager {
     const tableNo     = sale.table_number || sale.tableNo || sale.table || sale.table_no || '';
     const personCount = sale.person_count ?? sale.pax ?? sale.no_of_person ?? '';
     const dineType    = sale.dine_type || sale.order_type || '';
+    /* What the customer said about the whole order, and - for a delivery -
+       where it is going. Both were on the sale and neither was printed. */
+    const orderNote   = String(sale.notes || sale.note || '').trim();
+    const deliverTo   = String(sale.fulfilment || '') === 'delivery'
+      ? [sale.customer_name, sale.customer_address, sale.customer_phone].filter(Boolean).map(String).join(' / ')
+      : '';
 
     const rawId = sale.sales_id || sale.sid || sale.sale_id || '';
     const saleIdDisplay = rawId ? (String(rawId).toUpperCase().startsWith('SID') ? rawId : 'SID' + rawId) : '';
@@ -719,6 +725,7 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 .in.cx{text-decoration:line-through;}
 .iq{font-weight:700;font-size:14px;min-width:24px;text-align:right;}
 .id{font-size:11px;font-style:italic;font-weight:700;}
+.nt{font-size:12px;font-weight:700;border:1px dashed #000;padding:3px 4px;margin:4px 0;white-space:pre-wrap;}
 @media print{@page{size:72mm auto;margin:0;}body{width:72mm;margin:0;padding:0;}}
 </style></head><body>
 <div class="c"><div class="lt">${this._esc(title)}</div></div>
@@ -727,6 +734,8 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 ${dineType    ? `<div class="ml">${this._esc(dineType)}</div>` : ''}
 ${saleIdDisplay ? `<div class="ml">${this._esc(saleIdDisplay)}</div>` : ''}
 <div class="ml">Table:[${this._esc(String(tableNo))}] Pax:[${this._esc(String(personCount))}]</div>
+${deliverTo ? `<div class="nt">DELIVER TO: ${this._esc(deliverTo)}</div>` : ''}
+${orderNote ? `<div class="nt">NOTE: ${this._esc(orderNote)}</div>` : ''}
 <div class="rl"></div>
 ${itemsHtml}
 <div class="fl"></div>
