@@ -2908,199 +2908,243 @@
 
                                                             </div>
                         <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
-                            aria-labelledby="v-pills-tableorder-tab">
-                            <div class="card m-b-30" data-module="plan" data-access="read">
-                                <div class="card-body">
-                                    <div class="fc-section" id="fc_restaurant">
-                                        <h6 class="fc-title"><lang class="lang_modules_restaurant">Restaurant</lang></h6>
-                                        <a href="javascript:void(0)" onclick="$('#v-pills-tableorder-tab').click();" class="module-config-link"><lang class="lang_modules_managetables">Manage tables</lang></a>
-                                    </div>
-                                    <small class="form-text text-muted">
-                                        <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
-                                        under Settings &gt; Modules. This page manages the tables it uses.</lang>
-                                    </small>
-                                </div>
-                            </div>
                             <!--
-                                SERVING PERIODS LIVE HERE, not under a channel.
-
-                                Breakfast is breakfast wherever the menu is shown - on the QR code, on
-                                the kiosk, in the app. Putting them inside one channel's settings would
-                                mean copying them into the next channel within a month. They are the
-                                kitchen's clock, so they sit with the kitchen's other settings.
+                                THREE TABS, NOT SIX CARDS IN A COLUMN.
+                        
+                                This page had every restaurant setting stacked one below the next:
+                                tables, serving periods, venues, delivery charges, modifiers and the
+                                table list. Six cards is a page you scroll looking for the one you
+                                came for, and it grows every time the kitchen gains a setting.
+                        
+                                They group by the question being asked. Tables is the floor. Menu is
+                                what the kitchen serves and when. Delivery is what happens once the
+                                food leaves - where it goes and what it costs to send.
+                        
+                                Everything still loads on entry to this pane, not on the sub-tab:
+                                salesChannels.load() and servingPeriods.load() both bind to
+                                #v-pills-tableorder-tab. A hidden tab holds populated markup, so
+                                Save still writes every row wherever it sits.
                             -->
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_serving_periods">Serving periods</lang></h5>
-                                </div>
-                                <div class="card-body loader-view-dayparts">
-                                    <small class="text-muted d-block mb-2">
-                                        <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
-                                    </small>
-                                    <div id="menu_daypart_rows"></div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
-                                        <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
-                                    </button>
-                                    <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
-                                        <lang class="lang_use_usual_periods">Use the usual three</lang>
-                                    </button>
-                                    <div class="text-right mt-2">
-                                        <button type="button" class="btn btn-outline-primary btn-sm" id="save_dayparts">
-                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--
-                                VENUES AND DELIVERY CHARGES LIVE HERE, not under a channel.
-
-                                A hotel you deliver into is reachable from the QR code, the phone and
-                                every aggregator, and a delivery charge is a property of HOW the food
-                                travels rather than of which app the order came through. Both would
-                                have to be copied into the next channel within a month if they sat
-                                inside one. Same reasoning as the serving periods above.
-                            -->
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_partner_venues">Hotels and other venues</lang></h5>
-                                </div>
-                                <div class="card-body loader-view-saleschannels">
-                                    <!--
-                                        Hotels, offices, anywhere that is not this shop's own floor.
-
-                                        The code is what a printed QR carries
-                                        (/order/AZ100/venue/RC/123), so it has to outlive a
-                                        rename of the building. Markup and commission are two
-                                        numbers on purpose: a shop may mark up 12 and pay 10.
-                                    -->
-                                    <h6 class="mb-1"><lang class="lang_partner_venues">Hotels and other venues</lang></h6>
-                                    <small class="form-text text-muted mb-2">
-                                        <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
-                                    </small>
-                                    <div id="partner_venue_rows"></div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
-                                        <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
-                                    </button>
-
-                                    <div class="text-right mt-2">
-                                        <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
-                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h5>
-                                </div>
-                                <div class="card-body loader-view-saleschannels">
-                                    <!--
-                                        Fees, keyed by how the food gets there rather than by
-                                        which app the order came through. A delivery charge is
-                                        not a property of "online".
-                                    -->
-                                    <h6 class="mb-1"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h6>
-                                    <small class="form-text text-muted mb-2">
-                                        <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
-                                    </small>
-                                    <div id="channel_charge_rows"></div>
-
-                                    <div class="text-right mt-2">
-                                        <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
-                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Modifier groups (V2): the menu's option sets - Toppings, Spice level. -->
-                            <div class="card m-b-30">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0"><lang class="lang_modifier_groups">Modifiers</lang></h5>
-                                    <button type="button" class="btn btn-primary-rgba btn-sm" data-module="branch" data-access="write"
-                                        onclick="PosnicPro.modifiers.openEditor();">
-                                        <i class="feather icon-plus mr-1"></i><lang class="lang_modifier_new">New Group</lang>
-                                    </button>
-                                </div>
-                                <div class="card-body">
-                                    <small class="text-muted d-block mb-2"><lang class="lang_modifier_hint">Option sets the kitchen understands - each choice can add or subtract from the price. Attach groups to items on the item page; the cashier picks at sale time.</lang></small>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th><lang class="lang_group">Group</lang></th><th><lang class="lang_rules">Rules</lang></th><th><lang class="lang_options">Options</lang></th><th class="text-right"><lang class="lang_action">Action</lang></th></tr></thead>
-                                            <tbody id="modifier_groups_body"><tr><td colspan="4" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card m-b-30">
-                                <div class="card-header">
-                                    <h5 class="card-title">
-                                        <lang class="lang_tables_list">Tables list</lang>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="order-box">
-                                        <div class="card border m-b-30">
-                                            <div class="card-header">
-                                                <div class="row align-items-center">
-                                                    <div class="col-sm-2">
-                                                        <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()" aria-label="View tableorder per page">
-                                                            <option value="5">5</option>
-                                                            <option value="10" selected>10</option>
-                                                            <option value="25">25</option>
-                                                            <option value="50">50</option>
-                                                            <option value="100">100</option>
-                                                        </select>
+                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="restauranttables-tab-line" data-toggle="tab"
+                                    href="#restauranttables-line" role="tab" aria-controls="restauranttables-line"
+                                    aria-selected="true"><i class="feather icon-grid mr-1"></i><lang class="lang_tables">Tables</lang></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="restaurantmenu-tab-line" data-toggle="tab"
+                                    href="#restaurantmenu-line" role="tab" aria-controls="restaurantmenu-line"
+                                    aria-selected="false"><i class="feather icon-book-open mr-1"></i><lang class="lang_menu">Menu</lang></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="restaurantdelivery-tab-line" data-toggle="tab"
+                                    href="#restaurantdelivery-line" role="tab" aria-controls="restaurantdelivery-line"
+                                    aria-selected="false"><i class="feather icon-truck mr-1"></i><lang class="lang_delivery">Delivery</lang></a>
+                            </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="restauranttables-line" role="tabpanel"
+                                    aria-labelledby="restauranttables-tab-line">
+                                            <!--
+                                                KEEP #fc_restaurant. It is pinned by tests/feature-detail-copy.test.js:
+                                                the feature dialogs fold their configuration into the page a feature
+                                                already has, and this is Restaurant's. What was inside it was a
+                                                "Manage tables" link whose handler clicked the pane it was sitting in,
+                                                so it read as a way somewhere and went nowhere. The orientation line
+                                                is the part worth keeping.
+                                            -->
+                                            <div class="fc-section" id="fc_restaurant">
+                                                <small class="form-text text-muted">
+                                                    <lang class="lang_modules_kot_hint">Restaurant / KOT mode is switched on
+                                                    under Settings &gt; Modules. This page manages the tables it uses.</lang>
+                                                </small>
+                                            </div>
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title">
+                                                <lang class="lang_tables_list">Tables list</lang>
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="order-box">
+                                                <div class="card border m-b-30">
+                                                    <div class="card-header">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-sm-2">
+                                                                <select class="form-control" id="view_tableorder_per_page" onchange="PosnicPro.tableOrders.changePerPage()" aria-label="View tableorder per page">
+                                                                    <option value="5">5</option>
+                                                                    <option value="10" selected>10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                    <option value="100">100</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-sm-4"></div>
+                                                            <div class="col-sm-6">
+                                                                <h6 class="mb-0 float-right"><a data-module="branch" data-access="write"
+                                                                        class="btn btn-primary-rgba"
+                                                                        href="#/settings/tableorder/new"><i
+                                                                            class="feather icon-plus mr-2"></i>
+                                                                        <lang class="lang_addvariant_title">New</lang>
+                                                                    </a></h6>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div class="col-sm-4"></div>
-                                                    <div class="col-sm-6">
-                                                        <h6 class="mb-0 float-right"><a data-module="branch" data-access="write"
-                                                                class="btn btn-primary-rgba"
-                                                                href="#/settings/tableorder/new"><i
-                                                                    class="feather icon-plus mr-2"></i>
-                                                                <lang class="lang_addvariant_title">New</lang>
-                                                            </a></h6>
+                                                    <div class="card-body loader-table-tableorder">
+                                                        <div class="table-responsive">
+                                                            <table id="view_tableorder" class="table table-borderless">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <td class="td_align">#</td>
+                                                                        <td class="text-right">
+                                                                            <lang class="lang_value_title">Value</lang>
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <lang class="lang_action">Action</lang>
+                                                                        </td>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <p style="margin-top: 10px;"><lang class="lang_showing">Showing</lang> <span id="view_tableorder_showing_from">0</span> <lang class="lang_to">to</lang> <span id="view_tableorder_showing_to">0</span> <lang class="lang_of">of</lang> <span id="view_tableorder_total">0</span> <lang class="lang_entries">entries</lang></p>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <nav aria-label="Page navigation" data-t-aria-label="lang_page_navigation" class="float-right">
+                                                                    <ul class="pagination" id="view_tableorder_pagination">
+                                                                        <li class="page-item" id="tableorder_prev_page">
+                                                                            <a class="page-link" href="javascript:void(0)" onclick="PosnicPro.tableOrders.previousPage()" aria-label="Previous" data-t-aria-label="lang_previous">
+                                                                                <span aria-hidden="true"><lang class="lang_text_4">&laquo;</lang></span>
+                                                                            </a>
+                                                                        </li>
+                                                                        <li class="page-item" id="tableorder_next_page">
+                                                                            <a class="page-link" href="javascript:void(0)" onclick="PosnicPro.tableOrders.nextPage()" aria-label="Next" data-t-aria-label="lang_next">
+                                                                                <span aria-hidden="true"><lang class="lang_text_5">&raquo;</lang></span>
+                                                                            </a>
+                                                                        </li>
+                                                                    </ul>
+                                                                </nav>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="card-body loader-table-tableorder">
-                                                <div class="table-responsive">
-                                                    <table id="view_tableorder" class="table table-borderless">
-                                                        <thead>
-                                                            <tr>
-                                                                <td class="td_align">#</td>
-                                                                <td class="text-right">
-                                                                    <lang class="lang_value_title">Value</lang>
-                                                                </td>
-                                                                <td class="text-center">
-                                                                    <lang class="lang_action">Action</lang>
-                                                                </td>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <p style="margin-top: 10px;"><lang class="lang_showing">Showing</lang> <span id="view_tableorder_showing_from">0</span> <lang class="lang_to">to</lang> <span id="view_tableorder_showing_to">0</span> <lang class="lang_of">of</lang> <span id="view_tableorder_total">0</span> <lang class="lang_entries">entries</lang></p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <nav aria-label="Page navigation" data-t-aria-label="lang_page_navigation" class="float-right">
-                                                            <ul class="pagination" id="view_tableorder_pagination">
-                                                                <li class="page-item" id="tableorder_prev_page">
-                                                                    <a class="page-link" href="javascript:void(0)" onclick="PosnicPro.tableOrders.previousPage()" aria-label="Previous" data-t-aria-label="lang_previous">
-                                                                        <span aria-hidden="true"><lang class="lang_text_4">&laquo;</lang></span>
-                                                                    </a>
-                                                                </li>
-                                                                <li class="page-item" id="tableorder_next_page">
-                                                                    <a class="page-link" href="javascript:void(0)" onclick="PosnicPro.tableOrders.nextPage()" aria-label="Next" data-t-aria-label="lang_next">
-                                                                        <span aria-hidden="true"><lang class="lang_text_5">&raquo;</lang></span>
-                                                                    </a>
-                                                                </li>
-                                                            </ul>
-                                                        </nav>
-                                                    </div>
-                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="restaurantmenu-line" role="tabpanel"
+                                    aria-labelledby="restaurantmenu-tab-line">
+                                    <!--
+                                        SERVING PERIODS LIVE HERE, not under a channel.
+
+                                        Breakfast is breakfast wherever the menu is shown - on the QR code, on
+                                        the kiosk, in the app. Putting them inside one channel's settings would
+                                        mean copying them into the next channel within a month. They are the
+                                        kitchen's clock, so they sit with the kitchen's other settings.
+                                    -->
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0"><lang class="lang_serving_periods">Serving periods</lang></h5>
+                                        </div>
+                                        <div class="card-body loader-view-dayparts">
+                                            <small class="text-muted d-block mb-2">
+                                                <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
+                                            </small>
+                                            <div id="menu_daypart_rows"></div>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
+                                                <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
+                                            </button>
+                                            <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
+                                                <lang class="lang_use_usual_periods">Use the usual three</lang>
+                                            </button>
+                                            <div class="text-right mt-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" id="save_dayparts">
+                                                    <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Modifier groups (V2): the menu's option sets - Toppings, Spice level. -->
+                                    <div class="card m-b-30">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h5 class="card-title mb-0"><lang class="lang_modifier_groups">Modifiers</lang></h5>
+                                            <button type="button" class="btn btn-primary-rgba btn-sm" data-module="branch" data-access="write"
+                                                onclick="PosnicPro.modifiers.openEditor();">
+                                                <i class="feather icon-plus mr-1"></i><lang class="lang_modifier_new">New Group</lang>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <small class="text-muted d-block mb-2"><lang class="lang_modifier_hint">Option sets the kitchen understands - each choice can add or subtract from the price. Attach groups to items on the item page; the cashier picks at sale time.</lang></small>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead><tr><th><lang class="lang_group">Group</lang></th><th><lang class="lang_rules">Rules</lang></th><th><lang class="lang_options">Options</lang></th><th class="text-right"><lang class="lang_action">Action</lang></th></tr></thead>
+                                                    <tbody id="modifier_groups_body"><tr><td colspan="4" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="restaurantdelivery-line" role="tabpanel"
+                                    aria-labelledby="restaurantdelivery-tab-line">
+                                    <!--
+                                        VENUES AND DELIVERY CHARGES LIVE HERE, not under a channel.
+
+                                        A hotel you deliver into is reachable from the QR code, the phone and
+                                        every aggregator, and a delivery charge is a property of HOW the food
+                                        travels rather than of which app the order came through. Both would
+                                        have to be copied into the next channel within a month if they sat
+                                        inside one. Same reasoning as the serving periods above.
+                                    -->
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0"><lang class="lang_partner_venues">Hotels and other venues</lang></h5>
+                                        </div>
+                                        <div class="card-body loader-view-saleschannels">
+                                            <!--
+                                                Hotels, offices, anywhere that is not this shop's own floor.
+
+                                                The code is what a printed QR carries
+                                                (/order/AZ100/venue/RC/123), so it has to outlive a
+                                                rename of the building. Markup and commission are two
+                                                numbers on purpose: a shop may mark up 12 and pay 10.
+                                            -->
+                                            <small class="form-text text-muted mb-2">
+                                                <lang class="lang_partner_venues_help">Buildings you deliver into, each with its own QR codes. The markup is what the guest pays on top; the commission is what you owe the venue. They are separate numbers.</lang>
+                                            </small>
+                                            <div id="partner_venue_rows"></div>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_partner_venue">
+                                                <i class="feather icon-plus mr-1"></i><lang class="lang_add_venue">Add venue</lang>
+                                            </button>
+
+                                            <div class="text-right mt-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
+                                                    <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0"><lang class="lang_delivery_and_fees">Delivery and other charges</lang></h5>
+                                        </div>
+                                        <div class="card-body loader-view-saleschannels">
+                                            <!--
+                                                Fees, keyed by how the food gets there rather than by
+                                                which app the order came through. A delivery charge is
+                                                not a property of "online".
+                                            -->
+                                            <small class="form-text text-muted mb-2">
+                                                <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
+                                            </small>
+                                            <div id="channel_charge_rows"></div>
+
+                                            <div class="text-right mt-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm save-channel-settings">
+                                                    <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
