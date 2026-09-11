@@ -217,6 +217,18 @@ router.post(
   bindController(salesController.transcribe)
 );
 
+/*
+ * What the words MEANT, for a shop whose model does the reading. Same door,
+ * same guards, same reason: the handset never holds a key. A shop with no AI
+ * configured is answered 200 with commands:null and the app parses locally.
+ */
+router.post(
+  '/voiceIntent',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.voiceIntent)
+);
+
 router.use(protect);
 
 // POST /api/sales - Create a new sale

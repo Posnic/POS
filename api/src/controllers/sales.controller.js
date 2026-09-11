@@ -38,6 +38,7 @@ const cashbackService = new CashbackService();
 const { createActivityLog } = require('../utils/activityLogger');
 const { AuditService, AUDIT_EVENTS } = require('../services/audit.service');
 const transcribeService = require('../services/transcribe.service');
+const voiceIntent = require('../services/voice-intent.service');
 const { canPos } = require('../utils/pos-permission.util');
 const { isApprovedFor } = require('../utils/approval-token.util');
 const sessionFilterUtil = require('../utils/session-filter.util');
@@ -7229,6 +7230,38 @@ class SalesController extends BaseController {
     } catch (error) {
       console.error('Error in transcribe:', error);
       return this.error(res, 'Could not transcribe', 500);
+    }
+  }
+
+  /**
+   * What a waiter meant, read by the shop's model when it has one.
+   *
+   * Same door as transcribe and for the same reason: the handset never holds
+   * a key, so the model is asked from here. A shop with no AI configured gets
+   * status false and the app uses its own parser - that is not an error and
+   * is answered as 200 so a handset offline from the model is not offline
+   * from the feature.
+   */
+  async voiceIntent(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await voiceIntent.resolve(req.body || {}, context);
+      if (!result.status) {
+        /* "no_ai" is the normal case for most shops, not a failure. The app
+           reads status:false and falls back; a 4xx here would show as a red
+           toast on a phone at a table for a shop that configured nothing. */
+        return this.success(res, { commands: null, reason: result.message }, 'Read locally');
+      }
+      return this.success(res, result.data, 'Understood');
+    } catch (error) {
+      console.error('Error in voiceIntent:', error);
+      return this.success(res, { commands: null, reason: 'error' }, 'Read locally');
     }
   }
 
