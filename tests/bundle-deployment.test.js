@@ -88,6 +88,30 @@ test('every bundle the API serves is shipped by every deploy', () => {
   );
 });
 
+test('a change to a bundle actually triggers the deploy that ships it', () => {
+  /*
+   * THE OTHER HALF OF THE SAME BUG.
+   *
+   * Shipping the directories is not enough if the workflow never runs.
+   * deploy-api.yml is filtered to `paths: ["api/**"]`, so a commit touching
+   * only menu/ or order/ would pass CI, merge, and never reach a shop - and
+   * nothing would appear in Actions to say so, which is quieter than the 404
+   * that started this.
+   *
+   * develop has no paths filter, so it needs no entry here.
+   */
+  const workflow = read('.github', 'workflows', 'deploy-api.yml');
+  const filter = workflow.match(/paths:\s*\[([^\]]*)\]/);
+  assert.ok(filter, 'deploy-api.yml has no paths filter to check');
+
+  const missing = servedBundles().filter((b) => !filter[1].includes(`${b}/**`));
+  assert.deepStrictEqual(
+    missing,
+    [],
+    `deploy-api.yml does not run for changes to: ${missing.join(', ')}`
+  );
+});
+
 test('the bundles are in the repository at all', () => {
   /* The other end of the same pair: a deploy that copies a directory nobody
      committed fails at rsync time rather than silently, but it still fails. */

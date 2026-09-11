@@ -6,7 +6,12 @@ name: Deploy api (Lightsail)
 on:
   push:
     branches: [main]
-    paths: ["api/**"]
+    # The bundles are here for the same reason the rsync above ships them: the
+    # API serves /menu and /order from these directories, so a change to either
+    # is a change to what customers see. Without them a menu-only commit would
+    # pass CI, merge, and simply never reach a shop - the workflow would not
+    # even run, which is a quieter failure than the one that caused all this.
+    paths: ["api/**", "menu/**", "order/**"]
   workflow_dispatch:
 
 # Least privilege for GITHUB_TOKEN.
