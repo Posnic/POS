@@ -268,3 +268,141 @@ test('the captain app page can actually reach the pairing screen', () => {
     'the pairing link is built from a relative path, so it does nothing in the desktop build'
   );
 });
+
+test('no handler is bound to a tab that no longer exists', () => {
+  /*
+   * THE BUG THIS EXISTS FOR, FOUND BY THE OWNER AND NOT BY THIS SUITE.
+   *
+   * "What it sells" came up empty and its Show button found nothing. The
+   * screen was fine; its loader was bound to '#channels-tab-line', the tab id
+   * of the combined page the split deleted. A delegated handler on an id that
+   * does not exist is not an error - jQuery simply never fires it - so the
+   * feature read as broken with nothing anywhere to say why.
+   *
+   * dead-selectors.js cannot see this shape: it matches $('#id'), and a
+   * delegated binding is $(document).on('click', '#id', fn). Tab ids are
+   * always static markup, never built at runtime, so demanding they exist is
+   * a rule with no false positives.
+   */
+  const bound = new Set();
+  for (const m of SETTINGS_JS.matchAll(/\.on\(\s*'[^']+'\s*,\s*'([^']+)'/g)) {
+    for (const part of m[1].split(',')) {
+      const id = part.trim().match(/^#([\w-]+(?:-tab-line|-tab))$/);
+      if (id) bound.add(id[1]);
+    }
+  }
+
+  const dead = [...bound].filter((id) => !SETTINGS_HTML.includes(`id="${id}"`));
+  assert.deepStrictEqual(
+    dead,
+    [],
+    `these handlers wait on a tab that is not in the markup, so they never run: ${dead.join(', ')}`
+  );
+});
+
+test('the item page offers the channels the shop switched on', () => {
+  /*
+   * It used to filter by `sales_channels_enabled` - the checkbox list on the
+   * page the split deleted. With the markup gone the value is whatever was
+   * last stored, usually nothing, and "nothing" meant "offer all eight",
+   * including the channels this shop had turned off on the Features page.
+   */
+  const items = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js');
+
+  assert.match(items, /liveChannels: function/, 'nothing works out which channels this shop runs');
+  assert.doesNotMatch(
+    items,
+    /values\.sales_channels_enabled/,
+    'the item channel picker still reads the setting whose screen was removed'
+  );
+
+  /* Every channel with a feature switch is gated on it; the three without one
+     are always offered, because they need no setting up. */
+  for (const key of [
+    'module_kiosk_enable',
+    'module_captain_enable',
+    'module_online_ordering_enable',
+    'module_delivery_partners_enable',
+    'module_webshop_enable',
+  ]) {
+    assert.ok(items.includes(key), `the item picker ignores ${key}`);
+  }
+});
+
+test('a shop can find its own two addresses', () => {
+  /*
+   * A shop that had just set a store id had no way to learn what to print on
+   * the table: the addresses existed only in the shape of the URL. Both are
+   * shown, because /order and /menu are two pages rather than two modes - and
+   * stopping orders has to leave the menu standing.
+   */
+  assert.match(SETTINGS_HTML, /id="storefront_order_url"/, 'the ordering address is not shown');
+  assert.match(SETTINGS_HTML, /id="storefront_menu_url"/, 'the menu address is not shown');
+
+  const fn = SETTINGS_JS.match(/storefrontLinks = function[\s\S]*?\n\};/);
+  assert.ok(fn, 'nothing fills the address boxes');
+  assert.match(fn[0], /API_URL/, 'the addresses are built from a relative path, which dies in the desktop build');
+  assert.match(fn[0], /\/order\/'/, 'the ordering address is not /order/<store id>');
+  assert.match(fn[0], /\/menu\/'/, 'the menu address is not /menu/<store id>');
+});
+
+test('razorpay is enabled by having a key, not by failing to save one', () => {
+  /*
+   * The gate was inverted. A SUCCESSFUL save of the gateway key ran
+   * prop('disabled', true) and a FAILED one ran prop('disabled', false), so
+   * storing a working key locked the option and a rejected key unlocked it.
+   * That is why it showed greyed out on a shop that had configured it.
+   */
+  const save = SETTINGS_JS.match(/url: 'setting\/paymentsKey'[\s\S]*?\n    \},/);
+  assert.ok(save, 'the gateway key save is no longer a shape this test can read');
+
+  const success = save[0].match(/if \(response\.type === 'success'\)\s*\{([\s\S]*?)\n            \} else \{([\s\S]*?)\n            \}/);
+  assert.ok(success, 'the save no longer branches on success');
+
+  assert.match(
+    success[1],
+    /disabled',\s*false/,
+    'saving a gateway key still disables the payment method it unlocks'
+  );
+  assert.match(
+    success[2],
+    /disabled',\s*true/,
+    'a failed key save still leaves Razorpay offered to customers'
+  );
+});
+
+test('every settings link in the markup lands on a real page', () => {
+  /*
+   * The same rule as the FEATURE_HOME check, over the links written by hand.
+   *
+   * openSection falls back to Core Settings for a key it does not recognise,
+   * so a link to a page that is not there does not break - it quietly takes
+   * somebody somewhere else.
+   *
+   * What this catches and what it does not: a link to a page that does not
+   * EXIST fails here. A link to a real page that no longer holds the thing it
+   * promises does not, and cannot - the Captain App page pointed its voice
+   * ordering link at Integrations one commit before voice moved to Features,
+   * and Integrations is a real page, so only reading it caught that. Worth
+   * having anyway: the cheap half of the problem is the half that ships.
+   */
+  const defined = panes();
+  /* Old addresses that route on purpose - openSection redirects these. */
+  const legacy = new Set(
+    [...SETTINGS_JS.matchAll(/^\s*(\w+): '([\w-]+)',?\s*$/gm)]
+      .filter(() => true)
+      .map((m) => m[1])
+      .filter((k) => SETTINGS_JS.includes(`LEGACY_SECTIONS`) && ['branches', 'outlet', 'kiosk'].includes(k))
+  );
+
+  const dangling = [];
+  for (const m of SETTINGS_HTML.matchAll(/href="#\/settings\/([\w-]+)"/g)) {
+    if (!defined.has(m[1]) && !legacy.has(m[1])) dangling.push(m[1]);
+  }
+
+  assert.deepStrictEqual(
+    [...new Set(dangling)],
+    [],
+    `these links land on Core Settings instead of where they say: ${[...new Set(dangling)].join(', ')}`
+  );
+});
