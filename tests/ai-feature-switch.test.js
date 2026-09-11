@@ -36,6 +36,7 @@ const settingModel = fs.readFileSync(
 const groups = require(path.join(ROOT, 'api', 'src', 'services', 'settings-groups'));
 const sidebar = fs.readFileSync(path.join(ROOT, 'frontend', 'layouts', 'sidebar.html'), 'utf8');
 const core = fs.readFileSync(path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'), 'utf8');
+const itemsJs = fs.readFileSync(path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'), 'utf8');
 
 test('a shopkeeper can find AI in the Features list', () => {
   /* Where somebody scanning "what does this product do" will look. */
@@ -142,4 +143,41 @@ test('following that row loads the page rather than opening it empty', () => {
    */
   assert.match(settingsJs, /if \(key === 'ai'\) \{ PosnicPro\.settings\.ai\.load\(\); \}/,
     'a deep link to the AI page opens it without loading it');
+});
+
+test('a "not configured" answer is never remembered', () => {
+  /*
+   * The bug that made the whole feature look absent. The button is hidden
+   * until the API says AI is configured, and the answer was cached for the
+   * session - including the no. So the sequence every first-time user
+   * follows is the one that breaks:
+   *
+   *   open an item   -> asks, gets no, remembers no
+   *   go to settings -> paste a key, save
+   *   open an item   -> never asks again, no button
+   *
+   * The server answered available:true throughout; the browser had stopped
+   * listening. A yes is worth caching because only a settings visit can undo
+   * it, and settings clears it. A no is worth nothing.
+   */
+  assert.match(itemsJs, /_aiAvailable === true/,
+    'the cache no longer distinguishes a yes from a no');
+  assert.ok(!/_aiAvailable = false/.test(itemsJs),
+    'a negative answer is being remembered again, which hides the button until a reload');
+});
+
+test('a failed request does not hide the button for the session either', () => {
+  /* One network blip must not cost a shop its AI button until they reload. */
+  const fail = itemsJs.match(/aiRefresh[\s\S]*?\}\, function \(\) \{[\s\S]*?\}\);/);
+  assert.ok(fail, 'the failure path is gone');
+  assert.match(fail[0], /_aiAvailable = null/,
+    'a failed availability check is cached as a permanent no');
+});
+
+test('saving a key makes the button appear without a reload', () => {
+  /* The settings page clears the cached yes/no so the item screen asks
+     again. Without it, a shopkeeper pastes a key and is quietly told to
+     refresh by a button that never arrives. */
+  assert.match(settingsJs, /PosnicPro\.items\._aiAvailable = null/,
+    'saving AI settings no longer invalidates the item screen cache');
 });
