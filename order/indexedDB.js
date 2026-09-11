@@ -617,6 +617,14 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                         discount_price: parseFloat(item.discount_price) || 0,
                         tax_price: parseFloat(item.tax_price) || 0,
                         img: imageSrc,
+                        /* Kept so the page can filter by diet, sort by what
+                           sells, and search a description - none of which
+                           reached this bundle before, which is why /order had
+                           no search while /menu had one. */
+                        diet: item.diet || "",
+                        description: item.description || "",
+                        prep_minutes: Number(item.prep_minutes) || 0,
+                        ordered_count: Number(item.ordered_count) || 0,
                         category_name: category.category_name
                     });
                 });
@@ -962,12 +970,25 @@ async function showCategory(category, element) {
     // ✅ Store the last active category in localStorage
     localStorage.setItem("lastActiveCategory", category);
 
-    let html = "";
+    await renderProductCards(products[category] || []);
+}
+
+/**
+ * Draw a list of products into the grid.
+ *
+ * LIFTED OUT OF showCategory so search can reuse it. A search spans every
+ * category, so the thing being drawn is no longer "the open category" - and
+ * two copies of the card markup would mean the search results quietly losing
+ * a button the category view still had.
+ */
+async function renderProductCards(list) {
+    if (!document.getElementById("product-list")) return;
+
     const storedCart = await getCartData();
     const cartByProductId = new Map(storedCart.map(item => [String(item.id), item]));
-    const categoryProducts = products[category] || [];
+    let html = "";
 
-    for (const product of categoryProducts) {
+    for (const product of (list || [])) {
         const productId = String(product.id ?? "");
         const cartItem = cartByProductId.get(productId);
         const quantity = cartItem ? Number(cartItem.quantity) || 0 : 0;
@@ -980,13 +1001,18 @@ async function showCategory(category, element) {
         const safeImageUrl = escapeHtml(getSafeImageUrl(product.img));
         const price = Number(product.price) || 0;
 
-        // alert(product_name);
-        // console.log("product.img", product.img);
+        /* The veg mark, drawn as the square-and-circle people already look for
+           before they read the name. Absent when the shop has not said, which
+           is not the same as "not vegetarian". */
+        const diet = String(product.diet || "");
+        const dietMark = diet
+            ? `<span class="product-diet diet-${escapeHtml(diet)}" role="img" aria-label="${escapeHtml(diet.replace("_", "-"))}"></span>`
+            : "";
 
         html += `
         <div class="product-card ${activeClass}" data-id="${safeProductId}">
             <img src="${safeImageUrl}" alt="${safeProductName}">
-            <p class="product-title">${safeProductName}</p>
+            <p class="product-title">${dietMark}${safeProductName}</p>
             <div class="product-price">₹${price.toFixed(2)}</div>
             <div class="cart-controls">
                 <button class="btn-decrease" data-id="${safeProductId}" ${quantity <= 0 ? 'disabled' : ''}>-</button>
@@ -1446,3 +1472,255 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+
+
+/* ==========================================================================
+ * SEARCH, FILTERS AND SORT on the ordering page.
+ *
+ * This page had none of it. The digital menu at /menu could find a dish and
+ * the page people actually order from could not - category scrolling and
+ * nothing else - so a customer looking for one line in a catalogue of four
+ * hundred scrolled until they gave up.
+ *
+ * SEARCH SPANS EVERY CATEGORY. Somebody typing "biryani" is asking the
+ * restaurant a question, not the Mains tab. So a live search leaves the
+ * category strip behind and shows one flat list of answers, best first, and
+ * the strip comes back the moment the box is cleared.
+ *
+ * The matching arithmetic below is COPIED from menu/menu.js, which itself
+ * carries a port of api/src/utils/menu-search.js. Neither bundle has a build
+ * step; tests/menu-search-parity.test.js pins the copies to the same answers.
+ * ======================================================================== */
+
+function normalize(value) {
+  return String(value == null ? "" : value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* Damerau-Levenshtein. The transposition is what makes "biriyani" one
+   mistake rather than two. */
+function editDistance(a, b, budget) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > budget) return budget + 1;
+
+  var prev2 = null;
+  var prev = [];
+  for (var k = 0; k <= b.length; k++) prev.push(k);
+
+  for (var i = 1; i <= a.length; i++) {
+    var row = new Array(b.length + 1);
+    row[0] = i;
+    var best = row[0];
+
+    for (var j = 1; j <= b.length; j++) {
+      var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      var value = Math.min(row[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        value = Math.min(value, prev2[j - 2] + cost);
+      }
+      row[j] = value;
+      if (value < best) best = value;
+    }
+
+    if (best > budget) return budget + 1;
+    prev2 = prev;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/* Short words get no slack: with a budget of two, "dal" matches "dosa" and
+   a three-letter search returns the menu. */
+function budgetFor(length) {
+  if (length < 5) return 0;
+  if (length < 8) return 1;
+  return 2;
+}
+
+function scoreWord(query, target) {
+  if (!query || !target) return 0;
+  if (query === target) return 100;
+  if (target.indexOf(query) === 0) return 80;
+  if (target.indexOf(query) !== -1) return 55;
+
+  var budget = budgetFor(query.length);
+  if (!budget) return 0;
+  var distance = editDistance(query, target, budget);
+  if (distance > budget) return 0;
+  return 40 - (distance - 1) * 12;
+}
+
+/* Every query word must find something: somebody who typed two words meant
+   both of them. */
+function scoreItem(query, fields) {
+  var words = normalize(query).split(" ").filter(Boolean);
+  if (!words.length) return { match: true, score: 0 };
+
+  var haystacks = [
+    { text: normalize(fields.name), weight: 1 },
+    { text: normalize(fields.category), weight: 0.5 },
+    { text: normalize(fields.description), weight: 0.35 },
+  ].filter(function (h) {
+    return h.text;
+  });
+
+  var total = 0;
+  for (var w = 0; w < words.length; w++) {
+    var word = words[w];
+    var bestForWord = 0;
+
+    for (var h = 0; h < haystacks.length; h++) {
+      var hay = haystacks[h];
+      if (hay.text.indexOf(word) !== -1) {
+        bestForWord = Math.max(bestForWord, 70 * hay.weight);
+      }
+      var parts = hay.text.split(" ");
+      for (var p = 0; p < parts.length; p++) {
+        var s = scoreWord(word, parts[p]);
+        if (s) bestForWord = Math.max(bestForWord, s * hay.weight);
+      }
+    }
+
+    if (!bestForWord) return { match: false, score: 0 };
+    total += bestForWord;
+  }
+
+  return { match: true, score: Math.round(total / words.length) };
+}
+
+/* What the customer has narrowed the catalogue to. */
+var orderView = { query: "", vegOnly: false, sort: "menu" };
+
+/** Every product across every category, flattened once. */
+function allProducts() {
+    var out = [];
+    Object.keys(products || {}).forEach(function (key) {
+        (products[key] || []).forEach(function (p) { out.push(p); });
+    });
+    return out;
+}
+
+/**
+ * The list to draw right now.
+ *
+ * A live search ALWAYS orders by how well each product answered, whatever the
+ * sort box says: somebody who just typed "dosa" is asking a question, and
+ * answering it in price order buries the dosa. The box takes over again once
+ * the search is cleared.
+ */
+function orderViewList(source) {
+    var q = orderView.query.trim();
+    var list = (source || []).slice();
+
+    if (orderView.vegOnly) {
+        /* Veg only means veg. An unmarked product is NOT assumed vegetarian:
+           a shop that never filled the field has promised nothing, and
+           guessing on its behalf is the one mistake this filter must never
+           make. */
+        list = list.filter(function (p) {
+            return p.diet === "veg" || p.diet === "vegan";
+        });
+    }
+
+    if (q) {
+        list = list
+            .map(function (p, i) {
+                var hit = scoreItem(q, {
+                    name: p.name,
+                    description: p.description,
+                    category: p.category_name
+                });
+                return { p: p, i: i, match: hit.match, score: hit.score };
+            })
+            .filter(function (row) { return row.match; })
+            .sort(function (a, b) { return b.score - a.score || a.i - b.i; })
+            .map(function (row) { return row.p; });
+        return list;
+    }
+
+    if (orderView.sort === "popular") {
+        list.sort(function (a, b) {
+            return (Number(b.ordered_count) || 0) - (Number(a.ordered_count) || 0);
+        });
+    } else if (orderView.sort === "price_asc") {
+        list.sort(function (a, b) { return (Number(a.price) || 0) - (Number(b.price) || 0); });
+    } else if (orderView.sort === "price_desc") {
+        list.sort(function (a, b) { return (Number(b.price) || 0) - (Number(a.price) || 0); });
+    }
+
+    return list;
+}
+
+/** Redraw whatever the current narrowing produces. */
+async function refreshProductView() {
+    if (!document.getElementById("product-list")) return;
+
+    var searching = !!orderView.query.trim();
+    var active = String(localStorage.getItem("lastActiveCategory") || "");
+
+    /* Searching leaves the categories behind: the answer is a flat list across
+       the whole menu, and a category strip beside it would be navigating
+       something that is no longer there. */
+    $(".fixed-categories").toggle(!searching);
+
+    var source = searching ? allProducts() : (products[active] || []);
+    var list = orderViewList(source);
+
+    $("#category-heading").text(
+        searching
+            ? "Results"
+            : ($(".category-item.active").first().text() || "Our Menu")
+    );
+
+    await renderProductCards(list);
+
+    var counter = document.getElementById("order-result-count");
+    if (!counter) {
+        counter = document.createElement("p");
+        counter.id = "order-result-count";
+        counter.className = "order-result-count";
+        counter.setAttribute("role", "status");
+        var host = document.querySelector(".order-search");
+        if (host) host.appendChild(counter);
+    }
+
+    var narrowed = searching || orderView.vegOnly;
+    counter.hidden = !narrowed;
+    if (narrowed) {
+        counter.textContent = list.length === 0
+            ? (searching
+                ? 'Nothing matches "' + orderView.query + '". Try a different word.'
+                : "Nothing on the menu is marked vegetarian.")
+            : list.length + (list.length === 1 ? " item" : " items");
+    }
+
+    document.getElementById("product-search-clear").hidden = !searching;
+}
+
+$(document).on("input", "#product-search", function () {
+    orderView.query = String($(this).val() || "");
+    refreshProductView();
+});
+
+$(document).on("click", "#product-search-clear", function () {
+    $("#product-search").val("");
+    orderView.query = "";
+    refreshProductView();
+    $("#product-search").trigger("focus");
+});
+
+$(document).on("click", "#order-filter-veg", function () {
+    orderView.vegOnly = !orderView.vegOnly;
+    $(this).attr("aria-pressed", orderView.vegOnly ? "true" : "false");
+    refreshProductView();
+});
+
+$(document).on("change", "#order-sort", function () {
+    orderView.sort = String($(this).val() || "menu");
+    refreshProductView();
+});

@@ -4025,6 +4025,12 @@ class ItemRepository extends BaseModel {
                 available_quantity: '$available_quantity',
                 negative_stock: '$negative_stock',
                 description: '$description',
+                /* The veg mark, and what the kitchen needs. The ordering page
+                   could not filter by diet or show a preparation time because
+                   neither ever reached it - the menu had them and the page
+                   people actually order from did not. */
+                diet: '$diet',
+                prep_minutes: '$prep_minutes',
                 price: '$selling_price',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
@@ -4189,6 +4195,22 @@ class ItemRepository extends BaseModel {
             };
           });
         }
+      }
+
+      /*
+       * How often each line sold, so the page can offer "most ordered".
+       *
+       * Same one-pass read the menu uses. A shop with no history gets zeros
+       * and the sort simply keeps the shop's own order, which is the right
+       * answer rather than a degraded one.
+       */
+      const ordering = await this.salesSignals({ branchId: branchDoc._id });
+      for (const group of results) {
+        group.items = (group.items || []).map((item) => ({
+          ...item,
+          ordered_count: ordering.popularity.get(String(item.id)) || 0,
+          goes_with: (ordering.related.get(String(item.id)) || []).map((r) => r.id),
+        }));
       }
 
       /* What a customer pays on top of the food, so the page can show a
