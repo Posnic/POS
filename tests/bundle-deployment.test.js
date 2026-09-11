@@ -101,10 +101,22 @@ test('a change to a bundle actually triggers the deploy that ships it', () => {
    * develop has no paths filter, so it needs no entry here.
    */
   const workflow = read('.github', 'workflows', 'deploy-api.yml');
-  const filter = workflow.match(/paths:\s*\[([^\]]*)\]/);
+
+  /*
+   * Either YAML spelling.
+   *
+   * `paths: ["api/**"]` and a dashed list underneath mean the same thing to
+   * GitHub, and a check that understands only one fails the moment somebody
+   * reformats the file - which teaches people the check is noise rather than
+   * that the deploy is wrong. It failed exactly that way on the commit that
+   * switched this file to the list form, which is how it got written properly.
+   */
+  const inline = workflow.match(/paths:\s*\[([^\]]*)\]/);
+  const listed = workflow.match(/paths:\s*\n((?:[ \t]*(?:#[^\n]*|-[^\n]*)\n)+)/);
+  const filter = inline ? inline[1] : listed && listed[1];
   assert.ok(filter, 'deploy-api.yml has no paths filter to check');
 
-  const missing = servedBundles().filter((b) => !filter[1].includes(`${b}/**`));
+  const missing = servedBundles().filter((b) => !filter.includes(`${b}/**`));
   assert.deepStrictEqual(
     missing,
     [],
