@@ -46,9 +46,11 @@ test('the REST endpoint count is the number of routes there are', () => {
 test('the download and release badges read from GitHub, not from a number typed here', () => {
   /* These are the two the badges exist for - "how many people took it" and
      "what is current" - and both are unknowable from inside the repository. */
-  assert.match(README, /img\.shields\.io\/github\/downloads\/Posnic\/POS\/total/,
+  /* Anchored to the scheme and host: an unanchored "img.shields.io/..." can
+     match inside any URL, so another host could carry it as a path. */
+  assert.match(README, /https:\/\/img\.shields\.io\/github\/downloads\/Posnic\/POS\/total/,
     'the downloads badge is missing or is a hardcoded number');
-  assert.match(README, /img\.shields\.io\/github\/v\/release\/Posnic\/POS/,
+  assert.match(README, /https:\/\/img\.shields\.io\/github\/v\/release\/Posnic\/POS/,
     'the latest-release badge is missing or is a hardcoded version');
 });
 
@@ -68,7 +70,7 @@ test('every badge that states a number is checked by this file', () => {
     'package%20notices',
     'platforms',
   ];
-  const numeric = [...README.matchAll(/img\.shields\.io\/badge\/([^-]+)-/g)]
+  const numeric = [...README.matchAll(/https:\/\/img\.shields\.io\/badge\/([^-]+)-/g)]
     .map((m) => m[1]);
 
   for (const label of numeric) {

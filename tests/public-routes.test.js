@@ -391,7 +391,13 @@ test('registration cannot be reached, or self-promoted, by a stranger', () => {
   const body = create.slice(0, create.indexOf('});'));
 
   for (const claimed of ['role', 'usertype', 'access', 'license']) {
-    assert.ok(!new RegExp(`${claimed}:\s*req\.body\.`).test(body),
+    /* Double-escaped on purpose. In a TEMPLATE LITERAL "\\s" collapses to a
+       bare "s" and "\\." to ".", so this pattern used to demand a literal
+       letter s and treat the dot as "any character" - it would sail straight
+       past "role: req.body.role", which is the exact line it exists to catch.
+       A guard that cannot fail is worse than no guard, because it reads as
+       one. */
+    assert.ok(!new RegExp(`${claimed}:\\s*req\\.body\\.`).test(body),
       `register takes ${claimed} from the request body - privilege is granted, not claimed`);
   }
 });
