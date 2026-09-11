@@ -53,6 +53,17 @@ router.post('/accesskiosk', ensureKioskKey, bindController(itemsController.acces
 router.use(protect);
 
 // GET /api/items - Get paginated items (legacy default endpoint)
+/*
+ * The catalogue seen from one channel, and the two ways a shop changes it.
+ *
+ * Declared before '/' and before '/:id' so neither swallows them. Behind the
+ * normal session: deciding what a channel sells is a shop decision made by a
+ * person who is signed in, never by the anonymous storefront.
+ */
+router.get('/channel', bindController(itemsController.channelItems));
+router.post('/channel', bindController(itemsController.setChannelForItems));
+router.post('/:id/channel-hours', bindController(itemsController.setChannelHours));
+
 router.get('/', bindController(itemsController.getAll));
 
 // Legacy low stock endpoint expected by frontend dashboard

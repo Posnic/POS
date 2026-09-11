@@ -2881,6 +2881,36 @@
                                     </small>
                                 </div>
                             </div>
+                            <!--
+                                SERVING PERIODS LIVE HERE, not under a channel.
+
+                                Breakfast is breakfast wherever the menu is shown - on the QR code, on
+                                the kiosk, in the app. Putting them inside one channel's settings would
+                                mean copying them into the next channel within a month. They are the
+                                kitchen's clock, so they sit with the kitchen's other settings.
+                            -->
+                            <div class="card m-b-30">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><lang class="lang_serving_periods">Serving periods</lang></h5>
+                                </div>
+                                <div class="card-body loader-view-dayparts">
+                                    <small class="text-muted d-block mb-2">
+                                        <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
+                                    </small>
+                                    <div id="menu_daypart_rows"></div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
+                                        <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
+                                    </button>
+                                    <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
+                                        <lang class="lang_use_usual_periods">Use the usual three</lang>
+                                    </button>
+                                    <div class="text-right mt-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="save_dayparts">
+                                            <i class="feather icon-save mr-1"></i><lang class="lang_save_title">Save</lang>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Modifier groups (V2): the menu's option sets - Toppings, Spice level. -->
                             <div class="card m-b-30">
                                 <div class="card-header d-flex align-items-center justify-content-between">
@@ -4790,18 +4820,18 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="channels-tab-line" data-toggle="tab"
                                                         href="#channels-line" role="tab"
-                                                        aria-controls="channels-line" aria-selected="false"><i class="feather icon-share-2 mr-1"></i><lang class="lang_channels_tab">Channels</lang></a>
+                                                        aria-controls="channels-line" aria-selected="false"><i class="feather icon-share-2 mr-1"></i><lang class="lang_channels_and_products">Channels and products</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link active" id="kioskaccount-tab-line"
                                                         data-toggle="tab" href="#kioskaccount-line" role="tab"
                                                         aria-controls="kioskaccount-line"
-                                                        aria-selected="true"><i class="feather icon-key mr-1"></i><lang class="lang_account">Account</lang></a>
+                                                        aria-selected="true"><i class="feather icon-shopping-bag mr-1"></i><lang class="lang_storefront">Storefront</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskimage-tab-line" data-toggle="tab"
                                                         href="#kioskimage-line" role="tab"
-                                                        aria-controls="kioskimage-line" aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_images">Images</lang></a>
+                                                        aria-controls="kioskimage-line" aria-selected="false"><i class="feather icon-image mr-1"></i><lang class="lang_branding">Branding</lang></a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskpayment-tab-line" data-toggle="tab"
@@ -4812,7 +4842,7 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="kioskprint-tab-line" data-toggle="tab"
                                                         href="#kioskprint-line" role="tab"
-                                                        aria-controls="kioskprint-line" aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_printed">Print</lang></a>
+                                                        aria-controls="kioskprint-line" aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_kiosk_printer">Kiosk printer</lang></a>
                                                 </li>
                                             </ul>
                                             <div class="tab-content" id="defaultTabContentLine">
@@ -4827,23 +4857,6 @@
 
                                                                 <hr class="my-3">
 
-                                                                <!--
-                                                                    Serving periods. Defined once here;
-                                                                    each dish says which it belongs to.
-                                                                -->
-                                                                <h6 class="mb-1"><lang class="lang_serving_periods">Serving periods</lang></h6>
-                                                                <small class="form-text text-muted mb-2">
-                                                                    <lang class="lang_serving_periods_help">Breakfast, lunch, dinner. Set the times once here, then mark each dish on the item page. A dish in no period is served all day.</lang>
-                                                                </small>
-                                                                <div id="menu_daypart_rows"></div>
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_daypart">
-                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_period">Add period</lang>
-                                                                </button>
-                                                                <button type="button" class="btn btn-link btn-sm mt-2" id="suggest_dayparts">
-                                                                    <lang class="lang_use_usual_periods">Use the usual three</lang>
-                                                                </button>
-
-                                                                <hr class="my-3">
 
                                                                 <h6 class="mb-1"><lang class="lang_default_branch">Default branch</lang></h6>
                                                                 <small class="form-text text-muted mb-2">
@@ -4864,9 +4877,21 @@
                                                                 <small class="form-text text-muted mb-2">
                                                                     <lang class="lang_channel_partners_help">Aggregators and webshops that send you orders. The commission is what they keep, so a report can show what you actually earned.</lang>
                                                                 </small>
+                                                                <!--
+                                                                    The platforms most shops mean, one tap each.
+
+                                                                    Typing "Swiggy" by hand is how one shop ends up
+                                                                    with Swiggy, swiggy and Swigy as three rows of
+                                                                    the same report, each holding a third of the
+                                                                    month. A preset carries the id the server already
+                                                                    knows and the channel it belongs to, so the only
+                                                                    thing left to type is the rate that was agreed.
+                                                                -->
+                                                                <div class="mb-2" id="partner_presets"></div>
+
                                                                 <div id="sales_channel_partner_rows"></div>
                                                                 <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add_channel_partner">
-                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add partner</lang>
+                                                                    <i class="feather icon-plus mr-1"></i><lang class="lang_add_partner">Add another</lang>
                                                                 </button>
 
                                                                 <hr class="my-3">
@@ -4900,6 +4925,71 @@
                                                                     <lang class="lang_delivery_and_fees_help">Charged on top of the food. Free above is the order value that waives the fee; minimum is the smallest order you will send out at all.</lang>
                                                                 </small>
                                                                 <div id="channel_charge_rows"></div>
+
+                                                                <hr class="my-3">
+
+                                                                <!--
+                                                                    WHAT EACH CHANNEL SELLS.
+
+                                                                    An item is on every channel unless a shop says
+                                                                    otherwise, so this screen is for recording the
+                                                                    exceptions - and doing it in bulk, because a shop
+                                                                    with four hundred lines is never going to open
+                                                                    four hundred item pages to keep cigarettes off
+                                                                    Swiggy.
+                                                                -->
+                                                                <h6 class="mb-1"><lang class="lang_products_on_channel">What each channel sells</lang></h6>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_products_on_channel_help">Everything is sold everywhere unless you say otherwise. Pick a channel, find the lines that are different, and switch them off.</lang>
+                                                                </small>
+
+                                                                <div class="form-row align-items-end">
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_channel"><lang class="lang_channel">Channel</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_channel"></select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-3">
+                                                                        <label for="channel_items_category"><lang class="lang_category">Category</lang></label>
+                                                                        <select class="form-control form-control-sm" id="channel_items_category">
+                                                                            <option value=""><lang class="lang_report_all">All</lang></option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group col-md-4">
+                                                                        <label for="channel_items_search"><lang class="lang_search">Search</lang></label>
+                                                                        <input type="search" class="form-control form-control-sm" id="channel_items_search"
+                                                                            placeholder="Part of a name" data-t-placeholder="lang_part_of_a_name">
+                                                                    </div>
+                                                                    <div class="form-group col-md-2">
+                                                                        <button type="button" class="btn btn-primary-rgba btn-sm btn-block" id="channel_items_find">
+                                                                            <lang class="lang_show_matching">Show</lang>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div id="channel_items_wrap" style="display:none;">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <div class="custom-control custom-checkbox">
+                                                                            <input type="checkbox" class="custom-control-input" id="channel_items_all">
+                                                                            <label class="custom-control-label small" for="channel_items_all">
+                                                                                <lang class="lang_select_all">Select all</lang>
+                                                                            </label>
+                                                                        </div>
+                                                                        <div>
+                                                                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" id="channel_items_off">
+                                                                                <lang class="lang_remove_from_channel">Do not sell here</lang>
+                                                                            </button>
+                                                                            <button type="button" class="btn btn-outline-success btn-sm" id="channel_items_on">
+                                                                                <lang class="lang_add_to_channel">Sell here</lang>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="table-responsive" style="max-height:340px;overflow-y:auto;">
+                                                                        <table class="table table-sm table-borderless mb-0">
+                                                                            <tbody id="channel_items_rows"></tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                    <p class="small text-muted mt-2 mb-0" id="channel_items_count"></p>
+                                                                </div>
 
                                                                 <hr class="my-3">
 
@@ -5166,6 +5256,23 @@
                                                 </div>
                                                 <div class="tab-pane fade" id="kioskprint-line" role="tabpanel"
                                                     aria-labelledby="kioskprint-tab-line">
+                                                    <!--
+                                                        The ONE genuinely
+                                                        device-level setting.
+                                                        Everything else on this
+                                                        page is the storefront,
+                                                        which the machine and a
+                                                        customer's phone both
+                                                        read - so moving those
+                                                        "into kiosk" would
+                                                        break online ordering
+                                                        the moment a shop
+                                                        switched the machine
+                                                        off.
+                                                    -->
+                                                    <p class="text-muted small px-3 pt-2 mb-0">
+                                                        <lang class="lang_kiosk_printer_help">Only the self-service machine in your shop uses this. Everything else on this page is your storefront, which the machine and your customers' phones both show.</lang>
+                                                    </p>
                                                     <form class="validate" method="POST" name="kioskprint_form"
                                                         id="kioskprint_form">
                                                         <div class="card border m-b-30">

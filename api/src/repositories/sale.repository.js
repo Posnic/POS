@@ -6939,7 +6939,33 @@ class SalesRepository {
 
   async kioskOrderModel(data, { SaleModel } = {}) {
     const Model = this.getModel(SaleModel);
-    return Model.kioskOrderModel(data);
+    const result = await Model.kioskOrderModel(data);
+
+    /*
+     * The machine made a noise too.
+     *
+     * The alarm was wired for the online storefront and stopped there, so an
+     * order placed on the shop's own terminal landed in silence - the one
+     * channel where a ticket is printing in another room and nobody at the
+     * till has any reason to be looking at a screen.
+     *
+     * A CHIME, never the alarm. The customer is standing at the machine and
+     * the ticket prints on its own, so this is information rather than a task.
+     * The insistent repeated sound is for an order WAITING on a person, and
+     * using it here would teach staff to ignore the one that matters.
+     */
+    if (result && result.status === true) {
+      const placed = result.data || {};
+      notifyOrderAttention({
+        branchId: String(data?.branch || data?.branch_id || BaseModel.currentBranch || ''),
+        saleId: String(placed.sale_id || placed.sales_id || ''),
+        alert: 'received',
+        state: 'accepted',
+        total: Number(placed.total) || 0,
+      });
+    }
+
+    return result;
   }
 
   async generateRazorPayQrCodekioskModel(data, { SaleModel } = {}) {

@@ -589,8 +589,12 @@
   "Enter a valid email address": [
     "app.js"
   ],
+  "Enter must correct channel": [
+    "src/repositories/item.repository.js"
+  ],
   "Enter must correct item id": [
     "src/models/receiving.model.js",
+    "src/repositories/item.repository.js",
     "src/repositories/sale.repository.js"
   ],
   "Enter must correct order id": [
@@ -1607,6 +1611,9 @@
   "Sales targets saved": [
     "src/services/shift.service.js"
   ],
+  "Saved": [
+    "src/repositories/item.repository.js"
+  ],
   "Schedule entry not found": [
     "src/repositories/shift.repository.js"
   ],
@@ -1629,6 +1636,9 @@
   ],
   "Search term is required": [
     "src/services/customer.service.js"
+  ],
+  "Select at least one item": [
+    "src/repositories/item.repository.js"
   ],
   "Selected branches not found or do not belong to your license. Please select valid branches.": [
     "src/models/user.model.js"

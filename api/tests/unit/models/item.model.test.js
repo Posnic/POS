@@ -786,7 +786,7 @@ describe('Item.LegacyItemModel › class identity', () => {
     // + gtin/gtin14 (PIM1: the GLOBAL identifier, kept apart from barcode_id
     // because that one may hold an in-store code or free text - see
     // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(70);
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(72);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is

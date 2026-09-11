@@ -8037,12 +8037,15 @@ PosnicPro.salesChannels = {
                the survivable direction. */
             var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
             $("#online_order_approval").val(approval);
+            /* Serving periods are NOT drawn here any more - they moved to the
+               Restaurant page. Rendering them into markup that no longer
+               exists is harmless; COLLECTING them from it is not, which is
+               why the save below no longer sends them. */
             /* Remembered so the sidebar can decide without a request on every
                page load: the approval queue is only worth a menu entry for a
                shop that actually holds orders. */
             PosnicPro.local.set('online_order_approval', approval);
             PosnicPro.applyOrderQueueVisibility();
-            PosnicPro.dayparts.render(values.menu_dayparts);
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
@@ -8114,7 +8117,16 @@ PosnicPro.salesChannels = {
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
             online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
-            menu_dayparts: PosnicPro.dayparts.collect(),
+            /*
+             * menu_dayparts is DELIBERATELY ABSENT.
+             *
+             * The serving-period rows moved to the Restaurant page, so
+             * dayparts.collect() finds no markup here and returns an empty
+             * list. Sending that would have wiped every period a shop had set,
+             * on every save of this screen, with no error and nothing to
+             * explain it. The group endpoint writes only what it is given, so
+             * leaving the key out keeps the stored value safe.
+             */
             partner_venues: venues,
             channel_charges: charges,
             online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
@@ -8314,4 +8326,306 @@ $(document).on('click', '#stop_taking_orders', function () {
         'success',
         PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
     );
+});
+
+/*
+ * WHAT EACH CHANNEL SELLS.
+ *
+ * An item is on every channel the shop runs unless somebody says otherwise, so
+ * this screen records exceptions - and it records them in BULK, because a shop
+ * with four hundred lines is never going to open four hundred item pages to
+ * keep cigarettes off Swiggy.
+ *
+ * The filters are the ones a shop already thinks in: a category, or part of a
+ * name. Not a page number.
+ */
+PosnicPro.channelItems = {
+    /* Filled from the shop's own channels and partners, so a shop that does
+       not use Swiggy is never offered it. */
+    fillChannels: function () {
+        var channels = (PosnicPro.itemChannels && PosnicPro.itemChannels._options) || null;
+        var draw = function (options) {
+            $('#channel_items_channel').html(options.map(function (o) {
+                return '<option value="' + $('<div>').text(o.id).html() + '">'
+                    + $('<div>').text(o.label).html() + '</option>';
+            }).join(''));
+        };
+        if (channels) { draw(channels); return; }
+        if (PosnicPro.itemChannels) {
+            PosnicPro.itemChannels.load(function () {
+                draw(PosnicPro.itemChannels._options || []);
+            });
+        }
+    },
+
+    fillCategories: function () {
+        PosnicPro.get({ url: 'categories', data: { limit: 500 } }, function (response) {
+            var rows = (response && response.data && (response.data.list || response.data)) || [];
+            if (!Array.isArray(rows)) { return; }
+            var all = '<option value="">' + PosnicPro.i18n.t('lang_report_all', 'All') + '</option>';
+            $('#channel_items_category').html(all + rows.map(function (c) {
+                return '<option value="' + $('<div>').text(c._id || c.id).html() + '">'
+                    + $('<div>').text(c.name || '').html() + '</option>';
+            }).join(''));
+        }, function () { /* no categories is not an error */ });
+    },
+
+    find: function () {
+        var self = PosnicPro.channelItems;
+        var channel = $('#channel_items_channel').val();
+        if (!channel) { return; }
+
+        PosnicPro.get({
+            url: 'items/channel',
+            data: {
+                channel: channel,
+                category_id: $('#channel_items_category').val() || '',
+                search: $('#channel_items_search').val() || ''
+            }
+        }, function (response) {
+            var data = (response && response.data) || { items: [] };
+            self.render(data.items || []);
+        }, function () {
+            $('#channel_items_rows').html('');
+            $('#channel_items_wrap').hide();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_items', 'Could not load the items.'));
+        });
+    },
+
+    render: function (items) {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#channel_items_rows').html(items.map(function (item) {
+            /* The state shown is what the shop DECIDED, not what happens to be
+               true at four in the afternoon: somebody configuring a catalogue
+               is not asking about the clock. */
+            var mark = item.on
+                ? '<span class="badge badge-success-inverse">' + t('lang_sold_here', 'Sold here') + '</span>'
+                : '<span class="badge badge-danger-inverse">' + t('lang_not_sold_here', 'Not sold here') + '</span>';
+            var hours = item.hours
+                ? ' <span class="small text-muted">' + esc(item.hours.from) + ' - ' + esc(item.hours.to) + '</span>'
+                : '';
+
+            return '<tr>'
+                + '<td style="width:36px;"><div class="custom-control custom-checkbox">'
+                + '<input type="checkbox" class="custom-control-input channel-item-pick" '
+                + 'id="ci_' + esc(item.id) + '" value="' + esc(item.id) + '">'
+                + '<label class="custom-control-label" for="ci_' + esc(item.id) + '"></label>'
+                + '</div></td>'
+                + '<td>' + esc(item.name) + hours + '</td>'
+                + '<td class="text-muted small">' + esc(item.category_name) + '</td>'
+                + '<td class="text-right">' + mark + '</td>'
+                + '</tr>';
+        }).join(''));
+
+        $('#channel_items_count').text(items.length + ' ' + t('lang_items_found', 'items'));
+        $('#channel_items_all').prop('checked', false);
+        $('#channel_items_wrap').toggle(items.length > 0);
+        if (!items.length) {
+            PosnicPro.alert('info', t('lang_no_items_match', 'Nothing matches that filter.'));
+        }
+    },
+
+    apply: function (on) {
+        var self = PosnicPro.channelItems;
+        var ids = $('.channel-item-pick:checked').map(function () { return this.value; }).get();
+        if (!ids.length) {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_at_least_one_item', 'Select at least one item.'));
+            return;
+        }
+
+        PosnicPro.post({
+            url: 'items/channel',
+            data: JSON.stringify({
+                channel: $('#channel_items_channel').val(),
+                item_ids: ids,
+                on: on
+            })
+        }, function (response) {
+            if (response && response.type === 'success') {
+                /* Says how many actually moved, not how many were selected:
+                   "40 selected, 3 changed" is the honest answer when most were
+                   already where the shop wanted them. */
+                var d = response.data || {};
+                PosnicPro.alert('success', response.message + ' (' + (d.changed || 0) + ')');
+                self.find();
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function (xhr) {
+            var body = xhr && xhr.responseJSON;
+            PosnicPro.alert('error', (body && body.message)
+                || PosnicPro.i18n.t('lang_could_not_update_the_items', 'Could not update the items.'));
+        });
+    }
+};
+
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.channelItems.fillChannels();
+    PosnicPro.channelItems.fillCategories();
+});
+
+$(document).on('click', '#channel_items_find', function () {
+    PosnicPro.channelItems.find();
+});
+
+$(document).on('change', '#channel_items_all', function () {
+    $('.channel-item-pick').prop('checked', $(this).is(':checked'));
+});
+
+$(document).on('click', '#channel_items_on', function () { PosnicPro.channelItems.apply(true); });
+$(document).on('click', '#channel_items_off', function () { PosnicPro.channelItems.apply(false); });
+
+/*
+ * Serving periods, saved from the Restaurant page.
+ *
+ * They MOVED there from the channels tab because breakfast is breakfast
+ * wherever the menu is shown - on a QR code, on the kiosk, in the app. They
+ * are the kitchen's clock, not one channel's, and leaving them inside a
+ * channel would have meant copying them into the next channel within a month.
+ *
+ * They still LIVE in the channels settings group, because that is where the
+ * server keeps menu_dayparts and moving a stored key is a migration for no
+ * gain. The screen they are edited on and the group they are stored in do not
+ * have to agree, and pretending otherwise would be a database change to fix a
+ * layout problem.
+ */
+PosnicPro.servingPeriods = {
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            PosnicPro.dayparts.render(values.menu_dayparts);
+        }, function () {
+            PosnicPro.dayparts.render([]);
+        });
+    },
+
+    save: function () {
+        var loader = $('.loader-view-dayparts');
+        loader.find('.loadingSpinner').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        /*
+         * Only menu_dayparts is sent.
+         *
+         * The group endpoint writes what it is given and leaves the rest, so
+         * this cannot reach across and blank the store address or the partner
+         * list that live in the same group and are edited on another screen.
+         */
+        PosnicPro.put({
+            url: 'settings/group/channels',
+            data: JSON.stringify({ menu_dayparts: PosnicPro.dayparts.collect() })
+        }, function (response) {
+            loader.find('.loadingSpinner').remove();
+            if (response && response.type === 'success') {
+                PosnicPro.alert('success', response.message
+                    || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function () {
+            loader.find('.loadingSpinner').remove();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_serving_periods',
+                'Could not save the serving periods'));
+        });
+    }
+};
+
+$(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder', function () {
+    PosnicPro.servingPeriods.load();
+});
+
+$(document).on('click', '#save_dayparts', function () {
+    PosnicPro.servingPeriods.save();
+});
+
+/*
+ * The delivery platforms and webshops most shops actually mean.
+ *
+ * Mirrors KNOWN_PARTNERS in api/src/utils/sales-channels.js. The ids have to
+ * match, because they are what a sale stores and what the commission report
+ * groups by: a shop that types "Swiggy" one day and "swiggy" the next ends up
+ * with two rows holding half a month each.
+ *
+ * A preset is a starting point, not a restriction. A shop with a local
+ * aggregator nobody has heard of still adds one by hand - the whole reason
+ * partners are DATA rather than features is that a new one must never be a
+ * release.
+ */
+PosnicPro.partnerPresets = {
+    /*
+     * BRAND NAMES, NOT UI TEXT.
+     *
+     * Swiggy is Swiggy in Tamil. These are never translated and never wrapped
+     * in t() - which also keeps them out of the load-time trap, because a t()
+     * call in a literal here runs before any language pack exists.
+     *
+     * The auto-tagger will offer to wrap them every time somebody runs it.
+     * Say no. They belong beside the other proper nouns in _glossary.json,
+     * not in a translator's queue.
+     */
+    LIST: [
+        { id: 'swiggy', label: 'Swiggy', channel: 'marketplace' },
+        { id: 'zomato', label: 'Zomato', channel: 'marketplace' },
+        { id: 'ondc', label: 'ONDC', channel: 'marketplace' },
+        { id: 'magicpin', label: 'magicpin', channel: 'marketplace' },
+        { id: 'opencart', label: 'OpenCart', channel: 'ecommerce' },
+        { id: 'woocommerce', label: 'WooCommerce', channel: 'ecommerce' },
+        { id: 'shopify', label: 'Shopify', channel: 'ecommerce' }
+    ],
+
+    render: function () {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#partner_presets').html(
+            '<span class="small text-muted mr-2">' + t('lang_add_quickly', 'Add quickly') + ':</span>'
+            + PosnicPro.partnerPresets.LIST.map(function (p) {
+                return '<button type="button" class="btn btn-outline-secondary btn-sm mr-1 mb-1 partner-preset" '
+                    + 'data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '" '
+                    + 'data-channel="' + esc(p.channel) + '">'
+                    + '<i class="feather icon-plus mr-1"></i>' + esc(p.label) + '</button>';
+            }).join('')
+        );
+        PosnicPro.partnerPresets.markUsed();
+    },
+
+    /* A platform already in the list is shown as used rather than hidden: a
+       shop looking for Swiggy should find it either way, and learn that it is
+       already there instead of adding a second one. */
+    markUsed: function () {
+        var taken = {};
+        $('.channel-partner-row .partner-label').each(function () {
+            var name = String($(this).val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            if (name) { taken[name] = true; }
+        });
+        $('.partner-preset').each(function () {
+            var used = !!taken[$(this).data('id')];
+            $(this).prop('disabled', used).toggleClass('btn-outline-secondary', !used)
+                .toggleClass('btn-secondary-rgba', used);
+        });
+    }
+};
+
+$(document).on('click', '.partner-preset', function () {
+    var $b = $(this);
+    $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({
+        label: $b.data('label'),
+        channel: $b.data('channel'),
+        /* No rate guessed. What Swiggy charges this shop is what this shop
+           negotiated, and a plausible default is the kind of number that gets
+           saved unread and then disagrees with an invoice. */
+        commission_percent: 0,
+        enabled: true
+    }));
+    PosnicPro.partnerPresets.markUsed();
+});
+
+$(document).on('input', '.partner-label', function () {
+    PosnicPro.partnerPresets.markUsed();
+});
+
+$(document).on('click', '#channels-tab-line', function () {
+    PosnicPro.partnerPresets.render();
 });

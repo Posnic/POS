@@ -768,6 +768,35 @@ class ItemService {
   }
 
   /** The shop's public menu, for reading rather than ordering. */
+  /* Which items a channel sells, and the two ways a shop changes that: in
+     bulk from the channel's own screen, and one window at a time. */
+  async channelItems(params = {}) {
+    try {
+      return await this.repository.channelItems(params);
+    } catch (error) {
+      console.error('Error in ItemService.channelItems:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async setChannelForItems(params = {}) {
+    try {
+      return await this.repository.setChannelForItems(params);
+    } catch (error) {
+      console.error('Error in ItemService.setChannelForItems:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async setChannelHours(params = {}) {
+    try {
+      return await this.repository.setChannelHours(params);
+    } catch (error) {
+      console.error('Error in ItemService.setChannelHours:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
   async publicMenu(params = {}) {
     try {
       return await this.repository.publicMenu(params);
