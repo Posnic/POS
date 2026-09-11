@@ -2888,10 +2888,17 @@ PosnicPro = {
         }
         return Promise.all([
             window.electronAPI.preferences.get('receipt_printer'),
-            window.electronAPI.preferences.get('print_width')
+            window.electronAPI.preferences.get('print_width'),
+            /* The per-printer list: each printer with its own copies and paper.
+               Kept beside the two legacy keys rather than replacing them, so a
+               till that has not been reconfigured still prints exactly as it
+               did, and one that has can send a counter copy and an office copy
+               from the same sale. */
+            window.electronAPI.preferences.get('receipt_printers')
         ]).then(function (values) {
             if (values[0]) PosnicPro.local.set('receipt_printer', values[0]);
             if (values[1]) PosnicPro.local.set('print_width', values[1]);
+            PosnicPro.local.set('receipt_printers', values[2] || '');
             return true;
         }).catch(function (e) {
             // Printing still works off whatever was mirrored last time.
@@ -3134,6 +3141,23 @@ PosnicPro = {
                     paperWidth: width,
                     docName: 'Receipt ' + (sale.billNo || '')
                 };
+
+                /*
+                 * When the shop has configured printers individually, send the
+                 * whole list and let the main process fan it out. printerName
+                 * stays populated so nothing downstream has to care which shape
+                 * arrived, and a malformed value is ignored rather than
+                 * allowed to stop a sale printing.
+                 */
+                try {
+                    var saved = PosnicPro.local.get('receipt_printers');
+                    if (saved) {
+                        var list = JSON.parse(saved);
+                        if (Array.isArray(list) && list.length) opts.printers = list;
+                    }
+                } catch (e) {
+                    console.warn('[Print] ignoring unreadable printer list:', e.message);
+                }
                 if (cfg && cfg.autoOpenOnSale) {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;

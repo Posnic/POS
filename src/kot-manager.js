@@ -9,6 +9,7 @@ const os = require('os');
    silently - caught, reported, and nothing printed. */
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const { normalizeTargets, pageSizeFor } = require('./printer-targets');
 
 /*
  * Where our own API is listening, right now.
@@ -203,7 +204,7 @@ class KOTManager {
     return result;
   }
 
-  async _printToDeviceWithFallback(printWindow, deviceName) {
+  async _printToDeviceWithFallback(printWindow, deviceName, pageSizeKey) {
     const baseOptions = {
       silent: true,
       printBackground: true,
@@ -211,9 +212,12 @@ class KOTManager {
       deviceName
     };
 
+    /* The paper this printer is actually loaded with, rather than 80mm for
+       everyone. A kitchen on a 58mm roll was being handed an 80mm page and
+       relying on the driver to shrink it. */
     let result = await this._sendPrintJob(printWindow, {
       ...baseOptions,
-      pageSize: { width: 80000, height: 1000000 }
+      pageSize: pageSizeFor(pageSizeKey)
     });
 
     if (!result.success) {
@@ -551,16 +555,40 @@ class KOTManager {
       await printWindow.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`);
       await this._waitForPrintPage(printWindow.webContents);
 
-      let names = (Array.isArray(printerNames) ? printerNames : []).filter(Boolean)
-        .map(name => String(name).trim())
-        .map(name => name.toUpperCase() === 'POS-80C' ? '' : name);
-      if (!names.length) names = [''];
+      /*
+       * Each printer carries its own paper and its own copy count now, so a
+       * kitchen roll and a pass copy are one configuration rather than two
+       * incompatible ones.
+       *
+       * The name POS-80C used to be rewritten to '' here, which quietly sent
+       * the job to the SYSTEM DEFAULT instead of the printer the shop chose.
+       * It is the factory name on a great many generic 80mm printers, so any
+       * shop that never renamed theirs was printing somewhere else and had no
+       * way to tell. If a device name is genuinely unreachable the print fails
+       * and says so, which is recoverable; silently printing elsewhere is not.
+       */
+      const targets = normalizeTargets(
+        Array.isArray(printerNames) && printerNames.length
+          ? { printers: printerNames }
+          : this.config || {},
+        '80mm'
+      );
+
+      /* Flattened so one entry is one sheet: two copies is two passes through
+         the same printer, which is what the driver expects for a roll. */
+      const jobs = [];
+      for (const t of targets) {
+        for (let c = 0; c < t.copies; c += 1) {
+          jobs.push({ name: t.name, pageSize: t.pageSize, copy: c + 1, of: t.copies });
+        }
+      }
 
       await new Promise((resolve) => {
         let idx = 0;
         const next = async () => {
-          const deviceName = names[idx];
-          const result = await this._printToDeviceWithFallback(printWindow, deviceName);
+          const job = jobs[idx];
+          const deviceName = job.name;
+          const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize);
           if (!result.success) {
             console.error(`[KOT] Print failed (${deviceName}):`, result.reason);
             printerResults.push({ name: deviceName, status: 'failed', reason: result.reason || 'unknown' });
@@ -569,23 +597,7 @@ class KOTManager {
             printerResults.push({ name: deviceName, status: 'success' });
           }
           idx++;
-          if (idx < names.length) next(); else resolve();
-          return;
-          printWindow.webContents.print(
-            { silent: true, printBackground: true, margins: { marginType: 'none' },
-              pageSize: { width: 288000, height: 1000000 }, deviceName },
-            (ok, reason) => {
-              if (!ok) {
-                console.error(`[KOT] Print failed (${deviceName}):`, reason);
-                printerResults.push({ name: deviceName, status: 'failed', reason: reason || 'unknown' });
-              } else {
-                console.log(`[KOT] Printed → ${deviceName}`);
-                printerResults.push({ name: deviceName, status: 'success' });
-              }
-              idx++;
-              if (idx < names.length) next(); else resolve();
-            }
-          );
+          if (idx < jobs.length) next(); else resolve();
         };
         next();
       });
