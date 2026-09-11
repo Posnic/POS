@@ -34,6 +34,8 @@ const settingsJs = fs.readFileSync(
 const settingModel = fs.readFileSync(
   path.join(ROOT, 'api', 'src', 'models', 'setting.model.js'), 'utf8');
 const groups = require(path.join(ROOT, 'api', 'src', 'services', 'settings-groups'));
+const sidebar = fs.readFileSync(path.join(ROOT, 'frontend', 'layouts', 'sidebar.html'), 'utf8');
+const core = fs.readFileSync(path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'), 'utf8');
 
 test('a shopkeeper can find AI in the Features list', () => {
   /* Where somebody scanning "what does this product do" will look. */
@@ -99,4 +101,45 @@ test('the settings themselves live on their own page', () => {
   assert.match(html, /id="v-pills-ai"/, 'the AI settings page is gone');
   assert.match(html, /id="ai_provider"/, 'the provider control is gone from the AI page');
   assert.match(html, /id="ai_api_key"/, 'the key field is gone from the AI page');
+});
+
+test('the switch is in the payload the save actually sends', () => {
+  /*
+   * The bug the owner hit. _moduleToggleIds is only used by the REMOTE-branch
+   * path; saving your own branch goes through updateCommonSetting, which
+   * builds its body key by key by hand. The captured request had no
+   * ai_enabled in it at all, so the checkbox moved, the server never heard,
+   * and a refresh showed the truth.
+   */
+  assert.match(settingsJs, /ai_enabled:\s*\$\('#ai_enabled'\)\.is\(':checked'\)/,
+    'ai_enabled is not in the payload updateCommonSetting sends');
+});
+
+test('the switch is read back when the page loads', () => {
+  /*
+   * Without this the box renders off while the truth is on - and because the
+   * save sends whatever the box says, the first Save writes that lie back as
+   * fact. A missing load line does not just misreport, it corrupts.
+   */
+  assert.match(settingsJs, /\$\('#ai_enabled'\)\.prop\('checked', data\.ai_enabled !== false\)/,
+    'nothing sets the AI checkbox from saved settings');
+});
+
+test('the sidebar has a way in, gated on the switch', () => {
+  /* Every feature with a page has a row in Manage. Without one the page is
+     reachable only by scrolling the settings rail and hoping. */
+  assert.match(sidebar, /id="manage_li_ai"/, 'the AI row is gone from the sidebar');
+  assert.match(sidebar, /href="#\/settings\/ai"/, 'the AI row points nowhere');
+  assert.match(core, /\$\('#manage_li_ai'\)\.toggle\(on\('ai_enabled'\)\)/,
+    'the AI sidebar row is not gated on the switch');
+});
+
+test('following that row loads the page rather than opening it empty', () => {
+  /*
+   * The pane's loader hangs off shown.bs.tab, and a deep link activates the
+   * pane directly without firing it. An empty card reads as broken, not as
+   * unconfigured.
+   */
+  assert.match(settingsJs, /if \(key === 'ai'\) \{ PosnicPro\.settings\.ai\.load\(\); \}/,
+    'a deep link to the AI page opens it without loading it');
 });

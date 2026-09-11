@@ -2323,6 +2323,9 @@
   "Your session has expired. Please log in again.": [
     "src/middleware/auth.js"
   ],
+  "Your session security token is missing or expired. Refresh and try again.": [
+    "src/middleware/csrf.js"
+  ],
   "Your token has expired! Please log in again.": [
     "src/controllers/auth.controller.js"
   ],

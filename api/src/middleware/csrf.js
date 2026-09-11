@@ -55,4 +55,12 @@ const protect = (req, res, next) => {
   });
 };
 
-module.exports = { protect, credentialFor, tokenFor, matches, SAFE_METHODS, HEADER, RESPONSE_HEADER };
+module.exports = {
+  protect,
+  credentialFor,
+  tokenFor,
+  matches,
+  SAFE_METHODS,
+  HEADER,
+  RESPONSE_HEADER,
+};

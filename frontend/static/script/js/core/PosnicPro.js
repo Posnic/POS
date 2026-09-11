@@ -2871,6 +2871,7 @@ PosnicPro = {
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
+        $('#manage_li_ai').toggle(on('ai_enabled'));
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
         /* One system, owner's rule: a feature's card explains it; a
            feature's CONFIGURATION lives here, in its own entry - the same
