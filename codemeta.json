@@ -68,10 +68,10 @@
     "https://github.com/Posnic/POS/blob/main/docs/ADOPTION_EVIDENCE.md"
   ],
   "softwareVersion": "1.6.1",
-  "dateModified": "2026-09-09",
+  "dateModified": "2026-09-11",
   "readme": "https://github.com/Posnic/POS/blob/main/README.md",
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
-  "releaseNotes": "https://github.com/Posnic/POS/blob/main/docs/ROADMAP.md",
+  "releaseNotes": "https://github.com/Posnic/POS/releases/tag/v1.6.1",
   "isSourceCodeOf": {
     "@id": "https://www.posnic.com/#software",
     "@type": "SoftwareApplication",

@@ -17,6 +17,7 @@ repository-code: https://github.com/Posnic/POS
 url: https://www.posnic.com/
 license: AGPL-3.0-only
 version: 1.6.1
+date-released: 2026-08-28
 keywords:
   - point of sale
   - POS software
