@@ -80,17 +80,39 @@ describe('buildRuntimeInfo', () => {
     expect(buildRuntimeInfo({ POSNIC_UPDATE_CHANNEL: 'beta' }, '/nowhere').channel).toBe('beta');
     /*
      * features carries flags now, so this asserts the CONTRACT rather than
-     * emptiness: it is always an object clients can read unconditionally, and
-     * every flag defaults false. Pinning {} made adding the first flag look
-     * like a regression.
+     * emptiness: it is always an object clients can read unconditionally.
+     * Pinning {} made adding the first flag look like a regression.
+     *
+     * Two kinds of flag live here and they default oppositely, which is why
+     * each one is named rather than swept up by a loop:
+     *
+     *   a GRANT depends on how this installation is set up - an account, a
+     *   licence - so a bare environment grants nothing and it is false;
+     *
+     *   a CAPABILITY is something this build can do at all, true wherever
+     *   this code runs. It cannot default false without every server lying
+     *   about itself, and a client reading it would hold back behaviour the
+     *   server supports.
+     *
+     * A new flag has to be added to one of these lists, which is the point:
+     * classifying it is a decision, not a detail.
      */
+    const GRANTS = ['account'];
+    const CAPABILITIES = ['idempotentOrders'];
+
     const features = buildRuntimeInfo({}, '/nowhere').features;
     expect(typeof features).toBe('object');
     expect(features).not.toBeNull();
-    for (const [name, value] of Object.entries(features)) {
+    for (const [, value] of Object.entries(features)) {
       expect(typeof value).toBe('boolean');
-      expect(value).toBe(false); // a bare environment grants nothing
     }
-    expect(features.account).toBe(false);
+    expect(Object.keys(features).sort()).toEqual([...GRANTS, ...CAPABILITIES].sort());
+
+    for (const name of GRANTS) {
+      expect(features[name]).toBe(false); // a bare environment grants nothing
+    }
+    for (const name of CAPABILITIES) {
+      expect(features[name]).toBe(true); // the build either can do it or it cannot
+    }
   });
 });
