@@ -47,6 +47,7 @@ test('frontend source carries machine-readable discovery files for the app domai
   assert.match(llms, /^Preferred backlink target: https:\/\/www\.posnic\.com\/$/m);
   assert.match(llms, /^Official GitHub source: https:\/\/github\.com\/Posnic\/POS$/m);
   assert.match(llms, /POS; Billing Software; Offline POS; Online\/Offline POS; open source POS/);
+  assert.doesNotMatch(llms, /https?:\/\/(?:www\.)?posnic\.io(?:\/|$)/);
 
   const headers = read(FRONTEND, '_headers');
   assert.match(headers, /\/robots\.txt[\s\S]*Content-Type: text\/plain; charset=utf-8/);
@@ -69,6 +70,7 @@ test('public app entry pages expose canonical POS metadata', () => {
     assert.match(html, new RegExp(`<meta name="keywords" content="${keywordContent}">`));
     assert.match(html, /<meta name="robots" content="index, follow">/);
     assert.match(html, /<link rel="canonical" href="https:\/\/www\.posnic\.com\/">/);
+    assert.doesNotMatch(html, /https?:\/\/(?:www\.)?posnic\.io(?:\/|["'])/);
   }
 
   assert.match(login, /<meta property="og:title" content="Posnic POS - Offline POS & Billing Software">/);
