@@ -1,0 +1,41 @@
+{
+  "provider": "shopify",
+  "store": "store_blr_central",
+  "externalOrderId": "SYNTH-ORD-8801",
+  "version": 1,
+  "attempt": 2,
+  "note": "Transient timeout on attempt 1. Exact same order and payload re-submitted.",
+  "payload": {
+    "customer": {
+      "name": "Synthetic Test User",
+      "phone": "9876543210",
+      "email": "synthetic.user@example.com"
+    },
+    "currency": "INR",
+    "items": [
+      {
+        "sku": "SYNTH-SKU-001",
+        "name": "Synthetic Organic Honey 500g",
+        "quantity": 2,
+        "unit_price": 250,
+        "tax_rate": 5
+      },
+      {
+        "sku": "SYNTH-SKU-002",
+        "name": "Synthetic Cold Pressed Mustard Oil 1L",
+        "quantity": 1,
+        "unit_price": 180,
+        "tax_rate": 5
+      }
+    ],
+    "subtotal": 680,
+    "tax_total": 34,
+    "discount": 0,
+    "grand_total": 714,
+    "payment": {
+      "status": "PAID",
+      "method": "ONLINE_GATEWAY",
+      "transaction_id": "TXN-SYNTH-8801-A"
+    }
+  }
+}
