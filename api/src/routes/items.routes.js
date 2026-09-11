@@ -152,6 +152,7 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // second screen needs it.
 router.post('/aiDescription', bindController(itemsController.aiDescription));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
+router.get('/aiSpend', bindController(itemsController.aiSpend));
 
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));

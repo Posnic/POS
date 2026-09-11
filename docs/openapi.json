@@ -6616,6 +6616,29 @@
         }
       }
     },
+    "/items/aiSpend": {
+      "get": {
+        "summary": "aiSpend",
+        "operationId": "get_items_aiSpend",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/items/exportItems": {
       "post": {
         "summary": "exportItems",
