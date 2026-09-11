@@ -7794,6 +7794,13 @@ $(document).on('click', '#analytics_save', function () {
 /*
  * The Voice ordering card (Integrations tab).
  *
+ * It lives inside the CAPTAIN APP's card on the Features tab, because that is
+ * what it belongs to. It was briefly under Integrations on the grounds that it
+ * can hold a third-party key, which is filing a thing by how it is BUILT
+ * rather than by what it IS - a shopkeeper looking for voice ordering goes to
+ * where they switched the captain app on, not to a page about webhooks and API
+ * tokens.
+ *
  * ONE dropdown for the shopkeeper, because they are choosing a thing they can
  * name - nothing, the phone, or a company they have an account with - not an
  * architecture. What that means for where the audio travels is derived on the
@@ -7883,7 +7890,9 @@ PosnicPro.settings.voice = {
     }
 };
 
-$(document).on('shown.bs.tab', 'a[href="#int-sub-voice"]', function () {
+/* Loaded with the Features tab, because that is where the captain app's card
+   lives and where these controls now are. */
+$(document).on('shown.bs.tab', 'a[href="#v-pills-modules"]', function () {
     PosnicPro.settings.voice.load();
 });
 $(document).on('change', '#voice_provider', function () {
