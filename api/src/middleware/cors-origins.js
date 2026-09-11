@@ -141,10 +141,26 @@ const isAllowedOrigin = (origin, req) =>
 function corsHeaders(req, res, next) {
   const origin = req.headers.origin;
 
-  // In development, allow all origins
-  if (process.env.NODE_ENV !== 'production') {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  } else if (origin && isAllowedOrigin(origin, req)) {
+  /*
+   * The origin is checked the same way everywhere, production or not.
+   *
+   * This used to reflect whatever Origin arrived when NODE_ENV was not
+   * 'production' - and three lines below, every response sets
+   * Access-Control-Allow-Credentials: true. Those two together mean any web
+   * page anywhere could make a credentialed request to the till and READ the
+   * answer: the browser's cross-origin protection is precisely the thing
+   * being handed away.
+   *
+   * That was not confined to a developer's laptop. The desktop app runs this
+   * API on the till, and NODE_ENV is not 'production' there, so every shop was
+   * shipping the permissive branch.
+   *
+   * Removing it costs local work nothing: isAllowedOrigin already accepts
+   * localhost, 127.0.0.1 and the whole private-network range through
+   * isPrivateNetworkOrigin, plus same-origin requests. Development was never
+   * relying on the wildcard, only on being the same machine.
+   */
+  if (origin && isAllowedOrigin(origin, req)) {
     res.header('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
     // Allow requests with no origin (curl, mobile apps, etc.)
