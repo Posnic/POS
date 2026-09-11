@@ -812,9 +812,20 @@ test('every key written into a page is a key the tooling can see', () => {
       if (e.isDirectory()) { if (!/^(node_modules|public|vendor|plugins|lazy)$/.test(e.name)) look(full); continue; }
       if (!/\.(html|js)$/.test(e.name) || /\.min\.js$/.test(e.name)) continue;
       /* a comment showing what a tag looks like is documentation, not a key */
-      const src = fs.readFileSync(full, 'utf8')
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/<!--[\s\S]*?-->/g, '');
+      /* Stripped until nothing changes rather than once: a single pass over
+         "<!-- <!-- x --> " removes the inner comment and leaves a bare "<!--"
+         behind, so overlapping markers survive the replace that was meant to
+         remove them. */
+      const stripAll = (text, pattern) => {
+        let out = text;
+        let previous;
+        do { previous = out; out = out.replace(pattern, ''); } while (out !== previous);
+        return out;
+      };
+      const src = stripAll(
+        stripAll(fs.readFileSync(full, 'utf8'), /\/\*[\s\S]*?\*\//g),
+        /<!--[\s\S]*?-->/g
+      );
       for (const m of src.matchAll(written)) {
         const key = m[1] || m[2] || m[3];
         if (!used.has(key) && !unseen.has(key)) unseen.set(key, path.relative(FRONTEND, full).replace(/\\/g, '/'));
