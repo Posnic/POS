@@ -4080,8 +4080,29 @@ class ItemRepository extends BaseModel {
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
         { license: branchDoc.license },
       ];
-      // Only require ecommerce/isAvailable when an actual kiosk is configured
-      if (hasKiosk) {
+      /*
+       * The online-ordering ticks, and who they are actually about.
+       *
+       * `ecommerce` is the box a shop ticks to say "sell this on the internet",
+       * and `isAvailable` is written from it. Requiring them is right for a
+       * customer's phone: a shop that opened an online channel decides item by
+       * item what goes on it.
+       *
+       * IT IS WRONG FOR A WAITER. The captain app is staff standing in the
+       * shop, selling the shop's own catalogue - the same list as the till.
+       * Applying the online tick to them meant that the moment a shop
+       * configured a store address, every handset in the building showed "No
+       * products found for this branch. Please contact admin to configure
+       * items" about a shop with a full menu. A waiter cannot act on that and
+       * the admin has nothing to fix.
+       *
+       * Narrowed for the customer-facing channels only. What a shop does want
+       * kept off the floor is handled by channelFilter below, which is per
+       * channel and is the control that was actually built for this.
+       */
+      const staffChannel =
+        (params.channel || salesChannels.CHANNEL.ONLINE) === salesChannels.CHANNEL.TABLESIDE;
+      if (hasKiosk && !staffChannel) {
         baseFilter.push({ ecommerce: true });
         baseFilter.push({ isAvailable: true });
       }
