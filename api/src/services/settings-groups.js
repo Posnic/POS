@@ -29,8 +29,18 @@ const FEATURES = [
   'module_credit_enable',
   'module_marketing_enable',
   'module_messaging_enable',
+  /* The parent: whether this shop sells anywhere but the counter at all. */
   'module_channels_enable',
-  'module_channels_kiosk_enable',
+  /* One per channel the shop actually uses. A shopkeeper wants a kiosk, or a
+     QR code on the table, or the captain app - not "a sales channel", which is
+     our word for how a sale is reported and no customer of ours has ever said
+     out loud. Aggregators and webshops stay DATA behind their own switch, so
+     adding Zomato is a row rather than a release. */
+  'module_online_ordering_enable',
+  'module_kiosk_enable',
+  'module_captain_enable',
+  'module_delivery_partners_enable',
+  'module_webshop_enable',
   'module_recyclebin_enable',
   'module_themes_enable',
   'module_cashbook_enable',

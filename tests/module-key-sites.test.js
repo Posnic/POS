@@ -42,6 +42,23 @@ const EXEMPT = {
   till_lock_idle_minutes: {
     control: 'a number input, not a checkbox - the :checked reset failure mode does not apply',
   },
+  /*
+   * DERIVED, not switched.
+   *
+   * The Features page used to carry one "Sales Channels" switch. It carries
+   * five now - online ordering, kiosk machine, captain app, delivery partners,
+   * webshop - because a shopkeeper wants a kiosk or a QR code, not "a sales
+   * channel", which is our word for how a sale is reported.
+   *
+   * The parent survives as a computed value: true when any of the five is on.
+   * The reports that span channels read it, so it still has to be saved and
+   * still has to be in the toggle list; it just has no control of its own, and
+   * the save writes the OR of the five rather than reading a checkbox that is
+   * not there.
+   */
+  module_channels_enable: {
+    control: 'derived from the five per-channel switches; no control of its own',
+  },
 };
 
 function mapKeys(modelSource) {

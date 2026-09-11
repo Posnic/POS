@@ -2559,20 +2559,62 @@
 
                                         <div class="module-card">
                                             <div class="module-card-head">
-                                                <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="sales channels" loading="lazy" decoding="async"></span>
-                                                <div class="module-title"><lang class="lang_module_channels">Sales Channels</lang></div>
+                                                <span class="module-ico"><img src="static/images/svg-icon/shopping-online.svg" alt="online ordering" loading="lazy" decoding="async"></span>
+                                                <div class="module-title"><lang class="lang_module_online_ordering">Online Ordering</lang></div>
                                                 <div class="custom-control custom-switch module-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_channels_enable" name="module_channels_enable">
-                                                    <label class="custom-control-label" for="module_channels_enable"></label>
+                                                    <input type="checkbox" class="custom-control-input" id="module_online_ordering_enable" name="module_online_ordering_enable">
+                                                    <label class="custom-control-label" for="module_online_ordering_enable"></label>
                                                 </div>
                                             </div>
-                                            <p class="module-desc"><lang class="lang_selling_beyond_the_counter_online_qr_order">Selling beyond the counter - online, QR ordering and partner channels arrive here.</lang></p>
-                                            <div class="module-subs">
-                                                <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" id="module_channels_kiosk_enable" name="module_channels_kiosk_enable">
-                                                    <label class="custom-control-label" for="module_channels_kiosk_enable"><lang class="lang_module_kiosk_and_online">Kiosk and online ordering</lang></label>
+                                            <p class="module-desc"><lang class="lang_module_online_ordering_desc">A QR code on the table or a link customers open on their phone. Your menu, your prices, your kitchen.</lang></p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/monitor.svg" alt="kiosk machine" loading="lazy" decoding="async"></span>
+                                                <div class="module-title"><lang class="lang_module_kiosk_machine">Kiosk Machine</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_kiosk_enable" name="module_kiosk_enable">
+                                                    <label class="custom-control-label" for="module_kiosk_enable"></label>
                                                 </div>
                                             </div>
+                                            <p class="module-desc"><lang class="lang_module_kiosk_machine_desc">A self-service terminal standing in your shop. It shows the same storefront and prints to its own kitchen printer.</lang></p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/tables.svg" alt="captain app" loading="lazy" decoding="async"></span>
+                                                <div class="module-title"><lang class="lang_module_captain">Captain App</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_captain_enable" name="module_captain_enable">
+                                                    <label class="custom-control-label" for="module_captain_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc"><lang class="lang_module_captain_desc">Your staff taking orders at the table on a phone, straight to the kitchen.</lang></p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/passenger.svg" alt="delivery partners" loading="lazy" decoding="async"></span>
+                                                <div class="module-title"><lang class="lang_module_delivery_partners">Delivery Partners</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_delivery_partners_enable" name="module_delivery_partners_enable">
+                                                    <label class="custom-control-label" for="module_delivery_partners_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc"><lang class="lang_module_delivery_partners_desc">Swiggy, Zomato and the rest. Record what each one keeps so a report can show what you actually earned.</lang></p>
+                                        </div>
+
+                                        <div class="module-card">
+                                            <div class="module-card-head">
+                                                <span class="module-ico"><img src="static/images/svg-icon/ecommerce.svg" alt="webshop" loading="lazy" decoding="async"></span>
+                                                <div class="module-title"><lang class="lang_module_webshop">Webshop</lang></div>
+                                                <div class="custom-control custom-switch module-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="module_webshop_enable" name="module_webshop_enable">
+                                                    <label class="custom-control-label" for="module_webshop_enable"></label>
+                                                </div>
+                                            </div>
+                                            <p class="module-desc"><lang class="lang_module_webshop_desc">An online shop of your own - OpenCart, WooCommerce - sending its orders here.</lang></p>
                                         </div>
 
                                         <div class="module-card">
@@ -4740,7 +4782,7 @@
                                 <div class="col-md-12 col-lg-12 col-xl-12">
                                     <div class="card m-b-30">
                                         <div class="card-header">
-                                            <h5 class="card-title"><lang class="lang_kiosk_settings">Kiosk Settings</lang></h5>
+                                            <h5 class="card-title"><lang class="lang_channels_settings">Channels and ordering</lang></h5>
                                         </div>
                                         <div class="card-body">
                                             <ul class="nav nav-tabs custom-tab-line mb-3" id="defaultTabLine"

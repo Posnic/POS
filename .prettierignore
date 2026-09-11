@@ -63,3 +63,9 @@ docs/openapi.json
 # 64 changed lines and then into three merge conflicts against develop, none of
 # which were about anything. Leave the prose alone.
 README.md
+
+# Operational scripts, none of them prettier-formatted. A five-line change to
+# tenant-audit.js came back as 323 insertions and 129 deletions. Same story as
+# src/ and frontend/ above: these are read when something is wrong on a live
+# box, and blame matters more than quote style.
+scripts/

@@ -2779,8 +2779,17 @@ PosnicPro = {
         var s = {};
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
         var on = function (k) { return s[k] !== false; };
-        $('#viewkioskreport_page').closest('li')
-            .toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        /*
+         * One switch, not two.
+         *
+         * There was a second toggle on the Features page - "Kiosk and online
+         * ordering" - sitting under the Sales Channels switch and gating only
+         * this one menu row. Which channels a shop actually uses is answered
+         * properly on the Sales Channels page, by the checkbox list there, so
+         * a second half-switch in a different screen was one more thing to get
+         * out of step with it.
+         */
+        $('#viewkioskreport_page').closest('li').toggle(on('module_channels_enable'));
         $('#viewkotreport_page').closest('li')
             .toggle(PosnicPro.local.get('table_options') === 'enable');
 

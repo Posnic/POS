@@ -136,11 +136,43 @@ const FEATURES = [
     why: 'kiosk, QR ordering and online lists',
     evidence: [['kiosk_updates', {}], ['tableorder', {}]],
   },
+  /*
+   * One per channel, replacing the single kiosk sub-switch.
+   *
+   * The evidence is what says a shop was ALREADY using the thing: a shop with
+   * kiosk update rows has a machine, a shop with table orders runs the captain
+   * app. Switching a channel off under a shop that is selling through it is
+   * the one outcome a backfill must never produce.
+   */
   {
-    key: 'module_channels_kiosk_enable',
+    key: 'module_online_ordering_enable',
     dflt: false,
-    why: 'the kiosk specifically',
+    why: 'the QR and web storefront',
+    evidence: [['kiosk_updates', {}], ['tableorder', {}]],
+  },
+  {
+    key: 'module_kiosk_enable',
+    dflt: false,
+    why: 'the shop own self-service machines',
     evidence: [['kiosk_updates', {}]],
+  },
+  {
+    key: 'module_captain_enable',
+    dflt: false,
+    why: 'the captain app taking orders at the table',
+    evidence: [['tableorder', {}]],
+  },
+  {
+    key: 'module_delivery_partners_enable',
+    dflt: false,
+    why: 'aggregators like Swiggy and Zomato',
+    evidence: [['sales', { channel_partner: { $nin: [null, ''] } }]],
+  },
+  {
+    key: 'module_webshop_enable',
+    dflt: false,
+    why: 'an outside webshop sending orders in',
+    evidence: [['sales', { channel: 'ecommerce' }]],
   },
   {
     key: 'quotes_enable',
