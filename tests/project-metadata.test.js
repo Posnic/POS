@@ -35,6 +35,15 @@ test('CodeMeta states a version, and it cannot drift from package.json', () => {
   assert.ok(cffVersion, 'CITATION.cff states no version');
   assert.equal(cffVersion[1].trim().replace(/^['"]|['"]$/g, ''), packageJson.version);
 
+  const cffReleaseDate = /^date-released:\s*(.+)$/m.exec(citation);
+  assert.ok(cffReleaseDate, 'CITATION.cff states no release date');
+  assert.equal(cffReleaseDate[1].trim(), '2026-08-28');
+
+  assert.equal(
+    metadata.releaseNotes,
+    `https://github.com/Posnic/POS/releases/tag/v${packageJson.version}`,
+  );
+
   const cffLicense = /^license:\s*(.+)$/m.exec(citation);
   assert.equal(cffLicense[1].trim(), packageJson.license);
 });
@@ -68,6 +77,7 @@ test('CodeMeta uses only secure canonical links', () => {
     metadata.downloadUrl,
     metadata.softwareHelp,
     metadata.citation,
+    metadata.releaseNotes,
     ...metadata.relatedLink,
   ];
 
