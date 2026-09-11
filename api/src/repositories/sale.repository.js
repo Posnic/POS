@@ -13,6 +13,7 @@ const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const salesChannels = require('../utils/sales-channels');
+const itemChannels = require('../utils/item-channels');
 const partnerVenues = require('../utils/partner-venues');
 
 /* The fallback when channelState has no sentence of its own. It never should,
@@ -7450,6 +7451,27 @@ class SalesRepository {
             status: false,
             data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
             message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
+          };
+        }
+
+        /*
+         * And a dish the shop took off the online channel by hand.
+         *
+         * The menu and the ordering page both leave it out, so reaching here
+         * with one is a stale tab or a direct post - and either way the
+         * kitchen must not see it. Same helper the channel screen uses, so
+         * "off online" means one thing everywhere.
+         */
+        const onChannel = itemChannels.availableOn(
+          itemDoc,
+          salesChannels.CHANNEL.ONLINE,
+          orderMinutes
+        );
+        if (!onChannel.available) {
+          return {
+            status: false,
+            data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
+            message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
           };
         }
 

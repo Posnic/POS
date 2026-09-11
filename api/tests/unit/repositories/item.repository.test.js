@@ -1506,7 +1506,7 @@ describe('ItemRepository', () => {
    * to configure items" - about a shop with a full menu. A waiter cannot act
    * on that and the admin has nothing to fix.
    */
-  describe('who the online-ordering tick applies to', () => {
+  describe('what a customer is shown, and what a waiter is shown', () => {
     const salesChannels = require('../../../src/utils/sales-channels');
 
     /* The $match the aggregation was built with, for one channel. */
@@ -1519,10 +1519,28 @@ describe('ItemRepository', () => {
       return JSON.stringify(pipeline[0].$match);
     };
 
-    test('a CUSTOMER sees only what the shop put online', async () => {
+    test('a CUSTOMER sees the menu: everything the shop has not taken off this channel', async () => {
       const match = await filterFor(salesChannels.CHANNEL.ONLINE);
-      expect(match).toContain('ecommerce');
-      expect(match).toContain('isAvailable');
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('channel_off');
+      expect(match).toContain('"online"');
+      /*
+       * The legacy per-item "show on kiosk" tick is not a gate any more.
+       *
+       * It emptied every ordering page whose shop had never ticked it - the
+       * menu beside it listed the whole catalogue - and a shop that has just
+       * been given its store address has never seen the box.
+       */
+      expect(match).not.toContain('ecommerce');
+      expect(match).not.toContain('isAvailable');
+    });
+
+    test('the shop machine is a customer with its own exception list', async () => {
+      const match = await filterFor(salesChannels.CHANNEL.KIOSK);
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('"kiosk"');
+      expect(match).not.toContain('"online"');
+      expect(match).not.toContain('ecommerce');
     });
 
     test('a WAITER sees the shop catalogue, not the online subset', async () => {
@@ -1531,13 +1549,16 @@ describe('ItemRepository', () => {
       const match = await filterFor(salesChannels.CHANNEL.TABLESIDE);
       expect(match).not.toContain('ecommerce');
       expect(match).not.toContain('isAvailable');
+      expect(match).not.toContain('show_on_menu');
+      expect(match).toContain('"tableside"');
     });
 
     test('the default is still the customer, so nothing deployed changes', async () => {
-      /* accesskiosk and the storefront pass no channel and must keep the
-         narrowing they have always had. */
+      /* accessQr and the storefront pass no channel and get the phone's list. */
       const match = await filterFor(null);
-      expect(match).toContain('ecommerce');
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('"online"');
+      expect(match).not.toContain('ecommerce');
     });
 
     test('both are still scoped to the branch and the licence', async () => {
