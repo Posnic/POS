@@ -936,9 +936,28 @@ PosnicPro.settings = {
                 var image_path = (data.logo !== "store.png") ? data.logo : 'static/images/default/' + data.logo;
                 $('#previewing,#store_image').attr('src', image_path);
                 $('#setting_logo_value').val(data.logo);
-                // Ensure kiosk array exists and has at least one object
-                // Ensure kiosk array exists and has at least one object
-var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
+/*
+ * READ WHAT THE SERVER ACTUALLY STORES.
+ *
+ * This said `data.kiosk[0]`. The field was renamed to `online_ordering` - and
+ * from an Array-of-one to an object - because one reader treated it as an
+ * array and another as an object, which refused every order ever placed. The
+ * WRITE was moved; this read was not.
+ *
+ * So `data.kiosk` was undefined, kioskData became {}, and every storefront
+ * setting on this tab came back empty no matter what the shop had saved. The
+ * owner's words: "it forgot what i saved last time". Worse than forgetting -
+ * collect() then read those empty boxes, so opening the tab and pressing Save
+ * wrote the blanks back over the stored mode, pause and opening hours.
+ *
+ * Nothing failed. An absent field reads as {} and {} reads as "not set".
+ */
+var kioskData =
+    data.online_ordering && typeof data.online_ordering === 'object'
+        ? data.online_ordering
+        /* The old array shape, for a response from a server that predates the
+           rename. Harmless to keep and cheap to be wrong about. */
+        : (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
 
 // Extract values with fallback to empty strings
 var store_id = kioskData.store_id || "";

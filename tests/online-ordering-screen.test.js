@@ -24,7 +24,9 @@ const path = require('node:path');
 const { JSDOM } = require('jsdom');
 
 const ROOT = path.join(__dirname, '..', 'frontend');
+const read_ = (...p) => fs.readFileSync(path.join(__dirname, '..', ...p), 'utf8');
 const SETTINGS = path.join(ROOT, 'static/script/js/modules/js/settings.js');
+const SETTINGS_JS = fs.readFileSync(SETTINGS, 'utf8');
 
 /** Comments out, strings untouched, so a brace counter can be trusted. */
 function stripComments(src) {
@@ -469,4 +471,44 @@ test('the help under the mode describes the answer that is chosen', () => {
   oo.syncMode();
   assert.strictEqual($('#kiosk_mode_help_order').css('display'), 'none');
   assert.notStrictEqual($('#kiosk_mode_help_menu').css('display'), 'none');
+});
+
+test('the storefront tab reads the field the server actually stores', () => {
+  /*
+   * THE BUG: "it forgot what i saved last time."
+   *
+   * The branch's channel was renamed from `kiosk` - an Array of one - to
+   * `online_ordering`, an object, because one reader treated it as an array
+   * and another as an object and that refused every order ever placed. The
+   * WRITE moved. This read did not.
+   *
+   * `data.kiosk` was undefined, so the tab saw {} and every storefront value
+   * came back empty however many times the shop had saved it. The store id
+   * box was blank, which also hid the two addresses that depend on it.
+   *
+   * Worse than forgetting: collect() reads those same empty boxes, so opening
+   * the tab and pressing Save wrote the blanks back over the stored mode,
+   * pause and opening hours.
+   *
+   * Nothing failed anywhere. An absent field reads as {}, and {} reads as
+   * "not set".
+   */
+  const at = SETTINGS_JS.indexOf('var kioskData');
+  assert.notStrictEqual(at, -1, 'the storefront read is no longer a shape this test can find');
+  const read = SETTINGS_JS.slice(at, at + 400);
+
+  assert.match(
+    read,
+    /data\.online_ordering/,
+    'the storefront tab still reads `kiosk`, the field that was renamed away'
+  );
+
+  /* The model is the other end of the contract: if the field is renamed
+     again, this fails rather than the screen silently emptying. */
+  const model = read_('api', 'src', 'models', 'branch.model.js');
+  assert.match(
+    model,
+    /online_ordering: \{ type: Schema\.Types\.Mixed/,
+    'the branch no longer stores online_ordering under that name'
+  );
 });
