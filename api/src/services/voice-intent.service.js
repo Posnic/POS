@@ -74,7 +74,9 @@ function tidy(answer, menu) {
 
   for (const entry of raw) {
     if (!entry || typeof entry !== 'object') continue;
-    const verb = String(entry.verb || 'add').toLowerCase().trim();
+    const verb = String(entry.verb || 'add')
+      .toLowerCase()
+      .trim();
     if (!VERBS.has(verb)) continue;
 
     if (verb === 'place' || verb === 'clear' || verb === 'show') {
@@ -118,9 +120,13 @@ async function resolve(body, context) {
   const enabled = await ai.available(context);
   if (!enabled) return { status: false, message: 'no_ai', data: null };
 
-  const prompt = ['MENU (id, name):', ai.fence(JSON.stringify(menu)), '', 'SAID:', ai.fence(text)].join(
-    '\n'
-  );
+  const prompt = [
+    'MENU (id, name):',
+    ai.fence(JSON.stringify(menu)),
+    '',
+    'SAID:',
+    ai.fence(text),
+  ].join('\n');
 
   const asked = await ai.ask({ feature: 'voice_order', prompt, system: SYSTEM }, context);
   if (!asked.status) return asked;

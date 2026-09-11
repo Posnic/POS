@@ -76,11 +76,15 @@ test('a well-formed answer comes back in the shape the app executes', async () =
 test('an id the model invented becomes "not found", with the words kept', async () => {
   modelAnswers('{"commands":[{"verb":"add","quantity":1,"item_id":"999","said":"widgets"}]}');
   const result = await service.resolve({ text: 'x', items: MENU }, context);
-  expect(result.data.commands).toEqual([{ verb: 'add', quantity: 1, item_id: null, said: 'widgets' }]);
+  expect(result.data.commands).toEqual([
+    { verb: 'add', quantity: 1, item_id: null, said: 'widgets' },
+  ]);
 });
 
 test('a verb the app does not know is dropped, not guessed', async () => {
-  modelAnswers('{"commands":[{"verb":"refund","quantity":1,"item_id":"1"},{"verb":"add","quantity":1,"item_id":"1"}]}');
+  modelAnswers(
+    '{"commands":[{"verb":"refund","quantity":1,"item_id":"1"},{"verb":"add","quantity":1,"item_id":"1"}]}'
+  );
   const result = await service.resolve({ text: 'x', items: MENU }, context);
   expect(result.data.commands.map((c) => c.verb)).toEqual(['add']);
 });
