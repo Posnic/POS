@@ -131,6 +131,7 @@
   "lang_ai_key": "API-sleutel",
   "lang_ai_key_saved": "Er is een sleutel opgeslagen. Typ een nieuwe om die te vervangen.",
   "lang_ai_module_desc": "Schrijft artikelbeschrijvingen voor u. U gebruikt uw eigen AI-account en betaalt die aanbieder rechtstreeks; wij rekenen niets. In te stellen op de pagina AI-ondersteuning.",
+  "lang_ai_not_subscription": "Een Claude Pro- of ChatGPT Plus-abonnement werkt hier niet. Die betalen de chatwebsite; een API-sleutel wordt apart gefactureerd en kost voor dit soort gebruik meestal veel minder.",
   "lang_ai_off": "Uit - geen AI-knoppen",
   "lang_ai_openai": "OpenAI - uw eigen account",
   "lang_ai_provider": "Wie antwoordt",

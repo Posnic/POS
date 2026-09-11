@@ -131,6 +131,7 @@
   "lang_ai_key": "Ufunguo wa API",
   "lang_ai_key_saved": "Ufunguo umehifadhiwa. Andika mpya ili kuubadilisha.",
   "lang_ai_module_desc": "Huandika maelezo ya bidhaa kwa niaba yako. Unatumia akaunti yako ya AI na kumlipa mtoa huduma huyo moja kwa moja; sisi hatutozi chochote. Iweke kwenye ukurasa wa Msaada wa AI.",
+  "lang_ai_not_subscription": "Usajili wa Claude Pro au ChatGPT Plus haufanyi kazi hapa. Hizo hulipia tovuti ya mazungumzo; ufunguo wa API hutozwa tofauti na, kwa matumizi ya aina hii, mara nyingi hugharimu kidogo zaidi.",
   "lang_ai_off": "Imezimwa - hakuna vitufe vya AI",
   "lang_ai_openai": "OpenAI - akaunti yako mwenyewe",
   "lang_ai_provider": "Nani anajibu",

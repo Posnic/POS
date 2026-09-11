@@ -131,6 +131,7 @@
   "lang_ai_key": "Chiave API",
   "lang_ai_key_saved": "Una chiave è salvata. Digitane una nuova per sostituirla.",
   "lang_ai_module_desc": "Scrive le descrizioni degli articoli per te. Usi il tuo account IA e paghi direttamente quel fornitore; noi non addebitiamo nulla. Si configura nella pagina Assistenza IA.",
+  "lang_ai_not_subscription": "Un abbonamento Claude Pro o ChatGPT Plus non funziona qui. Quelli pagano il sito di chat; una chiave API si fattura a parte e, per questo tipo di uso, costa di solito molto meno.",
   "lang_ai_off": "Disattivato - nessun pulsante IA",
   "lang_ai_openai": "OpenAI - il tuo account",
   "lang_ai_provider": "Chi risponde",

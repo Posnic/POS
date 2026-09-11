@@ -9158,7 +9158,6 @@ PosnicPro.settings.ai = {
         }, function () { /* the placeholder is a courtesy, not the feature */ });
 
         PosnicPro.settings.ai.loadSpend();
-        $('#ai_saved_note').hide();
     },
 
     /* What it has cost so far, because somebody spending their own money is
@@ -9202,7 +9201,12 @@ PosnicPro.settings.ai = {
                that emptiness through would blank the shop's credential the
                first time anybody changed the limit. */
             if (!key) {
-                $('#ai_saved_note').show();
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                    'Saved. The AI button now appears on the item screen, beside Description.'));
+                /* The item screen asks once per session whether AI is usable; that
+                   answer is now stale, so let it ask again rather than leaving the
+                   button hidden until a reload. */
+                if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                 $('#ai_api_key').val('');
                 return;
             }
@@ -9211,7 +9215,12 @@ PosnicPro.settings.ai = {
                 data: JSON.stringify({ ai_api_key: key })
             }, function (second) {
                 if (second.type === 'success') {
-                    $('#ai_saved_note').show();
+                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                        'Saved. The AI button now appears on the item screen, beside Description.'));
+                    /* The item screen asks once per session whether AI is usable; that
+                       answer is now stale, so let it ask again rather than leaving the
+                       button hidden until a reload. */
+                    if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                     $('#ai_api_key').val('');
                     PosnicPro.settings.ai.load();
                 } else {
