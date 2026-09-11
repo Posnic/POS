@@ -1615,6 +1615,12 @@ if ($wrapper.length) {
         syncMode: function () {
             var ordering = $('#kiosk_mode').val() !== 'menu';
             $('.kiosk-ordering-only').toggle(ordering);
+            /* One sentence per answer, and only the chosen one on screen. The
+               single line that used to sit here described MENU mode whatever
+               was selected, so a shop reading it while set to "take orders"
+               was told its page had no cart. */
+            $('#kiosk_mode_help_order').toggle(ordering);
+            $('#kiosk_mode_help_menu').toggle(!ordering);
             var hours = ordering && $('#kiosk_hours_enable').is(':checked');
             $('#kiosk_hours_grid').toggle(hours);
             /* The sentence explaining the grid goes with the grid. */
@@ -8436,6 +8442,25 @@ $(document).on('click', '#add_channel_partner', function () {
 PosnicPro.settings.storefrontLinks = function () {
     var id = String($('#kioskstore_id').val() || '').trim();
     var row = $('#storefront_links_row');
+
+    /*
+     * The box spells out its own answer.
+     *
+     * "Store id" on an empty field asks somebody to supply a value whose
+     * purpose, source and shape are all unstated. Showing the real address it
+     * becomes - this shop's host, not a placeholder - turns the question into
+     * "finish this link", which anybody can answer.
+     */
+    var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+    if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+    /* Written in two steps on purpose. A regex ending in an escaped slash -
+       /^https?:\/\// - finishes with two slashes, and any tool that strips
+       comments without understanding regex literals reads those as the start
+       of one and eats the rest of the line. The test harness does exactly
+       that, and did. */
+    var host = base.replace(/^[a-z]+:/i, '').replace(/^\/+/, '');
+    $('#storefront_url_prefix').text(host + '/order/');
+
     if (!row.length) { return; }
     if (!/^[A-Za-z0-9]{3,6}$/.test(id)) {
         /* Nothing to print yet. An address with a blank where the code goes is

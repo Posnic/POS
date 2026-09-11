@@ -4982,17 +4982,37 @@
                                                         <div class="card border m-b-30">
                                                             <div class="card-body loader-view-kiosksetting">
                                                                 <div class="form-row">
-                                                                    <div class="form-group col-9">
-                                                                        <label for="kioskstore_id"><lang class="lang_store_id">Store id</lang></label>
-                                                                        <input type="text"
-                                                                            class="form-control border-control"
-                                                                            id="kioskstore_id" name="kioskstore_id"
-                                                                            placeholder="Enter your store id" data-t-placeholder="lang_enter_your_store_id" required
-                                                                            autocomplete="off"
-                                                                            pattern="^[A-Za-z0-9]{3,6}$" minlength="3"
-                                                                            maxlength="6"
-                                                                            title="Only letters and numbers" data-t-title="lang_only_letters_and_numbers">
+                                                                    <div class="form-group col-12">
+                                                                        <!--
+                                                                            "Store id" told a shopkeeper nothing.
 
+                                                                            Owner, looking at the empty box: "what
+                                                                            fucking store id you looking for?" - and he
+                                                                            was right. Nothing on the page said the
+                                                                            shop INVENTS this, what it is for, or where
+                                                                            it turns up. It is the last part of the web
+                                                                            address customers type, so the address is
+                                                                            shown around the box as it is typed. You
+                                                                            cannot misread a field that is spelling out
+                                                                            its own answer beside it.
+                                                                        -->
+                                                                        <label for="kioskstore_id"><lang class="lang_your_online_address">Your online address</lang></label>
+                                                                        <div class="input-group">
+                                                                            <div class="input-group-prepend">
+                                                                                <span class="input-group-text" id="storefront_url_prefix"></span>
+                                                                            </div>
+                                                                            <input type="text"
+                                                                                class="form-control border-control"
+                                                                                id="kioskstore_id" name="kioskstore_id"
+                                                                                placeholder="AZ100" data-t-placeholder="lang_store_id_example" required
+                                                                                autocomplete="off"
+                                                                                pattern="^[A-Za-z0-9]{3,6}$" minlength="3"
+                                                                                maxlength="6"
+                                                                                title="Only letters and numbers" data-t-title="lang_only_letters_and_numbers">
+                                                                        </div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_store_id_help">Make one up: 3 to 6 letters or numbers, anything you like - your shop name, your branch, AZ100. This is the bit customers see at the end of the link you print on the table or send them. You can change it whenever you want.</lang>
+                                                                        </small>
                                                                     </div>
                                                                 </div>
 
@@ -5059,13 +5079,24 @@
 
                                                                 <div class="form-row">
                                                                     <div class="form-group col-9">
-                                                                        <label for="kiosk_mode"><lang class="lang_online_ordering_mode">What this page is for</lang></label>
+                                                                        <!--
+                                                                            "What this page is for" is not a question
+                                                                            anybody can answer, and the sentence under
+                                                                            it described the option you had NOT picked -
+                                                                            so the page explained the wrong thing to
+                                                                            whoever was reading it. Ask the actual
+                                                                            question, and let the answer explain itself.
+                                                                        -->
+                                                                        <label for="kiosk_mode"><lang class="lang_can_customers_order">Can customers order from this page?</lang></label>
                                                                         <select class="form-control border-control" id="kiosk_mode" name="kiosk_mode">
-                                                                            <option value="order"><lang class="lang_online_ordering_mode_order">Take orders</lang></option>
-                                                                            <option value="menu"><lang class="lang_online_ordering_mode_menu">Show the menu only</lang></option>
+                                                                            <option value="order"><lang class="lang_mode_take_orders">Yes, they can order</lang></option>
+                                                                            <option value="menu"><lang class="lang_mode_menu_only">No, just show the menu</lang></option>
                                                                         </select>
-                                                                        <small class="form-text text-muted">
-                                                                            <lang class="lang_online_ordering_mode_help">Menu only shows prices and items with no cart. Customers order at the counter.</lang>
+                                                                        <small class="form-text text-muted" id="kiosk_mode_help_order">
+                                                                            <lang class="lang_mode_take_orders_help">Customers pick what they want, add it to a cart and send you the order.</lang>
+                                                                        </small>
+                                                                        <small class="form-text text-muted" id="kiosk_mode_help_menu" style="display:none;">
+                                                                            <lang class="lang_mode_menu_only_help">Dishes and prices only, with no cart. Customers read it and order at the counter.</lang>
                                                                         </small>
                                                                     </div>
                                                                 </div>
