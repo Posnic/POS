@@ -122,6 +122,10 @@
       "description": "Mounted at /online-ordering"
     },
     {
+      "name": "Pair",
+      "description": "Mounted at /pair"
+    },
+    {
       "name": "Purchase orders",
       "description": "Mounted at /purchaseOrders"
     },
@@ -7860,6 +7864,29 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/pair": {
+      "get": {
+        "summary": "html",
+        "operationId": "get_pair",
+        "tags": [
+          "Pair"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/purchaseOrders": {
