@@ -28,6 +28,7 @@
  * the service, so the shape only shows up in production.
  */
 const ItemService = require('../services/item.service');
+const salesChannels = require('../utils/sales-channels');
 const itemService = new ItemService();
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
@@ -149,6 +150,10 @@ class OnlineOrderingController {
     try {
       const result = await itemService.storefront({
         storeId: req.params.storeId,
+        /* The shop's own machine is its own channel, with its own exception
+           list on the Kiosk Machine screen. Read as "online" it showed the
+           phone's list and ignored the kiosk's. */
+        channel: salesChannels.CHANNEL.KIOSK,
         ...servicePointFrom(req),
       });
       return this.respond(res, result, (data) => ({

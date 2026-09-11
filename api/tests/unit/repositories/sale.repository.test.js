@@ -810,6 +810,36 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(true);
       expect(r.data.sale_id).toBeDefined();
     });
+    test('a dish the shop took off the online channel is refused by name', async () => {
+      /* The menu and the ordering page both leave it out; reaching here with
+         one is a stale tab or a direct post, and the kitchen must not see it
+         either way. */
+      if (!collections.branches) collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        online_ordering: { store_id: 'SHOP1', mode: 'order' },
+      });
+      if (!collections.items) collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        name: 'Staff Meal',
+        selling_price: 10,
+        tax: 0,
+        tax_type: 'exclusive',
+        branch_id: FAKE_BRANCH,
+        channel_off: ['online'],
+      });
+      const r = await salesRepository.createOnlineOrder({
+        branch: FAKE_BRANCH,
+        items: [
+          { item_id: FAKE_ITEM, item_name: 'Staff Meal', item_quantity: 1, item_price: 10, gst: 0 },
+        ],
+      });
+      expect(r.status).toBe(false);
+      expect(r.data.state).toBe('item_not_on_channel');
+      expect(r.message).toMatch(/Staff Meal/);
+    });
     test('menu mode refuses orders however they are addressed', async () => {
       if (!collections.branches) collections.branches = mkCol();
       collections.branches.findOne.mockResolvedValue({

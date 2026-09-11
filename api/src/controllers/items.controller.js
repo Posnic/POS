@@ -7,6 +7,7 @@ const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constan
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
+const salesChannels = require('../utils/sales-channels');
 const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
 const dishIcons = require('../utils/dish-icons');
@@ -900,7 +901,11 @@ class ItemsController extends BaseController {
    */
   async accesskiosk(req, res) {
     try {
-      const response = await this.service.storefront({ storeId: req.body.branch });
+      const response = await this.service.storefront({
+        storeId: req.body.branch,
+        /* The self-service machine's own channel. */
+        channel: salesChannels.CHANNEL.KIOSK,
+      });
 
       if (response.status !== true) {
         return this.error(res, response.message, 404, response.data);

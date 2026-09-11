@@ -132,10 +132,38 @@
 
   /* -------------------------------------------------------------- render */
 
+  /*
+   * A price, in the shop's own money.
+   *
+   * A SYMBOL sits against the number - "₹280", the way it is written on every
+   * bill in the country - and a CODE or a word keeps its space: "Rs 280",
+   * "INR 280". The server sends the symbol where the shop has one.
+   */
   function money(amount) {
     var n = Number(amount) || 0;
     var text = n % 1 === 0 ? String(n) : n.toFixed(2);
-    return state.currency ? state.currency + " " + text : text;
+    var unit = state.currency;
+    if (!unit) return text;
+    return /^[A-Za-z]/.test(unit) ? unit + " " + text : unit + text;
+  }
+
+  /*
+   * "Dishes" in a restaurant, "items" in a shop.
+   *
+   * The same menu serves a stationer as a kitchen, and "42 dishes" over a
+   * list of ball pens reads as a page that does not know where it is. A
+   * kitchen leaves fingerprints - a veg mark, a preparation time, a serving
+   * period - and one is enough.
+   */
+  function unitWord(count) {
+    var kitchen = state.flat.some(function (row) {
+      var i = row.item;
+      return (
+        !!i.diet || Number(i.prep_minutes) > 0 || (i.served_in || []).length > 0
+      );
+    });
+    if (count === 1) return kitchen ? "dish" : "item";
+    return kitchen ? "dishes" : "items";
   }
 
   function escapeHtml(value) {
@@ -232,7 +260,7 @@
       '<span class="dish-price">' +
       escapeHtml(money(item.price)) +
       "</span>" +
-      (off || prep ? "<br>" + off + (off && prep ? " " : "") + prep : "") +
+      (off || prep ? '<span class="dish-meta">' + off + prep + "</span>" : "") +
       "</span>" +
       thumb +
       "</button>"
@@ -408,6 +436,7 @@
     if (!Recognition || !mic || !input) return;
 
     mic.hidden = false;
+    mic.setAttribute("data-supported", "true");
     var listening = null;
 
     mic.addEventListener("click", function () {
@@ -483,8 +512,10 @@
 
     var count = data.item_count || 0;
     var sub = el("shop-sub");
-    sub.textContent = count + (count === 1 ? " dish" : " dishes");
+    sub.textContent = count + " " + unitWord(count);
     sub.hidden = false;
+
+    offerOrdering(data.channel || {});
 
     /*
      * The shop's own words about being closed, paused or menu-only. Shown
@@ -554,7 +585,8 @@
           "</h2>" +
           '<p class="section-count">' +
           c.items.length +
-          (c.items.length === 1 ? " dish" : " dishes") +
+          " " +
+          unitWord(c.items.length) +
           "</p>" +
           '<div class="dishes">' +
           c.items.map(dishHtml).join("") +
@@ -568,6 +600,39 @@
     el("foot").hidden = !store.name;
 
     watchSections();
+  }
+
+  /**
+   * The way in, when there is one.
+   *
+   * A menu is read-only by design, and this is the one thing on it that
+   * leads anywhere: a single bar at the bottom, only while the shop is
+   * actually taking orders. It keeps the table or room the printed code
+   * named, so a customer who scanned at table five lands on the ordering
+   * page already at table five.
+   */
+  function offerOrdering(channel) {
+    var bar = el("order-cta");
+    var link = el("order-link");
+    if (!bar || !link) return;
+
+    var taking = channel.accepting === true && channel.mode !== "menu";
+    bar.hidden = !taking;
+    document.body.classList.toggle("can-order", taking);
+    if (!taking) return;
+
+    var point = readUrl();
+    var href = "/order/";
+    if (point.store) {
+      href += encodeURIComponent(point.store);
+      if (point.table) {
+        href += "/table/" + encodeURIComponent(point.table);
+      } else if (point.venue) {
+        href += "/venue/" + encodeURIComponent(point.venue);
+        if (point.unit) href += "/" + encodeURIComponent(point.unit);
+      }
+    }
+    link.setAttribute("href", href);
   }
 
   function showState(title, detail) {
@@ -802,6 +867,10 @@
     }
 
     el("search-clear").hidden = !q;
+    /* The mic and the clear button share one corner of the field: the mic
+       while there is nothing to clear, the clear once there is. */
+    var mic = el("search-mic");
+    if (mic && mic.getAttribute("data-supported") === "true") mic.hidden = !!q;
     /* The categories navigate a list that narrowing has just rearranged, so
        they step aside until it is cleared. */
     el("cats").hidden = narrowed;
@@ -1230,14 +1299,15 @@
 
     var rows = [];
 
-    var diet =
-      item.diet === "veg"
-        ? "Vegetarian"
-        : item.diet === "vegan"
-          ? "Vegan"
-          : item.diet === "nonveg"
-            ? "Non-vegetarian"
-            : "";
+    /* The same four values the mark is drawn from. This read "nonveg" once,
+       a key nothing writes, so a non-vegetarian dish showed no Diet row at
+       all - on the one kind of dish where the answer matters most. */
+    var diet = {
+      veg: "Vegetarian",
+      vegan: "Vegan",
+      non_veg: "Non-vegetarian",
+      egg: "Contains egg",
+    }[item.diet];
     if (diet) rows.push(["Diet", diet]);
 
     /* "Breakfast and Lunch" is a reason to come back; a grey card is a dead

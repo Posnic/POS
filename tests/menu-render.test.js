@@ -635,3 +635,120 @@ test('the microphone stays hidden where the browser has no recogniser', async ()
     'a microphone is offered that cannot listen'
   );
 });
+
+/* ------------------------------------------------------------ inch by inch
+ *
+ * The owner's brief for this pass: "consider ux improvement inch by inch
+ * pixel by pixel". These pin the inches, so nobody puts them back.
+ */
+
+test('a symbol sits against the number; a code keeps its space', async () => {
+  /* "₹280" is how every bill in the country writes it; "Rs 280" is how a
+     word is written. The server sends the symbol, and the old page printed
+     the whole stored label - "India Rupee / INR or ₹ 80" - beside a dish. */
+  const rupee = { ...REPLY, store: { ...REPLY.store, currency: '₹' } };
+  let { document } = await render('/menu/AZ100', rupee);
+  assert.strictEqual(document.querySelector('.dish-price').textContent, '₹280');
+
+  ({ document } = await render('/menu/AZ100', REPLY));
+  assert.strictEqual(document.querySelector('.dish-price').textContent, 'Rs 280');
+});
+
+test('a shop that is taking orders offers the way in, from the same table', async () => {
+  const open = { ...REPLY, channel: { state: 'open', accepting: true, mode: 'order', message: '' } };
+  const { document } = await render('/menu/AZ100/table/5', open);
+  const bar = document.getElementById('order-cta');
+  assert.strictEqual(bar.hidden, false, 'a shop taking orders offered no way to order');
+  assert.strictEqual(
+    document.getElementById('order-link').getAttribute('href'),
+    '/order/AZ100/table/5',
+    'the customer would have to say which table they are at a second time'
+  );
+  assert.ok(document.body.classList.contains('can-order'), 'the page left no room for the bar');
+});
+
+test('a room keeps its room on the way in', async () => {
+  const open = { ...REPLY, channel: { state: 'open', accepting: true, mode: 'order', message: '' } };
+  const { document } = await render('/menu/AZ100/venue/RC/123', open);
+  assert.strictEqual(
+    document.getElementById('order-link').getAttribute('href'),
+    '/order/AZ100/venue/RC/123'
+  );
+});
+
+test('a menu-only shop, or a shut one, offers nothing to tap', async () => {
+  for (const channel of [
+    { state: 'menu_only', accepting: false, mode: 'menu', message: 'This menu is for viewing only.' },
+    { state: 'closed', accepting: false, mode: 'order', message: 'Opens at 6' },
+  ]) {
+    const { document } = await render('/menu/AZ100', { ...REPLY, channel });
+    assert.strictEqual(
+      document.getElementById('order-cta').hidden,
+      true,
+      `${channel.state} still offered ordering`
+    );
+    assert.ok(!document.body.classList.contains('can-order'));
+  }
+});
+
+test('a non-vegetarian dish says so in its facts', async () => {
+  /* This read "nonveg" - a key nothing writes - so the one kind of dish where
+     the answer matters most showed no Diet row at all. */
+  const reply = JSON.parse(JSON.stringify(REPLY));
+  reply.categories[0].items[0].diet = 'non_veg';
+  const { window, document } = await render('/menu/AZ100', reply);
+  document.querySelector('.dish').dispatchEvent(new window.Event('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 0));
+  assert.match(document.getElementById('sheet-facts').textContent, /Non-vegetarian/);
+});
+
+test('a shop that sells things rather than cooking them is not told it has dishes', async () => {
+  const reply = JSON.parse(JSON.stringify(REPLY));
+  reply.categories.forEach((c) =>
+    c.items.forEach((i) => {
+      i.diet = '';
+      i.prep_minutes = 0;
+      i.served_in = [];
+    })
+  );
+  const { document } = await render('/menu/AZ100', reply);
+  assert.strictEqual(document.getElementById('shop-sub').textContent, '2 items');
+
+  const { document: kitchen } = await render('/menu/AZ100', REPLY);
+  assert.strictEqual(kitchen.getElementById('shop-sub').textContent, '2 dishes');
+});
+
+test('the search row is a row, and its buttons are big enough for a thumb', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const rule = (re) => {
+    const m = html.match(re);
+    return m ? m[1] : '';
+  };
+  /* The mic is a grid box; in a block it dropped onto a line of its own under
+     the input on every browser that can listen. */
+  assert.match(rule(/\.search-row\s*\{([^}]*)\}/), /display:\s*flex/);
+  assert.match(rule(/\.search-back,\s*\.search-mic\s*\{([^}]*)\}/), /width:\s*40px/);
+  /* The standalone rule, after a closing brace - not the shared position rule
+     it also appears in. */
+  assert.match(rule(/\}\s*\n\s*\.search-clear\s*\{([^}]*)\}/), /width:\s*40px/);
+  assert.ok(!html.includes('var(--muted)'), 'a token that is never defined is used again');
+  assert.match(html, /dialog\.sheet\s*\{[^}]*max-height/, 'a long sheet runs off the screen with no way to scroll');
+  assert.match(html, /:focus-visible/, 'keyboard focus is invisible');
+});
+
+test('the mic gives way to the clear button once there is something to clear', async () => {
+  const { window, document } = await render('/menu/AZ100', REPLY);
+  const mic = document.getElementById('search-mic');
+  mic.hidden = false;
+  mic.setAttribute('data-supported', 'true');
+
+  const box = document.getElementById('search');
+  box.value = 'pan';
+  box.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.strictEqual(mic.hidden, true, 'two buttons in one corner');
+  assert.strictEqual(document.getElementById('search-clear').hidden, false);
+
+  box.value = '';
+  box.dispatchEvent(new window.Event('input', { bubbles: true }));
+  assert.strictEqual(mic.hidden, false, 'the mic did not come back');
+});

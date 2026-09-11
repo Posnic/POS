@@ -9,6 +9,7 @@ const onlineOrdering = require('../utils/online-ordering');
 const partnerVenues = require('../utils/partner-venues');
 const itemChannels = require('../utils/item-channels');
 const salesChannels = require('../utils/sales-channels');
+const currencyLabel = require('../utils/currency-label');
 
 /*
  * The diet mark, or nothing.
@@ -3760,21 +3761,7 @@ class ItemRepository extends BaseModel {
       const collection = await this.getCollection(this.collectionName);
 
       const match = {
-        $and: [
-          { 'branch_access.branch_id': branchDoc._id },
-          { item_status: { $ne: ITEM_STATUS.INSTANT } },
-          { license: branchDoc.license },
-          { del_status: { $nin: [1, '1', true] } },
-          { is_deleted: { $ne: true } },
-          /* Absent means shown. A shop that has never opened this screen still
-             gets a complete menu, which is the only sensible default for a
-             feature whose whole job is to list things. */
-          { show_on_menu: { $ne: false } },
-          /* And not a line this shop has taken off the online channel. Absent
-             means included, so a shop that has never touched it loses
-             nothing. See utils/item-channels.js. */
-          itemChannels.channelFilter(salesChannels.CHANNEL.ONLINE),
-        ],
+        $and: this._customerMenuFilter(branchDoc, salesChannels.CHANNEL.ONLINE),
       };
 
       const rows = await collection
@@ -3884,11 +3871,20 @@ class ItemRepository extends BaseModel {
            * answer, not a gap.
            */
           icon: dishIcons.iconFor(row),
-          /* Shown on the menu but not orderable right now, for either reason:
-             the shop marked it unavailable, or it is not its time of day. The
-             page says which, because "we have it, not now" and "we have it,
-             not today" are different things to a customer. */
-          available: row.isAvailable !== false && timing.available,
+          /*
+           * Shown on the menu but not orderable right now: it is not its time
+           * of day. The page says so, with the periods it IS served in.
+           *
+           * `isAvailable` used to be read here too, and it is not what its
+           * name says. It is the legacy per-item "show on kiosk" tick, written
+           * as Boolean(ecommerce) on every save - so every dish saved through
+           * the item form without that box ticked carried isAvailable: false,
+           * and a real shop's whole menu came out greyed "Not available
+           * today". Which channel sells a dish is the per-channel exception
+           * list now (see _customerMenuFilter); whether it is on right now is
+           * the serving period.
+           */
+          available: timing.available,
           /* The periods this dish belongs to, so the page can say "Breakfast
              only" rather than leaving a greyed-out dish unexplained. */
           served_in: timing.periods,
@@ -3963,9 +3959,17 @@ class ItemRepository extends BaseModel {
             name: branchDoc.branch_name || branchDoc.name || '',
             logo: config?.logo || '',
             banner: config?.banner || '',
-            /* The shop's own currency symbol. Hardcoding a rupee sign is how
-               a menu in Nairobi prices its food in the wrong money. */
-            currency: branchDoc.currency_text || branchDoc.currency || '',
+            /*
+             * The shop's own currency, as a SYMBOL. Hardcoding a rupee sign
+             * is how a menu in Nairobi prices its food in the wrong money;
+             * handing the page the stored label is how the menu came to read
+             * "India Rupee / INR or ₹ 80" beside every dish. The ISO code
+             * rides beside it for anything that must be unambiguous.
+             */
+            currency: currencyLabel.currencySymbol(branchDoc.currency_text || branchDoc.currency),
+            currency_code: currencyLabel.currencyCode(
+              branchDoc.currency_text || branchDoc.currency
+            ),
           },
           /* The channel state travels with the menu so the page can say "opens
              at 6" without a second request, and so a shop that also takes
@@ -4015,6 +4019,34 @@ class ItemRepository extends BaseModel {
    * because then the guard is a property of the CALLER and cannot be lost by a
    * value turning out to look like the other kind.
    */
+  /**
+   * Every item a customer may see on a channel.
+   *
+   * THE ONE RULE behind the public menu and the ordering page, so the two can
+   * never disagree about what the shop sells. Everything on the menu, less
+   * what the shop has taken off THIS channel by hand.
+   *
+   * Absent means shown, twice over: a shop that has never opened the menu
+   * screen still gets a complete menu, and one that has never touched the
+   * channel screen has every item on every channel. Exceptions are stored,
+   * not permissions, so nothing needs a migration to appear.
+   *
+   * @param {object} branchDoc
+   * @param {string} channel  a CHANNEL value; the customer-facing ones
+   * @returns {Array} clauses for a `$and`
+   */
+  _customerMenuFilter(branchDoc, channel) {
+    return [
+      { 'branch_access.branch_id': branchDoc._id },
+      { item_status: { $ne: ITEM_STATUS.INSTANT } },
+      { license: branchDoc.license },
+      { del_status: { $nin: [1, '1', true] } },
+      { is_deleted: { $ne: true } },
+      { show_on_menu: { $ne: false } },
+      itemChannels.channelFilter(channel),
+    ];
+  }
+
   async _storefrontBranch({ storeId, branchId }) {
     const branches = await this.getCollection('branches');
     if (branchId) {
@@ -4072,50 +4104,36 @@ class ItemRepository extends BaseModel {
        * endpoint must not hold two ideas of what is public, and there is only
        * one way in now anyway.
        */
-      const hasKiosk = onlineOrdering.hasStoreId(config);
       const collection = await this.getCollection(this.collectionName);
-
-      const baseFilter = [
-        { 'branch_access.branch_id': branchDoc._id },
-        { item_status: { $ne: ITEM_STATUS.INSTANT } },
-        { license: branchDoc.license },
-      ];
-      /*
-       * The online-ordering ticks, and who they are actually about.
-       *
-       * `ecommerce` is the box a shop ticks to say "sell this on the internet",
-       * and `isAvailable` is written from it. Requiring them is right for a
-       * customer's phone: a shop that opened an online channel decides item by
-       * item what goes on it.
-       *
-       * IT IS WRONG FOR A WAITER. The captain app is staff standing in the
-       * shop, selling the shop's own catalogue - the same list as the till.
-       * Applying the online tick to them meant that the moment a shop
-       * configured a store address, every handset in the building showed "No
-       * products found for this branch. Please contact admin to configure
-       * items" about a shop with a full menu. A waiter cannot act on that and
-       * the admin has nothing to fix.
-       *
-       * Narrowed for the customer-facing channels only. What a shop does want
-       * kept off the floor is handled by channelFilter below, which is per
-       * channel and is the control that was actually built for this.
-       */
-      const staffChannel =
-        (params.channel || salesChannels.CHANNEL.ONLINE) === salesChannels.CHANNEL.TABLESIDE;
-      if (hasKiosk && !staffChannel) {
-        baseFilter.push({ ecommerce: true });
-        baseFilter.push({ isAvailable: true });
-      }
+      const channel = params.channel || salesChannels.CHANNEL.ONLINE;
 
       /*
-       * And whatever this shop has taken off this channel by hand.
+       * WHAT A CUSTOMER IS SHOWN, AND WHAT A WAITER IS SHOWN.
        *
-       * The storefront is reached by a customer's phone and by the shop's own
-       * machine, which are two different channels with two different answers:
-       * a line a shop will not put online may still be perfectly fine on the
-       * terminal by the counter.
+       * A customer - on their phone, or at the shop's own machine - sees the
+       * list the public menu shows: everything on the menu that this channel
+       * has not been told to leave out. One rule for both reads, from one
+       * place, so /menu and /order cannot disagree about what the shop sells.
+       * They did: the menu listed the whole catalogue while the ordering page
+       * beside it was empty, because this read also demanded the legacy
+       * per-item "show on kiosk" tick (`ecommerce`, mirrored as
+       * `isAvailable`) - which nothing on the channel screens sets, and which
+       * a shop that has just been given its store address has never seen.
+       *
+       * A waiter is staff standing in the shop, selling the shop's own
+       * catalogue - the same list as the till - narrowed only by what the shop
+       * took off the tableside channel by hand. Applying the customer rule to
+       * a handset once emptied every captain app in the building.
        */
-      baseFilter.push(itemChannels.channelFilter(params.channel || salesChannels.CHANNEL.ONLINE));
+      const staffChannel = channel === salesChannels.CHANNEL.TABLESIDE;
+      const baseFilter = staffChannel
+        ? [
+            { 'branch_access.branch_id': branchDoc._id },
+            { item_status: { $ne: ITEM_STATUS.INSTANT } },
+            { license: branchDoc.license },
+            itemChannels.channelFilter(channel),
+          ]
+        : this._customerMenuFilter(branchDoc, channel);
 
       const pipeline = [
         { $match: { $and: baseFilter } },
@@ -4137,6 +4155,12 @@ class ItemRepository extends BaseModel {
                    people actually order from did not. */
                 diet: '$diet',
                 prep_minutes: '$prep_minutes',
+                /* Every photo, and the serving periods, so the ordering page
+                   can show the gallery and grey a dish outside its hours the
+                   way the menu does. Both are folded into `photos`,
+                   `available` and `served_in` below and do not travel raw. */
+                multi_image: '$multi_image',
+                daypart_ids: '$daypart_ids',
                 price: '$selling_price',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
@@ -4277,6 +4301,37 @@ class ItemRepository extends BaseModel {
       }
 
       /*
+       * The photos, and whether the dish is on RIGHT NOW.
+       *
+       * Both computed exactly as the public menu computes them, so a customer
+       * who read the menu and then opened the ordering page is told the same
+       * thing twice rather than two different things. A dish outside its
+       * serving period stays on the list and says so; the order endpoint
+       * refuses it by name if it is posted anyway.
+       */
+      let dayparts = [];
+      try {
+        dayparts = await this.shopDayparts();
+      } catch (e) {
+        console.warn('[storefront] could not read serving periods:', e.message);
+      }
+      const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
+      const nowDay = localNow.day();
+      const nowMinutes = localNow.hours() * 60 + localNow.minutes();
+      for (const group of results) {
+        group.items = (group.items || []).map((item) => {
+          const timing = onlineOrdering.itemAvailability(item, dayparts, nowDay, nowMinutes);
+          const { multi_image, daypart_ids, ...rest } = item;
+          return {
+            ...rest,
+            photos: onlineOrdering.photoList({ image: item.img, multi_image }),
+            available: timing.available,
+            served_in: timing.periods,
+          };
+        });
+      }
+
+      /*
        * The prices THIS service point pays.
        *
        * Done in JavaScript after the aggregation rather than inside it. The
@@ -4379,6 +4434,13 @@ class ItemRepository extends BaseModel {
             banner: config?.banner || '',
             homebanner: config?.homebanner || '',
             advertisement: config?.advertisement || '',
+            /* The symbol to print beside a price, and the ISO code. The
+               ordering page hardcoded a rupee sign; the menu beside it read
+               the shop's own. Both read the shop's own now. */
+            currency: currencyLabel.currencySymbol(branchDoc.currency_text || branchDoc.currency),
+            currency_code: currencyLabel.currencyCode(
+              branchDoc.currency_text || branchDoc.currency
+            ),
           },
           /*
            * What the page is allowed to do, decided here rather than on the
