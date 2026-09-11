@@ -35,13 +35,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: signatures/v1/cla.json
-          path-to-document: https://github.com/Posnic/POS/blob/main/.github/CLA.md
+          path-to-document: https://github.com/Posnic/POS/blob/develop/.github/CLA.md
           branch: cla-signatures
           allowlist: dependabot[bot],github-actions[bot],sridharkalaibala,sridharposnic
           custom-notsigned-prcomment: >
             Thank you for this. Before it can be merged we need a one-line
             signature on our
-            [Contributor Licence Agreement](https://github.com/Posnic/POS/blob/main/.github/CLA.md).
+            [Contributor Licence Agreement](https://github.com/Posnic/POS/blob/develop/.github/CLA.md).
             You keep the copyright in your work; the agreement lets Posnic ship
             your contribution in the paid edition alongside the AGPL release.
             To sign, reply to this pull request with exactly:

@@ -100,3 +100,12 @@ test('README exposes the public POS evaluation and recovery resources', () => {
   );
   assert.doesNotMatch(readme, /https:\/\/(?:www\.)?posnic\.io(?:\/|\b)/);
 });
+
+test('CLA workflow links to the agreement on the active development branch', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'cla.yml'), 'utf8');
+
+  assert.ok(fs.existsSync(path.join(root, '.github', 'CLA.md')));
+  assert.match(workflow, /Posnic\/POS\/blob\/develop\/\.github\/CLA\.md/);
+  assert.doesNotMatch(workflow, /Posnic\/POS\/blob\/main\/\.github\/CLA\.md/);
+  assert.match(workflow, /branch:\s*cla-signatures/);
+});
