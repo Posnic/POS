@@ -866,6 +866,8 @@ app.use('/uploads', require('./src/routes/uploads.route'));
 
 // Cookie parser middleware - MUST be before session middleware so that
 // req.cookies is populated when session and auth middleware run.
+// lgtm[js/missing-token-validation] csrfProtect below validates the reflected,
+// credential-bound X-XSRF-TOKEN for every cookie-authenticated unsafe request.
 app.use(cookieParser());
 
 // Session configuration
