@@ -107,3 +107,13 @@ src/mongodb/
 # file on its way to a person and back; the translations belong in
 # frontend/languages/<code>.json once merged, not in a half-filled sheet.
 *-to-translate.json
+
+# Database snapshots pulled down for comparison or recovery work. These are
+# raw copies of a production database - every shop, every customer - and the
+# only thing standing between one and a public repository is that nobody ran
+# "git add -A" while a 1.1GB Atlas snapshot happened to be sitting here. Name
+# them by their cluster and timestamp, as the Atlas download already does.
+Main-[0-9]*T[0-9]*Z/
+Main-[0-9]*T[0-9]*Z.tgz
+*.mongodump/
+dump/
