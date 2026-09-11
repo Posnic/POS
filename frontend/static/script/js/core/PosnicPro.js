@@ -1623,6 +1623,33 @@ PosnicPro = {
      */
 
 
+    /*
+     * Make a value safe to drop into an HTML string.
+     *
+     * The sale screen builds rows by concatenating HTML and handing it to
+     * jQuery, and the product name goes in raw - both as text and inside a
+     * data-id attribute. An item called
+     *
+     *     <img src=x onerror=...>
+     *
+     * therefore runs on the till, and an item name is not a trusted string:
+     * it arrives from the item screen and from CSV import, so the person who
+     * types it need not be the person standing at the counter.
+     *
+     * Quotes are escaped as well as angle brackets because these values land
+     * in attributes too, where a bare " ends the attribute and everything
+     * after it is markup.
+     */
+    escapeHtml: function (value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     minmax: function (value, min, max) {
         var text = String(value);
 
