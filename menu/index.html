@@ -523,6 +523,38 @@
         background: var(--raised);
       }
 
+      /*
+       * The same square as a photograph, holding an emoji instead.
+       *
+       * Same size on purpose: a menu where some cards have a 76px picture and
+       * others have a small glyph reads as a broken page rather than a menu,
+       * and the eye has to re-find the price on every row.
+       */
+      .dish-icon {
+        flex: 0 0 auto;
+        width: 76px;
+        height: 76px;
+        border-radius: 10px;
+        background: var(--raised);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Emoji have no baseline worth aligning to and vary in how much of
+           their box they fill; a line-height of 1 and centring in both axes is
+           what keeps a row of them level. */
+        font-size: 38px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .sheet-icon {
+        display: block;
+        margin: 0 auto 4px;
+        font-size: 64px;
+        line-height: 1.2;
+        text-align: center;
+      }
+
       .dish[data-available="false"] {
         opacity: 0.62;
       }
@@ -788,6 +820,7 @@
 
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
       <img id="sheet-img" class="sheet-img" alt="" hidden />
+      <span id="sheet-icon" class="sheet-icon" aria-hidden="true" hidden></span>
       <div class="sheet-body">
         <div class="sheet-title">
           <span id="sheet-diet"></span><span id="sheet-title"></span>
