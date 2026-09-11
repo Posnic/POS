@@ -128,6 +128,10 @@ describe('off by default', () => {
       provider: '',
       model: '',
       key: '',
+      /* A shop that never named a spending limit has not asked to be
+         stopped, so an unreadable settings row reads as no cap, the same
+         way it reads as no provider and no key. */
+      cap: null,
     });
   });
 });

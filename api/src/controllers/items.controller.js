@@ -11,6 +11,8 @@ const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
 const dishIcons = require('../utils/dish-icons');
 const { CHANNEL } = require('../utils/sales-channels');
+const ai = require('../services/ai.service');
+const itemDescription = require('../services/ai-item-description');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -2357,6 +2359,69 @@ class ItemsController extends BaseController {
     } catch (error) {
       console.error('Error in ItemsController.getDataChanges:', error);
       return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * Draft a description for the item being filled in. Writes nothing.
+   *
+   * The shop is spending its own money on this call - Posnic charges nothing
+   * for AI and the key is theirs - so it is gated on item.write rather than
+   * read: somebody who cannot edit an item has no reason to spend the shop's
+   * balance drafting copy for one.
+   */
+  async aiDescription(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await itemDescription.draft(req.body || {}, context);
+      if (!result.status) {
+        /* ai.service answers one sentence for every kind of refusal, so
+           there is nothing here to tell apart. 400 and the message it gave:
+           a shop with no key, no provider or no budget left all need the
+           words rather than the status code. */
+        return this.error(res, result.message, 400);
+      }
+      return this.success(res, result.data, 'Description drafted');
+    } catch (error) {
+      console.error('Error in aiDescription:', error);
+      return this.error(res, 'Could not draft a description', 500);
+    }
+  }
+
+  /**
+   * Should the item screen offer an AI button at all?
+   *
+   * Answers a boolean and a reason, never a key and never a balance. A shop
+   * with nothing configured gets `available: false` so the control is absent,
+   * which is the difference between a feature this shop does not have and a
+   * button that fails when pressed at a counter.
+   */
+  async aiAvailability(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.query?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.success(res, { available: false, reason: 'no_branch' });
+
+      const state = await ai.availability(context);
+      return this.success(res, state);
+    } catch (error) {
+      console.error('Error in aiAvailability:', error);
+      /* Absent, not broken: a screen that cannot ask should simply not offer
+         the button rather than show an error nobody can act on. */
+      return this.success(res, { available: false, reason: 'unavailable' });
     }
   }
 }
