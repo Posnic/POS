@@ -6,7 +6,7 @@ name: Deploy api (Lightsail)
 on:
   push:
     branches: [main]
-    paths: ['api/**']
+    paths: ["api/**"]
   workflow_dispatch:
 
 # Least privilege for GITHUB_TOKEN.
@@ -40,6 +40,26 @@ jobs:
             --exclude .wwebjs_auth --exclude .wwebjs_cache \
             -e "ssh -i ~/.ssh/deploy.pem" \
             api/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/api/"
+
+      # The customer-facing bundles, which the API serves and this workflow
+      # never shipped.
+      #
+      # api/app.js mounts them from `path.join(__dirname, '..', 'menu')` and
+      # '../order', guarded by fs.existsSync - so a missing directory is not an
+      # error, it is SILENCE. Every shop's /menu and /order answered 404 from
+      # the day the feature shipped, and the 404 reads as a routing bug rather
+      # than a deployment one, which is why it survived so long.
+      #
+      # tests/bundle-deployment.test.js pins this to what app.js actually
+      # serves, in both directions.
+      - name: Sync the customer bundles
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy.pem" \
+            menu/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/menu/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy.pem" \
+            order/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/order/"
       # The processes read api/.env at boot (dotenv), and rsync above
       # deliberately never touches it. The S3 credentials were put in GitHub
       # secrets, which the server itself never reads - this is the step that
