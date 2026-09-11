@@ -8037,12 +8037,15 @@ PosnicPro.salesChannels = {
                the survivable direction. */
             var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
             $("#online_order_approval").val(approval);
+            /* Serving periods are NOT drawn here any more - they moved to the
+               Restaurant page. Rendering them into markup that no longer
+               exists is harmless; COLLECTING them from it is not, which is
+               why the save below no longer sends them. */
             /* Remembered so the sidebar can decide without a request on every
                page load: the approval queue is only worth a menu entry for a
                shop that actually holds orders. */
             PosnicPro.local.set('online_order_approval', approval);
             PosnicPro.applyOrderQueueVisibility();
-            PosnicPro.dayparts.render(values.menu_dayparts);
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
@@ -8114,7 +8117,16 @@ PosnicPro.salesChannels = {
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
             online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
-            menu_dayparts: PosnicPro.dayparts.collect(),
+            /*
+             * menu_dayparts is DELIBERATELY ABSENT.
+             *
+             * The serving-period rows moved to the Restaurant page, so
+             * dayparts.collect() finds no markup here and returns an empty
+             * list. Sending that would have wiped every period a shop had set,
+             * on every save of this screen, with no error and nothing to
+             * explain it. The group endpoint writes only what it is given, so
+             * leaving the key out keeps the stored value safe.
+             */
             partner_venues: venues,
             channel_charges: charges,
             online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
@@ -8464,3 +8476,66 @@ $(document).on('change', '#channel_items_all', function () {
 
 $(document).on('click', '#channel_items_on', function () { PosnicPro.channelItems.apply(true); });
 $(document).on('click', '#channel_items_off', function () { PosnicPro.channelItems.apply(false); });
+
+/*
+ * Serving periods, saved from the Restaurant page.
+ *
+ * They MOVED there from the channels tab because breakfast is breakfast
+ * wherever the menu is shown - on a QR code, on the kiosk, in the app. They
+ * are the kitchen's clock, not one channel's, and leaving them inside a
+ * channel would have meant copying them into the next channel within a month.
+ *
+ * They still LIVE in the channels settings group, because that is where the
+ * server keeps menu_dayparts and moving a stored key is a migration for no
+ * gain. The screen they are edited on and the group they are stored in do not
+ * have to agree, and pretending otherwise would be a database change to fix a
+ * layout problem.
+ */
+PosnicPro.servingPeriods = {
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            PosnicPro.dayparts.render(values.menu_dayparts);
+        }, function () {
+            PosnicPro.dayparts.render([]);
+        });
+    },
+
+    save: function () {
+        var loader = $('.loader-view-dayparts');
+        loader.find('.loadingSpinner').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        /*
+         * Only menu_dayparts is sent.
+         *
+         * The group endpoint writes what it is given and leaves the rest, so
+         * this cannot reach across and blank the store address or the partner
+         * list that live in the same group and are edited on another screen.
+         */
+        PosnicPro.put({
+            url: 'settings/group/channels',
+            data: JSON.stringify({ menu_dayparts: PosnicPro.dayparts.collect() })
+        }, function (response) {
+            loader.find('.loadingSpinner').remove();
+            if (response && response.type === 'success') {
+                PosnicPro.alert('success', response.message
+                    || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function () {
+            loader.find('.loadingSpinner').remove();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_serving_periods',
+                'Could not save the serving periods'));
+        });
+    }
+};
+
+$(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder', function () {
+    PosnicPro.servingPeriods.load();
+});
+
+$(document).on('click', '#save_dayparts', function () {
+    PosnicPro.servingPeriods.save();
+});
