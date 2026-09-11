@@ -176,6 +176,281 @@
         font-size: 13px;
       }
 
+      /* ---- filters and sort ------------------------------------------ */
+
+      .tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+      }
+
+      .tools::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tool {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      /*
+        A pressed filter is a STATE, not a hover. It stays obvious after the
+        finger leaves, because the whole risk of a filter is forgetting it is
+        on and deciding the kitchen has run out of food.
+      */
+      .tool[aria-pressed="true"] {
+        background: var(--ink);
+        color: var(--bg);
+        border-color: var(--ink);
+      }
+
+      .tool[aria-pressed="true"] .diet {
+        color: var(--bg);
+      }
+
+      .tool-sep {
+        flex: 0 0 auto;
+        width: 1px;
+        height: 20px;
+        background: var(--line);
+      }
+
+      .tool-sort {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+
+      .tool-sort-label {
+        white-space: nowrap;
+      }
+
+      .tool-sort select {
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+
+      /* ---- goes with -------------------------------------------------- */
+
+      /*
+        Three at most, and only in the detail sheet. A suggestion under every
+        card turns a menu into a shop; a suggestion where somebody has already
+        stopped to read one dish is an answer to "what else".
+      */
+      .goes-with {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .goes-with h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+
+      .goes-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .goes-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .goes {
+        flex: 0 0 auto;
+        width: 132px;
+        text-align: left;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--raised);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .goes-name {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .goes-price {
+        display: block;
+        margin-top: 3px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+
+      .popular {
+        display: inline-block;
+        margin-top: 6px;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: var(--raised);
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        font-size: 12px;
+      }
+
+      /* ---- the photo strip -------------------------------------------- */
+
+      .sheet-gallery {
+        margin: -4px 0 14px;
+      }
+
+      /*
+        Scroll snapping does the work a carousel script would. One photo fills
+        the width, the next peeks in at the edge so there is something to
+        reach for, and the browser handles the momentum.
+      */
+      .sheet-strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .sheet-strip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .sheet-strip img {
+        flex: 0 0 88%;
+        scroll-snap-align: center;
+        width: 88%;
+        height: 190px;
+        object-fit: cover;
+        border-radius: var(--radius);
+        background: var(--raised);
+        /* Cropped to a tidy strip, so there is always more of the photo than
+           this shows - which is the whole reason it opens. */
+        cursor: zoom-in;
+      }
+
+      /*
+        THE PHOTO, WHOLE.
+
+        The strip crops every picture to the same band so the sheet reads as a
+        list rather than a scrapbook. That is right for scanning and wrong for
+        deciding, so a tap gives back the picture the shop actually uploaded -
+        contained, not cropped, on a dark ground with nothing else on screen.
+      */
+      dialog.viewer {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: rgba(0, 0, 0, 0.92);
+      }
+
+      dialog.viewer::backdrop {
+        background: rgba(0, 0, 0, 0.92);
+      }
+
+      .viewer-frame {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 16px;
+      }
+
+      .viewer-frame img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 4px;
+      }
+
+      /*
+        A way out that is visible on a photograph of anything.
+
+        A dark glyph disappears on a dark picture and a pale one on a pale
+        picture, so the button carries its own ground. Sized for a thumb, and
+        clear of the notch on a phone.
+      */
+      .viewer-close {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .viewer-close:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+
+      /* One photo is not a gallery: it fills the width and the dots go. */
+      .sheet-strip[data-count="1"] img {
+        flex-basis: 100%;
+        width: 100%;
+      }
+
+      .sheet-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .sheet-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--line);
+        transition: background 0.15s ease;
+      }
+
+      .sheet-dots span[data-on="true"] {
+        background: var(--ink-soft);
+      }
+
       /* ---- sticky controls ------------------------------------------ */
 
       /*
@@ -374,6 +649,38 @@
         border-radius: 10px;
         object-fit: cover;
         background: var(--raised);
+      }
+
+      /*
+       * The same square as a photograph, holding an emoji instead.
+       *
+       * Same size on purpose: a menu where some cards have a 76px picture and
+       * others have a small glyph reads as a broken page rather than a menu,
+       * and the eye has to re-find the price on every row.
+       */
+      .dish-icon {
+        flex: 0 0 auto;
+        width: 76px;
+        height: 76px;
+        border-radius: 10px;
+        background: var(--raised);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Emoji have no baseline worth aligning to and vary in how much of
+           their box they fill; a line-height of 1 and centring in both axes is
+           what keeps a row of them level. */
+        font-size: 38px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .sheet-icon {
+        display: block;
+        margin: 0 auto 4px;
+        font-size: 64px;
+        line-height: 1.2;
+        text-align: center;
       }
 
       .dish[data-available="false"] {
@@ -582,6 +889,41 @@
           </button>
         </div>
         <nav id="cats" class="cats" aria-label="Menu sections"></nav>
+
+        <!--
+          Filters and order, on one scrolling row.
+
+          Kept to the three a diner actually asks for. Every extra control here
+          is a thing to read before eating, and a menu is not a search engine.
+        -->
+        <div class="tools" id="tools">
+          <button
+            class="tool"
+            id="filter-veg"
+            type="button"
+            aria-pressed="false"
+          >
+            <span class="diet diet-veg" aria-hidden="true"></span>Veg only
+          </button>
+          <button
+            class="tool"
+            id="filter-available"
+            type="button"
+            aria-pressed="false"
+          >
+            Available now
+          </button>
+          <span class="tool-sep" aria-hidden="true"></span>
+          <label class="tool-sort">
+            <span class="tool-sort-label">Sort</span>
+            <select id="sort" aria-label="Sort the menu">
+              <option value="menu">Menu order</option>
+              <option value="popular">Most ordered</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+            </select>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -605,17 +947,56 @@
     <p class="foot" id="foot" hidden></p>
 
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+      <!--
+        The photos, as a swipeable strip.
+
+        Shops have been uploading several per dish for years and the menu
+        showed one, so the rest were taken, stored, and never seen. A strip
+        rather than a carousel with arrows: a thumb already knows how to push
+        a row sideways, and a control that has to be discovered is one most
+        people never touch.
+      -->
+      <div id="sheet-gallery" class="sheet-gallery" hidden>
+        <div class="sheet-strip" id="sheet-strip"></div>
+        <div class="sheet-dots" id="sheet-dots" aria-hidden="true"></div>
+      </div>
       <img id="sheet-img" class="sheet-img" alt="" hidden />
+      <span id="sheet-icon" class="sheet-icon" aria-hidden="true" hidden></span>
       <div class="sheet-body">
         <div class="sheet-title">
           <span id="sheet-diet"></span><span id="sheet-title"></span>
         </div>
         <p id="sheet-desc" class="sheet-desc" hidden></p>
         <p id="sheet-price" class="sheet-price"></p>
+
+        <!--
+          What people order with this, from the shop's own sales. Hidden
+          entirely when there is nothing to say: a new shop has no history, and
+          three dishes picked at random to fill the space is the fastest way to
+          stop being trusted.
+        -->
+        <div class="goes-with" id="goes-with" hidden>
+          <h3>Often ordered with</h3>
+          <div class="goes-row" id="goes-row"></div>
+        </div>
         <button id="sheet-close" class="sheet-close" type="button">
           Close
         </button>
       </div>
+    </dialog>
+
+    <dialog id="viewer" class="viewer" aria-label="Photo">
+      <div class="viewer-frame">
+        <img id="viewer-img" alt="" />
+      </div>
+      <button
+        type="button"
+        id="viewer-close"
+        class="viewer-close"
+        aria-label="Close photo"
+      >
+        &#215;
+      </button>
     </dialog>
 
     <script src="config.js"></script>

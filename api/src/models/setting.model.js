@@ -787,7 +787,11 @@ class SettingModel extends BaseModel {
       const module_marketing_enable = offOnly(data.module_marketing_enable);
       const module_messaging_enable = offOnly(data.module_messaging_enable);
       const module_channels_enable = offOnly(data.module_channels_enable);
-      const module_channels_kiosk_enable = offOnly(data.module_channels_kiosk_enable);
+      const module_online_ordering_enable = offOnly(data.module_online_ordering_enable);
+      const module_kiosk_enable = offOnly(data.module_kiosk_enable);
+      const module_captain_enable = offOnly(data.module_captain_enable);
+      const module_delivery_partners_enable = offOnly(data.module_delivery_partners_enable);
+      const module_webshop_enable = offOnly(data.module_webshop_enable);
       const module_recyclebin_enable = offOnly(data.module_recyclebin_enable);
       const module_themes_enable = offOnly(data.module_themes_enable);
       const module_cashbook_enable = offOnly(data.module_cashbook_enable);
@@ -885,7 +889,11 @@ class SettingModel extends BaseModel {
         ...ifSent('module_marketing_enable', module_marketing_enable),
         ...ifSent('module_messaging_enable', module_messaging_enable),
         ...ifSent('module_channels_enable', module_channels_enable),
-        ...ifSent('module_channels_kiosk_enable', module_channels_kiosk_enable),
+        ...ifSent('module_online_ordering_enable', module_online_ordering_enable),
+        ...ifSent('module_kiosk_enable', module_kiosk_enable),
+        ...ifSent('module_captain_enable', module_captain_enable),
+        ...ifSent('module_delivery_partners_enable', module_delivery_partners_enable),
+        ...ifSent('module_webshop_enable', module_webshop_enable),
         ...ifSent('module_recyclebin_enable', module_recyclebin_enable),
         ...ifSent('module_themes_enable', module_themes_enable),
         ...ifSent('allow_sale_date_edit', data.allow_sale_date_edit === 'false' ? 'false' : 'true'),
@@ -938,7 +946,11 @@ class SettingModel extends BaseModel {
         module_marketing_enable: module_marketing_enable,
         module_messaging_enable: module_messaging_enable,
         module_channels_enable: module_channels_enable,
-        module_channels_kiosk_enable: module_channels_kiosk_enable,
+        module_online_ordering_enable: module_online_ordering_enable,
+        module_kiosk_enable: module_kiosk_enable,
+        module_captain_enable: module_captain_enable,
+        module_delivery_partners_enable: module_delivery_partners_enable,
+        module_webshop_enable: module_webshop_enable,
         module_recyclebin_enable: module_recyclebin_enable,
         module_themes_enable: module_themes_enable,
         module_cashbook_enable: module_cashbook_enable,
@@ -1363,7 +1375,11 @@ class SettingModel extends BaseModel {
         module_marketing_enable: offOnly,
         module_messaging_enable: offOnly,
         module_channels_enable: offOnly,
-        module_channels_kiosk_enable: offOnly,
+        module_online_ordering_enable: offOnly,
+        module_kiosk_enable: offOnly,
+        module_captain_enable: offOnly,
+        module_delivery_partners_enable: offOnly,
+        module_webshop_enable: offOnly,
         module_recyclebin_enable: offOnly,
         module_themes_enable: offOnly,
         module_cashbook_enable: offOnly,
@@ -1379,6 +1395,11 @@ class SettingModel extends BaseModel {
         quotes_enable: offOnly,
         invoices_enable: offOnly,
         pl_include_cashbook: offOnly,
+        /* AI assistance. offOnly, so a shop that has never touched the switch
+           is not switched off by our silence - the same default every other
+           module here uses. The provider and key live on the AI page; this
+           is only the switch, which is all a Features card may carry. */
+        ai_enabled: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
         if (data[key] !== undefined) {
@@ -1503,7 +1524,11 @@ class SettingModel extends BaseModel {
       module_marketing_enable: { parse: offOnly, dflt: true },
       module_messaging_enable: { parse: offOnly, dflt: true },
       module_channels_enable: { parse: offOnly, dflt: true },
-      module_channels_kiosk_enable: { parse: offOnly, dflt: true },
+      module_online_ordering_enable: { parse: offOnly, dflt: true },
+      module_kiosk_enable: { parse: offOnly, dflt: true },
+      module_captain_enable: { parse: offOnly, dflt: true },
+      module_delivery_partners_enable: { parse: offOnly, dflt: true },
+      module_webshop_enable: { parse: offOnly, dflt: true },
       module_recyclebin_enable: { parse: offOnly, dflt: true },
       module_themes_enable: { parse: offOnly, dflt: true },
       module_cashbook_enable: { parse: offOnly, dflt: true },

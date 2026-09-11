@@ -54,6 +54,45 @@
             </div>
         </div>
 
+        <!--
+            SEARCH, which this page did not have.
+
+            The menu at /menu could find a dish and the page people actually
+            order from could not - it had category scrolling and nothing else,
+            so a customer looking for one item in a catalogue of four hundred
+            scrolled until they gave up.
+
+            It searches EVERY category, not the open one. Somebody typing
+            "biryani" is asking the restaurant a question, not the Mains tab.
+        -->
+        <section class="section-block order-search">
+            <div class="order-search-row">
+                <span class="order-search-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path>
+                    </svg>
+                </span>
+                <input type="search" id="product-search" class="order-search-input"
+                       autocomplete="off" placeholder="Search the menu"
+                       aria-label="Search the menu">
+                <button type="button" id="product-search-clear" class="order-search-clear"
+                        aria-label="Clear search" hidden>&times;</button>
+            </div>
+
+            <div class="order-tools">
+                <button type="button" class="order-tool" id="order-filter-veg" aria-pressed="false">
+                    <span class="order-diet" aria-hidden="true"></span>Veg only
+                </button>
+                <select id="order-sort" class="order-sort" aria-label="Sort the menu">
+                    <option value="menu">Menu order</option>
+                    <option value="popular">Most ordered</option>
+                    <option value="price_asc">Price: low to high</option>
+                    <option value="price_desc">Price: high to low</option>
+                </select>
+            </div>
+        </section>
+
         <!-- Fixed Categories -->
         <section class="section-block fixed-categories">
             <h2 class="section-heading">Menu Categories</h2>

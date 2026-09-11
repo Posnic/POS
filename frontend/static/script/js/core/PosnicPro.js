@@ -2806,8 +2806,17 @@ PosnicPro = {
         var s = {};
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
         var on = function (k) { return s[k] !== false; };
-        $('#viewkioskreport_page').closest('li')
-            .toggle(on('module_channels_enable') && on('module_channels_kiosk_enable'));
+        /*
+         * One switch, not two.
+         *
+         * There was a second toggle on the Features page - "Kiosk and online
+         * ordering" - sitting under the Sales Channels switch and gating only
+         * this one menu row. Which channels a shop actually uses is answered
+         * properly on the Sales Channels page, by the checkbox list there, so
+         * a second half-switch in a different screen was one more thing to get
+         * out of step with it.
+         */
+        $('#viewkioskreport_page').closest('li').toggle(on('module_channels_enable'));
         $('#viewkotreport_page').closest('li')
             .toggle(PosnicPro.local.get('table_options') === 'enable');
 
@@ -2853,8 +2862,16 @@ PosnicPro = {
         $('#dashboard_best_col').toggleClass('col-md-8', creditOn).toggleClass('col-md-12', !creditOn);
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
         $('#manage_li_messagingmodule').toggle(on('module_messaging_enable'));
-        $('#manage_li_kiosk').toggle(on('module_channels_enable'));
+        /* Each channel's entry follows its own feature switch. module_channels_enable
+           is the derived roof - true when any of them is on - so gating on it here
+           would show all four the moment a shop enabled one. */
+        $('#manage_li_onlineordering').toggle(on('module_online_ordering_enable'));
+        $('#manage_li_kioskmachine').toggle(on('module_kiosk_enable'));
+        $('#manage_li_captainapp').toggle(on('module_captain_enable'));
+        $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
+        $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
+        $('#manage_li_ai').toggle(on('ai_enabled'));
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
         /* One system, owner's rule: a feature's card explains it; a
            feature's CONFIGURATION lives here, in its own entry - the same

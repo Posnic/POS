@@ -571,6 +571,21 @@
                                         <textarea class="form-control items-description-fill" id="items_description" name="items_description"
                                             rows="4" maxlength="1000"
                                             placeholder="Enter a description ..." data-t-placeholder="lang_enter_a_description"></textarea>
+                                        <!-- Drafting the description nobody was going to type.
+                                             Hidden until the API says this shop has AI
+                                             configured: the shop pays its own provider, so a
+                                             button that exists without a key is a button that
+                                             fails when pressed. PosnicPro.items.aiDescribe
+                                             fills the textarea; nothing is saved until the
+                                             person saves the item. -->
+                                        <a href="javascript:void(0)" id="items_ai_describe"
+                                           class="items-ai-describe" style="display:none;"
+                                           data-toggle="tooltip" data-placement="top"
+                                           data-original-title="Draft a description from the item's own details"
+                                           data-t-title="lang_ai_describe_hint"
+                                           onclick="PosnicPro.items.aiDescribe();">
+                                            <i class="fa fa-magic mr-1"></i><lang class="lang_ai_describe">Write it for me</lang>
+                                        </a>
                                     </div>
                                     <div class="col-lg-6">
                                         <!-- Labelled like Description beside it (owner ask). An
@@ -614,6 +629,30 @@
                                              image is uploaded - the label already promised that,
                                              and a control that cannot affect anything should not
                                              ask for a decision. -->
+                                        <!-- A picture for a dish nobody photographed.
+                                             Sits beside the image because it answers the same
+                                             question, and above colour and shape because it is
+                                             the better answer: a hashed colour means nothing and
+                                             a picture of a dosa means dosa. Pre-filled from the
+                                             NAME, so a three hundred item menu is decorated
+                                             without anybody opening this form. -->
+                                        <div id="item_icon_row" class="mt-3">
+                                            <label class="form-control-placeholder d-block">
+                                                <lang class="lang_item_icon_title">Icon (when there is no photo)</lang>
+                                            </label>
+                                            <div class="d-flex align-items-center" style="gap:10px;">
+                                                <span id="item_icon_preview"
+                                                    style="width:44px;height:44px;border:1px solid #d0d7de;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;background:#fff;"></span>
+                                                <small id="item_icon_note" class="text-muted"></small>
+                                                <button type="button" id="item_icon_clear" class="btn btn-link p-0 ml-auto"
+                                                    style="font-size:12px;display:none;">
+                                                    <lang class="lang_use_suggested">Use the suggested one</lang>
+                                                </button>
+                                            </div>
+                                            <input type="hidden" id="item_icon" name="item_icon" value="">
+                                            <div id="item_icon_choices" class="d-flex flex-wrap mt-2" style="gap:4px;"></div>
+                                        </div>
+
                                         <div id="item_tile_fallback" class="mt-3">
                                             <!-- The tile this item will actually get. Without it
                                                  the swatches sit unselected and "no image" reads
@@ -885,6 +924,26 @@
                                             data-placeholder="All day" data-t-placeholder="lang_all_day"></select>
                                     </div>
 
+                                    <!--
+                                        Which channels do NOT sell this.
+                                    
+                                        Exceptions, not memberships: an item is on every
+                                        channel the shop runs unless it is ticked here.
+                                        A shop of two hundred lines should not have to
+                                        say "yes" six times per item to sell anything,
+                                        and a channel switched on next month should sell
+                                        the whole catalogue rather than nothing.
+                                    -->
+                                    <div class="form-group col-md-8">
+                                        <label for="item_channel_off"><lang class="lang_not_sold_on">Not sold on</lang></label>
+                                        <select class="form-control border-control select2" id="item_channel_off"
+                                            name="item_channel_off" multiple="multiple"
+                                            data-placeholder="Sold on every channel" data-t-placeholder="lang_sold_everywhere"></select>
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_not_sold_on_help">Leave empty to sell it everywhere. Pick a channel or a delivery partner to keep this item off it.</lang>
+                                        </small>
+                                    </div>
+                                    
                                     <div class="form-group col-md-4 restaurant-only">
                                         <label for="item_prep_minutes"><lang class="lang_prep_minutes">Preparation time (minutes)</lang></label>
                                         <input type="number" min="0" max="480" class="form-control border-control"

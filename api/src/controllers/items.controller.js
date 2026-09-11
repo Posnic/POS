@@ -9,6 +9,11 @@ const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
 const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
+const dishIcons = require('../utils/dish-icons');
+const { CHANNEL } = require('../utils/sales-channels');
+const ai = require('../services/ai.service');
+const itemDescription = require('../services/ai-item-description');
+const budget = require('../services/ai-budget');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -212,6 +217,60 @@ class ItemsController extends BaseController {
    * List items with pagination and optional filters
    * GET /items (legacy default endpoint)
    */
+  /**
+   * The catalogue, seen from one channel.
+   *
+   * A shop with four hundred lines is not going to open four hundred item
+   * pages to decide what goes on Swiggy, so the work is doable from the
+   * channel's own side, filtered the way a shop thinks about its catalogue:
+   * by category, or by typing part of a name.
+   */
+  async channelItems(req, res) {
+    try {
+      const response = await this.service.channelItems({
+        channel: req.query.channel,
+        categoryId: req.query.category_id,
+        search: req.query.search,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Turning a filtered set on or off for that channel in one go. */
+  async setChannelForItems(req, res) {
+    try {
+      const body = req.body || {};
+      const response = await this.service.setChannelForItems({
+        channel: body.channel,
+        itemIds: body.item_ids,
+        on: body.on,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** The hours one item keeps on one channel. */
+  async setChannelHours(req, res) {
+    try {
+      const body = req.body || {};
+      const response = await this.service.setChannelHours({
+        itemId: req.params.id,
+        channel: body.channel,
+        window: body.window,
+      });
+      if (response.status === true) return this.success(res, response.data, response.message);
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async getAll(req, res) {
     try {
       await this.ensureContext(req);
@@ -865,6 +924,85 @@ class ItemsController extends BaseController {
       );
     } catch (error) {
       console.error('Error in accesskiosk:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * What emoji this name suggests, so the item form can show it while it is
+   * being typed.
+   *
+   * The suggestion is a pure function of the name - no database, no branch, no
+   * item - which is why it can answer this cheaply on every keystroke the form
+   * chooses to send.
+   */
+  async iconSuggestion(req, res) {
+    const name = String(req.query.name || '').slice(0, 200);
+    return this.success(res, { name, icon: dishIcons.guess(name) }, 'success');
+  }
+
+  /**
+   * The menu, for a waiter's phone - the captain app.
+   *
+   * Kept in the shape it has always answered in, because the handsets are
+   * already out there and cannot be updated from here. `GET
+   * /online-ordering/:storeId/device` is the endpoint to build anything new
+   * against; this is the same query wearing the old names.
+   *
+   * The branch comes from the body, as it always has, and is honoured only
+   * because the route in front of this one has already established that the
+   * caller works for the shop. See routes/items.routes.js, and
+   * repositories/item.repository.js `_storefrontBranch` for why that
+   * distinction is the whole guard.
+   *
+   * TABLESIDE, not ONLINE. A waiter at a table is not a stranger's phone, and
+   * a shop may keep a line off the public storefront while still selling it
+   * from the floor.
+   */
+  async accessQr(req, res) {
+    try {
+      const response = await this.service.storefront({
+        branchId: req.body.branch,
+        channel: CHANNEL.TABLESIDE,
+      });
+
+      if (response.status !== true) {
+        return this.error(res, response.message, 404, response.data);
+      }
+
+      const data = response.data || {};
+      return this.success(
+        res,
+        {
+          products: data.products || [],
+          kiosk_images: {
+            logo: data.store?.logo || '',
+            banner: data.store?.banner || '',
+            homebanner: data.store?.homebanner || '',
+            advertisement: data.store?.advertisement || '',
+          },
+          kiosk_payment: data.payment || {},
+          /* The floor plan. The captain app reads this to draw its tables, and
+             is the only caller that ever did. */
+          tableorders: data.tableorders || [],
+          /*
+           * Whether this shop's handsets may listen, and in what language.
+           *
+           * WHERE THE AUDIO GOES, never which vendor transcribes it. A handset
+           * told the vendor is a handset that will eventually be asked to hold
+           * the key for it, and telling one phone tells every phone in the
+           * building. See utils/voice-settings.js.
+           *
+           * Sent with the menu because that is the one call every handset
+           * already makes on every start, so a shop that changes this setting
+           * has it in force by the next time a waiter opens the app.
+           */
+          voice: data.voice || {},
+        },
+        response.message
+      );
+    } catch (error) {
+      console.error('Error in accessQr:', error);
       return this.error(res, error.message, 500);
     }
   }
@@ -2222,6 +2360,106 @@ class ItemsController extends BaseController {
     } catch (error) {
       console.error('Error in ItemsController.getDataChanges:', error);
       return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * Draft a description for the item being filled in. Writes nothing.
+   *
+   * The shop is spending its own money on this call - Posnic charges nothing
+   * for AI and the key is theirs - so it is gated on item.write rather than
+   * read: somebody who cannot edit an item has no reason to spend the shop's
+   * balance drafting copy for one.
+   */
+  async aiDescription(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await itemDescription.draft(req.body || {}, context);
+      if (!result.status) {
+        /* ai.service answers one sentence for every kind of refusal, so
+           there is nothing here to tell apart. 400 and the message it gave:
+           a shop with no key, no provider or no budget left all need the
+           words rather than the status code. */
+        return this.error(res, result.message, 400);
+      }
+      return this.success(res, result.data, 'Description drafted');
+    } catch (error) {
+      console.error('Error in aiDescription:', error);
+      return this.error(res, 'Could not draft a description', 500);
+    }
+  }
+
+  /**
+   * Should the item screen offer an AI button at all?
+   *
+   * Answers a boolean and a reason, never a key and never a balance. A shop
+   * with nothing configured gets `available: false` so the control is absent,
+   * which is the difference between a feature this shop does not have and a
+   * button that fails when pressed at a counter.
+   */
+  async aiAvailability(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.query?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.success(res, { available: false, reason: 'no_branch' });
+
+      /* available(), not availability(). It answers a boolean; the shape the
+         screen reads is built here. */
+      const available = await ai.available(context);
+      return this.success(res, { available: available === true });
+    } catch (error) {
+      console.error('[ai] aiAvailability failed, so the button will stay hidden:', error);
+      /* Absent, not broken: a screen that cannot ask should simply not offer
+         the button rather than show an error nobody can act on. */
+      return this.success(res, { available: false, reason: 'error' });
+    }
+  }
+
+  /**
+   * What AI has cost this shop this month, per feature.
+   *
+   * The shop is spending its own money with its own provider, so it is
+   * entitled to see the meter without leaving the settings page. Figures are
+   * ours, computed from the token counts each call reported at list prices;
+   * the provider's own dashboard is the final word on the bill, and the
+   * settings card says so.
+   */
+  async aiSpend(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.query?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.success(res, { features: [] });
+
+      const spend = await budget.spentThisMonth(context);
+      const features = Object.entries(spend.byFeature || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([feature, minor]) => ({
+          feature,
+          /* Whole currency units with two decimals: the caller is a person
+             reading a number, not code doing arithmetic on it. */
+          spent: (minor / 100).toFixed(2),
+        }));
+      return this.success(res, { features, total: (spend.total / 100).toFixed(2) });
+    } catch (error) {
+      console.error('Error in aiSpend:', error);
+      /* A meter that cannot be read is not a broken settings page. */
+      return this.success(res, { features: [] });
     }
   }
 }

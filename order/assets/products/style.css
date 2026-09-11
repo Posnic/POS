@@ -452,3 +452,160 @@ body {
         max-width: 90%;
     }
 }
+
+/* -------------------------------------------------------------- search
+ *
+ * This page had none. The digital menu could find a dish and the ordering
+ * page could not, which is the wrong way round: one is read, the other is
+ * where somebody is trying to buy something.
+ */
+
+.order-search {
+    padding-bottom: 6px;
+}
+
+.order-search-row {
+    position: relative;
+}
+
+.order-search-input {
+    width: 100%;
+    padding: 11px 40px;
+    /* 16px or iOS zooms the whole page the moment it gains focus, and the
+       customer is then pinch-zooming a checkout. */
+    font-size: 16px;
+    font-family: inherit;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #f9fafb;
+    color: #111827;
+    outline-offset: 2px;
+}
+
+.order-search-icon,
+.order-search-clear {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    line-height: 1;
+}
+
+.order-search-icon {
+    left: 13px;
+    pointer-events: none;
+}
+
+.order-search-clear {
+    right: 8px;
+    border: 0;
+    background: transparent;
+    color: #6b7280;
+    font-size: 22px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.order-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.order-tools::-webkit-scrollbar {
+    display: none;
+}
+
+.order-tool {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #6b7280;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* A pressed filter is a STATE, not a hover: the risk of a filter is
+   forgetting it is on and deciding the kitchen has run out of food. */
+.order-tool[aria-pressed="true"] {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
+.order-diet {
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid #0f8a3d;
+    border-radius: 3px;
+    display: inline-grid;
+    place-items: center;
+}
+
+.order-diet::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0f8a3d;
+}
+
+.order-tool[aria-pressed="true"] .order-diet,
+.order-tool[aria-pressed="true"] .order-diet::after {
+    border-color: #fff;
+    background: #fff;
+}
+
+.order-sort {
+    flex: 0 0 auto;
+    font: inherit;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #111827;
+}
+
+/* The count, and the "nothing matched" line that stops a blank grid reading
+   as a broken page. */
+.order-result-count {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* The veg mark on a card, so a filter is not the only way to tell. */
+.product-diet {
+    display: inline-grid;
+    place-items: center;
+    width: 13px;
+    height: 13px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: -2px;
+}
+
+.product-diet::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.diet-veg { color: #0f8a3d; }
+.diet-non_veg { color: #b91c1c; }
+.diet-egg { color: #b45309; }
+.diet-vegan { color: #0f8a3d; }

@@ -606,7 +606,35 @@ function defaultConfig() {
   };
 }
 
+/**
+ * Every photo of a dish, cover first, as strings a browser can load.
+ *
+ * THE BUG THIS REPLACES.
+ *
+ * `multi_image` is an array of OBJECTS - `{ name, cover }` - and has been since
+ * the item form learned to take a set. The first version of this mapped it with
+ * `String(src)`, which turns an object into the literal text
+ * "[object Object]"; the cover came through fine because that one IS a string,
+ * so a dish showed its first photo and a broken icon for every other. Exactly
+ * what the owner saw: "second images not loaded properly".
+ *
+ * Deduplicated because the cover is usually also the first entry of the set,
+ * and a shop that uploaded one photo should not get a two-photo carousel of
+ * the same picture.
+ */
+function photoList(row) {
+  const extra = Array.isArray(row.multi_image) ? row.multi_image : [];
+  const names = [row.image, ...extra].map((entry) => {
+    /* A set entry is an object; the cover is a bare string. Accept both,
+       because old rows carry either shape. */
+    if (entry && typeof entry === 'object') return String(entry.name || '').trim();
+    return String(entry || '').trim();
+  });
+  return [...new Set(names.filter(Boolean))];
+}
+
 module.exports = {
+  photoList,
   DAY_KEYS,
   DEFAULT_FULFILMENT,
   DEFAULT_TIME_ZONE,

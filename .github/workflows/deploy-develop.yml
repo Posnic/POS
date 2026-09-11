@@ -41,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: "22"
 
       # Built here rather than on the box: a 2 GB machine running mongod and
       # the API should not also be running a gulp build, and building in CI
@@ -81,12 +81,55 @@ jobs:
             --exclude node_modules --exclude .env --exclude uploads \
             -e "ssh -i ~/.ssh/develop.pem" \
             api/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/api/"
+          # HASHED BUNDLES ARE PROTECTED FROM --delete.
+          #
+          # A tab that is already open still asks for script/dashboard.<old>.js
+          # by name. Plain --delete removes it the moment the next build lands,
+          # the page 404s on its own script, and the person looking at it says
+          # the site is down - which is exactly what happened here after four
+          # deploys inside thirteen minutes.
+          #
+          # deploy-frontend.yml learned this on a live estate ("mobile view add
+          # category shown and page broken. crashed" was an open tab meeting a
+          # deploy that had pruned its stylesheet). develop never did, and
+          # develop is where people sit with a tab open all day while builds
+          # land on top of them. Same protection, same retention below.
           rsync -az --delete \
+            --filter='protect public/script/*.js' \
+            --filter='protect public/style/*.css' \
             -e "ssh -i ~/.ssh/develop.pem" \
             frontend/public/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/frontend/public/"
           rsync -az \
             -e "ssh -i ~/.ssh/develop.pem" \
             languages/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/languages/"
+          # Retention: for every hashed bundle family (name.<hash8>.ext), keep
+          # the newest 3 and remove the rest. An open tab survives at least two
+          # more deploys; the instance never grows without bound. Same shape as
+          # deploy-frontend.yml, which is where this was worked out.
+          ssh -i ~/.ssh/develop.pem "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}" 'bash -s' <<'REMOTE'
+          set -u
+          for d in ~/posnic-develop/frontend/public/script ~/posnic-develop/frontend/public/style; do
+            [ -d "$d" ] || continue
+            cd "$d"
+            ls -1 2>/dev/null | grep -E '^[A-Za-z0-9_-]+\.[0-9a-f]{8}\.(js|css)$' \
+              | sed -E 's/\.[0-9a-f]{8}\.(js|css)$/.\1/' | sort -u \
+              | while read -r fam; do
+                  base="${fam%.*}"; ext="${fam##*.}"
+                  ls -1t "$base".????????."$ext" 2>/dev/null | tail -n +4 \
+                    | while read -r old; do rm -f -- "$old" && echo "pruned $d/$old"; done
+                done
+          done
+          REMOTE
+          # The customer-facing bundles. api/app.js serves these from '../menu'
+          # and '../order' behind an fs.existsSync guard, so leaving them out
+          # was not an error - it was a silent 404 on every /menu and /order
+          # URL, which is exactly the surface anybody comes to develop to test.
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            menu/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/menu/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            order/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/order/"
 
       - name: Install and restart
         run: |

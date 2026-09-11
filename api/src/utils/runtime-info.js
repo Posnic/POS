@@ -94,6 +94,22 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
       /* Show a link to posnic.com/account. See hasAccount() for why this is
          not simply `edition === 'cloud'`. */
       account: hasAccount(env, mode),
+
+      /*
+       * This server returns the order that already exists rather than writing
+       * a second one, when an order carries an idempotencyKey.
+       *
+       * Declared so a handset can decide whether resending is safe. A phone
+       * that loses the network mid-order cannot tell "never reached the
+       * kitchen" from "reached it and the reply was lost", so against a server
+       * without this it must hold the order and ask a person; against one with
+       * it, resending is free and the order can go by itself.
+       *
+       * A constant, not a check: the behaviour ships with this code. Absent is
+       * the honest answer for every older server, which neither advertises it
+       * nor honours the key.
+       */
+      idempotentOrders: true,
     },
   };
 }

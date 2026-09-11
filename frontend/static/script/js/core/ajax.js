@@ -62,6 +62,13 @@ PosnicPro.request = function (params, callback, failure = null) {
     {
         // JWT Token support for Electron cross-origin requests
         var headers = {};
+        /* The API returns this derived token on any cookie-authenticated
+         * response. It is useless without the HttpOnly credential it is bound
+         * to, but proves an unsafe browser request came from code that could
+         * read a prior API response rather than from an attacker page. */
+        if (PosnicPro.csrfToken && !/^(GET|HEAD|OPTIONS)$/i.test(method)) {
+            headers['X-XSRF-TOKEN'] = PosnicPro.csrfToken;
+        }
         if (navigator.userAgent.indexOf('Electron') !== -1) {
             const token = localStorage.getItem('posnic_jwt_token');
             if (token) {
@@ -84,7 +91,9 @@ PosnicPro.request = function (params, callback, failure = null) {
             data: data
         });
 
-        request.done(function (data) {
+        request.done(function (data, _status, xhr) {
+            var csrfToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+            if (csrfToken) { PosnicPro.csrfToken = csrfToken; }
             callback(data);
         });
 

@@ -35,6 +35,15 @@ test('CodeMeta states a version, and it cannot drift from package.json', () => {
   assert.ok(cffVersion, 'CITATION.cff states no version');
   assert.equal(cffVersion[1].trim().replace(/^['"]|['"]$/g, ''), packageJson.version);
 
+  const cffReleaseDate = /^date-released:\s*(.+)$/m.exec(citation);
+  assert.ok(cffReleaseDate, 'CITATION.cff states no release date');
+  assert.equal(cffReleaseDate[1].trim(), '2026-08-28');
+
+  assert.equal(
+    metadata.releaseNotes,
+    `https://github.com/Posnic/POS/releases/tag/v${packageJson.version}`,
+  );
+
   const cffLicense = /^license:\s*(.+)$/m.exec(citation);
   assert.equal(cffLicense[1].trim(), packageJson.license);
 });
@@ -68,6 +77,7 @@ test('CodeMeta uses only secure canonical links', () => {
     metadata.downloadUrl,
     metadata.softwareHelp,
     metadata.citation,
+    metadata.releaseNotes,
     ...metadata.relatedLink,
   ];
 
@@ -75,4 +85,27 @@ test('CodeMeta uses only secure canonical links', () => {
   assert.equal(packageJson.homepage, 'https://www.posnic.com/');
   assert.equal(metadata.url, 'https://www.posnic.com/');
   assert.equal(metadata.isSourceCodeOf.url, 'https://www.posnic.com/');
+});
+
+test('README exposes the public POS evaluation and recovery resources', () => {
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+
+  assert.match(
+    readme,
+    /https:\/\/posnic\.github\.io\/open-source-pos-evaluation-checklist\.html/,
+  );
+  assert.match(
+    readme,
+    /https:\/\/posnic\.github\.io\/offline-pos-backup-checklist\.html/,
+  );
+  assert.doesNotMatch(readme, /https:\/\/(?:www\.)?posnic\.io(?:\/|\b)/);
+});
+
+test('CLA workflow links to the agreement on the active development branch', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'cla.yml'), 'utf8');
+
+  assert.ok(fs.existsSync(path.join(root, '.github', 'CLA.md')));
+  assert.match(workflow, /Posnic\/POS\/blob\/develop\/\.github\/CLA\.md/);
+  assert.doesNotMatch(workflow, /Posnic\/POS\/blob\/main\/\.github\/CLA\.md/);
+  assert.match(workflow, /branch:\s*cla-signatures/);
 });

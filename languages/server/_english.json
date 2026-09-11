@@ -37,6 +37,9 @@
     "src/services/authorization.service.js",
     "src/services/shift.service.js"
   ],
+  "AI assistance is switched off for this shop": [
+    "src/services/ai.service.js"
+  ],
   "API v2": [
     "src/routes/index.js"
   ],
@@ -129,6 +132,9 @@
   ],
   "An invoice id is required": [
     "src/repositories/quote.repository.js"
+  ],
+  "An item name is needed first": [
+    "src/services/ai-item-description.js"
   ],
   "Another branch is already using this store address": [
     "src/models/setting.model.js"
@@ -589,8 +595,12 @@
   "Enter a valid email address": [
     "app.js"
   ],
+  "Enter must correct channel": [
+    "src/repositories/item.repository.js"
+  ],
   "Enter must correct item id": [
     "src/models/receiving.model.js",
+    "src/repositories/item.repository.js",
     "src/repositories/sale.repository.js"
   ],
   "Enter must correct order id": [
@@ -1023,6 +1033,12 @@
   "New password and confirmation are required": [
     "src/controllers/users.controller.js"
   ],
+  "No API key is saved for the AI provider": [
+    "src/services/ai.service.js"
+  ],
+  "No API key is saved for the voice provider": [
+    "src/services/transcribe.service.js"
+  ],
   "No IDs provided": [
     "src/models/expense.model.js",
     "src/models/receiving.model.js",
@@ -1040,6 +1056,9 @@
   ],
   "No SMS provider configured (brevo or msg91)": [
     "src/services/sms.service.js"
+  ],
+  "No audio was sent": [
+    "src/services/transcribe.service.js"
   ],
   "No branch IDs provided": [
     "src/models/branch.model.js"
@@ -1241,6 +1260,9 @@
   ],
   "Nothing to write": [
     "src/repositories/settings.repository.js"
+  ],
+  "Nothing was asked": [
+    "src/services/ai.service.js"
   ],
   "Online ordering is not available for this shop.": [
     "src/utils/online-ordering.js"
@@ -1607,6 +1629,9 @@
   "Sales targets saved": [
     "src/services/shift.service.js"
   ],
+  "Saved": [
+    "src/repositories/item.repository.js"
+  ],
   "Schedule entry not found": [
     "src/repositories/shift.repository.js"
   ],
@@ -1629,6 +1654,9 @@
   ],
   "Search term is required": [
     "src/services/customer.service.js"
+  ],
+  "Select at least one item": [
+    "src/repositories/item.repository.js"
   ],
   "Selected branches not found or do not belong to your license. Please select valid branches.": [
     "src/models/user.model.js"
@@ -1831,14 +1859,29 @@
   "That key does not belong to an API user.": [
     "src/middleware/api-key.js"
   ],
+  "That picture could not be read": [
+    "src/services/ai.service.js"
+  ],
+  "That recording is too long": [
+    "src/services/transcribe.service.js"
+  ],
   "That shop has no items yet": [
     "src/services/catalogue-copy.js"
   ],
   "That store address is reserved. Please choose another.": [
     "src/models/setting.model.js"
   ],
+  "The AI service did not answer": [
+    "src/services/ai.service.js"
+  ],
+  "The AI service had no answer": [
+    "src/services/ai.service.js"
+  ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
+  ],
+  "The audio could not be read": [
+    "src/services/transcribe.service.js"
   ],
   "The family needs a product name.": [
     "src/services/item.service.js"
@@ -1854,6 +1897,9 @@
   ],
   "The user belonging to this token no longer exists. Please log in again.": [
     "src/middleware/auth.js"
+  ],
+  "The voice service did not answer": [
+    "src/services/transcribe.service.js"
   ],
   "Theme settings not updated": [
     "src/controllers/settings.controller.js"
@@ -1972,6 +2018,15 @@
   ],
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
+  ],
+  "This shop has not set up an AI provider": [
+    "src/services/ai.service.js"
+  ],
+  "This shop has reached its monthly AI spending limit": [
+    "src/services/ai.service.js"
+  ],
+  "This shop transcribes on the handset, not on the server": [
+    "src/services/transcribe.service.js"
   ],
   "This supplier details already exist in our system": [
     "src/models/supplier-legacy.model.js"
@@ -2199,6 +2254,9 @@
   "Variant value \"": [
     "src/services/item.service.js"
   ],
+  "Voice ordering is not set up for this shop": [
+    "src/services/transcribe.service.js"
+  ],
   "Webhook registered. Store the secret now - it is not shown again.": [
     "app.js"
   ],
@@ -2264,6 +2322,9 @@
   ],
   "Your session has expired. Please log in again.": [
     "src/middleware/auth.js"
+  ],
+  "Your session security token is missing or expired. Refresh and try again.": [
+    "src/middleware/csrf.js"
   ],
   "Your token has expired! Please log in again.": [
     "src/controllers/auth.controller.js"

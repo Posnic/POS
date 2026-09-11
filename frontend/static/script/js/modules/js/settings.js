@@ -33,7 +33,13 @@ PosnicPro.settings = {
          * routes to the page that owns it now; a key nobody knows lands on
          * Core Settings rather than on rubble.
          */
-        var LEGACY_SECTIONS = { branches: 'branches', outlet: 'branches' };
+        var LEGACY_SECTIONS = {
+            branches: 'branches',
+            outlet: 'branches',
+            /* #/settings/kiosk was the one channels page. It is four pages now;
+               the storefront settings that address mostly meant are here. */
+            kiosk: 'onlineordering',
+        };
         if (LEGACY_SECTIONS[key]) {
             hasher.setHash(LEGACY_SECTIONS[key]);
             return;
@@ -71,6 +77,7 @@ PosnicPro.settings = {
         $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
+        if (key === 'ai') { PosnicPro.settings.ai.load(); }
     },
     /*
      * The branch's tax profile dresses the registration field (T2): every
@@ -580,10 +587,15 @@ PosnicPro.settings = {
                         module_marketing_enable: response.data['module_marketing_enable'] !== false,
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
                         module_channels_enable: response.data['module_channels_enable'] !== false,
-                        module_channels_kiosk_enable: response.data['module_channels_kiosk_enable'] !== false,
+                        module_online_ordering_enable: response.data['module_online_ordering_enable'] !== false,
+                        module_kiosk_enable: response.data['module_kiosk_enable'] !== false,
+                        module_captain_enable: response.data['module_captain_enable'] !== false,
+                        module_delivery_partners_enable: response.data['module_delivery_partners_enable'] !== false,
+                        module_webshop_enable: response.data['module_webshop_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
                         module_demo_data_enable: response.data['module_demo_data_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
+                    ai_enabled: response.data['ai_enabled'] !== false,
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
@@ -853,8 +865,11 @@ PosnicPro.settings = {
                 $('#module_credit_enable').prop('checked', data.module_credit_enable !== false);
                 $('#module_marketing_enable').prop('checked', data.module_marketing_enable !== false);
                 $('#module_messaging_enable').prop('checked', data.module_messaging_enable !== false);
-                $('#module_channels_enable').prop('checked', data.module_channels_enable !== false);
-                $('#module_channels_kiosk_enable').prop('checked', data.module_channels_kiosk_enable !== false);
+                $('#module_online_ordering_enable').prop('checked', data.module_online_ordering_enable !== false);
+                $('#module_kiosk_enable').prop('checked', data.module_kiosk_enable !== false);
+                $('#module_captain_enable').prop('checked', data.module_captain_enable !== false);
+                $('#module_delivery_partners_enable').prop('checked', data.module_delivery_partners_enable !== false);
+                $('#module_webshop_enable').prop('checked', data.module_webshop_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
                 $('#module_demo_data_enable').prop('checked', data.module_demo_data_enable !== false);
                 /* What it was BEFORE anybody touched it. Turning demo data
@@ -862,6 +877,9 @@ PosnicPro.settings = {
                    cannot be told from on->on without this. */
                 PosnicPro.settings._demoWasOn = data.module_demo_data_enable !== false;
                 $('#module_themes_enable').prop('checked', data.module_themes_enable !== false);
+                /* AI assistance. !== false like its neighbours: absent means
+                   on, which is what offOnly stores. */
+                $('#ai_enabled').prop('checked', data.ai_enabled !== false);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
@@ -883,10 +901,15 @@ PosnicPro.settings = {
                     module_marketing_enable: data.module_marketing_enable !== false,
                     module_messaging_enable: data.module_messaging_enable !== false,
                     module_channels_enable: data.module_channels_enable !== false,
-                    module_channels_kiosk_enable: data.module_channels_kiosk_enable !== false,
+                    module_online_ordering_enable: data.module_online_ordering_enable !== false,
+                    module_kiosk_enable: data.module_kiosk_enable !== false,
+                    module_captain_enable: data.module_captain_enable !== false,
+                    module_delivery_partners_enable: data.module_delivery_partners_enable !== false,
+                    module_webshop_enable: data.module_webshop_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
                     module_demo_data_enable: data.module_demo_data_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
+                    ai_enabled: data.ai_enabled !== false,
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
@@ -913,13 +936,38 @@ PosnicPro.settings = {
                 var image_path = (data.logo !== "store.png") ? data.logo : 'static/images/default/' + data.logo;
                 $('#previewing,#store_image').attr('src', image_path);
                 $('#setting_logo_value').val(data.logo);
-                // Ensure kiosk array exists and has at least one object
-                // Ensure kiosk array exists and has at least one object
-var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
+/*
+ * READ WHAT THE SERVER ACTUALLY STORES.
+ *
+ * This said `data.kiosk[0]`. The field was renamed to `online_ordering` - and
+ * from an Array-of-one to an object - because one reader treated it as an
+ * array and another as an object, which refused every order ever placed. The
+ * WRITE was moved; this read was not.
+ *
+ * So `data.kiosk` was undefined, kioskData became {}, and every storefront
+ * setting on this tab came back empty no matter what the shop had saved. The
+ * owner's words: "it forgot what i saved last time". Worse than forgetting -
+ * collect() then read those empty boxes, so opening the tab and pressing Save
+ * wrote the blanks back over the stored mode, pause and opening hours.
+ *
+ * Nothing failed. An absent field reads as {} and {} reads as "not set".
+ */
+var kioskData =
+    data.online_ordering && typeof data.online_ordering === 'object'
+        ? data.online_ordering
+        /* The old array shape, for a response from a server that predates the
+           rename. Harmless to keep and cheap to be wrong about. */
+        : (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
 
 // Extract values with fallback to empty strings
 var store_id = kioskData.store_id || "";
 $("#kioskstore_id").val(store_id);
+/* Draw the shop's two addresses for the id that just arrived.
+   .val() fires no event, so the 'input change' handler that keeps them
+   current while somebody types never runs here - and a person who opened
+   #/settings/onlineordering directly would see an empty box where their
+   own /order and /menu links should be, until they typed in it. */
+if (PosnicPro.settings.storefrontLinks) { PosnicPro.settings.storefrontLinks(); }
 
 PosnicPro.settings.onlineOrdering.load(kioskData);
 
@@ -994,7 +1042,7 @@ if ($wrapper.length) {
                  */
                 var deferPreview = function (sel, src) {
                     var $img = $(sel);
-                    if ($('#v-pills-kiosk').hasClass('active')) {
+                    if ($('#v-pills-onlineordering').hasClass('active')) {
                         $img.attr('src', src).css('display', 'block');
                     } else {
                         $img.attr('data-defer-src', src).css('display', 'block');
@@ -1320,11 +1368,15 @@ if ($wrapper.length) {
                 PosnicPro.getBranchDropdownOption();
                 PosnicPro.denom.denomTable();
                 PosnicPro.tableOrders.tableOrdersTable();
-                if (!data.payment_gateway || typeof data.payment_gateway.key === "undefined" || data.payment_gateway.key.trim() === '') {
-                    $('#payment_razorpay').prop('disabled', true);
-                } else {
-                    $('#payment_razorpay').prop('disabled', false);
-                }             
+                /* Razorpay can only be offered once the shop's key is stored.
+                   The switch was simply greyed out, which tells a shopkeeper
+                   nothing about why or where to fix it - so the reason shows
+                   with it. See lang_razorpay_needs_key in the markup. */
+                var hasGatewayKey = !!(data.payment_gateway
+                    && typeof data.payment_gateway.key === 'string'
+                    && data.payment_gateway.key.trim() !== '');
+                $('#payment_razorpay').prop('disabled', !hasGatewayKey);
+                $('#razorpay_needs_key').toggle(!hasGatewayKey);
 
                 //var countryDetail = $('#setting_country').select2("data");
                 //PosnicPro.settings.loadSelectSettingState(countryDetail[0].element.attributes['data-setting-id'].value);
@@ -1545,31 +1597,59 @@ if ($wrapper.length) {
         },
 
         /** Show what a pause is doing, in words, with the time it lifts. */
-        renderPause: function (pausedUntil) {
+        /**
+         * Draw the one true state, and show only the buttons that apply to it.
+         *
+         * `changed` marks this as somebody's click rather than what the server
+         * said. A pause is stored with the rest of the form, so the kitchen can
+         * press "Stop taking orders", see the screen change, walk away and have
+         * orders still arriving. Saying so where the button is beats a toast
+         * that has already faded.
+         */
+        renderPause: function (pausedUntil, changed) {
             var $status = $('#kiosk_pause_status');
             if (!$status.length) return;
             $('#kiosk_paused_until').val(pausedUntil || '');
 
-            if (!pausedUntil) {
-                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
-                return;
+            var at = pausedUntil ? new Date(pausedUntil) : null;
+            var paused = !!(at && !isNaN(at.getTime()) && at.getTime() > Date.now());
+
+            if (paused) {
+                $status
+                    .removeClass('badge-success')
+                    .addClass('badge-danger')
+                    .text(
+                        PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
+                        at.toLocaleString()
+                    );
+            } else {
+                $status
+                    .removeClass('badge-danger')
+                    .addClass('badge-success')
+                    .text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
             }
-            var at = new Date(pausedUntil);
-            if (isNaN(at.getTime()) || at.getTime() <= Date.now()) {
-                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
-                return;
-            }
-            $status.text(
-                PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
-                at.toLocaleString()
-            );
+
+            /* Pausing is offered while accepting; resuming while paused. A
+               Resume button on a shop that never stopped undoes nothing. */
+            $('#kiosk_pause_actions').toggle(!paused);
+            $('#kiosk_resume_actions').toggle(paused);
+            $('#kiosk_pause_unsaved').toggle(!!changed);
         },
 
         /** Toggle the controls that only mean something when taking orders. */
         syncMode: function () {
             var ordering = $('#kiosk_mode').val() !== 'menu';
             $('.kiosk-ordering-only').toggle(ordering);
-            $('#kiosk_hours_grid').toggle(ordering && $('#kiosk_hours_enable').is(':checked'));
+            /* One sentence per answer, and only the chosen one on screen. The
+               single line that used to sit here described MENU mode whatever
+               was selected, so a shop reading it while set to "take orders"
+               was told its page had no cart. */
+            $('#kiosk_mode_help_order').toggle(ordering);
+            $('#kiosk_mode_help_menu').toggle(!ordering);
+            var hours = ordering && $('#kiosk_hours_enable').is(':checked');
+            $('#kiosk_hours_grid').toggle(hours);
+            /* The sentence explaining the grid goes with the grid. */
+            $('#kiosk_hours_help').toggle(hours);
         },
 
         load: function (kioskData) {
@@ -1653,6 +1733,9 @@ if ($wrapper.length) {
             loader.find(".loadingSpinner").remove();
 
             if (response.type === 'success') {
+                /* Stored, so the "not saved yet" marker beside the pause
+                   buttons has nothing left to warn about. */
+                $('#kiosk_pause_unsaved').hide();
                 PosnicPro.alert('success', response.message || 'Settings saved');
             } else {
                 PosnicPro.alert('error', response.message || 'Could not save settings. Please try again.');
@@ -1781,7 +1864,12 @@ if ($wrapper.length) {
         'staff_shifts_enable', 'staff_tips_enable', 'staff_roster_enable',
         'cash_register_enable', 'till_lock_enable',
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
-        'module_messaging_enable', 'module_channels_enable', 'module_channels_kiosk_enable',
+        'module_messaging_enable',
+        'module_online_ordering_enable', 'module_kiosk_enable', 'module_captain_enable',
+        'module_delivery_partners_enable', 'module_webshop_enable',
+        /* Derived from the five above, but still saved: the reports that span
+           channels read it. */
+        'module_channels_enable',
         'module_recyclebin_enable', 'module_themes_enable', 'module_cashbook_enable',
         'module_demo_data_enable',
         'quick_sale_enable',
@@ -1789,6 +1877,9 @@ if ($wrapper.length) {
         'invoices_enable',
         'custom_charges_enable',
         'pl_include_cashbook',
+        /* AI assistance. The provider and key live on its own page; this is
+           only the switch, which is all a Features card may carry. */
+        'ai_enabled',
     ],
     initModulesBranchSelect: function () {
         var $sel = $('#modules_branch_select');
@@ -1959,11 +2050,18 @@ if ($wrapper.length) {
                 module_credit_enable: $('#module_credit_enable').is(':checked') ? 'true' : 'false',
                 module_marketing_enable: $('#module_marketing_enable').is(':checked') ? 'true' : 'false',
                 module_messaging_enable: $('#module_messaging_enable').is(':checked') ? 'true' : 'false',
-                module_channels_enable: $('#module_channels_enable').is(':checked') ? 'true' : 'false',
-                module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked') ? 'true' : 'false',
+                /* Derived, not switched: on when the shop uses any channel
+                   at all. The reports that span channels read it. */
+                module_channels_enable: ($('#module_online_ordering_enable').is(':checked') || $('#module_kiosk_enable').is(':checked') || $('#module_captain_enable').is(':checked') || $('#module_delivery_partners_enable').is(':checked') || $('#module_webshop_enable').is(':checked')) ? 'true' : 'false',
+                module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked') ? 'true' : 'false',
+                module_kiosk_enable: $('#module_kiosk_enable').is(':checked') ? 'true' : 'false',
+                module_captain_enable: $('#module_captain_enable').is(':checked') ? 'true' : 'false',
+                module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked') ? 'true' : 'false',
+                module_webshop_enable: $('#module_webshop_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
                 module_demo_data_enable: $('#module_demo_data_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
+                ai_enabled: $('#ai_enabled').is(':checked') ? 'true' : 'false',
                 pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
@@ -2082,8 +2180,12 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_credit_enable: $('#module_credit_enable').is(':checked'),
                     module_marketing_enable: $('#module_marketing_enable').is(':checked'),
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
-                    module_channels_enable: $('#module_channels_enable').is(':checked'),
-                    module_channels_kiosk_enable: $('#module_channels_kiosk_enable').is(':checked'),
+                    module_channels_enable: $('#module_online_ordering_enable').is(':checked') || $('#module_kiosk_enable').is(':checked') || $('#module_captain_enable').is(':checked') || $('#module_delivery_partners_enable').is(':checked') || $('#module_webshop_enable').is(':checked'),
+                    module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked'),
+                    module_kiosk_enable: $('#module_kiosk_enable').is(':checked'),
+                    module_captain_enable: $('#module_captain_enable').is(':checked'),
+                    module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked'),
+                    module_webshop_enable: $('#module_webshop_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
                     module_demo_data_enable: $('#module_demo_data_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
@@ -2184,9 +2286,13 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
         $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
-        // The entry is the CHANNELS roof now (kiosk is its content), so it
-        // gates on the module alone.
-        $('#v-pills-kiosk-tab').toggle(on('module_channels_enable'));
+        // One pill per channel, each on its own feature switch - the same
+        // rule the Manage sidebar uses, so the two rails never disagree.
+        $('#v-pills-onlineordering-tab').toggle(on('module_online_ordering_enable'));
+        $('#v-pills-kioskmachine-tab').toggle(on('module_kiosk_enable'));
+        $('#v-pills-captainapp-tab').toggle(on('module_captain_enable'));
+        $('#v-pills-deliverypartners-tab').toggle(on('module_delivery_partners_enable'));
+        $('#v-pills-webshop-tab').toggle(on('module_webshop_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
         $('#v-pills-theme-tab').toggle(on('module_themes_enable'));
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
@@ -2575,12 +2681,20 @@ loadSelectSettingCurrency: function (force) {
         };
         PosnicPro.post(params, function (response) {
             if (response.type === 'success') {
-                $('#payment_razorpay').prop('disabled', true);
+                /* A key has just been saved, so the switch it gates can come
+                   back. This had it backwards and disabled Razorpay on the one
+                   event that should have enabled it. */
+                $('#payment_razorpay').prop('disabled', false);
+                $('#razorpay_needs_key').hide();
                 localStorage.setItem("payment_gateway", response.data);
                 (response.data === 'true') ? $('.qr_btn').show() : $('.qr_btn').hide();
                 loader.find(".loadingSpinner:first").remove();
             } else {
-                $('#payment_razorpay').prop('disabled', false);
+                /* The key was not stored, so nothing gates open. The old code
+                   enabled Razorpay here - offering a customer a gateway the
+                   shop has no working key for. */
+                $('#payment_razorpay').prop('disabled', true).prop('checked', false);
+                $('#razorpay_needs_key').show();
             }
             PosnicPro.alert(response.type, response.message);
         }, function (xhr) {
@@ -5495,7 +5609,11 @@ PosnicPro.features = {
         ['module_credit_enable', 'Customer credit', 'Sell on account and settle later.'],
         ['module_marketing_enable', 'Marketing', 'Campaigns, coupons and customer pricing.'],
         ['module_messaging_enable', 'Messaging', 'Receipts and notices by WhatsApp or SMS.'],
-        ['module_channels_enable', 'Sales channels', 'Kiosk, QR ordering and online lists.'],
+        ['module_online_ordering_enable', 'Online ordering', 'A QR code or a link customers open on their phone.'],
+        ['module_kiosk_enable', 'Kiosk machine', 'A self-service terminal standing in your shop.'],
+        ['module_captain_enable', 'Captain app', 'Staff taking orders at the table on a phone.'],
+        ['module_delivery_partners_enable', 'Delivery partners', 'Swiggy, Zomato and the rest, with what each keeps.'],
+        ['module_webshop_enable', 'Webshop', 'An online shop of your own sending orders here.'],
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
@@ -6730,18 +6848,74 @@ PosnicPro.settings.featureInfo = {
             'It offers to send at the end of each sale'
         ]
     },
-    module_channels_enable: {
-        tagline: 'Let customers order themselves - kiosk, QR menu, or a public list.',
-        about: 'Selling without a cashier standing at the screen. A kiosk authenticates with its own key rather than a login, so a tablet on the counter can take orders without holding a staff account.',
+    module_online_ordering_enable: {
+        tagline: 'A QR code on the table, or a link customers open on their phone.',
+        about: 'Your own storefront, served by your own till, at your own address. Customers read the menu and order from it; the order arrives in the list your staff already work from. Print a code for a table, or for a hotel room across the road that pays its own agreed price.',
         benefits: [
-            'A kiosk signs in with its own key, never a staff password',
-            'QR ordering from the table, into the same sale flow',
-            'Orders land in the list your staff already work from'
+            'Your menu and your prices, with no commission to anybody',
+            'Open and close it on a schedule, or pause it in one tap on a busy night',
+            'Hold each order for approval, with an alarm so a waiting one is not missed'
         ],
         how: [
-            'Turn it on - Channels appears under settings',
-            'Register the device and give it its key',
-            'Point a tablet or a QR code at it and take orders'
+            'Turn it on, then set a short store address under Channels',
+            'Print the code - one per table, or one for the window',
+            'Decide whether orders go straight to the kitchen or wait for a person'
+        ]
+    },
+    module_kiosk_enable: {
+        tagline: 'A self-service machine standing in your shop.',
+        about: 'A terminal a customer uses themselves, showing the same storefront as your online ordering with its own kitchen printer behind it. It signs in with the installation key rather than a staff password, so a machine on the counter never holds somebody login.',
+        benefits: [
+            'The machine signs in with its own key, never a staff password',
+            'Same menu and prices as everywhere else, kept in one place',
+            'Its own printer, so tickets go to the right kitchen'
+        ],
+        how: [
+            'Turn on Online Ordering first - the machine shows that storefront',
+            'Turn this on and choose the printer the machine should use',
+            'Stand the machine up and point it at your store address'
+        ]
+    },
+    module_captain_enable: {
+        tagline: 'Your staff taking orders at the table, on a phone.',
+        about: 'The captain app runs on a phone your waiters carry. They take the order at the table and it reaches the kitchen without anybody walking to the till, which is the walk that loses a table its starter.',
+        benefits: [
+            'The order reaches the kitchen from where the customer is sitting',
+            'No queue at the one till during a rush',
+            'Tables and covers recorded as the order is taken'
+        ],
+        how: [
+            'Turn it on and set up your tables under Restaurant',
+            'Install the app on the phones your staff carry',
+            'Point it at this shop and sign each waiter in'
+        ]
+    },
+    module_delivery_partners_enable: {
+        tagline: 'Swiggy, Zomato and the rest, with what each one keeps.',
+        about: 'Orders that arrive through somebody else app. Recording the commission is the point: a month that looks like ninety thousand through partners is sixty-seven and a half once their cut is out, and a shop planning on the first figure is planning on money it never had.',
+        benefits: [
+            'One row per partner, so a new aggregator is never a software update',
+            'The rate is stored on each order, so last month report cannot change',
+            'A report showing what you actually earned, not what was rung up'
+        ],
+        how: [
+            'Turn it on and add each partner with the rate you agreed',
+            'Keep taking their orders however you take them today',
+            'Read what you owe under Reports, Money, Commission owed'
+        ]
+    },
+    module_webshop_enable: {
+        tagline: 'An online shop of your own, sending its orders here.',
+        about: 'A webshop you run yourself - OpenCart, WooCommerce - handing its orders to this till so stock and takings stay in one place instead of two systems that disagree by Friday.',
+        benefits: [
+            'One stock figure, not one in the shop and another on the website',
+            'Web orders in the same list as everything else',
+            'Reports that count the website beside the counter'
+        ],
+        how: [
+            'Turn it on and add your shop under Channels',
+            'Connect it under Integrations, where the keys live',
+            'Check the first order lands before you announce it'
         ]
     },
     module_cashbook_enable: {
@@ -7090,7 +7264,12 @@ PosnicPro.settings.FEATURE_HOME = {
     module_credit_enable: ['credit', 'Customer Credit'],
     module_marketing_enable: ['marketingmodule', 'Marketing'],
     module_messaging_enable: ['messagingmodule', 'Messaging'],
-    module_channels_enable: ['kiosk', 'Sales Channels'],
+    /* Each channel's card opens that channel's own page. */
+    module_online_ordering_enable: ['onlineordering', 'Online Ordering'],
+    module_kiosk_enable: ['kioskmachine', 'Kiosk Machine'],
+    module_captain_enable: ['captainapp', 'Captain App'],
+    module_delivery_partners_enable: ['deliverypartners', 'Delivery Partners'],
+    module_webshop_enable: ['webshop', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
     module_recyclebin_enable: ['recyclebin', 'Recycle Bin'],
     module_demo_data_enable: ['demodata', 'Demo Data'],
@@ -7640,8 +7819,8 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
 
 /* The kiosk pane pays for its own artwork, on first open only - see the
    deferPreview comment above. */
-$(document).on('click', '#v-pills-kiosk-tab, #manage_sec_kiosk', function () {
-    $('#v-pills-kiosk img[data-defer-src]').each(function () {
+$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering', function () {
+    $('#v-pills-onlineordering img[data-defer-src]').each(function () {
         var source = $(this).attr('data-defer-src') || '';
         if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
             $(this).attr('src', source).removeAttr('data-defer-src');
@@ -7691,6 +7870,123 @@ $(document).on('click', '#analytics_save', function () {
 });
 
 /*
+ * The Voice ordering card (Integrations tab).
+ *
+ * It has its own TAB on the Captain App page, which is where a setting goes.
+ *
+ * It got there the long way and the two wrong homes are worth naming, because
+ * both are easy mistakes to repeat. Integrations, on the grounds that it can
+ * hold a third-party key - that is filing a thing by how it is BUILT rather
+ * than by what it IS. Then inside the Captain App card on the Features list,
+ * which is worse: that list is a row of switches a shopkeeper scans to see
+ * what is on, and a card carrying a dropdown, a text field and a Save button
+ * is twice the height of its neighbours and breaks the grid it lives in.
+ *
+ * THE RULE, written down in AGENTS.md so it stops being rediscovered: the
+ * Features list holds ON and OFF and nothing else. Every setting belongs on
+ * the module's own page.
+ *
+ * ONE dropdown for the shopkeeper, because they are choosing a thing they can
+ * name - nothing, the phone, or a company they have an account with - not an
+ * architecture. What that means for where the audio travels is derived on the
+ * server; see api/src/utils/voice-settings.js for why those two vocabularies
+ * must not be the same field.
+ *
+ * The key goes through the SECRETS group, which is write-only: it is read back
+ * as "configured" and never as a value, so a saved key cannot be recovered
+ * from this screen by anybody who can open it. Sending an empty key means
+ * LEAVE IT ALONE, or the first person to change the language would blank the
+ * shop's credential.
+ *
+ * Delegated handlers only: this pane is part of the settings module and is not
+ * in the DOM when this file runs, which is the dead-selector trap.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+PosnicPro.settings.voice = {
+    /* The key field only means something for a provider that needs one. A
+       control that cannot affect anything should not ask for a decision. */
+    syncKeyRow: function () {
+        var paid = ['openai', 'google'].indexOf($('#voice_provider').val() || '') !== -1;
+        $('#voice_key_row').toggle(paid);
+    },
+
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var v = response.data.values || response.data;
+            $('#voice_provider').val(v.voice_provider || 'device');
+            $('#voice_language').val(v.voice_language || 'en-IN');
+            PosnicPro.settings.voice.syncKeyRow();
+        }, function () { /* the card still lets you choose and save */ });
+
+        /* Which secrets EXIST, never what they are. */
+        PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var saved = (response.data.configured || {}).voice_api_key === true;
+            $('#voice_api_key').attr('placeholder', saved
+                ? PosnicPro.i18n.t('lang_int_voice_key_saved', 'A key is saved. Type a new one to replace it.')
+                : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
+        }, function () { /* the placeholder is a courtesy, not the feature */ });
+
+        $('#voice_saved_note').hide();
+    },
+
+    save: function () {
+        var provider = $('#voice_provider').val() || 'device';
+        var key = String($('#voice_api_key').val() || '');
+
+        PosnicPro.put({
+            url: 'settings/group/preferences',
+            data: JSON.stringify({
+                voice_provider: provider,
+                voice_language: String($('#voice_language').val() || '').trim() || 'en-IN'
+            })
+        }, function (response) {
+            if (response.type !== 'success') {
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            /* An empty key means LEAVE THE SAVED ONE ALONE. The field loads
+               blank because the value is never sent to a browser, so writing
+               that emptiness through would blank the shop's credential the
+               first time anybody changed the language. */
+            if (!key) {
+                $('#voice_saved_note').show();
+                $('#voice_api_key').val('');
+                return;
+            }
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ voice_api_key: key })
+            }, function (second) {
+                if (second.type === 'success') {
+                    $('#voice_saved_note').show();
+                    $('#voice_api_key').val('');
+                    PosnicPro.settings.voice.load();
+                } else {
+                    PosnicPro.alert(second.type, second.message);
+                }
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_key', 'Could not save the voice key'));
+            });
+        }, function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_settings', 'Could not save the voice settings'));
+        });
+    }
+};
+
+/* Loaded when its own tab is opened, on the Captain App page. */
+$(document).on('shown.bs.tab', 'a[href="#captainvoice-line"]', function () {
+    PosnicPro.settings.voice.load();
+});
+$(document).on('change', '#voice_provider', function () {
+    PosnicPro.settings.voice.syncKeyRow();
+});
+$(document).on('click', '#voice_save', function () {
+    PosnicPro.settings.voice.save();
+});
+
+/*
  * Online ordering controls on the kiosk account tab.
  *
  * Delegated from document because the tab's markup is part of the settings
@@ -7712,14 +8008,16 @@ $(document).on('click', '.kiosk-pause-btn', function () {
     if (minutes > 0) {
         until = new Date(Date.now() + minutes * 60000);
     } else {
+        /* End of today, not for ever. The one-click version of the same rule
+           the whole control is built on. */
         until = new Date();
         until.setHours(23, 59, 59, 999);
     }
-    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString(), true);
 });
 
 $(document).on('click', '#kiosk_pause_resume', function () {
-    PosnicPro.settings.onlineOrdering.renderPause('');
+    PosnicPro.settings.onlineOrdering.renderPause('', true);
 });
 
 /*
@@ -7749,22 +8047,15 @@ PosnicPro.salesChannels = {
     /* The only two that mean nothing without naming the business involved. */
     PARTNER_CHANNELS: ['marketplace', 'ecommerce'],
 
-    renderChannels: function (enabled) {
-        var self = PosnicPro.salesChannels;
-        var chosen = Array.isArray(enabled) ? enabled : [];
-        var html = '';
-        self.CHANNELS.forEach(function (c) {
-            var checked = chosen.indexOf(c.id) !== -1 ? ' checked' : '';
-            html +=
-                '<div class="form-group col-md-4">' +
-                '<div class="custom-control custom-checkbox">' +
-                '<input type="checkbox" class="custom-control-input sales-channel-box" ' +
-                'id="channel_' + c.id + '" value="' + c.id + '"' + checked + '>' +
-                '<label class="custom-control-label" for="channel_' + c.id + '">' + c.label + '</label>' +
-                '</div></div>';
-        });
-        $('#sales_channels_list').html(html);
-    },
+    /*
+     * CHANNELS stays, renderChannels went.
+     *
+     * The list is still the vocabulary - partnerRow labels its kinds from it -
+     * but a shop no longer ticks channels on a settings screen. The Features
+     * page decides which channels exist; a second set of checkboxes behind it
+     * was the duplicate that made this page feel like one big "Sales Channels"
+     * screen in the first place.
+     */
 
     partnerRow: function (partner) {
         var self = PosnicPro.salesChannels;
@@ -7796,10 +8087,25 @@ PosnicPro.salesChannels = {
             '</div></div>';
     },
 
+    /*
+     * ONE list of partners, drawn into two screens.
+     *
+     * A partner row already says which kind it is - an aggregator that
+     * delivers, or a webshop the shop runs itself - so Delivery Partners and
+     * Webshop are two views of the same stored list rather than two lists to
+     * keep in step. collect() reads `.channel-partner-row` wherever it sits,
+     * so a save from either screen still writes both.
+     */
     renderPartners: function (partners) {
         var self = PosnicPro.salesChannels;
         var list = Array.isArray(partners) ? partners : [];
-        $('#sales_channel_partner_rows').html(list.map(self.partnerRow).join(''));
+        var apps = [];
+        var shops = [];
+        list.forEach(function (p) {
+            (String((p || {}).channel) === 'ecommerce' ? shops : apps).push(p);
+        });
+        $('#sales_channel_partner_rows').html(apps.map(self.partnerRow).join(''));
+        $('#webshop_partner_rows').html(shops.map(self.partnerRow).join(''));
     },
 
     /*
@@ -7928,7 +8234,10 @@ PosnicPro.salesChannels = {
         var self = PosnicPro.salesChannels;
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             var values = (response && response.data && response.data.values) || {};
-            self.renderChannels(values.sales_channels_enabled);
+            /* The rows below are now on screen and hold what the shop stored.
+               Until this is true, collect() must not claim to speak for them -
+               see the guard there. */
+            self._loaded = true;
             self.renderPartners(values.sales_channel_partners);
             self.renderVenues(values.partner_venues);
             self.renderCharges(values.channel_charges);
@@ -7938,26 +8247,40 @@ PosnicPro.salesChannels = {
                the survivable direction. */
             var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
             $("#online_order_approval").val(approval);
+            /* Serving periods are NOT drawn here any more - they moved to the
+               Restaurant page. Rendering them into markup that no longer
+               exists is harmless; COLLECTING them from it is not, which is
+               why the save below no longer sends them. */
             /* Remembered so the sidebar can decide without a request on every
                page load: the approval queue is only worth a menu entry for a
                shop that actually holds orders. */
             PosnicPro.local.set('online_order_approval', approval);
             PosnicPro.applyOrderQueueVisibility();
-            PosnicPro.dayparts.render(values.menu_dayparts);
         }, function () {
             /* A shop that has never saved these has nothing stored yet, which
                is not an error. Draw the till, which every shop has. */
-            self.renderChannels(['pos']);
             self.renderPartners([]);
             self.renderVenues([]);
             self.renderCharges({});
         });
     },
 
+    /**
+     * What the screens are showing, in the shape the group endpoint stores.
+     *
+     * EVERY KEY HERE IS READ OUT OF THE DOM, which makes this function a
+     * loaded gun whenever the DOM is not what it will be. The rows are drawn by
+     * load(); if that request is still in flight, or failed, or was never made
+     * because somebody reached a Save without passing through an entry point,
+     * the containers are empty and every one of these keys would go to the
+     * server as "none" - erasing the shop's partners, venues and charges.
+     *
+     * That is not a hypothetical shape in this codebase. menu_dayparts was
+     * caught doing it once and sales_channels_enabled a second time, both after
+     * markup moved. So: no load, no claim. The group endpoint writes only the
+     * keys it is given, and omitting one keeps what is stored.
+     */
     collect: function () {
-        var enabled = [];
-        $('.sales-channel-box:checked').each(function () { enabled.push($(this).val()); });
-
         var partners = [];
         $('.channel-partner-row').each(function () {
             var $row = $(this);
@@ -8010,16 +8333,54 @@ PosnicPro.salesChannels = {
         });
 
         return {
-            sales_channels_enabled: enabled,
+            /*
+             * sales_channels_enabled is DELIBERATELY ABSENT, for exactly the
+             * reason menu_dayparts is below.
+             *
+             * The "ways this shop takes orders" checkboxes were a second place
+             * to choose channels after the Features cards, so they went. Their
+             * markup is gone, which means collecting the key here would send an
+             * empty list and quietly wipe whatever a shop had chosen - the
+             * item channel picker reads it. The group endpoint writes only
+             * what it is given, so leaving it out keeps the stored value.
+             */
             sales_channel_partners: partners,
             /* Empty is a real answer: it means "work it out", which is right
                for the one-branch shops that are most of them. */
             online_ordering_default_store: String($("#online_ordering_default_store").val() || "").trim(),
-            menu_dayparts: PosnicPro.dayparts.collect(),
+            /*
+             * menu_dayparts is DELIBERATELY ABSENT.
+             *
+             * The serving-period rows moved to the Restaurant page, so
+             * dayparts.collect() finds no markup here and returns an empty
+             * list. Sending that would have wiped every period a shop had set,
+             * on every save of this screen, with no error and nothing to
+             * explain it. The group endpoint writes only what it is given, so
+             * leaving the key out keeps the stored value safe.
+             */
             partner_venues: venues,
             channel_charges: charges,
             online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
         };
+    },
+
+    /**
+     * collect(), with the keys nobody can vouch for taken out.
+     *
+     * Callers save through this rather than collect() so the guard cannot be
+     * forgotten at one of the four Save buttons.
+     */
+    payload: function () {
+        var self = PosnicPro.salesChannels;
+        var out = self.collect();
+        if (self._loaded) { return out; }
+
+        /* Nothing was ever read back, so these rows are empty because the page
+           has not filled them - not because the shop deleted everything. */
+        delete out.sales_channel_partners;
+        delete out.partner_venues;
+        delete out.channel_charges;
+        return out;
     },
 
     save: function () {
@@ -8029,7 +8390,7 @@ PosnicPro.salesChannels = {
 
         PosnicPro.put({
             url: 'settings/group/channels',
-            data: JSON.stringify(PosnicPro.salesChannels.collect())
+            data: JSON.stringify(PosnicPro.salesChannels.payload())
         }, function (response) {
             loader.find('.loadingSpinner').remove();
             if (response.type === 'success') {
@@ -8050,9 +8411,29 @@ PosnicPro.salesChannels = {
     }
 };
 
-/* Loaded when the tab is opened rather than on every settings page view: the
-   shop may never touch this screen, and the request would be wasted. */
-$(document).on('click', '#channels-tab-line', function () {
+/*
+ * Every screen that shows part of the channels group has to load it.
+ *
+ * This hung off '#channels-tab-line' - the one combined tab the split deleted.
+ * Nothing called load() after that, so Delivery Partners came up with no
+ * partners, Restaurant with no venues and no delivery charges, and the default
+ * branch and approval boxes empty. Worse than looking broken: collect() reads
+ * those same rows out of the DOM, so the next Save would have written the
+ * empty screen back and erased every partner, venue and charge the shop had.
+ *
+ * Restaurant is in this list because the venues and charges live there now.
+ * Loaded on entry rather than on every settings view: a shop may never open
+ * these, and the request would be wasted.
+ */
+PosnicPro.salesChannels.ENTRIES =
+    '#v-pills-onlineordering-tab, #manage_sec_onlineordering, ' +
+    '#v-pills-kioskmachine-tab, #manage_sec_kioskmachine, ' +
+    '#v-pills-captainapp-tab, #manage_sec_captainapp, ' +
+    '#v-pills-deliverypartners-tab, #manage_sec_deliverypartners, ' +
+    '#v-pills-webshop-tab, #manage_sec_webshop, ' +
+    '#v-pills-tableorder-tab, #manage_sec_tableorder';
+
+$(document).on('click', PosnicPro.salesChannels.ENTRIES, function () {
     PosnicPro.salesChannels.load();
 });
 
@@ -8068,14 +8449,193 @@ $(document).on('click', '#add_channel_partner', function () {
     $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({}));
 });
 
+/*
+ * The pairing screen lives on the API, not in this bundle.
+ *
+ * A relative /pair resolves against wherever the console happens to be served
+ * from - which on the packaged desktop build is a file:// path, and the link
+ * would simply do nothing. API_URL is the shop's own server either way. Built
+ * on click rather than at load because API_URL is not set until sign-in.
+ */
+/*
+ * The shop's two public addresses, shown where the store id is typed.
+ *
+ * A shop that has just set a store id has no way to find out what to print on
+ * the table. It was reachable only by knowing the shape of the URL, which is
+ * the kind of thing that gets asked on a support call forever.
+ *
+ * Both are shown at once because they are two pages and not two modes: /order
+ * transacts, /menu is the same catalogue with no cart. Stopping orders leaves
+ * the menu standing, which is the whole point of having both.
+ */
+PosnicPro.settings.storefrontLinks = function () {
+    var id = String($('#kioskstore_id').val() || '').trim();
+    var row = $('#storefront_links_row');
+
+    /*
+     * The box spells out its own answer.
+     *
+     * "Store id" on an empty field asks somebody to supply a value whose
+     * purpose, source and shape are all unstated. Showing the real address it
+     * becomes - this shop's host, not a placeholder - turns the question into
+     * "finish this link", which anybody can answer.
+     */
+    var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+    if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+    /* Written in two steps on purpose. A regex ending in an escaped slash -
+       /^https?:\/\// - finishes with two slashes, and any tool that strips
+       comments without understanding regex literals reads those as the start
+       of one and eats the rest of the line. The test harness does exactly
+       that, and did. */
+    var host = base.replace(/^[a-z]+:/i, '').replace(/^\/+/, '');
+    $('#storefront_url_prefix').text(host + '/order/');
+
+    if (!row.length) { return; }
+    if (!/^[A-Za-z0-9]{3,6}$/.test(id)) {
+        /* Nothing to print yet. An address with a blank where the code goes is
+           worse than no address: somebody will copy it. */
+        row.hide();
+        return;
+    }
+    /* API_URL, never a relative path - the desktop build serves this console
+       from file://, where "/order/AZ100" points at the local disk. */
+    var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+    if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+    $('#storefront_order_url').val(base + '/order/' + id);
+    $('#storefront_menu_url').val(base + '/menu/' + id);
+    row.show();
+};
+
+/* Redrawn as it is typed, so the address is right before the save rather than
+   after a reload nobody thinks to do. */
+$(document).on('input change', '#kioskstore_id', function () {
+    PosnicPro.settings.storefrontLinks();
+});
+
+$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering, #kioskaccount-tab-line', function () {
+    PosnicPro.settings.storefrontLinks();
+});
+
+$(document).on('click', '.copy-storefront-link', function () {
+    var input = document.getElementById($(this).data('target'));
+    if (!input) { return; }
+    var text = input.value || '';
+    var said = function () {
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_link_copied', 'Address copied'));
+    };
+    /* navigator.clipboard needs a secure context, which a shop on plain http
+       over its own LAN is not. The textarea fallback is what actually runs
+       there, so it is not dead code. */
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(said, function () { input.select(); });
+        return;
+    }
+    input.select();
+    try { document.execCommand('copy'); said(); } catch (e) { /* the text is selected; they can copy it */ }
+});
+
+$(document).on('click', '.storefront-open', function (e) {
+    e.preventDefault();
+    var input = document.getElementById($(this).data('target'));
+    if (input && input.value) { window.open(input.value, '_blank', 'noopener'); }
+});
+
+$(document).on('click', '#open_pairing_screen', function (e) {
+    e.preventDefault();
+    var base = (typeof API_URL === 'string' && API_URL) || '/';
+    window.open(base.replace(/\/+$/, '') + '/pair', '_blank', 'noopener');
+});
+
+$(document).on('click', '#add_webshop_partner', function () {
+    $('#webshop_partner_rows').append(PosnicPro.salesChannels.partnerRow({ channel: 'ecommerce' }));
+});
+
+/* Change a row's kind and it belongs on the other screen. Moving it there is
+   the honest answer: leaving an "Own webshop" row sitting under Delivery
+   Partners is how a shop ends up believing it saved something it cannot find. */
+$(document).on('change', '.partner-channel', function () {
+    var $row = $(this).closest('.channel-partner-row');
+    var target = $(this).val() === 'ecommerce' ? '#webshop_partner_rows' : '#sales_channel_partner_rows';
+    if (!$row.parent().is(target)) { $row.appendTo(target); }
+});
+
 $(document).on('click', '.remove-channel-partner', function () {
     $(this).closest('.channel-partner-row').remove();
 });
 
-$(document).on('submit', '#sales_channels_form', function (e) {
-    e.preventDefault();
+/*
+ * EVERY channel screen saves the whole group, and that is deliberate.
+ *
+ * collect() reads the DOM by class, and the panes are hidden rather than
+ * removed, so it sees every row wherever it sits. That means a save from the
+ * webshop screen still writes the aggregators, the venues and the charges
+ * exactly as they stand - which is what the one big form did before the split.
+ * Collecting only the open pane would be the change that quietly wipes the
+ * others, which is the bug this codebase has already paid for twice.
+ */
+$(document).on(
+    'submit',
+    '#online_orders_form, #delivery_partners_form, #webshop_partners_form',
+    function (e) {
+        e.preventDefault();
+        return PosnicPro.salesChannels.save();
+    }
+);
+
+/* Venues and delivery charges sit on the Restaurant page, as cards with their
+   own Save rather than a form - the same shape the serving periods use. */
+$(document).on('click', '.save-channel-settings', function () {
     return PosnicPro.salesChannels.save();
 });
+
+/*
+ * WHICH PRODUCTS THIS CHANNEL SELLS, shown inside the channel you are in.
+ *
+ * One copy of the screen, borrowed by whichever pane is open. Four copies
+ * would mean four sets of the same ids, and a duplicate id is how a screen
+ * starts writing to the wrong form - this page already carries one such
+ * landmine and does not need three more.
+ */
+PosnicPro.salesChannels.PANE_CHANNEL = {
+    'v-pills-onlineordering': 'online',
+    'v-pills-kioskmachine': 'kiosk',
+    'v-pills-captainapp': 'tableside',
+    'v-pills-deliverypartners': 'marketplace',
+    'v-pills-webshop': 'ecommerce'
+};
+
+PosnicPro.salesChannels.lendProducts = function (paneId) {
+    var channel = PosnicPro.salesChannels.PANE_CHANNEL[paneId];
+    if (!channel) { return; }
+    var $host = $('#' + paneId + ' .channel-products-host').first();
+    var $block = $('#channel_items_block');
+    if (!$host.length || !$block.length) { return; }
+    if (!$block.parent().is($host)) { $block.appendTo($host); }
+    if (!PosnicPro.channelItems) { return; }
+
+    PosnicPro.channelItems.fillCategories();
+    /*
+     * Preselect AFTER the options exist.
+     *
+     * Setting a value a select has no option for is a silent no-op, so doing
+     * this before the list arrives leaves the box on whatever it was showing
+     * and the shopkeeper edits the wrong channel's items. Same trap as
+     * itemChannels.set() on the item page, and the reason fillChannels takes
+     * a callback at all.
+     */
+    PosnicPro.channelItems.fillChannels(function () {
+        $('#channel_items_channel').val(channel).trigger('change');
+    });
+};
+
+$(document).on(
+    'shown.bs.tab',
+    '#v-pills-onlineordering-tab, #v-pills-kioskmachine-tab, #v-pills-captainapp-tab, ' +
+        '#v-pills-deliverypartners-tab, #v-pills-webshop-tab',
+    function () {
+        PosnicPro.salesChannels.lendProducts(String($(this).attr('href') || '').replace('#', ''));
+    }
+);
 
 /*
  * Serving periods: breakfast, lunch, dinner.
@@ -8207,12 +8767,519 @@ $(document).on('click', '.remove-daypart', function () {
  * following Tuesday, with nobody able to say why the orders stopped - which is
  * why the underlying field is a moment and not a flag.
  */
-$(document).on('click', '#stop_taking_orders', function () {
-    var until = new Date();
-    until.setHours(23, 59, 59, 999);
-    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
-    PosnicPro.alert(
-        'success',
-        PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
-    );
+/*
+ * The separate "Stop taking orders" button is gone, and this handler with it.
+ *
+ * It did exactly what "Rest of today" already did, and announced it with a
+ * SUCCESS toast reading "Orders stopped for today" - on a screen where nothing
+ * is stored until Save. A kitchen under water reads that as done, walks away,
+ * and the orders keep arriving. Stopping is now the red button in the group
+ * above, beside a marker that stays on screen until the form is saved.
+ */
+
+/*
+ * WHAT EACH CHANNEL SELLS.
+ *
+ * An item is on every channel the shop runs unless somebody says otherwise, so
+ * this screen records exceptions - and it records them in BULK, because a shop
+ * with four hundred lines is never going to open four hundred item pages to
+ * keep cigarettes off Swiggy.
+ *
+ * The filters are the ones a shop already thinks in: a category, or part of a
+ * name. Not a page number.
+ */
+PosnicPro.channelItems = {
+    /* Filled from the shop's own channels and partners, so a shop that does
+       not use Swiggy is never offered it. */
+    fillChannels: function (done) {
+        var channels = (PosnicPro.itemChannels && PosnicPro.itemChannels._options) || null;
+        var draw = function (options) {
+            $('#channel_items_channel').html(options.map(function (o) {
+                return '<option value="' + $('<div>').text(o.id).html() + '">'
+                    + $('<div>').text(o.label).html() + '</option>';
+            }).join(''));
+            if (done) { done(); }
+        };
+        if (channels) { draw(channels); return; }
+        if (PosnicPro.itemChannels) {
+            PosnicPro.itemChannels.load(function () {
+                draw(PosnicPro.itemChannels._options || []);
+            });
+        } else if (done) {
+            done();
+        }
+    },
+
+    fillCategories: function () {
+        PosnicPro.get({ url: 'categories', data: { limit: 500 } }, function (response) {
+            var rows = (response && response.data && (response.data.list || response.data)) || [];
+            if (!Array.isArray(rows)) { return; }
+            var all = '<option value="">' + PosnicPro.i18n.t('lang_report_all', 'All') + '</option>';
+            $('#channel_items_category').html(all + rows.map(function (c) {
+                return '<option value="' + $('<div>').text(c._id || c.id).html() + '">'
+                    + $('<div>').text(c.name || '').html() + '</option>';
+            }).join(''));
+        }, function () { /* no categories is not an error */ });
+    },
+
+    find: function () {
+        var self = PosnicPro.channelItems;
+        var channel = $('#channel_items_channel').val();
+        if (!channel) { return; }
+
+        PosnicPro.get({
+            url: 'items/channel',
+            data: {
+                channel: channel,
+                category_id: $('#channel_items_category').val() || '',
+                search: $('#channel_items_search').val() || ''
+            }
+        }, function (response) {
+            var data = (response && response.data) || { items: [] };
+            self.render(data.items || []);
+        }, function () {
+            $('#channel_items_rows').html('');
+            $('#channel_items_wrap').hide();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_items', 'Could not load the items.'));
+        });
+    },
+
+    render: function (items) {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#channel_items_rows').html(items.map(function (item) {
+            /* The state shown is what the shop DECIDED, not what happens to be
+               true at four in the afternoon: somebody configuring a catalogue
+               is not asking about the clock. */
+            var mark = item.on
+                ? '<span class="badge badge-success-inverse">' + t('lang_sold_here', 'Sold here') + '</span>'
+                : '<span class="badge badge-danger-inverse">' + t('lang_not_sold_here', 'Not sold here') + '</span>';
+            var hours = item.hours
+                ? ' <span class="small text-muted">' + esc(item.hours.from) + ' - ' + esc(item.hours.to) + '</span>'
+                : '';
+
+            return '<tr>'
+                + '<td style="width:36px;"><div class="custom-control custom-checkbox">'
+                + '<input type="checkbox" class="custom-control-input channel-item-pick" '
+                + 'id="ci_' + esc(item.id) + '" value="' + esc(item.id) + '">'
+                + '<label class="custom-control-label" for="ci_' + esc(item.id) + '"></label>'
+                + '</div></td>'
+                + '<td>' + esc(item.name) + hours + '</td>'
+                + '<td class="text-muted small">' + esc(item.category_name) + '</td>'
+                + '<td class="text-right">' + mark + '</td>'
+                + '</tr>';
+        }).join(''));
+
+        $('#channel_items_count').text(items.length + ' ' + t('lang_items_found', 'items'));
+        $('#channel_items_all').prop('checked', false);
+        $('#channel_items_wrap').toggle(items.length > 0);
+        if (!items.length) {
+            PosnicPro.alert('info', t('lang_no_items_match', 'Nothing matches that filter.'));
+        }
+    },
+
+    apply: function (on) {
+        var self = PosnicPro.channelItems;
+        var ids = $('.channel-item-pick:checked').map(function () { return this.value; }).get();
+        if (!ids.length) {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_at_least_one_item', 'Select at least one item.'));
+            return;
+        }
+
+        PosnicPro.post({
+            url: 'items/channel',
+            data: JSON.stringify({
+                channel: $('#channel_items_channel').val(),
+                item_ids: ids,
+                on: on
+            })
+        }, function (response) {
+            if (response && response.type === 'success') {
+                /* Says how many actually moved, not how many were selected:
+                   "40 selected, 3 changed" is the honest answer when most were
+                   already where the shop wanted them. */
+                var d = response.data || {};
+                PosnicPro.alert('success', response.message + ' (' + (d.changed || 0) + ')');
+                self.find();
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function (xhr) {
+            var body = xhr && xhr.responseJSON;
+            PosnicPro.alert('error', (body && body.message)
+                || PosnicPro.i18n.t('lang_could_not_update_the_items', 'Could not update the items.'));
+        });
+    }
+};
+
+/*
+ * The screen fills when a channel pane lends it, not on a tab that is gone.
+ *
+ * This used to hang off '#channels-tab-line', the tab id of the one combined
+ * "Channels and products" screen. The split deleted that tab, so nothing ever
+ * called fillChannels again: the Channel box came up empty, Show found nothing,
+ * and the whole tab read as broken - which is exactly how it was reported.
+ *
+ * Binding to the pane that borrows the screen means it cannot come apart the
+ * same way again: the thing that shows the screen is the thing that fills it.
+ */
+
+$(document).on('click', '#channel_items_find', function () {
+    PosnicPro.channelItems.find();
+});
+
+$(document).on('change', '#channel_items_all', function () {
+    $('.channel-item-pick').prop('checked', $(this).is(':checked'));
+});
+
+$(document).on('click', '#channel_items_on', function () { PosnicPro.channelItems.apply(true); });
+$(document).on('click', '#channel_items_off', function () { PosnicPro.channelItems.apply(false); });
+
+/*
+ * Serving periods, saved from the Restaurant page.
+ *
+ * They MOVED there from the channels tab because breakfast is breakfast
+ * wherever the menu is shown - on a QR code, on the kiosk, in the app. They
+ * are the kitchen's clock, not one channel's, and leaving them inside a
+ * channel would have meant copying them into the next channel within a month.
+ *
+ * They still LIVE in the channels settings group, because that is where the
+ * server keeps menu_dayparts and moving a stored key is a migration for no
+ * gain. The screen they are edited on and the group they are stored in do not
+ * have to agree, and pretending otherwise would be a database change to fix a
+ * layout problem.
+ */
+PosnicPro.servingPeriods = {
+    load: function () {
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            PosnicPro.dayparts.render(values.menu_dayparts);
+        }, function () {
+            PosnicPro.dayparts.render([]);
+        });
+    },
+
+    save: function () {
+        var loader = $('.loader-view-dayparts');
+        loader.find('.loadingSpinner').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        /*
+         * Only menu_dayparts is sent.
+         *
+         * The group endpoint writes what it is given and leaves the rest, so
+         * this cannot reach across and blank the store address or the partner
+         * list that live in the same group and are edited on another screen.
+         */
+        PosnicPro.put({
+            url: 'settings/group/channels',
+            data: JSON.stringify({ menu_dayparts: PosnicPro.dayparts.collect() })
+        }, function (response) {
+            loader.find('.loadingSpinner').remove();
+            if (response && response.type === 'success') {
+                PosnicPro.alert('success', response.message
+                    || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+            } else {
+                PosnicPro.alert('error', (response && response.message) || '');
+            }
+        }, function () {
+            loader.find('.loadingSpinner').remove();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_serving_periods',
+                'Could not save the serving periods'));
+        });
+    }
+};
+
+$(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder', function () {
+    PosnicPro.servingPeriods.load();
+});
+
+$(document).on('click', '#save_dayparts', function () {
+    PosnicPro.servingPeriods.save();
+});
+
+/*
+ * The delivery platforms and webshops most shops actually mean.
+ *
+ * Mirrors KNOWN_PARTNERS in api/src/utils/sales-channels.js. The ids have to
+ * match, because they are what a sale stores and what the commission report
+ * groups by: a shop that types "Swiggy" one day and "swiggy" the next ends up
+ * with two rows holding half a month each.
+ *
+ * A preset is a starting point, not a restriction. A shop with a local
+ * aggregator nobody has heard of still adds one by hand - the whole reason
+ * partners are DATA rather than features is that a new one must never be a
+ * release.
+ */
+PosnicPro.partnerPresets = {
+    /*
+     * BRAND NAMES, NOT UI TEXT.
+     *
+     * Swiggy is Swiggy in Tamil. These are never translated and never wrapped
+     * in t() - which also keeps them out of the load-time trap, because a t()
+     * call in a literal here runs before any language pack exists.
+     *
+     * The auto-tagger will offer to wrap them every time somebody runs it.
+     * Say no. They belong beside the other proper nouns in _glossary.json,
+     * not in a translator's queue.
+     */
+    LIST: [
+        { id: 'swiggy', label: 'Swiggy', channel: 'marketplace' },
+        { id: 'zomato', label: 'Zomato', channel: 'marketplace' },
+        { id: 'ondc', label: 'ONDC', channel: 'marketplace' },
+        { id: 'magicpin', label: 'magicpin', channel: 'marketplace' },
+        { id: 'opencart', label: 'OpenCart', channel: 'ecommerce' },
+        { id: 'woocommerce', label: 'WooCommerce', channel: 'ecommerce' },
+        { id: 'shopify', label: 'Shopify', channel: 'ecommerce' }
+    ],
+
+    render: function () {
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var t = function (k, f) { return PosnicPro.i18n.t(k, f); };
+
+        $('#partner_presets').html(
+            '<span class="small text-muted mr-2">' + t('lang_add_quickly', 'Add quickly') + ':</span>'
+            + PosnicPro.partnerPresets.LIST.map(function (p) {
+                return '<button type="button" class="btn btn-outline-secondary btn-sm mr-1 mb-1 partner-preset" '
+                    + 'data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '" '
+                    + 'data-channel="' + esc(p.channel) + '">'
+                    + '<i class="feather icon-plus mr-1"></i>' + esc(p.label) + '</button>';
+            }).join('')
+        );
+        PosnicPro.partnerPresets.markUsed();
+    },
+
+    /* A platform already in the list is shown as used rather than hidden: a
+       shop looking for Swiggy should find it either way, and learn that it is
+       already there instead of adding a second one. */
+    markUsed: function () {
+        var taken = {};
+        $('.channel-partner-row .partner-label').each(function () {
+            var name = String($(this).val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            if (name) { taken[name] = true; }
+        });
+        $('.partner-preset').each(function () {
+            var used = !!taken[$(this).data('id')];
+            $(this).prop('disabled', used).toggleClass('btn-outline-secondary', !used)
+                .toggleClass('btn-secondary-rgba', used);
+        });
+    }
+};
+
+$(document).on('click', '.partner-preset', function () {
+    var $b = $(this);
+    $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({
+        label: $b.data('label'),
+        channel: $b.data('channel'),
+        /* No rate guessed. What Swiggy charges this shop is what this shop
+           negotiated, and a plausible default is the kind of number that gets
+           saved unread and then disagrees with an invoice. */
+        commission_percent: 0,
+        enabled: true
+    }));
+    PosnicPro.partnerPresets.markUsed();
+});
+
+$(document).on('input', '.partner-label', function () {
+    PosnicPro.partnerPresets.markUsed();
+});
+
+/* The one-tap Swiggy/Zomato/OpenCart buttons, on the two screens that show
+   partner rows. Bound to the deleted tab, they simply never drew - which is
+   why Delivery Partners offered nothing but "Add another". */
+$(document).on(
+    'click',
+    '#v-pills-deliverypartners-tab, #manage_sec_deliverypartners, ' +
+        '#v-pills-webshop-tab, #manage_sec_webshop',
+    function () {
+        PosnicPro.partnerPresets.render();
+    }
+);
+
+/*
+ * Turning AI on, which is the step that was missing.
+ *
+ * The item screen has had a "Write it for me" button since the seam landed,
+ * hidden until the shop has a provider and a key - and there was nowhere to
+ * put either, so it could never appear. An engine with no ignition.
+ *
+ * Posnic charges nothing for AI. The shop brings its own account and pays the
+ * provider directly, which is why this works on every plan including the free
+ * and self-hosted one, and why the limit below is a courtesy to the shopkeeper
+ * rather than a control on us: it is their money.
+ *
+ * Delegated handlers only: this pane is part of the settings module and is not
+ * in the DOM when this file runs, which is the dead-selector trap.
+ */
+PosnicPro.settings = PosnicPro.settings || {};
+PosnicPro.settings.ai = {
+    /*
+     * Where each provider actually hands out a key.
+     *
+     * Deep links rather than a home page: "create an account and find the
+     * API section" is the step people give up on, and every one of these
+     * consoles buries it somewhere different.
+     */
+    KEY_PAGES: {
+        anthropic: {
+            url: 'https://console.anthropic.com/settings/keys', name: 'Anthropic Console',
+            paid: true, shownOnce: true
+        },
+        openai: {
+            url: 'https://platform.openai.com/api-keys', name: 'OpenAI Platform',
+            paid: true, shownOnce: true
+        },
+        /* Gemini has a free tier and shows the key again later, so two of
+           the three steps read differently for it. */
+        google: {
+            url: 'https://aistudio.google.com/apikey', name: 'Google AI Studio',
+            paid: false, shownOnce: false
+        }
+    },
+
+    /* The key, the limit and the meter only mean something once a provider is
+       chosen. Controls that cannot affect anything should not ask for a
+       decision. */
+    syncRows: function () {
+        var on = !!$('#ai_provider').val();
+        var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
+        /*
+         * Open while there is no key, put away once there is one. Somebody
+         * who has already pasted a key came back for the limit or the
+         * meter, and should not have to scroll past three steps they have
+         * done to reach them.
+         */
+        var needsHelp = on && !!where && !PosnicPro.settings.ai._keySaved;
+        $('#ai_key_help').toggle(needsHelp || PosnicPro.settings.ai._howtoOpen === true);
+        $('#ai_howto_toggle_row').toggle(on && !!where && !!PosnicPro.settings.ai._keySaved
+            && PosnicPro.settings.ai._howtoOpen !== true);
+        if (where) {
+            $('#ai_key_link').attr('href', where.url).text(where.name);
+            $('#ai_howto_2').text(where.paid
+                ? PosnicPro.i18n.t('lang_ai_howto_2_paid', 'Add credit or a payment method. A key with no balance behind it fails on the first press.')
+                : PosnicPro.i18n.t('lang_ai_howto_2_free', 'There is a free allowance to start with, so you can try it before adding any payment method.'));
+            $('#ai_howto_3').text(where.shownOnce
+                ? PosnicPro.i18n.t('lang_ai_howto_3_once', 'Create a key and paste it above. It is shown once, so copy it before closing that page.')
+                : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
+        }
+        $('#ai_key_row,#ai_cap_row').toggle(on);
+        $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
+    },
+
+    load: function () {
+        /* Collapsed again on every visit. Opening it was a request for this
+           look at the page, not a preference to remember. */
+        PosnicPro.settings.ai._howtoOpen = false;
+        PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var v = response.data.values || response.data;
+            $('#ai_provider').val(v.ai_provider || '');
+            $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
+            PosnicPro.settings.ai.syncRows();
+        }, function () { /* the card still lets you choose and save */ });
+
+        /* Which secrets EXIST, never what they are. */
+        PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
+            if (response.type !== 'success' || !response.data) { return; }
+            var saved = (response.data.configured || {}).ai_api_key === true;
+            PosnicPro.settings.ai._keySaved = saved;
+            PosnicPro.settings.ai.syncRows();
+            $('#ai_api_key').attr('placeholder', saved
+                ? PosnicPro.i18n.t('lang_ai_key_saved', 'A key is saved. Type a new one to replace it.')
+                : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
+        }, function () { /* the placeholder is a courtesy, not the feature */ });
+
+        PosnicPro.settings.ai.loadSpend();
+    },
+
+    /* What it has cost so far, because somebody spending their own money is
+       entitled to watch the meter without leaving the page. */
+    loadSpend: function () {
+        PosnicPro.get('items/aiSpend', {}, function (response) {
+            var rows = (response && response.data && response.data.features) || [];
+            var host = $('#ai_spend_table').empty();
+            if (!rows.length) { PosnicPro.settings.ai.syncRows(); return; }
+            var html = '';
+            for (var i = 0; i < rows.length; i += 1) {
+                html += '<div>' + PosnicPro.escapeHtml(rows[i].feature)
+                    + ': ' + PosnicPro.escapeHtml(rows[i].spent) + '</div>';
+            }
+            host.html(html);
+            PosnicPro.settings.ai.syncRows();
+        }, function () { /* no meter is not a broken page */ });
+    },
+
+    save: function () {
+        var provider = $('#ai_provider').val() || '';
+        var key = String($('#ai_api_key').val() || '');
+        var cap = String($('#ai_monthly_cap').val() || '').trim();
+
+        PosnicPro.put({
+            url: 'settings/group/preferences',
+            data: JSON.stringify({
+                ai_provider: provider,
+                /* Empty means no limit, which is a real choice and not the
+                   absence of one, so it is sent as an empty string rather
+                   than skipped. */
+                ai_monthly_cap: cap
+            })
+        }, function (response) {
+            if (response.type !== 'success') {
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            /* An empty key means LEAVE THE SAVED ONE ALONE. The field loads
+               blank because the value is never sent to a browser, so writing
+               that emptiness through would blank the shop's credential the
+               first time anybody changed the limit. */
+            if (!key) {
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                    'Saved. The AI button now appears on the item screen, beside Description.'));
+                /* The item screen asks once per session whether AI is usable; that
+                   answer is now stale, so let it ask again rather than leaving the
+                   button hidden until a reload. */
+                if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
+                $('#ai_api_key').val('');
+                return;
+            }
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ ai_api_key: key })
+            }, function (second) {
+                if (second.type === 'success') {
+                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                        'Saved. The AI button now appears on the item screen, beside Description.'));
+                    /* The item screen asks once per session whether AI is usable; that
+                       answer is now stale, so let it ask again rather than leaving the
+                       button hidden until a reload. */
+                    if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
+                    $('#ai_api_key').val('');
+                    PosnicPro.settings.ai.load();
+                } else {
+                    PosnicPro.alert(second.type, second.message);
+                }
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_ai_key', 'Could not save the AI key'));
+            });
+        }, function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_ai_settings', 'Could not save the AI settings'));
+        });
+    }
+};
+
+$(document).on('shown.bs.tab', 'a[href="#v-pills-ai"]', function () {
+    PosnicPro.settings.ai.load();
+});
+$(document).on('change', '#ai_provider', function () {
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_howto_toggle', function () {
+    /* One way: opened on request, and it stays open for as long as they
+       are on the page. Closing it again is what leaving the page does. */
+    PosnicPro.settings.ai._howtoOpen = true;
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_save', function () {
+    PosnicPro.settings.ai.save();
 });

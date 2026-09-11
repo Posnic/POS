@@ -28,9 +28,24 @@ const FEATURES = [
   'module_tax_enable',
   'module_credit_enable',
   'module_marketing_enable',
+  /* AI assistance. The switch a shopkeeper sees in the Features list; the
+     provider, key and spending limit live on the AI page. offOnly like its
+     neighbours, so a shop that never touched it is not switched off by our
+     silence. See services/ai.service.js. */
+  'ai_enabled',
   'module_messaging_enable',
+  /* The parent: whether this shop sells anywhere but the counter at all. */
   'module_channels_enable',
-  'module_channels_kiosk_enable',
+  /* One per channel the shop actually uses. A shopkeeper wants a kiosk, or a
+     QR code on the table, or the captain app - not "a sales channel", which is
+     our word for how a sale is reported and no customer of ours has ever said
+     out loud. Aggregators and webshops stay DATA behind their own switch, so
+     adding Zomato is a row rather than a release. */
+  'module_online_ordering_enable',
+  'module_kiosk_enable',
+  'module_captain_enable',
+  'module_delivery_partners_enable',
+  'module_webshop_enable',
   'module_recyclebin_enable',
   'module_themes_enable',
   'module_cashbook_enable',
@@ -114,6 +129,29 @@ const PREFERENCES = [
   'sms_auto_send_time',
   'sms_retry_period',
   'sms_max_retries',
+  /* Voice ordering (captain app). Which transcriber the shop uses - 'device'
+     for the handset's own recogniser, 'openai' or 'google' for a paid one,
+     'off' to hide the mic. A preference and not a secret: a screen has to be
+     able to show which one is chosen, and the NAME of a provider is not a
+     credential. Its key is in SECRETS, where it can never be read back. */
+  'voice_provider',
+  /* The language a recogniser is told to expect. One told the wrong locale
+     mishears NUMBERS before it mishears anything else, and a number is half of
+     every order. See utils/voice-settings.js. */
+  'voice_language',
+  /* The model a shop has an account with, and which one to use. Preferences
+     and not secrets for the same reason as the voice pair: the NAME of a
+     provider is not a credential, and a screen has to be able to show which
+     one is in force. Off by default - a shop that configured nothing gets
+     nothing and pays nobody. See services/ai.service.js. */
+  'ai_provider',
+  'ai_model',
+  /* A monthly ceiling on what AI may spend, in the shop's own currency,
+     enforced before each call. The money is the shop's - we charge nothing
+     for AI and the key is theirs - so this is a promise to them rather than
+     a control on us. Empty means uncapped, which is their decision to make.
+     See services/ai-budget.js. */
+  'ai_monthly_cap',
 ];
 
 const DOCUMENTS = [
@@ -133,6 +171,17 @@ const SECRETS = [
   'email_smtp_username',
   'email_smtp_password',
   'email_smtp_from',
+  /* The transcription key, for a shop that picked a paid provider. It is here
+     rather than in the handset on purpose: a key shipped to phones cannot be
+     rotated without reinstalling every one of them, and a leaked one is billed
+     to the shop until somebody reads the invoice. See
+     services/transcribe.service.js. */
+  'voice_api_key',
+  /* The model key. Here rather than in a page or a handset for the same
+     reason as every other key in this list: one shipped to clients cannot be
+     rotated without reinstalling all of them, and a leak is billed to the shop
+     until somebody reads the invoice. */
+  'ai_api_key',
 ];
 
 /* Now that an empty value means "leave the saved credential alone", clearing

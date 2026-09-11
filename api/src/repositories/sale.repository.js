@@ -6939,7 +6939,33 @@ class SalesRepository {
 
   async kioskOrderModel(data, { SaleModel } = {}) {
     const Model = this.getModel(SaleModel);
-    return Model.kioskOrderModel(data);
+    const result = await Model.kioskOrderModel(data);
+
+    /*
+     * The machine made a noise too.
+     *
+     * The alarm was wired for the online storefront and stopped there, so an
+     * order placed on the shop's own terminal landed in silence - the one
+     * channel where a ticket is printing in another room and nobody at the
+     * till has any reason to be looking at a screen.
+     *
+     * A CHIME, never the alarm. The customer is standing at the machine and
+     * the ticket prints on its own, so this is information rather than a task.
+     * The insistent repeated sound is for an order WAITING on a person, and
+     * using it here would teach staff to ignore the one that matters.
+     */
+    if (result && result.status === true) {
+      const placed = result.data || {};
+      notifyOrderAttention({
+        branchId: String(data?.branch || data?.branch_id || BaseModel.currentBranch || ''),
+        saleId: String(placed.sale_id || placed.sales_id || ''),
+        alert: 'received',
+        state: 'accepted',
+        total: Number(placed.total) || 0,
+      });
+    }
+
+    return result;
   }
 
   async generateRazorPayQrCodekioskModel(data, { SaleModel } = {}) {
@@ -7192,6 +7218,7 @@ class SalesRepository {
         kiosk_table_id,
         dine_type,
         person_count,
+        idempotencyKey,
         /*
          * Where the customer is sitting, read by the page out of the URL it
          * was opened on.
@@ -7217,6 +7244,46 @@ class SalesRepository {
         : { 'online_ordering.store_id': branch };
       if (BaseModel.license) branchSelector.license = BaseModel.license;
       const branchDoc = await branchCollection.findOne(branchSelector);
+
+      /*
+       * The same order, sent twice, is one order.
+       *
+       * A waiter taps send, the Wi-Fi drops before the reply arrives, and the
+       * app cannot tell "never reached the kitchen" from "reached it and the
+       * answer was lost". Without this the safe choice is to refuse to retry
+       * and make somebody check the kitchen screen; with it, sending again is
+       * free, which is what lets a handset hold an order and send it when the
+       * network returns.
+       *
+       * Both apps have been sending idempotencyKey for as long as they have
+       * existed. Nothing read it: the field was destructured nowhere and
+       * stored nowhere, so every retry wrote another ticket.
+       */
+      if (idempotencyKey) {
+        const already = await db.collection('sales').findOne({
+          idempotency_key: String(idempotencyKey),
+          ...(BaseModel.license ? { license: BaseModel.license } : {}),
+        });
+        if (already) {
+          return {
+            status: true,
+            message: 'Order placed successfully',
+            data: {
+              tokenId: already.token_id || already.tokenId || '',
+              sale_id: already._id.toString(),
+              sales_id: already.sales_id,
+              branch_name: already.branch_name,
+              items: already.items || [],
+              subtotal: already.sub_total ?? already.subtotal ?? 0,
+              discount: already.discount ?? 0,
+              tax: already.tax ?? 0,
+              total: already.sales_total ?? already.total ?? 0,
+              payment_status: already.payment_status,
+              duplicate: true,
+            },
+          };
+        }
+      }
 
       if (!branchDoc) {
         return { status: false, message: 'Branch not found', data: null };
@@ -7522,6 +7589,9 @@ class SalesRepository {
       // Use raw MongoDB insert to bypass Mongoose schema validators
       const salesCollection = db.collection('sales');
       const insertResult = await salesCollection.insertOne({
+        /* What makes a resend safe. Absent on orders taken before this
+           shipped, which is why the lookup above is skipped without one. */
+        ...(idempotencyKey ? { idempotency_key: String(idempotencyKey) } : {}),
         branch: branchObjectId,
         branch_id: branchObjectId,
         branch_name: branchName,

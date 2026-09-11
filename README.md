@@ -24,7 +24,7 @@ before making a package-level licence statement.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-616%20endpoints-blue)](docs/API.md)
+[![API](https://img.shields.io/badge/REST%20API-626%20endpoints-blue)](docs/API.md)
 [![Source licence](https://img.shields.io/badge/source%20licence-AGPL--3.0-blue)](LICENSE)
 [![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
@@ -125,6 +125,10 @@ A server is not a better desktop; it is a machine somebody has to look after. If
 one person rings up sales on one computer, the desktop app is the right answer
 and always will be.
 
+For a fuller comparison of local desktop, self-hosted network, and managed
+operation, read the [Offline POS vs Online/Offline POS deployment
+guide](https://posnic.github.io/offline-vs-online-pos.html).
+
 ### Desktop
 
 Download the package for your platform from
@@ -136,9 +140,10 @@ for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 Verify your download against `SHA256SUMS.txt`. For releases that provide an
 artifact-bound SBOM and provenance, follow the [release verification guide](docs/VERIFY_RELEASE.md).
 
-> **Windows** may warn that the publisher is unrecognised: *More info* → *Run
-> anyway*. **macOS**: *System Settings → Privacy & Security → Open Anyway*.
-> **Linux**: make the `.AppImage` executable, or install the `.deb`.
+> Current v1.6.1 Windows installers are signed and timestamped, and macOS
+> packages are signed and notarized. If the operating system reports an unknown
+> publisher, stop and verify the package against the official release before
+> running it. **Linux**: make the `.AppImage` executable, or install the `.deb`.
 
 First launch takes a few minutes while it sets up its database. After that,
 seconds. Full walkthrough in the **[user guide](docs/USER_GUIDE.md)**.
@@ -237,6 +242,8 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [India government integration](docs/INDIA_GOVERNMENT_INTEGRATION.md) | How software is registered with the GST system, what each route requires, and when to apply |
 | [Backups](docs/BACKUP_POLICY.md) | What is backed up, when, and what it does not protect you from |
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
+| [Open source POS evaluation checklist](https://posnic.github.io/open-source-pos-evaluation-checklist.html) | Verify licensing, offline checkout, hardware, recovery and maintenance before rollout |
+| [Offline POS backup and restore checklist](https://posnic.github.io/offline-pos-backup-checklist.html) | Turn routine copies into a tested recovery process for local and self-hosted deployments |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |

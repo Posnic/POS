@@ -7,6 +7,7 @@ const Branch = require('../models/branch.model');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const partnerVenues = require('../utils/partner-venues');
+const itemChannels = require('../utils/item-channels');
 const salesChannels = require('../utils/sales-channels');
 
 /*
@@ -18,6 +19,9 @@ const salesChannels = require('../utils/sales-channels');
  * is honestly unmarked - somebody with an allergy reads both the same way.
  */
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const dishIcons = require('../utils/dish-icons');
+const voiceSettings = require('../utils/voice-settings');
+
 const onlineOrderingDiet = (value) => {
   const v = String(value || '')
     .trim()
@@ -85,6 +89,7 @@ const TRACKED_FIELDS = [
  * Handles all database operations for items
  * Separates data access logic from business logic
  */
+
 class ItemRepository extends BaseModel {
   constructor() {
     super('items');
@@ -1573,11 +1578,27 @@ class ItemRepository extends BaseModel {
            default anybody wants from a feature whose job is to list things. */
         show_on_menu: data.show_on_menu !== false && data.show_on_menu !== 'false',
         diet: onlineOrderingDiet(data.diet),
+        /* One emoji, or nothing. Cleaned rather than trusted: it arrives
+           from a form and is rendered into a menu card, and a field that
+           accepts letters quietly becomes a second name. Empty is normal -
+           dish-icons reads the NAME and suggests one. */
+        icon: dishIcons.clean(data.icon),
         /* Ids into the shop's own serving periods. Empty means all day, which
            is most of a menu. */
         daypart_ids: Array.isArray(data.daypart_ids)
           ? data.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
           : [],
+        /*
+         * The channels this item is NOT sold on.
+         *
+         * Normalised here rather than trusted, because it arrives from a form
+         * and reaches a Mongo query: an id nobody recognises is dropped, so a
+         * typo can never quietly take an item off sale everywhere. Sync
+         * replaces whole documents, so this has to be written on every save or
+         * it is deleted by the next one. See utils/item-channels.js.
+         */
+        channel_off: itemChannels.normalizeOff(data.channel_off),
+        channel_hours: itemChannels.normalizeHours(data.channel_hours),
         /* The kitchen's standing instruction for this dish, never the
            customer's note - that rides on the order line. */
         prep_note: String(data.prep_note || '')
@@ -3454,6 +3475,275 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * Which items a channel sells, and which it does not.
+   *
+   * The screen behind "show me everything on Swiggy" - a shop with four
+   * hundred lines is not going to open four hundred item pages, so the work has
+   * to be doable from the channel's own side, filtered the way a shop thinks
+   * about its catalogue: by category, or by typing part of a name.
+   */
+  async channelItems(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      if (!channel) {
+        return { status: false, message: 'Enter must correct channel', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const match = {
+        $and: [
+          { license: BaseModel.license },
+          NOT_DELETED,
+          { is_deleted: { $ne: true } },
+          { item_status: { $ne: ITEM_STATUS.INSTANT } },
+        ],
+      };
+
+      if (params.categoryId && ObjectId.isValid(String(params.categoryId))) {
+        match.$and.push({ category_id: new ObjectId(String(params.categoryId)) });
+      }
+      if (params.search) {
+        /* Through safe-search, because this string came off a form and a
+           regex assembled from user input is a denial of service waiting for
+           somebody to paste the wrong thing. */
+        match.$and.push({ name: searchPattern(params.search) });
+      }
+
+      const rows = await collection
+        .find(match, {
+          projection: {
+            _id: 1,
+            name: 1,
+            category_name: 1,
+            selling_price: 1,
+            channel_off: 1,
+            channel_hours: 1,
+          },
+        })
+        .sort({ name: 1 })
+        .limit(500)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          channel,
+          items: rows.map((row) => {
+            const state = itemChannels.availableOn(row, channel);
+            return {
+              id: String(row._id),
+              name: row.name || '',
+              category_name: row.category_name || '',
+              price: Number(row.selling_price) || 0,
+              /* Whether this channel sells it at all. The clock is not
+                 consulted here: a shop configuring its catalogue wants to see
+                 what it has decided, not what happens to be true at 4pm. */
+              on: state.reason !== 'not_on_channel',
+              hours: (row.channel_hours || {})[channel] || null,
+            };
+          }),
+          total: rows.length,
+        },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.channelItems:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * Turning a whole filtered set on or off for one channel.
+   *
+   * WRITES ONLY WHAT CHANGES. "Sell everything on Swiggy" over four hundred
+   * items should touch the handful that were off, not four hundred documents:
+   * sync replaces whole documents, so every needless write is a chance to lose
+   * a field somebody else changed a second earlier.
+   */
+  async setChannelForItems(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      if (!channel) {
+        return { status: false, message: 'Enter must correct channel', data: null };
+      }
+      const on = params.on !== false && params.on !== 'false';
+
+      const ids = (Array.isArray(params.itemIds) ? params.itemIds : [])
+        .filter((id) => ObjectId.isValid(String(id)))
+        .map((id) => new ObjectId(String(id)));
+
+      if (!ids.length) {
+        return { status: false, message: 'Select at least one item', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const rows = await collection
+        .find(
+          { _id: { $in: ids }, license: BaseModel.license },
+          { projection: { _id: 1, channel_off: 1 } }
+        )
+        .toArray();
+
+      let changed = 0;
+      for (const row of rows) {
+        const next = itemChannels.setChannel(row.channel_off, channel, on);
+        if (!next.changed) continue;
+        await collection.updateOne(
+          { _id: row._id, license: BaseModel.license },
+          { $set: { channel_off: next.value, updated_date: new Date() } }
+        );
+        changed += 1;
+      }
+
+      return {
+        status: true,
+        message: on ? 'Items added to this channel' : 'Items removed from this channel',
+        data: { channel, on, matched: rows.length, changed },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.setChannelForItems:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * The window one item keeps on one channel.
+   *
+   * Separate from the on/off above because it is a different decision made at
+   * a different moment: a shop switches a line off an app in a second, and
+   * sits down to think about lunch hours.
+   */
+  async setChannelHours(params = {}) {
+    try {
+      const channel = itemChannels.normalizeTarget(params.channel);
+      const itemId = String(params.itemId || '');
+      if (!channel || !ObjectId.isValid(itemId)) {
+        return { status: false, message: 'Enter must correct item id', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const row = await collection.findOne(
+        { _id: new ObjectId(itemId), license: BaseModel.license },
+        { projection: { channel_hours: 1 } }
+      );
+      if (!row) return { status: false, message: 'Item not found', data: null };
+
+      const hours = itemChannels.normalizeHours(row.channel_hours);
+      /* An empty window CLEARS: "all day" is said by leaving the boxes blank,
+         and storing a half-written one would hide the item instead. */
+      const wanted = itemChannels.normalizeHours({ [channel]: params.window || {} });
+
+      if (wanted[channel]) hours[channel] = wanted[channel];
+      else delete hours[channel];
+
+      await collection.updateOne(
+        { _id: new ObjectId(itemId), license: BaseModel.license },
+        { $set: { channel_hours: hours, updated_date: new Date() } }
+      );
+
+      return { status: true, message: 'Saved', data: { channel, hours: hours[channel] || null } };
+    } catch (error) {
+      console.error('Error in ItemRepository.setChannelHours:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * What sells, and what sells beside it.
+   *
+   * ONE PASS FOR BOTH, and that is the whole reason they live in one method.
+   * Popularity is how often a line appears in a sale; "often ordered with" is
+   * how often two lines appear in the SAME sale. Asking those separately means
+   * reading the same few thousand sales twice, and asking for one item's
+   * neighbours at a time means one query per dish on the menu.
+   *
+   * A WINDOW, NOT ALL OF HISTORY. What a restaurant sold last spring is not
+   * what it sells this week, and a menu that recommends on three years of data
+   * recommends the thing that was popular before the chef changed. Thirty days
+   * of sales, capped, so this stays a bounded read on a busy shop.
+   *
+   * NEW SHOPS ANSWER EMPTY, and every caller has to be fine with that: a menu
+   * with no sales behind it shows no "popular" badge and no suggestions rather
+   * than inventing either.
+   */
+  async salesSignals({ branchId, days = 30, maxSales = 4000 } = {}) {
+    const empty = { popularity: new Map(), related: new Map() };
+    try {
+      const sales = await this.getCollection('sales');
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      const filter = {
+        date: { $gte: since },
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'KOT'] },
+      };
+      if (BaseModel.license) filter.license = BaseModel.license;
+      if (branchId && ObjectId.isValid(String(branchId))) {
+        filter.branch_id = new ObjectId(String(branchId));
+      }
+
+      const rows = await sales
+        .find(filter, { projection: { 'items.item_id': 1 } })
+        .sort({ date: -1 })
+        .limit(maxSales)
+        .toArray();
+
+      const popularity = new Map();
+      const pairs = new Map();
+
+      for (const sale of rows) {
+        /* Deduplicated per sale: two portions of the same dish on one bill is
+           one sale that wanted it, and counting quantity would let a single
+           table of twelve decide what the whole menu recommends. */
+        const ids = [
+          ...new Set((sale.items || []).map((line) => String(line.item_id || '')).filter(Boolean)),
+        ];
+
+        for (const id of ids) {
+          popularity.set(id, (popularity.get(id) || 0) + 1);
+        }
+
+        /* Co-occurrence, both directions, counted once per pair per sale. A
+           bill of twenty lines would be 190 pairs, which is where a big
+           catering order distorts everything, so wide bills are skipped. */
+        if (ids.length < 2 || ids.length > 12) continue;
+
+        for (let i = 0; i < ids.length; i += 1) {
+          for (let j = i + 1; j < ids.length; j += 1) {
+            for (const [a, b] of [
+              [ids[i], ids[j]],
+              [ids[j], ids[i]],
+            ]) {
+              if (!pairs.has(a)) pairs.set(a, new Map());
+              const withA = pairs.get(a);
+              withA.set(b, (withA.get(b) || 0) + 1);
+            }
+          }
+        }
+      }
+
+      /* Top three neighbours per dish. Three is what fits under a dish on a
+         phone without the suggestion becoming the page. */
+      const related = new Map();
+      for (const [id, counts] of pairs) {
+        related.set(
+          id,
+          [...counts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([otherId, count]) => ({ id: otherId, count }))
+        );
+      }
+
+      return { popularity, related };
+    } catch (error) {
+      /* A menu that cannot read its own sales still has to serve the menu.
+         No badges and no suggestions is a complete answer. */
+      console.warn('[menu] could not read sales signals:', error.message);
+      return empty;
+    }
+  }
+
   async publicMenu(params = {}) {
     const storeId = params.storeId;
     try {
@@ -3480,6 +3770,10 @@ class ItemRepository extends BaseModel {
              gets a complete menu, which is the only sensible default for a
              feature whose whole job is to list things. */
           { show_on_menu: { $ne: false } },
+          /* And not a line this shop has taken off the online channel. Absent
+             means included, so a shop that has never touched it loses
+             nothing. See utils/item-channels.js. */
+          itemChannels.channelFilter(salesChannels.CHANNEL.ONLINE),
         ],
       };
 
@@ -3497,6 +3791,8 @@ class ItemRepository extends BaseModel {
             category_name: 1,
             sort_order: 1,
             diet: 1,
+            icon: 1,
+            multi_image: 1,
             isAvailable: 1,
             ecommerce: 1,
             daypart_ids: 1,
@@ -3529,6 +3825,11 @@ class ItemRepository extends BaseModel {
         await this.shopVenues()
       );
 
+      /* What sells and what sells beside it, from the last month of this
+         branch's own sales. A new shop gets empty maps and simply shows no
+         badges and no suggestions. */
+      const signals = await this.salesSignals({ branchId: branchDoc._id });
+
       const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const nowDay = localNow.day();
       const nowMinutes = localNow.hours() * 60 + localNow.minutes();
@@ -3560,8 +3861,29 @@ class ItemRepository extends BaseModel {
           name: row.name || '',
           description: row.description || '',
           image: row.image || '',
+          /*
+           * Every photo of this dish, cover first and no duplicate of it.
+           *
+           * Shops already upload several - the item form has taken a set for
+           * years - and the menu showed exactly one, so the rest existed and
+           * were never seen by a customer. The card still shows the cover
+           * alone: a gallery belongs where somebody has stopped to look, not
+           * in a list being scanned.
+           */
+          photos: onlineOrdering.photoList(row),
           price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
           diet: String(row.diet || ''),
+          /*
+           * A picture for a dish nobody photographed.
+           *
+           * Resolved HERE rather than on the page, so the menu, the captain
+           * app, the kiosk and a QR code all draw the same thing for the same
+           * dish, and an old build that never heard of this gets it anyway.
+           * Empty when there is a photograph, because drawing both is clutter,
+           * and empty when the name suggests nothing - which is an honest
+           * answer, not a gap.
+           */
+          icon: dishIcons.iconFor(row),
           /* Shown on the menu but not orderable right now, for either reason:
              the shop marked it unavailable, or it is not its time of day. The
              page says which, because "we have it, not now" and "we have it,
@@ -3573,6 +3895,14 @@ class ItemRepository extends BaseModel {
           /* Roughly how long the kitchen needs. Zero means the shop has not
              said, and the page shows nothing rather than guessing. */
           prep_minutes: Number(row.prep_minutes) || 0,
+          /* How many of the last month's bills carried this. The page sorts
+             on it and badges the top few; zero is "we do not know yet", never
+             "nobody wants it". */
+          ordered_count: signals.popularity.get(String(row._id)) || 0,
+          /* The dishes most often on the same bill, best first. Ids only -
+             the page already holds every dish and looking them up there beats
+             sending three copies of each name down a phone connection. */
+          goes_with: (signals.related.get(String(row._id)) || []).map((r) => r.id),
           /* Internal, stripped before the page sees it: only the category
              ranking above needs it. */
           _sort: Number(row.sort_order) || 0,
@@ -3666,13 +3996,65 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async storefront(params = {}) {
-    const storeId = params.storeId;
+  /**
+   * Which branch a storefront request means.
+   *
+   * THE STORE ADDRESS IS THE ONLY WAY IN FROM OUTSIDE, and that is the point.
+   * A branch's raw database id appears in every authenticated response and is
+   * no secret, so accepting one from an anonymous caller would let anybody who
+   * had ever seen an id read a shop that deliberately never opened a channel.
+   *
+   * `branchId` is the staff door beside it. A route may pass it only after it
+   * has established that the caller works for this shop - a signed-in user, or
+   * the installation's own kiosk key. Such a caller is already entitled to
+   * this branch's catalogue; they can read it off the till. Making their shop
+   * publish a PUBLIC store address before the captain app could list a menu
+   * would be a rule protecting nobody from anybody.
+   *
+   * The two are separate parameters rather than one that accepts either,
+   * because then the guard is a property of the CALLER and cannot be lost by a
+   * value turning out to look like the other kind.
+   */
+  async _storefrontBranch({ storeId, branchId }) {
+    const branches = await this.getCollection('branches');
+    if (branchId) {
+      const selector = ObjectId.isValid(String(branchId))
+        ? { _id: new ObjectId(String(branchId)) }
+        : { 'online_ordering.store_id': String(branchId) };
+      return branches.findOne(selector);
+    }
+    return branches.findOne({ 'online_ordering.store_id': storeId });
+  }
+
+  /**
+   * The voice settings a handset is allowed to see.
+   *
+   * Read through the settings repository so branch overrides and account-level
+   * inheritance work the way they do everywhere else - a chain that sets this
+   * once for every shop should not have to be set again per branch.
+   *
+   * A read that fails answers with the default rather than throwing. A menu
+   * that will not load because a settings lookup failed is a far worse outcome
+   * than a handset that falls back to its own recogniser.
+   */
+  async voiceForHandset(branchDoc) {
     try {
-      const branchCollection = await this.getCollection('branches');
-      const branchDoc = await branchCollection.findOne({
-        'online_ordering.store_id': storeId,
+      const SettingsRepository = require('./settings.repository');
+      const settings = new SettingsRepository();
+      const read = await settings.resolveGroup('preferences', {
+        branchId: branchDoc._id,
+        licenseId: branchDoc.license,
       });
+      return voiceSettings.forHandset((read && read.status && read.data.values) || {});
+    } catch (e) {
+      console.warn('[storefront] could not read the voice settings:', e.message);
+      return voiceSettings.forHandset({});
+    }
+  }
+
+  async storefront(params = {}) {
+    try {
+      const branchDoc = await this._storefrontBranch(params);
 
       if (!branchDoc) {
         return { status: false, message: 'No shop found at this address', data: null };
@@ -3698,11 +4080,42 @@ class ItemRepository extends BaseModel {
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
         { license: branchDoc.license },
       ];
-      // Only require ecommerce/isAvailable when an actual kiosk is configured
-      if (hasKiosk) {
+      /*
+       * The online-ordering ticks, and who they are actually about.
+       *
+       * `ecommerce` is the box a shop ticks to say "sell this on the internet",
+       * and `isAvailable` is written from it. Requiring them is right for a
+       * customer's phone: a shop that opened an online channel decides item by
+       * item what goes on it.
+       *
+       * IT IS WRONG FOR A WAITER. The captain app is staff standing in the
+       * shop, selling the shop's own catalogue - the same list as the till.
+       * Applying the online tick to them meant that the moment a shop
+       * configured a store address, every handset in the building showed "No
+       * products found for this branch. Please contact admin to configure
+       * items" about a shop with a full menu. A waiter cannot act on that and
+       * the admin has nothing to fix.
+       *
+       * Narrowed for the customer-facing channels only. What a shop does want
+       * kept off the floor is handled by channelFilter below, which is per
+       * channel and is the control that was actually built for this.
+       */
+      const staffChannel =
+        (params.channel || salesChannels.CHANNEL.ONLINE) === salesChannels.CHANNEL.TABLESIDE;
+      if (hasKiosk && !staffChannel) {
         baseFilter.push({ ecommerce: true });
         baseFilter.push({ isAvailable: true });
       }
+
+      /*
+       * And whatever this shop has taken off this channel by hand.
+       *
+       * The storefront is reached by a customer's phone and by the shop's own
+       * machine, which are two different channels with two different answers:
+       * a line a shop will not put online may still be perfectly fine on the
+       * terminal by the counter.
+       */
+      baseFilter.push(itemChannels.channelFilter(params.channel || salesChannels.CHANNEL.ONLINE));
 
       const pipeline = [
         { $match: { $and: baseFilter } },
@@ -3714,9 +4127,16 @@ class ItemRepository extends BaseModel {
                 id: '$_id',
                 name: '$name',
                 img: '$image',
+                icon: '$icon',
                 available_quantity: '$available_quantity',
                 negative_stock: '$negative_stock',
                 description: '$description',
+                /* The veg mark, and what the kitchen needs. The ordering page
+                   could not filter by diet or show a preparation time because
+                   neither ever reached it - the menu had them and the page
+                   people actually order from did not. */
+                diet: '$diet',
+                prep_minutes: '$prep_minutes',
                 price: '$selling_price',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
@@ -3842,6 +4262,21 @@ class ItemRepository extends BaseModel {
       const results = await collection.aggregate(pipeline).toArray();
 
       /*
+       * A picture for a dish nobody photographed.
+       *
+       * Resolved here rather than in the pipeline: it reads the NAME when the
+       * shop has chosen nothing, and a keyword table is not a thing to write
+       * in aggregation syntax. Done for every caller of the storefront - the
+       * ordering page, the shop's own terminal and the captain app - so all of
+       * them draw the same picture for the same dish.
+       */
+      for (const group of results) {
+        for (const item of group.items || []) {
+          item.icon = dishIcons.iconFor({ image: item.img, icon: item.icon, name: item.name });
+        }
+      }
+
+      /*
        * The prices THIS service point pays.
        *
        * Done in JavaScript after the aggregation rather than inside it. The
@@ -3881,6 +4316,22 @@ class ItemRepository extends BaseModel {
             };
           });
         }
+      }
+
+      /*
+       * How often each line sold, so the page can offer "most ordered".
+       *
+       * Same one-pass read the menu uses. A shop with no history gets zeros
+       * and the sort simply keeps the shop's own order, which is the right
+       * answer rather than a degraded one.
+       */
+      const ordering = await this.salesSignals({ branchId: branchDoc._id });
+      for (const group of results) {
+        group.items = (group.items || []).map((item) => ({
+          ...item,
+          ordered_count: ordering.popularity.get(String(item.id)) || 0,
+          goes_with: (ordering.related.get(String(item.id)) || []).map((r) => r.id),
+        }));
       }
 
       /* What a customer pays on top of the food, so the page can show a
@@ -3941,6 +4392,15 @@ class ItemRepository extends BaseModel {
           }),
           products: results,
           tableorders,
+          /*
+           * Whether this shop's handsets may listen, and in what language.
+           *
+           * WHERE THE AUDIO GOES, never which vendor transcribes it and never
+           * the key. A handset told the vendor is a handset that will
+           * eventually be asked to hold the key for it, and telling one phone
+           * tells every phone in the building. See utils/voice-settings.js.
+           */
+          voice: await this.voiceForHandset(branchDoc),
           /*
            * Where this customer is sitting, and whether the prices above are
            * the house's. The page shows the destination at checkout and lets

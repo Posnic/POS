@@ -76,10 +76,15 @@ const ACCEPTED = {
       "it to unpack a Chromium build fetched from Google's servers over HTTPS. " +
       'Triggering it means controlling that download, and an attacker who can ' +
       'do that has better options than a symlink. CI never runs it at all: ' +
-      'PUPPETEER_SKIP_DOWNLOAD=1 is set in ci.yml. No fixed version exists - ' +
-      '2.0.1 is still the latest published release - so the only "fix" on ' +
-      'offer is a major bump of whatsapp-web.js, breaking WhatsApp receipts to ' +
-      'close a path that needs an archive we only ever fetch from Google.',
+      'PUPPETEER_SKIP_DOWNLOAD=1 is set in ci.yml. extract-zip itself is ' +
+      'still unfixed at 2.0.1, but the dependency is now escapable: ' +
+      '@puppeteer/browsers 3.x dropped extract-zip for modern-tar, and it ' +
+      'arrives with puppeteer 25. whatsapp-web.js 1.34.7 pins puppeteer to ' +
+      'exactly 24.38.0, so taking it means overriding that pin and running ' +
+      'WhatsApp on a puppeteer major it was never tested against - a real ' +
+      'risk to receipts, to close a path that needs an archive we only ever ' +
+      'fetch from Google. Revisit when whatsapp-web.js moves to puppeteer ' +
+      '25 itself; that is the cheap moment to take the fix.',
     expires: '2027-02-01',
   },
   'GHSA-jmr9-qjv8-65gv': {

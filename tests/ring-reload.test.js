@@ -67,3 +67,48 @@ test('the workflow delegates to the script the rsync just delivered', () => {
   assert.ok(workflow.includes('bash scripts/ring-reload.sh'));
   assert.ok(workflow.includes('npm ci --omit=dev --silent'));
 });
+
+test('the smoke never picks a SUSPENDED shop to prove the reload', () => {
+  /*
+   * A suspended shop is answered 403 by nginx without the request ever
+   * reaching the app, so it can never return 200 and the gate waits the full
+   * 120s and halts the rollout. Twenty-one shops are suspended and which one
+   * sits first in tenants.map is an accident of provisioning order, so this
+   * was a release outage waiting for the wrong shop to stop paying.
+   */
+  assert.ok(script.includes('suspended.map'),
+    'the smoke picks its shop without checking whether it is suspended');
+  assert.ok(/grep -vxF -f <\(grep -oE[^)]*suspended\.map/.test(script),
+    'suspended shops are no longer excluded from the candidates');
+});
+
+test('more than one shop can prove the reload', () => {
+  /* Betting a release on one shop means any single broken or half-provisioned
+     shop halts every deploy. */
+  assert.ok(/head -5/.test(script), 'the candidate list is back down to one shop');
+  assert.ok(/for host in \$hosts; do/.test(script),
+    'the poll no longer tries more than the first candidate');
+});
+
+test('no unsuspended shop is an error, not a 120 second wait', () => {
+  assert.ok(script.includes('no unsuspended shop is routed'),
+    'an empty candidate list would poll nothing until it timed out');
+});
+
+test('the smoke wait is bounded by a deadline, not by a round count', () => {
+  /*
+   * The poll used to be 60 rounds of one request. Trying several hosts per
+   * round would multiply that by the number of candidates, so a slow reload
+   * could hold the deploy far past the 120s it promises. A wall-clock
+   * deadline keeps the budget the same however many hosts are tried.
+   */
+  assert.ok(/deadline=\$\(\( \$\(date \+%s\) \+ 120 \)\)/.test(script),
+    'the smoke no longer bounds itself by wall-clock time');
+  assert.ok(/while \[ "\$\(date \+%s\)" -lt "\$deadline" \]/.test(script),
+    'the poll is not driven by the deadline');
+});
+
+test('host matching stays portable - grep -P is not everywhere', () => {
+  /* The pattern has no PCRE-only syntax, and -E costs nothing. */
+  assert.ok(!script.includes('grep -oP'), 'grep -P crept back in');
+});

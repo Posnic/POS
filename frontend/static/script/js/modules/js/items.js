@@ -3,7 +3,109 @@ PosnicPro.items = {
     imageParams: [],
     form_data: new FormData(),
     itemAction: 'add',
+
+    /*
+     * Whether this shop can draft descriptions at all.
+     *
+     * Asked once per form open and cached for the session. The shop pays its
+     * own AI provider, so a shop with no key must not see the button: a
+     * control that fails when pressed is worse than one that was never there,
+     * especially on a screen somebody is using with a customer waiting.
+     */
+    _aiAvailable: null,
+
+    aiRefresh: function () {
+        var $btn = $('#items_ai_describe');
+        if (!$btn.length) { return; }
+
+        /* Only a YES is remembered. A no is re-asked every time the form
+           opens, because the thing that turns it into a yes is the
+           shopkeeper walking to settings and pasting a key - and after
+           that they come straight back here expecting a button. */
+        if (PosnicPro.items._aiAvailable === true) {
+            $btn.show();
+            return;
+        }
+        PosnicPro.get('items/aiAvailability', {}, function (r) {
+            var ok = !!(r && r.data && r.data.available);
+            PosnicPro.items._aiAvailable = ok ? true : null;
+            $btn.toggle(ok);
+        }, function () {
+            /* Could not ask, so do not offer - but do not remember it
+               either. A network blip must not hide the button for the rest
+               of the session. */
+            PosnicPro.items._aiAvailable = null;
+            $btn.hide();
+        });
+    },
+
+    /*
+     * Draft a description from what is already on the form.
+     *
+     * Deliberately reads the FORM, not a saved item: the most useful moment
+     * for this is while a new item is being typed, before anything has been
+     * saved at all. The text lands in the textarea and is saved only when the
+     * person saves the item, like anything else they typed there.
+     */
+    aiDescribe: function () {
+        var $btn = $('#items_ai_describe');
+        var $field = $('#items_description');
+        var name = $.trim($('#items_name').val() || '');
+
+        if (!name) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_the_item_name_first', 'Enter the item name first'));
+            return;
+        }
+        /* Typing over somebody's own words without asking is the kind of
+           thing that makes people stop trusting a button. */
+        if ($.trim($field.val() || '') !== ''
+            && !window.confirm('Replace the description that is already there?')) {
+            return;
+        }
+
+        var original = $btn.html();
+        $btn.html('<i class="fa fa-spinner fa-spin mr-1"></i>Writing...').css('pointer-events', 'none');
+
+        PosnicPro.post({
+            url: 'items/aiDescription',
+            data: JSON.stringify({
+                name: name,
+                category_name: $.trim($('#items_category option:selected').text() || ''),
+                brand: $.trim($('#items_brand').val() || ''),
+                unit: $.trim($('#items_unit option:selected').text() || ''),
+                diet: $.trim($('input[name="item_diet"]:checked').val() || ''),
+                language: (PosnicPro.local && PosnicPro.local.get('language')) || ''
+            })
+        }, function (response) {
+            $btn.html(original).css('pointer-events', '');
+            if (response && response.type === 'success' && response.data && response.data.description) {
+                $field.val(response.data.description).trigger('change');
+                /* The label floats only when the field is not empty, and it
+                   was empty a moment ago. */
+                $field.focus();
+                return;
+            }
+            PosnicPro.alert('warning', (response && response.message) || 'Could not draft a description');
+        }, function (xhr) {
+            $btn.html(original).css('pointer-events', '');
+            var message = 'Could not draft a description';
+            try {
+                var body = JSON.parse((xhr && xhr.responseText) || '{}');
+                if (body && body.message) { message = body.message; }
+            } catch (e) { /* the default sentence is the fallback */ }
+            PosnicPro.alert('warning', message);
+            /* A refusal - over the monthly cap, key removed, AI switched
+               off - means hide it now, but ask again next time the form
+               opens. Remembering the no would keep the button hidden after
+               the shopkeeper has fixed whatever caused it. */
+            if (xhr && xhr.status === 400) {
+                PosnicPro.items._aiAvailable = null;
+                $('#items_ai_describe').hide();
+            }
+        });
+    },
     showAdd: function () {
+        PosnicPro.items.aiRefresh();
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         loader.find(".loadingSpinner:first").remove();
@@ -54,6 +156,7 @@ PosnicPro.items = {
         PosnicPro.items.cloneItem(id);
     },
     showEdit: function (id) {
+        PosnicPro.items.aiRefresh();
         var loader = $(".loader-item");
         loader.find(".loadingSpinner:first").remove();
         $('#product_without_variant').prop('checked', true);
@@ -167,6 +270,98 @@ PosnicPro.items = {
             automatic ? PosnicPro.i18n.t('lang_chosen_from_the_name_pick_a_colour_below_t', 'Chosen from the name - pick a colour below to change it') : PosnicPro.i18n.t('lang_your_choice', 'Your choice')
         );
         $box.show();
+    },
+
+    /*
+     * A picture for a dish nobody photographed.
+     *
+     * SUGGESTED, NOT ASKED FOR. A shop with three hundred items will upload no
+     * photographs and will pick no emoji either, so the name is read and an
+     * icon appears with nobody doing anything. This form is only where the
+     * handful the shop disagrees with get corrected.
+     *
+     * The suggestion comes from the SERVER. The same keyword table shipped
+     * twice is a table that can drift, and the drift shows up as a shopkeeper
+     * being shown one picture while their customers are shown another - which
+     * nobody reports, because nobody sees both screens at once.
+     */
+    _iconSuggested: '',
+    _iconTimer: null,
+
+    /* Debounced: this fires while somebody is typing a name. */
+    suggestIcon: function () {
+        clearTimeout(PosnicPro.items._iconTimer);
+        PosnicPro.items._iconTimer = setTimeout(function () {
+            var name = $.trim($('#items_name').val() || '');
+            if (!name) {
+                PosnicPro.items._iconSuggested = '';
+                PosnicPro.items.refreshIcon();
+                return;
+            }
+            PosnicPro.get('items/icon-suggestion', { name: name }, function (r) {
+                PosnicPro.items._iconSuggested = (r && r.data && r.data.icon) || '';
+                PosnicPro.items.refreshIcon();
+            }, function () {
+                /* No suggestion is a fine outcome: the picker still works, and
+                   an empty icon is an honest menu card. */
+            });
+        }, 350);
+    },
+
+    setIcon: function (icon) {
+        $('#item_icon').val(icon || '');
+        PosnicPro.items.refreshIcon();
+    },
+
+    refreshIcon: function () {
+        var $row = $('#item_icon_row');
+        if (!$row.length) { return; }
+
+        var chosen = $('#item_icon').val() || '';
+        var shown = chosen || PosnicPro.items._iconSuggested || '';
+        var logo = $('#item_logo').val() || '';
+        var hasPhoto = !!logo && logo !== 'item.svg';
+
+        /* A photograph beats this, and a control that cannot affect anything
+           should not ask for a decision - the same rule the colour and the
+           shape beside it already follow. */
+        $row.toggle(!hasPhoto);
+
+        $('#item_icon_preview').text(shown);
+        $('#item_icon_note').text(
+            !shown ? 'No icon. The card will show the name alone.'
+                : chosen ? 'Chosen for this item.'
+                    : 'Suggested from the name. Tap another to change it.'
+        );
+        $('#item_icon_clear').toggle(!!chosen);
+        $('#item_icon_choices .icon-choice')
+            .removeClass('is-picked')
+            .css('border-color', 'transparent')
+            .filter(function () { return ($(this).text() || '') === shown; })
+            .addClass('is-picked')
+            .css('border-color', '#2d9cdb');
+    },
+
+    /* The grid, drawn once. Deliberately short: a thousand-emoji picker is a
+       worse experience than a few dozen good ones, and the keyboard covers
+       everything else. */
+    drawIconChoices: function () {
+        var $host = $('#item_icon_choices');
+        if (!$host.length || $host.children().length) { return; }
+        var PALETTE = [
+            '🍛', '🍚', '🍜', '🍲', '🥘', '🍝', '🍕', '🍔', '🌯', '🥪', '🌮', '🥙',
+            '🍗', '🍖', '🥩', '🍤', '🐟', '🦀', '🥚', '🧀', '🍄', '🥔', '🌽', '🥬',
+            '🥞', '🫓', '🍞', '🥐', '🍟', '🍢', '🥟', '🍩', '🥗', '🫘', '🥣', '🍽️',
+            '☕', '🍵', '🥤', '🧃', '🥛', '🧋', '💧', '🍺', '🍷', '🍸', '🧉', '🍹',
+            '🍨', '🍰', '🍪', '🍫', '🍬', '🍮', '🍿', '🍯', '🧁', '🥧', '🍓', '🥭',
+            '🧼', '🧴', '🧻', '🪥', '🔋', '💡', '🖊️', '📒', '🛍️', '🧂', '🌾', '💊'
+        ];
+        $host.html(PALETTE.map(function (icon) {
+            return '<span class="icon-choice" style="width:32px;height:32px;display:inline-flex;'
+                + 'align-items:center;justify-content:center;font-size:19px;line-height:1;'
+                + 'cursor:pointer;border:1.5px solid transparent;border-radius:6px;">'
+                + icon + '</span>';
+        }).join(''));
     },
 
     setTileShape: function (shape) {
@@ -747,11 +942,13 @@ PosnicPro.items = {
             show_on_menu: $('#item_show_on_menu').is(':checked'),
             diet: String($('#item_diet').val() || ''),
             daypart_ids: $('#item_dayparts').val() || [],
+            channel_off: $('#item_channel_off').val() || [],
             prep_note: String($('#item_prep_note').val() || '').trim(),
             prep_minutes: Number($('#item_prep_minutes').val()) || 0,
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
+            icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
@@ -1021,11 +1218,13 @@ PosnicPro.items = {
                     show_on_menu: $('#item_show_on_menu').is(':checked'),
                     diet: String($('#item_diet').val() || ''),
                     daypart_ids: $('#item_dayparts').val() || [],
+                    channel_off: $('#item_channel_off').val() || [],
                     prep_note: String($('#item_prep_note').val() || '').trim(),
                     prep_minutes: Number($('#item_prep_minutes').val()) || 0,
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
+                    icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
@@ -1568,6 +1767,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
@@ -1583,6 +1783,10 @@ PosnicPro.items = {
                 PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                /* What the shop chose, and - so the form can tell "chosen"
+                   from "suggested" - what the name would have suggested. */
+                PosnicPro.items.setIcon(data.icon || '');
+                PosnicPro.items.suggestIcon();
                 $('#items_plu_code').val(data.plu_code || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
@@ -2227,6 +2431,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
@@ -2242,6 +2447,10 @@ PosnicPro.items = {
                 PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                /* What the shop chose, and - so the form can tell "chosen"
+                   from "suggested" - what the name would have suggested. */
+                PosnicPro.items.setIcon(data.icon || '');
+                PosnicPro.items.suggestIcon();
                 $('#items_plu_code').val(data.plu_code || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
@@ -4949,6 +5158,18 @@ $(document).ready(function () {
     });
     $(document).on('input', '#items_name', function () {
         PosnicPro.items.refreshTilePreview();
+        PosnicPro.items.suggestIcon();
+    });
+    PosnicPro.items.drawIconChoices();
+    $(document).on('click', '#item_icon_choices .icon-choice', function () {
+        var icon = $(this).text() || '';
+        /* Tap the picked one again to go back to the suggestion, the same way
+           the shape picker clears itself. */
+        if (($('#item_icon').val() || '') === icon) { icon = ''; }
+        PosnicPro.items.setIcon(icon);
+    });
+    $(document).on('click', '#item_icon_clear', function () {
+        PosnicPro.items.setIcon('');
     });
     $(document).on('input', '#items_gtin', function () {
         PosnicPro.items.checkGtin();
@@ -5137,3 +5358,163 @@ $(document).on('change', '.kiosk-toggle', function () {
 $(document).on('click', '#items_list_rows tr.items-row', function () {
     PosnicPro.items.openDoc($(this).data('id'));
 });
+
+
+/*
+ * The channels an item can be kept off.
+ *
+ * Filled from the shop's own channel settings rather than a list in this file:
+ * a shop that does not use Swiggy should never be offered it, and a partner
+ * added last week has to appear here without a release.
+ *
+ * Loaded once and cached. The item form opens dozens of times in a session and
+ * the answer does not change between two of them.
+ */
+PosnicPro.itemChannels = {
+    _options: null,
+
+    /*
+     * Ids only, with the English kept beside each one rather than resolved.
+     *
+     * A t() call in a literal here runs when this file LOADS, which is before
+     * the language pack has arrived - so every shop would see English whatever
+     * it chose. The lookup happens in labelFor(), at render time.
+     */
+    CHANNELS: [
+        { id: 'pos', en: 'Point of sale' },
+        { id: 'online', en: 'Online and QR' },
+        { id: 'kiosk', en: 'Kiosk machine' },
+        { id: 'tableside', en: 'Captain app' },
+        { id: 'phone', en: 'Phone order' },
+        { id: 'whatsapp', en: 'WhatsApp' },
+        { id: 'marketplace', en: 'Delivery partners' },
+        { id: 'ecommerce', en: 'Webshop' }
+    ],
+
+    /*
+     * The key is spelled out per channel rather than built by concatenation.
+     *
+     * A key assembled at runtime is invisible to the translation sweep: the
+     * tooling reads the source looking for literals, finds 'lang_channel_' and
+     * has no idea what follows it, so none of these would ever appear on a
+     * translator's screen. Eight lines of literal beats eight untranslatable
+     * labels.
+     */
+    KEYS: {
+        pos: 'lang_channel_pos',
+        online: 'lang_channel_online',
+        kiosk: 'lang_channel_kiosk',
+        tableside: 'lang_channel_tableside',
+        phone: 'lang_channel_phone',
+        whatsapp: 'lang_channel_whatsapp',
+        marketplace: 'lang_channel_marketplace',
+        ecommerce: 'lang_channel_ecommerce'
+    },
+
+    labelFor: function (channel) {
+        var key = PosnicPro.itemChannels.KEYS[channel.id];
+        return key ? PosnicPro.i18n.t(key, channel.en) : channel.en;
+    },
+
+    /*
+     * WHICH CHANNELS THIS SHOP ACTUALLY RUNS, from the features it switched on.
+     *
+     * This used to read `sales_channels_enabled` - a checkbox list on the old
+     * combined settings page. That page is gone and so are the checkboxes: a
+     * shop chooses its channels on the Features page now, one card each. Left
+     * alone this offered every channel in the vocabulary to every shop,
+     * including three it had switched off, which is not a list anybody can
+     * choose from sensibly.
+     *
+     * pos, phone and whatsapp have no feature switch because they need no
+     * setting up - somebody rings, somebody messages, somebody walks in - so
+     * they are always offered.
+     */
+    liveChannels: function () {
+        var s = {};
+        try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
+        /* Absent means on, the same rule the sidebar and the pills use: a key
+           a shop has never touched must not read as a channel it switched off. */
+        var on = function (k) { return s[k] !== false; };
+
+        var live = ['pos', 'phone', 'whatsapp'];
+        if (on('module_kiosk_enable')) { live.push('kiosk'); }
+        if (on('module_captain_enable')) { live.push('tableside'); }
+        if (on('module_online_ordering_enable')) { live.push('online'); }
+        if (on('module_delivery_partners_enable')) { live.push('marketplace'); }
+        if (on('module_webshop_enable')) { live.push('ecommerce'); }
+        return live;
+    },
+
+    load: function (done) {
+        var self = PosnicPro.itemChannels;
+        if (self._options) { self.fill(); if (done) { done(); } return; }
+
+        PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
+            var values = (response && response.data && response.data.values) || {};
+            var live = self.liveChannels();
+            var partners = values.sales_channel_partners || [];
+
+            var options = self.CHANNELS
+                .filter(function (c) { return live.indexOf(c.id) !== -1; })
+                .map(function (c) {
+                    return { id: c.id, label: self.labelFor(c) };
+                });
+
+            /* Each partner by name, so "not on Swiggy" is one tick rather than
+               taking the item off every aggregator at once - but only while the
+               feature that owns its kind is on. Offering Swiggy to a shop with
+               delivery partners switched off is the same noise as offering the
+               channel itself. */
+            partners.forEach(function (p) {
+                if (!p || !p.id || p.enabled === false) { return; }
+                var kind = String(p.channel || 'marketplace');
+                if (live.indexOf(kind) === -1) { return; }
+                options.push({ id: p.id, label: p.label || p.id });
+            });
+
+            self._options = options;
+            self.fill();
+            if (done) { done(); }
+        }, function () {
+            /*
+             * The settings call failed, which is not the same as "this shop has
+             * no channels". Falling back to an empty list used to make the box
+             * look like a shop that sells nowhere; the features are in local
+             * storage and do not need the server, so answer from those and lose
+             * only the partners.
+             */
+            var live = self.liveChannels();
+            self._options = self.CHANNELS
+                .filter(function (c) { return live.indexOf(c.id) !== -1; })
+                .map(function (c) { return { id: c.id, label: self.labelFor(c) }; });
+            self.fill();
+            if (done) { done(); }
+        });
+    },
+
+    fill: function () {
+        var $sel = $('#item_channel_off');
+        if (!$sel.length) { return; }
+        var chosen = $sel.val() || [];
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        $sel.html((PosnicPro.itemChannels._options || []).map(function (o) {
+            return '<option value="' + esc(o.id) + '">' + esc(o.label) + '</option>';
+        }).join(''));
+        $sel.val(chosen).trigger('change');
+    },
+
+    /*
+     * Setting the value has to WAIT for the options to exist.
+     *
+     * select2 silently drops any id it has no option for, so setting before
+     * the list loads leaves the box empty - and the next save writes that
+     * empty box back, quietly putting the item on sale everywhere the shop
+     * had switched it off.
+     */
+    set: function (values) {
+        PosnicPro.itemChannels.load(function () {
+            $('#item_channel_off').val(values || []).trigger('change');
+        });
+    }
+};

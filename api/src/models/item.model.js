@@ -46,6 +46,31 @@ const itemSchema = new mongoose.Schema(
     show_on_menu: { type: Boolean, default: true },
 
     /*
+     * The channels this item is NOT sold on, and when it is limited.
+     *
+     * EXCEPTIONS, not memberships, and the direction matters. A list of the
+     * channels an item IS on means six flags per item before a shop can sell
+     * anything, and a channel added later sells nothing until somebody edits
+     * two hundred items. Storing what is different means a new item sells
+     * everywhere, a new channel sells everything, and a shop records only the
+     * cigarettes it will not put on Swiggy.
+     *
+     * Entries are a channel id OR a partner id, because "not on Swiggy" is the
+     * request shops actually make and swiggy is a partner on the marketplace
+     * channel, not a channel. See utils/item-channels.js.
+     */
+    channel_off: { type: [String], default: [] },
+
+    /*
+     * Per-channel windows: { online: { from: '11:00', to: '15:00' } }.
+     *
+     * A different clock from the serving periods above. Breakfast is breakfast
+     * on every channel; this is "we stop taking app orders for this at three
+     * because it arrives cold". An item can carry both, and both must be true.
+     */
+    channel_hours: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+    /*
      * The dot. `veg`, `non_veg`, `egg`, `vegan`, or empty for "not said".
      *
      * Not decoration. Indian menus mark this by law and customers look for it
@@ -55,6 +80,21 @@ const itemSchema = new mongoose.Schema(
      * mark on a dish somebody cannot eat.
      */
     diet: { type: String, trim: true, default: '' },
+
+    /*
+     * A picture for a dish nobody photographed.
+     *
+     * One emoji. A shop with three hundred items will upload no photographs -
+     * that is not laziness, it is three hundred photographs for a list that
+     * changes every season - so the menu card is blank today for almost every
+     * item in the estate. An emoji costs one short string, renders in colour
+     * at any size in both themes, and needs no storage at all.
+     *
+     * Empty is the normal state and is not a gap: utils/dish-icons.js reads
+     * the NAME and suggests one, so a menu is decorated without anybody
+     * touching it. This field only holds the ones a shop disagreed with.
+     */
+    icon: { type: String, trim: true, default: '' },
 
     /*
      * When this is served: breakfast, lunch, dinner. Empty means always, which
@@ -171,7 +211,10 @@ class ItemModel {
     track_inventory: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
     show_on_menu: { type: 'Boolean', select: true },
+    channel_off: { type: 'Array', select: true },
+    channel_hours: { type: 'Object', select: true },
     diet: { type: 'String', select: true },
+    icon: { type: 'String', select: true },
     daypart_ids: { type: 'Array', select: true },
     prep_note: { type: 'String', select: true },
     prep_minutes: { type: 'Number', select: true },

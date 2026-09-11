@@ -82,7 +82,11 @@ function branchExpectations() {
     { field: 'module_marketing_enable', severity: 'cosmetic', why: 'defaults to true on read' },
     { field: 'module_messaging_enable', severity: 'cosmetic', why: 'defaults to true on read' },
     { field: 'module_channels_enable', severity: 'cosmetic', why: 'defaults to true on read' },
-    { field: 'module_channels_kiosk_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'module_online_ordering_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'module_kiosk_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'module_captain_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'module_delivery_partners_enable', severity: 'cosmetic', why: 'defaults to true on read' },
+    { field: 'module_webshop_enable', severity: 'cosmetic', why: 'defaults to true on read' },
     { field: 'enable_notification_reminders', severity: 'cosmetic', why: 'defaults to false on read' },
     { field: 'sms_auto_send_time', severity: 'cosmetic', why: 'defaults to 10:00 am on read' },
   ];

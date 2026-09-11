@@ -187,3 +187,343 @@ test('the category chips stay on this branch rather than navigating away', async
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.match(html, /<base\b[^>]*href="\/menu\/"/, 'the base tag this depends on is gone');
 });
+
+/* ------------------------------------------------- search, filters and sort */
+
+const RICH = {
+  ...REPLY,
+  categories: [
+    {
+      id: 'starters',
+      name: 'Starters',
+      items: [
+        {
+          id: 'i1', name: 'Paneer Tikka', description: 'Charred, on skewers',
+          price: 280, diet: 'veg', available: true, served_in: [],
+          prep_minutes: 15, ordered_count: 12, goes_with: ['i4'],
+        },
+        {
+          id: 'i2', name: 'Chicken 65', description: 'Chettinad style',
+          price: 320, diet: 'non_veg', available: true, served_in: [],
+          prep_minutes: 18, ordered_count: 40, goes_with: [],
+        },
+        {
+          id: 'i3', name: 'Gobi Manchurian', description: 'Cauliflower, soy',
+          price: 240, diet: 'veg', available: false, served_in: [],
+          prep_minutes: 0, ordered_count: 3, goes_with: [],
+        },
+      ],
+    },
+    {
+      id: 'breads',
+      name: 'Breads',
+      items: [
+        {
+          id: 'i4', name: 'Butter Naan', description: '',
+          price: 60, diet: 'veg', available: true, served_in: [],
+          prep_minutes: 8, ordered_count: 55, goes_with: ['i1'],
+        },
+      ],
+    },
+  ],
+  item_count: 4,
+};
+
+const visible = (document) =>
+  [...document.querySelectorAll('.dish')]
+    .filter((d) => !d.hidden)
+    .map((d) => d.querySelector('.dish-name').textContent);
+
+test('a misspelling still finds the dish', async () => {
+  /*
+   * THE WHOLE POINT OF THE FUZZY ENGINE.
+   *
+   * A hungry person on a phone types "panner". A menu that answers "nothing
+   * matches" reads as a restaurant that does not sell it, and every food app
+   * in the country tolerates this - so a menu that does not feels broken
+   * rather than strict.
+   */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'panner';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('a word nobody resembles still finds nothing, and says so', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'lasagne';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), []);
+  assert.match(document.getElementById('result-count').textContent, /Nothing matches/);
+});
+
+test('veg only hides the non-veg, and never guesses at the unmarked', async () => {
+  /* A shop that never filled the diet field has promised nothing. Assuming
+     vegetarian on its behalf is the one mistake this filter must not make. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.getElementById('filter-veg').click();
+
+  const shown = visible(document);
+  assert.ok(!shown.includes('Chicken 65'), 'a non-veg dish survived the veg filter');
+  assert.ok(shown.includes('Paneer Tikka'));
+});
+
+test('available now hides what is off tonight', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  document.getElementById('filter-available').click();
+  assert.ok(!visible(document).includes('Gobi Manchurian'));
+});
+
+test('filters and search narrow together rather than replacing each other', async () => {
+  /*
+   * They used to be one function reading a text box, so turning a filter on
+   * silently threw away whatever had been typed.
+   */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'tikka';
+  box.dispatchEvent(new window.Event('input'));
+  document.getElementById('filter-veg').click();
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('most ordered puts the best seller first', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'popular';
+  sort.dispatchEvent(new window.Event('change'));
+
+  /* Within each section: the sections themselves keep the shop's order. */
+  const starters = [...document.querySelectorAll('.section')][0];
+  const names = [...starters.querySelectorAll('.dish-name')].map((n) => n.textContent);
+  assert.strictEqual(names[0], 'Chicken 65');
+});
+
+test('price low to high sorts on the price the reader is being shown', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'price_asc';
+  sort.dispatchEvent(new window.Event('change'));
+
+  const starters = [...document.querySelectorAll('.section')][0];
+  const names = [...starters.querySelectorAll('.dish-name')].map((n) => n.textContent);
+  assert.deepStrictEqual(names, ['Gobi Manchurian', 'Paneer Tikka', 'Chicken 65']);
+});
+
+test('a live search outranks the sort box, because it is a question', async () => {
+  /* Somebody who just typed "naan" is asking something; answering in price
+     order buries the answer. The box takes over again once it is cleared. */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'price_desc';
+  sort.dispatchEvent(new window.Event('change'));
+
+  const box = document.getElementById('search');
+  box.value = 'paneer';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('the categories step aside while anything is narrowing the list', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  assert.strictEqual(document.getElementById('cats').hidden, false);
+  document.getElementById('filter-veg').click();
+  assert.strictEqual(document.getElementById('cats').hidden, true);
+});
+
+test('opening a dish offers what people order with it', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i1"]').click();
+
+  const box = document.getElementById('goes-with');
+  assert.strictEqual(box.hidden, false, 'no suggestions were offered');
+  assert.match(document.getElementById('goes-row').textContent, /Butter Naan/);
+});
+
+test('a dish with no history offers nothing rather than filling the space', async () => {
+  /* Recommending at random is something a diner notices immediately, and then
+     stops trusting the rest of the page. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i2"]').click();
+  assert.strictEqual(document.getElementById('goes-with').hidden, true);
+});
+
+test('a suggestion opens that dish', async () => {
+  /* It sits INSIDE the open sheet, so the handler has to run before the one
+     for dish cards or tapping it would do nothing at all. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i1"]').click();
+  document.querySelector('.goes').click();
+  assert.strictEqual(document.getElementById('sheet-title').textContent, 'Butter Naan');
+});
+
+/* ----------------------------------------------------------- photo gallery */
+
+const withPhotos = (photos, extra = {}) => ({
+  ...REPLY,
+  categories: [
+    {
+      id: 'starters',
+      name: 'Starters',
+      items: [{ ...REPLY.categories[0].items[0], photos, ...extra }],
+    },
+  ],
+});
+
+test('several photos become a strip you can push sideways', async () => {
+  /*
+   * Shops have uploaded more than one per dish for years - the item form has
+   * taken a set all along - and the menu showed exactly one. The rest were
+   * taken, stored, paid for, and never seen by a customer.
+   */
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg', 'c.jpg']));
+  document.querySelector('.dish').click();
+
+  const strip = document.getElementById('sheet-strip');
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(strip.querySelectorAll('img').length, 3);
+  assert.strictEqual(document.getElementById('sheet-dots').children.length, 3);
+});
+
+test('only the first photo loads eagerly', async () => {
+  /* The rest are off-screen until somebody pushes the strip, and a phone on a
+     bad connection should not pay for five photos of a dish nobody opened. */
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg']));
+  document.querySelector('.dish').click();
+
+  const imgs = [...document.querySelectorAll('#sheet-strip img')];
+  assert.strictEqual(imgs[0].getAttribute('loading'), 'eager');
+  assert.strictEqual(imgs[1].getAttribute('loading'), 'lazy');
+});
+
+test('one photo is not a gallery, so the dots go', async () => {
+  const { document } = await render('/menu/AZ100', withPhotos(['only.jpg']));
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-dots').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-strip').getAttribute('data-count'), '1');
+});
+
+test('a dish with no photos shows no empty grey box', async () => {
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos([], { image: '' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-img').hidden, true);
+});
+
+test('an older reply with only a cover image still shows it', async () => {
+  /* photos is new. A cached page, or a shop whose menu has not been rebuilt,
+     sends the single image and nothing else - and must not lose its photo
+     because a newer field is absent. */
+  const { document } = await render('/menu/AZ100', withPhotos(undefined, { image: 'cover.jpg' }));
+  document.querySelector('.dish').click();
+
+  const imgs = [...document.querySelectorAll('#sheet-strip img')];
+  assert.strictEqual(imgs.length, 1);
+  assert.match(imgs[0].getAttribute('src'), /cover\.jpg/);
+});
+
+test('every photo carries an alt a screen reader can use', async () => {
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg']));
+  document.querySelector('.dish').click();
+
+  const alts = [...document.querySelectorAll('#sheet-strip img')].map((i) => i.getAttribute('alt'));
+  assert.match(alts[0], /Paneer Tikka, photo 1 of 2/);
+  assert.match(alts[1], /photo 2 of 2/);
+});
+
+test('with no photo at all the generated icon still stands in', async () => {
+  /*
+   * Two features that landed the same afternoon and had to meet: the photo
+   * strip, and the drawn icon for the shops - most of them - that upload
+   * nothing. Photos win where they exist; the icon covers the rest; an empty
+   * grey box is never the answer.
+   */
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos([], { image: '', icon: '🍛' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-icon').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-icon').textContent, '🍛');
+});
+
+test('a photo beats the icon rather than sitting beside it', async () => {
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos(['a.jpg'], { icon: '🍛' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-icon').hidden, true);
+});
+
+test('a dish carries every photo, not the cover plus broken icons', () => {
+  /*
+   * THE BUG, AS THE OWNER SAW IT: "second images not loaded properly".
+   *
+   * `multi_image` is an array of OBJECTS - { name, cover } - and has been
+   * since the item form learned to take a set. The first version of the menu's
+   * photo list mapped it with String(src), which turns an object into the
+   * literal text "[object Object]". The cover came through because that one IS
+   * a string, so every dish showed its first photo and a broken icon for each
+   * of the rest.
+   *
+   * Nothing failed. The API answered 200 with a list of valid-looking strings;
+   * only a browser trying to fetch one could tell.
+   */
+  const { photoList } = require('../api/src/utils/online-ordering');
+
+  assert.deepStrictEqual(
+    photoList({ image: 'a.jpg', multi_image: [{ name: 'a.jpg', cover: 'yes' }, { name: 'b.jpg' }] }),
+    ['a.jpg', 'b.jpg'],
+    'the object shape multi_image actually has is not read'
+  );
+
+  /* Old rows carry bare strings; both shapes exist in the wild. */
+  assert.deepStrictEqual(photoList({ image: 'a.jpg', multi_image: ['b.jpg'] }), ['a.jpg', 'b.jpg']);
+
+  /* The cover is usually also the first of the set - one photo, not a
+     two-photo carousel of the same picture. */
+  assert.deepStrictEqual(photoList({ image: 'a.jpg', multi_image: [{ name: 'a.jpg' }] }), ['a.jpg']);
+
+  assert.deepStrictEqual(photoList({}), [], 'a dish with no photo gets an empty list, not [""]');
+
+  /* Nothing may come back that a browser cannot fetch. */
+  const mixed = photoList({ image: 'a.jpg', multi_image: [{ cover: 'yes' }, null, { name: '  ' }, { name: 'c.png' }] });
+  assert.ok(
+    mixed.every((src) => typeof src === 'string' && src.trim() && !src.includes('[object')),
+    `photoList produced something unfetchable: ${JSON.stringify(mixed)}`
+  );
+  assert.deepStrictEqual(mixed, ['a.jpg', 'c.png']);
+});
+
+test('the sheet can open a photo full size, and close it again', () => {
+  /* Owner: "if i click alone image lets show original big image. and close
+     button." The strip crops to one band so the sheet reads as a list; that
+     is wrong for deciding, so the whole picture is a tap away. */
+  const html = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'menu', 'menu.js'), 'utf8');
+
+  assert.match(html, /id="viewer"/, 'there is nothing to show a photo full size in');
+  assert.match(html, /id="viewer-close"/, 'the full size photo has no way out');
+  assert.match(html, /object-fit: contain/, 'the opened photo is cropped like the strip it came from');
+
+  assert.match(js, /function openViewer/, 'nothing opens the viewer');
+  assert.match(js, /viewer-close.*addEventListener|addEventListener\("click", closeViewer\)/s,
+    'the close button is not wired');
+});
