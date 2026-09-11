@@ -28,7 +28,10 @@ router.get('/', async (req, res) => {
   const { targets, cloud } = pairingTargets(
     {
       host: req.headers.host,
-      protocol: req.protocol,
+      /* No protocol. req.protocol reads `http` behind nginx unless
+         `trust proxy` is on, and it is only on in production - which printed
+         an http QR on every other instance. A public host is https; see
+         utils/pairing.js. */
       port: process.env.PORT || 5555,
     },
     localAddresses()
