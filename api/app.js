@@ -1461,6 +1461,31 @@ app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCac
  */
 const ORDER_BUNDLE = path.join(__dirname, '..', 'order');
 const MENU_BUNDLE = path.join(__dirname, '..', 'menu');
+
+/*
+ * A missing bundle is SAID OUT LOUD.
+ *
+ * The existsSync guards below are deliberate - a desktop build that packaged
+ * one and not the other should still boot - but silence was the bug. Neither
+ * deploy workflow rsynced these directories, so the mounts were skipped and
+ * every /menu and every /order URL answered 404 on every environment from the
+ * day the feature shipped. A 404 reads as a routing problem, which is why it
+ * survived review, a release, and months of use before somebody curled it.
+ *
+ * tests/bundle-deployment.test.js now pins the deploys to what is served here,
+ * in both directions. This line is the second belt: if it ever happens again
+ * the reason is in the log rather than in a support ticket.
+ */
+for (const [name, dir] of [
+  ['menu', MENU_BUNDLE],
+  ['order', ORDER_BUNDLE],
+]) {
+  if (!fs.existsSync(dir)) {
+    console.warn(
+      `[bundle] ${name}/ is not on disk at ${dir} - /${name} will answer 404 for every customer. The deploy did not ship it.`
+    );
+  }
+}
 if (fs.existsSync(MENU_BUNDLE)) {
   app.use('/menu', express.static(MENU_BUNDLE, { setHeaders: assetCacheHeaders }));
 }

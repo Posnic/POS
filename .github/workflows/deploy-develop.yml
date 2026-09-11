@@ -41,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: "22"
 
       # Built here rather than on the box: a 2 GB machine running mongod and
       # the API should not also be running a gulp build, and building in CI
@@ -87,6 +87,16 @@ jobs:
           rsync -az \
             -e "ssh -i ~/.ssh/develop.pem" \
             languages/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/languages/"
+          # The customer-facing bundles. api/app.js serves these from '../menu'
+          # and '../order' behind an fs.existsSync guard, so leaving them out
+          # was not an error - it was a silent 404 on every /menu and /order
+          # URL, which is exactly the surface anybody comes to develop to test.
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            menu/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/menu/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            order/ "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/order/"
 
       - name: Install and restart
         run: |
