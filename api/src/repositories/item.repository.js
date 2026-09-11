@@ -3790,6 +3790,7 @@ class ItemRepository extends BaseModel {
             sort_order: 1,
             diet: 1,
             icon: 1,
+            multi_image: 1,
             isAvailable: 1,
             ecommerce: 1,
             daypart_ids: 1,
@@ -3858,6 +3859,22 @@ class ItemRepository extends BaseModel {
           name: row.name || '',
           description: row.description || '',
           image: row.image || '',
+          /*
+           * Every photo of this dish, cover first and no duplicate of it.
+           *
+           * Shops already upload several - the item form has taken a set for
+           * years - and the menu showed exactly one, so the rest existed and
+           * were never seen by a customer. The card still shows the cover
+           * alone: a gallery belongs where somebody has stopped to look, not
+           * in a list being scanned.
+           */
+          photos: [
+            ...new Set(
+              [row.image, ...(Array.isArray(row.multi_image) ? row.multi_image : [])]
+                .map((src) => String(src || '').trim())
+                .filter(Boolean)
+            ),
+          ],
           price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
           diet: String(row.diet || ''),
           /*
