@@ -1,8 +1,9 @@
 # Posnic Individual Contributor Licence Agreement
 
-**Draft, version 1.0. Not yet in force.** This text is adapted from the Apache
-Software Foundation's Individual Contributor Licence Agreement v2.0 and must be
-reviewed by counsel before it is used. Nothing here is legal advice.
+**Version 1.0.** Adapted from the Apache Software Foundation's Individual
+Contributor Licence Agreement v2.0. If you are unsure what you are agreeing to,
+please take your own advice before signing: nothing here is legal advice from us
+to you.
 
 Thank you for contributing to Posnic. This agreement sets out the terms under
 which you contribute, so that both you and Posnic Innovations Private Limited
