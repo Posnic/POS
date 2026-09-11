@@ -2220,6 +2220,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         // rule the Manage sidebar uses, so the two rails never disagree.
         $('#v-pills-onlineordering-tab').toggle(on('module_online_ordering_enable'));
         $('#v-pills-kioskmachine-tab').toggle(on('module_kiosk_enable'));
+        $('#v-pills-captainapp-tab').toggle(on('module_captain_enable'));
         $('#v-pills-deliverypartners-tab').toggle(on('module_delivery_partners_enable'));
         $('#v-pills-webshop-tab').toggle(on('module_webshop_enable'));
         $('#v-pills-recyclebin-tab').toggle(on('module_recyclebin_enable'));
@@ -7185,15 +7186,10 @@ PosnicPro.settings.FEATURE_HOME = {
     module_credit_enable: ['credit', 'Customer Credit'],
     module_marketing_enable: ['marketingmodule', 'Marketing'],
     module_messaging_enable: ['messagingmodule', 'Messaging'],
-    /*
-     * Each channel's card opens that channel's own page.
-     *
-     * The Captain app is the exception and stays pointed at Restaurant: it is
-     * the tables it runs on, not a storefront of its own.
-     */
+    /* Each channel's card opens that channel's own page. */
     module_online_ordering_enable: ['onlineordering', 'Online Ordering'],
     module_kiosk_enable: ['kioskmachine', 'Kiosk Machine'],
-    module_captain_enable: ['tableorder', 'Captain App'],
+    module_captain_enable: ['captainapp', 'Captain App'],
     module_delivery_partners_enable: ['deliverypartners', 'Delivery Partners'],
     module_webshop_enable: ['webshop', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
@@ -8300,6 +8296,20 @@ $(document).on('click', '#add_channel_partner', function () {
     $('#sales_channel_partner_rows').append(PosnicPro.salesChannels.partnerRow({}));
 });
 
+/*
+ * The pairing screen lives on the API, not in this bundle.
+ *
+ * A relative /pair resolves against wherever the console happens to be served
+ * from - which on the packaged desktop build is a file:// path, and the link
+ * would simply do nothing. API_URL is the shop's own server either way. Built
+ * on click rather than at load because API_URL is not set until sign-in.
+ */
+$(document).on('click', '#open_pairing_screen', function (e) {
+    e.preventDefault();
+    var base = (typeof API_URL === 'string' && API_URL) || '/';
+    window.open(base.replace(/\/+$/, '') + '/pair', '_blank', 'noopener');
+});
+
 $(document).on('click', '#add_webshop_partner', function () {
     $('#webshop_partner_rows').append(PosnicPro.salesChannels.partnerRow({ channel: 'ecommerce' }));
 });
@@ -8353,6 +8363,7 @@ $(document).on('click', '.save-channel-settings', function () {
 PosnicPro.salesChannels.PANE_CHANNEL = {
     'v-pills-onlineordering': 'online',
     'v-pills-kioskmachine': 'kiosk',
+    'v-pills-captainapp': 'tableside',
     'v-pills-deliverypartners': 'marketplace',
     'v-pills-webshop': 'ecommerce'
 };
@@ -8373,7 +8384,8 @@ PosnicPro.salesChannels.lendProducts = function (paneId) {
 
 $(document).on(
     'shown.bs.tab',
-    '#v-pills-onlineordering-tab, #v-pills-kioskmachine-tab, #v-pills-deliverypartners-tab, #v-pills-webshop-tab',
+    '#v-pills-onlineordering-tab, #v-pills-kioskmachine-tab, #v-pills-captainapp-tab, ' +
+        '#v-pills-deliverypartners-tab, #v-pills-webshop-tab',
     function () {
         PosnicPro.salesChannels.lendProducts(String($(this).attr('href') || '').replace('#', ''));
     }

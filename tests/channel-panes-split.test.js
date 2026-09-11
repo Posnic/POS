@@ -39,14 +39,17 @@ const CORE_JS = read('frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js
 /**
  * The channels that earn their own page, and the section each one owns.
  *
- * The Captain app is deliberately absent: it configures the tables it runs on,
- * so its card points at Restaurant. That is a shared page on purpose, which is
- * why the "no two channels share a page" rule below is written over this list
- * rather than over every entry in FEATURE_HOME.
+ * The Captain app was the one exception for a while - its card pointed at
+ * Restaurant, on the grounds that it runs on the tables Restaurant manages.
+ * Defensible, and it left the one thing a shop actually has to do with a
+ * handset unreachable: the pairing screen the API serves at /pair, which
+ * nothing in the console linked to. A channel with somewhere to send people
+ * earns a page.
  */
 const CHANNELS = [
   { module: 'module_online_ordering_enable', section: 'onlineordering' },
   { module: 'module_kiosk_enable', section: 'kioskmachine' },
+  { module: 'module_captain_enable', section: 'captainapp' },
   { module: 'module_delivery_partners_enable', section: 'deliverypartners' },
   { module: 'module_webshop_enable', section: 'webshop' },
 ];
@@ -226,4 +229,42 @@ test('the products screen exists once, and every channel can borrow it', () => {
   assert.strictEqual(hosts, CHANNELS.length, `${hosts} panes can show the products screen, wanted ${CHANNELS.length}`);
 
   assert.match(SETTINGS_JS, /lendProducts/, 'nothing moves the products screen into the open pane');
+});
+
+test('the captain app page can actually reach the pairing screen', () => {
+  /*
+   * THE REASON THIS PAGE EXISTS.
+   *
+   * Setting up a handset means pointing a phone at this shop, and the screen
+   * that does it is served by the API at /pair - deliberately a plain page
+   * outside this bundle so it works on a till mid-setup with no internet.
+   * Nothing in the console linked to it, so the feature shipped findable only
+   * by being told about it.
+   */
+  assert.match(
+    SETTINGS_HTML,
+    /id="open_pairing_screen"/,
+    'the Captain App page has no link to the pairing screen, which is the one thing it is for'
+  );
+
+  const app = read('api', 'app.js');
+  assert.match(
+    app,
+    /app\.use\(\['\/pair', '\/api\/pair'\]/,
+    'the API no longer serves /pair, so the console link goes nowhere'
+  );
+
+  /*
+   * Built from API_URL, never a relative path. The packaged desktop build
+   * serves this console from file://, where "/pair" resolves to the filesystem
+   * root and the link silently does nothing - the same trap dashboard.js
+   * documents for its runtime-info fetch.
+   */
+  const handler = SETTINGS_JS.match(/#open_pairing_screen'[\s\S]{0,400}?\n\}\);/);
+  assert.ok(handler, 'nothing handles a click on the pairing link');
+  assert.match(
+    handler[0],
+    /API_URL/,
+    'the pairing link is built from a relative path, so it does nothing in the desktop build'
+  );
 });

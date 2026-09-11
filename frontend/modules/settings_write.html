@@ -98,6 +98,11 @@
                                     aria-selected="false"><i class="feather icon-truck mr-2"></i>
                                     <lang class="lang_module_delivery_partners">Delivery Partners</lang>
                                 </a>
+                                <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-captainapp-tab"
+                                    data-toggle="pill" href="#v-pills-captainapp" role="tab" aria-controls="v-pills-captainapp"
+                                    aria-selected="false"><i class="feather icon-smartphone mr-2"></i>
+                                    <lang class="lang_module_captain">Captain App</lang>
+                                </a>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-webshop-tab"
                                     data-toggle="pill" href="#v-pills-webshop" role="tab" aria-controls="v-pills-webshop"
                                     aria-selected="false"><i class="feather icon-globe mr-2"></i>
@@ -5468,6 +5473,70 @@
                                                 </div>
                                                 <div class="tab-pane fade" id="webshopproducts-line" role="tabpanel"
                                                     aria-labelledby="webshopproducts-tab-line">
+                                                    <div class="channel-products-host"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Captain App -->
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-captainapp"
+                            role="tabpanel" aria-labelledby="v-pills-captainapp-tab">
+                            <div class="order-box">
+                                <div class="col-md-12 col-lg-12 col-xl-12">
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title"><lang class="lang_module_captain">Captain App</lang></h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" id="captainhandsets-tab-line" data-toggle="tab"
+                                                        href="#captainhandsets-line" role="tab" aria-controls="captainhandsets-line"
+                                                        aria-selected="true"><i class="feather icon-smartphone mr-1"></i><lang class="lang_captain_handsets">Handsets</lang></a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" id="captainproducts-tab-line" data-toggle="tab"
+                                                        href="#captainproducts-line" role="tab" aria-controls="captainproducts-line"
+                                                        aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="captainhandsets-line" role="tabpanel"
+                                                    aria-labelledby="captainhandsets-tab-line">
+                                                    <div class="card border m-b-30">
+                                                        <div class="card-body">
+                                                            <h6 class="mb-1"><lang class="lang_captain_pair_title">Point a phone at this shop</lang></h6>
+                                                            <small class="form-text text-muted mb-3">
+                                                                <lang class="lang_captain_pair_help">Install the Posnic captain app on the phone, open the pairing screen below on the till, and let the phone read the code. The owner knows the shop address; a waiter on their first shift does not, and this is so nobody has to type it.</lang>
+                                                            </small>
+                                                            <a href="#" class="btn btn-outline-primary btn-sm" id="open_pairing_screen" target="_blank" rel="noopener">
+                                                                <i class="feather icon-maximize mr-1"></i><lang class="lang_captain_open_pairing">Open the pairing screen</lang>
+                                                            </a>
+                                                            <small class="form-text text-muted mt-2">
+                                                                <lang class="lang_captain_pair_safe">The code carries this shop's address, not a password. A waiter still signs in with their own name and PIN.</lang>
+                                                            </small>
+
+                                                            <hr class="my-3">
+
+                                                            <h6 class="mb-1"><lang class="lang_captain_elsewhere">Set up elsewhere</lang></h6>
+                                                            <small class="form-text text-muted mb-2">
+                                                                <lang class="lang_captain_elsewhere_help">Two things the captain app uses live on other pages, because they are not only its own.</lang>
+                                                            </small>
+                                                            <p class="mb-1">
+                                                                <a href="#/settings/tableorder"><lang class="lang_captain_tables_link">Tables and serving periods - Restaurant</lang></a>
+                                                            </p>
+                                                            <p class="mb-0">
+                                                                <a href="#/settings/integrations"><lang class="lang_captain_voice_link">Voice ordering, so a waiter can speak an order - Integrations</lang></a>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="tab-pane fade" id="captainproducts-line" role="tabpanel"
+                                                    aria-labelledby="captainproducts-tab-line">
                                                     <div class="channel-products-host"></div>
                                                 </div>
                                             </div>
