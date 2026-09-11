@@ -28,7 +28,18 @@
 (function () {
   "use strict";
 
-  var state = { categories: [], currency: "", flat: [] };
+  var state = {
+    categories: [],
+    currency: "",
+    flat: [],
+    /* What the reader has narrowed the menu to. Held here rather than read
+       back off the controls each time, so search and filters compose instead
+       of overwriting one another. */
+    query: "",
+    vegOnly: false,
+    availableOnly: false,
+    sort: "menu",
+  };
 
   var el = function (id) {
     return document.getElementById(id);
@@ -222,6 +233,10 @@
     state.flat = [];
     state.categories.forEach(function (c) {
       c.items.forEach(function (i) {
+        /* Carried onto the dish so search can weigh a category hit: somebody
+           typing "breads" means the section, and the dishes do not otherwise
+           know which one they are in. */
+        i.categoryName = c.name || "";
         state.flat.push({ cat: c.id, item: i });
       });
     });
@@ -333,51 +348,265 @@
     box.hidden = false;
   }
 
+  /* ------------------------------------------------------------- search
+   *
+   * PORTED FROM api/src/utils/menu-search.js, deliberately.
+   *
+   * This bundle is plain scripts on a phone with no build step, so there is
+   * nothing to import through. Sharing ninety lines would mean giving the page
+   * a module loader, and being fast on a bad connection is the whole reason
+   * this page exists. tests/menu-search-parity.test.js pins the two copies to
+   * the same answers so they cannot drift quietly.
+   */
+
+  function normalize(value) {
+    return String(value == null ? "" : value)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /* Damerau-Levenshtein. The transposition is what makes "biriyani" one
+     mistake rather than two. */
+  function editDistance(a, b, budget) {
+    if (a === b) return 0;
+    if (Math.abs(a.length - b.length) > budget) return budget + 1;
+
+    var prev2 = null;
+    var prev = [];
+    for (var k = 0; k <= b.length; k++) prev.push(k);
+
+    for (var i = 1; i <= a.length; i++) {
+      var row = new Array(b.length + 1);
+      row[0] = i;
+      var best = row[0];
+
+      for (var j = 1; j <= b.length; j++) {
+        var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        var value = Math.min(row[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+          value = Math.min(value, prev2[j - 2] + cost);
+        }
+        row[j] = value;
+        if (value < best) best = value;
+      }
+
+      if (best > budget) return budget + 1;
+      prev2 = prev;
+      prev = row;
+    }
+    return prev[b.length];
+  }
+
+  /* Short words get no slack: with a budget of two, "dal" matches "dosa" and
+     a three-letter search returns the menu. */
+  function budgetFor(length) {
+    if (length < 5) return 0;
+    if (length < 8) return 1;
+    return 2;
+  }
+
+  function scoreWord(query, target) {
+    if (!query || !target) return 0;
+    if (query === target) return 100;
+    if (target.indexOf(query) === 0) return 80;
+    if (target.indexOf(query) !== -1) return 55;
+
+    var budget = budgetFor(query.length);
+    if (!budget) return 0;
+    var distance = editDistance(query, target, budget);
+    if (distance > budget) return 0;
+    return 40 - (distance - 1) * 12;
+  }
+
+  /* Every query word must find something: somebody who typed two words meant
+     both of them. */
+  function scoreItem(query, fields) {
+    var words = normalize(query).split(" ").filter(Boolean);
+    if (!words.length) return { match: true, score: 0 };
+
+    var haystacks = [
+      { text: normalize(fields.name), weight: 1 },
+      { text: normalize(fields.category), weight: 0.5 },
+      { text: normalize(fields.description), weight: 0.35 },
+    ].filter(function (h) {
+      return h.text;
+    });
+
+    var total = 0;
+    for (var w = 0; w < words.length; w++) {
+      var word = words[w];
+      var bestForWord = 0;
+
+      for (var h = 0; h < haystacks.length; h++) {
+        var hay = haystacks[h];
+        if (hay.text.indexOf(word) !== -1) {
+          bestForWord = Math.max(bestForWord, 70 * hay.weight);
+        }
+        var parts = hay.text.split(" ");
+        for (var p = 0; p < parts.length; p++) {
+          var s = scoreWord(word, parts[p]);
+          if (s) bestForWord = Math.max(bestForWord, s * hay.weight);
+        }
+      }
+
+      if (!bestForWord) return { match: false, score: 0 };
+      total += bestForWord;
+    }
+
+    return { match: true, score: Math.round(total / words.length) };
+  }
+
   /* -------------------------------------------------------------- search */
 
-  function applySearch(term) {
-    var q = String(term || "")
-      .trim()
-      .toLowerCase();
-    var sections = document.querySelectorAll(".section");
+  /**
+   * Everything the reader has narrowed the menu to, applied together.
+   *
+   * SEARCH, FILTERS AND SORT COMPOSE. They used to be one function that read a
+   * text box, which meant turning on "veg only" silently threw away whatever
+   * had been typed. They are three independent narrowings of the same list
+   * now, and this is the only place that decides what is on screen.
+   *
+   * The dish elements are reordered rather than rebuilt: the detail sheet
+   * looks dishes up by id from state.flat, and rebuilding the markup on every
+   * keystroke would throw away the scroll position mid-type.
+   */
+  function applyView() {
+    var q = state.query.trim();
+    var scores = {};
     var shown = 0;
 
-    sections.forEach(function (section) {
+    document.querySelectorAll(".section").forEach(function (section) {
       var visibleInSection = 0;
-      section.querySelectorAll(".dish").forEach(function (dish) {
-        var hay = dish.textContent.toLowerCase();
-        var match = !q || hay.indexOf(q) !== -1;
-        dish.hidden = !match;
-        if (match) visibleInSection++;
+      var dishes = [].slice.call(section.querySelectorAll(".dish"));
+
+      dishes.forEach(function (dish) {
+        var item = lookup(dish.getAttribute("data-id"));
+        if (!item) return;
+
+        var ok = true;
+
+        /* Veg only means veg. An unmarked dish is NOT assumed vegetarian -
+           a shop that never filled the field has not promised anything, and
+           guessing on somebody's behalf is the one mistake this filter must
+           never make. */
+        if (state.vegOnly && item.diet !== "veg" && item.diet !== "vegan") {
+          ok = false;
+        }
+        if (state.availableOnly && item.available === false) ok = false;
+
+        if (ok && q) {
+          var hit = scoreItem(q, {
+            name: item.name,
+            description: item.description,
+            category: item.categoryName,
+          });
+          ok = hit.match;
+          scores[item.id] = hit.score;
+        }
+
+        dish.hidden = !ok;
+        if (ok) visibleInSection++;
       });
-      /* A heading with nothing under it is noise while searching. */
+
+      /* Reordered in place, so the sheet's lookups and the scroll position
+         both survive a keystroke. */
+      var order = sortedDishes(dishes, scores, q);
+      var row = section.querySelector(".dishes");
+      if (row)
+        order.forEach(function (dish) {
+          row.appendChild(dish);
+        });
+
+      /* A heading with nothing under it is noise. */
       section.hidden = visibleInSection === 0;
       shown += visibleInSection;
     });
 
+    var narrowed = !!q || state.vegOnly || state.availableOnly;
+
     el("search-clear").hidden = !q;
-    /* The categories navigate a list that searching has just rearranged,
-           so they step aside until the search is cleared. */
-    el("cats").hidden = !!q;
+    /* The categories navigate a list that narrowing has just rearranged, so
+       they step aside until it is cleared. */
+    el("cats").hidden = narrowed;
 
     var counter = el("result-count");
-    if (!q) {
+    if (!narrowed) {
       counter.hidden = true;
-    } else {
-      counter.hidden = false;
-      counter.innerHTML = "";
-      if (shown === 0) {
-        counter.appendChild(
-          Object.assign(document.createElement("strong"), {
-            textContent: 'Nothing matches "' + term + '"',
-          }),
-        );
-        counter.appendChild(document.createTextNode("Try a different word."));
-      } else {
-        counter.textContent =
-          shown + (shown === 1 ? " dish" : " dishes") + " found";
-      }
+      return;
     }
+
+    counter.hidden = false;
+    counter.innerHTML = "";
+    if (shown === 0) {
+      counter.appendChild(
+        Object.assign(document.createElement("strong"), {
+          textContent: q
+            ? 'Nothing matches "' + state.query + '"'
+            : "Nothing matches those filters",
+        }),
+      );
+      counter.appendChild(
+        document.createTextNode(
+          q ? "Try a different word." : "Try turning one off.",
+        ),
+      );
+    } else {
+      counter.textContent =
+        shown + (shown === 1 ? " dish" : " dishes") + " found";
+    }
+  }
+
+  /** One dish from the flattened list, by id. */
+  function lookup(id) {
+    var found = state.flat.filter(function (row) {
+      return String(row.item.id) === String(id);
+    })[0];
+    return found ? found.item : null;
+  }
+
+  /**
+   * The order the visible dishes appear in.
+   *
+   * A live search ALWAYS sorts by how well each dish answered, whatever the
+   * sort box says - somebody who just typed "dosa" is asking a question, and
+   * answering it in price order buries the dosa. The box takes over again the
+   * moment the search is cleared.
+   */
+  function sortedDishes(dishes, scores, query) {
+    var list = dishes.slice();
+
+    if (query) {
+      return list.sort(function (a, b) {
+        return (
+          (scores[b.getAttribute("data-id")] || 0) -
+          (scores[a.getAttribute("data-id")] || 0)
+        );
+      });
+    }
+
+    if (state.sort === "menu") return list;
+
+    return list.sort(function (a, b) {
+      var x = lookup(a.getAttribute("data-id")) || {};
+      var y = lookup(b.getAttribute("data-id")) || {};
+      if (state.sort === "popular") {
+        return (y.ordered_count || 0) - (x.ordered_count || 0);
+      }
+      if (state.sort === "price_asc") return (x.price || 0) - (y.price || 0);
+      if (state.sort === "price_desc") return (y.price || 0) - (x.price || 0);
+      return 0;
+    });
+  }
+
+  /* Kept under its old name: the search box, the clear button and the tests
+     all call it, and the extra argument is the only thing that changed. */
+  function applySearch(term) {
+    state.query = String(term == null ? "" : term);
+    applyView();
   }
 
   /* ------------------------------------------------------- scroll spy */
@@ -453,6 +682,8 @@
       money(item.price) +
       (item.available === false ? "  -  not available today" : "");
 
+    showGoesWith(item);
+
     var sheet = el("sheet");
     if (typeof sheet.showModal === "function") sheet.showModal();
     else sheet.setAttribute("open", "open");
@@ -461,6 +692,20 @@
   /* ---------------------------------------------------------------- wire */
 
   document.addEventListener("click", function (e) {
+    /*
+     * A suggestion opens that dish, in place.
+     *
+     * Checked BEFORE the .dish handler below, because a suggestion sits inside
+     * the open sheet and closest(".dish") would otherwise never see it - and
+     * tapping one would do nothing at all, which is the kind of dead control
+     * that makes a page feel broken rather than limited.
+     */
+    var goes = e.target.closest && e.target.closest(".goes");
+    if (goes) {
+      openSheet(goes.getAttribute("data-id"));
+      return;
+    }
+
     /*
      * The category chips, scrolled by hand.
      *
@@ -505,9 +750,81 @@
     }
   });
 
+  /**
+   * What people order with this, from the shop's own last month of sales.
+   *
+   * ONLY IN THE SHEET. A suggestion under every card turns a menu into a shop
+   * and doubles its length; a suggestion where somebody has already stopped to
+   * read one dish is an answer to the question they are actually asking.
+   *
+   * Silent when there is nothing to say. A new shop has no sales behind it,
+   * and inventing three dishes to fill the space would be recommending at
+   * random - which a diner notices immediately and stops trusting.
+   */
+  function showGoesWith(item) {
+    var box = el("goes-with");
+    if (!box) return;
+
+    var ids = item.goes_with || [];
+    var row = ids
+      .map(lookup)
+      .filter(Boolean)
+      /* Never suggest the dish somebody is already looking at. */
+      .filter(function (other) {
+        return String(other.id) !== String(item.id);
+      })
+      .slice(0, 3);
+
+    if (!row.length) {
+      box.hidden = true;
+      return;
+    }
+
+    el("goes-row").innerHTML = row
+      .map(function (other) {
+        return (
+          '<button type="button" class="goes" data-id="' +
+          escapeHtml(other.id) +
+          '">' +
+          '<span class="goes-name">' +
+          dietMark(other.diet) +
+          " " +
+          escapeHtml(other.name) +
+          "</span>" +
+          '<span class="goes-price">' +
+          escapeHtml(money(other.price)) +
+          "</span></button>"
+        );
+      })
+      .join("");
+    box.hidden = false;
+  }
+
   el("search").addEventListener("input", function (e) {
     applySearch(e.target.value);
   });
+
+  /* ------------------------------------------------------- filters and sort */
+
+  function toggleFilter(id, key) {
+    var button = el(id);
+    if (!button) return;
+    button.addEventListener("click", function () {
+      state[key] = !state[key];
+      button.setAttribute("aria-pressed", state[key] ? "true" : "false");
+      applyView();
+    });
+  }
+
+  toggleFilter("filter-veg", "vegOnly");
+  toggleFilter("filter-available", "availableOnly");
+
+  if (el("sort")) {
+    el("sort").addEventListener("change", function (e) {
+      state.sort = e.target.value;
+      applyView();
+    });
+  }
 
   load();
 })();

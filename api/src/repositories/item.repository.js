@@ -3640,6 +3640,101 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * What sells, and what sells beside it.
+   *
+   * ONE PASS FOR BOTH, and that is the whole reason they live in one method.
+   * Popularity is how often a line appears in a sale; "often ordered with" is
+   * how often two lines appear in the SAME sale. Asking those separately means
+   * reading the same few thousand sales twice, and asking for one item's
+   * neighbours at a time means one query per dish on the menu.
+   *
+   * A WINDOW, NOT ALL OF HISTORY. What a restaurant sold last spring is not
+   * what it sells this week, and a menu that recommends on three years of data
+   * recommends the thing that was popular before the chef changed. Thirty days
+   * of sales, capped, so this stays a bounded read on a busy shop.
+   *
+   * NEW SHOPS ANSWER EMPTY, and every caller has to be fine with that: a menu
+   * with no sales behind it shows no "popular" badge and no suggestions rather
+   * than inventing either.
+   */
+  async salesSignals({ branchId, days = 30, maxSales = 4000 } = {}) {
+    const empty = { popularity: new Map(), related: new Map() };
+    try {
+      const sales = await this.getCollection('sales');
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      const filter = {
+        date: { $gte: since },
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'KOT'] },
+      };
+      if (BaseModel.license) filter.license = BaseModel.license;
+      if (branchId && ObjectId.isValid(String(branchId))) {
+        filter.branch_id = new ObjectId(String(branchId));
+      }
+
+      const rows = await sales
+        .find(filter, { projection: { 'items.item_id': 1 } })
+        .sort({ date: -1 })
+        .limit(maxSales)
+        .toArray();
+
+      const popularity = new Map();
+      const pairs = new Map();
+
+      for (const sale of rows) {
+        /* Deduplicated per sale: two portions of the same dish on one bill is
+           one sale that wanted it, and counting quantity would let a single
+           table of twelve decide what the whole menu recommends. */
+        const ids = [
+          ...new Set((sale.items || []).map((line) => String(line.item_id || '')).filter(Boolean)),
+        ];
+
+        for (const id of ids) {
+          popularity.set(id, (popularity.get(id) || 0) + 1);
+        }
+
+        /* Co-occurrence, both directions, counted once per pair per sale. A
+           bill of twenty lines would be 190 pairs, which is where a big
+           catering order distorts everything, so wide bills are skipped. */
+        if (ids.length < 2 || ids.length > 12) continue;
+
+        for (let i = 0; i < ids.length; i += 1) {
+          for (let j = i + 1; j < ids.length; j += 1) {
+            for (const [a, b] of [
+              [ids[i], ids[j]],
+              [ids[j], ids[i]],
+            ]) {
+              if (!pairs.has(a)) pairs.set(a, new Map());
+              const withA = pairs.get(a);
+              withA.set(b, (withA.get(b) || 0) + 1);
+            }
+          }
+        }
+      }
+
+      /* Top three neighbours per dish. Three is what fits under a dish on a
+         phone without the suggestion becoming the page. */
+      const related = new Map();
+      for (const [id, counts] of pairs) {
+        related.set(
+          id,
+          [...counts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([otherId, count]) => ({ id: otherId, count }))
+        );
+      }
+
+      return { popularity, related };
+    } catch (error) {
+      /* A menu that cannot read its own sales still has to serve the menu.
+         No badges and no suggestions is a complete answer. */
+      console.warn('[menu] could not read sales signals:', error.message);
+      return empty;
+    }
+  }
+
   async publicMenu(params = {}) {
     const storeId = params.storeId;
     try {
@@ -3719,6 +3814,11 @@ class ItemRepository extends BaseModel {
         await this.shopVenues()
       );
 
+      /* What sells and what sells beside it, from the last month of this
+         branch's own sales. A new shop gets empty maps and simply shows no
+         badges and no suggestions. */
+      const signals = await this.salesSignals({ branchId: branchDoc._id });
+
       const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const nowDay = localNow.day();
       const nowMinutes = localNow.hours() * 60 + localNow.minutes();
@@ -3763,6 +3863,14 @@ class ItemRepository extends BaseModel {
           /* Roughly how long the kitchen needs. Zero means the shop has not
              said, and the page shows nothing rather than guessing. */
           prep_minutes: Number(row.prep_minutes) || 0,
+          /* How many of the last month's bills carried this. The page sorts
+             on it and badges the top few; zero is "we do not know yet", never
+             "nobody wants it". */
+          ordered_count: signals.popularity.get(String(row._id)) || 0,
+          /* The dishes most often on the same bill, best first. Ids only -
+             the page already holds every dish and looking them up there beats
+             sending three copies of each name down a phone connection. */
+          goes_with: (signals.related.get(String(row._id)) || []).map((r) => r.id),
           /* Internal, stripped before the page sees it: only the category
              ranking above needs it. */
           _sort: Number(row.sort_order) || 0,
