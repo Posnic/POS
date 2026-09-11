@@ -1566,31 +1566,53 @@ if ($wrapper.length) {
         },
 
         /** Show what a pause is doing, in words, with the time it lifts. */
-        renderPause: function (pausedUntil) {
+        /**
+         * Draw the one true state, and show only the buttons that apply to it.
+         *
+         * `changed` marks this as somebody's click rather than what the server
+         * said. A pause is stored with the rest of the form, so the kitchen can
+         * press "Stop taking orders", see the screen change, walk away and have
+         * orders still arriving. Saying so where the button is beats a toast
+         * that has already faded.
+         */
+        renderPause: function (pausedUntil, changed) {
             var $status = $('#kiosk_pause_status');
             if (!$status.length) return;
             $('#kiosk_paused_until').val(pausedUntil || '');
 
-            if (!pausedUntil) {
-                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
-                return;
+            var at = pausedUntil ? new Date(pausedUntil) : null;
+            var paused = !!(at && !isNaN(at.getTime()) && at.getTime() > Date.now());
+
+            if (paused) {
+                $status
+                    .removeClass('badge-success')
+                    .addClass('badge-danger')
+                    .text(
+                        PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
+                        at.toLocaleString()
+                    );
+            } else {
+                $status
+                    .removeClass('badge-danger')
+                    .addClass('badge-success')
+                    .text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
             }
-            var at = new Date(pausedUntil);
-            if (isNaN(at.getTime()) || at.getTime() <= Date.now()) {
-                $status.text(PosnicPro.i18n.t('lang_online_ordering_accepting', 'Accepting orders.'));
-                return;
-            }
-            $status.text(
-                PosnicPro.i18n.t('lang_online_ordering_paused_until', 'Paused until') + ' ' +
-                at.toLocaleString()
-            );
+
+            /* Pausing is offered while accepting; resuming while paused. A
+               Resume button on a shop that never stopped undoes nothing. */
+            $('#kiosk_pause_actions').toggle(!paused);
+            $('#kiosk_resume_actions').toggle(paused);
+            $('#kiosk_pause_unsaved').toggle(!!changed);
         },
 
         /** Toggle the controls that only mean something when taking orders. */
         syncMode: function () {
             var ordering = $('#kiosk_mode').val() !== 'menu';
             $('.kiosk-ordering-only').toggle(ordering);
-            $('#kiosk_hours_grid').toggle(ordering && $('#kiosk_hours_enable').is(':checked'));
+            var hours = ordering && $('#kiosk_hours_enable').is(':checked');
+            $('#kiosk_hours_grid').toggle(hours);
+            /* The sentence explaining the grid goes with the grid. */
+            $('#kiosk_hours_help').toggle(hours);
         },
 
         load: function (kioskData) {
@@ -1674,6 +1696,9 @@ if ($wrapper.length) {
             loader.find(".loadingSpinner").remove();
 
             if (response.type === 'success') {
+                /* Stored, so the "not saved yet" marker beside the pause
+                   buttons has nothing left to warn about. */
+                $('#kiosk_pause_unsaved').hide();
                 PosnicPro.alert('success', response.message || 'Settings saved');
             } else {
                 PosnicPro.alert('error', response.message || 'Could not save settings. Please try again.');
@@ -7936,14 +7961,16 @@ $(document).on('click', '.kiosk-pause-btn', function () {
     if (minutes > 0) {
         until = new Date(Date.now() + minutes * 60000);
     } else {
+        /* End of today, not for ever. The one-click version of the same rule
+           the whole control is built on. */
         until = new Date();
         until.setHours(23, 59, 59, 999);
     }
-    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
+    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString(), true);
 });
 
 $(document).on('click', '#kiosk_pause_resume', function () {
-    PosnicPro.settings.onlineOrdering.renderPause('');
+    PosnicPro.settings.onlineOrdering.renderPause('', true);
 });
 
 /*
@@ -8636,15 +8663,15 @@ $(document).on('click', '.remove-daypart', function () {
  * following Tuesday, with nobody able to say why the orders stopped - which is
  * why the underlying field is a moment and not a flag.
  */
-$(document).on('click', '#stop_taking_orders', function () {
-    var until = new Date();
-    until.setHours(23, 59, 59, 999);
-    PosnicPro.settings.onlineOrdering.renderPause(until.toISOString());
-    PosnicPro.alert(
-        'success',
-        PosnicPro.i18n.t('lang_orders_stopped_for_today', 'Orders stopped for today. Press Save to apply.')
-    );
-});
+/*
+ * The separate "Stop taking orders" button is gone, and this handler with it.
+ *
+ * It did exactly what "Rest of today" already did, and announced it with a
+ * SUCCESS toast reading "Orders stopped for today" - on a screen where nothing
+ * is stored until Save. A kitchen under water reads that as done, walks away,
+ * and the orders keep arriving. Stopping is now the red button in the group
+ * above, beside a marker that stays on screen until the form is saved.
+ */
 
 /*
  * WHAT EACH CHANNEL SELLS.
