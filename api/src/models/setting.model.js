@@ -1395,6 +1395,11 @@ class SettingModel extends BaseModel {
         quotes_enable: offOnly,
         invoices_enable: offOnly,
         pl_include_cashbook: offOnly,
+        /* AI assistance. offOnly, so a shop that has never touched the switch
+           is not switched off by our silence - the same default every other
+           module here uses. The provider and key live on the AI page; this
+           is only the switch, which is all a Features card may carry. */
+        ai_enabled: offOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
         if (data[key] !== undefined) {

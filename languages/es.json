@@ -122,6 +122,7 @@
   "lang_ai_hint": "No cobramos nada por esto. Usted aporta su propia cuenta con un proveedor de IA y le paga directamente, por lo que funciona en todos los planes, incluido el gratuito, y nosotros no le facturamos nada. La clave se guarda en este servidor, nunca se envía a un navegador y no se vuelve a mostrar una vez guardada.",
   "lang_ai_key": "Clave API",
   "lang_ai_key_saved": "Hay una clave guardada. Escriba una nueva para reemplazarla.",
+  "lang_ai_module_desc": "Escribe descripciones de artículos por usted. Usted aporta su propia cuenta de IA y paga directamente a ese proveedor; nosotros no cobramos nada. Configúrelo en la página Asistencia de IA.",
   "lang_ai_off": "Desactivado - sin botones de IA",
   "lang_ai_openai": "OpenAI - su propia cuenta",
   "lang_ai_provider": "Quién responde",

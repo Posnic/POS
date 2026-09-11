@@ -37,6 +37,9 @@
     "src/services/authorization.service.js",
     "src/services/shift.service.js"
   ],
+  "AI assistance is switched off for this shop": [
+    "src/services/ai.service.js"
+  ],
   "API v2": [
     "src/routes/index.js"
   ],

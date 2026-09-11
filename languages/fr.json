@@ -122,6 +122,7 @@
   "lang_ai_hint": "Nous ne facturons rien pour cela. Vous utilisez votre propre compte chez un fournisseur d'IA et le payez directement, ce qui fonctionne avec toutes les formules, y compris la gratuite, et nous ne vous facturons rien. La clé est enregistrée sur ce serveur, n'est jamais envoyée à un navigateur et n'est plus jamais affichée une fois enregistrée.",
   "lang_ai_key": "Clé API",
   "lang_ai_key_saved": "Une clé est enregistrée. Saisissez-en une nouvelle pour la remplacer.",
+  "lang_ai_module_desc": "Rédige les descriptions d'articles à votre place. Vous utilisez votre propre compte IA et payez ce fournisseur directement ; nous ne facturons rien. À configurer sur la page Assistance IA.",
   "lang_ai_off": "Désactivé - aucun bouton IA",
   "lang_ai_openai": "OpenAI - votre propre compte",
   "lang_ai_provider": "Qui répond",

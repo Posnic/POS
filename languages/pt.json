@@ -122,6 +122,7 @@
   "lang_ai_hint": "Não cobramos nada por isto. Você usa a sua própria conta num fornecedor de IA e paga-lhe diretamente, por isso funciona em todos os planos, incluindo o gratuito, e nós não lhe cobramos nada. A chave é guardada neste servidor, nunca é enviada para um navegador e nunca mais é mostrada depois de guardada.",
   "lang_ai_key": "Chave API",
   "lang_ai_key_saved": "Existe uma chave guardada. Escreva uma nova para a substituir.",
+  "lang_ai_module_desc": "Escreve descrições de artigos por si. Usa a sua própria conta de IA e paga diretamente a esse fornecedor; nós não cobramos nada. Configure na página Assistência de IA.",
   "lang_ai_off": "Desligado - sem botões de IA",
   "lang_ai_openai": "OpenAI - a sua própria conta",
   "lang_ai_provider": "Quem responde",
