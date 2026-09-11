@@ -579,21 +579,32 @@ body.searching .fixed-heading {
  * The shape every ordering app in the country has taught people, and the
  * same anatomy as the menu's card with one control added.
  */
+/*
+ * minmax(0, 1fr), never a bare 1fr.
+ *
+ * A bare 1fr track is minmax(auto, 1fr): it cannot shrink below the widest
+ * thing in it, and a dish name is set on one line with an ellipsis - so the
+ * NAME decides the track, the two tracks grow past the column, and the
+ * second card slides under the order panel. Seen on a laptop with "White
+ * Envelopes 25 envelope pack". Zero as the floor lets the ellipsis do its
+ * job.
+ */
 .product-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   padding: 0 0 12px;
 }
 
 @media (min-width: 720px) {
   .product-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1100px) {
   .product-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -638,6 +649,10 @@ body.searching .fixed-heading {
 }
 
 .product-name {
+  flex: 1 1 auto;
+  /* A flex item's floor is its content; a one-line name must be allowed to
+     be narrower than its words or nothing above it can shrink either. */
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2274,12 +2289,13 @@ dialog.sheet[open]::backdrop {
 
   .scrollable-products {
     grid-column: 2;
+    min-width: 0;
     max-width: none;
     padding: 0;
   }
 
   .product-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .order-panel {

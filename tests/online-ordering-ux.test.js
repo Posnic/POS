@@ -340,6 +340,30 @@ test('every action answers, and a phone that asked for less motion gets less', (
   assert.match(read('indexedDB.js'), /pop\(\$qty\)/, 'a changed count no longer pops');
 });
 
+test('a long dish name cannot push a column under the order panel', () => {
+  /*
+   * Seen on a laptop with "White Envelopes 25 envelope pack": a bare 1fr
+   * track is minmax(auto, 1fr) and cannot shrink below a one-line name, so
+   * the two tracks grew past the column and the second card slid under the
+   * panel. Every dish track has a floor of zero, on both pages.
+   */
+  const css = read('assets/order.css');
+  assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(css), 'a bare 1fr track is back in order.css');
+  assert.match(css, /\.product-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(css, /\.product-name\s*\{[^}]*min-width:\s*0/, 'the name has no floor of its own');
+  const menu = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
+  assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(menu), 'a bare 1fr track is back in the menu');
+  assert.match(menu, /\.dish-name\s*\{[^}]*min-width:\s*0/);
+});
+
+test('the shop name arrives on a browser that already had the menu', () => {
+  /* The header read the stored branch row, which on an older row had no
+     name, and said "Menu" until the next visit. */
+  const js = read('indexedDB.js');
+  const fetchFn = js.slice(js.indexOf('async function fetchAndStoreBranch('));
+  assert.match(fetchFn.slice(0, fetchFn.indexOf('validateCartWithProducts')), /paintShop\(\)/, 'the header is not repainted after a refresh');
+});
+
 test('every control is sized for a thumb, and focus is visible', () => {
   const css = read('assets/order.css');
   assert.match(css, /--tap:\s*44px/);
