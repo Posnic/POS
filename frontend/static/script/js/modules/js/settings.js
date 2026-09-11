@@ -937,6 +937,12 @@ var kioskData = (data.kiosk && data.kiosk.length > 0) ? data.kiosk[0] : {};
 // Extract values with fallback to empty strings
 var store_id = kioskData.store_id || "";
 $("#kioskstore_id").val(store_id);
+/* Draw the shop's two addresses for the id that just arrived.
+   .val() fires no event, so the 'input change' handler that keeps them
+   current while somebody types never runs here - and a person who opened
+   #/settings/onlineordering directly would see an empty box where their
+   own /order and /menu links should be, until they typed in it. */
+if (PosnicPro.settings.storefrontLinks) { PosnicPro.settings.storefrontLinks(); }
 
 PosnicPro.settings.onlineOrdering.load(kioskData);
 
