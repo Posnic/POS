@@ -1027,6 +1027,9 @@
   "New password and confirmation are required": [
     "src/controllers/users.controller.js"
   ],
+  "No API key is saved for the AI provider": [
+    "src/services/ai.service.js"
+  ],
   "No API key is saved for the voice provider": [
     "src/services/transcribe.service.js"
   ],
@@ -1251,6 +1254,9 @@
   ],
   "Nothing to write": [
     "src/repositories/settings.repository.js"
+  ],
+  "Nothing was asked": [
+    "src/services/ai.service.js"
   ],
   "Online ordering is not available for this shop.": [
     "src/utils/online-ordering.js"
@@ -1847,6 +1853,9 @@
   "That key does not belong to an API user.": [
     "src/middleware/api-key.js"
   ],
+  "That picture could not be read": [
+    "src/services/ai.service.js"
+  ],
   "That recording is too long": [
     "src/services/transcribe.service.js"
   ],
@@ -1855,6 +1864,12 @@
   ],
   "That store address is reserved. Please choose another.": [
     "src/models/setting.model.js"
+  ],
+  "The AI service did not answer": [
+    "src/services/ai.service.js"
+  ],
+  "The AI service had no answer": [
+    "src/services/ai.service.js"
   ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
@@ -1997,6 +2012,9 @@
   ],
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
+  ],
+  "This shop has not set up an AI provider": [
+    "src/services/ai.service.js"
   ],
   "This shop transcribes on the handset, not on the server": [
     "src/services/transcribe.service.js"
