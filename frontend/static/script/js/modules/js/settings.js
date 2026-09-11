@@ -7806,12 +7806,19 @@ $(document).on('click', '#analytics_save', function () {
 /*
  * The Voice ordering card (Integrations tab).
  *
- * It lives inside the CAPTAIN APP's card on the Features tab, because that is
- * what it belongs to. It was briefly under Integrations on the grounds that it
- * can hold a third-party key, which is filing a thing by how it is BUILT
- * rather than by what it IS - a shopkeeper looking for voice ordering goes to
- * where they switched the captain app on, not to a page about webhooks and API
- * tokens.
+ * It has its own TAB on the Captain App page, which is where a setting goes.
+ *
+ * It got there the long way and the two wrong homes are worth naming, because
+ * both are easy mistakes to repeat. Integrations, on the grounds that it can
+ * hold a third-party key - that is filing a thing by how it is BUILT rather
+ * than by what it IS. Then inside the Captain App card on the Features list,
+ * which is worse: that list is a row of switches a shopkeeper scans to see
+ * what is on, and a card carrying a dropdown, a text field and a Save button
+ * is twice the height of its neighbours and breaks the grid it lives in.
+ *
+ * THE RULE, written down in AGENTS.md so it stops being rediscovered: the
+ * Features list holds ON and OFF and nothing else. Every setting belongs on
+ * the module's own page.
  *
  * ONE dropdown for the shopkeeper, because they are choosing a thing they can
  * name - nothing, the phone, or a company they have an account with - not an
@@ -7902,9 +7909,8 @@ PosnicPro.settings.voice = {
     }
 };
 
-/* Loaded with the Features tab, because that is where the captain app's card
-   lives and where these controls now are. */
-$(document).on('shown.bs.tab', 'a[href="#v-pills-modules"]', function () {
+/* Loaded when its own tab is opened, on the Captain App page. */
+$(document).on('shown.bs.tab', 'a[href="#captainvoice-line"]', function () {
     PosnicPro.settings.voice.load();
 });
 $(document).on('change', '#voice_provider', function () {
