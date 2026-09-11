@@ -103,6 +103,7 @@ function assignedFunction(src, name) {
 }
 
 const MARKUP = `<!doctype html><html><body>
+  <span id="storefront_url_prefix"></span>
   <input type="text" id="kioskstore_id" value="">
   <div id="storefront_links_row" style="display:none;">
     <input type="text" id="storefront_order_url" readonly>
@@ -112,6 +113,8 @@ const MARKUP = `<!doctype html><html><body>
   </div>
 
   <select id="kiosk_mode"><option value="order" selected>order</option><option value="menu">menu</option></select>
+  <small id="kiosk_mode_help_order"></small>
+  <small id="kiosk_mode_help_menu" style="display:none;"></small>
   <div class="kiosk-ordering-only">
     <span id="kiosk_pause_status" class="badge badge-pill"></span>
     <span id="kiosk_pause_unsaved" style="display:none;"></span>
@@ -146,8 +149,28 @@ function screen({ apiUrl = 'https://tea.posnic.io' } = {}) {
 
   const src = stripComments(fs.readFileSync(SETTINGS, 'utf8'));
 
-  window.eval('PosnicPro.settings.onlineOrdering = ' + literalAfter(src, 'onlineOrdering: {') + ';');
-  window.eval(assignedFunction(src, 'PosnicPro.settings.storefrontLinks'));
+  /*
+   * stripComments does not understand regex literals, and a regex ending in an
+   * escaped slash finishes with two of them - which it reads as the start of a
+   * line comment and eats the rest of the line. That produced five tests
+   * failing with "Invalid regular expression: missing /", which says nothing
+   * about the cause. Check the lifted text parses, and say what happened.
+   */
+  const lift = (label, code) => {
+    try {
+      new window.Function(code);
+    } catch (e) {
+      assert.fail(
+        `${label} did not survive being lifted out of settings.js: ${e.message}. ` +
+          'Most likely a regex literal the comment stripper mangled - one ending in ' +
+          'an escaped slash looks like the start of a comment to it.'
+      );
+    }
+    window.eval(code);
+  };
+
+  lift('onlineOrdering', 'PosnicPro.settings.onlineOrdering = ' + literalAfter(src, 'onlineOrdering: {') + ';');
+  lift('storefrontLinks', assignedFunction(src, 'PosnicPro.settings.storefrontLinks'));
 
   /* The real delegated handlers, lifted from the real file - a handler bound to
      the wrong selector is exactly what this is here to catch. */
@@ -411,4 +434,39 @@ test('a webshop partner is drawn on the webshop screen', () => {
 
   /* One list underneath, so a save from either screen still writes both. */
   assert.strictEqual(sc.payload().sales_channel_partners.length, 2);
+});
+
+test('the box spells out the address it is filling in', () => {
+  /*
+   * "Store id" on an empty field asks for a value whose purpose, source and
+   * shape are all unstated. The owner's words, looking at it: "what fucking
+   * store id you looking for?" Showing this shop's real address beside the box
+   * turns the question into "finish this link", which anybody can answer.
+   */
+  const { window, $ } = screen({ apiUrl: 'https://tea.posnic.io' });
+  window.PosnicPro.settings.storefrontLinks();
+  assert.strictEqual($('#storefront_url_prefix').text(), 'tea.posnic.io/order/');
+});
+
+test('the prefix is this shop, not a placeholder domain', () => {
+  const { window, $ } = screen({ apiUrl: 'https://kirana.example.com/' });
+  window.PosnicPro.settings.storefrontLinks();
+  assert.strictEqual($('#storefront_url_prefix').text(), 'kirana.example.com/order/');
+});
+
+test('the help under the mode describes the answer that is chosen', () => {
+  /*
+   * One line used to sit there describing MENU mode whatever was selected - so
+   * a shop set to "take orders" was told its page had no cart.
+   */
+  const { $, oo } = screen();
+
+  oo.syncMode();
+  assert.notStrictEqual($('#kiosk_mode_help_order').css('display'), 'none', 'the ordering answer is not explained');
+  assert.strictEqual($('#kiosk_mode_help_menu').css('display'), 'none', 'the page explains the option nobody picked');
+
+  $('#kiosk_mode').val('menu');
+  oo.syncMode();
+  assert.strictEqual($('#kiosk_mode_help_order').css('display'), 'none');
+  assert.notStrictEqual($('#kiosk_mode_help_menu').css('display'), 'none');
 });
