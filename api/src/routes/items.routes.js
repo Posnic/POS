@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const itemsController = require('../controllers/items.controller');
-const { protect } = require('../middleware/auth');
-const { ensureKioskKey } = require('../middleware/kiosk-key');
+const { protect, optionalProtect } = require('../middleware/auth');
+const { ensureKioskKey, protectOrKioskKey } = require('../middleware/kiosk-key');
 const {
   validateCreateItem,
   validateUpdateItem,
@@ -48,6 +48,38 @@ router.post('/accessMobileApp', bindController(itemsController.accessMobileApp))
  * single storefront implementation.
  */
 router.post('/accesskiosk', ensureKioskKey, bindController(itemsController.accesskiosk));
+
+/*
+ * The menu, for a waiter's phone - the captain app.
+ *
+ * Deleted with the rest of the old online-ordering shapes on the grounds that
+ * nobody was using the channel. The kiosk route came back a commit later
+ * because the machines in shops could not load a menu; this is the same fact
+ * about a different device. Captain builds are signed, published and already
+ * installed on phones, and a phone cannot be updated from here.
+ *
+ * TWO THINGS CHANGED WHILE IT WAS AWAY, and both are kept.
+ *
+ * It is no longer anonymous. It never should have been: it took a branch's raw
+ * database id, which is in every authenticated response and is no secret, and
+ * answered with that branch's catalogue. Now it is a signed-in user or the
+ * shop's own equipment - which every captain handset already is, because it
+ * sends the token it logged in with to every other route it calls.
+ *
+ * And it asks for the TABLESIDE channel, not the customer one. A line a shop
+ * will not put in front of a stranger's phone can be perfectly fine for a
+ * waiter standing at the table, and until now those were the same list.
+ *
+ * `GET /online-ordering/:storeId/device` is what to build new work against.
+ * This is that query wearing the old field names, so there is still one
+ * storefront implementation rather than two that drift.
+ */
+router.post(
+  '/accessQr',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(itemsController.accessQr)
+);
 
 // Protect all remaining item routes to ensure req.user context is available
 router.use(protect);

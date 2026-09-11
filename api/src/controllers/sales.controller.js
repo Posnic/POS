@@ -6663,6 +6663,31 @@ class SalesController extends BaseController {
     }
   }
 
+  /**
+   * An order from a waiter's phone - the captain app.
+   *
+   * The branch comes from the body, as it always has, and is honoured only
+   * because the route in front of this has already established that the caller
+   * works for the shop. `POST /online-ordering/:storeId/orders` takes the same
+   * order from a customer and puts the store address in the path instead;
+   * underneath, both are this one function, so the idempotency key a queued
+   * handset replays is honoured either way.
+   */
+  async qrOrder(req, res) {
+    try {
+      const SaleModel = this.model || Sale;
+      const response = await salesService.createOnlineOrder(req.body, { SaleModel });
+
+      if (response.status === true) {
+        return this.success(res, response.data, response.message);
+      }
+      return this.error(res, response.message, 404);
+    } catch (error) {
+      console.error('Error in qrOrder:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async kioskOrder(req, res) {
     try {
       const SaleModel = this.model || Sale;

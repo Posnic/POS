@@ -1,6 +1,8 @@
 'use strict';
 
 jest.mock('../../../src/controllers/items.controller', () => ({
+  accessQr: jest.fn(),
+  accesskiosk: jest.fn(),
   accessMobileApp: jest.fn(),
   getAll: jest.fn(),
   itemLowStockTable: jest.fn(),
@@ -36,7 +38,10 @@ jest.mock('../../../src/controllers/items.controller', () => ({
   edit: jest.fn(),
 }));
 
-jest.mock('../../../src/middleware/auth', () => ({ protect: jest.fn((req, res, next) => next()) }));
+jest.mock('../../../src/middleware/auth', () => ({
+  protect: jest.fn((req, res, next) => next()),
+  optionalProtect: jest.fn((req, res, next) => next()),
+}));
 jest.mock('../../../src/middleware/items.validation', () => ({
   validateCreateItem: [],
   validateUpdateItem: [],
@@ -60,5 +65,30 @@ describe('items.routes', () => {
         'put /:id',
       ])
     );
+  });
+
+  /*
+   * The captain app's menu. Deleted once already on the grounds that nobody
+   * was using the channel, while signed builds of the app were being installed
+   * on phones that cannot be updated from here.
+   */
+  test('the captain handsets can still load a menu', () => {
+    const paths = router.stack
+      .filter((layer) => layer.route)
+      .map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);
+    expect(paths).toContain('post /accessQr');
+  });
+
+  test('and it is NOT anonymous, which is the one thing that changed', () => {
+    const { protectOrKioskKey } = require('../../../src/middleware/kiosk-key');
+    const layer = router.stack.find(
+      (l) => l.route && l.route.path === '/accessQr' && l.route.methods.post
+    );
+    const guards = layer.route.stack.map((h) => h.handle);
+    expect(guards).toContain(protectOrKioskKey);
+    /* It used to take a branch's raw database id - which is in every
+       authenticated response and is no secret - from anybody at all, and
+       answer with that branch's catalogue. */
+    expect(guards.length).toBeGreaterThan(1);
   });
 });

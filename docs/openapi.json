@@ -6113,6 +6113,30 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/items/accessQr": {
+      "post": {
+        "summary": "accessQr",
+        "operationId": "post_items_accessQr",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/items/icon-suggestion": {
       "get": {
         "summary": "iconSuggestion",
@@ -10261,6 +10285,30 @@
       "post": {
         "summary": "kioskOrder",
         "operationId": "post_sales_kioskOrder",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/qrOrder": {
+      "post": {
+        "summary": "qrOrder",
+        "operationId": "post_sales_qrOrder",
         "tags": [
           "Sales"
         ],

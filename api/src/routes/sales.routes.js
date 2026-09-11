@@ -85,6 +85,29 @@ router.post(
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));
+
+/*
+ * An order from a waiter's phone - the captain app.
+ *
+ * Deleted with the rest of the old online-ordering shapes on the grounds that
+ * nobody was using the channel. The captain handsets are signed, published and
+ * already installed, and a phone cannot be updated from here; `kioskOrder`
+ * above survived the same refactor for the same reason, one device along.
+ *
+ * No longer anonymous, which it should never have been: it wrote a real sale
+ * against a branch named only by its database id. A signed-in user or the
+ * shop's own equipment, which is what every captain handset already is.
+ *
+ * The same implementation as `POST /online-ordering/:storeId/orders` - that is
+ * the endpoint to build new work against - so the idempotency key a queued
+ * handset replays is honoured here too, and a retry cannot double a ticket.
+ */
+router.post(
+  '/qrOrder',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.qrOrder)
+);
 router.post(
   '/generateRazorPayQrCodekiosk',
   ensureKioskKey,
