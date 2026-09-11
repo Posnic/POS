@@ -318,3 +318,97 @@ test('a store id arriving from the server draws the addresses too', () => {
     'the store id loads without drawing the addresses, so a direct link to Online Ordering shows none'
   );
 });
+
+/* ------------------------------------------------- saving before loading */
+
+/** The channels module on a page whose rows have not been filled. */
+function channelsModule({ loads = true, values = {} } = {}) {
+  const dom = new JSDOM(
+    `<!doctype html><html><body>
+       <div id="sales_channel_partner_rows"></div>
+       <div id="webshop_partner_rows"></div>
+       <div id="partner_venue_rows"></div>
+       <div id="channel_charge_rows"></div>
+       <input id="online_ordering_default_store" value="">
+       <select id="online_order_approval"><option value="auto" selected>auto</option></select>
+       <input type="hidden" id="kiosk_paused_until">
+     </body></html>`,
+    { runScripts: 'outside-only' }
+  );
+  const { window } = dom;
+  window.eval(fs.readFileSync(path.join(ROOT, 'static/script/js/jquery.min.js'), 'utf8'));
+
+  const sent = [];
+  window.PosnicPro = {
+    i18n: { t: (k, f) => f || k },
+    alert: () => {},
+    local: { set: () => {}, get: () => '' },
+    applyOrderQueueVisibility: () => {},
+    get: (params, ok, fail) => (loads ? ok({ data: { values } }) : fail()),
+    put: (params) => sent.push(JSON.parse(params.data)),
+  };
+
+  const src = stripComments(fs.readFileSync(SETTINGS, 'utf8'));
+  window.eval('PosnicPro.salesChannels = ' + literalAfter(src, 'PosnicPro.salesChannels = {') + ';');
+  return { window, sent, sc: window.PosnicPro.salesChannels };
+}
+
+test('a save before anything loaded does not claim the shop has no partners', () => {
+  /*
+   * THE SHAPE THIS CODEBASE HAS PAID FOR TWICE.
+   *
+   * Every key in collect() is read out of the DOM. If the settings request is
+   * still in flight, or failed, the containers are empty - and a Save would
+   * post "no partners, no venues, no charges" and erase all three. Exactly how
+   * menu_dayparts nearly went, and how sales_channels_enabled would have gone.
+   */
+  const { sc } = channelsModule({ loads: false });
+  sc.load();
+
+  const payload = sc.payload();
+  assert.ok(!('sales_channel_partners' in payload), 'an unloaded screen claims the shop has no partners');
+  assert.ok(!('partner_venues' in payload), 'an unloaded screen claims the shop has no venues');
+  assert.ok(!('channel_charges' in payload), 'an unloaded screen claims the shop has no delivery charges');
+
+  /* What the screen genuinely does own still goes. */
+  assert.ok('online_order_approval' in payload);
+});
+
+test('once the rows are on screen the save speaks for them again', () => {
+  const { sc, window } = channelsModule({
+    loads: true,
+    values: {
+      sales_channel_partners: [{ id: 'swiggy', label: 'Swiggy', channel: 'marketplace', commission_percent: 22 }],
+    },
+  });
+  sc.load();
+
+  const payload = sc.payload();
+  assert.ok('sales_channel_partners' in payload, 'a loaded screen no longer saves its partners');
+  assert.strictEqual(payload.sales_channel_partners.length, 1);
+  assert.strictEqual(payload.sales_channel_partners[0].label, 'Swiggy');
+  assert.strictEqual(payload.sales_channel_partners[0].commission_percent, 22);
+
+  /* And the aggregator was drawn on the apps screen, not the webshop one. */
+  assert.strictEqual(window.$('#sales_channel_partner_rows .channel-partner-row').length, 1);
+  assert.strictEqual(window.$('#webshop_partner_rows .channel-partner-row').length, 0);
+});
+
+test('a webshop partner is drawn on the webshop screen', () => {
+  const { sc, window } = channelsModule({
+    loads: true,
+    values: {
+      sales_channel_partners: [
+        { id: 'swiggy', label: 'Swiggy', channel: 'marketplace' },
+        { id: 'my_shop', label: 'My shop', channel: 'ecommerce' },
+      ],
+    },
+  });
+  sc.load();
+
+  assert.strictEqual(window.$('#sales_channel_partner_rows .channel-partner-row').length, 1);
+  assert.strictEqual(window.$('#webshop_partner_rows .channel-partner-row').length, 1);
+
+  /* One list underneath, so a save from either screen still writes both. */
+  assert.strictEqual(sc.payload().sales_channel_partners.length, 2);
+});

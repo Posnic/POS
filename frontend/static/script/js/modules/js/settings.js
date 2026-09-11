@@ -8199,6 +8199,10 @@ PosnicPro.salesChannels = {
         var self = PosnicPro.salesChannels;
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             var values = (response && response.data && response.data.values) || {};
+            /* The rows below are now on screen and hold what the shop stored.
+               Until this is true, collect() must not claim to speak for them -
+               see the guard there. */
+            self._loaded = true;
             self.renderPartners(values.sales_channel_partners);
             self.renderVenues(values.partner_venues);
             self.renderCharges(values.channel_charges);
@@ -8226,6 +8230,21 @@ PosnicPro.salesChannels = {
         });
     },
 
+    /**
+     * What the screens are showing, in the shape the group endpoint stores.
+     *
+     * EVERY KEY HERE IS READ OUT OF THE DOM, which makes this function a
+     * loaded gun whenever the DOM is not what it will be. The rows are drawn by
+     * load(); if that request is still in flight, or failed, or was never made
+     * because somebody reached a Save without passing through an entry point,
+     * the containers are empty and every one of these keys would go to the
+     * server as "none" - erasing the shop's partners, venues and charges.
+     *
+     * That is not a hypothetical shape in this codebase. menu_dayparts was
+     * caught doing it once and sales_channels_enabled a second time, both after
+     * markup moved. So: no load, no claim. The group endpoint writes only the
+     * keys it is given, and omitting one keeps what is stored.
+     */
     collect: function () {
         var partners = [];
         $('.channel-partner-row').each(function () {
@@ -8310,6 +8329,25 @@ PosnicPro.salesChannels = {
         };
     },
 
+    /**
+     * collect(), with the keys nobody can vouch for taken out.
+     *
+     * Callers save through this rather than collect() so the guard cannot be
+     * forgotten at one of the four Save buttons.
+     */
+    payload: function () {
+        var self = PosnicPro.salesChannels;
+        var out = self.collect();
+        if (self._loaded) { return out; }
+
+        /* Nothing was ever read back, so these rows are empty because the page
+           has not filled them - not because the shop deleted everything. */
+        delete out.sales_channel_partners;
+        delete out.partner_venues;
+        delete out.channel_charges;
+        return out;
+    },
+
     save: function () {
         var loader = $('.loader-view-saleschannels');
         loader.find('.loadingSpinner').remove();
@@ -8317,7 +8355,7 @@ PosnicPro.salesChannels = {
 
         PosnicPro.put({
             url: 'settings/group/channels',
-            data: JSON.stringify(PosnicPro.salesChannels.collect())
+            data: JSON.stringify(PosnicPro.salesChannels.payload())
         }, function (response) {
             loader.find('.loadingSpinner').remove();
             if (response.type === 'success') {
