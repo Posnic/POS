@@ -169,6 +169,98 @@ PosnicPro.items = {
         $box.show();
     },
 
+    /*
+     * A picture for a dish nobody photographed.
+     *
+     * SUGGESTED, NOT ASKED FOR. A shop with three hundred items will upload no
+     * photographs and will pick no emoji either, so the name is read and an
+     * icon appears with nobody doing anything. This form is only where the
+     * handful the shop disagrees with get corrected.
+     *
+     * The suggestion comes from the SERVER. The same keyword table shipped
+     * twice is a table that can drift, and the drift shows up as a shopkeeper
+     * being shown one picture while their customers are shown another - which
+     * nobody reports, because nobody sees both screens at once.
+     */
+    _iconSuggested: '',
+    _iconTimer: null,
+
+    /* Debounced: this fires while somebody is typing a name. */
+    suggestIcon: function () {
+        clearTimeout(PosnicPro.items._iconTimer);
+        PosnicPro.items._iconTimer = setTimeout(function () {
+            var name = $.trim($('#items_name').val() || '');
+            if (!name) {
+                PosnicPro.items._iconSuggested = '';
+                PosnicPro.items.refreshIcon();
+                return;
+            }
+            PosnicPro.get('items/icon-suggestion', { name: name }, function (r) {
+                PosnicPro.items._iconSuggested = (r && r.data && r.data.icon) || '';
+                PosnicPro.items.refreshIcon();
+            }, function () {
+                /* No suggestion is a fine outcome: the picker still works, and
+                   an empty icon is an honest menu card. */
+            });
+        }, 350);
+    },
+
+    setIcon: function (icon) {
+        $('#item_icon').val(icon || '');
+        PosnicPro.items.refreshIcon();
+    },
+
+    refreshIcon: function () {
+        var $row = $('#item_icon_row');
+        if (!$row.length) { return; }
+
+        var chosen = $('#item_icon').val() || '';
+        var shown = chosen || PosnicPro.items._iconSuggested || '';
+        var logo = $('#item_logo').val() || '';
+        var hasPhoto = !!logo && logo !== 'item.svg';
+
+        /* A photograph beats this, and a control that cannot affect anything
+           should not ask for a decision - the same rule the colour and the
+           shape beside it already follow. */
+        $row.toggle(!hasPhoto);
+
+        $('#item_icon_preview').text(shown);
+        $('#item_icon_note').text(
+            !shown ? 'No icon. The card will show the name alone.'
+                : chosen ? 'Chosen for this item.'
+                    : 'Suggested from the name. Tap another to change it.'
+        );
+        $('#item_icon_clear').toggle(!!chosen);
+        $('#item_icon_choices .icon-choice')
+            .removeClass('is-picked')
+            .css('border-color', 'transparent')
+            .filter(function () { return ($(this).text() || '') === shown; })
+            .addClass('is-picked')
+            .css('border-color', '#2d9cdb');
+    },
+
+    /* The grid, drawn once. Deliberately short: a thousand-emoji picker is a
+       worse experience than a few dozen good ones, and the keyboard covers
+       everything else. */
+    drawIconChoices: function () {
+        var $host = $('#item_icon_choices');
+        if (!$host.length || $host.children().length) { return; }
+        var PALETTE = [
+            '🍛', '🍚', '🍜', '🍲', '🥘', '🍝', '🍕', '🍔', '🌯', '🥪', '🌮', '🥙',
+            '🍗', '🍖', '🥩', '🍤', '🐟', '🦀', '🥚', '🧀', '🍄', '🥔', '🌽', '🥬',
+            '🥞', '🫓', '🍞', '🥐', '🍟', '🍢', '🥟', '🍩', '🥗', '🫘', '🥣', '🍽️',
+            '☕', '🍵', '🥤', '🧃', '🥛', '🧋', '💧', '🍺', '🍷', '🍸', '🧉', '🍹',
+            '🍨', '🍰', '🍪', '🍫', '🍬', '🍮', '🍿', '🍯', '🧁', '🥧', '🍓', '🥭',
+            '🧼', '🧴', '🧻', '🪥', '🔋', '💡', '🖊️', '📒', '🛍️', '🧂', '🌾', '💊'
+        ];
+        $host.html(PALETTE.map(function (icon) {
+            return '<span class="icon-choice" style="width:32px;height:32px;display:inline-flex;'
+                + 'align-items:center;justify-content:center;font-size:19px;line-height:1;'
+                + 'cursor:pointer;border:1.5px solid transparent;border-radius:6px;">'
+                + icon + '</span>';
+        }).join(''));
+    },
+
     setTileShape: function (shape) {
         $('#item_tile_shape').val(shape || '');
         $('#item_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
@@ -753,6 +845,7 @@ PosnicPro.items = {
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
+            icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
@@ -1028,6 +1121,7 @@ PosnicPro.items = {
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
+                    icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
             tile_shape: $('#item_tile_shape').val() || PosnicPro.autoTile($('#items_name').val()).shape,
             plu_code: $('#items_plu_code').val() || '',
@@ -1586,6 +1680,10 @@ PosnicPro.items = {
                 PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                /* What the shop chose, and - so the form can tell "chosen"
+                   from "suggested" - what the name would have suggested. */
+                PosnicPro.items.setIcon(data.icon || '');
+                PosnicPro.items.suggestIcon();
                 $('#items_plu_code').val(data.plu_code || '');
                 $("#items_tax").val(data.tax_id).trigger("change");
                 $("#items_unit").val(data.unit_id).trigger("change");
@@ -2246,6 +2344,10 @@ PosnicPro.items = {
                 PosnicPro.items.checkGtin();
                 PosnicPro.items.setTileColor(data.tile_color || '');
                 PosnicPro.items.setTileShape(data.tile_shape || '');
+                /* What the shop chose, and - so the form can tell "chosen"
+                   from "suggested" - what the name would have suggested. */
+                PosnicPro.items.setIcon(data.icon || '');
+                PosnicPro.items.suggestIcon();
                 $('#items_plu_code').val(data.plu_code || '');
                 (data.tax_type === 'inclusive') ? $('#item_tax_inclusive').prop('checked', true) : $('#item_tax_exclusive').prop("checked", true);
                 $("#items_tax").val(data.tax_id).trigger("change");
@@ -4953,6 +5055,18 @@ $(document).ready(function () {
     });
     $(document).on('input', '#items_name', function () {
         PosnicPro.items.refreshTilePreview();
+        PosnicPro.items.suggestIcon();
+    });
+    PosnicPro.items.drawIconChoices();
+    $(document).on('click', '#item_icon_choices .icon-choice', function () {
+        var icon = $(this).text() || '';
+        /* Tap the picked one again to go back to the suggestion, the same way
+           the shape picker clears itself. */
+        if (($('#item_icon').val() || '') === icon) { icon = ''; }
+        PosnicPro.items.setIcon(icon);
+    });
+    $(document).on('click', '#item_icon_clear', function () {
+        PosnicPro.items.setIcon('');
     });
     $(document).on('input', '#items_gtin', function () {
         PosnicPro.items.checkGtin();

@@ -19,6 +19,8 @@ const salesChannels = require('../utils/sales-channels');
  * is honestly unmarked - somebody with an allergy reads both the same way.
  */
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const dishIcons = require('../utils/dish-icons');
+
 const onlineOrderingDiet = (value) => {
   const v = String(value || '')
     .trim()
@@ -1574,6 +1576,11 @@ class ItemRepository extends BaseModel {
            default anybody wants from a feature whose job is to list things. */
         show_on_menu: data.show_on_menu !== false && data.show_on_menu !== 'false',
         diet: onlineOrderingDiet(data.diet),
+        /* One emoji, or nothing. Cleaned rather than trusted: it arrives
+           from a form and is rendered into a menu card, and a field that
+           accepts letters quietly becomes a second name. Empty is normal -
+           dish-icons reads the NAME and suggests one. */
+        icon: dishIcons.clean(data.icon),
         /* Ids into the shop's own serving periods. Empty means all day, which
            is most of a menu. */
         daypart_ids: Array.isArray(data.daypart_ids)
@@ -3782,6 +3789,7 @@ class ItemRepository extends BaseModel {
             category_name: 1,
             sort_order: 1,
             diet: 1,
+            icon: 1,
             isAvailable: 1,
             ecommerce: 1,
             daypart_ids: 1,
@@ -3852,6 +3860,17 @@ class ItemRepository extends BaseModel {
           image: row.image || '',
           price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
           diet: String(row.diet || ''),
+          /*
+           * A picture for a dish nobody photographed.
+           *
+           * Resolved HERE rather than on the page, so the menu, the captain
+           * app, the kiosk and a QR code all draw the same thing for the same
+           * dish, and an old build that never heard of this gets it anyway.
+           * Empty when there is a photograph, because drawing both is clutter,
+           * and empty when the name suggests nothing - which is an honest
+           * answer, not a gap.
+           */
+          icon: dishIcons.iconFor(row),
           /* Shown on the menu but not orderable right now, for either reason:
              the shop marked it unavailable, or it is not its time of day. The
              page says which, because "we have it, not now" and "we have it,
@@ -3964,13 +3983,39 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * Which branch a storefront request means.
+   *
+   * THE STORE ADDRESS IS THE ONLY WAY IN FROM OUTSIDE, and that is the point.
+   * A branch's raw database id appears in every authenticated response and is
+   * no secret, so accepting one from an anonymous caller would let anybody who
+   * had ever seen an id read a shop that deliberately never opened a channel.
+   *
+   * `branchId` is the staff door beside it. A route may pass it only after it
+   * has established that the caller works for this shop - a signed-in user, or
+   * the installation's own kiosk key. Such a caller is already entitled to
+   * this branch's catalogue; they can read it off the till. Making their shop
+   * publish a PUBLIC store address before the captain app could list a menu
+   * would be a rule protecting nobody from anybody.
+   *
+   * The two are separate parameters rather than one that accepts either,
+   * because then the guard is a property of the CALLER and cannot be lost by a
+   * value turning out to look like the other kind.
+   */
+  async _storefrontBranch({ storeId, branchId }) {
+    const branches = await this.getCollection('branches');
+    if (branchId) {
+      const selector = ObjectId.isValid(String(branchId))
+        ? { _id: new ObjectId(String(branchId)) }
+        : { 'online_ordering.store_id': String(branchId) };
+      return branches.findOne(selector);
+    }
+    return branches.findOne({ 'online_ordering.store_id': storeId });
+  }
+
   async storefront(params = {}) {
-    const storeId = params.storeId;
     try {
-      const branchCollection = await this.getCollection('branches');
-      const branchDoc = await branchCollection.findOne({
-        'online_ordering.store_id': storeId,
-      });
+      const branchDoc = await this._storefrontBranch(params);
 
       if (!branchDoc) {
         return { status: false, message: 'No shop found at this address', data: null };
@@ -4022,6 +4067,7 @@ class ItemRepository extends BaseModel {
                 id: '$_id',
                 name: '$name',
                 img: '$image',
+                icon: '$icon',
                 available_quantity: '$available_quantity',
                 negative_stock: '$negative_stock',
                 description: '$description',
@@ -4154,6 +4200,21 @@ class ItemRepository extends BaseModel {
       ];
 
       const results = await collection.aggregate(pipeline).toArray();
+
+      /*
+       * A picture for a dish nobody photographed.
+       *
+       * Resolved here rather than in the pipeline: it reads the NAME when the
+       * shop has chosen nothing, and a keyword table is not a thing to write
+       * in aggregation syntax. Done for every caller of the storefront - the
+       * ordering page, the shop's own terminal and the captain app - so all of
+       * them draw the same picture for the same dish.
+       */
+      for (const group of results) {
+        for (const item of group.items || []) {
+          item.icon = dishIcons.iconFor({ image: item.img, icon: item.icon, name: item.name });
+        }
+      }
 
       /*
        * The prices THIS service point pays.

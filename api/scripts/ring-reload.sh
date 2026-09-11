@@ -139,15 +139,36 @@ smoke() {
       echo "::warning::smoke.js not present - ring gate cannot verify, continuing"
       exit 0
     fi
-    host=$(grep -oP "^[a-z0-9-]+\.posnic\.io" /etc/nginx/tenants.map | head -1)
+    # Which shop proves the reload worked.
+    #
+    # This used to be the first host in tenants.map, full stop. Two ways
+    # that halts a deploy for no good reason. A SUSPENDED shop answers 403
+    # from nginx without the request ever reaching the app, so it can never
+    # go 200 - and twenty-one shops are suspended, with which one sits first
+    # in that file being an accident of provisioning order. A shop that is
+    # simply broken does the same. Neither is a reason to stop a rollout
+    # that is otherwise healthy, so suspended shops are excluded and several
+    # candidates are kept rather than betting the release on one.
+    hosts=$(grep -oE "^[a-z0-9-]+\.posnic\.io" /etc/nginx/tenants.map \
+      | grep -vxF -f <(grep -oE "^[a-z0-9-]+\.posnic\.io" /etc/nginx/suspended.map 2>/dev/null) \
+      | head -5)
+    if [ -z "$hosts" ]; then
+      echo "::error::no unsuspended shop is routed, so the reload cannot be verified"
+      exit 1
+    fi
+    # Bounded by a deadline rather than a round count: trying several hosts
+    # per round would otherwise multiply the wait by the number of them.
+    deadline=$(( $(date +%s) + 120 ))
     ready=""
-    for i in $(seq 1 60); do
-      code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" -H "Host: $host" http://127.0.0.1/ 2>/dev/null || true)
-      if [ "$code" = "200" ]; then ready=yes; break; fi
+    while [ "$(date +%s)" -lt "$deadline" ]; do
+      for host in $hosts; do
+        code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" -H "Host: $host" http://127.0.0.1/ 2>/dev/null || true)
+        if [ "$code" = "200" ]; then ready=yes; break 2; fi
+      done
       sleep 2
     done
     if [ -z "$ready" ]; then
-      echo "::error::no shop answered within 120s of the reload"
+      echo "::error::no shop answered within 120s of the reload (tried: $(echo $hosts | tr '\n' ' '))"
       exit 1
     fi
     # Self-healing fixture (2026-08-18): the smoke SELLS a real unit every

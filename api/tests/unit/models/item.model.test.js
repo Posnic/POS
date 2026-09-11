@@ -786,7 +786,7 @@ describe('Item.LegacyItemModel › class identity', () => {
     // + gtin/gtin14 (PIM1: the GLOBAL identifier, kept apart from barcode_id
     // because that one may hold an in-store code or free text - see
     // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(72);
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(73);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
@@ -796,6 +796,11 @@ describe('Item.LegacyItemModel › class identity', () => {
         gtin14: expect.any(Object),
         branch_id: expect.any(Object),
         branch_name: expect.any(Object),
+        /* The menu card's picture when nobody uploaded a photograph. Named
+           here because it is projected by the storefront and the public menu,
+           and a field dropped from this map goes missing from both without a
+           single test turning red. */
+        icon: expect.any(Object),
       })
     );
   });

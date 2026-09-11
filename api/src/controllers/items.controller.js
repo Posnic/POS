@@ -9,6 +9,8 @@ const { toObjectId } = require('../utils/tenant-context');
 const { isKioskConfigured } = require('../utils/kiosk');
 const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
+const dishIcons = require('../utils/dish-icons');
+const { CHANNEL } = require('../utils/sales-channels');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -919,6 +921,72 @@ class ItemsController extends BaseController {
       );
     } catch (error) {
       console.error('Error in accesskiosk:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * What emoji this name suggests, so the item form can show it while it is
+   * being typed.
+   *
+   * The suggestion is a pure function of the name - no database, no branch, no
+   * item - which is why it can answer this cheaply on every keystroke the form
+   * chooses to send.
+   */
+  async iconSuggestion(req, res) {
+    const name = String(req.query.name || '').slice(0, 200);
+    return this.success(res, { name, icon: dishIcons.guess(name) }, 'success');
+  }
+
+  /**
+   * The menu, for a waiter's phone - the captain app.
+   *
+   * Kept in the shape it has always answered in, because the handsets are
+   * already out there and cannot be updated from here. `GET
+   * /online-ordering/:storeId/device` is the endpoint to build anything new
+   * against; this is the same query wearing the old names.
+   *
+   * The branch comes from the body, as it always has, and is honoured only
+   * because the route in front of this one has already established that the
+   * caller works for the shop. See routes/items.routes.js, and
+   * repositories/item.repository.js `_storefrontBranch` for why that
+   * distinction is the whole guard.
+   *
+   * TABLESIDE, not ONLINE. A waiter at a table is not a stranger's phone, and
+   * a shop may keep a line off the public storefront while still selling it
+   * from the floor.
+   */
+  async accessQr(req, res) {
+    try {
+      const response = await this.service.storefront({
+        branchId: req.body.branch,
+        channel: CHANNEL.TABLESIDE,
+      });
+
+      if (response.status !== true) {
+        return this.error(res, response.message, 404, response.data);
+      }
+
+      const data = response.data || {};
+      return this.success(
+        res,
+        {
+          products: data.products || [],
+          kiosk_images: {
+            logo: data.store?.logo || '',
+            banner: data.store?.banner || '',
+            homebanner: data.store?.homebanner || '',
+            advertisement: data.store?.advertisement || '',
+          },
+          kiosk_payment: data.payment || {},
+          /* The floor plan. The captain app reads this to draw its tables, and
+             is the only caller that ever did. */
+          tableorders: data.tableorders || [],
+        },
+        response.message
+      );
+    } catch (error) {
+      console.error('Error in accessQr:', error);
       return this.error(res, error.message, 500);
     }
   }

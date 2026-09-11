@@ -1480,4 +1480,44 @@ describe('ItemRepository', () => {
       await expect(repo.findItemById(FAKE_ID)).rejects.toThrow('fail');
     });
   });
+
+  /*
+   * Which branch a storefront request means, and the one rule that matters.
+   *
+   * The STORE ADDRESS is the only way in from outside. A branch's raw database
+   * id appears in every authenticated response and is no secret, so a public
+   * endpoint that accepted one would let anybody who had ever seen an id read
+   * a shop that deliberately never opened a channel - which is exactly what
+   * the old accessQr did.
+   *
+   * `branchId` is a separate parameter, not a value the same parameter might
+   * turn out to hold, so the guard is a property of the CALLING ROUTE and
+   * cannot be lost by a store address happening to look like an id.
+   */
+  describe('_storefrontBranch', () => {
+    test('a public caller names a STORE ADDRESS, and only that is looked up', async () => {
+      await repo._storefrontBranch({ storeId: 'AZ100' });
+      expect(col.findOne).toHaveBeenCalledWith({ 'online_ordering.store_id': 'AZ100' });
+    });
+
+    test('a raw id passed as a store address stays a store address', async () => {
+      /* The id is a legal string. If this ever falls back to _id, a public
+         route becomes a catalogue reader for every branch in the estate. */
+      await repo._storefrontBranch({ storeId: FAKE_ID });
+      expect(col.findOne).toHaveBeenCalledWith({ 'online_ordering.store_id': FAKE_ID });
+    });
+
+    test('a STAFF caller may name the branch itself', async () => {
+      await repo._storefrontBranch({ branchId: FAKE_ID });
+      const selector = col.findOne.mock.calls[0][0];
+      expect(Object.keys(selector)).toEqual(['_id']);
+    });
+
+    test('a staff caller may still name a store address', async () => {
+      const { ObjectId } = require('mongodb');
+      ObjectId.isValid.mockReturnValueOnce(false);
+      await repo._storefrontBranch({ branchId: 'AZ100' });
+      expect(col.findOne).toHaveBeenCalledWith({ 'online_ordering.store_id': 'AZ100' });
+    });
+  });
 });

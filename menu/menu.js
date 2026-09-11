@@ -171,11 +171,23 @@
   }
 
   function dishHtml(item) {
+    /*
+     * A photograph if the shop uploaded one, and otherwise the emoji the
+     * server resolved - chosen by the shop, or read from the dish's own name.
+     *
+     * Nothing is still a perfectly good answer, and it is what "Item 4" gets.
+     * The alternative to an honest blank is a grey placeholder box, which is
+     * a promise of a picture that never arrives.
+     */
     var thumb = item.image
       ? '<img class="dish-thumb" src="' +
         escapeHtml(item.image) +
         '" alt="" loading="lazy" decoding="async">'
-      : "";
+      : item.icon
+        ? '<span class="dish-icon" aria-hidden="true">' +
+          escapeHtml(item.icon) +
+          "</span>"
+        : "";
     var desc = item.description
       ? '<p class="dish-desc">' + escapeHtml(item.description) + "</p>"
       : "";
@@ -664,11 +676,17 @@
     var item = found.item;
 
     var img = el("sheet-img");
+    var icon = el("sheet-icon");
     if (item.image) {
       img.src = item.image;
       img.hidden = false;
+      icon.hidden = true;
     } else {
       img.hidden = true;
+      /* Bigger here than on the card, because the sheet has the room and a
+         dish somebody has opened deserves more than a thumbnail. */
+      icon.textContent = item.icon || "";
+      icon.hidden = !item.icon;
     }
 
     el("sheet-diet").innerHTML = dietMark(item.diet);
