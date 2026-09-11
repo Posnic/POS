@@ -323,6 +323,65 @@
         font-size: 12px;
       }
 
+      /* ---- the photo strip -------------------------------------------- */
+
+      .sheet-gallery {
+        margin: -4px 0 14px;
+      }
+
+      /*
+        Scroll snapping does the work a carousel script would. One photo fills
+        the width, the next peeks in at the edge so there is something to
+        reach for, and the browser handles the momentum.
+      */
+      .sheet-strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .sheet-strip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .sheet-strip img {
+        flex: 0 0 88%;
+        scroll-snap-align: center;
+        width: 88%;
+        height: 190px;
+        object-fit: cover;
+        border-radius: var(--radius);
+        background: var(--raised);
+      }
+
+      /* One photo is not a gallery: it fills the width and the dots go. */
+      .sheet-strip[data-count="1"] img {
+        flex-basis: 100%;
+        width: 100%;
+      }
+
+      .sheet-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .sheet-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--line);
+        transition: background 0.15s ease;
+      }
+
+      .sheet-dots span[data-on="true"] {
+        background: var(--ink-soft);
+      }
+
       /* ---- sticky controls ------------------------------------------ */
 
       /*
@@ -819,6 +878,19 @@
     <p class="foot" id="foot" hidden></p>
 
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+      <!--
+        The photos, as a swipeable strip.
+
+        Shops have been uploading several per dish for years and the menu
+        showed one, so the rest were taken, stored, and never seen. A strip
+        rather than a carousel with arrows: a thumb already knows how to push
+        a row sideways, and a control that has to be discovered is one most
+        people never touch.
+      -->
+      <div id="sheet-gallery" class="sheet-gallery" hidden>
+        <div class="sheet-strip" id="sheet-strip"></div>
+        <div class="sheet-dots" id="sheet-dots" aria-hidden="true"></div>
+      </div>
       <img id="sheet-img" class="sheet-img" alt="" hidden />
       <span id="sheet-icon" class="sheet-icon" aria-hidden="true" hidden></span>
       <div class="sheet-body">

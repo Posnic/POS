@@ -362,3 +362,112 @@ test('a suggestion opens that dish', async () => {
   document.querySelector('.goes').click();
   assert.strictEqual(document.getElementById('sheet-title').textContent, 'Butter Naan');
 });
+
+/* ----------------------------------------------------------- photo gallery */
+
+const withPhotos = (photos, extra = {}) => ({
+  ...REPLY,
+  categories: [
+    {
+      id: 'starters',
+      name: 'Starters',
+      items: [{ ...REPLY.categories[0].items[0], photos, ...extra }],
+    },
+  ],
+});
+
+test('several photos become a strip you can push sideways', async () => {
+  /*
+   * Shops have uploaded more than one per dish for years - the item form has
+   * taken a set all along - and the menu showed exactly one. The rest were
+   * taken, stored, paid for, and never seen by a customer.
+   */
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg', 'c.jpg']));
+  document.querySelector('.dish').click();
+
+  const strip = document.getElementById('sheet-strip');
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(strip.querySelectorAll('img').length, 3);
+  assert.strictEqual(document.getElementById('sheet-dots').children.length, 3);
+});
+
+test('only the first photo loads eagerly', async () => {
+  /* The rest are off-screen until somebody pushes the strip, and a phone on a
+     bad connection should not pay for five photos of a dish nobody opened. */
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg']));
+  document.querySelector('.dish').click();
+
+  const imgs = [...document.querySelectorAll('#sheet-strip img')];
+  assert.strictEqual(imgs[0].getAttribute('loading'), 'eager');
+  assert.strictEqual(imgs[1].getAttribute('loading'), 'lazy');
+});
+
+test('one photo is not a gallery, so the dots go', async () => {
+  const { document } = await render('/menu/AZ100', withPhotos(['only.jpg']));
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-dots').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-strip').getAttribute('data-count'), '1');
+});
+
+test('a dish with no photos shows no empty grey box', async () => {
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos([], { image: '' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-img').hidden, true);
+});
+
+test('an older reply with only a cover image still shows it', async () => {
+  /* photos is new. A cached page, or a shop whose menu has not been rebuilt,
+     sends the single image and nothing else - and must not lose its photo
+     because a newer field is absent. */
+  const { document } = await render('/menu/AZ100', withPhotos(undefined, { image: 'cover.jpg' }));
+  document.querySelector('.dish').click();
+
+  const imgs = [...document.querySelectorAll('#sheet-strip img')];
+  assert.strictEqual(imgs.length, 1);
+  assert.match(imgs[0].getAttribute('src'), /cover\.jpg/);
+});
+
+test('every photo carries an alt a screen reader can use', async () => {
+  const { document } = await render('/menu/AZ100', withPhotos(['a.jpg', 'b.jpg']));
+  document.querySelector('.dish').click();
+
+  const alts = [...document.querySelectorAll('#sheet-strip img')].map((i) => i.getAttribute('alt'));
+  assert.match(alts[0], /Paneer Tikka, photo 1 of 2/);
+  assert.match(alts[1], /photo 2 of 2/);
+});
+
+test('with no photo at all the generated icon still stands in', async () => {
+  /*
+   * Two features that landed the same afternoon and had to meet: the photo
+   * strip, and the drawn icon for the shops - most of them - that upload
+   * nothing. Photos win where they exist; the icon covers the rest; an empty
+   * grey box is never the answer.
+   */
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos([], { image: '', icon: '🍛' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, true);
+  assert.strictEqual(document.getElementById('sheet-icon').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-icon').textContent, '🍛');
+});
+
+test('a photo beats the icon rather than sitting beside it', async () => {
+  const { document } = await render(
+    '/menu/AZ100',
+    withPhotos(['a.jpg'], { icon: '🍛' })
+  );
+  document.querySelector('.dish').click();
+
+  assert.strictEqual(document.getElementById('sheet-gallery').hidden, false);
+  assert.strictEqual(document.getElementById('sheet-icon').hidden, true);
+});

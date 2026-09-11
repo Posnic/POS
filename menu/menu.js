@@ -675,19 +675,7 @@
     if (!found) return;
     var item = found.item;
 
-    var img = el("sheet-img");
-    var icon = el("sheet-icon");
-    if (item.image) {
-      img.src = item.image;
-      img.hidden = false;
-      icon.hidden = true;
-    } else {
-      img.hidden = true;
-      /* Bigger here than on the card, because the sheet has the room and a
-         dish somebody has opened deserves more than a thumbnail. */
-      icon.textContent = item.icon || "";
-      icon.hidden = !item.icon;
-    }
+    showPhotos(item);
 
     el("sheet-diet").innerHTML = dietMark(item.diet);
     el("sheet-title").textContent = item.name;
@@ -705,6 +693,101 @@
     var sheet = el("sheet");
     if (typeof sheet.showModal === "function") sheet.showModal();
     else sheet.setAttribute("open", "open");
+  }
+
+  /**
+   * Every photo of a dish, in a strip you push sideways.
+   *
+   * Falls back to the single cover image when a shop has uploaded only one,
+   * which is most of them - and to nothing at all when there is none, rather
+   * than an empty grey box. The old single <img> stays in the markup for
+   * exactly that fallback, so a dish with one photo renders the way it always
+   * did.
+   */
+  function showPhotos(item) {
+    var gallery = el("sheet-gallery");
+    var strip = el("sheet-strip");
+    var single = el("sheet-img");
+
+    var photos =
+      item.photos && item.photos.length
+        ? item.photos
+        : item.image
+          ? [item.image]
+          : [];
+
+    /*
+     * No photo at all falls back to the generated icon.
+     *
+     * Most shops upload nothing, so this is the common case rather than the
+     * edge one, and an empty grey box for every dish is worse than a drawn
+     * symbol. Bigger here than on the card: the sheet has the room, and a dish
+     * somebody has opened deserves more than a thumbnail.
+     */
+    var icon = el("sheet-icon");
+    if (!photos.length) {
+      gallery.hidden = true;
+      single.hidden = true;
+      if (icon) {
+        icon.textContent = item.icon || "";
+        icon.hidden = !item.icon;
+      }
+      return;
+    }
+    if (icon) icon.hidden = true;
+
+    single.hidden = true;
+    gallery.hidden = false;
+    strip.setAttribute("data-count", String(photos.length));
+    strip.innerHTML = photos
+      .map(function (src, i) {
+        /* Only the first is eager: the rest are off-screen until somebody
+           pushes the strip, and a phone on a bad connection should not be
+           paying for five photos of a dish nobody has opened. */
+        return (
+          '<img src="' +
+          escapeHtml(src) +
+          '" alt="' +
+          escapeHtml(item.name) +
+          (photos.length > 1
+            ? ", photo " + (i + 1) + " of " + photos.length
+            : "") +
+          '" loading="' +
+          (i === 0 ? "eager" : "lazy") +
+          '" decoding="async">'
+        );
+      })
+      .join("");
+
+    var dots = el("sheet-dots");
+    dots.hidden = photos.length < 2;
+    dots.innerHTML = photos
+      .map(function (_, i) {
+        return '<span data-on="' + (i === 0 ? "true" : "false") + '"></span>';
+      })
+      .join("");
+
+    strip.scrollLeft = 0;
+    if (photos.length > 1) watchStrip(strip, dots);
+  }
+
+  /* Which photo is in front, from where the strip has been pushed to. No
+     scroll handler recalculating positions every frame - the browser already
+     knows, and asking it is free. */
+  function watchStrip(strip, dots) {
+    if (strip._watched) return;
+    strip._watched = true;
+    strip.addEventListener(
+      "scroll",
+      function () {
+        var each = strip.scrollWidth / strip.children.length;
+        var at = Math.round(strip.scrollLeft / each);
+        [].forEach.call(dots.children, function (dot, i) {
+          dot.setAttribute("data-on", i === at ? "true" : "false");
+        });
+      },
+      { passive: true },
+    );
   }
 
   /* ---------------------------------------------------------------- wire */
