@@ -57,3 +57,9 @@ frontend/pages_html_map.json
 # pull request that touches a route. Same reason as languages/ above.
 docs/API.md
 docs/openapi.json
+
+# Hand-written, and NOT prettier-formatted in the repository. The hook pads
+# every markdown table on the way in, which turned a one-line badge bump into
+# 64 changed lines and then into three merge conflicts against develop, none of
+# which were about anything. Leave the prose alone.
+README.md

@@ -4,4 +4,4 @@ Disallow: /api/
 Disallow: /uploads/
 Disallow: /node_modules/
 
-Sitemap: https://www.posnic.io/sitemap.xml
+Sitemap: https://www.posnic.com/sitemap.xml

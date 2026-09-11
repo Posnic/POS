@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
 /*
  * Photographs for the demo products, from Wikimedia Commons.
@@ -32,17 +32,17 @@
  *   node scripts/fetch-demo-images.js --only=cafe
  */
 
-const fs = require('fs');
-const path = require('path');
-const { JSDOM } = require('jsdom');
-const https = require('https');
-const sharp = require('sharp');
+const fs = require("fs");
+const path = require("path");
+const { JSDOM } = require("jsdom");
+const https = require("https");
+const sharp = require("sharp");
 
-const ROOT = path.resolve(__dirname, '..');
-const OUT_DIR = path.join(ROOT, 'frontend', 'static', 'images', 'demo');
-const MANIFEST = path.join(OUT_DIR, 'credits.json');
+const ROOT = path.resolve(__dirname, "..");
+const OUT_DIR = path.join(ROOT, "frontend", "static", "images", "demo");
+const MANIFEST = path.join(OUT_DIR, "credits.json");
 
-const demo = require(path.join(ROOT, 'api', 'utils', 'demoData.js'));
+const demo = require(path.join(ROOT, "api", "utils", "demoData.js"));
 
 /*
  * Images a person looked at and turned down, and why.
@@ -54,8 +54,8 @@ const demo = require(path.join(ROOT, 'api', 'utils', 'demoData.js'));
  * and without this file a re-run would quietly undo it.
  */
 const REJECTS = (() => {
-  const f = path.join(__dirname, 'demo-image-rejects.json');
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
+  const f = path.join(__dirname, "demo-image-rejects.json");
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")) : {};
 })();
 
 const PACKS = {
@@ -71,39 +71,45 @@ const PACKS = {
 /* Wikimedia asks for a real User-Agent that identifies the caller and a way to
    reach them. Sending a default one is how a tool gets the whole project
    rate-limited. */
-const UA = 'PosnicDemoImages/1.0 (https://posnic.com; info@posnic.com)';
+const UA = "PosnicDemoImages/1.0 (https://www.posnic.com; info@posnic.com)";
 
 /* Licences whose terms allow shipping inside a commercial product, with
    attribution. Anything not on this list is refused rather than guessed at -
    "no licence stated" is not the same as "freely licensed". */
-const OK_LICENCE = /^(cc0|cc[- ]by([- ]sa)?([- ]\d(\.\d)?)?|public domain|pd|pdm)/i;
+const OK_LICENCE =
+  /^(cc0|cc[- ]by([- ]sa)?([- ]\d(\.\d)?)?|public domain|pd|pdm)/i;
 
 const args = process.argv.slice(2);
-const DRY = args.includes('--dry-run');
-const ONLY = (args.find((a) => a.startsWith('--only=')) || '').split('=')[1] || null;
+const DRY = args.includes("--dry-run");
+const ONLY =
+  (args.find((a) => a.startsWith("--only=")) || "").split("=")[1] || null;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function get(url, asBuffer = false) {
   return new Promise((resolve, reject) => {
     https
-      .get(url, { headers: { 'User-Agent': UA } }, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+      .get(url, { headers: { "User-Agent": UA } }, (res) => {
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
           res.resume();
           return resolve(get(res.headers.location, asBuffer));
         }
         if (res.statusCode !== 200) {
           res.resume();
-          return reject(new Error('http ' + res.statusCode));
+          return reject(new Error("http " + res.statusCode));
         }
         const chunks = [];
-        res.on('data', (c) => chunks.push(c));
-        res.on('end', () => {
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
           const buf = Buffer.concat(chunks);
-          resolve(asBuffer ? buf : buf.toString('utf8'));
+          resolve(asBuffer ? buf : buf.toString("utf8"));
         });
       })
-      .on('error', reject);
+      .on("error", reject);
   });
 }
 
@@ -116,34 +122,37 @@ function get(url, asBuffer = false) {
  */
 function searchTerm(name) {
   return String(name)
-    .replace(/\b\d+(\.\d+)?\s*(kg|g|ml|l|ltr|litre|liters?|sqmm|mm|cm|m|pc|pcs|piece|inch|in|w|watt|amp|a)\b/gi, ' ')
-    .replace(/\(\s*\)/g, ' ')
-    .replace(/[()]/g, ' ')
-    .replace(/\s{2,}/g, ' ')
+    .replace(
+      /\b\d+(\.\d+)?\s*(kg|g|ml|l|ltr|litre|liters?|sqmm|mm|cm|m|pc|pcs|piece|inch|in|w|watt|amp|a)\b/gi,
+      " ",
+    )
+    .replace(/\(\s*\)/g, " ")
+    .replace(/[()]/g, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
 const slug = (pack, name) =>
   pack +
-  '-' +
+  "-" +
   String(name)
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 async function search(term) {
   const url =
-    'https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search' +
-    '&srnamespace=6&srlimit=8&srsearch=' +
-    encodeURIComponent(term + ' filetype:bitmap');
+    "https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search" +
+    "&srnamespace=6&srlimit=8&srsearch=" +
+    encodeURIComponent(term + " filetype:bitmap");
   const body = JSON.parse(await get(url));
   return ((body.query && body.query.search) || []).map((r) => r.title);
 }
 
 async function info(title) {
   const url =
-    'https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo' +
-    '&iiprop=url|extmetadata|mime|size&iiurlwidth=600&titles=' +
+    "https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo" +
+    "&iiprop=url|extmetadata|mime|size&iiurlwidth=600&titles=" +
     encodeURIComponent(title);
   const body = JSON.parse(await get(url));
   const pages = (body.query && body.query.pages) || {};
@@ -152,7 +161,7 @@ async function info(title) {
   if (!ii) return null;
   const meta = ii.extmetadata || {};
   const plain = (k) => {
-    if (!meta[k] || !meta[k].value) return '';
+    if (!meta[k] || !meta[k].value) return "";
     return JSDOM.fragment(String(meta[k].value)).textContent.trim();
   };
   return {
@@ -162,9 +171,9 @@ async function info(title) {
     height: ii.height,
     thumb: ii.thumburl || ii.url,
     page: ii.descriptionurl,
-    licence: plain('LicenseShortName'),
-    author: plain('Artist'),
-    credit: plain('Credit'),
+    licence: plain("LicenseShortName"),
+    author: plain("Artist"),
+    credit: plain("Credit"),
   };
 }
 
@@ -201,18 +210,20 @@ function onTopic(title, term) {
 
 function acceptable(i) {
   if (!i) return false;
-  if (!/^image\/(jpeg|png|webp)$/.test(i.mime || '')) return false;
+  if (!/^image\/(jpeg|png|webp)$/.test(i.mime || "")) return false;
   /* Very small originals upscale into mush at tile size. */
   if ((i.width || 0) < 300) return false;
-  if (BRAND_SIGNAL.test(i.title || '')) return false;
-  if (BRAND_SIGNAL.test(i.credit || '')) return false;
-  return OK_LICENCE.test((i.licence || '').replace(/\s+/g, ' ').trim());
+  if (BRAND_SIGNAL.test(i.title || "")) return false;
+  if (BRAND_SIGNAL.test(i.credit || "")) return false;
+  return OK_LICENCE.test((i.licence || "").replace(/\s+/g, " ").trim());
 }
 
 async function main() {
   if (!DRY) fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  const credits = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : {};
+  const credits = fs.existsSync(MANIFEST)
+    ? JSON.parse(fs.readFileSync(MANIFEST, "utf8"))
+    : {};
   let found = 0;
   let skipped = 0;
   let kept = 0;
@@ -221,7 +232,7 @@ async function main() {
     if (ONLY && ONLY !== packName) continue;
     for (const product of pack.products) {
       const key = slug(packName, product.name);
-      const file = path.join(OUT_DIR, key + '.webp');
+      const file = path.join(OUT_DIR, key + ".webp");
 
       if (credits[key] && fs.existsSync(file)) {
         kept++;
@@ -230,7 +241,9 @@ async function main() {
 
       if (REJECTS[key]) {
         skipped++;
-        console.log(`  x  ${key.padEnd(38)} rejected on review: ${REJECTS[key]}`);
+        console.log(
+          `  x  ${key.padEnd(38)} rejected on review: ${REJECTS[key]}`,
+        );
         continue;
       }
 
@@ -253,7 +266,9 @@ async function main() {
 
       if (!picked) {
         skipped++;
-        console.log(`  -  ${key.padEnd(38)} no freely licensed match for "${term}"`);
+        console.log(
+          `  -  ${key.padEnd(38)} no freely licensed match for "${term}"`,
+        );
         await sleep(200);
         continue;
       }
@@ -265,16 +280,16 @@ async function main() {
         try {
           const buf = await get(picked.thumb, true);
           await sharp(buf)
-            .resize(400, 400, { fit: 'cover', position: 'centre' })
+            .resize(400, 400, { fit: "cover", position: "centre" })
             .webp({ quality: 78 })
             .toFile(file);
           credits[key] = {
             product: product.name,
             pack: packName,
-            file: 'static/images/demo/' + key + '.webp',
+            file: "static/images/demo/" + key + ".webp",
             source: picked.page,
             licence: picked.licence,
-            author: picked.author || picked.credit || 'Unknown',
+            author: picked.author || picked.credit || "Unknown",
           };
         } catch (e) {
           console.warn(`  ! ${key}: could not save - ${e.message}`);
@@ -287,15 +302,19 @@ async function main() {
   }
 
   if (!DRY) {
-    fs.writeFileSync(MANIFEST, JSON.stringify(credits, null, 2) + '\n');
+    fs.writeFileSync(MANIFEST, JSON.stringify(credits, null, 2) + "\n");
   }
 
-  console.log('');
-  console.log(`  fetched ${found}, already had ${kept}, no match for ${skipped}`);
+  console.log("");
+  console.log(
+    `  fetched ${found}, already had ${kept}, no match for ${skipped}`,
+  );
   console.log(`  credits: ${MANIFEST}`);
   if (skipped) {
-    console.log('  Products with no image fall back to their coloured tile, which is a');
-    console.log('  real answer - a wrong photograph would not be.');
+    console.log(
+      "  Products with no image fall back to their coloured tile, which is a",
+    );
+    console.log("  real answer - a wrong photograph would not be.");
   }
 }
 

@@ -30,14 +30,14 @@ closed repositories.
 
 The line between them:
 
-| | Posnic source and local edition | Paid service |
-|---|---|---|
-| Desktop app, API, UI | ✅ this repository | |
-| Local database, offline operation | ✅ | |
-| Hardware: printers, scales, drawers | ✅ | |
-| Multi-device sync | | Cloud |
-| Cloud backups, remote dashboard | | Cloud |
-| White-label builds | | Cloud |
+|                                     | Posnic source and local edition | Paid service |
+| ----------------------------------- | ------------------------------- | ------------ |
+| Desktop app, API, UI                | ✅ this repository              |              |
+| Local database, offline operation   | ✅                              |              |
+| Hardware: printers, scales, drawers | ✅                              |              |
+| Multi-device sync                   |                                 | Cloud        |
+| Cloud backups, remote dashboard     |                                 | Cloud        |
+| White-label builds                  |                                 | Cloud        |
 
 We will not move a feature from the left column to the right. If something is
 free today it stays free. The commercial argument for Cloud has to be that it
@@ -87,14 +87,14 @@ retain their own licences and marks.
 - Use, modify, self-host and redistribute the software under the AGPL
 - Run it for clients, including commercially
 - Fork it and publish your fork
-- Say your product is *"based on Posnic"* or *"a fork of Posnic"*
+- Say your product is _"based on Posnic"_ or _"a fork of Posnic"_
 
 **You may not**, without written permission:
 
 - Call your modified version "Posnic", or a name close enough to be confused
   with it
 - Use the Posnic logo as the icon of a product you distribute
-- Present a fork as official, endorsed by us, or as *"Posnic"* unqualified
+- Present a fork as official, endorsed by us, or as _"Posnic"_ unqualified
 - Use the name in a domain or app-store listing for a competing product
 
 This is the ordinary open-source arrangement — Firefox, WordPress and Ansible
@@ -197,12 +197,12 @@ to review, then to maintain. We do not use a bot to hand out badges.
 
 ## Communication
 
-| For | Use |
-|---|---|
-| Bugs, features, design discussion | GitHub Issues |
-| Questions, ideas, showing what you built | GitHub Discussions |
-| Security problems | See [SECURITY.md](../.github/SECURITY.md) — **not** a public issue |
-| Commercial and Cloud enquiries | info@posnic.com |
+| For                                      | Use                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| Bugs, features, design discussion        | GitHub Issues                                                      |
+| Questions, ideas, showing what you built | GitHub Discussions                                                 |
+| Security problems                        | See [SECURITY.md](../.github/SECURITY.md) — **not** a public issue |
+| Commercial and Cloud enquiries           | info@posnic.com                                                    |
 
 Everything technical happens in public. If a decision gets made in a private
 conversation, it gets written back into the issue, otherwise the project
@@ -226,7 +226,7 @@ The root [LICENSE](../LICENSE) governs Posnic's own source. It does not replace 
 licences and notices for every binary or asset in a release package. Review
 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md), the files shipped with the
 artifact and the current
-[reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json).
+[reproduced package evidence](https://www.posnic.com/assets/posnic-package-license-evidence.json).
 This governance document records project policy; it is not legal advice.
 
 ## Code of conduct

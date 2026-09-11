@@ -121,7 +121,7 @@
       "src/print-window-guard.js",
       "src/print-pdf.js",
       "src/escpos-receipt.js",
-    "src/printer-targets.js",
+      "src/printer-targets.js",
       "src/escpos-report.js",
       "src/preload.js",
       "package.json",
@@ -557,7 +557,7 @@
   "bugs": {
     "url": "https://github.com/Posnic/POS/issues"
   },
-  "homepage": "https://posnic.io/",
+  "homepage": "https://www.posnic.com/",
   "keywords": [
     "pos",
     "open-source-pos",
