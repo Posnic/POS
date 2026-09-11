@@ -3,7 +3,7 @@
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter hide-sale-filter">
                 <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title">KOT Reports</h4>
+                    <h4 class="page-title break_title"><lang class="lang_kot_reports">KOT Reports</lang></h4>
                 </div>
 
                 <div class="col-md-9 col-lg-9 show-button-action"></div>
@@ -22,14 +22,14 @@
                             <select class="floating-input select2 load-branch display-current-branch kot_branch_value"
                                 multiple="multiple" data-placeholder="Select Branch" name="kot_branch_value[]"
                                 id="kot_branch_value">
-                                <option class="allbranch_name" value=''>All</option>
+                                <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-4 col-sm-12 kot_table_filter_container" style="display:none;">
                             <select class="floating-input select2 kot_tablewise_table_value"
                                 multiple="multiple" data-placeholder="Select Table" name="kot_tablewise_table_value[]"
                                 id="kot_tablewise_table_value">
-                                <option class="alltable_name" value=''>All</option>
+                                <option class="alltable_name" value=''><lang class="lang_report_all">All</lang></option>
                             </select>
                         </div>
                     </div>
@@ -38,11 +38,11 @@
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
                     <button type="button" class="btn btn-danger-rgba" data-id="kot"
                         onclick="PosnicPro.dateRangeAllfilterClear(this)">
-                        Clear
+                        <lang class="lang_clear_title">Clear</lang>
                     </button>
                     <button type="button" class="btn btn-primary-rgba" id="change_kot_view" data-id="tableView"
                         onclick="PosnicPro.kotitemreport.applyFilter();">
-                        Apply
+                        <lang class="lang_filter_title">Apply</lang>
                     </button>
                 </div>
 
@@ -50,7 +50,7 @@
                     <div class="widgetbar">
                         <button type="button"
                             class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip"
-                            data-toggle="tooltip" title="Filter">
+                            data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -80,21 +80,21 @@
                                 <a class="nav-link active report_tab_font" id="kot-sales-summary-tab" data-toggle="tab"
                                     href="#kot-sales-summary" role="tab" aria-controls="kot-sales-summary"
                                     aria-selected="true" onClick="PosnicPro.kotitemreport.salesSummaryTabClick();"><i class="feather icon-shopping-cart mr-1"></i>
-                                    Sales Summary
+                                    <lang class="lang_sales_summary">Sales Summary</lang>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="kot-itemwise-tab" data-toggle="tab"
                                     href="#kot-itemwise" role="tab" aria-controls="kot-itemwise" aria-selected="false"
                                     onClick="PosnicPro.kotitemreport.itemTableTabClick();"><i class="feather icon-shopping-cart mr-1"></i>
-                                    Itemwise Sale
+                                    <lang class="lang_itemwise_sale">Itemwise Sale</lang>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="kot-discount-tab" data-toggle="tab"
                                     href="#kot-discount" role="tab" aria-controls="kot-discount" aria-selected="false"
                                     onClick="PosnicPro.kotdiscountreport.discountTableTabClick();"><i class="feather icon-list mr-1"></i>
-                                    Discount Report
+                                    <lang class="lang_discount_report">Discount Report</lang>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -102,21 +102,21 @@
                                     href="#kot-cancellation" role="tab" aria-controls="kot-cancellation"
                                     aria-selected="false"
                                     onClick="PosnicPro.kotitemreport.cancellationSummaryTabClick();"><i class="feather icon-list mr-1"></i>
-                                    Cancellation Report
+                                    <lang class="lang_cancellation_report">Cancellation Report</lang>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="kot-open-item-tab" data-toggle="tab"
                                     href="#kot-open-item" role="tab" aria-controls="kot-open-item" aria-selected="false"
                                     onClick="PosnicPro.kotopenitemreport.itemTableTabClick();"><i class="feather icon-package mr-1"></i>
-                                    Open Item
+                                    <lang class="lang_open_item">Open Item</lang>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link report_tab_font" id="kot-tablewise-tab" data-toggle="tab"
                                     href="#kot-tablewise" role="tab" aria-controls="kot-tablewise" aria-selected="false"
                                     onClick="PosnicPro.kotitemreport.tablewiseTabClick();"><i class="feather icon-list mr-1"></i>
-                                    Tablewise Report
+                                    <lang class="lang_tablewise_report">Tablewise Report</lang>
                                 </a>
                             </li>
                         </ul>
@@ -136,7 +136,7 @@
                                                                 class="btn btn-danger-rgba blur_val" id="kotsalessummary_pdfbtn"
                                                                 onclick="PosnicPro.kotitemreport.kotSalesSummaryPdf();"
                                                                 data-toggle="tooltip" data-placement="top"
-                                                                title="Download PDF" style="margin-right: 5px;font-size: 20px;">
+                                                                title="Download PDF" data-t-title="lang_download_pdf" style="margin-right: 5px;font-size: 20px;">
                                                                 <i class="fa fa-file-pdf-o"></i>
                                                             </button>
                                                         </li>
@@ -155,7 +155,7 @@
                                                                 data-id="kotsalessummaryexport"
                                                                 onclick="PosnicPro.kotitemreport.exportSalesSummary(this);"
                                                                 class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                                title="Export All To CSV">
+                                                                title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                 <i class="feather icon-share font-20"></i>
                                                             </a>
                                                         </li>
@@ -164,15 +164,15 @@
                                             </div>
                                             <div class="row mb-2 kotsalessummary_header">
                                                 <div class="col-12">
-                                                    <h5 class="mb-0" style="font-size: 17px; font-weight: 600;">Kotsale Summary</h5>
+                                                    <h5 class="mb-0" style="font-size: 17px; font-weight: 600;"><lang class="lang_kotsale_summary">Kotsale Summary</lang></h5>
                                                 </div>
                                             </div>
                                             <div class="row mb-2 kotsalessummary_daterange_row">
                                                 <div class="col-12 text-right">
-                                                    <span class="f-w-3 font-13">From :&nbsp;</span>
+                                                    <span class="f-w-3 font-13"><lang class="lang_from_2">From :&nbsp;</lang></span>
                                                     <span class="f-w-3 font-13" id="kotsales_fromdate"></span>
                                                     &nbsp;&nbsp;&nbsp;
-                                                    <span class="f-w-3 font-13">To :&nbsp;</span>
+                                                    <span class="f-w-3 font-13"><lang class="lang_to_3">To :&nbsp;</lang></span>
                                                     <span class="f-w-3 font-13" id="kotsales_todate"></span>
                                                 </div>
                                             </div>
@@ -180,34 +180,34 @@
                                                 <tr>
                                                     <th class="text-center" style="width:40px;"></th>
                                                     <th style="width:60px;">#</th>
-                                                    <th style="width:200px;">Table No</th>
-                                                    <th class="text-center" style="width:80px;">Qty</th>
-                                                    <th class="text-right" style="width:120px;">Amount</th>
-                                                    <th class="text-right" style="width:120px;">Discount</th>
-                                                    <th class="text-right" style="width:120px;">Tax</th>
-                                                    <th class="text-right" style="width:120px;">Additional Discount</th>
-                                                    <th class="text-center" style="width:80px;">Pax</th>
-                                                    <th class="text-right" style="width:120px;">Total Amount</th>
+                                                    <th style="width:200px;"><lang class="lang_table_no">Table No</lang></th>
+                                                    <th class="text-center" style="width:80px;"><lang class="lang_qty_title">Qty</lang></th>
+                                                    <th class="text-right" style="width:120px;"><lang class="lang_amount_title">Amount</lang></th>
+                                                    <th class="text-right" style="width:120px;"><lang class="lang_discount_title">Discount</lang></th>
+                                                    <th class="text-right" style="width:120px;"><lang class="lang_module_tax">Tax</lang></th>
+                                                    <th class="text-right" style="width:120px;"><lang class="lang_additional_discount">Additional Discount</lang></th>
+                                                    <th class="text-center" style="width:80px;"><lang class="lang_pax">Pax</lang></th>
+                                                    <th class="text-right" style="width:120px;"><lang class="lang_total_amount">Total Amount</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
                                         </table>
                                         <div class="row mt-3 justify-content-center kotsalestender_container" style="display:none;">
                                             <div class="col-sm-12 col-md-12 col-lg-12">
-                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;">Payment Method Summary</h5>
+                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;"><lang class="lang_payment_method_summary">Payment Method Summary</lang></h5>
                                                 <table class="table table-bordered" id="view_kotsalestender" style="font-size:13px;">
                                                     <thead>
                                                         <tr>
-                                                            <th class="text-center" style="width:60px;">S.No</th>
-                                                            <th class="text-left">Tender Type</th>
-                                                            <th class="text-right" style="width:160px;">Amount</th>
+                                                            <th class="text-center" style="width:60px;"><lang class="lang_s_no">S.No</lang></th>
+                                                            <th class="text-left"><lang class="lang_tender_type">Tender Type</lang></th>
+                                                            <th class="text-right" style="width:160px;"><lang class="lang_amount_title">Amount</lang></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
                                                     <tfoot>
                                                         <tr>
                                                             <th></th>
-                                                            <th class="text-center">Total</th>
+                                                            <th class="text-center"><lang class="lang_total_title">Total</lang></th>
                                                             <th class="text-right"><b><span id="view_kotsalestender_total"></span></b></th>
                                                         </tr>
                                                     </tfoot>
@@ -216,22 +216,22 @@
                                         </div>
                                         <div class="row mt-3 justify-content-center kotsalesdine_container" style="display:none;">
                                             <div class="col-sm-12 col-md-12 col-lg-12">
-                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;">Order Type Summary</h5>
+                                                <h5 class="mb-2" style="font-size: 17px; font-weight: 600;"><lang class="lang_order_type_summary">Order Type Summary</lang></h5>
                                                 <table class="table table-bordered" id="view_kotsalesdine" style="font-size:13px;">
                                                     <thead>
                                                         <tr>
-                                                            <th class="text-center" style="width:60px;">S.No</th>
-                                                            <th class="text-left">Dine Type</th>
-                                                            <th class="text-center" style="width:80px;">Count</th>
-                                                            <th class="text-center" style="width:80px;">Pax</th>
-                                                            <th class="text-right" style="width:160px;">Amount</th>
+                                                            <th class="text-center" style="width:60px;"><lang class="lang_s_no">S.No</lang></th>
+                                                            <th class="text-left"><lang class="lang_dine_type">Dine Type</lang></th>
+                                                            <th class="text-center" style="width:80px;"><lang class="lang_count">Count</lang></th>
+                                                            <th class="text-center" style="width:80px;"><lang class="lang_pax">Pax</lang></th>
+                                                            <th class="text-right" style="width:160px;"><lang class="lang_amount_title">Amount</lang></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
                                                     <tfoot>
                                                         <tr>
                                                             <th></th>
-                                                            <th class="text-center">Total</th>
+                                                            <th class="text-center"><lang class="lang_total_title">Total</lang></th>
                                                             <td class="text-center"><b><span id="view_kotsalesdine_count_total"></span></b></td>
                                                             <td class="text-center"><b><span id="view_kotsalesdine_pax_total"></span></b></td>
                                                             <td class="text-right"><b><span id="view_kotsalesdine_amount_total"></span></b></td>
@@ -277,7 +277,7 @@
                                                                 data-id="kotitemreportexport"
                                                                 onclick="PosnicPro.kotitemreport.exportItemwise(this);"
                                                                 class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                                title="Export All To CSV">
+                                                                title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                 <i class="feather icon-share font-20"></i>
                                                             </a>
                                                         </li>
@@ -287,8 +287,8 @@
                                             <thead>
                                                 <tr>
                                                     <th style="width:60px;">#</th>
-                                                    <th>Item Name</th>
-                                                    <th class="text-center" style="width:150px;">Sales Count</th>
+                                                    <th><lang class="lang_itemname_title">Item Name</lang></th>
+                                                    <th class="text-center" style="width:150px;"><lang class="lang_sales_count">Sales Count</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -303,29 +303,29 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing
+                                                            <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotitemreport_page_total"></span></b>
-                                                            to
+                                                            <lang class="lang_to">to</lang>
                                                             <b><span
                                                                     id="view_kotitemreport_page_perpage_total"></span></b>
-                                                            of
+                                                            <lang class="lang_of">of</lang>
                                                             <b><span id="view_kotitemreport_total"></span></b>
-                                                            entries
+                                                            <lang class="lang_entries">entries</lang>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button
                                                                     class="btn previous page-item text-dark-gradient f-w-7"
                                                                     data-id="kotitemreport"
-                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                                     <i class="fa fa-angle-left font-20"></i>
                                                                 </button>
                                                                 <button
                                                                     class="btn next page-item text-dark-gradient f-w-7"
                                                                     data-id="kotitemreport"
-                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                                     <i class="fa fa-angle-right font-20"></i>
                                                                 </button>
                                                             </ul>
@@ -366,7 +366,7 @@
                                                                 data-id="kotdiscountreportexport"
                                                                 onclick="PosnicPro.kotdiscountreport.exportDiscount(this);"
                                                                 class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                                title="Export All To CSV">
+                                                                title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                 <i class="feather icon-share font-20"></i>
                                                             </a>
                                                         </li>
@@ -377,13 +377,13 @@
                                                 <tr>
                                                     <th style="width:60px;">#</th>
                                                     <th>ID</th>
-                                                    <th>Date</th>
-                                                    <th class="text-center">Table</th>
-                                                    <th class="text-right">Total</th>
-                                                    <th class="text-right">Discount %</th>
-                                                    <th class="text-right">Discount (₹)</th>
-                                                    <th class="text-right">Discount Price</th>
-                                                    <th class="text-right">Net Amount</th>
+                                                    <th><lang class="lang_date_title">Date</lang></th>
+                                                    <th class="text-center"><lang class="lang_table_title">Table</lang></th>
+                                                    <th class="text-right"><lang class="lang_total_title">Total</lang></th>
+                                                    <th class="text-right"><lang class="lang_discount">Discount %</lang></th>
+                                                    <th class="text-right"><lang class="lang_discount_2">Discount (₹)</lang></th>
+                                                    <th class="text-right"><lang class="lang_discount_price">Discount Price</lang></th>
+                                                    <th class="text-right"><lang class="lang_net_amount">Net Amount</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -398,29 +398,29 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing
+                                                            <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotdiscountreport_page_total"></span></b>
-                                                            to
+                                                            <lang class="lang_to">to</lang>
                                                             <b><span
                                                                     id="view_kotdiscountreport_page_perpage_total"></span></b>
-                                                            of
+                                                            <lang class="lang_of">of</lang>
                                                             <b><span id="view_kotdiscountreport_total"></span></b>
-                                                            entries
+                                                            <lang class="lang_entries">entries</lang>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button
                                                                     class="btn previous page-item text-dark-gradient f-w-7"
                                                                     data-id="kotdiscountreport"
-                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                                     <i class="fa fa-angle-left font-20"></i>
                                                                 </button>
                                                                 <button
                                                                     class="btn next page-item text-dark-gradient f-w-7"
                                                                     data-id="kotdiscountreport"
-                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                                     <i class="fa fa-angle-right font-20"></i>
                                                                 </button>
                                                             </ul>
@@ -461,7 +461,7 @@
                                                                 data-id="kotcancellationexport"
                                                                 onclick="PosnicPro.kotitemreport.exportCancellation(this);"
                                                                 class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                                title="Export All To CSV">
+                                                                title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                 <i class="feather icon-share font-20"></i>
                                                             </a>
                                                         </li>
@@ -471,10 +471,10 @@
                                             <thead>
                                                 <tr>
                                                     <th style="width:60px;">#</th>
-                                                    <th>Table No</th>
-                                                    <th>Item Name</th>
-                                                    <th class="text-center">Qty</th>
-                                                    <th class="text-right">Amount</th>
+                                                    <th><lang class="lang_table_no">Table No</lang></th>
+                                                    <th><lang class="lang_itemname_title">Item Name</lang></th>
+                                                    <th class="text-center"><lang class="lang_qty_title">Qty</lang></th>
+                                                    <th class="text-right"><lang class="lang_amount_title">Amount</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -489,29 +489,29 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing
+                                                            <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotcancellation_page_total"></span></b>
-                                                            to
+                                                            <lang class="lang_to">to</lang>
                                                             <b><span
                                                                     id="view_kotcancellation_page_perpage_total"></span></b>
-                                                            of
+                                                            <lang class="lang_of">of</lang>
                                                             <b><span id="view_kotcancellation_total"></span></b>
-                                                            entries
+                                                            <lang class="lang_entries">entries</lang>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button
                                                                     class="btn previous page-item text-dark-gradient f-w-7"
                                                                     data-id="kotcancellation"
-                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                                     <i class="fa fa-angle-left font-20"></i>
                                                                 </button>
                                                                 <button
                                                                     class="btn next page-item text-dark-gradient f-w-7"
                                                                     data-id="kotcancellation"
-                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                                     <i class="fa fa-angle-right font-20"></i>
                                                                 </button>
                                                             </ul>
@@ -553,7 +553,7 @@
                                                                 data-id="kotopenitemexport"
                                                                 onclick="PosnicPro.kotopenitemreport.exportOpenItem(this);"
                                                                 class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                                title="Export All To CSV">
+                                                                title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                                 <i class="feather icon-share font-20"></i>
                                                             </a>
                                                         </li>
@@ -563,9 +563,9 @@
                                             <thead>
                                                 <tr>
                                                     <th style="width:60px;">#</th>
-                                                    <th>Item Name</th>
-                                                    <th class="text-center">Qty</th>
-                                                    <th class="text-right">Total</th>
+                                                    <th><lang class="lang_itemname_title">Item Name</lang></th>
+                                                    <th class="text-center"><lang class="lang_qty_title">Qty</lang></th>
+                                                    <th class="text-right"><lang class="lang_total_title">Total</lang></th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -580,27 +580,27 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing <b><span
+                                                            <lang class="lang_showing">Showing</lang> <b><span
                                                                     id="view_kotopenitemreport_page_total"></span></b>
-                                                            to <b><span
+                                                            <lang class="lang_to">to</lang> <b><span
                                                                     id="view_kotopenitemreport_page_perpage_total"></span></b>
-                                                            of <b><span id="view_kotopenitemreport_total"></span></b>
-                                                            entries
+                                                            <lang class="lang_of">of</lang> <b><span id="view_kotopenitemreport_total"></span></b>
+                                                            <lang class="lang_entries">entries</lang>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button
                                                                     class="btn previous page-item text-dark-gradient f-w-7"
                                                                     data-id="kotopenitemreport"
-                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page">
+                                                                    onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
                                                                     <i class="fa fa-angle-left font-20"></i>
                                                                 </button>
                                                                 <button
                                                                     class="btn next page-item text-dark-gradient f-w-7"
                                                                     data-id="kotopenitemreport"
-                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page">
+                                                                    onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
                                                                     <i class="fa fa-angle-right font-20"></i>
                                                                 </button>
                                                             </ul>

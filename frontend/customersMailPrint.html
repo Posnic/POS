@@ -49,7 +49,7 @@
             }
 
             /* #receipt is a <span> wrapping block content. Force block layout so
-               it has a correct full-width box — otherwise html2canvas measures it
+               it has a correct full-width box, otherwise html2canvas measures it
                too narrow and clips the right edge of the downloaded PDF. */
             #receipt {
                 display: block;
@@ -231,13 +231,13 @@
                 </div>
                 <div class="footer">
                     <p>THANK YOU FOR SHOPPING WITH US<br>THANK YOU VISIT AGAIN!</p>
-                    <p>Powered by Posnic, <a href="https://posnic.com">https://posnic.com</a></p>
+                    <p>Powered by Posnic, <a href="https://www.posnic.com">https://www.posnic.com</a></p>
                 </div>
             </span>
         </div>
         <script type="text/javascript">
             if (window.location.hostname === 'frontend-ace.pages.dev') {
-                window.location.replace("https://www.posnic.io");
+                window.location.replace("https://www.posnic.com");
             }
 
             // Posnic (desktop/self-hosted): the API is always the origin that

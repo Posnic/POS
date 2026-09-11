@@ -17,12 +17,12 @@
                 <div class="col-lg-3 col-xl-3 hide-button-action tb_filter" style="display:none;">
                     <select class="floating-input select2 load-branch display-current-branch supplier_branch_value" multiple="multiple"
                             data-placeholder="Select Branch" name="supplier_branch_value[]" id="supplier_branch_value">
-                        <option class="allbranch_name" value=''>All</option>
+                        <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
                     <input type="text" class="form-control custom_report_search_input supplier_sales_input" data-id="suppliers" data-field="supplier"
-                           placeholder="Choose Supplier"  maxlength="25">
+                           placeholder="Choose Supplier" data-t-placeholder="lang_choose_supplier_2"  maxlength="25">
                     <input type="hidden" class="suppliers_input_id">
                 </div>
                 <div class="col-md-2 col-lg-2 adjuce_left hide-button-action" style="display:none;">
@@ -35,7 +35,7 @@
                 </div>
                 <div class="col-lg-1 col-xl-1 tb_widget">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter">
+                        <button type="button" class="btn btn-round btn-primary-rgba click-action-button adjuce_left add_new_tooltip" data-toggle="tooltip" title="Filter" data-t-title="lang_filter">
                             <i class="feather icon-filter" aria-hidden="true"></i>
                         </button>                       
                     </div>
@@ -79,8 +79,8 @@
                         </ul>
                         <div class="tab-content" id="defaultTabContentLine">
                             <div id="supplier_upgrade" class="text-center mt-4">
-                                <p class="font-weight-bold">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</p>
-                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary">Upgrade to Premium</a>
+                                <p class="font-weight-bold"><lang class="lang_you_re_currently_on_the_free_plan_upgrade">You're currently on the Free Plan. Upgrade to Premium for full access to all features.</lang></p>
+                                <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="supplier-line" role="tabpanel" aria-labelledby="supplier-tab-line">
                                 <!-- start table -->
@@ -99,13 +99,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="supplierreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="supplierreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="supplierreport_exportbtn"
-                                                           data-id="supplierreportexport" onclick="PosnicPro.supplierreport.supplierreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="supplierreportexport" onclick="PosnicPro.supplierreport.supplierreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -136,24 +136,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_supplierreport_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_supplierreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_supplierreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-supplierreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-supplierreport text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-supplierreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -179,13 +179,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="supplierproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="supplierproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="supplierproductreport_exportbtn"
-                                                           data-id="supplierproductreportexport" onclick="PosnicPro.supplierproductreport.supplierproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="supplierproductreportexport" onclick="PosnicPro.supplierproductreport.supplierproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -201,10 +201,10 @@
                                                width="100%">
                                             <div class="col-sm-6 col-md-12 col-lg-12" id="reportbaseproduct_img_hide" style="display:none;">
                                                 <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
-                                                <div class="text-center text-dark"> <p>No Records </p></div>
+                                                <div class="text-center text-dark"> <p><lang class="lang_no_records">No Records</lang> </p></div>
                                             </div>
                                             <thead class="reportsupplierpro_header">
-                                                <tr><th>#</th><th>Supplier Name</th><th class="text-center">Products</th><th class="text-right">Total Amount</th></tr>
+                                                <tr><th>#</th><th><lang class="lang_supplier_name">Supplier Name</lang></th><th class="text-center"><lang class="lang_products">Products</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>
                                             </thead>
                                             <tbody class="report-thead-tfoot table-body reportsupplierpro_header"></tbody>
                                         </table>
@@ -217,24 +217,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_supplierproductreport_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_supplierproductreport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_supplierproductreport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-supplierproductreport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-supplierproductreport text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-supplierproductreport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierproductreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierproductreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="supplierproductreport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="supplierproductreport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>
@@ -260,13 +260,13 @@
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
                                                     <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="suppliersalereport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh">
+                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="suppliersalereport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
                                                             <i class="feather icon-refresh-cw font-20"></i>
                                                         </a>
                                                     </li>
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="suppliersalereport_exportbtn"
-                                                           data-id="suppliersalereportexport" onclick="PosnicPro.suppliersalereport.suppliersalereportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV">
+                                                           data-id="suppliersalereportexport" onclick="PosnicPro.suppliersalereport.suppliersalereportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
                                                             <i class="feather icon-share font-20"></i>
                                                         </a>
                                                     </li>
@@ -286,7 +286,7 @@
                                             <div class="reportbasesale_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
                                             </div>
                                             <thead class="reportsuppliersale_header">
-                                                <tr><th>#</th><th>Name</th><th class="text-center">Total Items Sold</th><th class="text-center">Sales</th><th class="text-right">Profit</th><th class="text-right">Avg. Sale</th><th class="text-right">Total Sales</th></tr>
+                                                <tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_noitemsold">Total Items Sold</lang></th><th class="text-center"><lang class="lang_rgrp_sales">Sales</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avgsale_title">Avg. Sale</lang></th><th class="text-right"><lang class="lang_noreturnds">Total Sales</lang></th></tr>
                                             </thead>
                                             <tbody class="report-thead-tfoot table-body reportsuppliersale_header"></tbody>
                                         </table>
@@ -299,24 +299,24 @@
                                         <div class="row align-items-center">
                                             <div class="col-8">
                                                 <div class="hint-text">
-                                                    Showing 
+                                                    <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_suppliersalereport_page_total"></span></b> 
-                                                    to 
+                                                    <lang class="lang_to">to</lang> 
                                                     <b><span id="view_suppliersalereport_page_perpage_total"></span></b> 
-                                                    of 
+                                                    <lang class="lang_of">of</lang> 
                                                     <b><span id="view_suppliersalereport_total"></span></b>
-                                                    entries 
+                                                    <lang class="lang_entries">entries</lang> 
                                                     <span class="showing-hide-show-suppliersalereport" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                        <span class="showing-value-suppliersalereport text-dark"> 0 </span>&nbsp;
-                                                        rows selected  
+                                                        <span class="showing-value-suppliersalereport text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>  
                                                     </span>
                                                 </div>
                                             </div>
                                             <div class="col-4">
-                                                <nav aria-label="Page navigation example">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                     <ul class="pagination mb-0">
-                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="suppliersalereport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page"> <i class="fa fa-angle-left font-20"></i> </button>
-                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="suppliersalereport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page"> <i class="fa fa-angle-right font-20"></i> </button>
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="suppliersalereport" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page"> <i class="fa fa-angle-left font-20"></i> </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="suppliersalereport" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page"> <i class="fa fa-angle-right font-20"></i> </button>
                                                     </ul>
                                                 </nav>
                                             </div>

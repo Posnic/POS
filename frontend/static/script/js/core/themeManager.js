@@ -775,14 +775,14 @@ PosnicPro.themeManager = {
 
         PosnicPro.put(params, function(response) {
             if (response.type === 'success') {
-                PosnicPro.alert('success', 'Theme settings saved successfully');
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_theme_settings_saved_successfully', 'Theme settings saved successfully'));
                 if (callback) callback(true, response);
             } else {
                 PosnicPro.alert('error', response.message || 'Failed to save theme settings');
                 if (callback) callback(false, response);
             }
         }, function(xhr) {
-            var response = xhr.responseText ? JSON.parse(xhr.responseText) : { message: 'Network error' };
+            var response = xhr.responseText ? JSON.parse(xhr.responseText) : { message: PosnicPro.i18n.t('lang_network_error', 'Network error') };
             PosnicPro.alert('error', response.message || 'Failed to save theme settings');
             if (callback) callback(false, response);
         });
@@ -803,7 +803,7 @@ PosnicPro.themeManager = {
             self.initColorPickers();
         }, 100);
 
-        PosnicPro.alert('success', 'Theme reset to default');
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_theme_reset_to_default', 'Theme reset to default'));
     },
 
     initColorPickers: function() {

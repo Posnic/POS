@@ -110,6 +110,7 @@
             "static/script/js/modules/js/cashback.js",
             "static/script/js/modules/js/whatsapp.js",
             "static/script/js/modules/js/device_settings.js",
+            "static/script/js/modules/js/online_orders.js",
             "static/script/js/modules/js/stocklog.js",
             "static/script/js/modules/js/suppliers.js",
             "static/script/js/modules/js/users.js",
@@ -118,7 +119,9 @@
             "static/script/js/routes.js",
             "static/script/js/core/analytics-inject.js",
             "static/script/js/core/signup-link.js",
-            "static/script/js/core/demo-mode.js"
+            "static/script/js/core/demo-mode.js",
+            "static/script/js/core/desktop-nudge.js",
+            "static/script/js/core/order-alert.js"
         ]
     },
     "login": {

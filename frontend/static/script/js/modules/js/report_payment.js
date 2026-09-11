@@ -42,8 +42,8 @@ PosnicPro.paymentreport = {
         $("#payment_transaction_cash_mode").empty();
         let paymentMethod = "";
         let reportPaymentType = PosnicPro.configPaymentType || [];
-        $('#payment_transaction_cash_mode').append('<option value="All" selected="selected">All</option>');
-        $('#payment_transaction_cash_mode').append('<option value="Cash">Cash</option>');
+        $('#payment_transaction_cash_mode').append('<option value="All" selected="selected" data-t="lang_report_all">All</option>');
+        $('#payment_transaction_cash_mode').append('<option value="Cash" data-t="lang_cash_title">Cash</option>');
         if (Array.isArray(reportPaymentType) && reportPaymentType.length !== 0) {
             $.each(reportPaymentType, function (key, val) {
                 paymentMethod = '<option value="' + val.payment_value + '">' + val.payment_value + ' </option>';
@@ -76,7 +76,7 @@ PosnicPro.paymentreport = {
                     if (rowTotal === 0) {
                         $('.reportpayment_header').hide();
                         let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                        $('.reportpayment_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpayment_norecord', 'No Records on ' + dateRange);
                         $('#reportpayment_img_hide,.reportpayment_norecord').show();
 
                     } else {
@@ -102,7 +102,7 @@ PosnicPro.paymentreport = {
 
                         $('span.number').number(true, 2);
                     } else {
-                        $("#salePaymentType tbody").append('<tr><td colspan="4"><div class="text-center text-dark"><p class="table_cart_content text-primary">Your cash details are empty</p></div></td></tr>');
+                        $("#salePaymentType tbody").append('<tr><td colspan="4"><div class="text-center text-dark"><p class="table_cart_content text-primary"><lang class="lang_your_cash_details_are_empty">Your cash details are empty</lang></p></div></td></tr>');
                     }
 
                 } else {
@@ -169,7 +169,7 @@ PosnicPro.paymentransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentstatus_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymenttransc_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                PosnicPro.renderNoRecords('.reportpaymenttransc_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymenttransc_img_hide,.reportpaymenttransc_norecord').show();
 
                         } else {
@@ -278,7 +278,7 @@ PosnicPro.paymentreturntransaction = {
                         if (rowTotal === 0) {
                             $('.reportpaymentreturn_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportpaymentreturntransction_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportpaymentreturntransction_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymentreturntransction_img_hide,.reportpaymentreturntransction_norecord').show();
 
                         } else {
@@ -363,3 +363,98 @@ $(document).ready(function () {
         PosnicPro.paymentreport.paymentSaleReportView();
     }
 });
+
+/*
+ * What this shop owes its hotels and its aggregators.
+ *
+ * THE REPORT THAT MAKES A TIE-UP POSSIBLE.
+ *
+ * A restaurant agrees a deal with the hotel across the road, and at the end of
+ * the month somebody has to work out what is owed. Doing that from a sales list
+ * is an evening of arithmetic and then a disagreement: the hotel has its own
+ * number and neither side can check the other's.
+ *
+ * Venues and aggregators in one table because a shop can owe both on the same
+ * day, and the question - what is going out of this month's takings - has one
+ * answer, not two. Lives in Money rather than Sales for the same reason.
+ *
+ * The commission it shows is the one STORED on each order at the rate agreed
+ * when it was placed. A hotel that renegotiates in March must not restate what
+ * it was owed in February.
+ */
+PosnicPro.commissionreport = {
+    load: function () {
+        var self = PosnicPro.commissionreport;
+        var loader = $('.loader-commission-report');
+        loader.find('.loadingSpinner:first').remove();
+        $("<div class='loadingSpinner'></div>").appendTo(loader);
+
+        var daterange = String($('.view_payment_report_daterange').val() ||
+            $('.view_payment_report_daterange span').text() || '');
+        var fields = daterange.split('-');
+
+        PosnicPro.get({
+            url: 'sales/commissionReport',
+            data: {
+                starting_date: (fields[0] || '').trim(),
+                ending_date: (fields[1] || '').trim(),
+                branch: $('.payment_branch_value').val() || []
+            }
+        }, function (response) {
+            loader.find('.loadingSpinner:first').remove();
+            self.render((response && response.data) || { rows: [], totals: {} });
+        }, function () {
+            loader.find('.loadingSpinner:first').remove();
+            $('#commission_report_body').html(
+                '<tr><td colspan="5" class="text-center text-danger">' +
+                PosnicPro.i18n.t('lang_could_not_load_the_report', 'Could not load the report.') +
+                '</td></tr>');
+            $('#commission_report_foot').html('');
+        });
+    },
+
+    render: function (data) {
+        var rows = (data && data.rows) || [];
+        var totals = (data && data.totals) || {};
+        var sign = PosnicPro.local.get('currencySign') || '';
+        var money = function (amount) { return sign + (Number(amount) || 0).toFixed(2); };
+        var safe = function (value) { return $('<div>').text(value == null ? '' : value).html(); };
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+
+        if (!rows.length) {
+            /* Not an error, and said so: most shops owe nobody anything, and a
+               red message would send them looking for a fault. */
+            $('#commission_report_body').html(
+                '<tr><td colspan="5" class="text-center text-muted">' +
+                t('lang_no_commission_in_this_range', 'No commission is owed in this range.') +
+                '</td></tr>');
+            $('#commission_report_foot').html('');
+            return;
+        }
+
+        $('#commission_report_body').html(rows.map(function (row) {
+            /* Which kind of deal this is. A hotel and an aggregator are both
+               partners and are not the same relationship, and a report that
+               blurs them cannot be checked against either. */
+            var kind = row.kind === 'venue'
+                ? t('lang_venue_kind', 'Venue')
+                : t('lang_partner_kind', 'Partner');
+
+            return '<tr>' +
+                '<td>' + safe(row.name) +
+                ' <span class="badge badge-secondary-inverse">' + kind + '</span></td>' +
+                '<td class="text-right">' + (Number(row.orders) || 0) + '</td>' +
+                '<td class="text-right">' + money(row.sales) + '</td>' +
+                '<td class="text-right">' + money(row.commission) + '</td>' +
+                '<td class="text-right">' + money(row.net) + '</td>' +
+                '</tr>';
+        }).join(''));
+
+        $('#commission_report_foot').html(
+            '<tr><th>' + t('lang_total_title', 'Total') + '</th>' +
+            '<th class="text-right">' + (Number(totals.orders) || 0) + '</th>' +
+            '<th class="text-right">' + money(totals.sales) + '</th>' +
+            '<th class="text-right">' + money(totals.commission) + '</th>' +
+            '<th class="text-right">' + money(totals.net) + '</th></tr>');
+    }
+};

@@ -85,9 +85,9 @@ PosnicPro.expenses = {
                     var row = response.data.list[i];
                     var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                     var action = '<div id="onclick-toolbar-options_' + i + '" class="hidden">' +
-                            '<a data-module = "expense" data-access = "read" href="#/expenses/' + row._id + '" data-id="expenses/' + row._id + '" data-toggle="tooltip" title="View Expense" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
-                            '<a data-module = "expense" data-access = "write" href="#/expenses/' + row._id + '/edit" data-id="expenses/' + row._id + '/edit" data-toggle="tooltip" title="Edit Expense" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
-                            '<a data-module = "expense" data-access = "delete" href="#/expenses/' + row._id + '/delete" data-id="expenses/' + row._id + '/delete" data-toggle="tooltip" title="Delete Expense" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
+                            '<a data-module = "expense" data-access = "read" href="#/expenses/' + row._id + '" data-id="expenses/' + row._id + '" data-toggle="tooltip" title="View Expense" data-t-title="lang_view_expense" class="point-cursor mobile_tooltip"><i class="feather icon-eye"></i></a>' +
+                            '<a data-module = "expense" data-access = "write" href="#/expenses/' + row._id + '/edit" data-id="expenses/' + row._id + '/edit" data-toggle="tooltip" title="Edit Expense" data-t-title="lang_edit_expense" class="point-cursor mobile_tooltip"><i class="feather icon-edit"></i></a>' +
+                            '<a data-module = "expense" data-access = "delete" href="#/expenses/' + row._id + '/delete" data-id="expenses/' + row._id + '/delete" data-toggle="tooltip" title="Delete Expense" data-t-title="lang_delete_expense" class="point-cursor mobile_tooltip"><i class="feather icon-trash"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
                     var trow = '<tr class="pipeline"><th><input type="checkbox" class="expenses-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'expenses\');"></th> <th scope="row" data-label="#">' + row_no + '</th><td class="text-right" data-label="Amount">' + currency + '&nbsp;<span class="number">' + row.amount + '</span></td><td data-label="Type">' + (row.type === 'credit' ? 'Money In' : row.type === 'debit' ? 'Money Out' : (row.type || '')) + '</td><td data-label="Category">' + row.category + '</td><td data-label="Approved by">' + row.approvedby + '</td><td data-label="Note">' + (row.description || '') + '</td>' +
@@ -260,7 +260,7 @@ PosnicPro.expenses = {
                 $('#expenses_approvedby').val(data.approvedby);
                 $('#expenses_expensesnote').val(data.description);
                 $('#expenses_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
-//                $('#expenses_button_title').text('Update');
+//                $('#expenses_button_title').text(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
                 $('#expenses_button_title').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
 
                 $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
@@ -281,7 +281,7 @@ PosnicPro.expenses = {
         var loader = $(".loader-expense");
         loader.find(".loadingSpinner:first").remove();
         $('#expenses_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
-//        $('#expenses_button_title').text('Save');
+//        $('#expenses_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('#expenses_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
 
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');

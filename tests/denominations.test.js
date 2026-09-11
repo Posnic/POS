@@ -75,7 +75,9 @@ function loadStatus() {
   // eslint-disable-next-line no-new-func
   const fn = new Function('$', 'PosnicPro', body + '\nreturn showTenderStatus;')(
     () => el,
-    { local: { get: () => '₹' } },
+    /* i18n answers with the English it is given, exactly as the real t()
+       does before a language pack has loaded. */
+    { local: { get: () => '₹' }, i18n: { t: (key, english) => english } },
   );
   return (tendered, bill) => {
     state.text = '';

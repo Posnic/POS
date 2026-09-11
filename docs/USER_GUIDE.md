@@ -32,9 +32,9 @@ Download the installer for your system from the
 [releases page](https://github.com/Posnic/POS/releases), run it, and follow the
 prompts.
 
-**Windows** may warn that the publisher is unrecognised. Choose *More info* →
-*Run anyway*. **macOS** may need *System Settings → Privacy & Security → Open
-Anyway* on first launch. **Linux** users can make the `.AppImage` executable and
+**Windows** may warn that the publisher is unrecognised. Choose _More info_ →
+_Run anyway_. **macOS** may need _System Settings → Privacy & Security → Open
+Anyway_ on first launch. **Linux** users can make the `.AppImage` executable and
 run it, or install the `.deb`.
 
 The first launch takes a few minutes — Posnic is setting up its own database.
@@ -71,15 +71,15 @@ You can change all of it later under **Config → Settings**.
 
 **Item → Add New Item.** The fields that matter:
 
-| Field | What it is |
-|---|---|
-| Name | What appears on the receipt |
-| Category | The one you just made |
-| Cost price | What you pay |
-| Selling price | What the customer pays |
-| Quantity | How many you have now |
-| Barcode | Optional — scan it here and the scanner will find it at the till |
-| Tax | The rate that applies |
+| Field         | What it is                                                       |
+| ------------- | ---------------------------------------------------------------- |
+| Name          | What appears on the receipt                                      |
+| Category      | The one you just made                                            |
+| Cost price    | What you pay                                                     |
+| Selling price | What the customer pays                                           |
+| Quantity      | How many you have now                                            |
+| Barcode       | Optional — scan it here and the scanner will find it at the till |
+| Tax           | The rate that applies                                            |
 
 Save.
 
@@ -235,8 +235,8 @@ Windows has a built-in Task Scheduler. One command tells it to run Posnic's
 backup every night, whether or not anyone has opened the app.
 
 **Posnic writes the exact command for you**, with the real paths already filled
-in — *Backup Manager → Settings → Backups when Posnic is closed → Show me the
-command*. It looks like this:
+in — _Backup Manager → Settings → Backups when Posnic is closed → Show me the
+command_. It looks like this:
 
 ```
 schtasks /Create /TN "Posnic Backup" /SC DAILY /ST 22:00 ^
@@ -247,7 +247,7 @@ Copy it from the Backup Manager rather than typing it from here — the path to
 Posnic depends on where you installed it, and the command must match your
 machine.
 
-1. Right-click **Command Prompt** → *Run as administrator*
+1. Right-click **Command Prompt** → _Run as administrator_
 2. Paste the command and press Enter
 3. Check it was created:
    ```
@@ -262,7 +262,7 @@ machine.
    schtasks /Query /TN "Posnic Backup" /FO LIST /V | findstr /C:"Last Result"
    ```
 
-Then open Posnic and look at *Backup Manager → History*. A new backup should be
+Then open Posnic and look at _Backup Manager → History_. A new backup should be
 listed.
 
 **A few things worth knowing:**
@@ -302,7 +302,7 @@ If something harmful does reach the machine — through a browser, a USB stick, 
 email attachment — an administrator account lets it do whatever it likes. A
 standard account does not.
 
-*Settings → Accounts → Other users → Add account.* Make the everyday one
+_Settings → Accounts → Other users → Add account._ Make the everyday one
 **Standard**, and keep a separate **Administrator** account for installing
 updates.
 
@@ -318,7 +318,7 @@ can read every sale, every customer and every stored password, without knowing
 any password at all. It does not matter that Posnic locks its own database; the
 files are simply readable.
 
-*Settings → Privacy & security → Device encryption*, or search for **BitLocker**.
+_Settings → Privacy & security → Device encryption_, or search for **BitLocker**.
 It runs in the background, does not slow the machine noticeably and does not make
 any file larger.
 
@@ -362,7 +362,7 @@ and settings stay consistent across every till and branch, and you get a
 dashboard you can check from anywhere.
 
 Without Cloud, each till is complete and independent. With it, they are one
-business. Details at [posnic.com](https://posnic.com).
+business. Details at [posnic.com](https://www.posnic.com).
 
 ---
 
@@ -372,11 +372,11 @@ business. Details at [posnic.com](https://posnic.com).
 database process more often than anything else. If it persists, the log will say
 why:
 
-| System | Log |
-|---|---|
-| Windows | `%APPDATA%\posnic\app.log` |
-| macOS | `~/Library/Application Support/posnic/app.log` |
-| Linux | `~/.config/posnic/app.log` |
+| System  | Log                                            |
+| ------- | ---------------------------------------------- |
+| Windows | `%APPDATA%\posnic\app.log`                     |
+| macOS   | `~/Library/Application Support/posnic/app.log` |
+| Linux   | `~/.config/posnic/app.log`                     |
 
 **"MongoDB service not running."** Posnic's database did not start. Restart the
 application; if it happens again, restart the machine and check the log.

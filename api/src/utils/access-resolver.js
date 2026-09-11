@@ -8,8 +8,8 @@
 // `user.access || user._doc.access`.
 //
 // This is the SEAM for Phase 1 (roles / permission groups): once reusable roles
-// exist, the resolution — merge the assigned role(s) `access` with any per-user
-// `access_overrides` — happens HERE, so the ~150 `checkPermission` call-sites
+// exist, the resolution - merge the assigned role(s) `access` with any per-user
+// `access_overrides` - happens HERE, so the ~150 `checkPermission` call-sites
 // never change. Keeping the resolution in one place is the whole point.
 
 /**

@@ -4,8 +4,8 @@
         <div class="modal-content loader-view-receiving">
             <div class="modal-header">
                 <h5 class="modal-title"><span id="receivingtitelText"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
                 </button>
             </div>
             <div class="modal-body">                
@@ -43,7 +43,7 @@
                                                         <th><lang class="lang_name_title">Name </lang></th>
                                                 <th><lang class="lang_price_title">Price </lang></th>
                                                 <th><lang class="lang_qty_title">Qty </lang></th>
-                                                <th><lang class="lang_tax_title">Exclusive (Tax) </lang></th>
+                                                <th><lang class="lang_exclusive_tax_2">Exclusive (Tax) </lang></th>
                                                 <th class="text-center"><lang class="lang_total_title">Total </lang></th>
                                                 </tr>
                                                 </thead>
@@ -65,7 +65,7 @@
                                                     </table>
                                                     <table class="table table-borderless text-left" id="detailed_receiving_item_gsttax" style="display:none;">
                                                         <thead>
-                                                        <th> GST Tax Details : </th>
+                                                        <th> <lang class="lang_gst_tax_details">GST Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                             <tr class="indian-gstr hide-show-igst" style="display: none;">
@@ -97,7 +97,7 @@
                                                         <td><span class="sign display-currency"></span>&nbsp;<span class="receiving-discount-value">0.00</span></td>
                                                         </tr>                                                        
                                                         <tr class="hide-receiving-tax" style="display: none;">
-                                                            <td><lang class="lang_tax_title">Tax</lang> :</td> 
+                                                            <td><lang class="lang_module_tax">Tax</lang> :</td> 
                                                         <td><span class="sign display-currency"></span>&nbsp;<span class="receiving_tax_view"></span></td>
                                                         </tr>                                                            
                                                         <tr>
@@ -112,7 +112,7 @@
                                     </div>
 
                                     <div class="invoice-summary hide-receiving-return" style="display:none;">
-                                        <h4><lang class="lang_receiving_title">Return Line Item</lang></h4>
+                                        <h4><lang class="lang_return_line_item">Return Line Item</lang></h4>
                                         <div id="viewreceiving_return_print_view">
 
                                         </div>
@@ -123,14 +123,14 @@
                                                 <div class="order-total table-responsive ">
                                                     <table class="table table-borderless text-left" id="detailed_receiving_itemreturn_tax">
                                                         <thead>
-                                                        <th> Tax Details : </th>
+                                                        <th> <lang class="lang_tax_details">Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                         </tbody>
                                                     </table>
                                                     <table class="table table-borderless text-left" id="detailed_receiving_return_item_gsttax" style="display:none;">
                                                         <thead>
-                                                        <th> GST Tax Details : </th>
+                                                        <th> <lang class="lang_gst_tax_details">GST Tax Details :</lang> </th>
                                                         </thead>
                                                         <tbody>
                                                             <tr class="return-indian-gstr hide-show-igst" style="display: none;">
@@ -162,7 +162,7 @@
                                                         <td><span class="sign display-currency"></span>&nbsp;<span class="receiving-return-discount-value">0</span></td>
                                                         </tr>                                                        
                                                         <tr class="hide-receiving-return-tax" style="display: none;">
-                                                            <td><lang class="lang_tax_title">Tax</lang> :</td> 
+                                                            <td><lang class="lang_module_tax">Tax</lang> :</td> 
                                                         <td><span class="sign display-currency"></span>&nbsp;<span class="receiving_return_tax_view"></span></td>
                                                         </tr>                                                            
                                                         <tr>
@@ -219,8 +219,8 @@
                             <i class="feather icon-printer mr-2"></i><lang class="lang_printed">Print</lang> 
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item receiving_id_print" id="receiving_button_print_view" href="javascript:void(0)"  data-id="receiving">Receiving Print</a>
-                            <a class="dropdown-item receiving_id_print" id="receiving_return_print_view" href="javascript:void(0)"  data-id="return">Return Print</a>
+                            <a class="dropdown-item receiving_id_print" id="receiving_button_print_view" href="javascript:void(0)"  data-id="receiving"><lang class="lang_purchaseprint">Receiving Print</lang></a>
+                            <a class="dropdown-item receiving_id_print" id="receiving_return_print_view" href="javascript:void(0)"  data-id="return"><lang class="lang_returnprint">Return Print</lang></a>
                         </div>
                     </div>
                 </div>

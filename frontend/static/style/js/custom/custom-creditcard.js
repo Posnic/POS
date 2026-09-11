@@ -13,12 +13,12 @@ $(document).ready(function() {
 	    /* where you want the card to appear */
 	    container: '.card-wrapper', /* *required*  */
 	    formSelectors: {
-	        numberInput: 'input#cardnumber', /* optional — default input[name="number"] */
-	        expiryInput: 'input#cardexpiry', /* optional — default input[name="expiry"] */
-	        cvcInput: 'input#cardcvc', /* optional — default input[name="cvc"] */
+	        numberInput: 'input#cardnumber', /* optional - default input[name="number"] */
+	        expiryInput: 'input#cardexpiry', /* optional - default input[name="expiry"] */
+	        cvcInput: 'input#cardcvc', /* optional - default input[name="cvc"] */
 	        nameInput: 'input#cardfullname' /* optional - defaults input[name="name"] */
 	    },
-	    width: 200, /* optional — default 350px */
+	    width: 200, /* optional - default 350px */
 	    formatting: true, /* optional - default true */
 	    /* Strings for translation - optional */
 	    messages: {

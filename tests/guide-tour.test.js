@@ -19,10 +19,24 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const strip = (s) => s
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/^[ \t]*\/\/.*$/gm, '')
-  .replace(/<!--[\s\S]*?-->/g, '');
+const removeDelimited = (source, opening, closing) => {
+  let result = '';
+  let cursor = 0;
+  while (cursor < source.length) {
+    const start = source.indexOf(opening, cursor);
+    if (start === -1) return result + source.slice(cursor);
+    result += source.slice(cursor, start);
+    const end = source.indexOf(closing, start + opening.length);
+    if (end === -1) return result;
+    cursor = end + closing.length;
+  }
+  return result;
+};
+const strip = (source) => {
+  const withoutBlocks = removeDelimited(source, '/*', '*/');
+  const withoutLines = withoutBlocks.replace(/^[ \t]*\/\/.*$/gm, '');
+  return removeDelimited(withoutLines, '<!--', '-->');
+};
 
 const tourJs = strip(read('frontend/static/script/js/core/tour.js'));
 const settingsJs = strip(read('frontend/static/script/js/modules/js/settings.js'));
@@ -85,12 +99,30 @@ test('the tour starts only after a SUCCESSFUL save, and only when asked', () => 
    * handler reads: a failed save must never start a tour of a shop that did
    * not save, and plain Save must never grow an uninvited tour.
    */
-  assert.match(
-    settingsJs,
-    /_tourAfterSave = true;[\s\S]{0,90}PosnicPro\.features\.saveIntro\(\)/
+  /*
+   * The tour button raises the flag and then saves. Asserted over the WHOLE
+   * handler rather than as two adjacent lines: this regex demanded that
+   * `_tourAfterSave = true;` be immediately followed by `saveIntro()`, and a
+   * later change inserted `_settingsAfterSave = false;` between them. Both pull
+   * requests were green on their own and the merge of the two was red - the
+   * behaviour never changed, only the line spacing.
+   *
+   * A test that fails when a correct line is added tests the typing, not the
+   * program.
+   */
+  const tourButton = between(settingsJs, "on('click', '#feature_intro_tour'", '});');
+  assert.match(tourButton, /_tourAfterSave = true;/,
+    'the tour button does not raise the flag the save-success handler reads');
+  assert.match(tourButton, /PosnicPro\.features\.saveIntro\(\)/,
+    'the tour button does not save');
+  assert.ok(
+    tourButton.indexOf('_tourAfterSave = true;') < tourButton.indexOf('saveIntro()'),
+    'the flag must be set before the save, or the success handler will not see it'
   );
-  const success = between(settingsJs, "PosnicPro.alert('success', 'Feature switches saved')", 'PosnicPro.alert(response.type');
-  assert.match(success, /PosnicPro\.features\._tourAfterSave/);
+  /* The message is translated now, so anchor on the sentence rather than on
+     the call that carries it. */
+  const success = between(settingsJs, "'Feature switches saved'))", 'PosnicPro.alert(response.type');
+  assert.match(success, /if \(PosnicPro\.features\._tourAfterSave\)/);
   assert.match(success, /PosnicPro\.tour\.firstRun\(\)/);
   // the failure path clears the flag, or the NEXT save inherits the wish
   const fail = between(settingsJs, "Could not save - you can set these later", '};');

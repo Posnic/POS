@@ -110,10 +110,10 @@
         // Bottom row: switch user, zero, delete. Zero stays in the middle where
         // a phone keypad puts it, because that is where a thumb expects it.
         keys += '<button type="button" class="lock-key is-quiet" data-action="switch"'
-            + ' aria-label="Switch user">Switch</button>';
+            + ' aria-label="Switch user" data-t-aria-label="lang_switch_user">Switch</button>';
         keys += '<button type="button" class="lock-key" data-digit="0" aria-label="0">0</button>';
         keys += '<button type="button" class="lock-key is-quiet" data-action="delete"'
-            + ' aria-label="Delete last digit">'
+            + ' aria-label="Delete last digit" data-t-aria-label="lang_delete_last_digit">'
             + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 3H7L1 12l6 9h15a2 2 0 0 0'
             + ' 2-2V5a2 2 0 0 0-2-2zm-3.7 12.3-1.4 1.4L14 13.8l-2.9 2.9-1.4-1.4 2.9-2.9-2.9-2.9'
             + ' 1.4-1.4 2.9 2.9 2.9-2.9 1.4 1.4-2.9 2.9 2.9 2.9z"/></svg></button>';
@@ -126,13 +126,13 @@
             + '  <div id="lock_single">'
             + '    <div class="lock-avatar" id="lock_avatar"></div>'
             + '    <p class="lock-name" id="lock_name"></p>'
-            + '    <p class="lock-hint" id="lock_hint">Enter your PIN</p>'
+            + '    <p class="lock-hint" id="lock_hint"><lang class="lang_enter_your_pin">Enter your PIN</lang></p>'
             + '    <div class="lock-dots" id="lock_dots"></div>'
             + '    <div class="lock-keys">' + keys + '</div>'
             + '  </div>'
             + '  <div id="lock_chooser" style="display:none;">'
-            + '    <p class="lock-name">Who is at the till?</p>'
-            + '    <p class="lock-hint">Choose your name to enter your PIN.</p>'
+            + '    <p class="lock-name"><lang class="lang_who_is_at_the_till">Who is at the till?</lang></p>'
+            + '    <p class="lock-hint"><lang class="lang_choose_your_name_to_enter_your_pin">Choose your name to enter your PIN.</lang></p>'
             + '    <div class="lock-users" id="lock_users"></div>'
             + '  </div>'
             + '</div>'

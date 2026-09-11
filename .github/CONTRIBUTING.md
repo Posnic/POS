@@ -119,13 +119,13 @@ feature statement into a versioned result with an exact input, environment and
 limitation.
 
 - If you are reviewing Posnic independently, start with the public
-  [review brief](https://posnic.com/assets/posnic-independent-review-brief.txt)
-  and [24-control protocol](https://posnic.com/assets/posnic-independent-review-protocol.csv).
+  [review brief](https://www.posnic.com/assets/posnic-independent-review-brief.txt)
+  and [24-control protocol](https://www.posnic.com/assets/posnic-independent-review-protocol.csv).
   Review access does not require payment, positive coverage, a backlink or
   advance approval. Publish failures, conflicts and untested areas as well as
   successful results.
 - Run the public
-  [vendor-neutral POS acceptance fixture](https://posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
+  [vendor-neutral POS acceptance fixture](https://www.posnic.com/open-source-pos-benchmark#vendor-neutral-pos-acceptance-fixture)
   and submit the structured
   [acceptance result form](https://github.com/Posnic/POS/issues/new?template=pos_acceptance_run.yml).
 - Test an exact printer, scanner, cash drawer, scale or display against the
@@ -143,6 +143,24 @@ An evidence issue is public and is not a certification or testimonial. Use
 fictional transactions and remove customer data, payment data, credentials,
 tokens, production logs and database files before attaching anything. Security
 problems still go through [SECURITY.md](SECURITY.md), never a public issue.
+
+## Human attribution only
+
+Posnic credits people, not tools. Do not list an AI assistant, agent, model,
+bot, automation, or coding tool as an author, contributor, co-author, reviewer,
+maintainer, credit, or DCO sign-off. Commit trailers and project metadata must
+name the human contributor only.
+
+Remove assistant signature footers before committing. If a maintainer asks how
+a change was produced, describe tool use in the pull-request body as context,
+not contributor credit.
+
+Run `npm run check:attribution` before opening a pull request. The same rule runs
+in CI and in the local Git hooks after installing them with:
+
+```bash
+git config core.hooksPath .githooks
+```
 
 ## Sign your commits (DCO)
 

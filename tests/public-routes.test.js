@@ -65,6 +65,28 @@ const ALLOWED_ANONYMOUS = {
     // the forgot-password flow: both require the emailed one-time user_key
     '/getUserKeyDetails', '/updateNewPassword',
   ],
+  'online-ordering.routes.js': [
+    /*
+     * A shop's storefront and its order door, both anonymous by design: a
+     * customer standing at a table has no credentials and never will.
+     *
+     * The STORE ADDRESS in the path is the opt-in and the whole guard. A
+     * branch that never chose one cannot be reached here at all, and a
+     * branch's raw database id - which appears in every authenticated
+     * response and is no secret - buys nothing. The order door additionally
+     * refuses whenever the shop says it is not accepting: menu mode, paused,
+     * or outside opening hours, all recomputed server-side on every request
+     * regardless of what the page believed when it drew its cart.
+     *
+     * `/:storeId/device` is NOT here: it carries the extra fields only the
+     * shop's own equipment needs, and it sits behind ensureKioskKey.
+     */
+    '/', '/:storeId', '/:storeId/orders',
+    /* The public menu, read-only and anonymous for the same reason: it is the
+       thing a customer reads at a table. It exposes dish names, descriptions
+       and prices - what the shop already prints on paper and hands out. */
+    '/menu', '/:storeId/menu',
+  ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
     // BEFORE auth works. Stores nothing, per-IP budgeted, truncated,
@@ -85,16 +107,25 @@ const ALLOWED_ANONYMOUS = {
     '/forgotPassword',
   ],
   'items.routes.js': [
-    // The pairing handshake a kiosk, QR page or phone makes before it has a key.
-    '/accesskiosk', '/accessQr', '/accessMobileApp',
+    // The pairing handshake a phone makes before it has a key. /accesskiosk is
+    // NOT here any more: it carries the shop machines' menu and now sits
+    // behind ensureKioskKey. /accessQr is gone entirely - the storefront moved
+    // to the online-ordering resource.
+    '/accessMobileApp',
   ],
   'sales.routes.js': [
     // getNewSale refuses an anonymous caller inside the handler (403 without
-    // sales.write). qrOrder is anonymous BY DESIGN - a customer's phone has no
-    // credentials - and is gated in the repository instead: only a branch with
-    // a configured QR identity (kiosk.store_id) accepts orders, so a shop that
-    // never enabled QR ordering exposes nothing.
-    '/qrOrder', '/getNewSale',
+    // sales.write). /qrOrder is gone - anonymous ordering moved to the
+    // online-ordering resource, which is listed above with its reasons.
+    '/getNewSale',
+  ],
+  'pair.routes.js': [
+    // The page a till shows so a staff phone can be pointed at this shop.
+    // It carries an ADDRESS, not a credential - the same thing the till's own
+    // browser address bar shows anybody standing at it. Requiring a login
+    // would mean a handset cannot be paired until somebody signs in on the
+    // till, which is backwards: pairing is what happens before anyone can.
+    '/',
   ],
   'base.routes.js': [
     // Liveness only. "/" says it is running; "/health" reports status, time and
@@ -198,26 +229,54 @@ test('the routes that leaked are specifically closed', () => {
   }
 });
 
-test('anonymous qrOrder only serves branches that opted into QR', () => {
+test('anonymous qrOrder only serves branches that are open to it', () => {
   /*
    * qrOrder is anonymous by design - a customer's phone has no credentials -
-   * so the gate lives in the repository: no configured QR identity
+   * so the gate lives in the repository: no configured online identity
    * (kiosk.store_id), no order. Without it, any branch's raw ObjectId (which
    * appears in every authenticated response and is no secret) was enough for
    * a stranger to put orders on its kitchen queue. Asserted here because the
    * repository's own unit file sits in jest's CI ignore list.
+   *
+   * THIS TEST USED TO PIN THE BUG.
+   *
+   * It asserted on the literal source of the old guard,
+   * `!branchDoc.kiosk || !branchDoc.kiosk.store_id`. That expression reads an
+   * ARRAY field as an object - `branch.kiosk` is an array in every write path
+   * in the application - so it was `undefined` every time, the gate fired for
+   * every branch, and qrOrder refused every order. Pinned by source text, the
+   * defect was protected rather than the property.
+   *
+   * So this now asserts the PROPERTY: the gate runs before anything is
+   * created, and it refuses unless the shared state engine says the shop is
+   * accepting. That engine is exercised properly in
+   * api/tests/unit/utils/online-ordering.test.js, including the array shape.
    */
   const src = fs.readFileSync(
     path.join(__dirname, '..', 'api', 'src', 'repositories', 'sale.repository.js'), 'utf8');
-  const start = src.indexOf('async qrOrderModel');
-  assert.ok(start >= 0, 'qrOrderModel has gone or been renamed');
+  const start = src.indexOf('async createOnlineOrder');
+  assert.ok(start >= 0, 'createOnlineOrder has gone or been renamed');
   const insertAt = src.indexOf('insertOne', start);
-  const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 4000);
+  const beforeCreate = src.slice(start, insertAt > start ? insertAt : start + 6000);
 
-  assert.match(beforeCreate, /branchDoc\.kiosk\s*\|\|\s*!branchDoc\.kiosk\.store_id/,
-    'the QR opt-in gate is gone - any branch id would accept anonymous orders again');
-  assert.ok(beforeCreate.includes('QR ordering is not enabled for this branch'),
-    'the refusal message changed or moved after order creation');
+  assert.match(beforeCreate, /onlineOrdering\.channelState\(/,
+    'the opt-in gate is gone - any branch id would accept anonymous orders again');
+  assert.match(beforeCreate, /if\s*\(\s*!\s*\w*[sS]tate\.accepting\s*\)/,
+    'qrOrder no longer refuses when the channel says it is not accepting');
+
+  /* And the channel must be read through the one accessor, not by reaching
+     into the branch document and hoping about its shape. */
+  assert.match(beforeCreate, /onlineOrdering\.storefront\(/,
+    'the channel is being read directly again - that is how the array/object bug happened');
+
+  /* Comments stripped first. The code above this gate explains the old bug and
+     names the expression that caused it, and a test that cannot tell code from
+     prose would read that explanation as a relapse. */
+  const code = beforeCreate
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  assert.ok(!/branchDoc\.kiosk\.store_id/.test(code),
+    'branchDoc.kiosk is an array; reading .store_id off it refuses every order');
 });
 
 test('the kiosk key is compared in constant time', () => {
@@ -340,7 +399,13 @@ test('registration cannot be reached, or self-promoted, by a stranger', () => {
   const body = create.slice(0, create.indexOf('});'));
 
   for (const claimed of ['role', 'usertype', 'access', 'license']) {
-    assert.ok(!new RegExp(`${claimed}:\s*req\.body\.`).test(body),
+    /* Double-escaped on purpose. In a TEMPLATE LITERAL "\\s" collapses to a
+       bare "s" and "\\." to ".", so this pattern used to demand a literal
+       letter s and treat the dot as "any character" - it would sail straight
+       past "role: req.body.role", which is the exact line it exists to catch.
+       A guard that cannot fail is worse than no guard, because it reads as
+       one. */
+    assert.ok(!new RegExp(`${claimed}:\\s*req\\.body\\.`).test(body),
       `register takes ${claimed} from the request body - privilege is granted, not claimed`);
   }
 });

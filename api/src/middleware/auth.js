@@ -93,6 +93,11 @@ const signToken = (id) => {
   });
 };
 
+/* Lives in its own dependency-free file so the number in the token and the
+   number a client is told cannot drift apart, and so it is testable without
+   installing the API. */
+const { jwtLifetimeSeconds } = require('../utils/token-lifetime');
+
 // Legacy-style JWT including encrypted session_id in the payload.
 // This mirrors the PHP design where JWT carries an encrypted session id
 // for fast session restoration, while still keeping the 'id' field
@@ -386,7 +391,7 @@ const isLoggedIn = async (req, res, next) => {
 };
 
 /**
- * Optional auth middleware — mirrors PHP session-exceptional behaviour.
+ * Optional auth middleware - mirrors PHP session-exceptional behaviour.
  *
  * PHP dispatcher.php starts a session on EVERY request.  For routes listed in
  * $sessionExceptionalRequest the dispatcher simply skips the "is authenticated?"
@@ -430,7 +435,7 @@ const optionalProtect = async (req, res, next) => {
       }
     }
 
-    // 3) No valid auth — continue anyway (session-exceptional)
+    // 3) No valid auth - continue anyway (session-exceptional)
     next();
   } catch (_) {
     next();
@@ -485,6 +490,7 @@ const createPasswordResetToken = () => {
 module.exports = {
   signToken,
   signLegacyToken,
+  jwtLifetimeSeconds,
   createSendToken,
   auth,
   protect,

@@ -91,10 +91,10 @@ PosnicPro.loyalty = {
     t = t || {};
     var row = $(
       '<tr>' +
-        '<td><input type="text" class="form-control loyalty-tier-name" placeholder="Tier name"></td>' +
+        '<td><input type="text" class="form-control loyalty-tier-name" placeholder="Tier name" data-t-placeholder="lang_tier_name"></td>' +
         '<td><input type="number" min="0" step="1" class="form-control loyalty-tier-threshold" placeholder="0"></td>' +
         '<td><input type="number" min="0" step="0.01" class="form-control loyalty-tier-multiplier" placeholder="1"></td>' +
-        '<td class="text-center"><a href="javascript:void(0)" class="btn btn-danger-rgba loyalty-tier-remove" title="Remove tier"><i class="feather icon-trash"></i></a></td>' +
+        '<td class="text-center"><a href="javascript:void(0)" class="btn btn-danger-rgba loyalty-tier-remove" title="Remove tier" data-t-title="lang_remove_tier"><i class="feather icon-trash"></i></a></td>' +
       '</tr>'
     );
     row.find('.loyalty-tier-name').val(t.name || '');
@@ -140,7 +140,7 @@ PosnicPro.loyalty = {
   save: function () {
     var data = PosnicPro.loyalty.collect();
     if (data.earn_amount <= 0 || data.earn_points <= 0) {
-      PosnicPro.alert('error', 'Earn rate needs a points value and an amount greater than zero.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_earn_rate_needs_a_points_value_and_an_amou', 'Earn rate needs a points value and an amount greater than zero.'));
       return;
     }
     PosnicPro.put({ url: 'loyalty/config', data: JSON.stringify(data) }, function (res) {

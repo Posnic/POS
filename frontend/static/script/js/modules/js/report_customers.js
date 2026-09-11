@@ -86,7 +86,7 @@ PosnicPro.customerreport = {
                         if (rowTotal === 0) {
                             $('.reportcustomer_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportcustomer_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportcustomer_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomer_img_hide,.reportcustomer_norecord').show();
 
                         } else {
@@ -251,7 +251,7 @@ PosnicPro.customeroutstandingreport = {
                         if (rowTotal === 0) {
                             $('.reportcustomeroutstanding_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportcustomeroutstanding_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                PosnicPro.renderNoRecords('.reportcustomeroutstanding_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomeroutstanding_img_hide,.reportcustomeroutstanding_norecord').show();
 
                         } else {
@@ -274,8 +274,8 @@ PosnicPro.customeroutstandingreport = {
                             
                             // Check if customer is deleted - if deleted, show name as plain text, otherwise show as link
                             var customerNameCell = row.is_deleted || !row.id 
-                                ? '<span class="text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Customer Deleted">' + row.name + ' (Deleted)</span>'
-                                : '<a href="#/customerreport/' + row.id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details">' + row.name + '</i></a>';
+                                ? '<span class="text-muted" style="cursor: not-allowed; opacity: 0.6;" title="Customer Deleted" data-t-title="lang_customer_deleted">' + row.name + ' (Deleted)</span>'
+                                : '<a href="#/customerreport/' + row.id + '"><i data-toggle="tooltip" class="table_model_item mobile_tooltip" title="View Details" data-t-title="lang_view_details_2">' + row.name + '</i></a>';
                             
                             var trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + customerNameCell + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.credit.toFixed(2) + '</td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.debit.toFixed(2) + '</td> <td class="text-right">' + currency + '&nbsp;<span>' + row.wallet.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.pending.toFixed(2) + '</span></td> <td class="text-right">' + currency + '&nbsp;<span>-' + row.due.toFixed(2) + '</span></td></tr>';
                             due += row.due;
@@ -338,4 +338,3 @@ $(document).ready(function () {
         PosnicPro.customerreport.customerreportTable();
     }
 });
-

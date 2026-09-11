@@ -2,7 +2,7 @@
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
-                <div class="col-lg-8"><h4 class="page-title break_title">Price Settings</h4></div>
+                <div class="col-lg-8"><h4 class="page-title break_title"><lang class="lang_price_settings">Price Settings</lang></h4></div>
             </div>
         </div>
     </div>
@@ -13,116 +13,116 @@
                 <div class="card m-b-30">
                     <div class="card-body">
                         <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
-                            <li class="nav-item"><a class="nav-link active report_tab_font" id="ps-margin-tab" data-toggle="tab" href="#ps-margin" role="tab"><i class="feather icon-percent mr-1"></i>Set Margin</a></li>
-                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-custom-tab" data-toggle="tab" href="#ps-custom" role="tab"><i class="feather icon-sliders mr-1"></i>Custom Change</a></li>
-                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-history-tab" data-toggle="tab" href="#ps-history" role="tab" onclick="PosnicPro.pricesettings.loadHistory(1);"><i class="feather icon-clock mr-1"></i>History</a></li>
+                            <li class="nav-item"><a class="nav-link active report_tab_font" id="ps-margin-tab" data-toggle="tab" href="#ps-margin" role="tab"><i class="feather icon-percent mr-1"></i><lang class="lang_set_margin">Set Margin</lang></a></li>
+                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-custom-tab" data-toggle="tab" href="#ps-custom" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_custom_change">Custom Change</lang></a></li>
+                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-history-tab" data-toggle="tab" href="#ps-history" role="tab" onclick="PosnicPro.pricesettings.loadHistory(1);"><i class="feather icon-clock mr-1"></i><lang class="lang_history">History</lang></a></li>
                         </ul>
 
                         <div class="tab-content">
                             <!-- ============ Set Margin ============ -->
                             <div class="tab-pane fade show active" id="ps-margin" role="tabpanel">
-                                <p class="text-muted" style="font-size:13.5px;">Set the selling price from a target profit margin &mdash; worked out from each item's cost, not nudged from an unknown base. Items with no cost price are left alone.</p>
+                                <p class="text-muted" style="font-size:13.5px;"><lang class="lang_set_the_selling_price_from_a_target_profit">Set the selling price from a target profit margin, worked out from each item's cost, not nudged from an unknown base. Items with no cost price are left alone.</lang></p>
                                 <div class="row">
                                     <div class="col-md-3 form-group">
-                                        <label>Which items</label>
-                                        <select class="form-control" id="ps_margin_scope" onchange="PosnicPro.pricesettings.scopeToggle('margin');" aria-label="Ps margin scope">
-                                            <option value="all">All items</option>
-                                            <option value="category">One category</option>
+                                        <label><lang class="lang_which_items">Which items</lang></label>
+                                        <select class="form-control" id="ps_margin_scope" onchange="PosnicPro.pricesettings.scopeToggle('margin');" aria-label="Ps margin scope" data-t-aria-label="lang_ps_margin_scope">
+                                            <option value="all"><lang class="lang_all_items">All items</lang></option>
+                                            <option value="category"><lang class="lang_one_category">One category</lang></option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group" id="ps_margin_cat_wrap" style="display:none;">
-                                        <label>Category</label>
-                                        <select class="form-control" id="ps_margin_category" aria-label="Ps margin category"></select>
+                                        <label><lang class="lang_newcategory_title">Category</lang></label>
+                                        <select class="form-control" id="ps_margin_category" aria-label="Ps margin category" data-t-aria-label="lang_ps_margin_category"></select>
                                     </div>
                                     <div class="col-md-2 form-group">
-                                        <label>Margin</label>
+                                        <label><lang class="lang_margin">Margin</lang></label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="ps_margin_value" min="0" step="0.5" placeholder="40" autocomplete="off" data-lpignore="true" data-form-type="other">
                                             <div class="input-group-append"><span class="input-group-text">%</span></div>
                                         </div>
                                     </div>
                                     <div class="col-md-4 form-group">
-                                        <label>What 40% means</label>
+                                        <label><lang class="lang_what_40_means">What 40% means</lang></label>
                                         <div style="padding-top:6px;">
-                                            <label class="mr-3" style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="margin" checked> Margin <span class="text-muted">(% of selling)</span></label>
-                                            <label style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="markup"> Markup <span class="text-muted">(% on cost)</span></label>
+                                            <label class="mr-3" style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="margin" checked> <lang class="lang_margin">Margin</lang> <span class="text-muted"><lang class="lang_of_selling">(% of selling)</lang></span></label>
+                                            <label style="font-weight:400;"><input type="radio" name="ps_margin_mode" value="markup"> <lang class="lang_markup">Markup</lang> <span class="text-muted"><lang class="lang_on_cost">(% on cost)</lang></span></label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_margin_skip" checked> Skip items whose new price would go above MRP</label></div>
+                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_margin_skip" checked> <lang class="lang_skip_items_whose_new_price_would_go_above">Skip items whose new price would go above MRP</lang></label></div>
                                 <div id="ps_margin_result" style="display:none;"></div>
                                 <div style="margin-top:8px;">
-                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkMargin();"><i class="feather icon-search mr-1"></i>Check</button>
-                                    <button class="btn btn-primary" id="ps_margin_apply" onclick="PosnicPro.pricesettings.applyMargin();"><i class="feather icon-check-circle mr-1"></i>Apply margin</button>
+                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkMargin();"><i class="feather icon-search mr-1"></i><lang class="lang_check">Check</lang></button>
+                                    <button class="btn btn-primary" id="ps_margin_apply" onclick="PosnicPro.pricesettings.applyMargin();"><i class="feather icon-check-circle mr-1"></i><lang class="lang_apply_margin">Apply margin</lang></button>
                                 </div>
                             </div>
 
                             <!-- ============ Custom Change ============ -->
                             <div class="tab-pane fade" id="ps-custom" role="tabpanel">
-                                <p class="text-muted" style="font-size:13.5px;">Raise or lower a price for many items at once, by a percentage or a flat amount. Every change is kept in each item's history.</p>
+                                <p class="text-muted" style="font-size:13.5px;"><lang class="lang_raise_or_lower_a_price_for_many_items_at_o">Raise or lower a price for many items at once, by a percentage or a flat amount. Every change is kept in each item's history.</lang></p>
                                 <div class="row">
                                     <div class="col-md-3 form-group">
-                                        <label>Which items</label>
-                                        <select class="form-control" id="ps_custom_scope" onchange="PosnicPro.pricesettings.scopeToggle('custom');" aria-label="Ps custom scope">
-                                            <option value="all">All items</option>
-                                            <option value="category">One category</option>
+                                        <label><lang class="lang_which_items">Which items</lang></label>
+                                        <select class="form-control" id="ps_custom_scope" onchange="PosnicPro.pricesettings.scopeToggle('custom');" aria-label="Ps custom scope" data-t-aria-label="lang_ps_custom_scope">
+                                            <option value="all"><lang class="lang_all_items">All items</lang></option>
+                                            <option value="category"><lang class="lang_one_category">One category</lang></option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group" id="ps_custom_cat_wrap" style="display:none;">
-                                        <label>Category</label>
-                                        <select class="form-control" id="ps_custom_category" aria-label="Ps custom category"></select>
+                                        <label><lang class="lang_newcategory_title">Category</lang></label>
+                                        <select class="form-control" id="ps_custom_category" aria-label="Ps custom category" data-t-aria-label="lang_ps_custom_category"></select>
                                     </div>
                                     <div class="col-md-3 form-group">
-                                        <label>Price to change</label>
-                                        <select class="form-control" id="ps_custom_field" aria-label="Ps custom field">
-                                            <option value="selling_price">Selling Price</option>
-                                            <option value="mrp_price">MRP</option>
-                                            <option value="company_price">Cost Price</option>
+                                        <label><lang class="lang_price_to_change">Price to change</lang></label>
+                                        <select class="form-control" id="ps_custom_field" aria-label="Ps custom field" data-t-aria-label="lang_ps_custom_field">
+                                            <option value="selling_price"><lang class="lang_selling_price">Selling Price</lang></option>
+                                            <option value="mrp_price"><lang class="lang_mrp">MRP</lang></option>
+                                            <option value="company_price"><lang class="lang_cost_price">Cost Price</lang></option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group">
-                                        <label>Direction</label>
-                                        <select class="form-control" id="ps_custom_direction" aria-label="Ps custom direction">
-                                            <option value="increase">Increase</option>
-                                            <option value="decrease">Decrease</option>
+                                        <label><lang class="lang_direction">Direction</lang></label>
+                                        <select class="form-control" id="ps_custom_direction" aria-label="Ps custom direction" data-t-aria-label="lang_ps_custom_direction">
+                                            <option value="increase"><lang class="lang_increase">Increase</lang></option>
+                                            <option value="decrease"><lang class="lang_decrease">Decrease</lang></option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group">
-                                        <label>By</label>
-                                        <select class="form-control" id="ps_custom_op" aria-label="Ps custom op">
-                                            <option value="percent">by %</option>
-                                            <option value="amount">by amount</option>
+                                        <label><lang class="lang_by">By</lang></label>
+                                        <select class="form-control" id="ps_custom_op" aria-label="Ps custom op" data-t-aria-label="lang_ps_custom_op">
+                                            <option value="percent"><lang class="lang_by_2">by %</lang></option>
+                                            <option value="amount"><lang class="lang_by_amount">by amount</lang></option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 form-group">
-                                        <label>Value</label>
+                                        <label><lang class="lang_value_title">Value</lang></label>
                                         <input type="number" class="form-control" id="ps_custom_value" min="0" step="0.5" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other">
                                     </div>
                                 </div>
-                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_custom_skip" checked> Skip items that would end up above MRP or below cost</label></div>
+                                <div class="form-group"><label style="font-weight:400;"><input type="checkbox" id="ps_custom_skip" checked> <lang class="lang_skip_items_that_would_end_up_above_mrp_or">Skip items that would end up above MRP or below cost</lang></label></div>
                                 <div id="ps_custom_result" style="display:none;"></div>
                                 <div style="margin-top:8px;">
-                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkCustom();"><i class="feather icon-search mr-1"></i>Check</button>
-                                    <button class="btn btn-primary" id="ps_custom_apply" onclick="PosnicPro.pricesettings.applyCustom();"><i class="feather icon-check-circle mr-1"></i>Update prices</button>
+                                    <button class="btn btn-light" onclick="PosnicPro.pricesettings.checkCustom();"><i class="feather icon-search mr-1"></i><lang class="lang_check">Check</lang></button>
+                                    <button class="btn btn-primary" id="ps_custom_apply" onclick="PosnicPro.pricesettings.applyCustom();"><i class="feather icon-check-circle mr-1"></i><lang class="lang_update_prices">Update prices</lang></button>
                                 </div>
                             </div>
 
                             <!-- ============ History ============ -->
                             <div class="tab-pane fade" id="ps-history" role="tabpanel">
-                                <p class="text-muted" style="font-size:13.5px;">Every bulk price change &mdash; who ran it, when, what it did, and how many items it touched.</p>
+                                <p class="text-muted" style="font-size:13.5px;"><lang class="lang_every_bulk_price_change_who_ran_it_when_wh">Every bulk price change: who ran it, when, what it did, and how many items it touched.</lang></p>
                                 <div class="table-responsive">
                                     <table class="table table-borderless">
                                         <thead>
                                             <tr>
-                                                <th>Date</th>
-                                                <th>By</th>
-                                                <th>Change</th>
-                                                <th class="text-right">Items Changed</th>
-                                                <th class="text-right">Skipped</th>
+                                                <th><lang class="lang_date_title">Date</lang></th>
+                                                <th><lang class="lang_by">By</lang></th>
+                                                <th><lang class="lang_change">Change</lang></th>
+                                                <th class="text-right"><lang class="lang_items_changed">Items Changed</lang></th>
+                                                <th class="text-right"><lang class="lang_skipped">Skipped</lang></th>
                                             </tr>
                                         </thead>
                                         <tbody id="ps_history_body">
-                                            <tr><td colspan="5" class="text-center text-muted" style="padding:16px;">Loading&hellip;</td></tr>
+                                            <tr><td colspan="5" class="text-center text-muted" style="padding:16px;"><lang class="lang_loading">Loading&hellip;</lang></td></tr>
                                         </tbody>
                                     </table>
                                 </div>

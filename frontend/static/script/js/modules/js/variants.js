@@ -45,16 +45,16 @@ PosnicPro.variants = {
     },
     openDoc: function (id) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="write" data-toggle="tooltip" title="Edit this variant" aria-label="Edit"'
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="write" data-toggle="tooltip" title="Edit this variant" data-t-title="lang_edit_this_variant" aria-label="Edit" data-t-aria-label="lang_edit_title"'
             + ' onclick="hasher.setHash(\'variants/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
-            + '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="delete" data-toggle="tooltip" title="Delete this variant" aria-label="Delete"'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="item" data-access="delete" data-toggle="tooltip" title="Delete this variant" data-t-title="lang_delete_this_variant" aria-label="Delete" data-t-aria-label="lang_delete"'
             + ' onclick="PosnicPro.listDoc.close(\'variants\'); hasher.setHash(\'variants/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>';
-        PosnicPro.listDoc.open({ key: 'variants', id: id, title: 'Variant', actions: actions });
+        PosnicPro.listDoc.open({ key: 'variants', id: id, title: PosnicPro.i18n.t('lang_newvariant_title', 'Variant'), actions: actions });
         PosnicPro.ACLForModule('item');
         PosnicPro.get('variants/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('variants', '<div class="text-danger p-3">Could not open this variant.</div>');
+                PosnicPro.listDoc.body('variants', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_variant">Could not open this variant.</lang></div>');
                 return;
             }
             var values = (d.fields || []).map(function (f) { return f && f.name; }).filter(Boolean);
@@ -66,7 +66,7 @@ PosnicPro.variants = {
                 + PosnicPro.listDoc.row('Added', d.created_date ? esc(PosnicPro.convertDate(d.created_date)) : '')
                 + PosnicPro.listDoc.row('Updated', d.updated_date ? esc(PosnicPro.convertDate(d.updated_date)) : '')));
         }, function () {
-            PosnicPro.listDoc.body('variants', '<div class="text-danger p-3">Could not open this variant.</div>');
+            PosnicPro.listDoc.body('variants', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_variant">Could not open this variant.</lang></div>');
         });
     },
     /* The name the OLD table machinery answered to - the save flow and the
@@ -101,9 +101,9 @@ PosnicPro.variants = {
             key: 'variants',
             container: '#variants_filter_panel',
             button: '#variants_filter_btn',
-            searchPlaceholder: 'Search variant name',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_variant_name', 'Search variant name'),
             searchFields: [
-                { value: 'name', label: 'Name' }
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') }
             ],
             onChange: function () { PosnicPro.variants.loadList(1); }
         });
@@ -124,12 +124,12 @@ PosnicPro.variants = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('variants') > 0;
                 $('#variants_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No variants match this filter.' : 'No variants yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_variants_match_this_filter', 'No variants match this filter.') : PosnicPro.i18n.t('lang_no_variants_yet_press_new_to_add_the_first', 'No variants yet - press New to add the first.')) + '</div>');
                 $('#variants_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="vr-col-values">Values</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="vr-col-values"><lang class="lang_values">Values</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var values = (r.fields || []).map(function (f) { return f && f.name; }).filter(Boolean).join(', ');
                 html += '<tr class="md-row variants-row highlight-select'
@@ -143,14 +143,14 @@ PosnicPro.variants = {
             PosnicPro.ACLForModule('item');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#variants_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load variants - try again.</div>');
+            $('#variants_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_variants_try_again">Could not load variants - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.variants;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' variant' : ' variants');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_variant', 'variant') : PosnicPro.i18n.t('lang_variants_2', 'variants'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')

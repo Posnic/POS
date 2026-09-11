@@ -32,6 +32,56 @@ const itemSchema = new mongoose.Schema(
     track_inventory: { type: Boolean, default: false },
     negative_stock: { type: Boolean, default: false },
     image: { type: String, trim: true },
+
+    /*
+     * Whether this appears on the shop's public menu.
+     *
+     * SEPARATE FROM `ecommerce`, which decides whether a thing can be ordered.
+     * A restaurant's menu is not its ordering catalogue: a dish can be listed
+     * and not sold - market price, or off tonight - and the menu should still
+     * say what the kitchen cooks. So this defaults to true and a shop excludes
+     * the few lines that are not dishes: packaging, staff meals, the "misc"
+     * entry every till accumulates.
+     */
+    show_on_menu: { type: Boolean, default: true },
+
+    /*
+     * The dot. `veg`, `non_veg`, `egg`, `vegan`, or empty for "not said".
+     *
+     * Not decoration. Indian menus mark this by law and customers look for it
+     * before they read the name; a menu without it is not one an Indian
+     * restaurant can put on a table. Elsewhere it reads as the dietary marking
+     * a good menu carries anyway. Empty is honest, and better than a wrong
+     * mark on a dish somebody cannot eat.
+     */
+    diet: { type: String, trim: true, default: '' },
+
+    /*
+     * When this is served: breakfast, lunch, dinner. Empty means always, which
+     * is most of a menu - the cost of this feature falls only on the dishes
+     * that need it.
+     *
+     * Ids into the shop's own list of periods rather than hours per item: two
+     * hundred dishes times seven days is data entry no shop will do, and the
+     * first time breakfast moves half an hour they would edit it two hundred
+     * times.
+     */
+    daypart_ids: { type: [String], default: [] },
+
+    /*
+     * A standing instruction to the kitchen, printed on every ticket for this
+     * dish. "Serve with mint chutney." "Always ask how they want it cooked."
+     *
+     * Not the same as the note a customer types with an order - that is
+     * sale.item_description and already exists. This one belongs to the dish
+     * and nobody has to remember it.
+     */
+    prep_note: { type: String, trim: true, default: '' },
+
+    /* Roughly how long it takes, in minutes, so an order can say when it will
+       be ready. Zero means the shop has not said, and nothing guesses. */
+    prep_minutes: { type: Number, default: 0 },
+
     license: { type: mongoose.Schema.Types.ObjectId, ref: 'License' },
     is_active: { type: Boolean, default: true },
   },
@@ -66,7 +116,7 @@ const Item = defineModel('Item', itemSchema);
 // ItemRepository. Most instance methods below are legacy-only and should
 // not be used by new code.
 //
-// Usage examples (legacy only – new code should NOT use these directly):
+// Usage examples (legacy only - new code should NOT use these directly):
 //   const Item = require("../models/item.model");          // Mongoose
 //   const LegacyItem = Item.LegacyItemModel;               // Legacy class alias
 //   const { LegacyItemModel } = require("../models/item.model");
@@ -119,8 +169,12 @@ class ItemModel {
     unit: { type: 'String', select: true },
     unit_id: { type: 'String', select: true },
     track_inventory: { type: 'Boolean', select: true },
-    sales_channel: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
+    show_on_menu: { type: 'Boolean', select: true },
+    diet: { type: 'String', select: true },
+    daypart_ids: { type: 'Array', select: true },
+    prep_note: { type: 'String', select: true },
+    prep_minutes: { type: 'Number', select: true },
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },
     sort_order: { type: 'Number', select: true },

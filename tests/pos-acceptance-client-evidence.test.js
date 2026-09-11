@@ -202,6 +202,10 @@ function bootPreCompletionVoid() {
     put: failOnNetwork('PUT'),
     delete: failOnNetwork('DELETE'),
     alert: (type, message) => calls.alerts.push({ type, message }),
+    /* The words a module writes now come through i18n. Answer the way the
+       real t() answers with no pack loaded: the English it was handed. */
+    i18n: { t: (key, english) => english },
+
     sales: {
       charges: [{ label: 'Synthetic charge', amount: 1 }],
       SaleTableLineItems: [{ item_id: 'ITEM-001', quantity: 3 }],

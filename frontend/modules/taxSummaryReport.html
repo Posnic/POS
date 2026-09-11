@@ -19,19 +19,19 @@
                     <div class="card-body">
                         <div class="form-row align-items-end mb-3">
                             <div class="form-group col-md-3 col-6 mb-2">
-                                <label for="taxsummary_from" style="font-size:.8rem; font-weight:600;">From</label>
+                                <label for="taxsummary_from" style="font-size:.8rem; font-weight:600;"><lang class="lang_from">From</lang></label>
                                 <input type="date" class="form-control" id="taxsummary_from">
                             </div>
                             <div class="form-group col-md-3 col-6 mb-2">
-                                <label for="taxsummary_to" style="font-size:.8rem; font-weight:600;">To</label>
+                                <label for="taxsummary_to" style="font-size:.8rem; font-weight:600;"><lang class="lang_to_2">To</lang></label>
                                 <input type="date" class="form-control" id="taxsummary_to">
                             </div>
                             <div class="form-group col-md-2 col-4 mb-2">
-                                <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.taxsummaryreport.run();">Run</button>
+                                <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.taxsummaryreport.run();"><lang class="lang_run_title">Run</lang></button>
                             </div>
                             <div class="form-group col-md-4 col-8 mb-2 text-right">
                                 <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.taxsummaryreport.exportCsv();">
-                                    <i class="feather icon-download mr-1"></i>CSV
+                                    <i class="feather icon-download mr-1"></i><lang class="lang_csv">CSV</lang>
                                 </button>
                             </div>
                         </div>
@@ -39,16 +39,16 @@
                             <table class="table table-borderless m-sticky-first" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>Rate</th>
-                                        <th>Tax</th>
-                                        <th class="text-right">Net</th>
-                                        <th class="text-right">Tax Amount</th>
-                                        <th class="text-right">Gross</th>
-                                        <th class="text-right">Lines</th>
+                                        <th><lang class="lang_rate_2">Rate</lang></th>
+                                        <th><lang class="lang_module_tax">Tax</lang></th>
+                                        <th class="text-right"><lang class="lang_net">Net</lang></th>
+                                        <th class="text-right"><lang class="lang_tax_amount">Tax Amount</lang></th>
+                                        <th class="text-right"><lang class="lang_gross">Gross</lang></th>
+                                        <th class="text-right"><lang class="lang_lines">Lines</lang></th>
                                     </tr>
                                 </thead>
                                 <tbody id="taxsummary_body">
-                                    <tr><td colspan="6" class="text-center text-muted">Pick a range and Run.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted"><lang class="lang_pick_a_range_and_run">Pick a range and Run.</lang></td></tr>
                                 </tbody>
                                 <tfoot id="taxsummary_foot"></tfoot>
                             </table>
@@ -76,11 +76,11 @@
                                         <th colspan="5"><lang class="lang_gst_itc_title">Input tax credit - purchases by rate</lang></th>
                                     </tr>
                                     <tr>
-                                        <th>Rate</th>
-                                        <th class="text-right">Net</th>
-                                        <th class="text-right">Tax paid</th>
-                                        <th class="text-right">Gross</th>
-                                        <th class="text-right">Lines</th>
+                                        <th><lang class="lang_rate_2">Rate</lang></th>
+                                        <th class="text-right"><lang class="lang_net">Net</lang></th>
+                                        <th class="text-right"><lang class="lang_tax_paid">Tax paid</lang></th>
+                                        <th class="text-right"><lang class="lang_gross">Gross</lang></th>
+                                        <th class="text-right"><lang class="lang_lines">Lines</lang></th>
                                     </tr>
                                 </thead>
                                 <tbody id="taxsummary_purchase_body"></tbody>

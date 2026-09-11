@@ -2550,13 +2550,12 @@ const form = document.getElementById('installForm');
             loadingIndicator.style.display = 'block';
             submitBtn.disabled = true;
 
-            // Debug: Log form data being sent
+            // Keep setup diagnostics useful without ever logging credentials.
             console.log('📤 Sending installation data:', {
                 register_demo: formData.register_demo,
                 businessType: formData.businessType,
                 register_demo_type: typeof formData.register_demo
             });
-            console.log('📦 Full formData:', formData);
 
             try {
                 // Call installation API

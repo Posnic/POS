@@ -41,26 +41,26 @@ understand here:
 
 ## Which languages, and how far along
 
-| Language | Code | Keys answered | Read by a speaker? |
-|---|---|---|---|
-| English | en | in the app itself | yes |
-| தமிழ் Tamil | ta | all | **yes** |
-| हिन्दी Hindi | hi | all | not yet - marked *beta* |
-| മലയാളം Malayalam | ml | all | not yet - marked *beta* |
-| ಕನ್ನಡ Kannada | kn | all | not yet - marked *beta* |
-| తెలుగు Telugu | te | all | not yet - marked *beta* |
-| සිංහල Sinhala | si | all | not yet - marked *beta* |
-| नेपाली Nepali | ne | all | not yet - marked *beta* |
-| العربية Arabic | ar | all | not yet - marked *beta*, right-to-left |
-| Français French | fr | all | not yet - marked *beta* |
-| Español Spanish | es | all | not yet - marked *beta* |
-| Português Portuguese | pt | all | not yet - marked *beta* |
-| Bahasa Indonesia | id | all | not yet - marked *beta* |
-| ไทย Thai | th | all | not yet - marked *beta* |
-| Deutsch German | de | all | not yet - marked *beta* |
-| Kiswahili | sw | all | not yet - marked *beta* |
-| Nederlands Dutch | nl | all | not yet - marked *beta* |
-| Italiano Italian | it | all | not yet - marked *beta* |
+| Language | Code | Screens | The server's toasts | Read by a speaker? |
+|---|---|---|---|---|
+| English | en | in the app itself | in the app itself | yes |
+| தமிழ் Tamil | ta | all | not yet | **yes** |
+| हिन्दी Hindi | hi | all | half | not yet - marked *beta* |
+| മലയാളം Malayalam | ml | all | not yet | not yet - marked *beta* |
+| ಕನ್ನಡ Kannada | kn | all | not yet | not yet - marked *beta* |
+| తెలుగు Telugu | te | all | not yet | not yet - marked *beta* |
+| සිංහල Sinhala | si | all | not yet | not yet - marked *beta* |
+| नेपाली Nepali | ne | all | not yet | not yet - marked *beta* |
+| العربية Arabic | ar | all | half | not yet - marked *beta*, right-to-left |
+| Français French | fr | all | all | not yet - marked *beta* |
+| Español Spanish | es | all | half | not yet - marked *beta* |
+| Português Portuguese | pt | all | not yet | not yet - marked *beta* |
+| Bahasa Indonesia | id | all | not yet | not yet - marked *beta* |
+| ไทย Thai | th | all | not yet | not yet - marked *beta* |
+| Deutsch German | de | all | half | not yet - marked *beta* |
+| Kiswahili | sw | all | not yet | not yet - marked *beta* |
+| Nederlands Dutch | nl | all | not yet | not yet - marked *beta* |
+| Italiano Italian | it | all | not yet | not yet - marked *beta* |
 
 ### Which language is added next, and why
 
@@ -87,8 +87,8 @@ followed for Belgium, Switzerland and Malta.
 1. Add a column to `languages/_glossary.json` - the 147 shared terms.
 2. Add `{ code, name, flag, reviewed: false }` to
    `frontend/gulpfile.js/config.js`.
-3. `node tests/tools/seed-from-glossary.js --write` - fills about 200 of the
-   662 keys from the glossary alone.
+3. `node tests/tools/seed-from-glossary.js --write` - fills a few hundred of
+   the 2,925 keys from the glossary alone.
 4. `node tests/tools/i18n-coverage.js --worksheet <code>` - writes the other
    463 to `<code>-to-translate.json`.
 5. Fill the blanks, then
@@ -203,6 +203,32 @@ in the pack as well.
 rest of the `doNotTranslate` list stay in Latin script exactly as they are. A
 shopkeeper matches them against a government form, character for character.
 
+### Names that are spelled, not translated
+
+`_glossary.json` also carries a `brands` list: `Razorpay`, `PhonePe`,
+`Way2SMS`, `Textlocal`, `Pharmacode`, `VS Code`, `Turbo C`, `Posnic`,
+`WhatsApp`, `Google Analytics`. Where a key's whole English is one of those,
+every pack spells it identically, and a test says so.
+
+This one is worth explaining, because six translators in a row got it wrong for
+the same good reason. A review tool that rejects a value identical to its
+English is right almost always - that is exactly what a skipped row looks like.
+But a brand has no translation, so the only way to satisfy the tool was to
+invent one: *Provider Way2sms*, *TextLocal*, *Msimbo wa Pharmacode*, a Razorpay
+tab prefixed with the word for gateway. A payment tab that no longer names the
+payment provider. If a name is on that list, leave it exactly as it is.
+
+Descriptive names are deliberately **not** on the list. *Soft Dark*, *Warm
+Night* and *Diamond* are words, and a theme picker in Thai should read in Thai.
+
+### Merge tokens
+
+`{name}`, `{points}`, `{tier}` and the rest are placeholders the app fills in.
+Where a string is nothing but a token - the chips on the campaign editor that
+insert a merge field - what it shows is what it inserts, so it is not text at
+all and carries no key. Inside a sentence, keep the token exactly as written
+and move it where the grammar needs it.
+
 ### Strings that carry markup
 
 A few strings carry an icon or a `<span>` the app rewrites later, for example
@@ -216,8 +242,10 @@ the code writes into later must survive, or that write lands nowhere.
 ## Keeping a language up to date
 
 When a screen gains a new string, every pack is behind by one key until
-somebody fills it. A test fails when any language drops below 95%, so it
-cannot drift far. Find what is missing:
+somebody fills it. A test holds every pack at or above the point it last
+reached (`tests/i18n-coverage-baseline.json`, refreshed with
+`--write-baseline` after a merge), so a language can only move up. Find what
+is missing:
 
 ```bash
 node tests/tools/i18n-coverage.js
@@ -276,6 +304,111 @@ column first - it is the fastest way to a consistent pack.
 
 ---
 
+## Adding text to the app (for developers)
+
+Every word a person reads has to be reachable by a key, or it is English in
+every language. Three shapes, one runtime:
+
+| Where the words are | Write | Translated by |
+|---|---|---|
+| Template text | `<lang class="lang_key">English</lang>` | `PosnicPro.i18n.apply()` at load |
+| Inside `<title>` or `<option>` | the same tag - the build hoists it to `data-t="lang_key"` | apply() |
+| `placeholder`, `title`, `aria-label` | `placeholder="English" data-t-placeholder="lang_key"` | apply() |
+| Markup JavaScript renders (table headers, pills, modal bodies) | `'<th><lang class="lang_key">Bill #</lang></th>'` | `PosnicPro.i18n.watch()` as it lands |
+| Text JavaScript sets (`.text()`, toasts, labels, ternaries) | `PosnicPro.i18n.t('lang_key', 'English')` | at the call |
+
+The English is the fallback, physically present in every case, so a missing
+key never shows anything worse than English.
+
+**One thing to watch:** `t()` evaluated when a module *loads* runs before any
+pack has arrived, so a top-level object literal must carry `<lang>` markup
+instead of `t()` (see `PosnicPro.dashboard.SETUP_CARDS`). Calls inside
+functions are fine.
+
+**The other thing to watch:** one key, one meaning. It is tempting to reuse
+`lang_supply_title` for a field that happens to be near the supplier column, or
+`lang_name_title` for "First name". Do not. English stays right on both screens
+and every other language is wrong on one of them, silently - the person who can
+see it is not the person reviewing the diff. Two hundred and forty-three labels
+were in that state, including the City, State and Country fields on the branch
+form, which read "Supplier list", "Customers" and "Address" in every language
+but English.
+
+```bash
+node tests/tools/i18n-collisions.js         # every key carrying two meanings
+node tests/tools/i18n-collisions.js --write # give the newcomer its own key
+```
+
+Punctuation is part of the label: `lang_name` means "Name:" and
+`lang_name_title` means "Name". Reusing one for the other leaves a stray colon
+in fifteen languages.
+
+You do not have to do this by hand. After adding a screen:
+
+```bash
+node tests/tools/i18n-tag.js --write        # templates: text nodes and attributes
+node tests/tools/i18n-tag-js.js --write     # JavaScript: markup literals and t() calls
+node tests/tools/i18n-gaps.js               # what is still bare, per template
+node tests/tools/i18n-collisions.js          # keys given a second meaning
+node tests/tools/i18n-coverage.js           # which packs now have gaps
+```
+
+Keys are minted from the English (`lang_add_to_bill`), and the same English on
+two screens shares one key. Then hand the new keys to translators with
+`--worksheet <code>`. Three tests hold this: no template may carry English a pack cannot reach, no
+key may carry two meanings, and no pack may slip below the coverage it last
+reached.
+
+---
+
+---
+
+## The words the server writes
+
+Every save, delete and refusal a shopkeeper sees is a toast, and the sentence
+in it comes from the API, not from a page:
+
+```json
+{ "type": "success", "message": "Customer added successfully" }
+```
+
+The frontend prints that as it arrives, at five hundred and seventy-six call
+sites, so no `<lang>` tag and no key can reach it. These are the messages a
+cashier reads most often, and until now every one of them was English in every
+language.
+
+**The English is the key here.** The API is deployed separately from the till
+and can be a release behind it, so a key would be worse than useless: a server
+that had never heard of it would send words the pack could not match, and a
+pack that had never heard of the key would print it raw. Looking the sentence
+up by its own words is what gettext has done for thirty years, and it degrades
+the right way - an unknown sentence, an untranslated one and a missing file all
+print exactly what the server sent.
+
+Translations live in `languages/server/<code>.json`, keyed by the English
+sentence, byte for byte:
+
+```json
+{
+  "Customer added successfully": "Client ajouté",
+  "A sale id is required": "Un identifiant de vente est obligatoire"
+}
+```
+
+```bash
+node tests/tools/i18n-server-text.js            what the API says, and how much is answered
+node tests/tools/i18n-server-text.js --todo fr  the sentences French has not answered yet
+node tests/tools/i18n-server-text.js --write    after the API changes wording
+```
+
+Change one character of the English key and the translation stops being found -
+silently, because the fallback is the English itself. Copy it, do not retype
+it. A message with a value interpolated into it (`Imported 12 rows`) will not
+match and is not listed; those need the API to send the number separately, and
+that is a change for another day.
+
+---
+
 ## Right-to-left languages
 
 Arabic switches the whole app to right-to-left: the sidebar moves to the
@@ -294,6 +427,21 @@ The rules live in `frontend/static/style/css/rtl.css`, scoped under
 node tests/tools/i18n-coverage.js
 node --test tests/i18n.test.js
 ```
+
+### Finding the screen that is still English
+
+Coverage tells you how much of a language is done. It does not tell you which
+screen a shopkeeper is looking at when they see English, which is the report
+you want when you have an hour and want to spend it where it shows:
+
+```bash
+node tests/tools/i18n-screen.js ta            every screen with a gap
+node tests/tools/i18n-screen.js ta --list     the missing keys too
+node tests/tools/i18n-screen.js --worst       the worst screen per language
+```
+
+The screens are listed worst first, so the top of that list is the best hour
+you can give the language.
 
 ### Save as UTF-8. This one matters more than it sounds.
 

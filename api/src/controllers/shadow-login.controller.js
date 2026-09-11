@@ -87,7 +87,19 @@ async function shadowLogin(req, res) {
    * only needed for as long as a token could still be replayed.
    */
   const spent = db.collection('shadow_login_tokens');
-  const shadowActor = claims.reason === 'owner sign-in from posnic.com' ? 'owner' : 'support';
+  /*
+   * Who is behind this link: the shop's owner, or one of our staff.
+   *
+   * `claims.actor` is the answer web-api now signs into the token. It used to
+   * be inferred by exact-matching a human-readable reason string, which meant
+   * that rewording the sentence would silently reclassify every owner sign-in
+   * as support and stop recording any of them. The string is still accepted so
+   * tokens minted by an older web-api keep working.
+   */
+  const shadowActor =
+    claims.actor === 'owner' || claims.reason === 'owner sign-in from posnic.com'
+      ? 'owner'
+      : 'support';
   try {
     await spent.createIndex({ jti: 1 }, { unique: true, name: 'jti_once' });
     await spent.createIndex({ usedAt: 1 }, { expireAfterSeconds: 24 * 60 * 60, name: 'jti_ttl' });
@@ -97,6 +109,7 @@ async function shadowLogin(req, res) {
       by: claims.by || null,
       reason: claims.reason || null,
       actor: shadowActor,
+      from: claims.from || null,
     });
   } catch (e) {
     if (e && e.code === 11000) {
@@ -216,6 +229,13 @@ async function shadowLogin(req, res) {
         {
           userAgent: req.headers['user-agent'] || '',
           ip: clientIp(req),
+          /*
+           * 'signup' when this is the shop being opened for somebody the
+           * moment they created it. That is not the same event as a customer
+           * choosing to come back, and the console needs to tell them apart or
+           * "opened the shop" ends up measuring our own redirect.
+           */
+          source: claims.from === 'signup' ? 'signup' : 'owner_link',
         }
       );
       if (!activity || activity.status === false) {

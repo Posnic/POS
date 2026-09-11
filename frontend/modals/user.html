@@ -2,7 +2,7 @@
 <div id="infobar-settings-sidebar-users" class="infobar-settings-sidebar scroll_width">
     <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
         <h4 id="exampleModalCenterTitle">
-            <span id="user_title">Add</span>&nbsp;<lang class="lang_users_title">User</lang>
+            <span id="user_title"><lang class="lang_nav_add">Add</lang></span>&nbsp;<lang class="lang_users_title">User</lang>
         </h4>
         <a href="javascript:void(0)" class="infobar-settings-close" data-id="users">
             <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
@@ -81,28 +81,28 @@
                             <lang class="lang_firstname">First Name </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control border-control user-text-clear" name="firstname" id="users_firstname"  minlength="3" maxlength="20" placeholder="Enter the firstname" autocomplete="off" required>                        
+                        <input type="text" class="form-control border-control user-text-clear" name="firstname" id="users_firstname"  minlength="3" maxlength="20" placeholder="Enter the firstname" data-t-placeholder="lang_enter_the_firstname" autocomplete="off" required>                        
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_lastname">
                             <lang class="lang_lastname">Last Name </lang>
                         </label>
-                        <input type="text" class="form-control border-control user-text-clear" name="lastname" id="users_lastname"  minlength="3" maxlength="20" placeholder="Enter the lastname" autocomplete="off">                        
+                        <input type="text" class="form-control border-control user-text-clear" name="lastname" id="users_lastname"  minlength="3" maxlength="20" placeholder="Enter the lastname" data-t-placeholder="lang_enter_the_lastname" autocomplete="off">                        
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_name">
                             <lang class="lang_usernamee_title">Username </lang>
                             <span class="text-danger">*</span>
-                            <i class="feather icon-help-circle" data-toggle="tooltip" data-placement="top" title="Can't edit this field"></i>
+                            <i class="feather icon-help-circle" data-toggle="tooltip" data-placement="top" title="Can't edit this field" data-t-title="lang_can_t_edit_this_field"></i>
                         </label>
-                        <input type="text" class="form-control border-control user-text-clear" name="name" id="users_name"  minlength="3" maxlength="250" placeholder="Enter the username" autocomplete="off" required>                        
+                        <input type="text" class="form-control border-control user-text-clear" name="name" id="users_name"  minlength="3" maxlength="250" placeholder="Enter the username" data-t-placeholder="lang_enter_the_username" autocomplete="off" required>                        
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_password">
                             <lang class="lang_enterpassword_title">Password</lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="password" class="form-control border-control user-text-clear password_clear" name="password" id="users_password"  minlength="5" maxlength="20" placeholder="Enter the password" autocomplete="new-password">
+                        <input type="password" class="form-control border-control user-text-clear password_clear" name="password" id="users_password"  minlength="5" maxlength="20" placeholder="Enter the password" data-t-placeholder="lang_entermobilenumber_title" autocomplete="new-password">
                         <input type="hidden" id="check_password" name="check_password" value='yes'>
                         <input type="hidden" name="id" id="users_id">
                     </div>
@@ -111,15 +111,15 @@
                             <lang class="lang_retypepassword_title">Retype Password </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="password" class="form-control border-control user-text-clear" name="retype_password" id="users_retype_password"  minlength="5" maxlength="20" placeholder="Enter retype password" autocomplete="new-password">
+                        <input type="password" class="form-control border-control user-text-clear" name="retype_password" id="users_retype_password"  minlength="5" maxlength="20" placeholder="Enter retype password" data-t-placeholder="lang_enter_retype_password" autocomplete="new-password">
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_email">
                             <lang class="lang_enteremail_title">Email </lang>
                             <span class="text-danger">*</span>
-                            <i class="feather icon-help-circle" data-toggle="tooltip" data-placement="top" title="Can't edit this field"></i>
+                            <i class="feather icon-help-circle" data-toggle="tooltip" data-placement="top" title="Can't edit this field" data-t-title="lang_can_t_edit_this_field"></i>
                         </label>
-                        <input type="email" class="form-control border-control user-text-clear" name="email" id="users_email"  maxlength="250" placeholder="Enter the email" autocomplete="off">
+                        <input type="email" class="form-control border-control user-text-clear" name="email" id="users_email"  maxlength="250" placeholder="Enter the email" data-t-placeholder="lang_enter_the_email" autocomplete="off">
                     </div>
                 </div>
                 <div class="form-row hide_show_user_api">
@@ -128,16 +128,16 @@
                             <lang class="lang_entername_title">App Name </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control border-control user-text-clear" name="app_name" id="app_name"  minlength="3" maxlength="250" placeholder="Enter the name" autocomplete="off"> 
+                        <input type="text" class="form-control border-control user-text-clear" name="app_name" id="app_name"  minlength="3" maxlength="250" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name" autocomplete="off"> 
                         <span id="error_app_name"></span> 
                     </div>
                     <div class="form-group col-md-12">
                         <label for="users_api">
-                            <lang class="lang_enteremail_title">Api Key </lang>
+                            <lang class="lang_apikey">Api Key </lang>
                             <span class="text-danger">*</span>                            
                         </label>
-                        <span class="pull-right" style="color: blue; cursor:pointer;" onclick="return PosnicPro.users.generateApiKey();">generate key</span>
-                        <input type="text" class="form-control border-control user-text-clear" name="users_api" id="users_api"  minlength="30" maxlength="60" placeholder="Api key" autocomplete="off" disabled>
+                        <span class="pull-right" style="color: blue; cursor:pointer;" onclick="return PosnicPro.users.generateApiKey();"><lang class="lang_generate_key">generate key</lang></span>
+                        <input type="text" class="form-control border-control user-text-clear" name="users_api" id="users_api"  minlength="30" maxlength="60" placeholder="Api key" data-t-placeholder="lang_api_key" autocomplete="off" disabled>
                         <span id="error_users_api"></span> 
                     </div>
                 </div>
@@ -184,121 +184,121 @@
                             <div class="card-body">
                                 <div class="row" id="user_role_row" style="margin-bottom:14px;">
                                     <div class="col-md-12">
-                                        <label for="user_role_id" style="font-weight:600;">Role
-                                            <span class="text-muted" style="font-weight:400;">(permission group)</span></label>
+                                        <label for="user_role_id" style="font-weight:600;"><lang class="lang_role">Role</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_permission_group">(permission group)</lang></span></label>
                                         <select id="user_role_id" name="role_id"
                                             class="form-control border-control"
                                             onchange="PosnicPro.users.applyRoleToForm(this.value);">
-                                            <option value="">Custom — set permissions manually</option>
+                                            <option value=""><lang class="lang_custom_set_permissions_manually">Custom - set permissions manually</lang></option>
                                         </select>
-                                        <small class="form-text text-muted">Pick a role to apply its preset
-                                            permissions, or choose "Custom" to set them by hand below.</small>
+                                        <small class="form-text text-muted"><lang class="lang_pick_a_role_to_apply_its_preset_permission">Pick a role to apply its preset
+                                            permissions, or choose "Custom" to set them by hand below.</lang></small>
                                     </div>
                                 </div>
                                 <div class="row" id="manager_pin_row" style="margin-bottom:14px; display:none;">
                                     <div class="col-md-12">
-                                        <label style="font-weight:600;">Manager Approval PIN
-                                            <span class="text-muted" style="font-weight:400;">(authorises a cashier's voids / refunds at the till)</span></label>
+                                        <label style="font-weight:600;"><lang class="lang_manager_approval_pin">Manager Approval PIN</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_authorises_a_cashier_s_voids_refunds_at_th">(authorises a cashier's voids / refunds at the till)</lang></span></label>
                                         <div class="input-group">
                                             <input type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"
                                                    class="form-control border-control" id="user_manager_pin"
-                                                   placeholder="4-8 digit PIN">
+                                                   placeholder="4-8 digit PIN" data-t-placeholder="lang_4_8_digit_pin">
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="user_manager_pin_btn"
-                                                        onclick="PosnicPro.users.setManagerPin();">Set PIN</button>
+                                                        onclick="PosnicPro.users.setManagerPin();"><lang class="lang_set_pin">Set PIN</lang></button>
                                             </div>
                                         </div>
-                                        <small class="form-text text-muted">Enter a 4-8 digit PIN and click Set PIN. A
-                                            manager types this at the till to approve a cashier's restricted action.</small>
+                                        <small class="form-text text-muted"><lang class="lang_enter_a_4_8_digit_pin_and_click_set_pin_a">Enter a 4-8 digit PIN and click Set PIN. A
+                                            manager types this at the till to approve a cashier's restricted action.</lang></small>
                                     </div>
                                 </div>
                                 <div class="row" id="rfid_row" style="margin-bottom:14px; display:none;">
                                     <div class="col-md-12">
-                                        <label style="font-weight:600;">RFID / Swipe Card
-                                            <span class="text-muted" style="font-weight:400;">(optional — swipe to clock in / approve)</span></label>
+                                        <label style="font-weight:600;"><lang class="lang_rfid_swipe_card">RFID / Swipe Card</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_optional_swipe_to_clock_in_approve">(optional - swipe to clock in / approve)</lang></span></label>
                                         <div class="input-group">
                                             <input type="text" autocomplete="off" class="form-control border-control"
-                                                   id="user_rfid_uid" placeholder="Click here, then swipe the card"
+                                                   id="user_rfid_uid" placeholder="Click here, then swipe the card" data-t-placeholder="lang_click_here_then_swipe_the_card"
                                                    onkeydown="if(event.key==='Enter'){event.preventDefault();PosnicPro.users.setRfid();}">
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="user_rfid_btn"
-                                                        onclick="PosnicPro.users.setRfid();">Assign</button>
+                                                        onclick="PosnicPro.users.setRfid();"><lang class="lang_assign">Assign</lang></button>
                                                 <button type="button" class="btn btn-outline-danger" id="user_rfid_clear_btn"
-                                                        onclick="PosnicPro.users.clearRfid();">Clear</button>
+                                                        onclick="PosnicPro.users.clearRfid();"><lang class="lang_clear_title">Clear</lang></button>
                                             </div>
                                         </div>
-                                        <small class="form-text text-muted">Focus the field and swipe the card on a USB
-                                            reader (it types the code), or type it, then Assign. One card per person.</small>
+                                        <small class="form-text text-muted"><lang class="lang_focus_the_field_and_swipe_the_card_on_a_us">Focus the field and swipe the card on a USB
+                                            reader (it types the code), or type it, then Assign. One card per person.</lang></small>
                                     </div>
                                 </div>
                                 <div class="row" id="wage_row" style="margin-bottom:14px; display:none;">
                                     <div class="col-md-12">
-                                        <label style="font-weight:600;">Hourly Wage
-                                            <span class="text-muted" style="font-weight:400;">(optional — for the payout report)</span></label>
+                                        <label style="font-weight:600;"><lang class="lang_hourly_wage">Hourly Wage</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_optional_for_the_payout_report">(optional - for the payout report)</lang></span></label>
                                         <div class="input-group">
                                             <input type="number" min="0" step="0.01" class="form-control border-control"
                                                    id="user_hourly_rate" placeholder="0.00">
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="user_wage_btn"
-                                                        onclick="PosnicPro.users.setRate();">Save Wage</button>
+                                                        onclick="PosnicPro.users.setRate();"><lang class="lang_save_wage">Save Wage</lang></button>
                                             </div>
                                         </div>
-                                        <small class="form-text text-muted">Turns worked hours into a payout figure in the
-                                            labour report.</small>
+                                        <small class="form-text text-muted"><lang class="lang_turns_worked_hours_into_a_payout_figure_in">Turns worked hours into a payout figure in the
+                                            labour report.</lang></small>
                                     </div>
                                 </div>
                                 <!-- Sales targets (LS1): optional per-user goals. -->
                                 <div class="row" id="targets_row" style="margin-bottom:14px; display:none;">
                                     <div class="col-md-12">
-                                        <label style="font-weight:600;">Sales Targets
-                                            <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+                                        <label style="font-weight:600;"><lang class="lang_sales_targets">Sales Targets</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_optional">(optional)</lang></span></label>
                                         <div class="form-row">
                                             <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
-                                                   id="user_target_daily" placeholder="Daily"></div>
+                                                   id="user_target_daily" placeholder="Daily" data-t-placeholder="lang_daily"></div>
                                             <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
-                                                   id="user_target_weekly" placeholder="Weekly"></div>
+                                                   id="user_target_weekly" placeholder="Weekly" data-t-placeholder="lang_weekly"></div>
                                             <div class="col-4"><input type="number" min="0" step="0.01" class="form-control border-control"
-                                                   id="user_target_monthly" placeholder="Monthly"></div>
+                                                   id="user_target_monthly" placeholder="Monthly" data-t-placeholder="lang_monthly"></div>
                                         </div>
                                         <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="user_targets_btn"
-                                                onclick="PosnicPro.users.setTargets();">Save Targets</button>
-                                        <small class="form-text text-muted">Sales goals this employee aims for - shown against
-                                            actuals in the user report.</small>
+                                                onclick="PosnicPro.users.setTargets();"><lang class="lang_save_targets">Save Targets</lang></button>
+                                        <small class="form-text text-muted"><lang class="lang_sales_goals_this_employee_aims_for_shown_a">Sales goals this employee aims for - shown against
+                                            actuals in the user report.</lang></small>
                                     </div>
                                 </div>
                                 <div class="row" id="pos_actions_row" style="margin-bottom:14px;">
                                     <div class="col-md-12">
-                                        <label style="font-weight:600;">Till / POS Actions
-                                            <span class="text-muted" style="font-weight:400;">(what this user may do at the till without a manager)</span></label>
+                                        <label style="font-weight:600;"><lang class="lang_till_pos_actions">Till / POS Actions</lang>
+                                            <span class="text-muted" style="font-weight:400;"><lang class="lang_what_this_user_may_do_at_the_till_without">(what this user may do at the till without a manager)</lang></span></label>
                                         <div style="border:1px solid #eae8e8; border-radius:4px; padding:12px 14px;">
                                             <div class="row" style="row-gap:6px;">
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_discount_apply"> Apply discount</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_price_override"> Price override</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_line"> Void a line</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_sale"> Void a sale</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_refund"> Refund / return</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_quick_sale"> Quick sale / instant items</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_reprint_receipt"> Reprint receipt</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_no_sale_open_drawer"> No-sale open drawer</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_open"> Open register</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_close"> Close register</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_in_out"> Cash in / out</label></div>
-                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_drop"> Cash drop</label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_discount_apply"> <lang class="lang_apply_discount">Apply discount</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_price_override"> <lang class="lang_price_override">Price override</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_line"> <lang class="lang_void_a_line">Void a line</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_void_sale"> <lang class="lang_void_a_sale">Void a sale</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_refund"> <lang class="lang_refund_return">Refund / return</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_quick_sale"> <lang class="lang_quick_sale_instant_items">Quick sale / instant items</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_reprint_receipt"> <lang class="lang_reprint_receipt">Reprint receipt</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_no_sale_open_drawer"> <lang class="lang_no_sale_open_drawer">No-sale open drawer</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_open"> <lang class="lang_open_register">Open register</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_register_close"> <lang class="lang_close_register">Close register</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_in_out"> <lang class="lang_cash_in_out">Cash in / out</lang></label></div>
+                                                <div class="col-md-4"><label style="font-weight:400;"><input type="checkbox" class="pos-action-box" id="pos_cash_drop"> <lang class="lang_cash_drop">Cash drop</lang></label></div>
                                             </div>
                                             <div class="row" style="margin-top:8px;">
                                                 <div class="col-md-6">
-                                                    <label style="font-weight:400; font-size:.85rem;">Max discount %</label>
+                                                    <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_discount">Max discount %</lang></label>
                                                     <input type="number" min="0" max="100" step="1" class="form-control border-control" id="pos_discount_max_percent" value="0">
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label style="font-weight:400; font-size:.85rem;">Max refund amount <span class="text-muted">(0 = no limit)</span></label>
+                                                    <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_refund_amount">Max refund amount</lang> <span class="text-muted"><lang class="lang_0_no_limit">(0 = no limit)</lang></span></label>
                                                     <input type="number" min="0" step="0.01" class="form-control border-control" id="pos_refund_max_amount" value="0">
                                                 </div>
                                             </div>
                                             <small class="form-text text-muted" id="pos_mgr_hint" style="margin-top:8px;"></small>
-                                            <small class="form-text text-muted">Unticked actions prompt for a manager's PIN or card at the
+                                            <small class="form-text text-muted"><lang class="lang_unticked_actions_prompt_for_a_manager_s_pi">Unticked actions prompt for a manager's PIN or card at the
                                                 till. Void sale and refund are enforced server-side today; the other gates take effect
-                                                as they ship.</small>
+                                                as they ship.</lang></small>
                                         </div>
                                     </div>
                                 </div>
@@ -337,7 +337,7 @@
                                                 <div>
                                                     <label class="control-label">
                                                         <label for="apiUser" class="control control--radio">
-                                                            <lang class="lang_adminaccess_title">Api </lang>
+                                                            <lang class="lang_api">Api </lang>
                                                             <input type="radio" name="usertype" id="apiUser" value="api"
                                                                    onclick="PosnicPro.users.userApiAccess();" required>
                                                             <div class="control__indicator"></div>
@@ -354,9 +354,9 @@
                                         <table class="table">
                                             <thead>
                                             <th></th>
-                                            <th>Read</th>
-                                            <th>R/Write</th>
-                                            <th>R/Delete</th>
+                                            <th><lang class="lang_read">Read</lang></th>
+                                            <th><lang class="lang_r_write">Read/Write</lang></th>
+                                            <th><lang class="lang_r_delete">Read/Delete</lang></th>
                                             </thead>
                                             <thead id="select_all_checkbox">
                                             <th></th>
@@ -392,7 +392,7 @@
                                                     <input class="onoffswitch-checkbox userdashboard read-selectall write-select-only" type="checkbox" name="dashboard_read" id="dashboard_read" data-id="dashboard"/>
                                                     <label class="badge active_user_access_class read-selectall-label write-select-only-label" for="dashboard_read">R</label>
                                                 </span>
-                                                <span class="checkbox checkbox-inline" title="Financial figures - profit, cost, margin, expenses, cash and dues. Grant only to management.">
+                                                <span class="checkbox checkbox-inline" title="Financial figures - profit, cost, margin, expenses, cash and dues. Grant only to management." data-t-title="lang_financial_figures_profit_cost_margin_expen">
                                                     <input class="onoffswitch-checkbox userdashboard" type="checkbox" name="dashboard_financials" id="dashboard_financials" data-id="dashboard"/>
                                                     <label class="badge active_user_access_class" for="dashboard_financials">&#8377;</label>
                                                 </span>
@@ -400,7 +400,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_sales_title">Sales</lang>
+                                            <lang class="lang_rgrp_sales">Sales</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -426,17 +426,17 @@
                                                     <span class="checkbox checkbox-inline">
                                                         <input class="onoffswitch-checkbox" type="checkbox" name="sales_session_filter" id="sales_session_filter" data-id="sales_session"/>
                                                         <label class="badge badge-info" for="sales_session_filter" style="cursor: pointer;">
-                                                            <i class="feather icon-clock"></i> Session Filter
+                                                            <i class="feather icon-clock"></i> <lang class="lang_session_filter">Session Filter</lang>
                                                         </label>
                                                     </span>
                                                     <small class="text-muted" style="margin-left: 10px;">
-                                                        <i class="feather icon-info"></i> User will only see sales created during their login session
+                                                        <i class="feather icon-info"></i> <lang class="lang_user_will_only_see_sales_created_during_th">User will only see sales created during their login session</lang>
                                                     </small>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_receiving_title">Purchase</lang>
+                                            <lang class="lang_purchse_title">Purchase</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -459,7 +459,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_customer_title">Customer </lang>
+                                            <lang class="lang_newcustomer_title">Customer </lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -482,7 +482,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_supply_title">Supplier </lang>
+                                            <lang class="lang_newsupplier_title">Supplier </lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -551,7 +551,7 @@
                                             </tr>                                                    
                                             <tr>
                                                 <td>
-                                            <lang class="lang_expense_title">Expenses</lang>
+                                            <lang class="lang_expensecut_title">Expenses</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -585,7 +585,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_user_title">User</lang>
+                                            <lang class="lang_newuser_title">User</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -596,7 +596,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                            <lang class="lang_report_title">Report</lang>
+                                            <lang class="lang_report">Report</lang>
                                             </td>
                                             <td>
                                                 <span class="checkbox checkbox-inline">
@@ -672,7 +672,7 @@
                 <div class="form-row" id="show_last_created_user" style="display:none;">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
-                            <h6>Saved a user. <a href="#" id="last_created_user">Open it</a></h6>
+                            <h6><lang class="lang_saved_a_user">Saved a user.</lang> <a href="#" id="last_created_user"><lang class="lang_open_it">Open it</lang></a></h6>
                         </div>
                     </div>
                 </div>
@@ -693,7 +693,7 @@
 
         <ul class="nav nav-tabs mb-3" id="defaultTab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="user-detail-tab" data-toggle="tab" href="#user_detail" role="tab" aria-controls="user_detail" aria-selected="true"><lang class="lang_manage_title"> Details</lang></a>
+                <a class="nav-link active" id="user-detail-tab" data-toggle="tab" href="#user_detail" role="tab" aria-controls="user_detail" aria-selected="true"><lang class="lang_item_details_title"> Details</lang></a>
             </li>
             <li class="nav-item" onclick="return PosnicPro.usersdetails.usersdetailsTable();">
                 <a class="nav-link" id="user-sale-tab" data-toggle="tab" href="#user_sale" role="tab" aria-controls="user_sale" aria-selected="false"><lang class="lang_activity"> Activities</lang></a>
@@ -714,16 +714,16 @@
                                             <table class="table table-border table-striped mb-0">
                                                 <tbody>
                                                     <tr>
-                                                        <th scope="row"><lang class="lang_image_title"> Profile Image </lang></th>
+                                                        <th scope="row"><lang class="lang_profile_image"> Profile Image </lang></th>
                                                    <td style="width: 70%;"><a href="#"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="userimageview" width='40' height='40' alt="NoImg" loading="lazy" decoding="async"></a>
                                                 </td>
                                                 </tr>
                                                 <tr class="hide-username" style="display: none;">
-                                                    <th scope="row"><lang class="lang_name_title"> First Name </lang> :</th>
+                                                    <th scope="row"><lang class="lang_firstname"> First Name </lang> :</th>
                                                 <td><span id="user_view_firstname"></span></td>
                                                 </tr>
                                                 <tr class="hide-username" style="display: none;">
-                                                    <th scope="row"><lang class="lang_name_title"> Last Name </lang> :</th>
+                                                    <th scope="row"><lang class="lang_lastname"> Last Name </lang> :</th>
                                                 <td><span id="user_view_lastname"></span></td>
                                                 </tr>
                                                 <tr>
@@ -772,131 +772,131 @@
                                                 <tr>
                                                     <td><lang class="lang_dashboard_title">Dashboard </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_dashboard_read_access"><i
-                                                        class="fa fa-times" id="user_dashboard_read_chk"></i><span> Read </span></span></td>
+                                                        class="fa fa-times" id="user_dashboard_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_dashboard_write_access"><i
-                                                        class="fa fa-times" id="user_dashboard_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_dashboard_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_dashboard_delete_access"><i
-                                                        class="fa fa-times" id="user_dashboard_delete_chk"></i><span> Delete </span></span>
+                                                        class="fa fa-times" id="user_dashboard_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span>
                                             </td>
                                             </tr>
                                             <tr>
                                                 <td><lang class="lang_sales_title">Sale </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_sales_read_access"><i
-                                                        class="fa fa-times" id="user_sales_read_chk"></i><span> Read </span></span></td>
+                                                        class="fa fa-times" id="user_sales_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_sales_write_access"><i
-                                                        class="fa fa-times" id="user_sales_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_sales_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_sales_delete_access"><i
-                                                        class="fa fa-times" id="user_sales_delete_chk"></i><span> Delete </span></span>
+                                                        class="fa fa-times" id="user_sales_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span>
                                             </td>
                                             </tr>
                                             <tr>
                                                 <td><lang class="lang_receiving_title">Receiving</lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_receiving_read_access"><i
-                                                        class="fa fa-times" id="user_receiving_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_receiving_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_receiving_write_access"><i
-                                                        class="fa fa-times" id="user_receiving_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_receiving_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_receiving_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_receiving_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_receiving_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_customer_title">Customer</lang></td>
+                                                <td><lang class="lang_newcustomer_title">Customer</lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_customer_read_access"><i
-                                                        class="fa fa-times" id="user_customer_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_customer_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_customer_write_access"><i
                                                         class="fa fa-times"
-                                                        id="user_customer_write_chk"></i><span> Write </span></span></td>
+                                                        id="user_customer_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_customer_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_customer_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_customer_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_supply_title">Supplier</lang></td>
+                                                <td><lang class="lang_newsupplier_title">Supplier</lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_supplier_read_access"><i
-                                                        class="fa fa-times" id="user_supplier_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_supplier_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_supplier_write_access"><i
                                                         class="fa fa-times"
-                                                        id="user_supplier_write_chk"></i><span> Write </span></span></td>
+                                                        id="user_supplier_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_supplier_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_supplier_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_supplier_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
                                                 <td><lang class="lang_category_title">Category </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_category_read_access"><i
-                                                        class="fa fa-times" id="user_category_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_category_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_category_write_access"><i
                                                         class="fa fa-times"
-                                                        id="user_category_write_chk"></i><span> Write </span></span></td>
+                                                        id="user_category_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_category_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_category_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_category_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
                                                 <td><lang class="lang_item_title">Item </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_item_read_access"><i
-                                                        class="fa fa-times" id="user_item_read_chk"></i><span> Read </span></span></td>
+                                                        class="fa fa-times" id="user_item_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_item_write_access"><i
-                                                        class="fa fa-times" id="user_item_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_item_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_item_delete_access"><i
-                                                        class="fa fa-times" id="user_item_delete_chk"></i><span> Delete </span></span>
+                                                        class="fa fa-times" id="user_item_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span>
                                             </td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_expense_title">Expense </lang></td>
+                                                <td><lang class="lang_newexpense_title">Expense </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_expense_read_access"><i
-                                                        class="fa fa-times" id="user_expense_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_expense_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_expense_write_access"><i
                                                         class="fa fa-times"
-                                                        id="user_expense_write_chk"></i><span> Write </span></span></td>
+                                                        id="user_expense_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_expense_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_expense_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_expense_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
                                                 <td><lang class="lang_branch_title">Branch </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_branch_read_access"><i
-                                                        class="fa fa-times" id="user_branch_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_branch_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_branch_write_access"><i
-                                                        class="fa fa-times" id="user_branch_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_branch_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_branch_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_branch_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_branch_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_report_title">Report </lang></td>
+                                                <td><lang class="lang_report">Report </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_report_read_access"><i
-                                                        class="fa fa-times" id="user_report_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_report_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_report_write_access"><i
-                                                        class="fa fa-times" id="user_report_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_report_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_report_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_report_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_report_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             <tr>
-                                                <td><lang class="lang_user_title">User </lang></td>
+                                                <td><lang class="lang_newuser_title">User </lang></td>
                                             <td><span class="badge badge-danger badge-icon" id="user_user_read_access"><i
-                                                        class="fa fa-times" id="user_user_read_chk"></i><span> Read </span></span>
+                                                        class="fa fa-times" id="user_user_read_chk"></i><span> <lang class="lang_read">Read</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_user_write_access"><i
-                                                        class="fa fa-times" id="user_user_write_chk"></i><span> Write </span></span>
+                                                        class="fa fa-times" id="user_user_write_chk"></i><span> <lang class="lang_write">Write</lang> </span></span>
                                             </td>
                                             <td><span class="badge badge-danger badge-icon" id="user_user_delete_access"><i
                                                         class="fa fa-times"
-                                                        id="user_user_delete_chk"></i><span> Delete </span></span></td>
+                                                        id="user_user_delete_chk"></i><span> <lang class="lang_delete">Delete</lang> </span></span></td>
                                             </tr>
                                             </tbody>
                                         </table>
@@ -962,7 +962,7 @@
                                 <div class="portlet light slider-portlet-vh">
                                     <div class="portlet-title margin-bottom-0">
                                         <div class="caption caption-basic font-green-meadow">
-                                            <span class="caption-subject bold uppercase"><lang class="lang_salehistory_title"> Sale History</lang></span>
+                                            <span class="caption-subject bold uppercase"><lang class="lang_sale_history"> Sale History</lang></span>
                                         </div>
                                         <div class="actions">
                                             <div class="inline-block text-left">
@@ -997,7 +997,7 @@
                                                        width="100%">
                                                     <div class="col-sm-6 col-md-12 col-lg-12" id="useractivity_img_hide" style="display:none;">
                                                         <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
-                                                        <div class="text-center text-dark"> <p>No Records </p></div>
+                                                        <div class="text-center text-dark"> <p><lang class="lang_no_records">No Records</lang> </p></div>
                                                     </div>
                                                     <thead class="report-thead-tfoot table-header useractivity_content"></thead>
                                                     <tbody class="report-thead-tfoot table-body useractivity_content"></tbody>
@@ -1010,21 +1010,21 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
                                                         <div class="hint-text">
-                                                            Showing 
+                                                            <lang class="lang_showing">Showing</lang> 
                                                             <b><span id="view_usersdetails_page_total"></span></b> 
-                                                            to 
+                                                            <lang class="lang_to">to</lang> 
                                                             <b><span id="view_usersdetails_page_perpage_total"></span></b> 
-                                                            of 
+                                                            <lang class="lang_of">of</lang> 
                                                             <b><span id="view_usersdetails_total"></span></b>
-                                                            entries 
+                                                            <lang class="lang_entries">entries</lang> 
                                                             <span class="showing-hide-show-usersdetails" style="display:none;"> &nbsp;&nbsp;&nbsp;&nbsp; 
-                                                                <span class="showing-value-usersdetails text-dark"> 0 </span>&nbsp;
-                                                                rows selected  
+                                                                <span class="showing-value-usersdetails text-dark"> 0 </span><lang class="lang_rows_selected">&nbsp;
+                                                                rows selected</lang>  
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div class="col-4">
-                                                        <nav aria-label="Page navigation example">
+                                                        <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
                                                             <ul class="pagination mb-0">
                                                                 <button class="btn previous page-item text-dark-gradient f-w-7" data-id="usersdetails" onclick="PosnicPro.previousPage(this, 'Table')"> <i class="fa fa-angle-left font-20"></i> </button>
                                                                 <button class="btn next page-item text-dark-gradient f-w-7" data-id="usersdetails" onclick="PosnicPro.nextPage(this, 'Table')"> <i class="fa fa-angle-right font-20"></i> </button>

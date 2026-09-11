@@ -16,7 +16,7 @@ them for a given build.
 
 **Shipped as:** `resources/mongodb/bin/mongod.exe` on Windows and
 `resources/mongodb/bin/mongod` on macOS and Linux
-**Version:** 7.0.14
+**Version:** 7.0.14 (exact bundled release matching installer build pin)
 **Copyright:** © MongoDB, Inc.
 **Licence:** Server Side Public License, Version 1 (SSPL-1.0)
 **Source:** <https://github.com/mongodb/mongo>
@@ -33,7 +33,7 @@ distribution rather than assigning one licence to the complete bundle. This
 notice records technical provenance and is not legal advice.
 
 If you would rather not receive it, the installer can be built without a bundled
-MongoDB and pointed at one you already run; see `download-mongodb.bat` and
+MongoDB and pointed at one you already run; see `download-mongodb.bat`  and
 `MONGODB_URI`.
 
 ## Node.js
@@ -73,7 +73,7 @@ listed in `LICENSES.chromium.html` beside the installed application)
 ## Microsoft Visual C++ Runtime
 
 **Shipped as:** `resources/mongodb/bin/msvcp140.dll`,
-`vcruntime140.dll`, `vcruntime140_1.dll`
+`vcruntime140.dll`, `vcruntime140_1.dll` (Windows package only)
 **Copyright:** © Microsoft Corporation
 **Licence:** Redistributed under the Microsoft Visual Studio redistributable
 terms, as files MongoDB requires to run.
@@ -180,15 +180,16 @@ outright and the question goes away rather than being answered.
 ### Flag icons
 
 **Shipped as:** `frontend/static/images/flags/1x1/` and `4x3/` - one SVG per
-language the app offers (in, us, lk, np, sa, fr, es, pt, id, th), and nothing
-else. The 242 other countries the stylesheet knows are not bundled.
+language the app offers (in, us, lk, np, sa, fr, es, pt, id, th, de, tz, nl,
+it), and nothing else. The 238 other countries the stylesheet knows are not
+bundled.
 
 | Set | Licence | Source |
 | --- | --- | --- |
 | flag-icons (formerly flag-icon-css) | MIT | `flag-icons` 7.5.0, `npm view flag-icons license`, 2 September 2026 |
 
-The eight added on 2 September 2026 were copied unmodified from that package
-for the language menu; `in.svg` and `us.svg` were already here from the
+The eight added on 2 September 2026 and the four on 4 September (de, tz, nl,
+it) were copied unmodified from that package for the language menu; `in.svg` and `us.svg` were already here from the
 same project's earlier name. MIT needs its notice carried, which this file does.
 
 ### What has been removed

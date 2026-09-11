@@ -256,7 +256,7 @@ class BaseController {
     const process = (item) => {
       if (!item || typeof item !== 'object') return item;
 
-      // Preserve Date and ObjectId instances — spreading them creates empty {}
+      // Preserve Date and ObjectId instances - spreading them creates empty {}
       if (item instanceof Date) return item;
       if (item._bsontype) return item;
 

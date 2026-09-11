@@ -15,7 +15,7 @@
  * `role.pos` in Phase 2.
  *
  * These DEFAULT_ROLES are seeded per tenant as `is_system` roles (clone to make
- * a custom role). They are the STARTING presets — a shop can edit them.
+ * a custom role). They are the STARTING presets - a shop can edit them.
  */
 
 // access-triple helpers

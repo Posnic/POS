@@ -48,7 +48,7 @@ PosnicPro.messaging = {
       (byScope[p.scope] = byScope[p.scope] || []).push(p);
     });
     var sel = $('#messaging_sms_provider').empty();
-    sel.append('<option value="">— choose a provider —</option>');
+    sel.append('<option value="" data-t="lang_choose_a_provider">Choose a provider</option>');
     Object.keys(byScope).forEach(function (scope) {
       var group = $('<optgroup label="' + PosnicPro.messaging.esc(scope) + '"></optgroup>');
       byScope[scope].forEach(function (p) {
@@ -75,7 +75,7 @@ PosnicPro.messaging = {
     $('#messaging_wa_host').val(s.whatsapp_host || '');
     var cloud = s.whatsapp_cloud || {};
     var waSet = s.whatsapp_secrets_set || {};
-    $('#messaging_wa_token').val('').attr('placeholder', waSet.access_token ? '•••••• saved — leave blank to keep' : '');
+    $('#messaging_wa_token').val('').attr('placeholder', waSet.access_token ? '•••••• saved, leave blank to keep' : '');
     $('#messaging_wa_phoneid').val(cloud.phone_number_id || '');
     $('#messaging_wa_apiver').val(cloud.api_version || '');
     $('#messaging_wa_tplname').val(cloud.template_name || '');
@@ -111,7 +111,7 @@ PosnicPro.messaging = {
       if (f.secret) {
         input =
           '<input type="password" class="form-control messaging-field" data-key="' + f.key + '" ' +
-          'autocomplete="new-password" placeholder="' + (isSet ? '•••••• saved — leave blank to keep' : '') + '">';
+          'autocomplete="new-password" placeholder="' + (isSet ? '•••••• saved, leave blank to keep' : '') + '">';
       } else {
         input =
           '<input type="text" class="form-control messaging-field" data-key="' + f.key + '" value="' +
@@ -163,7 +163,7 @@ PosnicPro.messaging = {
   test: function (channel, phoneSel) {
     var phone = $(phoneSel).val();
     if (!phone) {
-      PosnicPro.alert('error', 'Enter a phone number (with country code) to send a test.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_phone_number_with_country_code_to', 'Enter a phone number (with country code) to send a test.'));
       return;
     }
     PosnicPro.put({ url: 'messaging/settings', data: JSON.stringify(PosnicPro.messaging.collect()) }, function () {

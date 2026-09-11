@@ -547,7 +547,7 @@ class SalesController extends BaseController {
       if (r && !r.allowed) {
         return {
           blocked: true,
-          error: `Credit limit exceeded — limit ${r.limit}, already outstanding ${r.outstanding}, this sale would make it ${r.wouldBe}.`,
+          error: `Credit limit exceeded. Limit ${r.limit}, already outstanding ${r.outstanding}, this sale would make it ${r.wouldBe}.`,
           data: r,
         };
       }
@@ -1193,7 +1193,7 @@ class SalesController extends BaseController {
         }
 
         // Fallback: body itself may be an array or an object like
-        // { "0": "id1", "1": "id2" } – treat all string values as IDs.
+        // { "0": "id1", "1": "id2" } - treat all string values as IDs.
         if (Array.isArray(body)) {
           return body;
         }
@@ -5230,7 +5230,7 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.SALE_NOT_FOUND, 404);
       }
 
-      // Format print details — must match PHP getCustomerPrintDetails() exactly,
+      // Format print details - must match PHP getCustomerPrintDetails() exactly,
       // because the frontend (customer_mail.js) reads these precise field names
       // and calls .toFixed()/loops on them. A missing field (e.g. sales_sub_total)
       // throws in the browser and blanks the whole receipt below the header.
@@ -6594,6 +6594,74 @@ class SalesController extends BaseController {
    * PHP: kioskOrder()
    * Process kiosk order
    */
+  /**
+   * What this shop owes its venues and its aggregators.
+   *
+   * One report for both, because a shop can owe both on the same day and the
+   * question it is answering - "what is going out of this month's takings" -
+   * has one answer, not two.
+   */
+  async commissionReport(req, res) {
+    try {
+      /* The prepared params, not the raw query: the middleware turns
+         "branch[]" into a real array and normalises the dates, and every
+         other report on this controller reads it the same way. */
+      const params =
+        (req.branchPaginatedReportParams && req.branchPaginatedReportParams.data) || {};
+      const response = await salesService.commissionReport(params);
+      if (response.status === true) {
+        return this.success(res, response.data, response.message);
+      }
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /**
+   * The orders waiting for somebody to say yes.
+   *
+   * A shop in manual mode holds every incoming online order until a person
+   * accepts it. The kitchen has not been told, so no ticket printed and the
+   * sales list is not where anybody would think to look - this queue is the
+   * only place those orders exist on a screen.
+   */
+  async pendingOnlineOrders(req, res) {
+    try {
+      const response = await salesService.pendingOnlineOrders({
+        branchId: req.query.branch_id || req.query.branchid,
+      });
+      if (response.status === true) {
+        return this.success(res, response.data, response.message);
+      }
+      return this.error(res, response.message, 400);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Accepting or turning away one of them. */
+  async decideOnOrder(req, res) {
+    try {
+      const response = await salesService.decideOnOrder({
+        saleId: req.params.id,
+        decision: req.body && req.body.decision,
+        reason: req.body && req.body.reason,
+      });
+      if (response.status === true) {
+        return this.success(res, response.data, response.message);
+      }
+      /*
+       * 409, not 404. An order that is already accepted still exists; somebody
+       * else got there first, which the screen needs to say out loud rather
+       * than showing "not found" for an order plainly on the list.
+       */
+      return this.error(res, response.message, response.data ? 409 : 404);
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async kioskOrder(req, res) {
     try {
       const SaleModel = this.model || Sale;
@@ -6827,7 +6895,7 @@ class SalesController extends BaseController {
 
   /**
    * PHP: multiKitchenPrint()
-   * Multi-printer KOT polling — returns pending print_jobs per sale
+   * Multi-printer KOT polling - returns pending print_jobs per sale
    */
   async multiKitchenPrint(req, res) {
     try {
@@ -6857,26 +6925,6 @@ class SalesController extends BaseController {
       }
     } catch (error) {
       console.error('Error in markKitchenPrinted:', error);
-      return this.error(res, error.message, 500);
-    }
-  }
-
-  /**
-   * PHP: qrOrder()
-   * Process QR order
-   */
-  async qrOrder(req, res) {
-    try {
-      const SaleModel = this.model || Sale;
-      const response = await salesService.qrOrderModel(req.body, { SaleModel });
-
-      if (response.status === true) {
-        return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404);
-      }
-    } catch (error) {
-      console.error('Error in qrOrder:', error);
       return this.error(res, error.message, 500);
     }
   }

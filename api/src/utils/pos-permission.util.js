@@ -4,7 +4,7 @@
 // the frontend PosnicPro.posCan: owner-class accounts always pass; otherwise the
 // resolved access.pos matrix decides. Fails OPEN when a user has no pos matrix
 // (a session/user from before roles were resolved) so nothing is unexpectedly
-// blocked — enforcement only bites for explicitly-configured staff.
+// blocked - enforcement only bites for explicitly-configured staff.
 
 const MANAGER_TYPES = ['owner', 'admin', 'super_admin', 'manager', 'store_manager'];
 

@@ -1,0 +1,94 @@
+{
+  "description": "Synthetic WordPress REST and WooCommerce authorization contract data.",
+  "validSession": "synthetic-valid-wordpress-session",
+  "validNonce": "synthetic-valid-nonce",
+  "requiredCapability": "read_shop_orders",
+  "protectedWooCommerceData": {
+    "orders": [
+      {
+        "id": 7001,
+        "status": "processing",
+        "total": "12.50",
+        "customer_id": 101
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "valid WordPress REST authentication",
+      "request": {
+        "session": "synthetic-valid-wordpress-session",
+        "nonce": "synthetic-valid-nonce",
+        "capabilities": ["read_shop_orders"]
+      },
+      "expected": {
+        "allowed": true,
+        "status": 200
+      }
+    },
+    {
+      "name": "invalid authentication",
+      "request": {
+        "session": "synthetic-invalid-session",
+        "nonce": "synthetic-valid-nonce",
+        "capabilities": ["read_shop_orders"]
+      },
+      "expected": {
+        "allowed": false,
+        "status": 401,
+        "reason": "authentication"
+      }
+    },
+    {
+      "name": "invalid nonce",
+      "request": {
+        "session": "synthetic-valid-wordpress-session",
+        "nonce": "synthetic-invalid-nonce",
+        "capabilities": ["read_shop_orders"]
+      },
+      "expected": {
+        "allowed": false,
+        "status": 403,
+        "reason": "nonce"
+      }
+    },
+    {
+      "name": "missing nonce",
+      "request": {
+        "session": "synthetic-valid-wordpress-session",
+        "capabilities": ["read_shop_orders"]
+      },
+      "expected": {
+        "allowed": false,
+        "status": 403,
+        "reason": "nonce"
+      }
+    },
+    {
+      "name": "missing capability",
+      "request": {
+        "session": "synthetic-valid-wordpress-session",
+        "nonce": "synthetic-valid-nonce",
+        "capabilities": []
+      },
+      "expected": {
+        "allowed": false,
+        "status": 403,
+        "reason": "capability"
+      }
+    },
+    {
+      "name": "insufficient capability",
+      "request": {
+        "session": "synthetic-valid-wordpress-session",
+        "nonce": "synthetic-valid-nonce",
+        "capabilities": ["read_shop_profile"]
+      },
+      "expected": {
+        "allowed": false,
+        "status": 403,
+        "reason": "capability"
+      }
+    }
+  ]
+}

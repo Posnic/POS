@@ -141,6 +141,18 @@ function setupHardwareIPC(hardwareManager, kotManager) {
     return await hardwareManager.getDefaultPrinter();
   });
 
+  /* The paper catalogue, so the screen offers exactly what the print layer
+     can honour. Sent over IPC rather than copied into the HTML, because two
+     lists drift and the one that drifts is the one nobody tests. */
+  ipcMain.handle('printer:get-paper-sizes', () => {
+    const { PAPER_SIZES, DEFAULT_PAGE_SIZE, MAX_COPIES } = require('./printer-targets');
+    return {
+      sizes: Object.entries(PAPER_SIZES).map(([key, v]) => ({ key, label: v.label, roll: v.roll })),
+      defaultSize: DEFAULT_PAGE_SIZE,
+      maxCopies: MAX_COPIES,
+    };
+  });
+
   ipcMain.handle('printer:get-config', async () => {
     const defaultPrinter = await hardwareManager.getDefaultPrinter();
     const paperSize = preferences['paper_size'] || '3inch';
@@ -163,14 +175,60 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   ipcMain.handle('printer:print-receipt', async (event, sale, options = {}) => {
     try {
       const { renderSale } = require('./escpos-receipt');
-      const bytes = renderSale(sale || {}, {
-        paperWidth: options.paperWidth || '80',
-        openDrawer: !!options.openDrawer,
-        drawerPin: options.drawerPin,
-        cut: options.cut !== false,
-      });
-      return await hardwareManager.sendRawToPrinter(
-        options.printerName, bytes, options.docName || 'Posnic Receipt');
+      const { normalizeTargets, columnsFor } = require('./printer-targets');
+
+      /*
+       * One receipt can now go to several printers, each with its own paper and
+       * its own number of copies - a counter roll and a duplicate for the file,
+       * or a second copy to the back office.
+       *
+       * normalizeTargets accepts the old { printerName, paperWidth } this used
+       * to take, so the sale screen keeps working untouched while the Hardware
+       * Manager starts sending a printers[] list.
+       */
+      const targets = normalizeTargets(
+        options.printers && options.printers.length
+          ? { printers: options.printers }
+          : { printerName: options.printerName, paperSize: options.paperWidth },
+        options.paperWidth
+      );
+
+      const results = [];
+      for (const target of targets) {
+        /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
+           32, so the same bytes cannot serve both. Getting this wrong wraps the
+           total onto its own line, which looks like a rounding bug on paper. */
+        const bytes = renderSale(sale || {}, {
+          paperWidth: String(columnsFor(target.pageSize)),
+          /* The drawer opens once, on the first sheet. Pulsing it per copy
+             would have it kick three times for a three-copy receipt. */
+          openDrawer: !!options.openDrawer && results.length === 0,
+          drawerPin: options.drawerPin,
+          cut: options.cut !== false,
+        });
+
+        for (let copy = 0; copy < target.copies; copy += 1) {
+          const label = (options.docName || 'Posnic Receipt')
+            + (target.copies > 1 ? ` (${copy + 1}/${target.copies})` : '');
+          /* eslint-disable-next-line no-await-in-loop -- printers are serial
+             devices; two jobs sent at once interleave on the same roll. */
+          const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label);
+          results.push({ printer: target.name || '(default)', copy: copy + 1, ...r });
+        }
+      }
+
+      /* One failed printer must not report the whole receipt as failed when the
+         customer already has their copy, so success means at least one landed
+         and the failures are named for the operator. */
+      const failed = results.filter((r) => !r.success);
+      return {
+        success: results.some((r) => r.success),
+        printed: results.length - failed.length,
+        attempted: results.length,
+        failures: failed.map((r) => ({ printer: r.printer, error: r.error || 'unknown' })),
+        error: failed.length && !results.some((r) => r.success)
+          ? (failed[0].error || 'Print failed') : undefined,
+      };
     } catch (err) {
       console.error('[Print] receipt render failed:', err.message);
       return { success: false, error: err.message };
@@ -410,11 +468,63 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   });
 
   // ── KOT Handlers ─────────────────────────────────────
-  ipcMain.handle('kot:get-config', async () => {
-    if (!kotManager) {
-      return { branchId: '', printerNames: [], apiUrl: `http://127.0.0.1:${Number(process.env.PORT) || 5555}/api` };
+  /**
+   * The branches this installation actually has.
+   *
+   * Read straight from the local database rather than over HTTP: the branches
+   * route sits behind `protect`, and this window has no session to present.
+   * Same connection details the cloud data check uses.
+   */
+  async function readLocalBranches() {
+    let client = null;
+    try {
+      const { MongoClient } = require('mongodb');
+      let uri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
+      const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
+      if (fs.existsSync(credFile)) {
+        try {
+          const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+          if (creds.uri) uri = creds.uri;
+        } catch (e) { /* fall through to the default */ }
+      }
+      client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
+      await client.connect();
+      const rows = await client.db('PosnicPro').collection('branches')
+        .find({}, { projection: { branch_name: 1 } }).toArray();
+      return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
+    } catch (e) {
+      /* A shop with no database yet is a normal state during setup, not a
+         fault. The screen still works; it just cannot offer a list. */
+      return [];
+    } finally {
+      if (client) { try { await client.close(); } catch (e) { /* ignore */ } }
     }
-    return await kotManager.loadConfig();
+  }
+
+  ipcMain.handle('kot:get-branches', async () => readLocalBranches());
+
+  ipcMain.handle('kot:get-config', async () => {
+    const fallback = { branchId: '', printerNames: [], apiUrl: `http://127.0.0.1:${Number(process.env.PORT) || 5555}/api` };
+    const cfg = kotManager ? await kotManager.loadConfig() : fallback;
+
+    /*
+     * Answer the branch question instead of asking it.
+     *
+     * This screen used to demand a 24 character ObjectId, typed by hand, before
+     * a kitchen printer would work - a leftover from Hardware Manager being a
+     * separate application that had no way of knowing which shop it served.
+     * It runs inside the till now, so it can look.
+     *
+     * One branch, which is nearly every shop, is chosen outright. Several, and
+     * the list is returned so the screen can offer names rather than ids.
+     */
+    const branches = await readLocalBranches();
+    cfg.branches = branches;
+    if (!cfg.branchId && branches.length === 1) {
+      cfg.branchId = branches[0].id;
+      cfg.branchAutoSelected = true;
+    }
+    return cfg;
   });
 
   ipcMain.handle('kot:start-polling', async (event, config) => {

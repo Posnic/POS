@@ -313,7 +313,7 @@ class CategoryRepository extends BaseModel {
    * ItemRepository.getOnlineSalesItems:
    *  - Same branch & license scoping
    *  - Only items that are sellable (respecting track_inventory,
-   *    negative_stock, available_quantity, item_status, sales_channel)
+   *    negative_stock, available_quantity, item_status)
    *
    * As a result, Sales "Categories" tab will only show categories that
    * actually have valid items for the current branch/license.
@@ -354,19 +354,17 @@ class CategoryRepository extends BaseModel {
                 'branch_access.branch_id': branchObjectId,
                 ...(licenseObjectId ? { license: licenseObjectId } : {}),
                 item_status: { $ne: 'instant' },
-                // sales_channel filter removed for New Sale (misused boolean,
-                // not the intended multi-channel selector).
                 is_deleted: { $ne: true },
                 $or: [
-                  // Case 1: Inventory not tracked — always allowed
+                  // Case 1: Inventory not tracked - always allowed
                   { track_inventory: false },
 
-                  // Case 2: Negative stock allowed — quantity >= 0
+                  // Case 2: Negative stock allowed - quantity >= 0
                   {
                     $and: [{ negative_stock: true }, { available_quantity: { $gte: 0 } }],
                   },
 
-                  // Case 3: Normal stock — quantity > 0
+                  // Case 3: Normal stock - quantity > 0
                   {
                     $and: [
                       {

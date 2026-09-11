@@ -20,11 +20,11 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:8px;">
                             <div class="d-flex align-items-center" style="gap:8px;">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(-1);" aria-label="Previous week">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(-1);" aria-label="Previous week" data-t-aria-label="lang_previous_week">
                                     <i class="feather icon-chevron-left"></i>
                                 </button>
-                                <span id="roster_week_label" class="font-weight-bold" style="min-width:180px; text-align:center;">&mdash;</span>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(1);" aria-label="Next week">
+                                <span id="roster_week_label" class="font-weight-bold" style="min-width:180px; text-align:center;"><lang class="lang_text_2">&mdash;</lang></span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.roster.shiftWeek(1);" aria-label="Next week" data-t-aria-label="lang_next_week">
                                     <i class="feather icon-chevron-right"></i>
                                 </button>
                                 <button type="button" class="btn btn-outline-primary btn-sm" onclick="PosnicPro.roster.thisWeek();">
@@ -34,7 +34,7 @@
                             <small class="text-muted"><lang class="lang_roster_readonly_hint">Planned by management under Manage &gt; Workforce.</lang></small>
                         </div>
                         <div id="roster_view_body">
-                            <div class="text-center text-muted p-4">Loading&hellip;</div>
+                            <div class="text-center text-muted p-4"><lang class="lang_loading">Loading&hellip;</lang></div>
                         </div>
                     </div>
                 </div>

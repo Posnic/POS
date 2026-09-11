@@ -26,7 +26,7 @@
                                 <img src="static/images/default/store.png" id="store_image" onerror="this.onerror=null;this.src='static/images/default/store.png';" class="img-fluid rounded text-center" style="width: 63px; margin: 0 auto;" alt="shop" loading="lazy" decoding="async">
                             </div>
                             <div class="col-xs-12 col-sm-6 col-lg-3 mb-1 shop_name">
-                                <h3 class="text-secondary title_h2 branch-name mt-0 mb-1">Goldwins</h3>
+                                <h3 class="text-secondary title_h2 branch-name mt-0 mb-1"><lang class="lang_goldwins">Goldwins</lang></h3>
                                 <p class="mb-0 font-14"><lang class="lang_branch_title">Branch</lang></p>
                             </div>
                             <div class="col-xs-12 col-sm-12 col-lg-8 mb-1 shop_button_group">
@@ -53,13 +53,13 @@
                     <div class="card bg-primary-rgba m-b-30">
                         <div class="card-body" style="padding:14px 18px;">
                             <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap:10px;">
-                                <h5 class="text-primary mb-0" id="dashboard_greeting">Welcome</h5>
+                                <h5 class="text-primary mb-0" id="dashboard_greeting"><lang class="lang_welcome">Welcome</lang></h5>
                                 <div class="d-flex flex-wrap" style="gap:8px;">
-                                    <a href="#/sales/new" data-module="sales" data-access="write" class="btn btn-primary btn-sm"><i class="feather icon-plus-circle mr-1"></i>New Sale</a>
-                                    <a href="#/sales" data-module="sales" data-access="read||write||delete" class="btn btn-light btn-sm"><i class="feather icon-shopping-bag mr-1"></i>Sales History</a>
-                                    <a href="#/quickreport" data-module="report" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-bar-chart-2 mr-1"></i>Daily Report</a>
-                                    <a href="#/items" data-module="item" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-package mr-1"></i>Items</a>
-                                    <a href="#/items/new" data-module="item" data-access="write" class="btn btn-light btn-sm"><i class="feather icon-plus mr-1"></i>Add Item</a>
+                                    <a href="#/sales/new" data-module="sales" data-access="write" class="btn btn-primary btn-sm"><i class="feather icon-plus-circle mr-1"></i><lang class="lang_addnewsale_title">New Sale</lang></a>
+                                    <a href="#/sales" data-module="sales" data-access="read||write||delete" class="btn btn-light btn-sm"><i class="feather icon-shopping-bag mr-1"></i><lang class="lang_salehistory_title">Sales History</lang></a>
+                                    <a href="#/quickreport" data-module="report" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-bar-chart-2 mr-1"></i><lang class="lang_daily_report">Daily Report</lang></a>
+                                    <a href="#/items" data-module="item" data-access="read" class="btn btn-light btn-sm"><i class="feather icon-package mr-1"></i><lang class="lang_itemdetail_title">Items</lang></a>
+                                    <a href="#/items/new" data-module="item" data-access="write" class="btn btn-light btn-sm"><i class="feather icon-plus mr-1"></i><lang class="lang_additem_title">Add Item</lang></a>
                                 </div>
                             </div>
                         </div>
@@ -74,15 +74,15 @@
                     <div class="card m-b-30">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0 text-secondary"><i class="feather icon-bar-chart-2 mr-1"></i> Totals <span class="text-muted" style="font-size:12px;" id="kpi_period_label"></span></h5>
+                                <h5 class="mb-0 text-secondary"><i class="feather icon-bar-chart-2 mr-1"></i> <lang class="lang_totals">Totals</lang> <span class="text-muted" style="font-size:12px;" id="kpi_period_label"></span></h5>
                             </div>
                             <div class="row text-center">
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Sales</div><h4 class="mb-0" id="kpi_sales">&mdash;</h4></div>
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Purchase</div><h4 class="mb-0" id="kpi_purchase">&mdash;</h4></div>
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Expenses</div><h4 class="mb-0" id="kpi_expenses">&mdash;</h4></div>
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Tax</div><h4 class="mb-0" id="kpi_tax">&mdash;</h4></div>
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total UPI</div><h4 class="mb-0" id="kpi_upi">&mdash;</h4></div>
-                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;">Total Cash</div><h4 class="mb-0" id="kpi_cash">&mdash;</h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_noreturnds">Total Sales</lang></div><h4 class="mb-0" id="kpi_sales"><lang class="lang_text_2">&mdash;</lang></h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_total_purchase">Total Purchase</lang></div><h4 class="mb-0" id="kpi_purchase"><lang class="lang_text_2">&mdash;</lang></h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_total_expenses">Total Expenses</lang></div><h4 class="mb-0" id="kpi_expenses"><lang class="lang_text_2">&mdash;</lang></h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_total_tax">Total Tax</lang></div><h4 class="mb-0" id="kpi_tax"><lang class="lang_text_2">&mdash;</lang></h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_total_upi">Total UPI</lang></div><h4 class="mb-0" id="kpi_upi"><lang class="lang_text_2">&mdash;</lang></h4></div>
+                                <div class="col-6 col-md-4 col-lg-2 mb-2"><div class="text-muted" style="font-size:12.5px;"><lang class="lang_total_cash">Total Cash</lang></div><h4 class="mb-0" id="kpi_cash"><lang class="lang_text_2">&mdash;</lang></h4></div>
                             </div>
                         </div>
                     </div>
@@ -95,22 +95,22 @@
                     <div class="card m-b-30">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0 text-secondary"><i class="feather icon-trending-up mr-1"></i> Profit <span class="text-muted" style="font-size:12px;" id="profit_period_label"></span></h5>
+                                <h5 class="mb-0 text-secondary"><i class="feather icon-trending-up mr-1"></i> <lang class="lang_profit">Profit</lang> <span class="text-muted" style="font-size:12px;" id="profit_period_label"></span></h5>
                                 <span class="text-muted" id="profit_sales_count" style="font-size:12px;"></span>
                             </div>
                             <div class="row text-center align-items-center" style="font-size:13.5px;">
-                                <div class="col-6 col-md mb-2"><div class="text-muted">Sales</div><div class="f-w-6" id="profit_revenue">-</div></div>
-                                <div class="col-6 col-md mb-2"><div class="text-muted">Cost of goods</div><div class="f-w-6" id="profit_cogs">-</div></div>
-                                <div class="col-6 col-md mb-2"><div class="text-muted">Gross profit</div><div class="f-w-6 text-success" id="profit_gross">-</div></div>
-                                <div class="col-6 col-md mb-2"><div class="text-muted">Expenses</div><div class="f-w-6 text-danger" id="profit_expenses">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted"><lang class="lang_rgrp_sales">Sales</lang></div><div class="f-w-6" id="profit_revenue">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted"><lang class="lang_cost_of_goods">Cost of goods</lang></div><div class="f-w-6" id="profit_cogs">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted"><lang class="lang_gross_profit">Gross profit</lang></div><div class="f-w-6 text-success" id="profit_gross">-</div></div>
+                                <div class="col-6 col-md mb-2"><div class="text-muted"><lang class="lang_expensecut_title">Expenses</lang></div><div class="f-w-6 text-danger" id="profit_expenses">-</div></div>
                                 <div class="col-12 col-md mb-2" style="border-left:1px solid #eef0f3;">
-                                    <div class="text-muted">Net profit</div>
+                                    <div class="text-muted"><lang class="lang_net_profit">Net profit</lang></div>
                                     <div style="font-size:22px; font-weight:700;" id="profit_net" class="text-success">-</div>
                                     <div class="text-muted" style="font-size:12px;" id="profit_margin"></div>
                                 </div>
                             </div>
                             <div class="text-muted" style="font-size:11.5px; margin-top:6px;">
-                                Net profit = sales &minus; cost of goods sold &minus; expenses, using the cost recorded on each sale.
+                                <lang class="lang_net_profit_sales_cost_of_goods_sold_expens">Net profit = sales &minus; cost of goods sold &minus; expenses, using the cost recorded on each sale.</lang>
                                 <span id="profit_cashflow_note"></span>
                             </div>
                         </div>
@@ -172,7 +172,7 @@
                         <div class="card-body recentBody" style="min-height:auto;">
                             <div class="ecom-notification-box">
                                 <ul class="list-unstyled" id="lstRecentActivities">
-                                    <li class="text-muted" style="padding:12px 4px;">No customer owes money right now.</li>
+                                    <li class="text-muted" style="padding:12px 4px;"><lang class="lang_no_customer_owes_money_right_now">No customer owes money right now.</lang></li>
                                 </ul>
                             </div>
                         </div>

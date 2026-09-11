@@ -5,7 +5,7 @@
 // approval, role/permission change). Multi-tenant scoped by license + branch.
 //
 // Complements `data_change_log` (field-level CRUD diffs, written by
-// BaseModel.changeLog) — this records the ACTION, not the row diff.
+// BaseModel.changeLog) - this records the ACTION, not the row diff.
 //
 // Native-driver data-access class extending BaseModel (not Mongoose). All DB
 // operations are inherited; this class only declares the collection + fields.

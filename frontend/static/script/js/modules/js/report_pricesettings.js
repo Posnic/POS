@@ -23,7 +23,7 @@ PosnicPro.pricesettings = {
     loadCategories: function () {
         if (this._catsLoaded) return;
         PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
-            var opts = '<option value="">Choose a category</option>';
+            var opts = '<option value="" data-t="lang_choose_a_category_2">Choose a category</option>';
             $.each((response && response.suggestions) || [], function (i, c) {
                 opts += '<option value="' + c.id + '">' + $('<div>').text(c.name).html() + '</option>';
             });
@@ -42,12 +42,12 @@ PosnicPro.pricesettings = {
         var scope = $('#ps_margin_scope').val();
         var margin = $('#ps_margin_value').val();
         if (margin === '' || isNaN(margin) || Number(margin) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid margin %.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_valid_margin', 'Enter a valid margin %.'));
             return null;
         }
         var category_id = scope === 'category' ? $('#ps_margin_category').val() : null;
         if (scope === 'category' && !category_id) {
-            PosnicPro.alert('warning', 'Choose a category.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
             return null;
         }
         return {
@@ -61,13 +61,13 @@ PosnicPro.pricesettings = {
     checkMargin: function () {
         var form = this._marginForm();
         if (!form) return;
-        var box = $('#ps_margin_result').html('<span class="text-muted">Checking&hellip;</span>').show();
+        var box = $('#ps_margin_result').html('<span class="text-muted"><lang class="lang_checking_2">Checking&hellip;</lang></span>').show();
         PosnicPro.post({ url: 'items/marginPreview', data: JSON.stringify(form) }, function (r) {
             if (r.type !== 'success') { box.hide(); PosnicPro.alert(r.type, r.message); return; }
             var d = r.data || {};
             var msg = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
             if (d.noCost) msg += ' <span class="text-muted">' + d.noCost + ' have no cost price (left alone).</span>';
-            if (d.exceedsMrpCount) msg += '<div class="text-danger" style="margin-top:4px;">' + d.exceedsMrpCount + ' would price above MRP &mdash; skipped when the box is ticked.</div>';
+            if (d.exceedsMrpCount) msg += '<div class="text-danger" style="margin-top:4px;">' + d.exceedsMrpCount + ' would price above MRP, skipped when the box is ticked.</div>';
             box.attr('class', d.exceedsMrpCount ? 'alert alert-warning' : 'alert alert-success')
                 .css({ 'font-size': '12.5px', 'padding': '8px 12px' }).html(msg).show();
         }, function () { box.hide(); });
@@ -90,12 +90,12 @@ PosnicPro.pricesettings = {
         var scope = $('#ps_custom_scope').val();
         var value = $('#ps_custom_value').val();
         if (value === '' || isNaN(value) || Number(value) < 0) {
-            PosnicPro.alert('warning', 'Enter a valid value.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_valid_value', 'Enter a valid value.'));
             return null;
         }
         var category_id = scope === 'category' ? $('#ps_custom_category').val() : null;
         if (scope === 'category' && !category_id) {
-            PosnicPro.alert('warning', 'Choose a category.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
             return null;
         }
         return {
@@ -111,13 +111,13 @@ PosnicPro.pricesettings = {
     checkCustom: function () {
         var form = this._customForm();
         if (!form) return;
-        var box = $('#ps_custom_result').html('<span class="text-muted">Checking&hellip;</span>').show();
+        var box = $('#ps_custom_result').html('<span class="text-muted"><lang class="lang_checking_2">Checking&hellip;</lang></span>').show();
         PosnicPro.post({ url: 'items/bulkPricePreview', data: JSON.stringify(form) }, function (r) {
             if (r.type !== 'success') { box.hide(); PosnicPro.alert(r.type, r.message); return; }
             var d = r.data || {};
             var issues = (d.exceedsMrpCount || 0) + (d.belowCostCount || 0);
             var msg = '<b>' + (d.willChange || 0) + '</b> of ' + (d.total || 0) + ' item(s) would change.';
-            if (issues) msg += '<div class="text-danger" style="margin-top:4px;">' + (d.exceedsMrpCount || 0) + ' above MRP, ' + (d.belowCostCount || 0) + ' below cost &mdash; skipped when ticked.</div>';
+            if (issues) msg += '<div class="text-danger" style="margin-top:4px;">' + (d.exceedsMrpCount || 0) + ' above MRP, ' + (d.belowCostCount || 0) + ' below cost, skipped when ticked.</div>';
             box.attr('class', issues ? 'alert alert-warning' : 'alert alert-success')
                 .css({ 'font-size': '12.5px', 'padding': '8px 12px' }).html(msg).show();
         }, function () { box.hide(); });
@@ -141,13 +141,13 @@ PosnicPro.pricesettings = {
         var size = this._histSize;
         var skip = (this._histPage - 1) * size;
         var currency = PosnicPro.local.get('currencySign') || '';
-        var body = $('#ps_history_body').html('<tr><td colspan="5" class="text-center text-muted" style="padding:16px;">Loading&hellip;</td></tr>');
+        var body = $('#ps_history_body').html('<tr><td colspan="5" class="text-center text-muted" style="padding:16px;"><lang class="lang_loading">Loading&hellip;</lang></td></tr>');
         PosnicPro.get({ url: 'items/bulkPriceHistory', data: 'limit=' + size + '&skip=' + skip }, function (r) {
             var d = (r && r.data) || {};
             var runs = d.runs || [];
             var total = d.total || 0;
             if (!runs.length) {
-                body.html('<tr><td colspan="5" class="text-center text-muted" style="padding:16px;">No bulk price changes yet.</td></tr>');
+                body.html('<tr><td colspan="5" class="text-center text-muted" style="padding:16px;"><lang class="lang_no_bulk_price_changes_yet">No bulk price changes yet.</lang></td></tr>');
                 $('#ps_history_pager').html('');
                 return;
             }
@@ -160,7 +160,7 @@ PosnicPro.pricesettings = {
                 var f = esc(run.label || run.field || 'Price');
                 var scope = run.scope === 'category' ? 'one category' : 'all items';
                 if (run.op === 'margin' || run.op === 'markup' || run.direction === 'margin') {
-                    return (run.op === 'markup' ? 'Markup' : 'Margin') + ' ' + run.value + '% &rarr; ' + f + ', ' + scope;
+                    return (run.op === 'markup' ? PosnicPro.i18n.t('lang_markup', 'Markup') : PosnicPro.i18n.t('lang_margin', 'Margin')) + ' ' + run.value + '% &rarr; ' + f + ', ' + scope;
                 }
                 var arrow = run.direction === 'decrease' ? '<span class="text-danger">&darr;</span>' : '<span class="text-success">&uarr;</span>';
                 var by = run.op === 'percent' ? run.value + '%' : currency + ' ' + run.value;

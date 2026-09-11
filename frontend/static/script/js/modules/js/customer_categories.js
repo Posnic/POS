@@ -47,9 +47,9 @@ PosnicPro.customercategory = {
     openDoc: function (id) {
         var self = PosnicPro.customercategory;
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="write" data-toggle="tooltip" title="Edit this category" aria-label="Edit"'
+        var actions = '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="write" data-toggle="tooltip" title="Edit this category" data-t-title="lang_edit_this_category" aria-label="Edit" data-t-aria-label="lang_edit_title"'
             + ' onclick="hasher.setHash(\'customercategory/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
-            + '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="delete" data-toggle="tooltip" title="Delete this category" aria-label="Delete"'
+            + '<button type="button" class="btn btn-sm btn-light" data-module="customer" data-access="delete" data-toggle="tooltip" title="Delete this category" data-t-title="lang_delete_this_category" aria-label="Delete" data-t-aria-label="lang_delete"'
             + ' onclick="PosnicPro.listDoc.close(\'customercategory\'); hasher.setHash(\'customercategory/' + esc(id) + '/delete\');"><i class="feather icon-trash-2"></i></button>';
         var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
         if (r) {
@@ -58,12 +58,12 @@ PosnicPro.customercategory = {
             self.loadActivity(id);
             return;
         }
-        PosnicPro.listDoc.open({ key: 'customercategory', id: id, title: 'Customer category', actions: actions });
+        PosnicPro.listDoc.open({ key: 'customercategory', id: id, title: PosnicPro.i18n.t('lang_customer_category', 'Customer category'), actions: actions });
         PosnicPro.ACLForModule('customer');
         PosnicPro.get('customerCategory/' + id, function (response) {
             var d = response && response.data;
             if (response.type !== 'success' || !d) {
-                PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3">Could not open this category.</div>');
+                PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_category">Could not open this category.</lang></div>');
                 return;
             }
             d._id = d._id || id;
@@ -71,23 +71,23 @@ PosnicPro.customercategory = {
             PosnicPro.listDoc.body('customercategory', self._docBody(d));
             self.loadActivity(id);
         }, function () {
-            PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3">Could not open this category.</div>');
+            PosnicPro.listDoc.body('customercategory', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_category">Could not open this category.</lang></div>');
         });
     },
     _docBody: function (r) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         return '<div class="s-doc-stats" id="cc_doc_stats"></div>'
             + PosnicPro.listDoc.grid([
-                { label: 'About', lines: [
-                    r.description ? '<div>' + esc(r.description) + '</div>' : '<div class="q-muted">No description</div>'
+                { label: PosnicPro.i18n.t('lang_about', 'About'), lines: [
+                    r.description ? '<div>' + esc(r.description) + '</div>' : '<div class="q-muted"><lang class="lang_no_description">No description</lang></div>'
                 ] },
-                { label: 'On record', lines: [
+                { label: PosnicPro.i18n.t('lang_on_record', 'On record'), lines: [
                     r.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(r.created_date)) + '</div>' : '',
                     r.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(r.updated_date)) + '</div>' : ''
                 ] }
             ])
-            + '<div class="q-label" style="margin-top:18px;">Recent sales</div>'
-            + '<div id="cc_doc_sales" class="q-muted" style="font-size:13px;">Loading ...</div>';
+            + '<div class="q-label" style="margin-top:18px;"><lang class="lang_recent_sales">Recent sales</lang></div>'
+            + '<div id="cc_doc_sales" class="q-muted" style="font-size:13px;"><lang class="lang_loading_4">Loading ...</lang></div>';
     },
     /* The customer category's sales, IN the pane - the slide-over is the
        recycle bin's door now, never the list's. */
@@ -102,7 +102,7 @@ PosnicPro.customercategory = {
             var list = (t && t.list) || [];
             var total = (t && Number(t.total)) || 0;
             if (!list.length) {
-                $('#cc_doc_sales').html('No sales from this category yet.');
+                $('#cc_doc_sales').html(PosnicPro.i18n.t('lang_no_sales_from_this_category_yet', 'No sales from this category yet.'));
                 return;
             }
             var pageValue = 0;
@@ -118,15 +118,15 @@ PosnicPro.customercategory = {
             }).join('');
             $('#cc_doc_stats').append(
                 '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
-                + '<div class="s-stat-label">' + (total === 1 ? 'Sale' : 'Sales') + '</div></div>'
+                + '<div class="s-stat-label">' + (total === 1 ? PosnicPro.i18n.t('lang_newsale_title', 'Sale') : PosnicPro.i18n.t('lang_rgrp_sales', 'Sales')) + '</div></div>'
                 + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + pageValue.toFixed(2) + '</div>'
                 + '<div class="s-stat-label">Sold' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
             $('#cc_doc_sales').removeClass('q-muted').html(
                 '<table class="q-items s-doc-purchases-table"><thead><tr>'
-                + '<th>Bill #</th><th>Date</th><th>Process</th><th class="text-right">Total</th>'
+                + '<th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_process_title">Process</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '</tr></thead><tbody>' + rows + '</tbody></table>');
         }, function () {
-            $('#cc_doc_sales').html('Sales history unavailable.');
+            $('#cc_doc_sales').html(PosnicPro.i18n.t('lang_sales_history_unavailable', 'Sales history unavailable.'));
         });
     },
     /* The name the OLD table machinery answered to - the save flow and the
@@ -159,11 +159,11 @@ PosnicPro.customercategory = {
             key: 'customercategory',
             container: '#customercategory_filter_panel',
             button: '#customercategory_filter_btn',
-            searchPlaceholder: 'Search category name',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_category_name', 'Search category name'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'name', label: 'Name' },
-                { value: 'description', label: 'Description' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
+                { value: 'description', label: PosnicPro.i18n.t('lang_description_title', 'Description') }
             ],
             onChange: function () { PosnicPro.customercategory.loadList(1); }
         });
@@ -184,12 +184,12 @@ PosnicPro.customercategory = {
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('customercategory') > 0;
                 $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (filtered ? 'No customer categories match this filter.' : 'No customer categories yet - press New to add the first.') + '</div>');
+                    + (filtered ? PosnicPro.i18n.t('lang_no_customer_categories_match_this_filter', 'No customer categories match this filter.') : PosnicPro.i18n.t('lang_no_customer_categories_yet_press_new_to_ad', 'No customer categories yet - press New to add the first.')) + '</div>');
                 $('#customercategory_list_paging').html('');
                 return;
             }
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th>Name</th><th class="cc-col-desc">Description</th></tr></thead><tbody>';
+                + '<thead><tr><th><lang class="lang_name_title">Name</lang></th><th class="cc-col-desc"><lang class="lang_description_title">Description</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 html += '<tr class="md-row customercategory-row highlight-select'
                     + (PosnicPro.listDoc.activeId('customercategory') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -202,14 +202,14 @@ PosnicPro.customercategory = {
             PosnicPro.ACLForModule('customer');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
-            $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">Could not load customer categories - try again.</div>');
+            $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_customer_categories_try_aga">Could not load customer categories - try again.</lang></div>');
         });
     },
     renderPager: function (total) {
         var self = PosnicPro.customercategory;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + (total === 1 ? ' customer category' : ' customer categories');
+        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_customer_category_2', 'customer category') : PosnicPro.i18n.t('lang_customer_categories', 'customer categories'));
         if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')

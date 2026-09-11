@@ -157,7 +157,7 @@ class WhatsAppService extends EventEmitter {
         // whatsapp-web.js / puppeteer can throw errors like
         // "Attempted to use detached Frame" or "Target closed" if the
         // underlying Chromium page is already gone. For a "Disconnect"
-        // action in the UI, these are safe to ignore – the user simply
+        // action in the UI, these are safe to ignore - the user simply
         // wants the session cleared.
         try {
           await client.logout();

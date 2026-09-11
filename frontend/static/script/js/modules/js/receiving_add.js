@@ -19,7 +19,7 @@ PosnicPro.receivings = {
         $("#receiving_add_payment_mode").empty();
         let paymentMethod = "";
         let ReceivingPaymentType = PosnicPro.configPaymentType;
-        $('#receiving_add_payment_mode').append('<option value="Cash" selected="selected">Cash</option>');
+        $('#receiving_add_payment_mode').append('<option value="Cash" selected="selected" data-t="lang_cash_title">Cash</option>');
         if (ReceivingPaymentType.leght !== 0) {
             $.each(ReceivingPaymentType, function (key, val) {
                 if (val.payment_value !== payment_mode) {
@@ -34,8 +34,8 @@ PosnicPro.receivings = {
     },
     showAdd: function () {
         PosnicPro.receivings.showPaymentMode('');
-        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_new_title', 'New'));
-//        $('.changeReceivingText').text('Save');
+        $('.purchase-tittle-change').text(PosnicPro.i18n.t('lang_addvariant_title', 'New'));
+//        $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         $('.changeReceivingText').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         PosnicPro.HideSideBarModal();
         $('#receiving_submit').removeAttr('disabled');
@@ -66,7 +66,7 @@ PosnicPro.receivings = {
         PosnicPro.commonDate();
         $('#receiving_image_upload').attr('src', 'static/images/default/receiving.png');
         //$('#receiving_logo').val('receiving.png');
-        $('.fileupload-preview').html('Upload file');
+        $('.fileupload-preview').html(PosnicPro.i18n.t('lang_upload_file', 'Upload file'));
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         PosnicPro.collapseMenuForWorkspace();
         $('#v-pills-purchase-tab,.receiving_new_shortcut').addClass('active');
@@ -136,7 +136,7 @@ PosnicPro.receivings = {
     autofillFromSupplier: function (lowStockOnly) {
         var supplierId = $('#receiving_add_supplier_id').val();
         if (!supplierId) {
-            PosnicPro.alert('warning', 'Choose a supplier first');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_supplier_first', 'Choose a supplier first'));
             return;
         }
         var range = localStorage.getItem('notificationrange') || 10;
@@ -158,7 +158,7 @@ PosnicPro.receivings = {
             });
             PosnicPro.alert('success', rows.length + (lowStockOnly ? ' low-stock' : '') + ' item(s) added from the supplier');
         }, function () {
-            PosnicPro.alert('error', 'Could not load the supplier items');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_supplier_items', 'Could not load the supplier items'));
         });
     },
     addReceivingLineItems: function (param) {
@@ -232,7 +232,7 @@ PosnicPro.receivings = {
                 '</div>';
         if (PosnicPro.receivings.receivingReturnAction !== 'return') {
             var remove = '<td id=addReceivingRemoveLineItem_' + id + '>' +
-                    '<button type="button" class="btn btn-danger-rgba mb-1" onclick="PosnicPro.receivings.removeLineItemReceiving(\'' + id + '\');"  aria-label="Delete"><i class="feather icon-trash"></i></button>' +
+                    '<button type="button" class="btn btn-danger-rgba mb-1" onclick="PosnicPro.receivings.removeLineItemReceiving(\'' + id + '\');"  aria-label="Delete" data-t-aria-label="lang_delete"><i class="feather icon-trash"></i></button>' +
                     '</td>';
             $('#return_hide_text').show();
             $('#return_show_text').hide();
@@ -252,8 +252,8 @@ PosnicPro.receivings = {
                 '   <td id=addReceivingLineItemName_' + id + ' width="30%" class="font_size14">' + param.item_name + '</td>' +
                 '   <td class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
                 '   <td name ="addReceivingLineItemUnit" id="addReceivingLineItemUnit_' + id + '">' + item_unit + '</td>' +
-                '   <td id=addReceivingLineItemPrice_' + id + ' class="text-center font_size14">' + tax_itemprice.toFixed(2) + '&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemCompanyPriceReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item price" style="cursor:pointer;"></i></span></td>' +
-                '   <td name="addReceivingLineItemTax" id="addReceivingLineItemTax_' + id + '" class="text-center font_size14 show-hide-exc-tax" style="display:none;">' + lineItemTax + '<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item tax" style="cursor:pointer;"></i></span></td>' +
+                '   <td id=addReceivingLineItemPrice_' + id + ' class="text-center font_size14">' + tax_itemprice.toFixed(2) + '&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemCompanyPriceReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item price" data-t-title="lang_edit_item_price" style="cursor:pointer;"></i></span></td>' +
+                '   <td name="addReceivingLineItemTax" id="addReceivingLineItemTax_' + id + '" class="text-center font_size14 show-hide-exc-tax" style="display:none;">' + lineItemTax + '<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item tax" data-t-title="lang_edit_item_tax" style="cursor:pointer;"></i></span></td>' +
                 '   <td id=addReceivingLineItemTotal_' + id + ' class="text-right font_size14">' + line_total.toFixed(2) + '</td>' +
                 '   <span>' + remove + ' </span>' +
                 '   <td id=addReceivingLineItemId_' + id + ' class="col-md-1" style="display:none;">' + id + '</td>' +
@@ -366,7 +366,7 @@ PosnicPro.receivings = {
             image_name = image_name ? [image_name] : [];
         }
 
-        $(image_name).each(function (key, val) {
+        image_name.forEach(function (val, key) {
             if (!val) {
                 return true; // continue
             }
@@ -385,19 +385,41 @@ PosnicPro.receivings = {
             var extension = image_path.substr((image_path.lastIndexOf('.') + 1)).toLowerCase();
             var title = (typeof val === 'object' && val.name) ? val.name : image_path;
 
-            var filepath;
-            if (extension === 'pdf') {
-                filepath = '<iframe class="img-thumbnail image_style" src="' + image_path + '" frameborder="0" style="border:none;" data-toggle="tooltip" title="' + escape(title) + '"></iframe>';
-            } else {
-                filepath = '<img loading="lazy" decoding="async" class="img-thumbnail image_style" src="' + image_path + '" \
-                            data-toggle="tooltip" title="' + escape(title) + '" />';
+            var parsedUrl;
+            try {
+                parsedUrl = new URL(image_path, window.location.href);
+            } catch (error) {
+                return;
+            }
+            if (!/^(https?:|blob:|file:)$/.test(parsedUrl.protocol)) {
+                return;
             }
 
-            $('#display-preview').append(
-                    '<div id="selector_' + key + '" class="receiving-image-wrapper image-area" style="position: relative;"> \
-            <span>' + filepath + ' </span><br /> \
-            <a class="remove-image" style="cursor:pointer;display: inline;position: absolute; top: -10px; right: -10px; border-radius: 10em; padding: 2px 6px 3px; text-decoration: none; font: 700 21px/20px sans-serif; background: #f48787; border: 3px solid #fff; color: #FFF; box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.5); -webkit-transition: background 0.5s; transition: background 0.5s;" onclick="PosnicPro.receivings.image_edit_remove_selected(\'' + key + '\',\'' + image_path + '\')">&#215;</a> \
-            </div>');
+            var $media;
+            if (extension === 'pdf') {
+                $media = $('<iframe>')
+                    .addClass('img-thumbnail image_style')
+                    .attr({ src: parsedUrl.href, frameborder: '0', title: title, 'data-toggle': 'tooltip' })
+                    .css('border', 'none');
+            } else {
+                $media = $('<img>')
+                    .addClass('img-thumbnail image_style')
+                    .attr({ src: parsedUrl.href, loading: 'lazy', decoding: 'async', title: title, 'data-toggle': 'tooltip' });
+            }
+
+            var $wrapper = $('<div>')
+                .attr('id', 'selector_' + key)
+                .addClass('receiving-image-wrapper image-area')
+                .css('position', 'relative');
+            var $remove = $('<button type="button">')
+                .addClass('remove-image')
+                .attr('aria-label', 'Remove image')
+                .text('\u00d7')
+                .on('click', function () {
+                    PosnicPro.receivings.image_edit_remove_selected(key, image_path);
+                });
+            $wrapper.append($('<span>').append($media), $('<br>'), $remove);
+            $('#display-preview').append($wrapper);
 
             // Keep only the URL for edit submissions; uploads for new images
             // still go through receiving_image_preview -> uploadReceivingImage.
@@ -417,10 +439,10 @@ PosnicPro.receivings = {
         $('#receiving_status_select option[value="Partial"]').remove();
         if (ep.receiving_receiving_status === 'Partial') {
             $('#receiving_status_select')
-                .append('<option value="Partial">Partially received</option>')
+                .append('<option value="Partial" data-t="lang_partially_received">Partially received</option>')
                 .val('Partial')
                 .prop('disabled', true)
-                .attr('title', 'Managed by the Receive flow - receive or cancel the rest from the purchase document');
+                .attr('title', PosnicPro.i18n.t('lang_managed_by_the_receive_flow_receive_or_can', 'Managed by the Receive flow - receive or cancel the rest from the purchase document'));
             $('#receiving_expected_wrap').show();
         } else {
             $('#receiving_status_select').prop('disabled', false);
@@ -439,9 +461,9 @@ PosnicPro.receivings = {
     addChargeRow: function (label, amount) {
         $('#receiving_charges_rows').append(
             '<div class="form-row charge-row align-items-center mt-2">'
-            + '<div class="col-7"><input type="text" class="form-control form-control-sm charge-label" placeholder="Freight" maxlength="40" aria-label="Charge label"></div>'
-            + '<div class="col-4"><input type="number" step="0.01" min="0" class="form-control form-control-sm text-right charge-amount" placeholder="0.00" aria-label="Charge amount"></div>'
-            + '<div class="col-1 text-center"><a href="javascript:void(0)" class="charge-remove text-danger" aria-label="Remove charge"><i class="feather icon-x"></i></a></div>'
+            + '<div class="col-7"><input type="text" class="form-control form-control-sm charge-label" placeholder="Freight" data-t-placeholder="lang_freight" maxlength="40" aria-label="Charge label" data-t-aria-label="lang_charge_label"></div>'
+            + '<div class="col-4"><input type="number" step="0.01" min="0" class="form-control form-control-sm text-right charge-amount" placeholder="0.00" aria-label="Charge amount" data-t-aria-label="lang_charge_amount"></div>'
+            + '<div class="col-1 text-center"><a href="javascript:void(0)" class="charge-remove text-danger" aria-label="Remove charge" data-t-aria-label="lang_remove_charge"><i class="feather icon-x"></i></a></div>'
             + '</div>');
         var row = $('#receiving_charges_rows .charge-row').last();
         if (label !== undefined) { row.find('.charge-label').val(label); }
@@ -524,7 +546,7 @@ PosnicPro.receivings = {
             note.text('Does not match the lines (' + computed.toFixed(2) + ') - saved with a warning flag.')
                 .attr('class', 'form-text text-warning');
         } else {
-            note.text('Matches the lines.').attr('class', 'form-text text-success');
+            note.text(PosnicPro.i18n.t('lang_matches_the_lines', 'Matches the lines.')).attr('class', 'form-text text-success');
         }
     },
     /* The credit flag speaks the shop's regime (set once per page load). */
@@ -533,7 +555,7 @@ PosnicPro.receivings = {
             var d = r && r.data;
             if (!d || !d.regime) { return; }
             if (d.regime === 'sales_tax') {
-                $('#receiving_itc_label').text('Purchased for resale (tax-exempt)');
+                $('#receiving_itc_label').text(PosnicPro.i18n.t('lang_purchased_for_resale_tax_exempt', 'Purchased for resale (tax-exempt)'));
             } else if (d.regime === 'none') {
                 $('#receiving_itc_eligible').closest('.form-group').hide();
             }
@@ -581,7 +603,7 @@ PosnicPro.receivings = {
                 var ItemQty = available_quantity;
                 PosnicPro.receivings.receivingTextboxQtyChange(ItemQty, id);
                 PosnicPro.receivings.addReceivingTableRowCalc();
-                PosnicPro.alert('error', 'Some items are out of stock.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                 return false;
             }
         }
@@ -651,7 +673,7 @@ PosnicPro.receivings = {
         $('#receiving_add_item_name').focus();
         $('#clearReceiving').show();
         $('#closeReceiving').hide();
-        $('.fileupload-preview').html('Upload file');
+        $('.fileupload-preview').html(PosnicPro.i18n.t('lang_upload_file', 'Upload file'));
         (PosnicPro.local.get('default_supplier_enable_disable') === 'false') ? $('#receiving_add_supplier_id,#receiving_add_supplier_name,#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('') : PosnicPro.defaultSupplierSet();
         PosnicPro.receivings.imageParams = [];
         PosnicPro.receivings.receivingAddAction = false;
@@ -678,7 +700,7 @@ PosnicPro.receivings = {
         $('#clearReceiving').show();
         $('#closeReceiving').hide();
         $('#receiving_discount_amount,#receiving_total').val("0");
-        $('.fileupload-preview').html('Upload file');
+        $('.fileupload-preview').html(PosnicPro.i18n.t('lang_upload_file', 'Upload file'));
         $('#receiving_upload_image').val('');
         PosnicPro.receiving_lineitems = [];
         PosnicPro.receivings.imageParams = [];
@@ -692,7 +714,7 @@ PosnicPro.receivings = {
         $('#addReceivingLineItemPrice_' + id).editable({
             type: 'text',
             pk: 1,
-            title: 'Edit cost',
+            title: PosnicPro.i18n.t('lang_edit_cost', 'Edit cost'),
             inputclass: 'form-control form-control-sm',
             tpl: '<input size="4"></input>',
             validate: function (value) {
@@ -703,12 +725,12 @@ PosnicPro.receivings = {
             },
             success: function (k, val) {
                 $('#addpurchasePrice_' + id + '').text(val);
-                $('#addReceivingLineItemPrice_' + id).replaceWith('<td id=addReceivingLineItemPrice_' + id + ' class="text-center font_size14">' + parseFloat(val).toFixed(2) + '&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemCompanyPriceReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item price" style="cursor:pointer;"></i></span></td>');
+                $('#addReceivingLineItemPrice_' + id).replaceWith('<td id=addReceivingLineItemPrice_' + id + ' class="text-center font_size14">' + parseFloat(val).toFixed(2) + '&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemCompanyPriceReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item price" data-t-title="lang_edit_item_price" style="cursor:pointer;"></i></span></td>');
                 let taxValue = $('#addReceivingLineItemTax_' + id + '').text();
                 let excvalue = (val / 100) * parseFloat(taxValue);
                 let lineTotal = parseFloat(val) + parseFloat(excvalue);
                 $('#addReceivingLineItemTotal_' + id + '').text(lineTotal.toFixed(2));
-                $('#addReceivingLineTaxtype_' + id).text('Exc');
+                $('#addReceivingLineTaxtype_' + id).text(PosnicPro.i18n.t('lang_exc', 'Exc'));
                 PosnicPro.receivings.addLineReceivingChangeQty(id);
                 let params = {
                     method: 'PUT',
@@ -732,7 +754,7 @@ PosnicPro.receivings = {
         $('#addReceivingLineItemTax_' + id).editable({
             type: 'text',
             pk: 1,
-            title: 'Edit tax value',
+            title: PosnicPro.i18n.t('lang_edit_tax_value', 'Edit tax value'),
             inputclass: 'form-control form-control-sm',
             tpl: '<input size="4" min="0" max="100" maxlength="4" onkeyup="this.value=PosnicPro.minmax(this.value,0,100)" onkeypress="return PosnicPro.isNumber(event)"></input>',
             value: intValue,
@@ -744,13 +766,13 @@ PosnicPro.receivings = {
             },
             success: function (k, val) {
                 $('#addReceivingLineItemTax_' + id + '').text(val);
-                $('#addReceivingLineItemTax_' + id).replaceWith('<td id=addReceivingLineItemTax_' + id + ' class="text-center font_size14 show-hide-exc-tax">' + val + '%&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item tax" style="cursor:pointer;"></i></span></td>');
+                $('#addReceivingLineItemTax_' + id).replaceWith('<td id=addReceivingLineItemTax_' + id + ' class="text-center font_size14 show-hide-exc-tax">' + val + '%&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + id + '" data-toggle="tooltip" title="Edit item tax" data-t-title="lang_edit_item_tax" style="cursor:pointer;"></i></span></td>');
 
                 let price = $('#addpurchasePrice_' + id + '').text();
                 let Excvalue = (price / 100) * parseFloat(val);
                 let lineTotal = parseFloat(price) + parseFloat(Excvalue);
                 $('#addReceivingLineItemTotal_' + id + '').text(lineTotal.toFixed(2));
-                $('#addReceivingLineTaxtype_' + id).text('Exc');
+                $('#addReceivingLineTaxtype_' + id).text(PosnicPro.i18n.t('lang_exc', 'Exc'));
                 PosnicPro.receivings.addLineReceivingChangeQty(id);
             }
         });
@@ -775,8 +797,8 @@ PosnicPro.receivings = {
                 PosnicPro.receivings.editPriceAction = 'edit';
             }
             if (data.available_quantity > 0) {
-                $('#item_title_data').text('Add');
-                $('#item_button_title').text('Save');
+                $('#item_title_data').text(PosnicPro.i18n.t('lang_nav_add', 'Add'));
+                $('#item_button_title').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
                 $('#items_edit_reset,.items_edit_reset').hide();
                 $('#items_reset').show();
                 $('#itemid').val('');
@@ -791,8 +813,8 @@ PosnicPro.receivings = {
                 $('#items_mrp_price').val(data.mrp_price);
                 $('#items_company_price').val(data.company_price);
                 $('#items_selling_price').val(data.selling_price);
-                $('#item_title_data').text('Edit');
-                $('#item_button_title').text('Update');
+                $('#item_title_data').text(PosnicPro.i18n.t('lang_edit_title', 'Edit'));
+                $('#item_button_title').text(PosnicPro.i18n.t('lang_refresh_title', 'Update'));
                 $('#items_edit_reset,.items_edit_reset').show();
                 $('#items_reset').hide();
                 $('#itemid').val(id);
@@ -886,10 +908,10 @@ PosnicPro.receivings = {
         if ($('#receiving_print tbody tr').find(':nth-child(8)').text() === '' || supplier_name === '') {
             if (supplier_name === '') {
                 $("#receiving_add_supplier_name").focus();
-                PosnicPro.alert('error', 'Enter a supplier name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_supplier_name', 'Enter a supplier name.'));
                 return false;
             }
-            PosnicPro.alert('warning', 'Add at least one item.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item', 'Add at least one item.'));
             $('#receiving_add_item_name').focus();
             return false;
         } else {
@@ -1054,7 +1076,7 @@ PosnicPro.receivings = {
                                 '<th class="text-center"><lang class="lang_qty_title">Qty </lang></th>' +
                                 '<th class="text-center"><lang class="lang_unit_title">Unit </lang></th>' +
                                 '<th class="text-right"><lang class="lang_cost_title">Cost </lang></th>' +
-                                '<th class="text-center"><lang class="lang_tax_title">Tax </lang></th>' +
+                                '<th class="text-center"><lang class="lang_module_tax">Tax </lang></th>' +
                                 '<th class="text-right"><lang class="lang_total_title">Total </lang></th>' +
                                 '</tr></thead>';
                         app = app + '' + head + '';
@@ -1087,9 +1109,9 @@ PosnicPro.receivings = {
                             app = app + '' + body + '';
                         });
                         var foot = '<tbody><tr>' +
-                                '<td colspan="4"><span class="pull-right"><b>Sub Total</b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + priceValue.toFixed(2) + '</b></span></td></tr>' +
-                                '<tr><td colspan="4"><span class="pull-right"><b>Tax Amount</b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + (total - priceValue).toFixed(2) + '</b></span></td>' +
-                                '<tr><td colspan="4"><span class="pull-right"><b>Grand Total</b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + total.toFixed(2) + '</b></span></td>' +
+                                '<td colspan="4"><span class="pull-right"><b><lang class="lang_sub_total">Sub Total</lang></b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + priceValue.toFixed(2) + '</b></span></td></tr>' +
+                                '<tr><td colspan="4"><span class="pull-right"><b><lang class="lang_tax_amount">Tax Amount</lang></b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + (total - priceValue).toFixed(2) + '</b></span></td>' +
+                                '<tr><td colspan="4"><span class="pull-right"><b><lang class="lang_grand_total">Grand Total</lang></b></span></td><td colspan="2"><span class="pull-right"><b>' + currency + '&nbsp;' + total.toFixed(2) + '</b></span></td>' +
                                 '</tr><tr><td colspan="6"></td></tr></tbody>';
                         app = app + '' + foot + '';
                     }
@@ -1110,10 +1132,10 @@ PosnicPro.receivings = {
         if ($('#receiving_print tbody tr').find(':nth-child(8)').text() === '' || supplier_name === '') {
             if (supplier_name === '') {
                 $("#receiving_add_supplier_name").focus();
-                PosnicPro.alert('error', 'Enter a supplier name.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_supplier_name', 'Enter a supplier name.'));
                 return false;
             }
-            PosnicPro.alert('warning', 'Add at least one item.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_item', 'Add at least one item.'));
             $('#receiving_add_item_name').focus();
             return false;
         } else {
@@ -1277,7 +1299,7 @@ PosnicPro.receivings = {
         $('#receiviing_img_hide').show();
         (PosnicPro.local.get('default_supplier_enable_disable') === 'false') ? $('#receiving_add_supplier_id,#receiving_add_supplier_name,#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('') : PosnicPro.defaultSupplierSet();
         PosnicPro.receiving_lineitems = [];
-        PosnicPro.alert('success', 'Receiving cancelled.');
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_receiving_cancelled', 'Receiving cancelled.'));
         $('#reset_modal').modal('hide');
     },
     receivingImageFormSubmit: function () {
@@ -1313,7 +1335,7 @@ PosnicPro.receivings = {
             }
         } else {
             $('#receiving_add_item_name').focus();
-            PosnicPro.alert('error', 'Add product');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_add_product', 'Add product'));
         }
         return false;
     },
@@ -1361,7 +1383,7 @@ PosnicPro.receivings = {
                 }
 
                 if ($('#display-preview').find('div').length > 5) {
-                    PosnicPro.alert('error', "Maximum 6 files are allowed");
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_maximum_6_files_are_allowed', 'Maximum 6 files are allowed'));
                     return false;
                 }
 
@@ -1770,11 +1792,11 @@ $('#exclusive_tax').click(function () {
             if (isChecked) {
                 // When checked, restore the original tax percentage
                 hiddenTaxElement.text(originalTaxPercentage);
-                visibleTaxElement.html(originalTaxPercentage + '<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + itemId + '" data-toggle="tooltip" title="Edit item tax" style="cursor:pointer;"></i></span>');
+                visibleTaxElement.html(originalTaxPercentage + '<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + itemId + '" data-toggle="tooltip" title="Edit item tax" data-t-title="lang_edit_item_tax" style="cursor:pointer;"></i></span>');
             } else {
                 // When unchecked, set tax to 0 for calculation
                 hiddenTaxElement.text(0);
-                visibleTaxElement.html('0<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + itemId + '" data-toggle="tooltip" title="Edit item tax" style="cursor:pointer;"></i></span>');
+                visibleTaxElement.html('0<span>%</span>&nbsp;&nbsp;<span class="receving-return-hide"><i class="feather icon-edit-1 text-success" onclick="return PosnicPro.receivings.editItemTaxReceiving(this);"  data-id="' + itemId + '" data-toggle="tooltip" title="Edit item tax" data-t-title="lang_edit_item_tax" style="cursor:pointer;"></i></span>');
             }
             
             // Recalculate this line item
@@ -1854,13 +1876,13 @@ PosnicPro.purchaseorders = {
             key: 'receivings',
             container: '#purchases_filter_panel',
             button: '#purchases_filter_btn',
-            searchPlaceholder: 'Search purchase no, supplier or phone',
-            dateField: 'Bill date',
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_purchase_no_supplier_or_phone', 'Search purchase no, supplier or phone'),
+            dateField: PosnicPro.i18n.t('lang_bill_date', 'Bill date'),
             searchFields: [
-                { value: 'all', label: 'All fields' },
-                { value: 'receiving_id', label: 'Purchase no' },
-                { value: 'supplier_name', label: 'Supplier' },
-                { value: 'supplier_phone', label: 'Phone' }
+                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
+                { value: 'receiving_id', label: PosnicPro.i18n.t('lang_purchase_no', 'Purchase no') },
+                { value: 'supplier_name', label: PosnicPro.i18n.t('lang_newsupplier_title', 'Supplier') },
+                { value: 'supplier_phone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') }
             ],
             typeahead: 'supplier',
             typeaheadField: 'supplier_name',
@@ -1899,11 +1921,11 @@ PosnicPro.purchaseorders = {
         PosnicPro.purchaseorders.mountPurchaseFilters();
         PosnicPro.listSort.mount('purchases', {
             options: [
-                { v: 'date_asc', l: 'Bill date: oldest', i: 'rotate-ccw' },
-                { v: 'total_desc', l: 'Highest amount first', i: 'arrow-down' },
-                { v: 'total_asc', l: 'Lowest amount first', i: 'arrow-up' },
-                { v: 'expected_asc', l: 'Expected: soonest', i: 'truck' },
-                { v: 'supplier', l: 'Supplier A to Z', i: 'type' }
+                { v: 'date_asc', l: PosnicPro.i18n.t('lang_bill_date_oldest', 'Bill date: oldest'), i: 'rotate-ccw' },
+                { v: 'total_desc', l: PosnicPro.i18n.t('lang_highest_amount_first', 'Highest amount first'), i: 'arrow-down' },
+                { v: 'total_asc', l: PosnicPro.i18n.t('lang_lowest_amount_first', 'Lowest amount first'), i: 'arrow-up' },
+                { v: 'expected_asc', l: PosnicPro.i18n.t('lang_expected_soonest', 'Expected: soonest'), i: 'truck' },
+                { v: 'supplier', l: PosnicPro.i18n.t('lang_supplier_a_to_z', 'Supplier A to Z'), i: 'type' }
             ],
             onChange: function () { PosnicPro.purchaseorders.loadList(1); }
         });
@@ -1967,7 +1989,7 @@ PosnicPro.purchaseorders = {
             if (!pageRows.length) {
                 var isFiltered = !!chip || !!expChip || PosnicPro.listFilter.activeCount('receivings') > 0;
                 $('#po_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
-                    + (isFiltered ? 'No purchases match this filter.' : 'No purchases yet - press New Purchase to record the first.') + '</div>');
+                    + (isFiltered ? PosnicPro.i18n.t('lang_no_purchases_match_this_filter', 'No purchases match this filter.') : PosnicPro.i18n.t('lang_no_purchases_yet_press_new_purchase_to_rec', 'No purchases yet - press New Purchase to record the first.')) + '</div>');
                 $('#po_list_paging').html('');
                 return;
             }
@@ -1975,13 +1997,13 @@ PosnicPro.purchaseorders = {
             var P = self.STATUS_PILL, L = self.STATUS_LABEL;
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr>'
-                + '<th class="p-col-num">Purchase #</th><th>Supplier</th><th class="p-col-date">Date</th><th class="p-col-created">Created</th>'
-                + '<th class="p-col-expected">Expected</th><th class="text-right">Total</th><th class="text-center">Status</th>'
+                + '<th class="p-col-num"><lang class="lang_purchase_2">Purchase #</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th class="p-col-date"><lang class="lang_date_title">Date</lang></th><th class="p-col-created"><lang class="lang_created">Created</lang></th>'
+                + '<th class="p-col-expected"><lang class="lang_expected">Expected</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th class="text-center"><lang class="lang_userstatus">Status</lang></th>'
                 + '</tr></thead><tbody>';
             pageRows.forEach(function (r) {
                 var key = r.kind + ':' + r.id;
                 var badges = '';
-                if (r.mismatch) { badges += ' <i class="feather icon-alert-triangle text-warning" title="Invoice total mismatch"></i>'; }
+                if (r.mismatch) { badges += ' <i class="feather icon-alert-triangle text-warning" title="Invoice total mismatch" data-t-title="lang_invoice_total_mismatch"></i>'; }
                 if (r.hasDoc) { badges += ' <i class="feather icon-paperclip text-muted"></i>'; }
                 var pill = '<span class="rs-pill ' + (P[r.status] || 'hold') + '">' + (L[r.status] || esc(r.status)) + '</span>';
                 html += '<tr class="md-row purchases-row highlight-select' + (self._openDocKey === key ? ' is-active' : '') + '"'
@@ -2051,7 +2073,7 @@ PosnicPro.purchaseorders = {
         var label;
         if (total !== null && total !== undefined) {
             pages = Math.ceil(total / size) || 1;
-            label = total + (total === 1 ? ' purchase' : ' purchases');
+            label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_purchase_4', 'purchase') : PosnicPro.i18n.t('lang_purchases', 'purchases'));
             if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         } else {
             var first = (p - 1) * size + 1;
@@ -2109,12 +2131,12 @@ PosnicPro.purchaseorders = {
             return;
         }
         $('#purchases_po_host').hide();
-        $('#purchases_doc').show().html('<div class="text-center text-muted" style="padding:60px;">Loading ...</div>');
+        $('#purchases_doc').show().html('<div class="text-center text-muted" style="padding:60px;"><lang class="lang_loading_4">Loading ...</lang></div>');
         PosnicPro.get('receivings/' + id, function (response) {
-            if (response.type !== 'success') { $('#purchases_doc').html('<div class="text-danger p-4">Could not open this purchase.</div>'); return; }
+            if (response.type !== 'success') { $('#purchases_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_purchase">Could not open this purchase.</lang></div>'); return; }
             PosnicPro.purchaseorders.renderPurchaseDoc(response.data);
             PosnicPro.ACLForModule('receiving');
-        }, function () { $('#purchases_doc').html('<div class="text-danger p-4">Could not open this purchase.</div>'); });
+        }, function () { $('#purchases_doc').html('<div class="text-danger p-4"><lang class="lang_could_not_open_this_purchase">Could not open this purchase.</lang></div>'); });
     },
     closeDoc: function () {
         PosnicPro.purchaseorders._openDocKey = null;
@@ -2152,7 +2174,7 @@ PosnicPro.purchaseorders = {
         var L = PosnicPro.purchaseorders.STATUS_LABEL;
         var st = cancelled ? 'cancelled' : partial ? 'partial' : open ? 'ordered' : 'received';
         var logo = PosnicPro.local.get('branchimage');
-        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? 'GSTIN' : 'Tax ID';
+        var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var seller = '<div class="q-seller">'
             + (logo && logo !== 'store.png' ? '<img loading="lazy" decoding="async" class="q-logo" src="' + esc(logo) + '" alt="">' : '')
             + '<div class="q-shop">' + esc(PosnicPro.local.get('branchname') || '') + '</div>';
@@ -2165,13 +2187,13 @@ PosnicPro.purchaseorders = {
         if (gst) { seller += '<div class="q-muted">' + taxLabel + ': ' + esc(gst) + '</div>'; }
         seller += '</div>';
         var title = '<div class="q-title-block">'
-            + '<div class="q-doc-title">PURCHASE</div>'
+            + '<div class="q-doc-title"><lang class="lang_purchase_3">PURCHASE</lang></div>'
             + '<div class="q-num">' + esc(d.receiving_id) + '</div>'
             + '<div class="q-muted">Bill date: ' + dt(d.date) + '</div>'
             + (d.expected_date ? '<div class="q-muted">Expected: ' + dt(d.expected_date) + '</div>' : '')
             + '<div class="q-status">' + L[st].toUpperCase() + '</div>'
             + '</div>';
-        var supplier = '<div class="q-billto"><div class="q-label">Supplier</div>'
+        var supplier = '<div class="q-billto"><div class="q-label"><lang class="lang_newsupplier_title">Supplier</lang></div>'
             + '<div class="q-cust">' + esc(d.supplier_name || '-') + '</div>'
             + (real(d.supplier_address) ? '<div class="q-muted">' + esc(d.supplier_address) + '</div>' : '')
             + '<div class="q-muted">'
@@ -2182,8 +2204,8 @@ PosnicPro.purchaseorders = {
             + (real(d.supplier_email) ? '<div class="q-muted">Email: ' + esc(d.supplier_email) + '</div>' : '')
             + '</div>';
         var items = '<div class="table-responsive"><table class="q-items"><thead><tr>'
-            + '<th>#</th><th>Item</th><th class="text-right">Qty</th>'
-            + '<th class="text-right">Unit cost</th><th class="text-right">Tax</th><th class="text-right">Amount</th>'
+            + '<th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
+            + '<th class="text-right"><lang class="lang_unit_cost">Unit cost</lang></th><th class="text-right"><lang class="lang_module_tax">Tax</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
         (d.items || []).forEach(function (l, i) {
             var tax = (Number(l.igst_tax) || 0) + (Number(l.cgst_tax) || 0) + (Number(l.sgst_tax) || 0);
@@ -2192,16 +2214,16 @@ PosnicPro.purchaseorders = {
                 ? got + ' / ' + esc(l.item_quantity)
                 : esc(l.item_quantity);
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
-                + '<td class="text-right"' + (got !== null && got < (parseFloat(l.item_quantity) || 0) ? ' title="Received so far / ordered"' : '') + '>' + qtyCell + ' ' + esc(l.item_unit || '') + '</td>'
+                + '<td class="text-right"' + (got !== null && got < (parseFloat(l.item_quantity) || 0) ? ' title="Received so far / ordered" data-t-title="lang_received_so_far_ordered"' : '') + '>' + qtyCell + ' ' + esc(l.item_unit || '') + '</td>'
                 + '<td class="text-right">' + money(l.item_price) + '</td>'
                 + '<td class="text-right">' + money(tax) + '</td>'
                 + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
         });
         items += '</tbody><tfoot>'
-            + '<tr class="q-sub"><td colspan="5" class="text-right">Subtotal</td>'
+            + '<tr class="q-sub"><td colspan="5" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
             + '<td class="text-right">' + money(d.subtotal_amount) + '</td></tr>'
             + (Number(d.tax) > 0
-                ? '<tr class="q-sub"><td colspan="5" class="text-right">Tax</td><td class="text-right">' + money(d.tax) + '</td></tr>'
+                ? '<tr class="q-sub"><td colspan="5" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(d.tax) + '</td></tr>'
                 : '')
             + (d.additional_charges || []).map(function (c) {
                 return '<tr class="q-sub"><td colspan="5" class="text-right">' + esc(c.label || 'Charge')
@@ -2212,23 +2234,23 @@ PosnicPro.purchaseorders = {
                     + (d.invoice_total_mismatch ? ' <i class="feather icon-alert-triangle text-warning"></i>' : '')
                     + '</td><td class="text-right">' + money(d.invoice_total_declared) + '</td></tr>'
                 : '')
-            + '<tr class="q-grand"><th colspan="5" class="text-right">TOTAL</th>'
+            + '<tr class="q-grand"><th colspan="5" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
             + '<th class="text-right">' + money(d.total_amount) + '</th></tr>'
             + '</tfoot></table></div>';
         var footer = '<div class="q-footer">';
-        footer += '<div class="q-block"><div class="q-label">Payment details</div>'
+        footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
             + '<div>' + esc(d.payment_mode || '-') + '</div>'
             + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
             + '</div>';
         if (d.image && d.image.length) {
-            footer += '<div class="q-block"><div class="q-label">Attachments</div>';
+            footer += '<div class="q-block"><div class="q-label"><lang class="lang_po_attachments">Attachments</lang></div>';
             d.image.forEach(function (f) {
                 footer += '<div><a href="' + esc(f.name) + '" target="_blank" rel="noopener"><i class="feather icon-paperclip mr-1"></i>' + esc(String(f.name).split('/').pop()) + '</a></div>';
             });
             footer += '</div>';
         }
         if (cancelled && d.void_reason) {
-            footer += '<div class="q-block"><div class="q-label">Voided</div>'
+            footer += '<div class="q-block"><div class="q-label"><lang class="lang_voided">Voided</lang></div>'
                 + '<div class="q-muted">By ' + esc(d.voided_by || '?')
                 + (d.voided_at ? ' on ' + dt(d.voided_at) : '') + '</div>'
                 + '<div>' + esc(d.void_reason) + '</div></div>';
@@ -2252,11 +2274,11 @@ PosnicPro.purchaseorders = {
         var st = cancelled ? 'cancelled' : partial ? 'partial' : open ? 'ordered' : 'received';
         var chip = '<span class="rs-pill ' + P[st] + '">' + L[st] + '</span>';
         var itc = d.itc_eligible === false
-            ? '<span class="rs-pill unpaid" title="No input credit on this purchase">No credit</span>' : '';
+            ? '<span class="rs-pill unpaid" title="No input credit on this purchase" data-t-title="lang_no_input_credit_on_this_purchase"><lang class="lang_no_credit">No credit</lang></span>' : '';
         var mismatch = d.invoice_total_mismatch
-            ? '<span class="rs-pill hold" title="Declared invoice total does not match the lines"><i class="feather icon-alert-triangle"></i> Mismatch</span>' : '';
+            ? '<span class="rs-pill hold" title="Declared invoice total does not match the lines" data-t-title="lang_declared_invoice_total_does_not_match_the"><i class="feather icon-alert-triangle"></i> Mismatch</span>' : '';
         var more = '<div class="btn-group">'
-            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</button>'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.showPrint(\'' + esc(d._id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.receivings.view.receivingPdf(\'' + esc(d._id) + '\');"><i class="feather icon-file mr-2"></i>Download PDF</a>'
@@ -2270,7 +2292,7 @@ PosnicPro.purchaseorders = {
                 : '')
             + '</div></div>';
         var toolbar = '<div class="p-doc-toolbar">'
-            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" aria-label="Show or hide the list" onclick="PosnicPro.masterDetail.toggleRail(\'#purchases_split\');"><i class="feather icon-sidebar"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#purchases_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.receiving_id) + '</span>' + chip + itc + mismatch
             + '<span class="ml-auto"></span>'
             + ((open || partial) && !cancelled
@@ -2286,11 +2308,11 @@ PosnicPro.purchaseorders = {
                 : '')
             + (!cancelled ? '<button type="button" class="btn btn-sm btn-light" data-module="receiving" data-access="write" onclick="hasher.setHash(\'receivings/' + esc(d._id) + '/edit\');"><i class="feather icon-edit-2 mr-1"></i>Edit</button>' : '')
             + more
-            + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" aria-label="Close" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-light" title="Close this purchase and show the full list" data-t-title="lang_close_this_purchase_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.purchaseorders.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
         var voidStrip = '<div class="p-void-strip" id="p_void_strip" style="display:none;">'
             + '<span>Void <b>' + esc(d.receiving_id) + '</b> \u2014 stock reverses, the record stays, the tax leaves the input credit.</span>'
-            + '<input type="text" class="form-control form-control-sm" id="p_void_reason" maxlength="200" placeholder="Reason (required)" aria-label="Void reason">'
+            + '<input type="text" class="form-control form-control-sm" id="p_void_reason" maxlength="200" placeholder="Reason (required)" data-t-placeholder="lang_reason_required" aria-label="Void reason" data-t-aria-label="lang_void_reason">'
             + '<button type="button" class="btn btn-sm btn-danger" onclick="PosnicPro.purchaseorders.voidConfirm(\'' + esc(d._id) + '\');">Void purchase</button>'
             + '<button type="button" class="btn btn-sm btn-light" onclick="$(\'#p_void_strip\').slideUp(120);">Cancel</button>'
             + '</div>';
@@ -2316,10 +2338,10 @@ PosnicPro.purchaseorders = {
             rows += '<div class="p-rcv-row" data-item="' + esc(l.item_id) + '">'
                 + '<span class="p-rcv-name">' + esc(l.item_name) + '</span>'
                 + '<span class="p-rcv-progress">' + got + ' of ' + ordered + ' ' + esc(l.item_unit || '') + '</span>'
-                + '<input type="number" class="form-control form-control-sm p-rcv-qty" min="0" max="' + remaining + '" step="any" value="' + remaining + '" aria-label="Quantity arriving now">'
+                + '<input type="number" class="form-control form-control-sm p-rcv-qty" min="0" max="' + remaining + '" step="any" value="' + remaining + '" aria-label="Quantity arriving now" data-t-aria-label="lang_quantity_arriving_now">'
                 + '</div>';
         });
-        if (!rows) { PosnicPro.alert('warning', 'Nothing left to receive.'); return; }
+        if (!rows) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_nothing_left_to_receive', 'Nothing left to receive.')); return; }
         $('#p_receive_strip').html(
             '<div class="p-rcv-head">Receiving now \u2014 adjust what actually arrived:</div>'
             + rows
@@ -2336,7 +2358,7 @@ PosnicPro.purchaseorders = {
                 qty: parseFloat($(this).find('.p-rcv-qty').val()) || 0
             };
         }).get().filter(function (l) { return l.qty > 0; });
-        if (!lines.length) { PosnicPro.alert('warning', 'Enter a quantity for at least one line.'); return; }
+        if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_quantity_for_at_least_one_line', 'Enter a quantity for at least one line.')); return; }
         PosnicPro.purchaseorders._postReceive(id, { lines: lines });
     },
     closeShortOpen: function (id) {
@@ -2367,7 +2389,7 @@ PosnicPro.purchaseorders = {
     voidConfirm: function (id) {
         var reason = $.trim($('#p_void_reason').val() || '');
         if (!reason) {
-            $('#p_void_reason').addClass('is-invalid').attr('placeholder', 'A reason is required').trigger('focus');
+            $('#p_void_reason').addClass('is-invalid').attr('placeholder', PosnicPro.i18n.t('lang_a_reason_is_required', 'A reason is required')).trigger('focus');
             return;
         }
         PosnicPro.post({ url: 'receivings/' + id + '/void', data: JSON.stringify({ reason: reason }) }, function (r) {
@@ -2390,7 +2412,7 @@ PosnicPro.purchaseorders = {
         $('#po_form_id').val('');
         $('#po_supplier_name,#po_supplier_id,#po_expected_date,#po_notes,#po_item_search').val('');
         $('#po_cost_rows').html('');
-        $('#po_form_verb').text(id ? 'Edit' : 'Create');
+        $('#po_form_verb').text(id ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create'));
         PosnicPro.purchaseorders.renderLines();
         $('#po_list_section,#po_view_section,#po_receive_section').hide();
         $('#po_form_section').show();
@@ -2435,7 +2457,7 @@ PosnicPro.purchaseorders = {
     renderLines: function () {
         var keys = Object.keys(PosnicPro.purchaseorders._lines);
         if (!keys.length) {
-            $('#po_form_rows').html('<tr><td colspan="7" class="text-center text-muted">Search or fill from the supplier.</td></tr>');
+            $('#po_form_rows').html('<tr><td colspan="7" class="text-center text-muted"><lang class="lang_search_or_fill_from_the_supplier">Search or fill from the supplier.</lang></td></tr>');
             $('#po_form_total').text('0.00');
             return;
         }
@@ -2474,16 +2496,16 @@ PosnicPro.purchaseorders = {
     },
     fillFromSupplier: function (lowStockOnly) {
         var supplierId = $('#po_supplier_id').val();
-        if (!supplierId) { PosnicPro.alert('warning', 'Choose a supplier first'); return; }
+        if (!supplierId) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_supplier_first', 'Choose a supplier first')); return; }
         var range = localStorage.getItem('notificationrange') || 10;
         PosnicPro.get({
             url: 'items/bySupplier',
             data: 'supplier_id=' + encodeURIComponent(supplierId) + '&low_stock=' + (lowStockOnly ? 'true' : 'false') + '&notificationrange=' + encodeURIComponent(range)
         }, function (response) {
             var rows = (response && response.data) || [];
-            if (!rows.length) { PosnicPro.alert('info', 'No items for this supplier'); return; }
+            if (!rows.length) { PosnicPro.alert('info', PosnicPro.i18n.t('lang_no_items_for_this_supplier', 'No items for this supplier')); return; }
             rows.forEach(function (row) { PosnicPro.purchaseorders.addLine(row); });
-        }, function () { PosnicPro.alert('error', 'Could not load the supplier items'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_supplier_items', 'Could not load the supplier items')); });
     },
     save: function (status) {
         var id = $('#po_form_id').val();
@@ -2547,21 +2569,21 @@ PosnicPro.purchaseorders = {
             $('#po_view_costs').html(costs);
             $('#po_view_total').text(currency + ' ' + (Number(po.grand_total) || 0).toFixed(2));
             $('#po_view_notes').text(po.notes || '');
-            var actions = '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" onclick="PosnicPro.purchaseorders.backToList();">Back</button>';
+            var actions = '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" onclick="PosnicPro.purchaseorders.backToList();"><lang class="lang_back_title">Back</lang></button>';
             if (po.status === 'draft') {
-                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="order">Place order</button>' +
-                    '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit">Edit</button>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="delete">Delete</button>';
+                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="order"><lang class="lang_place_order">Place order</lang></button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit"><lang class="lang_edit_title">Edit</lang></button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="delete"><lang class="lang_delete">Delete</lang></button>';
             }
             if (po.status === 'ordered' || po.status === 'partial') {
-                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="receive">Receive</button>';
+                actions += '<button type="button" class="btn btn-sm btn-outline-primary mr-1" data-act="receive"><lang class="lang_receive">Receive</lang></button>';
                 if (po.status === 'ordered') {
-                    actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit">Edit</button>';
+                    actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="edit"><lang class="lang_edit_title">Edit</lang></button>';
                 }
-                actions += '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="cancel_remaining">Cancel remaining</button>';
+                actions += '<button type="button" class="btn btn-sm btn-outline-danger mr-1" data-act="cancel_remaining"><lang class="lang_cancel_remaining">Cancel remaining</lang></button>';
             }
             if ((po.items || []).length) {
-                actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="labels">Print labels</button>';
+                actions += '<button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-act="labels"><lang class="lang_print_labels">Print labels</lang></button>';
             }
             $('#po_view_actions').html(actions).data('po-id', String(po._id));
             if ($('#purchases_po_host').length && $.contains($('#purchases_po_host')[0], $('#po_view_section')[0])) {
@@ -2608,7 +2630,7 @@ PosnicPro.purchaseorders = {
             }
         });
         if (!labels.length) {
-            PosnicPro.alert('warning', 'No lines with a barcode to print');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_lines_with_a_barcode_to_print', 'No lines with a barcode to print'));
             return;
         }
         // Render each unique code once, reuse the SVG per copy.
@@ -2626,7 +2648,7 @@ PosnicPro.purchaseorders = {
             return '<div class="lbl"><div class="lbl-name">' + $('<span>').text(l.name).html() + '</div>' + (svgByCode[l.code] || '') + '</div>';
         }).join('');
         var w = window.open('', '_blank');
-        if (!w) { PosnicPro.alert('error', 'Allow pop-ups to print labels'); return; }
+        if (!w) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_allow_pop_ups_to_print_labels', 'Allow pop-ups to print labels')); return; }
         w.document.write('<html><head><title>Labels ' + (po.po_id || '') + '</title><style>' +
             'body{margin:0;font-family:sans-serif;}' +
             '.sheet{display:flex;flex-wrap:wrap;}' +
@@ -2652,7 +2674,7 @@ PosnicPro.purchaseorders = {
     _receive: null,
     receive: function (id) {
         var po = PosnicPro.purchaseorders._detail;
-        if (!po || String(po._id) !== String(id)) { PosnicPro.alert('error', 'Open the order first'); return; }
+        if (!po || String(po._id) !== String(id)) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_open_the_order_first', 'Open the order first')); return; }
         PosnicPro.get({
             url: 'items/bySupplier',
             data: 'supplier_id=' + encodeURIComponent(po.supplier_id || '') + '&low_stock=false'
@@ -2675,10 +2697,10 @@ PosnicPro.purchaseorders = {
                     tax_type: row.tax_type || ''
                 });
             });
-            if (!lines.length) { PosnicPro.alert('info', 'Nothing outstanding on this order'); return; }
+            if (!lines.length) { PosnicPro.alert('info', PosnicPro.i18n.t('lang_nothing_outstanding_on_this_order', 'Nothing outstanding on this order')); return; }
             PosnicPro.purchaseorders._receive = { po: po, lines: lines };
             PosnicPro.purchaseorders.openReceive();
-        }, function () { PosnicPro.alert('error', 'Could not load the order items'); });
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_order_items', 'Could not load the order items')); });
     },
     openReceive: function () {
         var st = PosnicPro.purchaseorders._receive;
@@ -2691,7 +2713,7 @@ PosnicPro.purchaseorders = {
         $('#po_receive_note').val('');
         $('#po_receive_excl').prop('checked', false);
         var sel = $('#po_receive_payment').empty();
-        sel.append('<option value="Cash" selected="selected">Cash</option>');
+        sel.append('<option value="Cash" selected="selected" data-t="lang_cash_title">Cash</option>');
         $.each(PosnicPro.configPaymentType || [], function (i, val) {
             if (val.payment_value && val.payment_value !== 'Cash') {
                 sel.append($('<option>').attr('value', val.payment_value).text(val.payment_value));
@@ -2728,8 +2750,8 @@ PosnicPro.purchaseorders = {
             rows += '<tr>' +
                 '<td data-label="Item">' + esc(line.item_name) + '</td>' +
                 '<td class="text-right" data-label="Outstanding">' + line.outstanding + ' ' + esc(line.item_unit) + '</td>' +
-                '<td class="text-right" data-label="Receive qty"><input type="number" min="0" max="' + line.outstanding + '" step="any" class="form-control form-control-sm text-right po-receive-qty" data-idx="' + idx + '" value="' + line.qty + '" aria-label="Receive quantity"></td>' +
-                '<td class="text-right" data-label="Purchase cost"><input type="number" min="0" step="any" class="form-control form-control-sm text-right po-receive-cost" data-idx="' + idx + '" value="' + line.cost + '" aria-label="Unit cost"></td>' +
+                '<td class="text-right" data-label="Receive qty"><input type="number" min="0" max="' + line.outstanding + '" step="any" class="form-control form-control-sm text-right po-receive-qty" data-idx="' + idx + '" value="' + line.qty + '" aria-label="Receive quantity" data-t-aria-label="lang_receive_quantity"></td>' +
+                '<td class="text-right" data-label="Purchase cost"><input type="number" min="0" step="any" class="form-control form-control-sm text-right po-receive-cost" data-idx="' + idx + '" value="' + line.cost + '" aria-label="Unit cost" data-t-aria-label="lang_unit_cost"></td>' +
                 '<td class="text-right po-receive-taxcol" data-label="Tax">' + (c.rate > 0 ? c.rate + '% = ' + c.tax.toFixed(2) : '-') + '</td>' +
                 '<td class="text-right" data-label="Amount">' + c.total.toFixed(2) + '</td>' +
                 '</tr>';
@@ -2757,7 +2779,7 @@ PosnicPro.purchaseorders = {
                 item_tax: c.rate
             });
         });
-        if (!items.length) { PosnicPro.alert('warning', 'Every quantity is 0 - nothing to receive.'); return; }
+        if (!items.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_every_quantity_is_0_nothing_to_receive', 'Every quantity is 0 - nothing to receive.')); return; }
         var po = st.po;
         $('#po_receive_save').attr('disabled', 'disabled');
         PosnicPro.post({
@@ -2798,7 +2820,7 @@ PosnicPro.purchaseorders = {
             }
         }, function () {
             $('#po_receive_save').removeAttr('disabled');
-            PosnicPro.alert('error', 'The receiving could not be saved.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_receiving_could_not_be_saved', 'The receiving could not be saved.'));
         });
     }
 };
@@ -2933,14 +2955,14 @@ $(document).on('click', '#purchases_filter_btn', function () {
 PosnicPro.purchaseorders.renderAttachments = function (list) {
     var esc = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
     if (!list.length) {
-        $('#po_view_attachments').html('<li class="text-muted" style="font-size:12.5px;">Nothing attached yet.</li>');
+        $('#po_view_attachments').html('<li class="text-muted" style="font-size:12.5px;"><lang class="lang_nothing_attached_yet">Nothing attached yet.</lang></li>');
         return;
     }
     $('#po_view_attachments').html(list.map(function (a) {
         var kb = a.size ? ' <span class="text-muted">(' + Math.max(1, Math.round(a.size / 1024)) + ' KB)</span>' : '';
         return '<li class="mb-1" style="font-size:13px;">'
             + '<a href="' + esc(a.url) + '" target="_blank" rel="noopener"><i class="feather icon-file mr-1"></i>' + esc(a.name) + '</a>' + kb
-            + ' <a href="javascript:void(0)" class="text-danger ml-2 po-attach-remove" data-att="' + esc(a.id) + '" title="Remove">&times;</a>'
+            + ' <a href="javascript:void(0)" class="text-danger ml-2 po-attach-remove" data-att="' + esc(a.id) + '" title="Remove" data-t-title="lang_remove">&times;</a>'
             + '</li>';
     }).join(''));
 };
@@ -2949,7 +2971,7 @@ $(document).on('change', '#po_attach_file', function () {
     this.value = '';
     var po = PosnicPro.purchaseorders._detail;
     if (!file || !po) { return; }
-    if (file.size > 10 * 1024 * 1024) { PosnicPro.alert('error', 'That file is over 10MB.'); return; }
+    if (file.size > 10 * 1024 * 1024) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_that_file_is_over_10mb', 'That file is over 10MB.')); return; }
     var fd = new FormData();
     fd.append('file', file);
     $.ajax({
@@ -2962,7 +2984,7 @@ $(document).on('change', '#po_attach_file', function () {
         success: function (r) {
             po.attachments = (po.attachments || []).concat([(r && r.data) || {}]);
             PosnicPro.purchaseorders.renderAttachments(po.attachments);
-            PosnicPro.alert('success', 'Attached.');
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_attached', 'Attached.'));
         },
         error: function (xhr) {
             var m = {}; try { m = JSON.parse(xhr.responseText); } catch (e) { }
@@ -2977,5 +2999,5 @@ $(document).on('click', '.po-attach-remove', function () {
     PosnicPro.delete({ url: 'receivings/' + po._id + '/attachments/' + attId, data: JSON.stringify({}) }, function () {
         po.attachments = (po.attachments || []).filter(function (a) { return a.id !== attId; });
         PosnicPro.purchaseorders.renderAttachments(po.attachments);
-    }, function () { PosnicPro.alert('error', 'Could not remove it.'); });
+    }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_remove_it', 'Could not remove it.')); });
 });

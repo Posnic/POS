@@ -10,7 +10,7 @@
     },
     "contact": {
       "name": "Posnic",
-      "url": "https://posnic.com",
+      "url": "https://www.posnic.com",
       "email": "info@posnic.com"
     }
   },
@@ -116,6 +116,14 @@
     {
       "name": "Messaging",
       "description": "Mounted at /messaging"
+    },
+    {
+      "name": "Online ordering",
+      "description": "Mounted at /online-ordering"
+    },
+    {
+      "name": "Pair",
+      "description": "Mounted at /pair"
     },
     {
       "name": "Purchase orders",
@@ -6057,58 +6065,34 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/items/accesskiosk": {
-      "post": {
-        "summary": "accesskiosk",
-        "operationId": "post_items_accesskiosk",
-        "tags": [
-          "Items"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
-    "/items/accessQr": {
-      "post": {
-        "summary": "accessQr",
-        "operationId": "post_items_accessQr",
-        "tags": [
-          "Items"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
     "/items/accessMobileApp": {
       "post": {
         "summary": "accessMobileApp",
         "operationId": "post_items_accessMobileApp",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/items/accesskiosk": {
+      "post": {
+        "summary": "accesskiosk",
+        "operationId": "post_items_accesskiosk",
         "tags": [
           "Items"
         ],
@@ -7701,6 +7685,208 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/online-ordering": {
+      "get": {
+        "summary": "defaultStorefront",
+        "operationId": "get_online_ordering",
+        "tags": [
+          "Online ordering"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/menu": {
+      "get": {
+        "summary": "defaultMenu",
+        "operationId": "get_online_ordering_menu",
+        "tags": [
+          "Online ordering"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/{storeId}/menu": {
+      "get": {
+        "summary": "menu",
+        "operationId": "get_online_ordering_storeId_menu",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/{storeId}": {
+      "get": {
+        "summary": "storefront",
+        "operationId": "get_online_ordering_storeId",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/{storeId}/device": {
+      "get": {
+        "summary": "deviceStorefront",
+        "operationId": "get_online_ordering_storeId_device",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/{storeId}/orders": {
+      "post": {
+        "summary": "createOrder",
+        "operationId": "post_online_ordering_storeId_orders",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/pair": {
+      "get": {
+        "summary": "html",
+        "operationId": "get_pair",
+        "tags": [
+          "Pair"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/purchaseOrders": {
@@ -10161,30 +10347,6 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/sales/qrOrder": {
-      "post": {
-        "summary": "qrOrder",
-        "operationId": "post_sales_qrOrder",
-        "tags": [
-          "Sales"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
     "/sales/getNewSale": {
       "get": {
         "summary": "getNewSale",
@@ -10432,6 +10594,86 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/sales/pendingOnlineOrders": {
+      "get": {
+        "summary": "pendingOnlineOrders",
+        "operationId": "get_sales_pendingOnlineOrders",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/commissionReport": {
+      "get": {
+        "summary": "commissionReport",
+        "operationId": "get_sales_commissionReport",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/{id}/approval": {
+      "post": {
+        "summary": "decideOnOrder",
+        "operationId": "post_sales_id_approval",
+        "tags": [
+          "Sales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/sales/dailySalesReports": {

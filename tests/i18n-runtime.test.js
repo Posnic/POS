@@ -314,3 +314,61 @@ test('an anchor cannot be smuggled in to send somebody elsewhere', () => {
   assert.equal(el.querySelector('a'), null, 'a link reached the page');
   assert.match(el.textContent, /our offer/, 'the words should survive the unwrap');
 });
+
+/* ------------------------------------------------ the words in attributes --- */
+
+test('placeholder, title and aria-label are translated and restored', () => {
+  const dom = page('<input placeholder="Enter the store name" data-t-placeholder="lang_store_ph">'
+    + '<button title="Sort the list" data-t-title="lang_sort_t">x</button>');
+  const { PosnicPro } = loadI18n(dom, { lang_store_ph: 'கடையின் பெயர்', lang_sort_t: 'வரிசைப்படுத்து' }, { language_code: 'ta' });
+  PosnicPro.i18n.apply();
+  const input = dom.window.document.querySelector('input');
+  const button = dom.window.document.querySelector('button');
+  assert.equal(input.getAttribute('placeholder'), 'கடையின் பெயர்');
+  assert.equal(button.getAttribute('title'), 'வரிசைப்படுத்து');
+  return PosnicPro.i18n.change('en').then(() => {
+    assert.equal(input.getAttribute('placeholder'), 'Enter the store name', 'the English placeholder did not come back');
+    assert.equal(button.getAttribute('title'), 'Sort the list', 'the English title did not come back');
+  });
+});
+
+/* ------------------------------------------- markup that arrives later --- */
+
+test('markup JavaScript draws after load is translated as it lands', async () => {
+  /*
+   * Table headers, pills, the receipt panel: none of it passes through
+   * apply() by itself. A module writes <lang class="key"> into its string
+   * and the observer does the rest.
+   */
+  const dom = page('<div id="list"></div>');
+  const { PosnicPro } = loadI18n(dom, TA, { language_code: 'ta' });
+  const observer = PosnicPro.i18n.watch(dom.window.document.documentElement);
+  assert.ok(observer, 'watch() returned nothing');
+  dom.window.document.getElementById('list').innerHTML =
+    '<table><tr><th><lang class="lang_item_name">Item name</lang></th></tr></table>'
+    + '<input placeholder="Newest" data-t-placeholder="lang_new_search">';
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector('th lang').textContent, 'பொருளின் பெயர்');
+  assert.equal(dom.window.document.querySelector('input').getAttribute('placeholder'), 'புதியது');
+  observer.disconnect();
+});
+
+test('a <lang> handed to apply() directly is translated, not only its children', () => {
+  const dom = page('<span id="s"><lang class="lang_item_name">Item name</lang></span>');
+  const { PosnicPro } = loadI18n(dom, TA, { language_code: 'ta' });
+  const el = dom.window.document.querySelector('lang');
+  PosnicPro.i18n.apply(el);
+  assert.equal(el.textContent, 'பொருளின் பெயர்');
+});
+
+test('the observer does nothing for a shop in English', async () => {
+  const dom = page('<div id="list"></div>');
+  const { PosnicPro } = loadI18n(dom, null);
+  PosnicPro.i18n._dict = null;
+  const observer = PosnicPro.i18n.watch(dom.window.document.documentElement);
+  dom.window.document.getElementById('list').innerHTML = '<th><lang class="lang_item_name">Item name</lang></th>';
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector('lang').textContent, 'Item name');
+  assert.equal(dom.window.document.querySelector('lang').hasAttribute('data-en'), false, 'nothing should have been touched');
+  observer.disconnect();
+});

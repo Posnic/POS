@@ -2,7 +2,7 @@
 //
 // Append-only writer for the accountability audit trail (`audit_log`).
 //
-// record() NEVER throws — an audit failure must not break the caller's primary
+// record() NEVER throws - an audit failure must not break the caller's primary
 // operation (a sale must still complete even if the audit write fails). Tenant
 // (license / branch) and actor default from the per-request BaseModel context
 // (AsyncLocalStorage), so callers usually only pass the event + specifics.
@@ -58,7 +58,7 @@ class AuditService {
         details: ctx.details && typeof ctx.details === 'object' ? ctx.details : null,
       };
 
-      // Keep documents lean — drop keys that resolved to null/undefined.
+      // Keep documents lean - drop keys that resolved to null/undefined.
       Object.keys(doc).forEach((k) => {
         if (doc[k] === null || doc[k] === undefined) delete doc[k];
       });
@@ -66,7 +66,7 @@ class AuditService {
       await collection.insertOne(doc);
       return { status: true };
     } catch (error) {
-      // Swallow — auditing must never break the primary operation.
+      // Swallow - auditing must never break the primary operation.
       // eslint-disable-next-line no-console
       console.error('AuditService.record failed:', error && error.message);
       return { status: false, error: error && error.message };

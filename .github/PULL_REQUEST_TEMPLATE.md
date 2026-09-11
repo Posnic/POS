@@ -28,6 +28,7 @@
 ## Checklist
 
 - [ ] One focused change per PR
+- [ ] Only people are credited as authors/contributors; no AI tool attribution or signature footer is included
 - [ ] Commits are signed off (`git commit -s`, DCO)
 - [ ] Works fully offline (no new external network calls in the local edition)
 - [ ] Matches surrounding code style

@@ -1,4 +1,7 @@
 #!/bin/sh
 # Security audit on what is staged. See security-audit.js for what it catches
 # and why. Installed per clone with: git config core.hooksPath .githooks
-exec node "$(dirname "$0")/security-audit.js"
+set -e
+HOOK_DIR=$(dirname "$0")
+node "$HOOK_DIR/security-audit.js"
+exec node "$HOOK_DIR/../scripts/check-ai-attribution.js" --staged

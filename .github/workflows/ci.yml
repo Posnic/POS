@@ -63,6 +63,19 @@ env:
 permissions:
   contents: read
 jobs:
+  attribution:
+    name: Human attribution guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Reject software tools credited as contributors
+        run: npm run check:attribution
+
   api-tests:
     name: API unit tests
     runs-on: ubuntu-latest

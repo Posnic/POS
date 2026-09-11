@@ -166,8 +166,8 @@
      * reads it - one fetch, no race with an unfiltered load.
      */
     var ENTITY_SOURCES = [
-        { module: 'items', label: 'Item', acl: ['item', 'read'] },
-        { module: 'customers', label: 'Customer', acl: ['customer', 'read'] },
+        { module: 'items', label: 'Item', t: 'lang_newitem_title', acl: ['item', 'read'] },
+        { module: 'customers', label: 'Customer', t: 'lang_newcustomer_title', acl: ['customer', 'read'] },
     ];
 
     function searchEntities(query, done) {
@@ -184,7 +184,7 @@
                 for (var i = 0; i < Math.min(list.length, 4); i++) {
                     var value = list[i] && (list[i].value || list[i]);
                     if (typeof value === 'string' && value) {
-                        found.push({ name: value, kind: src.label, module: src.module, value: value });
+                        found.push({ name: value, kind: src.label, kindKey: src.t, module: src.module, value: value });
                     }
                 }
                 if (--pending === 0) done(found);
@@ -223,9 +223,9 @@
         var overlay = document.createElement('div');
         overlay.id = 'cmdk-overlay';
         overlay.innerHTML =
-            '<div id="cmdk-box" role="dialog" aria-label="Command palette">' +
+            '<div id="cmdk-box" role="dialog" aria-label="Command palette" data-t-aria-label="lang_command_palette">' +
             '<input id="cmdk-input" type="text" autocomplete="off" spellcheck="false" ' +
-            'placeholder="Type a page or action…" aria-label="Search commands">' +
+            'placeholder="Type a page or action…" aria-label="Search commands" data-t-aria-label="lang_search_commands">' +
             '<div id="cmdk-list" role="listbox"></div>' +
             '<div id="cmdk-hint">↑↓ navigate &nbsp; Enter open &nbsp; Esc close</div>' +
             '</div>';
@@ -274,12 +274,15 @@
         for (var i = 0; i < state.results.length; i++) {
             var cmd = state.results[i];
             var kind = cmd.kind ? cmd.kind : (cmd.hash ? '' : 'action');
+            var kindKey = cmd.kind ? cmd.kindKey : (cmd.hash ? '' : 'lang_action');
             html += '<div class="cmdk-item' + (i === state.index ? ' cmdk-active' : '') + '" data-i="' + i + '" role="option">' +
                 $('<span>').text(cmd.name).html() +
-                (kind ? '<span class="cmdk-kind">' + kind + '</span>' : '') +
+                (kind ? '<span class="cmdk-kind">'
+                    + (kindKey ? '<lang class="' + kindKey + '">' + kind + '</lang>' : kind)
+                    + '</span>' : '') +
                 '</div>';
         }
-        if (!state.results.length) html = '<div class="cmdk-empty">Nothing matches</div>';
+        if (!state.results.length) html = '<div class="cmdk-empty"><lang class="lang_nothing_matches">Nothing matches</lang></div>';
         list.innerHTML = html;
         $(list).children('.cmdk-item').off('click').on('click', function () {
             pick(Number($(this).data('i')));

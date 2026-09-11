@@ -114,7 +114,6 @@ router.post(
 );
 
 // ── Kiosk / mobile-app routes (no JWT auth required, branch_id in body) ──
-router.post('/qrOrder', bindController(salesController.qrOrder));
 /*
  * getNewSale sits in the no-JWT block but its handler requires sales:write.
  * With no auth middleware at all, req.user was never populated - so the
@@ -187,6 +186,32 @@ router.post(
   handleValidationErrors,
   prepareCreateSalePayload,
   bindController(salesController.create)
+);
+
+/*
+ * The approval queue.
+ *
+ * Behind the normal session, not the kiosk key: deciding whether the kitchen
+ * cooks something is a shop decision made by a person who is signed in, and
+ * the anonymous storefront must never be able to accept its own orders.
+ *
+ * Declared before '/' and before '/:id' so neither swallows it.
+ */
+router.get('/pendingOnlineOrders', bindController(salesController.pendingOnlineOrders));
+
+/* What the shop owes its hotels and its aggregators. Same date-range and
+   branch preparation every other report uses, so a report saved from one
+   screen filters the same way as the next. */
+router.get(
+  '/commissionReport',
+  prepareBranchPaginatedReportQuery,
+  bindController(salesController.commissionReport)
+);
+router.post(
+  '/:id/approval',
+  ensureValidSaleIdParam,
+  handleValidationErrors,
+  bindController(salesController.decideOnOrder)
 );
 
 // GET /api/sales - Get all sales with pagination
@@ -451,7 +476,7 @@ router.post(
   bindController(salesController.fetchRazorPayQrStatusMobile)
 );
 
-// (qrOrder, getNewSale, getOrderHistory, updateOrder, searchProducts, getFrequentItems moved before protect above)
+// (getNewSale, getOrderHistory, updateOrder, searchProducts, getFrequentItems moved before protect above)
 
 // PHP: kotDiscountReports() - Get KOT discount reports
 router.get('/kotDiscountReports', bindController(salesController.kotDiscountReports));
@@ -459,7 +484,7 @@ router.get('/kotDiscountReports', bindController(salesController.kotDiscountRepo
 // PHP: kotTablewiseDetails() - Get KOT table-wise detailed item report
 router.get('/kotTablewiseDetails', bindController(salesController.kotTablewiseDetails));
 
-// PHP: getListKot() - (moved before protect for kiosk access — see above)
+// PHP: getListKot() - (moved before protect for kiosk access - see above)
 
 // PHP: pendingCustomerCategoryReportTable() - Get pending customer category report
 router.get(

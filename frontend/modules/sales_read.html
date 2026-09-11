@@ -16,11 +16,11 @@
                         <span id="sales_sort_host"></span>
                         <button type="button" id="sales_filter_btn"
                             class="btn btn-primary-rgba lf-btn"
-                            data-toggle="tooltip" title="Filter sales">
-                            <i class="feather icon-filter mr-2"></i>Filter
+                            data-toggle="tooltip" title="Filter sales" data-t-title="lang_filter_sales">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
                         </button>
                         <a id="sales_new_button" data-module="sales" data-access="write" href='#/sales/new'
-                            class="btn btn-primary-rgba dash_sale_count" data-toggle="tooltip" title="New Sale">
+                            class="btn btn-primary-rgba dash_sale_count" data-toggle="tooltip" title="New Sale" data-t-title="lang_addnewsale_title">
                             <i class="feather icon-plus mr-2"></i>
                             <lang class="lang_addvariant_title">New</lang>
                         </a>
@@ -66,7 +66,7 @@
         <div id="sales_split">
             <div class="card m-b-30 md-rail" id="sales_list_card">
                 <div class="card-body">
-                    <div id="sales_list_rows" class="md-rail-rows text-muted">Loading sales ...</div>
+                    <div id="sales_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_sales">Loading sales ...</lang></div>
                     <div class="q-pager" id="sales_list_paging"></div>
                 </div>
             </div>

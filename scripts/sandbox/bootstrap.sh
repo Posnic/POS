@@ -35,7 +35,7 @@ echo "  $(mongod --version | head -1)"
 echo "  mongod: $(systemctl is-active mongod)"
 
 say "pm2"
-sudo npm install -g pm2 --silent >/dev/null 2>&1 || sudo npm install -g pm2 >/dev/null
+sudo npm install -g pm2@7.0.4 --silent >/dev/null 2>&1 || sudo npm install -g pm2@7.0.4 >/dev/null
 echo "  pm2 $(pm2 --version)"
 
 say "app directory and its own secrets"

@@ -47,35 +47,35 @@ PosnicPro.tour = {
             {
                 hash: 'dashboard',
                 target: '.vertical-menu',
-                title: 'Everything lives here',
+                title: PosnicPro.i18n.t('lang_everything_lives_here', 'Everything lives here'),
                 text: 'Sales, items, customers, reports. When you switch a feature on, its menu appears here; switch it off and the menu goes - nothing is deleted.',
                 side: 'right'
             },
             {
                 hash: 'sales/new',
                 target: '#sales_new_item_name',
-                title: 'Sell by typing or scanning',
+                title: PosnicPro.i18n.t('lang_sell_by_typing_or_scanning', 'Sell by typing or scanning'),
                 text: 'Type a name, SKU or barcode - or just scan. A connected barcode scanner works with no set-up.',
                 side: 'bottom'
             },
             {
                 hash: 'sales/new',
                 target: '#sales_new_productList',
-                title: 'Or tap the shelf',
+                title: PosnicPro.i18n.t('lang_or_tap_the_shelf', 'Or tap the shelf'),
                 text: 'Tap a product to add it to the sale. A tile with a number badge holds sizes or colours - point at it and the list opens beside it.',
                 side: 'top'
             },
             {
                 hash: 'sales/new',
                 target: '#quick_sale_btn',
-                title: 'Quick sale',
+                title: PosnicPro.i18n.t('lang_quick_sale', 'Quick sale'),
                 text: 'For the busy counter: type an amount and take payment, no product needed.',
                 side: 'bottom'
             },
             {
                 hash: 'settings/modules',
                 target: '#v-pills-modules',
-                title: 'Shape the till any time',
+                title: PosnicPro.i18n.t('lang_shape_the_till_any_time', 'Shape the till any time'),
                 text: 'Every feature is a switch here. Off keeps the menus short; on brings it back exactly as it was. Each card opens its own page with its settings.',
                 side: 'top'
             }
@@ -106,9 +106,9 @@ PosnicPro.tour = {
             '  <div class="tour-foot">' +
             '    <span class="tour-dots" id="tour_dots"></span>' +
             '    <span class="tour-actions">' +
-            '      <button type="button" class="btn btn-sm btn-light" id="tour_skip">Skip</button>' +
-            '      <button type="button" class="btn btn-sm btn-light" id="tour_back">Back</button>' +
-            '      <button type="button" class="btn btn-sm btn-primary" id="tour_next">Next</button>' +
+            '      <button type="button" class="btn btn-sm btn-light" id="tour_skip"><lang class="lang_skip">Skip</lang></button>' +
+            '      <button type="button" class="btn btn-sm btn-light" id="tour_back"><lang class="lang_back_title">Back</lang></button>' +
+            '      <button type="button" class="btn btn-sm btn-primary" id="tour_next"><lang class="lang_next">Next</lang></button>' +
             '    </span>' +
             '  </div>' +
             '</div>';
@@ -171,7 +171,7 @@ PosnicPro.tour = {
         $('#tour_title').text(step.title);
         $('#tour_text').text(step.text);
         $('#tour_back').toggle(self._at > 0);
-        $('#tour_next').text(self._at === self._steps.length - 1 ? 'Done' : 'Next');
+        $('#tour_next').text(self._at === self._steps.length - 1 ? PosnicPro.i18n.t('lang_done', 'Done') : PosnicPro.i18n.t('lang_next', 'Next'));
         $('#tour_dots').html(self._steps.map(function (s, i) {
             return '<span class="tour-dot' + (i === self._at ? ' is-here' : '') + '"></span>';
         }).join(''));

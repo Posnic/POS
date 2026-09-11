@@ -21,24 +21,24 @@ PosnicPro.customerview = {
 
         db.customerDisplay.get('1').then(function (data) {
             $(data.customer).each(function (key, val) {
-                $(".customer-name").html(val.name);
-                $(".customer-phone").html(val.phone);
+                $(".customer-name").text(val.name);
+                $(".customer-phone").text(val.phone);
                 if (val.phone !== '') {
                     $("#show_customer_phone").show();
                 } else {
                     $("#show_customer_phone").hide();
                 }
-                $(".customer-email").html(val.email);
-                $(".customer-address").html(val.address);
+                $(".customer-email").text(val.email);
+                $(".customer-address").text(val.address);
             });
         });
 
         db.customerDisplay.get('2').then(function (data) {
             $(data.branch).each(function (key, val) {
-                $(".branch-name").html(val.name);
-                $(".branch-email").html(val.email);
-                $(".branch-phone").html(val.phone);
-                $(".branch-address").html(val.address);
+                $(".branch-name").text(val.name);
+                $(".branch-email").text(val.email);
+                $(".branch-phone").text(val.phone);
+                $(".branch-address").text(val.address);
                 var image_path = (val.image !== "store.png") ? val.image : 'static/images/default/store.png';
                 $('#image_previewing').attr('src', image_path);
             });
@@ -102,7 +102,7 @@ PosnicPro.customerview = {
                 if (!PosnicPro.customerview.isEmptyStateShown) {
                     var container = document.getElementById('list_linelitem');
                     if (container) {
-                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong>Sale Order Empty</strong></p><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
+                        container.innerHTML = '<div class="text-center text-dark" style="padding: 40px;"><p style="font-size: 18px; margin-bottom: 20px;"><strong><lang class="lang_sale_empty">Sale Order Empty</lang></strong></p><img loading="lazy" decoding="async" src="static/images/general/wallet.svg" class="img-fluid" style="opacity: 0.4; max-width: 300px;" alt="wallet"></div>';
                         PosnicPro.customerview.isEmptyStateShown = true;
                     }
                 }
@@ -126,53 +126,42 @@ PosnicPro.customerview = {
             
             var itemIndex = 0;
             for (var i = 0; i < data.length; i++) {
-                var rowHTMLLines = '';
+                var fragment = document.createDocumentFragment();
                 $(data[i].items).each(function (key, val) {
                     itemIndex++;
                     var currency = PosnicPro.local.get('currencySign');
-                    $('.current-currency').html(currency);
-                    var name = val.name;
+                    $('.current-currency').text(currency);
+                    var name = String(val.name || '');
                     var matches = name.match(/\b(\w)/g);
                     var joinLetter = matches ? matches.join('') : '';
-                    rowHTMLLines += '<div class="card m-b-20">' +
-                        '<div class="card-body">' +
-                        '<div class="table-responsive">' +
-                        '<table class="table table-borderless mb-0">' +
-                        '<tbody>' +
-                        '<tr>' +
-                        '<td><h5 class="my-0 font-13">' + itemIndex + '</h5></td>' +
-                        '<td><span class="action-icon badge badge-primary-inverse rounded-circle">' + joinLetter.substring(0, 3) + '</span></td>' +
-                        '<td>' +
-                        '<h5 class="mt-0 font-13 view_item_Name">' + val.name + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark ">Price</p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.price + '</span></h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Qty</p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.qty + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Discount</p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.discount + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Tax</p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + val.tax + '</h5>' +
-                        '</td>' +
-                        '<td>' +
-                        '<p class="mb-1 font-14 font-dark">Total</p>' +
-                        '<h5 class="mt-0 mb-0 font-13">' + currency + '&nbsp;<span class="number">' + val.total + '</span></h5>' +
-                        '</td>' +
-                        '</tr>' +
-                        '</tbody>' +
-                        '</table>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
+                    var $card = $('<div class="card m-b-20"><div class="card-body"><div class="table-responsive"><table class="table table-borderless mb-0"><tbody><tr></tr></tbody></table></div></div></div>');
+                    var $row = $card.find('tr');
+                    $('<td><h5 class="my-0 font-13"></h5></td>').find('h5').text(itemIndex).end().appendTo($row);
+                    $('<td><span class="action-icon badge badge-primary-inverse rounded-circle"></span></td>')
+                        .find('span').text(joinLetter.substring(0, 3)).end().appendTo($row);
+                    $('<td><h5 class="mt-0 font-13 view_item_Name"></h5></td>').find('h5').text(name).end().appendTo($row);
+
+                    var addValueCell = function (labelClass, label, value, withCurrency) {
+                        var $cell = $('<td><p class="mb-1 font-14 font-dark"><lang></lang></p><h5 class="mt-0 mb-0 font-13"></h5></td>');
+                        $cell.find('lang').addClass(labelClass).text(label);
+                        var $value = $cell.find('h5');
+                        if (withCurrency) {
+                            $value.text(currency + '\u00a0');
+                            $('<span class="number"></span>').text(value).appendTo($value);
+                        } else {
+                            $value.text(value);
+                        }
+                        $cell.appendTo($row);
+                    };
+
+                    addValueCell('lang_price_title', 'Price', val.price, true);
+                    addValueCell('lang_qty_title', 'Qty', val.qty, false);
+                    addValueCell('lang_discount_title', 'Discount', val.discount, false);
+                    addValueCell('lang_module_tax', 'Tax', val.tax, false);
+                    addValueCell('lang_total_title', 'Total', val.total, true);
+                    fragment.appendChild($card[0]);
                 });
-                container.innerHTML += rowHTMLLines;
+                container.appendChild(fragment);
             }
             $('span.number').number(true, 2);
         });
@@ -185,7 +174,7 @@ $(document).ready(function () {
     db.customerPlan.get('1').then(function (data) {
         if(data.read ===  false) {
             swal({
-                title: 'You are Unauthorized',
+                title: PosnicPro.i18n.t('lang_you_are_unauthorized', 'You are Unauthorized'),
                 showCancelButton: true,
                 confirmButtonClass: 'btn btn-outline-primary',
                 cancelButtonClass: 'btn btn-outline-danger m-l-10',

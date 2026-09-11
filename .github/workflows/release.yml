@@ -412,6 +412,15 @@ jobs:
           bytes should be - and the release is provenance-attested, so GitHub can
           prove it was built by this repository's own workflow.
 
+          To check that for yourself, with the GitHub CLI installed:
+
+          `gh attestation verify <the-file-you-downloaded> --repo Posnic/POS`
+
+          That confirms the repository, workflow, ref and commit recorded for the
+          file. It is not a code signature, an independent audit, or proof that
+          the software is safe. It answers one question: did this file come out
+          of our build.
+
           Automatic updates check both the hash they were promised and, on
           Windows and macOS, the code signature of what actually arrived -
           an update that is not ours does not install.

@@ -269,6 +269,53 @@ const TAX = [
   'us_resale_certificate', // the shop's own resale certificate number
 ];
 
+/*
+ * Which ways this shop sells, and who it sells through.
+ *
+ * Its own group rather than a handful of FEATURES toggles, because the
+ * partner list is not a switch: it carries a commission rate that money
+ * reports read. A 500 rupee order through an aggregator at 25% is 375 to the
+ * shop, and a report with nowhere to learn that overstates earnings by more
+ * the more the shop grows on aggregators.
+ *
+ * See utils/sales-channels.js for the vocabulary these values come from.
+ */
+const CHANNELS = [
+  /* The channel ids this shop uses: pos, kiosk, tableside, online, phone,
+     whatsapp, marketplace, ecommerce. A list rather than one toggle per
+     channel, so adding a channel is not a new settings key. */
+  'sales_channels_enabled',
+  /* [{ id, label, channel, commission_percent, enabled }] - the outside
+     businesses orders arrive through. Data, deliberately: a new aggregator
+     must never be a release. */
+  'sales_channel_partners',
+  /* The store address `/order` means when the URL names no branch. Only a
+     shop with several branches needs it: with one, there is nothing to
+     resolve. */
+  'online_ordering_default_store',
+  /* Serving periods - breakfast, lunch, dinner - as
+     [{ id, name, hours }]. Items point at these by id rather than carrying
+     hours of their own: two hundred dishes times seven days is data entry no
+     shop will do, and moving breakfast half an hour would mean editing every
+     one of them. */
+  'menu_dayparts',
+  /* 'auto' or 'manual': does an incoming online order go straight to the
+     kitchen, or wait for somebody to accept it. Anything unreadable means
+     auto - see utils/order-approval for why that is the survivable
+     direction. */
+  'online_order_approval',
+  /* [{ code, name, unit_label, address, delivery_note, ask_floor,
+     price_adjust_percent, commission_percent, enabled }] - hotels, offices and
+     anywhere else that is not the shop's own floor. The code is what a printed
+     QR carries (/order/AZ100/venue/RC/123), so it has to outlive a rename of
+     the building. See utils/partner-venues.js. */
+  'partner_venues',
+  /* Delivery, packing and service fees, keyed by FULFILMENT rather than by
+     channel: what a shop charges depends on whether somebody drives the food
+     somewhere, not on which app the order came through. */
+  'channel_charges',
+];
+
 const GROUPS = {
   features: FEATURES,
   preferences: PREFERENCES,
@@ -276,6 +323,7 @@ const GROUPS = {
   secrets: SECRETS,
   sharing: SHARING,
   tax: TAX,
+  channels: CHANNELS,
 };
 
 /* key -> group, built once so lookups are not a scan per key */
@@ -299,6 +347,7 @@ const splitByGroup = (payload = {}) => {
     secrets: {},
     sharing: {},
     tax: {},
+    channels: {},
     unknown: {},
   };
   for (const [key, value] of Object.entries(payload || {})) {
@@ -317,6 +366,7 @@ module.exports = {
   DOCUMENTS,
   SECRETS,
   SHARING,
+  CHANNELS,
   BRANCH_CREDENTIALS,
   CLEAR_SECRET,
   coerceFeatureToggle,
