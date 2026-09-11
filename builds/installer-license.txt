@@ -25,7 +25,7 @@ YOUR DATA STAYS ON THIS COMPUTER
 The Community Edition sends nothing anywhere. There is no account, no
 telemetry and no usage tracking. If you later subscribe to Posnic Cloud,
 separate terms apply to that service and are shown when you sign up:
-https://posnic.com/terms.html
+https://www.posnic.com/terms.html
 
 IF YOU MODIFY AND DISTRIBUTE POSNIC
 The AGPL requires that anyone you give a modified version to - including

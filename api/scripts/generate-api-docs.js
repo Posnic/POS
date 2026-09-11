@@ -193,7 +193,7 @@ function buildSpec(groups, validators) {
           'middleware. The rest are listed with their path, method and handler ' +
           'but no body schema, because inventing one would be worse than the gap.',
         license: { name: 'AGPL-3.0-only', url: 'https://www.gnu.org/licenses/agpl-3.0.html' },
-        contact: { name: 'Posnic', url: 'https://posnic.com', email: 'info@posnic.com' },
+        contact: { name: 'Posnic', url: 'https://www.posnic.com', email: 'info@posnic.com' },
       },
       servers: [
         { url: 'http://127.0.0.1:42590', description: 'Local desktop install (stock Posnic)' },

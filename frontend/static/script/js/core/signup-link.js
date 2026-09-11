@@ -32,7 +32,7 @@
 (function () {
     'use strict';
 
-    var SIGNUP_URL = 'https://posnic.com/signup.html';
+    var SIGNUP_URL = 'https://www.posnic.com/signup.html';
 
     /* A cookie read that cannot throw: this runs on every page, and a signup
        link that breaks the page is worse than one with no attribution. */

@@ -70,7 +70,7 @@ const PACKS = {
 /* Wikimedia asks for a real User-Agent that identifies the caller and a way to
    reach them. Sending a default one is how a tool gets the whole project
    rate-limited. */
-const UA = 'PosnicDemoImages/1.0 (https://posnic.com; info@posnic.com)';
+const UA = 'PosnicDemoImages/1.0 (https://www.posnic.com; info@posnic.com)';
 
 /* Licences whose terms allow shipping inside a commercial product, with
    attribution. Anything not on this list is refused rather than guessed at -

@@ -1501,7 +1501,7 @@ ipcMain.handle('cloud:status', async () => {
   return { connected, sync };
 });
 
-ipcMain.handle('cloud:signup', () => shell.openExternal('https://posnic.com/cloud'));
+ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
 /*
  * Pairing this till with a code, instead of the shop's password.
  *
@@ -1569,7 +1569,7 @@ ipcMain.handle('cloud:pair', async (_event, { serverUrl, code, waitForShopMs } =
  * unauthenticated create-a-shop call on the public internet, since the flag
  * saying "I am the desktop app" is trivially forged.
  */
-const WEBSITE_API = process.env.POSNIC_WEBSITE_API || 'https://posnic.com';
+const WEBSITE_API = process.env.POSNIC_WEBSITE_API || 'https://www.posnic.com';
 
 ipcMain.handle('cloud:captcha', async () => {
   try {
@@ -2720,7 +2720,7 @@ function applyWindowChrome(theme) {
  * ours, because a Community Edition user has nobody else to ask and we would
  * rather hear from them.
  */
-const SUPPORT_FALLBACK = 'https://posnic.com';
+const SUPPORT_FALLBACK = 'https://www.posnic.com';
 
 function supportBaseUrl() {
   try {
@@ -3052,7 +3052,7 @@ function openAboutWindow() {
    * Still an allowlist rather than "any https": this window has a preload,
    * and the point is that it never navigates to a page we did not choose.
    */
-  const allowedOrigins = new Set(['https://posnic.com', 'https://github.com']);
+  const allowedOrigins = new Set(['https://www.posnic.com', 'https://github.com']);
   try { allowedOrigins.add(new URL(provider).origin); } catch (e) { /* keep the defaults */ }
   const opensExternally = (url) => {
     try { return allowedOrigins.has(new URL(url).origin); } catch (e) { return false; }

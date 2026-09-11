@@ -226,7 +226,7 @@ The root [LICENSE](../LICENSE) governs Posnic's own source. It does not replace 
 licences and notices for every binary or asset in a release package. Review
 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md), the files shipped with the
 artifact and the current
-[reproduced package evidence](https://posnic.com/assets/posnic-package-license-evidence.json).
+[reproduced package evidence](https://www.posnic.com/assets/posnic-package-license-evidence.json).
 This governance document records project policy; it is not legal advice.
 
 ## Code of conduct
