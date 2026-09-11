@@ -64,7 +64,7 @@
     "linux",
     "mongodb"
   ],
-  "url": "https://posnic.io/",
+  "url": "https://www.posnic.com/",
   "downloadUrl": "https://github.com/Posnic/POS/releases/latest",
   "softwareHelp": "https://github.com/Posnic/POS/blob/main/docs/USER_GUIDE.md",
   "citation": "https://github.com/Posnic/POS/blob/main/CITATION.cff",
@@ -85,7 +85,7 @@
   "buildInstructions": "https://github.com/Posnic/POS/blob/main/docs/DEVELOPMENT.md",
   "releaseNotes": "https://github.com/Posnic/POS/blob/main/docs/ROADMAP.md",
   "isSourceCodeOf": {
-    "@id": "https://posnic.io/#software",
+    "@id": "https://www.posnic.com/#software",
     "@type": "SoftwareApplication",
     "name": "Posnic POS",
     "applicationCategory": "BusinessApplication",
@@ -96,6 +96,6 @@
       "Linux"
     ],
     "isAccessibleForFree": true,
-    "url": "https://posnic.io/"
+    "url": "https://www.posnic.com/"
   }
 }

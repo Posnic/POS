@@ -26,7 +26,7 @@
     <binary>posnic</binary>
   </provides>
 
-  <url type="homepage">https://posnic.io/</url>
+  <url type="homepage">https://www.posnic.com/</url>
   <url type="help">https://posnic.com/support</url>
   <url type="bugtracker">https://github.com/Posnic/POS/issues</url>
   <url type="vcs-browser">https://github.com/Posnic/POS</url>
