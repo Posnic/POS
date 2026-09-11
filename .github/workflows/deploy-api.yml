@@ -105,8 +105,45 @@ jobs:
             # BREVO_API_KEY secret is set, and harmless while empty.
             [ -n "$BREVO_API_KEY" ] && echo "BREVO_API_KEY=$BREVO_API_KEY"
             [ -n "$EMAIL_FROM" ] && echo "EMAIL_FROM=$EMAIL_FROM"
+          # MERGED INTO THE EXISTING .env, NEVER WRITTEN OVER IT.
+          #
+          # This was `cat > ~/apps/tenants/app/api/.env`, which replaces the
+          # whole file with the handful of keys above. The instance keeps
+          # MONGODB_URI, JWT_SECRET, SESSION_SECRET, ENCRYPTION_KEY and around
+          # a hundred more in that same file, and not one of them is in this
+          # repo to put back afterwards.
+          #
+          # It has never fired, but only because the S3 secrets are unset and
+          # the guard above exits first - so the step reports a reassuring
+          # warning about uploads and nobody reads what the enabled path does.
+          # The day somebody sets AWS_S3_BUCKET to turn uploads on, that
+          # deploy would truncate the estate's configuration to five keys and
+          # every shop would come back with no database URI. A step that is
+          # harmless only while it is switched off is a fuse, not a safeguard.
+          #
+          # So: drop the keys we are setting, keep every other line, append
+          # ours, move the result into place in one step. One .bak is left for
+          # the deploy that gets it wrong anyway.
           } | ssh -i ~/.ssh/deploy.pem "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            'umask 077; cat > ~/apps/tenants/app/api/.env && echo "storage env written ($(grep -c = ~/apps/tenants/app/api/.env) keys)"'
+            'set -eu
+             umask 077
+             env=$HOME/apps/tenants/app/api/.env
+             dir=$(dirname "$env")
+             incoming=$(mktemp "$dir/.env.incoming.XXXXXX")
+             merged=$(mktemp "$dir/.env.merged.XXXXXX")
+             cat > "$incoming"
+             if [ -f "$env" ]; then
+               cp -p "$env" "$env.bak"
+               cp "$env" "$merged"
+               for k in $(sed -n "s/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p" "$incoming"); do
+                 sed -i "/^$k=/d" "$merged"
+               done
+             fi
+             cat "$incoming" >> "$merged"
+             mv "$merged" "$env"
+             chmod 600 "$env"
+             rm -f "$incoming"
+             echo "storage env merged: $(grep -c = "$env") keys in .env"'
 
       # Ring-ordered reload with a smoke gate between rings (U3.2).
       #
