@@ -33,7 +33,7 @@ const FEATURE = 'item_description';
 const TARGET_CHARS = 400;
 
 const SYSTEM = [
-  'You write short product descriptions for a small shop\'s point-of-sale catalogue.',
+  "You write short product descriptions for a small shop's point-of-sale catalogue.",
   '',
   'Rules:',
   '- Two or three sentences. Plain, warm, factual. No marketing slogans.',
@@ -74,7 +74,12 @@ function payloadFor(item) {
 async function draft(item, context) {
   const name = String((item && item.name) || '').trim();
   if (!name) {
-    return { status: false, reason: 'no_name', message: 'An item name is needed first', data: null };
+    return {
+      status: false,
+      reason: 'no_name',
+      message: 'An item name is needed first',
+      data: null,
+    };
   }
 
   const language = String((item && item.language) || '').trim();

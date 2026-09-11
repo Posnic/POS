@@ -25,10 +25,16 @@ test('the model is told not to invent claims', () => {
   /* The one instruction that stands between this feature and a false
      advertising complaint on a customer's shelf. */
   assert.match(description.SYSTEM, /never invent/i, 'the no-invention rule is gone');
-  assert.match(description.SYSTEM, /organic/i,
-    'the regulated words are no longer named, so the model must guess which they are');
-  assert.match(description.SYSTEM, /unless that exact word appears/i,
-    'the model may now use a claim the shop never made');
+  assert.match(
+    description.SYSTEM,
+    /organic/i,
+    'the regulated words are no longer named, so the model must guess which they are'
+  );
+  assert.match(
+    description.SYSTEM,
+    /unless that exact word appears/i,
+    'the model may now use a claim the shop never made'
+  );
 });
 
 test('only describable fields are sent, and no person is', () => {
@@ -116,7 +122,11 @@ test('a refusal from the seam is passed through, not swallowed', async () => {
   /* A shop with no key must learn that from the message, not be told the
      description could not be written for some unexplained reason. */
   const original = ai.ask;
-  ai.ask = async () => ({ status: false, message: 'No API key is saved for the AI provider', data: null });
+  ai.ask = async () => ({
+    status: false,
+    message: 'No API key is saved for the AI provider',
+    data: null,
+  });
   try {
     const out = await description.draft({ name: 'Rice' }, CONTEXT);
     assert.equal(out.status, false);
