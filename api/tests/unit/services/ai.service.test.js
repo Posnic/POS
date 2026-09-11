@@ -132,6 +132,10 @@ describe('off by default', () => {
          stopped, so an unreadable settings row reads as no cap, the same
          way it reads as no provider and no key. */
       cap: null,
+      /* Not explicitly switched off. The read failed, so there is no flag
+         either way, and absent means on for every switch in that list. It
+         is still unusable: no provider and no key. */
+      enabled: true,
     });
   });
 });

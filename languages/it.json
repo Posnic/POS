@@ -122,6 +122,7 @@
   "lang_ai_hint": "Non addebitiamo nulla per questo. Usi il tuo account presso un fornitore di IA e paghi direttamente lui, quindi funziona con ogni piano, incluso quello gratuito, e noi non ti addebitiamo nulla. La chiave viene salvata su questo server, non viene mai inviata a un browser e non viene più mostrata una volta salvata.",
   "lang_ai_key": "Chiave API",
   "lang_ai_key_saved": "Una chiave è salvata. Digitane una nuova per sostituirla.",
+  "lang_ai_module_desc": "Scrive le descrizioni degli articoli per te. Usi il tuo account IA e paghi direttamente quel fornitore; noi non addebitiamo nulla. Si configura nella pagina Assistenza IA.",
   "lang_ai_off": "Disattivato - nessun pulsante IA",
   "lang_ai_openai": "OpenAI - il tuo account",
   "lang_ai_provider": "Chi risponde",

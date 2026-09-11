@@ -122,6 +122,7 @@
   "lang_ai_hint": "Hatutozi chochote kwa hili. Unatumia akaunti yako mwenyewe kwa mtoa huduma wa AI na unamlipa yeye moja kwa moja, hivyo hufanya kazi kwenye kila mpango ikiwa ni pamoja na ule wa bure, na sisi hatukutozi chochote. Ufunguo huhifadhiwa kwenye seva hii, hautumwi kamwe kwa kivinjari, na hauonyeshwi tena baada ya kuhifadhiwa.",
   "lang_ai_key": "Ufunguo wa API",
   "lang_ai_key_saved": "Ufunguo umehifadhiwa. Andika mpya ili kuubadilisha.",
+  "lang_ai_module_desc": "Huandika maelezo ya bidhaa kwa niaba yako. Unatumia akaunti yako ya AI na kumlipa mtoa huduma huyo moja kwa moja; sisi hatutozi chochote. Iweke kwenye ukurasa wa Msaada wa AI.",
   "lang_ai_off": "Imezimwa - hakuna vitufe vya AI",
   "lang_ai_openai": "OpenAI - akaunti yako mwenyewe",
   "lang_ai_provider": "Nani anajibu",

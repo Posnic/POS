@@ -28,6 +28,11 @@ const FEATURES = [
   'module_tax_enable',
   'module_credit_enable',
   'module_marketing_enable',
+  /* AI assistance. The switch a shopkeeper sees in the Features list; the
+     provider, key and spending limit live on the AI page. offOnly like its
+     neighbours, so a shop that never touched it is not switched off by our
+     silence. See services/ai.service.js. */
+  'ai_enabled',
   'module_messaging_enable',
   /* The parent: whether this shop sells anywhere but the counter at all. */
   'module_channels_enable',

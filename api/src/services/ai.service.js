@@ -204,7 +204,8 @@ const PROVIDERS = {
  * this module. Nothing that reaches a response may carry it.
  */
 async function settingsFor(context) {
-  const [preferences, secrets] = await Promise.all([
+  const [features, preferences, secrets] = await Promise.all([
+    _repo().resolveGroup('features', context),
     _repo().resolveGroup('preferences', context),
     _repo().resolveGroup('secrets', context),
   ]);
@@ -213,7 +214,19 @@ async function settingsFor(context) {
      shop that has configured everything as a shop that configured nothing. */
   const chosen = (preferences && preferences.status && preferences.data.values) || {};
   const keys = (secrets && secrets.status && secrets.data.values) || {};
+  const flags = (features && features.status && features.data.values) || {};
   return {
+    /*
+     * The Features switch. Absent means ON, which is what offOnly means
+     * everywhere else in that list: a shop that has never opened the
+     * Features page is not switched off by our silence. The string 'false'
+     * is tested as well as the boolean, because settings have reached this
+     * codebase as strings before and a plain !== false reads 'false' as on,
+     * giving a switch that cannot be turned off.
+     */
+    enabled: !(
+      flags.ai_enabled === false || String(flags.ai_enabled).trim().toLowerCase() === 'false'
+    ),
     provider: String(chosen.ai_provider || '')
       .trim()
       .toLowerCase(),
@@ -239,8 +252,8 @@ async function settingsFor(context) {
  */
 async function available(context) {
   try {
-    const { provider, key } = await settingsFor(context);
-    return !!(provider && provider !== 'off' && PROVIDERS[provider] && key);
+    const { provider, key, enabled } = await settingsFor(context);
+    return !!(enabled && provider && provider !== 'off' && PROVIDERS[provider] && key);
   } catch (e) {
     return false;
   }
@@ -312,7 +325,13 @@ async function ask(request, context) {
      Unnamed callers are recorded together rather than refused: a missing
      label is our bug and must not cost a shopkeeper a working feature. */
   const feature = String(request.feature || 'unlabelled');
-  const { provider, key, model, cap } = await settingsFor(context);
+  const { provider, key, model, cap, enabled } = await settingsFor(context);
+
+  /* The Features switch, checked first. A shopkeeper who turned AI off
+     expects it off, whatever else is still configured. */
+  if (!enabled) {
+    return { status: false, message: 'AI assistance is switched off for this shop', data: null };
+  }
 
   if (!provider || provider === 'off') {
     return { status: false, message: 'This shop has not set up an AI provider', data: null };

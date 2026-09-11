@@ -122,6 +122,7 @@
   "lang_ai_hint": "Kami tidak memungut biaya untuk ini. Anda memakai akun Anda sendiri pada penyedia AI dan membayar langsung kepada mereka, sehingga ini berfungsi pada semua paket termasuk yang gratis, dan kami tidak menagih apa pun kepada Anda. Kunci disimpan di server ini, tidak pernah dikirim ke peramban, dan tidak pernah ditampilkan lagi setelah disimpan.",
   "lang_ai_key": "Kunci API",
   "lang_ai_key_saved": "Sebuah kunci sudah tersimpan. Ketik yang baru untuk menggantinya.",
+  "lang_ai_module_desc": "Menulis deskripsi barang untuk Anda. Anda memakai akun AI Anda sendiri dan membayar penyedia itu langsung; kami tidak memungut biaya. Atur di halaman Bantuan AI.",
   "lang_ai_off": "Mati - tidak ada tombol AI",
   "lang_ai_openai": "OpenAI - akun Anda sendiri",
   "lang_ai_provider": "Siapa yang menjawab",

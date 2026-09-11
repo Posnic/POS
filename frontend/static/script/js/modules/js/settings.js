@@ -1852,6 +1852,9 @@ if ($wrapper.length) {
         'invoices_enable',
         'custom_charges_enable',
         'pl_include_cashbook',
+        /* AI assistance. The provider and key live on its own page; this is
+           only the switch, which is all a Features card may carry. */
+        'ai_enabled',
     ],
     initModulesBranchSelect: function () {
         var $sel = $('#modules_branch_select');
