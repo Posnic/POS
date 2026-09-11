@@ -3142,6 +3142,30 @@
                                             autocomplete="new-password" placeholder="Paste the key from your provider" data-t-placeholder="lang_paste_the_key_from_your_provider">
                                     </div>
 
+                                    <!-- How to get a key.
+                                         "Paste the key from your provider" assumes the shopkeeper
+                                         has one, and most will never have opened a developer
+                                         console in their life. The link changes with the provider
+                                         above; the three steps are the same everywhere, and step
+                                         two is the one people miss - a key with no balance
+                                         behind it fails on the first press with an error that
+                                         reads like our bug. -->
+                                    <div class="form-group" id="ai_key_help" style="max-width:460px; display:none;">
+                                        <div class="alert alert-light border p-3 mb-0">
+                                            <div class="mb-2"><strong><lang class="lang_ai_howto">How to get a key</lang></strong></div>
+                                            <ol class="pl-3 mb-2">
+                                                <li>
+                                                    <lang class="lang_ai_howto_1">Open</lang>
+                                                    <a href="#" id="ai_key_link" target="_blank" rel="noopener noreferrer"></a>
+                                                    <lang class="lang_ai_howto_1b">and sign in, or create an account.</lang>
+                                                </li>
+                                                <li><span id="ai_howto_2"></span></li>
+                                                <li><span id="ai_howto_3"></span></li>
+                                            </ol>
+                                            <small class="text-muted"><lang class="lang_ai_howto_cost">One item description costs about a tenth of a US cent, which is the currency providers bill in. A dollar or two of credit covers a month of ordinary use.</lang></small>
+                                        </div>
+                                    </div>
+
                                     <div class="form-group" id="ai_cap_row" style="max-width:460px; display:none;">
                                         <label for="ai_monthly_cap"><lang class="lang_ai_cap">Monthly limit</lang></label>
                                         <input type="number" id="ai_monthly_cap" class="form-control border-control"
