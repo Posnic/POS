@@ -86,3 +86,17 @@ test('CodeMeta uses only secure canonical links', () => {
   assert.equal(metadata.url, 'https://www.posnic.com/');
   assert.equal(metadata.isSourceCodeOf.url, 'https://www.posnic.com/');
 });
+
+test('README exposes the public POS evaluation and recovery resources', () => {
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+
+  assert.match(
+    readme,
+    /https:\/\/posnic\.github\.io\/open-source-pos-evaluation-checklist\.html/,
+  );
+  assert.match(
+    readme,
+    /https:\/\/posnic\.github\.io\/offline-pos-backup-checklist\.html/,
+  );
+  assert.doesNotMatch(readme, /https:\/\/(?:www\.)?posnic\.io(?:\/|\b)/);
+});
