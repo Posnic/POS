@@ -93,3 +93,71 @@ test('a page that watches its own stylesheet die reloads once to re-pair', () =>
   assert.match(block, /sessionStorage\.getItem\('posnic_repair_reload'\)/);
   assert.match(block, /location\.reload\(\)/);
 });
+
+test('the develop deploy keeps them alive too', () => {
+  /*
+   * THE GAP THAT BIT, 2026-09-11.
+   *
+   * Only deploy-frontend.yml was pinned here, so develop kept a plain
+   * `rsync --delete` over frontend/public. Develop is the environment where
+   * somebody sits with a tab open all day while builds land on top of them -
+   * four inside thirteen minutes on the day this was written - and every one
+   * of those deleted the bundles that tab was still asking for by name.
+   *
+   * The owner's report was "i cant access in develop.posnic.io". Every page
+   * answered 200, every deploy was green, the bundle parsed and sign-in
+   * returned a clean 401. His open tab was asking for a dashboard.<hash>.js
+   * that a later deploy had removed.
+   */
+  const wf = read('.github/workflows/deploy-develop.yml');
+  assert.match(
+    wf,
+    /--filter='protect public\/script\/\*\.js'/,
+    'develop deletes the hashed js that open tabs still reference'
+  );
+  assert.match(
+    wf,
+    /--filter='protect public\/style\/\*\.css'/,
+    'develop deletes the hashed css that open tabs still reference'
+  );
+  assert.match(
+    wf,
+    /tail -n \+4/,
+    'develop protects the bundles but never prunes them, so the box grows without bound'
+  );
+});
+
+test('no deploy runs a bare --delete over a directory of built bundles', () => {
+  /*
+   * The general rule rather than one test per workflow, which is how develop
+   * came to be missed in the first place. Any rsync whose source is a built
+   * frontend directory and which carries --delete must also protect the
+   * hashed files, because their names are what an open page remembers.
+   */
+  const offenders = [];
+  for (const file of ['deploy-frontend.yml', 'deploy-develop.yml']) {
+    const wf = read(`.github/workflows/${file}`);
+    for (const chunk of wf.split(/\brsync\s/).slice(1)) {
+      /* One rsync invocation: up to the first line that is not a continuation. */
+      const lines = [];
+      for (const line of chunk.split('\n')) {
+        lines.push(line);
+        /* A continuation line ends in a backslash. Named rather than written
+           as a literal: this file went through a heredoc that ate one. */
+        if (!line.trimEnd().endsWith(String.fromCharCode(92))) break;
+      }
+      const pass = lines.join('\n');
+      if (!/\bfrontend\//.test(pass)) continue;
+      if (!pass.includes('--delete')) continue;
+      if (!pass.includes('protect public/script/*.js')) {
+        offenders.push(`${file}: ${pass.split('\n')[0].trim()}`);
+      }
+    }
+  }
+
+  assert.deepStrictEqual(
+    offenders,
+    [],
+    `these rsyncs delete bundles that open tabs still ask for:\n  ${offenders.join('\n  ')}`
+  );
+});
