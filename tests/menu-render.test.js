@@ -187,3 +187,178 @@ test('the category chips stay on this branch rather than navigating away', async
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.match(html, /<base\b[^>]*href="\/menu\/"/, 'the base tag this depends on is gone');
 });
+
+/* ------------------------------------------------- search, filters and sort */
+
+const RICH = {
+  ...REPLY,
+  categories: [
+    {
+      id: 'starters',
+      name: 'Starters',
+      items: [
+        {
+          id: 'i1', name: 'Paneer Tikka', description: 'Charred, on skewers',
+          price: 280, diet: 'veg', available: true, served_in: [],
+          prep_minutes: 15, ordered_count: 12, goes_with: ['i4'],
+        },
+        {
+          id: 'i2', name: 'Chicken 65', description: 'Chettinad style',
+          price: 320, diet: 'non_veg', available: true, served_in: [],
+          prep_minutes: 18, ordered_count: 40, goes_with: [],
+        },
+        {
+          id: 'i3', name: 'Gobi Manchurian', description: 'Cauliflower, soy',
+          price: 240, diet: 'veg', available: false, served_in: [],
+          prep_minutes: 0, ordered_count: 3, goes_with: [],
+        },
+      ],
+    },
+    {
+      id: 'breads',
+      name: 'Breads',
+      items: [
+        {
+          id: 'i4', name: 'Butter Naan', description: '',
+          price: 60, diet: 'veg', available: true, served_in: [],
+          prep_minutes: 8, ordered_count: 55, goes_with: ['i1'],
+        },
+      ],
+    },
+  ],
+  item_count: 4,
+};
+
+const visible = (document) =>
+  [...document.querySelectorAll('.dish')]
+    .filter((d) => !d.hidden)
+    .map((d) => d.querySelector('.dish-name').textContent);
+
+test('a misspelling still finds the dish', async () => {
+  /*
+   * THE WHOLE POINT OF THE FUZZY ENGINE.
+   *
+   * A hungry person on a phone types "panner". A menu that answers "nothing
+   * matches" reads as a restaurant that does not sell it, and every food app
+   * in the country tolerates this - so a menu that does not feels broken
+   * rather than strict.
+   */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'panner';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('a word nobody resembles still finds nothing, and says so', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'lasagne';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), []);
+  assert.match(document.getElementById('result-count').textContent, /Nothing matches/);
+});
+
+test('veg only hides the non-veg, and never guesses at the unmarked', async () => {
+  /* A shop that never filled the diet field has promised nothing. Assuming
+     vegetarian on its behalf is the one mistake this filter must not make. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.getElementById('filter-veg').click();
+
+  const shown = visible(document);
+  assert.ok(!shown.includes('Chicken 65'), 'a non-veg dish survived the veg filter');
+  assert.ok(shown.includes('Paneer Tikka'));
+});
+
+test('available now hides what is off tonight', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  document.getElementById('filter-available').click();
+  assert.ok(!visible(document).includes('Gobi Manchurian'));
+});
+
+test('filters and search narrow together rather than replacing each other', async () => {
+  /*
+   * They used to be one function reading a text box, so turning a filter on
+   * silently threw away whatever had been typed.
+   */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const box = document.getElementById('search');
+  box.value = 'tikka';
+  box.dispatchEvent(new window.Event('input'));
+  document.getElementById('filter-veg').click();
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('most ordered puts the best seller first', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'popular';
+  sort.dispatchEvent(new window.Event('change'));
+
+  /* Within each section: the sections themselves keep the shop's order. */
+  const starters = [...document.querySelectorAll('.section')][0];
+  const names = [...starters.querySelectorAll('.dish-name')].map((n) => n.textContent);
+  assert.strictEqual(names[0], 'Chicken 65');
+});
+
+test('price low to high sorts on the price the reader is being shown', async () => {
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'price_asc';
+  sort.dispatchEvent(new window.Event('change'));
+
+  const starters = [...document.querySelectorAll('.section')][0];
+  const names = [...starters.querySelectorAll('.dish-name')].map((n) => n.textContent);
+  assert.deepStrictEqual(names, ['Gobi Manchurian', 'Paneer Tikka', 'Chicken 65']);
+});
+
+test('a live search outranks the sort box, because it is a question', async () => {
+  /* Somebody who just typed "naan" is asking something; answering in price
+     order buries the answer. The box takes over again once it is cleared. */
+  const { window, document } = await render('/menu/AZ100', RICH);
+  const sort = document.getElementById('sort');
+  sort.value = 'price_desc';
+  sort.dispatchEvent(new window.Event('change'));
+
+  const box = document.getElementById('search');
+  box.value = 'paneer';
+  box.dispatchEvent(new window.Event('input'));
+
+  assert.deepStrictEqual(visible(document), ['Paneer Tikka']);
+});
+
+test('the categories step aside while anything is narrowing the list', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  assert.strictEqual(document.getElementById('cats').hidden, false);
+  document.getElementById('filter-veg').click();
+  assert.strictEqual(document.getElementById('cats').hidden, true);
+});
+
+test('opening a dish offers what people order with it', async () => {
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i1"]').click();
+
+  const box = document.getElementById('goes-with');
+  assert.strictEqual(box.hidden, false, 'no suggestions were offered');
+  assert.match(document.getElementById('goes-row').textContent, /Butter Naan/);
+});
+
+test('a dish with no history offers nothing rather than filling the space', async () => {
+  /* Recommending at random is something a diner notices immediately, and then
+     stops trusting the rest of the page. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i2"]').click();
+  assert.strictEqual(document.getElementById('goes-with').hidden, true);
+});
+
+test('a suggestion opens that dish', async () => {
+  /* It sits INSIDE the open sheet, so the handler has to run before the one
+     for dish cards or tapping it would do nothing at all. */
+  const { document } = await render('/menu/AZ100', RICH);
+  document.querySelector('.dish[data-id="i1"]').click();
+  document.querySelector('.goes').click();
+  assert.strictEqual(document.getElementById('sheet-title').textContent, 'Butter Naan');
+});

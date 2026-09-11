@@ -176,6 +176,153 @@
         font-size: 13px;
       }
 
+      /* ---- filters and sort ------------------------------------------ */
+
+      .tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+      }
+
+      .tools::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tool {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      /*
+        A pressed filter is a STATE, not a hover. It stays obvious after the
+        finger leaves, because the whole risk of a filter is forgetting it is
+        on and deciding the kitchen has run out of food.
+      */
+      .tool[aria-pressed="true"] {
+        background: var(--ink);
+        color: var(--bg);
+        border-color: var(--ink);
+      }
+
+      .tool[aria-pressed="true"] .diet {
+        color: var(--bg);
+      }
+
+      .tool-sep {
+        flex: 0 0 auto;
+        width: 1px;
+        height: 20px;
+        background: var(--line);
+      }
+
+      .tool-sort {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+
+      .tool-sort-label {
+        white-space: nowrap;
+      }
+
+      .tool-sort select {
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+
+      /* ---- goes with -------------------------------------------------- */
+
+      /*
+        Three at most, and only in the detail sheet. A suggestion under every
+        card turns a menu into a shop; a suggestion where somebody has already
+        stopped to read one dish is an answer to "what else".
+      */
+      .goes-with {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+
+      .goes-with h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+
+      .goes-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .goes-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .goes {
+        flex: 0 0 auto;
+        width: 132px;
+        text-align: left;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--raised);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .goes-name {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .goes-price {
+        display: block;
+        margin-top: 3px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+
+      .popular {
+        display: inline-block;
+        margin-top: 6px;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: var(--raised);
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        font-size: 12px;
+      }
+
       /* ---- sticky controls ------------------------------------------ */
 
       /*
@@ -582,6 +729,41 @@
           </button>
         </div>
         <nav id="cats" class="cats" aria-label="Menu sections"></nav>
+
+        <!--
+          Filters and order, on one scrolling row.
+
+          Kept to the three a diner actually asks for. Every extra control here
+          is a thing to read before eating, and a menu is not a search engine.
+        -->
+        <div class="tools" id="tools">
+          <button
+            class="tool"
+            id="filter-veg"
+            type="button"
+            aria-pressed="false"
+          >
+            <span class="diet diet-veg" aria-hidden="true"></span>Veg only
+          </button>
+          <button
+            class="tool"
+            id="filter-available"
+            type="button"
+            aria-pressed="false"
+          >
+            Available now
+          </button>
+          <span class="tool-sep" aria-hidden="true"></span>
+          <label class="tool-sort">
+            <span class="tool-sort-label">Sort</span>
+            <select id="sort" aria-label="Sort the menu">
+              <option value="menu">Menu order</option>
+              <option value="popular">Most ordered</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+            </select>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -612,6 +794,17 @@
         </div>
         <p id="sheet-desc" class="sheet-desc" hidden></p>
         <p id="sheet-price" class="sheet-price"></p>
+
+        <!--
+          What people order with this, from the shop's own sales. Hidden
+          entirely when there is nothing to say: a new shop has no history, and
+          three dishes picked at random to fill the space is the fastest way to
+          stop being trusted.
+        -->
+        <div class="goes-with" id="goes-with" hidden>
+          <h3>Often ordered with</h3>
+          <div class="goes-row" id="goes-row"></div>
+        </div>
         <button id="sheet-close" class="sheet-close" type="button">
           Close
         </button>
