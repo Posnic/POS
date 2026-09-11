@@ -849,19 +849,66 @@
                                     </div>
 
                                     <div class="form-group col-md-4">
-                                        <input type="checkbox" class="custom-control-input" id="item_sales_channel"
-                                            name="item_sales_channel" checked>
-                                        <label class="custom-control-label" for="item_sales_channel">
-                                            <lang class="lang_sales_channel_2">Sales channel</lang>
-                                        </label>
-                                    </div>
-
-                                    <div class="form-group col-md-4">
                                         <input type="checkbox" class="custom-control-input" id="item_ecommerce"
                                             name="item_ecommerce">
                                         <label class="custom-control-label" for="item_ecommerce">
-                                            <lang class="lang_module_kiosk">Kiosk</lang>
+                                            <lang class="lang_show_in_kiosk_and_online">Kiosk and online</lang>
                                         </label>
+                                    </div>
+
+                                    <!--
+                                        Separate from the one above on purpose.
+                                        That decides whether a thing can be
+                                        ORDERED; this decides whether it is
+                                        LISTED. A restaurant lists the dish that
+                                        is off tonight, because a menu with
+                                        holes reads as a kitchen out of food.
+                                    -->
+                                    <div class="form-group col-md-4">
+                                        <input type="checkbox" class="custom-control-input" id="item_show_on_menu"
+                                            name="item_show_on_menu" checked>
+                                        <label class="custom-control-label" for="item_show_on_menu">
+                                            <lang class="lang_show_on_menu">Show on menu</lang>
+                                        </label>
+                                    </div>
+
+                                    <!--
+                                        Restaurant only. The serving periods
+                                        come from Settings; a dish in none of
+                                        them is served all day, which is most
+                                        of a menu.
+                                    -->
+                                    <div class="form-group col-md-4 restaurant-only">
+                                        <label for="item_dayparts"><lang class="lang_served_at">Served at</lang></label>
+                                        <select class="form-control border-control select2" id="item_dayparts"
+                                            name="item_dayparts" multiple="multiple"
+                                            data-placeholder="All day" data-t-placeholder="lang_all_day"></select>
+                                    </div>
+
+                                    <div class="form-group col-md-4 restaurant-only">
+                                        <label for="item_prep_minutes"><lang class="lang_prep_minutes">Preparation time (minutes)</lang></label>
+                                        <input type="number" min="0" max="480" class="form-control border-control"
+                                            id="item_prep_minutes" name="item_prep_minutes">
+                                    </div>
+
+                                    <div class="form-group col-md-8 restaurant-only">
+                                        <label for="item_prep_note"><lang class="lang_prep_note">Note for the kitchen</lang></label>
+                                        <input type="text" class="form-control border-control" id="item_prep_note"
+                                            name="item_prep_note" maxlength="200">
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_prep_note_help">Printed on every ticket for this dish. The customer never sees it.</lang>
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label for="item_diet"><lang class="lang_diet_mark">Diet</lang></label>
+                                        <select class="form-control border-control" id="item_diet" name="item_diet">
+                                            <option value=""><lang class="lang_diet_unset">Not marked</lang></option>
+                                            <option value="veg"><lang class="lang_diet_veg">Vegetarian</lang></option>
+                                            <option value="non_veg"><lang class="lang_diet_non_veg">Non-vegetarian</lang></option>
+                                            <option value="egg"><lang class="lang_diet_egg">Contains egg</lang></option>
+                                            <option value="vegan"><lang class="lang_diet_vegan">Vegan</lang></option>
+                                        </select>
                                     </div>
 
                                     <div class="form-group col-md-4">

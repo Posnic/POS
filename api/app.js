@@ -1418,6 +1418,97 @@ app.use(
 );
 app.use(express.static(path.join(frontendPath, 'public'), { setHeaders: assetCacheHeaders }));
 
+/*
+ * The shop's own online ordering page.
+ *
+ * Served from the shop's origin so it is the same origin as the API it calls:
+ * no CORS list to keep per shop, and - the part that actually bit customers -
+ * no shared browser storage. The kiosk used to live on one host for the whole
+ * estate, where IndexedDB is per-origin and therefore shared, which is why it
+ * had to wipe its catalogue whenever it noticed a different branch. A customer
+ * who ordered at two Posnic shops collided with themselves.
+ *
+ * TWO PAGES, NOT ONE BUNDLE WEARING TWO NAMES.
+ *
+ * `/menu` used to be `/order` with the cart hidden. That is a worse menu than
+ * the paper it replaces: it carries 1,500 lines of IndexedDB, a cart and two
+ * payment integrations to render a list of dishes, and it reads as a shop
+ * that has taken its ordering away rather than as a menu.
+ *
+ * So they are separate bundles with separate jobs. `/order` transacts.
+ * `/menu` is read-only: what the kitchen cooks, searchable, by category, with
+ * the veg mark, and nothing on it that starts an order. A shop with ordering
+ * switched on can still print a `/menu` code for its window; a shop in menu
+ * mode has only ever needed this one.
+ *
+ * Mounted BEFORE the root API router, which answers `/items/...` and friends,
+ * because that router is mounted at '/' and would otherwise see these paths
+ * first. express.static redirects `/order` to `/order/` on its own, which is
+ * what makes each bundle's relative asset paths resolve.
+ */
+const ORDER_BUNDLE = path.join(__dirname, '..', 'order');
+const MENU_BUNDLE = path.join(__dirname, '..', 'menu');
+if (fs.existsSync(MENU_BUNDLE)) {
+  app.use('/menu', express.static(MENU_BUNDLE, { setHeaders: assetCacheHeaders }));
+}
+if (fs.existsSync(ORDER_BUNDLE)) {
+  const orderStatic = express.static(ORDER_BUNDLE, { setHeaders: assetCacheHeaders });
+  app.use('/order', orderStatic);
+
+  /*
+   * `/order/AZ100` - the store address as a path segment rather than a query
+   * string.
+   *
+   * express.static answers 404 for it, because there is no file of that name,
+   * so the page has to be served for anything under these paths that is not a
+   * real asset. The page then reads the address out of its own URL.
+   *
+   * Only a single segment, and only one that looks like a store address, so
+   * this cannot become a catch-all that swallows a genuinely missing asset and
+   * answers HTML where a script was expected - which fails in the browser as
+   * a syntax error and sends whoever debugs it looking in the wrong place.
+   *
+   * A relative asset path still resolves: from `/order/AZ100` the browser
+   * treats the last segment as a file, so `assets/x` is `/order/assets/x`.
+   */
+  /*
+   * Every shape a printed code can carry.
+   *
+   *   /AZ100                  the shop
+   *   /AZ100/table/5          its own table five
+   *   /AZ100/venue/RC/123     Royal Club Hotel, room 123
+   *
+   * Still bounded, and still not a catch-all: a missing script under these
+   * paths stays a 404 rather than being answered with HTML, which in a browser
+   * surfaces as a syntax error pointing at entirely the wrong file.
+   *
+   * The page reads the parts out of its own URL. It can only do that because
+   * index.html carries a <base href="/order/">: without it, a relative asset
+   * on a three-segment URL would resolve to /order/AZ100/venue/assets/... and
+   * the page would load nothing at all.
+   */
+  const STORE_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+  const serveOrderPage = (req, res, next) => {
+    if (!STORE_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
+  };
+  app.use('/order', serveOrderPage);
+}
+
+/* `/menu/AZ100`, for the same reason and with the same guard: a path segment
+   express.static has no file for, and only one shaped like a store address. */
+if (fs.existsSync(MENU_BUNDLE)) {
+  /* The same shapes, so a menu can be printed for a hotel room and show that
+     room the prices it will actually be charged. */
+  const MENU_ADDRESS =
+    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+  app.use('/menu', (req, res, next) => {
+    if (!MENU_ADDRESS.test(req.path)) return next();
+    return res.sendFile(path.join(MENU_BUNDLE, 'index.html'));
+  });
+}
+
 // Also mount API routes at root for backward compatibility
 app.use('/', apiRouter);
 

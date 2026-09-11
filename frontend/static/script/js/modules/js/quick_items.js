@@ -47,7 +47,6 @@
             inventory: f.inventory !== false,
             // Sellable in New Sale by default (the full form ships this checked
             // too) - without it, bulk/quick items are hidden from every sale view.
-            sales_channel: true,
             ecommerce: false,
             // Allow selling even when stock is 0 (industry-standard flexible
             // default). Stock is still tracked; the shopkeeper can restrict an

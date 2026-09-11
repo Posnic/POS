@@ -1332,7 +1332,7 @@ class InstallService {
         for (const value of wantedUnits) {
           if (unitMap[value]) continue;
           const label = UNIT_LABELS[value] || value.charAt(0).toUpperCase() + value.slice(1);
-          // eslint-disable-next-line no-await-in-loop
+
           unitMap[value] = await this.repository.insertUnit({
             demo_pack: packTag,
             demo_seeded_at: now,
@@ -1436,7 +1436,6 @@ class InstallService {
             sort_order: 1,
             description: product.description || `${product.name} - ${product.unit}`,
             track_inventory: product.track_inventory !== false,
-            sales_channel: true,
             ecommerce: false,
             updated_date: now,
             updated_by: username,
@@ -1720,7 +1719,6 @@ class InstallService {
             sort_order: parseInt(itemValue.sort_order),
             description: itemValue.description,
             track_inventory: true,
-            sales_channel: true,
             ecommerce: false,
             updated_date: now,
             updated_by: username,
@@ -1825,7 +1823,6 @@ class InstallService {
         description:
           'Fortune Sunlite Oil is refined sunflower oil that is healthy and tasty. Its high boiling point implies that sunflower oil holds onto its nutritional content even at higher temperatures, making it an excellent choice for the Indian cooking style.',
         track_inventory: true,
-        sales_channel: true,
         ecommerce: false,
         name: 'Fortune Sunlite Refined Sunflower Oil 1L',
         updated_date: now,

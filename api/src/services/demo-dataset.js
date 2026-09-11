@@ -215,7 +215,6 @@ function toPack(dataset, imageFor, people) {
  * <trade>/images/<productId>/front.jpg.
  */
 async function openZip(buffer) {
-  // eslint-disable-next-line global-require
   const unzipper = require('unzipper');
   const dir = await unzipper.Open.buffer(buffer);
   let manifest = null;
@@ -231,7 +230,6 @@ async function openZip(buffer) {
      * seeder fell back to a hardcoded Indian list for every country on earth.
      */
     if (entry.path.endsWith('/customers.json') || entry.path === 'customers.json') {
-      // eslint-disable-next-line no-await-in-loop
       try {
         people.customers = JSON.parse((await entry.buffer()).toString('utf8'));
       } catch (e) {
@@ -240,7 +238,6 @@ async function openZip(buffer) {
       continue;
     }
     if (entry.path.endsWith('/suppliers.json') || entry.path === 'suppliers.json') {
-      // eslint-disable-next-line no-await-in-loop
       try {
         people.suppliers = JSON.parse((await entry.buffer()).toString('utf8'));
       } catch (e) {
@@ -249,7 +246,6 @@ async function openZip(buffer) {
       continue;
     }
     if (entry.path.endsWith('/data.json') || entry.path === 'data.json') {
-      // eslint-disable-next-line no-await-in-loop
       manifest = JSON.parse((await entry.buffer()).toString('utf8'));
     } else {
       const m = /images\/([^/]+)\/front\.(jpe?g|png|webp)$/i.exec(entry.path);
@@ -300,9 +296,8 @@ async function stageImages(datasetId, images, uploadsRoot) {
     const ext = path.extname(entry.path).toLowerCase() || '.jpg';
     const file = path.join(dest, safe + ext);
     if (!fs.existsSync(file)) {
-      // eslint-disable-next-line no-await-in-loop
       const buf = await entry.buffer();
-      // eslint-disable-next-line no-await-in-loop
+
       await fs.promises.writeFile(file, buf);
     }
     staged.set(productId, '/uploads/' + rel.split(path.sep).join('/') + '/' + safe + ext);
@@ -390,7 +385,6 @@ async function datasetAvailable(currency, trade) {
 async function listDatasetPacks(currency) {
   const rows = [];
   for (const [trade, label] of Object.entries(DATASET_TRADES)) {
-    // eslint-disable-next-line no-await-in-loop
     if (await datasetAvailable(currency, trade)) {
       rows.push({
         key: trade,

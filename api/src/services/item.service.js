@@ -479,7 +479,7 @@ class ItemService {
         variant_value: String(row.variant_value || '').trim(),
         variant_parent_name: parentName,
       };
-      // eslint-disable-next-line no-await-in-loop
+
       const result = await this.addItem({ data: payload, branchId, licenseId, user });
       const newId =
         result &&
@@ -487,7 +487,6 @@ class ItemService {
         result.data &&
         (result.data._id || result.data.id || result.data);
       if (!result || !result.status || !newId) {
-        // eslint-disable-next-line no-await-in-loop
         await this.repository
           .hardDeleteItems(created, { licenseId })
           .catch((e) => console.error('Family rollback failed:', e.message));
@@ -716,117 +715,6 @@ class ItemService {
     }
   }
 
-  async accessKiosk(branchStoreId) {
-    try {
-      const result = await this.repository.accessKiosk(branchStoreId);
-      if (result?.status === true && result.data) {
-        const rootDir = path.join(__dirname, '..', '..');
-        const uploadBaseDir = path.join(rootDir, 'uploads');
-        const itemImagesDir = path.join(uploadBaseDir, 'item_images');
-        const publicDir = path.join(rootDir, 'public');
-
-        if (!fs.existsSync(itemImagesDir)) {
-          fs.mkdirSync(itemImagesDir, { recursive: true });
-        }
-
-        const ensureItemImage = async (value, { returnPath = true } = {}) => {
-          if (!value || typeof value !== 'string') return value;
-          if (value === 'item.svg') return value;
-
-          let pathValue = value;
-          if (value.startsWith('http')) {
-            try {
-              const parsed = new URL(value);
-              pathValue = parsed.pathname;
-            } catch (err) {
-              return value;
-            }
-          }
-
-          const cleaned = pathValue.replace(/^\/+/, '');
-          if (!cleaned) return value;
-
-          const filename = cleaned.split('/').pop();
-          if (!filename) return value;
-
-          const itemPath = path.join(itemImagesDir, filename);
-          const rootPath = path.join(uploadBaseDir, filename);
-
-          if (fs.existsSync(rootPath) && !fs.existsSync(itemPath)) {
-            try {
-              fs.copyFileSync(rootPath, itemPath);
-            } catch (copyError) {
-              console.error('Error copying kiosk image to item_images:', copyError);
-            }
-          }
-
-          if (fs.existsSync(itemPath) && !fs.existsSync(rootPath)) {
-            try {
-              fs.copyFileSync(itemPath, rootPath);
-            } catch (copyError) {
-              console.error('Error copying kiosk image to uploads root:', copyError);
-            }
-          }
-
-          const publicPath = path.join(publicDir, filename);
-          const sourcePath = fs.existsSync(itemPath) ? itemPath : rootPath;
-          if (sourcePath && fs.existsSync(sourcePath) && !fs.existsSync(publicPath)) {
-            try {
-              fs.copyFileSync(sourcePath, publicPath);
-            } catch (copyError) {
-              console.error('Error copying kiosk image to public root:', copyError);
-            }
-          }
-
-          if (sourcePath && fs.existsSync(sourcePath) && !this.s3UploadedCache.has(filename)) {
-            await this.uploadFileToS3(filename, sourcePath);
-          }
-
-          return returnPath ? `/uploads/item_images/${filename}` : filename;
-        };
-
-        if (result.data.kiosk_images) {
-          result.data.kiosk_images = {
-            ...result.data.kiosk_images,
-            logo: await ensureItemImage(result.data.kiosk_images.logo, { returnPath: false }),
-            banner: await ensureItemImage(result.data.kiosk_images.banner, { returnPath: false }),
-            homebanner: await ensureItemImage(result.data.kiosk_images.homebanner, {
-              returnPath: false,
-            }),
-            advertisement: await ensureItemImage(result.data.kiosk_images.advertisement, {
-              returnPath: false,
-            }),
-          };
-        }
-
-        if (Array.isArray(result.data.products)) {
-          result.data.products = await Promise.all(
-            result.data.products.map(async (category) => {
-              const items = Array.isArray(category.items)
-                ? await Promise.all(
-                    category.items.map(async (item) => ({
-                      ...item,
-                      img: await ensureItemImage(item.img),
-                    }))
-                  )
-                : category.items;
-              return { ...category, items };
-            })
-          );
-        }
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error in ItemService.accessKiosk:', error);
-      return {
-        status: false,
-        data: null,
-        message: error.message,
-      };
-    }
-  }
-
   async updateKioskStatus(id, status) {
     try {
       const result = await this.repository.updateKioskStatus(id, status);
@@ -869,12 +757,32 @@ class ItemService {
     }
   }
 
-  async accessQr(params = {}) {
+  /** Which branch `/order` with no store address means. */
+  async defaultStoreId() {
     try {
-      const result = await this.repository.accessQr(params);
+      return await this.repository.defaultStoreId();
+    } catch (error) {
+      console.error('Error in ItemService.defaultStoreId:', error);
+      return { storeId: null, reason: 'error' };
+    }
+  }
+
+  /** The shop's public menu, for reading rather than ordering. */
+  async publicMenu(params = {}) {
+    try {
+      return await this.repository.publicMenu(params);
+    } catch (error) {
+      console.error('Error in ItemService.publicMenu:', error);
+      return { status: false, data: null, message: error.message };
+    }
+  }
+
+  async storefront(params = {}) {
+    try {
+      const result = await this.repository.storefront(params);
       return result;
     } catch (error) {
-      console.error('Error in ItemService.accessQr:', error);
+      console.error('Error in ItemService.storefront:', error);
       return {
         status: false,
         data: null,

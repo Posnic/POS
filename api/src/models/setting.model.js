@@ -6,6 +6,7 @@ const path = require('path');
 const { secretUpdate } = require('../services/settings-groups');
 const { recordAudit } = require('../utils/audit-trail');
 const { publicPageUrl } = require('../utils/public-url');
+const onlineOrdering = require('../utils/online-ordering');
 
 class SettingModel extends BaseModel {
   constructor() {
@@ -4592,22 +4593,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4615,24 +4624,24 @@ class SettingModel extends BaseModel {
       const updateFields = {};
 
       if (data.kiosk_logo && typeof data.kiosk_logo === 'string' && data.kiosk_logo.trim()) {
-        updateFields['kiosk.$[elem].logo'] = data.kiosk_logo.trim();
+        updateFields['online_ordering.logo'] = data.kiosk_logo.trim();
       }
       if (data.kiosk_banner && typeof data.kiosk_banner === 'string' && data.kiosk_banner.trim()) {
-        updateFields['kiosk.$[elem].banner'] = data.kiosk_banner.trim();
+        updateFields['online_ordering.banner'] = data.kiosk_banner.trim();
       }
       if (
         data.kiosk_homebanner &&
         typeof data.kiosk_homebanner === 'string' &&
         data.kiosk_homebanner.trim()
       ) {
-        updateFields['kiosk.$[elem].homebanner'] = data.kiosk_homebanner.trim();
+        updateFields['online_ordering.homebanner'] = data.kiosk_homebanner.trim();
       }
       if (
         data.kiosk_advertisement &&
         typeof data.kiosk_advertisement === 'string' &&
         data.kiosk_advertisement.trim()
       ) {
-        updateFields['kiosk.$[elem].advertisement'] = data.kiosk_advertisement.trim();
+        updateFields['online_ordering.advertisement'] = data.kiosk_advertisement.trim();
       }
 
       if (Object.keys(updateFields).length > 0) {
@@ -4641,10 +4650,7 @@ class SettingModel extends BaseModel {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: updateFields },
-          {
-            arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-          }
+          { $set: updateFields }
         );
       }
 
@@ -4727,38 +4733,66 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
-      // Check for duplicate store_id
+      /*
+       * Check for a duplicate store id, excluding this branch's own.
+       *
+       * The exclusion is not a nicety. The form posts the store id on every
+       * save, so without it a branch collided with itself: change anything
+       * else on this tab, press save, and the answer was "A kiosk with this
+       * Store ID already exists" - about the id the branch already had. That
+       * made the tab a one-shot, which mattered little when the store id was
+       * the only field on it and matters a great deal now that the mode, the
+       * pause and the opening hours are saved through the same door.
+       */
+      if (data.store_id && !onlineOrdering.storeIdIsAvailable(data.store_id)) {
+        /* A word this resource already uses for one of its own paths. The
+           clash is invisible until the one shop that chose it cannot be
+           reached, so it is refused at the point of choosing. */
+        return {
+          status: false,
+          data: null,
+          message: 'That store address is reserved. Please choose another.',
+        };
+      }
+
       if (data.store_id) {
         const exists = await collection.findOne({
-          kiosk: {
-            $elemMatch: { store_id: data.store_id },
-          },
+          _id: { $ne: this.normalizeId(this.branchId) },
+          'online_ordering.store_id': data.store_id,
         });
 
         if (exists) {
           return {
             status: false,
             data: null,
-            message: 'A kiosk with this Store ID already exists',
+            message: 'Another branch is already using this store address',
           };
         }
       }
@@ -4767,7 +4801,30 @@ class SettingModel extends BaseModel {
       const updateData = {};
 
       if (data.store_id !== undefined) {
-        updateData['kiosk.$[elem].store_id'] = data.store_id;
+        updateData['online_ordering.store_id'] = data.store_id;
+      }
+
+      /*
+       * Mode, pause, hours and fulfilment, normalised in one place.
+       *
+       * Only keys the caller actually sent come back, so a screen that saves
+       * the store id alone cannot blank the schedule - the same rule the branch
+       * credential fields follow, and for the same reason.
+       *
+       * The normalising itself lives in the util beside the code that READS
+       * these values, so a value can never be stored in a shape the reader does
+       * not expect. Clock strings become minutes past midnight; a mode becomes
+       * one of two known words rather than whatever arrived; an unparseable
+       * pause is refused here rather than shutting the shop silently later.
+       */
+      let normalized;
+      try {
+        normalized = onlineOrdering.normalizeSettings(data);
+      } catch (err) {
+        return { status: false, data: null, message: err.message };
+      }
+      for (const [key, value] of Object.entries(normalized)) {
+        updateData[`online_ordering.${key}`] = value;
       }
 
       if (Object.keys(updateData).length === 0) {
@@ -4777,17 +4834,13 @@ class SettingModel extends BaseModel {
           message: 'No valid fields provided for update',
         };
       }
-
-      // Perform update using arrayFilters
+      // Perform the update
       await collection.updateOne(
         {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {
@@ -4814,22 +4867,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4853,13 +4914,13 @@ class SettingModel extends BaseModel {
         ];
       }
 
-      updateData['kiosk.$[elem].printer_names'] = printers;
+      updateData['online_ordering.printer_names'] = printers;
 
       // Backward compatibility
       if (printers.length > 0) {
-        updateData['kiosk.$[elem].printer_name'] = printers[0];
+        updateData['online_ordering.printer_name'] = printers[0];
       } else {
-        updateData['kiosk.$[elem].printer_name'] = null;
+        updateData['online_ordering.printer_name'] = null;
       }
 
       // Perform update using array filter
@@ -4868,10 +4929,7 @@ class SettingModel extends BaseModel {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {
@@ -4898,22 +4956,30 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      // Initialize kiosk array if not present
-      if (!branchData.kiosk || branchData.kiosk.length === 0) {
-        const newKioskEntry = [
-          {
-            branch_id: this.normalizeId(this.branchId),
-            user_id: this.normalizeId(this.user?._id),
-            user_name: this.user?.username || '',
-          },
-        ];
-
+      /*
+       * Give this branch a channel if it has none.
+       *
+       * Written out in full rather than left to a read-time default: sync
+       * replaces whole documents, so a field the winning copy does not carry
+       * is deleted rather than merged, and absent reads the same as the
+       * default through the API - the setting would vanish silently.
+       */
+      if (!branchData.online_ordering) {
         await collection.updateOne(
           {
             _id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
           },
-          { $set: { kiosk: newKioskEntry } }
+          {
+            $set: {
+              online_ordering: {
+                ...onlineOrdering.defaultConfig(),
+                branch_id: this.normalizeId(this.branchId),
+                user_id: this.normalizeId(this.user?._id),
+                user_name: this.user?.username || '',
+              },
+            },
+          }
         );
       }
 
@@ -4923,7 +4989,7 @@ class SettingModel extends BaseModel {
 
       for (const field of allowedFields) {
         if (data[field] !== undefined) {
-          updateData[`kiosk.$[elem].${field}`] = Boolean(data[field]);
+          updateData[`online_ordering.${field}`] = Boolean(data[field]);
         }
       }
 
@@ -4941,10 +5007,7 @@ class SettingModel extends BaseModel {
           _id: this.normalizeId(this.branchId),
           license: this.normalizeId(this.licenseId),
         },
-        { $set: updateData },
-        {
-          arrayFilters: [{ 'elem.branch_id': this.normalizeId(this.branchId) }],
-        }
+        { $set: updateData }
       );
 
       return {

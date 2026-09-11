@@ -181,6 +181,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteLog:    (date, logId) => ipcRenderer.invoke('kot:delete-log', date, logId),
     reprint:      (logEntry) => ipcRenderer.invoke('kot:reprint', logEntry)
   },
+  /*
+   * The sound an online order makes.
+   *
+   * Every other way this till learns about a sale has a person standing in
+   * front of it. An online order is the one that arrives when nobody is
+   * looking, and a badge on a screen nobody is facing is not a notification -
+   * it is a record of something that was missed.
+   *
+   * The main process cannot play audio; only a renderer can. So it sends the
+   * tone here, already synthesised, and the page plays it. A shop with no
+   * window open makes no sound, which is correct: there is nobody to hear it.
+   *
+   * One way only. Nothing the page does through this can reach the machine.
+   */
+  orderAlert: {
+    on: (handler) => {
+      const h = (_e, payload) => handler(payload);
+      ipcRenderer.on('posnic:order-alert', h);
+      return () => ipcRenderer.removeListener('posnic:order-alert', h);
+    },
+    /* Somebody dealt with the queue, so stop the alarm repeating. */
+    resolve: (saleId) => ipcRenderer.invoke('order-alert:resolve', saleId),
+    clear: () => ipcRenderer.invoke('order-alert:clear'),
+  },
   mobile: {
     getInfo:       () => ipcRenderer.invoke('mobile:get-info'),
     getDevices:    () => ipcRenderer.invoke('mobile:get-devices'),

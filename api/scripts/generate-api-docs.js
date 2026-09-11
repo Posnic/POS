@@ -77,7 +77,10 @@ function parseRoutes(file) {
     // Only bare identifiers and dotted references count as middleware or a
     // handler; an inline arrow function has no name worth printing.
     const names = (rest.match(/(?<![\w$.])[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/g) || []).filter(
-      (n) => !/^(req|res|next|async|await|function|return|const|let|var|new|typeof|null|true|false)$/.test(n)
+      (n) =>
+        !/^(req|res|next|async|await|function|return|const|let|var|new|typeof|null|true|false)$/.test(
+          n
+        )
     );
     const handler = names.length ? names[names.length - 1] : null;
     const middleware = names.slice(0, -1);
@@ -105,7 +108,8 @@ function buildSpec(groups, validators) {
       // Express :id becomes OpenAPI {id}.
       const full = ((g.primary + r.path).replace(/\/+$/, '') || '/').replace(/:(\w+)/g, '{$1}');
       const fields = r.middleware.flatMap((m) => validators[m.split('.').pop()] || []);
-      if (fields.length) documented++; else undocumented++;
+      if (fields.length) documented++;
+      else undocumented++;
 
       const inPath = [...full.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
 
@@ -117,8 +121,11 @@ function buildSpec(groups, validators) {
         // supply, so it is dropped here and left as a source bug to fix.
         .filter((f) => f.in !== 'path' || inPath.includes(f.name))
         .map((f) => ({
-          name: f.name, in: f.in, required: !!f.required,
-          schema: f.schema, description: f.description,
+          name: f.name,
+          in: f.in,
+          required: !!f.required,
+          schema: f.schema,
+          description: f.description,
         }));
 
       // Path parameters are part of the URL whether or not anyone validated
@@ -134,8 +141,9 @@ function buildSpec(groups, validators) {
       // operationId has to be unique across the whole document, and the same
       // handler is mounted at several paths often enough that naming it after
       // the handler alone collides. Method plus path is unique by construction.
-      const opId = (r.method.toLowerCase() + full.replace(/[{}]/g, '').replace(/[^\w]+/g, '_'))
-        .replace(/_+$/, '');
+      const opId = (
+        r.method.toLowerCase() + full.replace(/[{}]/g, '').replace(/[^\w]+/g, '_')
+      ).replace(/_+$/, '');
 
       const op = {
         summary: r.handler ? r.handler.split('.').pop() : undefined,
@@ -163,7 +171,11 @@ function buildSpec(groups, validators) {
           required: required.length > 0,
           content: {
             'application/json': {
-              schema: { type: 'object', properties, required: required.length ? required : undefined },
+              schema: {
+                type: 'object',
+                properties,
+                required: required.length ? required : undefined,
+              },
             },
           },
         };
@@ -214,7 +226,10 @@ function buildSpec(groups, validators) {
 
 function main() {
   const mounts = readMounts();
-  const files = fs.readdirSync(ROUTES_DIR).filter((f) => f.endsWith('.js') && f !== 'index.js').sort();
+  const files = fs
+    .readdirSync(ROUTES_DIR)
+    .filter((f) => f.endsWith('.js') && f !== 'index.js')
+    .sort();
 
   const validators = loadAll(MIDDLEWARE_DIR);
 
@@ -238,8 +253,11 @@ function main() {
     let s = `\n### ${tag}\n\n`;
     s += `Mounted at \`${primary}\`. Source: \`api/src/routes/${file}\`.\n\n`;
     if (aliases.length) {
-      s += 'Also reachable at ' +
-        aliases.map((a) => `\`${a.path}\`${a.note ? ` (${a.note.toLowerCase()})` : ''}`).join(', ') +
+      s +=
+        'Also reachable at ' +
+        aliases
+          .map((a) => `\`${a.path}\`${a.note ? ` (${a.note.toLowerCase()})` : ''}`)
+          .join(', ') +
         '.\n\n';
     }
     s += '| Method | Path | Body documented | Handler |\n|---|---|---|---|\n';
@@ -291,10 +309,12 @@ the same commit, which makes it one of the more useful contributions available.
   fs.mkdirSync(DOCS_DIR, { recursive: true });
   fs.writeFileSync(OUT, header + sections.join('') + '\n');
   fs.writeFileSync(OUT_SPEC, JSON.stringify(spec, null, 2) + '\n');
-  console.log(`  wrote ${path.relative(process.cwd(), OUT)}: ${total} endpoints, ${sections.length} groups`);
+  console.log(
+    `  wrote ${path.relative(process.cwd(), OUT)}: ${total} endpoints, ${sections.length} groups`
+  );
   console.log(
     `  wrote ${path.relative(process.cwd(), OUT_SPEC)}: ${Object.keys(spec.paths).length} paths, ` +
-    `${documented} with a request schema, ${undocumented} without`
+      `${documented} with a request schema, ${undocumented} without`
   );
 }
 

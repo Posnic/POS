@@ -2785,6 +2785,17 @@ PosnicPro = {
             .toggle(PosnicPro.local.get('table_options') === 'enable');
 
         /*
+         * Fields that only mean something to a restaurant: serving periods,
+         * preparation time, the kitchen note. A grocer has no breakfast menu,
+         * and a form full of questions that do not apply is how a shop learns
+         * to skip the whole section.
+         *
+         * The same switch that shows the KOT report, because that is what
+         * "this shop is a restaurant" already means here.
+         */
+        $('.restaurant-only').toggle(PosnicPro.local.get('table_options') === 'enable');
+
+        /*
          * Themes module, applied in REAL TIME: off hides the header theme
          * button and the shop drops to the default look immediately. The
          * saved choice is never wiped (applyTheme, not applyPreset), so
@@ -2843,6 +2854,19 @@ PosnicPro = {
             }
         }
     },
+    /*
+     * The approval queue in the sidebar, only for a shop that holds orders.
+     *
+     * Gated on the approval MODE rather than on the restaurant switch. A shop
+     * that sends orders straight to the kitchen never has anything waiting, so
+     * the entry would open an empty screen for ever; a retail shop selling
+     * online with approval on needs it as much as a restaurant does.
+     */
+    applyOrderQueueVisibility: function () {
+        var holds = PosnicPro.local.get('online_order_approval') === 'manual';
+        $('#online_orders_menu').toggle(holds);
+    },
+
     applyKotVisibility: function (enabled) {
         $('#v-pills-tableorder-tab').toggle(!!enabled);
         PosnicPro.applyModuleSidebar();
@@ -4820,6 +4844,7 @@ $(document).ready(function () {
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
+    PosnicPro.applyOrderQueueVisibility();
 });
 
 /*Import Csv File Into Table By Type of Table Request*/

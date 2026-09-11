@@ -11,14 +11,14 @@ nothing expires.
 
 ## Which one do you want?
 
-| | Desktop | Your own server |
-|---|---|---|
-| Install | Download and run | One command on Ubuntu |
-| Where the data lives | That computer | Your server |
-| Works with no internet | Yes | On your own network, yes |
-| Several people at once | One computer | Any device that can reach the server |
-| Somebody must maintain it | No | **You** — updates, backups, certificate |
-| Sync between separate shops | Posnic Cloud | Posnic Cloud |
+|                             | Desktop          | Your own server                         |
+| --------------------------- | ---------------- | --------------------------------------- |
+| Install                     | Download and run | One command on Ubuntu                   |
+| Where the data lives        | That computer    | Your server                             |
+| Works with no internet      | Yes              | On your own network, yes                |
+| Several people at once      | One computer     | Any device that can reach the server    |
+| Somebody must maintain it   | No               | **You** — updates, backups, certificate |
+| Sync between separate shops | Posnic Cloud     | Posnic Cloud                            |
 
 **Be honest with yourself about the last two rows.** A server is not a better
 desktop; it is a machine somebody has to look after. If one person rings up
@@ -76,13 +76,13 @@ and your data alone**.
 
 Worth knowing before you run something as root:
 
-| | |
-|---|---|
-| Installs | `nodejs`, `mongodb-org`, `git`, `curl`, `gnupg` |
-| Adds apt sources | NodeSource, MongoDB |
-| Creates | `/opt/posnic`, `/etc/systemd/system/posnic.service` |
-| Starts | `mongod` and `posnic`, both enabled at boot |
-| Never touches | an existing `api/.env`, or your database |
+|                  |                                                     |
+| ---------------- | --------------------------------------------------- |
+| Installs         | `nodejs`, `mongodb-org`, `git`, `curl`, `gnupg`     |
+| Adds apt sources | NodeSource, MongoDB                                 |
+| Creates          | `/opt/posnic`, `/etc/systemd/system/posnic.service` |
+| Starts           | `mongod` and `posnic`, both enabled at boot         |
+| Never touches    | an existing `api/.env`, or your database            |
 
 ---
 
@@ -229,8 +229,8 @@ cd /opt/posnic
 npm run recover
 ```
 
-It lists everyone who can sign in, and — usefully when somebody says *"it
-worked yesterday"* — when each password was last changed.
+It lists everyone who can sign in, and — usefully when somebody says _"it
+worked yesterday"_ — when each password was last changed.
 
 To set one:
 

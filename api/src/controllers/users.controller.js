@@ -2727,26 +2727,25 @@ class UsersController extends BaseController {
           const branchCollection = db.collection('branches');
           const cursor = await branchCollection
             .find({
-              'kiosk.branch_id': { $in: branchIds },
+              _id: { $in: branchIds },
+              online_ordering: { $ne: null },
             })
             .toArray();
 
           for (const doc of cursor) {
-            if (doc.kiosk && Array.isArray(doc.kiosk)) {
-              for (const kioskEntry of doc.kiosk) {
-                if (!kioskEntry.branch_id) continue;
-
-                const bid = String(kioskEntry.branch_id);
-
-                kioskMap[bid] = {
-                  store_id: kioskEntry.store_id || null,
-                  user_id: String(recordsFiltered._id),
-                  user_name: recordsFiltered.username || null,
-                  payment_cod: kioskEntry.payment_cod || null,
-                  payment_number: kioskEntry.payment_number || null,
-                  payment_razorpay: kioskEntry.payment_razorpay || null,
-                };
-              }
+            /* One channel per branch, so the branch document IS the key. It
+               used to be an array searched by a branch_id stored inside it,
+               which is the branch the document already was. */
+            const config = doc.online_ordering;
+            if (config && typeof config === 'object') {
+              kioskMap[String(doc._id)] = {
+                store_id: config.store_id || null,
+                user_id: String(recordsFiltered._id),
+                user_name: recordsFiltered.username || null,
+                payment_cod: config.payment_cod || null,
+                payment_number: config.payment_number || null,
+                payment_razorpay: config.payment_razorpay || null,
+              };
             }
           }
         }

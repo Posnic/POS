@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /*
  * One version, written everywhere it is stated.
@@ -18,13 +18,13 @@
  *   node scripts/sync-version.js --check    # fail if any of them disagree
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execFileSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execFileSync } = require("child_process");
 
-const ROOT = path.join(__dirname, '..');
-const CHECK = process.argv.includes('--check');
-const version = require(path.join(ROOT, 'package.json')).version;
+const ROOT = path.join(__dirname, "..");
+const CHECK = process.argv.includes("--check");
+const version = require(path.join(ROOT, "package.json")).version;
 
 const changed = [];
 const wrong = [];
@@ -33,33 +33,38 @@ const wrong = [];
    reformatting them whole would bury a one-line change in a thousand. */
 function edit(file, replacements) {
   const p = path.join(ROOT, file);
-  const before = fs.readFileSync(p, 'utf8');
+  const before = fs.readFileSync(p, "utf8");
   let after = before;
   for (const [pattern, replacement] of replacements) {
     if (!pattern.test(after)) {
-      throw new Error(`${file}: nothing matched ${pattern} - the file's shape changed`);
+      throw new Error(
+        `${file}: nothing matched ${pattern} - the file's shape changed`,
+      );
     }
     after = after.replace(pattern, replacement);
   }
   if (after === before) return;
-  if (CHECK) { wrong.push(file); return; }
+  if (CHECK) {
+    wrong.push(file);
+    return;
+  }
   fs.writeFileSync(p, after);
   changed.push(file);
 }
 
-edit('codemeta.json', [
+edit("codemeta.json", [
   [/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`],
   [/^(\s*"softwareVersion":\s*")[^"]+(")/m, `$1${version}$2`],
 ]);
 
-edit('CITATION.cff', [[/^(version:\s*).+$/m, `$1${version}`]]);
+edit("CITATION.cff", [[/^(version:\s*).+$/m, `$1${version}`]]);
 
 /*
  * The OpenAPI spec takes its version from api/package.json, so that file has
  * to move too - and the spec is then regenerated rather than hand-edited,
  * because CI regenerates it and compares.
  */
-edit('api/package.json', [[/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`]]);
+edit("api/package.json", [[/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`]]);
 
 if (!CHECK) {
   /*
@@ -69,19 +74,22 @@ if (!CHECK) {
    * DeprecationWarning on every run. Node running a .js file needs neither.
    * api/package.json's docs:api is exactly this command.
    */
-  execFileSync(process.execPath, ['scripts/generate-api-docs.js'], {
-    cwd: path.join(ROOT, 'api'), stdio: 'pipe',
+  execFileSync(process.execPath, ["scripts/generate-api-docs.js"], {
+    cwd: path.join(ROOT, "api"),
+    stdio: "pipe",
   });
-  changed.push('docs/API.md + docs/openapi.json (regenerated)');
+  changed.push("docs/API.md + docs/openapi.json (regenerated)");
 }
 
 if (CHECK) {
-  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'openapi.json'), 'utf8'));
-  if (spec.info.version !== version) wrong.push('docs/openapi.json');
+  const spec = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "docs", "openapi.json"), "utf8"),
+  );
+  if (spec.info.version !== version) wrong.push("docs/openapi.json");
   if (wrong.length) {
     console.error(`\n  These still name a different version than ${version}:`);
     for (const f of wrong) console.error(`    ${f}`);
-    console.error('\n  Run: node scripts/sync-version.js\n');
+    console.error("\n  Run: node scripts/sync-version.js\n");
     process.exit(1);
   }
   console.log(`every version-bearing file agrees on ${version}`);

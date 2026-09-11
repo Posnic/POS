@@ -34,11 +34,9 @@
  *   createInstantItem(params)
  *   deleteInstantItem(params)
  *   getReceivingItemsAjaxList(params, context)
- *   accessKiosk(branchStoreId)
  *   updateKioskStatus(id, status)
  *   getItemsByCategoryId(categoryId, context)
  *   itemSearchPage(params, context)
- *   accessQr(params)
  *   accessMobileApp(branchId)
  *   updateItemQuantity(id, value)
  *   categoryProductDetails(data, context)
@@ -181,11 +179,9 @@ function makeRepoMethods(overrides = {}) {
     createInstantItem: jest.fn(),
     deleteInstantItem: jest.fn(),
     getReceivingItemsAjaxList: jest.fn(),
-    accessKiosk: jest.fn(),
     updateKioskStatus: jest.fn(),
     getItemsByCategoryId: jest.fn(),
     itemSearchPage: jest.fn(),
-    accessQr: jest.fn(),
     accessMobileApp: jest.fn(),
     updateItemQuantity: jest.fn(),
     categoryProductDetails: jest.fn(),
@@ -281,11 +277,9 @@ describe('ItemService', () => {
         'createInstantItem',
         'deleteInstantItem',
         'getReceivingItemsAjaxList',
-        'accessKiosk',
         'updateKioskStatus',
         'getItemsByCategoryId',
         'itemSearchPage',
-        'accessQr',
         'accessMobileApp',
         'updateItemQuantity',
         'categoryProductDetails',
@@ -1281,89 +1275,7 @@ describe('ItemService', () => {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // accessKiosk
   // ════════════════════════════════════════════════════════════════════════════
-  describe('accessKiosk', () => {
-    test('returns repository result when status is false (no image processing)', async () => {
-      const mockResult = { status: false, data: null, message: 'not found' };
-      repo.accessKiosk.mockResolvedValue(mockResult);
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result).toEqual(mockResult);
-    });
-
-    test('returns error when repository throws', async () => {
-      repo.accessKiosk.mockRejectedValue(new Error('kiosk error'));
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.status).toBe(false);
-      expect(result.message).toBe('kiosk error');
-    });
-
-    test('returns data when status is true but data is null (no image processing)', async () => {
-      repo.accessKiosk.mockResolvedValue({ status: true, data: null, message: 'ok' });
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.status).toBe(true);
-    });
-
-    test('processes kiosk_images and products when status is true and data exists', async () => {
-      fs.existsSync.mockReturnValue(false);
-      const mockData = {
-        kiosk_images: { logo: null, banner: null, homebanner: null, advertisement: null },
-        products: [],
-      };
-      repo.accessKiosk.mockResolvedValue({ status: true, data: mockData, message: 'ok' });
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.status).toBe(true);
-      expect(result.data.kiosk_images).toBeDefined();
-      expect(Array.isArray(result.data.products)).toBe(true);
-    });
-
-    test('handles products array with items containing img field', async () => {
-      fs.existsSync.mockReturnValue(false);
-      const mockData = {
-        kiosk_images: { logo: null, banner: null, homebanner: null, advertisement: null },
-        products: [{ name: 'Cat A', items: [{ name: 'Item A', img: null }] }],
-      };
-      repo.accessKiosk.mockResolvedValue({ status: true, data: mockData, message: 'ok' });
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.data.products[0].items[0].img).toBeNull();
-    });
-
-    test('handles products array where items field is not an array', async () => {
-      fs.existsSync.mockReturnValue(false);
-      const mockData = {
-        kiosk_images: { logo: null, banner: null, homebanner: null, advertisement: null },
-        products: [{ name: 'Cat A', items: null }],
-      };
-      repo.accessKiosk.mockResolvedValue({ status: true, data: mockData, message: 'ok' });
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.data.products[0].items).toBeNull();
-    });
-
-    test('preserves http URL for kiosk images (item.svg passthrough)', async () => {
-      fs.existsSync.mockReturnValue(false);
-      const mockData = {
-        kiosk_images: { logo: 'item.svg', banner: null, homebanner: null, advertisement: null },
-        products: [],
-      };
-      repo.accessKiosk.mockResolvedValue({ status: true, data: mockData, message: 'ok' });
-
-      const result = await service.accessKiosk('store-123');
-
-      expect(result.data.kiosk_images.logo).toBe('item.svg');
-    });
-  });
 
   // ════════════════════════════════════════════════════════════════════════════
   // updateKioskStatus
@@ -1435,27 +1347,7 @@ describe('ItemService', () => {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // accessQr
   // ════════════════════════════════════════════════════════════════════════════
-  describe('accessQr', () => {
-    test('delegates to repository and returns result', async () => {
-      const mockResult = { status: true, data: {}, message: 'ok' };
-      repo.accessQr.mockResolvedValue(mockResult);
-
-      const result = await service.accessQr({ branchId: BRANCH_ID });
-
-      expect(repo.accessQr).toHaveBeenCalledWith({ branchId: BRANCH_ID });
-      expect(result).toEqual(mockResult);
-    });
-
-    test('returns error when repository throws', async () => {
-      repo.accessQr.mockRejectedValue(new Error('qr error'));
-
-      const result = await service.accessQr();
-
-      expect(result.status).toBe(false);
-    });
-  });
 
   // ════════════════════════════════════════════════════════════════════════════
   // accessMobileApp

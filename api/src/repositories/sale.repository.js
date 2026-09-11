@@ -6,8 +6,18 @@ const BaseModel = require('../models/base.model');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { notifyOrderAttention } = require('../helpers/order-attention');
+const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
+const moment = require('moment-timezone');
+const onlineOrdering = require('../utils/online-ordering');
+const salesChannels = require('../utils/sales-channels');
+const partnerVenues = require('../utils/partner-venues');
+
+/* The fallback when channelState has no sentence of its own. It never should,
+   but a refusal with an empty message would tell a customer nothing. */
+const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
 
 const activeTenantFilter = () => ({
   ...(BaseModel.license ? { license: BaseModel.license } : {}),
@@ -6991,7 +7001,7 @@ class SalesRepository {
         });
       }
       if (!branchData) {
-        branchData = await branchCollection.findOne({ 'kiosk.store_id': branchId });
+        branchData = await branchCollection.findOne({ 'online_ordering.store_id': branchId });
       }
       if (!branchData) {
         return {
@@ -7163,7 +7173,7 @@ class SalesRepository {
     }
   }
 
-  async qrOrderModel(data, { SaleModel } = {}) {
+  async createOnlineOrder(data, { SaleModel } = {}) {
     try {
       const db = await BaseModel.getDb();
 
@@ -7182,6 +7192,19 @@ class SalesRepository {
         kiosk_table_id,
         dine_type,
         person_count,
+        /*
+         * Where the customer is sitting, read by the page out of the URL it
+         * was opened on.
+         *
+         *   /order/AZ100/table/5        no venue: the shop's own floor
+         *   /order/AZ100/venue/RC/123   Royal Club Hotel, room 123
+         *
+         * `destination` is what the customer CONFIRMED at checkout, which may
+         * correct the room the link claimed. See utils/partner-venues.
+         */
+        venue,
+        unit,
+        destination,
       } = data;
 
       if (!branch) {
@@ -7190,8 +7213,8 @@ class SalesRepository {
 
       const branchCollection = db.collection('branches');
       const branchSelector = ObjectId.isValid(String(branch))
-        ? { $or: [{ _id: new ObjectId(String(branch)) }, { 'kiosk.store_id': branch }] }
-        : { 'kiosk.store_id': branch };
+        ? { $or: [{ _id: new ObjectId(String(branch)) }, { 'online_ordering.store_id': branch }] }
+        : { 'online_ordering.store_id': branch };
       if (BaseModel.license) branchSelector.license = BaseModel.license;
       const branchDoc = await branchCollection.findOne(branchSelector);
 
@@ -7199,17 +7222,115 @@ class SalesRepository {
         return { status: false, message: 'Branch not found', data: null };
       }
       /*
-       * QR ordering is opt-in. This endpoint is anonymous by design (a
-       * customer's phone has no credentials), so the ONLY thing standing
-       * between the internet and a shop's kitchen queue is this: a branch
-       * that never configured a QR identity must not accept orders addressed
-       * by its raw database id, which appears in every authenticated response
-       * and is no secret.
+       * Online ordering is opt-in, and it can be shut for four unrelated
+       * reasons. This endpoint is anonymous by design (a customer's phone has
+       * no credentials) and reachable from the internet, so the ONLY thing
+       * standing between a stranger and a shop's kitchen queue is this check:
+       * a branch that never configured an online identity must not accept
+       * orders addressed by its raw database id, which appears in every
+       * authenticated response and is no secret. Nor may a shop that is in
+       * menu mode, paused, or outside its opening hours.
+       *
+       * The customer's page hides its cart in all of those states. That is a
+       * courtesy. This is the control, and it runs the same computation so the
+       * two cannot drift.
+       *
+       * The config used to live in `branch.kiosk`, an array of one, and this
+       * guard read it as an object (`branchDoc.kiosk.store_id`). That is
+       * `undefined` on an array, so it fired for every branch and refused
+       * every order ever placed against this API. It survived because live
+       * traffic still reached the old PHP backend and because the unit test
+       * mocked the object shape nothing wrote. The field is a plain object
+       * now, so the two readers cannot disagree again.
        */
-      if (!branchDoc.kiosk || !branchDoc.kiosk.store_id) {
-        return { status: false, message: 'QR ordering is not enabled for this branch', data: null };
+      const onlineEntry = onlineOrdering.storefront(branchDoc);
+      const onlineState = onlineOrdering.channelState(onlineEntry, {
+        timeZone: branchDoc.time_zone,
+      });
+      if (!onlineState.accepting) {
+        return {
+          status: false,
+          message: onlineState.message || ONLINE_ORDERING_DISABLED,
+          data: { state: onlineState.state, opens_at: onlineState.opens_at },
+        };
       }
       const branchObjectId = branchDoc._id;
+
+      /*
+       * The serving periods, and the clock they are judged against.
+       *
+       * Read once for the whole order rather than per line, and in the
+       * BRANCH's timezone - whether it is lunchtime is a question about where
+       * the kitchen is, not where the customer is holding their phone.
+       */
+      let servingPeriods = [];
+      try {
+        const settingsCollection = db.collection('settings');
+        const settingsDoc = await settingsCollection.findOne({ menu_dayparts: { $exists: true } });
+        servingPeriods = onlineOrdering.normalizeDayparts(
+          (settingsDoc && settingsDoc.menu_dayparts) || []
+        );
+      } catch (e) {
+        /* No periods configured is the normal state and means everything is
+           served all day, which is also the safe answer if this fails. */
+        console.warn('[order] could not read serving periods:', e.message);
+      }
+      /*
+       * Does an order from this shop go straight to the kitchen?
+       *
+       * Read from the same settings document as the serving periods. If it
+       * cannot be read at all, approvalMode answers AUTO - see
+       * utils/order-approval for why that is the survivable direction.
+       */
+      let approvalSetting = 'auto';
+      try {
+        const settingsCollection = db.collection('settings');
+        const approvalDoc = await settingsCollection.findOne({
+          online_order_approval: { $exists: true },
+        });
+        approvalSetting = (approvalDoc && approvalDoc.online_order_approval) || 'auto';
+      } catch (e) {
+        console.warn('[order] could not read the approval setting:', e.message);
+      }
+
+      /*
+       * Whose floor this order is coming from, and what it costs to get there.
+       *
+       * A restaurant's own table nine and room 123 of the hotel across the
+       * road arrive through the same storefront and are not the same order:
+       * the room pays the agreed markup, the hotel is owed its cut, and
+       * somebody has to carry the food over.
+       *
+       * Both are read here rather than trusted from the page. The customer's
+       * phone tells us WHICH venue the code named; it does not get to say what
+       * that venue's markup is.
+       */
+      let venues = [];
+      let shopCharges = {};
+      try {
+        const settingsCollection = db.collection('settings');
+        const venueDoc = await settingsCollection.findOne({ partner_venues: { $exists: true } });
+        venues = partnerVenues.normalizeVenues((venueDoc && venueDoc.partner_venues) || []);
+        const chargeDoc = await settingsCollection.findOne({ channel_charges: { $exists: true } });
+        shopCharges = (chargeDoc && chargeDoc.channel_charges) || {};
+      } catch (e) {
+        /* No venues and no fees is the normal state for a shop with one
+           dining room, and it is also the safe answer if this fails: house
+           prices, nothing added, nothing owed. */
+        console.warn('[order] could not read venues or charges:', e.message);
+      }
+
+      const servicePoint = partnerVenues.resolveServicePoint(
+        { table: kiosk_table_no, venue, unit },
+        venues
+      );
+      /* Where the food actually goes, as the customer confirmed it. Null for
+         the shop's own floor, which needs no address. */
+      const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
+
+      const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
+      const orderDay = orderLocal.day();
+      const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
 
       // Generate token ID
       const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
@@ -7236,7 +7357,51 @@ class SalesRepository {
           };
         }
 
-        const sellingPrice = Number(itemDoc.selling_price || 0);
+        /*
+         * Breakfast at four in the afternoon.
+         *
+         * The page greys out a dish outside its serving period, and that is a
+         * courtesy - a stale tab, a shared link, or somebody posting straight
+         * to this endpoint all reach here with a dosa in the basket long after
+         * the griddle is cold. The kitchen finds out when the ticket prints,
+         * which is the worst moment for everyone.
+         *
+         * Named in the refusal, because "something in your order is not
+         * available" sends a customer hunting through their own basket.
+         */
+        const timing = onlineOrdering.itemAvailability(
+          itemDoc,
+          servingPeriods,
+          orderDay,
+          orderMinutes
+        );
+        if (!timing.available) {
+          const when = timing.periods.length
+            ? ` It is served at ${timing.periods.join(' and ')}.`
+            : '';
+          return {
+            status: false,
+            data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
+            message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
+          };
+        }
+
+        /*
+         * The price THIS service point pays.
+         *
+         * A hotel room is quoted the marked-up price, because the hotel takes
+         * a cut of it and the restaurant is not paying that out of a plate of
+         * biryani. The shop's own tables are quoted the house price, which is
+         * what priceFor returns when there is no venue.
+         *
+         * Applied to the selling price before anything is split out of it, so
+         * tax, discount and the inclusive/exclusive arithmetic below all work
+         * on the number the customer was actually shown.
+         */
+        const sellingPrice = partnerVenues.priceFor(
+          Number(itemDoc.selling_price || 0),
+          servicePoint.venue
+        );
         const taxRate = Number(itemDoc.tax || 0);
         const discountAmount = Number(itemDoc.discount_amount || 0);
         const discountPercentage = Number(itemDoc.discount_percentage || 0);
@@ -7276,7 +7441,44 @@ class SalesRepository {
       const itemDiscountTotal = round(
         saleItems.reduce((s, i) => s + Number(i.item_discount || 0), 0)
       );
-      const finalTotal = round(saleItems.reduce((s, i) => s + i.total, 0) - discountAmt);
+      const foodTotal = round(saleItems.reduce((s, i) => s + i.total, 0) - discountAmt);
+
+      /*
+       * What this order owes on top of the food.
+       *
+       * Keyed by FULFILMENT, not by channel: a fee exists because somebody
+       * drives the food somewhere, not because the order arrived through a
+       * particular app. The same storefront serves a table (no fee), a
+       * takeaway (a packing charge, maybe) and a hotel room (delivery).
+       *
+       * Checked here as well as on the page. A minimum order is a rule about
+       * what the shop is willing to send out, and a stale tab or a direct POST
+       * must not get past it.
+       */
+      const fulfilment = salesChannels.normalizeFulfilment(data.fulfilment || order || dine_type);
+      const charge = salesChannels.chargesFor(fulfilment, foodTotal, shopCharges);
+      if (!charge.allowed) {
+        return {
+          status: false,
+          data: { state: 'below_minimum', minimum: charge.minimum },
+          message: `Orders for this start at ${charge.minimum}.`,
+        };
+      }
+      const deliveryFee = round(charge.fee);
+      const finalTotal = round(foodTotal + deliveryFee);
+
+      /*
+       * What the venue is owed, worked out once and stored on the order.
+       *
+       * On the FOOD, not on the delivery fee: the fee covers the restaurant's
+       * own cost of carrying the food across the road, and paying a
+       * commission on a cost is paying twice for the same trip.
+       *
+       * Stored rather than computed at report time, because the rate can
+       * change: a hotel that renegotiates in March must not silently restate
+       * what it was owed in February.
+       */
+      const venueCommission = partnerVenues.commissionFor(foodTotal, servicePoint.venue);
       const branchName = branchDoc.name || branchDoc.branch_name || '';
 
       const now = new Date();
@@ -7289,7 +7491,7 @@ class SalesRepository {
         salesId = await this.generateSalesIdForBranch(branchObjectId);
       } catch (e) {
         console.error(
-          'Failed to generate sequential sales_id for qrOrder; using fallback SID timestamp:',
+          'Failed to generate sequential sales_id for an online order; using fallback SID timestamp:',
           e.message
         );
         salesId = `SID${now.getTime()}`;
@@ -7328,10 +7530,29 @@ class SalesRepository {
         sale_process: 'KOT',
         payment_status: data.payment_status || 'Paid',
         payment_mode: data.payment_status || 'Cash',
-        sale_method: sale_method || 'Table-Order',
+        /*
+         * The customer's own device, through the shop's own storefront.
+         *
+         * `order` carries what the page asked for - dine in, takeaway - and
+         * that is the FULFILMENT, not the channel: a QR code at a table and
+         * the same page from somebody's sofa are one channel with two
+         * answers to "how does this reach them". `sale_method` is still
+         * written, in step, by describeSale.
+         */
+        ...salesChannels.describeSale({
+          channel: salesChannels.CHANNEL.ONLINE,
+          fulfilment,
+          sale_method,
+        }),
         dine_type: dine_type || 'Dine-in',
-        table_number: kiosk_table_no || '',
+        /* The service point, in the words the kitchen and the driver read.
+           A hotel room says the hotel and the room; the shop's own table says
+           the table, exactly as it always did. */
+        table_number: servicePoint.label || kiosk_table_no || '',
         table_id: kiosk_table_id || '',
+        venue: deliverTo,
+        venue_commission: venueCommission,
+        delivery_fee: deliveryFee,
         person_count: person_count || 0,
         items: saleItems,
         subtotal,
@@ -7357,10 +7578,49 @@ class SalesRepository {
 
       const insertedId = insertResult.insertedId.toString();
 
-      /* The printer is in this process. Tell it now rather than letting it find
-         this ticket on its next poll - a kitchen ticket that arrives after the
-         customer does is the whole reason this is event driven. */
-      notifyKotReady({ branchId: String(branchObjectId), saleId: insertedId, reason: 'created' });
+      /*
+       * The kitchen is told only if this shop lets orders through on their own.
+       *
+       * The order is SAVED either way. Approval gates the ticket, not the
+       * record: refusing to save would lose a customer's order on a network
+       * they cannot see and cannot retry into, where holding it means the worst
+       * case is a wait and a queue somebody can act on.
+       *
+       * A ticket printed is food started and food started is money spent, which
+       * is why a shop taking orders from a hotel across the road wants to look
+       * first - is the kitchen still open, is that dish really on, is this a
+       * prank at 2am.
+       */
+      const arrival = orderApproval.decideOnArrival(approvalSetting);
+
+      await salesCollection.updateOne(
+        { _id: insertResult.insertedId },
+        { $set: { order_state: arrival.state, order_state_at: new Date() } }
+      );
+
+      if (arrival.printKitchenTicket) {
+        /* The printer is in this process. Tell it now rather than letting it
+           find this ticket on its next poll - a kitchen ticket that arrives
+           after the customer does is the whole reason this is event driven. */
+        notifyKotReady({ branchId: String(branchObjectId), saleId: insertedId, reason: 'created' });
+      }
+
+      /*
+       * And make a noise, either way.
+       *
+       * Auto-approved is a short chime: the ticket is already printing, so this
+       * only has to tell whoever is at the till that it happened. Waiting is an
+       * alarm, because nobody is watching a screen they have no reason to be
+       * watching - the owner's words were "looking at another page, or watching
+       * a movie".
+       */
+      notifyOrderAttention({
+        branchId: String(branchObjectId),
+        saleId: insertedId,
+        alert: arrival.alert,
+        state: arrival.state,
+        total: finalTotal,
+      });
 
       return {
         status: true,
@@ -7374,12 +7634,281 @@ class SalesRepository {
           subtotal,
           discount: round(itemDiscountTotal + discountAmt),
           tax: totalTax,
+          delivery_fee: deliveryFee,
           total: finalTotal,
+          /* Echoed back so the confirmation screen can say "we will bring it
+             to Royal Club Hotel, Room 123" rather than repeating what the
+             customer typed and hoping it was recorded. */
+          deliver_to: deliverTo,
           payment_status: data.payment_status || 'Paid',
         },
       };
     } catch (error) {
-      console.error('Error in qrOrderModel:', error);
+      console.error('Error in createOnlineOrder:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * What this shop owes its venues and its aggregators, over a date range.
+   *
+   * THE REPORT THAT MAKES A TIE-UP POSSIBLE.
+   *
+   * A restaurant with nine tables agrees a deal with the hotel across the road
+   * and, at the end of the month, somebody has to work out what is owed. Doing
+   * that from a sales list is an evening of arithmetic and a disagreement; the
+   * hotel has its own number, and neither side can check the other's.
+   *
+   * Grouped by venue AND by partner, because a shop can owe both on the same
+   * day: a hotel takes a cut of the orders from its rooms, an aggregator takes
+   * a cut of the ones from its app, and they are unrelated deals.
+   *
+   * READS THE STORED COMMISSION, never recomputes it. The rate was agreed when
+   * the order was placed; a hotel that renegotiates in March must not restate
+   * what it was owed in February, and a report that recalculates would do
+   * exactly that, silently, with no way to notice.
+   */
+  async commissionReport(value = {}) {
+    try {
+      const baseModel = new BaseModel('sales');
+      const { FromDate, ToDate } = formatDate(
+        value.starting_date,
+        value.ending_date,
+        BaseModel.currentTimeZone || 'Asia/Kolkata'
+      );
+
+      const branchIds = [];
+      if (Array.isArray(value.branchid)) {
+        value.branchid.forEach((id) => {
+          if (id && mongoose.Types.ObjectId.isValid(String(id))) {
+            branchIds.push(new mongoose.Types.ObjectId(String(id)));
+          }
+        });
+      }
+
+      const range = {
+        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
+        license: BaseModel.license,
+      };
+      if (branchIds.length) range.branch_id = { $in: branchIds };
+
+      const collection = await baseModel.getCollection('sales');
+
+      /* One row per venue: what its guests spent, and what the shop owes. */
+      const venues = await collection
+        .aggregate([
+          { $match: { ...range, 'venue.venue_code': { $exists: true, $ne: '' } } },
+          {
+            $group: {
+              _id: '$venue.venue_code',
+              name: { $first: '$venue.venue_name' },
+              orders: { $sum: 1 },
+              sales: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
+              commission: { $sum: { $toDouble: { $ifNull: ['$venue_commission', 0] } } },
+            },
+          },
+          { $sort: { commission: -1 } },
+        ])
+        .toArray();
+
+      /* And one per aggregator, from the commission the sale recorded when it
+         was made. */
+      const partners = await collection
+        .aggregate([
+          { $match: { ...range, channel_partner: { $nin: [null, ''] } } },
+          {
+            $group: {
+              _id: '$channel_partner',
+              orders: { $sum: 1 },
+              sales: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
+              commission: { $sum: { $toDouble: { $ifNull: ['$channel_commission', 0] } } },
+            },
+          },
+          { $sort: { commission: -1 } },
+        ])
+        .toArray();
+
+      const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
+      const shape = (rows, kind) =>
+        rows.map((row) => ({
+          kind,
+          code: String(row._id || ''),
+          name: row.name || String(row._id || ''),
+          orders: Number(row.orders) || 0,
+          sales: money(row.sales),
+          commission: money(row.commission),
+          /* What the shop actually keeps. The number the report exists for:
+             a month that looks like 90,000 of sales through partners is
+             67,500 once their cut is out, and a shop planning on the first
+             figure is planning on money it never had. */
+          net: money((Number(row.sales) || 0) - (Number(row.commission) || 0)),
+        }));
+
+      const rows = [...shape(venues, 'venue'), ...shape(partners, 'partner')];
+
+      return {
+        status: true,
+        message: 'OK',
+        data: {
+          rows,
+          totals: {
+            orders: rows.reduce((sum, r) => sum + r.orders, 0),
+            sales: money(rows.reduce((sum, r) => sum + r.sales, 0)),
+            commission: money(rows.reduce((sum, r) => sum + r.commission, 0)),
+            net: money(rows.reduce((sum, r) => sum + r.net, 0)),
+          },
+        },
+      };
+    } catch (error) {
+      console.error('Error in commissionReport:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
+  /**
+   * Orders waiting for somebody to say yes.
+   *
+   * The queue behind the alarm. A shop in manual mode holds every incoming
+   * online order until a person accepts it, and this is the only place those
+   * orders are visible - the kitchen has not been told, so a ticket never
+   * printed and the sales list is not where anybody would look.
+   *
+   * Newest LAST, deliberately. A queue is worked from the top, and the person
+   * who has been waiting longest should be served first.
+   */
+  async pendingOnlineOrders({ branchId } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const salesCollection = db.collection('sales');
+
+      const filter = {
+        order_state: orderApproval.ORDER_STATE.PENDING,
+        ...activeTenantFilter(),
+      };
+      const branch = branchId || BaseModel.currentBranch;
+      if (branch && ObjectId.isValid(String(branch))) {
+        filter.branch_id = new ObjectId(String(branch));
+      }
+
+      const rows = await salesCollection
+        .find(filter, {
+          projection: {
+            _id: 1,
+            sales_id: 1,
+            token_id: 1,
+            table_number: 1,
+            venue: 1,
+            items: 1,
+            total: 1,
+            delivery_fee: 1,
+            notes: 1,
+            customer_phone: 1,
+            fulfilment: 1,
+            created_date: 1,
+            order_state_at: 1,
+          },
+        })
+        .sort({ created_date: 1 })
+        .limit(100)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: rows.map((row) => ({
+          sale_id: String(row._id),
+          sales_id: row.sales_id || '',
+          token_id: row.token_id || '',
+          /* Where it is going, in the words a person reads: a table number, or
+             the hotel and the room. */
+          destination: (row.venue && row.venue.label) || row.table_number || '',
+          venue_name: (row.venue && row.venue.venue_name) || '',
+          delivery_note: (row.venue && row.venue.delivery_note) || '',
+          fulfilment: row.fulfilment || '',
+          items: (row.items || []).map((item) => ({
+            name: item.item_name || item.name || '',
+            quantity: Number(item.item_quantity || item.quantity || 0),
+          })),
+          total: Number(row.total) || 0,
+          delivery_fee: Number(row.delivery_fee) || 0,
+          note: row.notes || '',
+          customer_phone: row.customer_phone || '',
+          placed_at: row.created_date || row.order_state_at || null,
+        })),
+      };
+    } catch (error) {
+      console.error('Error in pendingOnlineOrders:', error);
+      return { status: false, message: error.message, data: [] };
+    }
+  }
+
+  /**
+   * Accepting or turning away an order that was held.
+   *
+   * The kitchen is told exactly once, on the move from pending to accepted.
+   * utils/order-approval decides whether the move is legal and whether it
+   * prints, so a double-tap on a slow screen cannot produce two tickets - and
+   * two tickets for one order is two lots of food.
+   */
+  async decideOnOrder({ saleId, decision, reason } = {}) {
+    try {
+      if (!saleId || !ObjectId.isValid(String(saleId))) {
+        return { status: false, message: 'Enter must correct order id', data: null };
+      }
+
+      const db = await BaseModel.getDb();
+      const salesCollection = db.collection('sales');
+      const _id = new ObjectId(String(saleId));
+
+      const sale = await salesCollection.findOne(
+        { _id, ...activeTenantFilter() },
+        { projection: { order_state: 1, branch_id: 1 } }
+      );
+      if (!sale) {
+        return { status: false, message: 'Order not found', data: null };
+      }
+
+      const move = orderApproval.transition(sale.order_state, decision);
+      if (!move.allowed) {
+        return {
+          status: false,
+          message: move.reason || 'That order cannot be changed',
+          data: { state: move.state },
+        };
+      }
+
+      await salesCollection.updateOne(
+        { _id, ...activeTenantFilter() },
+        {
+          $set: {
+            order_state: move.state,
+            order_state_at: new Date(),
+            order_state_by: BaseModel.loggedUserName || '',
+            order_state_reason: String(reason || '').slice(0, 300),
+          },
+        }
+      );
+
+      if (move.printKitchenTicket) {
+        /* The printer is in this process. Telling it now rather than letting it
+           find the ticket on its next poll is the whole point of accepting an
+           order by hand: the customer is already waiting. */
+        notifyKotReady({
+          branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
+          saleId: String(saleId),
+          reason: 'approved',
+        });
+      }
+
+      return {
+        status: true,
+        message:
+          move.state === orderApproval.ORDER_STATE.ACCEPTED ? 'Order accepted' : 'Order rejected',
+        data: { sale_id: String(saleId), state: move.state, printed: move.printKitchenTicket },
+      };
+    } catch (error) {
+      console.error('Error in decideOnOrder:', error);
       return { status: false, message: error.message, data: null };
     }
   }
@@ -8710,11 +9239,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const filters = {
@@ -8776,11 +9317,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const condition = {
@@ -8945,11 +9498,23 @@ class SalesRepository {
         });
       }
 
+      /*
+       * Self-service sales: a machine in the shop AND a customer own phone.
+       * Both, always - naming this report after either one alone loses the
+       * other, which has happened.
+       *
+       * channelFilter matches the modern `channel` field and, for sales
+       * written before it existed, the legacy `sale_method`. Years of
+       * trading carry only the old one, and a filter that could not see them
+       * would show a shop its history as an empty page with no error.
+       */
       let methodFilter = {};
       if (value.kiosk_method) {
-        methodFilter = { sale_method: value.kiosk_method };
+        methodFilter = salesChannels.channelFilter(
+          salesChannels.channelOf({ sale_method: value.kiosk_method, channel: value.kiosk_method })
+        );
       } else {
-        methodFilter = { sale_method: { $in: ['Kiosk', 'Self-Order'] } };
+        methodFilter = salesChannels.channelFilter(salesChannels.SELF_SERVICE_CHANNELS);
       }
 
       const condition = {

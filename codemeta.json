@@ -29,21 +29,9 @@
   "developmentStatus": "active",
   "license": "https://spdx.org/licenses/AGPL-3.0-only.html",
   "isAccessibleForFree": true,
-  "programmingLanguage": [
-    "JavaScript",
-    "HTML",
-    "CSS"
-  ],
-  "runtimePlatform": [
-    "Electron",
-    "Node.js",
-    "MongoDB"
-  ],
-  "operatingSystem": [
-    "Windows",
-    "macOS",
-    "Linux"
-  ],
+  "programmingLanguage": ["JavaScript", "HTML", "CSS"],
+  "runtimePlatform": ["Electron", "Node.js", "MongoDB"],
+  "operatingSystem": ["Windows", "macOS", "Linux"],
   "keywords": [
     "pos",
     "open-source-pos",
@@ -90,11 +78,7 @@
     "name": "Posnic POS",
     "applicationCategory": "BusinessApplication",
     "applicationSubCategory": "Point of sale software",
-    "operatingSystem": [
-      "Windows",
-      "macOS",
-      "Linux"
-    ],
+    "operatingSystem": ["Windows", "macOS", "Linux"],
     "isAccessibleForFree": true,
     "url": "https://www.posnic.com/"
   }
