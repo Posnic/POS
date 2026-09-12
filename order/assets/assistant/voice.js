@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, rec: null, speaking: false };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false };
 
   /* ------------------------------------------------------------ the button */
 
@@ -208,20 +208,50 @@
     }
   }
 
+  /*
+   * Ask for the microphone NOW, inside the tap. Safari on an iPhone grants
+   * a microphone request only while the tap is fresh; a database read
+   * first, and the answer is "not allowed" with no dialog shown.
+   */
+  function grabMicrophone() {
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") return null;
+    try {
+      var p = navigator.mediaDevices.getUserMedia({ audio: true });
+      /* A rejection nobody has awaited yet is still a rejection; keep it
+         from surfacing as an unhandled error while start() gets there. */
+      if (p && p.catch) p.catch(function () {});
+      return p;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  function microphoneWords(error) {
+    var name = error && error.name;
+    if (name === "NotFoundError" || name === "DevicesNotFoundError" || name === "OverconstrainedError") {
+      return say("No microphone was found on this device. You can still type.");
+    }
+    return say("The microphone was not allowed. You can still type.");
+  }
+
   async function startLive() {
     status("connecting", say("Connecting..."));
+    try {
+      var asked = live.pendingStream || grabMicrophone();
+      live.pendingStream = null;
+      if (!asked) throw new Error("no microphone API");
+      live.stream = await asked;
+    } catch (e) {
+      live.pendingStream = null;
+      note(microphoneWords(e));
+      status("", "");
+      return false;
+    }
     var branch = "";
     try {
       branch = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
     } catch (e) {
       branch = "";
-    }
-    try {
-      live.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e) {
-      note(say("The microphone was not allowed. You can still type."));
-      status("", "");
-      return false;
     }
     var pc = new RTCPeerConnection();
     live.pc = pc;
@@ -491,6 +521,7 @@
         go.hidden = true;
         var stopButton = el("voice-stop");
         if (stopButton) stopButton.hidden = false;
+        if (voiceMode() === "live") live.pendingStream = grabMicrophone();
         unlockSpeech();
         warmSpeaker();
         start();
@@ -501,6 +532,7 @@
         stop();
         return;
       }
+      if (voiceMode() === "live") live.pendingStream = grabMicrophone();
       unlockSpeech();
       warmSpeaker();
       start();

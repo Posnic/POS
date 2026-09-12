@@ -286,6 +286,7 @@
       "Thinking...": "யோசிக்கிறது...",
       "Go ahead, I'm listening. Say what you feel like, and I'll answer out loud and add to your order.": "சொல்லுங்கள், கேட்கிறேன். உங்களுக்கு என்ன வேண்டும் என்று சொல்லுங்கள்; சத்தமாகப் பதிலளித்து உங்கள் ஆர்டரில் சேர்க்கிறேன்.",
       "The microphone was not allowed. You can still type.": "மைக்ரோஃபோன் அனுமதிக்கப்படவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
+      "No microphone was found on this device. You can still type.": "இந்தச் சாதனத்தில் மைக்ரோஃபோன் இல்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
       "Could not connect the voice line. You can still type.": "குரல் இணைப்பை ஏற்படுத்த முடியவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
       "Live voice is switched off for this shop, so I'll answer turn by turn.": "இந்தக் கடையில் நேரடிக் குரல் அணைக்கப்பட்டுள்ளது, எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
       "The live voice line did not open ({why}), so I'll answer turn by turn.": "நேரடிக் குரல் இணைப்பு திறக்கவில்லை ({why}), எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
