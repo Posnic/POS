@@ -17,8 +17,12 @@
     <base href="/order/" />
     <title>Order placed</title>
     <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/i18n.js?v=20260912-design"></script>
     <script src="assets/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js"></script>
+    <!-- Pinned to the bytes reviewed: a changed file on the CDN is refused, not run. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js"
+            integrity="sha384-1Rq385dzyHeeImKREXc2dTf1lhBKJHL8YR6phOUkikTCsUwGgDyWRoGv8KVG2+qY"
+            crossorigin="anonymous"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
@@ -71,6 +75,7 @@
             <div class="item"><span>Subtotal</span><span><strong id="subtotal"></strong></span></div>
             <div class="item"><span>Discount</span><span><strong id="discount"></strong></span></div>
             <div class="item"><span>Tax</span><span><strong id="tax"></strong></span></div>
+            <div class="item" id="fee-row" hidden><span id="fee-label">Delivery</span><span><strong id="fee"></strong></span></div>
             <div class="item"><span>Total</span><span><strong id="total"></strong></span></div>
         </div>
 

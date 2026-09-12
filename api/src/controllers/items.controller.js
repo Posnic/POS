@@ -6,7 +6,6 @@ const { safeJsonParse, formatDate } = require('../utils/helpers');
 const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/items.constants');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { toObjectId } = require('../utils/tenant-context');
-const { isKioskConfigured } = require('../utils/kiosk');
 const salesChannels = require('../utils/sales-channels');
 const { parseFilterParam } = require('../utils/mongo-guard');
 const { scanItems } = require('../services/gst-readiness');
@@ -176,43 +175,6 @@ class ItemsController extends BaseController {
     return branches;
   }
 
-  /**
-   * Has this branch been set up to run a kiosk?
-   *
-   * The rule itself lives in utils/kiosk; this is the lookup around it.
-   *
-   * Answers false on any failure. Hiding an optional column from a shop that
-   * might have wanted it is a far smaller harm than a failed list of items.
-   */
-  async isKioskConfigured(branchId) {
-    if (!branchId) return false;
-    try {
-      /*
-       * Only ask if the database is actually there.
-       *
-       * This decides whether to draw one optional column, and it must never be
-       * the reason the item list is slow. It first used a 750ms race against
-       * the lookup, which was the wrong instrument: Mongoose does not fail when
-       * it has no connection, it *buffers* the query for ten seconds, and a
-       * timer racing that is a coin toss decided by how loaded the machine is.
-       * It passed here and failed on CI, which is exactly what that kind of
-       * flakiness looks like.
-       *
-       * readyState is a synchronous property. Connected, and the query runs
-       * against a live socket and returns promptly. Not connected, and the
-       * answer is no, immediately, with nothing left buffering in the
-       * background to time out and log after the request has finished.
-       */
-      const mongoose = require('mongoose');
-      if (mongoose.connection?.readyState !== 1) return false;
-
-      const { getBranchById } = require('../services/sale.service');
-      return isKioskConfigured(await getBranchById(branchId));
-    } catch (error) {
-      console.warn('isKioskConfigured: branch lookup failed', error.message);
-      return false;
-    }
-  }
 
   /**
    * List items with pagination and optional filters
@@ -350,7 +312,7 @@ class ItemsController extends BaseController {
         // Shape already matches legacy itemPage() result.data
         return this.sendResponse(
           res,
-          { ...result.data, kiosk_configured: await this.isKioskConfigured(branchId) },
+          result.data,
           result.message
         );
       }

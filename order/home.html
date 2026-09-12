@@ -1,67 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-  <title>Kiosk Home</title>
-  <link href="assets/bootstrap.min.css" rel="stylesheet" />
+  <title>Start your order</title>
+  <link href="assets/order.css" rel="stylesheet" />
+  <script src="assets/i18n.js?v=20260912-design"></script>
   <script src="assets/jquery-3.7.1.min.js"></script>
   <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
     <script src="assets/service-point.js"></script>
   <script src="assets/kiosk-core.js"></script>
-  <script src="indexedDB.js?v=20260709-fastrefresh"></script>
-  <link href="assets/home/style.css" rel="stylesheet" />
+  <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
-<body class="home-page">
-  <div class="overlay">
-    <div class="option-card" onclick="selectOrderType('DINE IN')">
-      <img src="images/dinein.png" alt="Dine In" />
-      <p>Dine In</p>
+<body class="home-page attract">
+  <!--
+      THE SCREEN A KIOSK MACHINE RESTS ON.
+
+      Nothing routes a scanned phone here any more; this is what the shop's
+      own touchscreen shows between customers, and where "Finish" on the
+      token page returns it to. One question, two large targets, the shop's
+      own name and picture, and nothing else to read from a metre away. The
+      choice is remembered the way the payment page remembers it, so the
+      machine never asks twice.
+  -->
+  <main class="attract-main">
+    <button type="button" class="lang-toggle attract-lang" data-lang-toggle hidden>தமிழ்</button>
+    <header class="attract-head">
+      <img id="attract-logo" class="attract-logo" alt="" hidden />
+      <h1 id="attract-name" class="attract-name">Welcome</h1>
+      <p class="attract-sub" id="attract-sub">Touch to start your order</p>
+    </header>
+
+    <div class="attract-choices" role="group" aria-label="How would you like it?">
+      <button type="button" class="attract-choice" data-order-type="DINE IN" data-fulfilment="dine_in" onclick="selectOrderType('DINE IN', 'dine_in')">
+        <span class="attract-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><path d="M8 40h32M12 40V24a12 12 0 0 1 24 0v16M24 12v-4M18 16l-2-3M30 16l2-3"/></svg>
+        </span>
+        <span class="attract-title">Dine in</span>
+        <span class="attract-note">We bring it to your table</span>
+      </button>
+      <button type="button" class="attract-choice" data-order-type="PARCEL" data-fulfilment="takeaway" onclick="selectOrderType('PARCEL', 'takeaway')">
+        <span class="attract-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><path d="M10 18h28l-3 22H13L10 18zM16 18a8 8 0 0 1 16 0M20 26v8M28 26v8"/></svg>
+        </span>
+        <span class="attract-title">Take away</span>
+        <span class="attract-note">Packed to carry</span>
+      </button>
     </div>
-    <div class="option-card" onclick="selectOrderType('PARCEL')">
-      <img src="images/parcel.png" alt="Parcel" />
-      <p>Take Away</p>
-    </div>
-  </div>
+  </main>
 
   <script>
+    /* A fresh start for the next customer: nothing from the last order may
+       follow them. */
     clearOrderAttemptId();
     Object.keys(sessionStorage)
       .filter(key => key.startsWith('printed_'))
       .forEach(key => sessionStorage.removeItem(key));
-    sessionStorage.removeItem('kioskReceipt');
-    sessionStorage.removeItem('kioskReceiptPrinted');
-    sessionStorage.removeItem('kiosk_mobile_number');
-    sessionStorage.removeItem('qr_id');
-    localStorage.removeItem('kioskReceipt');
-    localStorage.removeItem('kiosk_mobile_number');
-    localStorage.removeItem('qr_id');
+    ['kioskReceipt', 'kioskReceiptPrinted', 'kiosk_mobile_number', 'qr_id'].forEach(key => sessionStorage.removeItem(key));
+    ['kioskReceipt', 'kiosk_mobile_number', 'qr_id', 'order_fulfilment', 'order_table', 'order_pay',
+      'order_customer_name', 'order_customer_address', 'note', 'orderType'].forEach(key => localStorage.removeItem(key));
 
-    function selectOrderType(type) {
+    function selectOrderType(type, fulfilment) {
       localStorage.setItem('orderType', type);
+      localStorage.setItem('order_fulfilment', fulfilment);
       window.location.href = 'products.html';
     }
   </script>
 
-  <script src="assets/home/script.js?v=20260709-fastrefresh"></script>
+  <script src="assets/home/script.js?v=20260912-design"></script>
 
 </body>
-
 </html>

@@ -76,3 +76,6 @@ scripts/
 # line file, which buries the change, takes blame with it, and turns any
 # parallel work on the theme into a merge nobody can read.
 frontend/static/style/
+
+# A byte copy of order/assets/i18n.js (order/ is ignored above); formatting the copy breaks the identity test.
+menu/i18n.js

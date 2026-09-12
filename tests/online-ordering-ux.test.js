@@ -75,6 +75,9 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'rememberShop'),
     lift(src, 'money'),
     lift(src, 'words'),
+    lift(src, 'placeLabel'),
+    lift(src, 'paintShop'),
+    lift(src, 'chargeFor'),
     lift(src, 'markCategories'),
     lift(src, 'setCartItemNote'),
     liftConst(src, 'DIET_WORDS'),
@@ -97,7 +100,11 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     saveCartData: async () => {},
     products,
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
     getData: async (store) => (store === 'branch' ? [{ id: 'b1', ...branch }] : []),
+    getKioskImages: async () => null,
+    allProducts: () => Object.values(products).flat(),
+    CONFIG: { API_BASE_URL: '' },
     CustomEvent: window.CustomEvent,
     Number,
     String,
@@ -383,7 +390,7 @@ test('every control is sized for a thumb, and focus is visible', () => {
 
 test('the button says what happens, and the question cannot be skipped', () => {
   const js = read('assets/payment/script.js');
-  assert.match(js, /`Pay \$\{money\(payState\.total\)\}`/, 'the button no longer says the amount');
+  assert.match(js, /t\("Pay \{amount\}", \{ amount: money\(payState\.total\) \}\)/, 'the button no longer says the amount');
   assert.match(js, /"Place order"/, 'a cash order is still told to "proceed to payment"');
   /*
    * With no number wanted, the page went straight to the payment - fine while
@@ -410,8 +417,19 @@ test('the number is grouped the way it is printed', () => {
 /* --------------------------------------------------------- the words */
 
 test('the pages speak to a person at a table, not to a shopping website', () => {
-  /* Comments stripped: the pages explain what the old words were. */
-  const read = (f) => fs.readFileSync(path.join(BUNDLE, f), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  /* Comments stripped: the pages explain what the old words were. Stripped
+     until nothing changes, so a comment left behind by the first pass
+     cannot hide a word from the check. */
+  const stripComments = (html) => {
+    let out = html;
+    let before;
+    do {
+      before = out;
+      out = out.replace(/<!--[\s\S]*?-->/g, '');
+    } while (out !== before);
+    return out;
+  };
+  const read = (f) => stripComments(fs.readFileSync(path.join(BUNDLE, f), 'utf8'));
   assert.ok(!read('products.html').includes('Self-Ordering'), 'the page names the software again');
   assert.match(read('products.html'), /id="shop-name"/, 'the shop has nowhere to put its name');
   assert.ok(!read('cart.html').includes('Shopping Cart'));
@@ -501,7 +519,13 @@ function payBox() {
     lift(js, 'orderTypeFor'),
     lift(js, 'offlineLabel'),
   ].join('\n');
-  const sandbox = { Set, String, Array, Number };
+  const sandbox = {
+    Set,
+    String,
+    Array,
+    Number,
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+  };
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
   return sandbox;
@@ -565,4 +589,93 @@ test('paying offline finishes an order, and the table on the code reaches it', (
   assert.match(read('products.html'), /id="dish-note"/, 'the dish sheet has nowhere for a note');
   assert.match(read('products.html'), /id="shop-place"/, 'the page has nowhere to say which table');
   assert.match(read('cart.html'), /id="order-note"/, 'the order page has nowhere for a note');
+});
+
+/* ------------------------------------------- the fee, before the button */
+
+test('the fee and the minimum are computed the way the server computes them', async () => {
+  /* Owner's gap: the shop can set a fee, a free-above and a minimum per way
+     of travelling, and the page never said so until the token page or a
+     refusal. Same arithmetic as utils/sales-channels.chargesFor. */
+  const { box } = page('products.html', {
+    branch: { charges: { delivery: { fee: 30, free_above: 500, min_order: 200 }, takeaway: { fee: 10, free_above: 0, min_order: 0 } } },
+  });
+  await box.rememberShop();
+
+  const short = box.chargeFor('delivery', 150);
+  assert.strictEqual(short.allowed, false);
+  assert.strictEqual(short.short, 50);
+  assert.strictEqual(short.minimum, 200);
+
+  const charged = box.chargeFor('delivery', 300);
+  assert.strictEqual(charged.allowed, true);
+  assert.strictEqual(charged.fee, 30);
+  assert.strictEqual(charged.toFree, 200);
+
+  const free = box.chargeFor('delivery', 500);
+  assert.strictEqual(free.fee, 0);
+  assert.strictEqual(free.waived, true);
+
+  assert.strictEqual(box.chargeFor('takeaway', 50).fee, 10);
+  assert.strictEqual(box.chargeFor('dine_in', 50).fee, 0);
+  assert.strictEqual(box.chargeFor('', 50).allowed, true);
+});
+
+test('the payment page has somewhere to say the fee, and the receipt names it', () => {
+  const html = read('payment.html');
+  for (const id of ['pay-charges', 'pay-subtotal', 'pay-fee-label', 'pay-fee', 'pay-charge-note']) {
+    assert.match(html, new RegExp('id="' + id + '"'), 'payment.html has no #' + id);
+  }
+  const js = read('assets/payment/script.js');
+  assert.match(js, /function paintCharges/, 'the fee is not drawn');
+  assert.match(js, /payState\.allowed === false/, 'the button does not wait for the minimum');
+  assert.match(js, /t\("Add \{amount\} more", \{ amount: money\(charge\.short\) \}\)/, 'the button does not say how much more');
+  assert.match(js, /createRazorPayMobile\(payState\.total \|\| totalAmount/, 'the gateway is asked for the food without the fee');
+  assert.match(read('thankyou.html'), /id="fee-row"/, 'the receipt has no line for the fee');
+  assert.match(read('assets/thankyou/script.js'), /receiptData\.delivery_fee/, 'the receipt does not read the fee');
+});
+
+/* --------------------------------------------------- the machine's screen */
+
+test('the kiosk machine rests on a screen in the same clothes', () => {
+  const html = read('home.html');
+  assert.match(html, /assets\/order\.css/, 'the resting screen does not use the shared stylesheet');
+  assert.ok(!/bootstrap|gradient\(/.test(html), 'the resting screen still carries the old look');
+  assert.match(html, /data-fulfilment="dine_in"/);
+  assert.match(html, /data-fulfilment="takeaway"/);
+  assert.match(html, /id="attract-name"/, 'the screen has nowhere for the shop\'s name');
+  assert.match(html, /order_fulfilment/, 'the choice made here does not reach the payment page');
+  const css = read('assets/order.css');
+  assert.match(css, /\.attract-choice\s*\{[^}]*min-height:\s*220px/, 'the targets are not sized for a hand from a metre away');
+  assert.ok(!/gradient\(/.test(read('assets/home/script.js')));
+});
+
+/* ------------------------------------------------------ the Kiosk column */
+
+test('the Items list no longer carries the legacy Kiosk column', () => {
+  const items = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'), 'utf8');
+  assert.ok(!items.includes('kiosk-column'), 'the Kiosk column is back on the Items list');
+  assert.ok(!items.includes('kiosk-toggle'), 'the per-item kiosk tick is back');
+  const controller = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'controllers', 'items.controller.js'), 'utf8');
+  assert.ok(!controller.includes('kiosk_configured'), 'the list still computes whether to draw the column');
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'api', 'src', 'utils', 'kiosk.js')), 'utils/kiosk.js is back');
+});
+
+test('a shop is searched, not a menu, and is not asked about veg', async () => {
+  const shop = page('products.html', {
+    branch: { kind: 'retail', name: 'Kirana Corner' },
+    products: { stationery: [{ id: 'p1', name: 'Ball Pen', price: 10, category_name: 'Stationery' }] },
+  });
+  await shop.box.paintShop();
+  assert.strictEqual(shop.document.getElementById('product-search').placeholder, 'Search products');
+  assert.strictEqual(shop.document.querySelector('#order-sort option[value="menu"]').textContent, 'Catalogue order');
+  assert.strictEqual(shop.document.getElementById('order-filter-veg').hidden, true, 'a stationer is asked about veg');
+
+  const kitchen = page('products.html', {
+    branch: { kind: 'restaurant', name: 'Azure' },
+    products: { mains: [{ id: 'p1', name: 'Dal Tadka', price: 220, diet: 'veg', category_name: 'Mains' }] },
+  });
+  await kitchen.box.paintShop();
+  assert.strictEqual(kitchen.document.getElementById('product-search').placeholder, 'Search the menu');
+  assert.strictEqual(kitchen.document.getElementById('order-filter-veg').hidden, false);
 });

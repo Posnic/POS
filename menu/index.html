@@ -28,6 +28,7 @@
       and the page loads blank with nothing in the console anybody reads.
     -->
     <base href="/menu/" />
+    <script src="i18n.js"></script>
     <meta name="robots" content="index, follow" />
     <title>Menu</title>
 
@@ -150,8 +151,43 @@
       /* ---- masthead ------------------------------------------------- */
 
       .masthead {
+        position: relative;
         padding: 28px 0 16px;
         text-align: center;
+      }
+
+      /* ------------------------------------------------------ language */
+
+      .lang-toggle {
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .masthead-lang {
+        position: absolute;
+        top: 20px;
+        right: 0;
+      }
+
+      /* Tamil glyphs stand taller than Latin ones and have no capitals to
+         space out. */
+      html[lang="ta"] body {
+        line-height: 1.6;
+      }
+
+      html[lang="ta"] .section-count,
+      html[lang="ta"] .result-count,
+      html[lang="ta"] button {
+        letter-spacing: 0;
       }
 
       .shop-logo {
@@ -1460,6 +1496,15 @@
   <body>
     <div class="wrap">
       <header class="masthead">
+        <!-- The other language, named in itself. Painted by i18n.js. -->
+        <button
+          type="button"
+          class="lang-toggle masthead-lang"
+          data-lang-toggle
+          hidden
+        >
+          தமிழ்
+        </button>
         <img id="shop-logo" class="shop-logo" alt="" hidden />
         <h1 id="shop-name" class="shop-name">Menu</h1>
         <p id="shop-sub" class="shop-sub" hidden></p>

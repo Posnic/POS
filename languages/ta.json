@@ -2951,5 +2951,7 @@
   "lang_module_channels": "விற்பனை வழிகள்",
   "lang_sales_channel": "விற்பனை சேனல்",
   "lang_sales_channel_2": "விற்பனை சேனல்",
-  "lang_selling_beyond_the_counter_online_qr_order": "கல்லாவைத் தாண்டிய விற்பனை - ஆன்லைன், QR ஆர்டர் மற்றும் கூட்டாளர் சேனல்கள் இங்கே வந்து சேரும்."
+  "lang_selling_beyond_the_counter_online_qr_order": "கல்லாவைத் தாண்டிய விற்பனை - ஆன்லைன், QR ஆர்டர் மற்றும் கூட்டாளர் சேனல்கள் இங்கே வந்து சேரும்.",
+  "lang_no_address": "முகவரி கொடுக்கப்படவில்லை",
+  "lang_collect_at_counter": "கவுண்டரில் வாங்கிக் கொள்ளுதல்"
 }
