@@ -31,10 +31,18 @@ test('the tombstone is written from the row, before the row is deleted', async (
   const order = [];
   const row = { _id: TABLE, tableorder_value: '6A', branch_id: BRANCH, license: LICENSE };
   const collection = {
-    findOne: jest.fn(async () => { order.push('find'); return row; }),
-    deleteOne: jest.fn(async () => { order.push('delete'); return { deletedCount: 1 }; }),
+    findOne: jest.fn(async () => {
+      order.push('find');
+      return row;
+    }),
+    deleteOne: jest.fn(async () => {
+      order.push('delete');
+      return { deletedCount: 1 };
+    }),
   };
-  const tombstone = jest.spyOn(BaseModel, 'deletedDocumentBackup').mockImplementation(async () => { order.push('tombstone'); });
+  const tombstone = jest.spyOn(BaseModel, 'deletedDocumentBackup').mockImplementation(async () => {
+    order.push('tombstone');
+  });
 
   const result = await modelOver(collection).deleteTableOrderFiledModel(TABLE);
 
@@ -60,4 +68,18 @@ test('a table that is not there gets no tombstone, and the answer says so', asyn
   expect(tombstone).not.toHaveBeenCalled();
   expect(result.status).toBe(false);
   expect(result.message).toMatch(/not found/);
+});
+
+test('a malformed table ID never reaches a Mongo query', async () => {
+  const collection = {
+    findOne: jest.fn(),
+    deleteOne: jest.fn(),
+  };
+
+  const result = await modelOver(collection).deleteTableOrderFiledModel({ $ne: null });
+
+  expect(result.status).toBe(false);
+  expect(result.message).toMatch(/valid table order ID/i);
+  expect(collection.findOne).not.toHaveBeenCalled();
+  expect(collection.deleteOne).not.toHaveBeenCalled();
 });
