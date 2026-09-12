@@ -537,7 +537,7 @@ PosnicPro.items = {
                 + '<th class="text-right i-col-price"><lang class="lang_price_title">Price</lang></th>'
                 + '<th class="text-right i-col-margin"><lang class="lang_margin">Margin</lang></th>'
                 + '<th class="text-right i-col-tax"><lang class="lang_module_tax">Tax</lang></th>'
-                + '<th class="text-center kiosk-column"><lang class="lang_module_kiosk">Kiosk</lang></th></tr></thead><tbody>';
+                + '</tr></thead><tbody>';
             list.forEach(function (r) {
                 var unit = r.unit || 'qty';
                 var thumb;
@@ -578,17 +578,11 @@ PosnicPro.items = {
                     + '<td class="text-right i-col-price">' + cur + '&nbsp;' + sell.toFixed(2) + '</td>'
                     + '<td class="text-right i-col-margin">' + marginCell + '</td>'
                     + '<td class="text-right i-col-tax q-muted">' + taxCell + '</td>'
-                    + '<td class="text-center kiosk-column"><input type="checkbox" id="kiosk_' + esc(r._id) + '" class="kiosk-toggle" aria-label="Show on kiosk" data-t-aria-label="lang_show_on_kiosk"' + (r.isAvailable ? ' checked' : '') + '></td>'
+
                     + '</tr>';
             });
             html += '</tbody></table></div>';
             $('#items_list_rows').html(html);
-            /* the Kiosk column shows only where a kiosk is configured */
-            if (response.data.kiosk_configured) {
-                $('.kiosk-column').show();
-            } else {
-                $('.kiosk-column').hide();
-            }
             self.renderPager(Number(data.total) || list.length);
         }, function () {
             $('#items_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_items_try_again">Could not load items - try again.</lang></div>');
@@ -5347,11 +5341,6 @@ $('#items_barcodeid').scannerDetection({
     onError: function (string, qty) {
         $('#items_barcodeid').val($('#items_barcodeid').val() + string).focus();
     }
-});
-$(document).on('change', '.kiosk-toggle', function () {
-    var itemId = $(this).attr('id').replace('kiosk_', '');
-    var isChecked = $(this).is(':checked');
-    PosnicPro.items.updateItemAvailability(itemId, isChecked);
 });
 /*end*/
 

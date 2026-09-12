@@ -38,8 +38,12 @@ function storeAddressFromUrl() {
 async function checkBranchFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const branchId = storeAddressFromUrl();
+    /* Only when the link carried one. setItem(null) stores the word
+       "null", and "null" is truthy, so every order placed from a plain
+       link went to the kitchen with the note "null" on it. */
     const note = urlParams.get("notes");
-    localStorage.setItem('note', note);
+    if (note) localStorage.setItem('note', note);
+    else localStorage.removeItem('note');
 
     if (branchId) {
         console.log("🔗 Branch from QR URL:", branchId);
@@ -63,7 +67,7 @@ async function checkBranchFromURL() {
             tx.oncomplete = async () => {
                 console.log("✅ Old data cleared");
                 showLoader();
-                await fetchAndStoreBranch(branchId, true); // will redirect to home.html
+                await fetchAndStoreBranch(branchId, true); // will redirect to products.html
                 hideLoader();
             };
 
@@ -75,7 +79,9 @@ async function checkBranchFromURL() {
             showLoader();
             await fetchAndStoreBranch(branchId, false);
             hideLoader();
-            window.location.href = "home.html";
+            /* The menu, not a question. Somebody who scanned a code wants to
+               see what there is; how they are eating is asked when they pay. */
+            window.location.href = "products.html";
         }
     } else {
         /*
@@ -144,7 +150,7 @@ async function checkBranchStored() {
 
     if (branches.length > 0) {
         console.log("✅ Branch already stored. Redirecting...");
-        window.location.href = "home.html";
+        window.location.href = "products.html";
     } else {
         console.log("🟡 No stored branch. Checking QR...");
         await checkBranchFromURL();

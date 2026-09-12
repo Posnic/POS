@@ -3,6 +3,16 @@ const DB_VERSION = 3;
 const STORE_NAME = "products";
 const BRANCH_STORE = "branch";
 const CART_STORE = "cart";
+
+/* The customer's language, from assets/i18n.js. The English fallback keeps
+   the page alive if that file is ever missing from a deploy. */
+if (typeof window.t !== "function") {
+    window.t = function (key, vars) {
+        return String(key).replace(/\{(\w+)\}/g, function (m, name) {
+            return vars && vars[name] != null ? String(vars[name]) : m;
+        });
+    };
+}
 const PHONEPE_STORE = "phonepe";
 const IMAGE_STORE = "images";
 const PAYMENT_STORE = "payment";
@@ -80,19 +90,206 @@ let appErrorRetryAction = null;
 let appErrorKind = null;
 let orderProcessingActive = false;
 
+/* ------------------------------------------------------------- the shop
+ *
+ * Who the shop is and what money it takes, as the storefront read said.
+ * Stored with the branch row so every page - the menu, the order, paying -
+ * writes a price the same way without asking the server again.
+ */
+const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {}, charges: {} };
+
+async function rememberShop() {
+    try {
+        const rows = await getData(BRANCH_STORE);
+        const branch = rows && rows[0] ? rows[0] : {};
+        shop.name = String(branch.name || "");
+        shop.currency = String(branch.currency || "");
+        shop.currencyCode = String(branch.currency_code || "");
+        /* What kind of shop, which decides the words and the questions. */
+        shop.kind = branch.kind === "retail" ? "retail" : "restaurant";
+        shop.notes = branch.notes === true;
+        shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
+        shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
+        shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
+    } catch (error) {
+        /* No branch row yet is not an error; the fetch that stores one will
+           be along in a moment. */
+    }
+    return shop;
+}
+
+/*
+ * A price, in the shop's own money.
+ *
+ * A SYMBOL sits against the number - "₹280", the way every bill in the
+ * country writes it - and a CODE or a word keeps its space: "Rs 280". The
+ * rupee is the fallback for a shop that has not said, because this product
+ * grew up in India and a blank beside a price is worse than a guess.
+ */
+function money(amount) {
+    const n = Number(amount) || 0;
+    const text = n % 1 === 0 ? String(n) : n.toFixed(2);
+    const unit = shop.currency || "₹";
+    return /^[A-Za-z]/.test(unit) ? unit + " " + text : unit + text;
+}
+
+/*
+ * The words a shop uses.
+ *
+ * A restaurant has dishes on a menu; a shop has items in a catalogue. The
+ * same page serves both, and calling a ball pen a dish is how a page tells
+ * a shopkeeper it was not made for them.
+ */
+function words() {
+    if (shop.kind === "retail") {
+        return { one: "item", many: "items", menu: t("Products"), heading: t("All products"), kitchen: "the shop" };
+    }
+    return { one: "dish", many: "dishes", menu: t("Menu"), heading: t("Our Menu"), kitchen: "the kitchen" };
+}
+
+/* Where the customer is, as the printed code said: "Table 5", or a room. */
+function placeLabel() {
+    try {
+        if (!window.KioskServicePoint) return "";
+        const point = window.KioskServicePoint.read();
+        if (point.venue) {
+            const place = window.KioskServicePoint.describe();
+            if (place && place.name) return place.name + (point.unit ? ", " + (place.unit_label || t("Room")) + " " + point.unit : "");
+            return point.venue + (point.unit ? " " + point.unit : "");
+        }
+        if (point.table) return t("Table {n}", { n: point.table });
+    } catch (e) {
+        /* No service point on this page is not an error. */
+    }
+    return "";
+}
+
+/*
+ * What a way of travelling costs, and whether the order is big enough.
+ *
+ * The SAME arithmetic the server runs when the order lands
+ * (utils/sales-channels.chargesFor): a flat fee, waived above a threshold,
+ * refused below a minimum. Mirrored here so the customer sees "Delivery
+ * ₹30" and "orders start at ₹200" before the button, not a different total
+ * on the token page or a refusal after the tap.
+ */
+function chargeFor(fulfilment, subtotal) {
+    const rule = (shop.charges && shop.charges[fulfilment]) || {};
+    const fee = Math.max(0, Number(rule.fee) || 0);
+    const freeAbove = Math.max(0, Number(rule.free_above) || 0);
+    const minimum = Math.max(0, Number(rule.min_order) || 0);
+    const amount = Number(subtotal) || 0;
+    if (!fulfilment) return { fee: 0, waived: false, allowed: true, minimum: 0, short: 0, toFree: 0 };
+    if (minimum > 0 && amount < minimum) {
+        return { fee, waived: false, allowed: false, minimum, short: minimum - amount, toFree: 0 };
+    }
+    const waived = freeAbove > 0 && amount >= freeAbove;
+    return {
+        fee: waived ? 0 : fee,
+        waived,
+        allowed: true,
+        minimum,
+        short: 0,
+        toFree: !waived && freeAbove > 0 && fee > 0 ? freeAbove - amount : 0
+    };
+}
+
+/* The words behind the veg mark, for a screen reader and for the sheet. */
+const DIET_WORDS = {
+    veg: "Vegetarian",
+    non_veg: "Non-vegetarian",
+    egg: "Contains egg",
+    vegan: "Vegan"
+};
+
+function dietMarkHtml(diet) {
+    const key = String(diet || "");
+    if (!DIET_WORDS[key]) return "";
+    return `<span class="product-diet diet-${escapeHtml(key)}" role="img" aria-label="${DIET_WORDS[key]}"></span>`;
+}
+
+/* The shop's name and logo at the top of the ordering page, in place of
+   "Self-Ordering", which named the software and not the restaurant. */
+async function paintShop() {
+    await rememberShop();
+    const name = document.getElementById("shop-name");
+    if (!name) return;
+
+    const w = words();
+    if (shop.name) {
+        name.textContent = shop.name;
+        document.title = t("{shop} · Order", { shop: shop.name });
+    } else {
+        name.textContent = w.menu;
+    }
+
+    const sub = document.getElementById("shop-sub");
+    if (sub && typeof allProducts === "function") {
+        const count = allProducts().length;
+        sub.textContent = t("{n} " + (count === 1 ? w.one : w.many), { n: count });
+        sub.hidden = count === 0;
+    }
+
+    /* A shop is searched, not a menu; and a veg filter over stationery is a
+       question nobody asked. */
+    const searchWord = shop.kind === "retail" ? t("Search products") : t("Search the menu");
+    const search = document.getElementById("product-search");
+    if (search) search.placeholder = searchWord;
+    const searchLabel = document.querySelector('label[for="product-search"]');
+    if (searchLabel) searchLabel.textContent = searchWord;
+    const firstSort = document.querySelector('#order-sort option[value="menu"]');
+    if (firstSort) firstSort.textContent = shop.kind === "retail" ? t("Catalogue order") : t("Menu order");
+    const veg = document.getElementById("order-filter-veg");
+    if (veg && typeof allProducts === "function") {
+        const list = allProducts();
+        if (list.length) veg.hidden = !list.some((p) => p && p.diet);
+    }
+
+    /* "Table 5", from the code that was scanned, beside the shop's name -
+       so a customer knows the page knows where they are sitting. */
+    const place = document.getElementById("shop-place");
+    if (place) {
+        const label = placeLabel();
+        place.textContent = label;
+        place.hidden = !label;
+    }
+
+    const heading = document.getElementById("category-heading");
+    if (heading && (heading.textContent === "Our Menu" || heading.textContent === t("Our Menu"))) heading.textContent = w.heading;
+
+    try {
+        const images = await getKioskImages();
+        const logo = document.getElementById("shop-logo");
+        const raw = images && typeof images.logo === "string" ? images.logo.trim() : "";
+        if (logo && raw && raw !== "default-product.png" && raw !== "images/default-product.png") {
+            const apiBaseUrl = String(CONFIG.API_BASE_URL || "").replace(/\/$/, "");
+            const src = /^(https?:|data:|blob:)/i.test(raw)
+                ? raw
+                : raw.startsWith("/") ? `${apiBaseUrl}${raw}` : `${apiBaseUrl}/${raw}`;
+            logo.addEventListener("error", () => { logo.hidden = true; }, { once: true });
+            logo.src = getSafeImageUrl(src, "");
+            logo.hidden = !logo.src;
+        }
+    } catch (error) {
+        /* A logo that will not load is a logo that stays hidden. */
+    }
+}
+
 function ensureAppStateStyles() {
     if (document.getElementById("app-state-styles")) return;
     const style = document.createElement("style");
     style.id = "app-state-styles";
+    /* Ink on paper, like the rest of the page. This carried the orange
+       gradient after every other gradient was gone. */
     style.textContent = `
-        .app-state-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(255,255,255,.96); font-family: Arial,sans-serif; text-align: center; }
-        .app-state-card { width: min(460px, 100%); padding: 32px; border-radius: 20px; background: #fff; box-shadow: 0 12px 40px rgba(0,0,0,.18); }
-        .app-state-icon { font-size: 52px; margin-bottom: 12px; }
-        .app-state-title { margin: 0 0 12px; color: #2b160d; font-size: 28px; }
-        .app-state-message { margin: 0; color: #555; font-size: 17px; line-height: 1.5; white-space: pre-line; }
-        .app-state-button { margin-top: 24px; width: 100%; padding: 14px 18px; border: 0; border-radius: 10px; background: linear-gradient(90deg,#ff7e5f,#feb47b); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
+        .app-state-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(255,255,255,.96); font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; text-align: center; color: #111827; }
+        .app-state-card { width: min(420px, 100%); padding: 28px 24px; border-radius: 16px; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 8px 24px rgba(17,24,39,.14); }
+        .app-state-icon { font-size: 40px; margin-bottom: 10px; }
+        .app-state-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+        .app-state-message { margin: 0; color: #6b7280; font-size: 15px; line-height: 1.5; white-space: pre-line; }
+        .app-state-button { margin-top: 20px; width: 100%; min-height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: #111827; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
         .app-state-button:disabled { opacity: .55; cursor: wait; }
-        .app-state-spinner { width: 54px; height: 54px; margin: 0 auto 20px; border: 6px solid #f1e4de; border-top-color: #ff7e5f; border-radius: 50%; animation: app-state-spin 1s linear infinite; }
+        .app-state-spinner { width: 40px; height: 40px; margin: 0 auto 16px; border: 4px solid #e5e7eb; border-top-color: #111827; border-radius: 50%; animation: app-state-spin .9s linear infinite; }
         @keyframes app-state-spin { to { transform: rotate(360deg); } }
     `;
     document.head.appendChild(style);
@@ -337,7 +534,10 @@ async function syncChangedProducts(newProducts) {
         "discount_price",
         "tax_price",
         "img",
-        "category_name"
+        "category_name",
+        "available",
+        "description",
+        "diet"
     ];
 
     return new Promise((resolve, reject) => {
@@ -524,7 +724,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
         if (existingBranches.some(b => b.id === branchId)) {
             console.log("🔹 Branch exists. Checking for product updates...");
             if (redirect) {
-                window.location.href = "home.html"; // ✅ First-time redirect
+                window.location.href = "products.html"; // first time in: the menu, not a question
             }
         }
 
@@ -603,9 +803,15 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 }, !silent);
             }
 
+            /* The shop, as the page shows it: the name at the top and the
+               money beside every price. */
+            const storeInfo = result.data.store || {};
+
             categories.forEach(category => {
                 category.items.forEach(item => {
-                    let imageSrc = (!item.img || item.img.trim() === "" || item.img === "item.svg") ? "images/default-product.png" : item.img;
+                    /* Empty when there is no photograph, so the card can draw
+                       the dish's icon instead of a grey placeholder. */
+                    const imageSrc = (!item.img || String(item.img).trim() === "" || item.img === "item.svg") ? "" : String(item.img).trim();
                     const itemId = typeof item.id === "string"
                         ? item.id
                         : (item.id?.$oid || item._id?.$oid || item._id || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -625,6 +831,13 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                         description: item.description || "",
                         prep_minutes: Number(item.prep_minutes) || 0,
                         ordered_count: Number(item.ordered_count) || 0,
+                        /* Every photo, the drawn icon for a dish with none,
+                           and whether it is on right now - the same three
+                           things the menu shows, so the two pages agree. */
+                        photos: Array.isArray(item.photos) ? item.photos.filter(Boolean) : [],
+                        icon: item.icon || "",
+                        available: item.available !== false,
+                        served_in: Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [],
                         category_name: category.category_name
                     });
                 });
@@ -632,7 +845,31 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             // ✅ Save branch & products in IndexedDB
             let productChanges = null;
-            await saveData(BRANCH_STORE, [{ id: branchId, kioskPayment: result.data.payment }]);
+            await saveData(BRANCH_STORE, [{
+                id: branchId,
+                kioskPayment: result.data.payment,
+                name: storeInfo.name || "",
+                currency: storeInfo.currency || "",
+                currency_code: storeInfo.currency_code || "",
+                /* A restaurant or a shop, whether the kitchen takes a note,
+                   and how the food may travel. */
+                kind: storeInfo.kind === "retail" ? "retail" : "restaurant",
+                notes: !!(result.data.features && result.data.features.notes),
+                fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
+                    ? result.data.channel.fulfilment
+                    : [],
+                /* What each way of travelling costs, and its minimum, so the
+                   page can say so before the button rather than after. */
+                charges: result.data.charges && typeof result.data.charges === "object" ? result.data.charges : {}
+            }]);
+            await rememberShop();
+            /* A browser that already had the menu draws the header from the
+               branch row it stored last time, which on an older row has no
+               name - so the page said "Menu" until the next visit. The name
+               is painted the moment the fresh row is in. */
+            if (typeof paintShop === "function" && document.getElementById("shop-name")) {
+                await paintShop();
+            }
             if (silent) {
                 productChanges = await syncChangedProducts(products);
                 const totalChanges = productChanges.inserted + productChanges.updated + productChanges.deleted;
@@ -668,7 +905,17 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             if (!silent) await loadProducts();
 
             if (redirect) {
-                window.location.href = "home.html";
+                /*
+                 * THE MENU FIRST.
+                 *
+                 * This went to home.html - Dine In or Take Away, before a
+                 * single dish had been seen. Owner: "take away or here no
+                 * need to ask first itself." The question moved to the
+                 * payment page, where it is answered once and at the point it
+                 * matters; home.html stays for a screen that wants an attract
+                 * page, but nothing routes a scanned code through it.
+                 */
+                window.location.href = "products.html";
                 hideLoader(); // ✅ Hide loader after redirect
             }
             if (!silent) hideAppErrorScreen();
@@ -720,6 +967,8 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
                     ...item,
                     name: updatedProduct.name,
                     img: updatedProduct.img,
+                    icon: updatedProduct.icon || "",
+                    diet: updatedProduct.diet || "",
                     price: updatedProduct.price,
                     tax_price: updatedProduct.tax_price,
                 };
@@ -738,24 +987,34 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
     renderCart(syncedCart);             // 🔄 Re-render cart UI with synced data
 }
 
-// ✅ Optimized renderCart function
+/*
+ * The order, drawn: one row per dish, the sums under them, the bar at the
+ * foot. Also keeps the counts on the ordering page in step, because the same
+ * data feeds both and this is the one place that reads it.
+ */
 async function renderCart(cartData = null) {
     if (window.POSNIC_SILENT_REFRESH) return;
 
     try {
         if (!cartData) {
-            cartData = await getCartData(); // ✅ Fetch only if not already available
+            cartData = await getCartData();
         }
+        await rememberShop();
 
         let totalPrice = 0;
+        let totalTax = 0;
         let totalQty = 0;
         let html = "";
 
         if (cartData.length === 0) {
             $("#next-btn").prop("disabled", true);
-            $("#cart-summary").html("<p class='text-center'>Cart is empty</p>");
-            $("#cart-total,#cart-qty,#mobile-cart-count").text("0.00");
-            $("#summary-display").text(`0 Items | ₹0.00`);
+            $("#cart-summary").html(
+                '<div class="empty-order"><strong>Your order is empty</strong>Taking you back to the menu.</div>'
+            );
+            $("#bill").prop("hidden", true);
+            $("#cart-total").text(money(0));
+            $("#cart-qty,#mobile-cart-count").text("0");
+            $("#summary-display").text(`0 items · ${money(0)}`);
             setTimeout(() => {
                 window.location.href = "products.html";
             }, 2000);
@@ -768,31 +1027,45 @@ async function renderCart(cartData = null) {
             const price = Number(item.price) || 0;
             const lineTotal = quantity * price;
             totalPrice += lineTotal;
+            totalTax += (Number(item.tax_price) || 0) * quantity;
             totalQty += quantity;
 
-            const itemName = String(item.name ?? "Unknown");
-            const displayName = itemName.length > 25 ? itemName.substring(0, 25) + '...' : itemName;
             const safeItemId = escapeHtml(itemId);
-            const safeItemName = escapeHtml(displayName);
-            const safeImageUrl = escapeHtml(getSafeImageUrl(item.img));
+            const safeItemName = escapeHtml(String(item.name ?? "Unknown"));
+            const picture = item.img
+                ? `<img src="${escapeHtml(getSafeImageUrl(item.img))}" alt="" class="item-image">`
+                : `<span class="item-icon" aria-hidden="true">${escapeHtml(item.icon || "")}</span>`;
+
+            /*
+             * A note for the kitchen, on the line it is about.
+             *
+             * "Less spicy", "no onion", "cut in half" - the customisation a
+             * table asks for out loud and this page had no way to take. Only
+             * where there is a kitchen to read it; a stationer gets an order
+             * note at the foot instead.
+             */
+            const note = String(item.note || "").trim();
+            const noteHtml = shop.notes
+                ? (note ? `<div class="item-note">${escapeHtml(note)}</div>` : "") +
+                  `<button type="button" class="line-note-btn" data-item-id="${safeItemId}">${note ? "Edit note" : "Add a note"}</button>`
+                : "";
 
             html += `
                 <div class="cart-item" data-item-id="${safeItemId}">
-                    <img src="${safeImageUrl}" alt="${safeItemName}" class="item-image">
-                    
+                    ${picture}
                     <div class="item-content">
                         <div class="item-details">
-                            <div class="item-name">${safeItemName}</div>
+                            <div class="item-name">${dietMarkHtml(item.diet)}<span>${safeItemName}</span></div>
                             <div class="item-prices">
-                                <span class="unit-price">₹${price.toFixed(2)} per item</span>
-                                <span class="total-price">₹${lineTotal.toFixed(2)}</span>
+                                <span class="unit-price">${escapeHtml(money(price))} each</span>
+                                <span class="total-price">${escapeHtml(money(lineTotal))}</span>
                             </div>
+                            ${noteHtml}
                         </div>
-                        
-                        <div class="quantity-control">
-                            <button class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="-1">-</button>
+                        <div class="quantity-control" aria-label="Quantity">
+                            <button type="button" class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="-1" aria-label="One fewer">&minus;</button>
                             <span class="qty-value">${quantity}</span>
-                            <button class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="1">+</button>
+                            <button type="button" class="qty-btn cart-quantity-btn" data-item-id="${safeItemId}" data-change="1" aria-label="One more">+</button>
                         </div>
                     </div>
                 </div>`;
@@ -803,15 +1076,54 @@ async function renderCart(cartData = null) {
         }
 
         $("#cart-summary").html(html);
-        $("#summary-display").text(`${totalQty} Items | ₹${totalPrice.toFixed(2)}`);
-        $('#cart-qty,#mobile-cart-count').html(totalQty);
-        $("#cart-total").text(totalPrice.toFixed(2));
+
+        /*
+         * The sums. The line prices already carry any tax that is added on
+         * top, so "Items" is the food and "Taxes" is the part of the total
+         * that is tax - shown only when there is any, because a row reading
+         * "Taxes ₹0" is a row that makes people wonder.
+         */
+        const itemsWord = totalQty === 1 ? "item" : "items";
+        $("#bill-items").text(money(totalPrice - totalTax));
+        $("#bill-tax").text(money(totalTax));
+        $("#bill-tax-row").prop("hidden", totalTax <= 0);
+        $("#bill-items-row").prop("hidden", totalTax <= 0);
+        $("#bill").toggleClass("bill-plain", totalTax <= 0);
+        $("#bill-total").text(money(totalPrice));
+        $("#bill").prop("hidden", false);
+
+        $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
+        $("#cart-qty,#mobile-cart-count").text(totalQty);
+        $("#cart-total").text(money(totalPrice));
+        $("#next-btn").prop("disabled", false);
+
+        /* The note for the whole order: for the kitchen where there is one,
+           for the shop where there is not. */
+        const noteBox = document.getElementById("order-note-box");
+        if (noteBox) {
+            noteBox.hidden = false;
+            const label = document.getElementById("order-note-label");
+            if (label) label.textContent = shop.kind === "retail" ? "A note for the shop" : "A note for the kitchen";
+            const field = document.getElementById("order-note");
+            if (field && !field.value) field.value = localStorage.getItem("note") || "";
+        }
+
         const loader = document.getElementById('page-loader');
         if (loader) loader.style.display = 'none';
 
     } catch (error) {
         console.error("❌ Error rendering cart:", error);
     }
+}
+
+/** A note on one line of the order, kept with the line. */
+async function setCartItemNote(id, text) {
+    const cartData = await getCartData();
+    const line = cartData.find(item => String(item.id) === String(id));
+    if (!line) return;
+    line.note = String(text || "").trim().slice(0, 200);
+    await saveCartData(cartData);
+    renderCart(cartData);
 }
 
 $(document).on("click", ".cart-quantity-btn", async function () {
@@ -878,16 +1190,14 @@ async function patchVisibleProductsFromData(updatedProducts = [], changedProduct
         const $card = $(".product-card").filter((_, card) => String($(card).attr("data-id")) === String(product.id));
         if (!$card.length) return;
 
-        $card.find(".product-price").text(`₹${Number(product.price || 0).toFixed(2)}`);
-        const productName = String(product.name || "Unknown");
-        const displayName = productName.length > 25 ? productName.substring(0, 25) + "..." : productName;
-        $card.find(".product-title").text(displayName);
-        const $image = $card.find("img").first();
-        const safeImageUrl = getSafeImageUrl(product.img);
-        if ($image.length && $image.attr("src") !== safeImageUrl) {
-            $image.attr("src", safeImageUrl);
+        $card.find(".product-price").text(money(product.price));
+        $card.find(".product-name").text(String(product.name || "Unknown"));
+        $card.attr("data-available", product.available === false ? "false" : "true");
+        const $image = $card.find(".product-media img").first();
+        if (product.img && $image.length) {
+            const safeImageUrl = getSafeImageUrl(product.img);
+            if ($image.attr("src") !== safeImageUrl) $image.attr("src", safeImageUrl);
         }
-        $image.attr("alt", displayName);
     });
 
     await updateCart();
@@ -902,7 +1212,41 @@ async function loadProducts() {
     const storedProducts = await getData("products");
 
     if (storedProducts.length === 0) {
-        console.error("❌ No products found in IndexedDB!");
+        /*
+         * NOTHING STORED YET IS A REASON TO FETCH, NOT TO STOP.
+         *
+         * This logged an error and returned - and the spinner it returned
+         * behind stayed up for ever, because the only thing that hides it is
+         * the cart render at the end of this function. That is what every
+         * first-time visitor to products.html saw: a wheel, and the console
+         * line "No products found in IndexedDB!" that nobody reads.
+         *
+         * The branch is known (it was stored on arrival), so ask the server
+         * for its menu once; the fetch calls back into here when the rows
+         * are saved. If there is no branch either, say so on screen with a
+         * way back to the start, and take the wheel down.
+         */
+        console.warn("No products stored yet; fetching the menu.");
+        const loader = document.getElementById("page-loader");
+        const branches = await getData("branch").catch(() => []);
+        const branchId = branches && branches[0] && branches[0].id;
+        if (branchId && !loadProducts._fetching) {
+            loadProducts._fetching = true;
+            try {
+                await fetchAndStoreBranch(branchId, false);
+            } finally {
+                loadProducts._fetching = false;
+            }
+            return;
+        }
+        if (loader) loader.style.display = "none";
+        if (typeof showAppErrorScreen === "function") {
+            showAppErrorScreen(
+                "Menu not loaded",
+                "Scan the code on the table again, or ask at the counter.",
+                () => { window.location.href = "index.html"; }
+            );
+        }
         return;
     }
 
@@ -917,13 +1261,19 @@ async function loadProducts() {
         categories.set(categoryKey, categoryName);
     });
 
+    /* The chip strip on a phone and the rail on a wide screen carry the
+       same sections; one delegated handler answers both. Buttons, so a
+       keyboard and a screen reader get them too. */
     const $categoryList = $("#category-list").empty();
+    const $categoryRail = $("#category-rail").empty();
     categories.forEach((categoryName, categoryKey) => {
-        $("<div>")
+        const chip = $("<button>")
+            .attr("type", "button")
             .addClass("category-item")
             .attr("data-category", categoryKey)
-            .text(categoryName)
-            .appendTo($categoryList);
+            .text(categoryName);
+        chip.appendTo($categoryList);
+        if ($categoryRail.length) chip.clone().appendTo($categoryRail);
     });
 
     // ✅ Retrieve last active category from localStorage
@@ -960,8 +1310,9 @@ async function showCategory(category, element) {
         return;
     }
 
+    /* Lit in both lists, so the rail and the strip never disagree. */
     $(".category-item").removeClass("active");
-    $(element).addClass("active");
+    $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === String(category)).addClass("active");
 
     // ✅ Update heading dynamically
     let categoryName = $(element).text();
@@ -994,30 +1345,47 @@ async function renderProductCards(list) {
         const quantity = cartItem ? Number(cartItem.quantity) || 0 : 0;
         const activeClass = quantity > 0 ? "active" : "";
 
-        const productName = String(product.name ?? "Unknown");
-        const displayName = productName.length > 25 ? productName.substring(0, 25) + '...' : productName;
         const safeProductId = escapeHtml(productId);
-        const safeProductName = escapeHtml(displayName);
-        const safeImageUrl = escapeHtml(getSafeImageUrl(product.img));
+        const safeProductName = escapeHtml(String(product.name ?? "Unknown"));
+        const description = String(product.description || "");
         const price = Number(product.price) || 0;
 
-        /* The veg mark, drawn as the square-and-circle people already look for
-           before they read the name. Absent when the shop has not said, which
-           is not the same as "not vegetarian". */
-        const diet = String(product.diet || "");
-        const dietMark = diet
-            ? `<span class="product-diet diet-${escapeHtml(diet)}" role="img" aria-label="${escapeHtml(diet.replace("_", "-"))}"></span>`
-            : "";
+        /*
+         * Off its hours: shown, greyed, and told why. Hiding it makes a
+         * restaurant look like it does not serve breakfast at all.
+         */
+        const available = product.available !== false;
+        const served = Array.isArray(product.served_in) ? product.served_in.filter(Boolean) : [];
+        const meta = [];
+        if (!available) {
+            meta.push(served.length ? t("{when} only", { when: served.join(t(" and ")) }) : t("Not available right now"));
+        } else if (Number(product.prep_minutes) > 0) {
+            meta.push(t("~{n} min", { n: Number(product.prep_minutes) }));
+        }
+
+        /* A photograph if the shop uploaded one, the drawn icon if not, and
+           the old placeholder only when there is neither. */
+        const media = product.img
+            ? `<img src="${escapeHtml(getSafeImageUrl(product.img))}" alt="" loading="lazy" decoding="async">`
+            : product.icon
+                ? `<span class="product-icon" aria-hidden="true">${escapeHtml(product.icon)}</span>`
+                : `<img src="images/default-product.png" alt="" loading="lazy">`;
 
         html += `
-        <div class="product-card ${activeClass}" data-id="${safeProductId}">
-            <img src="${safeImageUrl}" alt="${safeProductName}">
-            <p class="product-title">${dietMark}${safeProductName}</p>
-            <div class="product-price">₹${price.toFixed(2)}</div>
-            <div class="cart-controls">
-                <button class="btn-decrease" data-id="${safeProductId}" ${quantity <= 0 ? 'disabled' : ''}>-</button>
-                <span class="product-qty" data-id="${safeProductId}" style="font-size: 18px; font-weight: bold;">${quantity}</span>
-                <button class="btn-increase" data-id="${safeProductId}">+</button>
+        <div class="product-card ${activeClass}" data-id="${safeProductId}" data-qty="${quantity}" data-available="${available ? "true" : "false"}" role="button" tabindex="0">
+            <div class="product-body">
+                <p class="product-title">${dietMarkHtml(product.diet)}<span class="product-name">${safeProductName}</span></p>
+                ${description ? `<p class="product-desc">${escapeHtml(description)}</p>` : ""}
+                <p class="product-price">${escapeHtml(money(price))}</p>
+                ${meta.length ? `<div class="product-meta">${meta.map(m => `<span>${escapeHtml(m)}</span>`).join("")}</div>` : ""}
+            </div>
+            <div class="product-media">
+                ${media}
+                <div class="cart-controls" aria-label="Quantity">
+                    <button type="button" class="btn-decrease" data-id="${safeProductId}" aria-label="One fewer" ${quantity <= 0 ? 'disabled' : ''}>&minus;</button>
+                    <span class="product-qty" data-id="${safeProductId}" aria-live="polite">${quantity}</span>
+                    <button type="button" class="btn-increase" data-id="${safeProductId}" aria-label="Add one"><span class="add-word">Add</span><span class="add-plus" aria-hidden="true">+</span></button>
+                </div>
             </div>
         </div>`;
     }
@@ -1053,11 +1421,15 @@ async function updateQuantity(id, change) {
     updateCart();
 
     // ✅ Update UI quantity text
-    $(".product-qty").filter((_, element) => String($(element).attr("data-id")) === String(id)).text(item.quantity);
+    const $qty = $(".product-qty").filter((_, element) => String($(element).attr("data-id")) === String(id));
+    $qty.text(item.quantity);
+    pop($qty);
+    pop($("#mobile-cart-count"));
 
-    // ✅ Disable or enable "-" button
+    /* The card's state: the pill reads "Add" at zero and "- n +" above it. */
     const $decreaseBtn = $(".btn-decrease").filter((_, element) => String($(element).attr("data-id")) === String(id));
     const $productCard = $(".product-card").filter((_, element) => String($(element).attr("data-id")) === String(id));
+    $productCard.attr("data-qty", String(item.quantity));
     if (item.quantity === 0) {
         $decreaseBtn.prop("disabled", true);
         $productCard.removeClass("active");
@@ -1065,6 +1437,66 @@ async function updateQuantity(id, change) {
         $decreaseBtn.prop("disabled", false);
         $productCard.addClass("active");
     }
+
+    /* Said out loud, so the open sheet can follow without reaching in. */
+    document.dispatchEvent(new CustomEvent("posnic:order-changed", {
+        detail: { id: String(id), quantity: item.quantity }
+    }));
+}
+
+/* A number that changed pops once, so the eye is told which one. */
+function pop($el) {
+    if (!$el || !$el.length) return;
+    $el.removeClass("pop");
+    void $el[0].offsetWidth;
+    $el.addClass("pop");
+}
+
+/*
+ * The order so far, on a wide screen, where the bottom bar would be on a
+ * phone: one line per dish, the total, and the way on.
+ */
+function renderOrderPanel(cartData) {
+    const lines = document.getElementById("order-panel-lines");
+    if (!lines) return;
+
+    const rows = (cartData || []).filter(item => (Number(item.quantity) || 0) > 0);
+    if (!rows.length) {
+        lines.innerHTML = '<p class="order-panel-empty">Nothing yet. Add a dish to start.</p>';
+    } else {
+        lines.innerHTML = rows.map(item => {
+            const quantity = Number(item.quantity) || 0;
+            const lineTotal = quantity * (Number(item.price) || 0);
+            return `<div class="panel-line" data-item-id="${escapeHtml(String(item.id ?? ""))}">
+                <span class="panel-line-qty">${quantity}&times;</span>
+                <span class="panel-line-name">${escapeHtml(String(item.name ?? "Unknown"))}</span>
+                <span class="panel-line-total">${escapeHtml(money(lineTotal))}</span>
+            </div>`;
+        }).join("");
+    }
+
+    const total = rows.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
+    $("#order-panel-total").text(money(total));
+    $("#order-panel-next").prop("disabled", rows.length === 0);
+}
+
+/*
+ * Which sections have something in the order, and how much.
+ *
+ * A small count on the chip - in the strip and in the rail - so a customer
+ * three sections away can see at a glance that two things from Starters are
+ * already on the bill. Owner: "keep that category with little highlight that
+ * some items we added from that category."
+ */
+function markCategories(cartData) {
+    if (typeof products !== "object" || !products) return;
+    const byId = new Map((cartData || []).map(line => [String(line.id), Number(line.quantity) || 0]));
+    Object.keys(products).forEach(key => {
+        const count = (products[key] || []).reduce((sum, p) => sum + (byId.get(String(p.id)) || 0), 0);
+        $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === key)
+            .attr("data-count", String(count))
+            .toggleClass("has-items", count > 0);
+    });
 }
 
 async function updateCart(cartData = null) {
@@ -1084,20 +1516,25 @@ async function updateCart(cartData = null) {
             )).text(item.quantity);
         });
 
-        if (totalQty === 0) {
-            $(".next-page")
-                .addClass("disabled")
-                .off("click"); // disables click handler
-        } else {
-            $(".next-page").on("click", () => window.location.href = 'cart.html');
-            $(".next-page").removeClass("disabled");
-        }
-
+        /*
+         * The bar: gone while there is nothing in it, back the moment there
+         * is. The click that opens the order is bound once, by the page
+         * script, and only answers while the class is off - this used to
+         * bind a fresh handler on every change and never let go of the old
+         * ones.
+         */
+        const itemsWord = totalQty === 1 ? "item" : "items";
+        $(".next-page").toggleClass("disabled", totalQty === 0);
+        $("#bill-bar").toggleClass("is-empty", totalQty === 0);
+        $("#mobile-cart-count").attr("data-zero", totalQty === 0 ? "true" : "false");
 
         $("#cart-qty,#mobile-cart-count").text(totalQty);
-        $("#cart-total").text(totalPrice.toFixed(2));
-        $("#summary-display").text(`${totalQty} Items | ₹${totalPrice.toFixed(2)}`);
+        $("#cart-qty-word").text(itemsWord);
+        $("#cart-total").text(money(totalPrice));
+        $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
         $("#next-btn").prop("disabled", totalQty === 0);
+        renderOrderPanel(storedCart);
+        markCategories(storedCart);
     } catch (error) {
         console.error("❌ Error updating cart:", error);
     }
@@ -1211,7 +1648,7 @@ async function confirmCancelOrder() {
     const cartSummary = document.getElementById("cart-summary");
     if (cartSummary) cartSummary.innerHTML = ""; // Clear cart UI
     const summaryDisplay = document.getElementById("summary-display");
-    if (summaryDisplay) summaryDisplay.textContent = "0 Items | ₹0.00"; // Reset summary
+    if (summaryDisplay) summaryDisplay.textContent = `0 items · ${money(0)}`;
     closeCancelModal(); // Close the modal
 
     // Optional redirect to products page
@@ -1270,7 +1707,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             return {
                 item_id: item.id,
                 item_quantity: item.quantity,
-                gst: item.tax_price * item.quantity
+                gst: item.tax_price * item.quantity,
+                /* What the customer asked for on this line; printed on the
+                   kitchen ticket under the dish. */
+                item_note: String(item.note || "").trim().slice(0, 200)
             };
         });
 
@@ -1278,7 +1718,17 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
         const branches = await getData(BRANCH_STORE);
         const branchId = branches.length > 0 ? branches[0].id : null;
         const orderType = localStorage.getItem("orderType");
-        const note = localStorage.getItem('note');
+        /* "null" is what setItem(null) stores, and it was reaching tickets. */
+        const rawNote = localStorage.getItem('note');
+        const note = rawNote && rawNote !== "null" ? String(rawNote).trim().slice(0, 300) : "";
+        /* How the food travels and, for a delivery, to whom. Chosen on the
+           payment page; the table comes from the printed code first and a
+           typed table number second. */
+        const fulfilment = localStorage.getItem("order_fulfilment") || "";
+        const point = window.KioskServicePoint ? window.KioskServicePoint.orderFields() : {};
+        const table = String(point.table || localStorage.getItem("order_table") || "").trim();
+        const customerName = String(localStorage.getItem("order_customer_name") || "").trim().slice(0, 80);
+        const customerAddress = String(localStorage.getItem("order_customer_address") || "").trim().slice(0, 300);
 
         const productsRefreshed = await fetchAndStoreBranch(branchId, false);
         if (!productsRefreshed) return false;
@@ -1309,6 +1759,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
                 payment_status: paymentStatus,
                 sale_method: 'Self-Order',
                 order: orderType,
+                fulfilment: fulfilment,
+                table: table,
+                customer_name: customerName,
+                customer_address: customerAddress,
                 note: note,
                 /*
                  * Which venue and room the printed code named, and what the
@@ -1694,12 +2148,15 @@ async function refreshProductView() {
     if (narrowed) {
         counter.textContent = list.length === 0
             ? (searching
-                ? 'Nothing matches "' + orderView.query + '". Try a different word.'
-                : "Nothing on the menu is marked vegetarian.")
-            : list.length + (list.length === 1 ? " item" : " items");
+                ? t('Nothing matches "{q}". Try a different word.', { q: orderView.query })
+                : t("Nothing on the menu is marked vegetarian."))
+            : t(list.length === 1 ? "{n} item" : "{n} items", { n: list.length });
     }
 
     document.getElementById("product-search-clear").hidden = !searching;
+    /* The mic and the clear button share one corner of the field. */
+    var mic = document.getElementById("product-search-mic");
+    if (mic && mic.getAttribute("data-supported") === "true") mic.hidden = searching;
 }
 
 $(document).on("input", "#product-search", function () {

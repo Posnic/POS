@@ -80,6 +80,9 @@
                 mode: String(state.mode || 'order'),
                 accepting: state.accepting !== false,
                 message: String(state.message || ''),
+                /* How the food may travel, as the shop set it up: the
+                   payment page builds its question from this. */
+                fulfilment: Array.isArray(state.fulfilment) ? state.fulfilment.map(String) : [],
                 opens_at: state.opens_at || null,
                 resumes_at: state.resumes_at || null
             }));

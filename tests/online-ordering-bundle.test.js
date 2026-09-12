@@ -569,3 +569,88 @@ test('the menu lists what the kitchen cooks, not what is orderable', () => {
     'the menu is filtering on orderability, which hides dishes that are merely off today'
   );
 });
+
+/* ---------------------------------------------------- the menu comes first */
+
+test('a scanned code lands on the menu, not on a question', () => {
+  /*
+   * Owner: "take away or here no need to ask first itself. first show menu
+   * and let him choose in some step." Every route into the bundle used to go
+   * through home.html - Dine In or Take Away before a single dish was seen.
+   */
+  const index = fs.readFileSync(path.join(__dirname, '..', 'order', 'assets', 'index', 'script.js'), 'utf8');
+  const db = fs.readFileSync(path.join(__dirname, '..', 'order', 'indexedDB.js'), 'utf8');
+  for (const [name, src] of [['index/script.js', index], ['indexedDB.js', db]]) {
+    assert.ok(
+      !/location\.href\s*=\s*["']home\.html["']/.test(src),
+      `${name} still sends a customer to the Dine In / Take Away screen first`
+    );
+  }
+  assert.match(index, /location\.href\s*=\s*["']products\.html["']/, 'index does not go to the menu');
+  assert.match(db, /location\.href\s*=\s*["']products\.html["']/, 'the branch fetch does not go to the menu');
+});
+
+test('how you are eating is asked at payment, and paying waits for the answer', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'order', 'payment.html'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'order', 'assets', 'payment', 'script.js'), 'utf8');
+
+  assert.match(html, /data-order-type="DINE IN"/, 'no Dine in choice on the payment page');
+  assert.match(html, /data-order-type="PARCEL"/, 'no Take away choice on the payment page');
+
+  /* The same key home.html wrote and checkout() reads, so nothing downstream
+     had to learn a new name. */
+  assert.match(js, /localStorage\.setItem\("orderType"/, 'the choice is not stored where checkout reads it');
+
+  /* Both ways of paying are gated. An order with no type is a ticket the
+     kitchen has to guess about. */
+  const razorpay = js.slice(js.indexOf('async function submitRazorPayMobile()'));
+  const cash = js.slice(js.indexOf('async function performPaymentSubmission()'));
+  assert.match(razorpay.slice(0, 120), /ensureOrderType\(\)/, 'Razorpay can pay without an answer');
+  assert.match(cash.slice(0, 120), /ensureOrderType\(\)/, 'cash can pay without an answer');
+
+  /* Pre-answered from the code that was scanned: a table means dining in. */
+  assert.match(js, /KioskServicePoint\.read/, 'a customer at a table is still asked whether they are eating in');
+});
+
+test('an empty product store fetches the menu instead of spinning for ever', () => {
+  /*
+   * THE SPINNER. loadProducts() logged "No products found in IndexedDB!" and
+   * returned, and the only thing that hides the page loader is the cart render
+   * at the end of that function. Every first-time visitor saw a wheel.
+   */
+  const db = fs.readFileSync(path.join(__dirname, '..', 'order', 'indexedDB.js'), 'utf8');
+  const fn = db.slice(db.indexOf('async function loadProducts()'));
+  const empty = fn.slice(fn.indexOf('storedProducts.length === 0'), fn.indexOf('products = Object.create(null)'));
+
+  assert.match(empty, /fetchAndStoreBranch\(/, 'an empty store still gives up instead of fetching');
+  assert.match(empty, /page-loader/, 'the spinner is not taken down when there is nothing to fetch with');
+  assert.match(empty, /showAppErrorScreen/, 'a visitor with no branch is left with nothing on screen');
+  /* Once. A fetch that finds nothing must not call back into a fetch. */
+  assert.match(empty, /_fetching/, 'nothing stops the fetch from recursing');
+});
+
+/* ------------------------------------------ a store id nobody had to invent */
+
+test('a branch with no store id is given one the first time its settings are read', () => {
+  /*
+   * Owner: "first store id dont wait for customer based store just assign
+   * something." Every branch sat with a blank id - so no menu and no ordering
+   * page - until a shopkeeper invented a code in a box that did not say what
+   * it was for. getOneStore is the settings screen's read, so the heal lives
+   * there: the box is full the first time anyone looks.
+   */
+  const model = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'models', 'branch.model.js'), 'utf8');
+  const read = model.slice(model.indexOf('async getBranchDetails('));
+  const heal = read.slice(0, read.indexOf('simplifyDocument'));
+
+  assert.match(heal, /newStoreId\(\)/, 'a blank store id is left blank');
+  /* Unique within the shop: two branches on one address would share a
+     storefront, and "not with these odds" is how that happens. */
+  assert.match(heal, /'online_ordering\.store_id'/, 'the other branches are not checked for a collision');
+  assert.match(heal, /taken\.has\(assigned\)/, 'a colliding id is not retried');
+  /* Written back, so the next read and the customer's /menu agree. */
+  assert.match(heal, /updateOne\([\s\S]*store_id/, 'the assigned id is not stored');
+  /* Best-effort, like the toggle repair beside it: failing to assign must
+     not fail the read. */
+  assert.match(heal, /catch \(assignErr\)/, 'a failed assignment would fail the whole settings read');
+});

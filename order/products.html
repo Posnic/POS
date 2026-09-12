@@ -1,134 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-    <title>Self-Ordering Kiosk</title>
-    <link href="assets/bootstrap.min.css" rel="stylesheet">
-    <script src="assets/jquery-3.6.0.min.js"></script>
+    <title>Order</title>
+    <!--
+        One stylesheet for the whole walk - this page, the order, paying, the
+        token - so the four feel like one place. Bootstrap and the Font
+        Awesome CDN are gone: a phone at a table on a bad connection was
+        fetching a framework and an icon font from another host to draw one
+        basket glyph, which is drawn inline now.
+    -->
+    <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/i18n.js?v=20260912-design"></script>
+    <script src="assets/jquery-3.7.1.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
     <script src="assets/service-point.js"></script>
     <script src="assets/kiosk-core.js"></script>
-    <script src="indexedDB.js?v=20260709-fastrefresh"></script>
-    <link href="assets/products/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
 <body>
 
-    <!-- Page Loader -->
-    <div id="page-loader">
-        <div class="loader"></div>
-    </div>
-
-    <!-- Popup -->
-    <div id="popup">
-        ⚠️ Need more? Our counter staff is happy to help!
-        <button onclick="hidePopup()" aria-label="Close popup">&times;</button>
-    </div>
-
-    <!-- 🔻 Add this wrapper for scrollable content -->
-    <div class="content-wrapper">
-        <!-- Fixed Mobile Header -->
-        <div class="mobile-header">
-            <div class="store-title">Self-Ordering</div>
-            <div class="mobile-cart next-page">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="mobile-cart-count">0</span>
-            </div>
+    <!-- Up until the first cards are drawn, and taken down by the same
+         render. The shape of a menu, not a wheel: a page that already looks
+         like what it is about to be reads as fast. -->
+    <div id="page-loader" role="status" aria-label="Loading the menu">
+        <div class="skeleton-list" aria-hidden="true">
+            <div class="skeleton-card"><div class="sk-body"><div class="sk sk-line"></div><div class="sk sk-line short"></div><div class="sk sk-line price"></div></div><div class="sk sk-media"></div></div>
+            <div class="skeleton-card"><div class="sk-body"><div class="sk sk-line"></div><div class="sk sk-line short"></div><div class="sk sk-line price"></div></div><div class="sk sk-media"></div></div>
+            <div class="skeleton-card"><div class="sk-body"><div class="sk sk-line"></div><div class="sk sk-line short"></div><div class="sk sk-line price"></div></div><div class="sk sk-media"></div></div>
+            <div class="skeleton-card"><div class="sk-body"><div class="sk sk-line"></div><div class="sk sk-line short"></div><div class="sk sk-line price"></div></div><div class="sk sk-media"></div></div>
         </div>
+    </div>
 
+    <div id="popup" role="status">
+        Need more than that? The counter can help.
+        <button type="button" onclick="hidePopup()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="content-wrapper order-layout">
         <!--
-            SEARCH, which this page did not have.
+            THE SHOP, THE SEARCH, THE SECTIONS - stuck to the top.
 
-            The menu at /menu could find a dish and the page people actually
-            order from could not - it had category scrolling and nothing else,
-            so a customer looking for one item in a catalogue of four hundred
-            scrolled until they gave up.
-
-            It searches EVERY category, not the open one. Somebody typing
-            "biryani" is asking the restaurant a question, not the Mains tab.
+            The same three rows as the digital menu, in the same order, so a
+            customer who read the menu and tapped "Order now" finds the page
+            they already know. The name replaces "Self-Ordering", which named
+            the software and not the restaurant.
         -->
-        <section class="section-block order-search">
-            <div class="order-search-row">
-                <span class="order-search-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path>
-                    </svg>
-                </span>
-                <input type="search" id="product-search" class="order-search-input"
-                       autocomplete="off" placeholder="Search the menu"
-                       aria-label="Search the menu">
-                <button type="button" id="product-search-clear" class="order-search-clear"
-                        aria-label="Clear search" hidden>&times;</button>
+        <header class="top">
+            <div class="wrap">
+                <div class="top-row">
+                    <div class="shop">
+                        <img id="shop-logo" class="shop-logo" alt="" hidden>
+                        <div class="shop-text">
+                            <h1 id="shop-name" class="shop-name">Menu</h1>
+                            <p class="shop-sub"><span id="shop-sub" hidden></span><span id="shop-place" class="shop-place" hidden></span></p>
+                        </div>
+                    </div>
+                    <!-- The other language, named in itself. Painted by i18n.js. -->
+                    <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
+                    <!-- The order so far, as a glyph with the count on it. -->
+                    <button type="button" class="icon-btn top-cart next-page" id="top-cart" aria-label="Your order">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 7h12l1 13H5L6 7z"></path>
+                            <path d="M9 7V6a3 3 0 016 0v1"></path>
+                        </svg>
+                        <span class="badge" id="mobile-cart-count" data-zero="true">0</span>
+                    </button>
+                </div>
+
+                <!--
+                    SEARCH, across every category.
+
+                    Somebody typing "biryani" is asking the restaurant a
+                    question, not the Mains tab. Searching is a mode: the shop
+                    name and the sections stand down while the keyboard has
+                    half the screen, and the arrow is the way back.
+                -->
+                <section class="order-search">
+                    <div class="search-row">
+                        <button type="button" id="product-search-back" class="icon-btn search-back"
+                                aria-label="Back to the menu" hidden>&#8592;</button>
+                        <div class="search-field">
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+                            </svg>
+                            <label for="product-search" hidden>Search the menu</label>
+                            <input type="search" id="product-search" class="search-input"
+                                   autocomplete="off" placeholder="Search the menu">
+                            <!-- The browser's own recogniser; hidden where there is none. -->
+                            <button type="button" id="product-search-mic" class="search-mic"
+                                    aria-label="Search by voice" hidden>
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/>
+                                </svg>
+                            </button>
+                            <button type="button" id="product-search-clear" class="search-clear"
+                                    aria-label="Clear search" hidden>&times;</button>
+                        </div>
+                    </div>
+
+                    <div class="order-tools">
+                        <button type="button" class="order-tool" id="order-filter-veg" aria-pressed="false">
+                            <span class="order-diet" aria-hidden="true"></span>Veg only
+                        </button>
+                        <select id="order-sort" class="order-sort" aria-label="Sort the menu">
+                            <option value="menu">Menu order</option>
+                            <option value="popular">Most ordered</option>
+                            <option value="price_asc">Price: low to high</option>
+                            <option value="price_desc">Price: high to low</option>
+                        </select>
+                    </div>
+                </section>
+
+                <nav class="fixed-categories" aria-label="Menu sections">
+                    <div class="category-scroll-container" id="category-list"></div>
+                </nav>
             </div>
+        </header>
 
-            <div class="order-tools">
-                <button type="button" class="order-tool" id="order-filter-veg" aria-pressed="false">
-                    <span class="order-diet" aria-hidden="true"></span>Veg only
-                </button>
-                <select id="order-sort" class="order-sort" aria-label="Sort the menu">
-                    <option value="menu">Menu order</option>
-                    <option value="popular">Most ordered</option>
-                    <option value="price_asc">Price: low to high</option>
-                    <option value="price_desc">Price: high to low</option>
-                </select>
+        <!-- On a wide screen the sections are a rail down the left; the
+             chip strip in the header stands down. Same items, same handler. -->
+        <aside class="category-rail" id="category-rail" aria-label="Menu sections"></aside>
+
+        <main class="scrollable-products wrap">
+            <div class="fixed-heading">
+                <h2 class="section-heading" id="category-heading">Our Menu</h2>
             </div>
-        </section>
+            <div class="product-grid" id="product-list"></div>
+        </main>
 
-        <!-- Fixed Categories -->
-        <section class="section-block fixed-categories">
-            <h2 class="section-heading">Menu Categories</h2>
-            <div class="category-scroll-container" id="category-list">
-                <!-- Categories dynamically injected -->
+        <!-- And the order so far on the right, building as dishes are added,
+             where the bottom bar would be on a phone. -->
+        <aside class="order-panel" id="order-panel" aria-label="Your order">
+            <div class="order-panel-head">Your order</div>
+            <div class="order-panel-lines" id="order-panel-lines">
+                <p class="order-panel-empty">Nothing yet. Add a dish to start.</p>
             </div>
-        </section>
-
-        <!-- Fixed Our Menu Heading -->
-        <section class="section-block fixed-heading">
-            <h2 class="section-heading" id="category-heading">Our Menu</h2>
-        </section>
-
-        <!-- Scrollable product list -->
-        <div class="scrollable-products">
-            <div class="container product-grid" id="product-list"></div>
-        </div>
+            <div class="order-panel-foot">
+                <div class="order-panel-total"><span>Total</span><span id="order-panel-total"></span></div>
+                <button type="button" class="btn-primary btn-block checkout-btn" id="order-panel-next"
+                        onclick="window.location.href='cart.html'" disabled>Review order</button>
+            </div>
+        </aside>
     </div>
 
-
-
-    <!-- Cart Footer -->
-    <div class="cart-footer">
-        <button class="btn-home" onclick="window.location.href='home.html'">
-            <i class="fas fa-arrow-left"></i> Back
-        </button>
-        <div class="floating-cart next-page">
-            <i class="fas fa-shopping-cart"></i> <span id="cart-qty">0</span> | ₹<span id="cart-total">0.00</span>
+    <!--
+        THE BILL BAR. What has been ordered so far and the one way forward,
+        fixed to the bottom and gone while the order is empty. "Back" is gone
+        with it: a customer who scanned a code has nowhere behind them to go.
+    -->
+    <footer class="cart-footer is-empty" id="bill-bar">
+        <div class="cart-footer-inner">
+            <div class="floating-cart next-page" role="button" tabindex="0" aria-label="Your order">
+                <span class="floating-cart-count"><span id="cart-qty">0</span> <span id="cart-qty-word">items</span></span>
+                <span class="floating-cart-total" id="cart-total"></span>
+            </div>
+            <button type="button" class="btn-primary checkout-btn" id="next-btn"
+                    onclick="window.location.href='cart.html'" disabled>
+                View order
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6"></path>
+                </svg>
+            </button>
         </div>
-        <button class="btn checkout-btn btn-lg" id="next-btn" onclick="window.location.href='cart.html'">
-            Next <i class="fas fa-arrow-right"></i>
-        </button>
-    </div>
+    </footer>
 
-    <script src="assets/products/script.js?v=20260709-fastrefresh"></script>
+    <!--
+        THE DISH, OPENED. Same sheet as the menu - every photo in a strip,
+        the whole description, what the shop has said about it - and here,
+        because this page can, the way to add it.
+    -->
+    <dialog id="dish" class="sheet" aria-labelledby="dish-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <button type="button" id="dish-close" class="icon-btn sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+        <div id="dish-gallery" hidden>
+            <div class="sheet-strip" id="dish-strip"></div>
+            <div class="sheet-dots" id="dish-dots" aria-hidden="true"></div>
+        </div>
+        <span id="dish-icon" class="sheet-icon" aria-hidden="true" hidden></span>
+        <div class="sheet-body">
+            <h2 class="sheet-title"><span id="dish-diet"></span><span id="dish-title"></span></h2>
+            <p id="dish-desc" class="sheet-desc" hidden></p>
+            <dl id="dish-facts" class="sheet-facts" hidden></dl>
+            <!-- "Less spicy", "no onion": a note the kitchen reads under the
+                 dish. Only where there is a kitchen. Kept as it is typed, and
+                 carried onto the line the moment the dish is added. -->
+            <div class="sheet-note" id="dish-note-box" hidden>
+                <label class="field-label" for="dish-note">A note for the kitchen</label>
+                <textarea id="dish-note" class="note-field" rows="2" maxlength="200"
+                          placeholder="Less spicy, no onion, cut in half..."></textarea>
+            </div>
+            <div class="sheet-foot">
+                <p class="sheet-price" id="dish-price"></p>
+                <div class="sheet-add" id="dish-add" data-qty="0" aria-label="Quantity">
+                    <button type="button" class="sheet-less" id="dish-less" aria-label="One fewer">&minus;</button>
+                    <span class="sheet-qty" id="dish-qty" aria-live="polite">0</span>
+                    <button type="button" class="sheet-more" id="dish-more" aria-label="Add one">
+                        <span class="add-word">Add</span><span class="add-plus" aria-hidden="true">+</span>
+                    </button>
+                </div>
+                <p class="sheet-off" id="dish-off" hidden></p>
+            </div>
+        </div>
+    </dialog>
+
+    <script src="assets/products/script.js?v=20260912-design"></script>
 </body>
-
-
 </html>

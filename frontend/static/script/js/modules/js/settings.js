@@ -1042,7 +1042,7 @@ if ($wrapper.length) {
                  */
                 var deferPreview = function (sel, src) {
                     var $img = $(sel);
-                    if ($('#v-pills-onlineordering').hasClass('active')) {
+                    if ($('#v-pills-kioskmachine').hasClass('active')) {
                         $img.attr('src', src).css('display', 'block');
                     } else {
                         $img.attr('data-defer-src', src).css('display', 'block');
@@ -1638,14 +1638,15 @@ if ($wrapper.length) {
 
         /** Toggle the controls that only mean something when taking orders. */
         syncMode: function () {
-            var ordering = $('#kiosk_mode').val() !== 'menu';
+            /*
+             * Always ordering. The "can customers order from this page"
+             * dropdown is gone: /order takes orders and /menu shows the menu,
+             * both live whenever online ordering is on, and a shop that wants
+             * to stop taking orders presses the button for that. The name
+             * stays so the callers that wire hours to it need not change.
+             */
+            var ordering = true;
             $('.kiosk-ordering-only').toggle(ordering);
-            /* One sentence per answer, and only the chosen one on screen. The
-               single line that used to sit here described MENU mode whatever
-               was selected, so a shop reading it while set to "take orders"
-               was told its page had no cart. */
-            $('#kiosk_mode_help_order').toggle(ordering);
-            $('#kiosk_mode_help_menu').toggle(!ordering);
             var hours = ordering && $('#kiosk_hours_enable').is(':checked');
             $('#kiosk_hours_grid').toggle(hours);
             /* The sentence explaining the grid goes with the grid. */
@@ -1656,7 +1657,6 @@ if ($wrapper.length) {
             var self = PosnicPro.settings.onlineOrdering;
             var data = kioskData || {};
 
-            $('#kiosk_mode').val(data.mode === 'menu' ? 'menu' : 'order');
 
             var hours = data.hours || null;
             $('#kiosk_hours_enable').prop('checked', !!hours);
@@ -1674,7 +1674,11 @@ if ($wrapper.length) {
          */
         collect: function () {
             var self = PosnicPro.settings.onlineOrdering;
-            var mode = $('#kiosk_mode').val() === 'menu' ? 'menu' : 'order';
+            /* Sent as 'order' on every save, on purpose. A shop saved as
+               'menu' under the old dropdown heals to the two-page model the
+               first time it presses Save, and the server's reader keeps a
+               known word rather than whatever a missing element answers. */
+            var mode = 'order';
             var out = {
                 mode: mode,
                 paused_until: $('#kiosk_paused_until').val() || null
@@ -2271,10 +2275,28 @@ if ($("#sale_quick_edit").is(":checked")) {
     /* ON cards vivid, OFF cards greyed - the state must read before the
        labels do. Driven by each card's main switch. */
     refreshModuleCards: function () {
+        var on = 0, total = 0;
         $('#v-pills-modules .module-card').each(function () {
             var $main = $(this).find('.module-card-head input.custom-control-input').first();
-            $(this).toggleClass('is-off', !$main.is(':checked'));
+            var off = !$main.is(':checked');
+            $(this).toggleClass('is-off', off);
+            total += 1;
+            if (!off) { on += 1; }
         });
+        /* The page's own headline: how much of Posnic this shop has switched
+           on. A number and a bar, because "14 of 23" is read faster than
+           fourteen chips are counted. */
+        $('#fg_on_count').text(on);
+        $('#fg_total_count').text(total);
+        $('#fg_meter_bar').css('width', total ? Math.round(on * 100 / total) + '%' : '0%');
+        /* And per group, so a heading says "2 / 4" before a card is read. */
+        $('#v-pills-modules .module-group').each(function () {
+            var n = $(this).find('.module-card').length;
+            var k = $(this).find('.module-card:not(.is-off)').length;
+            $(this).find('[data-fg-count]').html('<b>' + k + '</b> / ' + n)
+                .toggleClass('is-none', k === 0);
+        });
+        PosnicPro.settings.applyModuleVisibility();
     },
     applyModuleNav: function () {
         PosnicPro.settings.refreshModuleCards();
@@ -6553,7 +6575,39 @@ PosnicPro.settings.filterModuleCards = function (query) {
         var hit = !q || $(this).text().toLowerCase().indexOf(q) !== -1;
         $(this).toggleClass('search-miss', !hit);
     });
+    PosnicPro.settings.applyModuleVisibility();
 };
+
+/*
+ * What is shown is the search AND the chip, worked out in one place.
+ *
+ * Search marks a card search-miss; the All / On / Off chip marks it
+ * filter-miss. Neither knows about the other, so a group whose every card is
+ * hidden by one or the other would keep its heading on an empty grid - which
+ * reads as "this group has nothing in it" rather than "nothing here matched".
+ * This runs after either changes and hides the heading with its cards.
+ */
+PosnicPro.settings._moduleFilter = 'all';
+PosnicPro.settings.applyModuleVisibility = function () {
+    var f = PosnicPro.settings._moduleFilter || 'all';
+    $('#v-pills-modules .module-card').each(function () {
+        var off = $(this).hasClass('is-off');
+        $(this).toggleClass('filter-miss', (f === 'on' && off) || (f === 'off' && !off));
+    });
+    $('#v-pills-modules .module-group').each(function () {
+        var visible = $(this).find('.module-card').not('.search-miss, .filter-miss').length;
+        $(this).toggleClass('group-empty', visible === 0);
+    });
+    var any = $('#v-pills-modules .module-card').not('.search-miss, .filter-miss').length;
+    $('#fg_empty').toggle(any === 0);
+};
+
+$(document).on('click', '#v-pills-modules .fg-chip', function () {
+    PosnicPro.settings._moduleFilter = $(this).attr('data-fg-filter') || 'all';
+    $('#v-pills-modules .fg-chip').removeClass('is-active');
+    $(this).addClass('is-active');
+    PosnicPro.settings.applyModuleVisibility();
+});
 
 /* The settings header names whichever page the pill opened. */
 $(document).on('shown.bs.tab', '#v-pills-tab a[data-toggle="pill"]', function () {
@@ -7819,8 +7873,8 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
 
 /* The kiosk pane pays for its own artwork, on first open only - see the
    deferPreview comment above. */
-$(document).on('click', '#v-pills-onlineordering-tab, #manage_sec_onlineordering', function () {
-    $('#v-pills-onlineordering img[data-defer-src]').each(function () {
+$(document).on('click', '#v-pills-kioskmachine-tab, #manage_sec_kioskmachine', function () {
+    $('#v-pills-kioskmachine img[data-defer-src]').each(function () {
         var source = $(this).attr('data-defer-src') || '';
         if (/^static\/images\/[a-z0-9_./-]+$/i.test(source)) {
             $(this).attr('src', source).removeAttr('data-defer-src');
@@ -7992,7 +8046,7 @@ $(document).on('click', '#voice_save', function () {
  * Delegated from document because the tab's markup is part of the settings
  * module and is not in the DOM when this file runs.
  */
-$(document).on('change', '#kiosk_mode, #kiosk_hours_enable', function () {
+$(document).on('change', '#kiosk_hours_enable', function () {
     PosnicPro.settings.onlineOrdering.syncMode();
 });
 
@@ -9114,6 +9168,12 @@ $(document).on(
  */
 PosnicPro.settings = PosnicPro.settings || {};
 PosnicPro.settings.ai = {
+    /* Must match CLEAR_SECRET in api/src/services/settings-groups.js. An
+       empty value means "leave the saved credential alone", so removing one
+       has to be said on purpose, with a word no empty box can send. */
+    CLEAR_SECRET: '__posnic_clear__',
+    /* True only between pressing Replace and saving or backing out. */
+    _replacing: false,
     /*
      * Where each provider actually hands out a key.
      *
@@ -9164,6 +9224,14 @@ PosnicPro.settings.ai = {
                 : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
         }
         $('#ai_key_row,#ai_cap_row').toggle(on);
+        /* A saved key and no key must not look the same. The key never comes
+           back to the browser, so "saved" is a badge and two buttons, and the
+           empty box only appears when somebody asks to replace it. */
+        var saved = PosnicPro.settings.ai._keySaved === true;
+        var replacing = PosnicPro.settings.ai._replacing === true;
+        $('#ai_key_status').toggle(on && saved && !replacing);
+        $('#ai_api_key').toggle(on && (!saved || replacing));
+        $('#ai_key_cancel').toggle(on && saved && replacing);
         $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
     },
 
@@ -9171,6 +9239,7 @@ PosnicPro.settings.ai = {
         /* Collapsed again on every visit. Opening it was a request for this
            look at the page, not a preference to remember. */
         PosnicPro.settings.ai._howtoOpen = false;
+        PosnicPro.settings.ai._replacing = false;
         PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var v = response.data.values || response.data;
@@ -9210,6 +9279,45 @@ PosnicPro.settings.ai = {
         }, function () { /* no meter is not a broken page */ });
     },
 
+    /*
+     * Remove the saved key.
+     *
+     * Asked first, because the only thing this page knows about the key is
+     * that it exists, and the person removing it may not have the original to
+     * paste back. The provider account is untouched; only what this shop
+     * holds is cleared, and the AI buttons go with it until a new key is saved.
+     */
+    removeKey: function () {
+        swal({
+            title: PosnicPro.i18n.t('lang_ai_key_remove_q', 'Remove the saved key?'),
+            text: PosnicPro.i18n.t('lang_ai_key_remove_text', 'The AI buttons disappear until a new key is saved. Your provider account is not touched.'),
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-danger',
+            cancelButtonClass: 'btn btn-secondary m-l-10',
+            confirmButtonText: PosnicPro.i18n.t('lang_ai_key_remove', 'Remove'),
+            cancelButtonText: PosnicPro.i18n.t('lang_cancel', 'Cancel')
+        }).then(function () {
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ ai_api_key: PosnicPro.settings.ai.CLEAR_SECRET })
+            }, function (response) {
+                if (response.type !== 'success') {
+                    PosnicPro.alert(response.type, response.message);
+                    return;
+                }
+                PosnicPro.settings.ai._keySaved = false;
+                PosnicPro.settings.ai._replacing = false;
+                /* The item screen's cached "is AI available" answer is stale
+                   the moment the key is gone. */
+                if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_key_removed',
+                    'Key removed. The AI buttons are hidden until a new one is saved.'));
+                PosnicPro.settings.ai.load();
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_remove_the_ai_key', 'Could not remove the AI key'));
+            });
+        }, function () { /* kept */ });
+    },
     save: function () {
         var provider = $('#ai_provider').val() || '';
         var key = String($('#ai_api_key').val() || '');
@@ -9282,4 +9390,18 @@ $(document).on('click', '#ai_howto_toggle', function () {
 });
 $(document).on('click', '#ai_save', function () {
     PosnicPro.settings.ai.save();
+});
+$(document).on('click', '#ai_key_replace', function () {
+    PosnicPro.settings.ai._replacing = true;
+    PosnicPro.settings.ai.syncRows();
+    $('#ai_api_key').val('').trigger('focus');
+});
+$(document).on('click', '#ai_key_cancel', function () {
+    /* Nothing was sent; the saved key was never in danger. */
+    PosnicPro.settings.ai._replacing = false;
+    $('#ai_api_key').val('');
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_key_remove', function () {
+    PosnicPro.settings.ai.removeKey();
 });

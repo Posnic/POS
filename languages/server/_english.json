@@ -1120,6 +1120,9 @@
   "No matching expenses found": [
     "src/models/expense.model.js"
   ],
+  "No menu to match against": [
+    "src/services/voice-intent.service.js"
+  ],
   "No old deleted logs to cleanup": [
     "src/repositories/stock-log.repository.js"
   ],
@@ -1263,6 +1266,9 @@
   ],
   "Nothing was asked": [
     "src/services/ai.service.js"
+  ],
+  "Nothing was said": [
+    "src/services/voice-intent.service.js"
   ],
   "Online ordering is not available for this shop.": [
     "src/utils/online-ordering.js"
@@ -1870,6 +1876,9 @@
   ],
   "That store address is reserved. Please choose another.": [
     "src/models/setting.model.js"
+  ],
+  "The AI answer could not be read": [
+    "src/services/voice-intent.service.js"
   ],
   "The AI service did not answer": [
     "src/services/ai.service.js"

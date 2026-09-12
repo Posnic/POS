@@ -652,6 +652,53 @@ class BranchModel {
         }
       }
 
+      /*
+       * Self-healing read, second kind: a branch with no store id is given
+       * one.
+       *
+       * Owner: "first store id dont wait for customer based store just assign
+       * something." The id is the last part of the address customers use, and
+       * it sat blank on every branch that had never been through the storefront
+       * tab - which was all of them - so no shop had a working menu or ordering
+       * page until somebody invented a code. Nobody should have to. Assigned
+       * here because this endpoint is the settings screen's read, so the box
+       * is full the first time anyone looks; unique within the shop, because
+       * two branches on one address would share a storefront; best-effort like
+       * the toggle repair above, because failing to assign must not fail the
+       * read.
+       */
+      const current =
+        branch.online_ordering && String(branch.online_ordering.store_id || '').trim();
+      if (!current) {
+        try {
+          const taken = new Set(
+            (
+              await this.model
+                .find(
+                  { 'online_ordering.store_id': { $nin: [null, ''] } },
+                  { 'online_ordering.store_id': 1 }
+                )
+                .lean()
+            ).map((row) => String(row.online_ordering.store_id).toUpperCase())
+          );
+          let assigned = onlineOrdering.newStoreId();
+          for (let tries = 0; taken.has(assigned) && tries < 20; tries += 1)
+            assigned = onlineOrdering.newStoreId();
+          if (!taken.has(assigned)) {
+            const config = {
+              ...(branch.online_ordering && typeof branch.online_ordering === 'object'
+                ? branch.online_ordering
+                : onlineOrdering.defaultConfig()),
+              store_id: assigned,
+            };
+            await this.model.updateOne({ _id: branch._id }, { $set: { online_ordering: config } });
+            branch.online_ordering = config;
+          }
+        } catch (assignErr) {
+          console.error('branch store id assignment skipped:', assignErr.message);
+        }
+      }
+
       // Simplify ObjectIds and Dates
       const simplified = BranchModel.simplifyDocument(branch);
 

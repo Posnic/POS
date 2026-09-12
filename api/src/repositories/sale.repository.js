@@ -13,6 +13,7 @@ const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
 const salesChannels = require('../utils/sales-channels');
+const itemChannels = require('../utils/item-channels');
 const partnerVenues = require('../utils/partner-venues');
 
 /* The fallback when channelState has no sentence of its own. It never should,
@@ -7232,6 +7233,12 @@ class SalesRepository {
         venue,
         unit,
         destination,
+        /* The shop's own table, as the printed code named it (the customer
+           page) - the captain app says it as kiosk_table_no. */
+        table,
+        /* Who a delivery goes to. The phone is customerMobile above. */
+        customer_name,
+        customer_address,
       } = data;
 
       if (!branch) {
@@ -7388,7 +7395,7 @@ class SalesRepository {
       }
 
       const servicePoint = partnerVenues.resolveServicePoint(
-        { table: kiosk_table_no, venue, unit },
+        { table: String(kiosk_table_no || table || '').trim(), venue, unit },
         venues
       );
       /* Where the food actually goes, as the customer confirmed it. Null for
@@ -7454,6 +7461,27 @@ class SalesRepository {
         }
 
         /*
+         * And a dish the shop took off the online channel by hand.
+         *
+         * The menu and the ordering page both leave it out, so reaching here
+         * with one is a stale tab or a direct post - and either way the
+         * kitchen must not see it. Same helper the channel screen uses, so
+         * "off online" means one thing everywhere.
+         */
+        const onChannel = itemChannels.availableOn(
+          itemDoc,
+          salesChannels.CHANNEL.ONLINE,
+          orderMinutes
+        );
+        if (!onChannel.available) {
+          return {
+            status: false,
+            data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
+            message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
+          };
+        }
+
+        /*
          * The price THIS service point pays.
          *
          * A hotel room is quoted the marked-up price, because the hotel takes
@@ -7491,7 +7519,19 @@ class SalesRepository {
           unit_price: round(baseUnitPrice),
           tax_amount: taxAmt,
           total: itemTotal,
-          item_description: itemDoc.description || item.item_description || '',
+          /*
+           * THE CUSTOMER'S NOTE, not the catalogue's blurb.
+           *
+           * The kitchen ticket prints this line under the dish. It carried
+           * the item's marketing description - "charred on skewers, with
+           * mint chutney" on every ticket - and it carried it INSTEAD of
+           * anything the waiter or the customer had typed, because the
+           * catalogue text won the ||. "Less spicy" is what a kitchen needs
+           * to read; the description it already knows.
+           */
+          item_description: String(item.item_note || item.item_description || '')
+            .trim()
+            .slice(0, 200),
           // receipt-facing fields
           item_base_price: round(baseUnitPrice),
           item_quantity: qty,
@@ -7587,6 +7627,36 @@ class SalesRepository {
         .filter((it) => it.item_id && it.item_quantity > 0);
 
       // Use raw MongoDB insert to bypass Mongoose schema validators
+      /*
+       * The method somebody intends to pay by, and whether they already have.
+       *
+       * Callers have always put a METHOD in `payment_status` - the captain app
+       * sends "cash", the QR page sends "Upi" - so the two are separated here
+       * rather than at every caller, which keeps handsets already in the field
+       * working without an update.
+       */
+      const said = String(data.payment_status || '')
+        .trim()
+        .toLowerCase();
+      const paidUpFront = said === 'paid' || said === 'completed';
+      const paymentMethod =
+        data.payment_mode ||
+        (said && !paidUpFront ? said.charAt(0).toUpperCase() + said.slice(1) : 'Cash');
+
+      /*
+       * HOW MANY THINGS ARE ON THIS SALE.
+       *
+       * The sales list read 0 items on an order that opened to show two. The
+       * model sets `number_of_items` in a pre-save hook - but this writes
+       * through the raw driver, and a raw insert runs no mongoose hooks at
+       * all, so the field was simply never written for a captain or QR order.
+       *
+       * Computed the same way the hook does (the sum of the quantities, not
+       * the number of lines), so a sale taken at a table and one taken at the
+       * counter count the same way in the same list.
+       */
+      const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+
       const salesCollection = db.collection('sales');
       const insertResult = await salesCollection.insertOne({
         /* What makes a resend safe. Absent on orders taken before this
@@ -7598,8 +7668,40 @@ class SalesRepository {
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
         sale_process: 'KOT',
-        payment_status: data.payment_status || 'Paid',
-        payment_mode: data.payment_status || 'Cash',
+        /*
+         * A KOT IS NOT PAID. It is a ticket for a kitchen.
+         *
+         * Owner: "Until customer pays it will not become paid. First captain
+         * orders, it goes to print to kitchen and service department. Once
+         * service complete reception will take bill print. Even that time bill
+         * is not paid. After giving to customer, customer pays with cash or
+         * preferred method in his table. After paid now user able to take the
+         * bill."
+         *
+         * What was here wrote the CALLER'S PAYMENT METHOD into the status
+         * field and defaulted the rest to "Paid". The captain app sends
+         * `payment_status: "cash"` and the QR page sends "Upi" - both of them
+         * methods - so every table order has been stored with a payment_status
+         * of "cash" or "Upi" for the whole life of the feature.
+         *
+         * Two things fell out of that, and both were reported together:
+         *
+         *   The table never appeared on the handset's home screen.
+         *   getTablesWithActiveOrders looks for payment_status 'Unpaid', and
+         *   "cash" is not that, so a waiter took an order and the floor showed
+         *   nothing. It has never worked for a captain order.
+         *
+         *   And the sale read as settled the moment it was taken, so a bill
+         *   could be closed before anybody had handed over money.
+         *
+         * So the value is read as what it is - a method - and the status is
+         * Unpaid unless the caller explicitly says otherwise. A genuinely
+         * prepaid order sends 'paid' or 'completed' and still lands as Paid.
+         */
+        payment_status: paidUpFront ? 'Paid' : 'Unpaid',
+        payment_mode: paymentMethod,
+        /* The hook that normally writes this does not run on a raw insert. */
+        number_of_items: numberOfItems,
         /*
          * The customer's own device, through the shop's own storefront.
          *
@@ -7635,7 +7737,16 @@ class SalesRepository {
         extra_discount_type: 'price',
         discount_description: kiosk_discount_description || '',
         customer_phone: customerMobile || '',
-        notes: note || '',
+        /* For a delivery: who, and where. */
+        customer_name: String(customer_name || '')
+          .trim()
+          .slice(0, 80),
+        customer_address: String(customer_address || '')
+          .trim()
+          .slice(0, 300),
+        /* "null" is what a page stores when it stores nothing, and it was
+           reaching tickets as a note. */
+        notes: note && String(note) !== 'null' ? String(note).trim().slice(0, 300) : '',
         order: order || '',
         date: now,
         created_date: now,
@@ -7698,6 +7809,10 @@ class SalesRepository {
         data: {
           tokenId,
           sale_id: insertedId,
+          /* How it travels and where, so the receipt can say which table and
+             name the fee for the way chosen (delivery_fee is already here). */
+          fulfilment,
+          table_number: servicePoint.label || kiosk_table_no || table || '',
           sales_id: salesId,
           branch_name: branchName,
           items: saleItems,
@@ -7710,7 +7825,10 @@ class SalesRepository {
              to Royal Club Hotel, Room 123" rather than repeating what the
              customer typed and hoping it was recorded. */
           deliver_to: deliverTo,
-          payment_status: data.payment_status || 'Paid',
+          /* What was actually written, not what was asked for. The receipt
+             screen said "Paid" on an order nobody had paid for. */
+          payment_status: paidUpFront ? 'Paid' : 'Unpaid',
+          payment_mode: paymentMethod,
         },
       };
     } catch (error) {
@@ -7874,6 +7992,10 @@ class SalesRepository {
             delivery_fee: 1,
             notes: 1,
             customer_phone: 1,
+            /* Who a delivery goes to and where, and how many at the table. */
+            customer_name: 1,
+            customer_address: 1,
+            person_count: 1,
             fulfilment: 1,
             created_date: 1,
             order_state_at: 1,
@@ -7899,11 +8021,18 @@ class SalesRepository {
           items: (row.items || []).map((item) => ({
             name: item.item_name || item.name || '',
             quantity: Number(item.item_quantity || item.quantity || 0),
+            /* "Less spicy": what the customer typed for this line. It was
+               on the sale and printed on the ticket, and never shown to the
+               person deciding whether to accept the order. */
+            note: item.item_description || '',
           })),
           total: Number(row.total) || 0,
           delivery_fee: Number(row.delivery_fee) || 0,
           note: row.notes || '',
           customer_phone: row.customer_phone || '',
+          customer_name: row.customer_name || '',
+          customer_address: row.customer_address || '',
+          person_count: Number(row.person_count) || 0,
           placed_at: row.created_date || row.order_state_at || null,
         })),
       };

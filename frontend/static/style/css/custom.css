@@ -6440,3 +6440,459 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 .branches-split .br-col-email, .branches-split .br-col-address,
 .branches-split .br-col-state,
 .roles-split .rl-col-desc, .roles-split .rl-col-auth { display: none; }
+
+/*
+ * FEATURES, ARRANGED.
+ *
+ * Twenty-three switches in one flat grid read as a settings dump. They are now
+ * seven groups, each with its own accent - the colour is a variable set on the
+ * <section>, so every rule below asks "what colour am I" and the answer comes
+ * from wherever the card happens to sit. Move a card, and it takes on its new
+ * group's colour with no CSS change.
+ *
+ * Everything paints from theme variables, so the dark presets and the custom
+ * colours on the Themes page carry through. Nothing here hard-codes a ground.
+ */
+
+/* ---- the header strip: a number, a bar, and the controls ---------------- */
+#v-pills-modules .fg-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px 24px;
+    padding: 16px 20px;
+}
+#v-pills-modules .fg-summary { display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
+#v-pills-modules .fg-summary-num {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--theme-text-primary, #16203a);
+    font-variant-numeric: tabular-nums;
+}
+#v-pills-modules .fg-summary-of {
+    font-size: 15px;
+    font-weight: 600;
+    margin-left: 6px;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-modules .fg-summary-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-modules .fg-meter {
+    width: 200px;
+    height: 6px;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 4px;
+    background: rgba(127, 127, 127, 0.18);
+}
+#v-pills-modules .fg-meter > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 99px;
+    background: linear-gradient(90deg,
+        var(--theme-primary-color, #506fe4),
+        color-mix(in srgb, var(--theme-primary-color, #506fe4) 60%, #7c5cd6));
+    transition: width .35s ease;
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .fg-meter > span { background: var(--theme-primary-color, #506fe4); }
+}
+#v-pills-modules .fg-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+}
+#v-pills-modules .fg-search { position: relative; flex: 0 1 260px; min-width: 180px; }
+#v-pills-modules .fg-search > i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    pointer-events: none;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-modules .fg-search > input {
+    padding-left: 34px;
+    border-radius: 99px;
+    height: 36px;
+    background: var(--theme-card-bg, #fff);
+    color: var(--theme-text-primary, #16203a);
+    border-color: rgba(127, 127, 127, 0.3);
+}
+#v-pills-modules .fg-search > input:focus {
+    border-color: var(--theme-primary-color, #506fe4);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary-color, #506fe4) 20%, transparent);
+}
+#v-pills-modules .fg-chips {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 99px;
+    gap: 2px;
+    background: rgba(127, 127, 127, 0.14);
+}
+#v-pills-modules .fg-chip {
+    border: 0;
+    background: transparent;
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    color: var(--theme-text-secondary, #3d4a60);
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+#v-pills-modules .fg-chip:hover { color: var(--theme-text-primary, #16203a); }
+#v-pills-modules .fg-chip:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #506fe4);
+    outline-offset: 1px;
+}
+#v-pills-modules .fg-chip.is-active {
+    background: var(--theme-card-bg, #fff);
+    color: var(--theme-primary-color, #506fe4);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+#v-pills-modules .fg-hint {
+    margin: 0 0 14px;
+    font-size: 12.5px;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-modules .fg-empty {
+    padding: 28px 16px;
+    text-align: center;
+    border: 1px dashed rgba(127, 127, 127, 0.35);
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--theme-text-muted, #5b6577);
+}
+
+/* ---- a group: heading, one line, count, then its grid ------------------- */
+#v-pills-modules .module-group { margin-bottom: 30px; }
+#v-pills-modules .module-group:last-of-type { margin-bottom: 6px; }
+#v-pills-modules .module-group.group-empty { display: none; }
+#v-pills-modules .fg-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.16);
+}
+#v-pills-modules .fg-head-ico {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    background: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 14%, transparent);
+}
+#v-pills-modules .fg-head-ico i { font-size: 17px; }
+#v-pills-modules .fg-head-text { flex: 1 1 auto; min-width: 0; }
+#v-pills-modules .fg-head-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--theme-text-primary, #16203a);
+}
+#v-pills-modules .fg-head-sub {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-modules .fg-head-count {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    background: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 12%, transparent);
+}
+#v-pills-modules .fg-head-count.is-none {
+    color: var(--theme-text-muted, #5b6577);
+    background: rgba(127, 127, 127, 0.14);
+}
+#v-pills-modules .fg-head-count b { font-weight: 800; }
+
+/* ---- the card, taking its colour from the group it sits in -------------- */
+#v-pills-modules .module-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    min-height: 132px;
+    border: 1px solid rgba(127, 127, 127, 0.2);
+    transition: box-shadow .18s ease, transform .18s ease, opacity .18s ease, border-color .18s ease;
+}
+#v-pills-modules .module-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 45%, transparent);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.10);
+}
+/* An ON card: a coloured top edge and a faint wash of its group's colour,
+   instead of the old blue left bar that every group shared. */
+#v-pills-modules .module-card::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 3px;
+    background: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+#v-pills-modules .module-card:not(.is-off)::before { opacity: 1; }
+#v-pills-modules .module-card:not(.is-off) {
+    border-left-width: 1px;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 7%, var(--theme-card-bg, #fff)),
+        var(--theme-card-bg, #fff) 55%);
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .module-card:not(.is-off) { background: var(--theme-card-bg, #fff); }
+}
+#v-pills-modules .module-ico {
+    background: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 12%, transparent);
+    box-shadow: none;
+}
+#v-pills-modules .module-card:not(.is-off) .module-ico {
+    background: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 20%, transparent);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 28%, transparent);
+}
+#v-pills-modules .module-ico i { color: var(--fg-accent, var(--theme-primary-color, #506fe4)); }
+#v-pills-modules .module-card:not(.is-off) .module-title::after {
+    background: var(--fg-accent, var(--theme-primary-color, #506fe4));
+}
+/* The switch turns the group's colour too, so On means the same thing in
+   the tile, the chip and the toggle. */
+#v-pills-modules .module-switch .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    border-color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+}
+#v-pills-modules .module-switch .custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 25%, transparent);
+}
+/* The whole card opens the feature's page. A chevron on hover says so
+   without a word to translate. */
+#v-pills-modules .module-card::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--fg-accent, var(--theme-primary-color, #506fe4));
+    border-bottom: 2px solid var(--fg-accent, var(--theme-primary-color, #506fe4));
+    transform: rotate(-45deg) translate(-4px, 0);
+    opacity: 0;
+    transition: opacity .18s ease, transform .18s ease;
+}
+#v-pills-modules .module-card:hover::after { opacity: .8; transform: rotate(-45deg) translate(0, 0); }
+#v-pills-modules .module-desc { padding-right: 18px; }
+#v-pills-modules .module-card.is-off { opacity: 0.7; }
+#v-pills-modules .module-card.is-off:hover { opacity: 1; }
+/* Hidden by the All / On / Off chip; search-miss is the search's own class. */
+#v-pills-modules .module-card.filter-miss { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    #v-pills-modules .module-card,
+    #v-pills-modules .module-card::before,
+    #v-pills-modules .module-card::after,
+    #v-pills-modules .fg-meter > span,
+    #v-pills-modules .fg-chip { transition: none; }
+    #v-pills-modules .module-card:hover { transform: none; }
+}
+@media (max-width: 640px) {
+    #v-pills-modules .fg-toolbar { padding: 14px; }
+    #v-pills-modules .fg-controls { justify-content: flex-start; }
+    #v-pills-modules .fg-search { flex: 1 1 100%; }
+}
+
+/*
+ * WHERE YOU ARE, in the left menu.
+ *
+ * `active` and `:hover` were styled identically - the same primary colour on
+ * the same transparent background - so "the page you are on" and "the item
+ * your mouse is over" looked the same. On a settings screen, where every page
+ * looks like every other settings page, that left the menu saying nothing at
+ * the moment it was most needed.
+ *
+ * The rail is what separates them. Hover stays a colour change, because hover
+ * is a question; active gets a bar and a tint, because active is an answer.
+ *
+ * !important throughout: custom.css loads BEFORE theme-variables.css, so an
+ * override here loses to the theme unless it says so. That has bitten this
+ * file before.
+ */
+.vertical-menu > li > a.active,
+.vertical-menu > li.active > a {
+  background-color: rgba(80, 111, 228, 0.08) !important;
+  background-color: color-mix(in srgb, var(--theme-primary-color, #506fe4) 8%, transparent) !important;
+  font-weight: 600 !important;
+  position: relative;
+}
+
+/* The bar. On a pseudo-element, so it costs the row no layout and cannot
+   shift the label by a pixel when it appears. */
+.vertical-menu > li > a.active::before,
+.vertical-menu > li.active > a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--theme-primary-color, #506fe4);
+}
+
+/* Hovering the page you are already on should not un-mark it. */
+.vertical-menu > li:hover > a.active {
+  background-color: rgba(80, 111, 228, 0.12) !important;
+  background-color: color-mix(in srgb, var(--theme-primary-color, #506fe4) 12%, transparent) !important;
+}
+/*
+ * FEATURES, IN COLOUR.
+ *
+ * The grouped page was still pale: tiles tinted at twelve percent, grey
+ * glyphs, and every off card grayscaled - which on a page where most
+ * features ARE off is a wall of grey. Owner: "dull colors and icons making
+ * very annoying".
+ *
+ * So every feature now owns a colour, carried as --fg-accent on its own card
+ * (the group keeps one for its heading). The tile is a solid gradient of it
+ * with a white glyph, on or off. State is no longer told by grey: an ON card
+ * has the glow under its tile, the coloured top edge, the wash and the chip;
+ * an OFF card has the same colour, quieter, and comes to full strength on
+ * hover. The page reads as a set of coloured things some of which are lit,
+ * rather than a set of grey things some of which are blue.
+ *
+ * Later than the block above on purpose: same selectors, so these win.
+ */
+/* The glyph on a coloured tile is white in every theme - it sits on the
+   tile's own colour, never on the page - so it is one token, declared once.
+   (The theme-token guards scan to the end of this file, and rightly ask
+   that no colour be spelled out by hand where a theme could want a say.) */
+:root { --fg-glyph: #fff; }
+#v-pills-modules .module-card {
+    --fg-deep: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a);
+    border-color: rgba(127, 127, 127, 0.16);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 6px 18px rgba(16, 24, 40, 0.05);
+}
+#v-pills-modules .module-card:hover {
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.13);
+}
+#v-pills-modules .module-ico,
+#v-pills-modules .module-card:not(.is-off) .module-ico {
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg,
+        var(--fg-accent, var(--theme-primary-color, #506fe4)),
+        var(--fg-deep, var(--fg-accent, var(--theme-primary-color, #506fe4))));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 6px 16px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 38%, transparent);
+    filter: none;
+    transition: filter .18s ease, opacity .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .module-ico,
+    #v-pills-modules .module-card:not(.is-off) .module-ico {
+        background: var(--fg-accent, var(--theme-primary-color, #506fe4));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
+    }
+}
+#v-pills-modules .module-ico i { color: var(--fg-glyph); font-size: 23px; line-height: 1; }
+/* Any image glyph still in a tile becomes white on its colour. */
+#v-pills-modules .module-ico img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
+#v-pills-modules .module-card:hover .module-ico { transform: scale(1.04); }
+
+/* Off: its colour, quieter. Not grey. */
+#v-pills-modules .module-card.is-off { opacity: 1; }
+#v-pills-modules .module-card.is-off .module-ico {
+    filter: saturate(0.5);
+    opacity: 0.82;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+#v-pills-modules .module-card.is-off .module-title { color: var(--theme-text-secondary, #3d4a60); }
+#v-pills-modules .module-card.is-off .module-desc { opacity: 0.85; }
+#v-pills-modules .module-card.is-off:hover .module-ico { filter: none; opacity: 1; }
+
+/* The group heading gets the same tile at its own size, so the heading and
+   its cards are visibly one family. */
+#v-pills-modules .fg-head-ico {
+    color: var(--fg-glyph);
+    background: linear-gradient(135deg,
+        var(--fg-accent, var(--theme-primary-color, #506fe4)),
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a));
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 30%, transparent);
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-modules .fg-head-ico { background: var(--fg-accent, var(--theme-primary-color, #506fe4)); }
+}
+/* The feature page dialog copies the tile in; give it the same look there. */
+#feature_detail_modal .fd-ico i, #fp_icon i { color: var(--fg-glyph); }
+#fp_icon .module-ico, #feature_detail_modal .fd-ico .module-ico { width: 48px; height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+    #v-pills-modules .module-ico { transition: none; }
+    #v-pills-modules .module-card:hover .module-ico { transform: none; }
+}
+
+/*
+ * AI KEY ON FILE.
+ *
+ * The key never comes back to a browser, so "one is saved" has to be said
+ * with a badge and two buttons rather than by showing it. Painted from theme
+ * variables only: the guards further up scan to the end of this file and ask
+ * that no colour be spelled out by hand where a theme could want a say.
+ */
+#v-pills-ai .ai-key-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(127, 127, 127, 0.22);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--theme-success-color, #1b7a3d) 8%, var(--theme-card-bg, #fff));
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #v-pills-ai .ai-key-status { background: var(--theme-card-bg, #fff); }
+}
+#v-pills-ai .ai-key-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--theme-success-color, #1b7a3d);
+}
+#v-pills-ai .ai-key-badge i { font-size: 16px; }
+#v-pills-ai .ai-key-hint {
+    flex: 1 1 auto;
+    font-size: 12.5px;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-ai .ai-key-actions { display: inline-flex; gap: 6px; }
+#v-pills-ai #ai_key_cancel { display: inline-block; margin-top: 6px; }

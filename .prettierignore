@@ -69,3 +69,13 @@ README.md
 # src/ and frontend/ above: these are read when something is wrong on a live
 # box, and blame matters more than quote style.
 scripts/
+
+# The stylesheets, for the same reason as frontend/static/script/ above, which
+# is already here. Prettier has never formatted these: adding 45 lines to
+# custom.css came back as 5,697 insertions and 3,577 deletions across a 9,274
+# line file, which buries the change, takes blame with it, and turns any
+# parallel work on the theme into a merge nobody can read.
+frontend/static/style/
+
+# A byte copy of order/assets/i18n.js (order/ is ignored above); formatting the copy breaks the identity test.
+menu/i18n.js

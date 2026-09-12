@@ -1506,7 +1506,69 @@ describe('ItemRepository', () => {
    * to configure items" - about a shop with a full menu. A waiter cannot act
    * on that and the admin has nothing to fix.
    */
-  describe('who the online-ordering tick applies to', () => {
+  describe('what kind of shop, and whether paying offline finishes an order', () => {
+    const SettingsRepository = require('../../../src/repositories/settings.repository');
+
+    const storefrontFor = async (online_ordering, tableOptions) => {
+      const branch = { _id: FAKE_ID, license: FAKE_ID, online_ordering };
+      jest.spyOn(repo, '_storefrontBranch').mockResolvedValue(branch);
+      jest
+        .spyOn(SettingsRepository.prototype, 'resolveGroup')
+        .mockResolvedValue({ status: true, data: { values: { table_options: tableOptions } } });
+      col.aggregate.mockReturnValue(mkAgg([]));
+      const result = await repo.storefront({});
+      expect(result.status).toBe(true);
+      return result.data;
+    };
+
+    test('the Restaurant module makes it a restaurant, with a note for the kitchen', async () => {
+      /* The Features page saves the switch as the STRING 'true'; older saves
+         hold a boolean; the console's own cache says 'enable'. The first cut
+         read only the cache's word and made every shop a shop. */
+      for (const stored of ['true', true, 'enable', 1]) {
+        const data = await storefrontFor({ store_id: 'AZ100' }, stored);
+        expect(data.store.kind).toBe('restaurant');
+        expect(data.features.notes).toBe(true);
+      }
+    });
+
+    test('without it the page is told this is a shop', async () => {
+      for (const stored of ['false', false, 'disable', undefined, '']) {
+        const data = await storefrontFor({ store_id: 'AZ100' }, stored);
+        expect(data.store.kind).toBe('retail');
+        expect(data.features.notes).toBe(false);
+      }
+    });
+
+    test('a shop with no gateway takes payment at the counter', async () => {
+      /* The page refused every such shop: "has not set up a way to pay
+         online yet", which turned the ordering page into a menu. */
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: false, payment_cod: false },
+        'enable'
+      );
+      expect(data.payment.offline).toBe(true);
+    });
+
+    test('a shop that takes online payment and switched offline off is prepaid only', async () => {
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: true, payment_cod: false },
+        'enable'
+      );
+      expect(data.payment.offline).toBe(false);
+      expect(data.payment.razorpay).toBe(true);
+    });
+
+    test('a shop that takes online payment and left offline on offers both', async () => {
+      const data = await storefrontFor(
+        { store_id: 'AZ100', payment_razorpay: true, payment_cod: true },
+        'enable'
+      );
+      expect(data.payment.offline).toBe(true);
+    });
+  });
+
+  describe('what a customer is shown, and what a waiter is shown', () => {
     const salesChannels = require('../../../src/utils/sales-channels');
 
     /* The $match the aggregation was built with, for one channel. */
@@ -1519,10 +1581,28 @@ describe('ItemRepository', () => {
       return JSON.stringify(pipeline[0].$match);
     };
 
-    test('a CUSTOMER sees only what the shop put online', async () => {
+    test('a CUSTOMER sees the menu: everything the shop has not taken off this channel', async () => {
       const match = await filterFor(salesChannels.CHANNEL.ONLINE);
-      expect(match).toContain('ecommerce');
-      expect(match).toContain('isAvailable');
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('channel_off');
+      expect(match).toContain('"online"');
+      /*
+       * The legacy per-item "show on kiosk" tick is not a gate any more.
+       *
+       * It emptied every ordering page whose shop had never ticked it - the
+       * menu beside it listed the whole catalogue - and a shop that has just
+       * been given its store address has never seen the box.
+       */
+      expect(match).not.toContain('ecommerce');
+      expect(match).not.toContain('isAvailable');
+    });
+
+    test('the shop machine is a customer with its own exception list', async () => {
+      const match = await filterFor(salesChannels.CHANNEL.KIOSK);
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('"kiosk"');
+      expect(match).not.toContain('"online"');
+      expect(match).not.toContain('ecommerce');
     });
 
     test('a WAITER sees the shop catalogue, not the online subset', async () => {
@@ -1531,13 +1611,16 @@ describe('ItemRepository', () => {
       const match = await filterFor(salesChannels.CHANNEL.TABLESIDE);
       expect(match).not.toContain('ecommerce');
       expect(match).not.toContain('isAvailable');
+      expect(match).not.toContain('show_on_menu');
+      expect(match).toContain('"tableside"');
     });
 
     test('the default is still the customer, so nothing deployed changes', async () => {
-      /* accesskiosk and the storefront pass no channel and must keep the
-         narrowing they have always had. */
+      /* accessQr and the storefront pass no channel and get the phone's list. */
       const match = await filterFor(null);
-      expect(match).toContain('ecommerce');
+      expect(match).toContain('show_on_menu');
+      expect(match).toContain('"online"');
+      expect(match).not.toContain('ecommerce');
     });
 
     test('both are still scoped to the branch and the licence', async () => {

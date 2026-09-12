@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
-
         A printed code can be three segments deep - /order/AZ100/venue/RC/123
         for a hotel room - and without this the browser looks for each asset
         under /order/AZ100/venue/, a directory that does not exist. The page
         loads and shows nothing, which is the worst kind of broken: a blank
         screen with no error anybody sees.
-
         Pinned to the mount rather than left to the arriving URL, so one file
         serves the shop address, a table and a venue alike.
     -->
     <base href="/order/" />
-    <title>Thank You - Receipt</title>
-    <link href="assets/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/thankyou/style.css" rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="assets/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Order placed</title>
+    <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/i18n.js?v=20260912-design"></script>
+    <script src="assets/jquery-3.7.1.min.js"></script>
+    <!-- Pinned to the bytes reviewed: a changed file on the CDN is refused, not run. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js"
+            integrity="sha384-1Rq385dzyHeeImKREXc2dTf1lhBKJHL8YR6phOUkikTCsUwGgDyWRoGv8KVG2+qY"
+            crossorigin="anonymous"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
     <script src="assets/channel-state.js"></script>
@@ -29,30 +30,40 @@
 </head>
 
 <body>
-    <!-- Full height flex container -->
-    <div class="d-flex justify-content-center align-items-center mb-4 bg-light center-wrapper">
-        <div class="thank-you-box text-center bg-white p-4 rounded shadow">
-            <div class="success-circle display-1 text-success mb-3">✓</div>
-            <h1 class="text-danger fw-bold">Payment Successful</h1>
-            <p class="lead">Your order has been placed. We’re preparing your food 🍗</p>
-            <h2 class="token-number">Token No: <span id="tokenId">--</span></h2>
-            <p class="order-time" id="orderTime">Order Time: --</p>
-
-            <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap button-group">
-                <button class="btn btn-danger" onclick="clearReceiptAndGo('products.html')">🍟 Order More</button>
-                <button class="btn btn-danger" onclick="clearReceiptAndGo('home.html')">🏁 Finish</button>
-            </div>
+    <!--
+        THE TOKEN IS THE PAGE. It is the one thing the customer has to carry
+        to the counter, so it is the largest thing on the screen; everything
+        else is quieter than it. "Payment Successful" in red is gone - red is
+        for things that went wrong.
+    -->
+    <main class="done">
+        <div class="done-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"></path></svg>
         </div>
-    </div>
+        <h1 id="done-title">Order placed</h1>
+        <p class="lead" id="done-lead">The kitchen has it. Show this at the counter.</p>
+        <p class="lead" id="done-pay" hidden></p>
 
-    <div class="receipt-section">
+        <div class="token">
+            <span class="token-label">Your token</span>
+            <span class="token-number" id="tokenId">--</span>
+        </div>
+        <p class="order-time">Placed <span id="orderTime">--</span></p>
+
+        <div class="button-group">
+            <button type="button" class="btn-primary" onclick="clearReceiptAndGo('products.html')">Order more</button>
+            <button type="button" class="btn-secondary" onclick="clearReceiptAndGo('home.html')">Finish</button>
+        </div>
+    </main>
+
+    <!-- The receipt, below the fold, set as a receipt. -->
+    <section class="receipt-section" aria-label="Receipt">
         <div class="center" id="branch-name"><strong>POS</strong></div>
-        <div class="center">Token: <strong><span id="token-id"></span></strong></div>
-        <div class="center">Date: <strong><span id="orderDate">2024-03-24</span></strong></div>
+        <div class="center">Token <strong><span id="token-id"></span></strong></div>
+        <div class="center">Date <strong><span id="orderDate">--</span></strong></div>
         <div class="receipt-line"></div>
         <div class="center">
-            <div>Order: <strong id="orderTypePrint">DINE IN</strong> | Pay: <strong id="paymentTypePrint">Upi</strong>
-            </div>
+            <div>Order <strong id="orderTypePrint">DINE IN</strong> &middot; Paid by <strong id="paymentTypePrint">Upi</strong></div>
         </div>
         <div class="receipt-line"></div>
 
@@ -61,21 +72,18 @@
         <div class="receipt-line"></div>
 
         <div class="totals">
-            <div class="item"><span>Subtotal</span><span><strong id="subtotal">₹0.00</strong></span></div>
-            <div class="item"><span>Discount</span><span><strong id="discount">-₹0.00</strong></span></div>
-            <div class="item"><span>Tax</span><span><strong id="tax">₹0.00</strong></span></div>
-            <div class="item"><span>Total</span><span><strong id="total">₹0.00</strong></span></div>
+            <div class="item"><span>Subtotal</span><span><strong id="subtotal"></strong></span></div>
+            <div class="item"><span>Discount</span><span><strong id="discount"></strong></span></div>
+            <div class="item"><span>Tax</span><span><strong id="tax"></strong></span></div>
+            <div class="item" id="fee-row" hidden><span id="fee-label">Delivery</span><span><strong id="fee"></strong></span></div>
+            <div class="item"><span>Total</span><span><strong id="total"></strong></span></div>
         </div>
 
         <div class="receipt-line"></div>
-        <div class="center">Thank you! Visit again.</div>
-        <div class="powered"><b>Powered by <strong>Posnic</strong><br /><span>https://www.posnic.com</span></b></div>
-        <!-- <div class="text-center mt-4">
-            <button class="btn btn-outline-dark" onclick="generatePdfFromHtmlFile();">Pdf</button>
-        </div> -->
-    </div>
+        <div class="center">Thank you. Visit again.</div>
+        <div class="powered">Powered by Posnic &middot; www.posnic.com</div>
+    </section>
 
-    <script src="assets/thankyou/script.js?v=20260708-successfix"></script>
+    <script src="assets/thankyou/script.js?v=20260912-design"></script>
 </body>
-
 </html>

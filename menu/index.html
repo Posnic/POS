@@ -6,7 +6,18 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#111827" />
+    <!-- The browser chrome matches the page in both themes, rather than a
+         dark bar over a white page. -->
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0f19"
+      media="(prefers-color-scheme: dark)"
+    />
     <!--
       WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
 
@@ -17,6 +28,7 @@
       and the page loads blank with nothing in the console anybody reads.
     -->
     <base href="/menu/" />
+    <script src="i18n.js"></script>
     <meta name="robots" content="index, follow" />
     <title>Menu</title>
 
@@ -78,6 +90,21 @@
         display: none !important;
       }
 
+      /*
+        Keyboard focus is visible on everything that can take it.
+
+        Only the photo viewer's close button had a ring; every other control
+        relied on the browser default, which several mobile browsers draw as
+        nothing at all. One rule, in ink, so it reads in both themes.
+      */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+
       html {
         -webkit-text-size-adjust: 100%;
       }
@@ -124,8 +151,43 @@
       /* ---- masthead ------------------------------------------------- */
 
       .masthead {
+        position: relative;
         padding: 28px 0 16px;
         text-align: center;
+      }
+
+      /* ------------------------------------------------------ language */
+
+      .lang-toggle {
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .masthead-lang {
+        position: absolute;
+        top: 20px;
+        right: 0;
+      }
+
+      /* Tamil glyphs stand taller than Latin ones and have no capitals to
+         space out. */
+      html[lang="ta"] body {
+        line-height: 1.6;
+      }
+
+      html[lang="ta"] .section-count,
+      html[lang="ta"] .result-count,
+      html[lang="ta"] button {
+        letter-spacing: 0;
       }
 
       .shop-logo {
@@ -325,6 +387,238 @@
 
       /* ---- the photo strip -------------------------------------------- */
 
+      /* ------------------------------------------------ search as a place */
+
+      /*
+        Sized for a thumb, not a cursor. 40px is the smallest square a finger
+        lands on reliably; the old 30px missed one tap in four on a phone.
+      */
+      .search-back,
+      .search-mic {
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--ink-soft);
+        font-size: 19px;
+        cursor: pointer;
+      }
+
+      .search-back {
+        margin-left: -8px;
+      }
+
+      /* Inside the field, at the right, where the clear button also lives.
+         Only one of the two is ever shown: a mic while the box is empty, a
+         clear once there is something to clear. */
+      .search-mic {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .search-mic svg {
+        width: 19px;
+        height: 19px;
+        fill: currentColor;
+      }
+
+      .search-mic[data-listening="true"] {
+        color: #fff;
+        background: #c0392b;
+      }
+
+      /*
+        While searching, the shop's name and the section chips go.
+
+        They are for arriving, not for looking something up, and on a phone
+        with the keyboard open they are the difference between two results
+        and eight.
+      */
+      /* .masthead, which is the class the header actually has. This said
+         .head, which nothing has, so the shop's name and count stayed on a
+         phone whose keyboard had already taken half the screen. */
+      body.searching .masthead,
+      body.searching .cats,
+      body.searching .cats-rail,
+      body.searching .tools {
+        display: none;
+      }
+
+      body.searching .controls {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding-top: 8px;
+        background: var(--bg);
+      }
+
+      /* ------------------------------------------------------ result rows */
+
+      /*
+        "2 dishes found", tight under the box.
+
+        This wore the loading state's class - 64px of padding above and
+        below, centred - so the first result sat a whole screen down on a
+        phone. It is one quiet line now, and the rows start right under it.
+      */
+      .result-count {
+        margin: 0;
+        padding: 6px 4px 2px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        text-align: left;
+      }
+
+      .result-count strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        margin-bottom: 2px;
+      }
+
+      .results {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Room for two columns of rows on a tablet or a laptop; on a phone
+         the keyboard has half the screen and one column reads faster. */
+      @media (min-width: 720px) {
+        .results {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: 24px;
+        }
+
+        .result:last-child {
+          border-bottom: 1px solid var(--line);
+        }
+      }
+
+      .result {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        min-height: 64px;
+        padding: 8px 4px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .result:last-child {
+        border-bottom: 0;
+      }
+
+      .result-thumb,
+      .result-icon {
+        flex: 0 0 auto;
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: var(--raised);
+      }
+
+      .result-icon {
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+      }
+
+      .result-body {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .result-name .diet {
+        margin-right: 6px;
+        vertical-align: -1px;
+      }
+
+      .result-name {
+        display: block;
+        font-weight: 600;
+        /* One line: a wrapped name turns a dense list back into a sparse one. */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .result-meta {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .result-price {
+        flex: 0 0 auto;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .result[data-available="false"] .result-name,
+      .result[data-available="false"] .result-price {
+        color: var(--ink-soft);
+      }
+
+      /* --------------------------------------------- long sections fold up */
+
+      /*
+        A section with forty dishes buries the next one.
+
+        Somebody scrolling a menu is looking for the SHAPE of it - what kinds
+        of thing this kitchen makes - and cannot see that if one category
+        fills four screens. The first few show, the rest are one tap away.
+      */
+      .more-in-section {
+        display: block;
+        width: 100%;
+        margin: 4px 0 2px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* What the shop has said about a dish, in pairs. */
+      .sheet-facts {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 14px;
+        margin: 12px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--line);
+        font-size: 14px;
+      }
+
+      .sheet-facts dt {
+        color: var(--ink-soft);
+      }
+
+      .sheet-facts dd {
+        margin: 0;
+      }
+
       .sheet-gallery {
         margin: -4px 0 14px;
       }
@@ -467,14 +761,29 @@
         padding-top: 10px;
       }
 
+      /*
+        A ROW. The back arrow, the field and its buttons sit side by side.
+
+        This was a plain block, and the mic button - a grid box - dropped onto
+        a line of its own under the input on every browser that can listen,
+        which is most of them.
+      */
       .search-row {
-        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 4px;
         padding-bottom: 10px;
+      }
+
+      .search-field {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
       }
 
       .search {
         width: 100%;
-        padding: 12px 40px 12px 40px;
+        padding: 12px 44px 12px 40px;
         font-size: 16px; /* 16px or iOS zooms the whole page on focus */
         color: var(--ink);
         background: var(--raised);
@@ -487,12 +796,19 @@
         color: var(--ink-soft);
       }
 
+      /* The browser's own cancel button, which sat beside the page's. */
+      .search::-webkit-search-cancel-button,
+      .search::-webkit-search-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+        display: none;
+      }
+
       .search-icon,
       .search-clear {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        margin-top: -5px;
         color: var(--ink-soft);
         line-height: 1;
       }
@@ -503,12 +819,16 @@
       }
 
       .search-clear {
-        right: 8px;
+        right: 4px;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
         border: 0;
         background: transparent;
         color: var(--ink-soft);
         font-size: 22px;
-        padding: 4px 10px;
         cursor: pointer;
         border-radius: 50%;
       }
@@ -532,7 +852,10 @@
 
       .cat {
         flex: 0 0 auto;
-        padding: 7px 14px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 6px 14px;
         border-radius: 999px;
         border: 1px solid var(--line);
         background: var(--surface);
@@ -580,9 +903,11 @@
         gap: 10px;
       }
 
+      /* minmax(0, 1fr): a bare 1fr cannot shrink below a one-line dish name,
+         and a long name would push the second column out of the page. */
       @media (min-width: 720px) {
         .dishes {
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
 
@@ -619,6 +944,8 @@
       }
 
       .dish-name {
+        flex: 1 1 auto;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -687,9 +1014,18 @@
         opacity: 0.62;
       }
 
+      /* The small facts under a dish - when it is served, how long it takes -
+         on one wrapping row. They used to hang off a <br>, which is a line
+         break pretending to be layout. */
+      .dish-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+
       .prep {
         display: inline-block;
-        margin-top: 6px;
         padding: 1px 8px;
         border-radius: 999px;
         background: var(--raised);
@@ -700,7 +1036,6 @@
 
       .off-today {
         display: inline-block;
-        margin-top: 6px;
         padding: 1px 8px;
         border-radius: 999px;
         background: var(--raised);
@@ -772,12 +1107,31 @@
 
       dialog.sheet {
         width: min(520px, 100%);
+        /*
+          Never taller than the screen. A dish with a long description and
+          three photos used to run past the bottom of a small phone with no
+          way to scroll to the price, because a <dialog> does not scroll
+          unless told to.
+        */
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
         margin: auto auto 0;
         padding: 0;
         border: 0;
         background: var(--surface);
         color: var(--ink);
         border-radius: 16px 16px 0 0;
+      }
+
+      /* The pull bar every sheet on a phone carries: it says "this slides
+         away" before a finger has tried. */
+      .sheet-handle {
+        width: 36px;
+        height: 4px;
+        margin: 8px auto 4px;
+        border-radius: 2px;
+        background: var(--line);
       }
 
       @media (min-width: 720px) {
@@ -799,7 +1153,7 @@
       }
 
       .sheet-body {
-        padding: 18px 20px 24px;
+        padding: 18px 20px max(24px, env(safe-area-inset-bottom));
       }
 
       .sheet-title {
@@ -826,6 +1180,7 @@
       .sheet-close {
         margin: 18px 0 0;
         width: 100%;
+        min-height: 44px;
         padding: 12px;
         font: inherit;
         font-weight: 600;
@@ -835,12 +1190,321 @@
         border-radius: 10px;
         cursor: pointer;
       }
+
+      /* ---- the way in ------------------------------------------------ */
+
+      /*
+        A menu that can be ordered from says so, once, at the bottom of the
+        screen. Not on every card: this is a menu, and a button beside every
+        dish turns it into a shop. One bar, in ink, only when the shop is
+        actually taking orders, and it carries the table or room the code was
+        printed for so the customer does not have to say where they are.
+      */
+      .order-cta {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9;
+        padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
+        background: var(--bg);
+        border-top: 1px solid var(--line);
+      }
+
+      .order-cta a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        max-width: 900px;
+        min-height: 48px;
+        margin: 0 auto;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--bg);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      /* Room for the bar, so the last dish is not under it. */
+      body.can-order {
+        padding-bottom: calc(76px + env(safe-area-inset-bottom));
+      }
+
+      /* ---- motion ---------------------------------------------------- */
+
+      /*
+        Every action answers quietly: a press shrinks the thing pressed, a
+        sheet rises rather than appears, a result row settles in. Each under
+        300ms, and all of it off for a phone that asked for less motion (the
+        rule at the top of the file already zeroes every transition).
+      */
+      .dish,
+      .result,
+      .cat,
+      .tool,
+      .goes,
+      .more-in-section,
+      .sheet-close,
+      .search-back,
+      .search-mic,
+      .search-clear,
+      .order-cta a {
+        transition:
+          transform 0.12s ease,
+          background-color 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .dish:active,
+      .result:active,
+      .goes:active,
+      .more-in-section:active,
+      .sheet-close:active,
+      .order-cta a:active {
+        transform: scale(0.98);
+      }
+
+      .cat:active,
+      .tool:active,
+      .search-back:active,
+      .search-mic:active,
+      .search-clear:active {
+        transform: scale(0.92);
+      }
+
+      @media (hover: hover) {
+        .dish:hover {
+          border-color: var(--ink-soft);
+          box-shadow:
+            0 1px 2px rgba(17, 24, 39, 0.06),
+            0 1px 3px rgba(17, 24, 39, 0.08);
+          transform: translateY(-1px);
+        }
+
+        .cat:not([aria-current="true"]):hover,
+        .tool:not([aria-pressed="true"]):hover {
+          color: var(--ink);
+          border-color: var(--ink-soft);
+        }
+
+        .goes:hover,
+        .more-in-section:hover {
+          background: var(--raised);
+        }
+      }
+
+      @keyframes sheet-up {
+        from {
+          transform: translateY(28px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes line-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        dialog.sheet[open] {
+          animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        dialog.sheet[open]::backdrop,
+        dialog.viewer[open] {
+          animation: fade-in 0.2s ease;
+        }
+
+        .result,
+        .dish {
+          animation: line-in 0.22s ease both;
+        }
+      }
+
+      /* ---- a wide screen ---------------------------------------------- */
+
+      /*
+        A laptop gets a laptop's layout, not a phone page stretched across
+        it: the shop across the top, the sections down the left where they
+        stay put, the dishes in the middle, and the way in as a card in the
+        corner rather than a bar across the bottom.
+      */
+      .cats-rail {
+        display: none;
+      }
+
+      @media (min-width: 1024px) {
+        :root {
+          --pad: 24px;
+        }
+
+        .wrap {
+          max-width: 1240px;
+        }
+
+        .masthead {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          column-gap: 16px;
+          align-items: center;
+          text-align: left;
+          padding: 28px 0 18px;
+        }
+
+        .shop-logo {
+          grid-row: 1 / span 2;
+          width: 56px;
+          height: 56px;
+          margin: 0;
+        }
+
+        .shop-logo[hidden] + .shop-name,
+        .shop-logo[hidden] ~ .shop-sub {
+          grid-column: 1 / -1;
+        }
+
+        .shop-name {
+          grid-column: 2;
+          font-size: 28px;
+        }
+
+        .shop-sub {
+          grid-column: 2;
+        }
+
+        .notice,
+        .venue-note {
+          grid-column: 1 / -1;
+          text-align: left;
+        }
+
+        .controls .wrap {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .search-row {
+          flex: 1 1 360px;
+          max-width: 600px;
+          padding-bottom: 0;
+        }
+
+        .cats {
+          display: none;
+        }
+
+        .tools {
+          flex: 0 0 auto;
+          padding-bottom: 0;
+        }
+
+        .controls {
+          padding: 10px 0;
+        }
+
+        body.searching .cats-rail {
+          display: none;
+        }
+
+        main.wrap {
+          display: grid;
+          grid-template-columns: 220px minmax(0, 1fr);
+          column-gap: 32px;
+          align-items: start;
+        }
+
+        .cats-rail {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          position: sticky;
+          top: 76px;
+          max-height: calc(100vh - 92px);
+          overflow-y: auto;
+          padding: 24px 0;
+        }
+
+        .cats-rail .cat {
+          display: flex;
+          width: 100%;
+          min-height: 40px;
+          align-items: center;
+          padding: 8px 12px;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          font-size: 15px;
+          white-space: normal;
+        }
+
+        .cats-rail .cat[aria-current="true"] {
+          background: var(--raised);
+          color: var(--ink);
+          font-weight: 600;
+          box-shadow: inset 3px 0 0 var(--ink);
+        }
+
+        .menu-main {
+          min-width: 0;
+        }
+
+        .section > h2 {
+          scroll-margin-top: 80px;
+        }
+
+        .order-cta {
+          left: auto;
+          right: 24px;
+          bottom: 24px;
+          width: 320px;
+          padding: 12px;
+          border: 1px solid var(--line);
+          border-radius: 14px;
+          box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
+        }
+
+        body.can-order {
+          padding-bottom: 96px;
+        }
+      }
     </style>
   </head>
 
   <body>
     <div class="wrap">
       <header class="masthead">
+        <!-- The other language, named in itself. Painted by i18n.js. -->
+        <button
+          type="button"
+          class="lang-toggle masthead-lang"
+          data-lang-toggle
+          hidden
+        >
+          தமிழ்
+        </button>
         <img id="shop-logo" class="shop-logo" alt="" hidden />
         <h1 id="shop-name" class="shop-name">Menu</h1>
         <p id="shop-sub" class="shop-sub" hidden></p>
@@ -854,39 +1518,80 @@
     <div id="controls" class="controls" hidden>
       <div class="wrap">
         <div class="search-row">
-          <svg
-            class="search-icon"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7"></circle>
-            <path d="M20 20l-3.5-3.5"></path>
-          </svg>
-          <label class="search-label" for="search" hidden
-            >Search the menu</label
-          >
-          <input
-            id="search"
-            class="search"
-            type="search"
-            autocomplete="off"
-            placeholder="Search dishes"
-          />
+          <!--
+            A BACK ARROW, because searching is a place you go.
+
+            The keyboard takes half a phone, so while somebody is typing, the
+            shop name and the section chips are a waste of the half that is
+            left. The bar rises to the top, the results take the rest, and this
+            is the way out - the shape every food app has already taught people.
+          -->
           <button
-            id="search-clear"
-            class="search-clear"
             type="button"
+            id="search-back"
+            class="search-back"
+            aria-label="Back to the menu"
             hidden
-            aria-label="Clear search"
           >
-            &times;
+            &#8592;
           </button>
+          <div class="search-field">
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20l-3.5-3.5"></path>
+            </svg>
+            <label class="search-label" for="search" hidden
+              >Search the menu</label
+            >
+            <input
+              id="search"
+              class="search"
+              type="search"
+              autocomplete="off"
+              placeholder="Search the menu"
+            />
+            <!--
+              Speak instead of type, using the browser's own recogniser.
+
+              Nothing is sent anywhere and no account is needed - this is the
+              engine behind the keyboard's own dictation key. Hidden outright
+              where the browser has none, because a microphone that does nothing
+              is worse than no microphone at all. Steps aside for the clear
+              button once there is something to clear.
+            -->
+            <button
+              type="button"
+              id="search-mic"
+              class="search-mic"
+              aria-label="Search by voice"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"
+                />
+              </svg>
+            </button>
+            <button
+              id="search-clear"
+              class="search-clear"
+              type="button"
+              hidden
+              aria-label="Clear search"
+            >
+              &times;
+            </button>
+          </div>
         </div>
         <nav id="cats" class="cats" aria-label="Menu sections"></nav>
 
@@ -928,25 +1633,47 @@
     </div>
 
     <main class="wrap">
-      <!-- Announced to a screen reader when a search changes what is shown;
+      <!-- The sections down the left on a wide screen; the chips above do the
+           same job on a phone. Filled with the same links. -->
+      <nav id="cats-rail" class="cats-rail" aria-label="Menu sections"></nav>
+
+      <div class="menu-main">
+        <!-- Announced to a screen reader when a search changes what is shown;
              a sighted reader sees the list change, and this is the equivalent. -->
-      <p
-        id="result-count"
-        class="state"
-        role="status"
-        aria-live="polite"
-        hidden
-      ></p>
-      <div id="menu"></div>
-      <div id="state" class="state">
-        <strong>Loading the menu</strong>
-        One moment.
+        <p
+          id="result-count"
+          class="result-count"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
+        <!--
+        SEARCH RESULTS ARE A LIST, NOT A GRID OF CARDS.
+
+        The menu's cards are built for browsing: a picture, a description, room
+        to breathe. Search is the opposite job - somebody has a word in mind
+        and wants to know whether this kitchen has it, with a keyboard covering
+        half the screen. So results get their own dense rows: a small square
+        photo, the name, its section, the price. Eight fit where two cards did.
+      -->
+        <div id="results" class="results" hidden></div>
+        <div id="menu"></div>
+        <div id="state" class="state">
+          <strong>Loading the menu</strong>
+          One moment.
+        </div>
       </div>
     </main>
 
     <p class="foot" id="foot" hidden></p>
 
+    <!-- Shown only when the shop is taking orders right now. -->
+    <div id="order-cta" class="order-cta" hidden>
+      <a id="order-link" href="/order/">Order now</a>
+    </div>
+
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+      <div class="sheet-handle" aria-hidden="true"></div>
       <!--
         The photos, as a swipeable strip.
 
@@ -968,6 +1695,17 @@
         </div>
         <p id="sheet-desc" class="sheet-desc" hidden></p>
         <p id="sheet-price" class="sheet-price"></p>
+
+        <!--
+          Everything else the shop has said about this dish.
+
+          A customer who has stopped to open a dish is deciding, and the things
+          that decide it are: can I eat it, when is it served, how long will it
+          take, and is it on right now. Each one is drawn only when the shop
+          has actually answered - an empty row of headings is worse than a
+          short list.
+        -->
+        <dl id="sheet-facts" class="sheet-facts" hidden></dl>
 
         <!--
           What people order with this, from the shop's own sales. Hidden

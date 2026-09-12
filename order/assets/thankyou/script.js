@@ -31,7 +31,7 @@ if (!hasValidReceiptAccess) {
 
 async function renderAndPrint() {
     if (!hasValidReceiptAccess || !receiptData?.items) {
-        document.body.innerHTML = "<p style='text-align:center'>No receipt data found.</p>";
+        document.body.innerHTML = "<main class='access-denied'><h1>Nothing to show here</h1><p>This receipt is not from an order placed on this phone.</p><a href='products.html' class='btn-primary'>See the menu</a></main>";
         return;
     }
 
@@ -52,6 +52,33 @@ async function renderAndPrint() {
         minute: '2-digit',
         hour12: true
     });
+
+    /*
+     * What happens next, in the customer's terms: to the table, at the
+     * counter, from the shop, or on its way; and what is still owed if the
+     * order was not paid here.
+     */
+    (function sayWhatHappensNext() {
+        const fulfilment = localStorage.getItem("order_fulfilment") || (orderType === "DINE IN" ? "dine_in" : "");
+        const table = localStorage.getItem("order_table") || (receiptData.table_number || "");
+        const lead = document.getElementById("done-lead");
+        const pay = document.getElementById("done-pay");
+        let text = t("The kitchen has it. Show this at the counter.");
+        if (fulfilment === "dine_in") text = table ? t("The kitchen has it. We'll bring it to table {table}.", { table }) : t("The kitchen has it. We'll bring it to your table.");
+        else if (fulfilment === "takeaway") text = t("The kitchen has it. Collect it at the counter when your token is called.");
+        else if (fulfilment === "pickup") text = t("Your order is in. Collect it from the shop when it's ready.");
+        else if (fulfilment === "delivery") text = t("Your order is in. It's on its way as soon as it's ready.");
+        if (lead) lead.textContent = text;
+        if (pay && localStorage.getItem("order_pay") === "offline" && receiptData.total != null) {
+            const amount = "\u20b9" + Number(receiptData.total).toFixed(2).replace(/\.00$/, "");
+            pay.textContent = fulfilment === "delivery"
+                ? t("Pay {amount} on delivery.", { amount })
+                : (fulfilment === "pickup" || fulfilment === "takeaway")
+                    ? t("Pay {amount} when you collect it.", { amount })
+                    : t("Pay {amount} at the counter.", { amount });
+            pay.hidden = false;
+        }
+    })();
 
     $("#branch-name").text(receiptData.branch_name || "POS");
     $("#orderDate").text(formatted);
@@ -119,6 +146,13 @@ async function renderAndPrint() {
     $("#subtotal").text(`₹${receiptData.subtotal.toFixed(2)}`);
     $("#discount").text(`-₹${receiptData.discount.toFixed(2)}`);
     $("#tax").text(`₹${receiptData.tax.toFixed(2)}`);
+    /* The fee for the way it travelled, when there was one. */
+    if (Number(receiptData.delivery_fee) > 0) {
+        const how = String(receiptData.fulfilment || localStorage.getItem("order_fulfilment") || "");
+        $("#fee-label").text(how === "delivery" ? "Delivery" : how === "dine_in" ? "Service" : "Packing");
+        $("#fee").text(`₹${Number(receiptData.delivery_fee).toFixed(2)}`);
+        $("#fee-row").prop("hidden", false);
+    }
     $("#total").text(`₹${receiptData.total.toFixed(2)}`);
     $("#orderTypePrint").text(orderType);
 
@@ -129,7 +163,7 @@ async function renderAndPrint() {
             sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
         } catch (error) {
             console.error("Receipt PDF generation failed:", error);
-            alert(error.message || "Receipt PDF could not be generated.");
+            alert(error.message || t("Receipt PDF could not be generated."));
         }
     }, 1000);
 }
@@ -226,6 +260,9 @@ function clearReceiptAndGo(url) {
     sessionStorage.removeItem("kioskReceipt");
     sessionStorage.removeItem("kiosk_mobile_number");
     sessionStorage.removeItem("qr_id");
+    ["order_fulfilment", "order_table", "order_pay", "order_customer_name", "order_customer_address", "note"].forEach((key) =>
+        localStorage.removeItem(key)
+    );
     localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
     localStorage.removeItem("kiosk_mobile_number");
     localStorage.removeItem("qr_id");
