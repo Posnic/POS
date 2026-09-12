@@ -1814,7 +1814,7 @@ async function loadCart() {
     return cart; // ✅ Return cart data
 }
 
-async function checkout(transactionId, paymentStatus = "Upi") {
+async function checkout(transactionId, paymentStatus = "Upi", options = {}) {
     if (checkoutSingleFlight.isRunning()) {
         console.warn("Checkout already in progress; reusing the active request.");
     }
@@ -1823,7 +1823,7 @@ async function checkout(transactionId, paymentStatus = "Upi") {
         hideAppErrorScreen();
         showOrderProcessingScreen("Payment is being confirmed and your order is being created. Please do not close or refresh this page.");
         try {
-            const completed = await performCheckout(transactionId, paymentStatus);
+            const completed = await performCheckout(transactionId, paymentStatus, options);
             if (!completed) hideOrderProcessingScreen();
             return completed;
         } catch (error) {
@@ -1833,7 +1833,7 @@ async function checkout(transactionId, paymentStatus = "Upi") {
     });
 }
 
-async function performCheckout(transactionId, paymentStatus = "Upi") {
+async function performCheckout(transactionId, paymentStatus = "Upi", options = {}) {
     try {
         // 🔄 Get cart data from IndexedDB
         const cartItems = await getCartData();
@@ -1940,6 +1940,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             localStorage.removeItem("qr_id");
             clearOrderAttemptId();
             hideOrderProcessingScreen();
+            /* A caller with something to say first - the voice, which reads
+               the token out - stays on this page and is handed the token; it
+               moves to the receipt when it is done. */
+            if (options && options.stay) return { placed: true, token: normalizedTokenId };
             window.location.href = `thankyou.html?token=${encodeURIComponent(normalizedTokenId)}`;
             return true;
         } else {

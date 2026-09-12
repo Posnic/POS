@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false, placed: "", leaving: false, leaveTimer: 0 };
 
   /* ------------------------------------------------------------ the button */
 
@@ -250,6 +250,7 @@
   async function runTool(name, args) {
     var a = assistant();
     if (name === "show_order") return { ok: true, order: await cartSummary() };
+    if (name === "send_to_kitchen") return sendToKitchen(args);
     var id = String((args && args.item_id) || "");
     var asked = String((args && args.asked) || "").replace(/\s+/g, " ").trim().slice(0, 80);
     var item = findItem(id, asked);
@@ -367,6 +368,157 @@
     return /session|expired|invalid_api_key|insufficient_quota|rate_limit|unauthori[sz]ed|forbidden/.test(code);
   }
 
+  /* ------------------------------------------------- send to kitchen */
+
+  var WAY_WORD = { dine_in: "DINE IN", takeaway: "PARCEL", pickup: "PARCEL", delivery: "PARCEL" };
+
+  function servicePoint() {
+    try {
+      return window.KioskServicePoint && window.KioskServicePoint.read ? window.KioskServicePoint.read() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function switchedOn(value) {
+    if (value === true || value === 1) return true;
+    if (value && typeof value === "object") {
+      return switchedOn(value.enabled != null ? value.enabled : value.status != null ? value.status : value.value);
+    }
+    return typeof value === "string" && ["true", "1", "on", "yes", "enabled", "active", "checked"].indexOf(value.trim().toLowerCase()) !== -1;
+  }
+
+  /* Whether paying at the counter, on delivery or when collecting is
+     allowed: the server says (payment.offline); an older answer is read the
+     way the payment page reads it, cash switched on or no gateway at all. */
+  function offlineAllowed(payment) {
+    if (payment && typeof payment.offline === "boolean") return payment.offline;
+    var razorpay = false;
+    var cash = false;
+    Object.keys(payment || {}).forEach(function (key) {
+      var plain = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (/razorpay/.test(plain) && switchedOn(payment[key])) razorpay = true;
+      if ((/cash/.test(plain) || plain === "cod") && switchedOn(payment[key])) cash = true;
+    });
+    return cash || !razorpay;
+  }
+
+  /* The shop asks every order for a phone number; the assistant never does. */
+  function phoneWanted(payment) {
+    return !!payment && (switchedOn(payment.number) || switchedOn(payment.payment_number));
+  }
+
+  function waysOffered() {
+    var s = shopNow();
+    var list = s && Array.isArray(s.fulfilment) ? s.fulfilment : [];
+    return list.map(String).filter(function (w) {
+      return !!WAY_WORD[w];
+    });
+  }
+
+  /* How the food travels: the code that was scanned decides first (a table
+     or a room is dining in), then what the customer told the assistant,
+     then what was chosen earlier, then the one way the shop offers. */
+  function resolveWay(asked) {
+    var point = servicePoint();
+    if (point && (point.table || point.venue)) return "dine_in";
+    var offered = waysOffered();
+    var want = String(asked || "").trim();
+    if (!want) {
+      try {
+        want = String(localStorage.getItem("order_fulfilment") || "");
+      } catch (e) {
+        want = "";
+      }
+    }
+    if (want && WAY_WORD[want] && (!offered.length || offered.indexOf(want) !== -1)) return want;
+    if (offered.length === 1) return offered[0];
+    return "";
+  }
+
+  /*
+   * The order goes to the kitchen through the same checkout a tap on "Place
+   * order" uses, under the same rules: the way it travels is known, paying
+   * at the counter is allowed, nothing the page must ask for (a phone
+   * number, an address, an online payment) is wanted, and the order is big
+   * enough for that way. Anything the page must ask for is handed to the
+   * Review order button under the conversation, and the model is told
+   * exactly why so it can say so. The customer's clear yes is the model's
+   * to obtain; confirmed:false places nothing.
+   */
+  async function sendToKitchen(args) {
+    var order = await cartSummary();
+    if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
+    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: order };
+    var way = resolveWay(args && args.fulfilment);
+    if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: order };
+    if (way === "delivery") return { ok: false, reason: "needs_details", next: "review", order: order };
+    var s = shopNow();
+    var payment = (s && s.payment) || {};
+    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "review", order: order };
+    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "review", order: order };
+    var point = servicePoint();
+    try {
+      if (way === "dine_in" && !(point && (point.table || point.venue))) {
+        var table = String((args && args.table) || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 12);
+        if (!table) return { ok: false, reason: "need_table", order: order };
+        localStorage.setItem("order_table", table);
+      } else {
+        localStorage.removeItem("order_table");
+      }
+      if (typeof chargeFor === "function") { // eslint-disable-line no-undef
+        var charge = chargeFor(way, order.total); // eslint-disable-line no-undef
+        if (charge && charge.allowed === false) {
+          return { ok: false, reason: "below_minimum", minimum: charge.minimum, short: charge.short, order: order };
+        }
+      }
+      localStorage.setItem("order_fulfilment", way);
+      localStorage.setItem("orderType", WAY_WORD[way]);
+    } catch (e) {
+      /* a browser that keeps nothing still places the order below */
+    }
+    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "review", order: order }; // eslint-disable-line no-undef
+    var placed = null;
+    try {
+      placed = await checkout("", "Cash", { stay: true }); // eslint-disable-line no-undef
+    } catch (e) {
+      placed = null;
+    }
+    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "review", order: order };
+    live.placed = String(placed.token);
+    var a = assistant();
+    if (a && a.placedLine) a.placedLine(live.placed);
+    return {
+      ok: true,
+      token: live.placed,
+      total: order.total,
+      way: way,
+      pay: way === "dine_in" ? "at the counter" : "when collecting",
+      order: order
+    };
+  }
+
+  /* Once the token has been said, the page goes to the receipt: when the
+     audio has stopped, or a few seconds after the reply is done. */
+  function armLeave() {
+    if (live.leaving) return;
+    clearTimeout(live.leaveTimer);
+    live.leaveTimer = setTimeout(leaveNow, 6000);
+  }
+
+  function leaveNow() {
+    if (live.leaving || !live.placed) return;
+    live.leaving = true;
+    clearTimeout(live.leaveTimer);
+    var token = live.placed;
+    stop();
+    window.OrderingVoice.leave("thankyou.html?token=" + encodeURIComponent(token));
+  }
+
+  function leave(url) {
+    window.location.href = url;
+  }
+
   /* ----------------------------------------------------------- live line */
 
   function sendEvent(payload) {
@@ -413,10 +565,16 @@
       case "response.done": {
         var response = ev.response || {};
         var finished = !response.status || response.status === "completed";
-        if (finished && live.active) await runToolCalls(response);
+        var ran = finished && live.active ? await runToolCalls(response) : false;
+        /* The reply after a placed order is the token being said; the page
+           leaves for the receipt once it has been heard. */
+        if (live.placed && !ran) armLeave();
         if (live.active) status("listening", say("Listening..."));
         break;
       }
+      case "output_audio_buffer.stopped":
+        if (live.placed) leaveNow();
+        break;
       case "error":
         if (!fatalError(ev.error)) {
           if (window.console && console.warn) console.warn("[voice] line said:", ev.error && (ev.error.message || ev.error.code));
@@ -458,6 +616,8 @@
 
   async function startLive() {
     status("connecting", say("Connecting..."));
+    live.placed = "";
+    live.leaving = false;
     try {
       var asked = live.pendingStream || grabMicrophone();
       live.pendingStream = null;
@@ -861,5 +1021,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

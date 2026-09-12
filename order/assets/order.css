@@ -2643,6 +2643,33 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   text-align: center;
 }
 
+/* The way out of the conversation: the order, and the button that reviews
+   and places it. The page's own order bar is under this sheet, out of reach. */
+.assistant-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  margin: 10px 0 0;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.assistant-review-sum {
+  font-weight: 500;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
 /* --------------------------------------------------------- the machine */
 
 /*

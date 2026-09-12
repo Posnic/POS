@@ -267,6 +267,50 @@
       else actionLine(say("Added {n} × {name}", { n: delta, name: a.name }));
       if (a.note && now > 0) actionLine(say("Request noted: {note}", { note: a.note }));
     }
+    paintReview();
+  }
+
+  /* ------------------------------------------------ the way out */
+
+  function leave(url) {
+    window.location.href = url;
+  }
+
+  /* The button under the conversation: what the order holds, and the way
+     to review and place it. Hidden while there is nothing to review. */
+  async function paintReview() {
+    var button = el("assistant-review");
+    if (!button || typeof getCartData !== "function") return; // eslint-disable-line no-undef
+    var lines = [];
+    try {
+      lines = (await getCartData()) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      lines = [];
+    }
+    var count = 0;
+    var total = 0;
+    lines.forEach(function (l) {
+      var q = Number(l.quantity) || 0;
+      count += q;
+      total += (Number(l.price) || 0) * q;
+    });
+    button.hidden = !count;
+    var sum = el("assistant-review-sum");
+    if (!sum) return;
+    if (!count) {
+      sum.textContent = "";
+      return;
+    }
+    var w = typeof words === "function" ? words() : { one: "item", many: "items" }; // eslint-disable-line no-undef
+    var amount = typeof money === "function" ? money(total) : String(total); // eslint-disable-line no-undef
+    sum.textContent = say("{n} " + (count === 1 ? w.one : w.many), { n: count }) + " · " + amount;
+  }
+
+  /* The order has gone to the kitchen from the conversation. */
+  function placedLine(token) {
+    actionLine(say("Sent to the kitchen. Token {token}.", { token: token }));
+    var button = el("assistant-review");
+    if (button) button.hidden = true;
   }
 
   /* --------------------------------------------------------- a turn */
@@ -363,6 +407,7 @@
     var sheet = el("assistant");
     if (!sheet) return;
     greet();
+    paintReview();
     if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
     var input = el("assistant-input");
     if (input) setTimeout(function () { input.focus(); }, 60);
@@ -374,7 +419,12 @@
     if (sheet && sheet.open) sheet.close();
   }
 
+  var wired = false;
   function wire() {
+    /* Once. A document that is already complete when this runs, and then
+       hears a DOMContentLoaded anyway, must not get every handler twice. */
+    if (wired) return;
+    wired = true;
     var spark = el("ask-ai");
     if (!spark) return;
     spark.addEventListener("click", open);
@@ -382,6 +432,8 @@
     if (hintOpen) hintOpen.addEventListener("click", open);
     var hintClose = el("assistant-hint-close");
     if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
+    var review = el("assistant-review");
+    if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
     var closeButton = el("assistant-close");
     if (closeButton) closeButton.addEventListener("click", close);
     var form = el("assistant-form");
@@ -413,5 +465,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, placedLine: placedLine, leave: leave, state: state };
 })();
