@@ -2951,5 +2951,20 @@
   "lang_module_channels": "అమ్మకాల ఛానెల్‌లు",
   "lang_sales_channel": "అమ్మకాల ఛానెల్",
   "lang_sales_channel_2": "అమ్మకాల ఛానెల్",
-  "lang_selling_beyond_the_counter_online_qr_order": "కౌంటర్‌కు అవతల అమ్మకం - ఆన్‌లైన్, QR ఆర్డరింగ్ మరియు భాగస్వామి ఛానెల్‌లు ఇక్కడ చేరతాయి."
+  "lang_selling_beyond_the_counter_online_qr_order": "కౌంటర్‌కు అవతల అమ్మకం - ఆన్‌లైన్, QR ఆర్డరింగ్ మరియు భాగస్వామి ఛానెల్‌లు ఇక్కడ చేరతాయి.",
+  "lang_ai_spent_short": "ఇప్పటివరకు ఖర్చు",
+  "lang_ai_spent_approx": "సుమారుగా",
+  "lang_ai_spend_total": "ఇప్పటివరకు మొత్తం",
+  "lang_ai_spent_note": "ప్రతి కాల్ నివేదించిన దాని నుండి, జాబితా ధరల్లో, మీ కరెన్సీలో గుండ్రంగా చేసిన రేటుతో అంచనా వేయబడింది. లైవ్ వాయిస్ కాల్ జరుగుతున్నప్పుడు తెరిచిన లైన్ ప్రతి నిమిషానికి లెక్కించబడుతుంది. బిల్లుపై తుది మాట మీ ప్రొవైడర్ డాష్‌బోర్డ్‌దే.",
+  "lang_ai_spend_feature": "ఏమిటి",
+  "lang_ai_spend_calls": "కాల్స్",
+  "lang_ai_spend_minutes": "నిమిషాలు",
+  "lang_ai_spend_cost": "సుమారు",
+  "lang_ai_spend_of_cap": "{cap} నెలవారీ పరిమితిలో {pct}%",
+  "lang_ai_spend_no_cap": "నెలవారీ పరిమితి సెట్ చేయలేదు.",
+  "lang_ai_live_voice_rate": "సంభాషణ ప్రతి నిమిషానికి సుమారు {amount}, కాల్ జరుగుతున్నప్పుడు నెలవారీ పరిమితిలో లెక్కించబడుతుంది.",
+  "lang_ai_feature_item_description": "వస్తువు వివరణలు",
+  "lang_ai_feature_ordering_assistant": "ఆర్డర్ సహాయకుడు, టైప్ చేసి",
+  "lang_ai_feature_voice_order_live": "మాట్లాడి ఆర్డర్ చేయండి, లైవ్ వాయిస్",
+  "lang_ai_feature_voice_order": "హ్యాండ్‌సెట్‌లో వాయిస్ ఆర్డర్లు"
 }

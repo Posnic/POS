@@ -6,6 +6,7 @@
 const voice = require('../../../src/services/voice-session.service');
 const assistant = require('../../../src/services/ordering-assistant.service');
 const ai = require('../../../src/services/ai.service');
+const meter = require('../../../src/services/voice-meter');
 
 const MENU = [
   {
@@ -95,12 +96,21 @@ describe('voice-session.service', () => {
     const answer = jest
       .spyOn(ai, 'realtimeAnswer')
       .mockResolvedValue({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });
+    const opened = jest.spyOn(meter, 'open').mockResolvedValue('sess1');
     const out = await voice.session(
       { sdp: OFFER },
       { categories: MENU, store: { name: 'Azure' } },
       context
     );
-    expect(out).toEqual({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });
+    /* The page gets the answer, and the clock it must keep winding. */
+    expect(out).toEqual({
+      status: true,
+      data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime', session: 'sess1', tick_seconds: 30 },
+    });
+    expect(opened).toHaveBeenCalledWith(
+      { model: 'gpt-realtime', feature: 'voice_order_live' },
+      context
+    );
     const [request, ctx] = answer.mock.calls[0];
     expect(ctx).toBe(context);
     expect(request.feature).toBe('voice_order_live');
@@ -117,6 +127,7 @@ describe('voice-session.service', () => {
     const answer = jest
       .spyOn(ai, 'realtimeAnswer')
       .mockResolvedValue({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });
+    jest.spyOn(meter, 'open').mockResolvedValue('sess1');
     const front = {
       categories: MENU,
       store: { name: 'Azure', address: '12 Beach Road, Chennai', phone: '044 1234' },
@@ -144,6 +155,19 @@ describe('voice-session.service', () => {
       const tool = voice.tools().find((t) => t.name === name);
       expect(tool.parameters.properties.asked).toBeDefined();
     }
+  });
+
+  test('a tick from the page goes to the meter as it came', async () => {
+    const ticked = jest
+      .spyOn(meter, 'tick')
+      .mockResolvedValue({ status: true, data: { seconds: 30 } });
+    expect(await voice.tick('sess1', { end: true }, context)).toEqual({
+      status: true,
+      data: { seconds: 30 },
+    });
+    expect(ticked).toHaveBeenCalledWith('sess1', { end: true }, context);
+    await voice.tick('sess1', undefined, context);
+    expect(ticked).toHaveBeenLastCalledWith('sess1', {}, context);
   });
 
   test('a refusal from the AI service passes through untouched', async () => {

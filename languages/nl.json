@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Verkoopkanalen",
   "lang_sales_channel": "Verkoopkanaal",
   "lang_sales_channel_2": "Verkoopkanaal",
-  "lang_selling_beyond_the_counter_online_qr_order": "Verkopen buiten de toonbank - online, QR-bestellen en partnerkanalen komen hier."
+  "lang_selling_beyond_the_counter_online_qr_order": "Verkopen buiten de toonbank - online, QR-bestellen en partnerkanalen komen hier.",
+  "lang_ai_spent_short": "Tot nu toe besteed",
+  "lang_ai_spent_approx": "bij benadering",
+  "lang_ai_spend_total": "Totaal tot nu toe",
+  "lang_ai_spent_note": "Geschat op basis van wat elke oproep meldde, tegen lijstprijzen, in uw valuta tegen een afgeronde koers. Live spraak wordt per minuut open lijn geteld zolang het gesprek duurt. Het dashboard van uw aanbieder heeft het laatste woord over de factuur.",
+  "lang_ai_spend_feature": "Wat",
+  "lang_ai_spend_calls": "Oproepen",
+  "lang_ai_spend_minutes": "Minuten",
+  "lang_ai_spend_cost": "Ongeveer",
+  "lang_ai_spend_of_cap": "{pct}% van de maandlimiet van {cap}",
+  "lang_ai_spend_no_cap": "Geen maandlimiet ingesteld.",
+  "lang_ai_live_voice_rate": "Ongeveer {amount} per minuut gesprek, tijdens het gesprek afgetrokken van de maandlimiet.",
+  "lang_ai_feature_item_description": "Artikelbeschrijvingen",
+  "lang_ai_feature_ordering_assistant": "Bestelassistent, getypt",
+  "lang_ai_feature_voice_order_live": "Praten om te bestellen, live spraak",
+  "lang_ai_feature_voice_order": "Spraakbestellingen op de handset"
 }

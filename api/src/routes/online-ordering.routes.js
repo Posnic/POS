@@ -30,7 +30,11 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/online-ordering.controller');
 const { ensureKioskKey } = require('../middleware/kiosk-key');
-const { assistantLimiter, voiceLimiter } = require('../middleware/assistant-rate-limit');
+const {
+  assistantLimiter,
+  voiceLimiter,
+  voiceTickLimiter,
+} = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
 
@@ -98,5 +102,13 @@ router.post('/:storeId/assistant', assistantLimiter, bind(controller.assistant))
  * it has its own switch inside and its own limit here.
  */
 router.post('/:storeId/voice', voiceLimiter, bind(controller.voice));
+
+/*
+ * The meter on that line: the page reports every half minute that it is
+ * still open, and once as it hangs up. The server clocks the seconds itself
+ * and prices them against the monthly limit; past it, this answers 403 and
+ * the page hangs up. See services/voice-meter.js.
+ */
+router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.voiceTick));
 
 module.exports = router;

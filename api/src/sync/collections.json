@@ -45,7 +45,9 @@
     "branch": "a legacy alias seen in old code paths; the real collection is branches, which syncs",
     "login_check": "sign-in attempts and lockouts on this machine; another machine has its own",
     "shadow_login_tokens": "support sign-in tokens minted by the cloud for one use on one machine",
-    "user_sessions": "browser and app sessions belong to the machine that opened them"
+    "user_sessions": "browser and app sessions belong to the machine that opened them",
+    "ai_usage": "The AI spend meter, counted where the call was made: the cloud meters the ordering page and the till meters its own screens. Rows are $inc counters, which last-writer-wins would clobber; the settings screen reads the side it is opened on.",
+    "ai_voice_sessions": "Live-voice lines being metered by the cloud instance that opened them: a few minutes of clock per call, swept after two days. State of one server, not shop data."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",

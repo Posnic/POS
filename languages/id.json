@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Saluran penjualan",
   "lang_sales_channel": "Saluran penjualan",
   "lang_sales_channel_2": "Saluran penjualan",
-  "lang_selling_beyond_the_counter_online_qr_order": "Berjualan di luar konter - penjualan online, pemesanan QR, dan saluran mitra akan hadir di sini."
+  "lang_selling_beyond_the_counter_online_qr_order": "Berjualan di luar konter - penjualan online, pemesanan QR, dan saluran mitra akan hadir di sini.",
+  "lang_ai_spent_short": "Terpakai sejauh ini",
+  "lang_ai_spent_approx": "perkiraan",
+  "lang_ai_spend_total": "Total sejauh ini",
+  "lang_ai_spent_note": "Diperkirakan dari yang dilaporkan setiap panggilan, dengan harga daftar, dalam mata uang Anda pada kurs yang dibulatkan. Suara langsung dihitung per menit saluran terbuka selama panggilan berlangsung. Dasbor penyedia Anda yang menentukan tagihan akhir.",
+  "lang_ai_spend_feature": "Apa",
+  "lang_ai_spend_calls": "Panggilan",
+  "lang_ai_spend_minutes": "Menit",
+  "lang_ai_spend_cost": "Sekitar",
+  "lang_ai_spend_of_cap": "{pct}% dari batas bulanan {cap}",
+  "lang_ai_spend_no_cap": "Batas bulanan belum ditetapkan.",
+  "lang_ai_live_voice_rate": "Sekitar {amount} untuk setiap menit percakapan, dihitung dari batas bulanan selama panggilan berlangsung.",
+  "lang_ai_feature_item_description": "Deskripsi barang",
+  "lang_ai_feature_ordering_assistant": "Asisten pemesanan, diketik",
+  "lang_ai_feature_voice_order_live": "Bicara untuk memesan, suara langsung",
+  "lang_ai_feature_voice_order": "Pesanan suara di perangkat genggam"
 }

@@ -305,6 +305,44 @@ class OnlineOrderingController {
     }
   }
 
+  /**
+   * The line is still open: the page says so every half minute, and once
+   * more as it closes. Each tick is metered against the shop's monthly
+   * limit; past the limit the answer is a refusal and the page hangs up.
+   */
+  async voiceTick(req, res) {
+    try {
+      const context = await itemService.storefrontContext({ storeId: req.params.storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop found at this address', data: null });
+      }
+      /* The hang-up report is a beacon with no body, so its `end` rides on
+         the address; a report from an open line carries it in the body. */
+      const body = req.body || {};
+      const end = body.end != null ? body.end : req.query && req.query.end;
+      const result = await voiceSession.tick(String(req.params.session || ''), { end }, context);
+      if (result.status) return this.respond(res, result);
+      if (result.message === 'cap') {
+        return res.status(403).json({
+          type: 'error',
+          message: 'This shop has reached its monthly AI spending limit',
+          data: result.data,
+        });
+      }
+      if (result.message === 'no_session') {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No such voice session', data: null });
+      }
+      return res.status(503).json({ type: 'error', message: result.message, data: null });
+    } catch (error) {
+      console.error('Error in online ordering voice tick:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async createOrder(req, res) {
     try {
       /*
