@@ -247,6 +247,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Restaurant POS opening and closing checklist](https://posnic.github.io/restaurant-pos-opening-closing-checklist.html) | Test tills, menus, printers, offline operation, reconciliation and handover for each shift |
 | [Retail POS inventory cycle count checklist](https://posnic.github.io/retail-pos-inventory-cycle-count-checklist.html) | Control stock cutoffs, blind counts, offline synchronization, variance investigation and approvals |
 | [Retail POS end-of-day cash reconciliation checklist](https://posnic.github.io/retail-pos-end-of-day-cash-reconciliation-checklist.html) | Close tills, reconcile each tender, investigate variances and preserve a reviewable shift handover |
+| [Retail POS incident response checklist](https://posnic.github.io/retail-pos-incident-response-checklist.html) | Contain billing outages, preserve evidence, prevent duplicates, recover service and reconcile affected records |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
