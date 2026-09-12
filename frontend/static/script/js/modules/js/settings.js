@@ -7532,65 +7532,16 @@ PosnicPro.settings.demoPacks = {
     _loaded: false,
 
     /*
-     * Remove the samples from the page somebody is already on.
+     * Remove the samples, from the page somebody is already on.
      *
-     * The same two steps the Features switch takes, in the same order: the
-     * switch goes off first, so a failed removal still leaves the samples
-     * hidden rather than visible and half-deleted, and the removal itself is
-     * the server's careful purge - anything edited, sold or received is
-     * refused and named back.
+     * One implementation, in the shell: this is offered from three places now
+     * - here, the line every page carries, and the dashboard card - and three
+     * copies of a deletion is three things to keep in step.
      */
     removeAll: function () {
-        swal({
-            title: PosnicPro.i18n.t('lang_demoremove_q', 'Remove the sample data?'),
-            text: PosnicPro.i18n.t('lang_demoremove_text',
-                'The sample products, sales, purchases, quotes, customers and suppliers go. '
-                + 'Nothing you created yourself is removed, and a sample you have edited, sold '
-                + 'or received is kept - it is your record now.'),
-            showCancelButton: true,
-            confirmButtonClass: 'btn btn-danger',
-            cancelButtonClass: 'btn btn-light m-l-10',
-            confirmButtonText: PosnicPro.i18n.t('lang_demoremove_button', 'Remove the sample data'),
-            cancelButtonText: PosnicPro.i18n.t('lang_keep_the_samples', 'Keep the samples')
-            /* SweetAlert v6 REJECTS on cancel; without the second handler a
-               declined question is an unhandled rejection. */
-        }).then(function () {
-            $('#demo_remove_all').prop('disabled', true);
-            PosnicPro.settings.demoProgress.open(PosnicPro.i18n.t('lang_removing_the_sample_data', 'Removing the sample data'));
-            PosnicPro.put({
-                url: 'settings/group/features',
-                data: JSON.stringify({ module_demo_data_enable: false })
-            }, function () {
-                PosnicPro.settings._demoWasOn = false;
-                $('#module_demo_data_enable').prop('checked', false);
-                PosnicPro.delete({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
-                    PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
-                    $('#demo_remove_all').prop('disabled', false);
-                    $('#demo_remove_status').text(response.message || '');
-                    $('#demo_data_bar').hide();
-                    if (PosnicPro.sales && PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
-                }, function (xhr) {
-                    var resp = {};
-                    try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
-                    var msg = resp.message || '';
-                    /* Nothing to remove is the outcome asked for, not a fault. */
-                    var harmless = /nothing|no sample|not found/i.test(msg);
-                    PosnicPro.settings.demoProgress.close(harmless ? null : (msg || 'Could not remove the sample data'), harmless);
-                    $('#demo_remove_all').prop('disabled', false);
-                    $('#demo_data_bar').hide();
-                });
-            }, function () {
-                PosnicPro.settings.demoProgress.close('Could not switch sample data off', false);
-                $('#demo_remove_all').prop('disabled', false);
-            });
-        }, function () { /* kept */ });
+        PosnicPro.demoSamples.remove();
     },
 
-    /*
-     * Loaded when the page is opened, not at boot: this list is needed by one
-     * screen that most shops never visit, and a request at boot is a request
-     * on the critical path to a first sale.
-     */
     load: function () {
         var self = PosnicPro.settings.demoPacks;
         if (self._loaded) { self.paint(); return; }

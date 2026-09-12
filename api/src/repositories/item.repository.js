@@ -1102,6 +1102,60 @@ class ItemRepository extends BaseModel {
    * undoable by the shop that asked for it. A hard delete here would make
    * "permanent" mean permanent in a way nobody asked for.
    */
+  /**
+   * How many samples this shop still has, kind by kind.
+   *
+   * A shopkeeper asking "how do I get rid of the demo data" is really asking
+   * two things: where the button is, and how much of what they are looking at
+   * is not theirs. A screen that can answer the second is worth far more than
+   * one that only offers the first, so the counts are read here and said on
+   * the dashboard.
+   *
+   * Never throws: a count that cannot be taken is zero for that kind, and a
+   * dashboard that cannot read the meter is not a broken dashboard.
+   *
+   * @returns {Promise<{counts: Object, total: number}>}
+   */
+  async demoCounts({ branchId, licenseId } = {}) {
+    const branch = this.toObjectId(branchId);
+    const license = this.toObjectId(licenseId);
+    if (!branch || !license) return { counts: {}, total: 0 };
+
+    const ids = (value) => ({ $in: [value, String(value)] });
+    /* Which field carries the branch, and what "still here" means, differ by
+       collection: items are soft-deleted into the Recycle Bin and people
+       carry is_deleted, while a sale or a purchase is simply there or not. */
+    const KINDS = [
+      ['items', 'branch_access.branch_id', { del_status: { $ne: 1 } }],
+      ['sales', 'branch_id', {}],
+      ['receivings', 'branch_id', {}],
+      ['quotes', 'branch_id', {}],
+      ['customers', 'branch_id', { is_deleted: { $ne: true } }],
+      ['suppliers', 'branch_id', { is_deleted: { $ne: true } }],
+    ];
+
+    const counts = {};
+    await Promise.all(
+      KINDS.map(async ([name, branchField, alive]) => {
+        try {
+          const collection = await this.getCollection(name);
+          counts[name] = await collection.countDocuments({
+            ...demoData.seededClause(name),
+            [branchField]: ids(branch),
+            license: ids(license),
+            ...alive,
+          });
+        } catch (e) {
+          console.error(`demoCounts: could not count ${name}:`, e.message);
+          counts[name] = 0;
+        }
+      })
+    );
+
+    const total = Object.values(counts).reduce((sum, n) => sum + (Number(n) || 0), 0);
+    return { counts, total };
+  }
+
   async purgeDemoData({ branchId, licenseId, user } = {}) {
     const items = await this.getCollection(this.collectionName);
     const branch = this.toObjectId(branchId);

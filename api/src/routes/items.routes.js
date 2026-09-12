@@ -179,6 +179,11 @@ router.post('/demo', bindController(itemsController.reseedDemoData));
 // swallow this path and answer it with the wrong handler.
 router.get('/demo/packs', bindController(itemsController.listDemoPacks));
 
+// GET /api/items/demo/status - whether samples are still here and how many of
+// each. What the dashboard card and the sample-data line on every page are
+// both drawn from, so neither says anything once the samples are gone.
+router.get('/demo/status', bindController(itemsController.demoStatus));
+
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,
 // and the members of one family for the edit page's strip.

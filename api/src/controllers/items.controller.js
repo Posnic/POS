@@ -1447,6 +1447,30 @@ class ItemsController extends BaseController {
     }
   }
 
+  /**
+   * Whether this shop still has samples, and how many of each.
+   *
+   * Read by the dashboard and by the line every page carries while samples
+   * are on, so that both can say something true and both can stop saying
+   * anything the moment the samples are gone.
+   */
+  async demoStatus(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.demoStatus({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+      });
+      return this.success(res, result.data, 'success');
+    } catch (error) {
+      console.error('Error in demoStatus:', error);
+      return this.success(res, { on: false, counts: {}, total: 0 });
+    }
+  }
+
   async purgeDemoData(req, res) {
     try {
       if (req.user?.access?.item?.delete === false) {
