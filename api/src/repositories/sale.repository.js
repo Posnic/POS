@@ -7627,6 +7627,34 @@ class SalesRepository {
         .filter((it) => it.item_id && it.item_quantity > 0);
 
       // Use raw MongoDB insert to bypass Mongoose schema validators
+      /*
+       * The method somebody intends to pay by, and whether they already have.
+       *
+       * Callers have always put a METHOD in `payment_status` - the captain app
+       * sends "cash", the QR page sends "Upi" - so the two are separated here
+       * rather than at every caller, which keeps handsets already in the field
+       * working without an update.
+       */
+      const said = String(data.payment_status || '').trim().toLowerCase();
+      const paidUpFront = said === 'paid' || said === 'completed';
+      const paymentMethod =
+        data.payment_mode ||
+        (said && !paidUpFront ? said.charAt(0).toUpperCase() + said.slice(1) : 'Cash');
+
+      /*
+       * HOW MANY THINGS ARE ON THIS SALE.
+       *
+       * The sales list read 0 items on an order that opened to show two. The
+       * model sets `number_of_items` in a pre-save hook - but this writes
+       * through the raw driver, and a raw insert runs no mongoose hooks at
+       * all, so the field was simply never written for a captain or QR order.
+       *
+       * Computed the same way the hook does (the sum of the quantities, not
+       * the number of lines), so a sale taken at a table and one taken at the
+       * counter count the same way in the same list.
+       */
+      const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+
       const salesCollection = db.collection('sales');
       const insertResult = await salesCollection.insertOne({
         /* What makes a resend safe. Absent on orders taken before this
@@ -7638,8 +7666,40 @@ class SalesRepository {
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
         sale_process: 'KOT',
-        payment_status: data.payment_status || 'Paid',
-        payment_mode: data.payment_status || 'Cash',
+        /*
+         * A KOT IS NOT PAID. It is a ticket for a kitchen.
+         *
+         * Owner: "Until customer pays it will not become paid. First captain
+         * orders, it goes to print to kitchen and service department. Once
+         * service complete reception will take bill print. Even that time bill
+         * is not paid. After giving to customer, customer pays with cash or
+         * preferred method in his table. After paid now user able to take the
+         * bill."
+         *
+         * What was here wrote the CALLER'S PAYMENT METHOD into the status
+         * field and defaulted the rest to "Paid". The captain app sends
+         * `payment_status: "cash"` and the QR page sends "Upi" - both of them
+         * methods - so every table order has been stored with a payment_status
+         * of "cash" or "Upi" for the whole life of the feature.
+         *
+         * Two things fell out of that, and both were reported together:
+         *
+         *   The table never appeared on the handset's home screen.
+         *   getTablesWithActiveOrders looks for payment_status 'Unpaid', and
+         *   "cash" is not that, so a waiter took an order and the floor showed
+         *   nothing. It has never worked for a captain order.
+         *
+         *   And the sale read as settled the moment it was taken, so a bill
+         *   could be closed before anybody had handed over money.
+         *
+         * So the value is read as what it is - a method - and the status is
+         * Unpaid unless the caller explicitly says otherwise. A genuinely
+         * prepaid order sends 'paid' or 'completed' and still lands as Paid.
+         */
+        payment_status: paidUpFront ? 'Paid' : 'Unpaid',
+        payment_mode: paymentMethod,
+        /* The hook that normally writes this does not run on a raw insert. */
+        number_of_items: numberOfItems,
         /*
          * The customer's own device, through the shop's own storefront.
          *
@@ -7759,7 +7819,10 @@ class SalesRepository {
              to Royal Club Hotel, Room 123" rather than repeating what the
              customer typed and hoping it was recorded. */
           deliver_to: deliverTo,
-          payment_status: data.payment_status || 'Paid',
+          /* What was actually written, not what was asked for. The receipt
+             screen said "Paid" on an order nobody had paid for. */
+          payment_status: paidUpFront ? 'Paid' : 'Unpaid',
+          payment_mode: paymentMethod,
         },
       };
     } catch (error) {
