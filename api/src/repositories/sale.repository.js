@@ -8326,7 +8326,7 @@ class SalesRepository {
         return updateResult.modifiedCount > 0
           ? {
               status: true,
-              message: 'Order cancelled successfully',
+              message: 'Order cancelled',
               data: { order_id: orderId },
             }
           : {
@@ -8611,7 +8611,7 @@ class SalesRepository {
       return updateResult.modifiedCount > 0
         ? {
             status: true,
-            message: 'Order updated successfully',
+            message: 'Order updated',
             data: {
               order_id: orderId,
               items_updated: finalItems.length,

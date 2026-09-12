@@ -1315,7 +1315,7 @@
   "Only drafts can be deleted": [
     "src/repositories/purchase-order.repository.js"
   ],
-  "Order cancelled successfully": [
+  "Order cancelled": [
     "src/repositories/sale.repository.js"
   ],
   "Order history fetched": [
@@ -1327,7 +1327,7 @@
   "Order placed successfully": [
     "src/repositories/sale.repository.js"
   ],
-  "Order updated successfully": [
+  "Order updated": [
     "src/repositories/sale.repository.js"
   ],
   "Outstanding customers": [
