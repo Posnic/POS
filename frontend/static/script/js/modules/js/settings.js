@@ -9168,6 +9168,12 @@ $(document).on(
  */
 PosnicPro.settings = PosnicPro.settings || {};
 PosnicPro.settings.ai = {
+    /* Must match CLEAR_SECRET in api/src/services/settings-groups.js. An
+       empty value means "leave the saved credential alone", so removing one
+       has to be said on purpose, with a word no empty box can send. */
+    CLEAR_SECRET: '__posnic_clear__',
+    /* True only between pressing Replace and saving or backing out. */
+    _replacing: false,
     /*
      * Where each provider actually hands out a key.
      *
@@ -9218,6 +9224,14 @@ PosnicPro.settings.ai = {
                 : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
         }
         $('#ai_key_row,#ai_cap_row').toggle(on);
+        /* A saved key and no key must not look the same. The key never comes
+           back to the browser, so "saved" is a badge and two buttons, and the
+           empty box only appears when somebody asks to replace it. */
+        var saved = PosnicPro.settings.ai._keySaved === true;
+        var replacing = PosnicPro.settings.ai._replacing === true;
+        $('#ai_key_status').toggle(on && saved && !replacing);
+        $('#ai_api_key').toggle(on && (!saved || replacing));
+        $('#ai_key_cancel').toggle(on && saved && replacing);
         $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
     },
 
@@ -9225,6 +9239,7 @@ PosnicPro.settings.ai = {
         /* Collapsed again on every visit. Opening it was a request for this
            look at the page, not a preference to remember. */
         PosnicPro.settings.ai._howtoOpen = false;
+        PosnicPro.settings.ai._replacing = false;
         PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var v = response.data.values || response.data;
@@ -9264,6 +9279,45 @@ PosnicPro.settings.ai = {
         }, function () { /* no meter is not a broken page */ });
     },
 
+    /*
+     * Remove the saved key.
+     *
+     * Asked first, because the only thing this page knows about the key is
+     * that it exists, and the person removing it may not have the original to
+     * paste back. The provider account is untouched; only what this shop
+     * holds is cleared, and the AI buttons go with it until a new key is saved.
+     */
+    removeKey: function () {
+        swal({
+            title: PosnicPro.i18n.t('lang_ai_key_remove_q', 'Remove the saved key?'),
+            text: PosnicPro.i18n.t('lang_ai_key_remove_text', 'The AI buttons disappear until a new key is saved. Your provider account is not touched.'),
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-danger',
+            cancelButtonClass: 'btn btn-secondary m-l-10',
+            confirmButtonText: PosnicPro.i18n.t('lang_ai_key_remove', 'Remove'),
+            cancelButtonText: PosnicPro.i18n.t('lang_cancel', 'Cancel')
+        }).then(function () {
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ ai_api_key: PosnicPro.settings.ai.CLEAR_SECRET })
+            }, function (response) {
+                if (response.type !== 'success') {
+                    PosnicPro.alert(response.type, response.message);
+                    return;
+                }
+                PosnicPro.settings.ai._keySaved = false;
+                PosnicPro.settings.ai._replacing = false;
+                /* The item screen's cached "is AI available" answer is stale
+                   the moment the key is gone. */
+                if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_key_removed',
+                    'Key removed. The AI buttons are hidden until a new one is saved.'));
+                PosnicPro.settings.ai.load();
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_remove_the_ai_key', 'Could not remove the AI key'));
+            });
+        }, function () { /* kept */ });
+    },
     save: function () {
         var provider = $('#ai_provider').val() || '';
         var key = String($('#ai_api_key').val() || '');
@@ -9336,4 +9390,18 @@ $(document).on('click', '#ai_howto_toggle', function () {
 });
 $(document).on('click', '#ai_save', function () {
     PosnicPro.settings.ai.save();
+});
+$(document).on('click', '#ai_key_replace', function () {
+    PosnicPro.settings.ai._replacing = true;
+    PosnicPro.settings.ai.syncRows();
+    $('#ai_api_key').val('').trigger('focus');
+});
+$(document).on('click', '#ai_key_cancel', function () {
+    /* Nothing was sent; the saved key was never in danger. */
+    PosnicPro.settings.ai._replacing = false;
+    $('#ai_api_key').val('');
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_key_remove', function () {
+    PosnicPro.settings.ai.removeKey();
 });
