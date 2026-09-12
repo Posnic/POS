@@ -297,6 +297,7 @@
       "Removed {name}": "{name} நீக்கப்பட்டது",
       "Now {n} × {name}": "இப்போது {name} {n}",
       "Request noted: {note}": "வேண்டுகோள் குறிக்கப்பட்டது: {note}",
+      "Sent to the kitchen. Token {token}.": "சமையலறைக்கு அனுப்பப்பட்டது. டோக்கன் {token}.",
       "The assistant is not available at this shop right now.": "இந்தக் கடையில் உதவியாளர் இப்போது கிடைக்கவில்லை.",
       "One moment. That is a lot of questions at once; please try again shortly.": "ஒரு நிமிடம். ஒரே நேரத்தில் நிறைய கேள்விகள்; சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.",
       "I could not answer just now. The menu still works the usual way.": "இப்போது பதிலளிக்க முடியவில்லை. மெனு வழக்கம் போல் வேலை செய்யும்.",
