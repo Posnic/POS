@@ -72,8 +72,11 @@ test('switching off deletes only with consent, and a failed save deletes nothing
   assert.match(confirm, /_demoPurgeArmed = true/);
   assert.match(confirm, /prop\('checked', true\)/);
   assert.match(confirm, /\}, function \(\) \{/, 'SweetAlert v6 rejects on cancel - both handlers required');
-  // the words the owner asked for: what is removed, and what is kept
-  assert.match(confirm, /products, sales, quotes, customers and suppliers/);
+  /* The words the owner asked for: what is removed, what is kept, and -
+     after a shop found sample purchases still there - purchases named among
+     them rather than left to be guessed at. */
+  assert.match(confirm, /products, sales, purchases, quotes, customers and suppliers/);
+  assert.match(confirm, /Nothing you created yourself is removed/);
   assert.match(confirm, /kept/);
 
   const sync = blockAt(settingsJs, 'PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options)');
