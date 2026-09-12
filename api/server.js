@@ -102,49 +102,6 @@ const startServer = async () => {
       console.log('🚀 =====================================');
     });
 
-    /*
-     * AND ON 5555, SO A HANDSET CAN FIND THIS TILL.
-     *
-     * The desktop app stopped assuming 5555 for good reasons - it derives its
-     * port from the brand name now, because 5555 collides with whatever else
-     * on the machine had the same idea, and two brands on one machine needed
-     * two ports. src/local-ports.js says so in as many words: "Neither range
-     * is ours to assume."
-     *
-     * The handset was never told. It sweeps the LAN for port 5555 and nothing
-     * else, so it probes 254 addresses on a port the till abandoned and finds
-     * nothing - on every network, for every shop. Measured on a real install:
-     * the till answers /api/runtime-info on its derived port and refuses the
-     * connection on 5555, which is exactly what a sweep sees.
-     *
-     * Fixing it in the app would leave every handset already in the field
-     * unable to pair until somebody updated it. Fixing it here costs one more
-     * listener on the same Express app and works for versions that shipped
-     * months ago.
-     *
-     * It is a COURTESY, not a requirement. If 5555 is busy - the collision
-     * that moved us off it in the first place - this logs and carries on; the
-     * till is already serving on its real port and pairing by shop code or by
-     * scanning the QR is unaffected.
-     */
-    const DISCOVERY_PORT = Number(process.env.POSNIC_DISCOVERY_PORT) || 5555;
-    if (String(PORT) !== String(DISCOVERY_PORT)) {
-      const discovery = app.listen(DISCOVERY_PORT, HOST);
-      discovery.on('listening', () => {
-        console.log(
-          `🔎 Also answering on http://localhost:${DISCOVERY_PORT}/api for handset discovery`
-        );
-      });
-      discovery.on('error', (err) => {
-        /* EADDRINUSE is the ordinary case on a machine that already runs
-           something there. Nothing is broken; discovery just cannot use it. */
-        console.log(
-          `🔎 Port ${DISCOVERY_PORT} is not available for handset discovery (${err.code || err.message}). ` +
-            'Pair by shop code or by scanning the code on the till.'
-        );
-      });
-    }
-
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (err) => {
       console.log('❌ UNHANDLED REJECTION! Shutting down...');
