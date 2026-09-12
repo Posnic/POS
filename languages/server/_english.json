@@ -375,6 +375,9 @@
   "Common settings updated": [
     "src/controllers/settings.controller.js"
   ],
+  "Could not ask for the bill": [
+    "src/repositories/sale.repository.js"
+  ],
   "Could not check that API key.": [
     "src/middleware/api-key.js"
   ],
@@ -405,8 +408,14 @@
   "Could not list webhooks": [
     "app.js"
   ],
+  "Could not mark the bill printed": [
+    "src/repositories/sale.repository.js"
+  ],
   "Could not read branch modules": [
     "src/controllers/settings.controller.js"
+  ],
+  "Could not read pending bills": [
+    "src/repositories/sale.repository.js"
   ],
   "Could not read state": [
     "app.js"
@@ -1175,6 +1184,9 @@
   "No supplier data provided": [
     "src/services/supplier.service.js"
   ],
+  "No table was named": [
+    "src/repositories/sale.repository.js"
+  ],
   "No theme settings found": [
     "src/controllers/settings.controller.js",
     "src/models/setting.model.js"
@@ -1218,6 +1230,9 @@
   ],
   "No valid payment settings provided": [
     "src/models/setting.model.js"
+  ],
+  "No valid sale IDs to mark as billed.": [
+    "src/repositories/sale.repository.js"
   ],
   "No valid sale IDs to mark as printed.": [
     "src/repositories/sale.repository.js"
