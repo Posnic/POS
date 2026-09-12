@@ -654,41 +654,18 @@ test('a symbol sits against the number; a code keeps its space', async () => {
   assert.strictEqual(document.querySelector('.dish-price').textContent, 'Rs 280');
 });
 
-test('a shop that is taking orders offers the way in, from the same table', async () => {
+test('the menu offers no way in: it is for reading, whatever the shop is doing', async () => {
+  /* Owner: "why menu have order now button. dont include that." Ordering has
+     its own page and its own printed codes; a menu that grows a button
+     stops being a menu. */
   const open = { ...REPLY, channel: { state: 'open', accepting: true, mode: 'order', message: '' } };
   const { document } = await render('/menu/AZ100/table/5', open);
-  const bar = document.getElementById('order-cta');
-  assert.strictEqual(bar.hidden, false, 'a shop taking orders offered no way to order');
-  assert.strictEqual(
-    document.getElementById('order-link').getAttribute('href'),
-    '/order/AZ100/table/5',
-    'the customer would have to say which table they are at a second time'
-  );
-  assert.ok(document.body.classList.contains('can-order'), 'the page left no room for the bar');
-});
-
-test('a room keeps its room on the way in', async () => {
-  const open = { ...REPLY, channel: { state: 'open', accepting: true, mode: 'order', message: '' } };
-  const { document } = await render('/menu/AZ100/venue/RC/123', open);
-  assert.strictEqual(
-    document.getElementById('order-link').getAttribute('href'),
-    '/order/AZ100/venue/RC/123'
-  );
-});
-
-test('a menu-only shop, or a shut one, offers nothing to tap', async () => {
-  for (const channel of [
-    { state: 'menu_only', accepting: false, mode: 'menu', message: 'This menu is for viewing only.' },
-    { state: 'closed', accepting: false, mode: 'order', message: 'Opens at 6' },
-  ]) {
-    const { document } = await render('/menu/AZ100', { ...REPLY, channel });
-    assert.strictEqual(
-      document.getElementById('order-cta').hidden,
-      true,
-      `${channel.state} still offered ordering`
-    );
-    assert.ok(!document.body.classList.contains('can-order'));
-  }
+  assert.strictEqual(document.getElementById('order-cta'), null, 'the bar is back');
+  assert.strictEqual(document.querySelector('a[href^="/order"]'), null, 'the menu links to the ordering page');
+  assert.ok(!document.body.classList.contains('can-order'));
+  assert.ok(!/Order now/.test(document.body.textContent));
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(!/order-cta|can-order/.test(html), 'the bar still has styles or markup');
 });
 
 test('a non-vegetarian dish says so in its facts', async () => {

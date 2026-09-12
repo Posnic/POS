@@ -1203,44 +1203,6 @@
 
       /* ---- the way in ------------------------------------------------ */
 
-      /*
-        A menu that can be ordered from says so, once, at the bottom of the
-        screen. Not on every card: this is a menu, and a button beside every
-        dish turns it into a shop. One bar, in ink, only when the shop is
-        actually taking orders, and it carries the table or room the code was
-        printed for so the customer does not have to say where they are.
-      */
-      .order-cta {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 9;
-        padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
-        background: var(--bg);
-        border-top: 1px solid var(--line);
-      }
-
-      .order-cta a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        max-width: 900px;
-        min-height: 48px;
-        margin: 0 auto;
-        border-radius: 12px;
-        background: var(--accent);
-        color: var(--bg);
-        font-weight: 600;
-        text-decoration: none;
-      }
-
-      /* Room for the bar, so the last dish is not under it. */
-      body.can-order {
-        padding-bottom: calc(76px + env(safe-area-inset-bottom));
-      }
-
       /* ---- motion ---------------------------------------------------- */
 
       /*
@@ -1258,8 +1220,7 @@
       .sheet-close,
       .search-back,
       .search-mic,
-      .search-clear,
-      .order-cta a {
+      .search-clear {
         transition:
           transform 0.12s ease,
           background-color 0.15s ease,
@@ -1272,8 +1233,7 @@
       .result:active,
       .goes:active,
       .more-in-section:active,
-      .sheet-close:active,
-      .order-cta a:active {
+      .sheet-close:active {
         transform: scale(0.98);
       }
 
@@ -1358,8 +1318,7 @@
       /*
         A laptop gets a laptop's layout, not a phone page stretched across
         it: the shop across the top, the sections down the left where they
-        stay put, the dishes in the middle, and the way in as a card in the
-        corner rather than a bar across the bottom.
+        stay put, the dishes in the middle, and nothing else.
       */
       .cats-rail {
         display: none;
@@ -1483,21 +1442,6 @@
 
         .section > h2 {
           scroll-margin-top: 80px;
-        }
-
-        .order-cta {
-          left: auto;
-          right: 24px;
-          bottom: 24px;
-          width: 320px;
-          padding: 12px;
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
-        }
-
-        body.can-order {
-          padding-bottom: 96px;
         }
       }
     </style>
@@ -1676,11 +1620,6 @@
     </main>
 
     <p class="foot" id="foot" hidden></p>
-
-    <!-- Shown only when the shop is taking orders right now. -->
-    <div id="order-cta" class="order-cta" hidden>
-      <a id="order-link" href="/order/">Order now</a>
-    </div>
 
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
       <div class="sheet-handle" aria-hidden="true"></div>
