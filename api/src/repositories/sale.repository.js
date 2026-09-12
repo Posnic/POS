@@ -12,6 +12,16 @@ const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
+
+/*
+ * The two ways this estate spells takeaway.
+ *
+ * Not a tidy-up waiting to happen: both are already in the data, written by
+ * different screens over different years, and getTablesWithActiveOrders has
+ * always read both. Anything that filters on dine_type has to take both or it
+ * silently answers about half the orders.
+ */
+const TAKEAWAY_SAID = ['Take away', 'Takeaway'];
 const salesChannels = require('../utils/sales-channels');
 const itemChannels = require('../utils/item-channels');
 const partnerVenues = require('../utils/partner-venues');
@@ -9925,6 +9935,28 @@ class SalesRepository {
       if (filters && typeof filters === 'object') {
         for (const [key, value] of Object.entries(filters)) {
           if (key === 'branch_id') continue; // already handled
+          /*
+           * TAKEAWAY IS SPELLED TWO WAYS AND ONLY ONE READER KNEW.
+           *
+           * getTablesWithActiveOrders has always accepted both - the line
+           * reads `dType === 'Take away' || dType === 'Takeaway'` - which is
+           * the shape of a field that holds both in real data. This path
+           * matched whichever single string the caller happened to send.
+           *
+           * So the handset's floor drew a takeaway card, because the query
+           * behind it takes both, and tapping it asked for exactly
+           * "Take away" and got nothing. Owner: "one order show as take away,
+           * when tap, inside shows no active orders."
+           *
+           * Widened here rather than in the app, because the app that is
+           * asking the wrong question is already installed on handsets and
+           * this is the half that can be fixed without reinstalling any of
+           * them.
+           */
+          if (key === 'dine_type' && TAKEAWAY_SAID.includes(value)) {
+            query[key] = { $in: TAKEAWAY_SAID };
+            continue;
+          }
           query[key] = value;
         }
       }
