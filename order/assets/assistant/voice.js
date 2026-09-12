@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0 };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false };
 
   /* ------------------------------------------------------------ the button */
 
@@ -328,6 +328,26 @@
     return "latin";
   }
 
+  /*
+   * The assistant speaks first. A line that opens in silence leaves the
+   * customer wondering whether anything is listening; a waiter says
+   * "welcome" before anyone orders. One system note tells the model the
+   * line is open and one response.create asks it to speak. Once per line.
+   */
+  function greetFirst() {
+    if (live.greeted) return;
+    live.greeted = true;
+    sendEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "system",
+        content: [{ type: "input_text", text: "The line has just opened. Say your OPENING LINE now, in one sentence, in the page's language, then wait for the customer." }],
+      },
+    });
+    sendEvent({ type: "response.create" });
+  }
+
   /* Tell the line to hear Tamil from now on. Once. */
   function lockTamil() {
     if (live.heardLanguage) return;
@@ -472,6 +492,7 @@
     dc.onmessage = onEvent;
     dc.onopen = function () {
       status("listening", say("Listening..."));
+      greetFirst();
     };
     pc.onconnectionstatechange = function () {
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected") stop();
@@ -614,6 +635,7 @@
     live.dc = null;
     live.pc = null;
     live.stream = null;
+    live.greeted = false;
     var out = el("voice-out");
     if (out) out.srcObject = null;
   }
