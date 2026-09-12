@@ -7024,6 +7024,174 @@ class SalesRepository {
     return Model.kitchenPrintModel(branchId);
   }
 
+  /*
+   * =====================================================================
+   * THE BILL, ASKED FOR FROM THE FLOOR.
+   * =====================================================================
+   *
+   * The waiter is standing at the table when the guest asks for the bill.
+   * Walking to the till to ask somebody else to press a button is the exact
+   * errand a handset exists to remove, and every restaurant POS worth the name
+   * lets the floor fire it - Toast, Square, Lightspeed, MICROS, Petpooja.
+   *
+   * WHAT THE HANDSET MAY AND MAY NOT DO. It may ASK for the bill. It may not
+   * say the bill was paid. The person who takes the order must not be the
+   * person who declares the money received, or a waiter can close a cash bill
+   * and pocket it with nothing in the system to disagree. So nothing on this
+   * path writes payment_status, and a test says so out loud.
+   *
+   * WHERE IT PRINTS. The cashier's receipt printer, never the kitchen's. They
+   * are different documents, not one document in two places: a KOT is
+   * departmental and carries only its own lines, a bill is single and carries
+   * the totals, the tax and the shop header. printer-targets.js has always
+   * modelled this - a LIST of printerNames for KOT, one printerName for the
+   * receipt - and this rides that split rather than inventing another.
+   *
+   * HOW IT TRAVELS. Exactly the way a kitchen ticket does, because that path
+   * is proven: the request is a mark on the sale, the till polls for marks it
+   * has not served, prints, and stamps them done. No socket to the phone, no
+   * printer on the phone, and a till that was switched off catches up when it
+   * comes back rather than losing the bill.
+   */
+
+  /**
+   * A waiter asks for the bill for a table.
+   *
+   * Marks every open ticket for that table, because a table that ordered three
+   * times has three tickets and the guest is asking for one bill covering all
+   * of them. Already-requested tickets are left with their original timestamp:
+   * asking twice is somebody wondering where the bill got to, not a second
+   * bill.
+   */
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+      const table = String(tableNumber == null ? '' : tableNumber).trim();
+      if (!table) {
+        return { status: false, message: 'No table was named', data: null };
+      }
+
+      const query = {
+        sale_process: { $regex: 'KOT', $options: 'i' },
+        table_number: table,
+        /*
+         * Only what is still open. A settled ticket has had its bill.
+         *
+         * The literal, not PAYMENT_STATUS.UNPAID - there is no such member.
+         * PAYMENT_STATUS carries pending/completed/failed/refunded, and this
+         * column holds the word 'Unpaid' that createOnlineOrder writes and
+         * getTablesWithActiveOrders reads. Reaching for the constant would
+         * have put `undefined` in the query, which Mongo answers by matching
+         * every document where the field is missing.
+         */
+        payment_status: 'Unpaid',
+        bill_printed_at: { $in: [null, undefined] },
+      };
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const result = await Model.updateMany(
+        { ...query, bill_requested_at: { $in: [null, undefined] } },
+        {
+          $set: {
+            bill_requested_at: new Date(),
+            bill_requested_by: String(askedBy || '').trim(),
+          },
+        }
+      );
+
+      /* Asked for a second time, or asked for a table with nothing open. The
+         caller is told which, because "the bill is already on its way" and
+         "there is nothing to bill" send a waiter to two different places. */
+      const waiting = await Model.countDocuments(query);
+
+      return {
+        status: waiting > 0,
+        message:
+          waiting > 0 ? 'The bill is on its way to the counter' : 'Nothing is open on that table',
+        data: {
+          table_number: table,
+          marked: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+          waiting,
+        },
+      };
+    } catch (error) {
+      console.error('Error in requestBillPrintModel:', error);
+      return { status: false, message: 'Could not ask for the bill', data: null };
+    }
+  }
+
+  /**
+   * The bills the till has been asked for and has not printed yet.
+   *
+   * Shaped like multiKitchenPrintModel's answer on purpose: the desktop
+   * already knows how to read a list of sales, print them and report back, and
+   * a second shape would be a second thing to keep working.
+   */
+  async pendingBillPrintsModel(branchId, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+
+      const query = {
+        bill_requested_at: { $ne: null, $exists: true },
+        bill_printed_at: { $in: [null, undefined] },
+      };
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
+
+      return { status: true, message: 'success', data: sales };
+    } catch (error) {
+      console.error('Error in pendingBillPrintsModel:', error);
+      return { status: false, message: 'Could not read pending bills', data: [] };
+    }
+  }
+
+  /**
+   * The till says the paper came out.
+   *
+   * Stamped only after the print, so a till that dies mid-job asks again when
+   * it comes back rather than a guest waiting at a table for a bill the system
+   * believes it already produced.
+   */
+  async markBillPrintedModel(saleIds, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+      const ids = (Array.isArray(saleIds) ? saleIds : [saleIds])
+        .map((id) => String(id || ''))
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      if (!ids.length) {
+        return { status: false, message: 'No valid sale IDs to mark as billed.', data: null };
+      }
+
+      const query = { _id: { $in: ids } };
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const result = await Model.updateMany(query, { $set: { bill_printed_at: new Date() } });
+      return {
+        status: true,
+        message: 'success',
+        data: {
+          marked: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+        },
+      };
+    } catch (error) {
+      console.error('Error in markBillPrintedModel:', error);
+      return { status: false, message: 'Could not mark the bill printed', data: null };
+    }
+  }
+
   async multiKitchenPrintModel(branchId) {
     try {
       const db = await BaseModel.getDb();
@@ -8326,7 +8494,7 @@ class SalesRepository {
         return updateResult.modifiedCount > 0
           ? {
               status: true,
-              message: 'Order cancelled successfully',
+              message: 'Order cancelled',
               data: { order_id: orderId },
             }
           : {
@@ -8611,7 +8779,7 @@ class SalesRepository {
       return updateResult.modifiedCount > 0
         ? {
             status: true,
-            message: 'Order updated successfully',
+            message: 'Order updated',
             data: {
               order_id: orderId,
               items_updated: finalItems.length,

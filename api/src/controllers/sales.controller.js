@@ -6924,6 +6924,61 @@ class SalesController extends BaseController {
    * PHP: multiKitchenPrint()
    * Multi-printer KOT polling - returns pending print_jobs per sale
    */
+  /*
+   * A WAITER ASKS FOR THE BILL.
+   *
+   * This is the only half of billing a handset is trusted with. It says "the
+   * guest on table four would like the bill", and the counter prints it. It
+   * cannot say the bill was paid - the person taking the order must not be the
+   * person declaring the money received.
+   */
+  async requestBillPrint(req, res) {
+    try {
+      const table = req.body.table_number || req.body.tableNumber || '';
+      const askedBy = req.body.asked_by || req.body.askedBy || '';
+      const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy);
+
+      if (response.status !== true) {
+        /* Not an error the app should shout about: most often the table has
+           already been billed or was never open. */
+        return this.success(res, response.data || null, response.message);
+      }
+      return this.success(res, response.data, response.message);
+    } catch (error) {
+      console.error('Error in requestBillPrint:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  /** What the till still owes the counter, read by the till itself. */
+  async pendingBillPrints(req, res) {
+    try {
+      const response = await salesService.pendingBillPrints(req.body.branchId);
+      if (response.status !== true) {
+        return this.error(res, response.message || ERROR_MESSAGES.DETAILS_NOT_FOUND, 404);
+      }
+      const list = this.mongoDateFilter(this.mongoIDFilter(response.data || []));
+      return this.success(res, list, response.message);
+    } catch (error) {
+      console.error('Error in pendingBillPrints:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  /** The till reporting that the paper came out. */
+  async markBillPrinted(req, res) {
+    try {
+      const response = await salesService.markBillPrinted(req.body.saleIds || req.body.sale_ids);
+      if (response.status !== true) {
+        return this.error(res, response.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      return this.success(res, response.data, response.message);
+    } catch (error) {
+      console.error('Error in markBillPrinted:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   async multiKitchenPrint(req, res) {
     try {
       const response = await salesService.multiKitchenPrintModel(req.body.branchId);
@@ -7639,7 +7694,7 @@ class SalesController extends BaseController {
         } catch (e) {
           console.error('[cashback] reverse skipped:', e && e.message);
         }
-        return this.success(res, result.data, 'Sale cancelled successfully');
+        return this.success(res, result.data, 'Sale cancelled');
       } else {
         return this.error(res, result?.message || 'Failed to cancel sale', 500);
       }

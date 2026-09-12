@@ -10,6 +10,41 @@ const fs = require('fs');
 const path = require('path');
 const { EssaeWeightReader, ESSAE_DEFAULTS } = require('./essae-weight-reader');
 
+/*
+ * The branches this till serves.
+ *
+ * Module scope rather than inside setupHardwareIPC, because two callers need
+ * it now: the Hardware Manager screen offering a list, and the bill poller
+ * working out which shop to ask about. Two copies of a Mongo connection and a
+ * credentials-file lookup is two places to fix the day either changes.
+ */
+async function readLocalBranches() {
+  let client = null;
+  try {
+    const { MongoClient } = require('mongodb');
+    let uri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
+    const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
+    if (fs.existsSync(credFile)) {
+      try {
+        const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+        if (creds.uri) uri = creds.uri;
+      } catch (e) { /* fall through to the default */ }
+    }
+    client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
+    await client.connect();
+    const rows = await client.db('PosnicPro').collection('branches')
+      .find({}, { projection: { branch_name: 1 } }).toArray();
+    return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
+  } catch (e) {
+    /* A shop with no database yet is a normal state during setup, not a
+       fault. The screen still works; it just cannot offer a list. */
+    return [];
+  } finally {
+    if (client) { try { await client.close(); } catch (e) { /* ignore */ } }
+  }
+}
+
+
 // Network scale settings live beside the other app data so a shop keeps its
 // configuration across updates.
 let _essaeReader = null;
@@ -475,32 +510,6 @@ function setupHardwareIPC(hardwareManager, kotManager) {
    * route sits behind `protect`, and this window has no session to present.
    * Same connection details the cloud data check uses.
    */
-  async function readLocalBranches() {
-    let client = null;
-    try {
-      const { MongoClient } = require('mongodb');
-      let uri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-      const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
-      if (fs.existsSync(credFile)) {
-        try {
-          const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-          if (creds.uri) uri = creds.uri;
-        } catch (e) { /* fall through to the default */ }
-      }
-      client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
-      await client.connect();
-      const rows = await client.db('PosnicPro').collection('branches')
-        .find({}, { projection: { branch_name: 1 } }).toArray();
-      return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
-    } catch (e) {
-      /* A shop with no database yet is a normal state during setup, not a
-         fault. The screen still works; it just cannot offer a list. */
-      return [];
-    } finally {
-      if (client) { try { await client.close(); } catch (e) { /* ignore */ } }
-    }
-  }
-
   ipcMain.handle('kot:get-branches', async () => readLocalBranches());
 
   ipcMain.handle('kot:get-config', async () => {
@@ -562,4 +571,4 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   console.log('Hardware IPC handlers registered');
 }
 
-module.exports = { setupHardwareIPC };
+module.exports = { setupHardwareIPC, readLocalBranches };
