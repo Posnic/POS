@@ -116,6 +116,11 @@ async function rememberShop() {
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
         shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
+        /* The address bar says which shop this is, from the row that is
+           actually showing. A copied link that names another shop is an
+           arrival there instead (assets/shop-address.js). */
+        const address = storeAddressFromRow(branch);
+        if (address && window.ShopAddress && !window.ShopAddress.follow(address)) window.ShopAddress.keep(address);
     } catch (error) {
         /* No branch row yet is not an error; the fetch that stores one will
            be along in a moment. */
@@ -874,6 +879,9 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             const next = await recoverDefaultStore(branchId);
             if (next) {
                 console.warn(`Shop ${branchId} is no longer at this address; using ${next}.`);
+                /* The bar moves to the live shop first, or the fresh row reads
+                   the dead address in the URL as a link to follow. */
+                if (window.ShopAddress) window.ShopAddress.keep(next);
                 await forgetShop();
                 return fetchAndStoreBranch(next, redirect, { ...options, recovered: true });
             }
