@@ -279,3 +279,16 @@ test('with no printer anywhere, nothing is marked printed', async () => {
   assert.ok(!calls.some((c) => c.url.includes('/markBillPrinted')),
     'a bill nobody printed was marked printed');
 });
+
+test('the module that answers which printer is in the packaged build', () => {
+  /*
+   * build.files is an explicit allowlist. A module left out of it works all
+   * the way through CI and then throws "Cannot find module" the first time a
+   * customer prints - on their counter, not in our tests. It has happened
+   * here before, to printer-targets.js.
+   */
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.ok(pkg.build.files.includes('src/device-preferences.js'),
+    'the receipt printer lookup is not shipped; the bill would throw on a real install');
+});
+
