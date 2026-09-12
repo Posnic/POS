@@ -3705,9 +3705,17 @@ class SettingModel extends BaseModel {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);
       if (!id) throw new Error('ID is required');
+      /*
+       * `id` comes from the settings request. Do not let a malformed value
+       * remain an object in the Mongo filter: normalizeId deliberately keeps
+       * legacy values unchanged when it cannot convert them.
+       */
+      if (typeof id !== 'string' || !ObjectId.isValid(id)) {
+        throw new Error('A valid table order ID is required');
+      }
 
       const filter = {
-        _id: this.normalizeId(id),
+        _id: new ObjectId(id),
         branch_id: this.normalizeId(this.branchId),
         license: this.normalizeId(this.licenseId),
       };

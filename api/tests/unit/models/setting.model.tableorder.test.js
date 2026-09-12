@@ -69,3 +69,17 @@ test('a table that is not there gets no tombstone, and the answer says so', asyn
   expect(result.status).toBe(false);
   expect(result.message).toMatch(/not found/);
 });
+
+test('a malformed table ID never reaches a Mongo query', async () => {
+  const collection = {
+    findOne: jest.fn(),
+    deleteOne: jest.fn(),
+  };
+
+  const result = await modelOver(collection).deleteTableOrderFiledModel({ $ne: null });
+
+  expect(result.status).toBe(false);
+  expect(result.message).toMatch(/valid table order ID/i);
+  expect(collection.findOne).not.toHaveBeenCalled();
+  expect(collection.deleteOne).not.toHaveBeenCalled();
+});
