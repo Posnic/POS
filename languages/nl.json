@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "Klant vraagt om annulering",
   "lang_keep_the_order": "Bestelling behouden",
-  "lang_cancel_it": "Annuleren"
+  "lang_cancel_it": "Annuleren",
+  "lang_int_voice_key_on_file": "Sleutel opgeslagen",
+  "lang_int_voice_key_remove_q": "Opgeslagen sleutel verwijderen?",
+  "lang_int_voice_key_remove_text": "De toestellen vallen terug op de spraakherkenning van de telefoon tot er een nieuwe sleutel is opgeslagen. Uw account bij de aanbieder blijft ongemoeid.",
+  "lang_int_voice_key_removed": "Sleutel verwijderd."
 }

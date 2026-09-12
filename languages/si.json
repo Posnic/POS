@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "පාරිභෝගිකයා අවලංගු කරන්න ඉල්ලා ඇත",
   "lang_keep_the_order": "ඇණවුම තබාගන්න",
-  "lang_cancel_it": "අවලංගු කරන්න"
+  "lang_cancel_it": "අවලංගු කරන්න",
+  "lang_int_voice_key_on_file": "යතුර සුරකින ලදි",
+  "lang_int_voice_key_remove_q": "සුරැකි යතුර ඉවත් කරන්නද?",
+  "lang_int_voice_key_remove_text": "නව යතුරක් සුරකින තෙක් උපකරණ දුරකථනයේම හඳුනාගැනීමට නැවත යයි. ඔබේ සැපයුම්කරු ගිණුමට කිසිවක් නොවේ.",
+  "lang_int_voice_key_removed": "යතුර ඉවත් කරන ලදි."
 }

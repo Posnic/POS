@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "O cliente pediu para cancelar",
   "lang_keep_the_order": "Manter o pedido",
-  "lang_cancel_it": "Cancelar"
+  "lang_cancel_it": "Cancelar",
+  "lang_int_voice_key_on_file": "Chave guardada",
+  "lang_int_voice_key_remove_q": "Remover a chave guardada?",
+  "lang_int_voice_key_remove_text": "Os aparelhos voltam ao reconhecimento do próprio telefone até guardar uma chave nova. A sua conta no fornecedor não é tocada.",
+  "lang_int_voice_key_removed": "Chave removida."
 }

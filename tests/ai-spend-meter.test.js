@@ -31,7 +31,20 @@ const SPEND = read('api', 'src', 'controllers', 'items.controller.js');
 const DECISIONS = JSON.parse(read('api', 'src', 'sync', 'collections.json'));
 
 const pane = HTML.slice(HTML.indexOf('id="v-pills-ai"'), HTML.indexOf('id="v-pills-recyclebin"'));
-const loadSpend = JS.slice(JS.indexOf('    loadSpend: function () {'), JS.indexOf('    removeKey: function () {'));
+/*
+ * The AI object's loadSpend, and only it.
+ *
+ * The end is searched from the start of the block, not from the top of the
+ * file: the Captain App's voice card has a removeKey of its own that sits
+ * hundreds of lines earlier, and an end before the start gives an empty
+ * slice - which matches no regex and fails every assertion below while
+ * explaining none of them.
+ */
+const loadSpendAt = JS.indexOf('    loadSpend: function () {');
+const loadSpendEnd = JS.indexOf('    removeKey: function () {', loadSpendAt);
+assert.ok(loadSpendAt > -1, 'settings.js no longer has an AI loadSpend');
+assert.ok(loadSpendEnd > loadSpendAt, 'the AI loadSpend has no end after it');
+const loadSpend = JS.slice(loadSpendAt, loadSpendEnd);
 
 test('the screen has a meter: a table, a total, a bar against the limit, and the note that it is approximate', () => {
   for (const id of ['ai_spend_row', 'ai_spend_table', 'ai_spend_total', 'ai_spend_meter', 'ai_spend_meter_bar', 'ai_spend_meter_text']) {
