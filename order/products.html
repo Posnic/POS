@@ -290,6 +290,14 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg>
                 </button>
             </form>
+            <!-- The way out of the conversation and into the order. The page's
+                 own order bar sits under this sheet, so "tap Review order" needs
+                 a button that is actually on screen. Shown once the order holds
+                 something. -->
+            <button type="button" class="assistant-review" id="assistant-review" hidden>
+                <span>Review order</span>
+                <span class="assistant-review-sum" id="assistant-review-sum"></span>
+            </button>
             <p class="assistant-foot">Answers come from this shop's menu. Please confirm allergies at the counter.</p>
         </div>
     </dialog>

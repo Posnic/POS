@@ -1039,13 +1039,13 @@ test("the shop's own greeting opens the conversation, and the console has somewh
 /* -------------------------------------------------------- talk to order */
 
 /** The products page with both assistant scripts and a shop that allows voice. */
-function voicePage({ voice = 'live', reply } = {}) {
+function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null } = {}) {
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
-  const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0 };
-  let cart = [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 1 }];
+  const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0, checkout: [], left: [] };
+  let cart = cartLines ? JSON.parse(JSON.stringify(cartLines)) : [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 1 }];
   const catalogue = { m1: { id: 'm1', name: 'Chicken Biryani', price: 320 }, b1: { id: 'b1', name: 'Masala Dosa', price: 120, available: false }, d1: { id: 'd1', name: 'Fresh Lime Soda', price: 80 } };
-  window.shop = { assistant: true, voice, name: 'Azure' };
+  window.shop = { assistant: true, voice, name: 'Azure', fulfilment, payment };
   window.CONFIG = { API_BASE_URL: '' };
   window.knownBranchId = async () => 'AZ100';
   window.getCartData = async () => JSON.parse(JSON.stringify(cart));
@@ -1054,6 +1054,12 @@ function voicePage({ voice = 'live', reply } = {}) {
   window.allProducts = () => Object.values(catalogue);
   window.updateQuantity = async (id, change) => { calls.applied.push([id, change]); };
   window.setCartItemNote = async () => {};
+  /* What the page has for placing an order: the code's table, the same
+     checkout a tap uses (told to stay), the shop's words and money. */
+  window.KioskServicePoint = { read: () => ({ table, venue: '', unit: '', destination: null }) };
+  window.checkout = async (tx, status, options) => { calls.checkout.push([tx, status, options]); cart = []; return { placed: true, token: '042' }; };
+  window.words = () => ({ one: 'dish', many: 'dishes' });
+  window.money = (n) => '₹' + n;
   window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
   window.HTMLDialogElement.prototype.close = function () { this.open = false; };
   /* A WebRTC that goes nowhere, with a data channel the test can drive. */
@@ -1078,6 +1084,8 @@ function voicePage({ voice = 'live', reply } = {}) {
   window.SpeechSynthesisUtterance = function (text) { this.text = text; };
   window.eval(read('assets/assistant/script.js'));
   window.eval(read('assets/assistant/voice.js'));
+  window.OrderingVoice.leave = (url) => calls.left.push(url);
+  window.OrderingAssistant.leave = (url) => calls.left.push(url);
   window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   return { window, document: window.document, calls };
 }
@@ -1522,4 +1530,139 @@ test('the arrival page reads the URL whenever it says anything, stored shop or n
   const query = arrivalPage('/order/?branch=XYZ', { stored: held });
   await wait();
   assert.deepStrictEqual(query.calls.fetched, [['XYZ', true]]);
+});
+
+const call = (name, args, id) => ({ type: 'function_call', name, call_id: id || 'k1', arguments: JSON.stringify(args) });
+const done = (calls) => ({ data: JSON.stringify({ type: 'response.done', response: { status: 'completed', output: calls } }) });
+const lastOutput = (calls) => JSON.parse(calls.sent.filter((e) => e.type === 'conversation.item.create').pop().item.output);
+
+test('the assistant can send the order to the kitchen, only on a clear yes, through the same checkout a tap uses', async () => {
+  /* Owner: "it cant make order or confirm. make that available. let ai
+     confirm send to kitchen." */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  await window.OrderingVoice.start();
+  await settle();
+  calls.sent.length = 0;
+
+  await window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: false })]));
+  await settle();
+  assert.strictEqual(lastOutput(calls).reason, 'not_confirmed');
+  assert.deepStrictEqual(calls.checkout, [], 'an order was placed without the customer\'s yes');
+
+  /* A table from the code: dining in, paid at the counter, placed. */
+  await window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true }, 'k2')]));
+  await settle();
+  const placed = lastOutput(calls);
+  assert.strictEqual(placed.ok, true);
+  assert.strictEqual(placed.token, '042');
+  assert.strictEqual(placed.pay, 'at the counter');
+  /* Through JSON: the options object is born in the page's realm. */
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(calls.checkout)), [['', 'Cash', { stay: true }]], 'not the same checkout a tap uses, or it did not stay');
+  assert.strictEqual(window.localStorage.getItem('orderType'), 'DINE IN');
+  assert.strictEqual(window.localStorage.getItem('order_fulfilment'), 'dine_in');
+  assert.match(document.getElementById('assistant-log').textContent, /Sent to the kitchen\. Token 042\./);
+  assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the model was not asked to say the token');
+  assert.deepStrictEqual(calls.left, [], 'the page left before the token was said');
+
+  /* The model says the token; when the audio stops, the page goes to the receipt. */
+  await window.OrderingVoice.onEvent(done([]));
+  assert.deepStrictEqual(calls.left, [], 'the page left while the token was still being said');
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
+  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042']);
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off', 'the line stayed open after leaving');
+});
+
+test('sending to the kitchen asks for what the code did not say, and hands the rest to Review order', async () => {
+  const live = { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } };
+
+  /* No table and two ways offered: ask; told takeaway: placed as a parcel. */
+  const open = voicePage({ voice: 'live', reply: live, table: '' });
+  await open.window.OrderingVoice.start();
+  await settle();
+  await open.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true })]));
+  await settle();
+  let out = lastOutput(open.calls);
+  assert.strictEqual(out.reason, 'need_fulfilment');
+  assert.deepStrictEqual(out.options, ['dine_in', 'takeaway']);
+  await open.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true, fulfilment: 'takeaway' }, 'k2')]));
+  await settle();
+  out = lastOutput(open.calls);
+  assert.strictEqual(out.ok, true);
+  assert.strictEqual(out.pay, 'when collecting');
+  assert.strictEqual(open.window.localStorage.getItem('orderType'), 'PARCEL');
+  open.window.OrderingVoice.stop();
+
+  /* Eating here with no table on the code: the table is asked for. */
+  const seat = voicePage({ voice: 'live', reply: live, table: '' });
+  await seat.window.OrderingVoice.start();
+  await settle();
+  await seat.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true, fulfilment: 'dine_in' })]));
+  await settle();
+  assert.strictEqual(lastOutput(seat.calls).reason, 'need_table');
+  await seat.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true, fulfilment: 'dine_in', table: ' t-7 ' }, 'k2')]));
+  await settle();
+  assert.strictEqual(lastOutput(seat.calls).ok, true);
+  assert.strictEqual(seat.window.localStorage.getItem('order_table'), 'T-7');
+  seat.window.OrderingVoice.stop();
+
+  /* Delivery needs an address, a shop that wants a phone number, and one
+     that takes online payment only: the Review order button finishes it. */
+  for (const [label, options, reason] of [
+    ['delivery', { table: '', fulfilment: ['delivery'] }, 'needs_details'],
+    ['phone', { payment: { offline: true, number: true } }, 'needs_phone'],
+    ['online only', { payment: { offline: false, razorpay: true } }, 'pay_online'],
+  ]) {
+    const page = voicePage({ voice: 'live', reply: live, ...options });
+    await page.window.OrderingVoice.start();
+    await settle();
+    await page.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true })]));
+    await settle();
+    const answer = lastOutput(page.calls);
+    assert.strictEqual(answer.reason, reason, label);
+    assert.strictEqual(answer.next, 'review', label);
+    assert.deepStrictEqual(page.calls.checkout, [], label + ': placed anyway');
+    page.window.OrderingVoice.stop();
+  }
+
+  /* An older payment answer without the offline flag: cash on means the counter is fine. */
+  const older = voicePage({ voice: 'live', reply: live, payment: { cash: 'true', razorpay: true } });
+  await older.window.OrderingVoice.start();
+  await settle();
+  await older.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true })]));
+  await settle();
+  assert.strictEqual(lastOutput(older.calls).ok, true);
+  older.window.OrderingVoice.stop();
+
+  /* Nothing in the order: nothing to send. */
+  const empty = voicePage({ voice: 'live', reply: live, cartLines: [] });
+  await empty.window.OrderingVoice.start();
+  await settle();
+  await empty.window.OrderingVoice.onEvent(done([call('send_to_kitchen', { confirmed: true })]));
+  await settle();
+  assert.strictEqual(lastOutput(empty.calls).reason, 'empty_order');
+  assert.deepStrictEqual(empty.calls.checkout, []);
+});
+
+test('the sheet carries a Review order button with the count and the total, once there is something to review', async () => {
+  /* Owner: "ai asking to click review and order. but there is no button." */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  const button = document.getElementById('assistant-review');
+  assert.ok(button, 'no Review order button in the sheet');
+  document.getElementById('ask-ai').click();
+  await settle();
+  assert.strictEqual(button.hidden, false, 'the button is hidden with an order to review');
+  assert.strictEqual(document.getElementById('assistant-review-sum').textContent, '1 dish · ₹80');
+  button.click();
+  assert.deepStrictEqual(calls.left, ['cart.html']);
+
+  const bare = voicePage({ voice: 'live', reply: { status: 200, body: {} }, cartLines: [] });
+  bare.document.getElementById('ask-ai').click();
+  await settle();
+  assert.strictEqual(bare.document.getElementById('assistant-review').hidden, true, 'the button shows with nothing to review');
+
+  /* checkout() can stay on the page and hand back the token. */
+  const db = read('indexedDB.js');
+  assert.match(db, /async function checkout\(transactionId, paymentStatus = "Upi", options = \{\}\)/);
+  assert.match(db, /if \(options && options\.stay\) return \{ placed: true, token: normalizedTokenId \};/);
+  assert.ok(db.indexOf('options.stay') < db.indexOf('window.location.href = `thankyou.html?token='), 'the stay must be decided before the page leaves');
 });

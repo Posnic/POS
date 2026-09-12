@@ -54,7 +54,20 @@ describe('voice-session.service', () => {
       'remove_from_order',
       'set_quantity',
       'show_order',
+      'send_to_kitchen',
     ]);
+    /* Sending needs the customer's yes, and the brief says when to ask. */
+    const send = voice.tools().find((t) => t.name === 'send_to_kitchen');
+    expect(send.parameters.required).toEqual(['confirmed']);
+    expect(send.parameters.properties.fulfilment.enum).toEqual([
+      'dine_in',
+      'takeaway',
+      'pickup',
+      'delivery',
+    ]);
+    expect(voice.VOICE_SYSTEM).toContain('Shall I send it to the kitchen?');
+    expect(voice.VOICE_SYSTEM).toContain('Only on a clear yes call send_to_kitchen');
+    expect(voice.VOICE_SYSTEM).not.toContain('tell them to tap Review order');
     for (const tool of voice.tools()) expect(tool.type).toBe('function');
   });
 
