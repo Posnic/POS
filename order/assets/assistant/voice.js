@@ -324,7 +324,12 @@
       rec.onresult = function (e) {
         for (var i = e.resultIndex; i < e.results.length; i++) heard += e.results[i][0].transcript;
       };
-      rec.onerror = function () {};
+      rec.onerror = function (e) {
+        /* A refused microphone is the one error worth a sentence; the rest
+           (nothing said, a dropped network) just end the turn. */
+        var why = e && e.error;
+        if (why === "not-allowed" || why === "service-not-allowed" || why === "audio-capture") live.denied = true;
+      };
       rec.onend = function () {
         live.rec = null;
         resolve(heard.trim());
@@ -346,6 +351,10 @@
     while (live.active) {
       var heard = await listenOnce();
       if (!live.active) break;
+      if (live.denied) {
+        note(say("The microphone was not allowed. You can still type."));
+        break;
+      }
       if (!heard) {
         /* Silence twice in a row is a customer who has stopped; once is a breath. */
         if (live.silent) break;
@@ -372,6 +381,7 @@
     live.active = true;
     live.mode = mode;
     live.silent = false;
+    live.denied = false;
     if (mode === "live") {
       var ok = await startLive();
       if (!ok) live.active = false;
