@@ -7836,7 +7836,7 @@ class SalesRepository {
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
       const salesCollection = db.collection('sales');
-      const insertResult = await salesCollection.insertOne({
+      const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
         ...(idempotencyKey ? { idempotency_key: String(idempotencyKey) } : {}),
@@ -7933,7 +7933,16 @@ class SalesRepository {
         token_id: tokenId,
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
-      });
+      };
+
+      /* A number taken a moment ago is taken again, not handed to the
+         customer as a database error. */
+      const insertResult = await this.insertSaleWithFreshNumber(
+        salesCollection,
+        saleDocument,
+        branchObjectId
+      );
+      salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
 
@@ -10156,7 +10165,7 @@ class SalesRepository {
     }
   }
 
-  async generateSalesIdForBranch(branchIdRaw) {
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
@@ -10185,7 +10194,13 @@ class SalesRepository {
 
     void prefixLength;
     void salesCollection;
-    const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
+    /* The branch's own licence first: see nextSalesNumberForBranch. The
+       ambient one is a fallback for a branch this process cannot read. */
+    const n = await this.nextSalesNumberForBranch(
+      branchId,
+      (branchDoc && branchDoc.license) || BaseModel.license,
+      { reseed }
+    );
     return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
   }
 
@@ -10205,13 +10220,48 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw) {
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false } = {}) {
     const db = await BaseModel.getDb();
     const counters = db.collection('counters');
+
+    /*
+     * ONE COUNTER PER BRANCH, whichever door the sale came through.
+     *
+     * The licence used to be whatever the caller happened to hold, and on the
+     * customer's own ordering page there is no caller to ask: /online-ordering
+     * is public, so BaseModel.license carried whatever the last signed-in
+     * request in this process left behind - the real licence, or nothing. A
+     * branch ended up with two counters, one keyed by the licence and one by
+     * the empty string, each seeded once and each counting on alone. The
+     * moment both existed they issued the same numbers and the unique index
+     * refused the second: the customer got "E11000 duplicate key ... sales_id"
+     * where an order should have been, with a Retry that asked for the same
+     * number again.
+     *
+     * The branch's own licence is the one answer every door agrees on.
+     */
+    let license = licenseRaw;
+    if (!license && branchIdRaw) {
+      try {
+        const owner = await db.collection('branches').findOne(
+          {
+            _id: mongoose.Types.ObjectId.isValid(String(branchIdRaw))
+              ? new mongoose.Types.ObjectId(String(branchIdRaw))
+              : branchIdRaw,
+          },
+          { projection: { license: 1 } }
+        );
+        if (owner && owner.license) license = owner.license;
+      } catch (e) {
+        /* A branch that cannot be read leaves the caller's answer standing;
+           the duplicate backstop below still holds. */
+      }
+    }
+
     const key = {
       kind: 'sales_id',
       branch_key: String(branchIdRaw || ''),
-      license_key: String(licenseRaw || ''),
+      license_key: String(license || ''),
     };
 
     /* Idempotent and cheap; the unique index is what makes the concurrent
@@ -10240,6 +10290,22 @@ class SalesRepository {
       await counters
         .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
         .catch(() => {});
+    }
+
+    /*
+     * Asked for after a number came back taken: catch the counter up.
+     *
+     * A counter can sit behind the sales it is numbering - a restore that
+     * brought the sales back without the counters, or numbers issued through
+     * the second counter this method no longer creates. Adding one then walks
+     * into every taken number in turn, a failed order each time. $max only
+     * ever raises, so a number allocated concurrently cannot be undone by it.
+     */
+    if (reseed) {
+      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license);
+      if (behind > 0) {
+        await counters.updateOne(key, { $max: { seq: behind } }, { upsert: true }).catch(() => {});
+      }
     }
 
     const res = await counters.findOneAndUpdate(
@@ -10456,6 +10522,38 @@ class SalesRepository {
    * The highest number this branch has ever put on a bill, whatever the
    * prefix was at the time. Runs once per branch, to seed its counter.
    */
+  /*
+   * Insert an order, taking a fresh bill number if this one has just been taken.
+   *
+   * The till has had this since bill numbers became unique (createSaleUnique);
+   * the customer's own ordering page never did, so a collision reached the
+   * phone as "E11000 duplicate key error ... unique_sales_id_per_license",
+   * under a Retry button that asked for the very same number again. Each retry
+   * catches the counter up to the highest number the branch has actually
+   * issued, so a counter that has fallen behind is right on the next attempt
+   * rather than after as many attempts as there are taken numbers.
+   *
+   * Only a duplicate BILL NUMBER is retried. Anything else - a duplicate
+   * idempotency key above all, which means this very order is already saved -
+   * is raised, because retrying it would be how one order becomes two.
+   */
+  async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await salesCollection.insertOne(document);
+      } catch (error) {
+        if (attempt >= attempts || !this.isDuplicateSalesIdError(error)) throw error;
+        const fresh = await this.generateSalesIdForBranch(branchId, { reseed: true });
+        console.warn(
+          `[order] bill number ${document.sales_id} was already issued; taking ${fresh}`
+        );
+        document.sales_id = fresh;
+        if (document.invoice_number) document.invoice_number = fresh;
+        if (document.sale_no) document.sale_no = fresh;
+      }
+    }
+  }
+
   async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
     const db = await BaseModel.getDb();
     const asObjectId = (v) =>
