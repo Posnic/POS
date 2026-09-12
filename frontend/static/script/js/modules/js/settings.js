@@ -9279,6 +9279,10 @@ PosnicPro.settings.ai = {
        chosen. Controls that cannot affect anything should not ask for a
        decision. */
     syncRows: function () {
+        if (!PosnicPro.settings.ai._switchWired) {
+            PosnicPro.settings.ai._switchWired = true;
+            $(document).on('change', '#ai_ordering_assistant', function () { PosnicPro.settings.ai.syncRows(); });
+        }
         var on = !!$('#ai_provider').val();
         var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
         /*
@@ -9301,6 +9305,10 @@ PosnicPro.settings.ai = {
                 : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
         }
         $('#ai_key_row,#ai_cap_row,#ai_assistant_row').toggle(on);
+        /* The greeting, the house notes and the how-it-works only once the
+           door is open: a shop that has not switched it on is not asked to
+           write for it. */
+        $('#ai_assistant_config').toggle(on && $('#ai_ordering_assistant').is(':checked'));
         /* A saved key and no key must not look the same. The key never comes
            back to the browser, so "saved" is a badge and two buttons, and the
            empty box only appears when somebody asks to replace it. */
@@ -9323,6 +9331,8 @@ PosnicPro.settings.ai = {
             $('#ai_provider').val(v.ai_provider || '');
             $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
             $('#ai_ordering_assistant').prop('checked', String(v.ai_ordering_assistant) === 'true');
+            $('#ai_assistant_greeting').val(v.ai_assistant_greeting || '');
+            $('#ai_assistant_instructions').val(v.ai_assistant_instructions || '');
             PosnicPro.settings.ai.syncRows();
         }, function () { /* the card still lets you choose and save */ });
 
@@ -9411,7 +9421,9 @@ PosnicPro.settings.ai = {
                 ai_monthly_cap: cap,
                 /* The ordering page's door, as a word: 'false' is a choice
                    the reader must not mistake for silence. */
-                ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false'
+                ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false',
+                ai_assistant_greeting: String($('#ai_assistant_greeting').val() || '').trim().slice(0, 200),
+                ai_assistant_instructions: String($('#ai_assistant_instructions').val() || '').trim().slice(0, 1500)
             })
         }, function (response) {
             if (response.type !== 'success') {

@@ -126,7 +126,10 @@
   function greet() {
     if (state.greeted) return;
     state.greeted = true;
-    bubble("ai", say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order."));
+    /* The shop's own opening line when it wrote one, else the plain one. */
+    var current = shopNow();
+    var own = current && current.assistantGreeting ? String(current.assistantGreeting).trim() : "";
+    bubble("ai", own || say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order."));
   }
 
   /* ------------------------------------------------- applying an answer */

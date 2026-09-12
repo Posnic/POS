@@ -4514,10 +4514,10 @@ class ItemRepository extends BaseModel {
             /* Whether the spark is drawn: the shop's own AI, switched on
                for the ordering page in particular. Decided here so a page
                never offers a button that would fail. */
-            assistant: await orderingAssistant.available({
+            ...(await orderingAssistant.storefrontFeatures({
               branchId: branchDoc._id,
               licenseId: branchDoc.license,
-            }),
+            })),
           },
           /*
            * What the page is allowed to do, decided here rather than on the

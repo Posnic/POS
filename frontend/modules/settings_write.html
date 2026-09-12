@@ -3388,6 +3388,31 @@
                                         <small class="form-text text-muted"><lang class="lang_ai_ordering_assistant_hint">A spark appears on your ordering page. Customers ask in their own words, and the assistant answers from your menu and can add to their order. It never places or pays. Every question is billed to your account above, within the monthly limit, and it is off until you switch it on.</lang></small>
                                     </div>
 
+                                    <div id="ai_assistant_config" style="max-width:460px; display:none;">
+                                        <div class="form-group">
+                                            <label for="ai_assistant_greeting"><lang class="lang_ai_assistant_greeting">First thing it says</lang></label>
+                                            <input type="text" id="ai_assistant_greeting" class="form-control border-control" maxlength="200" autocomplete="off"
+                                                   placeholder="Hi! Tell me what you feel like, or ask what's good here." data-t-placeholder="lang_ai_assistant_greeting_placeholder">
+                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_greeting_hint">Leave it empty for the standard greeting. Write it in the language most of your customers use; the assistant answers each customer in whatever language they write.</lang></small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="ai_assistant_instructions"><lang class="lang_ai_assistant_instructions">House notes for the assistant</lang></label>
+                                            <textarea id="ai_assistant_instructions" class="form-control border-control" rows="5" maxlength="1500"
+                                                      placeholder="Today's special is the prawn biryani. We are a pure-veg kitchen on Tuesdays. Always offer a drink with a meal. We do not do half portions. Dishes marked spicy are genuinely hot; say so." data-t-placeholder="lang_ai_assistant_instructions_placeholder"></textarea>
+                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_instructions_hint">Plain sentences. The assistant follows them wherever they do not break its own rules: it only ever recommends what is on your menu at the prices on it, never promises anything about allergens, and never asks for phone numbers or payment. Up to 1,500 characters; every question carries these notes, so shorter costs less.</lang></small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><lang class="lang_ai_assistant_how_title">How it works</lang></label>
+                                            <ol class="small text-muted pl-3 mb-2">
+                                                <li><lang class="lang_ai_assistant_how_1">A customer on your ordering page taps the spark and asks in their own words: what is good, something veg and spicy, a meal for two, "add two of that, less spicy".</lang></li>
+                                                <li><lang class="lang_ai_assistant_how_2">Your provider's model reads your menu (names, descriptions, prices, veg marks, what is off right now), your house notes, and the customer's order so far, and answers in the customer's language.</lang></li>
+                                                <li><lang class="lang_ai_assistant_how_3">When the customer asks for something to be added or removed, the page does it the same way a tap on Add does, and says so in the conversation. The assistant never places the order, never takes payment, never sees a phone number or address.</lang></li>
+                                                <li><lang class="lang_ai_assistant_how_4">Each question is one call to your provider, billed to your account, counted against the monthly limit above, and each phone is held to twelve questions a minute.</lang></li>
+                                                <li><lang class="lang_ai_assistant_how_5">To try it: save, open your ordering page on a phone, and tap the spark in the header. Switching it off here removes the spark within a minute.</lang></li>
+                                            </ol>
+                                        </div>
+                                    </div>
+
                                     <div class="form-group" id="ai_spend_row" style="max-width:460px; display:none;">
                                         <label><lang class="lang_ai_spent">Spent this month</lang></label>
                                         <div id="ai_spend_table" class="small text-muted"></div>
