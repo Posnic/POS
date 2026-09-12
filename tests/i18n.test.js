@@ -941,3 +941,28 @@ test('no server pack answers a sentence the server never sends', () => {
   }
   assert.deepEqual(stray, [], 'a translation is keyed by a sentence the server does not send:\n  ' + stray.join('\n  '));
 });
+
+test('no help text explains itself with a placeholder in angle brackets', () => {
+  /* Owner, on the AI page: "but i see soemthing here" - and the standard
+     line read "Welcome to , table 5". The example had been written as
+     "<your shop's name>", which a browser reads as a tag it does not know
+     and throws away, taking the words inside with it. It looks right in the
+     source and wrong only on screen, which is the worst place to find out.
+     An example a browser will eat is not an example. */
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const pages = fs
+    .readdirSync(path.join(root, 'frontend', 'modules'))
+    .filter((f) => f.endsWith('.html'));
+  const eaten = [];
+  for (const page of pages) {
+    const src = fs.readFileSync(path.join(root, 'frontend', 'modules', page), 'utf8');
+    for (const m of src.matchAll(/<lang class="(lang_[a-z0-9_]+)">([\s\S]*?)<\/lang>/g)) {
+      /* A placeholder, not markup: <word word> with no slash and no
+         attributes is somebody writing a blank to fill in. */
+      if (/<[a-z][a-z'’ ]+>/i.test(m[2])) eaten.push(page + ': ' + m[1]);
+    }
+  }
+  assert.deepStrictEqual(eaten, [], 'help text with a placeholder a browser will swallow');
+});
