@@ -756,6 +756,53 @@ async function knownBranchId() {
     return "";
 }
 
+/*
+ * The origin's default store, when a remembered address is dead.
+ *
+ * The same question index.html asks for a plain /order: the server knows
+ * whether this shop set a default, whether there is only one to pick, or
+ * whether it is a real question. Only an answer different from the dead
+ * address is a way forward.
+ */
+async function recoverDefaultStore(deadId) {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/online-ordering`, {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) return "";
+        const body = await response.json();
+        const id = body && body.data && body.data.store && body.data.store.id;
+        return id && String(id) !== String(deadId) ? String(id) : "";
+    } catch (error) {
+        return "";
+    }
+}
+
+/* Everything this browser kept about a shop that is gone: its row, its
+   products, an order made of products that no longer exist. The customer's
+   own words (the note, the language) stay. */
+async function forgetShop() {
+    try {
+        localStorage.removeItem(STORE_ADDRESS_KEY);
+    } catch (e) {
+        /* nothing kept, nothing to forget */
+    }
+    const db = await getDB();
+    const wanted = window.KioskCore && Array.isArray(window.KioskCore.BRANCH_STORES)
+        ? window.KioskCore.BRANCH_STORES
+        : [BRANCH_STORE, STORE_NAME, CART_STORE];
+    const names = wanted.filter((name) => db.objectStoreNames.contains(name));
+    if (!names.length) return;
+    await new Promise((resolve, reject) => {
+        const tx = db.transaction(names, "readwrite");
+        names.forEach((name) => tx.objectStore(name).clear());
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
+}
+
 // ✅ Fetch and Store Branch Data
 async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
     try {
@@ -809,6 +856,17 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(branchId)}${servicePoint}`,
             { method: "GET", headers: { "Accept": "application/json" } }
         );
+
+        /* The address is dead: the shop was re-seeded or the code retired.
+           Ask the origin for its default store once, and start over there. */
+        if (response.status === 404 && !options?.recovered) {
+            const next = await recoverDefaultStore(branchId);
+            if (next) {
+                console.warn(`Shop ${branchId} is no longer at this address; using ${next}.`);
+                await forgetShop();
+                return fetchAndStoreBranch(next, redirect, { ...options, recovered: true });
+            }
+        }
 
         const result = await readJsonResponse(response, "Product sync");
         console.log("🔄 API Response:", result);

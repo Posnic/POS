@@ -79,6 +79,7 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'storeAddressFromRow'),
     lift(src, 'rememberStoreAddress'),
     lift(src, 'knownBranchId'),
+    lift(src, 'recoverDefaultStore'),
     lift(src, 'placeLabel'),
     lift(src, 'paintShop'),
     lift(src, 'chargeFor'),
@@ -754,4 +755,25 @@ test('a dish says in plain words that a request can be made on it', async () => 
   assert.match(document.querySelector('.line-note-btn').textContent, /less spicy/i, 'the line does not invite a request');
   assert.match(read('products.html'), /Any request for this dish\?/);
   assert.match(read('cart.html'), /Any request for this dish\?/);
+});
+
+test('a shop address the server no longer knows is recovered from the origin default, not walled off', async () => {
+  /* The sandbox was re-seeded overnight and came back as FJ5AF; the owner's
+     browser still remembered ABC123. Every refresh was a 404 in a wall. */
+  const { box } = page('cart.html', {});
+  box.CONFIG = { API_BASE_URL: '' };
+  const asked = [];
+  box.fetch = async (url) => {
+    asked.push(url);
+    return { ok: true, status: 200, json: async () => ({ type: 'success', data: { store: { id: 'FJ5AF', name: 'Develop Sandbox Store' } } }) };
+  };
+  assert.strictEqual(await box.recoverDefaultStore('ABC123'), 'FJ5AF');
+  assert.deepStrictEqual(asked, ['/online-ordering'], 'the origin default is asked for at its own address');
+  assert.strictEqual(await box.recoverDefaultStore('FJ5AF'), '', 'the dead address itself is never offered back');
+  box.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
+  assert.strictEqual(await box.recoverDefaultStore('ABC123'), '', 'no default is no recovery, quietly');
+
+  const db = read('indexedDB.js');
+  assert.match(db, /response\.status === 404 && !options\?\.recovered/, 'a 404 for a remembered shop no longer tries the origin default');
+  assert.match(db, /await forgetShop\(\);\s*return fetchAndStoreBranch\(next, redirect, \{ \.\.\.options, recovered: true \}\)/, 'the dead shop is not forgotten before the new one is loaded');
 });
