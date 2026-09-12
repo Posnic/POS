@@ -250,6 +250,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Retail POS incident response checklist](https://posnic.github.io/retail-pos-incident-response-checklist.html) | Contain billing outages, preserve evidence, prevent duplicates, recover service and reconcile affected records |
 | [Retail POS receipt printer troubleshooting](https://posnic.github.io/retail-pos-receipt-printer-troubleshooting.html) | Protect completed sales, isolate printer and cash-drawer faults, recover safely and prevent duplicate billing |
 | [Retail POS user access review checklist](https://posnic.github.io/retail-pos-user-access-review-checklist.html) | Review staff roles, sensitive actions, leavers, offline enforcement, integrations and retained evidence |
+| [Retail POS returns, refunds and voids checklist](https://posnic.github.io/retail-pos-returns-refunds-voids-checklist.html) | Verify original sales, approvals, payment reversals, stock disposition, offline queues and reconciliation |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
