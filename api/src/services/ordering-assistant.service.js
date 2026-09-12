@@ -60,13 +60,14 @@ const SYSTEM = [
   'Rules:',
   '- Recommend and add ONLY items from the MENU provided, using their exact item_id. Never invent a dish, a price, an ingredient or an offer.',
   '- Use the prices and details as given. Mention a price when you suggest something. Do not compute discounts or totals beyond simple addition of listed prices.',
-  '- An item marked available:false cannot be ordered now; say so if asked, and offer something similar that is available.',
+  '- The MENU lists only what can be ordered right now. NOT TODAY lists names that exist but cannot be ordered today: never add them; if asked, say it is not available today and offer the closest thing on the MENU.',
   '- Only put something in "actions" when the customer clearly asked for it to be added, removed or changed. Suggestions go in "reply" only. When unsure, ask a short question instead of acting.',
   '- "set" changes a line to an exact quantity; "add" adds to it; "remove" takes it out. Quantities are whole numbers from 1 to 20.',
   '- A request about how a dish is prepared ("less spicy", "no onion") goes in "note" on that action, in the customer\'s words, and stays under 100 characters.',
   '- Allergies and dietary restrictions: say only what the MENU states (diet marks, descriptions) and tell the customer to confirm with the counter before ordering. Never guarantee anything is free of an allergen.',
   '- Answer in the language the customer writes in. If they write in Tamil, reply in Tamil; if in English, in English. Keep dish names as they appear on the menu.',
-  '- Stay on the menu and the order. For anything else, say kindly that you can only help with ordering here.',
+  '- Questions about the place - where it is, the phone number, when it opens, whether it is taking orders now, how the food can be had, how to pay - are answered from ABOUT THE SHOP, and from nothing else. If it is not there, say you do not know and suggest asking at the counter.',
+  '- Anything else, say kindly that you can only help with ordering here.',
   '- Never ask for or repeat personal details: no phone numbers, addresses, or payment information. The page handles those.',
   '- The CART is what the customer has so far; refer to it when they ask what they have or the total.',
 ].join('\n');
@@ -88,6 +89,125 @@ function categoriesOf(storefront) {
   if (storefront.menu && Array.isArray(storefront.menu.categories))
     return storefront.menu.categories;
   return [];
+}
+
+/**
+ * The menu in two lists: what can be ordered, and the names of what cannot
+ * today. The model gets ids only for the first, so it cannot add the second
+ * however it is asked; the names let it say "not today" instead of "never
+ * heard of it".
+ */
+function splitMenu(menu) {
+  const open = [];
+  const off = [];
+  for (const item of Array.isArray(menu) ? menu : []) {
+    if (!item) continue;
+    if (item.available === false) off.push(String(item.name || '').slice(0, 80));
+    else {
+      const { available, ...rest } = item;  
+      open.push(rest);
+    }
+  }
+  return { open, off: off.filter(Boolean).slice(0, 60) };
+}
+
+const DAY_WORDS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+function clock(minutes) {
+  const m = Math.max(0, Math.min(24 * 60, Number(minutes) || 0));
+  return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+}
+
+/** "Mon 11:00-23:00; Tue closed; ..." from the channel's normalised week. */
+function hoursText(hours) {
+  if (!hours || typeof hours !== 'object') return 'no fixed hours';
+  const days = [];
+  for (let d = 1; d <= 7; d++) {
+    const key = DAY_KEYS[d % 7];
+    const windows = Array.isArray(hours[key]) ? hours[key] : [];
+    const spans = windows
+      .filter((w) => w && Number.isFinite(Number(w.open)) && Number.isFinite(Number(w.close)))
+      .map((w) => clock(w.open) + '-' + clock(w.close));
+    days.push(DAY_WORDS[d % 7] + ' ' + (spans.length ? spans.join(', ') : 'closed'));
+  }
+  return days.join('; ');
+}
+
+const WAY_WORDS = {
+  dine_in: 'eat here (at the table)',
+  takeaway: 'take away (collect at the counter)',
+  pickup: 'pick up (collect at the counter)',
+  delivery: 'delivery',
+};
+
+/**
+ * What the shop says about itself, for the questions that are not about a
+ * dish: where it is, when it opens, how the food can be had and paid for.
+ * Everything here is already public on the storefront; nothing is read from
+ * anywhere else, so nothing private can leak through a question.
+ */
+function shopFacts(storefront) {
+  const front = storefront && typeof storefront === 'object' ? storefront : {};
+  const store = front.store || {};
+  const channel = front.channel || {};
+  const charges = front.charges && typeof front.charges === 'object' ? front.charges : {};
+  const payment = front.payment && typeof front.payment === 'object' ? front.payment : {};
+  const point = front.service_point || {};
+  const text = (value, max) =>
+    String(value == null ? '' : value)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, max || 120);
+
+  const ways = (Array.isArray(channel.fulfilment) ? channel.fulfilment : [])
+    .map((way) => String(way))
+    .filter((way) => WAY_WORDS[way])
+    .map((way) => {
+      const rule = charges[way] && typeof charges[way] === 'object' ? charges[way] : {};
+      const out = { way, means: WAY_WORDS[way] };
+      if (Number(rule.fee) > 0) out.fee = Number(rule.fee);
+      if (Number(rule.free_above) > 0) out.fee_waived_from = Number(rule.free_above);
+      if (Number(rule.min_order) > 0) out.minimum_order = Number(rule.min_order);
+      return out;
+    });
+
+  /* Payment: the names of what is switched on, never a key or an id. */
+  const pays = Object.keys(payment)
+    .filter((key) => !/key|secret|token|salt|merchant|id$|url|account/i.test(key))
+    .filter((key) => payment[key] === true || payment[key] === 'true' || payment[key] === 1)
+    .map((key) => text(key.replace(/_/g, ' '), 30))
+    .slice(0, 8);
+
+  const facts = {
+    name: text(store.name || 'this shop', 80),
+    kind: store.kind === 'retail' ? 'shop' : 'restaurant',
+    currency: text(store.currency_code || store.currency || 'INR', 8),
+  };
+  if (text(store.address)) facts.address = text(store.address, 200);
+  if (text(store.phone)) facts.phone = text(store.phone, 60);
+  if (text(store.website)) facts.website = text(store.website, 120);
+  facts.taking_orders_now = channel.accepting === true;
+  if (channel.accepting !== true && text(channel.message))
+    facts.status = text(channel.message, 160);
+  if (channel.opens_at) facts.opens_at = text(channel.opens_at, 40);
+  if (channel.resumes_at) facts.resumes_at = text(channel.resumes_at, 40);
+  facts.hours = hoursText(channel.hours);
+  if (channel.time_zone) facts.time_zone = text(channel.time_zone, 40);
+  if (ways.length) facts.ways_to_get_it = ways;
+  if (pays.length) facts.payment = pays;
+  const where = point.venue
+    ? [
+        text(point.venue.name, 60),
+        point.venue.unit
+          ? text(point.venue.unit_label || 'Room', 20) + ' ' + text(point.venue.unit, 24)
+          : '',
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : text(point.label, 60);
+  if (where) facts.customer_is_at = where;
+  return facts;
 }
 
 /** The menu, as little of it as the model needs to talk about it well. */
@@ -283,13 +403,20 @@ async function reply(body, storefront, context) {
 
   const known = new Set(menu.map((item) => item.id));
   const store = (storefront && storefront.store) || {};
+  const lists = splitMenu(menu);
   const prompt = [
     `SHOP: ${ai.fence(String(store.name || 'this shop').slice(0, 80))}`,
     `KIND: ${store.kind === 'retail' ? 'shop' : 'restaurant'}`,
     `CURRENCY: ${String(store.currency || '').slice(0, 4) || 'INR'}`,
     '',
-    'MENU (JSON; id, name, category, price, diet, available, about, served):',
-    ai.fence(JSON.stringify(menu)),
+    'MENU (JSON; what can be ordered right now: id, name, category, price, diet, about, served):',
+    ai.fence(JSON.stringify(lists.open)),
+    '',
+    'NOT TODAY (names only; cannot be ordered today):',
+    ai.fence(JSON.stringify(lists.off)),
+    '',
+    'ABOUT THE SHOP (JSON):',
+    ai.fence(JSON.stringify(shopFacts(storefront))),
     '',
     'CART (JSON):',
     ai.fence(JSON.stringify(cartFor(body && body.cart, known))),
@@ -324,6 +451,9 @@ async function reply(body, storefront, context) {
 
 module.exports = {
   reply,
+  splitMenu,
+  shopFacts,
+  hoursText,
   available,
   settingsFor,
   storefrontFeatures,
