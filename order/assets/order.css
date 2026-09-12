@@ -2747,126 +2747,13 @@ dialog.sheet[data-voice="on"] .assistant-foot {
   text-align: center;
 }
 
+/* The scene is drawn on a canvas (assets/assistant/kitchen-scene.js), so
+   all this has to do is give it a box and keep it inside one on a small
+   phone. Everything that moves is in the drawing. */
 .placed-art {
-  position: relative;
-  width: 96px;
-  height: 96px;
-}
-
-.placed-tick,
-.placed-pan {
-  position: absolute;
-  inset: 0;
-  transition: opacity 0.4s ease;
-}
-
-.placed-art[data-stage='sent'] .placed-pan,
-.placed-art[data-stage='cooking'] .placed-tick {
-  opacity: 0;
-}
-
-.placed-tick {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.placed-tick circle {
-  opacity: 0.25;
-}
-
-/* The pan, drawn rather than pictured: a shop's food is its own, and a stock
-   photograph of somebody else's is worse than a shape. */
-.placed-pot {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 16px;
-  height: 30px;
-  border: 3px solid var(--ink);
-  border-top: 0;
-  border-radius: 0 0 16px 16px;
-  background: var(--surface);
-}
-
-.placed-pot::after {
-  content: '';
-  position: absolute;
-  left: -6px;
-  right: -6px;
-  top: -3px;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--ink);
-}
-
-.placed-steam {
-  position: absolute;
-  bottom: 48px;
-  width: 5px;
-  height: 20px;
-  border-radius: 3px;
-  background: var(--ink-soft);
-  opacity: 0;
-}
-
-.placed-steam:nth-of-type(1) {
-  left: 30px;
-}
-.placed-steam:nth-of-type(2) {
-  left: 46px;
-}
-.placed-steam:nth-of-type(3) {
-  left: 62px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .placed-art[data-stage='sent'] .placed-tick path {
-    stroke-dasharray: 44;
-    stroke-dashoffset: 44;
-    animation: placed-draw 0.5s 0.1s ease-out forwards;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam {
-    animation: placed-steam 2.4s ease-in-out infinite;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(2) {
-    animation-delay: 0.5s;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(3) {
-    animation-delay: 1s;
-  }
-}
-
-/* Without motion the tick is simply drawn and the steam simply sits there. */
-@media (prefers-reduced-motion: reduce) {
-  .placed-art[data-stage='cooking'] .placed-steam {
-    opacity: 0.35;
-  }
-}
-
-@keyframes placed-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes placed-steam {
-  0% {
-    opacity: 0;
-    transform: translateY(6px) scaleY(0.6);
-  }
-  35% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-22px) scaleY(1.3);
-  }
+  width: 100%;
+  max-width: 280px;
+  height: 170px;
 }
 
 .placed-said {

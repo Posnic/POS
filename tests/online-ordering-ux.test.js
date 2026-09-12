@@ -1094,6 +1094,7 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   };
   window.speechSynthesis = { cancel() {}, getVoices: () => [], speak(u) { calls.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); } };
   window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+  window.eval(read('assets/assistant/kitchen-scene.js'));
   window.eval(read('assets/assistant/script.js'));
   window.eval(read('assets/assistant/voice.js'));
   window.OrderingVoice.leave = (url) => calls.left.push(url);
@@ -1589,8 +1590,8 @@ test('the assistant can send the order to the kitchen, only on a clear yes, thro
      preparing." */
   assert.strictEqual(document.getElementById('assistant-placed').hidden, false, 'nothing told the customer the order had gone');
   assert.strictEqual(document.getElementById('placed-token').textContent, '042');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
-  assert.strictEqual(document.getElementById('placed-art').getAttribute('data-stage'), 'sent');
+  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sending your order to the kitchen');
+  assert.strictEqual(document.getElementById('placed-art').getAttribute('data-stage'), 'sending');
   assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the model was not asked to say the token');
   assert.deepStrictEqual(calls.left, [], 'the page left before the token was said');
 
@@ -1707,33 +1708,35 @@ test('the sheet carries a Review order button with the count and the total, once
   assert.ok(db.indexOf('options.stay') < db.indexOf('window.location.href = `thankyou.html?token='), 'the stay must be decided before the page leaves');
 });
 
-test('the order lands in the sheet, in two beats, and nothing moves until Done', async () => {
+test('the order lands in the sheet, and nothing moves until Done', async () => {
   /* Owner: "as soon order over it cut suddenly ... i wanted to show some
-     animation like sent kitchen and chef preparing." */
+     animation like sent kitchen and chef preparing." The beats themselves
+     belong to the scene, and are tested against its own drawing below. */
   const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
-  window.OrderingAssistant.placedPanel('042', { after: 10 });
+  window.OrderingAssistant.placedPanel('042');
 
   const panel = document.getElementById('assistant-placed');
   const art = document.getElementById('placed-art');
   assert.strictEqual(panel.hidden, false);
   assert.strictEqual(document.getElementById('placed-token').textContent, '042');
-  assert.strictEqual(art.getAttribute('data-stage'), 'sent');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
-
-  await new Promise((r) => setTimeout(r, 40));
-  assert.strictEqual(art.getAttribute('data-stage'), 'cooking', 'the second beat never came');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'The chef is preparing your order');
+  assert.strictEqual(art.getAttribute('data-stage'), 'sending', 'the first beat is not immediate');
+  assert.strictEqual(
+    document.getElementById('placed-said').textContent,
+    'Sending your order to the kitchen'
+  );
   assert.deepStrictEqual(calls.left, [], 'the panel walked the customer off by itself');
 
   document.getElementById('placed-done').click();
   assert.strictEqual(panel.hidden, true);
   assert.deepStrictEqual(calls.left, ['thankyou.html?token=042']);
 
-  /* Both beats are drawn, and the steam is still there without motion. */
-  const css = fs.readFileSync(path.join(BUNDLE, 'assets', 'order.css'), 'utf8');
-  assert.match(css, /\.placed-art\[data-stage='sent'\] \.placed-tick path/);
-  assert.match(css, /\.placed-art\[data-stage='cooking'\] \.placed-steam/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*placed-steam/);
+  /* Leaving stops the scene: a second order must not run behind the first. */
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(
+    document.getElementById('placed-said').textContent,
+    'Sending your order to the kitchen',
+    'a beat arrived after the panel was closed'
+  );
 });
 
 test('the token screen downloads nothing and shows no bill', () => {
@@ -2052,4 +2055,86 @@ test('an order already asked about says so, and a paid one is not asked about at
   assert.strictEqual(paid.document.getElementById('details-o2').querySelector('.history-cancel'), null, 'a paid order can still be cancelled from the phone');
   asked.window.close();
   paid.window.close();
+});
+
+/** A 2d context that records what was asked of it, and a canvas holding it. */
+function recordingCanvas(window) {
+  const calls = [];
+  const ctx = new Proxy(
+    {},
+    {
+      get(target, name) {
+        if (name === 'canvas') return canvas;
+        if (name === 'setTransform') return () => calls.push(['setTransform']);
+        return (...args) => calls.push([String(name), ...args]);
+      },
+      set(target, name, value) {
+        calls.push(['set:' + String(name), value]);
+        return true;
+      },
+    }
+  );
+  const canvas = {
+    width: 280,
+    height: 170,
+    getContext: () => ctx,
+    getBoundingClientRect: () => ({ width: 280, height: 170 }),
+    setAttribute: () => {},
+  };
+  void window;
+  return { canvas, calls };
+}
+
+test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {
+  /* Owner: "i want very cool animation ... sending order to kitchen. and
+     they got it preparing." Three beats, and the drawing changes with them. */
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.eval(read('assets/assistant/kitchen-scene.js'));
+  const scene = window.KitchenScene;
+  /* Spread: an array from the page's realm is not reference-equal to one
+     of ours, however alike they look. */
+  assert.deepStrictEqual([...scene.BEATS].map((b) => b.name), ['sending', 'landed', 'cooking']);
+  assert.ok(scene.BEATS[1].at > scene.BEATS[0].at && scene.BEATS[2].at > scene.BEATS[1].at, 'the beats are out of order');
+
+  const colours = { ink: '#111', soft: '#666', line: '#ddd', surface: '#fff', accent: '#111' };
+  const early = recordingCanvas(window);
+  scene.frame(early.canvas.getContext(), colours, 280, 170, 200, false);
+  const earlyNames = early.calls.map((c) => c[0]);
+  assert.ok(earlyNames.includes('clearRect'), 'the scene does not clear between frames');
+  assert.ok(earlyNames.filter((n) => n === 'rotate').length > 0, 'the docket is not in flight');
+
+  /* Late on, it is a pan with steam and no docket flying. */
+  const late = recordingCanvas(window);
+  scene.frame(late.canvas.getContext(), colours, 280, 170, scene.BEATS[2].at + 900, false);
+  const lateSets = late.calls.filter((c) => c[0] === 'set:globalAlpha').map((c) => c[1]);
+  assert.ok(lateSets.some((a) => a > 0 && a <= 1), 'nothing was faded in for the cooking beat');
+  assert.ok(late.calls.some((c) => c[0] === 'quadraticCurveTo'), 'the pan and steam are not drawn');
+
+  /* Asked for less motion, it draws the settled kitchen once. */
+  const still = recordingCanvas(window);
+  scene.frame(still.canvas.getContext(), colours, 280, 170, 0, true);
+  assert.ok(still.calls.some((c) => c[0] === 'quadraticCurveTo'), 'the still frame draws nothing');
+});
+
+test('the scene tells the caption which beat it is on, and stops when it is told to', async () => {
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.eval(read('assets/assistant/kitchen-scene.js'));
+
+  /* A canvas that hands back no context - an old browser, a hardened one -
+     still gets every caption, on the same clock. */
+  const beats = [];
+  const stop = window.KitchenScene.play({ getContext: () => null, getBoundingClientRect: () => ({ width: 280, height: 170 }) }, {
+    onBeat: (name) => beats.push(name),
+  });
+  assert.deepStrictEqual(beats, ['sending'], 'the first beat is not immediate');
+  stop();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.deepStrictEqual(beats, ['sending'], 'a stopped scene went on calling back');
+
+  /* And with no canvas at all. */
+  const more = [];
+  window.KitchenScene.play(null, { onBeat: (name) => more.push(name) })();
+  assert.deepStrictEqual(more, ['sending']);
 });

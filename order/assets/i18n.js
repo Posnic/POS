@@ -323,6 +323,8 @@
       "Tell the counter once you have paid. They mark it, and your bill appears here.": "பணம் செலுத்தியதும் கவுண்டரில் சொல்லுங்கள். அவர்கள் பதிவு செய்ததும் உங்கள் பில் இங்கே வரும்.",
       "Download the bill": "பில்லைப் பதிவிறக்கு",
       "Sent to the kitchen": "சமையலறைக்கு அனுப்பிட்டோம்",
+      "Sending your order to the kitchen": "உங்கள் ஆர்டரை சமையலறைக்கு அனுப்புகிறோம்",
+      "The kitchen has it": "சமையலறையில் கிடைத்துவிட்டது",
       "The chef is preparing your order": "சமையல்காரர் உங்கள் ஆர்டரைத் தயார் செய்கிறார்",
       "Token": "டோக்கன்",
       "Done": "முடிந்தது",
