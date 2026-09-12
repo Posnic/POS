@@ -377,6 +377,14 @@
    * cooking it - and then the customer decides when to leave.
    */
   var placedTimer = 0;
+  var placedStop = null;
+
+  /* What each beat of the drawn scene is called, in the customer's words. */
+  var PLACED_WORDS = {
+    sending: "Sending your order to the kitchen",
+    landed: "The kitchen has it",
+    cooking: "The chef is preparing your order",
+  };
 
   function placedPanel(token, options) {
     var panel = el("assistant-placed");
@@ -386,20 +394,32 @@
     }
     var number = el("placed-token");
     if (number) number.textContent = String(token || "--");
-    var art = el("placed-art");
-    if (art) art.setAttribute("data-stage", "sent");
     var said = el("placed-said");
-    if (said) said.textContent = say("Sent to the kitchen");
+    if (said) said.textContent = say(PLACED_WORDS.sending);
     panel.hidden = false;
     state.placed = String(token || "");
-    clearTimeout(placedTimer);
-    /* Long enough for the tick to land and be read, short enough that
-       nobody wonders whether the page has stopped. */
-    var after = options && typeof options.after === "number" ? options.after : 1800;
-    placedTimer = setTimeout(function () {
-      if (art) art.setAttribute("data-stage", "cooking");
-      if (said) said.textContent = say("The chef is preparing your order");
-    }, after);
+
+    /* One scene at a time: a second order during the same visit must not
+       leave the first one's loop running behind it. */
+    if (placedStop) placedStop();
+    placedStop = null;
+    var art = el("placed-art");
+    if (window.KitchenScene && art) {
+      placedStop = window.KitchenScene.play(art, {
+        still: options && options.still,
+        onBeat: function (beat) {
+          if (art.setAttribute) art.setAttribute("data-stage", beat);
+          if (said && PLACED_WORDS[beat]) said.textContent = say(PLACED_WORDS[beat]);
+        },
+      });
+    } else if (said) {
+      /* No scene to draw: the words still arrive, on their own clock. */
+      clearTimeout(placedTimer);
+      var after = options && typeof options.after === "number" ? options.after : 1800;
+      placedTimer = setTimeout(function () {
+        said.textContent = say(PLACED_WORDS.cooking);
+      }, after);
+    }
   }
 
   function placedLine(token) {
@@ -419,6 +439,8 @@
 
   function hidePlaced() {
     clearTimeout(placedTimer);
+    if (placedStop) placedStop();
+    placedStop = null;
     var panel = el("assistant-placed");
     if (panel) panel.hidden = true;
   }
