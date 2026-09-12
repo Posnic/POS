@@ -8227,13 +8227,39 @@ PosnicPro.salesChannels = {
             '<div class="form-group col-md-1 text-right">' +
             '<button type="button" class="btn btn-outline-danger btn-sm remove-partner-venue" aria-label="' + t('lang_remove_venue', 'Remove venue') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
             '</div>' +
+            '<div class="col-12"><small class="text-muted venue-link"></small></div>' +
             '</div></div></div>';
     },
 
+    /*
+     * Where a venue is SEEN once it is saved.
+     *
+     * Owner: "added venue not listed. where to see and edit if needed". The
+     * rows on this page are the list and the editor; what was missing was
+     * the thing a venue is FOR - the address printed on its QR codes. Each
+     * saved venue now shows it, built the same way the storefront address is
+     * (API_URL, else this origin, plus the shop's storefront id), with the
+     * unit left for the printer: /order/<shop>/venue/<CODE>/<room>.
+     */
+    fillVenueLinks: function () {
+        var id = String($('#kioskstore_id').val() || '').trim();
+        if (!/^[A-Za-z0-9]{3,6}$/.test(id)) { $('.venue-link').text(''); return; }
+        var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+        if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var code = String($row.find('.venue-code').val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            var unit = String($row.find('.venue-unit-label').val() || 'Room').trim().toLowerCase() || 'room';
+            $row.find('.venue-link').text(code
+                ? PosnicPro.i18n.t('lang_venue_guests_scan', 'Guests scan:') + ' ' + base + '/order/' + id + '/venue/' + code.toUpperCase() + '/<' + unit + '>'
+                : '');
+        });
+    },
     renderVenues: function (venues) {
         var self = PosnicPro.salesChannels;
         var list = Array.isArray(venues) ? venues : [];
         $('#partner_venue_rows').html(list.map(self.venueRow).join(''));
+        self.fillVenueLinks();
     },
 
     /*
@@ -8361,8 +8387,16 @@ PosnicPro.salesChannels = {
                venue, or a hotel's orders split across two half-totals. */
             var code = String($row.find('.venue-code').val() || '')
                 .trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            /* A venue with a name and no code used to be skipped here, and
+               the toast still said Saved. The owner typed a hotel, pressed
+               Save, came back, and it was gone. The code is what the printed
+               QR carries, so it has to exist; derived from the name once, and
+               written back into the box so it is seen and kept. */
+            if (name && !code) {
+                code = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24);
+                $row.find('.venue-code').val(code);
+            }
             if (!name || !code) return;
-
             venues.push({
                 code: code,
                 name: name,
@@ -8437,7 +8471,34 @@ PosnicPro.salesChannels = {
         return out;
     },
 
+    /*
+     * What would stop this save from meaning what the screen shows.
+     *
+     * Returns a sentence, or null. Checked before the request rather than
+     * after, because the server normalises quietly and a venue that merges
+     * into another one on save is data lost with a green toast on top.
+     */
+    venueProblems: function () {
+        var seen = {};
+        var clash = null;
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.venue-name').val() || '').trim();
+            var code = String($row.find('.venue-code').val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            if (!name) { return; }
+            if (!code) { code = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24); }
+            if (seen[code] && !clash) { clash = [seen[code], name, code]; }
+            seen[code] = seen[code] || name;
+        });
+        if (clash) {
+            return PosnicPro.i18n.t('lang_venue_code_clash', 'Two venues would share the code "{0}": "{1}" and "{2}". Give one of them a different code.')
+                .replace('{0}', clash[2]).replace('{1}', clash[0]).replace('{2}', clash[1]);
+        }
+        return null;
+    },
     save: function () {
+        var problem = PosnicPro.salesChannels.venueProblems();
+        if (problem) { PosnicPro.alert('warning', problem); return; }
         var loader = $('.loader-view-saleschannels');
         loader.find('.loadingSpinner').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -8454,6 +8515,10 @@ PosnicPro.salesChannels = {
                 PosnicPro.local.set('online_order_approval', $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto');
                 PosnicPro.applyOrderQueueVisibility();
                 PosnicPro.alert('success', response.message || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+                /* Re-read, so the rows show exactly what the server kept.
+                   A row the server normalised or dropped must not sit on
+                   the screen looking saved until the next visit. */
+                PosnicPro.salesChannels.load();
             } else {
                 PosnicPro.alert('error', response.message);
             }
@@ -8491,6 +8556,9 @@ $(document).on('click', PosnicPro.salesChannels.ENTRIES, function () {
     PosnicPro.salesChannels.load();
 });
 
+$(document).on('input', '.venue-code, .venue-unit-label, .venue-name', function () {
+    PosnicPro.salesChannels.fillVenueLinks();
+});
 $(document).on('click', '#add_partner_venue', function () {
     $('#partner_venue_rows').append(PosnicPro.salesChannels.venueRow({}));
 });
