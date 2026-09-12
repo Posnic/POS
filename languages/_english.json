@@ -124,7 +124,7 @@
   "lang_after_5_minutes": "After 5 minutes",
   "lang_ai_anthropic": "Anthropic Claude - your own account",
   "lang_ai_assistant_greeting": "First thing it says",
-  "lang_ai_assistant_greeting_hint": "Spoken first on a live call and shown first in the chat. Leave it empty for the standard line: “Welcome to <your shop’s name>, table 5. What can I get you today?” The shop’s name is the store name on your Branch page, never the branch code. Write it in the language most of your customers use; the assistant answers each customer in whatever language they use.",
+  "lang_ai_assistant_greeting_hint": "Spoken first on a live call and shown first in the chat. Leave it empty for the standard line, which uses your own shop’s name: “Welcome to Azure Coastal Kitchen, table 5. What can I get you today?” That name is the store name on your Branch page, never the branch code. Write it in the language most of your customers use; the assistant answers each customer in whatever language they use.",
   "lang_ai_assistant_greeting_placeholder": "Hi! Tell me what you feel like, or ask what's good here.",
   "lang_ai_assistant_how_1": "A customer on your ordering page taps the spark and asks in their own words: what is good, something veg and spicy, a meal for two, \"add two of that, less spicy\".",
   "lang_ai_assistant_how_2": "Your provider's model reads your menu (names, descriptions, prices, veg marks, what is off right now), your house notes, and the customer's order so far, and answers in the customer's language.",
