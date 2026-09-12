@@ -2205,6 +2205,121 @@ dialog.assistant {
   stroke-linejoin: round;
 }
 
+.assistant-talk {
+  margin-left: auto;
+  color: var(--ink);
+}
+
+.assistant-talk svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.assistant-talk[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* While the customer is talking, the keyboard row steps aside. */
+dialog.assistant[data-voice="on"] .assistant-ask,
+dialog.assistant[data-voice="on"] .assistant-chips {
+  display: none;
+}
+
+.voice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--line);
+}
+
+.voice-orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.voice-orb[data-state="connecting"] {
+  border-style: dashed;
+}
+
+.voice-orb[data-state="listening"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.voice-orb[data-state="speaking"] {
+  background: var(--surface);
+}
+
+.voice-orb[data-state="thinking"] {
+  border-color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voice-orb[data-state="listening"] {
+    animation: orb-breathe 1.6s ease-in-out infinite;
+  }
+
+  .voice-orb[data-state="speaking"] {
+    animation: orb-talk 0.6s ease-in-out infinite;
+  }
+
+  .voice-orb[data-state="connecting"],
+  .voice-orb[data-state="thinking"] {
+    animation: orb-spin 1.2s linear infinite;
+  }
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes orb-talk {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.voice-status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.voice-stop {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+}
+
 .assistant-log {
   flex: 1 1 auto;
   min-height: 120px;

@@ -111,6 +111,8 @@ async function rememberShop() {
         /* Whether the shop opened its assistant to customers; the spark. */
         shop.assistant = branch.assistant === true;
         shop.assistantGreeting = String(branch.assistant_greeting || "");
+        /* How a customer may talk to it: "live", "turns", or not at all. */
+        shop.voice = String(branch.voice || "");
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
         shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
@@ -981,6 +983,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 notes: !!(result.data.features && result.data.features.notes),
                 assistant: !!(result.data.features && result.data.features.assistant),
                 assistant_greeting: String((result.data.features && result.data.features.assistant_greeting) || ""),
+                voice: String((result.data.features && result.data.features.voice) || ""),
                 fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
                     ? result.data.channel.fulfilment
                     : [],

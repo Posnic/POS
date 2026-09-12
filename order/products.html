@@ -249,8 +249,19 @@
             <h2 class="sheet-title assistant-title" id="assistant-title">
                 <svg class="assistant-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"></path></svg>
                 <span>Ask about the menu</span>
+                <!-- Talk instead of type: shown where the shop lets customers talk. -->
+                <button type="button" class="icon-btn assistant-talk" id="assistant-talk" aria-label="Talk to order" aria-pressed="false" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+                </button>
             </h2>
             <div class="assistant-log" id="assistant-log" role="log" aria-live="polite"></div>
+            <!-- The voice in progress: what it is doing, and the way to stop. -->
+            <div class="voice" id="voice" hidden>
+                <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>
+                <p class="voice-status" id="voice-status" role="status"></p>
+                <button type="button" class="voice-stop" id="voice-stop">Stop talking</button>
+            </div>
+            <audio id="voice-out" autoplay playsinline hidden></audio>
             <div class="assistant-chips" id="assistant-chips">
                 <button type="button" class="assistant-chip" data-ask="What do you recommend?">What do you recommend?</button>
                 <button type="button" class="assistant-chip" data-ask="Something vegetarian and spicy">Something vegetarian and spicy</button>
@@ -270,5 +281,6 @@
 
     <script src="assets/products/script.js?v=20260912-design"></script>
     <script src="assets/assistant/script.js?v=20260912-design"></script>
+    <script src="assets/assistant/voice.js?v=20260912-design"></script>
 </body>
 </html>

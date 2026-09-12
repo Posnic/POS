@@ -33,6 +33,7 @@ const itemService = new ItemService();
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 const orderingAssistant = require('../services/ordering-assistant.service');
+const voiceSession = require('../services/voice-session.service');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -258,6 +259,48 @@ class OnlineOrderingController {
       return res.status(503).json({ type: 'error', message: result.message, data: null });
     } catch (error) {
       console.error('Error in online ordering assistant:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /**
+   * Open a live voice line for one customer.
+   *
+   * The page sends its WebRTC offer; the shop's provider answers it, and
+   * the audio then flows phone to provider without us. Same doors as the
+   * typed assistant plus one more, because minutes of audio cost more than
+   * typed questions.
+   */
+  async voice(req, res) {
+    try {
+      const storeId = req.params.storeId;
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop found at this address', data: null });
+      }
+      const front = await itemService.storefront({ storeId, ...servicePointFrom(req) });
+      if (!front || !front.status) return this.respond(res, front);
+
+      const result = await voiceSession.session(req.body || {}, front.data, context);
+      if (result.status) return this.respond(res, result);
+      if (result.message === 'no_assistant' || result.message === 'no_live_voice') {
+        return res.status(403).json({
+          type: 'error',
+          message:
+            result.message === 'no_assistant'
+              ? 'This shop has not switched on the ordering assistant'
+              : 'This shop has not switched on live voice',
+          data: null,
+        });
+      }
+      if (result.message === 'Nothing to connect') {
+        return res.status(400).json({ type: 'error', message: result.message, data: null });
+      }
+      return res.status(503).json({ type: 'error', message: result.message, data: null });
+    } catch (error) {
+      console.error('Error in online ordering voice:', error);
       return res.status(500).json({ type: 'error', message: error.message, data: null });
     }
   }

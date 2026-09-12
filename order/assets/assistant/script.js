@@ -247,6 +247,7 @@
         bubble("ai", reply);
       }
       if (actions.length) await apply(actions);
+      return { reply: reply, actions: actions };
     } catch (error) {
       typing(false);
       bubble("ai", say("I could not answer just now. The menu still works the usual way."));
@@ -310,5 +311,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, state: state };
 })();

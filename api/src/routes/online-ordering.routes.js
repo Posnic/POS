@@ -30,7 +30,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/online-ordering.controller');
 const { ensureKioskKey } = require('../middleware/kiosk-key');
-const { assistantLimiter } = require('../middleware/assistant-rate-limit');
+const { assistantLimiter, voiceLimiter } = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
 
@@ -90,5 +90,13 @@ router.post('/:storeId/orders', bind(controller.createOrder));
  * client here and switched on per shop inside.
  */
 router.post('/:storeId/assistant', assistantLimiter, bind(controller.assistant));
+
+/*
+ * A live voice line with the same assistant: the page's WebRTC offer in,
+ * the provider's answer out, the audio then phone to provider without us.
+ * Anonymous like the rest, billed per minute to the shop's own account, so
+ * it has its own switch inside and its own limit here.
+ */
+router.post('/:storeId/voice', voiceLimiter, bind(controller.voice));
 
 module.exports = router;

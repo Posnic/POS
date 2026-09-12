@@ -3401,6 +3401,13 @@
                                                       placeholder="Today's special is the prawn biryani. We are a pure-veg kitchen on Tuesdays. Always offer a drink with a meal. We do not do half portions. Dishes marked spicy are genuinely hot; say so." data-t-placeholder="lang_ai_assistant_instructions_placeholder"></textarea>
                                             <small class="form-text text-muted"><lang class="lang_ai_assistant_instructions_hint">Plain sentences. The assistant follows them wherever they do not break its own rules: it only ever recommends what is on your menu at the prices on it, never promises anything about allergens, and never asks for phone numbers or payment. Up to 1,500 characters; every question carries these notes, so shorter costs less.</lang></small>
                                         </div>
+                                        <div class="form-group" id="ai_live_voice_row">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="ai_live_voice" name="ai_live_voice">
+                                                <label class="custom-control-label" for="ai_live_voice"><lang class="lang_ai_live_voice">Let customers talk to it, live</lang></label>
+                                            </div>
+                                            <small class="form-text text-muted"><lang class="lang_ai_live_voice_hint">A microphone appears beside the assistant. The customer speaks and hears it answer, can interrupt it, and it adds to the order as they talk, like a phone call with a waiter. The sound goes from the phone straight to your provider; our servers never hear it. Billed by your provider per minute of audio, which costs several times a typed question; it counts against the monthly limit above. Live voice needs an OpenAI key today. With another provider the microphone still works turn by turn, using the phone's own voice, at the price of a typed question.</lang></small>
+                                        </div>
                                         <div class="form-group">
                                             <label><lang class="lang_ai_assistant_how_title">How it works</lang></label>
                                             <ol class="small text-muted pl-3 mb-2">

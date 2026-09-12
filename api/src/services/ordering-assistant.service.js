@@ -212,15 +212,17 @@ function clean(value, max) {
  * along in the same read. Never throws; on any failure the answer is "off".
  */
 async function settingsFor(context) {
-  const off = { on: false, instructions: '', greeting: '' };
+  const off = { on: false, liveVoice: false, instructions: '', greeting: '' };
   try {
     if (!(await ai.available(context))) return off;
     const read = await _repo().resolveGroup('preferences', context);
     const values = (read && read.status && read.data && read.data.values) || {};
     const flag = values.ai_ordering_assistant;
     const on = flag === true || String(flag).trim().toLowerCase() === 'true';
+    const live = values.ai_live_voice;
     return {
       on,
+      liveVoice: on && (live === true || String(live).trim().toLowerCase() === 'true'),
       instructions: clean(values.ai_assistant_instructions, MAX_INSTRUCTIONS_CHARS),
       greeting: clean(values.ai_assistant_greeting, MAX_GREETING_CHARS),
     };
@@ -240,8 +242,15 @@ async function available(context) {
  */
 async function storefrontFeatures(context) {
   const settings = await settingsFor(context);
+  /* How the page may let a customer talk: a live line where the provider
+     can hold one and the shop said yes, turn by turn otherwise. */
+  let voice = false;
+  if (settings.on) {
+    voice = settings.liveVoice && (await ai.realtimeCapable(context)) ? 'live' : 'turns';
+  }
   return {
     assistant: settings.on,
+    voice,
     ...(settings.on && settings.greeting ? { assistant_greeting: settings.greeting } : {}),
   };
 }

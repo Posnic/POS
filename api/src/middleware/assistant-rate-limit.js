@@ -27,4 +27,20 @@ const assistantLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { assistantLimiter };
+/* A live line is a heavier thing to open than a typed question: a handful
+   a minute from one client is a person; more is a script. */
+const voiceLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'voice' }),
+  keyGenerator: perClientKey,
+  windowMs: 60 * 1000,
+  limit: 6,
+  message: {
+    type: 'error',
+    message: 'Too many voice sessions in a minute. Please wait a moment and try again.',
+    data: null,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { assistantLimiter, voiceLimiter };

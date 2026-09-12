@@ -994,6 +994,9 @@
   "List id required": [
     "src/models/setting.model.js"
   ],
+  "Live voice needs an OpenAI key": [
+    "src/services/ai.service.js"
+  ],
   "Logged out successfully": [
     "src/services/whatsapp.service.js"
   ],
@@ -1248,6 +1251,10 @@
   ],
   "Nothing to apply": [
     "src/services/coupon.service.js"
+  ],
+  "Nothing to connect": [
+    "src/services/ai.service.js",
+    "src/services/voice-session.service.js"
   ],
   "Nothing to receive - enter a quantity": [
     "src/models/receiving.model.js"
@@ -1900,6 +1907,9 @@
   "The family needs a product name.": [
     "src/services/item.service.js"
   ],
+  "The live voice service did not answer": [
+    "src/services/ai.service.js"
+  ],
   "The sale behind this invoice was not found": [
     "src/services/invoice-sync.js"
   ],
@@ -2040,7 +2050,8 @@
     "src/controllers/online-ordering.controller.js"
   ],
   "This shop has nothing on its menu yet": [
-    "src/services/ordering-assistant.service.js"
+    "src/services/ordering-assistant.service.js",
+    "src/services/voice-session.service.js"
   ],
   "This shop has reached its monthly AI spending limit": [
     "src/services/ai.service.js"
@@ -2104,6 +2115,9 @@
   ],
   "Too many sign-in attempts. Please wait ten minutes and try again, ": [
     "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many voice sessions in a minute. Please wait a moment and try again.": [
+    "src/middleware/assistant-rate-limit.js"
   ],
   "Top performer data retrieved successfully": [
     "src/models/dashboard.model.js"
@@ -2409,7 +2423,11 @@
     "src/services/po-receive-bridge.js"
   ],
   "no_assistant": [
-    "src/services/ordering-assistant.service.js"
+    "src/services/ordering-assistant.service.js",
+    "src/services/voice-session.service.js"
+  ],
+  "no_live_voice": [
+    "src/services/voice-session.service.js"
   ],
   "not valid": [
     "src/controllers/users.controller.js"
