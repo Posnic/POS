@@ -3032,6 +3032,8 @@
   "lang_variants_2": "variants",
   "lang_variants_are_for_stocked_products_this_is": "Variants are for stocked products - this is now a single service",
   "lang_vat_gst_credit_method": "VAT / GST - credit method",
+  "lang_venue_code_clash": "Two venues would share the code \"{0}\": \"{1}\" and \"{2}\". Give one of them a different code.",
+  "lang_venue_guests_scan": "Guests scan:",
   "lang_verdana": "Verdana",
   "lang_verify_title": "Verify",
   "lang_version": "Version",
