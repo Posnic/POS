@@ -473,6 +473,116 @@ describe('SalesRepository', () => {
     });
   });
 
+  describe('one counter per branch, whichever door the order came through', () => {
+    /*
+     * The bug the owner photographed: "E11000 duplicate key error ...
+     * unique_sales_id_per_license dup key: { ..., sales_id: 'S-G0YI-000027' }"
+     * on every order, from the page and from the assistant alike.
+     */
+    test("the counter is keyed by the BRANCH's licence, not by whatever the caller happens to hold", async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
+      collections.branches.findOne.mockResolvedValue({ license: FAKE_LICENSE });
+      collections.counters.findOne.mockResolvedValue({ seq: 26 });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 27 });
+
+      await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
+
+      const key = collections.counters.findOneAndUpdate.mock.calls[0][0];
+      expect(key).toMatchObject({ kind: 'sales_id', branch_key: String(FAKE_BRANCH) });
+      expect(key.license_key).toBe(String(FAKE_LICENSE));
+      expect(key.license_key).not.toBe('');
+    });
+
+    test('a counter that has fallen behind catches up in one step, and never goes backwards', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
+      collections.branches.findOne.mockResolvedValue({ license: FAKE_LICENSE });
+      /* The counter says 5; the branch has actually issued up to 27. */
+      collections.counters.findOne.mockResolvedValue({ seq: 5 });
+      collections.sales.find.mockReturnValue({
+        toArray: jest
+          .fn()
+          .mockResolvedValue([{ sales_id: 'S-G0YI-000027' }, { sales_id: 'S-G0YI-000009' }]),
+      });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 28 });
+
+      const id = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH, { reseed: true });
+
+      expect(collections.counters.updateOne).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'sales_id' }),
+        { $max: { seq: 27 } },
+        { upsert: true }
+      );
+      expect(id).toBe('S-DEV1-000028');
+    });
+
+    test('a taken bill number is taken again; the customer never sees the collision', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
+      collections.branches.findOne.mockResolvedValue({ license: FAKE_LICENSE });
+      collections.counters.findOne.mockResolvedValue({ seq: 27 });
+      collections.sales.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([{ sales_id: 'S-G0YI-000027' }]),
+      });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 28 });
+
+      const taken = Object.assign(new Error('E11000 duplicate key error'), {
+        code: 11000,
+        keyPattern: { license: 1, sales_id: 1 },
+      });
+      const col = {
+        insertOne: jest
+          .fn()
+          .mockRejectedValueOnce(taken)
+          .mockResolvedValue({ insertedId: FAKE_ID }),
+      };
+      const document = { sales_id: 'S-G0YI-000027', invoice_number: 'S-G0YI-000027' };
+
+      const result = await salesRepository.insertSaleWithFreshNumber(col, document, FAKE_BRANCH);
+
+      expect(result).toEqual({ insertedId: FAKE_ID });
+      expect(col.insertOne).toHaveBeenCalledTimes(2);
+      expect(document.sales_id).toBe('S-DEV1-000028');
+      expect(document.invoice_number).toBe('S-DEV1-000028');
+    });
+
+    test('anything that is not a duplicate bill number is raised, so one order never becomes two', async () => {
+      const sameOrderTwice = Object.assign(new Error('E11000 duplicate key error'), {
+        code: 11000,
+        keyPattern: { idempotency_key: 1 },
+      });
+      const col = { insertOne: jest.fn().mockRejectedValue(sameOrderTwice) };
+      await expect(
+        salesRepository.insertSaleWithFreshNumber(col, { sales_id: 'S-1' }, FAKE_BRANCH)
+      ).rejects.toThrow('E11000');
+      expect(col.insertOne).toHaveBeenCalledTimes(1);
+    });
+
+    test('a number that stays taken gives up rather than looping', async () => {
+      if (!collections.branches) collections.branches = mkCol();
+      if (!collections.sales) collections.sales = mkCol();
+      if (!collections.counters) collections.counters = mkCol();
+      collections.branches.findOne.mockResolvedValue({ license: FAKE_LICENSE });
+      collections.counters.findOne.mockResolvedValue({ seq: 1 });
+      collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) });
+      collections.counters.findOneAndUpdate.mockResolvedValue({ seq: 2 });
+      const taken = Object.assign(new Error('E11000 duplicate key error sales_id'), {
+        code: 11000,
+        keyPattern: { license: 1, sales_id: 1 },
+      });
+      const col = { insertOne: jest.fn().mockRejectedValue(taken) };
+      await expect(
+        salesRepository.insertSaleWithFreshNumber(col, { sales_id: 'S-1' }, FAKE_BRANCH, {
+          attempts: 3,
+        })
+      ).rejects.toThrow('E11000');
+      expect(col.insertOne).toHaveBeenCalledTimes(3);
+    });
+  });
+
   describe('bill-number uniqueness (per-till tagging)', () => {
     test('buildSalesId puts the till code between the prefix and the number', async () => {
       const id = await salesRepository.buildSalesId('SID', 45);

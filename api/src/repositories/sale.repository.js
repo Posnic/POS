@@ -7837,7 +7837,7 @@ class SalesRepository {
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
       const salesCollection = db.collection('sales');
-      const insertResult = await salesCollection.insertOne({
+      const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
         ...(idempotencyKey ? { idempotency_key: String(idempotencyKey) } : {}),
@@ -7934,7 +7934,16 @@ class SalesRepository {
         token_id: tokenId,
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
-      });
+      };
+
+      /* A number taken a moment ago is taken again, not handed to the
+         customer as a database error. */
+      const insertResult = await this.insertSaleWithFreshNumber(
+        salesCollection,
+        saleDocument,
+        branchObjectId
+      );
+      salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
 
@@ -8800,6 +8809,245 @@ class SalesRepository {
         data: [],
       };
     }
+  }
+
+  /* ------------------------------- the customer's own order, after it went */
+
+  /** One order of this branch's, by its id. Nothing wider: no list, no search. */
+  async findCustomerOrder({ branchId, orderId }) {
+    if (!mongoose.Types.ObjectId.isValid(String(orderId || ''))) return null;
+    const db = await BaseModel.getDb();
+    const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
+      ? new mongoose.Types.ObjectId(String(branchId))
+      : branchId;
+    return db.collection('sales').findOne({
+      _id: new mongoose.Types.ObjectId(String(orderId)),
+      branch_id: branchObjectId,
+    });
+  }
+
+  /*
+   * One line of an order, at a different quantity.
+   *
+   * EXACT, and it has to be. Every money field on an online order's line is
+   * linear in its quantity: the unit price, the tax, the discount and the
+   * total were each worked out per unit when the order was taken and
+   * multiplied up. Scaling a line to a new quantity therefore reproduces
+   * exactly what that order would have cost had it been placed that way - and
+   * it does it from the order's OWN stored prices, so a customer is held to
+   * the price they were quoted rather than to whatever the catalogue says by
+   * the time they change their mind.
+   */
+  _scaleOrderLine(line, was, now) {
+    if (!(was > 0) || now === was) return { ...line, item_quantity: now, quantity: now };
+    const factor = now / was;
+    const scale = (value) => round(Number(value || 0) * factor);
+    const scaled = { ...line, item_quantity: now, quantity: now };
+    for (const field of [
+      'tax_amount',
+      'item_tax',
+      'total',
+      'item_total',
+      'total_amount',
+      'item_discount',
+      'company_price_total',
+      'cgst_tax',
+      'sgst_tax',
+      'igst_tax',
+    ]) {
+      if (line[field] !== undefined) scaled[field] = scale(line[field]);
+    }
+    return scaled;
+  }
+
+  /** What the order's totals come to, from its lines. */
+  _onlineOrderTotals(lines, orderDoc) {
+    const qtyOf = (l) => Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0);
+    const unitOf = (l) => Number(l.unit_price != null ? l.unit_price : l.item_price || 0);
+    const lineTotalOf = (l) =>
+      Number(l.total != null ? l.total : l.item_total || l.total_amount || 0);
+    const subtotal = round(lines.reduce((s, l) => s + unitOf(l) * qtyOf(l), 0));
+    const tax = round(lines.reduce((s, l) => s + Number(l.tax_amount || l.item_tax || 0), 0));
+    const itemDiscount = round(lines.reduce((s, l) => s + Number(l.item_discount || 0), 0));
+    const extra = Number((orderDoc && orderDoc.extra_discount) || 0);
+    const food = round(lines.reduce((s, l) => s + lineTotalOf(l), 0) - extra);
+    const total = round(food + Number((orderDoc && orderDoc.delivery_fee) || 0));
+    return {
+      subtotal,
+      tax,
+      total,
+      discount: round(itemDiscount + extra),
+      number_of_items: lines.reduce((s, l) => s + qtyOf(l), 0),
+    };
+  }
+
+  /*
+   * The customer changed their mind about something already on the ticket.
+   *
+   * The kitchen is told the difference, line by line, through the same
+   * changes log a waiter's amendment writes, so a screen or a printer that
+   * already knows how to show "one biryani cancelled" needs nothing new.
+   */
+  async changeCustomerOrderItems(orderDoc, wanted) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+
+    const asked = new Map();
+    for (const want of Array.isArray(wanted) ? wanted : []) {
+      const id = String((want && want.item_id) || '');
+      const qty = Math.round(Number(want && want.quantity));
+      if (!id || !Number.isFinite(qty)) continue;
+      asked.set(id, Math.max(0, Math.min(20, qty)));
+    }
+    if (!asked.size) return { status: false, message: 'nothing_asked', data: null };
+
+    const onOrder = new Set(lines.map((l) => String(l.item_id || '')));
+    const unknown = [...asked.keys()].filter((id) => !onOrder.has(id));
+    if (unknown.length) {
+      return { status: false, message: 'not_on_this_order', data: { unknown } };
+    }
+
+    const changes = [];
+    const kept = [];
+    for (const line of lines) {
+      const id = String(line.item_id || '');
+      const was = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+      const now = asked.has(id) ? asked.get(id) : was;
+      if (now !== was) {
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        const moved = Math.abs(now - was);
+        changes.push({
+          item_id: id,
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: moved,
+          process: now > was ? 'add' : 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * moved),
+        });
+      }
+      if (now > 0) kept.push(this._scaleOrderLine(line, was, now));
+    }
+
+    if (!changes.length) return { status: false, message: 'nothing_changed', data: null };
+    /* Every line gone is a cancelled order, not an order of nothing. */
+    if (!kept.length) return this.cancelCustomerOrder(orderDoc);
+
+    const totals = this._onlineOrderTotals(kept, orderDoc);
+    const at = new Date();
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          items: kept,
+          changes: log,
+          subtotal: totals.subtotal,
+          sales_sub_total: totals.subtotal,
+          items_subtotal: totals.subtotal,
+          total: totals.total,
+          sales_total: totals.total,
+          items_total: totals.total,
+          tax: totals.tax,
+          discount: totals.discount,
+          number_of_items: totals.number_of_items,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'updated',
+    });
+
+    return {
+      status: true,
+      message: 'Order updated',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        items: kept.map((l) => ({
+          item_id: String(l.item_id || ''),
+          name: String(l.item_name || l.name || ''),
+          quantity: Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0),
+        })),
+        total: totals.total,
+      },
+    };
+  }
+
+  /*
+   * The whole order, called off.
+   *
+   * The record stays and is marked cancelled - a shop that cooked half of it
+   * needs to see that it existed - and every line goes to the kitchen as a
+   * cancellation, the same shape the console writes.
+   */
+  async cancelCustomerOrder(orderDoc) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const at = new Date();
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+    const changes = lines
+      .map((line) => {
+        const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+        if (!(qty > 0)) return null;
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        return {
+          item_id: String(line.item_id || ''),
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: qty,
+          process: 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * qty),
+        };
+      })
+      .filter(Boolean);
+
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    if (changes.length) log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          sale_process: 'cancelled',
+          payment_status: 'Cancelled',
+          payment_pending: 0,
+          changes: log,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'cancelled',
+    });
+
+    return {
+      status: true,
+      message: 'Order cancelled',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        cancelled: true,
+        total: 0,
+      },
+    };
   }
 
   async getFrequentItemsForBranch(branchId, limit, { SaleModel } = {}) {
@@ -10157,7 +10405,7 @@ class SalesRepository {
     }
   }
 
-  async generateSalesIdForBranch(branchIdRaw) {
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
@@ -10186,7 +10434,13 @@ class SalesRepository {
 
     void prefixLength;
     void salesCollection;
-    const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
+    /* The branch's own licence first: see nextSalesNumberForBranch. The
+       ambient one is a fallback for a branch this process cannot read. */
+    const n = await this.nextSalesNumberForBranch(
+      branchId,
+      (branchDoc && branchDoc.license) || BaseModel.license,
+      { reseed }
+    );
     return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
   }
 
@@ -10206,13 +10460,48 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw) {
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false } = {}) {
     const db = await BaseModel.getDb();
     const counters = db.collection('counters');
+
+    /*
+     * ONE COUNTER PER BRANCH, whichever door the sale came through.
+     *
+     * The licence used to be whatever the caller happened to hold, and on the
+     * customer's own ordering page there is no caller to ask: /online-ordering
+     * is public, so BaseModel.license carried whatever the last signed-in
+     * request in this process left behind - the real licence, or nothing. A
+     * branch ended up with two counters, one keyed by the licence and one by
+     * the empty string, each seeded once and each counting on alone. The
+     * moment both existed they issued the same numbers and the unique index
+     * refused the second: the customer got "E11000 duplicate key ... sales_id"
+     * where an order should have been, with a Retry that asked for the same
+     * number again.
+     *
+     * The branch's own licence is the one answer every door agrees on.
+     */
+    let license = licenseRaw;
+    if (!license && branchIdRaw) {
+      try {
+        const owner = await db.collection('branches').findOne(
+          {
+            _id: mongoose.Types.ObjectId.isValid(String(branchIdRaw))
+              ? new mongoose.Types.ObjectId(String(branchIdRaw))
+              : branchIdRaw,
+          },
+          { projection: { license: 1 } }
+        );
+        if (owner && owner.license) license = owner.license;
+      } catch (e) {
+        /* A branch that cannot be read leaves the caller's answer standing;
+           the duplicate backstop below still holds. */
+      }
+    }
+
     const key = {
       kind: 'sales_id',
       branch_key: String(branchIdRaw || ''),
-      license_key: String(licenseRaw || ''),
+      license_key: String(license || ''),
     };
 
     /* Idempotent and cheap; the unique index is what makes the concurrent
@@ -10241,6 +10530,22 @@ class SalesRepository {
       await counters
         .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
         .catch(() => {});
+    }
+
+    /*
+     * Asked for after a number came back taken: catch the counter up.
+     *
+     * A counter can sit behind the sales it is numbering - a restore that
+     * brought the sales back without the counters, or numbers issued through
+     * the second counter this method no longer creates. Adding one then walks
+     * into every taken number in turn, a failed order each time. $max only
+     * ever raises, so a number allocated concurrently cannot be undone by it.
+     */
+    if (reseed) {
+      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license);
+      if (behind > 0) {
+        await counters.updateOne(key, { $max: { seq: behind } }, { upsert: true }).catch(() => {});
+      }
     }
 
     const res = await counters.findOneAndUpdate(
@@ -10457,6 +10762,38 @@ class SalesRepository {
    * The highest number this branch has ever put on a bill, whatever the
    * prefix was at the time. Runs once per branch, to seed its counter.
    */
+  /*
+   * Insert an order, taking a fresh bill number if this one has just been taken.
+   *
+   * The till has had this since bill numbers became unique (createSaleUnique);
+   * the customer's own ordering page never did, so a collision reached the
+   * phone as "E11000 duplicate key error ... unique_sales_id_per_license",
+   * under a Retry button that asked for the very same number again. Each retry
+   * catches the counter up to the highest number the branch has actually
+   * issued, so a counter that has fallen behind is right on the next attempt
+   * rather than after as many attempts as there are taken numbers.
+   *
+   * Only a duplicate BILL NUMBER is retried. Anything else - a duplicate
+   * idempotency key above all, which means this very order is already saved -
+   * is raised, because retrying it would be how one order becomes two.
+   */
+  async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await salesCollection.insertOne(document);
+      } catch (error) {
+        if (attempt >= attempts || !this.isDuplicateSalesIdError(error)) throw error;
+        const fresh = await this.generateSalesIdForBranch(branchId, { reseed: true });
+        console.warn(
+          `[order] bill number ${document.sales_id} was already issued; taking ${fresh}`
+        );
+        document.sales_id = fresh;
+        if (document.invoice_number) document.invoice_number = fresh;
+        if (document.sale_no) document.sale_no = fresh;
+      }
+    }
+  }
+
   async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
     const db = await BaseModel.getDb();
     const asObjectId = (v) =>

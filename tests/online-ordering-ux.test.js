@@ -1052,7 +1052,19 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   /* The real page has allProducts() (global) and NOT findProduct() (inside
      the products script's closure); the harness mirrors that. */
   window.allProducts = () => Object.values(catalogue);
-  window.updateQuantity = async (id, change) => { calls.applied.push([id, change]); };
+  /* The real updateQuantity moves the order, and the sheet draws from it, so
+     the fake one has to move it too or the list on screen is a fiction. */
+  window.updateQuantity = async (id, change) => {
+    calls.applied.push([id, change]);
+    const line = cart.find((l) => String(l.id) === String(id));
+    if (line) {
+      line.quantity += change;
+      if (line.quantity <= 0) cart = cart.filter((l) => l !== line);
+    } else if (change > 0) {
+      const item = catalogue[id] || {};
+      cart.push({ id, name: item.name || id, price: item.price || 0, quantity: change });
+    }
+  };
   window.setCartItemNote = async () => {};
   /* What the page has for placing an order: the code's table, the same
      checkout a tap uses (told to stay), the shop's words and money. */
@@ -1150,10 +1162,17 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on', 'a passing error ended the call');
 
-  /* What was said, both ways, lands in the conversation. */
+  /* What was said is NOT written down. Owner: "no need to show conversation
+     as text in the chat. just hide." A customer on a call is listening, not
+     reading, and the order itself stands in the transcript's place. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'two biryani please' }) });
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.output_audio_transcript.done', transcript: 'Two Chicken Biryani, less spicy, added.' }) });
-  assert.match(document.getElementById('assistant-log').textContent, /two biryani please[\s\S]*Two Chicken Biryani, less spicy, added\./);
+  const spokenLog = document.getElementById('assistant-log').textContent;
+  assert.ok(!/two biryani please/.test(spokenLog), 'what the customer said was written into the chat');
+  assert.ok(!/less spicy, added/.test(spokenLog), 'what the assistant said was written into the chat');
+  assert.strictEqual(document.getElementById('assistant-order').hidden, false, 'the order does not stand in for the transcript');
+  /* Two, then the one the misspelt id landed on. */
+  assert.match(document.getElementById('assistant-order-list').textContent, /3×Chicken Biryani/);
 
   window.OrderingVoice.stop();
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off');
@@ -1406,10 +1425,13 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   assert.strictEqual(updates.length, 1);
   assert.deepStrictEqual(updates[0].session.audio.input.transcription, { model: 'gpt-4o-mini-transcribe', language: 'ta' });
 
-  /* Tamil shows, and the lock is not sent twice. English still shows. */
+  /* Nothing is written down either way, and the lock is not sent twice. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு சிக்கன் பிரியாணி' }) });
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'and one lime soda' }) });
-  assert.match(document.getElementById('assistant-log').textContent, /ஒரு சிக்கன் பிரியாணி[\s\S]*and one lime soda/);
+  assert.ok(
+    !/ஒரு சிக்கன் பிரியாணி|and one lime soda/.test(document.getElementById('assistant-log').textContent),
+    'the call was written into the chat'
+  );
   assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 1, 'the lock was sent again');
   window.OrderingVoice.stop();
 
@@ -1564,12 +1586,16 @@ test('the assistant can send the order to the kitchen, only on a clear yes, thro
   assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the model was not asked to say the token');
   assert.deepStrictEqual(calls.left, [], 'the page left before the token was said');
 
-  /* The model says the token; when the audio stops, the page goes to the receipt. */
+  /* The page STAYS while the line is up: the customer may want to change what
+     they have just sent, and a page that walked off to the token screen ended
+     the conversation in the middle of it. The receipt is where hanging up
+     goes. */
   await window.OrderingVoice.onEvent(done([]));
-  assert.deepStrictEqual(calls.left, [], 'the page left while the token was still being said');
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
-  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042']);
-  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off', 'the line stayed open after leaving');
+  assert.deepStrictEqual(calls.left, [], 'the page left in the middle of the call');
+  window.OrderingVoice.stop();
+  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042'], 'hanging up did not show the token screen');
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off', 'the line stayed open after hanging up');
 });
 
 test('sending to the kitchen asks for what the code did not say, and hands the rest to Review order', async () => {
@@ -1663,6 +1689,10 @@ test('the sheet carries a Review order button with the count and the total, once
   /* checkout() can stay on the page and hand back the token. */
   const db = read('indexedDB.js');
   assert.match(db, /async function checkout\(transactionId, paymentStatus = "Upi", options = \{\}\)/);
-  assert.match(db, /if \(options && options\.stay\) return \{ placed: true, token: normalizedTokenId \};/);
+  /* And the id with it: changing the order later needs the id as the proof
+     that this phone placed it, and the token beside it. */
+  assert.match(db, /if \(options && options\.stay\) \{/);
+  assert.match(db, /placed: true,\s*\n\s*token: normalizedTokenId,/);
+  assert.match(db, /saleId: String\(result\.data\.sale_id/);
   assert.ok(db.indexOf('options.stay') < db.indexOf('window.location.href = `thankyou.html?token='), 'the stay must be decided before the page leaves');
 });

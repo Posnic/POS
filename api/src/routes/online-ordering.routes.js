@@ -34,6 +34,7 @@ const {
   assistantLimiter,
   voiceLimiter,
   voiceTickLimiter,
+  placedOrderLimiter,
 } = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
@@ -110,5 +111,26 @@ router.post('/:storeId/voice', voiceLimiter, bind(controller.voice));
  * the page hangs up. See services/voice-meter.js.
  */
 router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.voiceTick));
+
+/*
+ * The order a customer has already placed, from the phone that placed it:
+ * a line at a new quantity, or the whole thing called off.
+ *
+ * Anonymous like the rest of this storefront, and holding the order is the
+ * proof - its id, which nobody guesses, and its token, which is on the
+ * customer's own screen. services/customer-order.service.js holds the rest
+ * of the rules: a billed, paid, refused, delivered or stale order is not the
+ * customer's to move, and says which of those it is.
+ */
+router.post(
+  '/:storeId/orders/:orderId/items',
+  placedOrderLimiter,
+  bind(controller.changePlacedOrder)
+);
+router.post(
+  '/:storeId/orders/:orderId/cancel',
+  placedOrderLimiter,
+  bind(controller.cancelPlacedOrder)
+);
 
 module.exports = router;

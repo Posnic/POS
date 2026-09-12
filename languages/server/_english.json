@@ -1159,6 +1159,9 @@
   "No sales data found for the period": [
     "src/models/dashboard.model.js"
   ],
+  "No shop at this address": [
+    "src/controllers/online-ordering.controller.js"
+  ],
   "No shop found at this address": [
     "src/controllers/online-ordering.controller.js",
     "src/repositories/item.repository.js"
@@ -2111,6 +2114,9 @@
   "Too many accounts created from this connection. Please wait an hour.": [
     "src/middleware/auth-rate-limit.js"
   ],
+  "Too many changes in a minute. Please wait a moment and try again.": [
+    "src/middleware/assistant-rate-limit.js"
+  ],
   "Too many invoice requests. Please wait a few minutes and try again.": [
     "src/middleware/auth-rate-limit.js"
   ],
@@ -2456,6 +2462,16 @@
   ],
   "not valid": [
     "src/controllers/users.controller.js"
+  ],
+  "not_on_this_order": [
+    "src/repositories/sale.repository.js"
+  ],
+  "nothing_asked": [
+    "src/repositories/sale.repository.js",
+    "src/services/customer-order.service.js"
+  ],
+  "nothing_changed": [
+    "src/repositories/sale.repository.js"
   ],
   "overview": [
     "src/models/dashboard.model.js"

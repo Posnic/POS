@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false, placed: "", leaving: false, leaveTimer: 0 };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false, placed: "", leaving: false, leaveTimer: 0, placedId: "" };
 
   /* ------------------------------------------------------------ the button */
 
@@ -76,6 +76,8 @@
   /* ------------------------------------------------------------- the state */
 
   function status(state, text) {
+    var a = assistant();
+    if (a && a.showOrderInstead) a.showOrderInstead(!!state);
     var panel = el("voice");
     var orb = el("voice-orb");
     var line = el("voice-status");
@@ -251,6 +253,8 @@
     var a = assistant();
     if (name === "show_order") return { ok: true, order: await cartSummary() };
     if (name === "send_to_kitchen") return sendToKitchen(args);
+    if (name === "change_placed_order") return changePlacedOrder(args);
+    if (name === "cancel_placed_order") return cancelPlacedOrder(args);
     var id = String((args && args.item_id) || "");
     var asked = String((args && args.asked) || "").replace(/\s+/g, " ").trim().slice(0, 80);
     var item = findItem(id, asked);
@@ -486,6 +490,7 @@
     }
     if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "review", order: order };
     live.placed = String(placed.token);
+    live.placedId = String(placed.saleId || "");
     var a = assistant();
     if (a && a.placedLine) a.placedLine(live.placed);
     return {
@@ -498,20 +503,115 @@
     };
   }
 
-  /* Once the token has been said, the page goes to the receipt: when the
-     audio has stopped, or a few seconds after the reply is done. */
-  function armLeave() {
-    if (live.leaving) return;
-    clearTimeout(live.leaveTimer);
-    live.leaveTimer = setTimeout(leaveNow, 6000);
+  /*
+   * The order has gone, and the customer has changed their mind.
+   *
+   * The server decides whether it is still theirs to move - billed, paid,
+   * refused, or simply too late - and names the reason so the assistant can
+   * say which it is rather than inventing one. A dish they think of AFTER
+   * sending is not a change; it is a second ticket, which the model sends
+   * with add_to_order and send_to_kitchen again.
+   */
+  async function placedOrderCall(what, body) {
+    if (!live.placedId || !live.placed) return { ok: false, reason: "nothing_placed" };
+    var branch = "";
+    try {
+      branch = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      branch = "";
+    }
+    if (!branch) return { ok: false, reason: "no_shop" };
+    try {
+      var response = await fetch(
+        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/" + encodeURIComponent(live.placedId) + "/" + what,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(Object.assign({ token: live.placed }, body || {}))
+        }
+      );
+      var answer = null;
+      try {
+        answer = await response.json();
+      } catch (e) {
+        answer = null;
+      }
+      if (!response.ok || !answer || answer.type !== "success") {
+        return { ok: false, reason: String((answer && answer.message) || "not_changed") };
+      }
+      return { ok: true, data: (answer && answer.data) || {} };
+    } catch (e) {
+      return { ok: false, reason: "not_changed" };
+    }
   }
 
-  function leaveNow() {
+  /* The cart on this phone, brought back in step with what the shop now holds,
+     so the sheet shows the order as it really is. */
+  async function matchCartTo(lines) {
+    var a = assistant();
+    if (!a || !a.apply) return;
+    var actions = [];
+    (lines || []).forEach(function (line) {
+      actions.push({ verb: "set", item_id: String(line.item_id || ""), name: String(line.name || ""), quantity: Number(line.quantity) || 0 });
+    });
+    var have = await cartSummary();
+    have.lines.forEach(function (line) {
+      var still = (lines || []).some(function (l) {
+        return String(l.item_id) === String(line.item_id);
+      });
+      if (!still) actions.push({ verb: "remove", item_id: String(line.item_id), name: String(line.name || ""), quantity: 0 });
+    });
+    if (actions.length) await a.apply(actions);
+  }
+
+  async function changePlacedOrder(args) {
+    var wanted = (args && args.items) || [];
+    if (!wanted.length) return { ok: false, reason: "nothing_asked" };
+    var asked = [];
+    for (var i = 0; i < wanted.length; i++) {
+      var id = String((wanted[i] && wanted[i].item_id) || "");
+      var found = id ? byId(id) : null;
+      if (!found) {
+        var near = nearest(String((wanted[i] && wanted[i].asked) || id.replace(/[_-]+/g, " ")), 3);
+        if (!near.length) return { ok: false, reason: "not_on_this_order", asked: id };
+        found = near[0].item;
+      }
+      asked.push({ item_id: String(found.id), quantity: Math.max(0, Math.min(20, Math.round(Number(wanted[i].quantity) || 0))) });
+    }
+    var done = await placedOrderCall("items", { items: asked });
+    if (!done.ok) return { ok: false, reason: done.reason, token: live.placed };
+    await matchCartTo(done.data.items || []);
+    var a = assistant();
+    if (a && a.actionLine) a.actionLine(say("Order changed"));
+    return { ok: true, token: live.placed, order: { lines: done.data.items || [], total: done.data.total } };
+  }
+
+  async function cancelPlacedOrder(args) {
+    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed" };
+    var done = await placedOrderCall("cancel", {});
+    if (!done.ok) return { ok: false, reason: done.reason, token: live.placed };
+    await matchCartTo([]);
+    live.placed = "";
+    live.placedId = "";
+    var a = assistant();
+    if (a && a.actionLine) a.actionLine(say("Order cancelled"));
+    return { ok: true, cancelled: true };
+  }
+
+  /* Once the token has been said, the page goes to the receipt: when the
+     audio has stopped, or a few seconds after the reply is done. */
+  /*
+   * The receipt, once the call is over.
+   *
+   * Not a moment before: the page used to walk off to the token screen as
+   * soon as the number had been said, which ended the conversation in the
+   * middle of it - and the customer who wanted to change the order they had
+   * just placed was talking to a page that had gone.
+   */
+  function leaveForReceipt() {
     if (live.leaving || !live.placed) return;
     live.leaving = true;
-    clearTimeout(live.leaveTimer);
     var token = live.placed;
-    stop();
     window.OrderingVoice.leave("thankyou.html?token=" + encodeURIComponent(token));
   }
 
@@ -549,7 +649,7 @@
           lockTamil();
           break;
         }
-        if (a && a.bubble) a.bubble("me", heard);
+        /* Not drawn: on a call the order stands in for the transcript. */
         break;
       }
       case "response.created":
@@ -557,7 +657,7 @@
         break;
       case "response.output_audio_transcript.done":
       case "response.audio_transcript.done":
-        if (ev.transcript && a && a.bubble) a.bubble("ai", String(ev.transcript).trim());
+        /* Not drawn either; the customer is listening, not reading. */
         break;
       case "response.function_call_arguments.done":
         /* Answered together at response.done; see runToolCalls. */
@@ -565,16 +665,11 @@
       case "response.done": {
         var response = ev.response || {};
         var finished = !response.status || response.status === "completed";
-        var ran = finished && live.active ? await runToolCalls(response) : false;
-        /* The reply after a placed order is the token being said; the page
-           leaves for the receipt once it has been heard. */
-        if (live.placed && !ran) armLeave();
+        if (finished && live.active) await runToolCalls(response);
         if (live.active) status("listening", say("Listening..."));
         break;
       }
-      case "output_audio_buffer.stopped":
-        if (live.placed) leaveNow();
-        break;
+
       case "error":
         if (!fatalError(ev.error)) {
           if (window.console && console.warn) console.warn("[voice] line said:", ev.error && (ev.error.message || ev.error.code));
@@ -930,6 +1025,9 @@
     live.rec = null;
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     status("", "");
+    /* An order was placed during this call: its token screen is what
+       comes next. */
+    leaveForReceipt();
   }
 
   /*
@@ -1021,5 +1119,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

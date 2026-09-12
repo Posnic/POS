@@ -261,6 +261,13 @@
                 <span>Ask about the menu</span>
             </h2>
             <div class="assistant-log" id="assistant-log" role="log" aria-live="polite"></div>
+            <!-- While the customer is talking, the order itself stands in for a
+                 transcript nobody reads back. Owner: "no need to show
+                 conversation as text in the chat. just hide." -->
+            <div class="assistant-order" id="assistant-order" hidden>
+                <h3 class="assistant-order-title" id="assistant-order-title">Your order</h3>
+                <ul class="assistant-order-list" id="assistant-order-list"></ul>
+            </div>
             <!-- The voice in progress: what it is doing, and the way to stop. -->
             <div class="voice" id="voice" hidden>
                 <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>

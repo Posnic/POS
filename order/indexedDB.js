@@ -1943,7 +1943,15 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             /* A caller with something to say first - the voice, which reads
                the token out - stays on this page and is handed the token; it
                moves to the receipt when it is done. */
-            if (options && options.stay) return { placed: true, token: normalizedTokenId };
+            if (options && options.stay) {
+                return {
+                    placed: true,
+                    token: normalizedTokenId,
+                    /* Changing this order later needs its id as well as its
+                       token; the id is what proves the caller placed it. */
+                    saleId: String(result.data.sale_id || result.data.order_id || "")
+                };
+            }
             window.location.href = `thankyou.html?token=${encodeURIComponent(normalizedTokenId)}`;
             return true;
         } else {
