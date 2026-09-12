@@ -86,6 +86,13 @@ const ALLOWED_ANONYMOUS = {
        thing a customer reads at a table. It exposes dish names, descriptions
        and prices - what the shop already prints on paper and hands out. */
     '/menu', '/:storeId/menu',
+    /* The ordering assistant: a customer asking the shop's own model about the
+       menu, from the same anonymous page. Three doors inside: the address names
+       a shop, the shop has usable AI, and the shop switched the assistant on
+       for this page (off by default, because it spends the shop's money).
+       Rate-limited per client on the route. It reads the menu and proposes;
+       it never writes an order. */
+    '/:storeId/assistant',
   ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
