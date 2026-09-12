@@ -245,6 +245,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Open source POS evaluation checklist](https://posnic.github.io/open-source-pos-evaluation-checklist.html) | Verify licensing, offline checkout, hardware, recovery and maintenance before rollout |
 | [Offline POS backup and restore checklist](https://posnic.github.io/offline-pos-backup-checklist.html) | Turn routine copies into a tested recovery process for local and self-hosted deployments |
 | [Restaurant POS opening and closing checklist](https://posnic.github.io/restaurant-pos-opening-closing-checklist.html) | Test tills, menus, printers, offline operation, reconciliation and handover for each shift |
+| [Retail POS inventory cycle count checklist](https://posnic.github.io/retail-pos-inventory-cycle-count-checklist.html) | Control stock cutoffs, blind counts, offline synchronization, variance investigation and approvals |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
