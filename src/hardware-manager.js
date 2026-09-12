@@ -859,11 +859,15 @@ try {
       return this._sendRawViaCups(printerName, buffer, docName);
     }
 
+    let rawTempDir;
     try {
-      const stamp = Date.now();
-      const tmpBin = path.join(app.getPath('temp'), `posnic_raw_${stamp}.bin`);
-      const tmpPs1 = path.join(app.getPath('temp'), `posnic_raw_${stamp}.ps1`);
-      fs.writeFileSync(tmpBin, buffer);
+      // Keep each job in a private, freshly-created directory. Predictable
+      // names in a shared temp folder can be replaced before the spooler reads
+      // them, which could send somebody else's data to the printer.
+      rawTempDir = fs.mkdtempSync(path.join(app.getPath('temp'), 'posnic-raw-'));
+      const tmpBin = path.join(rawTempDir, 'receipt.bin');
+      const tmpPs1 = path.join(rawTempDir, 'print.ps1');
+      fs.writeFileSync(tmpBin, buffer, { mode: 0o600, flag: 'wx' });
 
       const safePrinter = String(printerName).replace(/'/g, "''");
       const safeBin = tmpBin.replace(/\\/g, '\\\\');
@@ -875,15 +879,14 @@ try {
         { timeout: 20000 }
       ).toString().trim();
 
-      // Best effort: a receipt already printed should not fail because a
-      // temporary file could not be removed.
-      try { fs.unlinkSync(tmpBin); fs.unlinkSync(tmpPs1); } catch (e) { /* ignore */ }
-
       if (out.includes('OK')) return { success: true, bytes: buffer.length };
       return { success: false, error: 'The spooler did not confirm the job' };
     } catch (err) {
       console.error('[Print] raw send failed:', err.message);
       return { success: false, error: err.message };
+    } finally {
+      // A failed print must not leave receipt data in the shared temp folder.
+      try { if (rawTempDir) fs.rmSync(rawTempDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
     }
   }
 
@@ -898,13 +901,11 @@ try {
    * quote in it is an argument and not something the shell gets to read.
    */
   _sendRawViaCups(printerName, buffer, docName) {
-    const tmpBin = path.join(
-      app.getPath('temp'),
-      `posnic_raw_${Date.now()}_${Math.random().toString(16).slice(2)}.bin`,
-    );
-
+    let rawTempDir;
     try {
-      fs.writeFileSync(tmpBin, buffer);
+      rawTempDir = fs.mkdtempSync(path.join(app.getPath('temp'), 'posnic-raw-'));
+      const tmpBin = path.join(rawTempDir, 'receipt.bin');
+      fs.writeFileSync(tmpBin, buffer, { mode: 0o600, flag: 'wx' });
       const { execFileSync } = require('child_process');
       execFileSync(
         'lp',
@@ -924,7 +925,7 @@ try {
           : err.message,
       };
     } finally {
-      try { fs.unlinkSync(tmpBin); } catch (e) { /* a printed receipt must not fail on cleanup */ }
+      try { if (rawTempDir) fs.rmSync(rawTempDir, { recursive: true, force: true }); } catch (e) { /* a printed receipt must not fail on cleanup */ }
     }
   }
 

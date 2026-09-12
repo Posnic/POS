@@ -52,6 +52,11 @@ test('/order and /menu are mounted before the root API router', () => {
   assert.ok(orderAt !== -1, "app.js does not mount '/order'");
   assert.ok(menuAt !== -1, "app.js does not mount '/menu'");
   assert.ok(rootApiAt !== -1, 'the root API router mount moved; this test needs updating');
+  assert.match(
+    src,
+    /app\.use\('\/order', limiter, serveOrderPage\)/,
+    'the public order pages bypass the availability limiter',
+  );
 
   assert.ok(
     orderAt < rootApiAt,
