@@ -51,9 +51,13 @@
         </div>
         <p class="order-time">Placed <span id="orderTime">--</span></p>
 
+        <!-- A bill is a record of money that has changed hands. This appears
+             when the shop has marked the order paid, and not before. -->
+        <button type="button" class="btn-primary done-bill" id="done-bill" hidden>Download the bill</button>
+
         <div class="button-group">
             <button type="button" class="btn-primary" onclick="clearReceiptAndGo('products.html')">Order more</button>
-            <button type="button" class="btn-secondary" onclick="clearReceiptAndGo('home.html')">Finish</button>
+            <button type="button" class="btn-secondary" onclick="window.location.href='history.html'">Your orders</button>
         </div>
     </main>
 

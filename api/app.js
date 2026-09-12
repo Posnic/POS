@@ -1551,7 +1551,7 @@ if (fs.existsSync(ORDER_BUNDLE)) {
    * page must not be the one from four hours ago.
    */
   const STORE_PAGE =
-    /^\/[A-Za-z0-9]{3,6}\/((?:home|products|cart|payment|thankyou|phonepe_status|receipt|access-denied)\.html)$/;
+    /^\/[A-Za-z0-9]{3,6}\/((?:home|products|cart|payment|thankyou|history|phonepe_status|receipt|access-denied)\.html)$/;
   const PAGE_HEADERS = { headers: { 'Cache-Control': 'no-cache' } };
   const serveOrderPage = (req, res, next) => {
     const page = STORE_PAGE.exec(req.path);

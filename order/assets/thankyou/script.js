@@ -169,8 +169,54 @@ async function renderAndPrint() {
      * generatePdfFromHtmlFile stays, and is what that button will call.
      */
     void printedFlagKey;
+
+    /*
+     * The bill appears when the shop says the money is in.
+     *
+     * Asked once as the page opens and again on the way back to it, because
+     * the till is where that changes and nothing tells this page when it
+     * does. A shop that has not been asked, or an order it has never heard
+     * of, simply leaves the button hidden.
+     */
+    offerBillWhenPaid(token);
 }
 
+
+/* Does the shop say this order is paid? If so, the bill is worth having. */
+async function offerBillWhenPaid(token) {
+    const button = document.getElementById("done-bill");
+    if (!button) return;
+    const kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []).find(
+        (row) => row && String(row.token) === String(token)
+    );
+    const orderId = new URLSearchParams(window.location.search).get("order") || (kept && kept.orderId) || "";
+    const shopId = (kept && kept.shop) || (typeof knownBranchId === "function" ? await knownBranchId() : "");
+    if (!orderId || !shopId) return;
+    try {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return;
+        const body = await response.json();
+        if (!body || body.type !== "success" || !body.data || !body.data.bill_ready) return;
+        button.hidden = false;
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            try {
+                await generatePdfFromHtmlFile();
+            } catch (error) {
+                console.error("Receipt PDF generation failed:", error);
+                alert(error.message || t("Receipt PDF could not be generated."));
+            } finally {
+                button.disabled = false;
+            }
+        });
+    } catch (error) {
+        /* Offline, or a shop that cannot be reached: no bill offered, which
+           is the same as before this existed. */
+    }
+}
 
 async function generatePdfFromHtmlFile() {
 
