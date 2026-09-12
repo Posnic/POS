@@ -2206,7 +2206,15 @@ dialog.assistant {
 }
 
 .assistant-talk {
-  margin-left: auto;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
   color: var(--ink);
 }
 

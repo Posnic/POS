@@ -1153,4 +1153,23 @@ test('the wiring behind the microphone: route, limiter, allowlist, switch, conso
   assert.match(read('indexedDB.js'), /voice: String\(\(result\.data\.features && result\.data\.features\.voice\) \|\| ""\)/);
   assert.match(read('products.html'), /id="assistant-talk"/);
   assert.match(read('products.html'), /id="voice-out"/);
+  /* Beside the send arrow, not under the close button. */
+  const dom = new JSDOM(read('products.html'));
+  assert.ok(dom.window.document.querySelector('#assistant-form #assistant-talk'), 'the microphone is not in the composer row');
+  assert.ok(!dom.window.document.querySelector('#assistant-title #assistant-talk'), 'the microphone is back under the close button');
+});
+
+test('turn by turn: a refused microphone is said, not swallowed', async () => {
+  const { window, document, calls } = voicePage({ voice: 'turns', reply: { status: 200, body: {} } });
+  window.SpeechRecognition = function () {
+    this.start = () => setTimeout(() => { this.onerror({ error: 'not-allowed' }); this.onend(); }, 0);
+    this.abort = () => {};
+    this.stop = () => {};
+  };
+  window.OrderingVoice.paintTalk();
+  await window.OrderingVoice.start();
+  await settle();
+  assert.match(document.getElementById('assistant-log').textContent, /microphone was not allowed/);
+  assert.strictEqual(calls.fetch.length, 0, 'the assistant was asked with nothing heard');
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off');
 });
