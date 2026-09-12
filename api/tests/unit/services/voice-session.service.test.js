@@ -29,7 +29,7 @@ const context = { branchId: 'b1', licenseId: 'lic' };
 describe('voice-session.service', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  test('the brief carries how to speak, the fenced menu and the house notes, and the four tools', () => {
+  test('the brief carries how to speak, the fenced menu, the house notes and every tool', () => {
     const menu = assistant.menuFor(MENU);
     const brief = voice.instructionsFor(
       { store: { name: 'Azure Sea Foods', currency: '₹' } },
@@ -54,8 +54,18 @@ describe('voice-session.service', () => {
       'remove_from_order',
       'set_quantity',
       'show_order',
+      'change_placed_order',
+      'cancel_placed_order',
       'send_to_kitchen',
     ]);
+    /* An order that has already gone is the customer's to change or call off,
+       and calling it off takes their word for it. */
+    expect(voice.tools().find((t) => t.name === 'cancel_placed_order').parameters.required).toEqual(
+      ['confirmed']
+    );
+    expect(voice.tools().find((t) => t.name === 'change_placed_order').parameters.required).toEqual(
+      ['items']
+    );
     /* Sending needs the customer's yes, and the brief says when to ask. */
     const send = voice.tools().find((t) => t.name === 'send_to_kitchen');
     expect(send.parameters.required).toEqual(['confirmed']);
@@ -65,8 +75,13 @@ describe('voice-session.service', () => {
       'pickup',
       'delivery',
     ]);
-    expect(voice.VOICE_SYSTEM).toContain('Shall I send it to the kitchen?');
-    expect(voice.VOICE_SYSTEM).toContain('Only on a clear yes call send_to_kitchen');
+    /* The manner the owner asked for: no totals, one offer alongside and no
+       second, then the one question, then go. */
+    expect(voice.VOICE_SYSTEM).toContain('Anything else, or shall I send it?');
+    expect(voice.VOICE_SYSTEM).toContain('OFFER SOMETHING ALONGSIDE ONCE');
+    expect(voice.VOICE_SYSTEM).toContain('No total. Not unless they ask');
+    expect(voice.VOICE_SYSTEM).toContain('call send_to_kitchen with confirmed:true');
+    expect(voice.VOICE_SYSTEM).toContain('everyday spoken Tamil');
     expect(voice.VOICE_SYSTEM).not.toContain('tell them to tap Review order');
     for (const tool of voice.tools()) expect(tool.type).toBe('function');
   });

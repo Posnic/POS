@@ -34,6 +34,7 @@ const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 const orderingAssistant = require('../services/ordering-assistant.service');
 const voiceSession = require('../services/voice-session.service');
+const customerOrder = require('../services/customer-order.service');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -341,6 +342,54 @@ class OnlineOrderingController {
       console.error('Error in online ordering voice tick:', error);
       return res.status(500).json({ type: 'error', message: error.message, data: null });
     }
+  }
+
+  /*
+   * The order the customer already placed: changed, or called off.
+   *
+   * One handler for both, because the door is the same door - the order's id
+   * and its token, and a state that still belongs to the customer. The
+   * refusals are named rather than numbered so the assistant can say which
+   * one it is: "you have already paid, so the counter will have to do it."
+   */
+  async _actOnPlacedOrder(req, res, act) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await act(
+        { ...(req.body || {}), orderId: req.params.orderId, token: (req.body || {}).token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+
+      const said = String((result && result.message) || 'not_found');
+      if (said === 'not_found') {
+        return res.status(404).json({ type: 'error', message: said, data: null });
+      }
+      if (said === 'nothing_asked' || said === 'not_on_this_order' || said === 'nothing_changed') {
+        return res
+          .status(400)
+          .json({ type: 'error', message: said, data: (result && result.data) || null });
+      }
+      /* The order exists and is simply not the customer's to move any more. */
+      return res.status(409).json({ type: 'error', message: said, data: null });
+    } catch (error) {
+      console.error('Error acting on a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  async changePlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.change);
+  }
+
+  async cancelPlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.cancel);
   }
 
   async createOrder(req, res) {

@@ -261,6 +261,12 @@ describe('ordering-assistant.service', () => {
         { way: 'delivery', means: 'delivery', fee: 30, fee_waived_from: 500, minimum_order: 200 },
       ]);
       expect(JSON.stringify(facts)).not.toContain('M123');
+      /* What time it is where the SHOP is, so a four o'clock order can be
+         offered a cold drink and a late one cannot. Owner: "if user order
+         something in after noon ... inform we have cool drinks, fresh juice
+         and mojito like that." */
+      expect(facts.part_of_day).toMatch(/morning|afternoon|evening|late night/);
+      expect(facts.now).toMatch(/^\w+ \d{2}:\d{2}$/);
 
       const room = assistant.shopFacts({
         store: {},
@@ -274,6 +280,32 @@ describe('ordering-assistant.service', () => {
         customer_is_at: 'Royal Club, Room 123',
       });
       expect(room.status).toBeUndefined();
+    });
+
+    test("the clock is the shop's own, and the parts of the day are named", () => {
+      /* Midday UTC is half past five in the evening in Kolkata and half past
+         seven in the morning in New York: the kitchen's afternoon, not the
+         server's. */
+      const noonUtc = new Date('2026-09-12T12:00:00.000Z');
+      expect(assistant.clockAt('Asia/Kolkata', noonUtc)).toEqual({
+        day: 'Saturday',
+        time: '17:30',
+        part: 'evening',
+      });
+      expect(assistant.clockAt('America/New_York', noonUtc)).toMatchObject({
+        time: '08:00',
+        part: 'morning',
+      });
+      /* A time zone nobody recognises still answers with a part of the day. */
+      expect(assistant.clockAt('Mars/Olympus', noonUtc).part).toMatch(
+        /morning|afternoon|evening|late night/
+      );
+      expect([10, 13, 18, 23].map(assistant.partOfDay)).toEqual([
+        'morning',
+        'afternoon',
+        'evening',
+        'late night',
+      ]);
     });
 
     test('the menu splits into what can be ordered and the names of what cannot', () => {
