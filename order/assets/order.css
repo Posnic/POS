@@ -1597,6 +1597,37 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   border-color: var(--warn);
 }
 
+/* The table the code named, stated in one line with a way to change it. */
+.eating-how-known {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raised);
+}
+
+.eating-how-known-text {
+  font-weight: 600;
+}
+
+.eating-how-change {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .eating-how-missing {
   margin: 8px 0 0;
   color: var(--warn);

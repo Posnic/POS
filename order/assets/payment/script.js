@@ -34,7 +34,11 @@ const payState = {
     fulfilment: [],
     chosen: "",
     kind: "restaurant",
-    tableFromCode: ""
+    tableFromCode: "",
+    /* A room or a hotel table named by the code, described for the page. */
+    placeFromCode: "",
+    /* The customer tapped Change on a known table: ask after all. */
+    changing: false
 };
 const DEFAULT_MOBILE = "9494111161";
 
@@ -97,8 +101,45 @@ function paintFulfilment() {
     /* One way is not a question; it is chosen, and shown so it is known. */
     if (choices.length === 1) chooseFulfilment(choices[0]);
     else if (payState.chosen && choices.includes(payState.chosen)) chooseFulfilment(payState.chosen);
-    else if (payState.tableFromCode && choices.includes("dine_in")) chooseFulfilment("dine_in");
+    else if ((payState.tableFromCode || payState.placeFromCode) && choices.includes("dine_in")) chooseFulfilment("dine_in");
+    paintKnownPlace(choices);
 }
+
+/*
+ * The code already said where they are: stated, not asked.
+ *
+ * "Bringing it to table 5", with one small Change for the customer who
+ * wants it packed instead. The buttons come back the moment Change is
+ * tapped, or whenever something other than the table is chosen.
+ */
+function paintKnownPlace(choices) {
+    const known = document.getElementById("eating-how-known");
+    const list = document.getElementById("eating-how-choices");
+    const title = document.getElementById("eating-how-title");
+    if (!known || !list) return;
+    const where = payState.tableFromCode
+        ? t("Bringing it to table {table}", { table: payState.tableFromCode })
+        : payState.placeFromCode ? t("Bringing it to {place}", { place: payState.placeFromCode }) : "";
+    const settled = !!where && payState.chosen === "dine_in" && choices.includes("dine_in") && choices.length > 1 && !payState.changing;
+    const text = document.getElementById("eating-how-known-text");
+    if (text) text.textContent = where;
+    known.hidden = !settled;
+    list.hidden = settled;
+    if (title) title.hidden = settled;
+}
+
+/* Change: the question comes back, with the table still the pressed choice. */
+function askAgain() {
+    payState.changing = true;
+    paintFulfilment();
+    const first = document.querySelector('#eating-how-choices .eating-how-btn[aria-pressed="true"]') || document.querySelector("#eating-how-choices .eating-how-btn");
+    if (first) first.focus();
+}
+
+document.addEventListener("click", (event) => {
+    const change = event.target.closest ? event.target.closest("#eating-how-change") : null;
+    if (change) askAgain();
+});
 
 function chooseFulfilment(key) {
     payState.chosen = key;
@@ -114,7 +155,8 @@ function chooseFulfilment(key) {
 
     /* A table, when it is not already known from the code. */
     const tableField = document.getElementById("table-field");
-    if (tableField) tableField.hidden = !(key === "dine_in" && !payState.tableFromCode);
+    if (tableField) tableField.hidden = !(key === "dine_in" && !payState.tableFromCode && !payState.placeFromCode);
+    if (typeof paintKnownPlace === "function") paintKnownPlace(fulfilmentChoices());
     /* Somewhere to send it. */
     const delivery = document.getElementById("delivery-form");
     if (delivery) delivery.hidden = key !== "delivery";
@@ -235,6 +277,12 @@ function presetOrderType() {
     try {
         const point = window.KioskServicePoint && KioskServicePoint.read ? KioskServicePoint.read() : null;
         if (point && point.table) payState.tableFromCode = String(point.table);
+        if (point && point.venue) {
+            const place = KioskServicePoint.describe ? KioskServicePoint.describe() : null;
+            payState.placeFromCode = place && place.name
+                ? place.name + (place.unit ? ", " + (place.unit_label || "Room") + " " + place.unit : "")
+                : String(point.venue) + (point.unit ? " " + point.unit : "");
+        }
         /* A room at a partner venue is a delivery to that room, which the
            service point already describes; it reads as "to my table" here. */
         if (point && (point.table || point.venue) && !localStorage.getItem("orderType")) {

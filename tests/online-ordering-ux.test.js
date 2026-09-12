@@ -915,6 +915,77 @@ test('the wiring behind the spark: the storefront flag, the route, the switch, t
   assert.match(read('products.html'), /id="assistant"[^>]*class="sheet assistant"/, 'the sheet is missing');
 });
 
+/* ------------------------------------------- the table the code named */
+
+/** The payment page's "how would you like it" with the real painters. */
+function payPage({ table = '', fulfilment = ['dine_in', 'takeaway', 'delivery'], kind = 'restaurant' } = {}) {
+  const dom = new JSDOM(read('payment.html'), { url: 'https://shop.example/order/payment.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  const js = read('assets/payment/script.js');
+  const code = [
+    /* var, not const: a const in a vm script never reaches the sandbox global. */
+    liftConst(js, 'payState').replace('const payState', 'var payState'),
+    lift(js, 'fulfilmentChoices'),
+    lift(js, 'fulfilmentLabel'),
+    lift(js, 'orderTypeFor'),
+    lift(js, 'paintFulfilment'),
+    lift(js, 'paintKnownPlace'),
+    lift(js, 'askAgain'),
+    lift(js, 'chooseFulfilment'),
+    'function paintPayMethod() {} function paintProceed() {} function validateNumber() {}',
+    'payState.kind = ' + JSON.stringify(kind) + '; payState.fulfilment = ' + JSON.stringify(fulfilment) + '; payState.tableFromCode = ' + JSON.stringify(table) + ';',
+    'paintFulfilment();',
+  ].join('\n');
+  const sandbox = {
+    window,
+    document: window.document,
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+    Set,
+    String,
+    Array,
+    JSON,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+  return { document: window.document, box: sandbox };
+}
+
+test('a table on the code is stated, not asked; Change brings the question back', () => {
+  /* Owner: "if table number or venue already given via url (QR) then
+     details prefilled and make sure its pre selected... do we need really
+     ask first itself?" */
+  const { document, box } = payPage({ table: '5' });
+  const known = document.getElementById('eating-how-known');
+  assert.strictEqual(known.hidden, false, 'the known table is not stated');
+  assert.strictEqual(document.getElementById('eating-how-known-text').textContent, 'Bringing it to table 5');
+  assert.strictEqual(document.getElementById('eating-how-choices').hidden, true, 'the question is still asked');
+  assert.strictEqual(document.getElementById('eating-how-title').hidden, true);
+  assert.strictEqual(box.payState.chosen, 'dine_in', 'the table is not preselected');
+
+  /* The page wires the Change button to askAgain(); the harness lifts functions, not listeners. */
+  assert.ok(read('assets/payment/script.js').includes('if (change) askAgain();'), 'the Change button is not wired');
+  box.askAgain();
+  assert.strictEqual(document.getElementById('eating-how-known').hidden, true, 'Change did not bring the question back');
+  assert.strictEqual(document.getElementById('eating-how-choices').hidden, false);
+  assert.strictEqual(document.querySelector('.eating-how-btn[aria-pressed="true"]').getAttribute('data-fulfilment'), 'dine_in', 'the table is no longer the pressed choice');
+
+  box.chooseFulfilment('takeaway');
+  assert.strictEqual(document.getElementById('eating-how-known').hidden, true);
+  assert.strictEqual(document.querySelector('.eating-how-btn[aria-pressed="true"]').getAttribute('data-fulfilment'), 'takeaway');
+});
+
+test('with nothing known the question is asked, and a lone way is never a question', () => {
+  const asked = payPage({ table: '' });
+  assert.strictEqual(asked.document.getElementById('eating-how-known').hidden, true);
+  assert.strictEqual(asked.document.getElementById('eating-how-choices').hidden, false);
+  assert.strictEqual(asked.box.payState.chosen, '', 'a choice was made for a customer who said nothing');
+
+  const lone = payPage({ table: '5', fulfilment: ['dine_in'] });
+  assert.strictEqual(lone.document.getElementById('eating-how-known').hidden, true, 'one way needs no Change');
+  assert.strictEqual(lone.box.payState.chosen, 'dine_in');
+});
+
 test('no customer page fetches a script from another host', () => {
   /* Owner, after an order on the sandbox: "cant find variable: html2pdf".
      The receipt page pulled its PDF library from a CDN; the page's own
