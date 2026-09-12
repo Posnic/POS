@@ -147,7 +147,7 @@ test('every page that reaches the API also loads the channel state', () => {
   const missing = [];
   for (const page of htmlPages()) {
     const src = readBundle(page);
-    if (!src.includes('src="config.js"')) continue;
+    if (!src.includes('src="config.js')) continue;
     if (!src.includes('assets/channel-state.js')) missing.push(page);
   }
   assert.deepStrictEqual(missing, [], `pages load the API but not the channel state: ${missing}`);
@@ -653,4 +653,56 @@ test('a branch with no store id is given one the first time its settings are rea
   /* Best-effort, like the toggle repair beside it: failing to assign must
      not fail the read. */
   assert.match(heal, /catch \(assignErr\)/, 'a failed assignment would fail the whole settings read');
+});
+
+test('every local script and stylesheet carries the version tag, on both bundles', () => {
+  /*
+   * Assets are cached four hours (app.js, assetCacheHeaders). The version
+   * tag is the only thing that makes a phone ask for today's file, and the
+   * deploys rewrite it to the commit - so an asset without one is an asset
+   * a customer keeps running until the cache expires. The owner: "is it
+   * deployed to dev? when i open didnt happen."
+   */
+  const versions = new Set();
+  const bare = [];
+  const pages = htmlPages()
+    .map((p) => ['order/' + p, readBundle(p)])
+    .concat([['menu/index.html', fs.readFileSync(path.join(ROOT, 'menu', 'index.html'), 'utf8')]]);
+  for (const [name, src] of pages) {
+    for (const m of src.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)) {
+      const ref = m[1];
+      if (/^(?:https?:)?\/\//.test(ref) || !/\.(?:js|css)(?:\?|$)/.test(ref)) continue;
+      const tag = (ref.match(/[?&]v=([^&]+)/) || [])[1];
+      if (!tag) bare.push(name + ' -> ' + ref);
+      else versions.add(tag);
+    }
+  }
+  assert.deepStrictEqual(bare, [], 'assets with no version tag, cached for four hours whatever ships');
+  assert.strictEqual(versions.size, 1, 'more than one version tag in play: ' + [...versions].join(', '));
+});
+
+test('every page a customer walks through puts the shop back into the address bar', () => {
+  /* Owner: "i see develop.posnic.io/order/products.html ... its missing ABC
+     as branch. its better to keep user might refresh page or copy page." */
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+    assert.match(readBundle(page), /assets\/shop-address\.js/, 'order/' + page + ' does not keep the shop in its address');
+  }
+  assert.ok(!/shop-address\.js/.test(readBundle('index.html')), 'the arrival page manages its own address');
+});
+
+test('the server answers an inner page under a shop, and only the pages', () => {
+  const src = fs.readFileSync(APP_JS, 'utf8');
+  const literal = (src.match(/const STORE_PAGE =\s*(\/\^[^\n;]+);/) || [])[1];
+  assert.ok(literal, 'app.js no longer serves /order/AZ100/<page>.html');
+  // eslint-disable-next-line no-eval
+  const re = eval(literal);
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+    const m = re.exec('/AZ100/' + page);
+    assert.ok(m && m[1] === page, literal + ' does not serve /AZ100/' + page);
+  }
+  for (const bad of ['/AZ100/index.html', '/AZ100/assets/app.js', '/AZ100/nope.html', '/AZ100/table/5/cart.html', '/cart.html', '/toolongtobeastore/cart.html']) {
+    assert.ok(!re.test(bad), literal + ' swallows ' + bad);
+  }
+  assert.ok(src.indexOf('const STORE_PAGE') > src.indexOf("app.use('/order', orderStatic)"), 'the static mount must come first');
+  assert.match(src, /sendFile\(path\.join\(ORDER_BUNDLE, page\[1\]\), PAGE_HEADERS\)/, 'the page is not served as no-cache HTML');
 });

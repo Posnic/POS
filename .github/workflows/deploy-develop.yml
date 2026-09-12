@@ -139,6 +139,13 @@ jobs:
             echo "nginx: no passwordless sudo on this box; apply scripts/sandbox/nginx-develop.conf by hand"
           fi
           NGINX
+          # Stamp the asset version with this commit. Scripts and styles are
+          # cached four hours on purpose, and a tag that never changes means a
+          # phone that opened the menu this morning runs this morning's code
+          # until tonight. The literal in the HTML is what a checkout served
+          # straight from the tree uses; tests/bundle-deployment.test.js keeps
+          # the two in step.
+          sed -i "s/v=20260912-design/v=${GITHUB_SHA:0:8}/g" order/*.html menu/index.html
           # The customer-facing bundles. api/app.js serves these from '../menu'
           # and '../order' behind an fs.existsSync guard, so leaving them out
           # was not an error - it was a silent 404 on every /menu and /order
