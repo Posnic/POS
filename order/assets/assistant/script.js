@@ -295,6 +295,7 @@
       total += (Number(l.price) || 0) * q;
     });
     button.hidden = !count;
+    paintOrderList(lines);
     var sum = el("assistant-review-sum");
     if (!sum) return;
     if (!count) {
@@ -304,6 +305,67 @@
     var w = typeof words === "function" ? words() : { one: "item", many: "items" }; // eslint-disable-line no-undef
     var amount = typeof money === "function" ? money(total) : String(total); // eslint-disable-line no-undef
     sum.textContent = say("{n} " + (count === 1 ? w.one : w.many), { n: count }) + " · " + amount;
+  }
+
+  /*
+   * What is on the order, while the customer is talking. It stands in for the
+   * transcript, which is hidden on a call: they are listening, not reading,
+   * and the prices are on the page behind this sheet anyway.
+   */
+  function paintOrderList(lines) {
+    var box = el("assistant-order-list");
+    if (!box) return;
+    box.textContent = "";
+    if (!lines || !lines.length) {
+      var empty = document.createElement("li");
+      empty.className = "assistant-order-empty";
+      empty.textContent = say("Nothing yet");
+      box.appendChild(empty);
+      return;
+    }
+    lines.forEach(function (line) {
+      var row = document.createElement("li");
+      var qty = document.createElement("span");
+      qty.className = "assistant-order-qty";
+      qty.textContent = String(Number(line.quantity) || 0) + "×";
+      var name = document.createElement("span");
+      name.className = "assistant-order-name";
+      name.textContent = String(line.name || "");
+      row.appendChild(qty);
+      row.appendChild(name);
+      if (line.note) {
+        var note = document.createElement("small");
+        note.className = "assistant-order-note";
+        note.textContent = String(line.note);
+        row.appendChild(note);
+      }
+      /* Changed by hand, for whatever the talking got wrong. Owner: "in
+         screen show line item and can able to modify details by hand also." */
+      var less = document.createElement("button");
+      less.type = "button";
+      less.className = "assistant-order-step";
+      less.setAttribute("data-step", "-1");
+      less.setAttribute("data-id", String(line.item_id || line.id || ""));
+      less.setAttribute("aria-label", say("One less {name}", { name: line.name }));
+      less.textContent = "−";
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "assistant-order-step";
+      more.setAttribute("data-step", "1");
+      more.setAttribute("data-id", String(line.item_id || line.id || ""));
+      more.setAttribute("aria-label", say("One more {name}", { name: line.name }));
+      more.textContent = "+";
+      row.appendChild(less);
+      row.appendChild(more);
+      box.appendChild(row);
+    });
+  }
+
+  /* Talking or typing: on a call the order shows and the transcript does not. */
+  function showOrderInstead(on) {
+    var box = el("assistant-order");
+    if (box) box.hidden = !on;
+    if (on) paintReview();
   }
 
   /* The order has gone to the kitchen from the conversation. */
@@ -434,6 +496,18 @@
     if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
     var review = el("assistant-review");
     if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
+    var orderList = el("assistant-order-list");
+    if (orderList) {
+      orderList.addEventListener("click", async function (event) {
+        var step = event.target && event.target.closest ? event.target.closest(".assistant-order-step") : null;
+        if (!step) return;
+        var id = step.getAttribute("data-id");
+        var by = Number(step.getAttribute("data-step")) || 0;
+        if (!id || !by || typeof updateQuantity !== "function") return; // eslint-disable-line no-undef
+        await updateQuantity(id, by); // eslint-disable-line no-undef
+        paintReview();
+      });
+    }
     var closeButton = el("assistant-close");
     if (closeButton) closeButton.addEventListener("click", close);
     var form = el("assistant-form");
@@ -465,5 +539,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, placedLine: placedLine, leave: leave, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
 })();

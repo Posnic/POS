@@ -2643,6 +2643,93 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   text-align: center;
 }
 
+/*
+ * Talking, not chatting: while a voice line is open the transcript is hidden
+ * and the order takes its place. A customer on a call is listening, not
+ * reading, and the one thing worth looking at is what they have ordered.
+ */
+dialog.sheet[data-voice="on"] .assistant-log {
+  display: none;
+}
+
+dialog.sheet[data-voice="on"] .assistant-chips,
+dialog.sheet[data-voice="on"] .assistant-foot {
+  display: none;
+}
+
+.assistant-order {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 4px 0 0;
+}
+
+.assistant-order-title {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-order-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-order-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+
+.assistant-order-list li:last-child {
+  border-bottom: 0;
+}
+
+.assistant-order-qty {
+  min-width: 2.2em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.assistant-order-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.assistant-order-note {
+  flex: 1 1 100%;
+  order: 3;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* Changed by hand: whatever the talking got wrong, a thumb can put right. */
+.assistant-order-step {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.assistant-order-empty {
+  padding: 7px 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
 /* The way out of the conversation: the order, and the button that reviews
    and places it. The page's own order bar is under this sheet, out of reach. */
 .assistant-review {

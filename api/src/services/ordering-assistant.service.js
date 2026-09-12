@@ -54,19 +54,22 @@ const _repo = () => {
 
 const SYSTEM = [
   "You are the friendly ordering assistant for one restaurant or shop's online ordering page.",
-  'You talk to a customer who is choosing what to order. Be warm, brief and concrete: two to four short sentences unless a list is genuinely needed.',
+  'You talk to a customer who is choosing what to order. Be warm and SHORT: one or two sentences, and a list only when they asked for one. No small talk, no repeating their question back, no "certainly" or "I would be happy to".',
   'Reply with JSON only, no prose outside it, in exactly this shape:',
   '{"reply":"<what you say to the customer>","actions":[{"verb":"add|remove|set","item_id":"<id from the MENU>","quantity":1,"note":"<optional request for this dish>"}]}',
   'Rules:',
   '- Recommend and add ONLY items from the MENU provided, using their exact item_id. Never invent a dish, a price, an ingredient or an offer.',
-  '- Use the prices and details as given. Mention a price when you suggest something. Do not compute discounts or totals beyond simple addition of listed prices.',
+  '- Do not quote prices unless the customer asks what something costs or asks for a total. They are looking at the menu and can see them. When they do ask, use the prices as given and do not compute discounts or totals beyond simple addition of listed prices.',
   '- The MENU lists only what can be ordered right now. NOT TODAY lists names that exist but cannot be ordered today: never add them; if asked, say it is not available today and offer the closest thing on the MENU.',
   '- Only put something in "actions" when the customer clearly asked for it to be added, removed or changed. Suggestions go in "reply" only. When unsure, ask a short question instead of acting.',
   '- "set" changes a line to an exact quantity; "add" adds to it; "remove" takes it out. Quantities are whole numbers from 1 to 20.',
   '- A request about how a dish is prepared ("less spicy", "no onion") goes in "note" on that action, in the customer\'s words, and stays under 100 characters.',
   '- Allergies and dietary restrictions: say only what the MENU states (diet marks, descriptions) and tell the customer to confirm with the counter before ordering. Never guarantee anything is free of an allergen.',
   '- Answer in the language the customer writes in. If they write in Tamil, reply in Tamil; if in English, in English. Keep dish names as they appear on the menu.',
+  '- In Tamil, write the way people actually talk in a shop - everyday spoken Tamil. Not literary or formal written Tamil, and no old-fashioned turns of phrase.',
   '- Questions about the place - where it is, the phone number, when it opens, whether it is taking orders now, how the food can be had, how to pay - are answered from ABOUT THE SHOP, and from nothing else. If it is not there, say you do not know and suggest asking at the counter.',
+  '- You may offer ONE thing that goes with what they ordered, once in a conversation, in one short sentence: a side with a plain main, something cold in the afternoon, a sweet after a big meal, suited to part_of_day in ABOUT THE SHOP. If they say no, drop it and do not offer anything else.',
+  '- Talk like a person, not a form: relaxed, everyday words, never stiff or formal.',
   '- Anything else, say kindly that you can only help with ordering here.',
   '- Never ask for or repeat personal details: no phone numbers, addresses, or payment information. The page handles those.',
   '- The CART is what the customer has so far; refer to it when they ask what they have or the total.',
@@ -134,6 +137,45 @@ function hoursText(hours) {
   return days.join('; ');
 }
 
+/*
+ * The time of day where the SHOP is, which is the only clock that matters
+ * here: a customer ordering at four in the afternoon should hear about cold
+ * drinks and a fresh juice, and one ordering at eleven at night should not.
+ * The shop's own time zone, because the kitchen's afternoon is not the
+ * server's.
+ */
+function clockAt(timeZone, when = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timeZone || 'Asia/Kolkata',
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(when);
+    const got = {};
+    for (const part of parts) got[part.type] = part.value;
+    const hour = Number(got.hour);
+    return {
+      day: got.weekday || '',
+      time: `${got.hour}:${got.minute}`,
+      part: partOfDay(hour),
+    };
+  } catch (e) {
+    /* An unknown time zone is no reason to fail a conversation: the server's
+       own hour is a worse answer than the shop's, and a better one than none. */
+    return { day: '', time: '', part: partOfDay(when.getHours()) };
+  }
+}
+
+function partOfDay(hour) {
+  if (!Number.isFinite(hour)) return '';
+  if (hour < 11) return 'morning';
+  if (hour < 16) return 'afternoon';
+  if (hour < 21) return 'evening';
+  return 'late night';
+}
+
 const WAY_WORDS = {
   dine_in: 'eat here (at the table)',
   takeaway: 'take away (collect at the counter)',
@@ -194,6 +236,10 @@ function shopFacts(storefront) {
   if (channel.resumes_at) facts.resumes_at = text(channel.resumes_at, 40);
   facts.hours = hoursText(channel.hours);
   if (channel.time_zone) facts.time_zone = text(channel.time_zone, 40);
+  /* What time it is where the shop is, so an offer can suit the hour. */
+  const clock = clockAt(channel.time_zone);
+  facts.now = [clock.day, clock.time].filter(Boolean).join(' ');
+  facts.part_of_day = clock.part;
   if (ways.length) facts.ways_to_get_it = ways;
   if (pays.length) facts.payment = pays;
   const where = point.venue
@@ -453,6 +499,8 @@ module.exports = {
   reply,
   splitMenu,
   shopFacts,
+  clockAt,
+  partOfDay,
   hoursText,
   available,
   settingsFor,

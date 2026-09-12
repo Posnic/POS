@@ -55,4 +55,21 @@ const voiceTickLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { assistantLimiter, voiceLimiter, voiceTickLimiter };
+/* Changing an order already on the ticket is rarer than asking about the
+   menu and heavier than reading one: a handful a minute is a person changing
+   their mind, and more is something else. */
+const placedOrderLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'placed_order' }),
+  keyGenerator: perClientKey,
+  windowMs: 60 * 1000,
+  limit: 10,
+  message: {
+    type: 'error',
+    message: 'Too many changes in a minute. Please wait a moment and try again.',
+    data: null,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { assistantLimiter, voiceLimiter, voiceTickLimiter, placedOrderLimiter };

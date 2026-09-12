@@ -103,6 +103,9 @@ const ALLOWED_ANONYMOUS = {
        line past it. Nothing to read, nothing to write but the shop's own
        meter; its own limit per client. See services/voice-meter.js. */
     '/:storeId/voice/:session/tick',
+    /* The customer's own order, held by its id and its token. */
+    '/:storeId/orders/:orderId/items',
+    '/:storeId/orders/:orderId/cancel',
   ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen
