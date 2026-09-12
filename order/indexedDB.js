@@ -265,7 +265,7 @@ async function paintShop() {
             const apiBaseUrl = String(CONFIG.API_BASE_URL || "").replace(/\/$/, "");
             const src = /^(https?:|data:|blob:)/i.test(raw)
                 ? raw
-                : raw.startsWith("/") ? `${apiBaseUrl}${raw}` : `${apiBaseUrl}/${raw.replace(/^uploads\//, "uploads/")}`;
+                : raw.startsWith("/") ? `${apiBaseUrl}${raw}` : `${apiBaseUrl}/${raw}`;
             logo.addEventListener("error", () => { logo.hidden = true; }, { once: true });
             logo.src = getSafeImageUrl(src, "");
             logo.hidden = !logo.src;

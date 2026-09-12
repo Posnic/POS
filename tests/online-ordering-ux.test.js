@@ -417,8 +417,19 @@ test('the number is grouped the way it is printed', () => {
 /* --------------------------------------------------------- the words */
 
 test('the pages speak to a person at a table, not to a shopping website', () => {
-  /* Comments stripped: the pages explain what the old words were. */
-  const read = (f) => fs.readFileSync(path.join(BUNDLE, f), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  /* Comments stripped: the pages explain what the old words were. Stripped
+     until nothing changes, so a comment left behind by the first pass
+     cannot hide a word from the check. */
+  const stripComments = (html) => {
+    let out = html;
+    let before;
+    do {
+      before = out;
+      out = out.replace(/<!--[\s\S]*?-->/g, '');
+    } while (out !== before);
+    return out;
+  };
+  const read = (f) => stripComments(fs.readFileSync(path.join(BUNDLE, f), 'utf8'));
   assert.ok(!read('products.html').includes('Self-Ordering'), 'the page names the software again');
   assert.match(read('products.html'), /id="shop-name"/, 'the shop has nowhere to put its name');
   assert.ok(!read('cart.html').includes('Shopping Cart'));
