@@ -69,11 +69,37 @@ const SYSTEM = [
   '- The CART is what the customer has so far; refer to it when they ask what they have or the total.',
 ].join('\n');
 
+/**
+ * The categories of a storefront, whichever shape it arrived in.
+ *
+ * The repository answers `products`: aggregation groups with the category
+ * under `_id`. The presenter the page sees turns that into
+ * `menu.categories` with the name beside the items. The controller hands
+ * this service the repository's answer, so the raw shape is the one that
+ * matters, and the presented one is accepted so a test or a future caller
+ * cannot silently hand over an empty menu.
+ */
+function categoriesOf(storefront) {
+  if (!storefront || typeof storefront !== 'object') return [];
+  if (Array.isArray(storefront.products)) return storefront.products;
+  if (Array.isArray(storefront.categories)) return storefront.categories;
+  if (storefront.menu && Array.isArray(storefront.menu.categories))
+    return storefront.menu.categories;
+  return [];
+}
+
 /** The menu, as little of it as the model needs to talk about it well. */
 function menuFor(categories) {
   const out = [];
   for (const category of Array.isArray(categories) ? categories : []) {
-    const name = String((category && category.category_name) || (category && category.name) || '').slice(0, 60);
+    const group =
+      (category && category._id && typeof category._id === 'object' && category._id) || {};
+    const name = String(
+      (category && category.category_name) ||
+        group.category_name ||
+        (category && category.name) ||
+        ''
+    ).slice(0, 60);
     for (const item of (category && category.items) || []) {
       if (!item) continue;
       const id = String(item.id ?? item._id ?? '');
@@ -85,8 +111,12 @@ function menuFor(categories) {
         price: Number(item.price) || 0,
         ...(item.diet ? { diet: String(item.diet) } : {}),
         ...(item.available === false ? { available: false } : {}),
-        ...(item.description ? { about: String(item.description).replace(/\s+/g, ' ').slice(0, 140) } : {}),
-        ...(Array.isArray(item.served_in) && item.served_in.length ? { served: item.served_in.slice(0, 4) } : {}),
+        ...(item.description
+          ? { about: String(item.description).replace(/\s+/g, ' ').slice(0, 140) }
+          : {}),
+        ...(Array.isArray(item.served_in) && item.served_in.length
+          ? { served: item.served_in.slice(0, 4) }
+          : {}),
       });
       if (out.length >= MAX_ITEMS) return out;
     }
@@ -142,7 +172,8 @@ function tidy(answer, menu) {
     const item = known.get(id);
     if (!item) continue;
     if (verb !== 'remove' && item.available === false) continue;
-    const quantity = verb === 'remove' ? 0 : Math.min(20, Math.max(1, Math.round(Number(entry.quantity) || 1)));
+    const quantity =
+      verb === 'remove' ? 0 : Math.min(20, Math.max(1, Math.round(Number(entry.quantity) || 1)));
     const note = String(entry.note || '')
       .replace(/\s+/g, ' ')
       .trim()
@@ -189,12 +220,16 @@ async function reply(body, storefront, context) {
   if (!last || last.role !== 'customer') {
     return { status: false, message: 'Nothing was asked', data: null };
   }
-  const menu = menuFor(storefront && storefront.categories);
-  if (!menu.length) return { status: false, message: 'This shop has nothing on its menu yet', data: null };
 
+  /* The door first: a shop that has not opened the assistant gets the same
+     answer whatever its menu looks like, and nothing about the menu is
+     computed for a caller who is not allowed to ask. */
   if (!(await available(context))) {
     return { status: false, message: 'no_assistant', data: null };
   }
+  const menu = menuFor(categoriesOf(storefront));
+  if (!menu.length)
+    return { status: false, message: 'This shop has nothing on its menu yet', data: null };
 
   const known = new Set(menu.map((item) => item.id));
   const store = (storefront && storefront.store) || {};
@@ -229,4 +264,15 @@ async function reply(body, storefront, context) {
   return { status: true, data: tidied };
 }
 
-module.exports = { reply, available, tidy, menuFor, cartFor, turnsFor, SYSTEM, FEATURE, _repo };
+module.exports = {
+  reply,
+  available,
+  tidy,
+  menuFor,
+  categoriesOf,
+  cartFor,
+  turnsFor,
+  SYSTEM,
+  FEATURE,
+  _repo,
+};
