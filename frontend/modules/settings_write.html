@@ -6076,6 +6076,30 @@
                                                                 <small class="form-text text-muted"><lang class="lang_int_voice_language_hint">en-IN, ta-IN, hi-IN, en-US. A recogniser told the wrong language mishears numbers before anything else, and a number is half of every order. Leaving this on en-IN does not stop a waiter counting in Tamil or Hindi - "rendu chicken biryani" is two - and a handset can read a menu said in Tamil or Devanagari letters as well.</lang></small>
                                                             </div>
 
+                                                            <!--
+                                                                KEY ON FILE.
+
+                                                                The key is never sent back to a browser, so a saved one
+                                                                and no key looked identical here: the same open box every
+                                                                visit, with a placeholder as the only tell. Owner: "i
+                                                                saved here nothing happened. need close form have edit or
+                                                                delete symbol."
+
+                                                                The AI card answered this once already; this is the same
+                                                                answer. While a key is saved the box is folded away and
+                                                                this line stands in its place. Edit opens an empty box -
+                                                                empty means "leave the saved one alone", so typing is the
+                                                                only way to replace it. Remove says so out loud.
+                                                            -->
+                                                            <div id="voice_key_saved" class="ai-key-status" style="max-width:420px; display:none;">
+                                                                <span class="ai-key-badge"><i class="feather icon-check-circle"></i><lang class="lang_int_voice_key_on_file">Key saved</lang></span>
+                                                                <span class="ai-key-hint" id="voice_key_provider"></span>
+                                                                <span class="ai-key-actions">
+                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="voice_key_edit"><i class="feather icon-edit mr-1"></i><lang class="lang_ai_edit">Edit</lang></button>
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm" id="voice_key_remove"><i class="feather icon-x mr-1"></i><lang class="lang_ai_key_remove">Remove</lang></button>
+                                                                </span>
+                                                            </div>
+
                                                             <div class="form-group" id="voice_key_row" style="max-width:420px; display:none;">
                                                                 <label for="voice_api_key"><lang class="lang_int_voice_key">API key</lang></label>
                                                                 <input type="password" id="voice_api_key" class="form-control border-control"

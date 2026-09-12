@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "Le client demande l’annulation",
   "lang_keep_the_order": "Garder la commande",
-  "lang_cancel_it": "L’annuler"
+  "lang_cancel_it": "L’annuler",
+  "lang_int_voice_key_on_file": "Clé enregistrée",
+  "lang_int_voice_key_remove_q": "Supprimer la clé enregistrée ?",
+  "lang_int_voice_key_remove_text": "Les terminaux reviennent à la reconnaissance du téléphone jusqu'à ce qu'une nouvelle clé soit enregistrée. Votre compte chez le fournisseur n'est pas touché.",
+  "lang_int_voice_key_removed": "Clé supprimée."
 }

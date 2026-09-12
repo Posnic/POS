@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "Pelanggan minta dibatalkan",
   "lang_keep_the_order": "Pertahankan pesanan",
-  "lang_cancel_it": "Batalkan"
+  "lang_cancel_it": "Batalkan",
+  "lang_int_voice_key_on_file": "Kunci tersimpan",
+  "lang_int_voice_key_remove_q": "Hapus kunci yang tersimpan?",
+  "lang_int_voice_key_remove_text": "Perangkat kembali memakai pengenalan suara ponsel sampai kunci baru disimpan. Akun penyedia Anda tidak disentuh.",
+  "lang_int_voice_key_removed": "Kunci dihapus."
 }

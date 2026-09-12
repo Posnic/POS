@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "طلب العميل الإلغاء",
   "lang_keep_the_order": "أبقِ الطلب",
-  "lang_cancel_it": "ألغِه"
+  "lang_cancel_it": "ألغِه",
+  "lang_int_voice_key_on_file": "المفتاح محفوظ",
+  "lang_int_voice_key_remove_q": "إزالة المفتاح المحفوظ؟",
+  "lang_int_voice_key_remove_text": "ستعود الأجهزة إلى تمييز الهاتف نفسه حتى يُحفظ مفتاح جديد. لا يمس هذا حسابك لدى المزوّد.",
+  "lang_int_voice_key_removed": "أُزيل المفتاح."
 }

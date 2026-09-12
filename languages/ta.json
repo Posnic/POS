@@ -3018,5 +3018,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "வாடிக்கையாளர் ரத்து கேட்டுள்ளார்",
   "lang_keep_the_order": "ஆர்டரை வைத்திரு",
-  "lang_cancel_it": "ரத்து செய்"
+  "lang_cancel_it": "ரத்து செய்",
+  "lang_int_voice_key_on_file": "கீ சேமிக்கப்பட்டுள்ளது",
+  "lang_int_voice_key_remove_q": "சேமித்த கீயை நீக்கவா?",
+  "lang_int_voice_key_remove_text": "புதிய கீ சேமிக்கும் வரை ஹேண்ட்செட்டுகள் போனின் சொந்த அடையாளத்தையே பயன்படுத்தும். உங்கள் வழங்குநர் கணக்கில் எந்த மாற்றமும் இல்லை.",
+  "lang_int_voice_key_removed": "கீ நீக்கப்பட்டது."
 }

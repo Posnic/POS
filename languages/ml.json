@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "ഉപഭോക്താവ് റദ്ദാക്കാൻ ആവശ്യപ്പെട്ടു",
   "lang_keep_the_order": "ഓർഡർ നിലനിർത്തുക",
-  "lang_cancel_it": "റദ്ദാക്കുക"
+  "lang_cancel_it": "റദ്ദാക്കുക",
+  "lang_int_voice_key_on_file": "കീ സൂക്ഷിച്ചു",
+  "lang_int_voice_key_remove_q": "സൂക്ഷിച്ച കീ നീക്കണോ?",
+  "lang_int_voice_key_remove_text": "പുതിയ കീ സൂക്ഷിക്കുന്നതുവരെ ഹാൻഡ്‌സെറ്റുകൾ ഫോണിന്റെ സ്വന്തം തിരിച്ചറിയലിലേക്കു മടങ്ങും. നിങ്ങളുടെ ദാതാവിന്റെ അക്കൗണ്ടിന് ഒന്നും സംഭവിക്കില്ല.",
+  "lang_int_voice_key_removed": "കീ നീക്കി."
 }
