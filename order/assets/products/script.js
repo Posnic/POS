@@ -326,6 +326,10 @@
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && listening) listening.stop();
         });
+        sheet.addEventListener("close", () => {
+            openId = "";
+        });
+    })();
 
         mic.addEventListener("click", () => {
             if (listening) {

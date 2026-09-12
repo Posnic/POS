@@ -1272,6 +1272,9 @@
   "Nothing was said": [
     "src/services/voice-intent.service.js"
   ],
+  "Nothing was said": [
+    "src/services/voice-intent.service.js"
+  ],
   "Online ordering is not available for this shop.": [
     "src/utils/online-ordering.js"
   ],

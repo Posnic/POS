@@ -667,6 +667,39 @@
     watchSections();
   }
 
+  /**
+   * The way in, when there is one.
+   *
+   * A menu is read-only by design, and this is the one thing on it that
+   * leads anywhere: a single bar at the bottom, only while the shop is
+   * actually taking orders. It keeps the table or room the printed code
+   * named, so a customer who scanned at table five lands on the ordering
+   * page already at table five.
+   */
+  function offerOrdering(channel) {
+    var bar = el("order-cta");
+    var link = el("order-link");
+    if (!bar || !link) return;
+
+    var taking = channel.accepting === true && channel.mode !== "menu";
+    bar.hidden = !taking;
+    document.body.classList.toggle("can-order", taking);
+    if (!taking) return;
+
+    var point = readUrl();
+    var href = "/order/";
+    if (point.store) {
+      href += encodeURIComponent(point.store);
+      if (point.table) {
+        href += "/table/" + encodeURIComponent(point.table);
+      } else if (point.venue) {
+        href += "/venue/" + encodeURIComponent(point.venue);
+        if (point.unit) href += "/" + encodeURIComponent(point.unit);
+      }
+    }
+    link.setAttribute("href", href);
+  }
+
   function showState(title, detail) {
     var box = el("state");
     box.innerHTML = "<strong></strong><span></span>";
