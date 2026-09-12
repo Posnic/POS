@@ -3380,6 +3380,14 @@
                                         <small class="form-text text-muted"><lang class="lang_ai_cap_hint">The most this may spend from your account in a month. We stop before the call, not after. Your provider's own dashboard is the final word on the bill.</lang></small>
                                     </div>
 
+                                    <div class="form-group" id="ai_assistant_row" style="max-width:460px; display:none;">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="ai_ordering_assistant" name="ai_ordering_assistant">
+                                            <label class="custom-control-label" for="ai_ordering_assistant"><lang class="lang_ai_ordering_assistant">Let customers ask the assistant on your online ordering page</lang></label>
+                                        </div>
+                                        <small class="form-text text-muted"><lang class="lang_ai_ordering_assistant_hint">A spark appears on your ordering page. Customers ask in their own words, and the assistant answers from your menu and can add to their order. It never places or pays. Every question is billed to your account above, within the monthly limit, and it is off until you switch it on.</lang></small>
+                                    </div>
+
                                     <div class="form-group" id="ai_spend_row" style="max-width:460px; display:none;">
                                         <label><lang class="lang_ai_spent">Spent this month</lang></label>
                                         <div id="ai_spend_table" class="small text-muted"></div>
@@ -5919,7 +5927,9 @@
                                                                 <label for="voice_provider"><lang class="lang_int_voice_provider">Who listens</lang></label>
                                                                 <select id="voice_provider" class="form-control border-control">
                                                                     <option value="device"><lang class="lang_int_voice_device">The phone itself - free, works offline</lang></option>
+                                                                    <option value="deepgram"><lang class="lang_int_voice_deepgram">Deepgram - your own account, cheapest</lang></option>
                                                                     <option value="openai"><lang class="lang_int_voice_openai">OpenAI Whisper - your own account</lang></option>
+                                                                    <option value="assembly"><lang class="lang_int_voice_assembly">AssemblyAI - your own account, best with accents</lang></option>
                                                                     <option value="google"><lang class="lang_int_voice_google">Google Speech-to-Text - your own account</lang></option>
                                                                     <option value="off"><lang class="lang_int_voice_off">Off - no microphone button</lang></option>
                                                                 </select>
@@ -5929,7 +5939,7 @@
                                                                 <label for="voice_language"><lang class="lang_int_voice_language">Language</lang></label>
                                                                 <input type="text" id="voice_language" class="form-control border-control"
                                                                     maxlength="20" placeholder="en-IN" data-t-placeholder="lang_en_in" autocomplete="off">
-                                                                <small class="form-text text-muted"><lang class="lang_int_voice_language_hint">en-IN, ta-IN, hi-IN, en-US. A recogniser told the wrong language mishears numbers before anything else, and a number is half of every order.</lang></small>
+                                                                <small class="form-text text-muted"><lang class="lang_int_voice_language_hint">en-IN, ta-IN, hi-IN, en-US. A recogniser told the wrong language mishears numbers before anything else, and a number is half of every order. Leaving this on en-IN does not stop a waiter counting in Tamil or Hindi - "rendu chicken biryani" is two - and a handset can read a menu said in Tamil or Devanagari letters as well.</lang></small>
                                                             </div>
 
                                                             <div class="form-group" id="voice_key_row" style="max-width:420px; display:none;">

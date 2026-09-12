@@ -13,9 +13,18 @@
  * The handset never learns which provider was used or what it cost. It sends
  * a clip and gets words back.
  *
- * Adding a provider means adding one entry to PROVIDERS. Each is given the
- * audio and the key and returns text; nothing else about the shape of the
- * request reaches the caller.
+ * Adding a provider means adding one entry to PROVIDERS and one value to
+ * CHOICES in voice-settings.js. Each is given the audio and the key and
+ * returns text; nothing else about the shape of the request reaches the
+ * caller, so no provider can leak its identity to a handset.
+ *
+ * Four now, and they are not ranked. A shop picks on what it already has an
+ * account with, what its dining room sounds like, and what it costs:
+ *
+ *   deepgram  one call, the cheapest, and the fastest to answer
+ *   openai    one call, takes browser audio as it arrives, no project setup
+ *   assembly  upload, start, poll - the slowest, and the strongest on accents
+ *   google    one call, but a project and a region to set up first
  */
 
 const SettingsRepository = require('../repositories/settings.repository');
@@ -42,6 +51,10 @@ const _repo = () => {
 const MAX_SECONDS = 20;
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 20000;
+/* How often a job that has to be polled is asked whether it is done. Short
+   enough that a fast answer is not sat on, long enough not to spend the
+   waiter's wait on round trips. */
+const POLL_MS = 700;
 
 /**
  * One provider: given audio and a key, return what was said.
@@ -109,7 +122,123 @@ const PROVIDERS = {
         .join(' ')
     ).trim();
   },
+
+  /*
+   * Deepgram, nova-2. The cheapest of the four by a distance and the fastest:
+   * one call, the audio goes in the body as it arrived, words come straight
+   * back. No upload step and nothing to poll.
+   */
+  async deepgram({ audio, mimeType, language, key, phrases }) {
+    const query = new URLSearchParams({
+      model: 'nova-2',
+      /* Numerals as digits and sentences with punctuation. A waiter says
+         "two", and "2" is one less thing for the parser to work out. */
+      smart_format: 'true',
+      punctuate: 'true',
+    });
+    if (language) query.set('language', language);
+    /*
+     * The shop's own dish names, repeated as one parameter each - which is the
+     * shape this API takes them in, unlike the other three.
+     *
+     * The boost suffix is deliberately mild for the same reason Google's is:
+     * enough to prefer a real dish over the English word that sounds like it,
+     * not enough to hear a dish in a sentence that had none.
+     */
+    for (const phrase of (phrases || []).slice(0, 100)) query.append('keywords', `${phrase}:2`);
+
+    const response = await fetch(`https://api.deepgram.com/v1/listen?${query}`, {
+      method: 'POST',
+      /* `Token`, not `Bearer`. Getting this wrong is a 401 that reads exactly
+         like a shop having typed its key in wrongly. */
+      headers: { authorization: `Token ${key}`, 'content-type': mimeType || 'audio/webm' },
+      body: audio,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`provider answered ${response.status}`);
+    const body = await response.json();
+    const channel = ((body.results || {}).channels || [])[0] || {};
+    return String(((channel.alternatives || [])[0] || {}).transcript || '').trim();
+  },
+
+  /*
+   * AssemblyAI. Three calls rather than one, because it has no synchronous
+   * endpoint: the clip is uploaded, a job is started, and the job is polled
+   * until it finishes. A spoken order is a few seconds of audio and comes back
+   * in a few more, which is inside the budget a waiter will stand still for -
+   * but it IS the slowest of the four, and that is the trade for its accent
+   * handling.
+   */
+  async assembly({ audio, language, key, phrases }) {
+    const auth = { authorization: key };
+
+    const upload = await fetch('https://api.assemblyai.com/v2/upload', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/octet-stream' },
+      body: audio,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!upload.ok) throw new Error(`provider answered ${upload.status}`);
+    const uploaded = await upload.json();
+
+    const started = await fetch('https://api.assemblyai.com/v2/transcript', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        audio_url: uploaded.upload_url,
+        language_code: assemblyLanguage(language),
+        ...(phrases && phrases.length
+          ? { word_boost: phrases.slice(0, 1000), boost_param: 'default' }
+          : {}),
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!started.ok) throw new Error(`provider answered ${started.status}`);
+    const job = await started.json();
+    if (!job.id) throw new Error('provider started no job');
+
+    /* Polled until it is done or the budget runs out. The deadline is the
+       same TIMEOUT_MS every other provider gets, counted across the whole
+       thing rather than per call, so a slow queue cannot outlast a waiter. */
+    const deadline = Date.now() + TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+      const poll = await fetch(`https://api.assemblyai.com/v2/transcript/${job.id}`, {
+        headers: auth,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!poll.ok) throw new Error(`provider answered ${poll.status}`);
+      const state = await poll.json();
+      if (state.status === 'completed') return String(state.text || '').trim();
+      if (state.status === 'error') throw new Error(state.error || 'provider failed the job');
+    }
+    throw new Error('provider did not finish in time');
+  },
 };
+
+/*
+ * What AssemblyAI calls a language.
+ *
+ * It takes `en`, `en_us`, `en_au`, `en_uk`, `hi`, `ta` and so on - underscores,
+ * and NO `en_in`. The default this whole feature is tuned for is en-IN, so the
+ * obvious translation of it is a value the API refuses, which would fail every
+ * request for the commonest setting in the estate. Indian English falls back
+ * to plain `en`, which is the global model and the right answer for it.
+ */
+function assemblyLanguage(tag) {
+  const said = String(tag || '')
+    .trim()
+    .toLowerCase()
+    .replace('-', '_');
+  if (!said) return 'en';
+  const KNOWN = ['en_us', 'en_au', 'en_uk'];
+  if (KNOWN.includes(said)) return said;
+  /* Any other English, Indian included, is the global English model. */
+  if (said === 'en' || said.startsWith('en_')) return 'en';
+  /* Everything else goes as its bare language: ta-IN is Tamil, not a Tamil
+     that only exists in India as far as this provider is concerned. */
+  return said.split('_')[0];
+}
 
 /**
  * What this branch has configured.
@@ -226,4 +355,13 @@ async function transcribe(request, context) {
   }
 }
 
-module.exports = { transcribe, settingsFor, _repo, PROVIDERS, MAX_SECONDS, MAX_BYTES };
+module.exports = {
+  transcribe,
+  settingsFor,
+  _repo,
+  PROVIDERS,
+  assemblyLanguage,
+  MAX_SECONDS,
+  MAX_BYTES,
+  POLL_MS,
+};

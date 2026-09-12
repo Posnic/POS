@@ -75,6 +75,11 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'rememberShop'),
     lift(src, 'money'),
     lift(src, 'words'),
+    'const STORE_ADDRESS_KEY = "posnic_store";',
+    lift(src, 'storeAddressFromRow'),
+    lift(src, 'rememberStoreAddress'),
+    lift(src, 'knownBranchId'),
+    lift(src, 'recoverDefaultStore'),
     lift(src, 'placeLabel'),
     lift(src, 'paintShop'),
     lift(src, 'chargeFor'),
@@ -452,7 +457,7 @@ test('a restaurant line takes a note for the kitchen; a shop line does not', asy
   await box.renderCart();
   const row = document.querySelector('.cart-item');
   assert.strictEqual(row.querySelector('.item-note').textContent, 'less spicy');
-  assert.strictEqual(row.querySelector('.line-note-btn').textContent, 'Edit note');
+  assert.strictEqual(row.querySelector('.line-note-btn').textContent, 'Edit request');
   assert.strictEqual(document.getElementById('order-note-label').textContent, 'A note for the kitchen');
 
   const shopPage = page('cart.html', {
@@ -678,4 +683,337 @@ test('a shop is searched, not a menu, and is not asked about veg', async () => {
   await kitchen.box.paintShop();
   assert.strictEqual(kitchen.document.getElementById('product-search').placeholder, 'Search the menu');
   assert.strictEqual(kitchen.document.getElementById('order-filter-veg').hidden, false);
+});
+
+/* ------------------------------------------------- the photo is the top */
+
+test('the photo is the top of the sheet, edge to edge, on both pages', () => {
+  /* Owner, with a screenshot: the picture had been inset with white around
+     it; "previously you made top corners with image. it was good in mobile.
+     please change back." Both pages, or the two sheets drift apart. */
+  const menuCss = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
+  const orderCss = read('assets/order.css');
+  for (const [name, css] of [['menu', menuCss], ['order', orderCss]]) {
+    const img = css.match(/\.sheet-strip img\s*\{([^}]*)\}/);
+    assert.ok(img, name + ': no rule for the photos in the strip');
+    assert.match(img[1], /flex:\s*0 0 100%/, name + ': a photo no longer fills the sheet');
+    assert.ok(!/border-radius/.test(img[1]), name + ': the photo has its own corners again instead of the sheet\'s');
+    const strip = css.match(/\.sheet-strip\s*\{([^}]*)\}/);
+    assert.ok(!/padding:\s*0 12px/.test(strip[1]), name + ': the strip is inset again');
+    const handle = css.match(/\.sheet-handle\s*\{([^}]*)\}/);
+    assert.match(handle[1], /position:\s*absolute/, name + ': the handle pushes the photo down from the top');
+    const gallery = css.match(/\.sheet-gallery\s*\{([^}]*)\}/);
+    assert.ok(gallery && !/-4px/.test(gallery[1]), name + ': the gallery still carries the old negative margin');
+  }
+  assert.match(read('products.html'), /id="dish-gallery" class="sheet-gallery"/, 'the order page gallery lost the class the shared rules key on');
+});
+
+/* ------------------------------------------------ the shop's address */
+
+test('a browser with a stale branch row still knows which shop it is in', async () => {
+  /* Owner, with a screenshot of the cart behind "Unable to reach the server,
+     Product sync failed (404): No shop found at this address": the cart had
+     asked for /online-ordering/undefined. His browser met the shop through
+     an older bundle whose branch row had no id. */
+  const stale = page('cart.html', { branch: { name: 'Azure', kind: 'restaurant' } });
+  delete stale.box.getData;
+  stale.box.getData = async (store) => (store === 'branch' ? [{ store_id: 'AZ100', name: 'Azure' }] : []);
+  assert.strictEqual(await stale.box.knownBranchId(), 'AZ100', 'a legacy row key is not read');
+
+  const kept = page('cart.html', {});
+  kept.box.getData = async () => [];
+  kept.box.localStorage = { getItem: (k) => (k === 'posnic_store' ? 'KC200' : null), setItem() {}, removeItem() {} };
+  assert.strictEqual(await kept.box.knownBranchId(), 'KC200', 'the address kept from the last load is not read');
+
+  const nothing = page('cart.html', {});
+  nothing.box.getData = async () => [];
+  assert.strictEqual(await nothing.box.knownBranchId(), '', 'an unknown shop should be empty, never "undefined"');
+});
+
+test('the cart and the payment page never refresh with an address they do not have', () => {
+  const cart = read('assets/cart/script.js');
+  assert.ok(!cart.includes('branches[0]?.id'), 'the cart still reads the row directly');
+  assert.match(cart, /const branchId = await knownBranchId\(\);\s*if \(branchId\) await fetchAndStoreBranch/, 'the cart refreshes without an address');
+  const pay = read('assets/payment/script.js');
+  assert.ok(!pay.includes('branches[0]?.id'), 'the payment page still reads the row directly');
+  const db = read('indexedDB.js');
+  assert.match(db, /if \(!branchId\) \{[\s\S]{0,400}return false;/, 'fetchAndStoreBranch still asks the server for "undefined"');
+  assert.ok(!/branches\[0\]\.id/.test(db), 'indexedDB.js still reads the row directly somewhere');
+});
+
+test('"null" left in the note box by an older build is read as nothing', async () => {
+  const { document, box } = page('cart.html', { cart: [{ id: 'p1', name: 'Dal', price: 100, quantity: 1 }], branch: { kind: 'restaurant', notes: true } });
+  box.localStorage = { getItem: (k) => (k === 'note' ? 'null' : null), setItem() {}, removeItem() {} };
+  await box.renderCart(await box.getCartData());
+  assert.strictEqual(document.getElementById('order-note').value, '', 'the word "null" is shown as the note');
+});
+
+test('a dish says in plain words that a request can be made on it', async () => {
+  const { document, box } = page('cart.html', { cart: [{ id: 'p1', name: 'Dal', price: 100, quantity: 1 }], branch: { kind: 'restaurant', notes: true } });
+  await box.rememberShop();
+  await box.renderCart(await box.getCartData());
+  assert.match(document.querySelector('.line-note-btn').textContent, /less spicy/i, 'the line does not invite a request');
+  assert.match(read('products.html'), /Any request for this dish\?/);
+  assert.match(read('cart.html'), /Any request for this dish\?/);
+});
+
+test('a shop address the server no longer knows is recovered from the origin default, not walled off', async () => {
+  /* The sandbox was re-seeded overnight and came back as FJ5AF; the owner's
+     browser still remembered ABC123. Every refresh was a 404 in a wall. */
+  const { box } = page('cart.html', {});
+  box.CONFIG = { API_BASE_URL: '' };
+  const asked = [];
+  box.fetch = async (url) => {
+    asked.push(url);
+    return { ok: true, status: 200, json: async () => ({ type: 'success', data: { store: { id: 'FJ5AF', name: 'Develop Sandbox Store' } } }) };
+  };
+  assert.strictEqual(await box.recoverDefaultStore('ABC123'), 'FJ5AF');
+  assert.deepStrictEqual(asked, ['/online-ordering'], 'the origin default is asked for at its own address');
+  assert.strictEqual(await box.recoverDefaultStore('FJ5AF'), '', 'the dead address itself is never offered back');
+  box.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
+  assert.strictEqual(await box.recoverDefaultStore('ABC123'), '', 'no default is no recovery, quietly');
+
+  const db = read('indexedDB.js');
+  assert.match(db, /response\.status === 404 && !options\?\.recovered/, 'a 404 for a remembered shop no longer tries the origin default');
+  assert.match(db, /await forgetShop\(\);\s*return fetchAndStoreBranch\(next, redirect, \{ \.\.\.options, recovered: true \}\)/, 'the dead shop is not forgotten before the new one is loaded');
+});
+
+/* ------------------------------------------------------ the assistant */
+
+/**
+ * The products page with the assistant script running, a shop flag, and a
+ * server that answers what the test says.
+ */
+function assistantPage({ assistant = true, reply } = {}) {
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
+  const { window } = dom;
+  const calls = { fetch: [], updateQuantity: [], notes: [] };
+  let cart = [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 1 }];
+  window.shop = { assistant, name: 'Azure' };
+  window.CONFIG = { API_BASE_URL: '' };
+  window.knownBranchId = async () => 'AZ100';
+  window.getCartData = async () => JSON.parse(JSON.stringify(cart));
+  window.updateQuantity = async (id, change) => {
+    calls.updateQuantity.push([id, change]);
+    const line = cart.find((l) => String(l.id) === String(id));
+    if (line) line.quantity += change;
+    else cart.push({ id, name: id, price: 0, quantity: change });
+    cart = cart.filter((l) => l.quantity > 0);
+  };
+  window.setCartItemNote = async (id, note) => { calls.notes.push([id, note]); };
+  window.fetch = async (url, init) => {
+    calls.fetch.push({ url, body: JSON.parse(init.body) });
+    const answer = typeof reply === 'function' ? reply(calls.fetch.length) : reply;
+    return { ok: answer.status < 400, status: answer.status, json: async () => answer.body };
+  };
+  /* <dialog> is not fully implemented in jsdom; the open flag is enough. */
+  window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+  window.eval(read('assets/assistant/script.js'));
+  window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  return { window, document: window.document, calls, cart: () => cart };
+}
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+test('the spark is drawn only where the shop opened its assistant', () => {
+  const off = assistantPage({ assistant: false, reply: { status: 200, body: {} } });
+  assert.strictEqual(off.document.getElementById('ask-ai').hidden, true);
+  const on = assistantPage({ assistant: true, reply: { status: 200, body: {} } });
+  assert.strictEqual(on.document.getElementById('ask-ai').hidden, false);
+  /* And follows the shop when it changes under the page. */
+  on.window.shop.assistant = false;
+  on.document.dispatchEvent(new on.window.Event('posnic:shop'));
+  assert.strictEqual(on.document.getElementById('ask-ai').hidden, true);
+});
+
+test('a question goes to the shop with the conversation and the order, and the answer is applied through the same code as a tap', async () => {
+  const { window, document, calls, cart } = assistantPage({
+    reply: {
+      status: 200,
+      body: {
+        type: 'success',
+        data: {
+          reply: 'Two Chicken Biryani, less spicy, coming up.',
+          actions: [
+            { verb: 'add', item_id: 'm1', name: 'Chicken Biryani', quantity: 2, note: 'less spicy' },
+            { verb: 'remove', item_id: 'd1', name: 'Fresh Lime Soda', quantity: 0 },
+          ],
+        },
+      },
+    },
+  });
+  document.getElementById('ask-ai').click();
+  assert.strictEqual(document.getElementById('assistant').open, true);
+  assert.match(document.getElementById('assistant-log').textContent, /Tell me what you feel like/, 'no greeting');
+
+  await window.OrderingAssistant.send('Two biryani, less spicy, and drop the soda');
+  await settle();
+
+  assert.strictEqual(calls.fetch.length, 1);
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/assistant');
+  assert.deepStrictEqual(calls.fetch[0].body.messages, [{ role: 'user', text: 'Two biryani, less spicy, and drop the soda' }]);
+  assert.deepStrictEqual(calls.fetch[0].body.cart, [{ id: 'd1', quantity: 1, note: '' }]);
+
+  assert.deepStrictEqual(calls.updateQuantity, [['m1', 2], ['d1', -1]], 'the order was not changed through updateQuantity');
+  assert.deepStrictEqual(calls.notes, [['m1', 'less spicy']]);
+  assert.deepStrictEqual(cart().map((l) => [l.id, l.quantity]), [['m1', 2]]);
+
+  const log = document.getElementById('assistant-log').textContent;
+  assert.match(log, /Two Chicken Biryani, less spicy, coming up\./);
+  assert.match(log, /Added 2 × Chicken Biryani/);
+  assert.match(log, /Request noted: less spicy/);
+  assert.match(log, /Removed Fresh Lime Soda/);
+  assert.strictEqual(document.getElementById('assistant-chips').hidden, true, 'the starter chips stay after the first question');
+  /* The next turn carries the whole conversation. */
+  assert.deepStrictEqual([...window.OrderingAssistant.state.messages].map((m) => m.role), ['user', 'assistant']);
+});
+
+test('a shop that switched it off since the page loaded takes the spark away; a busy minute and a bad day keep the menu working', async () => {
+  const off = assistantPage({ reply: { status: 403, body: { type: 'error', message: 'off' } } });
+  await off.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.strictEqual(off.document.getElementById('ask-ai').hidden, true);
+  assert.match(off.document.getElementById('assistant-log').textContent, /not available at this shop/);
+
+  const busy = assistantPage({ reply: { status: 429, body: { type: 'error', message: 'slow down' } } });
+  await busy.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.match(busy.document.getElementById('assistant-log').textContent, /lot of questions/);
+  assert.strictEqual(busy.window.OrderingAssistant.state.messages.length, 0, 'a refused turn stays in the conversation');
+
+  const down = assistantPage({ reply: { status: 503, body: { type: 'error', message: 'cap' } } });
+  await down.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.match(down.document.getElementById('assistant-log').textContent, /menu still works/);
+  assert.deepStrictEqual(down.calls.updateQuantity, []);
+});
+
+test('the reply is written as text, never as markup', async () => {
+  const { window, document } = assistantPage({
+    reply: { status: 200, body: { type: 'success', data: { reply: '<img src=x onerror=alert(1)> Try the <b>biryani</b>', actions: [] } } },
+  });
+  await window.OrderingAssistant.send('hi');
+  await settle();
+  assert.strictEqual(document.querySelectorAll('#assistant-log img, #assistant-log b').length, 0);
+  assert.match(document.getElementById('assistant-log').textContent, /<b>biryani<\/b>/);
+});
+
+test('the wiring behind the spark: the storefront flag, the route, the switch, the console', () => {
+  const repo = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
+  assert.match(repo, /assistant: await orderingAssistant\.available\(/, 'the storefront does not say whether the assistant is available');
+  assert.match(repo, /async storefrontContext\(/, 'a store address cannot be turned into a settings context');
+  const routes = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'routes', 'online-ordering.routes.js'), 'utf8');
+  assert.match(routes, /router\.post\('\/:storeId\/assistant', assistantLimiter, bind\(controller\.assistant\)\)/, 'the turn endpoint is missing or unlimited');
+  const groups = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'services', 'settings-groups.js'), 'utf8');
+  assert.match(groups, /'ai_ordering_assistant'/, 'the shop has no switch for the ordering page');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  assert.match(html, /id="ai_ordering_assistant"/, 'the console has no switch');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /ai_ordering_assistant: \$\('#ai_ordering_assistant'\)\.is\(':checked'\) \? 'true' : 'false'/, 'the switch is not saved');
+  assert.match(read('indexedDB.js'), /assistant: !!\(result\.data\.features && result\.data\.features\.assistant\)/, 'the page never stores the flag');
+  assert.match(read('products.html'), /id="assistant"[^>]*class="sheet assistant"/, 'the sheet is missing');
+});
+
+/* ------------------------------------------- the table the code named */
+
+/** The payment page's "how would you like it" with the real painters. */
+function payPage({ table = '', fulfilment = ['dine_in', 'takeaway', 'delivery'], kind = 'restaurant' } = {}) {
+  const dom = new JSDOM(read('payment.html'), { url: 'https://shop.example/order/payment.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  const js = read('assets/payment/script.js');
+  const code = [
+    /* var, not const: a const in a vm script never reaches the sandbox global. */
+    liftConst(js, 'payState').replace('const payState', 'var payState'),
+    lift(js, 'fulfilmentChoices'),
+    lift(js, 'fulfilmentLabel'),
+    lift(js, 'orderTypeFor'),
+    lift(js, 'paintFulfilment'),
+    lift(js, 'paintKnownPlace'),
+    lift(js, 'askAgain'),
+    lift(js, 'chooseFulfilment'),
+    'function paintPayMethod() {} function paintProceed() {} function validateNumber() {}',
+    'payState.kind = ' + JSON.stringify(kind) + '; payState.fulfilment = ' + JSON.stringify(fulfilment) + '; payState.tableFromCode = ' + JSON.stringify(table) + ';',
+    'paintFulfilment();',
+  ].join('\n');
+  const sandbox = {
+    window,
+    document: window.document,
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+    Set,
+    String,
+    Array,
+    JSON,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+  return { document: window.document, box: sandbox };
+}
+
+test('a table on the code is stated, not asked; Change brings the question back', () => {
+  /* Owner: "if table number or venue already given via url (QR) then
+     details prefilled and make sure its pre selected... do we need really
+     ask first itself?" */
+  const { document, box } = payPage({ table: '5' });
+  const known = document.getElementById('eating-how-known');
+  assert.strictEqual(known.hidden, false, 'the known table is not stated');
+  assert.strictEqual(document.getElementById('eating-how-known-text').textContent, 'Bringing it to table 5');
+  assert.strictEqual(document.getElementById('eating-how-choices').hidden, true, 'the question is still asked');
+  assert.strictEqual(document.getElementById('eating-how-title').hidden, true);
+  assert.strictEqual(box.payState.chosen, 'dine_in', 'the table is not preselected');
+
+  /* The page wires the Change button to askAgain(); the harness lifts functions, not listeners. */
+  assert.ok(read('assets/payment/script.js').includes('if (change) askAgain();'), 'the Change button is not wired');
+  box.askAgain();
+  assert.strictEqual(document.getElementById('eating-how-known').hidden, true, 'Change did not bring the question back');
+  assert.strictEqual(document.getElementById('eating-how-choices').hidden, false);
+  assert.strictEqual(document.querySelector('.eating-how-btn[aria-pressed="true"]').getAttribute('data-fulfilment'), 'dine_in', 'the table is no longer the pressed choice');
+
+  box.chooseFulfilment('takeaway');
+  assert.strictEqual(document.getElementById('eating-how-known').hidden, true);
+  assert.strictEqual(document.querySelector('.eating-how-btn[aria-pressed="true"]').getAttribute('data-fulfilment'), 'takeaway');
+});
+
+test('with nothing known the question is asked, and a lone way is never a question', () => {
+  const asked = payPage({ table: '' });
+  assert.strictEqual(asked.document.getElementById('eating-how-known').hidden, true);
+  assert.strictEqual(asked.document.getElementById('eating-how-choices').hidden, false);
+  assert.strictEqual(asked.box.payState.chosen, '', 'a choice was made for a customer who said nothing');
+
+  const lone = payPage({ table: '5', fulfilment: ['dine_in'] });
+  assert.strictEqual(lone.document.getElementById('eating-how-known').hidden, true, 'one way needs no Change');
+  assert.strictEqual(lone.box.payState.chosen, 'dine_in');
+});
+
+test('no customer page fetches a script from another host', () => {
+  /* Owner, after an order on the sandbox: "cant find variable: html2pdf".
+     The receipt page pulled its PDF library from a CDN; the page's own
+     policy allows scripts from its own origin only, and a kiosk on the
+     shop's wifi has no CDN anyway. Every library rides in assets/. */
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html', 'access-denied.html']) {
+    const html = read(page);
+    assert.ok(!/<script[^>]+src=["']https?:/i.test(html), page + ' loads a script from another host');
+  }
+  assert.match(read('thankyou.html'), /assets\/html2pdf\.bundle\.min\.js/, 'the receipt page has no PDF library');
+  assert.ok(fs.statSync(path.join(BUNDLE, 'assets', 'html2pdf.bundle.min.js')).size > 500000, 'the vendored PDF library is not the real one');
+  assert.match(read('assets/thankyou/script.js'), /typeof html2pdf !== "function"/, 'the receipt button throws a bare ReferenceError when the library is missing');
+});
+
+test("on an iPhone the keyboard's microphone is the microphone, and listening never holds the screen", () => {
+  /* Owner, iPhone 14 Pro: tapped the mic, allowed it, and a system sheet sat
+     over the search box "for a long time". iOS is WebKit everywhere and its
+     recogniser draws UI the page cannot dismiss; the keyboard already has a
+     dictation key. */
+  for (const [name, src] of [
+    ['order', read('assets/products/script.js')],
+    ['menu', fs.readFileSync(path.join(__dirname, '..', 'menu', 'menu.js'), 'utf8')],
+  ]) {
+    const guard = src.indexOf('if (isIOS()) return;');
+    const show = src.indexOf('mic.hidden = false;');
+    assert.ok(guard > 0 && show > 0 && guard < show, name + ': the mic is shown on iOS');
+    assert.match(src, /function isIOS\(\)/, name + ': no iOS check');
+    assert.match(src, /setTimeout\([\s\S]{0,200}rec\.stop\(\)[\s\S]{0,120}12000\)/, name + ': listening has no end of its own');
+    assert.match(src, /visibilitychange/, name + ': a hidden page keeps listening');
+  }
 });

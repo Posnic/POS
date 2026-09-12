@@ -619,18 +619,24 @@
         margin: 0;
       }
 
+      /*
+        The photo is the top of the sheet: edge to edge, the sheet's own
+        rounded corners cutting it, nothing white around it. It was inset
+        with a margin for a while and the owner asked for this back - on a
+        phone the picture IS the sheet's header.
+      */
       .sheet-gallery {
-        margin: -4px 0 14px;
+        margin: 0 0 12px;
       }
 
       /*
         Scroll snapping does the work a carousel script would. One photo fills
-        the width, the next peeks in at the edge so there is something to
-        reach for, and the browser handles the momentum.
+        the width, the next is one push away, and the browser handles the
+        momentum; the dots underneath say how many there are.
       */
       .sheet-strip {
         display: flex;
-        gap: 8px;
+        gap: 0;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         scrollbar-width: none;
@@ -642,12 +648,11 @@
       }
 
       .sheet-strip img {
-        flex: 0 0 88%;
-        scroll-snap-align: center;
-        width: 88%;
-        height: 190px;
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        width: 100%;
+        height: 220px;
         object-fit: cover;
-        border-radius: var(--radius);
         background: var(--raised);
         /* Cropped to a tidy strip, so there is always more of the photo than
            this shows - which is the whole reason it opens. */
@@ -718,12 +723,6 @@
       .viewer-close:focus-visible {
         outline: 2px solid #fff;
         outline-offset: 2px;
-      }
-
-      /* One photo is not a gallery: it fills the width and the dots go. */
-      .sheet-strip[data-count="1"] img {
-        flex-basis: 100%;
-        width: 100%;
       }
 
       .sheet-dots {
@@ -1004,7 +1003,7 @@
 
       .sheet-icon {
         display: block;
-        margin: 0 auto 4px;
+        margin: 20px auto 4px;
         font-size: 64px;
         line-height: 1.2;
         text-align: center;
@@ -1125,13 +1124,24 @@
       }
 
       /* The pull bar every sheet on a phone carries: it says "this slides
-         away" before a finger has tried. */
+         away" before a finger has tried. It floats, so the photo can start
+         at the very top; over a photo it turns white to stay visible. */
       .sheet-handle {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        z-index: 1;
         width: 36px;
         height: 4px;
-        margin: 8px auto 4px;
+        margin: 0;
         border-radius: 2px;
         background: var(--line);
+        transform: translateX(-50%);
+      }
+
+      dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
       }
 
       @media (min-width: 720px) {
@@ -1153,7 +1163,7 @@
       }
 
       .sheet-body {
-        padding: 18px 20px max(24px, env(safe-area-inset-bottom));
+        padding: 20px 20px max(24px, env(safe-area-inset-bottom));
       }
 
       .sheet-title {
@@ -1193,44 +1203,6 @@
 
       /* ---- the way in ------------------------------------------------ */
 
-      /*
-        A menu that can be ordered from says so, once, at the bottom of the
-        screen. Not on every card: this is a menu, and a button beside every
-        dish turns it into a shop. One bar, in ink, only when the shop is
-        actually taking orders, and it carries the table or room the code was
-        printed for so the customer does not have to say where they are.
-      */
-      .order-cta {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 9;
-        padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
-        background: var(--bg);
-        border-top: 1px solid var(--line);
-      }
-
-      .order-cta a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        max-width: 900px;
-        min-height: 48px;
-        margin: 0 auto;
-        border-radius: 12px;
-        background: var(--accent);
-        color: var(--bg);
-        font-weight: 600;
-        text-decoration: none;
-      }
-
-      /* Room for the bar, so the last dish is not under it. */
-      body.can-order {
-        padding-bottom: calc(76px + env(safe-area-inset-bottom));
-      }
-
       /* ---- motion ---------------------------------------------------- */
 
       /*
@@ -1248,8 +1220,7 @@
       .sheet-close,
       .search-back,
       .search-mic,
-      .search-clear,
-      .order-cta a {
+      .search-clear {
         transition:
           transform 0.12s ease,
           background-color 0.15s ease,
@@ -1262,8 +1233,7 @@
       .result:active,
       .goes:active,
       .more-in-section:active,
-      .sheet-close:active,
-      .order-cta a:active {
+      .sheet-close:active {
         transform: scale(0.98);
       }
 
@@ -1348,8 +1318,7 @@
       /*
         A laptop gets a laptop's layout, not a phone page stretched across
         it: the shop across the top, the sections down the left where they
-        stay put, the dishes in the middle, and the way in as a card in the
-        corner rather than a bar across the bottom.
+        stay put, the dishes in the middle, and nothing else.
       */
       .cats-rail {
         display: none;
@@ -1473,21 +1442,6 @@
 
         .section > h2 {
           scroll-margin-top: 80px;
-        }
-
-        .order-cta {
-          left: auto;
-          right: 24px;
-          bottom: 24px;
-          width: 320px;
-          padding: 12px;
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
-        }
-
-        body.can-order {
-          padding-bottom: 96px;
         }
       }
     </style>
@@ -1666,11 +1620,6 @@
     </main>
 
     <p class="foot" id="foot" hidden></p>
-
-    <!-- Shown only when the shop is taking orders right now. -->
-    <div id="order-cta" class="order-cta" hidden>
-      <a id="order-link" href="/order/">Order now</a>
-    </div>
 
     <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
       <div class="sheet-handle" aria-hidden="true"></div>

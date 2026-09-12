@@ -7960,8 +7960,12 @@ PosnicPro.settings.voice = {
     /* The key field only means something for a provider that needs one. A
        control that cannot affect anything should not ask for a decision. */
     syncKeyRow: function () {
-        var paid = ['openai', 'google'].indexOf($('#voice_provider').val() || '') !== -1;
-        $('#voice_key_row').toggle(paid);
+        /* Every provider but the phone itself needs a key. Listed rather
+           than "not device and not off", so a value added to the dropdown
+           without being added here hides the field it depends on instead of
+           silently showing one for a provider that has no use for it. */
+        var paid = ['openai', 'google', 'deepgram', 'assembly'];
+        $('#voice_key_row').toggle(paid.indexOf($('#voice_provider').val() || '') !== -1);
     },
 
     load: function () {
@@ -8227,13 +8231,39 @@ PosnicPro.salesChannels = {
             '<div class="form-group col-md-1 text-right">' +
             '<button type="button" class="btn btn-outline-danger btn-sm remove-partner-venue" aria-label="' + t('lang_remove_venue', 'Remove venue') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
             '</div>' +
+            '<div class="col-12"><small class="text-muted venue-link"></small></div>' +
             '</div></div></div>';
     },
 
+    /*
+     * Where a venue is SEEN once it is saved.
+     *
+     * Owner: "added venue not listed. where to see and edit if needed". The
+     * rows on this page are the list and the editor; what was missing was
+     * the thing a venue is FOR - the address printed on its QR codes. Each
+     * saved venue now shows it, built the same way the storefront address is
+     * (API_URL, else this origin, plus the shop's storefront id), with the
+     * unit left for the printer: /order/<shop>/venue/<CODE>/<room>.
+     */
+    fillVenueLinks: function () {
+        var id = String($('#kioskstore_id').val() || '').trim();
+        if (!/^[A-Za-z0-9]{3,6}$/.test(id)) { $('.venue-link').text(''); return; }
+        var base = String((typeof API_URL === 'string' && API_URL) || '').replace(/\/+$/, '');
+        if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var code = String($row.find('.venue-code').val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            var unit = String($row.find('.venue-unit-label').val() || 'Room').trim().toLowerCase() || 'room';
+            $row.find('.venue-link').text(code
+                ? PosnicPro.i18n.t('lang_venue_guests_scan', 'Guests scan:') + ' ' + base + '/order/' + id + '/venue/' + code.toUpperCase() + '/<' + unit + '>'
+                : '');
+        });
+    },
     renderVenues: function (venues) {
         var self = PosnicPro.salesChannels;
         var list = Array.isArray(venues) ? venues : [];
         $('#partner_venue_rows').html(list.map(self.venueRow).join(''));
+        self.fillVenueLinks();
     },
 
     /*
@@ -8361,8 +8391,16 @@ PosnicPro.salesChannels = {
                venue, or a hotel's orders split across two half-totals. */
             var code = String($row.find('.venue-code').val() || '')
                 .trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            /* A venue with a name and no code used to be skipped here, and
+               the toast still said Saved. The owner typed a hotel, pressed
+               Save, came back, and it was gone. The code is what the printed
+               QR carries, so it has to exist; derived from the name once, and
+               written back into the box so it is seen and kept. */
+            if (name && !code) {
+                code = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24);
+                $row.find('.venue-code').val(code);
+            }
             if (!name || !code) return;
-
             venues.push({
                 code: code,
                 name: name,
@@ -8437,7 +8475,34 @@ PosnicPro.salesChannels = {
         return out;
     },
 
+    /*
+     * What would stop this save from meaning what the screen shows.
+     *
+     * Returns a sentence, or null. Checked before the request rather than
+     * after, because the server normalises quietly and a venue that merges
+     * into another one on save is data lost with a green toast on top.
+     */
+    venueProblems: function () {
+        var seen = {};
+        var clash = null;
+        $('.partner-venue-row').each(function () {
+            var $row = $(this);
+            var name = String($row.find('.venue-name').val() || '').trim();
+            var code = String($row.find('.venue-code').val() || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+            if (!name) { return; }
+            if (!code) { code = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24); }
+            if (seen[code] && !clash) { clash = [seen[code], name, code]; }
+            seen[code] = seen[code] || name;
+        });
+        if (clash) {
+            return PosnicPro.i18n.t('lang_venue_code_clash', 'Two venues would share the code "{0}": "{1}" and "{2}". Give one of them a different code.')
+                .replace('{0}', clash[2]).replace('{1}', clash[0]).replace('{2}', clash[1]);
+        }
+        return null;
+    },
     save: function () {
+        var problem = PosnicPro.salesChannels.venueProblems();
+        if (problem) { PosnicPro.alert('warning', problem); return; }
         var loader = $('.loader-view-saleschannels');
         loader.find('.loadingSpinner').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -8454,6 +8519,10 @@ PosnicPro.salesChannels = {
                 PosnicPro.local.set('online_order_approval', $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto');
                 PosnicPro.applyOrderQueueVisibility();
                 PosnicPro.alert('success', response.message || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+                /* Re-read, so the rows show exactly what the server kept.
+                   A row the server normalised or dropped must not sit on
+                   the screen looking saved until the next visit. */
+                PosnicPro.salesChannels.load();
             } else {
                 PosnicPro.alert('error', response.message);
             }
@@ -8491,6 +8560,9 @@ $(document).on('click', PosnicPro.salesChannels.ENTRIES, function () {
     PosnicPro.salesChannels.load();
 });
 
+$(document).on('input', '.venue-code, .venue-unit-label, .venue-name', function () {
+    PosnicPro.salesChannels.fillVenueLinks();
+});
 $(document).on('click', '#add_partner_venue', function () {
     $('#partner_venue_rows').append(PosnicPro.salesChannels.venueRow({}));
 });
@@ -9034,6 +9106,11 @@ PosnicPro.servingPeriods = {
             if (response && response.type === 'success') {
                 PosnicPro.alert('success', response.message
                     || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+                /* The item form caches this group for the session. A period
+                   saved here must be offered on the next dish opened, not on
+                   the next sign-in. Both boxes come from the same request. */
+                if (PosnicPro.itemChannels) { PosnicPro.itemChannels._options = null; }
+                if (PosnicPro.itemDayparts) { PosnicPro.itemDayparts._options = null; }
             } else {
                 PosnicPro.alert('error', (response && response.message) || '');
             }
@@ -9223,7 +9300,7 @@ PosnicPro.settings.ai = {
                 ? PosnicPro.i18n.t('lang_ai_howto_3_once', 'Create a key and paste it above. It is shown once, so copy it before closing that page.')
                 : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
         }
-        $('#ai_key_row,#ai_cap_row').toggle(on);
+        $('#ai_key_row,#ai_cap_row,#ai_assistant_row').toggle(on);
         /* A saved key and no key must not look the same. The key never comes
            back to the browser, so "saved" is a badge and two buttons, and the
            empty box only appears when somebody asks to replace it. */
@@ -9245,6 +9322,7 @@ PosnicPro.settings.ai = {
             var v = response.data.values || response.data;
             $('#ai_provider').val(v.ai_provider || '');
             $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
+            $('#ai_ordering_assistant').prop('checked', String(v.ai_ordering_assistant) === 'true');
             PosnicPro.settings.ai.syncRows();
         }, function () { /* the card still lets you choose and save */ });
 
@@ -9330,7 +9408,10 @@ PosnicPro.settings.ai = {
                 /* Empty means no limit, which is a real choice and not the
                    absence of one, so it is sent as an empty string rather
                    than skipped. */
-                ai_monthly_cap: cap
+                ai_monthly_cap: cap,
+                /* The ordering page's door, as a word: 'false' is a choice
+                   the reader must not mistake for silence. */
+                ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false'
             })
         }, function (response) {
             if (response.type !== 'success') {

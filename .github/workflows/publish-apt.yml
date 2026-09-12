@@ -30,7 +30,7 @@ on:
         required: true
 
 permissions:
-  contents: write   # uploads .asc signatures back to the release
+  contents: write # uploads .asc signatures back to the release
 
 jobs:
   publish:
@@ -108,4 +108,5 @@ jobs:
           aws s3 sync apt-repo/pool "s3://$BUCKET/apt/pool"
           aws s3 sync apt-repo/dists "s3://$BUCKET/apt/dists" --delete
           aws s3 cp apt-repo/gpg.key "s3://$BUCKET/gpg.key"
+          aws s3 cp builds/linux/packages-index.html "s3://$BUCKET/index.html" --content-type "text/html; charset=utf-8"
           echo "packages.posnic.com updated for $TAG"

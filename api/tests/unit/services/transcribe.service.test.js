@@ -282,3 +282,203 @@ describe('every provider keeps the same shape', () => {
     }
   });
 });
+
+/*
+ * THE TWO CHEAP EARS.
+ *
+ * Owner: "i saw your were mentioning assembly ai, deepgram some cheap and best
+ * stuff. but i dont see those options. not included for any reason ?"
+ *
+ * No reason. OpenAI and Google went first because they are the accounts a shop
+ * is likeliest to already hold, and the seam was built so a third and fourth
+ * cost one entry each. These are them.
+ */
+describe('Deepgram', () => {
+  const context = { branchId: 'b', licenseId: 'l' };
+  const menuHints = require('../../../src/services/menu-hints');
+
+  const answers = (transcript) =>
+    jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: { channels: [{ alternatives: [{ transcript }] }] } }),
+    });
+
+  beforeEach(() => {
+    jest.spyOn(menuHints, 'phrasesFor').mockResolvedValue(['Chicken Biryani', 'Masala Dosa']);
+  });
+
+  test('the words come back from where this provider puts them', async () => {
+    configured('deepgram', 'dg-live');
+    global.fetch = answers('two chicken biryani');
+
+    await expect(service.transcribe({ audio: 'AAAA' }, context)).resolves.toEqual({
+      status: true,
+      data: { text: 'two chicken biryani' },
+    });
+  });
+
+  test('the key goes as a Token, which is what this API wants', async () => {
+    /* `Bearer` here is a 401 that reads exactly like a shop having typed its
+       key in wrongly, and the shop would go looking in the wrong place. */
+    configured('deepgram', 'dg-live');
+    global.fetch = answers('ok');
+
+    await service.transcribe({ audio: 'AAAA' }, context);
+    expect(global.fetch.mock.calls[0][1].headers.authorization).toBe('Token dg-live');
+  });
+
+  test('the audio goes in the body, in one call', async () => {
+    configured('deepgram', 'dg-live');
+    global.fetch = answers('ok');
+
+    await service.transcribe({ audio: 'AAAA', mimeType: 'audio/webm' }, context);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const [, options] = global.fetch.mock.calls[0];
+    expect(Buffer.isBuffer(options.body)).toBe(true);
+    expect(options.headers['content-type']).toBe('audio/webm');
+  });
+
+  test('the shop menu rides along as keywords, mildly boosted', async () => {
+    configured('deepgram', 'dg-live');
+    global.fetch = answers('ok');
+
+    await service.transcribe({ audio: 'AAAA' }, context);
+    const url = new URL(global.fetch.mock.calls[0][0]);
+    expect(url.searchParams.getAll('keywords')).toContain('Chicken Biryani:2');
+    expect(url.searchParams.get('model')).toBe('nova-2');
+  });
+
+  test('the shop language is passed through, not translated', async () => {
+    /* Unlike AssemblyAI below, this one takes en-IN as it stands. */
+    configured('deepgram', 'dg-live');
+    global.fetch = answers('ok');
+
+    await service.transcribe({ audio: 'AAAA', language: 'en-IN' }, context);
+    expect(new URL(global.fetch.mock.calls[0][0]).searchParams.get('language')).toBe('en-IN');
+  });
+
+  test('a refusal reaches the handset as one sentence, without the key', async () => {
+    configured('deepgram', 'dg-live');
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+
+    const answer = await service.transcribe({ audio: 'AAAA' }, context);
+    expect(answer.status).toBe(false);
+    expect(JSON.stringify(answer)).not.toContain('dg-live');
+  });
+});
+
+describe('AssemblyAI', () => {
+  const context = { branchId: 'b', licenseId: 'l' };
+  const menuHints = require('../../../src/services/menu-hints');
+
+  /** Upload, start, then however many polls the test wants. */
+  const conversation = (...polls) => {
+    const calls = [
+      { ok: true, json: async () => ({ upload_url: 'https://cdn/clip' }) },
+      { ok: true, json: async () => ({ id: 'job-1' }) },
+      ...polls.map((state) => ({ ok: true, json: async () => state })),
+    ];
+    let at = 0;
+    return jest.fn().mockImplementation(async () => calls[Math.min(at++, calls.length - 1)]);
+  };
+
+  beforeEach(() => {
+    jest.spyOn(menuHints, 'phrasesFor').mockResolvedValue(['Chicken Biryani']);
+  });
+
+  test('the clip is uploaded, a job is started, and the job is waited for', async () => {
+    configured('assembly', 'aai-live');
+    global.fetch = conversation(
+      { status: 'processing' },
+      { status: 'completed', text: 'three coffee' }
+    );
+
+    await expect(service.transcribe({ audio: 'AAAA' }, context)).resolves.toEqual({
+      status: true,
+      data: { text: 'three coffee' },
+    });
+    const urls = global.fetch.mock.calls.map(([url]) => String(url));
+    expect(urls[0]).toContain('/v2/upload');
+    expect(urls[1]).toContain('/v2/transcript');
+    expect(urls[2]).toContain('/v2/transcript/job-1');
+  });
+
+  test('the key is the authorization header as it stands, with no scheme', async () => {
+    configured('assembly', 'aai-live');
+    global.fetch = conversation({ status: 'completed', text: 'ok' });
+
+    await service.transcribe({ audio: 'AAAA' }, context);
+    expect(global.fetch.mock.calls[0][1].headers.authorization).toBe('aai-live');
+  });
+
+  test('the shop menu rides along as boosted words', async () => {
+    configured('assembly', 'aai-live');
+    global.fetch = conversation({ status: 'completed', text: 'ok' });
+
+    await service.transcribe({ audio: 'AAAA' }, context);
+    const started = JSON.parse(global.fetch.mock.calls[1][1].body);
+    expect(started.word_boost).toContain('Chicken Biryani');
+    expect(started.audio_url).toBe('https://cdn/clip');
+  });
+
+  test('a job that fails is a failure, not an empty order', async () => {
+    /* Resolving with '' would put an empty transcript in front of a waiter
+       and look like a microphone that heard nothing. */
+    configured('assembly', 'aai-live');
+    global.fetch = conversation({ status: 'error', error: 'bad audio' });
+
+    const answer = await service.transcribe({ audio: 'AAAA' }, context);
+    expect(answer.status).toBe(false);
+  });
+
+  test('en-IN becomes plain en, because there is no en_in to ask for', () => {
+    /*
+     * THE TRAP THIS EXISTS FOR. en-IN is the default the whole feature is
+     * tuned for, and the obvious translation of it - en_in - is a value this
+     * API refuses. Left alone it would fail every single request for the
+     * commonest setting in the estate.
+     */
+    expect(service.assemblyLanguage('en-IN')).toBe('en');
+    expect(service.assemblyLanguage('en-US')).toBe('en_us');
+    expect(service.assemblyLanguage('ta-IN')).toBe('ta');
+    expect(service.assemblyLanguage('')).toBe('en');
+  });
+});
+
+describe('a shop can actually choose them', () => {
+  const voice = require('../../../src/utils/voice-settings');
+
+  test('both are settings rather than typos', () => {
+    expect(voice.CHOICES).toContain('deepgram');
+    expect(voice.CHOICES).toContain('assembly');
+    expect(voice.choice('deepgram')).toBe('deepgram');
+  });
+
+  test('both are transcribed by the till, so the key stays on it', () => {
+    /*
+     * The half that is easy to forget. A provider in CHOICES but not in
+     * SERVER_SIDE is one a shop can pick and a handset then treats as its own
+     * recogniser - the shop pays for an account it never calls, and nothing
+     * anywhere says so. That exact bug is what voice-settings.js was written
+     * to end.
+     */
+    expect(voice.usesServer('deepgram')).toBe(true);
+    expect(voice.usesServer('assembly')).toBe(true);
+    expect(voice.forHandset({ voice_provider: 'deepgram' }).provider).toBe('server');
+    expect(voice.forHandset({ voice_provider: 'assembly' }).provider).toBe('server');
+  });
+
+  test('and the handset is still never told which company it is', () => {
+    const told = voice.forHandset({ voice_provider: 'assembly', voice_language: 'en-IN' });
+    expect(JSON.stringify(told)).not.toContain('assembly');
+    expect(Object.keys(told).sort()).toEqual(['language', 'provider']);
+  });
+
+  test('every choice a shop can make has somewhere to be carried out', () => {
+    /* A dropdown that offers a provider the service cannot run is a shop
+       silently getting nothing, which is worse than an option missing. */
+    for (const chosen of voice.SERVER_SIDE) {
+      expect(typeof service.PROVIDERS[chosen]).toBe('function');
+    }
+  });
+});

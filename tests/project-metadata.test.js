@@ -101,6 +101,23 @@ test('README exposes the public POS evaluation and recovery resources', () => {
   assert.doesNotMatch(readme, /https:\/\/(?:www\.)?posnic\.io(?:\/|\b)/);
 });
 
+test('APT repository page uses canonical Posnic discovery links', () => {
+  const packageIndex = fs.readFileSync(
+    path.join(root, 'builds', 'linux', 'packages-index.html'),
+    'utf8',
+  );
+  const workflow = fs.readFileSync(
+    path.join(root, '.github', 'workflows', 'publish-apt.yml'),
+    'utf8',
+  );
+
+  assert.match(packageIndex, /href="https:\/\/www\.posnic\.com\/"/);
+  assert.match(packageIndex, /href="https:\/\/github\.com\/Posnic\/POS"/);
+  assert.doesNotMatch(packageIndex, /https?:\/\/(?:www\.)?posnic\.io(?:\/|\b)/);
+  assert.doesNotMatch(packageIndex, /https?:\/\/posnic\.com(?:\/|\b)/);
+  assert.match(workflow, /aws s3 cp builds\/linux\/packages-index\.html/);
+});
+
 test('CLA workflow links to the agreement on the active development branch', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'cla.yml'), 'utf8');
 

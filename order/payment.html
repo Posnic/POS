@@ -67,6 +67,12 @@
         -->
         <section class="pay-section eating-how" id="eating-how" role="radiogroup" aria-label="How would you like it?">
             <span class="field-label" id="eating-how-title">How would you like it?</span>
+            <!-- The code already said where they are: stated, not asked. One
+                 small way out for the customer who wants it packed instead. -->
+            <div class="eating-how-known" id="eating-how-known" hidden>
+                <span class="eating-how-known-text" id="eating-how-known-text"></span>
+                <button type="button" class="eating-how-change" id="eating-how-change">Change</button>
+            </div>
             <div class="eating-how-choices" id="eating-how-choices">
                 <button type="button" class="eating-how-btn" data-order-type="DINE IN" data-fulfilment="dine_in" aria-pressed="false">Bring it to my table</button>
                 <button type="button" class="eating-how-btn" data-order-type="PARCEL" data-fulfilment="takeaway" aria-pressed="false">I'll collect it at the counter</button>
