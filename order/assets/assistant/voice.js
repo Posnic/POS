@@ -598,23 +598,6 @@
     return { ok: true, cancelled: true };
   }
 
-  /* Once the token has been said, the page goes to the receipt: when the
-     audio has stopped, or a few seconds after the reply is done. */
-  /*
-   * The receipt, once the call is over.
-   *
-   * Not a moment before: the page used to walk off to the token screen as
-   * soon as the number had been said, which ended the conversation in the
-   * middle of it - and the customer who wanted to change the order they had
-   * just placed was talking to a page that had gone.
-   */
-  function leaveForReceipt() {
-    if (live.leaving || !live.placed) return;
-    live.leaving = true;
-    var token = live.placed;
-    window.OrderingVoice.leave("thankyou.html?token=" + encodeURIComponent(token));
-  }
-
   function leave(url) {
     window.location.href = url;
   }
@@ -1025,9 +1008,12 @@
     live.rec = null;
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     status("", "");
-    /* An order was placed during this call: its token screen is what
-       comes next. */
-    leaveForReceipt();
+    /*
+     * Nothing navigates here. An order placed during this call is already
+     * confirmed in the sheet, with its token and a Done button; a page that
+     * walked off the moment the line closed was the "cut suddenly" the owner
+     * saw, and it is indistinguishable from a crash.
+     */
   }
 
   /*

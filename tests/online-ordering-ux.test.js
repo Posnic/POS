@@ -1582,19 +1582,29 @@ test('the assistant can send the order to the kitchen, only on a clear yes, thro
   assert.deepStrictEqual(JSON.parse(JSON.stringify(calls.checkout)), [['', 'Cash', { stay: true }]], 'not the same checkout a tap uses, or it did not stay');
   assert.strictEqual(window.localStorage.getItem('orderType'), 'DINE IN');
   assert.strictEqual(window.localStorage.getItem('order_fulfilment'), 'dine_in');
-  assert.match(document.getElementById('assistant-log').textContent, /Sent to the kitchen\. Token 042\./);
+  /* The confirmation lands in the sheet the customer was talking into: a
+     tick under "Sent to the kitchen", which becomes a pan under "The chef is
+     preparing your order", with the token. Owner: "as soon order over it cut
+     suddenly ... i wanted to show some animation like sent kitchen and chef
+     preparing." */
+  assert.strictEqual(document.getElementById('assistant-placed').hidden, false, 'nothing told the customer the order had gone');
+  assert.strictEqual(document.getElementById('placed-token').textContent, '042');
+  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
+  assert.strictEqual(document.getElementById('placed-art').getAttribute('data-stage'), 'sent');
   assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the model was not asked to say the token');
   assert.deepStrictEqual(calls.left, [], 'the page left before the token was said');
 
-  /* The page STAYS while the line is up: the customer may want to change what
-     they have just sent, and a page that walked off to the token screen ended
-     the conversation in the middle of it. The receipt is where hanging up
-     goes. */
+  /* NOTHING navigates on its own, and hanging up changes nothing on screen:
+     a page that walked off the moment the line closed is what the owner saw
+     as a sudden cut. The customer leaves when they tap Done. */
   await window.OrderingVoice.onEvent(done([]));
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
   assert.deepStrictEqual(calls.left, [], 'the page left in the middle of the call');
   window.OrderingVoice.stop();
-  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042'], 'hanging up did not show the token screen');
+  assert.deepStrictEqual(calls.left, [], 'hanging up walked the customer off the page');
+  assert.strictEqual(document.getElementById('assistant-placed').hidden, false, 'the confirmation went with the call');
+  document.getElementById('placed-done').click();
+  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042'], 'Done did not go to the token screen');
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off', 'the line stayed open after hanging up');
 });
 
@@ -1695,4 +1705,45 @@ test('the sheet carries a Review order button with the count and the total, once
   assert.match(db, /placed: true,\s*\n\s*token: normalizedTokenId,/);
   assert.match(db, /saleId: String\(result\.data\.sale_id/);
   assert.ok(db.indexOf('options.stay') < db.indexOf('window.location.href = `thankyou.html?token='), 'the stay must be decided before the page leaves');
+});
+
+test('the order lands in the sheet, in two beats, and nothing moves until Done', async () => {
+  /* Owner: "as soon order over it cut suddenly ... i wanted to show some
+     animation like sent kitchen and chef preparing." */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { after: 10 });
+
+  const panel = document.getElementById('assistant-placed');
+  const art = document.getElementById('placed-art');
+  assert.strictEqual(panel.hidden, false);
+  assert.strictEqual(document.getElementById('placed-token').textContent, '042');
+  assert.strictEqual(art.getAttribute('data-stage'), 'sent');
+  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
+
+  await new Promise((r) => setTimeout(r, 40));
+  assert.strictEqual(art.getAttribute('data-stage'), 'cooking', 'the second beat never came');
+  assert.strictEqual(document.getElementById('placed-said').textContent, 'The chef is preparing your order');
+  assert.deepStrictEqual(calls.left, [], 'the panel walked the customer off by itself');
+
+  document.getElementById('placed-done').click();
+  assert.strictEqual(panel.hidden, true);
+  assert.deepStrictEqual(calls.left, ['thankyou.html?token=042']);
+
+  /* Both beats are drawn, and the steam is still there without motion. */
+  const css = fs.readFileSync(path.join(BUNDLE, 'assets', 'order.css'), 'utf8');
+  assert.match(css, /\.placed-art\[data-stage='sent'\] \.placed-tick path/);
+  assert.match(css, /\.placed-art\[data-stage='cooking'\] \.placed-steam/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*placed-steam/);
+});
+
+test('the token screen downloads nothing and shows no bill', () => {
+  /* Owner: "after order no need to show bill or pdf not required. once
+     payment done from desktop then make bill available to download." */
+  const script = read('assets/thankyou/script.js');
+  assert.ok(!/setTimeout\(async \(\) => \{[\s\S]{0,200}generatePdfFromHtmlFile\(\)/.test(script), 'the page still pushes a PDF at the phone');
+  assert.match(script, /NOTHING IS DOWNLOADED HERE/);
+  /* Kept, because the button the shop unlocks after payment calls it. */
+  assert.match(script, /async function generatePdfFromHtmlFile\(\)/);
+  const html = read('thankyou.html');
+  assert.match(html, /<section class="receipt-section" aria-label="Receipt" hidden>/, 'the bill is shown before a rupee has been paid');
 });

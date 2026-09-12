@@ -57,8 +57,13 @@
         </div>
     </main>
 
-    <!-- The receipt, below the fold, set as a receipt. -->
-    <section class="receipt-section" aria-label="Receipt">
+    <!--
+        The receipt, built but not shown: no money has changed hands yet, so
+        there is nothing to give a customer a bill for. It is filled in as
+        the page loads so that the shop marking the order paid has something
+        to offer immediately.
+    -->
+    <section class="receipt-section" aria-label="Receipt" hidden>
         <div class="center" id="branch-name"><strong>POS</strong></div>
         <div class="center">Token <strong><span id="token-id"></span></strong></div>
         <div class="center">Date <strong><span id="orderDate">--</span></strong></div>
