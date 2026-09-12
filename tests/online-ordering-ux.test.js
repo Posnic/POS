@@ -914,3 +914,35 @@ test('the wiring behind the spark: the storefront flag, the route, the switch, t
   assert.match(read('indexedDB.js'), /assistant: !!\(result\.data\.features && result\.data\.features\.assistant\)/, 'the page never stores the flag');
   assert.match(read('products.html'), /id="assistant"[^>]*class="sheet assistant"/, 'the sheet is missing');
 });
+
+test('no customer page fetches a script from another host', () => {
+  /* Owner, after an order on the sandbox: "cant find variable: html2pdf".
+     The receipt page pulled its PDF library from a CDN; the page's own
+     policy allows scripts from its own origin only, and a kiosk on the
+     shop's wifi has no CDN anyway. Every library rides in assets/. */
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html', 'access-denied.html']) {
+    const html = read(page);
+    assert.ok(!/<script[^>]+src=["']https?:/i.test(html), page + ' loads a script from another host');
+  }
+  assert.match(read('thankyou.html'), /assets\/html2pdf\.bundle\.min\.js/, 'the receipt page has no PDF library');
+  assert.ok(fs.statSync(path.join(BUNDLE, 'assets', 'html2pdf.bundle.min.js')).size > 500000, 'the vendored PDF library is not the real one');
+  assert.match(read('assets/thankyou/script.js'), /typeof html2pdf !== "function"/, 'the receipt button throws a bare ReferenceError when the library is missing');
+});
+
+test("on an iPhone the keyboard's microphone is the microphone, and listening never holds the screen", () => {
+  /* Owner, iPhone 14 Pro: tapped the mic, allowed it, and a system sheet sat
+     over the search box "for a long time". iOS is WebKit everywhere and its
+     recogniser draws UI the page cannot dismiss; the keyboard already has a
+     dictation key. */
+  for (const [name, src] of [
+    ['order', read('assets/products/script.js')],
+    ['menu', fs.readFileSync(path.join(__dirname, '..', 'menu', 'menu.js'), 'utf8')],
+  ]) {
+    const guard = src.indexOf('if (isIOS()) return;');
+    const show = src.indexOf('mic.hidden = false;');
+    assert.ok(guard > 0 && show > 0 && guard < show, name + ': the mic is shown on iOS');
+    assert.match(src, /function isIOS\(\)/, name + ': no iOS check');
+    assert.match(src, /setTimeout\([\s\S]{0,200}rec\.stop\(\)[\s\S]{0,120}12000\)/, name + ': listening has no end of its own');
+    assert.match(src, /visibilitychange/, name + ': a hidden page keeps listening');
+  }
+});

@@ -298,15 +298,34 @@
      * microphone; it also steps aside for the clear button once there is
      * something to clear.
      */
+    function isIOS() {
+        const ua = navigator.userAgent || "";
+        return /iP(hone|od|ad)/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1);
+    }
+
+    function isIOS() {
+        const ua = navigator.userAgent || "";
+        return /iP(hone|od|ad)/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1);
+    }
+
     (function wireMic() {
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
         const mic = el("product-search-mic");
         const input = el("product-search");
         if (!Recognition || !mic || !input) return;
+        /* iOS: every browser is WebKit, its recogniser shows system UI the
+           page cannot dismiss (a permission sheet sat over this box on an
+           iPhone 14 Pro), and the keyboard already has a dictation key that
+           types straight into this field. There, the keyboard's microphone
+           is the microphone. */
+        if (isIOS()) return;
 
         mic.hidden = false;
         mic.setAttribute("data-supported", "true");
         let listening = null;
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && listening) listening.stop();
+        });
 
         mic.addEventListener("click", () => {
             if (listening) {
@@ -320,10 +339,13 @@
             rec.lang = document.documentElement.getAttribute("data-speech-lang") || "en-IN";
             rec.interimResults = true;
             rec.maxAlternatives = 1;
+            let quiet = 0;
             rec.onstart = () => {
                 listening = rec;
                 mic.setAttribute("data-listening", "true");
                 setSearching(true);
+                /* A recogniser that never says "end" cannot hold the screen. */
+                quiet = setTimeout(() => { try { rec.stop(); } catch (e) { /* already stopped */ } }, 12000);
             };
             rec.onresult = (e) => {
                 let said = "";
@@ -337,6 +359,7 @@
             };
             rec.onerror = () => {};
             rec.onend = () => {
+                clearTimeout(quiet);
                 listening = null;
                 mic.removeAttribute("data-listening");
             };

@@ -253,6 +253,7 @@
       "Unknown": "தெரியவில்லை",
       "Thank you. Visit again.": "நன்றி. மீண்டும் வாருங்கள்.",
       "Receipt PDF could not be generated.": "ரசீது PDF உருவாக்க முடியவில்லை.",
+      "The receipt could not be saved on this device. Ask at the counter for a printed copy.": "இந்தச் சாதனத்தில் ரசீதைச் சேமிக்க முடியவில்லை. அச்சிட்ட நகலுக்கு கவுண்டரில் கேளுங்கள்.",
       "Nothing to show": "காட்ட எதுவும் இல்லை",
       "Nothing to show here": "இங்கே காட்ட எதுவும் இல்லை",
       "This receipt is not from an order placed on this phone.": "இந்த ரசீது இந்த போனில் செய்யப்பட்ட ஆர்டருடையது அல்ல.",
