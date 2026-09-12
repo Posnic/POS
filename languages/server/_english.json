@@ -285,6 +285,10 @@
   "Campaigns": [
     "src/services/campaign.service.js"
   ],
+  "Cancellation requested": [
+    "src/repositories/sale.repository.js",
+    "src/services/customer-order.service.js"
+  ],
   "Cancelling a sale requires POST": [
     "src/routes/sales.routes.js"
   ],
@@ -1934,6 +1938,9 @@
   "The live voice service did not answer": [
     "src/services/ai.service.js"
   ],
+  "The order stands": [
+    "src/repositories/sale.repository.js"
+  ],
   "The sale behind this invoice was not found": [
     "src/services/invoice-sync.js"
   ],
@@ -2468,6 +2475,7 @@
   ],
   "not_found": [
     "src/controllers/online-ordering.controller.js",
+    "src/repositories/sale.repository.js",
     "src/services/customer-order.service.js"
   ],
   "not_on_this_order": [

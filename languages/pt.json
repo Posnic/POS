@@ -2994,5 +2994,8 @@
   "lang_upi_id": "ID do UPI",
   "lang_upi_name": "Nome que o cliente verá",
   "lang_upi_help": "Coloque aqui o seu ID do UPI e quem estiver a ver um pedido por pagar recebe um botão que abre a aplicação dele, já com o seu nome e o valor preenchidos. O dinheiro vai diretamente para si. Ninguém o verifica aqui: o seu balcão vê o pagamento e marca o pedido como pago, tal como faz com dinheiro. Deixe vazio e não aparece botão nenhum.",
-  "lang_upi_id_placeholder": "9843012345@okaxis"
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "O cliente pediu para cancelar",
+  "lang_keep_the_order": "Manter o pedido",
+  "lang_cancel_it": "Cancelar"
 }

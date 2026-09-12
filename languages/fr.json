@@ -2994,5 +2994,8 @@
   "lang_upi_id": "Identifiant UPI",
   "lang_upi_name": "Nom que verra votre client",
   "lang_upi_help": "Indiquez ici votre identifiant UPI : un client qui consulte une commande impayée verra un bouton qui ouvre sa propre application, avec votre nom et le montant déjà remplis. L'argent vous parvient directement. Personne ne le vérifie ici : votre comptoir voit le paiement et marque la commande comme payée, exactement comme pour les espèces. Laissez le champ vide et aucun bouton n'apparaît.",
-  "lang_upi_id_placeholder": "9843012345@okaxis"
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Le client demande l’annulation",
+  "lang_keep_the_order": "Garder la commande",
+  "lang_cancel_it": "L’annuler"
 }

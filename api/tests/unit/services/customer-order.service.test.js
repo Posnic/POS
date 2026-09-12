@@ -15,7 +15,15 @@ const BRANCH = '646576656c6f7073616e6462';
 const ORDER_ID = '6aa5509215e3686c543e5cc3';
 const context = { branchId: BRANCH, licenseId: 'lic' };
 
-/** A KOT taken a minute ago, on the shop's own floor. */
+/** How long this shop leaves an order open to its customer. */
+function shopAllows(seconds) {
+  return jest.spyOn(customerOrder._settings(), 'resolveGroup').mockResolvedValue({
+    status: true,
+    data: { values: seconds === undefined ? {} : { online_order_change_seconds: seconds } },
+  });
+}
+
+/** A KOT taken five seconds ago, on the shop's own floor. */
 function order(extra = {}) {
   return {
     _id: ORDER_ID,
@@ -23,7 +31,7 @@ function order(extra = {}) {
     token_id: '219',
     sale_process: 'KOT',
     payment_status: 'Unpaid',
-    created_date: new Date(Date.now() - 60 * 1000),
+    created_date: new Date(Date.now() - 5 * 1000),
     delivery_fee: 0,
     venue_commission: 0,
     items: [
@@ -45,6 +53,7 @@ function order(extra = {}) {
 }
 
 describe('customer-order.service', () => {
+  beforeEach(() => shopAllows(30));
   afterEach(() => jest.restoreAllMocks());
 
   describe('who may move it', () => {
@@ -93,17 +102,17 @@ describe('customer-order.service', () => {
       ['the shop refused it', { order_state: 'rejected' }, 'refused_by_shop'],
       ['it is going to a hotel room', { venue: 'Royal Club, Room 123' }, 'at_the_counter'],
       ['somebody is driving it over', { delivery_fee: 30 }, 'at_the_counter'],
-      [
-        'the kitchen has long since moved on',
-        { created_date: new Date(Date.now() - 3 * 60 * 60 * 1000) },
-        'too_late',
-      ],
+      ['the window has closed', { created_date: new Date(Date.now() - 3 * 60 * 1000) }, 'too_late'],
     ];
     for (const [what, extra, reason] of cases) {
       test(`${what}: ${reason}`, async () => {
         jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(order(extra));
         const changed = jest.spyOn(salesRepository, 'changeCustomerOrderItems');
         const cancelled = jest.spyOn(salesRepository, 'cancelCustomerOrder');
+        const asked = jest
+          .spyOn(salesRepository, 'requestCustomerCancel')
+          .mockResolvedValue({ status: true, data: { cancel_requested: true } });
+
         expect(
           (
             await customerOrder.change(
@@ -112,16 +121,65 @@ describe('customer-order.service', () => {
             )
           ).message
         ).toBe(reason);
-        expect(
-          (await customerOrder.cancel({ orderId: ORDER_ID, token: '219' }, context)).message
-        ).toBe(reason);
         expect(changed).not.toHaveBeenCalled();
         expect(cancelled).not.toHaveBeenCalled();
+
+        /* Cancelling is different: where the order still exists and is not
+           settled, the customer may always ASK and the shop decides. */
+        const out = await customerOrder.cancel({ orderId: ORDER_ID, token: '219' }, context);
+        const settled = ['already_billed', 'already_paid', 'already_cancelled'].includes(reason);
+        if (settled) {
+          expect(out).toEqual({ status: false, message: reason, data: null });
+          expect(asked).not.toHaveBeenCalled();
+        } else {
+          expect(out.status).toBe(true);
+          expect(out.data).toMatchObject({ requested: true, why_not: reason });
+        }
       });
     }
 
     test("a fresh KOT on the shop's own floor is theirs", () => {
       expect(customerOrder.whyNot(order())).toBe('');
+    });
+
+    test("the window is the shop's to set, and zero closes it at once", async () => {
+      /* Owner: "within 30 seconds they can modify ... shop ower setting
+         might be." */
+      const read = shopAllows(30);
+      expect(await customerOrder.changeSeconds(context)).toBe(30);
+
+      read.mockResolvedValue({
+        status: true,
+        data: { values: { online_order_change_seconds: '120' } },
+      });
+      expect(await customerOrder.changeSeconds(context)).toBe(120);
+
+      /* Nothing said is the sensible default, not no window at all. */
+      read.mockResolvedValue({ status: true, data: { values: {} } });
+      expect(await customerOrder.changeSeconds(context)).toBe(customerOrder.DEFAULT_CHANGE_SECONDS);
+
+      /* Nonsense is the default too; a shop cannot leave one open for a day. */
+      read.mockResolvedValue({
+        status: true,
+        data: { values: { online_order_change_seconds: 'soon' } },
+      });
+      expect(await customerOrder.changeSeconds(context)).toBe(customerOrder.DEFAULT_CHANGE_SECONDS);
+      read.mockResolvedValue({
+        status: true,
+        data: { values: { online_order_change_seconds: 99999 } },
+      });
+      expect(await customerOrder.changeSeconds(context)).toBe(customerOrder.MAX_CHANGE_SECONDS);
+
+      /* A settings read that throws still leaves a working window. */
+      read.mockRejectedValue(new Error('no database'));
+      expect(await customerOrder.changeSeconds(context)).toBe(customerOrder.DEFAULT_CHANGE_SECONDS);
+
+      /* Switched off: the order is the shop's from the moment it lands. */
+      expect(customerOrder.whyNot(order(), Date.now(), 0)).toBe('too_late');
+      /* And a longer window keeps an older order open. */
+      const older = order({ created_date: new Date(Date.now() - 90 * 1000) });
+      expect(customerOrder.whyNot(older, Date.now(), 30)).toBe('too_late');
+      expect(customerOrder.whyNot(older, Date.now(), 300)).toBe('');
     });
 
     test('nothing asked is not a change', async () => {
@@ -289,5 +347,65 @@ describe('what an order keeps about the device it came from', () => {
     expect(salesRepository._clientFacts(null)).toBeNull();
     expect(salesRepository._clientFacts({})).toBeNull();
     expect(salesRepository._clientFacts({ ip: '' })).toBeNull();
+  });
+});
+
+describe('cancelling after the window has closed', () => {
+  beforeEach(() => shopAllows(30));
+  afterEach(() => jest.restoreAllMocks());
+
+  test('a cancellation after the window is a request, not a refusal', async () => {
+    /* Owner: "second cancel the order. may be approval from desktop. user
+       can submit the request however." */
+    const late = order({ created_date: new Date(Date.now() - 5 * 60 * 1000) });
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(late);
+    const cancelled = jest.spyOn(salesRepository, 'cancelCustomerOrder');
+    const asked = jest
+      .spyOn(salesRepository, 'requestCustomerCancel')
+      .mockResolvedValue({ status: true, data: { order_id: ORDER_ID, cancel_requested: true } });
+
+    const out = await customerOrder.cancel({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.status).toBe(true);
+    expect(out.data).toMatchObject({ requested: true, why_not: 'too_late' });
+    expect(asked).toHaveBeenCalledWith(late);
+    expect(cancelled).not.toHaveBeenCalled();
+  });
+
+  test('inside the window it simply goes, and nothing is asked of anybody', async () => {
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(order());
+    const asked = jest.spyOn(salesRepository, 'requestCustomerCancel');
+    const cancelled = jest
+      .spyOn(salesRepository, 'cancelCustomerOrder')
+      .mockResolvedValue({ status: true, data: { cancelled: true } });
+    const out = await customerOrder.cancel({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.data).toMatchObject({ cancelled: true });
+    expect(cancelled).toHaveBeenCalled();
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  test('an order already off, billed or paid is not asked about again', async () => {
+    const asked = jest.spyOn(salesRepository, 'requestCustomerCancel');
+    for (const [extra, reason] of [
+      [{ sale_process: 'cancelled' }, 'already_cancelled'],
+      [{ sale_process: 'Add' }, 'already_billed'],
+      [{ payment_status: 'Paid' }, 'already_paid'],
+    ]) {
+      jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(order(extra));
+      const out = await customerOrder.cancel({ orderId: ORDER_ID, token: '219' }, context);
+      expect(out).toEqual({ status: false, message: reason, data: null });
+    }
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  test('the read says how long the window is and whether one has been asked for', async () => {
+    jest
+      .spyOn(salesRepository, 'findCustomerOrder')
+      .mockResolvedValue(order({ cancel_requested: true }));
+    const out = await customerOrder.read({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.data).toMatchObject({
+      change_seconds: 30,
+      cancel_requested: true,
+      can_change: true,
+    });
   });
 });

@@ -97,11 +97,25 @@ PosnicPro.onlineorders = {
             ? '<div class="small text-muted">' + t('lang_delivery_fee', 'Delivery') + ': ' + money(order.delivery_fee) + '</div>'
             : '';
 
-        return '<div class="card border mb-3 online-order-card" data-id="' + safe(order.sale_id) + '">' +
+        /*
+         * An order whose customer has asked to call it off. It sits in this
+         * same queue because it is the same job - somebody deciding - and
+         * the two buttons mean the obvious thing: accept the request and the
+         * order is cancelled, refuse it and the order stands.
+         */
+        var asked = order.cancel_requested === true;
+        var askedChip = asked
+            ? '<span class="badge badge-danger mr-2 align-middle">' +
+              t('lang_cancel_requested', 'Customer asked to cancel') +
+              '</span>'
+            : '';
+
+        return '<div class="card border mb-3 online-order-card' + (asked ? ' border-danger' : '') +
+            '" data-id="' + safe(order.sale_id) + '" data-asked="' + (asked ? '1' : '0') + '">' +
             '<div class="card-body">' +
             '<div class="d-flex justify-content-between align-items-start flex-wrap">' +
             '<div>' +
-            '<h6 class="mb-1">' + howChip + where + '</h6>' +
+            '<h6 class="mb-1">' + askedChip + howChip + where + '</h6>' +
             '<div class="small text-muted mb-2">' +
             safe(order.sales_id || '') +
             (order.token_id ? ' &middot; ' + t('lang_token', 'Token') + ' ' + safe(order.token_id) : '') +
@@ -118,10 +132,12 @@ PosnicPro.onlineorders = {
             note +
             '<div class="text-right">' +
             '<button type="button" class="btn btn-outline-danger btn-sm mr-2 online-order-reject">' +
-            t('lang_reject_order', 'Reject') +
+            (asked ? t('lang_keep_the_order', 'Keep the order') : t('lang_reject_order', 'Reject')) +
             '</button>' +
             '<button type="button" class="btn btn-primary-rgba btn-sm online-order-accept">' +
-            t('lang_accept_and_print', 'Accept and print') +
+            (asked
+                ? t('lang_cancel_it', 'Cancel it')
+                : t('lang_accept_and_print', 'Accept and print')) +
             '</button>' +
             '</div>' +
             '</div></div>';
@@ -199,9 +215,22 @@ PosnicPro.onlineorders = {
 };
 
 $(document).on('click', '.online-order-accept', function () {
-    PosnicPro.onlineorders.decide($(this).closest('.online-order-card').data('id'), 'accepted');
+    var card = $(this).closest('.online-order-card');
+    /* On a cancellation request the primary button means the customer's
+       wish, which is the order off. */
+    if (String(card.data('asked')) === '1') {
+        PosnicPro.onlineorders.decide(card.data('id'), 'cancel');
+        return;
+    }
+    PosnicPro.onlineorders.decide(card.data('id'), 'accepted');
 });
 
 $(document).on('click', '.online-order-reject', function () {
-    PosnicPro.onlineorders.decide($(this).closest('.online-order-card').data('id'), 'rejected');
+    var card = $(this).closest('.online-order-card');
+    /* Refusing a cancellation leaves the order exactly as it was. */
+    if (String(card.data('asked')) === '1') {
+        PosnicPro.onlineorders.decide(card.data('id'), 'keep');
+        return;
+    }
+    PosnicPro.onlineorders.decide(card.data('id'), 'rejected');
 });
