@@ -3701,3 +3701,45 @@ dialog.sheet[open]::backdrop {
   margin: 8px auto 0;
   display: block;
 }
+
+/* ----------------------------------------------------------- paying by UPI
+ *
+ * One button, and under it the apps by name for anybody whose phone does not
+ * offer a chooser. The sentence underneath is the important part: this page
+ * does not know whether the money arrived, and says so rather than implying
+ * a confirmation it cannot give.
+ */
+.pay-upi {
+  margin: 18px auto 0;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.pay-upi-amount {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.pay-upi-go {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  line-height: var(--tap);
+  text-align: center;
+  text-decoration: none;
+}
+
+.pay-upi-apps {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+
+.pay-upi-note {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}

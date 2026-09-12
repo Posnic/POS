@@ -1856,7 +1856,10 @@ test('the bill is offered only when the shop says the money is in', () => {
      download." */
   const script = read('assets/thankyou/script.js');
   assert.match(script, /async function offerBillWhenPaid\(token\)/);
-  assert.match(script, /if \(!body \|\| body\.type !== "success" \|\| !body\.data \|\| !body\.data\.bill_ready\) return;/);
+  /* One or the other, never both: an unpaid order is offered a way to pay,
+     a paid one is offered its bill. */
+  assert.match(script, /if \(!body\.data\.bill_ready\) \{/);
+  assert.match(script, /offerUpi\(body\.data, payment, token, orderId\);/);
   assert.ok(
     script.indexOf('button.hidden = false') > script.indexOf('bill_ready'),
     'the button is shown before the shop has been asked'
@@ -1864,4 +1867,69 @@ test('the bill is offered only when the shop says the money is in', () => {
   const html = read('thankyou.html');
   assert.match(html, /id="done-bill" hidden/, 'the bill button starts visible');
   assert.match(html, /history\.html'">Your orders/, 'there is no way from the token screen to the list');
+});
+
+/** The thank-you script's UPI helpers, lifted and run with a fake page. */
+function upiBox({ payment = {}, said = {}, token = '042', orderId = 'o1' } = {}) {
+  const dom = new JSDOM(read('thankyou.html'), { url: 'https://shop.example/order/thankyou.html?token=042', runScripts: 'outside-only' });
+  const { window } = dom;
+  const src = read('assets/thankyou/script.js');
+  const cut = (name) => {
+    const at = src.indexOf('function ' + name + '(');
+    assert.ok(at > -1, 'thankyou/script.js no longer defines ' + name);
+    const end = src.indexOf('\n}\n', at) + 3;
+    return src.slice(at, end);
+  };
+  const sandbox = {
+    window,
+    document: window.document,
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+    Number,
+    String,
+    Object,
+    encodeURIComponent,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext([cut('upiLinks'), cut('offerUpi')].join('\n'), sandbox);
+  sandbox.offerUpi(said, payment, token, orderId);
+  return { window, document: window.document, box: sandbox };
+}
+
+test('the UPI link carries the right payee and the right amount, and encodes everything', () => {
+  /* Owner: "just configured upi id and how much enough. let cashier verify
+     manually and update as paid." Money, so: the payee, the amount, and no
+     way for a shop name to end the amount early. */
+  const { document, box } = upiBox({
+    payment: { upi_id: 'azure@okaxis', upi_name: 'Azure Sea & Foods' },
+    said: { total: 660, paid: false, cancelled: false, shop: 'Azure' },
+  });
+  assert.strictEqual(document.getElementById('pay-upi').hidden, false);
+  const href = document.getElementById('pay-upi-any').getAttribute('href');
+  assert.ok(href.startsWith('upi://pay?pa=azure%40okaxis'), 'the payee is wrong or unencoded: ' + href);
+  assert.match(href, /&am=660\.00&cu=INR/);
+  assert.match(href, /&pn=Azure%20Sea%20%26%20Foods/, 'an ampersand in the shop name would end the amount early');
+  assert.match(href, /&tn=Order%20042/);
+  assert.match(href, /&tr=o1$/);
+  assert.strictEqual(document.getElementById('pay-upi-gpay').getAttribute('href').startsWith('tez://upi/pay?'), true);
+  assert.strictEqual(document.getElementById('pay-upi-phonepe').getAttribute('href').startsWith('phonepe://pay?'), true);
+  assert.strictEqual(document.getElementById('pay-upi-paytm').getAttribute('href').startsWith('paytmmp://pay?'), true);
+  assert.match(document.getElementById('pay-upi-amount').textContent, /Pay ₹660 to Azure Sea & Foods/);
+
+  /* And it says plainly that nobody here checks it. */
+  assert.match(read('thankyou.html'), /Tell the counter once you have paid/);
+  void box;
+});
+
+test('nothing to pay, nowhere to send it, or already paid: no button at all', () => {
+  const none = upiBox({ payment: {}, said: { total: 660, paid: false } });
+  assert.strictEqual(none.document.getElementById('pay-upi').hidden, true, 'a shop with no UPI id offered one');
+
+  const paid = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 660, paid: true } });
+  assert.strictEqual(paid.document.getElementById('pay-upi').hidden, true, 'a paid order was asked for money again');
+
+  const off = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 660, cancelled: true } });
+  assert.strictEqual(off.document.getElementById('pay-upi').hidden, true, 'a cancelled order was asked for money');
+
+  const free = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 0, paid: false } });
+  assert.strictEqual(free.document.getElementById('pay-upi').hidden, true, 'an order costing nothing offered a payment');
 });

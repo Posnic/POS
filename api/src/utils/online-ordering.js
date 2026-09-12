@@ -632,6 +632,11 @@ function defaultConfig() {
     payment_cod: '',
     payment_razorpay: '',
     payment_number: '',
+    /* Where a customer's UPI payment goes, and the name their app shows
+       them. Written out in full so sync cannot delete what it does not
+       carry; see the note above defaultConfig. */
+    payment_upi_id: '',
+    payment_upi_name: '',
     printer_name: '',
   };
 }
