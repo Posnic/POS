@@ -39,6 +39,8 @@ const MAX_TURN_CHARS = 500;
 const MAX_REPLY_CHARS = 1200;
 const MAX_NOTE_CHARS = 120;
 const MAX_ACTIONS = 8;
+const MAX_INSTRUCTIONS_CHARS = 1500;
+const MAX_GREETING_CHARS = 200;
 
 /*
  * The same seam as ai.service.js: the class, instantiated late, so a test can
@@ -187,23 +189,61 @@ function tidy(answer, menu) {
   return { reply, actions };
 }
 
+/** A shop's own words, cut to size and stripped of control characters. */
+function clean(value, max) {
+  /* Character by character rather than a regex: the linter refuses control
+     characters written into a pattern, and rightly. Tabs and newlines stay;
+     the rest of the control range and DEL go. */
+  let out = '';
+  for (const ch of String(value == null ? '' : value)) {
+    const code = ch.charCodeAt(0);
+    const control = (code < 32 && code !== 9 && code !== 10 && code !== 13) || code === 127;
+    if (!control) out += ch;
+  }
+  return out.trim().slice(0, max);
+}
+
 /**
- * Has this shop opened the assistant to its customers?
+ * What this shop said about its assistant.
  *
- * Two switches, both needed: the shop's AI must be usable (provider, key,
- * the Features switch) and the shop must have said yes to the ordering page
- * in particular. Never throws; a screen leaves the spark out on "no".
+ * Two switches, both needed for `on`: the shop's AI must be usable
+ * (provider, key, the Features switch) and the shop must have said yes to
+ * the ordering page in particular. The house notes and the greeting come
+ * along in the same read. Never throws; on any failure the answer is "off".
  */
-async function available(context) {
+async function settingsFor(context) {
+  const off = { on: false, instructions: '', greeting: '' };
   try {
-    if (!(await ai.available(context))) return false;
+    if (!(await ai.available(context))) return off;
     const read = await _repo().resolveGroup('preferences', context);
     const values = (read && read.status && read.data && read.data.values) || {};
     const flag = values.ai_ordering_assistant;
-    return flag === true || String(flag).trim().toLowerCase() === 'true';
+    const on = flag === true || String(flag).trim().toLowerCase() === 'true';
+    return {
+      on,
+      instructions: clean(values.ai_assistant_instructions, MAX_INSTRUCTIONS_CHARS),
+      greeting: clean(values.ai_assistant_greeting, MAX_GREETING_CHARS),
+    };
   } catch (e) {
-    return false;
+    return off;
   }
+}
+
+/** Has this shop opened the assistant to its customers? */
+async function available(context) {
+  return (await settingsFor(context)).on;
+}
+
+/**
+ * What the storefront tells the page: whether to draw the spark, and the
+ * greeting to open with. Nothing else about the shop's settings leaves.
+ */
+async function storefrontFeatures(context) {
+  const settings = await settingsFor(context);
+  return {
+    assistant: settings.on,
+    ...(settings.on && settings.greeting ? { assistant_greeting: settings.greeting } : {}),
+  };
 }
 
 /**
@@ -224,7 +264,8 @@ async function reply(body, storefront, context) {
   /* The door first: a shop that has not opened the assistant gets the same
      answer whatever its menu looks like, and nothing about the menu is
      computed for a caller who is not allowed to ask. */
-  if (!(await available(context))) {
+  const settings = await settingsFor(context);
+  if (!settings.on) {
     return { status: false, message: 'no_assistant', data: null };
   }
   const menu = menuFor(categoriesOf(storefront));
@@ -248,7 +289,15 @@ async function reply(body, storefront, context) {
     ai.fence(JSON.stringify(turns)),
   ].join('\n');
 
-  const asked = await ai.ask({ feature: FEATURE, prompt, system: SYSTEM }, context);
+  /* The shop's house notes ride with the rules, after them: the shop is
+     trusted to steer its own assistant (it is their model and their money),
+     but not to switch off the rules that keep a customer safe. */
+  const system = settings.instructions
+    ? SYSTEM +
+      '\n\nHouse notes from the shop. Follow them wherever they do not conflict with the rules above:\n' +
+      settings.instructions
+    : SYSTEM;
+  const asked = await ai.ask({ feature: FEATURE, prompt, system }, context);
   if (!asked.status) return asked;
   const parsed = ai.jsonFrom(asked.data && asked.data.text);
   if (!parsed) {
@@ -267,6 +316,8 @@ async function reply(body, storefront, context) {
 module.exports = {
   reply,
   available,
+  settingsFor,
+  storefrontFeatures,
   tidy,
   menuFor,
   categoriesOf,

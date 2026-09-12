@@ -157,6 +157,11 @@ const PREFERENCES = [
      the shop's bill is opened by the shop, never by our default. Off until
      said otherwise. See services/ordering-assistant.service.js. */
   'ai_ordering_assistant',
+  /* What the shop tells its assistant: house notes the model follows
+     (today's special, tone, house rules) and the greeting a customer sees
+     first. Preferences, not secrets: a screen shows them back. */
+  'ai_assistant_instructions',
+  'ai_assistant_greeting',
 ];
 
 const DOCUMENTS = [

@@ -901,7 +901,7 @@ test('the reply is written as text, never as markup', async () => {
 
 test('the wiring behind the spark: the storefront flag, the route, the switch, the console', () => {
   const repo = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
-  assert.match(repo, /assistant: await orderingAssistant\.available\(/, 'the storefront does not say whether the assistant is available');
+  assert.match(repo, /\.\.\.\(await orderingAssistant\.storefrontFeatures\(/, 'the storefront does not say whether the assistant is available');
   assert.match(repo, /async storefrontContext\(/, 'a store address cannot be turned into a settings context');
   const routes = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'routes', 'online-ordering.routes.js'), 'utf8');
   assert.match(routes, /router\.post\('\/:storeId\/assistant', assistantLimiter, bind\(controller\.assistant\)\)/, 'the turn endpoint is missing or unlimited');
@@ -1016,4 +1016,22 @@ test("on an iPhone the keyboard's microphone is the microphone, and listening ne
     assert.match(src, /setTimeout\([\s\S]{0,200}rec\.stop\(\)[\s\S]{0,120}12000\)/, name + ': listening has no end of its own');
     assert.match(src, /visibilitychange/, name + ': a hidden page keeps listening');
   }
+});
+
+test("the shop's own greeting opens the conversation, and the console has somewhere to write it", () => {
+  const { window, document } = assistantPage({ reply: { status: 200, body: {} } });
+  window.shop.assistantGreeting = 'Vanakkam! What can I get you?';
+  document.getElementById('ask-ai').click();
+  assert.match(document.getElementById('assistant-log').textContent, /Vanakkam! What can I get you\?/);
+  assert.ok(!/Tell me what you feel like/.test(document.getElementById('assistant-log').textContent), 'the standard greeting shows beside the shop\'s own');
+
+  assert.match(read('indexedDB.js'), /assistant_greeting: String\(/, 'the page never stores the greeting');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  for (const id of ['ai_assistant_greeting', 'ai_assistant_instructions', 'ai_assistant_config']) {
+    assert.match(html, new RegExp('id="' + id + '"'), 'the AI page has no #' + id);
+  }
+  assert.match(html, /lang_ai_assistant_how_5/, 'the AI page does not say how to try it');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /ai_assistant_instructions: String\(\$\('#ai_assistant_instructions'\)\.val\(\)/, 'the house notes are not saved');
+  assert.match(js, /ai_assistant_greeting: String\(\$\('#ai_assistant_greeting'\)\.val\(\)/, 'the greeting is not saved');
 });
