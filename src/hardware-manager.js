@@ -6,6 +6,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const rawPrintService = require('./raw-print-service');
 
 /* How long the printer list may be remembered. Long enough that a receipt
    never pays the spooler for it, short enough that a printer plugged in
@@ -905,6 +906,23 @@ try {
       const tmpBin = path.join(rawTempDir, 'receipt.bin');
       const tmpPs1 = path.join(rawTempDir, 'print.ps1');
       fs.writeFileSync(tmpBin, buffer, { mode: 0o600, flag: 'wx' });
+
+      /*
+       * THE WARM HELPER FIRST.
+       *
+       * Starting PowerShell and compiling the interop class costs 350 to
+       * 550 ms on a real till, and it was paid on every copy of every
+       * receipt. src/raw-print-service.js keeps one alive and answers a job
+       * in under a millisecond. If it cannot be used - it would not start,
+       * it stopped, this is not Windows - it says so rather than failing the
+       * print, and the original per-job spawn below runs unchanged.
+       */
+      const warm = await rawPrintService.send({ printer: printerName, file: tmpBin, doc: docName });
+      if (!warm.unavailable) {
+        if (warm.success) return { success: true, bytes: buffer.length };
+        return { success: false, error: warm.error || 'The spooler did not confirm the job' };
+      }
+      console.warn('[Print] the warm print helper is unavailable; starting one PowerShell for this job');
 
       const safePrinter = String(printerName).replace(/'/g, "''");
       const safeBin = tmpBin.replace(/\\/g, '\\\\');

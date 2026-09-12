@@ -4394,6 +4394,18 @@ app.whenReady().then(async () => {
   hardwareManager = new HardwareManager();
   console.log('HardwareManager initialized');
 
+  /*
+   * Start the raw print helper before the first sale, not on it.
+   *
+   * Starting PowerShell and compiling its interop class costs 350 to 550 ms.
+   * Paid here it is paid once, while nobody is waiting; paid on the first
+   * receipt it is paid in front of a customer. Failure is not fatal: the
+   * print path falls back to a per-job spawn exactly as it always did.
+   */
+  require('./raw-print-service').warm().then((ok) => {
+    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; prints will start their own');
+  });
+
   // Initialize KOT manager
   kotManager = new KOTManager();
   console.log('KOTManager initialized');
