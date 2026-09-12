@@ -7960,8 +7960,12 @@ PosnicPro.settings.voice = {
     /* The key field only means something for a provider that needs one. A
        control that cannot affect anything should not ask for a decision. */
     syncKeyRow: function () {
-        var paid = ['openai', 'google'].indexOf($('#voice_provider').val() || '') !== -1;
-        $('#voice_key_row').toggle(paid);
+        /* Every provider but the phone itself needs a key. Listed rather
+           than "not device and not off", so a value added to the dropdown
+           without being added here hides the field it depends on instead of
+           silently showing one for a provider that has no use for it. */
+        var paid = ['openai', 'google', 'deepgram', 'assembly'];
+        $('#voice_key_row').toggle(paid.indexOf($('#voice_provider').val() || '') !== -1);
     },
 
     load: function () {

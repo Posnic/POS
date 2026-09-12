@@ -19,8 +19,11 @@
 const voice = require('../../../src/utils/voice-settings');
 
 describe('what a shop is allowed to choose', () => {
-  test('four values, and they are the ones a shopkeeper would say', () => {
-    expect(voice.CHOICES).toEqual(['off', 'device', 'openai', 'google']);
+  test('the values are the ones a shopkeeper would say', () => {
+    /* Two more ears, both cheaper than the ones that were here first. Owner:
+       "i saw your were mentioning assembly ai, deepgram some cheap and best
+       stuff. but i dont see those options." */
+    expect(voice.CHOICES).toEqual(['off', 'device', 'openai', 'google', 'deepgram', 'assembly']);
   });
 
   test('a saved choice survives, whatever case it was written in', () => {

@@ -14,6 +14,8 @@
  *     device    the handset's own recogniser: free, offline, no key
  *     openai    the shop's own account
  *     google    the shop's own account
+ *     deepgram  the shop's own account
+ *     assembly  the shop's own account
  *
  * The till reads that and knows which vendor to call. The HANDSET must not:
  * telling a phone that this shop uses OpenAI tells every phone in the building,
@@ -32,12 +34,12 @@
  */
 
 /* What a shop may choose. Anything else is not a setting, it is a typo. */
-const CHOICES = Object.freeze(['off', 'device', 'openai', 'google']);
+const CHOICES = Object.freeze(['off', 'device', 'openai', 'google', 'deepgram', 'assembly']);
 
 /* The ones the till transcribes for. Kept as a list rather than "not device
    and not off", so adding a vendor is one entry and cannot accidentally
    reclassify a future value like `device_offline`. */
-const SERVER_SIDE = Object.freeze(['openai', 'google']);
+const SERVER_SIDE = Object.freeze(['openai', 'google', 'deepgram', 'assembly']);
 
 /*
  * The default a shop gets before it has chosen anything.

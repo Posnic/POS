@@ -1284,6 +1284,8 @@
   "lang_int_newhook": "New Webhook",
   "lang_int_newtoken": "New Token",
   "lang_int_tokens": "API Tokens",
+  "lang_int_voice_assembly": "AssemblyAI - your own account, best with accents",
+  "lang_int_voice_deepgram": "Deepgram - your own account, cheapest",
   "lang_int_voice_device": "The phone itself - free, works offline",
   "lang_int_voice_google": "Google Speech-to-Text - your own account",
   "lang_int_voice_hint": "A waiter holds a button and says the order instead of tapping it. The phone's own recognition is free, works without internet and needs no account - choose a paid service only if your dining room is loud. The key is saved on this server and never sent to a phone.",
