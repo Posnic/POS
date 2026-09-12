@@ -2013,10 +2013,27 @@
                 '</div>';
             $('#payment_id').append(paymentMethod);
         }
-        let SalePaymentType = PosnicPro.configPaymentType;
-        if (SalePaymentType.leght !== 0) {
+        /*
+         * The same rule as the split-tender screen above: Cash is built in, so
+         * a shop that also listed it in Settings must not get a second button
+         * with the same id. `leght` was a typo for `length`, which made the
+         * guard around this loop always true; $.each handles an empty list, so
+         * the guard is simply gone.
+         */
+        let SalePaymentType = PosnicPro.configPaymentType || [];
+        var renderedModes = { cash: true };
+        if (localStorage.getItem("payment_gateway") === 'true') {
+            renderedModes.qrpay = true;
+            renderedModes.razorpay = true;
+        }
+        var modeKey = function (value) {
+            return String(value || '').replace(/\s+/g, '').toLowerCase();
+        };
+        {
             $.each(SalePaymentType, function (key, val) {
                 var payment_mode_active = val.payment_value + '_active';
+                if (renderedModes[modeKey(val.payment_value)]) { return; }
+                renderedModes[modeKey(val.payment_value)] = true;
                 if (sales_payment_mode !== val.payment_value) {
                     $('.payment_mode').val(sales_payment_mode);
                     let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
@@ -2422,18 +2439,41 @@
             );
         }
 
+        /*
+         * A TILE PER METHOD, AND NEVER THE SAME METHOD TWICE.
+         *
+         * Cash is built in here, and a shop that had also added "Cash" to its
+         * own payment list got two Cash tiles. They were not cosmetic
+         * duplicates: both carried the same element ids and both read the same
+         * stored amount, so a 690 rupee bill showed 690 in each and typing in
+         * one never reached the other.
+         *
+         * The shop's list is typed by hand, so the match is deliberately loose
+         * - "Cash", "cash" and "CASH " are one tile. A built-in's id AND its
+         * title both count, so a shop that typed "Razorpay" does not get a
+         * second tile beside the Qrpay one that already says Razorpay.
+         */
+        var renderedMethods = {};
+        function addPaymentBlock(id, title, isActive) {
+            var key = normalizeKey(String(id || ''));
+            if (!key || renderedMethods[key]) { return; }
+            renderedMethods[key] = true;
+            renderedMethods[normalizeKey(String(title || ''))] = true;
+            $('#payment_id').append(createPaymentBlock(id, title, isActive));
+        }
+
         // --- Cash ---
-        $('#payment_id').append(createPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash')));
+        addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
         // --- QR / Razorpay ---
         if (localStorage.getItem("payment_gateway") === 'true') {
-            $('#payment_id').append(createPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay')));
+            addPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay'));
         }
 
         // --- Other Configured Payment Modes ---
         let SalePaymentType = PosnicPro.configPaymentType;
         if (SalePaymentType && SalePaymentType.length !== 0) {
             $.each(SalePaymentType, function (key, val) {
-                $('#payment_id').append(createPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value)));
+                addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
             });
         }
 
