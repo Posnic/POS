@@ -82,6 +82,26 @@ router.post(
   bindController(salesController.getTablesWithActiveOrders)
 );
 
+/*
+ * "The guest on table four would like the bill."
+ *
+ * Guarded exactly like the floor screen above it, because it is the same
+ * waiter on the same handset asking about the same tables. Deliberately NOT
+ * behind ensureKioskKey: that key is per INSTALLATION, and a phone holding one
+ * would be a till.
+ *
+ * This is the only half of billing the floor is trusted with. It asks for the
+ * bill; it cannot say the bill was paid. The two till-side routes that print
+ * it and stamp it are above, behind the kiosk key, because they are the
+ * machine talking to itself about its own printer.
+ */
+router.post(
+  '/requestBillPrint',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.requestBillPrint)
+);
+
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));
@@ -129,6 +149,25 @@ router.post(
   '/multiKitchenPrint',
   ensureKioskKey,
   bindController(salesController.multiKitchenPrint)
+);
+/*
+ * The bill a waiter asked for.
+ *
+ * The two the TILL calls are behind ensureKioskKey, like every other printer
+ * route - they are the machine talking to itself about its own hardware. The
+ * one the HANDSET calls sits with the other kiosk routes further down, because
+ * a phone has no kiosk key and never should: that key is per installation and
+ * a phone that held one would be a till.
+ */
+router.post(
+  '/pendingBillPrints',
+  ensureKioskKey,
+  bindController(salesController.pendingBillPrints)
+);
+router.post(
+  '/markBillPrinted',
+  ensureKioskKey,
+  bindController(salesController.markBillPrinted)
 );
 router.post(
   '/markKitchenPrinted',
