@@ -46,8 +46,41 @@ PosnicPro.onlineorders = {
         };
 
         var lines = (order.items || []).map(function (item) {
-            return '<li>' + safe(item.quantity) + ' &times; ' + safe(item.name) + '</li>';
+            return '<li>' + safe(item.quantity) + ' &times; ' + safe(item.name) +
+                /* The note on this line, under the dish, the way the kitchen
+                   ticket prints it. */
+                (item.note ? '<div class="small text-muted font-italic">' + safe(item.note) + '</div>' : '') +
+                '</li>';
         }).join('');
+
+        /*
+         * How the order travels, in the words the console already uses for
+         * the channel settings, and where it is going: a table, the counter,
+         * or a name and an address. A delivery card with no address is a
+         * card nobody can act on, and that is what this drew.
+         */
+        var how = {
+            dine_in: t('lang_fulfilment_dine_in', 'Dine in'),
+            takeaway: t('lang_fulfilment_takeaway', 'Takeaway'),
+            pickup: t('lang_fulfilment_pickup', 'Pickup'),
+            delivery: t('lang_fulfilment_delivery', 'Delivery')
+        }[order.fulfilment] || '';
+
+        var where;
+        if (order.fulfilment === 'delivery') {
+            where = (order.customer_name ? safe(order.customer_name) + ' &middot; ' : '') +
+                (order.customer_address ? safe(order.customer_address) : t('lang_no_address', 'No address given'));
+        } else if (order.fulfilment === 'pickup' || order.fulfilment === 'takeaway') {
+            where = t('lang_collect_at_counter', 'Collect at the counter') +
+                (order.customer_name ? ' &middot; ' + safe(order.customer_name) : '');
+        } else {
+            where = safe(order.destination || t('lang_no_destination', 'No table or room given')) +
+                (order.person_count > 0 ? ' &middot; ' + safe(order.person_count) + ' ' + t('lang_pax', 'pax') : '');
+        }
+
+        var howChip = how
+            ? '<span class="badge badge-light border mr-2 align-middle">' + how + '</span>'
+            : '';
 
         /* The venue's standing instruction, copied onto the order when it was
            placed. Shown here because whoever accepts it is often the person
@@ -68,7 +101,7 @@ PosnicPro.onlineorders = {
             '<div class="card-body">' +
             '<div class="d-flex justify-content-between align-items-start flex-wrap">' +
             '<div>' +
-            '<h6 class="mb-1">' + safe(order.destination || t('lang_no_destination', 'No table or room given')) + '</h6>' +
+            '<h6 class="mb-1">' + howChip + where + '</h6>' +
             '<div class="small text-muted mb-2">' +
             safe(order.sales_id || '') +
             (order.token_id ? ' &middot; ' + t('lang_token', 'Token') + ' ' + safe(order.token_id) : '') +

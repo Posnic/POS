@@ -155,13 +155,28 @@
    * kitchen leaves fingerprints - a veg mark, a preparation time, a serving
    * period - and one is enough.
    */
-  function unitWord(count) {
-    var kitchen = state.flat.some(function (row) {
+  /* The customer's language, from i18n.js. The English fallback keeps the
+     page alive if that file is ever missing from a deploy. */
+  if (typeof window.t !== "function") {
+    window.t = function (key, vars) {
+      return String(key).replace(/\{(\w+)\}/g, function (m, name) {
+        return vars && vars[name] != null ? String(vars[name]) : m;
+      });
+    };
+  }
+  var t = window.t;
+
+  function kitchenSigns() {
+    return state.flat.some(function (row) {
       var i = row.item;
       return (
         !!i.diet || Number(i.prep_minutes) > 0 || (i.served_in || []).length > 0
       );
     });
+  }
+
+  function unitWord(count) {
+    var kitchen = kitchenSigns();
     if (count === 1) return kitchen ? "dish" : "item";
     return kitchen ? "dishes" : "items";
   }
@@ -228,10 +243,14 @@
      */
     var off = "";
     if (item.available === false) {
-      var served = (item.served_in || []).join(" and ");
+      var served = (item.served_in || []).join(t(" and "));
       off =
         '<span class="off-today">' +
-        escapeHtml(served ? served + " only" : "Not available today") +
+        escapeHtml(
+          served
+            ? t("{when} only", { when: served })
+            : t("Not available today"),
+        ) +
         "</span>";
     }
 
@@ -239,7 +258,7 @@
     var prep =
       Number(item.prep_minutes) > 0
         ? '<span class="prep">' +
-          escapeHtml("~" + item.prep_minutes + " min") +
+          escapeHtml(t("~{n} min", { n: item.prep_minutes })) +
           "</span>"
         : "";
 
@@ -289,12 +308,14 @@
        available, why, which is the more useful thing to say. */
     var meta = item.categoryName || "";
     if (item.available === false) {
-      var served = (item.served_in || []).join(" and ");
-      meta = served ? served + " only" : "Not available today";
+      var served = (item.served_in || []).join(t(" and "));
+      meta = served
+        ? t("{when} only", { when: served })
+        : t("Not available today");
     } else if (Number(item.prep_minutes) > 0) {
       meta = meta
-        ? meta + "  -  ~" + item.prep_minutes + " min"
-        : "~" + item.prep_minutes + " min";
+        ? meta + "  -  " + t("~{n} min", { n: item.prep_minutes })
+        : t("~{n} min", { n: item.prep_minutes });
     }
 
     return (
@@ -370,7 +391,7 @@
         row.parentNode.insertBefore(button, row.nextSibling);
       }
       button.hidden = false;
-      button.textContent = "Show all " + dishes.length;
+      button.textContent = t("Show all {n}", { n: dishes.length });
     });
   }
 
@@ -445,10 +466,12 @@
         return;
       }
       var rec = new Recognition();
-      /* The page's own language, so a Tamil menu is not transcribed as
-         English - the recogniser mishears NUMBERS first when told the wrong
-         one, and a number is half of what people search for. */
-      rec.lang = document.documentElement.lang || "en";
+      /* The language the MENU is written in, not the language of the page
+         around it: a Tamil-reading customer still says "biryani", and the
+         item is still called that. A shop whose menu is typed in another
+         language sets data-speech-lang on <html>. */
+      rec.lang =
+        document.documentElement.getAttribute("data-speech-lang") || "en-IN";
       rec.interimResults = true;
       rec.maxAlternatives = 1;
 
@@ -501,7 +524,9 @@
     });
 
     var store = data.store || {};
-    document.title = store.name ? store.name + " menu" : "Menu";
+    document.title = store.name
+      ? t("{shop} menu", { shop: store.name })
+      : t("Menu");
 
     if (store.logo) {
       var logo = el("shop-logo");
@@ -512,8 +537,19 @@
 
     var count = data.item_count || 0;
     var sub = el("shop-sub");
-    sub.textContent = count + " " + unitWord(count);
+    sub.textContent = t("{n} " + unitWord(count), { n: count });
     sub.hidden = false;
+
+    /* A shop is searched, not a menu; and a veg filter over stationery is a
+       question nobody asked. The same signs decide as for the count words. */
+    if (!kitchenSigns()) {
+      el("search").placeholder = t("Search products");
+      var searchLabel = document.querySelector('label[for="search"]');
+      if (searchLabel) searchLabel.textContent = t("Search products");
+      var firstSort = document.querySelector('#sort option[value="menu"]');
+      if (firstSort) firstSort.textContent = t("Catalogue order");
+      el("filter-veg").hidden = true;
+    }
 
     offerOrdering(data.channel || {});
 
@@ -538,12 +574,13 @@
      */
     var point = data.service_point || {};
     if (point.venue) {
-      el("venue-note").textContent =
-        "Prices shown for " +
-        point.venue.name +
-        (point.venue.unit
-          ? ", " + point.venue.unit_label + " " + point.venue.unit
-          : "");
+      el("venue-note").textContent = t("Prices shown for {venue}", {
+        venue:
+          point.venue.name +
+          (point.venue.unit
+            ? ", " + point.venue.unit_label + " " + point.venue.unit
+            : ""),
+      });
       el("venue-note").hidden = false;
     }
 
@@ -588,9 +625,9 @@
           escapeHtml(c.name || "Menu") +
           "</h2>" +
           '<p class="section-count">' +
-          c.items.length +
-          " " +
-          unitWord(c.items.length) +
+          escapeHtml(
+            t("{n} " + unitWord(c.items.length), { n: c.items.length }),
+          ) +
           "</p>" +
           '<div class="dishes">' +
           c.items.map(dishHtml).join("") +
@@ -892,18 +929,19 @@
       counter.appendChild(
         Object.assign(document.createElement("strong"), {
           textContent: q
-            ? 'Nothing matches "' + state.query + '"'
-            : "Nothing matches those filters",
+            ? t('Nothing matches "{q}"', { q: state.query })
+            : t("Nothing matches those filters"),
         }),
       );
       counter.appendChild(
         document.createTextNode(
-          q ? "Try a different word." : "Try turning one off.",
+          q ? t("Try a different word.") : t("Try turning one off."),
         ),
       );
     } else {
-      counter.textContent =
-        shown + (shown === 1 ? " dish" : " dishes") + " found";
+      counter.textContent = t("{n} " + unitWord(shown) + " found", {
+        n: shown,
+      });
     }
   }
 
@@ -1326,14 +1364,16 @@
     if (served.length) rows.push(["Served at", served.join(", ")]);
 
     if (Number(item.prep_minutes) > 0) {
-      rows.push(["Takes about", item.prep_minutes + " minutes"]);
+      rows.push(["Takes about", t("{n} minutes", { n: item.prep_minutes })]);
     }
 
     rows.push([
       "Right now",
       item.available === false
         ? served.length
-          ? "Not being served - " + served.join(" and ") + " only"
+          ? t("Not being served - {when} only", {
+              when: served.join(t(" and ")),
+            })
           : "Not available today"
         : "Available",
     ]);

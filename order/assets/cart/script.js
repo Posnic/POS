@@ -30,7 +30,7 @@ function showDestination() {
     if (!place || !box) return;
 
     document.getElementById('destination-title').textContent =
-        'We will bring it to ' + place.name;
+        t('We will bring it to {place}', { place: place.name });
 
     const unitLabel = document.getElementById('destination-unit-label');
     const unit = document.getElementById('destination-unit');

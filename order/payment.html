@@ -17,6 +17,7 @@
     <base href="/order/" />
     <title>Almost done</title>
     <link href="assets/order.css" rel="stylesheet">
+    <script src="assets/i18n.js?v=20260912-design"></script>
     <script src="assets/jquery-3.7.1.min.js"></script>
     <script src="config.js"></script>
     <link href="assets/channel-state.css" rel="stylesheet">
@@ -90,9 +91,18 @@
 
         <!-- What is being paid for, so the number on the button is not the
              first time the customer sees it. -->
-        <section class="pay-section bill-brief">
-            <span class="bill-brief-items" id="pay-items">Your order</span>
-            <span class="bill-brief-total" id="pay-total"></span>
+        <section class="pay-section" id="pay-bill" aria-label="Bill">
+            <div class="bill-brief">
+                <span class="bill-brief-items" id="pay-items">Your order</span>
+                <span class="bill-brief-total" id="pay-total"></span>
+            </div>
+            <!-- The fee for the way that was chosen, and the minimum, said
+                 here and not on the token page. -->
+            <div class="pay-charges" id="pay-charges" hidden>
+                <div class="bill-row"><span>Items</span><span id="pay-subtotal"></span></div>
+                <div class="bill-row" id="pay-fee-row"><span id="pay-fee-label">Delivery</span><span id="pay-fee"></span></div>
+                <p class="bill-note" id="pay-charge-note" hidden></p>
+            </div>
         </section>
 
         <!--

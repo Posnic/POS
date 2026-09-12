@@ -25,7 +25,10 @@ const payState = {
     /* Which of the two the customer picked when both are on offer. */
     method: "",
     phoneRequired: true,
+    /* The food, and the food plus the fee for the way chosen. */
+    subtotal: 0,
     total: 0,
+    allowed: true,
     items: 0,
     /* How the food may travel, and which way was chosen. */
     fulfilment: [],
@@ -68,10 +71,10 @@ function fulfilmentChoices() {
 
 function fulfilmentLabel(key) {
     const table = payState.tableFromCode;
-    if (key === "dine_in") return table ? `Bring it to table ${table}` : "Bring it to my table";
-    if (key === "takeaway") return "I'll collect it at the counter";
-    if (key === "pickup") return "I'll collect it from the shop";
-    if (key === "delivery") return "Deliver it to me";
+    if (key === "dine_in") return table ? t("Bring it to table {table}", { table }) : t("Bring it to my table");
+    if (key === "takeaway") return t("I'll collect it at the counter");
+    if (key === "pickup") return t("I'll collect it from the shop");
+    if (key === "delivery") return t("Deliver it to me");
     return key;
 }
 
@@ -154,17 +157,57 @@ function phoneWanted() {
     return payState.phoneRequired || payState.chosen === "delivery";
 }
 
+/* What the chosen way costs on top of the food, if anything. */
+function feeLabel(key) {
+    if (key === "delivery") return "Delivery";
+    if (key === "dine_in") return "Service";
+    return "Packing";
+}
+
+function paintCharges() {
+    const box = document.getElementById("pay-charges");
+    if (!box) return { fee: 0, allowed: true, short: 0 };
+    const charge = typeof chargeFor === "function" ? chargeFor(payState.chosen, payState.subtotal) : { fee: 0, allowed: true, short: 0, toFree: 0, waived: false, minimum: 0 };
+    const hasFee = charge.fee > 0 || charge.waived;
+    box.hidden = !(hasFee || !charge.allowed);
+    const sub = document.getElementById("pay-subtotal");
+    if (sub) sub.textContent = money(payState.subtotal);
+    const feeRow = document.getElementById("pay-fee-row");
+    if (feeRow) feeRow.hidden = !hasFee;
+    const label = document.getElementById("pay-fee-label");
+    if (label) label.textContent = feeLabel(payState.chosen);
+    const fee = document.getElementById("pay-fee");
+    if (fee) fee.textContent = charge.waived ? "Free" : money(charge.fee);
+    const note = document.getElementById("pay-charge-note");
+    if (note) {
+        let text = "";
+        if (!charge.allowed) {
+            text = t(feeLabel(payState.chosen) === "Delivery" ? "Delivery orders start at {min}. Add {more} more." : "Orders start at {min}. Add {more} more.", { min: money(charge.minimum), more: money(charge.short) });
+        } else if (charge.toFree > 0) {
+            text = t("Add {amount} more and {what} is free.", { amount: money(charge.toFree), what: t(feeLabel(payState.chosen).toLowerCase()) });
+        }
+        note.textContent = text;
+        note.hidden = !text;
+    }
+    return charge;
+}
+
 function paintProceed() {
+    const charge = paintCharges();
+    payState.total = Math.round((payState.subtotal + (charge.allowed ? charge.fee : 0)) * 100) / 100;
+    payState.allowed = charge.allowed;
     const button = document.getElementById("proceed-btn");
     if (button) {
-        button.textContent = payingOnline() ? `Pay ${money(payState.total)}` : "Place order";
+        button.textContent = !charge.allowed
+            ? t("Add {amount} more", { amount: money(charge.short) })
+            : payingOnline() ? t("Pay {amount}", { amount: money(payState.total) }) : t("Place order");
     }
     const total = document.getElementById("pay-total");
     if (total) total.textContent = money(payState.total);
     const items = document.getElementById("pay-items");
     if (items) {
         const one = payState.kind === "retail" ? "item" : "dish";
-        items.textContent = `${payState.items} ${payState.items === 1 ? one : one + (one === "dish" ? "es" : "s")}`;
+        items.textContent = t("{n} " + (payState.items === 1 ? one : one + (one === "dish" ? "es" : "s")), { n: payState.items });
     }
     const phone = document.getElementById("phone-section");
     if (phone) phone.hidden = !phoneWanted();
@@ -212,7 +255,7 @@ function ensureDetails() {
         const table = field ? String(field.value || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 12) : "";
         if (!table) {
             if (field) field.focus();
-            if (typeof showToast === "function") showToast("Which table are you at?");
+            if (typeof showToast === "function") showToast(t("Which table are you at?"));
             return false;
         }
         localStorage.setItem("order_table", table);
@@ -432,10 +475,11 @@ function numberIsValid() {
     return /^[6-9]\d{9}$/.test(enteredNumber);
 }
 
-/* The button waits for a number only when one is wanted. */
+/* The button waits for a number only when one is wanted, and for the
+   order to reach the minimum for the way it travels. */
 function validateNumber() {
     const paymentBusy = Boolean(paymentSubmissionPromise) || isRazorpayPaymentActive;
-    $("#proceed-btn").prop("disabled", paymentBusy || (phoneWanted() && !numberIsValid()));
+    $("#proceed-btn").prop("disabled", paymentBusy || payState.allowed === false || (phoneWanted() && !numberIsValid()));
 }
 
 async function submitRazorPayMobile() {
@@ -467,7 +511,7 @@ async function performPaymentSubmission() {
         const productsRefreshed = await fetchAndStoreBranch(branchId, false);
         if (!productsRefreshed) throw new Error("Could not refresh branch data before payment.");
         if (phoneWanted() && !numberIsValid()) {
-            alert("Please enter a valid 10-digit mobile number starting with 6-9.");
+            alert(t("Please enter a valid 10-digit mobile number starting with 6-9."));
             return;
         }
         const number = phoneWanted() ? enteredNumber : DEFAULT_MOBILE;
@@ -488,7 +532,7 @@ async function performPaymentSubmission() {
          * failure of the shop to have set one up.
          */
         if (payingOnline()) {
-            const paymentStarted = await createRazorPayMobile(totalAmount, branchId, number);
+            const paymentStarted = await createRazorPayMobile(payState.total || totalAmount, branchId, number);
             if (!paymentStarted) throw new Error("Razorpay payment could not be started.");
         } else {
             await checkout("", "Cash");
@@ -673,7 +717,7 @@ async function createPhonepeMobile(amount, branchId, number) {
 
     } catch (error) {
         console.error("Error submitting QR request:", error);
-        alert(error.message || "Payment request failed. Please try again.");
+        alert(error.message || t("Payment request failed. Please try again."));
     }
 }
 
@@ -733,7 +777,7 @@ function showAlert(message) {
     console.log("Kiosk payment config", { kioskPayment, razorpayEnabled, cashEnabled, offlineAllowed, showPhoneInput });
     if (!razorpayEnabled && !offlineAllowed) {
         mobileWrapper.style.display = "none";
-        showAlert("This shop is not taking payment through this page right now. Please order at the counter.");
+        showAlert(t("This shop is not taking payment through this page right now. Please order at the counter."));
         if (backBtn) backBtn.style.display = "inline-block";
         return;
     }
@@ -744,6 +788,7 @@ function showAlert(message) {
     payState.cash = cashEnabled;
     payState.offline = offlineAllowed;
     payState.phoneRequired = showPhoneInput;
+    payState.subtotal = totalAmount;
     payState.total = totalAmount;
     payState.items = cartLines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
     payState.kind = shop.kind;
@@ -765,7 +810,10 @@ function showAlert(message) {
      * already settled by the code that was scanned, no number wanted, and
      * one way to pay. Otherwise the page stays up and asks.
      */
-    const settled = choices.length === 1 && (choices[0] !== "dine_in" || payState.tableFromCode) && choices[0] !== "delivery";
+    const firstCharge = typeof chargeFor === "function" ? chargeFor(choices[0], totalAmount) : { fee: 0, allowed: true };
+    const settled = choices.length === 1 && (choices[0] !== "dine_in" || payState.tableFromCode) && choices[0] !== "delivery"
+        /* A fee or a minimum is something to be told about before paying. */
+        && firstCharge.allowed && !(firstCharge.fee > 0);
     const needsType = !settled && !(payState.chosen && choices.includes(payState.chosen));
     const oneWayToPay = !(razorpayEnabled && offlineAllowed);
 
@@ -778,7 +826,7 @@ function showAlert(message) {
             await checkout("", "Cash");
             return;
         }
-        const paymentStarted = await createRazorPayMobile(totalAmount, branchId, DEFAULT_MOBILE);
+        const paymentStarted = await createRazorPayMobile(payState.total || totalAmount, branchId, DEFAULT_MOBILE);
         if (!paymentStarted) throw new Error("Razorpay payment could not be started.");
         return;
     }
