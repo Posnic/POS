@@ -5639,7 +5639,7 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
-        ['module_demo_data_enable', 'Demo data', 'Sample products, sales and people to try the till with. Off removes them (it asks first).'],
+        ['module_demo_data_enable', 'Demo data', 'Sample products, sales, purchases and people to try the till with. Off removes the samples and nothing of your own (it asks first).'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
@@ -7532,10 +7532,16 @@ PosnicPro.settings.demoPacks = {
     _loaded: false,
 
     /*
-     * Loaded when the page is opened, not at boot: this list is needed by one
-     * screen that most shops never visit, and a request at boot is a request
-     * on the critical path to a first sale.
+     * Remove the samples, from the page somebody is already on.
+     *
+     * One implementation, in the shell: this is offered from three places now
+     * - here, the line every page carries, and the dashboard card - and three
+     * copies of a deletion is three things to keep in step.
      */
+    removeAll: function () {
+        PosnicPro.demoSamples.remove();
+    },
+
     load: function () {
         var self = PosnicPro.settings.demoPacks;
         if (self._loaded) { self.paint(); return; }
@@ -7710,6 +7716,9 @@ $(document).on('change', '#demo_pack_choice', function () {
 $(document).on('click', '#demo_pack_install', function () {
     PosnicPro.settings.demoPacks.install();
 });
+$(document).on('click', '#demo_remove_all', function () {
+    PosnicPro.settings.demoPacks.removeAll();
+});
 $(document).on('click', '#demo_pack_reset', function () {
     PosnicPro.settings.demoPacks.reset();
 });
@@ -7801,7 +7810,8 @@ PosnicPro.settings.suggestPartner = function (checkbox) {
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
         title: PosnicPro.i18n.t('lang_switch_off_demo_data_and_remove_the_sample', 'Switch off Demo Data and remove the samples?'),
-        text: 'The sample records created for the demo - products, sales, quotes, customers and suppliers - will be removed. Anything you have edited, sold or received yourself is kept.',
+        text: 'The sample records created for the demo - products, sales, purchases, quotes, customers and suppliers - will be removed. '
+            + 'Nothing you created yourself is removed: your own products, sales and purchases stay, and any sample you have edited, sold or received is kept.',
         showCancelButton: true,
         confirmButtonClass: 'btn btn-danger',
         cancelButtonClass: 'btn btn-light m-l-10',

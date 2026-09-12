@@ -196,7 +196,9 @@ describe('the demo endpoints stay wired - the CI check the owner asked for', () 
     /* Reaching receivings is not enough - the purge also READS receivings to
        refuse received items, so a deleted deleteMany still left this test
        green. It must DELETE there. Found surviving mutation. */
-    expect(purge).toMatch(/purchasesRemoved = \(await receivingsCol\.deleteMany\(demoScope\)\)/);
+    expect(purge).toMatch(
+      /purchasesRemoved =\s*\(await receivingsCol\.deleteMany\(demoScopeFor\('receivings'\)\)\)/
+    );
     /* Same lesson for units: reading the collection is not removing from it. */
     expect(purge).toMatch(/unitsCol\.deleteOne\(/);
   });

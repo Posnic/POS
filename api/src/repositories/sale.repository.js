@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
@@ -10335,7 +10336,7 @@ class SalesRepository {
       const skip = (page - 1) * limit;
       const sort = options?.sort || { _id: -1 };
 
-      const query = {};
+      const query = { ...(await demoData.filterCurrent('sales')) };
 
       // Apply branchId filter
       if (branchId) {

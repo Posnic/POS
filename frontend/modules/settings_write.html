@@ -3783,10 +3783,39 @@
                                         </div>
                                         <small id="demo_pack_summary" class="text-muted d-block mt-1"></small>
                                         <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
-                                            <lang class="lang_demopack_note">Only sample products are replaced.
-                                                Anything you have edited, sold or received is kept, and named
+                                            <lang class="lang_demopack_note">Only the sample products are replaced.
+                                                Records you created yourself are never touched, and a sample you have
+                                                edited, sold or received has become yours - it is kept, and named
                                                 if it cannot be removed.</lang>
                                         </p>
+                                    </div>
+
+                                    <!--
+                                        THE DOOR OUT, where somebody looking at the samples is
+                                        standing. Owner: "able to disable quickly ... people also
+                                        afraid clear existing data option will delete newly created
+                                        or not. so make it clear on this things."
+
+                                        The Features switch can still do this, and asks the same
+                                        question. What it cannot do is be found by somebody who is
+                                        already on this page wondering how to be rid of them.
+                                    -->
+                                    <div class="fc-section" id="fc_demoremove">
+                                        <h6 class="fc-title"><lang class="lang_demoremove_title">Finished with the samples?</lang></h6>
+                                        <p class="text-muted mb-2" style="font-size:13px;">
+                                            <lang class="lang_demoremove_help">This removes the sample products, sales,
+                                                purchases, quotes, customers and suppliers, and switches sample data off.</lang>
+                                        </p>
+                                        <div class="demo-safe-note">
+                                            <i class="feather icon-shield mr-1"></i>
+                                            <span><lang class="lang_demoremove_safe">Nothing you created yourself is removed.
+                                                Your own products, sales, purchases and people are untouched, and so is
+                                                any sample you have edited, sold or received - that one is yours now.</lang></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="demo_remove_all">
+                                            <i class="feather icon-trash-2 mr-1"></i><lang class="lang_demoremove_button">Remove the sample data</lang>
+                                        </button>
+                                        <small id="demo_remove_status" class="text-muted d-block mt-1"></small>
                                     </div>
                                 </div>
                             </div>
