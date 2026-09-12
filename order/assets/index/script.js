@@ -193,9 +193,19 @@ function hideLoader() {
 // ✅ Auto-run on load
 (async () => {
     await loadEnvConfig();
-    // Prioritize URL first
+    /*
+     * The URL first, whenever it says anything: a store address in the path
+     * or the query, a code printed for the conversation (?ai=), a note.
+     *
+     * This read the URL only for ?branch=. With the address in the path,
+     * which is what every printed code carries, a browser that already held
+     * a shop went straight to the menu: ?ai=talk was never read, and a code
+     * for another shop showed the stored one. A first visit worked because
+     * nothing was stored yet, so it looked like it only worked on a phone.
+     */
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("branch")) {
+    const said = !!storeAddressFromUrl() || urlParams.has("ai") || urlParams.has("notes");
+    if (said) {
         await checkBranchFromURL();
     } else {
         await checkBranchStored();

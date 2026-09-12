@@ -104,7 +104,7 @@ function splitMenu(menu) {
     if (!item) continue;
     if (item.available === false) off.push(String(item.name || '').slice(0, 80));
     else {
-      const { available, ...rest } = item;  
+      const { available, ...rest } = item;
       open.push(rest);
     }
   }

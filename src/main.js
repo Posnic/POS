@@ -125,9 +125,10 @@ try {
 }
 
 const { HardwareManager } = require('./hardware-manager');
-const { setupHardwareIPC } = require('./hardware-ipc');
+const { setupHardwareIPC, readLocalBranches } = require('./hardware-ipc');
 const MongoDBManager = require('./mongodb-manager');
 const KOTManager = require('./kot-manager');
+const BillManager = require('./bill-manager');
 const { OrderAlert } = require('./order-alert');
 const SyncAgentManager = require('./sync-agent-manager');
 const { AssetUpdater } = require('./asset-updater');
@@ -534,6 +535,7 @@ let mainWindow;
 let apiServer;
 let hardwareManager;
 let kotManager;
+let billManager;
 let orderAlert;
 let hardwareWindow;
 let backupWindow;
@@ -4395,6 +4397,42 @@ app.whenReady().then(async () => {
   // Initialize KOT manager
   kotManager = new KOTManager();
   console.log('KOTManager initialized');
+
+  /*
+   * THE BILL A WAITER ASKED FOR FROM THE FLOOR.
+   *
+   * Started unconditionally, unlike the KOT poller, because there is nothing
+   * to configure: the bill goes to the same printer a receipt already goes to,
+   * and the branch is the one this till serves. A shop that never uses the
+   * handset simply finds nothing waiting, ten seconds at a time, against its
+   * own API on localhost.
+   *
+   * The branch is looked up rather than asked for. Hardware Manager had to
+   * demand a 24 character ObjectId typed by hand once, and that was a leftover
+   * from when it was a separate application that could not know which shop it
+   * served. This one runs inside the till, so it looks.
+   */
+  billManager = new BillManager(hardwareManager, {
+    findBranchId: async () => {
+      /* Whatever the kitchen printer was told, if anything - the same shop
+         either way - and otherwise the only branch there is. */
+      try {
+        const kotConfig = kotManager ? await kotManager.loadConfig() : null;
+        if (kotConfig && kotConfig.branchId) return kotConfig.branchId;
+      } catch (e) {
+        /* no kitchen config yet; fall through and look for ourselves */
+      }
+      try {
+        const branches = await readLocalBranches();
+        if (branches.length === 1) return branches[0].id;
+      } catch (e) {
+        /* the database is not up yet; the next poll will try again */
+      }
+      return '';
+    },
+  });
+  billManager.start();
+  console.log('BillManager started');
 
   /*
    * The sound an online order makes.

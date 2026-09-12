@@ -683,6 +683,35 @@ const saleSchema = new mongoose.Schema(
       trim: true,
     },
 
+    /*
+     * THE BILL A WAITER ASKED FOR FROM THE FLOOR.
+     *
+     * Three fields and not one, because "somebody wants this billed" and "the
+     * bill came out of the printer" are different facts and the gap between
+     * them is where a bill gets lost. The till polls for the first and stamps
+     * the second, exactly as it already does for kitchen tickets.
+     *
+     * NONE OF THIS IS PAYMENT. A printed bill is a request for money, not a
+     * receipt of it - payment_status is not touched from this path and there
+     * is a test that says so. The cashier settles; the waiter asks.
+     *
+     * Declared here because the schema is STRICT: an undeclared field is
+     * stripped without a word, which is how invoice_key and source_invoice_id
+     * each shipped broken once already.
+     */
+    bill_requested_at: {
+      type: Date,
+    },
+    /* Who asked, so a bill nobody collected can be traced to a person rather
+       than to "the system". */
+    bill_requested_by: {
+      type: String,
+      trim: true,
+    },
+    bill_printed_at: {
+      type: Date,
+    },
+
     // The invoice this sale was recorded from (INVOICING_MODULE_DESIGN).
     // Same lesson as invoice_key: the schema is strict, so an undeclared
     // field is stripped without a word and the invoice never learns it was

@@ -3895,6 +3895,22 @@ module.exports = {
     salesRepository.itemExpiryReportPage(data, options, {
       SaleModel: getModel(SaleModel),
     }),
+  /*
+   * The bill a waiter asked for from the floor.
+   *
+   * Three calls because there are three moments: somebody asks, the till finds
+   * out, the paper comes out. See the block above requestBillPrintModel for
+   * why none of them touches payment_status.
+   */
+  requestBillPrint: async (branchId, tableNumber, askedBy, { SaleModel } = {}) =>
+    salesRepository.requestBillPrintModel(branchId, tableNumber, askedBy, {
+      SaleModel: getModel(SaleModel),
+    }),
+  pendingBillPrints: async (branchId, { SaleModel } = {}) =>
+    salesRepository.pendingBillPrintsModel(branchId, { SaleModel: getModel(SaleModel) }),
+  markBillPrinted: async (saleIds, { SaleModel } = {}) =>
+    salesRepository.markBillPrintedModel(saleIds, { SaleModel: getModel(SaleModel) }),
+
   salePage: async (filters, options, branchId, { SaleModel } = {}) =>
     salesRepository.salePage(filters, options, branchId, {
       SaleModel: getModel(SaleModel),
