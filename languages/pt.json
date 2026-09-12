@@ -2989,5 +2989,10 @@
   "lang_demo_kind_customers": "clientes",
   "lang_demo_kind_suppliers": "fornecedores",
   "lang_could_not_switch_sample_data_off": "Não foi possível desligar os dados de amostra",
-  "lang_could_not_remove_the_sample_data": "Não foi possível remover os dados de amostra"
+  "lang_could_not_remove_the_sample_data": "Não foi possível remover os dados de amostra",
+  "lang_upi_heading": "Pagar por UPI",
+  "lang_upi_id": "ID do UPI",
+  "lang_upi_name": "Nome que o cliente verá",
+  "lang_upi_help": "Coloque aqui o seu ID do UPI e quem estiver a ver um pedido por pagar recebe um botão que abre a aplicação dele, já com o seu nome e o valor preenchidos. O dinheiro vai diretamente para si. Ninguém o verifica aqui: o seu balcão vê o pagamento e marca o pedido como pago, tal como faz com dinheiro. Deixe vazio e não aparece botão nenhum.",
+  "lang_upi_id_placeholder": "9843012345@okaxis"
 }

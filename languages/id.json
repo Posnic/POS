@@ -2989,5 +2989,10 @@
   "lang_demo_kind_customers": "pelanggan",
   "lang_demo_kind_suppliers": "pemasok",
   "lang_could_not_switch_sample_data_off": "Tidak dapat mematikan data contoh",
-  "lang_could_not_remove_the_sample_data": "Tidak dapat menghapus data contoh"
+  "lang_could_not_remove_the_sample_data": "Tidak dapat menghapus data contoh",
+  "lang_upi_heading": "Bayar dengan UPI",
+  "lang_upi_id": "ID UPI",
+  "lang_upi_name": "Nama yang dilihat pelanggan",
+  "lang_upi_help": "Isikan ID UPI Anda di sini, dan pelanggan yang melihat pesanan yang belum dibayar akan mendapat tombol yang membuka aplikasinya sendiri, dengan nama Anda dan jumlahnya sudah terisi. Uangnya langsung masuk ke Anda. Tidak ada yang memeriksanya di sini: kasir Anda melihat pembayaran dan menandai pesanan sebagai lunas, persis seperti uang tunai. Biarkan kosong, maka tombolnya tidak muncul.",
+  "lang_upi_id_placeholder": "9843012345@okaxis"
 }

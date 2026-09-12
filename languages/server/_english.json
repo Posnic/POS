@@ -1886,6 +1886,9 @@
   "That card is already assigned to another user": [
     "src/services/authorization.service.js"
   ],
+  "That does not look like a UPI id. It should read like name@bank.": [
+    "src/models/setting.model.js"
+  ],
   "That is more than the ": [
     "src/services/invoice-sync.js"
   ],

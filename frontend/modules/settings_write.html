@@ -5559,6 +5559,32 @@
                                                                 </div>
                                                             </div>
 
+                                                            <!--
+                                                                UPI, which in India is how most customers would rather
+                                                                pay: they tap, their own app opens with the amount
+                                                                already in it, and the money lands in the shop's own
+                                                                account. Nothing here confirms it - the counter sees
+                                                                the payment and marks the order paid, the same as cash.
+                                                            -->
+                                                            <div class="col-md-12 mb-3">
+                                                                <label class="font-weight-bold"><lang class="lang_upi_heading">Pay by UPI</lang></label>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_upi_help">Put your UPI id here and a customer looking at an unpaid order gets a button that opens their own app, with your name and the amount already filled in. The money goes straight to you. Nobody here checks it: your counter sees the payment and marks the order paid, exactly as it does with cash. Leave it empty and no button appears.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="payment_upi_id"><lang class="lang_upi_id">UPI id</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="payment_upi_id"
+                                                                            autocomplete="off" maxlength="80" placeholder="9843012345@okaxis" data-t-placeholder="lang_upi_id_placeholder">
+                                                                    </div>
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="payment_upi_name"><lang class="lang_upi_name">Name your customer will see</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="payment_upi_name"
+                                                                            autocomplete="off" maxlength="60">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
                                                         </div>
 
                                                         <!-- Submit Button -->

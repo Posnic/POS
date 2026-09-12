@@ -182,6 +182,79 @@ async function renderAndPrint() {
 }
 
 
+/* What the shop takes, as the storefront describes it. */
+async function getLatestShopPayment(shopId) {
+    try {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return null;
+        const body = await response.json();
+        return (body && body.data && body.data.payment) || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/*
+ * The UPI links for one order.
+ *
+ * pa is who is paid, pn the name their app shows, am the amount, tn what it
+ * is for. The generic upi: scheme opens the phone's chooser, which is every
+ * UPI app it has; the named ones are for phones that do not offer one.
+ *
+ * Everything is encoded: a shop name with an ampersand in it would otherwise
+ * end the amount early, and a customer would be shown the wrong number to
+ * pay - which is the one bug this must not have.
+ */
+function upiLinks({ upiId, upiName, amount, token, orderId }) {
+    const money = Number(amount || 0).toFixed(2);
+    const fields =
+        "pa=" + encodeURIComponent(upiId) +
+        "&pn=" + encodeURIComponent(upiName || "") +
+        "&am=" + encodeURIComponent(money) +
+        "&cu=INR" +
+        "&tn=" + encodeURIComponent(t("Order {token}", { token: token })) +
+        (orderId ? "&tr=" + encodeURIComponent(String(orderId).slice(0, 35)) : "");
+    return {
+        any: "upi://pay?" + fields,
+        gpay: "tez://upi/pay?" + fields,
+        phonepe: "phonepe://pay?" + fields,
+        paytm: "paytmmp://pay?" + fields,
+        amount: money
+    };
+}
+
+/* The money a customer still owes, offered to their own app. */
+function offerUpi(said, shopPayment, token, orderId) {
+    const box = document.getElementById("pay-upi");
+    if (!box) return;
+    const upiId = String((shopPayment && shopPayment.upi_id) || "");
+    /* Nothing owed, nothing to pay, or nowhere to send it. */
+    if (!upiId || !said || said.paid || said.cancelled || !(Number(said.total) > 0)) return;
+    const links = upiLinks({
+        upiId,
+        upiName: String((shopPayment && shopPayment.upi_name) || said.shop || ""),
+        amount: said.total,
+        token,
+        orderId
+    });
+    const amount = document.getElementById("pay-upi-amount");
+    if (amount) {
+        amount.textContent = t("Pay {amount} to {who}", {
+            amount: "\u20b9" + links.amount.replace(/\.00$/, ""),
+            who: String((shopPayment && shopPayment.upi_name) || said.shop || "")
+        });
+    }
+    const where = { "pay-upi-any": links.any, "pay-upi-gpay": links.gpay, "pay-upi-phonepe": links.phonepe, "pay-upi-paytm": links.paytm };
+    Object.keys(where).forEach((id) => {
+        const link = document.getElementById(id);
+        if (link) link.href = where[id];
+    });
+    box.hidden = false;
+}
+
 /* Does the shop say this order is paid? If so, the bill is worth having. */
 async function offerBillWhenPaid(token) {
     const button = document.getElementById("done-bill");
@@ -199,7 +272,18 @@ async function offerBillWhenPaid(token) {
         );
         if (!response.ok) return;
         const body = await response.json();
-        if (!body || body.type !== "success" || !body.data || !body.data.bill_ready) return;
+        if (!body || body.type !== "success" || !body.data) return;
+        /* Unpaid: offer to pay it. Paid: offer the bill. Never both. */
+        if (!body.data.bill_ready) {
+            let payment = {};
+            try {
+                payment = (await getLatestShopPayment(shopId)) || {};
+            } catch (e) {
+                payment = {};
+            }
+            offerUpi(body.data, payment, token, orderId);
+            return;
+        }
         button.hidden = false;
         button.addEventListener("click", async () => {
             button.disabled = true;

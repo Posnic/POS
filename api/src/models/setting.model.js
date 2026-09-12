@@ -5040,6 +5040,35 @@ class SettingModel extends BaseModel {
         }
       }
 
+      /*
+       * The UPI payee: an address and the name a customer's app will show
+       * them. Text, not a switch, so it cannot go through the loop above -
+       * Boolean('anything') is true and would have written "true" into the
+       * field a customer pays into.
+       *
+       * A UPI address is name@handle. Anything else is refused rather than
+       * stored, because a wrong one sends a customer's money to a stranger
+       * or nowhere, and neither shows up until somebody complains.
+       */
+      if (data.payment_upi_id !== undefined) {
+        const upi = String(data.payment_upi_id || '')
+          .trim()
+          .slice(0, 80);
+        if (upi && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9.-]{1,30}$/.test(upi)) {
+          return {
+            status: false,
+            data: null,
+            message: 'That does not look like a UPI id. It should read like name@bank.',
+          };
+        }
+        updateData['online_ordering.payment_upi_id'] = upi;
+      }
+      if (data.payment_upi_name !== undefined) {
+        updateData['online_ordering.payment_upi_name'] = String(data.payment_upi_name || '')
+          .trim()
+          .slice(0, 60);
+      }
+
       if (Object.keys(updateData).length === 0) {
         return {
           status: false,
