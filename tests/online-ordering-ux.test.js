@@ -1747,3 +1747,121 @@ test('the token screen downloads nothing and shows no bill', () => {
   const html = read('thankyou.html');
   assert.match(html, /<section class="receipt-section" aria-label="Receipt" hidden>/, 'the bill is shown before a rupee has been paid');
 });
+
+/** The history page in jsdom, with what a browser kept and what a shop says. */
+function historyPage({ kept = [], says = {} } = {}) {
+  const dom = new JSDOM(read('history.html'), {
+    url: 'https://shop.example/order/history.html',
+    runScripts: 'outside-only',
+  });
+  const { window } = dom;
+  const calls = { asked: [], forgotten: [] };
+  window.CONFIG = { API_BASE_URL: '' };
+  window.loadEnvConfig = async () => {};
+  window.rememberedOrders = () => JSON.parse(JSON.stringify(kept));
+  window.forgetOrder = (id) => calls.forgotten.push(id);
+  window.fetch = async (url) => {
+    calls.asked.push(String(url));
+    const id = String(url).split('/orders/')[1].split('?')[0];
+    const answer = says[id];
+    if (!answer) return { ok: false, status: 404, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => ({ type: 'success', data: answer }) };
+  };
+  window.eval(read('assets/history/script.js'));
+  return { window, document: window.document, calls };
+}
+
+test('what this phone ordered is kept on this phone, and the shop says where each one got to', async () => {
+  /* Owner: "also order history page not exist ... keep the history in the
+     browser." There is no account behind a QR code, so there is no other
+     list there could be. */
+  const kept = [
+    { orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T10:00:00.000Z', items: [{ name: 'Chicken Biryani', quantity: 2 }] },
+    { orderId: 'o2', token: '220', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T09:00:00.000Z', items: [{ name: 'Masala Dosa', quantity: 1 }] },
+    { orderId: 'gone', token: '221', shop: 'ABC', shopName: 'Azure', at: '2026-09-11T09:00:00.000Z', items: [] },
+  ];
+  const says = {
+    o1: { order_id: 'o1', token: '219', shop: 'Azure', paid: true, bill_ready: true, cancelled: false, state: 'accepted', items: [{ name: 'Chicken Biryani', quantity: 2 }], total: 660 },
+    o2: { order_id: 'o2', token: '220', shop: 'Azure', paid: false, bill_ready: false, cancelled: false, state: 'accepted', items: [{ name: 'Masala Dosa', quantity: 1 }], total: 120 },
+  };
+  const { window, document, calls } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  const rows = [...document.querySelectorAll('.history-row')];
+  assert.strictEqual(rows.length, 2, 'an order the shop has never heard of stayed on the list');
+  assert.deepStrictEqual(calls.forgotten, ['gone'], 'the dead order was not forgotten');
+
+  /* Paid carries a bill; with the kitchen does not. */
+  assert.strictEqual(rows[0].querySelector('.history-state').textContent, 'Paid');
+  assert.strictEqual(rows[0].querySelector('.history-state').getAttribute('data-state'), 'paid');
+  assert.ok(rows[0].querySelector('.history-bill'), 'a paid order offers no bill');
+  assert.match(rows[0].querySelector('.history-bill').getAttribute('href'), /thankyou\.html\?token=219&order=o1/);
+  assert.strictEqual(rows[1].querySelector('.history-state').textContent, 'With the kitchen');
+  assert.ok(!rows[1].querySelector('.history-bill'), 'an unpaid order offers a bill');
+  assert.match(rows[1].querySelector('.history-what').textContent, /1× Masala Dosa/);
+
+  /* Each row is asked with its OWN token, at its own shop, and nothing
+     else is asked for. The count is not pinned: a page may paint more than
+     once (a language switch, a restore), and the guard above makes that
+     harmless rather than forbidden. */
+  for (const id of ['o1', 'o2', 'gone']) {
+    const token = kept.find((row) => row.orderId === id).token;
+    assert.ok(
+      calls.asked.some((url) => url === '/online-ordering/ABC/orders/' + id + '?token=' + token),
+      id + ' was not asked for with its own token'
+    );
+  }
+  assert.ok(calls.asked.every((url) => /\/orders\/(o1|o2|gone)\?token=\d+$/.test(url)), 'something else was asked for');
+});
+
+test('a phone that has ordered nothing is told so, and a shop that cannot be reached keeps the list', async () => {
+  const bare = historyPage({ kept: [] });
+  bare.document.dispatchEvent(new bare.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(bare.document.getElementById('history-empty').hidden, false);
+  assert.strictEqual(bare.document.querySelectorAll('.history-row').length, 0);
+
+  /* Offline: the browser's own record still shows, marked as unchecked
+     rather than silently claimed to be current. */
+  const offline = historyPage({
+    kept: [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T10:00:00.000Z', items: [{ name: 'Lime Soda', quantity: 1 }] }],
+  });
+  offline.window.fetch = async () => {
+    throw new Error('offline');
+  };
+  offline.document.dispatchEvent(new offline.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 40));
+  const row = offline.document.querySelector('.history-row');
+  assert.ok(row, 'an offline phone lost its own record');
+  assert.strictEqual(row.querySelector('.history-state').textContent, 'Not checked');
+  assert.deepStrictEqual(offline.calls.forgotten, [], 'an unreachable shop made the page forget an order');
+});
+
+test('the order is written into this phone\'s list when it is placed, with what it is', () => {
+  const db = read('indexedDB.js');
+  assert.match(db, /const ORDER_HISTORY_KEY = "posnic_orders";/);
+  assert.match(db, /rememberOrder\(\{[\s\S]*orderId: String\(result\.data\.sale_id/, 'a placed order is not written to the list');
+  assert.ok(
+    db.indexOf('rememberOrder({') > db.indexOf('sessionStorage.setItem("kioskReceipt"'),
+    'the order is remembered before it is known to have been placed'
+  );
+  /* And what the device is rides with the order, for the shop's records. */
+  assert.match(db, /client: typeof clientFacts === "function" \? clientFacts\(\) : undefined/);
+  assert.match(db, /const DEVICE_KEY = "posnic_device";/);
+});
+
+test('the bill is offered only when the shop says the money is in', () => {
+  /* Owner: "once payment done from desktop then make bill available to
+     download." */
+  const script = read('assets/thankyou/script.js');
+  assert.match(script, /async function offerBillWhenPaid\(token\)/);
+  assert.match(script, /if \(!body \|\| body\.type !== "success" \|\| !body\.data \|\| !body\.data\.bill_ready\) return;/);
+  assert.ok(
+    script.indexOf('button.hidden = false') > script.indexOf('bill_ready'),
+    'the button is shown before the shop has been asked'
+  );
+  const html = read('thankyou.html');
+  assert.match(html, /id="done-bill" hidden/, 'the bill button starts visible');
+  assert.match(html, /history\.html'">Your orders/, 'there is no way from the token screen to the list');
+});

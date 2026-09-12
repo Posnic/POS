@@ -689,7 +689,7 @@ test('every local script and stylesheet carries the version tag, on both bundles
 test('every page a customer walks through puts the shop back into the address bar', () => {
   /* Owner: "i see develop.posnic.io/order/products.html ... its missing ABC
      as branch. its better to keep user might refresh page or copy page." */
-  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'history.html', 'home.html', 'phonepe_status.html']) {
     assert.match(readBundle(page), /assets\/shop-address\.js/, 'order/' + page + ' does not keep the shop in its address');
   }
   assert.ok(!/shop-address\.js/.test(readBundle('index.html')), 'the arrival page manages its own address');
@@ -701,7 +701,7 @@ test('the server answers an inner page under a shop, and only the pages', () => 
   assert.ok(literal, 'app.js no longer serves /order/AZ100/<page>.html');
   // eslint-disable-next-line no-eval
   const re = eval(literal);
-  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'history.html', 'home.html', 'phonepe_status.html']) {
     const m = re.exec('/AZ100/' + page);
     assert.ok(m && m[1] === page, literal + ' does not serve /AZ100/' + page);
   }
