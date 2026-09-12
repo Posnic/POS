@@ -157,6 +157,49 @@ describe('voice-session.service', () => {
     }
   });
 
+  test("the assistant speaks first: the opening line is the shop's own, else a welcome by name and table", () => {
+    const azure = {
+      store: { name: 'Azure Sea Foods', kind: 'restaurant' },
+      service_point: { label: 'Table 5', venue: null },
+    };
+    expect(voice.openingLine(azure, {})).toBe(
+      'Welcome to Azure Sea Foods, table 5. What can I get you today?'
+    );
+    expect(
+      voice.openingLine(
+        { store: { name: 'Azure Sea Foods' }, service_point: { label: '', venue: null } },
+        {}
+      )
+    ).toBe('Welcome to Azure Sea Foods. What can I get you today?');
+    expect(
+      voice.openingLine(
+        {
+          store: { name: 'Azure' },
+          service_point: { venue: { name: 'Royal Club', unit_label: 'Room', unit: '123' } },
+        },
+        {}
+      )
+    ).toBe('Welcome to Azure, room 123. What can I get you today?');
+    expect(voice.openingLine({ store: { name: 'Nila Stationery', kind: 'retail' } }, {})).toBe(
+      'Welcome to Nila Stationery. What are you looking for today?'
+    );
+    expect(voice.openingLine(azure, { greeting: '  Vanakkam!  What can I get you?  ' })).toBe(
+      'Vanakkam! What can I get you?'
+    );
+    expect(voice.openingLine({}, {})).toBe('Welcome to our shop. What can I get you today?');
+
+    const brief = voice.instructionsFor(
+      azure,
+      assistant.menuFor(MENU),
+      { greeting: 'Vanakkam! What can I get you?' },
+      'ta'
+    );
+    expect(brief).toMatch(
+      /OPENING LINE: <<<SHOP_DATA\nVanakkam! What can I get you\?\nSHOP_DATA>>>/
+    );
+    expect(voice.VOICE_SYSTEM).toContain('You speak first.');
+  });
+
   test('a tick from the page goes to the meter as it came', async () => {
     const ticked = jest
       .spyOn(meter, 'tick')

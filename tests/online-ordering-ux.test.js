@@ -1425,3 +1425,28 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   assert.strictEqual(tamil.calls.sent.filter((e) => e.type === 'session.update').length, 0);
   tamil.window.OrderingVoice.stop();
 });
+
+test('the assistant speaks first when the line opens, once per line', async () => {
+  /* Owner: "when it starts with greeting? like welcome to shop name". */
+  const { window, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  await window.OrderingVoice.start();
+  await settle();
+  calls.sent.length = 0;
+  window.__pc.channel.onopen();
+  assert.strictEqual(calls.sent.length, 2, 'opening the line did not ask the assistant to speak');
+  assert.strictEqual(calls.sent[0].type, 'conversation.item.create');
+  assert.strictEqual(calls.sent[0].item.role, 'system');
+  assert.match(calls.sent[0].item.content[0].text, /OPENING LINE/);
+  assert.strictEqual(calls.sent[1].type, 'response.create');
+  window.__pc.channel.onopen();
+  assert.strictEqual(calls.sent.length, 2, 'the greeting was asked for twice on one line');
+
+  /* A new line greets again. */
+  window.OrderingVoice.stop();
+  await window.OrderingVoice.start();
+  await settle();
+  calls.sent.length = 0;
+  window.__pc.channel.onopen();
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1);
+  window.OrderingVoice.stop();
+});

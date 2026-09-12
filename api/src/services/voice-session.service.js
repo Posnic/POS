@@ -31,6 +31,7 @@ const MAX_SDP_CHARS = 200000;
 
 const VOICE_SYSTEM = [
   "You are the spoken ordering assistant for one restaurant or shop's online ordering page. The customer is talking to you by voice and hears you speak.",
+  "You speak first. The moment the line opens, say the OPENING LINE in one breath, in the page's language (translate it when the page is in Tamil; keep the shop's name as written), then stop and listen. Do not read the menu unasked.",
   'Talk the way a good waiter talks: warm, short, concrete. One or two sentences, then let the customer speak. Never read out more than three items at once; offer to go on.',
   'Recommend and add ONLY items from the MENU, through the tools, using their exact item_id. Never invent a dish, a price, an ingredient or an offer. Say prices as they are on the menu.',
   'The MENU lists only what can be ordered right now. NOT TODAY lists names that exist but cannot be ordered today: never add them; if asked, say it is not available today and offer the closest thing on the MENU.',
@@ -115,6 +116,38 @@ function languageOf(lang) {
   return /^ta/i.test(String(lang || '')) ? 'ta' : 'en';
 }
 
+/**
+ * The first thing the customer hears. The shop's own opening line when it
+ * wrote one (the console's greeting box), else a welcome by name, with the
+ * table or the room when the code said one. The model says it in the
+ * page's language.
+ */
+function openingLine(storefront, settings) {
+  const tidy = (value, max) =>
+    String(value == null ? '' : value)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, max);
+  const own = tidy(settings && settings.greeting, 200);
+  if (own) return own;
+  const store = (storefront && storefront.store) || {};
+  const point = (storefront && storefront.service_point) || {};
+  const name = tidy(store.name, 80) || 'our shop';
+  let where = '';
+  if (point.venue && point.venue.unit) {
+    where =
+      ', ' +
+      tidy(point.venue.unit_label || 'room', 20).toLowerCase() +
+      ' ' +
+      tidy(point.venue.unit, 24);
+  } else if (tidy(point.label, 40)) {
+    where = ', ' + tidy(point.label, 40).toLowerCase();
+  }
+  return store.kind === 'retail'
+    ? `Welcome to ${name}${where}. What are you looking for today?`
+    : `Welcome to ${name}${where}. What can I get you today?`;
+}
+
 function languageLine(lang) {
   return languageOf(lang) === 'ta'
     ? 'LANGUAGE: the page is in Tamil. Expect Tamil, often with English dish names in it, and answer in Tamil unless the customer clearly speaks English.'
@@ -154,6 +187,7 @@ function instructionsFor(storefront, menu, settings, lang) {
     `KIND: ${store.kind === 'retail' ? 'shop' : 'restaurant'}`,
     `CURRENCY: ${String(store.currency || '').slice(0, 4) || 'INR'}`,
     languageLine(lang),
+    `OPENING LINE: ${ai.fence(openingLine(storefront, settings))}`,
     '',
     'MENU (JSON; what can be ordered right now: id, name, category, price, diet, about, served):',
     ai.fence(JSON.stringify(lists.open)),
@@ -241,6 +275,7 @@ module.exports = {
   tools,
   instructionsFor,
   languageLine,
+  openingLine,
   vocabularyFor,
   VOICE_SYSTEM,
   FEATURE,
