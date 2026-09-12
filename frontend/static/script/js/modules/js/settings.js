@@ -9251,6 +9251,8 @@ PosnicPro.settings.ai = {
     CLEAR_SECRET: '__posnic_clear__',
     /* True only between pressing Replace and saving or backing out. */
     _replacing: false,
+    /* True only between pressing Edit on the set-up line and saving. */
+    _editing: false,
     /*
      * Where each provider actually hands out a key.
      *
@@ -9318,6 +9320,24 @@ PosnicPro.settings.ai = {
         $('#ai_api_key').toggle(on && (!saved || replacing));
         $('#ai_key_cancel').toggle(on && saved && replacing);
         $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
+        /*
+         * SET UP: with a key saved, the provider, the key, the how-to and the
+         * limit are answered questions, and the form folds to one line that
+         * says what answers and the limit, with Edit and Remove. Decided
+         * last, so it wins over every toggle above. Save stays: the customer
+         * assistant switch below shares it.
+         */
+        var configured = on && saved && PosnicPro.settings.ai._editing !== true;
+        $('#ai_configured').toggle(configured);
+        if (configured) {
+            $('#ai_configured_provider').text(
+                $('#ai_provider option:selected').text().replace(/\s+-\s.*$/, '').trim());
+            var cap = String($('#ai_monthly_cap').val() || '').trim();
+            $('#ai_configured_cap').text(cap || PosnicPro.i18n.t('lang_ai_no_limit', 'none'));
+            $('#ai_provider_row,#ai_key_row,#ai_howto_toggle_row,#ai_key_help,#ai_cap_row').hide();
+        } else {
+            $('#ai_provider_row').show();
+        }
     },
 
     load: function () {
@@ -9325,6 +9345,7 @@ PosnicPro.settings.ai = {
            look at the page, not a preference to remember. */
         PosnicPro.settings.ai._howtoOpen = false;
         PosnicPro.settings.ai._replacing = false;
+        PosnicPro.settings.ai._editing = false;
         PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var v = response.data.values || response.data;
@@ -9498,5 +9519,14 @@ $(document).on('click', '#ai_key_cancel', function () {
     PosnicPro.settings.ai.syncRows();
 });
 $(document).on('click', '#ai_key_remove', function () {
+    PosnicPro.settings.ai.removeKey();
+});
+$(document).on('click', '#ai_edit', function () {
+    PosnicPro.settings.ai._editing = true;
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_remove_all', function () {
+    /* The same removal as the key row's: asked first, then the key goes
+       and the form comes back empty for a fresh setup. */
     PosnicPro.settings.ai.removeKey();
 });

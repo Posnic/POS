@@ -3294,7 +3294,30 @@
                                         <lang class="lang_ai_hint">We charge nothing for this. You bring your own account with an AI provider and pay them directly, so it works on every plan including the free one, and nothing is billed to you by us. The key is saved on this server, is never sent to a browser, and is never shown again once saved.</lang>
                                     </small>
 
-                                    <div class="form-group" style="max-width:460px;">
+                                    <!--
+                                        SET UP: the whole form folds to one line.
+
+                                        With a key saved, the provider, the key, the how-to and the
+                                        limit are questions already answered, and a page that asks
+                                        them again on every visit looks unfinished. Owner: "when key
+                                        save whole section of form needs to be shrink. if user want
+                                        remove or edit. not only near to the field."
+
+                                        So the setup becomes one line: what answers, the limit, and
+                                        Edit or Remove. Edit unfolds the form as it was; Remove is
+                                        the same removal as the key row's, asked first. The customer
+                                        assistant switch below stays, because it is a separate
+                                        decision and needs the Save it shares.
+                                    -->
+                                    <div id="ai_configured" class="ai-key-status" style="max-width:460px; display:none;">
+                                        <span class="ai-key-badge"><i class="feather icon-check-circle"></i><lang class="lang_ai_configured">AI is set up</lang></span>
+                                        <span class="ai-key-hint"><span id="ai_configured_provider"></span> &middot; <lang class="lang_ai_cap">Monthly limit</lang>: <span id="ai_configured_cap"></span></span>
+                                        <span class="ai-key-actions">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="ai_edit"><i class="feather icon-edit mr-1"></i><lang class="lang_ai_edit">Edit</lang></button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" id="ai_remove_all"><i class="feather icon-x mr-1"></i><lang class="lang_ai_key_remove">Remove</lang></button>
+                                        </span>
+                                    </div>
+                                    <div class="form-group" id="ai_provider_row" style="max-width:460px;">
                                         <label for="ai_provider"><lang class="lang_ai_provider">Who answers</lang></label>
                                         <select id="ai_provider" class="form-control border-control">
                                             <option value=""><lang class="lang_ai_off">Off - no AI buttons anywhere</lang></option>
