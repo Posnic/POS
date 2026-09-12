@@ -324,13 +324,11 @@ describe('ordering-assistant.service', () => {
     });
 
     test('a refusal from the AI service passes through untouched', async () => {
-      jest
-        .spyOn(ai, 'ask')
-        .mockResolvedValue({
-          status: false,
-          message: 'AI assistance has reached its monthly limit',
-          data: null,
-        });
+      jest.spyOn(ai, 'ask').mockResolvedValue({
+        status: false,
+        message: 'AI assistance has reached its monthly limit',
+        data: null,
+      });
       const out = await assistant.reply(
         { messages: [{ role: 'user', text: 'Recommend' }] },
         { categories: MENU },
