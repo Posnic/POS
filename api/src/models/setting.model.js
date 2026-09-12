@@ -3706,12 +3706,26 @@ class SettingModel extends BaseModel {
       const collection = await this.getCollection(this.tableOrderCollection);
       if (!id) throw new Error('ID is required');
 
-      // PHP lines 3003-3007: Delete with _id, branch_id, and license filters
-      const result = await collection.deleteOne({
+      const filter = {
         _id: this.normalizeId(id),
         branch_id: this.normalizeId(this.branchId),
         license: this.normalizeId(this.licenseId),
-      });
+      };
+      /*
+       * A tombstone first, or the delete never leaves this machine.
+       *
+       * tableorder syncs now. Sync propagates a deletion only through the
+       * recycle_bin tombstone every other synced collection writes; a bare
+       * deleteOne is invisible to it. Worse than invisible: the other side
+       * still holds the row and pushes it straight back, so a table removed
+       * on the cloud would reappear from the till on the next cycle, every
+       * cycle, forever.
+       */
+      const doc = await collection.findOne(filter);
+      if (doc) {
+        await BaseModel.deletedDocumentBackup(this.tableOrderCollection, doc);
+      }
+      const result = await collection.deleteOne(filter);
 
       if (result.deletedCount === 0) {
         return {
