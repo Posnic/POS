@@ -4413,6 +4413,15 @@ app.whenReady().then(async () => {
    * served. This one runs inside the till, so it looks.
    */
   billManager = new BillManager(hardwareManager, {
+    /* The counter's roll, not whatever Windows calls the default. See
+       src/device-preferences.js for why this had to be readable from here. */
+    findReceiptPrinter: async () => {
+      try {
+        return require('./device-preferences').receiptPrinterName();
+      } catch (e) {
+        return null;
+      }
+    },
     findBranchId: async () => {
       /* Whatever the kitchen printer was told, if anything - the same shop
          either way - and otherwise the only branch there is. */
