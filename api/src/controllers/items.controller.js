@@ -175,7 +175,6 @@ class ItemsController extends BaseController {
     return branches;
   }
 
-
   /**
    * List items with pagination and optional filters
    * GET /items (legacy default endpoint)
@@ -310,11 +309,7 @@ class ItemsController extends BaseController {
          * hides a control a kiosk shop needs or shows one nobody can use.
          */
         // Shape already matches legacy itemPage() result.data
-        return this.sendResponse(
-          res,
-          result.data,
-          result.message
-        );
+        return this.sendResponse(res, result.data, result.message);
       }
 
       return this.sendError(res, ERROR_MESSAGES.ITEM_DETAILS_NOT_FOUND, 404, result.data);
