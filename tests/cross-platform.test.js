@@ -100,6 +100,9 @@ test('printing has a path that is not PowerShell', () => {
   assert.match(HW, /_sendRawViaCups/, 'raw printing is PowerShell-only');
   assert.match(HW, /'-o', 'raw'/, 'the CUPS path does not ask for raw mode, so ESC/POS is filtered as text');
   assert.match(HW, /_printPdfFile/, 'PDF printing goes straight to the Windows-only library');
+  assert.match(HW, /fs\.mkdtempSync\(path\.join\(app\.getPath\('temp'\), 'posnic-raw-'\)\)/, 'raw print files share predictable names in the system temp directory');
+  assert.match(HW, /flag: 'wx'/, 'raw print files can replace a pre-existing temporary file');
+  assert.match(HW, /fs\.rmSync\(rawTempDir, \{ recursive: true, force: true \}\)/, 'raw receipt data is retained after the print job');
 
   const raw = HW.slice(HW.indexOf('async sendRawToPrinter'));
   assert.match(

@@ -1559,7 +1559,9 @@ if (fs.existsSync(ORDER_BUNDLE)) {
     if (!STORE_ADDRESS.test(req.path)) return next();
     return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'), PAGE_HEADERS);
   };
-  app.use('/order', serveOrderPage);
+  // Store pages are public, but still perform disk reads. Apply the same
+  // per-shop limiter as the API so an anonymous client cannot exhaust I/O.
+  app.use('/order', limiter, serveOrderPage);
 }
 
 /* `/menu/AZ100`, for the same reason and with the same guard: a path segment
