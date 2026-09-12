@@ -1758,20 +1758,27 @@ function historyPage({ kept = [], says = {} } = {}) {
     runScripts: 'outside-only',
   });
   const { window } = dom;
-  const calls = { asked: [], forgotten: [] };
+  const calls = { asked: [], forgotten: [], posted: [] };
   window.CONFIG = { API_BASE_URL: '' };
   window.loadEnvConfig = async () => {};
   window.rememberedOrders = () => JSON.parse(JSON.stringify(kept));
   window.forgetOrder = (id) => calls.forgotten.push(id);
-  window.fetch = async (url) => {
-    calls.asked.push(String(url));
-    const id = String(url).split('/orders/')[1].split('?')[0];
+  window.fetch = async (url, init) => {
+    const at = String(url);
+    if (init && init.method === 'POST') {
+      calls.posted.push({ url: at, body: JSON.parse(init.body) });
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ok: true } }) };
+    }
+    calls.asked.push(at);
+    const id = at.split('/orders/')[1].split('?')[0];
     const answer = says[id];
     if (!answer) return { ok: false, status: 404, json: async () => ({}) };
     return { ok: true, status: 200, json: async () => ({ type: 'success', data: answer }) };
   };
   window.eval(read('assets/history/script.js'));
-  return { window, document: window.document, calls };
+  /* The countdown is a real interval; a test that opens a row must close
+     the page or the runner never exits. */
+  return { window, document: window.document, calls, dom };
 }
 
 test('what this phone ordered is kept on this phone, and the shop says where each one got to', async () => {
@@ -1935,6 +1942,119 @@ test('nothing to pay, nowhere to send it, or already paid: no button at all', ()
 
   const free = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 0, paid: false } });
   assert.strictEqual(free.document.getElementById('pay-upi').hidden, true, 'an order costing nothing offered a payment');
+});
+
+test('a row opens into the order, and the window is a countdown on it', async () => {
+  /* Owner: "order history should able to clickable expand details within 30
+     seconds they can modify ... shop ower setting might be." */
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [{ name: 'Chicken Biryani', quantity: 2 }] }];
+  const says = {
+    o1: {
+      order_id: 'o1',
+      token: '219',
+      shop: 'Azure',
+      placed_at: new Date().toISOString(),
+      paid: false,
+      cancelled: false,
+      bill_ready: false,
+      state: 'accepted',
+      can_change: true,
+      change_seconds: 30,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 660, note: 'less spicy' }],
+      total: 660,
+    },
+  };
+  const { window, document, calls } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  /* Closed to begin with: a list of open orders is a list nobody reads. */
+  const panel = document.getElementById('details-o1');
+  assert.ok(panel, 'the row does not open into anything');
+  assert.strictEqual(panel.hidden, true);
+
+  document.querySelector('.history-open').click();
+  assert.strictEqual(panel.hidden, false, 'tapping the row did not open it');
+  assert.match(panel.textContent, /2×\s*Chicken Biryani/);
+  assert.match(panel.textContent, /less spicy/);
+  assert.match(panel.textContent, /Total ₹660/);
+  assert.match(panel.querySelector('.history-clock').textContent, /\d+s to change it/);
+
+  /* Inside the window: a minus, a plus, and a Cancel that cancels. */
+  const steps = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(steps.length, 2, 'the line cannot be changed by hand');
+  assert.strictEqual(steps[1].getAttribute('data-quantity'), '3', 'plus does not mean one more');
+  assert.strictEqual(steps[0].getAttribute('data-quantity'), '1', 'minus does not mean one fewer');
+  assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Cancel the order');
+
+  steps[1].click();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.strictEqual(calls.posted.length, 1);
+  assert.match(calls.posted[0].url, /\/online-ordering\/ABC\/orders\/o1\/items$/);
+  assert.deepStrictEqual(calls.posted[0].body, { token: '219', items: [{ item_id: 'm1', quantity: 3 }] });
+  window.close();
+});
+
+test('once the window has closed, cancelling asks the shop instead of doing it', async () => {
+  /* Owner: "may be approval from desktop. user can submit the request
+     however." */
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T09:00:00.000Z', items: [] }];
+  const says = {
+    o1: {
+      order_id: 'o1',
+      token: '219',
+      shop: 'Azure',
+      placed_at: '2026-09-12T09:00:00.000Z',
+      paid: false,
+      cancelled: false,
+      state: 'accepted',
+      can_change: false,
+      why_not: 'too_late',
+      change_seconds: 30,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 660 }],
+      total: 660,
+    },
+  };
+  const { window, document, calls } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  document.querySelector('.history-open').click();
+  const panel = document.getElementById('details-o1');
+
+  assert.strictEqual(panel.querySelectorAll('.history-step').length, 0, 'a closed window still offers to change the order');
+  assert.strictEqual(panel.querySelector('.history-clock'), null, 'a closed window is still counting down');
+  const off = panel.querySelector('.history-cancel');
+  assert.strictEqual(off.textContent, 'Ask the shop to cancel', 'the button still claims to cancel it outright');
+
+  off.click();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.match(calls.posted[0].url, /\/orders\/o1\/cancel$/);
+  assert.deepStrictEqual(calls.posted[0].body, { token: '219' });
+  window.close();
+});
+
+test('an order already asked about says so, and a paid one is not asked about at all', async () => {
+  const asked = historyPage({
+    kept: [{ orderId: 'o1', token: '219', shop: 'ABC', at: '2026-09-12T09:00:00.000Z', items: [] }],
+    says: { o1: { order_id: 'o1', token: '219', placed_at: '2026-09-12T09:00:00.000Z', can_change: false, cancel_requested: true, paid: false, cancelled: false, items: [], total: 120 } },
+  });
+  asked.document.dispatchEvent(new asked.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  asked.document.querySelector('.history-open').click();
+  const panel = asked.document.getElementById('details-o1');
+  assert.match(panel.textContent, /The shop has your cancellation request/);
+  assert.strictEqual(panel.querySelector('.history-cancel').disabled, true, 'the same request can be sent twice');
+
+  const paid = historyPage({
+    kept: [{ orderId: 'o2', token: '220', shop: 'ABC', at: '2026-09-12T09:00:00.000Z', items: [] }],
+    says: { o2: { order_id: 'o2', token: '220', placed_at: '2026-09-12T09:00:00.000Z', can_change: false, paid: true, bill_ready: true, cancelled: false, items: [], total: 120 } },
+  });
+  paid.document.dispatchEvent(new paid.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  paid.document.querySelector('.history-open').click();
+  assert.strictEqual(paid.document.getElementById('details-o2').querySelector('.history-cancel'), null, 'a paid order can still be cancelled from the phone');
+  asked.window.close();
+  paid.window.close();
 });
 
 /** A 2d context that records what was asked of it, and a canvas holding it. */

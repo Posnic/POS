@@ -2994,5 +2994,8 @@
   "lang_upi_id": "ID UPI",
   "lang_upi_name": "Nama yang dilihat pelanggan",
   "lang_upi_help": "Isikan ID UPI Anda di sini, dan pelanggan yang melihat pesanan yang belum dibayar akan mendapat tombol yang membuka aplikasinya sendiri, dengan nama Anda dan jumlahnya sudah terisi. Uangnya langsung masuk ke Anda. Tidak ada yang memeriksanya di sini: kasir Anda melihat pembayaran dan menandai pesanan sebagai lunas, persis seperti uang tunai. Biarkan kosong, maka tombolnya tidak muncul.",
-  "lang_upi_id_placeholder": "9843012345@okaxis"
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Pelanggan minta dibatalkan",
+  "lang_keep_the_order": "Pertahankan pesanan",
+  "lang_cancel_it": "Batalkan"
 }

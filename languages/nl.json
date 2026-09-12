@@ -2994,5 +2994,8 @@
   "lang_upi_id": "UPI-id",
   "lang_upi_name": "Naam die uw klant ziet",
   "lang_upi_help": "Zet hier uw UPI-id neer. Een klant die een onbetaalde bestelling bekijkt, krijgt dan een knop die zijn eigen app opent, met uw naam en het bedrag al ingevuld. Het geld komt rechtstreeks bij u. Niemand controleert het hier: uw balie ziet de betaling en markeert de bestelling als betaald, precies zoals bij contant geld. Laat het leeg en er verschijnt geen knop.",
-  "lang_upi_id_placeholder": "9843012345@okaxis"
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Klant vraagt om annulering",
+  "lang_keep_the_order": "Bestelling behouden",
+  "lang_cancel_it": "Annuleren"
 }

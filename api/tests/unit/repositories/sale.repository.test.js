@@ -1285,10 +1285,16 @@ describe('SalesRepository', () => {
       });
     };
 
-    test('it asks only for orders nobody has decided on yet', async () => {
+    test('it asks for the two things that need a person: undecided orders, and cancellations customers have asked for', async () => {
+      /* Both are the same job - somebody deciding - so they belong in one
+         queue. A second screen is a screen nobody opens. */
       rows([]);
       await salesRepository.pendingOnlineOrders({ branchId: FAKE_BRANCH });
-      expect(collections.sales.find.mock.calls[0][0].order_state).toBe('pending');
+      const filter = collections.sales.find.mock.calls[0][0];
+      expect(filter.$or).toEqual([
+        { order_state: 'pending' },
+        { cancel_requested: true, sale_process: 'KOT' },
+      ]);
     });
 
     test('the oldest is first, because that customer has waited longest', async () => {

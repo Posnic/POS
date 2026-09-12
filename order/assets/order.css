@@ -3630,3 +3630,115 @@ dialog.sheet[open]::backdrop {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* The row opens into the order: the lines, what they cost, and - while the
+   shop's window is open - a way to change them. */
+.history-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.history-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.history-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-lines li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 15px;
+}
+
+.history-line-qty {
+  min-width: 2.2em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.history-line-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.history-line-note {
+  flex: 1 1 100%;
+  order: 5;
+  padding-left: 2.2em;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.history-line-cost {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-step {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.history-total {
+  margin: 8px 0 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.history-clock {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-asked {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.history-cancel {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-cancel[disabled] {
+  opacity: 0.5;
+}

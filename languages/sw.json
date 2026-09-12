@@ -2994,5 +2994,8 @@
   "lang_upi_id": "Kitambulisho cha UPI",
   "lang_upi_name": "Jina atakaloona mteja",
   "lang_upi_help": "Weka kitambulisho chako cha UPI hapa, na mteja anayeangalia agizo ambalo halijalipwa atapata kitufe kinachofungua programu yake mwenyewe, na jina lako pamoja na kiasi vikiwa tayari vimejazwa. Pesa huja moja kwa moja kwako. Hakuna anayezikagua hapa: kaunta yako huona malipo na kuweka alama kuwa agizo limelipwa, kama vile inavyofanya kwa pesa taslimu. Ukiacha wazi, hakuna kitufe kitakachoonekana.",
-  "lang_upi_id_placeholder": "9843012345@okaxis"
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Mteja ameomba kughairi",
+  "lang_keep_the_order": "Weka agizo",
+  "lang_cancel_it": "Lighairi"
 }
