@@ -7415,6 +7415,17 @@ class SalesRepository {
         /* The shop's own table, as the printed code named it (the customer
            page) - the captain app says it as kiosk_table_no. */
         table,
+        /*
+         * WHERE THE ORDER CAME FROM, for a shop that one evening is looking
+         * at fifteen orders nobody is going to collect. The controller fills
+         * this in from the request; the page adds what only it knows.
+         *
+         * Written and never read back out to a customer. Nothing in the
+         * product acts on it yet, deliberately: blocking somebody is a
+         * decision a shopkeeper makes, and there is no point building the
+         * decision before there is anything to decide it from.
+         */
+        client,
         /* Who a delivery goes to. The phone is customerMobile above. */
         customer_name,
         customer_address,
@@ -7837,6 +7848,7 @@ class SalesRepository {
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
       const salesCollection = db.collection('sales');
+      const clientRecord = this._clientFacts(client);
       const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
@@ -7932,6 +7944,9 @@ class SalesRepository {
         updated_date: now,
         transaction_id: transactionId || '',
         token_id: tokenId,
+        /* The device this came from; see the note beside `client` above.
+           Worked out once: calling twice would stamp two different times. */
+        ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
       };
@@ -8812,6 +8827,88 @@ class SalesRepository {
   }
 
   /* ------------------------------- the customer's own order, after it went */
+
+  /*
+   * What we keep about the device an order came from: an address, what the
+   * browser calls itself, and the random id that browser keeps for itself.
+   * Everything is cut to a length, and anything not recognised is dropped, so
+   * a crafted payload cannot turn this into storage of its own.
+   */
+  _clientFacts(client) {
+    const from = client && typeof client === 'object' ? client : {};
+    /* Control characters go by code point, not by a regular expression: a
+       regex holding them is refused by the linter, for the good reason that
+       nobody can read one. */
+    const text = (value, max) => {
+      let out = '';
+      for (const character of String(value == null ? '' : value)) {
+        const code = character.codePointAt(0);
+        if (code >= 32 && code !== 127) out += character;
+      }
+      return out.trim().slice(0, max);
+    };
+    const facts = {};
+    const ip = text(from.ip, 64);
+    if (ip) facts.ip = ip;
+    const agent = text(from.user_agent, 300);
+    if (agent) facts.user_agent = agent;
+    const device = text(from.device_id, 40);
+    if (device) facts.device_id = device;
+    const language = text(from.language, 24);
+    if (language) facts.language = language;
+    const platform = text(from.platform, 60);
+    if (platform) facts.platform = platform;
+    const screen = text(from.screen, 24);
+    if (/^\d{2,5}x\d{2,5}$/.test(screen)) facts.screen = screen;
+    const zone = text(from.time_zone, 60);
+    if (zone) facts.time_zone = zone;
+    const referrer = text(from.referrer, 200);
+    if (referrer) facts.referrer = referrer;
+    facts.at = new Date();
+    return Object.keys(facts).length > 1 ? facts : null;
+  }
+
+  /**
+   * What this order will be asked back for by the phone that placed it:
+   * where it has got to, and what was on it. Never the whole sale document -
+   * that carries the shop's costs, its margins and the device the order came
+   * from, none of which is the customer's.
+   */
+  customerOrderView(order) {
+    if (!order) return null;
+    const process = String(order.sale_process || '');
+    const paymentStatus = String(order.payment_status || '');
+    const cancelled = process === 'cancelled' || paymentStatus === 'Cancelled';
+    return {
+      order_id: String(order._id),
+      token: String(order.token_id || ''),
+      placed_at: order.created_date || order.date || null,
+      /* The three words a customer actually wants: is it off, is it paid,
+         has the shop accepted it. */
+      state: cancelled ? 'cancelled' : String(order.order_state || 'accepted'),
+      cancelled,
+      paid: paymentStatus === 'Paid',
+      /* A bill is a record of money that has changed hands. Until it has,
+         there is nothing to hand anybody. */
+      bill_ready: paymentStatus === 'Paid' && !cancelled,
+      payment_status: paymentStatus,
+      payment_mode: String(order.payment_mode || ''),
+      fulfilment: String(order.fulfilment || ''),
+      table_number: String(order.table_number || ''),
+      items: (Array.isArray(order.items) ? order.items : []).map((line) => ({
+        item_id: String(line.item_id || ''),
+        name: String(line.item_name || line.name || ''),
+        quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
+        note: String(line.item_description || ''),
+        total: Number(line.total != null ? line.total : line.item_total || 0),
+      })),
+      total: Number(order.total != null ? order.total : order.sales_total || 0),
+      tax: Number(order.tax || 0),
+      discount: Number(order.discount || 0),
+      delivery_fee: Number(order.delivery_fee || 0),
+      shop: String(order.branch_name || ''),
+    };
+  }
 
   /** One order of this branch's, by its id. Nothing wider: no list, no search. */
   async findCustomerOrder({ branchId, orderId }) {

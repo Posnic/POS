@@ -35,6 +35,7 @@ const SaleModel = require('../models/sale.model');
 const orderingAssistant = require('../services/ordering-assistant.service');
 const voiceSession = require('../services/voice-session.service');
 const customerOrder = require('../services/customer-order.service');
+const { clientIp } = require('../utils/client-ip');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -384,6 +385,34 @@ class OnlineOrderingController {
     }
   }
 
+  /*
+   * The order, read back by the phone that placed it: where it has got to,
+   * and whether there is a bill to be had yet. The same door as changing it -
+   * the id and the token together - and the same named refusals, except that
+   * reading is allowed for an order the customer may no longer change: a
+   * paid order is exactly the one they want to see.
+   */
+  async readPlacedOrder(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await customerOrder.read(
+        { orderId: req.params.orderId, token: req.query.token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+      return res.status(404).json({ type: 'error', message: 'not_found', data: null });
+    } catch (error) {
+      console.error('Error reading a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async changePlacedOrder(req, res) {
     return this._actOnPlacedOrder(req, res, customerOrder.change);
   }
@@ -399,8 +428,19 @@ class OnlineOrderingController {
        * both would let a caller name one shop in the URL and another in the
        * payload, and leave two readers to disagree about which one they meant.
        */
+      /*
+       * Where it came from, taken from the REQUEST rather than the body.
+       * The page describes its own browser; the address and the user agent
+       * are ours to read, and a body that tries to set them is overruled.
+       */
+      const client = {
+        ...(req.body && typeof req.body.client === 'object' ? req.body.client : {}),
+        ip: clientIp(req),
+        user_agent: req.get('User-Agent') || '',
+        referrer: req.get('Referer') || '',
+      };
       const result = await salesService.createOnlineOrder(
-        { ...req.body, branch: req.params.storeId },
+        { ...req.body, client, branch: req.params.storeId },
         { SaleModel }
       );
       return this.respond(res, result);

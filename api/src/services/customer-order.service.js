@@ -73,6 +73,38 @@ async function heldOrder(body, context) {
   return reason ? { order: null, reason } : { order, reason: '' };
 }
 
+/**
+ * The order, read back.
+ *
+ * Reading is allowed where changing is not: an order that has been billed,
+ * paid or cancelled is exactly the one a customer wants to look at, and a
+ * paid one is the only one with a bill behind it. The door is the same -
+ * the id and the token together, and the order must belong to this shop.
+ */
+async function read(body, context) {
+  const orderId = String((body && body.orderId) || '').trim();
+  const token = String((body && body.token) || '').trim();
+  if (!orderId || !token) return { status: false, message: 'not_found', data: null };
+  const order = await salesRepository.findCustomerOrder({
+    branchId: context && context.branchId,
+    orderId,
+  });
+  if (!order || String(order.token_id || '') !== token) {
+    return { status: false, message: 'not_found', data: null };
+  }
+  return {
+    status: true,
+    message: 'OK',
+    data: {
+      ...salesRepository.customerOrderView(order),
+      /* Whether they may still move it, and why not, so one read answers
+         every question the page has. */
+      can_change: whyNot(order) === '',
+      why_not: whyNot(order) || undefined,
+    },
+  };
+}
+
 /** Set the quantity of lines already on the order; 0 takes a line off it. */
 async function change(body, context) {
   const { order, reason } = await heldOrder(body, context);
@@ -89,4 +121,4 @@ async function cancel(body, context) {
   return salesRepository.cancelCustomerOrder(order);
 }
 
-module.exports = { change, cancel, heldOrder, whyNot, CHANGE_WINDOW_MINUTES };
+module.exports = { read, change, cancel, heldOrder, whyNot, CHANGE_WINDOW_MINUTES };
