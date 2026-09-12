@@ -43,4 +43,16 @@ const voiceLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { assistantLimiter, voiceLimiter };
+/* A line reports itself twice a minute. Forty from one client is not a
+   person on a call, and each one is a database write. */
+const voiceTickLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'voice_tick' }),
+  keyGenerator: perClientKey,
+  windowMs: 60 * 1000,
+  limit: 40,
+  message: { type: 'error', message: 'Too many voice reports in a minute.', data: null },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { assistantLimiter, voiceLimiter, voiceTickLimiter };

@@ -1116,6 +1116,53 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off');
 });
 
+test('talk to order: the line reports itself to the meter, and the monthly limit hangs it up', async () => {
+  /*
+   * The audio never passes our server, so the server cannot see how long a
+   * call lasts. The page says "still talking" every half minute; past the
+   * shop's monthly limit the server refuses, and the line must close with a
+   * word to the customer, not run on unmetered.
+   */
+  const answers = [
+    { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime', session: 's1', tick_seconds: 30 } } },
+    { status: 200, body: { type: 'success', data: { seconds: 30, ended: false, next: 30 } } },
+    { status: 403, body: { type: 'error', message: 'This shop has reached its monthly AI spending limit', data: { seconds: 60 } } },
+  ];
+  const { window, document, calls } = voicePage({ voice: 'live', reply: () => answers.shift() || { status: 200, body: { type: 'success', data: {} } } });
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(window.OrderingVoice.live.session, 's1', 'the page did not keep the session the server opened');
+  assert.ok(window.OrderingVoice.live.meter, 'no clock is running on an open line');
+
+  assert.strictEqual(await window.OrderingVoice.tick(false), true);
+  assert.strictEqual(calls.fetch[1].url, '/online-ordering/AZ100/voice/s1/tick');
+  assert.deepStrictEqual(calls.fetch[1].body, { end: false });
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on', 'a metered tick closed the line');
+
+  assert.strictEqual(await window.OrderingVoice.tick(false), false);
+  await settle();
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off', 'past the limit the line stayed open');
+  assert.match(document.getElementById('assistant-log').textContent, /reached its limit for the month/, 'the customer was not told why the line closed');
+  assert.strictEqual(window.OrderingVoice.live.meter, null, 'the clock kept running after the line closed');
+  assert.strictEqual(calls.fetch.length, 3, 'a line the server already ended was sent a hang-up report');
+});
+
+test('talk to order: hanging up reports once more, so the last half minute is counted', async () => {
+  const answers = [
+    { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime', session: 's2', tick_seconds: 30 } } },
+  ];
+  const { window, calls } = voicePage({ voice: 'live', reply: () => answers.shift() || { status: 200, body: { type: 'success', data: {} } } });
+  await window.OrderingVoice.start();
+  await settle();
+  window.OrderingVoice.stop();
+  await settle();
+  assert.strictEqual(calls.fetch.length, 2, 'a hang-up sent no last report, or more than one');
+  assert.strictEqual(calls.fetch[1].url, '/online-ordering/AZ100/voice/s2/tick');
+  assert.deepStrictEqual(calls.fetch[1].body, { end: true });
+  assert.strictEqual(window.OrderingVoice.live.session, '', 'the session outlived the line');
+  assert.strictEqual(window.OrderingVoice.live.meter, null);
+});
+
 test('talk to order, turn by turn: the phone listens, the typed assistant answers, the phone speaks it', async () => {
   const { window, calls } = voicePage({
     voice: 'turns',
@@ -1146,6 +1193,7 @@ test('talk to order, turn by turn: the phone listens, the typed assistant answer
 test('the wiring behind the microphone: route, limiter, allowlist, switch, console', () => {
   const routes = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'routes', 'online-ordering.routes.js'), 'utf8');
   assert.match(routes, /router\.post\('\/:storeId\/voice', voiceLimiter, bind\(controller\.voice\)\)/);
+  assert.match(routes, /router\.post\('\/:storeId\/voice\/:session\/tick', voiceTickLimiter, bind\(controller\.voiceTick\)\)/, 'the meter has no door');
   const groups = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'services', 'settings-groups.js'), 'utf8');
   assert.match(groups, /'ai_live_voice'/);
   const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');

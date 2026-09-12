@@ -2951,5 +2951,20 @@
   "lang_module_channels": "ಮಾರಾಟ ಚಾನೆಲ್‌ಗಳು",
   "lang_sales_channel": "ಮಾರಾಟ ಚಾನೆಲ್",
   "lang_sales_channel_2": "ಮಾರಾಟ ಚಾನೆಲ್",
-  "lang_selling_beyond_the_counter_online_qr_order": "ಕೌಂಟರ್ ಆಚೆಗಿನ ಮಾರಾಟ - ಆನ್‌ಲೈನ್, QR ಆರ್ಡರಿಂಗ್ ಮತ್ತು ಪಾಲುದಾರ ಚಾನೆಲ್‌ಗಳು ಇಲ್ಲಿ ಬರಲಿವೆ."
+  "lang_selling_beyond_the_counter_online_qr_order": "ಕೌಂಟರ್ ಆಚೆಗಿನ ಮಾರಾಟ - ಆನ್‌ಲೈನ್, QR ಆರ್ಡರಿಂಗ್ ಮತ್ತು ಪಾಲುದಾರ ಚಾನೆಲ್‌ಗಳು ಇಲ್ಲಿ ಬರಲಿವೆ.",
+  "lang_ai_spent_short": "ಇಲ್ಲಿಯವರೆಗೆ ಖರ್ಚು",
+  "lang_ai_spent_approx": "ಅಂದಾಜು",
+  "lang_ai_spend_total": "ಇಲ್ಲಿಯವರೆಗೆ ಒಟ್ಟು",
+  "lang_ai_spent_note": "ಪ್ರತಿ ಕರೆ ವರದಿ ಮಾಡಿದ್ದರಿಂದ, ಪಟ್ಟಿ ಬೆಲೆಯಲ್ಲಿ, ನಿಮ್ಮ ಕರೆನ್ಸಿಯಲ್ಲಿ ದುಂಡಾದ ದರದಲ್ಲಿ ಅಂದಾಜಿಸಲಾಗಿದೆ. ಲೈವ್ ಧ್ವನಿಯನ್ನು ಕರೆ ನಡೆಯುವಾಗ ತೆರೆದ ಲೈನ್‌ನ ಪ್ರತಿ ನಿಮಿಷಕ್ಕೆ ಎಣಿಸಲಾಗುತ್ತದೆ. ಬಿಲ್‌ನ ಬಗ್ಗೆ ನಿಮ್ಮ ಪೂರೈಕೆದಾರರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಅಂತಿಮ ಮಾತು.",
+  "lang_ai_spend_feature": "ಏನು",
+  "lang_ai_spend_calls": "ಕರೆಗಳು",
+  "lang_ai_spend_minutes": "ನಿಮಿಷಗಳು",
+  "lang_ai_spend_cost": "ಸುಮಾರು",
+  "lang_ai_spend_of_cap": "{cap} ಮಾಸಿಕ ಮಿತಿಯ {pct}%",
+  "lang_ai_spend_no_cap": "ಮಾಸಿಕ ಮಿತಿ ನಿಗದಿಪಡಿಸಿಲ್ಲ.",
+  "lang_ai_live_voice_rate": "ಸಂಭಾಷಣೆಯ ಪ್ರತಿ ನಿಮಿಷಕ್ಕೆ ಸುಮಾರು {amount}, ಕರೆ ನಡೆಯುವಾಗ ಮಾಸಿಕ ಮಿತಿಯಲ್ಲಿ ಎಣಿಸಲಾಗುತ್ತದೆ.",
+  "lang_ai_feature_item_description": "ಐಟಂ ವಿವರಣೆಗಳು",
+  "lang_ai_feature_ordering_assistant": "ಆರ್ಡರ್ ಸಹಾಯಕ, ಟೈಪ್ ಮಾಡಿ",
+  "lang_ai_feature_voice_order_live": "ಮಾತನಾಡಿ ಆರ್ಡರ್ ಮಾಡಿ, ಲೈವ್ ಧ್ವನಿ",
+  "lang_ai_feature_voice_order": "ಹ್ಯಾಂಡ್‌ಸೆಟ್‌ನಲ್ಲಿ ಧ್ವನಿ ಆರ್ಡರ್‌ಗಳು"
 }

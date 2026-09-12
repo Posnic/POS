@@ -2951,5 +2951,20 @@
   "lang_module_channels": "बिक्री च्यानलहरू",
   "lang_sales_channel": "बिक्री च्यानल",
   "lang_sales_channel_2": "बिक्री च्यानल",
-  "lang_selling_beyond_the_counter_online_qr_order": "काउन्टरभन्दा बाहिरको बिक्री - अनलाइन, QR अर्डर र साझेदार च्यानलहरू यहाँ आउँछन्।"
+  "lang_selling_beyond_the_counter_online_qr_order": "काउन्टरभन्दा बाहिरको बिक्री - अनलाइन, QR अर्डर र साझेदार च्यानलहरू यहाँ आउँछन्।",
+  "lang_ai_spent_short": "हालसम्म खर्च",
+  "lang_ai_spent_approx": "अनुमानित",
+  "lang_ai_spend_total": "हालसम्म जम्मा",
+  "lang_ai_spent_note": "प्रत्येक कलले जनाएको आधारमा, सूची मूल्यमा, तपाईंको मुद्रामा गोलाकार दरमा अनुमान गरिएको। लाइभ आवाज कलको समयमा खुला लाइनको प्रति मिनेट गनिन्छ। बिलको अन्तिम निर्णय तपाईंको प्रदायकको ड्यासबोर्डको हो।",
+  "lang_ai_spend_feature": "के",
+  "lang_ai_spend_calls": "कलहरू",
+  "lang_ai_spend_minutes": "मिनेट",
+  "lang_ai_spend_cost": "लगभग",
+  "lang_ai_spend_of_cap": "{cap} को मासिक सीमाको {pct}%",
+  "lang_ai_spend_no_cap": "कुनै मासिक सीमा तोकिएको छैन।",
+  "lang_ai_live_voice_rate": "कुराकानीको प्रत्येक मिनेटका लागि लगभग {amount}, कलको समयमा मासिक सीमामा गनिन्छ।",
+  "lang_ai_feature_item_description": "वस्तु विवरणहरू",
+  "lang_ai_feature_ordering_assistant": "अर्डर सहायक, टाइप गरेर",
+  "lang_ai_feature_voice_order_live": "बोलेर अर्डर, लाइभ आवाज",
+  "lang_ai_feature_voice_order": "ह्यान्डसेटमा आवाज अर्डरहरू"
 }

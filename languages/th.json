@@ -2951,5 +2951,20 @@
   "lang_module_channels": "ช่องทางการขาย",
   "lang_sales_channel": "ช่องทางการขาย",
   "lang_sales_channel_2": "ช่องทางการขาย",
-  "lang_selling_beyond_the_counter_online_qr_order": "การขายนอกเหนือจากหน้าเคาน์เตอร์ - ช่องทางออนไลน์ การสั่งผ่าน QR และช่องทางพันธมิตรจะมาอยู่ที่นี่"
+  "lang_selling_beyond_the_counter_online_qr_order": "การขายนอกเหนือจากหน้าเคาน์เตอร์ - ช่องทางออนไลน์ การสั่งผ่าน QR และช่องทางพันธมิตรจะมาอยู่ที่นี่",
+  "lang_ai_spent_short": "ใช้ไปแล้ว",
+  "lang_ai_spent_approx": "โดยประมาณ",
+  "lang_ai_spend_total": "รวมจนถึงตอนนี้",
+  "lang_ai_spent_note": "ประมาณจากสิ่งที่แต่ละการเรียกรายงาน ตามราคาตั้ง ในสกุลเงินของคุณด้วยอัตราที่ปัดเศษ เสียงสดนับเป็นนาทีของสายที่เปิดอยู่ระหว่างการโทร แดชบอร์ดของผู้ให้บริการของคุณเป็นข้อสรุปสุดท้ายของบิล",
+  "lang_ai_spend_feature": "รายการ",
+  "lang_ai_spend_calls": "การเรียก",
+  "lang_ai_spend_minutes": "นาที",
+  "lang_ai_spend_cost": "ประมาณ",
+  "lang_ai_spend_of_cap": "{pct}% ของวงเงินรายเดือน {cap}",
+  "lang_ai_spend_no_cap": "ยังไม่ได้กำหนดวงเงินรายเดือน",
+  "lang_ai_live_voice_rate": "ประมาณ {amount} ต่อนาทีของการสนทนา นับรวมในวงเงินรายเดือนระหว่างการโทร",
+  "lang_ai_feature_item_description": "คำอธิบายสินค้า",
+  "lang_ai_feature_ordering_assistant": "ผู้ช่วยสั่งซื้อ แบบพิมพ์",
+  "lang_ai_feature_voice_order_live": "พูดเพื่อสั่ง เสียงสด",
+  "lang_ai_feature_voice_order": "สั่งด้วยเสียงบนเครื่องพกพา"
 }

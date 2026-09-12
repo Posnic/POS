@@ -24,6 +24,7 @@
  */
 const ai = require('./ai.service');
 const assistant = require('./ordering-assistant.service');
+const meter = require('./voice-meter');
 
 const FEATURE = 'voice_order_live';
 const MAX_SDP_CHARS = 200000;
@@ -154,7 +155,24 @@ async function session(body, storefront, context) {
     context
   );
   if (!answered.status) return answered;
-  return { status: true, data: { sdp: answered.data.sdp, model: answered.data.model } };
+  /* The line is open: start its clock. The page sends this id back every
+     half minute and once as it hangs up; voice-meter.js prices the seconds
+     between, against the same monthly limit as every typed question. */
+  const session = await meter.open({ model: answered.data.model, feature: FEATURE }, context);
+  return {
+    status: true,
+    data: {
+      sdp: answered.data.sdp,
+      model: answered.data.model,
+      session,
+      tick_seconds: meter.TICK_SECONDS,
+    },
+  };
 }
 
-module.exports = { session, tools, instructionsFor, VOICE_SYSTEM, FEATURE };
+/** The page says the line is still open, or has just closed. */
+function tick(id, body, context) {
+  return meter.tick(id, body || {}, context);
+}
+
+module.exports = { session, tick, tools, instructionsFor, VOICE_SYSTEM, FEATURE };

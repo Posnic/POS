@@ -288,6 +288,7 @@
       "The microphone was not allowed. You can still type.": "மைக்ரோஃபோன் அனுமதிக்கப்படவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
       "No microphone was found on this device. You can still type.": "இந்தச் சாதனத்தில் மைக்ரோஃபோன் இல்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
       "Could not connect the voice line. You can still type.": "குரல் இணைப்பை ஏற்படுத்த முடியவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
+      "This shop's assistant has reached its limit for the month. You can still order the usual way.": "இந்தக் கடையின் உதவியாளர் இந்த மாதத்திற்கான வரம்பை அடைந்துவிட்டது. வழக்கம் போல் ஆர்டர் செய்யலாம்.",
       "Live voice is switched off for this shop, so I'll answer turn by turn.": "இந்தக் கடையில் நேரடிக் குரல் அணைக்கப்பட்டுள்ளது, எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
       "The live voice line did not open ({why}), so I'll answer turn by turn.": "நேரடிக் குரல் இணைப்பு திறக்கவில்லை ({why}), எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
       "Answers come from this shop's menu. Please confirm allergies at the counter.": "பதில்கள் இந்தக் கடையின் மெனுவிலிருந்து வருகின்றன. ஒவ்வாமை பற்றி கவுண்டரில் உறுதிப்படுத்துங்கள்.",

@@ -2951,5 +2951,20 @@
   "lang_module_channels": "बिक्री चैनल",
   "lang_sales_channel": "बिक्री चैनल",
   "lang_sales_channel_2": "बिक्री चैनल",
-  "lang_selling_beyond_the_counter_online_qr_order": "काउंटर से आगे की बिक्री - ऑनलाइन, QR ऑर्डरिंग और पार्टनर चैनल यहां आएंगे।"
+  "lang_selling_beyond_the_counter_online_qr_order": "काउंटर से आगे की बिक्री - ऑनलाइन, QR ऑर्डरिंग और पार्टनर चैनल यहां आएंगे।",
+  "lang_ai_spent_short": "अब तक खर्च",
+  "lang_ai_spent_approx": "अनुमानित",
+  "lang_ai_spend_total": "अब तक कुल",
+  "lang_ai_spent_note": "हर कॉल ने जो बताया उससे, सूची मूल्य पर, आपकी मुद्रा में गोल की गई दर से अनुमानित। लाइव आवाज़ कॉल के दौरान खुली लाइन के हर मिनट के हिसाब से गिनी जाती है। बिल पर अंतिम निर्णय आपके प्रदाता के डैशबोर्ड का है।",
+  "lang_ai_spend_feature": "क्या",
+  "lang_ai_spend_calls": "कॉल",
+  "lang_ai_spend_minutes": "मिनट",
+  "lang_ai_spend_cost": "लगभग",
+  "lang_ai_spend_of_cap": "{cap} की मासिक सीमा का {pct}%",
+  "lang_ai_spend_no_cap": "कोई मासिक सीमा तय नहीं है।",
+  "lang_ai_live_voice_rate": "बातचीत के हर मिनट के लिए लगभग {amount}, कॉल के दौरान मासिक सीमा में गिना जाता है।",
+  "lang_ai_feature_item_description": "आइटम विवरण",
+  "lang_ai_feature_ordering_assistant": "ऑर्डर सहायक, टाइप करके",
+  "lang_ai_feature_voice_order_live": "बोलकर ऑर्डर, लाइव आवाज़",
+  "lang_ai_feature_voice_order": "हैंडसेट पर आवाज़ से ऑर्डर"
 }

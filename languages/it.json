@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Canali di vendita",
   "lang_sales_channel": "Canale di vendita",
   "lang_sales_channel_2": "Canale di vendita",
-  "lang_selling_beyond_the_counter_online_qr_order": "Vendere oltre il banco: online, ordini con QR e canali partner arriveranno qui."
+  "lang_selling_beyond_the_counter_online_qr_order": "Vendere oltre il banco: online, ordini con QR e canali partner arriveranno qui.",
+  "lang_ai_spent_short": "Speso finora",
+  "lang_ai_spent_approx": "approssimativo",
+  "lang_ai_spend_total": "Totale finora",
+  "lang_ai_spent_note": "Stimato da ciò che ogni chiamata ha riportato, a prezzi di listino, nella tua valuta a un tasso arrotondato. La voce dal vivo è contata al minuto di linea aperta durante la chiamata. Il pannello del tuo fornitore ha l'ultima parola sulla fattura.",
+  "lang_ai_spend_feature": "Cosa",
+  "lang_ai_spend_calls": "Chiamate",
+  "lang_ai_spend_minutes": "Minuti",
+  "lang_ai_spend_cost": "Circa",
+  "lang_ai_spend_of_cap": "{pct}% del limite mensile di {cap}",
+  "lang_ai_spend_no_cap": "Nessun limite mensile impostato.",
+  "lang_ai_live_voice_rate": "Circa {amount} per ogni minuto di conversazione, conteggiati nel limite mensile durante la chiamata.",
+  "lang_ai_feature_item_description": "Descrizioni degli articoli",
+  "lang_ai_feature_ordering_assistant": "Assistente ordini, scritto",
+  "lang_ai_feature_voice_order_live": "Parla per ordinare, voce dal vivo",
+  "lang_ai_feature_voice_order": "Ordini vocali sul palmare"
 }
