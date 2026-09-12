@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "clients",
   "lang_demo_kind_suppliers": "fournisseurs",
   "lang_could_not_switch_sample_data_off": "Impossible de désactiver les données d'exemple",
-  "lang_could_not_remove_the_sample_data": "Impossible de supprimer les données d'exemple"
+  "lang_could_not_remove_the_sample_data": "Impossible de supprimer les données d'exemple",
+  "lang_upi_heading": "Payer par UPI",
+  "lang_upi_id": "Identifiant UPI",
+  "lang_upi_name": "Nom que verra votre client",
+  "lang_upi_help": "Indiquez ici votre identifiant UPI : un client qui consulte une commande impayée verra un bouton qui ouvre sa propre application, avec votre nom et le montant déjà remplis. L'argent vous parvient directement. Personne ne le vérifie ici : votre comptoir voit le paiement et marque la commande comme payée, exactement comme pour les espèces. Laissez le champ vide et aucun bouton n'apparaît.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Le client demande l’annulation",
+  "lang_keep_the_order": "Garder la commande",
+  "lang_cancel_it": "L’annuler",
+  "lang_int_voice_key_on_file": "Clé enregistrée",
+  "lang_int_voice_key_remove_q": "Supprimer la clé enregistrée ?",
+  "lang_int_voice_key_remove_text": "Les terminaux reviennent à la reconnaissance du téléphone jusqu'à ce qu'une nouvelle clé soit enregistrée. Votre compte chez le fournisseur n'est pas touché.",
+  "lang_int_voice_key_removed": "Clé supprimée."
 }

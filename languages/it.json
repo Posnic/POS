@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "clienti",
   "lang_demo_kind_suppliers": "fornitori",
   "lang_could_not_switch_sample_data_off": "Impossibile disattivare i dati di esempio",
-  "lang_could_not_remove_the_sample_data": "Impossibile rimuovere i dati di esempio"
+  "lang_could_not_remove_the_sample_data": "Impossibile rimuovere i dati di esempio",
+  "lang_upi_heading": "Pagare con UPI",
+  "lang_upi_id": "ID UPI",
+  "lang_upi_name": "Nome che vedrà il cliente",
+  "lang_upi_help": "Inserisca qui il suo ID UPI: chi guarda un ordine non pagato vedrà un pulsante che apre la propria app, con il suo nome e l'importo già compilati. Il denaro arriva direttamente a lei. Qui nessuno lo verifica: la sua cassa vede il pagamento e segna l'ordine come pagato, esattamente come con il contante. Se lo lascia vuoto, non compare alcun pulsante.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Il cliente chiede di annullare",
+  "lang_keep_the_order": "Mantieni l’ordine",
+  "lang_cancel_it": "Annullalo",
+  "lang_int_voice_key_on_file": "Chiave salvata",
+  "lang_int_voice_key_remove_q": "Rimuovere la chiave salvata?",
+  "lang_int_voice_key_remove_text": "I palmari tornano al riconoscimento del telefono finché non viene salvata una nuova chiave. Il suo account presso il fornitore non viene toccato.",
+  "lang_int_voice_key_removed": "Chiave rimossa."
 }

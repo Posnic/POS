@@ -24,13 +24,46 @@
  *   too_late         placed long enough ago that the kitchen has moved on
  */
 const salesRepository = require('../repositories/sale.repository');
+const SettingsRepository = require('../repositories/settings.repository');
 
-/* Long enough for a change of mind over a menu, short enough that a kitchen
-   is not amending something it plated half an hour ago. */
-const CHANGE_WINDOW_MINUTES = 45;
+/*
+ * How long an order stays the customer's, when the shop has not said.
+ *
+ * Thirty seconds is what the delivery apps settled on and what a customer
+ * expects: long enough to catch "no, two" the moment they hear themselves,
+ * short enough that a kitchen is not amending something already on the pass.
+ */
+const DEFAULT_CHANGE_SECONDS = 30;
+/* A window nobody would call a window: a shop cannot leave an order open to
+   editing for a day and be surprised by what comes back. */
+const MAX_CHANGE_SECONDS = 900;
+
+let settings = null;
+const _settings = () => {
+  if (!settings) settings = new SettingsRepository();
+  return settings;
+};
+
+/** How long this shop leaves an order open, in seconds. */
+async function changeSeconds(context) {
+  try {
+    const read = await _settings().resolveGroup('preferences', context);
+    const values = (read && read.status && read.data && read.data.values) || {};
+    const said = values.online_order_change_seconds;
+    if (said === undefined || said === null || String(said).trim() === '') {
+      return DEFAULT_CHANGE_SECONDS;
+    }
+    const seconds = Math.round(Number(said));
+    if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_CHANGE_SECONDS;
+    return Math.min(MAX_CHANGE_SECONDS, seconds);
+  } catch (e) {
+    /* A shop whose settings cannot be read still gets the sensible one. */
+    return DEFAULT_CHANGE_SECONDS;
+  }
+}
 
 /** Why this order is not the customer's to change, or '' when it is. */
-function whyNot(order, now = Date.now()) {
+function whyNot(order, now = Date.now(), seconds = DEFAULT_CHANGE_SECONDS) {
   if (!order) return 'not_found';
   const process = String(order.sale_process || '');
   if (process === 'cancelled') return 'already_cancelled';
@@ -45,8 +78,11 @@ function whyNot(order, now = Date.now()) {
   ) {
     return 'at_the_counter';
   }
+  /* A shop that has switched the window off keeps every order the moment
+     it lands: asking is still allowed, doing is not. */
+  if (!(seconds > 0)) return 'too_late';
   const placed = new Date(order.created_date || order.date || 0).getTime();
-  if (!placed || now - placed > CHANGE_WINDOW_MINUTES * 60 * 1000) return 'too_late';
+  if (!placed || now - placed > seconds * 1000) return 'too_late';
   return '';
 }
 
@@ -69,8 +105,8 @@ async function heldOrder(body, context) {
      prober that the id was right. */
   if (!order || String(order.token_id || '') !== token) return { order: null, reason: 'not_found' };
 
-  const reason = whyNot(order);
-  return reason ? { order: null, reason } : { order, reason: '' };
+  const reason = whyNot(order, Date.now(), await changeSeconds(context));
+  return reason ? { order: null, reason, held: order } : { order, reason: '' };
 }
 
 /**
@@ -92,15 +128,21 @@ async function read(body, context) {
   if (!order || String(order.token_id || '') !== token) {
     return { status: false, message: 'not_found', data: null };
   }
+  const seconds = await changeSeconds(context);
+  const reason = whyNot(order, Date.now(), seconds);
   return {
     status: true,
     message: 'OK',
     data: {
       ...salesRepository.customerOrderView(order),
-      /* Whether they may still move it, and why not, so one read answers
-         every question the page has. */
-      can_change: whyNot(order) === '',
-      why_not: whyNot(order) || undefined,
+      /* Whether they may still move it, why not, and how long the shop
+         leaves it open - so one read answers every question the page has,
+         including what to count down. */
+      can_change: reason === '',
+      why_not: reason || undefined,
+      change_seconds: seconds,
+      /* Already asked for; the shop has it in the queue it accepts from. */
+      cancel_requested: order.cancel_requested === true,
     },
   };
 }
@@ -114,11 +156,45 @@ async function change(body, context) {
   return salesRepository.changeCustomerOrderItems(order, wanted);
 }
 
-/** Call the whole order off. */
+/**
+ * Call the whole order off - or, once the kitchen has had it a while, ASK.
+ *
+ * Owner: "second cancel the order. may be approval from desktop. user can
+ * submit the request however." Inside the window it is the customer's own
+ * order and it simply goes. Outside it, the kitchen may have started, so
+ * the customer's wish is recorded and the shop decides in the queue it
+ * already uses to accept orders. Either way the customer is never told to
+ * go and find somebody.
+ */
 async function cancel(body, context) {
-  const { order, reason } = await heldOrder(body, context);
-  if (!order) return { status: false, message: reason, data: null };
-  return salesRepository.cancelCustomerOrder(order);
+  const { order, reason, held } = await heldOrder(body, context);
+  if (order) return salesRepository.cancelCustomerOrder(order);
+
+  /* Nothing to ask about: it is already off, already billed, or not theirs. */
+  if (!held || reason === 'not_found' || reason === 'already_cancelled') {
+    return { status: false, message: reason, data: null };
+  }
+  if (reason === 'already_billed' || reason === 'already_paid') {
+    return { status: false, message: reason, data: null };
+  }
+  const asked = await salesRepository.requestCustomerCancel(held);
+  if (!asked.status) return asked;
+  return {
+    status: true,
+    message: 'Cancellation requested',
+    data: { ...asked.data, requested: true, why_not: reason },
+  };
 }
 
-module.exports = { read, change, cancel, heldOrder, whyNot, CHANGE_WINDOW_MINUTES };
+module.exports = {
+  /* The seam a test stands in for, as ordering-assistant.service does. */
+  _settings,
+  read,
+  change,
+  cancel,
+  heldOrder,
+  whyNot,
+  changeSeconds,
+  DEFAULT_CHANGE_SECONDS,
+  MAX_CHANGE_SECONDS,
+};

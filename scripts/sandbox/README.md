@@ -69,3 +69,26 @@ scp scripts/sandbox/reset.sh ubuntu@<ip>:~/posnic-develop/
 ```
 
 Then point `DEVELOP_HOST` at the new address. The deploy workflow does the rest.
+
+## What survives the reset
+
+A nightly wipe is for clearing what testers did. It is not for making
+somebody type their OpenAI key in again every morning, so `reset.sh` carries
+three things across itself:
+
+| Kept | Why |
+| --- | --- |
+| `branch_secrets` | API keys, SMTP passwords: typed once, then trusted |
+| `branch_preferences` | the assistant's switches, its instructions, the order-change window |
+| each branch's `online_ordering` | the UPI payee and the store address |
+
+They are saved before the restore and put back after it, into
+`~/posnic-develop/keep/`, which is on the box and never in the repository
+because it holds real keys. Everything else is wiped exactly as before.
+
+The group rows win over the older copy on the branch document, so restoring
+those two collections is enough for the values to be in force.
+
+`reset.sh` and `seed.js` now ship with the deploy rather than being copied
+by hand: a copy on the box nobody can diff against the repository drifts
+until the two are different programs.

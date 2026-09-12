@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "عملاء",
   "lang_demo_kind_suppliers": "مورّدون",
   "lang_could_not_switch_sample_data_off": "تعذّر إيقاف البيانات التجريبية",
-  "lang_could_not_remove_the_sample_data": "تعذّرت إزالة البيانات التجريبية"
+  "lang_could_not_remove_the_sample_data": "تعذّرت إزالة البيانات التجريبية",
+  "lang_upi_heading": "الدفع عبر UPI",
+  "lang_upi_id": "معرّف UPI",
+  "lang_upi_name": "الاسم الذي يراه العميل",
+  "lang_upi_help": "ضع معرّف UPI الخاص بك هنا، وسيظهر للعميل الذي يطالع طلبًا غير مدفوع زرٌّ يفتح تطبيقه، وقد امتلأ باسمك وبالمبلغ. تصل النقود إليك مباشرة. لا أحد هنا يتحقق منها: يرى موظف الكاشير الدفعة ويضع علامة على الطلب بأنه مدفوع، تمامًا كما يفعل مع النقد. اتركه فارغًا فلا يظهر أي زر.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "طلب العميل الإلغاء",
+  "lang_keep_the_order": "أبقِ الطلب",
+  "lang_cancel_it": "ألغِه",
+  "lang_int_voice_key_on_file": "المفتاح محفوظ",
+  "lang_int_voice_key_remove_q": "إزالة المفتاح المحفوظ؟",
+  "lang_int_voice_key_remove_text": "ستعود الأجهزة إلى تمييز الهاتف نفسه حتى يُحفظ مفتاح جديد. لا يمس هذا حسابك لدى المزوّد.",
+  "lang_int_voice_key_removed": "أُزيل المفتاح."
 }

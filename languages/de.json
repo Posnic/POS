@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "Kunden",
   "lang_demo_kind_suppliers": "Lieferanten",
   "lang_could_not_switch_sample_data_off": "Beispieldaten konnten nicht ausgeschaltet werden",
-  "lang_could_not_remove_the_sample_data": "Beispieldaten konnten nicht entfernt werden"
+  "lang_could_not_remove_the_sample_data": "Beispieldaten konnten nicht entfernt werden",
+  "lang_upi_heading": "Mit UPI bezahlen",
+  "lang_upi_id": "UPI-ID",
+  "lang_upi_name": "Name, den Ihr Kunde sieht",
+  "lang_upi_help": "Tragen Sie hier Ihre UPI-ID ein. Kunden, die eine unbezahlte Bestellung ansehen, bekommen dann eine Schaltfläche, die ihre eigene App öffnet - mit Ihrem Namen und dem Betrag bereits ausgefüllt. Das Geld geht direkt an Sie. Hier prüft es niemand: Ihre Kasse sieht die Zahlung und markiert die Bestellung als bezahlt, genau wie bei Bargeld. Lassen Sie das Feld leer, erscheint keine Schaltfläche.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "Kunde bittet um Stornierung",
+  "lang_keep_the_order": "Bestellung behalten",
+  "lang_cancel_it": "Stornieren",
+  "lang_int_voice_key_on_file": "Schlüssel gespeichert",
+  "lang_int_voice_key_remove_q": "Gespeicherten Schlüssel entfernen?",
+  "lang_int_voice_key_remove_text": "Die Handgeräte fallen auf die Spracherkennung des Telefons zurück, bis ein neuer Schlüssel gespeichert ist. Ihr Anbieterkonto bleibt unberührt.",
+  "lang_int_voice_key_removed": "Der Schlüssel wurde entfernt."
 }

@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "ลูกค้า",
   "lang_demo_kind_suppliers": "ซัพพลายเออร์",
   "lang_could_not_switch_sample_data_off": "ไม่สามารถปิดข้อมูลตัวอย่างได้",
-  "lang_could_not_remove_the_sample_data": "ไม่สามารถลบข้อมูลตัวอย่างได้"
+  "lang_could_not_remove_the_sample_data": "ไม่สามารถลบข้อมูลตัวอย่างได้",
+  "lang_upi_heading": "ชำระเงินด้วย UPI",
+  "lang_upi_id": "รหัส UPI",
+  "lang_upi_name": "ชื่อที่ลูกค้าจะเห็น",
+  "lang_upi_help": "ใส่รหัส UPI ของคุณที่นี่ แล้วลูกค้าที่กำลังดูออร์เดอร์ที่ยังไม่ได้ชำระจะเห็นปุ่มที่เปิดแอปของเขาเอง พร้อมชื่อของคุณและจำนวนเงินที่กรอกไว้แล้ว เงินจะเข้าถึงคุณโดยตรง ที่นี่ไม่มีใครตรวจสอบ เคาน์เตอร์ของคุณจะเห็นการชำระเงินและทำเครื่องหมายว่าออร์เดอร์ชำระแล้ว เหมือนกับเงินสด หากเว้นว่างไว้ จะไม่มีปุ่มปรากฏ",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "ลูกค้าขอยกเลิก",
+  "lang_keep_the_order": "เก็บออร์เดอร์ไว้",
+  "lang_cancel_it": "ยกเลิก",
+  "lang_int_voice_key_on_file": "บันทึกคีย์แล้ว",
+  "lang_int_voice_key_remove_q": "ลบคีย์ที่บันทึกไว้?",
+  "lang_int_voice_key_remove_text": "เครื่องจะกลับไปใช้การรู้จำเสียงของโทรศัพท์เองจนกว่าจะบันทึกคีย์ใหม่ บัญชีผู้ให้บริการของคุณไม่ถูกแตะต้อง",
+  "lang_int_voice_key_removed": "ลบคีย์แล้ว"
 }

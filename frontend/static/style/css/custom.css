@@ -6896,6 +6896,37 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     color: var(--theme-text-muted, #5b6577);
 }
 #v-pills-ai .ai-key-actions { display: inline-flex; gap: 6px; }
+/* The same card on the Captain App's voice tab, where a saved key used to
+   show as nothing at all. One rule, two places, so they cannot drift. */
+#captainvoice-line .ai-key-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(127, 127, 127, 0.22);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--theme-success-color, #1b7a3d) 8%, var(--theme-card-bg, #fff));
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #captainvoice-line .ai-key-status { background: var(--theme-card-bg, #fff); }
+}
+#captainvoice-line .ai-key-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--theme-success-color, #1b7a3d);
+}
+#captainvoice-line .ai-key-badge i { font-size: 16px; }
+#captainvoice-line .ai-key-hint {
+    flex: 1 1 auto;
+    font-size: 12.5px;
+    color: var(--theme-text-muted, #5b6577);
+}
+#captainvoice-line .ai-key-actions { display: inline-flex; gap: 6px; }
 #v-pills-ai #ai_key_cancel { display: inline-block; margin-top: 6px; }
 
 /*

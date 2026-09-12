@@ -2747,126 +2747,13 @@ dialog.sheet[data-voice="on"] .assistant-foot {
   text-align: center;
 }
 
+/* The scene is drawn on a canvas (assets/assistant/kitchen-scene.js), so
+   all this has to do is give it a box and keep it inside one on a small
+   phone. Everything that moves is in the drawing. */
 .placed-art {
-  position: relative;
-  width: 96px;
-  height: 96px;
-}
-
-.placed-tick,
-.placed-pan {
-  position: absolute;
-  inset: 0;
-  transition: opacity 0.4s ease;
-}
-
-.placed-art[data-stage='sent'] .placed-pan,
-.placed-art[data-stage='cooking'] .placed-tick {
-  opacity: 0;
-}
-
-.placed-tick {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.placed-tick circle {
-  opacity: 0.25;
-}
-
-/* The pan, drawn rather than pictured: a shop's food is its own, and a stock
-   photograph of somebody else's is worse than a shape. */
-.placed-pot {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 16px;
-  height: 30px;
-  border: 3px solid var(--ink);
-  border-top: 0;
-  border-radius: 0 0 16px 16px;
-  background: var(--surface);
-}
-
-.placed-pot::after {
-  content: '';
-  position: absolute;
-  left: -6px;
-  right: -6px;
-  top: -3px;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--ink);
-}
-
-.placed-steam {
-  position: absolute;
-  bottom: 48px;
-  width: 5px;
-  height: 20px;
-  border-radius: 3px;
-  background: var(--ink-soft);
-  opacity: 0;
-}
-
-.placed-steam:nth-of-type(1) {
-  left: 30px;
-}
-.placed-steam:nth-of-type(2) {
-  left: 46px;
-}
-.placed-steam:nth-of-type(3) {
-  left: 62px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .placed-art[data-stage='sent'] .placed-tick path {
-    stroke-dasharray: 44;
-    stroke-dashoffset: 44;
-    animation: placed-draw 0.5s 0.1s ease-out forwards;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam {
-    animation: placed-steam 2.4s ease-in-out infinite;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(2) {
-    animation-delay: 0.5s;
-  }
-
-  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(3) {
-    animation-delay: 1s;
-  }
-}
-
-/* Without motion the tick is simply drawn and the steam simply sits there. */
-@media (prefers-reduced-motion: reduce) {
-  .placed-art[data-stage='cooking'] .placed-steam {
-    opacity: 0.35;
-  }
-}
-
-@keyframes placed-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes placed-steam {
-  0% {
-    opacity: 0;
-    transform: translateY(6px) scaleY(0.6);
-  }
-  35% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-22px) scaleY(1.3);
-  }
+  width: 100%;
+  max-width: 280px;
+  height: 170px;
 }
 
 .placed-said {
@@ -3700,4 +3587,158 @@ dialog.sheet[open]::backdrop {
 .done-bill {
   margin: 8px auto 0;
   display: block;
+}
+
+/* ----------------------------------------------------------- paying by UPI
+ *
+ * One button, and under it the apps by name for anybody whose phone does not
+ * offer a chooser. The sentence underneath is the important part: this page
+ * does not know whether the money arrived, and says so rather than implying
+ * a confirmation it cannot give.
+ */
+.pay-upi {
+  margin: 18px auto 0;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.pay-upi-amount {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.pay-upi-go {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  line-height: var(--tap);
+  text-align: center;
+  text-decoration: none;
+}
+
+.pay-upi-apps {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+
+.pay-upi-note {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* The row opens into the order: the lines, what they cost, and - while the
+   shop's window is open - a way to change them. */
+.history-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.history-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.history-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-lines li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 15px;
+}
+
+.history-line-qty {
+  min-width: 2.2em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.history-line-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.history-line-note {
+  flex: 1 1 100%;
+  order: 5;
+  padding-left: 2.2em;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.history-line-cost {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-step {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.history-total {
+  margin: 8px 0 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.history-clock {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-asked {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.history-cancel {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-cancel[disabled] {
+  opacity: 0.5;
 }

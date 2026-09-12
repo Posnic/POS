@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "clientes",
   "lang_demo_kind_suppliers": "proveedores",
   "lang_could_not_switch_sample_data_off": "No se pudieron desactivar los datos de muestra",
-  "lang_could_not_remove_the_sample_data": "No se pudieron eliminar los datos de muestra"
+  "lang_could_not_remove_the_sample_data": "No se pudieron eliminar los datos de muestra",
+  "lang_upi_heading": "Pagar con UPI",
+  "lang_upi_id": "ID de UPI",
+  "lang_upi_name": "Nombre que verá el cliente",
+  "lang_upi_help": "Escriba aquí su ID de UPI y quien mire un pedido sin pagar verá un botón que abre su propia aplicación, con su nombre y el importe ya rellenados. El dinero va directamente a usted. Aquí nadie lo comprueba: su mostrador ve el pago y marca el pedido como pagado, igual que con el efectivo. Si lo deja vacío, no aparece ningún botón.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "El cliente pide cancelar",
+  "lang_keep_the_order": "Mantener el pedido",
+  "lang_cancel_it": "Cancelarlo",
+  "lang_int_voice_key_on_file": "Clave guardada",
+  "lang_int_voice_key_remove_q": "¿Quitar la clave guardada?",
+  "lang_int_voice_key_remove_text": "Los dispositivos vuelven al reconocimiento del propio teléfono hasta que se guarde una clave nueva. Su cuenta con el proveedor no se toca.",
+  "lang_int_voice_key_removed": "Clave quitada."
 }

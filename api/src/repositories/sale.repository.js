@@ -8173,8 +8173,17 @@ class SalesRepository {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
 
+      /*
+       * Two things need somebody: an order waiting to be accepted, and one
+       * whose customer has asked to call it off after the window closed.
+       * They belong in the same queue because they are the same job - a
+       * person deciding - and a second screen is a screen nobody opens.
+       */
       const filter = {
-        order_state: orderApproval.ORDER_STATE.PENDING,
+        $or: [
+          { order_state: orderApproval.ORDER_STATE.PENDING },
+          { cancel_requested: true, sale_process: 'KOT' },
+        ],
         ...activeTenantFilter(),
       };
       const branch = branchId || BaseModel.currentBranch;
@@ -8202,6 +8211,8 @@ class SalesRepository {
             fulfilment: 1,
             created_date: 1,
             order_state_at: 1,
+            cancel_requested: 1,
+            cancel_requested_at: 1,
           },
         })
         .sort({ created_date: 1 })
@@ -8215,6 +8226,10 @@ class SalesRepository {
           sale_id: String(row._id),
           sales_id: row.sales_id || '',
           token_id: row.token_id || '',
+          /* The customer has asked for this one to be called off; the shop
+             decides, with the same two buttons. */
+          cancel_requested: row.cancel_requested === true,
+          cancel_requested_at: row.cancel_requested_at || null,
           /* Where it is going, in the words a person reads: a table number, or
              the hotel and the room. */
           destination: (row.venue && row.venue.label) || row.table_number || '',
@@ -8265,10 +8280,57 @@ class SalesRepository {
 
       const sale = await salesCollection.findOne(
         { _id, ...activeTenantFilter() },
-        { projection: { order_state: 1, branch_id: 1 } }
+        {
+          projection: {
+            order_state: 1,
+            branch_id: 1,
+            /* Enough to cancel it here, where the customer has asked for
+               that: the lines go to the kitchen as cancellations. */
+            cancel_requested: 1,
+            items: 1,
+            changes: 1,
+            token_id: 1,
+            total: 1,
+          },
+        }
       );
       if (!sale) {
         return { status: false, message: 'Order not found', data: null };
+      }
+
+      /*
+       * THE CUSTOMER ASKED FOR THIS ONE TO BE CALLED OFF.
+       *
+       * Answered here rather than through the approval states, because those
+       * are about whether the kitchen may start and this is about whether
+       * the order lives. An order somebody asks to cancel is usually one the
+       * shop already accepted, so a transition has nothing to say about it.
+       * Either answer ends the request, so the queue does not keep asking.
+       */
+      if (sale.cancel_requested === true && (decision === 'cancel' || decision === 'keep')) {
+        const answeredAt = new Date();
+        const said = {
+          cancel_requested: false,
+          cancel_decided_at: answeredAt,
+          cancel_decided_by: BaseModel.loggedUserName || '',
+          updated_date: answeredAt,
+        };
+        if (decision === 'keep') {
+          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          return {
+            status: true,
+            message: 'The order stands',
+            data: { sale_id: String(saleId), cancelled: false },
+          };
+        }
+        const done = await this.cancelCustomerOrder(sale);
+        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        if (!done.status) return done;
+        return {
+          status: true,
+          message: 'Order cancelled',
+          data: { sale_id: String(saleId), cancelled: true },
+        };
       }
 
       const move = orderApproval.transition(sale.order_state, decision);
@@ -8893,6 +8955,8 @@ class SalesRepository {
       bill_ready: paymentStatus === 'Paid' && !cancelled,
       payment_status: paymentStatus,
       payment_mode: String(order.payment_mode || ''),
+      /* Asked for, and waiting on the shop. */
+      cancel_requested: order.cancel_requested === true,
       fulfilment: String(order.fulfilment || ''),
       table_number: String(order.table_number || ''),
       items: (Array.isArray(order.items) ? order.items : []).map((line) => ({
@@ -9077,6 +9141,50 @@ class SalesRepository {
           quantity: Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0),
         })),
         total: totals.total,
+      },
+    };
+  }
+
+  /*
+   * The customer has asked the shop to cancel an order the kitchen has
+   * already had a while.
+   *
+   * Recorded on the order and announced, so it turns up where a shop is
+   * already looking - the queue it accepts orders from - rather than in a
+   * screen somebody has to remember to open. Nothing is cancelled here:
+   * that is the shop's call, and a kitchen that has cooked it needs to say
+   * so.
+   */
+  async requestCustomerCancel(orderDoc) {
+    const db = await BaseModel.getDb();
+    const at = new Date();
+    const result = await db.collection('sales').updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          cancel_requested: true,
+          cancel_requested_at: at,
+          updated_date: at,
+        },
+      }
+    );
+    if (!result.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    notifyOrderAttention({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      alert: 'waiting',
+      state: 'cancel_requested',
+      total: Number(orderDoc.total || 0),
+    });
+
+    return {
+      status: true,
+      message: 'Cancellation requested',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        cancel_requested: true,
       },
     };
   }

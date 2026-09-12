@@ -2989,5 +2989,17 @@
   "lang_demo_kind_customers": "కస్టమర్లు",
   "lang_demo_kind_suppliers": "సరఫరాదారులు",
   "lang_could_not_switch_sample_data_off": "నమూనా డేటాను ఆఫ్ చేయలేకపోయాం",
-  "lang_could_not_remove_the_sample_data": "నమూనా డేటాను తీసివేయలేకపోయాం"
+  "lang_could_not_remove_the_sample_data": "నమూనా డేటాను తీసివేయలేకపోయాం",
+  "lang_upi_heading": "UPI ద్వారా చెల్లింపు",
+  "lang_upi_id": "UPI ఐడీ",
+  "lang_upi_name": "కస్టమర్‌కు కనిపించే పేరు",
+  "lang_upi_help": "ఇక్కడ మీ UPI ఐడీని ఇవ్వండి. చెల్లించని ఆర్డర్‌ను చూస్తున్న కస్టమర్‌కు ఒక బటన్ కనిపిస్తుంది; దాన్ని నొక్కితే వారి యాప్ తెరుచుకుని, మీ పేరు మరియు మొత్తం ముందే నింపబడి ఉంటాయి. డబ్బు నేరుగా మీకే వస్తుంది. ఇక్కడ ఎవరూ దాన్ని తనిఖీ చేయరు: మీ కౌంటర్ చెల్లింపును చూసి, నగదులాగే ఆర్డర్‌ను చెల్లించినట్టు గుర్తిస్తుంది. ఖాళీగా వదిలితే బటన్ కనిపించదు.",
+  "lang_upi_id_placeholder": "9843012345@okaxis",
+  "lang_cancel_requested": "కస్టమర్ రద్దు కోరారు",
+  "lang_keep_the_order": "ఆర్డర్ ఉంచు",
+  "lang_cancel_it": "రద్దు చెయ్",
+  "lang_int_voice_key_on_file": "కీ భద్రపరచబడింది",
+  "lang_int_voice_key_remove_q": "భద్రపరచిన కీని తొలగించాలా?",
+  "lang_int_voice_key_remove_text": "కొత్త కీ భద్రపరిచే వరకు హ్యాండ్‌సెట్‌లు ఫోన్ సొంత గుర్తింపునే వాడతాయి. మీ ప్రొవైడర్ ఖాతాకు ఏమీ కాదు.",
+  "lang_int_voice_key_removed": "కీ తొలగించబడింది."
 }

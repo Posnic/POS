@@ -4709,6 +4709,20 @@ class ItemRepository extends BaseModel {
                * "prepaid only" means something.
                */
               offline: razorpay ? cod : true,
+              /*
+               * Where to send a UPI payment, and the name the customer's app
+               * will show. Public by nature - it is the address printed on
+               * the counter's own QR sticker - and the page needs both to
+               * build the link that opens their app.
+               *
+               * Nothing here confirms a payment. The money goes to the shop's
+               * account, the counter sees it, and the till marks the order
+               * paid.
+               */
+              upi_id: String(config?.payment_upi_id || ''),
+              upi_name: String(
+                config?.payment_upi_name || branchDoc.branch_name || branchDoc.name || ''
+              ),
             };
           })(),
           /* Device-only: which printer the shop's own terminal sends its

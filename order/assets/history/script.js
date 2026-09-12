@@ -82,6 +82,110 @@
         }
     }
 
+    /* Seconds left of the shop's window, or 0. */
+    function secondsLeft(said) {
+        if (!said || !said.can_change) return 0;
+        const window = Number(said.change_seconds) || 0;
+        const at = new Date(said.placed_at || 0).getTime();
+        if (!window || !at) return 0;
+        return Math.max(0, Math.ceil((at + window * 1000 - Date.now()) / 1000));
+    }
+
+    function money(amount) {
+        const n = Number(amount) || 0;
+        const text = n % 1 === 0 ? String(n) : n.toFixed(2);
+        return (window.__posnicCurrency || "\u20b9") + text;
+    }
+
+    /*
+     * What is on the order, and what may still be done about it.
+     *
+     * The plus and minus are the whole point of the window: a customer who
+     * hears themselves say one and meant two should not have to find a
+     * person. Once the window closes they disappear and the Cancel button
+     * changes its words - it asks the shop instead of doing it.
+     */
+    function details(kept, said) {
+        const box = document.createElement("div");
+        box.className = "history-details";
+        box.id = "details-" + kept.orderId;
+
+        const lines = document.createElement("ul");
+        lines.className = "history-lines";
+        ((said && said.items) || kept.items || []).forEach((line) => {
+            const row = document.createElement("li");
+            const qty = document.createElement("span");
+            qty.className = "history-line-qty";
+            qty.textContent = String(Number(line.quantity) || 0) + "×";
+            const name = document.createElement("span");
+            name.className = "history-line-name";
+            name.textContent = String(line.name || "");
+            row.appendChild(qty);
+            row.appendChild(name);
+            if (line.note) {
+                const note = document.createElement("small");
+                note.className = "history-line-note";
+                note.textContent = String(line.note);
+                row.appendChild(note);
+            }
+            if (Number(line.total) > 0) {
+                const cost = document.createElement("span");
+                cost.className = "history-line-cost";
+                cost.textContent = money(line.total);
+                row.appendChild(cost);
+            }
+            if (said && said.can_change && line.item_id) {
+                [["-1", "\u2212"], ["1", "+"]].forEach(([by, glyph]) => {
+                    const step = document.createElement("button");
+                    step.type = "button";
+                    step.className = "history-step";
+                    step.setAttribute("data-order", kept.orderId);
+                    step.setAttribute("data-item", String(line.item_id));
+                    step.setAttribute("data-quantity", String(Math.max(0, (Number(line.quantity) || 0) + Number(by))));
+                    step.textContent = glyph;
+                    row.appendChild(step);
+                });
+            }
+            lines.appendChild(row);
+        });
+        box.appendChild(lines);
+
+        if (Number((said && said.total) || kept.total) > 0) {
+            const total = document.createElement("p");
+            total.className = "history-total";
+            total.textContent = say("Total {amount}", { amount: money((said && said.total) || kept.total) });
+            box.appendChild(total);
+        }
+
+        /* The window, counted down, and the way out of the order. */
+        const foot = document.createElement("div");
+        foot.className = "history-actions";
+        const left = secondsLeft(said);
+        if (said && said.can_change) {
+            const clock = document.createElement("span");
+            clock.className = "history-clock";
+            clock.setAttribute("data-order", kept.orderId);
+            clock.textContent = say("{n}s to change it", { n: left });
+            foot.appendChild(clock);
+        } else if (said && said.cancel_requested) {
+            const asked = document.createElement("span");
+            asked.className = "history-asked";
+            asked.textContent = say("The shop has your cancellation request");
+            foot.appendChild(asked);
+        }
+        if (said && !said.cancelled && !said.paid) {
+            const off = document.createElement("button");
+            off.type = "button";
+            off.className = "history-cancel";
+            off.setAttribute("data-order", kept.orderId);
+            off.textContent = said.can_change ? say("Cancel the order") : say("Ask the shop to cancel");
+            if (said.cancel_requested) off.disabled = true;
+            foot.appendChild(off);
+        }
+        if (foot.children.length) box.appendChild(foot);
+        return box;
+    }
+
     function row(kept, said) {
         const item = document.createElement("li");
         item.className = "history-row";
@@ -118,9 +222,22 @@
         foot.appendChild(token);
         foot.appendChild(state);
 
-        item.appendChild(head);
-        item.appendChild(what);
-        item.appendChild(foot);
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "history-open";
+        open.setAttribute("data-order", kept.orderId);
+        open.setAttribute("aria-expanded", "false");
+        open.setAttribute("aria-controls", "details-" + kept.orderId);
+        open.appendChild(head);
+        open.appendChild(what);
+        open.appendChild(foot);
+
+        item.appendChild(open);
+        if (said && !said.unknown) {
+            const panel = details(kept, said);
+            panel.hidden = true;
+            item.appendChild(panel);
+        }
 
         /* A bill exists once the shop has taken the money, and not before. */
         if (said && said.bill_ready) {
@@ -176,10 +293,111 @@
         if (!list.children.length && empty) empty.hidden = false;
     }
 
+    /* One open row at a time, and the seconds ticking while it is open. */
+    let ticking = 0;
+
+    function tick() {
+        const clocks = [...document.querySelectorAll(".history-clock")];
+        if (!clocks.length) {
+            clearInterval(ticking);
+            ticking = 0;
+            return;
+        }
+        clocks.forEach((clock) => {
+            const left = Number(clock.getAttribute("data-left") || 0) - 1;
+            clock.setAttribute("data-left", String(Math.max(0, left)));
+            if (left <= 0) {
+                /* The window has closed under them: say so and take the
+                   buttons away rather than let a tap fail. */
+                paint();
+                return;
+            }
+            clock.textContent = say("{n}s to change it", { n: left });
+        });
+    }
+
+    function startTicking() {
+        const clocks = [...document.querySelectorAll(".history-clock")];
+        clocks.forEach((clock) => {
+            const said = (clock.textContent.match(/\d+/) || ["0"])[0];
+            clock.setAttribute("data-left", said);
+        });
+        if (!ticking && clocks.length) ticking = setInterval(tick, 1000);
+    }
+
+    /** Tell the shop, then draw whatever it now says. */
+    async function actOn(kept, what, body) {
+        try {
+            const response = await fetch(
+                apiBase() +
+                    "/online-ordering/" +
+                    encodeURIComponent(kept.shop) +
+                    "/orders/" +
+                    encodeURIComponent(kept.orderId) +
+                    "/" +
+                    what,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify(Object.assign({ token: kept.token }, body || {}))
+                }
+            );
+            const answer = await response.json().catch(() => null);
+            return answer && answer.type === "success" ? answer.data || {} : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function keptFor(orderId) {
+        const list = typeof rememberedOrders === "function" ? rememberedOrders() : []; // eslint-disable-line no-undef
+        return list.find((row) => row && String(row.orderId) === String(orderId)) || null;
+    }
+
+    document.addEventListener("click", async (event) => {
+        const target = event.target;
+        if (!target || !target.closest) return;
+
+        const open = target.closest(".history-open");
+        if (open) {
+            const panel = document.getElementById("details-" + open.getAttribute("data-order"));
+            if (!panel) return;
+            const showing = panel.hidden;
+            /* One at a time: a list of open orders is a list nobody reads. */
+            [...document.querySelectorAll(".history-details")].forEach((other) => { other.hidden = true; });
+            [...document.querySelectorAll(".history-open")].forEach((other) => other.setAttribute("aria-expanded", "false"));
+            panel.hidden = !showing;
+            open.setAttribute("aria-expanded", showing ? "true" : "false");
+            if (showing) startTicking();
+            return;
+        }
+
+        const step = target.closest(".history-step");
+        if (step) {
+            const kept = keptFor(step.getAttribute("data-order"));
+            if (!kept) return;
+            step.disabled = true;
+            await actOn(kept, "items", {
+                items: [{ item_id: step.getAttribute("data-item"), quantity: Number(step.getAttribute("data-quantity")) || 0 }]
+            });
+            await paint();
+            return;
+        }
+
+        const off = target.closest(".history-cancel");
+        if (off) {
+            const kept = keptFor(off.getAttribute("data-order"));
+            if (!kept) return;
+            off.disabled = true;
+            await actOn(kept, "cancel", {});
+            await paint();
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", async () => {
         if (typeof loadEnvConfig === "function") await loadEnvConfig(); // eslint-disable-line no-undef
         await paint();
     });
 
-    window.OrderHistory = { paint, stateWords, when, lineWords };
+    window.OrderHistory = { paint, stateWords, when, lineWords, details, secondsLeft };
 })();

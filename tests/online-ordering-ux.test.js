@@ -1094,6 +1094,7 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   };
   window.speechSynthesis = { cancel() {}, getVoices: () => [], speak(u) { calls.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); } };
   window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+  window.eval(read('assets/assistant/kitchen-scene.js'));
   window.eval(read('assets/assistant/script.js'));
   window.eval(read('assets/assistant/voice.js'));
   window.OrderingVoice.leave = (url) => calls.left.push(url);
@@ -1589,8 +1590,8 @@ test('the assistant can send the order to the kitchen, only on a clear yes, thro
      preparing." */
   assert.strictEqual(document.getElementById('assistant-placed').hidden, false, 'nothing told the customer the order had gone');
   assert.strictEqual(document.getElementById('placed-token').textContent, '042');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
-  assert.strictEqual(document.getElementById('placed-art').getAttribute('data-stage'), 'sent');
+  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sending your order to the kitchen');
+  assert.strictEqual(document.getElementById('placed-art').getAttribute('data-stage'), 'sending');
   assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the model was not asked to say the token');
   assert.deepStrictEqual(calls.left, [], 'the page left before the token was said');
 
@@ -1707,33 +1708,35 @@ test('the sheet carries a Review order button with the count and the total, once
   assert.ok(db.indexOf('options.stay') < db.indexOf('window.location.href = `thankyou.html?token='), 'the stay must be decided before the page leaves');
 });
 
-test('the order lands in the sheet, in two beats, and nothing moves until Done', async () => {
+test('the order lands in the sheet, and nothing moves until Done', async () => {
   /* Owner: "as soon order over it cut suddenly ... i wanted to show some
-     animation like sent kitchen and chef preparing." */
+     animation like sent kitchen and chef preparing." The beats themselves
+     belong to the scene, and are tested against its own drawing below. */
   const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
-  window.OrderingAssistant.placedPanel('042', { after: 10 });
+  window.OrderingAssistant.placedPanel('042');
 
   const panel = document.getElementById('assistant-placed');
   const art = document.getElementById('placed-art');
   assert.strictEqual(panel.hidden, false);
   assert.strictEqual(document.getElementById('placed-token').textContent, '042');
-  assert.strictEqual(art.getAttribute('data-stage'), 'sent');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'Sent to the kitchen');
-
-  await new Promise((r) => setTimeout(r, 40));
-  assert.strictEqual(art.getAttribute('data-stage'), 'cooking', 'the second beat never came');
-  assert.strictEqual(document.getElementById('placed-said').textContent, 'The chef is preparing your order');
+  assert.strictEqual(art.getAttribute('data-stage'), 'sending', 'the first beat is not immediate');
+  assert.strictEqual(
+    document.getElementById('placed-said').textContent,
+    'Sending your order to the kitchen'
+  );
   assert.deepStrictEqual(calls.left, [], 'the panel walked the customer off by itself');
 
   document.getElementById('placed-done').click();
   assert.strictEqual(panel.hidden, true);
   assert.deepStrictEqual(calls.left, ['thankyou.html?token=042']);
 
-  /* Both beats are drawn, and the steam is still there without motion. */
-  const css = fs.readFileSync(path.join(BUNDLE, 'assets', 'order.css'), 'utf8');
-  assert.match(css, /\.placed-art\[data-stage='sent'\] \.placed-tick path/);
-  assert.match(css, /\.placed-art\[data-stage='cooking'\] \.placed-steam/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*placed-steam/);
+  /* Leaving stops the scene: a second order must not run behind the first. */
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(
+    document.getElementById('placed-said').textContent,
+    'Sending your order to the kitchen',
+    'a beat arrived after the panel was closed'
+  );
 });
 
 test('the token screen downloads nothing and shows no bill', () => {
@@ -1755,20 +1758,27 @@ function historyPage({ kept = [], says = {} } = {}) {
     runScripts: 'outside-only',
   });
   const { window } = dom;
-  const calls = { asked: [], forgotten: [] };
+  const calls = { asked: [], forgotten: [], posted: [] };
   window.CONFIG = { API_BASE_URL: '' };
   window.loadEnvConfig = async () => {};
   window.rememberedOrders = () => JSON.parse(JSON.stringify(kept));
   window.forgetOrder = (id) => calls.forgotten.push(id);
-  window.fetch = async (url) => {
-    calls.asked.push(String(url));
-    const id = String(url).split('/orders/')[1].split('?')[0];
+  window.fetch = async (url, init) => {
+    const at = String(url);
+    if (init && init.method === 'POST') {
+      calls.posted.push({ url: at, body: JSON.parse(init.body) });
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ok: true } }) };
+    }
+    calls.asked.push(at);
+    const id = at.split('/orders/')[1].split('?')[0];
     const answer = says[id];
     if (!answer) return { ok: false, status: 404, json: async () => ({}) };
     return { ok: true, status: 200, json: async () => ({ type: 'success', data: answer }) };
   };
   window.eval(read('assets/history/script.js'));
-  return { window, document: window.document, calls };
+  /* The countdown is a real interval; a test that opens a row must close
+     the page or the runner never exits. */
+  return { window, document: window.document, calls, dom };
 }
 
 test('what this phone ordered is kept on this phone, and the shop says where each one got to', async () => {
@@ -1856,7 +1866,10 @@ test('the bill is offered only when the shop says the money is in', () => {
      download." */
   const script = read('assets/thankyou/script.js');
   assert.match(script, /async function offerBillWhenPaid\(token\)/);
-  assert.match(script, /if \(!body \|\| body\.type !== "success" \|\| !body\.data \|\| !body\.data\.bill_ready\) return;/);
+  /* One or the other, never both: an unpaid order is offered a way to pay,
+     a paid one is offered its bill. */
+  assert.match(script, /if \(!body\.data\.bill_ready\) \{/);
+  assert.match(script, /offerUpi\(body\.data, payment, token, orderId\);/);
   assert.ok(
     script.indexOf('button.hidden = false') > script.indexOf('bill_ready'),
     'the button is shown before the shop has been asked'
@@ -1864,4 +1877,264 @@ test('the bill is offered only when the shop says the money is in', () => {
   const html = read('thankyou.html');
   assert.match(html, /id="done-bill" hidden/, 'the bill button starts visible');
   assert.match(html, /history\.html'">Your orders/, 'there is no way from the token screen to the list');
+});
+
+/** The thank-you script's UPI helpers, lifted and run with a fake page. */
+function upiBox({ payment = {}, said = {}, token = '042', orderId = 'o1' } = {}) {
+  const dom = new JSDOM(read('thankyou.html'), { url: 'https://shop.example/order/thankyou.html?token=042', runScripts: 'outside-only' });
+  const { window } = dom;
+  const src = read('assets/thankyou/script.js');
+  const cut = (name) => {
+    const at = src.indexOf('function ' + name + '(');
+    assert.ok(at > -1, 'thankyou/script.js no longer defines ' + name);
+    const end = src.indexOf('\n}\n', at) + 3;
+    return src.slice(at, end);
+  };
+  const sandbox = {
+    window,
+    document: window.document,
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+    Number,
+    String,
+    Object,
+    encodeURIComponent,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext([cut('upiLinks'), cut('offerUpi')].join('\n'), sandbox);
+  sandbox.offerUpi(said, payment, token, orderId);
+  return { window, document: window.document, box: sandbox };
+}
+
+test('the UPI link carries the right payee and the right amount, and encodes everything', () => {
+  /* Owner: "just configured upi id and how much enough. let cashier verify
+     manually and update as paid." Money, so: the payee, the amount, and no
+     way for a shop name to end the amount early. */
+  const { document, box } = upiBox({
+    payment: { upi_id: 'azure@okaxis', upi_name: 'Azure Sea & Foods' },
+    said: { total: 660, paid: false, cancelled: false, shop: 'Azure' },
+  });
+  assert.strictEqual(document.getElementById('pay-upi').hidden, false);
+  const href = document.getElementById('pay-upi-any').getAttribute('href');
+  assert.ok(href.startsWith('upi://pay?pa=azure%40okaxis'), 'the payee is wrong or unencoded: ' + href);
+  assert.match(href, /&am=660\.00&cu=INR/);
+  assert.match(href, /&pn=Azure%20Sea%20%26%20Foods/, 'an ampersand in the shop name would end the amount early');
+  assert.match(href, /&tn=Order%20042/);
+  assert.match(href, /&tr=o1$/);
+  assert.strictEqual(document.getElementById('pay-upi-gpay').getAttribute('href').startsWith('tez://upi/pay?'), true);
+  assert.strictEqual(document.getElementById('pay-upi-phonepe').getAttribute('href').startsWith('phonepe://pay?'), true);
+  assert.strictEqual(document.getElementById('pay-upi-paytm').getAttribute('href').startsWith('paytmmp://pay?'), true);
+  assert.match(document.getElementById('pay-upi-amount').textContent, /Pay ₹660 to Azure Sea & Foods/);
+
+  /* And it says plainly that nobody here checks it. */
+  assert.match(read('thankyou.html'), /Tell the counter once you have paid/);
+  void box;
+});
+
+test('nothing to pay, nowhere to send it, or already paid: no button at all', () => {
+  const none = upiBox({ payment: {}, said: { total: 660, paid: false } });
+  assert.strictEqual(none.document.getElementById('pay-upi').hidden, true, 'a shop with no UPI id offered one');
+
+  const paid = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 660, paid: true } });
+  assert.strictEqual(paid.document.getElementById('pay-upi').hidden, true, 'a paid order was asked for money again');
+
+  const off = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 660, cancelled: true } });
+  assert.strictEqual(off.document.getElementById('pay-upi').hidden, true, 'a cancelled order was asked for money');
+
+  const free = upiBox({ payment: { upi_id: 'azure@okaxis' }, said: { total: 0, paid: false } });
+  assert.strictEqual(free.document.getElementById('pay-upi').hidden, true, 'an order costing nothing offered a payment');
+});
+
+test('a row opens into the order, and the window is a countdown on it', async () => {
+  /* Owner: "order history should able to clickable expand details within 30
+     seconds they can modify ... shop ower setting might be." */
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [{ name: 'Chicken Biryani', quantity: 2 }] }];
+  const says = {
+    o1: {
+      order_id: 'o1',
+      token: '219',
+      shop: 'Azure',
+      placed_at: new Date().toISOString(),
+      paid: false,
+      cancelled: false,
+      bill_ready: false,
+      state: 'accepted',
+      can_change: true,
+      change_seconds: 30,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 660, note: 'less spicy' }],
+      total: 660,
+    },
+  };
+  const { window, document, calls } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  /* Closed to begin with: a list of open orders is a list nobody reads. */
+  const panel = document.getElementById('details-o1');
+  assert.ok(panel, 'the row does not open into anything');
+  assert.strictEqual(panel.hidden, true);
+
+  document.querySelector('.history-open').click();
+  assert.strictEqual(panel.hidden, false, 'tapping the row did not open it');
+  assert.match(panel.textContent, /2×\s*Chicken Biryani/);
+  assert.match(panel.textContent, /less spicy/);
+  assert.match(panel.textContent, /Total ₹660/);
+  assert.match(panel.querySelector('.history-clock').textContent, /\d+s to change it/);
+
+  /* Inside the window: a minus, a plus, and a Cancel that cancels. */
+  const steps = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(steps.length, 2, 'the line cannot be changed by hand');
+  assert.strictEqual(steps[1].getAttribute('data-quantity'), '3', 'plus does not mean one more');
+  assert.strictEqual(steps[0].getAttribute('data-quantity'), '1', 'minus does not mean one fewer');
+  assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Cancel the order');
+
+  steps[1].click();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.strictEqual(calls.posted.length, 1);
+  assert.match(calls.posted[0].url, /\/online-ordering\/ABC\/orders\/o1\/items$/);
+  assert.deepStrictEqual(calls.posted[0].body, { token: '219', items: [{ item_id: 'm1', quantity: 3 }] });
+  window.close();
+});
+
+test('once the window has closed, cancelling asks the shop instead of doing it', async () => {
+  /* Owner: "may be approval from desktop. user can submit the request
+     however." */
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T09:00:00.000Z', items: [] }];
+  const says = {
+    o1: {
+      order_id: 'o1',
+      token: '219',
+      shop: 'Azure',
+      placed_at: '2026-09-12T09:00:00.000Z',
+      paid: false,
+      cancelled: false,
+      state: 'accepted',
+      can_change: false,
+      why_not: 'too_late',
+      change_seconds: 30,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 660 }],
+      total: 660,
+    },
+  };
+  const { window, document, calls } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  document.querySelector('.history-open').click();
+  const panel = document.getElementById('details-o1');
+
+  assert.strictEqual(panel.querySelectorAll('.history-step').length, 0, 'a closed window still offers to change the order');
+  assert.strictEqual(panel.querySelector('.history-clock'), null, 'a closed window is still counting down');
+  const off = panel.querySelector('.history-cancel');
+  assert.strictEqual(off.textContent, 'Ask the shop to cancel', 'the button still claims to cancel it outright');
+
+  off.click();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.match(calls.posted[0].url, /\/orders\/o1\/cancel$/);
+  assert.deepStrictEqual(calls.posted[0].body, { token: '219' });
+  window.close();
+});
+
+test('an order already asked about says so, and a paid one is not asked about at all', async () => {
+  const asked = historyPage({
+    kept: [{ orderId: 'o1', token: '219', shop: 'ABC', at: '2026-09-12T09:00:00.000Z', items: [] }],
+    says: { o1: { order_id: 'o1', token: '219', placed_at: '2026-09-12T09:00:00.000Z', can_change: false, cancel_requested: true, paid: false, cancelled: false, items: [], total: 120 } },
+  });
+  asked.document.dispatchEvent(new asked.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  asked.document.querySelector('.history-open').click();
+  const panel = asked.document.getElementById('details-o1');
+  assert.match(panel.textContent, /The shop has your cancellation request/);
+  assert.strictEqual(panel.querySelector('.history-cancel').disabled, true, 'the same request can be sent twice');
+
+  const paid = historyPage({
+    kept: [{ orderId: 'o2', token: '220', shop: 'ABC', at: '2026-09-12T09:00:00.000Z', items: [] }],
+    says: { o2: { order_id: 'o2', token: '220', placed_at: '2026-09-12T09:00:00.000Z', can_change: false, paid: true, bill_ready: true, cancelled: false, items: [], total: 120 } },
+  });
+  paid.document.dispatchEvent(new paid.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  paid.document.querySelector('.history-open').click();
+  assert.strictEqual(paid.document.getElementById('details-o2').querySelector('.history-cancel'), null, 'a paid order can still be cancelled from the phone');
+  asked.window.close();
+  paid.window.close();
+});
+
+/** A 2d context that records what was asked of it, and a canvas holding it. */
+function recordingCanvas(window) {
+  const calls = [];
+  const ctx = new Proxy(
+    {},
+    {
+      get(target, name) {
+        if (name === 'canvas') return canvas;
+        if (name === 'setTransform') return () => calls.push(['setTransform']);
+        return (...args) => calls.push([String(name), ...args]);
+      },
+      set(target, name, value) {
+        calls.push(['set:' + String(name), value]);
+        return true;
+      },
+    }
+  );
+  const canvas = {
+    width: 280,
+    height: 170,
+    getContext: () => ctx,
+    getBoundingClientRect: () => ({ width: 280, height: 170 }),
+    setAttribute: () => {},
+  };
+  void window;
+  return { canvas, calls };
+}
+
+test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {
+  /* Owner: "i want very cool animation ... sending order to kitchen. and
+     they got it preparing." Three beats, and the drawing changes with them. */
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.eval(read('assets/assistant/kitchen-scene.js'));
+  const scene = window.KitchenScene;
+  /* Spread: an array from the page's realm is not reference-equal to one
+     of ours, however alike they look. */
+  assert.deepStrictEqual([...scene.BEATS].map((b) => b.name), ['sending', 'landed', 'cooking']);
+  assert.ok(scene.BEATS[1].at > scene.BEATS[0].at && scene.BEATS[2].at > scene.BEATS[1].at, 'the beats are out of order');
+
+  const colours = { ink: '#111', soft: '#666', line: '#ddd', surface: '#fff', accent: '#111' };
+  const early = recordingCanvas(window);
+  scene.frame(early.canvas.getContext(), colours, 280, 170, 200, false);
+  const earlyNames = early.calls.map((c) => c[0]);
+  assert.ok(earlyNames.includes('clearRect'), 'the scene does not clear between frames');
+  assert.ok(earlyNames.filter((n) => n === 'rotate').length > 0, 'the docket is not in flight');
+
+  /* Late on, it is a pan with steam and no docket flying. */
+  const late = recordingCanvas(window);
+  scene.frame(late.canvas.getContext(), colours, 280, 170, scene.BEATS[2].at + 900, false);
+  const lateSets = late.calls.filter((c) => c[0] === 'set:globalAlpha').map((c) => c[1]);
+  assert.ok(lateSets.some((a) => a > 0 && a <= 1), 'nothing was faded in for the cooking beat');
+  assert.ok(late.calls.some((c) => c[0] === 'quadraticCurveTo'), 'the pan and steam are not drawn');
+
+  /* Asked for less motion, it draws the settled kitchen once. */
+  const still = recordingCanvas(window);
+  scene.frame(still.canvas.getContext(), colours, 280, 170, 0, true);
+  assert.ok(still.calls.some((c) => c[0] === 'quadraticCurveTo'), 'the still frame draws nothing');
+});
+
+test('the scene tells the caption which beat it is on, and stops when it is told to', async () => {
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.eval(read('assets/assistant/kitchen-scene.js'));
+
+  /* A canvas that hands back no context - an old browser, a hardened one -
+     still gets every caption, on the same clock. */
+  const beats = [];
+  const stop = window.KitchenScene.play({ getContext: () => null, getBoundingClientRect: () => ({ width: 280, height: 170 }) }, {
+    onBeat: (name) => beats.push(name),
+  });
+  assert.deepStrictEqual(beats, ['sending'], 'the first beat is not immediate');
+  stop();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.deepStrictEqual(beats, ['sending'], 'a stopped scene went on calling back');
+
+  /* And with no canvas at all. */
+  const more = [];
+  window.KitchenScene.play(null, { onBeat: (name) => more.push(name) })();
+  assert.deepStrictEqual(more, ['sending']);
 });

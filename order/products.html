@@ -312,15 +312,14 @@
                 it, then the token. Nothing moves until they tap Done.
             -->
             <div class="placed" id="assistant-placed" hidden>
-                <div class="placed-art" id="placed-art" data-stage="sent" aria-hidden="true">
-                    <svg class="placed-tick" viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"></circle><path d="M15 27l8 8 15-16"></path></svg>
-                    <div class="placed-pan">
-                        <span class="placed-steam"></span>
-                        <span class="placed-steam"></span>
-                        <span class="placed-steam"></span>
-                        <span class="placed-pot"></span>
-                    </div>
-                </div>
+                <!--
+                    The order going to the kitchen, drawn: a docket flies to the
+                    hatch, the bell rings, and the scene settles into a pan with
+                    a flame under it. assets/assistant/kitchen-scene.js. Drawn
+                    rather than filmed so it takes the page's own colours, costs
+                    no download, and is sharp on any phone.
+                -->
+                <canvas class="placed-art" id="placed-art" width="280" height="170" aria-hidden="true"></canvas>
                 <p class="placed-said" id="placed-said" role="status">Sent to the kitchen</p>
                 <div class="placed-token">
                     <span class="placed-token-label">Token</span>
