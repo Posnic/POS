@@ -136,7 +136,7 @@
         if (DIET_WORD[item.diet]) rows.push(["Diet", DIET_WORD[item.diet]]);
         const served = Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [];
         if (served.length) rows.push(["Served at", served.join(", ")]);
-        if (Number(item.prep_minutes) > 0) rows.push(["Takes about", `${Number(item.prep_minutes)} minutes`]);
+        if (Number(item.prep_minutes) > 0) rows.push(["Takes about", t("{n} minutes", { n: Number(item.prep_minutes) })]);
         if (item.category_name) rows.push(["Category", item.category_name]);
 
         const list = el("dish-facts");
@@ -180,7 +180,7 @@
         el("dish-add").hidden = !available;
         const off = el("dish-off");
         off.hidden = available;
-        off.textContent = served.length ? `Served at ${served.join(" and ")} only` : "Not available right now";
+        off.textContent = served.length ? t("Served at {when} only", { when: served.join(t(" and ")) }) : t("Not available right now");
 
         const line = (await getCartData()).find((row) => String(row.id) === openId);
         paintSheetQty(line ? line.quantity : 0);
@@ -314,7 +314,10 @@
                 return;
             }
             const rec = new Recognition();
-            rec.lang = document.documentElement.lang || "en";
+            /* The language the MENU is written in, not the language of the
+               page around it: a Tamil-reading customer still says "biryani",
+               and the item is still called that. */
+            rec.lang = document.documentElement.getAttribute("data-speech-lang") || "en-IN";
             rec.interimResults = true;
             rec.maxAlternatives = 1;
             rec.onstart = () => {

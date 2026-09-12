@@ -613,10 +613,19 @@ body.searching .order-search {
   color: var(--accent);
 }
 
+/* Room for the bubble, so it sits beside the last letter and not on it. */
+.category-item.has-items {
+  padding-right: 24px;
+}
+
 .category-rail .category-item.has-items::after {
   position: static;
   margin-left: auto;
   border: 0;
+}
+
+.category-rail .category-item.has-items {
+  padding-right: 14px;
 }
 
 /* --------------------------------------------------------------- sections */
@@ -1668,6 +1677,13 @@ dialog.sheet::backdrop {
   font-variant-numeric: tabular-nums;
 }
 
+/* The fee for the way chosen, under the total, before the button. */
+.pay-charges {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
 /* The number as it is typed, in a field-shaped box with the country code
    already in it. Digits are shown, not masked: a phone number is not a PIN,
    and a customer needs to see they typed it right. */
@@ -2026,6 +2042,180 @@ dialog.sheet::backdrop {
   .page-head {
     display: none !important;
   }
+}
+
+/* ------------------------------------------------------------ language */
+
+/*
+ * The toggle names the language it would switch TO, in that language:
+ * "தமிழ்" on the English page, "English" on the Tamil one, so the person
+ * who cannot read the current page can still find the way out of it.
+ */
+.lang-toggle {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.attract-lang {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  right: 16px;
+}
+
+/* Tamil glyphs stand taller than Latin ones, and have no capitals to space
+   out - tracking meant for uppercase Latin only pulls Tamil apart. */
+html[lang="ta"] body {
+  line-height: 1.6;
+}
+
+/* A Tamil sentence is longer than its English; three of them side by
+   side wrap to three lines each, one under the other they read. */
+html[lang="ta"] .eating-how-choices .eating-how-btn {
+  flex-basis: 100%;
+}
+
+html[lang="ta"] .add-word,
+html[lang="ta"] .btn-primary,
+html[lang="ta"] .btn-secondary,
+html[lang="ta"] .eyebrow,
+html[lang="ta"] .token-label,
+html[lang="ta"] .attract-note {
+  letter-spacing: 0;
+}
+
+/* --------------------------------------------------------- the machine */
+
+/*
+ * The screen a kiosk machine rests on between customers. Read from a metre
+ * away: the shop's name, one line, two targets a hand can land on without
+ * aiming. The shop's own picture behind it when it has uploaded one, a
+ * plain ground when it has not - never a stock photograph of somebody
+ * else's food.
+ */
+body.attract {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--raised);
+  background-size: cover;
+  background-position: center;
+}
+
+.attract-main {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 40px var(--pad) calc(40px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.86);
+}
+
+body.attract.has-picture .attract-main {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.attract-head {
+  text-align: center;
+}
+
+.attract-logo {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.attract-name {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.attract-sub {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(16px, 1.8vw, 20px);
+}
+
+.attract-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: min(760px, 100%);
+}
+
+@media (max-width: 560px) {
+  .attract-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.attract-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 220px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.attract-choice:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) {
+  .attract-choice:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+  }
+}
+
+.attract-icon svg {
+  width: 72px;
+  height: 72px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.attract-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.attract-note {
+  color: var(--ink-soft);
+  font-size: 15px;
 }
 
 /* ---------------------------------------------------------------- misc */

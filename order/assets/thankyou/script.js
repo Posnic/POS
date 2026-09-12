@@ -63,19 +63,19 @@ async function renderAndPrint() {
         const table = localStorage.getItem("order_table") || (receiptData.table_number || "");
         const lead = document.getElementById("done-lead");
         const pay = document.getElementById("done-pay");
-        let text = "The kitchen has it. Show this at the counter.";
-        if (fulfilment === "dine_in") text = table ? `The kitchen has it. We'll bring it to table ${table}.` : "The kitchen has it. We'll bring it to your table.";
-        else if (fulfilment === "takeaway") text = "The kitchen has it. Collect it at the counter when your token is called.";
-        else if (fulfilment === "pickup") text = "Your order is in. Collect it from the shop when it's ready.";
-        else if (fulfilment === "delivery") text = "Your order is in. It's on its way as soon as it's ready.";
+        let text = t("The kitchen has it. Show this at the counter.");
+        if (fulfilment === "dine_in") text = table ? t("The kitchen has it. We'll bring it to table {table}.", { table }) : t("The kitchen has it. We'll bring it to your table.");
+        else if (fulfilment === "takeaway") text = t("The kitchen has it. Collect it at the counter when your token is called.");
+        else if (fulfilment === "pickup") text = t("Your order is in. Collect it from the shop when it's ready.");
+        else if (fulfilment === "delivery") text = t("Your order is in. It's on its way as soon as it's ready.");
         if (lead) lead.textContent = text;
         if (pay && localStorage.getItem("order_pay") === "offline" && receiptData.total != null) {
             const amount = "\u20b9" + Number(receiptData.total).toFixed(2).replace(/\.00$/, "");
             pay.textContent = fulfilment === "delivery"
-                ? `Pay ${amount} on delivery.`
+                ? t("Pay {amount} on delivery.", { amount })
                 : (fulfilment === "pickup" || fulfilment === "takeaway")
-                    ? `Pay ${amount} when you collect it.`
-                    : `Pay ${amount} at the counter.`;
+                    ? t("Pay {amount} when you collect it.", { amount })
+                    : t("Pay {amount} at the counter.", { amount });
             pay.hidden = false;
         }
     })();
@@ -146,6 +146,13 @@ async function renderAndPrint() {
     $("#subtotal").text(`₹${receiptData.subtotal.toFixed(2)}`);
     $("#discount").text(`-₹${receiptData.discount.toFixed(2)}`);
     $("#tax").text(`₹${receiptData.tax.toFixed(2)}`);
+    /* The fee for the way it travelled, when there was one. */
+    if (Number(receiptData.delivery_fee) > 0) {
+        const how = String(receiptData.fulfilment || localStorage.getItem("order_fulfilment") || "");
+        $("#fee-label").text(how === "delivery" ? "Delivery" : how === "dine_in" ? "Service" : "Packing");
+        $("#fee").text(`₹${Number(receiptData.delivery_fee).toFixed(2)}`);
+        $("#fee-row").prop("hidden", false);
+    }
     $("#total").text(`₹${receiptData.total.toFixed(2)}`);
     $("#orderTypePrint").text(orderType);
 
@@ -156,7 +163,7 @@ async function renderAndPrint() {
             sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
         } catch (error) {
             console.error("Receipt PDF generation failed:", error);
-            alert(error.message || "Receipt PDF could not be generated.");
+            alert(error.message || t("Receipt PDF could not be generated."));
         }
     }, 1000);
 }

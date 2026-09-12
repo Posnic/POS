@@ -7747,6 +7747,10 @@ class SalesRepository {
         data: {
           tokenId,
           sale_id: insertedId,
+          /* How it travels and where, so the receipt can say which table and
+             name the fee for the way chosen (delivery_fee is already here). */
+          fulfilment,
+          table_number: servicePoint.label || kiosk_table_no || table || '',
           sales_id: salesId,
           branch_name: branchName,
           items: saleItems,
@@ -7923,6 +7927,10 @@ class SalesRepository {
             delivery_fee: 1,
             notes: 1,
             customer_phone: 1,
+            /* Who a delivery goes to and where, and how many at the table. */
+            customer_name: 1,
+            customer_address: 1,
+            person_count: 1,
             fulfilment: 1,
             created_date: 1,
             order_state_at: 1,
@@ -7948,11 +7956,18 @@ class SalesRepository {
           items: (row.items || []).map((item) => ({
             name: item.item_name || item.name || '',
             quantity: Number(item.item_quantity || item.quantity || 0),
+            /* "Less spicy": what the customer typed for this line. It was
+               on the sale and printed on the ticket, and never shown to the
+               person deciding whether to accept the order. */
+            note: item.item_description || '',
           })),
           total: Number(row.total) || 0,
           delivery_fee: Number(row.delivery_fee) || 0,
           note: row.notes || '',
           customer_phone: row.customer_phone || '',
+          customer_name: row.customer_name || '',
+          customer_address: row.customer_address || '',
+          person_count: Number(row.person_count) || 0,
           placed_at: row.created_date || row.order_state_at || null,
         })),
       };

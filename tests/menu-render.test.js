@@ -769,3 +769,22 @@ test('searching takes the shop name down and keeps the count to one line', () =>
   assert.match(rule[1], /padding:\s*6px 4px 2px/, 'the count is not tight under the box');
   assert.match(html, /\.results\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, 'a wide screen gets one column of results');
 });
+
+test('a shop with no kitchen signs is searched as a shop, and not asked about veg', async () => {
+  const shop = {
+    ...REPLY,
+    store: { ...REPLY.store, name: 'Kirana Corner' },
+    categories: REPLY.categories.map((c) => ({
+      ...c,
+      items: c.items.map((i) => ({ ...i, diet: '', prep_minutes: 0, served_in: [] })),
+    })),
+  };
+  const { document } = await render('/menu/KC200', shop);
+  assert.strictEqual(document.getElementById('search').placeholder, 'Search products');
+  assert.strictEqual(document.getElementById('filter-veg').hidden, true, 'a stationer is asked about veg');
+  assert.match(document.getElementById('shop-sub').textContent, /items$/);
+
+  const kitchen = await render('/menu/AZ100', REPLY);
+  assert.strictEqual(kitchen.document.getElementById('search').placeholder, 'Search the menu');
+  assert.strictEqual(kitchen.document.getElementById('filter-veg').hidden, false);
+});

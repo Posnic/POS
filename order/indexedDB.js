@@ -3,6 +3,16 @@ const DB_VERSION = 3;
 const STORE_NAME = "products";
 const BRANCH_STORE = "branch";
 const CART_STORE = "cart";
+
+/* The customer's language, from assets/i18n.js. The English fallback keeps
+   the page alive if that file is ever missing from a deploy. */
+if (typeof window.t !== "function") {
+    window.t = function (key, vars) {
+        return String(key).replace(/\{(\w+)\}/g, function (m, name) {
+            return vars && vars[name] != null ? String(vars[name]) : m;
+        });
+    };
+}
 const PHONEPE_STORE = "phonepe";
 const IMAGE_STORE = "images";
 const PAYMENT_STORE = "payment";
@@ -86,7 +96,7 @@ let orderProcessingActive = false;
  * Stored with the branch row so every page - the menu, the order, paying -
  * writes a price the same way without asking the server again.
  */
-const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {} };
+const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {}, charges: {} };
 
 async function rememberShop() {
     try {
@@ -100,6 +110,7 @@ async function rememberShop() {
         shop.notes = branch.notes === true;
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
+        shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
     } catch (error) {
         /* No branch row yet is not an error; the fetch that stores one will
            be along in a moment. */
@@ -131,9 +142,9 @@ function money(amount) {
  */
 function words() {
     if (shop.kind === "retail") {
-        return { one: "item", many: "items", menu: "Products", heading: "All products", kitchen: "the shop" };
+        return { one: "item", many: "items", menu: t("Products"), heading: t("All products"), kitchen: "the shop" };
     }
-    return { one: "dish", many: "dishes", menu: "Menu", heading: "Our Menu", kitchen: "the kitchen" };
+    return { one: "dish", many: "dishes", menu: t("Menu"), heading: t("Our Menu"), kitchen: "the kitchen" };
 }
 
 /* Where the customer is, as the printed code said: "Table 5", or a room. */
@@ -143,14 +154,44 @@ function placeLabel() {
         const point = window.KioskServicePoint.read();
         if (point.venue) {
             const place = window.KioskServicePoint.describe();
-            if (place && place.name) return place.name + (point.unit ? ", " + (place.unit_label || "Room") + " " + point.unit : "");
+            if (place && place.name) return place.name + (point.unit ? ", " + (place.unit_label || t("Room")) + " " + point.unit : "");
             return point.venue + (point.unit ? " " + point.unit : "");
         }
-        if (point.table) return "Table " + point.table;
+        if (point.table) return t("Table {n}", { n: point.table });
     } catch (e) {
         /* No service point on this page is not an error. */
     }
     return "";
+}
+
+/*
+ * What a way of travelling costs, and whether the order is big enough.
+ *
+ * The SAME arithmetic the server runs when the order lands
+ * (utils/sales-channels.chargesFor): a flat fee, waived above a threshold,
+ * refused below a minimum. Mirrored here so the customer sees "Delivery
+ * ₹30" and "orders start at ₹200" before the button, not a different total
+ * on the token page or a refusal after the tap.
+ */
+function chargeFor(fulfilment, subtotal) {
+    const rule = (shop.charges && shop.charges[fulfilment]) || {};
+    const fee = Math.max(0, Number(rule.fee) || 0);
+    const freeAbove = Math.max(0, Number(rule.free_above) || 0);
+    const minimum = Math.max(0, Number(rule.min_order) || 0);
+    const amount = Number(subtotal) || 0;
+    if (!fulfilment) return { fee: 0, waived: false, allowed: true, minimum: 0, short: 0, toFree: 0 };
+    if (minimum > 0 && amount < minimum) {
+        return { fee, waived: false, allowed: false, minimum, short: minimum - amount, toFree: 0 };
+    }
+    const waived = freeAbove > 0 && amount >= freeAbove;
+    return {
+        fee: waived ? 0 : fee,
+        waived,
+        allowed: true,
+        minimum,
+        short: 0,
+        toFree: !waived && freeAbove > 0 && fee > 0 ? freeAbove - amount : 0
+    };
 }
 
 /* The words behind the veg mark, for a screen reader and for the sheet. */
@@ -177,7 +218,7 @@ async function paintShop() {
     const w = words();
     if (shop.name) {
         name.textContent = shop.name;
-        document.title = shop.name + " · Order";
+        document.title = t("{shop} · Order", { shop: shop.name });
     } else {
         name.textContent = w.menu;
     }
@@ -185,8 +226,23 @@ async function paintShop() {
     const sub = document.getElementById("shop-sub");
     if (sub && typeof allProducts === "function") {
         const count = allProducts().length;
-        sub.textContent = count + " " + (count === 1 ? w.one : w.many);
+        sub.textContent = t("{n} " + (count === 1 ? w.one : w.many), { n: count });
         sub.hidden = count === 0;
+    }
+
+    /* A shop is searched, not a menu; and a veg filter over stationery is a
+       question nobody asked. */
+    const searchWord = shop.kind === "retail" ? t("Search products") : t("Search the menu");
+    const search = document.getElementById("product-search");
+    if (search) search.placeholder = searchWord;
+    const searchLabel = document.querySelector('label[for="product-search"]');
+    if (searchLabel) searchLabel.textContent = searchWord;
+    const firstSort = document.querySelector('#order-sort option[value="menu"]');
+    if (firstSort) firstSort.textContent = shop.kind === "retail" ? t("Catalogue order") : t("Menu order");
+    const veg = document.getElementById("order-filter-veg");
+    if (veg && typeof allProducts === "function") {
+        const list = allProducts();
+        if (list.length) veg.hidden = !list.some((p) => p && p.diet);
     }
 
     /* "Table 5", from the code that was scanned, beside the shop's name -
@@ -199,7 +255,7 @@ async function paintShop() {
     }
 
     const heading = document.getElementById("category-heading");
-    if (heading && heading.textContent === "Our Menu") heading.textContent = w.heading;
+    if (heading && (heading.textContent === "Our Menu" || heading.textContent === t("Our Menu"))) heading.textContent = w.heading;
 
     try {
         const images = await getKioskImages();
@@ -801,7 +857,10 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 notes: !!(result.data.features && result.data.features.notes),
                 fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
                     ? result.data.channel.fulfilment
-                    : []
+                    : [],
+                /* What each way of travelling costs, and its minimum, so the
+                   page can say so before the button rather than after. */
+                charges: result.data.charges && typeof result.data.charges === "object" ? result.data.charges : {}
             }]);
             await rememberShop();
             /* A browser that already had the menu draws the header from the
@@ -1033,7 +1092,7 @@ async function renderCart(cartData = null) {
         $("#bill-total").text(money(totalPrice));
         $("#bill").prop("hidden", false);
 
-        $("#summary-display").text(`${totalQty} ${itemsWord} · ${money(totalPrice)}`);
+        $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
         $("#cart-qty,#mobile-cart-count").text(totalQty);
         $("#cart-total").text(money(totalPrice));
         $("#next-btn").prop("disabled", false);
@@ -1299,9 +1358,9 @@ async function renderProductCards(list) {
         const served = Array.isArray(product.served_in) ? product.served_in.filter(Boolean) : [];
         const meta = [];
         if (!available) {
-            meta.push(served.length ? served.join(" and ") + " only" : "Not available right now");
+            meta.push(served.length ? t("{when} only", { when: served.join(t(" and ")) }) : t("Not available right now"));
         } else if (Number(product.prep_minutes) > 0) {
-            meta.push("~" + Number(product.prep_minutes) + " min");
+            meta.push(t("~{n} min", { n: Number(product.prep_minutes) }));
         }
 
         /* A photograph if the shop uploaded one, the drawn icon if not, and
@@ -1472,7 +1531,7 @@ async function updateCart(cartData = null) {
         $("#cart-qty,#mobile-cart-count").text(totalQty);
         $("#cart-qty-word").text(itemsWord);
         $("#cart-total").text(money(totalPrice));
-        $("#summary-display").text(`${totalQty} ${itemsWord} · ${money(totalPrice)}`);
+        $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
         $("#next-btn").prop("disabled", totalQty === 0);
         renderOrderPanel(storedCart);
         markCategories(storedCart);
@@ -2089,9 +2148,9 @@ async function refreshProductView() {
     if (narrowed) {
         counter.textContent = list.length === 0
             ? (searching
-                ? 'Nothing matches "' + orderView.query + '". Try a different word.'
-                : "Nothing on the menu is marked vegetarian.")
-            : list.length + (list.length === 1 ? " item" : " items");
+                ? t('Nothing matches "{q}". Try a different word.', { q: orderView.query })
+                : t("Nothing on the menu is marked vegetarian."))
+            : t(list.length === 1 ? "{n} item" : "{n} items", { n: list.length });
     }
 
     document.getElementById("product-search-clear").hidden = !searching;
