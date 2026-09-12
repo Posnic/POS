@@ -242,6 +242,9 @@ async function generatePdfFromHtmlFile() {
     };
 
     // 4. Generate and download PDF
+    if (typeof html2pdf !== "function") {
+        throw new Error(t("The receipt could not be saved on this device. Ask at the counter for a printed copy."));
+    }
     await html2pdf().set(opt).from(tempDiv).save();
 
     // ✅ Step 1: Set the printed flag

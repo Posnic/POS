@@ -449,16 +449,32 @@
    * browser has none the button stays hidden, because a microphone that does
    * nothing is worse than no microphone.
    */
+  function isIOS() {
+    var ua = navigator.userAgent || "";
+    return (
+      /iP(hone|od|ad)/.test(ua) ||
+      (/Mac/.test(ua) && navigator.maxTouchPoints > 1)
+    );
+  }
+
   (function wireMic() {
     var Recognition =
       window.SpeechRecognition || window.webkitSpeechRecognition || null;
     var mic = el("search-mic");
     var input = el("search");
     if (!Recognition || !mic || !input) return;
+    /* iOS: every browser is WebKit, its recogniser shows system UI the page
+       cannot dismiss (a permission sheet sat over this box on an iPhone 14
+       Pro), and the keyboard already has a dictation key that types straight
+       into this field. There, the keyboard's microphone is the microphone. */
+    if (isIOS()) return;
 
     mic.hidden = false;
     mic.setAttribute("data-supported", "true");
     var listening = null;
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden && listening) listening.stop();
+    });
 
     mic.addEventListener("click", function () {
       if (listening) {
@@ -466,6 +482,7 @@
         return;
       }
       var rec = new Recognition();
+      var quiet = 0;
       /* The language the MENU is written in, not the language of the page
          around it: a Tamil-reading customer still says "biryani", and the
          item is still called that. A shop whose menu is typed in another
@@ -479,6 +496,14 @@
         listening = rec;
         mic.setAttribute("data-listening", "true");
         setSearching(true);
+        /* A recogniser that never says "end" cannot hold the screen. */
+        quiet = setTimeout(function () {
+          try {
+            rec.stop();
+          } catch (e) {
+            /* already stopped */
+          }
+        }, 12000);
       };
       rec.onresult = function (e) {
         var said = "";
@@ -497,6 +522,7 @@
            simply nothing said. None of them is worth an alert on a menu. */
       };
       rec.onend = function () {
+        clearTimeout(quiet);
         listening = null;
         mic.removeAttribute("data-listening");
       };
