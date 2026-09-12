@@ -209,6 +209,66 @@ describe('ordering-assistant.service', () => {
     });
   });
 
+  describe('what the shop wrote', () => {
+    test('house notes ride with the rules, after them; the greeting reaches the storefront; both are cut to size', async () => {
+      jest.spyOn(ai, 'available').mockResolvedValue(true);
+      jest.spyOn(assistant._repo(), 'resolveGroup').mockResolvedValue({
+        status: true,
+        data: {
+          values: {
+            ai_ordering_assistant: 'true',
+            ai_assistant_instructions:
+              "Today's special is the prawn biryani.\u0007 Always offer a drink. " +
+              'x'.repeat(2000),
+            ai_assistant_greeting: '  Vanakkam! What can I get you?  ',
+          },
+        },
+      });
+      const ask = jest
+        .spyOn(ai, 'ask')
+        .mockResolvedValue({ status: true, data: { text: '{"reply":"ok","actions":[]}' } });
+      await assistant.reply(
+        { messages: [{ role: 'user', text: 'hi' }] },
+        { categories: MENU },
+        context
+      );
+      const [request] = ask.mock.calls[0];
+      expect(request.system.startsWith(assistant.SYSTEM)).toBe(true);
+      expect(request.system).toContain('House notes from the shop');
+      expect(request.system).toContain(
+        "Today's special is the prawn biryani. Always offer a drink."
+      );
+      expect(request.system).not.toContain('\u0007');
+      expect(request.system.length).toBeLessThan(assistant.SYSTEM.length + 1700);
+      expect(await assistant.storefrontFeatures(context)).toEqual({
+        assistant: true,
+        assistant_greeting: 'Vanakkam! What can I get you?',
+      });
+    });
+
+    test('nothing written means the plain rules and no greeting field; a closed door sends nothing at all', async () => {
+      jest.spyOn(ai, 'available').mockResolvedValue(true);
+      const resolveGroup = jest
+        .spyOn(assistant._repo(), 'resolveGroup')
+        .mockResolvedValue({ status: true, data: { values: { ai_ordering_assistant: 'true' } } });
+      const ask = jest
+        .spyOn(ai, 'ask')
+        .mockResolvedValue({ status: true, data: { text: '{"reply":"ok","actions":[]}' } });
+      await assistant.reply(
+        { messages: [{ role: 'user', text: 'hi' }] },
+        { categories: MENU },
+        context
+      );
+      expect(ask.mock.calls[0][0].system).toBe(assistant.SYSTEM);
+      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: true });
+      resolveGroup.mockResolvedValue({
+        status: true,
+        data: { values: { ai_assistant_greeting: 'Hello' } },
+      });
+      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: false });
+    });
+  });
+
   describe('the storefront, whichever shape it arrived in', () => {
     test('the repository answer: products, category under _id', () => {
       const raw = {
