@@ -7635,7 +7635,9 @@ class SalesRepository {
        * rather than at every caller, which keeps handsets already in the field
        * working without an update.
        */
-      const said = String(data.payment_status || '').trim().toLowerCase();
+      const said = String(data.payment_status || '')
+        .trim()
+        .toLowerCase();
       const paidUpFront = said === 'paid' || said === 'completed';
       const paymentMethod =
         data.payment_mode ||
