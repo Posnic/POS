@@ -1356,6 +1356,8 @@
   "lang_item_prices_are_before_tax_tax_is_added_on": "Item prices are before tax; tax is added on top",
   "lang_item_quick": "Quick Item Add",
   "lang_item_report": "Item Report",
+  "lang_item_restaurant_hint": "serving periods, kitchen ticket, diet",
+  "lang_item_restaurant_title": "Restaurant",
   "lang_item_running_low": "item running low",
   "lang_item_saved": "Item saved",
   "lang_item_service_unit": "Item service unit",
