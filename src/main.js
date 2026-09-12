@@ -4399,6 +4399,42 @@ app.whenReady().then(async () => {
   console.log('KOTManager initialized');
 
   /*
+   * AND START IT, if this till has already been told where its kitchen is.
+   *
+   * Constructing the manager is not the same as running it. The only thing
+   * that ever called startPolling was the Hardware Manager window, so after
+   * every restart, update or power cut a restaurant printed NOTHING in the
+   * kitchen until somebody happened to open that window and land on the KOT
+   * tab - not by the event, which returns early unless isPolling, and not by
+   * the safety-net poll, which was not running either. To a kitchen that
+   * presents as "printing is very slow", because tickets arrive whenever
+   * someone opens a settings screen.
+   *
+   * The saved config is complete and sitting on disk; it was only ever being
+   * read back by that window. A till that has never been given a kitchen
+   * printer starts nothing, exactly as before. Same reasoning as BillManager
+   * below, which has always started itself.
+   */
+  (async () => {
+    try {
+      const kotConfig = await kotManager.loadConfig();
+      const printers = Array.isArray(kotConfig && kotConfig.printerNames)
+        ? kotConfig.printerNames.filter((n) => n && String(n).trim())
+        : [];
+      if (kotConfig && kotConfig.branchId && printers.length) {
+        await kotManager.startPolling(kotConfig);
+        console.log('KOT polling restored from saved settings at startup');
+      } else {
+        console.log('KOT polling not started: no kitchen printer is configured on this till');
+      }
+    } catch (error) {
+      /* A kitchen printer that cannot be started must never stop the till
+         from opening. The Hardware Manager window can still start it. */
+      console.error('KOT polling could not be started at startup:', error && error.message);
+    }
+  })();
+
+  /*
    * THE BILL A WAITER ASKED FOR FROM THE FLOOR.
    *
    * Started unconditionally, unlike the KOT poller, because there is nothing
