@@ -93,6 +93,10 @@ const ALLOWED_ANONYMOUS = {
        Rate-limited per client on the route. It reads the menu and proposes;
        it never writes an order. */
     '/:storeId/assistant',
+    /* The same assistant with a voice: the page's WebRTC offer in, the
+       provider's answer out; the audio never comes here. Same doors as the
+       assistant plus the shop's live-voice switch; its own limit per client. */
+    '/:storeId/voice',
   ],
   'client-errors.routes.js': [
     // The boot watchdog's report: the errors worth hearing about happen

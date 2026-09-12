@@ -242,6 +242,7 @@ describe('ordering-assistant.service', () => {
       expect(request.system.length).toBeLessThan(assistant.SYSTEM.length + 1700);
       expect(await assistant.storefrontFeatures(context)).toEqual({
         assistant: true,
+        voice: 'turns',
         assistant_greeting: 'Vanakkam! What can I get you?',
       });
     });
@@ -260,12 +261,18 @@ describe('ordering-assistant.service', () => {
         context
       );
       expect(ask.mock.calls[0][0].system).toBe(assistant.SYSTEM);
-      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: true });
+      expect(await assistant.storefrontFeatures(context)).toEqual({
+        assistant: true,
+        voice: 'turns',
+      });
       resolveGroup.mockResolvedValue({
         status: true,
         data: { values: { ai_assistant_greeting: 'Hello' } },
       });
-      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: false });
+      expect(await assistant.storefrontFeatures(context)).toEqual({
+        assistant: false,
+        voice: false,
+      });
     });
   });
 

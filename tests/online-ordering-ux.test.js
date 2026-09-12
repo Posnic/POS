@@ -1035,3 +1035,122 @@ test("the shop's own greeting opens the conversation, and the console has somewh
   assert.match(js, /ai_assistant_instructions: String\(\$\('#ai_assistant_instructions'\)\.val\(\)/, 'the house notes are not saved');
   assert.match(js, /ai_assistant_greeting: String\(\$\('#ai_assistant_greeting'\)\.val\(\)/, 'the greeting is not saved');
 });
+
+/* -------------------------------------------------------- talk to order */
+
+/** The products page with both assistant scripts and a shop that allows voice. */
+function voicePage({ voice = 'live', reply } = {}) {
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
+  const { window } = dom;
+  const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0 };
+  let cart = [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 1 }];
+  const catalogue = { m1: { id: 'm1', name: 'Chicken Biryani', price: 320 }, b1: { id: 'b1', name: 'Masala Dosa', price: 120, available: false }, d1: { id: 'd1', name: 'Fresh Lime Soda', price: 80 } };
+  window.shop = { assistant: true, voice, name: 'Azure' };
+  window.CONFIG = { API_BASE_URL: '' };
+  window.knownBranchId = async () => 'AZ100';
+  window.getCartData = async () => JSON.parse(JSON.stringify(cart));
+  window.findProduct = (id) => catalogue[id] || null;
+  window.updateQuantity = async (id, change) => { calls.applied.push([id, change]); };
+  window.setCartItemNote = async () => {};
+  window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+  /* A WebRTC that goes nowhere, with a data channel the test can drive. */
+  class FakeChannel { constructor() { this.readyState = 'open'; } send(s) { calls.sent.push(JSON.parse(s)); } close() {} }
+  class FakePC {
+    constructor() { this.channel = new FakeChannel(); window.__pc = this; }
+    addTrack() {}
+    createDataChannel() { return this.channel; }
+    async createOffer() { return { type: 'offer', sdp: 'v=0\r\noffer' }; }
+    async setLocalDescription() {}
+    async setRemoteDescription(d) { this.remote = d; }
+    close() {}
+  }
+  window.RTCPeerConnection = FakePC;
+  window.navigator.mediaDevices = { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) };
+  window.fetch = async (url, init) => {
+    calls.fetch.push({ url, body: JSON.parse(init.body) });
+    const answer = typeof reply === 'function' ? reply() : reply;
+    return { ok: answer.status < 400, status: answer.status, json: async () => answer.body };
+  };
+  window.speechSynthesis = { cancel() {}, getVoices: () => [], speak(u) { calls.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); } };
+  window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+  window.eval(read('assets/assistant/script.js'));
+  window.eval(read('assets/assistant/voice.js'));
+  window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  return { window, document: window.document, calls };
+}
+
+test('talk to order: the microphone follows the shop, and a live line applies the model\'s tools through the page', async () => {
+  const off = voicePage({ voice: '', reply: { status: 200, body: {} } });
+  assert.strictEqual(off.document.getElementById('assistant-talk').hidden, true, 'a shop without voice shows a microphone');
+
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  assert.strictEqual(document.getElementById('assistant-talk').hidden, false);
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/voice');
+  assert.strictEqual(calls.fetch[0].body.sdp, 'v=0\r\noffer');
+  assert.strictEqual(window.__pc.remote.sdp, 'v=0\r\nanswer', 'the provider\'s answer was not applied to the line');
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on');
+
+  /* The model asks for two biryani, less spicy, and for a dish that is off. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c1', arguments: '{"item_id":"m1","quantity":2,"note":"less spicy"}' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c2', arguments: '{"item_id":"b1","quantity":1}' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c3', arguments: '{"item_id":"ghost","quantity":1}' }) });
+  await settle();
+  assert.deepStrictEqual(calls.applied, [['m1', 2]], 'the order was changed for something not on the menu or off tonight');
+  const outputs = calls.sent.filter((e) => e.type === 'conversation.item.create').map((e) => ({ call: e.item.call_id, out: JSON.parse(e.item.output) }));
+  assert.deepStrictEqual(outputs.map((o) => [o.call, o.out.ok]), [['c1', true], ['c2', false], ['c3', false]]);
+  assert.strictEqual(outputs[0].out.note, 'less spicy');
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 3, 'the model was not asked to speak after each tool');
+  assert.match(document.getElementById('assistant-log').textContent, /Added 2 × Chicken Biryani/);
+
+  /* What was said, both ways, lands in the conversation. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'two biryani please' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.output_audio_transcript.done', transcript: 'Two Chicken Biryani, less spicy, added.' }) });
+  assert.match(document.getElementById('assistant-log').textContent, /two biryani please[\s\S]*Two Chicken Biryani, less spicy, added\./);
+
+  window.OrderingVoice.stop();
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off');
+});
+
+test('talk to order, turn by turn: the phone listens, the typed assistant answers, the phone speaks it', async () => {
+  const { window, calls } = voicePage({
+    voice: 'turns',
+    reply: { status: 200, body: { type: 'success', data: { reply: 'The biryani is lovely tonight.', actions: [] } } },
+  });
+  let heard = ['what is good tonight', '', ''];
+  window.SpeechRecognition = function () {
+    calls.recognitions++;
+    this.start = () => {
+      const said = heard.shift() || '';
+      setTimeout(() => {
+        if (said) this.onresult({ resultIndex: 0, results: [[{ transcript: said }]] });
+        this.onend();
+      }, 0);
+    };
+    this.abort = () => {};
+    this.stop = () => {};
+  };
+  window.OrderingVoice.paintTalk();
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/assistant', 'turn by turn did not ask the typed assistant');
+  assert.deepStrictEqual(calls.fetch[0].body.messages.slice(-1), [{ role: 'user', text: 'what is good tonight' }]);
+  assert.deepStrictEqual(calls.spoken, ['The biryani is lovely tonight.'], 'the answer was not spoken');
+  assert.ok(calls.recognitions >= 2, 'the page did not listen again after speaking');
+});
+
+test('the wiring behind the microphone: route, limiter, allowlist, switch, console', () => {
+  const routes = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'routes', 'online-ordering.routes.js'), 'utf8');
+  assert.match(routes, /router\.post\('\/:storeId\/voice', voiceLimiter, bind\(controller\.voice\)\)/);
+  const groups = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'services', 'settings-groups.js'), 'utf8');
+  assert.match(groups, /'ai_live_voice'/);
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  assert.match(html, /id="ai_live_voice"/);
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /ai_live_voice: \$\('#ai_live_voice'\)\.is\(':checked'\)/);
+  assert.match(read('indexedDB.js'), /voice: String\(\(result\.data\.features && result\.data\.features\.voice\) \|\| ""\)/);
+  assert.match(read('products.html'), /id="assistant-talk"/);
+  assert.match(read('products.html'), /id="voice-out"/);
+});

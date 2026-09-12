@@ -9332,6 +9332,7 @@ PosnicPro.settings.ai = {
             $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
             $('#ai_ordering_assistant').prop('checked', String(v.ai_ordering_assistant) === 'true');
             $('#ai_assistant_greeting').val(v.ai_assistant_greeting || '');
+            $('#ai_live_voice').prop('checked', String(v.ai_live_voice) === 'true');
             $('#ai_assistant_instructions').val(v.ai_assistant_instructions || '');
             PosnicPro.settings.ai.syncRows();
         }, function () { /* the card still lets you choose and save */ });
@@ -9423,6 +9424,7 @@ PosnicPro.settings.ai = {
                    the reader must not mistake for silence. */
                 ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false',
                 ai_assistant_greeting: String($('#ai_assistant_greeting').val() || '').trim().slice(0, 200),
+                ai_live_voice: $('#ai_live_voice').is(':checked') ? 'true' : 'false',
                 ai_assistant_instructions: String($('#ai_assistant_instructions').val() || '').trim().slice(0, 1500)
             })
         }, function (response) {
