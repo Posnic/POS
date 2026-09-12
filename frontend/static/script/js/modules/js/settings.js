@@ -9034,6 +9034,11 @@ PosnicPro.servingPeriods = {
             if (response && response.type === 'success') {
                 PosnicPro.alert('success', response.message
                     || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+                /* The item form caches this group for the session. A period
+                   saved here must be offered on the next dish opened, not on
+                   the next sign-in. Both boxes come from the same request. */
+                if (PosnicPro.itemChannels) { PosnicPro.itemChannels._options = null; }
+                if (PosnicPro.itemDayparts) { PosnicPro.itemDayparts._options = null; }
             } else {
                 PosnicPro.alert('error', (response && response.message) || '');
             }

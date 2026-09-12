@@ -140,6 +140,7 @@ PosnicPro.items = {
             PosnicPro.items.itemClearForm();
         }
         PosnicPro.items.itemAction = 'add';
+        PosnicPro.itemDayparts.set([]);
         
         // Apply discount from selected category
         setTimeout(function() {
@@ -1760,7 +1761,7 @@ PosnicPro.items = {
                    belongs on the menu, which is what a menu is for. */
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
-                $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemDayparts.set(data.daypart_ids || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
@@ -2424,7 +2425,7 @@ PosnicPro.items = {
                    belongs on the menu, which is what a menu is for. */
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
-                $('#item_dayparts').val(data.daypart_ids || []).trigger('change');
+                PosnicPro.itemDayparts.set(data.daypart_ids || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
@@ -5463,6 +5464,9 @@ PosnicPro.itemChannels = {
             });
 
             self._options = options;
+            /* The serving periods live in the same group. One request fills
+               both boxes; the periods box had never been filled at all. */
+            PosnicPro.itemDayparts.take(values.menu_dayparts);
             self.fill();
             if (done) { done(); }
         }, function () {
@@ -5504,6 +5508,62 @@ PosnicPro.itemChannels = {
     set: function (values) {
         PosnicPro.itemChannels.load(function () {
             $('#item_channel_off').val(values || []).trigger('change');
+        });
+    }
+};
+
+/*
+ * Which serving periods a dish is on.
+ *
+ * WHY THIS EXISTS. Settings said "set the times once here, then mark each
+ * dish on the item page", and the item page had the box - a select2 called
+ * Served at - and nothing ever put an option in it. The owner set up
+ * Breakfast, opened a dish, and found an empty list with "All day" as the
+ * placeholder. The field saved fine, read back fine, and could never be set.
+ *
+ * Same shape as itemChannels above, and fed by the same request: the periods
+ * and the channel exceptions are in one settings group, so the channel loader
+ * hands the periods over (take) rather than asking twice.
+ *
+ * Setting the value has to WAIT for the options to exist, for the same reason
+ * as the channels: select2 drops any id it has no option for, and the next
+ * save would write the empty box back, quietly putting a breakfast dish on
+ * all day.
+ */
+PosnicPro.itemDayparts = {
+    _options: null,
+
+    /* From the settings group: [{ id, name, hours }]. Only id and name are
+       needed here; the hours are the kitchen's business. */
+    take: function (rows) {
+        PosnicPro.itemDayparts._options = (Array.isArray(rows) ? rows : [])
+            .filter(function (r) { return r && r.id && r.name; })
+            .map(function (r) { return { id: String(r.id), name: String(r.name) }; });
+        PosnicPro.itemDayparts.fill();
+    },
+
+    load: function (done) {
+        /* The channel loader is the one that fetches; it calls take(). */
+        PosnicPro.itemChannels.load(function () {
+            PosnicPro.itemDayparts.fill();
+            if (done) { done(); }
+        });
+    },
+
+    fill: function () {
+        var $sel = $('#item_dayparts');
+        if (!$sel.length) { return; }
+        var chosen = $sel.val() || [];
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        $sel.html((PosnicPro.itemDayparts._options || []).map(function (o) {
+            return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>';
+        }).join(''));
+        $sel.val(chosen).trigger('change');
+    },
+
+    set: function (values) {
+        PosnicPro.itemDayparts.load(function () {
+            $('#item_dayparts').val(values || []).trigger('change');
         });
     }
 };
