@@ -7694,7 +7694,7 @@ class SalesController extends BaseController {
         } catch (e) {
           console.error('[cashback] reverse skipped:', e && e.message);
         }
-        return this.success(res, result.data, 'Sale cancelled successfully');
+        return this.success(res, result.data, 'Sale cancelled');
       } else {
         return this.error(res, result?.message || 'Failed to cancel sale', 500);
       }
