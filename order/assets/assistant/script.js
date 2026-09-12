@@ -22,7 +22,7 @@
   "use strict";
 
   var MAX_TURNS_SENT = 12;
-  var state = { messages: [], busy: false, greeted: false };
+  var state = { messages: [], busy: false, greeted: false, landed: false };
 
   function el(id) {
     return document.getElementById(id);
@@ -65,6 +65,100 @@
     var on = !!(current && current.assistant);
     spark.hidden = !on;
     document.body.classList.toggle("has-assistant", on);
+    if (on) offerHint(current);
+    else hideHint(false);
+    if (on) landInConversation(current);
+  }
+
+  /* ------------------------------------------------ a code for the talk */
+
+  var AI_FIRST_KEY = "posnic_ai_first";
+
+  /* What the link asked for: "talk", "ask", or nothing. From the query on
+     this page, or from what the arrival page kept across its redirect. */
+  function aiFirstWish() {
+    var wish = "";
+    try {
+      wish = String(new URLSearchParams(window.location.search).get("ai") || "").toLowerCase();
+    } catch (e) {
+      wish = "";
+    }
+    if (wish === "1") wish = "ask";
+    if (wish !== "talk" && wish !== "ask") {
+      try {
+        wish = String(sessionStorage.getItem(AI_FIRST_KEY) || "");
+      } catch (e) {
+        wish = "";
+      }
+    }
+    return wish === "talk" || wish === "ask" ? wish : "";
+  }
+
+  /* Once, the moment the shop is known: open the sheet; where the shop lets
+     people talk and the code asked for it, stand ready with "Tap to talk". */
+  function landInConversation(current) {
+    if (state.landed) return;
+    var wish = aiFirstWish();
+    if (!wish) return;
+    state.landed = true;
+    try {
+      sessionStorage.removeItem(AI_FIRST_KEY);
+    } catch (e) {
+      /* nothing kept */
+    }
+    hideHint(true);
+    open();
+    if (wish === "talk" && current && current.voice && window.OrderingVoice && window.OrderingVoice.standReady) {
+      window.OrderingVoice.standReady();
+    }
+  }
+
+  /* ------------------------------------------------------- the callout */
+
+  var HINT_KEY = "posnic_assistant_seen";
+  var hintTimer = 0;
+
+  function hintSeen() {
+    try {
+      return localStorage.getItem(HINT_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markHintSeen() {
+    try {
+      localStorage.setItem(HINT_KEY, "1");
+    } catch (e) {
+      /* a browser that keeps nothing sees it again next time; fine */
+    }
+  }
+
+  /* Once per phone, for a few seconds: "Ask me what's good, or just talk." */
+  function offerHint(current) {
+    var hint = el("assistant-hint");
+    if (!hint) return;
+    if (hintSeen() || state.greeted) {
+      /* Seen already, here or in another tab: nothing to offer, and one
+         that is somehow up comes down. */
+      hideHint(false);
+      return;
+    }
+    var text = el("assistant-hint-text");
+    if (text) text.textContent = current && current.voice ? say("Ask me what's good, or just talk") : say("Ask me what's good");
+    if (!hint.hidden) return;
+    hint.hidden = false;
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () {
+      hideHint(false);
+    }, 9000);
+  }
+
+  function hideHint(forGood) {
+    var hint = el("assistant-hint");
+    if (hint) hint.hidden = true;
+    clearTimeout(hintTimer);
+    if (forGood) markHintSeen();
   }
 
   /* --------------------------------------------------------- the log */
@@ -126,10 +220,14 @@
   function greet() {
     if (state.greeted) return;
     state.greeted = true;
-    /* The shop's own opening line when it wrote one, else the plain one. */
+    hideHint(true);
+    /* The shop's own opening line when it wrote one, else the plain one;
+       and where the shop lets people talk, the microphone gets a mention. */
     var current = shopNow();
     var own = current && current.assistantGreeting ? String(current.assistantGreeting).trim() : "";
-    bubble("ai", own || say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order."));
+    var line = own || say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order.");
+    if (current && current.voice) line += " " + say("Or tap the microphone and just talk.");
+    bubble("ai", line);
   }
 
   /* ------------------------------------------------- applying an answer */
@@ -280,6 +378,10 @@
     var spark = el("ask-ai");
     if (!spark) return;
     spark.addEventListener("click", open);
+    var hintOpen = el("assistant-hint-open");
+    if (hintOpen) hintOpen.addEventListener("click", open);
+    var hintClose = el("assistant-hint-close");
+    if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
     var closeButton = el("assistant-close");
     if (closeButton) closeButton.addEventListener("click", close);
     var form = el("assistant-form");

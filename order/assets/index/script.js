@@ -44,6 +44,15 @@ async function checkBranchFromURL() {
     const note = urlParams.get("notes");
     if (note) localStorage.setItem('note', note);
     else localStorage.removeItem('note');
+    /* ?ai=talk or ?ai=ask: a code printed for the conversation. Kept for
+       the products page, because the redirect below drops the query. */
+    const aiFirst = String(urlParams.get("ai") || "").toLowerCase();
+    try {
+        if (aiFirst === "talk" || aiFirst === "ask" || aiFirst === "1") sessionStorage.setItem("posnic_ai_first", aiFirst === "1" ? "ask" : aiFirst);
+        else sessionStorage.removeItem("posnic_ai_first");
+    } catch (e) {
+        /* a browser that keeps nothing lands on the menu, which still works */
+    }
 
     if (branchId) {
         console.log("🔗 Branch from QR URL:", branchId);

@@ -3412,6 +3412,13 @@
                                     </div>
 
                                     <div id="ai_assistant_config" style="max-width:460px; display:none;">
+                                        <div class="form-group" id="ai_live_voice_row">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="ai_live_voice" name="ai_live_voice">
+                                                <label class="custom-control-label" for="ai_live_voice"><strong><lang class="lang_ai_live_voice">Let customers talk to it, live: it listens and talks back</lang></strong></label>
+                                            </div>
+                                            <small class="form-text"><span id="ai_live_voice_state" class="badge badge-secondary mr-1"></span><lang class="lang_ai_live_voice_hint">A microphone appears beside the assistant. The customer speaks and hears it answer, can interrupt it, and it adds to the order as they talk, like a phone call with a waiter. The sound goes from the phone straight to your provider; our servers never hear it. Billed by your provider per minute of audio, which costs several times a typed question; it counts against the monthly limit above. Live voice needs an OpenAI key today. With another provider the microphone still works turn by turn, using the phone's own voice, at the price of a typed question.</lang></small>
+                                        </div>
                                         <div class="form-group">
                                             <label for="ai_assistant_greeting"><lang class="lang_ai_assistant_greeting">First thing it says</lang></label>
                                             <input type="text" id="ai_assistant_greeting" class="form-control border-control" maxlength="200" autocomplete="off"
@@ -3423,13 +3430,6 @@
                                             <textarea id="ai_assistant_instructions" class="form-control border-control" rows="5" maxlength="1500"
                                                       placeholder="Today's special is the prawn biryani. We are a pure-veg kitchen on Tuesdays. Always offer a drink with a meal. We do not do half portions. Dishes marked spicy are genuinely hot; say so." data-t-placeholder="lang_ai_assistant_instructions_placeholder"></textarea>
                                             <small class="form-text text-muted"><lang class="lang_ai_assistant_instructions_hint">Plain sentences. The assistant follows them wherever they do not break its own rules: it only ever recommends what is on your menu at the prices on it, never promises anything about allergens, and never asks for phone numbers or payment. Up to 1,500 characters; every question carries these notes, so shorter costs less.</lang></small>
-                                        </div>
-                                        <div class="form-group" id="ai_live_voice_row">
-                                            <div class="custom-control custom-switch">
-                                                <input type="checkbox" class="custom-control-input" id="ai_live_voice" name="ai_live_voice">
-                                                <label class="custom-control-label" for="ai_live_voice"><lang class="lang_ai_live_voice">Let customers talk to it, live</lang></label>
-                                            </div>
-                                            <small class="form-text text-muted"><lang class="lang_ai_live_voice_hint">A microphone appears beside the assistant. The customer speaks and hears it answer, can interrupt it, and it adds to the order as they talk, like a phone call with a waiter. The sound goes from the phone straight to your provider; our servers never hear it. Billed by your provider per minute of audio, which costs several times a typed question; it counts against the monthly limit above. Live voice needs an OpenAI key today. With another provider the microphone still works turn by turn, using the phone's own voice, at the price of a typed question.</lang></small>
                                         </div>
                                         <div class="form-group">
                                             <label><lang class="lang_ai_assistant_how_title">How it works</lang></label>
@@ -5358,8 +5358,21 @@
                                                                                 </div>
                                                                             </div>
                                                                         </div>
+                                                                        <div class="mb-2" id="storefront_talk_row">
+                                                                            <div class="input-group input-group-sm">
+                                                                                <div class="input-group-prepend">
+                                                                                    <span class="input-group-text" id="storefront_talk_label"><i class="feather icon-mic mr-1" aria-hidden="true"></i><lang class="lang_storefront_link_talk">Talks to order</lang></span>
+                                                                                </div>
+                                                                                <input type="text" class="form-control" id="storefront_talk_url" readonly aria-labelledby="storefront_talk_label">
+                                                                                <div class="input-group-append">
+                                                                                    <button type="button" class="btn btn-outline-secondary copy-storefront-link" data-target="storefront_talk_url" aria-label="Copy this address" data-t-aria-label="lang_copy_this_address"><i class="feather icon-copy" aria-hidden="true"></i></button>
+                                                                                    <a class="btn btn-outline-secondary storefront-open" data-target="storefront_talk_url" href="#" target="_blank" rel="noopener" aria-label="Open this page" data-t-aria-label="lang_open_this_page"><i class="feather icon-external-link" aria-hidden="true"></i></a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                         <small class="form-text text-muted">
                                                                             <lang class="lang_storefront_links_help">Both work as soon as online ordering is on. The menu address never shows a cart, so it stays useful when you stop taking orders. Print whichever one you want on the table or in the window.</lang>
+                                                                            <lang class="lang_storefront_link_talk_help">The third lands the customer straight in the assistant's conversation, ready to talk where you have switched live voice on (AI page); the menu is right behind it. Add ?ai=talk to any table or room address for the same effect, or ?ai=ask to open the typed assistant.</lang>
                                                                         </small>
                                                                     </div>
                                                                 </div>

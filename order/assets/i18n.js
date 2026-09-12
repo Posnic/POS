@@ -264,6 +264,11 @@
 
       /* the assistant */
       "Ask about the menu": "மெனு பற்றிக் கேளுங்கள்",
+      "New": "புதிது",
+      "Ask me what's good, or just talk": "எது நன்றாக இருக்கும் என்று கேளுங்கள், அல்லது பேசுங்கள்",
+      "Ask me what's good": "எது நன்றாக இருக்கும் என்று கேளுங்கள்",
+      "Dismiss": "மூடு",
+      "Or tap the microphone and just talk.": "அல்லது மைக்ரோஃபோனைத் தட்டிப் பேசுங்கள்.",
       "What do you recommend?": "நீங்கள் எதைப் பரிந்துரைக்கிறீர்கள்?",
       "Something vegetarian and spicy": "சைவமும் காரமுமான ஏதாவது",
       "A meal for two": "இரண்டு பேருக்கு ஒரு உணவு",
@@ -274,6 +279,7 @@
       "Thinking": "யோசிக்கிறது",
       "Talk to order": "பேசி ஆர்டர் செய்யுங்கள்",
       "Stop talking": "பேச்சை நிறுத்து",
+      "Tap to talk": "பேசத் தட்டுங்கள்",
       "Connecting...": "இணைக்கிறது...",
       "Listening...": "கேட்கிறது...",
       "Speaking...": "பேசுகிறது...",
@@ -281,6 +287,8 @@
       "Go ahead, I'm listening. Say what you feel like, and I'll answer out loud and add to your order.": "சொல்லுங்கள், கேட்கிறேன். உங்களுக்கு என்ன வேண்டும் என்று சொல்லுங்கள்; சத்தமாகப் பதிலளித்து உங்கள் ஆர்டரில் சேர்க்கிறேன்.",
       "The microphone was not allowed. You can still type.": "மைக்ரோஃபோன் அனுமதிக்கப்படவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
       "Could not connect the voice line. You can still type.": "குரல் இணைப்பை ஏற்படுத்த முடியவில்லை. நீங்கள் தட்டச்சு செய்யலாம்.",
+      "Live voice is switched off for this shop, so I'll answer turn by turn.": "இந்தக் கடையில் நேரடிக் குரல் அணைக்கப்பட்டுள்ளது, எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
+      "The live voice line did not open ({why}), so I'll answer turn by turn.": "நேரடிக் குரல் இணைப்பு திறக்கவில்லை ({why}), எனவே முறை முறையாகப் பதிலளிக்கிறேன்.",
       "Answers come from this shop's menu. Please confirm allergies at the counter.": "பதில்கள் இந்தக் கடையின் மெனுவிலிருந்து வருகின்றன. ஒவ்வாமை பற்றி கவுண்டரில் உறுதிப்படுத்துங்கள்.",
       "Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order.": "வணக்கம்! உங்களுக்கு என்ன வேண்டும் என்று சொல்லுங்கள், அல்லது இங்கே எது நன்றாக இருக்கும் என்று கேளுங்கள். மெனுவிலிருந்து பரிந்துரைத்து உங்கள் ஆர்டரில் சேர்க்கிறேன்.",
       "Added {n} × {name}": "{name} {n} சேர்க்கப்பட்டது",

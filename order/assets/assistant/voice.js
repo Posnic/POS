@@ -95,11 +95,28 @@
 
   /* --------------------------------------------------------- the tools */
 
+  /*
+   * A dish by id, from the page's own catalogue. allProducts() is the
+   * page-wide list (indexedDB.js, global); findProduct() lives inside the
+   * products script's closure and is NOT visible here, which is how every
+   * add once came back "not on this menu" on the real page.
+   */
   function findItem(id) {
+    var wanted = String(id);
     try {
-      if (typeof findProduct === "function") return findProduct(id) || null; // eslint-disable-line no-undef
+      if (typeof allProducts === "function") { // eslint-disable-line no-undef
+        var all = allProducts() || []; // eslint-disable-line no-undef
+        for (var i = 0; i < all.length; i++) {
+          if (all[i] && String(all[i].id) === wanted) return all[i];
+        }
+      }
     } catch (e) {
-      /* no catalogue helper on this page */
+      /* no catalogue on this page */
+    }
+    try {
+      if (typeof findProduct === "function") return findProduct(wanted) || null; // eslint-disable-line no-undef
+    } catch (e) {
+      /* not on this page either */
     }
     return null;
   }
@@ -241,12 +258,18 @@
       } catch (e) {
         body = null;
       }
-      if (response.status === 403) {
-        /* The shop switched it off since the page loaded; the turn-by-turn way still works. */
+      if (!response.ok || !body || body.type !== "success" || !body.data || !body.data.sdp) {
+        /* No live line from this shop right now: say why in one line, then
+           talk turn by turn rather than leave the customer with silence. The
+           owner tested with his key and got only transcripts, and nothing
+           told him the live switch was off. */
         stopLine();
+        var why = body && body.message ? String(body.message) : "";
+        note(response.status === 403
+          ? say("Live voice is switched off for this shop, so I'll answer turn by turn.")
+          : say("The live voice line did not open ({why}), so I'll answer turn by turn.", { why: why || response.status }));
         return startTurns();
       }
-      if (!response.ok || !body || body.type !== "success" || !body.data || !body.data.sdp) throw new Error("no line");
       await pc.setRemoteDescription({ type: "answer", sdp: body.data.sdp });
       return true;
     } catch (e) {
@@ -392,7 +415,14 @@
   }
 
   function stop() {
-    if (!live.active && !live.pc) return;
+    var go = el("voice-start");
+    if (go) go.hidden = true;
+    var stopButton = el("voice-stop");
+    if (stopButton) stopButton.hidden = false;
+    if (!live.active && !live.pc) {
+      status("", "");
+      return;
+    }
     live.active = false;
     stopLine();
     try {
@@ -405,12 +435,75 @@
     status("", "");
   }
 
+  /*
+   * An iPhone lets a page speak only once speech has been started inside a
+   * tap. A silent utterance in the tap handler unlocks it for the answers
+   * that come later, after the network. Harmless everywhere else.
+   */
+  function unlockSpeech() {
+    try {
+      var synth = window.speechSynthesis;
+      if (!synth || !window.SpeechSynthesisUtterance) return;
+      var u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      synth.speak(u);
+      if (synth.getVoices && !synth.getVoices().length && synth.addEventListener) {
+        synth.addEventListener("voiceschanged", function () {}, { once: true });
+      }
+    } catch (e) {
+      /* no speech on this browser */
+    }
+  }
+
+  /* The speaker element, touched inside the tap so iOS lets the line's audio
+     play later. play() may return nothing where media is not implemented. */
+  function warmSpeaker() {
+    var out = el("voice-out");
+    if (!out || typeof out.play !== "function") return;
+    try {
+      var p = out.play();
+      if (p && typeof p.catch === "function") p.catch(function () {});
+    } catch (e) {
+      /* nothing to play yet */
+    }
+  }
+
+  /*
+   * A code printed for the talk lands here: the panel is up, the orb is
+   * still, and one big button says "Tap to talk". One tap, because no
+   * browser opens a microphone without a finger on the screen.
+   */
+  function standReady() {
+    if (!voiceMode()) return;
+    status("ready", say("Tap to talk"));
+    var go = el("voice-start");
+    if (go) go.hidden = false;
+    var stopButton = el("voice-stop");
+    if (stopButton) stopButton.hidden = true;
+  }
+
   function wire() {
     var button = el("assistant-talk");
     if (!button) return;
+    var go = el("voice-start");
+    if (go) {
+      go.addEventListener("click", function () {
+        go.hidden = true;
+        var stopButton = el("voice-stop");
+        if (stopButton) stopButton.hidden = false;
+        unlockSpeech();
+        warmSpeaker();
+        start();
+      });
+    }
     button.addEventListener("click", function () {
-      if (live.active) stop();
-      else start();
+      if (live.active) {
+        stop();
+        return;
+      }
+      unlockSpeech();
+      warmSpeaker();
+      start();
     });
     var stopButton = el("voice-stop");
     if (stopButton) stopButton.addEventListener("click", stop);
@@ -426,5 +519,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { start: start, stop: stop, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, live: live };
+  window.OrderingVoice = { start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, live: live };
 })();
