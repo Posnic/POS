@@ -1622,6 +1622,22 @@ const getTablesWithActiveOrders = async (branchId) => {
             table_number: '$table_number',
             dine_type: '$dine_type',
           },
+          /*
+           * WHAT THE WAITER ACTUALLY NEEDS TO KNOW, at no extra cost.
+           *
+           * This grouped the open KOTs by table and then threw everything
+           * except the table's name away, so the handset's home screen could
+           * draw a grid of identical boxes and nothing else. A waiter walking
+           * back onto the floor is asking which table has been waiting
+           * longest and which is nearly done, and the screen could not say.
+           *
+           * The documents are already grouped here. Counting them, taking the
+           * earliest and summing the totals is three accumulators on a pass
+           * that was happening anyway - no second query and no extra index.
+           */
+          orders: { $sum: 1 },
+          since: { $min: { $ifNull: ['$created_date', '$date'] } },
+          amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
       },
       {
@@ -1629,6 +1645,9 @@ const getTablesWithActiveOrders = async (branchId) => {
           _id: 0,
           table_number: '$_id.table_number',
           dine_type: '$_id.dine_type',
+          orders: 1,
+          since: 1,
+          amount: 1,
         },
       },
     ];
@@ -1636,7 +1655,21 @@ const getTablesWithActiveOrders = async (branchId) => {
     const results = await salesRepository.aggregate(pipeline);
 
     const tables = [];
+    const detail = new Map();
     let hasTakeaway = false;
+    let takeaway = null;
+
+    const remember = (key, res) => {
+      const was = detail.get(key);
+      const orders = (was ? was.orders : 0) + (Number(res.orders) || 0);
+      const amount = (was ? was.amount : 0) + (Number(res.amount) || 0);
+      /* The EARLIEST, across however many dine types share one table name.
+         The table has been waiting since its first open ticket, not its
+         most recent one. */
+      const since =
+        was && was.since && (!res.since || was.since <= res.since) ? was.since : res.since || null;
+      detail.set(key, { orders, amount, since });
+    };
 
     results.forEach((res) => {
       const dType = res.dine_type || '';
@@ -1644,10 +1677,13 @@ const getTablesWithActiveOrders = async (branchId) => {
 
       if (dType === 'Take away' || dType === 'Takeaway') {
         hasTakeaway = true;
+        remember('__takeaway__', res);
       } else if (tNum !== '') {
         tables.push(tNum);
+        remember(tNum, res);
       }
     });
+    takeaway = detail.get('__takeaway__') || null;
 
     // Unique & Sort (Natural sort like PHP natsort)
     const uniqueTables = [...new Set(tables)];
@@ -1655,11 +1691,38 @@ const getTablesWithActiveOrders = async (branchId) => {
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
+    /*
+     * `tables` STAYS A LIST OF NAMES, and the detail rides alongside it.
+     *
+     * Handsets in the field are on whatever version they were last updated
+     * to, and the app they run does `tables.forEach(name => ...)` on strings.
+     * Turning those into objects would empty the home screen of every phone
+     * that had not been updated yet - on the screen a waiter opens first.
+     */
+    const table_details = uniqueTables.map((name) => {
+      const row = detail.get(name) || {};
+      return {
+        table_number: name,
+        orders: row.orders || 0,
+        /* ISO, so a phone in a different timezone reads the same instant. */
+        since: row.since ? new Date(row.since).toISOString() : null,
+        amount: Number(row.amount) || 0,
+      };
+    });
+
     return {
       status: true,
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
+        table_details,
+        takeaway_detail: takeaway
+          ? {
+              orders: takeaway.orders || 0,
+              since: takeaway.since ? new Date(takeaway.since).toISOString() : null,
+              amount: Number(takeaway.amount) || 0,
+            }
+          : null,
       },
       message: 'Tables with active orders loaded',
     };
