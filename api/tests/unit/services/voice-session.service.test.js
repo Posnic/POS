@@ -81,14 +81,12 @@ describe('voice-session.service', () => {
   });
 
   test('with the doors open the offer goes to the provider with the brief and the tools, and the answer comes back', async () => {
-    jest
-      .spyOn(assistant, 'settingsFor')
-      .mockResolvedValue({
-        on: true,
-        liveVoice: true,
-        instructions: 'Always offer a drink.',
-        greeting: '',
-      });
+    jest.spyOn(assistant, 'settingsFor').mockResolvedValue({
+      on: true,
+      liveVoice: true,
+      instructions: 'Always offer a drink.',
+      greeting: '',
+    });
     const answer = jest
       .spyOn(ai, 'realtimeAnswer')
       .mockResolvedValue({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });

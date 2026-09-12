@@ -31,10 +31,18 @@ test('the tombstone is written from the row, before the row is deleted', async (
   const order = [];
   const row = { _id: TABLE, tableorder_value: '6A', branch_id: BRANCH, license: LICENSE };
   const collection = {
-    findOne: jest.fn(async () => { order.push('find'); return row; }),
-    deleteOne: jest.fn(async () => { order.push('delete'); return { deletedCount: 1 }; }),
+    findOne: jest.fn(async () => {
+      order.push('find');
+      return row;
+    }),
+    deleteOne: jest.fn(async () => {
+      order.push('delete');
+      return { deletedCount: 1 };
+    }),
   };
-  const tombstone = jest.spyOn(BaseModel, 'deletedDocumentBackup').mockImplementation(async () => { order.push('tombstone'); });
+  const tombstone = jest.spyOn(BaseModel, 'deletedDocumentBackup').mockImplementation(async () => {
+    order.push('tombstone');
+  });
 
   const result = await modelOver(collection).deleteTableOrderFiledModel(TABLE);
 
