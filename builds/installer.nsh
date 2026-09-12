@@ -22,14 +22,26 @@ SetDatablockOptimize on
 ; $\r$\n is NSIS's line break. It has to reach makensis as those characters -
 ; writing a real carriage return here ends the string early and the build fails
 ; with "unterminated string".
-!define MUI_WELCOMEPAGE_TITLE "Welcome to Posnic"
-!define MUI_WELCOMEPAGE_TEXT "Posnic is a point of sale that works without internet. Your sales, stock and customers stay on this computer.$\r$\n$\r$\nSetup installs the application and its database. The first launch takes a few minutes while the database is prepared; later launches take seconds.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
-; Kept short on purpose. MUI gives the finish page a fixed text area above the
-; "run now" checkbox and silently clips whatever does not fit - the first
-; version of this ended mid-sentence at "your data is on this".
-!define MUI_FINISHPAGE_TITLE "Posnic is installed"
-!define MUI_FINISHPAGE_TEXT "The first launch prepares the database and opens the setup wizard, where you name your shop and create an administrator account.$\r$\n$\r$\nKeep that password safe. Your data lives on this machine."
-!define MUI_FINISHPAGE_RUN_TEXT "Start Posnic now"
+; THE SAME SCRIPT IS COMPILED TWICE: once for the installer, once for the
+; uninstaller (electron-builder defines BUILD_UNINSTALLER for the second
+; pass). These page texts used to be defined once, so the uninstaller's
+; finish page announced "Posnic is installed" at the end of an uninstall.
+; Owner: "i saw message like pos installed on the end while uninstalled."
+!ifdef BUILD_UNINSTALLER
+  !define MUI_WELCOMEPAGE_TITLE "Remove Posnic"
+  !define MUI_WELCOMEPAGE_TEXT "This removes the Posnic application from this computer.$\r$\n$\r$\nYour sales, stock and customers stay in the data folder; they are not deleted.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
+  !define MUI_FINISHPAGE_TITLE "Posnic is removed"
+  !define MUI_FINISHPAGE_TEXT "The application has been removed from this computer.$\r$\n$\r$\nYour data folder was kept, so installing Posnic again picks up where you left off."
+!else
+  !define MUI_WELCOMEPAGE_TITLE "Welcome to Posnic"
+  !define MUI_WELCOMEPAGE_TEXT "Posnic is a point of sale that works without internet. Your sales, stock and customers stay on this computer.$\r$\n$\r$\nSetup installs the application and its database. The first launch takes a few minutes while the database is prepared; later launches take seconds.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
+  ; Kept short on purpose. MUI gives the finish page a fixed text area above the
+  ; "run now" checkbox and silently clips whatever does not fit - the first
+  ; version of this ended mid-sentence at "your data is on this".
+  !define MUI_FINISHPAGE_TITLE "Posnic is installed"
+  !define MUI_FINISHPAGE_TEXT "The first launch prepares the database and opens the setup wizard, where you name your shop and create an administrator account.$\r$\n$\r$\nKeep that password safe. Your data lives on this machine."
+  !define MUI_FINISHPAGE_RUN_TEXT "Start Posnic now"
+!endif
 
 
 
