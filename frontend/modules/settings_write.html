@@ -3294,7 +3294,30 @@
                                         <lang class="lang_ai_hint">We charge nothing for this. You bring your own account with an AI provider and pay them directly, so it works on every plan including the free one, and nothing is billed to you by us. The key is saved on this server, is never sent to a browser, and is never shown again once saved.</lang>
                                     </small>
 
-                                    <div class="form-group" style="max-width:460px;">
+                                    <!--
+                                        SET UP: the whole form folds to one line.
+
+                                        With a key saved, the provider, the key, the how-to and the
+                                        limit are questions already answered, and a page that asks
+                                        them again on every visit looks unfinished. Owner: "when key
+                                        save whole section of form needs to be shrink. if user want
+                                        remove or edit. not only near to the field."
+
+                                        So the setup becomes one line: what answers, the limit, and
+                                        Edit or Remove. Edit unfolds the form as it was; Remove is
+                                        the same removal as the key row's, asked first. The customer
+                                        assistant switch below stays, because it is a separate
+                                        decision and needs the Save it shares.
+                                    -->
+                                    <div id="ai_configured" class="ai-key-status" style="max-width:460px; display:none;">
+                                        <span class="ai-key-badge"><i class="feather icon-check-circle"></i><lang class="lang_ai_configured">AI is set up</lang></span>
+                                        <span class="ai-key-hint"><span id="ai_configured_provider"></span> &middot; <lang class="lang_ai_cap">Monthly limit</lang>: <span id="ai_configured_cap"></span><span id="ai_configured_spent_wrap" style="display:none;"> &middot; <lang class="lang_ai_spent_short">Spent so far</lang> <span id="ai_configured_spent"></span></span></span>
+                                        <span class="ai-key-actions">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="ai_edit"><i class="feather icon-edit mr-1"></i><lang class="lang_ai_edit">Edit</lang></button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" id="ai_remove_all"><i class="feather icon-x mr-1"></i><lang class="lang_ai_key_remove">Remove</lang></button>
+                                        </span>
+                                    </div>
+                                    <div class="form-group" id="ai_provider_row" style="max-width:460px;">
                                         <label for="ai_provider"><lang class="lang_ai_provider">Who answers</lang></label>
                                         <select id="ai_provider" class="form-control border-control">
                                             <option value=""><lang class="lang_ai_off">Off - no AI buttons anywhere</lang></option>
@@ -3389,11 +3412,18 @@
                                     </div>
 
                                     <div id="ai_assistant_config" style="max-width:460px; display:none;">
+                                        <div class="form-group" id="ai_live_voice_row">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="ai_live_voice" name="ai_live_voice">
+                                                <label class="custom-control-label" for="ai_live_voice"><strong><lang class="lang_ai_live_voice">Let customers talk to it, live: it listens and talks back</lang></strong></label>
+                                            </div>
+                                            <small class="form-text"><span id="ai_live_voice_state" class="badge badge-secondary mr-1"></span><span id="ai_live_voice_rate" class="d-block mt-1 mb-1 font-weight-bold"></span><lang class="lang_ai_live_voice_hint">A microphone appears beside the assistant. The customer speaks and hears it answer, can interrupt it, and it adds to the order as they talk, like a phone call with a waiter. The sound goes from the phone straight to your provider; our servers never hear it. Billed by your provider per minute of audio, which costs several times a typed question; it counts against the monthly limit above. Live voice needs an OpenAI key today. With another provider the microphone still works turn by turn, using the phone's own voice, at the price of a typed question.</lang></small>
+                                        </div>
                                         <div class="form-group">
                                             <label for="ai_assistant_greeting"><lang class="lang_ai_assistant_greeting">First thing it says</lang></label>
                                             <input type="text" id="ai_assistant_greeting" class="form-control border-control" maxlength="200" autocomplete="off"
                                                    placeholder="Hi! Tell me what you feel like, or ask what's good here." data-t-placeholder="lang_ai_assistant_greeting_placeholder">
-                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_greeting_hint">Leave it empty for the standard greeting. Write it in the language most of your customers use; the assistant answers each customer in whatever language they write.</lang></small>
+                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_greeting_hint">Spoken first on a live call and shown first in the chat. Leave it empty for the standard line: “Welcome to <your shop’s name>, table 5. What can I get you today?” The shop’s name is the store name on your Branch page, never the branch code. Write it in the language most of your customers use; the assistant answers each customer in whatever language they use.</lang></small>
                                         </div>
                                         <div class="form-group">
                                             <label for="ai_assistant_instructions"><lang class="lang_ai_assistant_instructions">House notes for the assistant</lang></label>
@@ -3413,9 +3443,20 @@
                                         </div>
                                     </div>
 
+                                    <!--
+                                        THE METER. The shop is spending its own money with its own
+                                        provider, and a live voice call is billed by the minute after
+                                        the audio has left us. So the month is shown feature by feature,
+                                        with the calls and the minutes behind each figure, in the shop's
+                                        own currency, and the limit as a bar. Approximate, and said so.
+                                    -->
                                     <div class="form-group" id="ai_spend_row" style="max-width:460px; display:none;">
-                                        <label><lang class="lang_ai_spent">Spent this month</lang></label>
-                                        <div id="ai_spend_table" class="small text-muted"></div>
+                                        <label><lang class="lang_ai_spent">Spent this month</lang> <span class="text-muted font-weight-normal">(<lang class="lang_ai_spent_approx">approximate</lang>)</span></label>
+                                        <div id="ai_spend_table" class="ai-spend-table"></div>
+                                        <div class="ai-spend-total"><span><lang class="lang_ai_spend_total">Total so far</lang></span><strong id="ai_spend_total"></strong></div>
+                                        <div class="ai-spend-meter" id="ai_spend_meter" style="display:none;"><div class="ai-spend-meter-bar" id="ai_spend_meter_bar"></div></div>
+                                        <small class="form-text text-muted" id="ai_spend_meter_text"></small>
+                                        <small class="form-text text-muted"><lang class="lang_ai_spent_note">Estimated from what each call reported, at list prices, in your currency at a rounded rate. Live voice is counted by the minute of open line while the call is on. Your provider's dashboard is the final word on the bill.</lang></small>
                                     </div>
 
                                     <button type="button" class="btn btn-primary" id="ai_save"><lang class="lang_ai_save">Save</lang></button>
@@ -3742,10 +3783,39 @@
                                         </div>
                                         <small id="demo_pack_summary" class="text-muted d-block mt-1"></small>
                                         <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
-                                            <lang class="lang_demopack_note">Only sample products are replaced.
-                                                Anything you have edited, sold or received is kept, and named
+                                            <lang class="lang_demopack_note">Only the sample products are replaced.
+                                                Records you created yourself are never touched, and a sample you have
+                                                edited, sold or received has become yours - it is kept, and named
                                                 if it cannot be removed.</lang>
                                         </p>
+                                    </div>
+
+                                    <!--
+                                        THE DOOR OUT, where somebody looking at the samples is
+                                        standing. Owner: "able to disable quickly ... people also
+                                        afraid clear existing data option will delete newly created
+                                        or not. so make it clear on this things."
+
+                                        The Features switch can still do this, and asks the same
+                                        question. What it cannot do is be found by somebody who is
+                                        already on this page wondering how to be rid of them.
+                                    -->
+                                    <div class="fc-section" id="fc_demoremove">
+                                        <h6 class="fc-title"><lang class="lang_demoremove_title">Finished with the samples?</lang></h6>
+                                        <p class="text-muted mb-2" style="font-size:13px;">
+                                            <lang class="lang_demoremove_help">This removes the sample products, sales,
+                                                purchases, quotes, customers and suppliers, and switches sample data off.</lang>
+                                        </p>
+                                        <div class="demo-safe-note">
+                                            <i class="feather icon-shield mr-1"></i>
+                                            <span><lang class="lang_demoremove_safe">Nothing you created yourself is removed.
+                                                Your own products, sales, purchases and people are untouched, and so is
+                                                any sample you have edited, sold or received - that one is yours now.</lang></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="demo_remove_all">
+                                            <i class="feather icon-trash-2 mr-1"></i><lang class="lang_demoremove_button">Remove the sample data</lang>
+                                        </button>
+                                        <small id="demo_remove_status" class="text-muted d-block mt-1"></small>
                                     </div>
                                 </div>
                             </div>
@@ -5328,8 +5398,21 @@
                                                                                 </div>
                                                                             </div>
                                                                         </div>
+                                                                        <div class="mb-2" id="storefront_talk_row">
+                                                                            <div class="input-group input-group-sm">
+                                                                                <div class="input-group-prepend">
+                                                                                    <span class="input-group-text" id="storefront_talk_label"><i class="feather icon-mic mr-1" aria-hidden="true"></i><lang class="lang_storefront_link_talk">Talks to order</lang></span>
+                                                                                </div>
+                                                                                <input type="text" class="form-control" id="storefront_talk_url" readonly aria-labelledby="storefront_talk_label">
+                                                                                <div class="input-group-append">
+                                                                                    <button type="button" class="btn btn-outline-secondary copy-storefront-link" data-target="storefront_talk_url" aria-label="Copy this address" data-t-aria-label="lang_copy_this_address"><i class="feather icon-copy" aria-hidden="true"></i></button>
+                                                                                    <a class="btn btn-outline-secondary storefront-open" data-target="storefront_talk_url" href="#" target="_blank" rel="noopener" aria-label="Open this page" data-t-aria-label="lang_open_this_page"><i class="feather icon-external-link" aria-hidden="true"></i></a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                         <small class="form-text text-muted">
                                                                             <lang class="lang_storefront_links_help">Both work as soon as online ordering is on. The menu address never shows a cart, so it stays useful when you stop taking orders. Print whichever one you want on the table or in the window.</lang>
+                                                                            <lang class="lang_storefront_link_talk_help">The third lands the customer straight in the assistant's conversation, ready to talk where you have switched live voice on (AI page); the menu is right behind it. Add ?ai=talk to any table or room address for the same effect, or ?ai=ask to open the typed assistant.</lang>
                                                                         </small>
                                                                     </div>
                                                                 </div>

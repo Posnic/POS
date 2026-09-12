@@ -118,6 +118,7 @@
       "src/hardware-manager.js",
       "src/hardware-ipc.js",
       "src/kot-manager.js",
+      "src/bill-manager.js",
       "src/print-window-guard.js",
       "src/print-pdf.js",
       "src/escpos-receipt.js",

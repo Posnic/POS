@@ -33,6 +33,9 @@ const itemService = new ItemService();
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 const orderingAssistant = require('../services/ordering-assistant.service');
+const voiceSession = require('../services/voice-session.service');
+const customerOrder = require('../services/customer-order.service');
+const { clientIp } = require('../utils/client-ip');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -262,6 +265,162 @@ class OnlineOrderingController {
     }
   }
 
+  /**
+   * Open a live voice line for one customer.
+   *
+   * The page sends its WebRTC offer; the shop's provider answers it, and
+   * the audio then flows phone to provider without us. Same doors as the
+   * typed assistant plus one more, because minutes of audio cost more than
+   * typed questions.
+   */
+  async voice(req, res) {
+    try {
+      const storeId = req.params.storeId;
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop found at this address', data: null });
+      }
+      const front = await itemService.storefront({ storeId, ...servicePointFrom(req) });
+      if (!front || !front.status) return this.respond(res, front);
+
+      const result = await voiceSession.session(req.body || {}, front.data, context);
+      if (result.status) return this.respond(res, result);
+      if (result.message === 'no_assistant' || result.message === 'no_live_voice') {
+        return res.status(403).json({
+          type: 'error',
+          message:
+            result.message === 'no_assistant'
+              ? 'This shop has not switched on the ordering assistant'
+              : 'This shop has not switched on live voice',
+          data: null,
+        });
+      }
+      if (result.message === 'Nothing to connect') {
+        return res.status(400).json({ type: 'error', message: result.message, data: null });
+      }
+      return res.status(503).json({ type: 'error', message: result.message, data: null });
+    } catch (error) {
+      console.error('Error in online ordering voice:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /**
+   * The line is still open: the page says so every half minute, and once
+   * more as it closes. Each tick is metered against the shop's monthly
+   * limit; past the limit the answer is a refusal and the page hangs up.
+   */
+  async voiceTick(req, res) {
+    try {
+      const context = await itemService.storefrontContext({ storeId: req.params.storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop found at this address', data: null });
+      }
+      /* The hang-up report is a beacon with no body, so its `end` rides on
+         the address; a report from an open line carries it in the body. */
+      const body = req.body || {};
+      const end = body.end != null ? body.end : req.query && req.query.end;
+      const result = await voiceSession.tick(String(req.params.session || ''), { end }, context);
+      if (result.status) return this.respond(res, result);
+      if (result.message === 'cap') {
+        return res.status(403).json({
+          type: 'error',
+          message: 'This shop has reached its monthly AI spending limit',
+          data: result.data,
+        });
+      }
+      if (result.message === 'no_session') {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No such voice session', data: null });
+      }
+      return res.status(503).json({ type: 'error', message: result.message, data: null });
+    } catch (error) {
+      console.error('Error in online ordering voice tick:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /*
+   * The order the customer already placed: changed, or called off.
+   *
+   * One handler for both, because the door is the same door - the order's id
+   * and its token, and a state that still belongs to the customer. The
+   * refusals are named rather than numbered so the assistant can say which
+   * one it is: "you have already paid, so the counter will have to do it."
+   */
+  async _actOnPlacedOrder(req, res, act) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await act(
+        { ...(req.body || {}), orderId: req.params.orderId, token: (req.body || {}).token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+
+      const said = String((result && result.message) || 'not_found');
+      if (said === 'not_found') {
+        return res.status(404).json({ type: 'error', message: said, data: null });
+      }
+      if (said === 'nothing_asked' || said === 'not_on_this_order' || said === 'nothing_changed') {
+        return res
+          .status(400)
+          .json({ type: 'error', message: said, data: (result && result.data) || null });
+      }
+      /* The order exists and is simply not the customer's to move any more. */
+      return res.status(409).json({ type: 'error', message: said, data: null });
+    } catch (error) {
+      console.error('Error acting on a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /*
+   * The order, read back by the phone that placed it: where it has got to,
+   * and whether there is a bill to be had yet. The same door as changing it -
+   * the id and the token together - and the same named refusals, except that
+   * reading is allowed for an order the customer may no longer change: a
+   * paid order is exactly the one they want to see.
+   */
+  async readPlacedOrder(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await customerOrder.read(
+        { orderId: req.params.orderId, token: req.query.token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+      return res.status(404).json({ type: 'error', message: 'not_found', data: null });
+    } catch (error) {
+      console.error('Error reading a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  async changePlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.change);
+  }
+
+  async cancelPlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.cancel);
+  }
+
   async createOrder(req, res) {
     try {
       /*
@@ -269,8 +428,19 @@ class OnlineOrderingController {
        * both would let a caller name one shop in the URL and another in the
        * payload, and leave two readers to disagree about which one they meant.
        */
+      /*
+       * Where it came from, taken from the REQUEST rather than the body.
+       * The page describes its own browser; the address and the user agent
+       * are ours to read, and a body that tries to set them is overruled.
+       */
+      const client = {
+        ...(req.body && typeof req.body.client === 'object' ? req.body.client : {}),
+        ip: clientIp(req),
+        user_agent: req.get('User-Agent') || '',
+        referrer: req.get('Referer') || '',
+      };
       const result = await salesService.createOnlineOrder(
-        { ...req.body, branch: req.params.storeId },
+        { ...req.body, client, branch: req.params.storeId },
         { SaleModel }
       );
       return this.respond(res, result);

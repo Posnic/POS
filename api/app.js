@@ -1539,11 +1539,29 @@ if (fs.existsSync(ORDER_BUNDLE)) {
    */
   const STORE_ADDRESS =
     /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+  /*
+   * `/AZ100/cart.html` - an inner page with the shop in front of it.
+   *
+   * The pages put the shop back into the address bar once they know it
+   * (order/assets/shop-address.js), so a refresh or a copied link still says
+   * which shop it was. Named pages only, and the names are this bundle's own
+   * files, so a missing script under a shop is still a 404 and not a page.
+   *
+   * Both answers are HTML and say so to caches: the address bar changes, the
+   * page must not be the one from four hours ago.
+   */
+  const STORE_PAGE =
+    /^\/[A-Za-z0-9]{3,6}\/((?:home|products|cart|payment|thankyou|history|phonepe_status|receipt|access-denied)\.html)$/;
+  const PAGE_HEADERS = { headers: { 'Cache-Control': 'no-cache' } };
   const serveOrderPage = (req, res, next) => {
+    const page = STORE_PAGE.exec(req.path);
+    if (page) return res.sendFile(path.join(ORDER_BUNDLE, page[1]), PAGE_HEADERS);
     if (!STORE_ADDRESS.test(req.path)) return next();
-    return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'));
+    return res.sendFile(path.join(ORDER_BUNDLE, 'index.html'), PAGE_HEADERS);
   };
-  app.use('/order', serveOrderPage);
+  // Store pages are public, but still perform disk reads. Apply the same
+  // per-shop limiter as the API so an anonymous client cannot exhaust I/O.
+  app.use('/order', limiter, serveOrderPage);
 }
 
 /* `/menu/AZ100`, for the same reason and with the same guard: a path segment

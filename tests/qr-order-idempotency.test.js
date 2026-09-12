@@ -53,9 +53,16 @@ test('the lookup is scoped to the shop', () => {
 
 test('the key is stored, or the lookup can never match', () => {
   const source = qrOrderSource();
-  const insert = source.slice(source.indexOf('insertOne({'));
+  /* The document that is inserted, which is built by name now: the insert
+     retries on a bill number another till has just taken, so it needs a
+     document it can hand back in. */
+  const at = source.indexOf('const saleDocument = {');
+  assert.ok(at > -1, 'the order document moved; this test no longer reads the insert');
+  const insert = source.slice(at);
   assert.match(insert, /idempotency_key: String\(idempotencyKey\)/,
     'checking for a key that is never written is a check that always passes');
+  assert.match(insert, /insertSaleWithFreshNumber\(/,
+    'the document must reach an insert, and the retrying one carries the key through');
 });
 
 test('an order sent without a key still works', () => {

@@ -6897,3 +6897,158 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 }
 #v-pills-ai .ai-key-actions { display: inline-flex; gap: 6px; }
 #v-pills-ai #ai_key_cancel { display: inline-block; margin-top: 6px; }
+
+/*
+ * THE AI METER.
+ *
+ * What the month has cost, feature by feature, in the shop's own currency,
+ * with the limit as a bar. Theme variables only, as for the block above.
+ */
+#v-pills-ai table.ai-spend {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin-bottom: 4px;
+}
+#v-pills-ai table.ai-spend th,
+#v-pills-ai table.ai-spend td {
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+    text-align: left;
+}
+#v-pills-ai table.ai-spend th {
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--theme-text-muted, #5b6577);
+}
+#v-pills-ai table.ai-spend .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+#v-pills-ai .ai-spend-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 6px 2px;
+    font-size: 13px;
+}
+#v-pills-ai .ai-spend-total strong {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+#v-pills-ai .ai-spend-meter {
+    height: 6px;
+    margin: 6px 6px 2px;
+    border-radius: 3px;
+    background: rgba(127, 127, 127, 0.18);
+    overflow: hidden;
+}
+#v-pills-ai .ai-spend-meter-bar {
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: var(--theme-success-color, #1b7a3d);
+    transition: width 0.3s ease;
+}
+#v-pills-ai .ai-spend-meter-bar.is-near {
+    background: var(--theme-danger-color, #b42318);
+}
+
+/*
+ * SAMPLE DATA, SAID OUT LOUD.
+ *
+ * One line under the topbar while the samples are switched on, and the
+ * promise beside the button that removes them. Theme variables only: the
+ * guards above scan to the end of this file and ask that no colour be
+ * spelled out by hand where a theme could want a say.
+ */
+.demo-data-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.22);
+    background: color-mix(in srgb, var(--theme-warning-color, #b26a00) 10%, var(--theme-card-bg, #fff));
+    font-size: 13px;
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    .demo-data-bar { background: var(--theme-card-bg, #fff); }
+}
+.demo-data-bar-tag {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--theme-warning-color, #b26a00);
+}
+.demo-data-bar-text { flex: 1 1 240px; color: var(--theme-text-secondary, #4a5262); }
+.demo-data-bar-hide {
+    border: 0;
+    background: transparent;
+    padding: 2px 4px;
+    line-height: 1;
+    color: var(--theme-text-muted, #5b6577);
+    cursor: pointer;
+}
+.demo-data-bar-hide:hover { color: var(--theme-text-primary, #1c2430); }
+#fc_demoremove .demo-safe-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: 560px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(127, 127, 127, 0.22);
+    background: color-mix(in srgb, var(--theme-success-color, #1b7a3d) 8%, var(--theme-card-bg, #fff));
+    font-size: 12.5px;
+    color: var(--theme-text-secondary, #4a5262);
+}
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+    #fc_demoremove .demo-safe-note { background: var(--theme-card-bg, #fff); }
+}
+#fc_demoremove .demo-safe-note i { color: var(--theme-success-color, #1b7a3d); }
+
+/*
+ * SAMPLE DATA, ON THE DASHBOARD.
+ *
+ * How many of each kind are still here, and the two buttons. Theme variables
+ * only, like the bar above it.
+ */
+.demo-data-card {
+    border-left: 3px solid var(--theme-warning-color, #b26a00);
+}
+.demo-data-card-title {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--theme-text-primary, #1c2430);
+}
+.demo-data-card-title i { color: var(--theme-warning-color, #b26a00); }
+.demo-data-card-actions { display: inline-flex; align-items: center; gap: 4px; }
+.demo-data-card-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 2px;
+}
+.demo-data-card-counts .demo-count {
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(127, 127, 127, 0.22);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--theme-text-secondary, #4a5262);
+}
+.demo-data-card-counts .demo-count strong { color: var(--theme-text-primary, #1c2430); }
+.demo-data-bar-link {
+    font-size: 12.5px;
+    text-decoration: underline;
+    color: var(--theme-text-muted, #5b6577);
+}

@@ -22,7 +22,7 @@
   "use strict";
 
   var MAX_TURNS_SENT = 12;
-  var state = { messages: [], busy: false, greeted: false };
+  var state = { messages: [], busy: false, greeted: false, landed: false, placed: "" };
 
   function el(id) {
     return document.getElementById(id);
@@ -65,6 +65,100 @@
     var on = !!(current && current.assistant);
     spark.hidden = !on;
     document.body.classList.toggle("has-assistant", on);
+    if (on) offerHint(current);
+    else hideHint(false);
+    if (on) landInConversation(current);
+  }
+
+  /* ------------------------------------------------ a code for the talk */
+
+  var AI_FIRST_KEY = "posnic_ai_first";
+
+  /* What the link asked for: "talk", "ask", or nothing. From the query on
+     this page, or from what the arrival page kept across its redirect. */
+  function aiFirstWish() {
+    var wish = "";
+    try {
+      wish = String(new URLSearchParams(window.location.search).get("ai") || "").toLowerCase();
+    } catch (e) {
+      wish = "";
+    }
+    if (wish === "1") wish = "ask";
+    if (wish !== "talk" && wish !== "ask") {
+      try {
+        wish = String(sessionStorage.getItem(AI_FIRST_KEY) || "");
+      } catch (e) {
+        wish = "";
+      }
+    }
+    return wish === "talk" || wish === "ask" ? wish : "";
+  }
+
+  /* Once, the moment the shop is known: open the sheet; where the shop lets
+     people talk and the code asked for it, stand ready with "Tap to talk". */
+  function landInConversation(current) {
+    if (state.landed) return;
+    var wish = aiFirstWish();
+    if (!wish) return;
+    state.landed = true;
+    try {
+      sessionStorage.removeItem(AI_FIRST_KEY);
+    } catch (e) {
+      /* nothing kept */
+    }
+    hideHint(true);
+    open();
+    if (wish === "talk" && current && current.voice && window.OrderingVoice && window.OrderingVoice.standReady) {
+      window.OrderingVoice.standReady();
+    }
+  }
+
+  /* ------------------------------------------------------- the callout */
+
+  var HINT_KEY = "posnic_assistant_seen";
+  var hintTimer = 0;
+
+  function hintSeen() {
+    try {
+      return localStorage.getItem(HINT_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markHintSeen() {
+    try {
+      localStorage.setItem(HINT_KEY, "1");
+    } catch (e) {
+      /* a browser that keeps nothing sees it again next time; fine */
+    }
+  }
+
+  /* Once per phone, for a few seconds: "Ask me what's good, or just talk." */
+  function offerHint(current) {
+    var hint = el("assistant-hint");
+    if (!hint) return;
+    if (hintSeen() || state.greeted) {
+      /* Seen already, here or in another tab: nothing to offer, and one
+         that is somehow up comes down. */
+      hideHint(false);
+      return;
+    }
+    var text = el("assistant-hint-text");
+    if (text) text.textContent = current && current.voice ? say("Ask me what's good, or just talk") : say("Ask me what's good");
+    if (!hint.hidden) return;
+    hint.hidden = false;
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () {
+      hideHint(false);
+    }, 9000);
+  }
+
+  function hideHint(forGood) {
+    var hint = el("assistant-hint");
+    if (hint) hint.hidden = true;
+    clearTimeout(hintTimer);
+    if (forGood) markHintSeen();
   }
 
   /* --------------------------------------------------------- the log */
@@ -126,10 +220,14 @@
   function greet() {
     if (state.greeted) return;
     state.greeted = true;
-    /* The shop's own opening line when it wrote one, else the plain one. */
+    hideHint(true);
+    /* The shop's own opening line when it wrote one, else the plain one;
+       and where the shop lets people talk, the microphone gets a mention. */
     var current = shopNow();
     var own = current && current.assistantGreeting ? String(current.assistantGreeting).trim() : "";
-    bubble("ai", own || say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order."));
+    var line = own || say("Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order.");
+    if (current && current.voice) line += " " + say("Or tap the microphone and just talk.");
+    bubble("ai", line);
   }
 
   /* ------------------------------------------------- applying an answer */
@@ -169,6 +267,160 @@
       else actionLine(say("Added {n} × {name}", { n: delta, name: a.name }));
       if (a.note && now > 0) actionLine(say("Request noted: {note}", { note: a.note }));
     }
+    paintReview();
+  }
+
+  /* ------------------------------------------------ the way out */
+
+  function leave(url) {
+    window.location.href = url;
+  }
+
+  /* The button under the conversation: what the order holds, and the way
+     to review and place it. Hidden while there is nothing to review. */
+  async function paintReview() {
+    var button = el("assistant-review");
+    if (!button || typeof getCartData !== "function") return; // eslint-disable-line no-undef
+    var lines = [];
+    try {
+      lines = (await getCartData()) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      lines = [];
+    }
+    var count = 0;
+    var total = 0;
+    lines.forEach(function (l) {
+      var q = Number(l.quantity) || 0;
+      count += q;
+      total += (Number(l.price) || 0) * q;
+    });
+    button.hidden = !count;
+    paintOrderList(lines);
+    var sum = el("assistant-review-sum");
+    if (!sum) return;
+    if (!count) {
+      sum.textContent = "";
+      return;
+    }
+    var w = typeof words === "function" ? words() : { one: "item", many: "items" }; // eslint-disable-line no-undef
+    var amount = typeof money === "function" ? money(total) : String(total); // eslint-disable-line no-undef
+    sum.textContent = say("{n} " + (count === 1 ? w.one : w.many), { n: count }) + " · " + amount;
+  }
+
+  /*
+   * What is on the order, while the customer is talking. It stands in for the
+   * transcript, which is hidden on a call: they are listening, not reading,
+   * and the prices are on the page behind this sheet anyway.
+   */
+  function paintOrderList(lines) {
+    var box = el("assistant-order-list");
+    if (!box) return;
+    box.textContent = "";
+    if (!lines || !lines.length) {
+      var empty = document.createElement("li");
+      empty.className = "assistant-order-empty";
+      empty.textContent = say("Nothing yet");
+      box.appendChild(empty);
+      return;
+    }
+    lines.forEach(function (line) {
+      var row = document.createElement("li");
+      var qty = document.createElement("span");
+      qty.className = "assistant-order-qty";
+      qty.textContent = String(Number(line.quantity) || 0) + "×";
+      var name = document.createElement("span");
+      name.className = "assistant-order-name";
+      name.textContent = String(line.name || "");
+      row.appendChild(qty);
+      row.appendChild(name);
+      if (line.note) {
+        var note = document.createElement("small");
+        note.className = "assistant-order-note";
+        note.textContent = String(line.note);
+        row.appendChild(note);
+      }
+      /* Changed by hand, for whatever the talking got wrong. Owner: "in
+         screen show line item and can able to modify details by hand also." */
+      var less = document.createElement("button");
+      less.type = "button";
+      less.className = "assistant-order-step";
+      less.setAttribute("data-step", "-1");
+      less.setAttribute("data-id", String(line.item_id || line.id || ""));
+      less.setAttribute("aria-label", say("One less {name}", { name: line.name }));
+      less.textContent = "−";
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "assistant-order-step";
+      more.setAttribute("data-step", "1");
+      more.setAttribute("data-id", String(line.item_id || line.id || ""));
+      more.setAttribute("aria-label", say("One more {name}", { name: line.name }));
+      more.textContent = "+";
+      row.appendChild(less);
+      row.appendChild(more);
+      box.appendChild(row);
+    });
+  }
+
+  /* Talking or typing: on a call the order shows and the transcript does not. */
+  function showOrderInstead(on) {
+    var box = el("assistant-order");
+    if (box) box.hidden = !on;
+    if (on) paintReview();
+  }
+
+  /*
+   * The order has gone, and this is where the customer finds that out.
+   *
+   * In the sheet they were talking into, not on a screen the page jumped to:
+   * the jump was indistinguishable from a crash, and it ended the
+   * conversation in the middle of it. Two beats - it went, somebody is
+   * cooking it - and then the customer decides when to leave.
+   */
+  var placedTimer = 0;
+
+  function placedPanel(token, options) {
+    var panel = el("assistant-placed");
+    if (!panel) {
+      actionLine(say("Sent to the kitchen. Token {token}.", { token: token }));
+      return;
+    }
+    var number = el("placed-token");
+    if (number) number.textContent = String(token || "--");
+    var art = el("placed-art");
+    if (art) art.setAttribute("data-stage", "sent");
+    var said = el("placed-said");
+    if (said) said.textContent = say("Sent to the kitchen");
+    panel.hidden = false;
+    state.placed = String(token || "");
+    clearTimeout(placedTimer);
+    /* Long enough for the tick to land and be read, short enough that
+       nobody wonders whether the page has stopped. */
+    var after = options && typeof options.after === "number" ? options.after : 1800;
+    placedTimer = setTimeout(function () {
+      if (art) art.setAttribute("data-stage", "cooking");
+      if (said) said.textContent = say("The chef is preparing your order");
+    }, after);
+  }
+
+  function placedLine(token) {
+    placedPanel(token);
+  }
+
+  /* Out of the conversation, to the token screen, when the customer says so. */
+  function placedDone() {
+    var token = state.placed;
+    hidePlaced();
+    /* Through the published seam, the way the Review button and the voice
+       line leave, so one place decides what leaving means. */
+    window.OrderingAssistant.leave(
+      token ? "thankyou.html?token=" + encodeURIComponent(token) : "products.html"
+    );
+  }
+
+  function hidePlaced() {
+    clearTimeout(placedTimer);
+    var panel = el("assistant-placed");
+    if (panel) panel.hidden = true;
   }
 
   /* --------------------------------------------------------- a turn */
@@ -247,6 +499,7 @@
         bubble("ai", reply);
       }
       if (actions.length) await apply(actions);
+      return { reply: reply, actions: actions };
     } catch (error) {
       typing(false);
       bubble("ai", say("I could not answer just now. The menu still works the usual way."));
@@ -264,6 +517,7 @@
     var sheet = el("assistant");
     if (!sheet) return;
     greet();
+    paintReview();
     if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
     var input = el("assistant-input");
     if (input) setTimeout(function () { input.focus(); }, 60);
@@ -275,10 +529,35 @@
     if (sheet && sheet.open) sheet.close();
   }
 
+  var wired = false;
   function wire() {
+    /* Once. A document that is already complete when this runs, and then
+       hears a DOMContentLoaded anyway, must not get every handler twice. */
+    if (wired) return;
+    wired = true;
     var spark = el("ask-ai");
     if (!spark) return;
     spark.addEventListener("click", open);
+    var hintOpen = el("assistant-hint-open");
+    if (hintOpen) hintOpen.addEventListener("click", open);
+    var hintClose = el("assistant-hint-close");
+    if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
+    var review = el("assistant-review");
+    if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
+    var done = el("placed-done");
+    if (done) done.addEventListener("click", placedDone);
+    var orderList = el("assistant-order-list");
+    if (orderList) {
+      orderList.addEventListener("click", async function (event) {
+        var step = event.target && event.target.closest ? event.target.closest(".assistant-order-step") : null;
+        if (!step) return;
+        var id = step.getAttribute("data-id");
+        var by = Number(step.getAttribute("data-step")) || 0;
+        if (!id || !by || typeof updateQuantity !== "function") return; // eslint-disable-line no-undef
+        await updateQuantity(id, by); // eslint-disable-line no-undef
+        paintReview();
+      });
+    }
     var closeButton = el("assistant-close");
     if (closeButton) closeButton.addEventListener("click", close);
     var form = el("assistant-form");
@@ -310,5 +589,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
 })();

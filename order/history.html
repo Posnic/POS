@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff">
+    <!--
+        WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
+        A printed code can be three segments deep - /order/AZ100/venue/RC/123
+        for a hotel room - and without this the browser looks for each asset
+        under /order/AZ100/venue/, a directory that does not exist. The page
+        loads and shows nothing, which is the worst kind of broken: a blank
+        screen with no error anybody sees.
+    -->
+    <base href="/order/" />
+    <title>Your orders</title>
+    <link href="assets/order.css?v=20260912-design" rel="stylesheet">
+    <script src="assets/i18n.js?v=20260912-design"></script>
+    <script src="assets/jquery-3.7.1.min.js?v=20260912-design"></script>
+    <script src="config.js?v=20260912-design"></script>
+    <link href="assets/channel-state.css?v=20260912-design" rel="stylesheet">
+    <script src="assets/channel-state.js?v=20260912-design"></script>
+    <script src="assets/service-point.js?v=20260912-design"></script>
+    <script src="assets/shop-address.js?v=20260912-design"></script>
+    <script src="assets/kiosk-core.js?v=20260912-design"></script>
+    <script src="indexedDB.js?v=20260912-design"></script>
+    <script src="assets/history/script.js?v=20260912-design"></script>
+</head>
+
+<body>
+    <!--
+        WHAT THIS PHONE HAS ORDERED, and nothing else. There is no account
+        behind a QR code, so there is no other list to show: what this device
+        placed, this device remembers, and the shop is asked where each one
+        got to.
+    -->
+    <header class="page-head">
+        <button type="button" class="icon-btn" aria-label="Back to the menu"
+                onclick="window.location.href='products.html'">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+        </button>
+        <h1>Your orders</h1>
+        <!-- The other language, named in itself. Painted by i18n.js. -->
+        <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
+    </header>
+
+    <main class="history">
+        <ul class="history-list" id="history-list"></ul>
+        <p class="history-empty" id="history-empty" hidden>Nothing ordered from this phone yet.</p>
+        <p class="history-note">Kept on this phone. Clearing your browser data clears this list.</p>
+    </main>
+</body>
+</html>

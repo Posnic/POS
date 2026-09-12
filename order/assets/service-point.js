@@ -78,8 +78,18 @@
         };
 
         var first = parts[0] || '';
+        /*
+         * /order/AZ100/cart.html is the same visit WALKING, with the shop
+         * kept in the address bar by assets/shop-address.js. Only the
+         * arrival page - /order/AZ100, /order/AZ100/table/5, or index.html
+         * with ?branch= - replaces the service point. Read a page name as an
+         * arrival and the table a customer scanned is gone at the first tap.
+         */
+        var last = parts[parts.length - 1] || '';
+        var walking = /\.html$/i.test(last) && last.toLowerCase() !== 'index.html';
         point.arrival =
-            (/^[A-Za-z0-9]{3,6}$/.test(first) && !/\./.test(first)) || !!query.get('branch');
+            !walking &&
+            ((/^[A-Za-z0-9]{3,6}$/.test(first) && !/\./.test(first)) || !!query.get('branch'));
 
         if (parts[1] === 'table') point.table = clean(parts[2]);
         if (parts[1] === 'venue') {

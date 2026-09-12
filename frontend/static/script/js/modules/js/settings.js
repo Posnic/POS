@@ -5639,7 +5639,7 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
-        ['module_demo_data_enable', 'Demo data', 'Sample products, sales and people to try the till with. Off removes them (it asks first).'],
+        ['module_demo_data_enable', 'Demo data', 'Sample products, sales, purchases and people to try the till with. Off removes the samples and nothing of your own (it asks first).'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
@@ -7532,10 +7532,16 @@ PosnicPro.settings.demoPacks = {
     _loaded: false,
 
     /*
-     * Loaded when the page is opened, not at boot: this list is needed by one
-     * screen that most shops never visit, and a request at boot is a request
-     * on the critical path to a first sale.
+     * Remove the samples, from the page somebody is already on.
+     *
+     * One implementation, in the shell: this is offered from three places now
+     * - here, the line every page carries, and the dashboard card - and three
+     * copies of a deletion is three things to keep in step.
      */
+    removeAll: function () {
+        PosnicPro.demoSamples.remove();
+    },
+
     load: function () {
         var self = PosnicPro.settings.demoPacks;
         if (self._loaded) { self.paint(); return; }
@@ -7710,6 +7716,9 @@ $(document).on('change', '#demo_pack_choice', function () {
 $(document).on('click', '#demo_pack_install', function () {
     PosnicPro.settings.demoPacks.install();
 });
+$(document).on('click', '#demo_remove_all', function () {
+    PosnicPro.settings.demoPacks.removeAll();
+});
 $(document).on('click', '#demo_pack_reset', function () {
     PosnicPro.settings.demoPacks.reset();
 });
@@ -7801,7 +7810,8 @@ PosnicPro.settings.suggestPartner = function (checkbox) {
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
         title: PosnicPro.i18n.t('lang_switch_off_demo_data_and_remove_the_sample', 'Switch off Demo Data and remove the samples?'),
-        text: 'The sample records created for the demo - products, sales, quotes, customers and suppliers - will be removed. Anything you have edited, sold or received yourself is kept.',
+        text: 'The sample records created for the demo - products, sales, purchases, quotes, customers and suppliers - will be removed. '
+            + 'Nothing you created yourself is removed: your own products, sales and purchases stay, and any sample you have edited, sold or received is kept.',
         showCancelButton: true,
         confirmButtonClass: 'btn btn-danger',
         cancelButtonClass: 'btn btn-light m-l-10',
@@ -8629,6 +8639,9 @@ PosnicPro.settings.storefrontLinks = function () {
     if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
     $('#storefront_order_url').val(base + '/order/' + id);
     $('#storefront_menu_url').val(base + '/menu/' + id);
+    /* Lands in the conversation; harmless on a shop with the assistant off,
+       where it is the ordering page. */
+    $('#storefront_talk_url').val(base + '/order/' + id + '?ai=talk');
     row.show();
 };
 
@@ -9251,6 +9264,8 @@ PosnicPro.settings.ai = {
     CLEAR_SECRET: '__posnic_clear__',
     /* True only between pressing Replace and saving or backing out. */
     _replacing: false,
+    /* True only between pressing Edit on the set-up line and saving. */
+    _editing: false,
     /*
      * Where each provider actually hands out a key.
      *
@@ -9282,6 +9297,7 @@ PosnicPro.settings.ai = {
         if (!PosnicPro.settings.ai._switchWired) {
             PosnicPro.settings.ai._switchWired = true;
             $(document).on('change', '#ai_ordering_assistant', function () { PosnicPro.settings.ai.syncRows(); });
+            $(document).on('change', '#ai_live_voice', function () { PosnicPro.settings.ai.syncRows(); });
         }
         var on = !!$('#ai_provider').val();
         var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
@@ -9309,6 +9325,18 @@ PosnicPro.settings.ai = {
            door is open: a shop that has not switched it on is not asked to
            write for it. */
         $('#ai_assistant_config').toggle(on && $('#ai_ordering_assistant').is(':checked'));
+        /* Say in one word what the microphone will do, so nobody has to
+           guess from a page of hints why it only transcribed. */
+        var liveOn = $('#ai_live_voice').is(':checked');
+        var openai = $('#ai_provider').val() === 'openai';
+        $('#ai_live_voice_state')
+            .toggleClass('badge-success', liveOn && openai)
+            .toggleClass('badge-secondary', !(liveOn && openai))
+            .text(liveOn && openai
+                ? PosnicPro.i18n.t('lang_ai_live_voice_on', 'Live: the microphone opens a voice call with the assistant')
+                : liveOn
+                    ? PosnicPro.i18n.t('lang_ai_live_voice_needs_openai', 'Live voice needs an OpenAI key; with this provider the microphone works turn by turn')
+                    : PosnicPro.i18n.t('lang_ai_live_voice_off', 'Off: the microphone works turn by turn, with the phone\'s own voice'));
         /* A saved key and no key must not look the same. The key never comes
            back to the browser, so "saved" is a badge and two buttons, and the
            empty box only appears when somebody asks to replace it. */
@@ -9318,6 +9346,24 @@ PosnicPro.settings.ai = {
         $('#ai_api_key').toggle(on && (!saved || replacing));
         $('#ai_key_cancel').toggle(on && saved && replacing);
         $('#ai_spend_row').toggle(on && $('#ai_spend_table').children().length > 0);
+        /*
+         * SET UP: with a key saved, the provider, the key, the how-to and the
+         * limit are answered questions, and the form folds to one line that
+         * says what answers and the limit, with Edit and Remove. Decided
+         * last, so it wins over every toggle above. Save stays: the customer
+         * assistant switch below shares it.
+         */
+        var configured = on && saved && PosnicPro.settings.ai._editing !== true;
+        $('#ai_configured').toggle(configured);
+        if (configured) {
+            $('#ai_configured_provider').text(
+                $('#ai_provider option:selected').text().replace(/\s+-\s.*$/, '').trim());
+            var cap = String($('#ai_monthly_cap').val() || '').trim();
+            $('#ai_configured_cap').text(cap || PosnicPro.i18n.t('lang_ai_no_limit', 'none'));
+            $('#ai_provider_row,#ai_key_row,#ai_howto_toggle_row,#ai_key_help,#ai_cap_row').hide();
+        } else {
+            $('#ai_provider_row').show();
+        }
     },
 
     load: function () {
@@ -9325,6 +9371,7 @@ PosnicPro.settings.ai = {
            look at the page, not a preference to remember. */
         PosnicPro.settings.ai._howtoOpen = false;
         PosnicPro.settings.ai._replacing = false;
+        PosnicPro.settings.ai._editing = false;
         PosnicPro.get({ url: 'settings/group/preferences' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var v = response.data.values || response.data;
@@ -9332,6 +9379,7 @@ PosnicPro.settings.ai = {
             $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
             $('#ai_ordering_assistant').prop('checked', String(v.ai_ordering_assistant) === 'true');
             $('#ai_assistant_greeting').val(v.ai_assistant_greeting || '');
+            $('#ai_live_voice').prop('checked', String(v.ai_live_voice) === 'true');
             $('#ai_assistant_instructions').val(v.ai_assistant_instructions || '');
             PosnicPro.settings.ai.syncRows();
         }, function () { /* the card still lets you choose and save */ });
@@ -9350,19 +9398,79 @@ PosnicPro.settings.ai = {
         PosnicPro.settings.ai.loadSpend();
     },
 
-    /* What it has cost so far, because somebody spending their own money is
-       entitled to watch the meter without leaving the page. */
+    /* The meter's rows are feature keys; a shopkeeper reads what they mean. */
+    featureLabel: function (feature) {
+        var names = {
+            item_description: PosnicPro.i18n.t('lang_ai_feature_item_description', 'Item descriptions'),
+            ordering_assistant: PosnicPro.i18n.t('lang_ai_feature_ordering_assistant', 'Ordering assistant, typed'),
+            voice_order_live: PosnicPro.i18n.t('lang_ai_feature_voice_order_live', 'Talk to order, live voice'),
+            voice_order: PosnicPro.i18n.t('lang_ai_feature_voice_order', 'Voice orders on the handset')
+        };
+        return names[feature] || String(feature || '');
+    },
+
+    /* The server says which currency the figures are in, from the branch
+       record; the sign this screen saved at setup is the fallback. */
+    currencySymbol: function (data) {
+        var fromServer = data && data.currency && data.currency.symbol;
+        return String(fromServer || PosnicPro.local.get('currencySign') || '\u20B9');
+    },
+
+    /*
+     * What it has cost so far, because somebody spending their own money is
+     * entitled to watch the meter without leaving the page. Feature by
+     * feature, with the calls and, for live voice, the minutes of open line
+     * behind the figure; the total against the limit as a bar; the price of
+     * a minute beside the live switch; and the total on the folded line, so
+     * a shop that set up and left still sees the month at a glance.
+     */
     loadSpend: function () {
         PosnicPro.get('items/aiSpend', {}, function (response) {
-            var rows = (response && response.data && response.data.features) || [];
+            var data = (response && response.data) || {};
+            var rows = data.features || [];
             var host = $('#ai_spend_table').empty();
-            if (!rows.length) { PosnicPro.settings.ai.syncRows(); return; }
-            var html = '';
-            for (var i = 0; i < rows.length; i += 1) {
-                html += '<div>' + PosnicPro.escapeHtml(rows[i].feature)
-                    + ': ' + PosnicPro.escapeHtml(rows[i].spent) + '</div>';
+            var sym = PosnicPro.settings.ai.currencySymbol(data);
+            var esc = PosnicPro.escapeHtml;
+            if (data.voice && data.voice.per_minute) {
+                $('#ai_live_voice_rate').text(PosnicPro.i18n.t('lang_ai_live_voice_rate', 'About {amount} for each minute of conversation, counted against the monthly limit while the call is on.')
+                    .replace('{amount}', sym + ' ' + data.voice.per_minute));
             }
+            if (!rows.length) {
+                $('#ai_configured_spent_wrap').hide();
+                PosnicPro.settings.ai.syncRows();
+                return;
+            }
+            var html = '<table class="ai-spend"><thead><tr>'
+                + '<th>' + esc(PosnicPro.i18n.t('lang_ai_spend_feature', 'What')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_calls', 'Calls')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_minutes', 'Minutes')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_cost', 'About')) + '</th>'
+                + '</tr></thead><tbody>';
+            for (var i = 0; i < rows.length; i += 1) {
+                var row = rows[i];
+                var minutes = row.seconds > 0 ? (row.seconds / 60).toFixed(1) : '';
+                html += '<tr><td>' + esc(PosnicPro.settings.ai.featureLabel(row.feature)) + '</td>'
+                    + '<td class="num">' + esc(row.calls != null ? String(row.calls) : '') + '</td>'
+                    + '<td class="num">' + esc(minutes) + '</td>'
+                    + '<td class="num">' + esc(sym + ' ' + row.spent) + '</td></tr>';
+            }
+            html += '</tbody></table>';
             host.html(html);
+            $('#ai_spend_total').text(sym + ' ' + (data.total || '0.00'));
+            var cap = Number(data.cap) || 0;
+            var total = Number(data.total) || 0;
+            if (cap > 0) {
+                var pct = Math.min(100, Math.round((total / cap) * 100));
+                $('#ai_spend_meter').show();
+                $('#ai_spend_meter_bar').css('width', pct + '%').toggleClass('is-near', pct >= 80);
+                $('#ai_spend_meter_text').text(PosnicPro.i18n.t('lang_ai_spend_of_cap', '{pct}% of the {cap} monthly limit')
+                    .replace('{pct}', String(pct)).replace('{cap}', sym + ' ' + data.cap));
+            } else {
+                $('#ai_spend_meter').hide();
+                $('#ai_spend_meter_text').text(PosnicPro.i18n.t('lang_ai_spend_no_cap', 'No monthly limit is set.'));
+            }
+            $('#ai_configured_spent').text('\u2248 ' + sym + ' ' + (data.total || '0.00'));
+            $('#ai_configured_spent_wrap').show();
             PosnicPro.settings.ai.syncRows();
         }, function () { /* no meter is not a broken page */ });
     },
@@ -9423,6 +9531,7 @@ PosnicPro.settings.ai = {
                    the reader must not mistake for silence. */
                 ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false',
                 ai_assistant_greeting: String($('#ai_assistant_greeting').val() || '').trim().slice(0, 200),
+                ai_live_voice: $('#ai_live_voice').is(':checked') ? 'true' : 'false',
                 ai_assistant_instructions: String($('#ai_assistant_instructions').val() || '').trim().slice(0, 1500)
             })
         }, function (response) {
@@ -9496,5 +9605,14 @@ $(document).on('click', '#ai_key_cancel', function () {
     PosnicPro.settings.ai.syncRows();
 });
 $(document).on('click', '#ai_key_remove', function () {
+    PosnicPro.settings.ai.removeKey();
+});
+$(document).on('click', '#ai_edit', function () {
+    PosnicPro.settings.ai._editing = true;
+    PosnicPro.settings.ai.syncRows();
+});
+$(document).on('click', '#ai_remove_all', function () {
+    /* The same removal as the key row's: asked first, then the key goes
+       and the form comes back empty for a fresh setup. */
     PosnicPro.settings.ai.removeKey();
 });

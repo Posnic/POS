@@ -209,6 +209,140 @@ describe('ordering-assistant.service', () => {
     });
   });
 
+  describe('what the shop says about itself', () => {
+    test('the facts: where, when, how to get it, how to pay, where the customer sits', () => {
+      const facts = assistant.shopFacts({
+        store: {
+          name: 'Azure Sea Foods',
+          kind: 'restaurant',
+          currency: '₹',
+          currency_code: 'INR',
+          address: '12 Beach Road, Chennai, 600001',
+          phone: '044 1234 / 98400 00000',
+          website: 'azure.example',
+        },
+        channel: {
+          accepting: false,
+          message: 'Opens at 11:00.',
+          opens_at: '2026-09-13T05:30:00.000Z',
+          hours: {
+            mon: [{ open: 660, close: 1380 }],
+            tue: [],
+            sun: [
+              { open: 660, close: 900 },
+              { open: 1080, close: 1380 },
+            ],
+          },
+          fulfilment: ['dine_in', 'delivery', 'drone'],
+          time_zone: 'Asia/Kolkata',
+        },
+        charges: { delivery: { fee: 30, free_above: 500, min_order: 200 } },
+        payment: { cash: true, upi: 'true', phonepe_merchant_id: 'M123', online: false },
+        service_point: { label: 'Table 5', venue: null },
+      });
+      expect(facts).toMatchObject({
+        name: 'Azure Sea Foods',
+        kind: 'restaurant',
+        currency: 'INR',
+        address: '12 Beach Road, Chennai, 600001',
+        phone: '044 1234 / 98400 00000',
+        website: 'azure.example',
+        taking_orders_now: false,
+        status: 'Opens at 11:00.',
+        time_zone: 'Asia/Kolkata',
+        payment: ['cash', 'upi'],
+        customer_is_at: 'Table 5',
+      });
+      expect(facts.hours).toBe(
+        'Mon 11:00-23:00; Tue closed; Wed closed; Thu closed; Fri closed; Sat closed; Sun 11:00-15:00, 18:00-23:00'
+      );
+      expect(facts.ways_to_get_it).toEqual([
+        { way: 'dine_in', means: 'eat here (at the table)' },
+        { way: 'delivery', means: 'delivery', fee: 30, fee_waived_from: 500, minimum_order: 200 },
+      ]);
+      expect(JSON.stringify(facts)).not.toContain('M123');
+      /* What time it is where the SHOP is, so a four o'clock order can be
+         offered a cold drink and a late one cannot. Owner: "if user order
+         something in after noon ... inform we have cool drinks, fresh juice
+         and mojito like that." */
+      expect(facts.part_of_day).toMatch(/morning|afternoon|evening|late night/);
+      expect(facts.now).toMatch(/^\w+ \d{2}:\d{2}$/);
+
+      const room = assistant.shopFacts({
+        store: {},
+        channel: { accepting: true },
+        service_point: { venue: { name: 'Royal Club', unit_label: 'Room', unit: '123' } },
+      });
+      expect(room).toMatchObject({
+        name: 'this shop',
+        taking_orders_now: true,
+        hours: 'no fixed hours',
+        customer_is_at: 'Royal Club, Room 123',
+      });
+      expect(room.status).toBeUndefined();
+    });
+
+    test("the clock is the shop's own, and the parts of the day are named", () => {
+      /* Midday UTC is half past five in the evening in Kolkata and half past
+         seven in the morning in New York: the kitchen's afternoon, not the
+         server's. */
+      const noonUtc = new Date('2026-09-12T12:00:00.000Z');
+      expect(assistant.clockAt('Asia/Kolkata', noonUtc)).toEqual({
+        day: 'Saturday',
+        time: '17:30',
+        part: 'evening',
+      });
+      expect(assistant.clockAt('America/New_York', noonUtc)).toMatchObject({
+        time: '08:00',
+        part: 'morning',
+      });
+      /* A time zone nobody recognises still answers with a part of the day. */
+      expect(assistant.clockAt('Mars/Olympus', noonUtc).part).toMatch(
+        /morning|afternoon|evening|late night/
+      );
+      expect([10, 13, 18, 23].map(assistant.partOfDay)).toEqual([
+        'morning',
+        'afternoon',
+        'evening',
+        'late night',
+      ]);
+    });
+
+    test('the menu splits into what can be ordered and the names of what cannot', () => {
+      const { open, off } = assistant.splitMenu(assistant.menuFor(MENU));
+      expect(open.map((i) => i.id)).not.toContain('b1');
+      expect(open.every((i) => i.available === undefined)).toBe(true);
+      expect(off).toEqual(['Masala Dosa']);
+    });
+
+    test('the typed brief carries the two lists and the facts, and the rules name them', async () => {
+      jest.spyOn(ai, 'available').mockResolvedValue(true);
+      jest.spyOn(assistant._repo(), 'resolveGroup').mockResolvedValue({
+        status: true,
+        data: { values: { ai_ordering_assistant: 'true' } },
+      });
+      const ask = jest
+        .spyOn(ai, 'ask')
+        .mockResolvedValue({ status: true, data: { text: '{"reply":"ok","actions":[]}' } });
+      await assistant.reply(
+        { messages: [{ role: 'user', text: 'where are you?' }] },
+        {
+          categories: MENU,
+          store: { name: 'Azure', address: '12 Beach Road' },
+          channel: { accepting: true },
+        },
+        context
+      );
+      const [request] = ask.mock.calls[0];
+      expect(request.prompt).toMatch(/MENU \(JSON; what can be ordered right now/);
+      expect(request.prompt).not.toContain('"available":false');
+      expect(request.prompt).toMatch(/NOT TODAY[\s\S]*"Masala Dosa"/);
+      expect(request.prompt).toMatch(/ABOUT THE SHOP[\s\S]*"address":"12 Beach Road"/);
+      expect(assistant.SYSTEM).toContain('ABOUT THE SHOP');
+      expect(assistant.SYSTEM).toContain('NOT TODAY');
+    });
+  });
+
   describe('what the shop wrote', () => {
     test('house notes ride with the rules, after them; the greeting reaches the storefront; both are cut to size', async () => {
       jest.spyOn(ai, 'available').mockResolvedValue(true);
@@ -242,6 +376,7 @@ describe('ordering-assistant.service', () => {
       expect(request.system.length).toBeLessThan(assistant.SYSTEM.length + 1700);
       expect(await assistant.storefrontFeatures(context)).toEqual({
         assistant: true,
+        voice: 'turns',
         assistant_greeting: 'Vanakkam! What can I get you?',
       });
     });
@@ -260,12 +395,18 @@ describe('ordering-assistant.service', () => {
         context
       );
       expect(ask.mock.calls[0][0].system).toBe(assistant.SYSTEM);
-      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: true });
+      expect(await assistant.storefrontFeatures(context)).toEqual({
+        assistant: true,
+        voice: 'turns',
+      });
       resolveGroup.mockResolvedValue({
         status: true,
         data: { values: { ai_assistant_greeting: 'Hello' } },
       });
-      expect(await assistant.storefrontFeatures(context)).toEqual({ assistant: false });
+      expect(await assistant.storefrontFeatures(context)).toEqual({
+        assistant: false,
+        voice: false,
+      });
     });
   });
 

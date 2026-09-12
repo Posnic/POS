@@ -16,17 +16,18 @@
     -->
     <base href="/order/" />
     <title>Order placed</title>
-    <link href="assets/order.css" rel="stylesheet">
+    <link href="assets/order.css?v=20260912-design" rel="stylesheet">
     <script src="assets/i18n.js?v=20260912-design"></script>
-    <script src="assets/jquery-3.7.1.min.js"></script>
+    <script src="assets/jquery-3.7.1.min.js?v=20260912-design"></script>
     <!-- The receipt's PDF library, served by the shop like everything else
          on this page: the page's own policy allows no other host, and a
          kiosk on the shop's wifi may have no other host to reach. -->
-    <script src="assets/html2pdf.bundle.min.js"></script>
-    <script src="config.js"></script>
-    <link href="assets/channel-state.css" rel="stylesheet">
-    <script src="assets/channel-state.js"></script>
-    <script src="assets/service-point.js"></script>
+    <script src="assets/html2pdf.bundle.min.js?v=20260912-design"></script>
+    <script src="config.js?v=20260912-design"></script>
+    <link href="assets/channel-state.css?v=20260912-design" rel="stylesheet">
+    <script src="assets/channel-state.js?v=20260912-design"></script>
+    <script src="assets/service-point.js?v=20260912-design"></script>
+    <script src="assets/shop-address.js?v=20260912-design"></script>
 </head>
 
 <body>
@@ -50,14 +51,23 @@
         </div>
         <p class="order-time">Placed <span id="orderTime">--</span></p>
 
+        <!-- A bill is a record of money that has changed hands. This appears
+             when the shop has marked the order paid, and not before. -->
+        <button type="button" class="btn-primary done-bill" id="done-bill" hidden>Download the bill</button>
+
         <div class="button-group">
             <button type="button" class="btn-primary" onclick="clearReceiptAndGo('products.html')">Order more</button>
-            <button type="button" class="btn-secondary" onclick="clearReceiptAndGo('home.html')">Finish</button>
+            <button type="button" class="btn-secondary" onclick="window.location.href='history.html'">Your orders</button>
         </div>
     </main>
 
-    <!-- The receipt, below the fold, set as a receipt. -->
-    <section class="receipt-section" aria-label="Receipt">
+    <!--
+        The receipt, built but not shown: no money has changed hands yet, so
+        there is nothing to give a customer a bill for. It is filled in as
+        the page loads so that the shop marking the order paid has something
+        to offer immediately.
+    -->
+    <section class="receipt-section" aria-label="Receipt" hidden>
         <div class="center" id="branch-name"><strong>POS</strong></div>
         <div class="center">Token <strong><span id="token-id"></span></strong></div>
         <div class="center">Date <strong><span id="orderDate">--</span></strong></div>

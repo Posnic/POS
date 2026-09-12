@@ -30,7 +30,12 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/online-ordering.controller');
 const { ensureKioskKey } = require('../middleware/kiosk-key');
-const { assistantLimiter } = require('../middleware/assistant-rate-limit');
+const {
+  assistantLimiter,
+  voiceLimiter,
+  voiceTickLimiter,
+  placedOrderLimiter,
+} = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
 
@@ -90,5 +95,47 @@ router.post('/:storeId/orders', bind(controller.createOrder));
  * client here and switched on per shop inside.
  */
 router.post('/:storeId/assistant', assistantLimiter, bind(controller.assistant));
+
+/*
+ * A live voice line with the same assistant: the page's WebRTC offer in,
+ * the provider's answer out, the audio then phone to provider without us.
+ * Anonymous like the rest, billed per minute to the shop's own account, so
+ * it has its own switch inside and its own limit here.
+ */
+router.post('/:storeId/voice', voiceLimiter, bind(controller.voice));
+
+/*
+ * The meter on that line: the page reports every half minute that it is
+ * still open, and once as it hangs up. The server clocks the seconds itself
+ * and prices them against the monthly limit; past it, this answers 403 and
+ * the page hangs up. See services/voice-meter.js.
+ */
+router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.voiceTick));
+
+/*
+ * The order a customer has already placed, from the phone that placed it:
+ * a line at a new quantity, or the whole thing called off.
+ *
+ * Anonymous like the rest of this storefront, and holding the order is the
+ * proof - its id, which nobody guesses, and its token, which is on the
+ * customer's own screen. services/customer-order.service.js holds the rest
+ * of the rules: a billed, paid, refused, delivered or stale order is not the
+ * customer's to move, and says which of those it is.
+ */
+/* Read back by the phone that placed it: where it got to, and whether the
+   shop has marked it paid, which is what puts a bill behind it. Reading is
+   allowed where changing is not - a paid order is exactly the one a customer
+   wants to look at. */
+router.get('/:storeId/orders/:orderId', placedOrderLimiter, bind(controller.readPlacedOrder));
+router.post(
+  '/:storeId/orders/:orderId/items',
+  placedOrderLimiter,
+  bind(controller.changePlacedOrder)
+);
+router.post(
+  '/:storeId/orders/:orderId/cancel',
+  placedOrderLimiter,
+  bind(controller.cancelPlacedOrder)
+);
 
 module.exports = router;

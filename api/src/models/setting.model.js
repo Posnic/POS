@@ -3705,13 +3705,35 @@ class SettingModel extends BaseModel {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);
       if (!id) throw new Error('ID is required');
+      /*
+       * `id` comes from the settings request. Do not let a malformed value
+       * remain an object in the Mongo filter: normalizeId deliberately keeps
+       * legacy values unchanged when it cannot convert them.
+       */
+      if (typeof id !== 'string' || !ObjectId.isValid(id)) {
+        throw new Error('A valid table order ID is required');
+      }
 
-      // PHP lines 3003-3007: Delete with _id, branch_id, and license filters
-      const result = await collection.deleteOne({
-        _id: this.normalizeId(id),
+      const filter = {
+        _id: new ObjectId(id),
         branch_id: this.normalizeId(this.branchId),
         license: this.normalizeId(this.licenseId),
-      });
+      };
+      /*
+       * A tombstone first, or the delete never leaves this machine.
+       *
+       * tableorder syncs now. Sync propagates a deletion only through the
+       * recycle_bin tombstone every other synced collection writes; a bare
+       * deleteOne is invisible to it. Worse than invisible: the other side
+       * still holds the row and pushes it straight back, so a table removed
+       * on the cloud would reappear from the till on the next cycle, every
+       * cycle, forever.
+       */
+      const doc = await collection.findOne(filter);
+      if (doc) {
+        await BaseModel.deletedDocumentBackup(this.tableOrderCollection, doc);
+      }
+      const result = await collection.deleteOne(filter);
 
       if (result.deletedCount === 0) {
         return {

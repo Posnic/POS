@@ -65,6 +65,13 @@ jobs:
       # serves, in both directions.
       - name: Sync the customer bundles
         run: |
+          # Stamp the asset version with this commit. Scripts and styles are
+          # cached four hours on purpose, and a tag that never changes means a
+          # phone that opened the menu this morning runs this morning's code
+          # until tonight. The literal in the HTML is what a checkout served
+          # straight from the tree uses; tests/bundle-deployment.test.js keeps
+          # the two in step.
+          sed -i "s/v=20260912-design/v=${GITHUB_SHA:0:8}/g" order/*.html menu/index.html
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy.pem" \
             menu/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/menu/"

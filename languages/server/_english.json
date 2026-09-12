@@ -375,6 +375,9 @@
   "Common settings updated": [
     "src/controllers/settings.controller.js"
   ],
+  "Could not ask for the bill": [
+    "src/repositories/sale.repository.js"
+  ],
   "Could not check that API key.": [
     "src/middleware/api-key.js"
   ],
@@ -405,8 +408,14 @@
   "Could not list webhooks": [
     "app.js"
   ],
+  "Could not mark the bill printed": [
+    "src/repositories/sale.repository.js"
+  ],
   "Could not read branch modules": [
     "src/controllers/settings.controller.js"
+  ],
+  "Could not read pending bills": [
+    "src/repositories/sale.repository.js"
   ],
   "Could not read state": [
     "app.js"
@@ -994,6 +1003,9 @@
   "List id required": [
     "src/models/setting.model.js"
   ],
+  "Live voice needs an OpenAI key": [
+    "src/services/ai.service.js"
+  ],
   "Logged out successfully": [
     "src/services/whatsapp.service.js"
   ],
@@ -1147,6 +1159,9 @@
   "No sales data found for the period": [
     "src/models/dashboard.model.js"
   ],
+  "No shop at this address": [
+    "src/controllers/online-ordering.controller.js"
+  ],
   "No shop found at this address": [
     "src/controllers/online-ordering.controller.js",
     "src/repositories/item.repository.js"
@@ -1163,11 +1178,17 @@
   "No such price list": [
     "src/models/setting.model.js"
   ],
+  "No such voice session": [
+    "src/controllers/online-ordering.controller.js"
+  ],
   "No supplier IDs provided": [
     "src/services/supplier.service.js"
   ],
   "No supplier data provided": [
     "src/services/supplier.service.js"
+  ],
+  "No table was named": [
+    "src/repositories/sale.repository.js"
   ],
   "No theme settings found": [
     "src/controllers/settings.controller.js",
@@ -1213,6 +1234,9 @@
   "No valid payment settings provided": [
     "src/models/setting.model.js"
   ],
+  "No valid sale IDs to mark as billed.": [
+    "src/repositories/sale.repository.js"
+  ],
   "No valid sale IDs to mark as printed.": [
     "src/repositories/sale.repository.js"
   ],
@@ -1248,6 +1272,10 @@
   ],
   "Nothing to apply": [
     "src/services/coupon.service.js"
+  ],
+  "Nothing to connect": [
+    "src/services/ai.service.js",
+    "src/services/voice-session.service.js"
   ],
   "Nothing to receive - enter a quantity": [
     "src/models/receiving.model.js"
@@ -1305,7 +1333,7 @@
   "Only drafts can be deleted": [
     "src/repositories/purchase-order.repository.js"
   ],
-  "Order cancelled successfully": [
+  "Order cancelled": [
     "src/repositories/sale.repository.js"
   ],
   "Order history fetched": [
@@ -1317,7 +1345,7 @@
   "Order placed successfully": [
     "src/repositories/sale.repository.js"
   ],
-  "Order updated successfully": [
+  "Order updated": [
     "src/repositories/sale.repository.js"
   ],
   "Outstanding customers": [
@@ -1900,6 +1928,9 @@
   "The family needs a product name.": [
     "src/services/item.service.js"
   ],
+  "The live voice service did not answer": [
+    "src/services/ai.service.js"
+  ],
   "The sale behind this invoice was not found": [
     "src/services/invoice-sync.js"
   ],
@@ -2040,9 +2071,11 @@
     "src/controllers/online-ordering.controller.js"
   ],
   "This shop has nothing on its menu yet": [
-    "src/services/ordering-assistant.service.js"
+    "src/services/ordering-assistant.service.js",
+    "src/services/voice-session.service.js"
   ],
   "This shop has reached its monthly AI spending limit": [
+    "src/controllers/online-ordering.controller.js",
     "src/services/ai.service.js"
   ],
   "This shop transcribes on the handset, not on the server": [
@@ -2081,6 +2114,9 @@
   "Too many accounts created from this connection. Please wait an hour.": [
     "src/middleware/auth-rate-limit.js"
   ],
+  "Too many changes in a minute. Please wait a moment and try again.": [
+    "src/middleware/assistant-rate-limit.js"
+  ],
   "Too many invoice requests. Please wait a few minutes and try again.": [
     "src/middleware/auth-rate-limit.js"
   ],
@@ -2104,6 +2140,12 @@
   ],
   "Too many sign-in attempts. Please wait ten minutes and try again, ": [
     "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many voice reports in a minute.": [
+    "src/middleware/assistant-rate-limit.js"
+  ],
+  "Too many voice sessions in a minute. Please wait a moment and try again.": [
+    "src/middleware/assistant-rate-limit.js"
   ],
   "Top performer data retrieved successfully": [
     "src/models/dashboard.model.js"
@@ -2409,10 +2451,31 @@
     "src/services/po-receive-bridge.js"
   ],
   "no_assistant": [
-    "src/services/ordering-assistant.service.js"
+    "src/services/ordering-assistant.service.js",
+    "src/services/voice-session.service.js"
+  ],
+  "no_live_voice": [
+    "src/services/voice-session.service.js"
+  ],
+  "no_session": [
+    "src/services/voice-meter.js"
   ],
   "not valid": [
     "src/controllers/users.controller.js"
+  ],
+  "not_found": [
+    "src/controllers/online-ordering.controller.js",
+    "src/services/customer-order.service.js"
+  ],
+  "not_on_this_order": [
+    "src/repositories/sale.repository.js"
+  ],
+  "nothing_asked": [
+    "src/repositories/sale.repository.js",
+    "src/services/customer-order.service.js"
+  ],
+  "nothing_changed": [
+    "src/repositories/sale.repository.js"
   ],
   "overview": [
     "src/models/dashboard.model.js"

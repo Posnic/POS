@@ -162,6 +162,10 @@ const PREFERENCES = [
      first. Preferences, not secrets: a screen shows them back. */
   'ai_assistant_instructions',
   'ai_assistant_greeting',
+  /* Whether customers may TALK to the assistant on a live line, billed per
+     minute of audio by the shop's provider. Its own switch: audio minutes
+     cost more than typed questions. See services/voice-session.service.js. */
+  'ai_live_voice',
 ];
 
 const DOCUMENTS = [

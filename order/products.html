@@ -23,14 +23,15 @@
         fetching a framework and an icon font from another host to draw one
         basket glyph, which is drawn inline now.
     -->
-    <link href="assets/order.css" rel="stylesheet">
+    <link href="assets/order.css?v=20260912-design" rel="stylesheet">
     <script src="assets/i18n.js?v=20260912-design"></script>
-    <script src="assets/jquery-3.7.1.min.js"></script>
-    <script src="config.js"></script>
-    <link href="assets/channel-state.css" rel="stylesheet">
-    <script src="assets/channel-state.js"></script>
-    <script src="assets/service-point.js"></script>
-    <script src="assets/kiosk-core.js"></script>
+    <script src="assets/jquery-3.7.1.min.js?v=20260912-design"></script>
+    <script src="config.js?v=20260912-design"></script>
+    <link href="assets/channel-state.css?v=20260912-design" rel="stylesheet">
+    <script src="assets/channel-state.js?v=20260912-design"></script>
+    <script src="assets/service-point.js?v=20260912-design"></script>
+    <script src="assets/shop-address.js?v=20260912-design"></script>
+    <script src="assets/kiosk-core.js?v=20260912-design"></script>
     <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
@@ -80,8 +81,25 @@
                             <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"></path>
                         </svg>
                     </button>
+                    <!-- Said once per phone: the spark is easy to miss, and a customer
+                         who never learns it is there never asks. -->
+                    <div class="assistant-hint" id="assistant-hint" role="status" hidden>
+                        <button type="button" class="assistant-hint-open" id="assistant-hint-open">
+                            <span class="assistant-hint-title">New</span>
+                            <span class="assistant-hint-text" id="assistant-hint-text">Ask me what's good, or just talk</span>
+                        </button>
+                        <button type="button" class="assistant-hint-close" id="assistant-hint-close" aria-label="Dismiss">&times;</button>
+                    </div>
                     <!-- The other language, named in itself. Painted by i18n.js. -->
                     <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
+                    <!-- What this phone has ordered before, which is the only
+                         order history there can be without an account. -->
+                    <button type="button" class="icon-btn top-history" id="top-history" aria-label="Your orders" hidden>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 8v5l3 2"></path>
+                            <path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.5V3"></path>
+                        </svg>
+                    </button>
                     <!-- The order so far, as a glyph with the count on it. -->
                     <button type="button" class="icon-btn top-cart next-page" id="top-cart" aria-label="Your order">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -251,6 +269,24 @@
                 <span>Ask about the menu</span>
             </h2>
             <div class="assistant-log" id="assistant-log" role="log" aria-live="polite"></div>
+            <!-- While the customer is talking, the order itself stands in for a
+                 transcript nobody reads back. Owner: "no need to show
+                 conversation as text in the chat. just hide." -->
+            <div class="assistant-order" id="assistant-order" hidden>
+                <h3 class="assistant-order-title" id="assistant-order-title">Your order</h3>
+                <ul class="assistant-order-list" id="assistant-order-list"></ul>
+            </div>
+            <!-- The voice in progress: what it is doing, and the way to stop. -->
+            <div class="voice" id="voice" hidden>
+                <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>
+                <p class="voice-status" id="voice-status" role="status"></p>
+                <button type="button" class="voice-start" id="voice-start" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+                    <span>Tap to talk</span>
+                </button>
+                <button type="button" class="voice-stop" id="voice-stop">Stop talking</button>
+            </div>
+            <audio id="voice-out" autoplay playsinline hidden></audio>
             <div class="assistant-chips" id="assistant-chips">
                 <button type="button" class="assistant-chip" data-ask="What do you recommend?">What do you recommend?</button>
                 <button type="button" class="assistant-chip" data-ask="Something vegetarian and spicy">Something vegetarian and spicy</button>
@@ -260,15 +296,52 @@
             <form class="assistant-ask" id="assistant-form" autocomplete="off">
                 <label for="assistant-input" hidden>Your message</label>
                 <input type="text" id="assistant-input" class="assistant-input" maxlength="400" placeholder="Ask anything about the menu...">
+                <!-- Talk instead of type, beside the arrow where every messaging app
+                     keeps it. Shown where the shop lets customers talk. -->
+                <button type="button" class="assistant-talk" id="assistant-talk" aria-label="Talk to order" aria-pressed="false" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+                </button>
                 <button type="submit" class="assistant-send" id="assistant-send" aria-label="Send">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg>
                 </button>
             </form>
+            <!--
+                The order has gone. This is where the customer finds that out:
+                in the sheet they were just talking into, not on a screen the
+                page jumped to. A tick, then a pan with the steam coming off
+                it, then the token. Nothing moves until they tap Done.
+            -->
+            <div class="placed" id="assistant-placed" hidden>
+                <div class="placed-art" id="placed-art" data-stage="sent" aria-hidden="true">
+                    <svg class="placed-tick" viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"></circle><path d="M15 27l8 8 15-16"></path></svg>
+                    <div class="placed-pan">
+                        <span class="placed-steam"></span>
+                        <span class="placed-steam"></span>
+                        <span class="placed-steam"></span>
+                        <span class="placed-pot"></span>
+                    </div>
+                </div>
+                <p class="placed-said" id="placed-said" role="status">Sent to the kitchen</p>
+                <div class="placed-token">
+                    <span class="placed-token-label">Token</span>
+                    <span class="placed-token-number" id="placed-token">--</span>
+                </div>
+                <button type="button" class="placed-done" id="placed-done">Done</button>
+            </div>
+            <!-- The way out of the conversation and into the order. The page's
+                 own order bar sits under this sheet, so "tap Review order" needs
+                 a button that is actually on screen. Shown once the order holds
+                 something. -->
+            <button type="button" class="assistant-review" id="assistant-review" hidden>
+                <span>Review order</span>
+                <span class="assistant-review-sum" id="assistant-review-sum"></span>
+            </button>
             <p class="assistant-foot">Answers come from this shop's menu. Please confirm allergies at the counter.</p>
         </div>
     </dialog>
 
     <script src="assets/products/script.js?v=20260912-design"></script>
     <script src="assets/assistant/script.js?v=20260912-design"></script>
+    <script src="assets/assistant/voice.js?v=20260912-design"></script>
 </body>
 </html>

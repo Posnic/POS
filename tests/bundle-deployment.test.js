@@ -148,3 +148,25 @@ test('a missing bundle is logged rather than passed over in silence', () => {
     'app.js skips a missing bundle without saying anything'
   );
 });
+
+test('both deploys stamp the asset version with the commit, and the tag they look for is the one in the pages', () => {
+  /*
+   * The pages carry one literal version tag; the deploys sed it to the
+   * commit before the rsync. If somebody bumps the literal by hand and not
+   * the sed, the stamp silently stops matching and every deploy ships the
+   * same tag again - the exact bug this exists to end.
+   */
+  const products = read('order', 'products.html');
+  const tag = (products.match(/\?v=([A-Za-z0-9._-]+)"/) || [])[1];
+  assert.ok(tag, 'order/products.html carries no version tag');
+  for (const { file, what } of DEPLOYS) {
+    const workflow = read(file);
+    assert.ok(
+      workflow.includes('sed -i "s/v=' + tag + '/v=${GITHUB_SHA:0:8}/g" order/*.html menu/index.html'),
+      what + ' does not stamp v=' + tag + ' with the commit before shipping the bundles'
+    );
+    const stamp = workflow.indexOf('s/v=' + tag + '/');
+    const ship = workflow.search(/^\s*order\/\s/m);
+    assert.ok(stamp !== -1 && ship !== -1 && stamp < ship, what + ' stamps after it ships');
+  }
+});

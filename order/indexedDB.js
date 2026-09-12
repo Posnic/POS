@@ -111,9 +111,16 @@ async function rememberShop() {
         /* Whether the shop opened its assistant to customers; the spark. */
         shop.assistant = branch.assistant === true;
         shop.assistantGreeting = String(branch.assistant_greeting || "");
+        /* How a customer may talk to it: "live", "turns", or not at all. */
+        shop.voice = String(branch.voice || "");
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
         shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
+        /* The address bar says which shop this is, from the row that is
+           actually showing. A copied link that names another shop is an
+           arrival there instead (assets/shop-address.js). */
+        const address = storeAddressFromRow(branch);
+        if (address && window.ShopAddress && !window.ShopAddress.follow(address)) window.ShopAddress.keep(address);
     } catch (error) {
         /* No branch row yet is not an error; the fetch that stores one will
            be along in a moment. */
@@ -765,6 +772,84 @@ async function knownBranchId() {
     return "";
 }
 
+/* ------------------------------------------------- what this phone ordered
+ *
+ * There is no account behind a QR code and no address to write to, so the
+ * only place a customer's own order history can live is the browser that
+ * placed it. Twenty is plenty: this is "what did I order", not an archive,
+ * and the shop keeps the real record.
+ */
+const ORDER_HISTORY_KEY = "posnic_orders";
+const ORDER_HISTORY_KEEP = 20;
+
+function rememberedOrders() {
+    try {
+        const raw = localStorage.getItem(ORDER_HISTORY_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+    } catch (e) {
+        /* Private mode, cleared storage, or something that is not JSON. */
+        return [];
+    }
+}
+
+function rememberOrder(entry) {
+    if (!entry || !entry.orderId || !entry.token) return;
+    try {
+        const list = rememberedOrders().filter((row) => row && row.orderId !== entry.orderId);
+        list.unshift(entry);
+        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(list.slice(0, ORDER_HISTORY_KEEP)));
+    } catch (e) {
+        /* A browser that keeps nothing still placed the order. */
+    }
+}
+
+function forgetOrder(orderId) {
+    try {
+        const list = rememberedOrders().filter((row) => row && row.orderId !== String(orderId));
+        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+        /* nothing kept, nothing to forget */
+    }
+}
+
+/*
+ * WHAT THIS DEVICE IS, sent with an order.
+ *
+ * Not for the customer and not shown anywhere: it rides with the sale so a
+ * shop looking at fifteen prank orders one evening has something to act on.
+ * The address and the user agent are the server's to read; this is what only
+ * the browser knows. A random id kept in this browser makes the same device
+ * recognisable across orders without knowing who is holding it.
+ */
+const DEVICE_KEY = "posnic_device";
+
+function deviceId() {
+    try {
+        let id = localStorage.getItem(DEVICE_KEY);
+        if (!id) {
+            id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(DEVICE_KEY, id);
+        }
+        return id;
+    } catch (e) {
+        return "";
+    }
+}
+
+function clientFacts() {
+    const facts = { device_id: deviceId() };
+    try {
+        facts.language = String(navigator.language || "");
+        facts.platform = String(navigator.userAgentData?.platform || navigator.platform || "");
+        if (window.screen) facts.screen = String(window.screen.width) + "x" + String(window.screen.height);
+        facts.time_zone = String(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+    } catch (e) {
+        /* A browser that will not say is a browser we do not describe. */
+    }
+    return facts;
+}
+
 /*
  * The origin's default store, when a remembered address is dead.
  *
@@ -872,6 +957,9 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
             const next = await recoverDefaultStore(branchId);
             if (next) {
                 console.warn(`Shop ${branchId} is no longer at this address; using ${next}.`);
+                /* The bar moves to the live shop first, or the fresh row reads
+                   the dead address in the URL as a link to follow. */
+                if (window.ShopAddress) window.ShopAddress.keep(next);
                 await forgetShop();
                 return fetchAndStoreBranch(next, redirect, { ...options, recovered: true });
             }
@@ -981,6 +1069,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                 notes: !!(result.data.features && result.data.features.notes),
                 assistant: !!(result.data.features && result.data.features.assistant),
                 assistant_greeting: String((result.data.features && result.data.features.assistant_greeting) || ""),
+                voice: String((result.data.features && result.data.features.voice) || ""),
                 fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
                     ? result.data.channel.fulfilment
                     : [],
@@ -1803,7 +1892,7 @@ async function loadCart() {
     return cart; // ✅ Return cart data
 }
 
-async function checkout(transactionId, paymentStatus = "Upi") {
+async function checkout(transactionId, paymentStatus = "Upi", options = {}) {
     if (checkoutSingleFlight.isRunning()) {
         console.warn("Checkout already in progress; reusing the active request.");
     }
@@ -1812,7 +1901,7 @@ async function checkout(transactionId, paymentStatus = "Upi") {
         hideAppErrorScreen();
         showOrderProcessingScreen("Payment is being confirmed and your order is being created. Please do not close or refresh this page.");
         try {
-            const completed = await performCheckout(transactionId, paymentStatus);
+            const completed = await performCheckout(transactionId, paymentStatus, options);
             if (!completed) hideOrderProcessingScreen();
             return completed;
         } catch (error) {
@@ -1822,7 +1911,7 @@ async function checkout(transactionId, paymentStatus = "Upi") {
     });
 }
 
-async function performCheckout(transactionId, paymentStatus = "Upi") {
+async function performCheckout(transactionId, paymentStatus = "Upi", options = {}) {
     try {
         // 🔄 Get cart data from IndexedDB
         const cartItems = await getCartData();
@@ -1882,6 +1971,8 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             },
             body: JSON.stringify({
                 items: payload,
+                /* What this device is, for the shop's own records. */
+                client: typeof clientFacts === "function" ? clientFacts() : undefined,
                 customerMobile: '+91' + savedNumber,
                 transactionId: transactionId,
                 idempotencyKey: orderAttemptId,
@@ -1917,6 +2008,21 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             result.data.tokenId = normalizedTokenId;
             result.data.payment_status = result.data.payment_status || paymentStatus;
             sessionStorage.setItem("kioskReceipt", JSON.stringify(result.data));
+            /* This phone's own list of what it has ordered: see
+               rememberedOrders above. The shop is asked for the state of
+               each one when the list is drawn. */
+            rememberOrder({
+                orderId: String(result.data.sale_id || ""),
+                token: normalizedTokenId,
+                shop: String(branchId || ""),
+                shopName: String(result.data.branch_name || (typeof shop === "object" && shop ? shop.name : "") || ""),
+                at: new Date().toISOString(),
+                items: (result.data.items || []).map((line) => ({
+                    name: String(line.item_name || line.name || ""),
+                    quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0)
+                })),
+                total: Number(result.data.total || 0)
+            });
             localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
             console.log(result.data);
             console.log("✅ Checkout successful! Token:", tokenId);
@@ -1929,6 +2035,18 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
             localStorage.removeItem("qr_id");
             clearOrderAttemptId();
             hideOrderProcessingScreen();
+            /* A caller with something to say first - the voice, which reads
+               the token out - stays on this page and is handed the token; it
+               moves to the receipt when it is done. */
+            if (options && options.stay) {
+                return {
+                    placed: true,
+                    token: normalizedTokenId,
+                    /* Changing this order later needs its id as well as its
+                       token; the id is what proves the caller placed it. */
+                    saleId: String(result.data.sale_id || result.data.order_id || "")
+                };
+            }
             window.location.href = `thankyou.html?token=${encodeURIComponent(normalizedTokenId)}`;
             return true;
         } else {

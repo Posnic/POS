@@ -156,18 +156,67 @@ async function renderAndPrint() {
     $("#total").text(`₹${receiptData.total.toFixed(2)}`);
     $("#orderTypePrint").text(orderType);
 
-    // ✅ Generate PDF after 1s
-    setTimeout(async () => {
-        try {
-            await generatePdfFromHtmlFile();
-            sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
-        } catch (error) {
-            console.error("Receipt PDF generation failed:", error);
-            alert(error.message || t("Receipt PDF could not be generated."));
-        }
-    }, 1000);
+    /*
+     * NOTHING IS DOWNLOADED HERE.
+     *
+     * This page used to push a PDF at the phone a second after it opened.
+     * Owner: "after order no need to show bill or pdf not required. once
+     * payment done from desktop then make bill available to download." A bill
+     * is a record of money that has changed hands, and at this moment none
+     * has: the order is a ticket in a kitchen. The shop marks it paid at the
+     * till, and the bill is offered then.
+     *
+     * generatePdfFromHtmlFile stays, and is what that button will call.
+     */
+    void printedFlagKey;
+
+    /*
+     * The bill appears when the shop says the money is in.
+     *
+     * Asked once as the page opens and again on the way back to it, because
+     * the till is where that changes and nothing tells this page when it
+     * does. A shop that has not been asked, or an order it has never heard
+     * of, simply leaves the button hidden.
+     */
+    offerBillWhenPaid(token);
 }
 
+
+/* Does the shop say this order is paid? If so, the bill is worth having. */
+async function offerBillWhenPaid(token) {
+    const button = document.getElementById("done-bill");
+    if (!button) return;
+    const kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []).find(
+        (row) => row && String(row.token) === String(token)
+    );
+    const orderId = new URLSearchParams(window.location.search).get("order") || (kept && kept.orderId) || "";
+    const shopId = (kept && kept.shop) || (typeof knownBranchId === "function" ? await knownBranchId() : "");
+    if (!orderId || !shopId) return;
+    try {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return;
+        const body = await response.json();
+        if (!body || body.type !== "success" || !body.data || !body.data.bill_ready) return;
+        button.hidden = false;
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            try {
+                await generatePdfFromHtmlFile();
+            } catch (error) {
+                console.error("Receipt PDF generation failed:", error);
+                alert(error.message || t("Receipt PDF could not be generated."));
+            } finally {
+                button.disabled = false;
+            }
+        });
+    } catch (error) {
+        /* Offline, or a shop that cannot be reached: no bill offered, which
+           is the same as before this existed. */
+    }
+}
 
 async function generatePdfFromHtmlFile() {
 

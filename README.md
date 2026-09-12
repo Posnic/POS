@@ -24,7 +24,7 @@ before making a package-level licence statement.
 [![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-66%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
-[![API](https://img.shields.io/badge/REST%20API-628%20endpoints-blue)](docs/API.md)
+[![API](https://img.shields.io/badge/REST%20API-637%20endpoints-blue)](docs/API.md)
 [![Source licence](https://img.shields.io/badge/source%20licence-AGPL--3.0-blue)](LICENSE)
 [![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
@@ -235,7 +235,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Contributor quickstart](docs/CONTRIBUTOR_QUICKSTART.md) | Local setup, test commands, issue map, PR flow and safety rules |
 | [Developer guide](docs/DEVELOPMENT.md) | Setup, tests, conventions, good first issues |
 | [Architecture](docs/ARCHITECTURE.md) | How it fits together, and the parts that bite |
-| [REST API](docs/API.md) | 628 endpoints, generated from the routes |
+| [REST API](docs/API.md) | 637 endpoints, generated from the routes |
 | [Hardware](docs/HARDWARE_MATRIX.md) | Printers, scanners, drawers, scales — and how far each claim is checked |
 | [India e-invoicing](docs/INDIA_EINVOICING_DESIGN.md) | Research, readiness inventory and design for GST e-invoicing as an optional feature; no live IRP submission is built |
 | [India GST return gaps](docs/INDIA_GST_RETURNS_GAPS.md) | What the GST reports compute today, measured against GSTR-1, 3B and 9 |
@@ -244,6 +244,11 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Disaster recovery](docs/DISASTER_RECOVERY.md) | Getting back to working, with RPO and RTO as numbers |
 | [Open source POS evaluation checklist](https://posnic.github.io/open-source-pos-evaluation-checklist.html) | Verify licensing, offline checkout, hardware, recovery and maintenance before rollout |
 | [Offline POS backup and restore checklist](https://posnic.github.io/offline-pos-backup-checklist.html) | Turn routine copies into a tested recovery process for local and self-hosted deployments |
+| [Restaurant POS opening and closing checklist](https://posnic.github.io/restaurant-pos-opening-closing-checklist.html) | Test tills, menus, printers, offline operation, reconciliation and handover for each shift |
+| [Retail POS inventory cycle count checklist](https://posnic.github.io/retail-pos-inventory-cycle-count-checklist.html) | Control stock cutoffs, blind counts, offline synchronization, variance investigation and approvals |
+| [Retail POS end-of-day cash reconciliation checklist](https://posnic.github.io/retail-pos-end-of-day-cash-reconciliation-checklist.html) | Close tills, reconcile each tender, investigate variances and preserve a reviewable shift handover |
+| [Retail POS incident response checklist](https://posnic.github.io/retail-pos-incident-response-checklist.html) | Contain billing outages, preserve evidence, prevent duplicates, recover service and reconcile affected records |
+| [Retail POS receipt printer troubleshooting](https://posnic.github.io/retail-pos-receipt-printer-troubleshooting.html) | Protect completed sales, isolate printer and cash-drawer faults, recover safely and prevent duplicate billing |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |

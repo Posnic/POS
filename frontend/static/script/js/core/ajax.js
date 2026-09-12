@@ -100,6 +100,13 @@ PosnicPro.request = function (params, callback, failure = null) {
         request.fail(function (xhr, status, error) {
             $(".loadingSpinner").remove();
 
+            /* The token rides on every credentialed answer, refusals
+               included. A page whose reads all fail, such as the login page
+               under an expired login, still learns the token it needs for
+               its next write instead of being refused for not having it. */
+            var refreshed = xhr && xhr.getResponseHeader && xhr.getResponseHeader('X-CSRF-TOKEN');
+            if (refreshed) { PosnicPro.csrfToken = refreshed; }
+
             // A non-JSON body (proxy error page, dropped connection, offline)
             // used to throw here and kill the whole handler, so the user saw
             // nothing at all. Fall back to null and keep going.

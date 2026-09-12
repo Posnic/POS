@@ -2138,6 +2138,102 @@ html[lang="ta"] .attract-note {
 /* ------------------------------------------------------ the assistant */
 
 /*
+ * The first-time callout: a small card under the spark, ink on paper, with
+ * a pointer. It rises once, waits a few seconds, and leaves; a tap opens
+ * the sheet, a cross dismisses it for good on this phone.
+ */
+.top-row {
+  position: relative;
+}
+
+.assistant-hint {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 88px;
+  z-index: 12;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+.assistant-hint::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+.assistant-hint-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.assistant-hint-title {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-hint-close {
+  width: 36px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0 12px 12px 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .assistant-hint:not([hidden]) {
+    animation: hint-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .assistant-hint {
+    right: 8px;
+  }
+  .assistant-hint::before {
+    right: 98px;
+  }
+}
+
+/*
  * The spark: the one thing in the header that is not the shop's own. Drawn
  * only where the shop opened its assistant, and once, when it appears, it
  * breathes - a customer should notice it exists without being nagged by it.
@@ -2203,6 +2299,162 @@ dialog.assistant {
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linejoin: round;
+}
+
+.assistant-talk {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.assistant-talk svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.assistant-talk[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* While the customer is talking, the keyboard row steps aside. */
+dialog.assistant[data-voice="on"] .assistant-ask,
+dialog.assistant[data-voice="on"] .assistant-chips {
+  display: none;
+}
+
+.voice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--line);
+}
+
+.voice-orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.voice-orb[data-state="connecting"] {
+  border-style: dashed;
+}
+
+.voice-orb[data-state="listening"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.voice-orb[data-state="speaking"] {
+  background: var(--surface);
+}
+
+.voice-orb[data-state="thinking"] {
+  border-color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voice-orb[data-state="listening"] {
+    animation: orb-breathe 1.6s ease-in-out infinite;
+  }
+
+  .voice-orb[data-state="speaking"] {
+    animation: orb-talk 0.6s ease-in-out infinite;
+  }
+
+  .voice-orb[data-state="connecting"],
+  .voice-orb[data-state="thinking"] {
+    animation: orb-spin 1.2s linear infinite;
+  }
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes orb-talk {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.voice-status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.voice-orb[data-state="ready"] {
+  border-style: dashed;
+  border-color: var(--ink-soft);
+}
+
+.voice-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+}
+
+.voice-start svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voice-start:not([hidden]) {
+    animation: orb-breathe 1.8s ease-in-out infinite;
+  }
+}
+
+.voice-stop {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
 }
 
 .assistant-log {
@@ -2389,6 +2641,310 @@ dialog.assistant {
   color: var(--ink-soft);
   font-size: 12px;
   text-align: center;
+}
+
+/*
+ * Talking, not chatting: while a voice line is open the transcript is hidden
+ * and the order takes its place. A customer on a call is listening, not
+ * reading, and the one thing worth looking at is what they have ordered.
+ */
+dialog.sheet[data-voice="on"] .assistant-log {
+  display: none;
+}
+
+dialog.sheet[data-voice="on"] .assistant-chips,
+dialog.sheet[data-voice="on"] .assistant-foot {
+  display: none;
+}
+
+.assistant-order {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 4px 0 0;
+}
+
+.assistant-order-title {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-order-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-order-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+
+.assistant-order-list li:last-child {
+  border-bottom: 0;
+}
+
+.assistant-order-qty {
+  min-width: 2.2em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.assistant-order-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.assistant-order-note {
+  flex: 1 1 100%;
+  order: 3;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* Changed by hand: whatever the talking got wrong, a thumb can put right. */
+.assistant-order-step {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.assistant-order-empty {
+  padding: 7px 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+/*
+ * The order has gone. Two beats, in the sheet the customer was talking into:
+ * a tick that draws itself, then a pan with steam coming off it. Neither is
+ * decoration - between them they answer the only two questions a customer has
+ * at that moment, did it go and is anybody cooking it.
+ */
+.placed {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 0 6px;
+  text-align: center;
+}
+
+.placed-art {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+.placed-tick,
+.placed-pan {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.4s ease;
+}
+
+.placed-art[data-stage='sent'] .placed-pan,
+.placed-art[data-stage='cooking'] .placed-tick {
+  opacity: 0;
+}
+
+.placed-tick {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.placed-tick circle {
+  opacity: 0.25;
+}
+
+/* The pan, drawn rather than pictured: a shop's food is its own, and a stock
+   photograph of somebody else's is worse than a shape. */
+.placed-pot {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 16px;
+  height: 30px;
+  border: 3px solid var(--ink);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  background: var(--surface);
+}
+
+.placed-pot::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -3px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--ink);
+}
+
+.placed-steam {
+  position: absolute;
+  bottom: 48px;
+  width: 5px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--ink-soft);
+  opacity: 0;
+}
+
+.placed-steam:nth-of-type(1) {
+  left: 30px;
+}
+.placed-steam:nth-of-type(2) {
+  left: 46px;
+}
+.placed-steam:nth-of-type(3) {
+  left: 62px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .placed-art[data-stage='sent'] .placed-tick path {
+    stroke-dasharray: 44;
+    stroke-dashoffset: 44;
+    animation: placed-draw 0.5s 0.1s ease-out forwards;
+  }
+
+  .placed-art[data-stage='cooking'] .placed-steam {
+    animation: placed-steam 2.4s ease-in-out infinite;
+  }
+
+  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(2) {
+    animation-delay: 0.5s;
+  }
+
+  .placed-art[data-stage='cooking'] .placed-steam:nth-of-type(3) {
+    animation-delay: 1s;
+  }
+}
+
+/* Without motion the tick is simply drawn and the steam simply sits there. */
+@media (prefers-reduced-motion: reduce) {
+  .placed-art[data-stage='cooking'] .placed-steam {
+    opacity: 0.35;
+  }
+}
+
+@keyframes placed-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes placed-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scaleY(0.6);
+  }
+  35% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scaleY(1.3);
+  }
+}
+
+.placed-said {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.placed-token {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.placed-token-label {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.placed-token-number {
+  font-size: 40px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.placed-done {
+  min-width: 160px;
+  min-height: var(--tap);
+  margin-top: 4px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* While it is up, the conversation's own furniture is out of the way. */
+dialog.sheet:has(.placed:not([hidden])) .assistant-log,
+dialog.sheet:has(.placed:not([hidden])) .assistant-order,
+dialog.sheet:has(.placed:not([hidden])) .assistant-chips,
+dialog.sheet:has(.placed:not([hidden])) .assistant-ask,
+dialog.sheet:has(.placed:not([hidden])) .assistant-review,
+dialog.sheet:has(.placed:not([hidden])) .assistant-foot {
+  display: none;
+}
+
+/* The way out of the conversation: the order, and the button that reviews
+   and places it. The page's own order bar is under this sheet, out of reach. */
+.assistant-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  margin: 10px 0 0;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.assistant-review-sum {
+  font-weight: 500;
+  opacity: 0.9;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------- the machine */
@@ -3036,4 +3592,112 @@ dialog.sheet[open]::backdrop {
   font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- what this phone ordered
+ *
+ * A list of what has already happened, so it is quiet: no photographs, no
+ * prices shouted, one line of state per order. The state is the only thing
+ * carrying colour, because it is the only thing that changes.
+ */
+.history {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 16px 40px;
+}
+
+.history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-row {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-shop {
+  font-weight: 700;
+}
+
+.history-when {
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.history-what {
+  margin: 6px 0 10px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.history-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-token {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-state {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.history-state[data-state='paid'] {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.history-state[data-state='cancelled'] {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.history-bill {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-empty,
+.history-note {
+  color: var(--ink-soft);
+  font-size: 14px;
+  text-align: center;
+}
+
+.history-note {
+  margin-top: 24px;
+  font-size: 12px;
+}
+
+.done-bill {
+  margin: 8px auto 0;
+  display: block;
 }

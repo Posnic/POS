@@ -44,6 +44,15 @@ async function checkBranchFromURL() {
     const note = urlParams.get("notes");
     if (note) localStorage.setItem('note', note);
     else localStorage.removeItem('note');
+    /* ?ai=talk or ?ai=ask: a code printed for the conversation. Kept for
+       the products page, because the redirect below drops the query. */
+    const aiFirst = String(urlParams.get("ai") || "").toLowerCase();
+    try {
+        if (aiFirst === "talk" || aiFirst === "ask" || aiFirst === "1") sessionStorage.setItem("posnic_ai_first", aiFirst === "1" ? "ask" : aiFirst);
+        else sessionStorage.removeItem("posnic_ai_first");
+    } catch (e) {
+        /* a browser that keeps nothing lands on the menu, which still works */
+    }
 
     if (branchId) {
         console.log("🔗 Branch from QR URL:", branchId);
@@ -184,9 +193,19 @@ function hideLoader() {
 // ✅ Auto-run on load
 (async () => {
     await loadEnvConfig();
-    // Prioritize URL first
+    /*
+     * The URL first, whenever it says anything: a store address in the path
+     * or the query, a code printed for the conversation (?ai=), a note.
+     *
+     * This read the URL only for ?branch=. With the address in the path,
+     * which is what every printed code carries, a browser that already held
+     * a shop went straight to the menu: ?ai=talk was never read, and a code
+     * for another shop showed the stored one. A first visit worked because
+     * nothing was stored yet, so it looked like it only worked on a phone.
+     */
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("branch")) {
+    const said = !!storeAddressFromUrl() || urlParams.has("ai") || urlParams.has("notes");
+    if (said) {
         await checkBranchFromURL();
     } else {
         await checkBranchStored();

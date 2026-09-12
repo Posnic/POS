@@ -1447,6 +1447,30 @@ class ItemsController extends BaseController {
     }
   }
 
+  /**
+   * Whether this shop still has samples, and how many of each.
+   *
+   * Read by the dashboard and by the line every page carries while samples
+   * are on, so that both can say something true and both can stop saying
+   * anything the moment the samples are gone.
+   */
+  async demoStatus(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.sendError(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const result = await this.service.demoStatus({
+        branchId: this.model?.branchId || null,
+        licenseId: this.model?.licenseId || null,
+      });
+      return this.success(res, result.data, 'success');
+    } catch (error) {
+      console.error('Error in demoStatus:', error);
+      return this.success(res, { on: false, counts: {}, total: 0 });
+    }
+  }
+
   async purgeDemoData(req, res) {
     try {
       if (req.user?.access?.item?.delete === false) {
@@ -2404,9 +2428,14 @@ class ItemsController extends BaseController {
    *
    * The shop is spending its own money with its own provider, so it is
    * entitled to see the meter without leaving the settings page. Figures are
-   * ours, computed from the token counts each call reported at list prices;
-   * the provider's own dashboard is the final word on the bill, and the
-   * settings card says so.
+   * ours, computed from the token counts each call reported at list prices,
+   * in the shop's own currency at a rounded rate; the provider's own
+   * dashboard is the final word on the bill, and the settings card says so.
+   *
+   * Beside each feature: how many calls, and for live voice how many seconds
+   * of open line those calls held, because a minute is what the provider
+   * bills and what a shopkeeper can picture. With it, the limit the shop set
+   * and what a minute of live voice costs, so the switch can say its price.
    */
   async aiSpend(req, res) {
     try {
@@ -2417,16 +2446,34 @@ class ItemsController extends BaseController {
       };
       if (!context.branchId) return this.success(res, { features: [] });
 
-      const spend = await budget.spentThisMonth(context);
+      const [spend, currency, settings] = await Promise.all([
+        budget.spentThisMonth(context),
+        budget.currencyOf(context),
+        ai.settingsFor(context),
+      ]);
       const features = Object.entries(spend.byFeature || {})
         .sort((a, b) => b[1] - a[1])
-        .map(([feature, minor]) => ({
-          feature,
-          /* Whole currency units with two decimals: the caller is a person
-             reading a number, not code doing arithmetic on it. */
-          spent: (minor / 100).toFixed(2),
-        }));
-      return this.success(res, { features, total: (spend.total / 100).toFixed(2) });
+        .map(([feature, minor]) => {
+          const detail = (spend.details && spend.details[feature]) || {};
+          return {
+            feature,
+            /* Whole currency units with two decimals: the caller is a person
+               reading a number, not code doing arithmetic on it. */
+            spent: (minor / 100).toFixed(2),
+            calls: Number(detail.calls) || 0,
+            seconds: Number(detail.seconds) || 0,
+          };
+        });
+      return this.success(res, {
+        features,
+        total: (spend.total / 100).toFixed(2),
+        currency: { code: currency.code, symbol: currency.symbol },
+        cap: settings.cap ? Number(settings.cap).toFixed(2) : null,
+        voice: {
+          per_minute: (budget.voiceMinuteMinor(settings.model, currency.rate) / 100).toFixed(2),
+        },
+        approximate: true,
+      });
     } catch (error) {
       console.error('Error in aiSpend:', error);
       /* A meter that cannot be read is not a broken settings page. */

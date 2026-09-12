@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
@@ -12,6 +13,16 @@ const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
 const onlineOrdering = require('../utils/online-ordering');
+
+/*
+ * The two ways this estate spells takeaway.
+ *
+ * Not a tidy-up waiting to happen: both are already in the data, written by
+ * different screens over different years, and getTablesWithActiveOrders has
+ * always read both. Anything that filters on dine_type has to take both or it
+ * silently answers about half the orders.
+ */
+const TAKEAWAY_SAID = ['Take away', 'Takeaway'];
 const salesChannels = require('../utils/sales-channels');
 const itemChannels = require('../utils/item-channels');
 const partnerVenues = require('../utils/partner-venues');
@@ -7014,6 +7025,174 @@ class SalesRepository {
     return Model.kitchenPrintModel(branchId);
   }
 
+  /*
+   * =====================================================================
+   * THE BILL, ASKED FOR FROM THE FLOOR.
+   * =====================================================================
+   *
+   * The waiter is standing at the table when the guest asks for the bill.
+   * Walking to the till to ask somebody else to press a button is the exact
+   * errand a handset exists to remove, and every restaurant POS worth the name
+   * lets the floor fire it - Toast, Square, Lightspeed, MICROS, Petpooja.
+   *
+   * WHAT THE HANDSET MAY AND MAY NOT DO. It may ASK for the bill. It may not
+   * say the bill was paid. The person who takes the order must not be the
+   * person who declares the money received, or a waiter can close a cash bill
+   * and pocket it with nothing in the system to disagree. So nothing on this
+   * path writes payment_status, and a test says so out loud.
+   *
+   * WHERE IT PRINTS. The cashier's receipt printer, never the kitchen's. They
+   * are different documents, not one document in two places: a KOT is
+   * departmental and carries only its own lines, a bill is single and carries
+   * the totals, the tax and the shop header. printer-targets.js has always
+   * modelled this - a LIST of printerNames for KOT, one printerName for the
+   * receipt - and this rides that split rather than inventing another.
+   *
+   * HOW IT TRAVELS. Exactly the way a kitchen ticket does, because that path
+   * is proven: the request is a mark on the sale, the till polls for marks it
+   * has not served, prints, and stamps them done. No socket to the phone, no
+   * printer on the phone, and a till that was switched off catches up when it
+   * comes back rather than losing the bill.
+   */
+
+  /**
+   * A waiter asks for the bill for a table.
+   *
+   * Marks every open ticket for that table, because a table that ordered three
+   * times has three tickets and the guest is asking for one bill covering all
+   * of them. Already-requested tickets are left with their original timestamp:
+   * asking twice is somebody wondering where the bill got to, not a second
+   * bill.
+   */
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+      const table = String(tableNumber == null ? '' : tableNumber).trim();
+      if (!table) {
+        return { status: false, message: 'No table was named', data: null };
+      }
+
+      const query = {
+        sale_process: { $regex: 'KOT', $options: 'i' },
+        table_number: table,
+        /*
+         * Only what is still open. A settled ticket has had its bill.
+         *
+         * The literal, not PAYMENT_STATUS.UNPAID - there is no such member.
+         * PAYMENT_STATUS carries pending/completed/failed/refunded, and this
+         * column holds the word 'Unpaid' that createOnlineOrder writes and
+         * getTablesWithActiveOrders reads. Reaching for the constant would
+         * have put `undefined` in the query, which Mongo answers by matching
+         * every document where the field is missing.
+         */
+        payment_status: 'Unpaid',
+        bill_printed_at: { $in: [null, undefined] },
+      };
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const result = await Model.updateMany(
+        { ...query, bill_requested_at: { $in: [null, undefined] } },
+        {
+          $set: {
+            bill_requested_at: new Date(),
+            bill_requested_by: String(askedBy || '').trim(),
+          },
+        }
+      );
+
+      /* Asked for a second time, or asked for a table with nothing open. The
+         caller is told which, because "the bill is already on its way" and
+         "there is nothing to bill" send a waiter to two different places. */
+      const waiting = await Model.countDocuments(query);
+
+      return {
+        status: waiting > 0,
+        message:
+          waiting > 0 ? 'The bill is on its way to the counter' : 'Nothing is open on that table',
+        data: {
+          table_number: table,
+          marked: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+          waiting,
+        },
+      };
+    } catch (error) {
+      console.error('Error in requestBillPrintModel:', error);
+      return { status: false, message: 'Could not ask for the bill', data: null };
+    }
+  }
+
+  /**
+   * The bills the till has been asked for and has not printed yet.
+   *
+   * Shaped like multiKitchenPrintModel's answer on purpose: the desktop
+   * already knows how to read a list of sales, print them and report back, and
+   * a second shape would be a second thing to keep working.
+   */
+  async pendingBillPrintsModel(branchId, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+
+      const query = {
+        bill_requested_at: { $ne: null, $exists: true },
+        bill_printed_at: { $in: [null, undefined] },
+      };
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
+
+      return { status: true, message: 'success', data: sales };
+    } catch (error) {
+      console.error('Error in pendingBillPrintsModel:', error);
+      return { status: false, message: 'Could not read pending bills', data: [] };
+    }
+  }
+
+  /**
+   * The till says the paper came out.
+   *
+   * Stamped only after the print, so a till that dies mid-job asks again when
+   * it comes back rather than a guest waiting at a table for a bill the system
+   * believes it already produced.
+   */
+  async markBillPrintedModel(saleIds, { SaleModel } = {}) {
+    try {
+      const Model = this.getModel(SaleModel);
+      const ids = (Array.isArray(saleIds) ? saleIds : [saleIds])
+        .map((id) => String(id || ''))
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      if (!ids.length) {
+        return { status: false, message: 'No valid sale IDs to mark as billed.', data: null };
+      }
+
+      const query = { _id: { $in: ids } };
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const result = await Model.updateMany(query, { $set: { bill_printed_at: new Date() } });
+      return {
+        status: true,
+        message: 'success',
+        data: {
+          marked: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+        },
+      };
+    } catch (error) {
+      console.error('Error in markBillPrintedModel:', error);
+      return { status: false, message: 'Could not mark the bill printed', data: null };
+    }
+  }
+
   async multiKitchenPrintModel(branchId) {
     try {
       const db = await BaseModel.getDb();
@@ -7236,6 +7415,17 @@ class SalesRepository {
         /* The shop's own table, as the printed code named it (the customer
            page) - the captain app says it as kiosk_table_no. */
         table,
+        /*
+         * WHERE THE ORDER CAME FROM, for a shop that one evening is looking
+         * at fifteen orders nobody is going to collect. The controller fills
+         * this in from the request; the page adds what only it knows.
+         *
+         * Written and never read back out to a customer. Nothing in the
+         * product acts on it yet, deliberately: blocking somebody is a
+         * decision a shopkeeper makes, and there is no point building the
+         * decision before there is anything to decide it from.
+         */
+        client,
         /* Who a delivery goes to. The phone is customerMobile above. */
         customer_name,
         customer_address,
@@ -7658,7 +7848,8 @@ class SalesRepository {
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
       const salesCollection = db.collection('sales');
-      const insertResult = await salesCollection.insertOne({
+      const clientRecord = this._clientFacts(client);
+      const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
         ...(idempotencyKey ? { idempotency_key: String(idempotencyKey) } : {}),
@@ -7753,9 +7944,21 @@ class SalesRepository {
         updated_date: now,
         transaction_id: transactionId || '',
         token_id: tokenId,
+        /* The device this came from; see the note beside `client` above.
+           Worked out once: calling twice would stamp two different times. */
+        ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
-      });
+      };
+
+      /* A number taken a moment ago is taken again, not handed to the
+         customer as a database error. */
+      const insertResult = await this.insertSaleWithFreshNumber(
+        salesCollection,
+        saleDocument,
+        branchObjectId
+      );
+      salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
 
@@ -8316,7 +8519,7 @@ class SalesRepository {
         return updateResult.modifiedCount > 0
           ? {
               status: true,
-              message: 'Order cancelled successfully',
+              message: 'Order cancelled',
               data: { order_id: orderId },
             }
           : {
@@ -8601,7 +8804,7 @@ class SalesRepository {
       return updateResult.modifiedCount > 0
         ? {
             status: true,
-            message: 'Order updated successfully',
+            message: 'Order updated',
             data: {
               order_id: orderId,
               items_updated: finalItems.length,
@@ -8621,6 +8824,327 @@ class SalesRepository {
         data: [],
       };
     }
+  }
+
+  /* ------------------------------- the customer's own order, after it went */
+
+  /*
+   * What we keep about the device an order came from: an address, what the
+   * browser calls itself, and the random id that browser keeps for itself.
+   * Everything is cut to a length, and anything not recognised is dropped, so
+   * a crafted payload cannot turn this into storage of its own.
+   */
+  _clientFacts(client) {
+    const from = client && typeof client === 'object' ? client : {};
+    /* Control characters go by code point, not by a regular expression: a
+       regex holding them is refused by the linter, for the good reason that
+       nobody can read one. */
+    const text = (value, max) => {
+      let out = '';
+      for (const character of String(value == null ? '' : value)) {
+        const code = character.codePointAt(0);
+        if (code >= 32 && code !== 127) out += character;
+      }
+      return out.trim().slice(0, max);
+    };
+    const facts = {};
+    const ip = text(from.ip, 64);
+    if (ip) facts.ip = ip;
+    const agent = text(from.user_agent, 300);
+    if (agent) facts.user_agent = agent;
+    const device = text(from.device_id, 40);
+    if (device) facts.device_id = device;
+    const language = text(from.language, 24);
+    if (language) facts.language = language;
+    const platform = text(from.platform, 60);
+    if (platform) facts.platform = platform;
+    const screen = text(from.screen, 24);
+    if (/^\d{2,5}x\d{2,5}$/.test(screen)) facts.screen = screen;
+    const zone = text(from.time_zone, 60);
+    if (zone) facts.time_zone = zone;
+    const referrer = text(from.referrer, 200);
+    if (referrer) facts.referrer = referrer;
+    facts.at = new Date();
+    return Object.keys(facts).length > 1 ? facts : null;
+  }
+
+  /**
+   * What this order will be asked back for by the phone that placed it:
+   * where it has got to, and what was on it. Never the whole sale document -
+   * that carries the shop's costs, its margins and the device the order came
+   * from, none of which is the customer's.
+   */
+  customerOrderView(order) {
+    if (!order) return null;
+    const process = String(order.sale_process || '');
+    const paymentStatus = String(order.payment_status || '');
+    const cancelled = process === 'cancelled' || paymentStatus === 'Cancelled';
+    return {
+      order_id: String(order._id),
+      token: String(order.token_id || ''),
+      placed_at: order.created_date || order.date || null,
+      /* The three words a customer actually wants: is it off, is it paid,
+         has the shop accepted it. */
+      state: cancelled ? 'cancelled' : String(order.order_state || 'accepted'),
+      cancelled,
+      paid: paymentStatus === 'Paid',
+      /* A bill is a record of money that has changed hands. Until it has,
+         there is nothing to hand anybody. */
+      bill_ready: paymentStatus === 'Paid' && !cancelled,
+      payment_status: paymentStatus,
+      payment_mode: String(order.payment_mode || ''),
+      fulfilment: String(order.fulfilment || ''),
+      table_number: String(order.table_number || ''),
+      items: (Array.isArray(order.items) ? order.items : []).map((line) => ({
+        item_id: String(line.item_id || ''),
+        name: String(line.item_name || line.name || ''),
+        quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
+        note: String(line.item_description || ''),
+        total: Number(line.total != null ? line.total : line.item_total || 0),
+      })),
+      total: Number(order.total != null ? order.total : order.sales_total || 0),
+      tax: Number(order.tax || 0),
+      discount: Number(order.discount || 0),
+      delivery_fee: Number(order.delivery_fee || 0),
+      shop: String(order.branch_name || ''),
+    };
+  }
+
+  /** One order of this branch's, by its id. Nothing wider: no list, no search. */
+  async findCustomerOrder({ branchId, orderId }) {
+    if (!mongoose.Types.ObjectId.isValid(String(orderId || ''))) return null;
+    const db = await BaseModel.getDb();
+    const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
+      ? new mongoose.Types.ObjectId(String(branchId))
+      : branchId;
+    return db.collection('sales').findOne({
+      _id: new mongoose.Types.ObjectId(String(orderId)),
+      branch_id: branchObjectId,
+    });
+  }
+
+  /*
+   * One line of an order, at a different quantity.
+   *
+   * EXACT, and it has to be. Every money field on an online order's line is
+   * linear in its quantity: the unit price, the tax, the discount and the
+   * total were each worked out per unit when the order was taken and
+   * multiplied up. Scaling a line to a new quantity therefore reproduces
+   * exactly what that order would have cost had it been placed that way - and
+   * it does it from the order's OWN stored prices, so a customer is held to
+   * the price they were quoted rather than to whatever the catalogue says by
+   * the time they change their mind.
+   */
+  _scaleOrderLine(line, was, now) {
+    if (!(was > 0) || now === was) return { ...line, item_quantity: now, quantity: now };
+    const factor = now / was;
+    const scale = (value) => round(Number(value || 0) * factor);
+    const scaled = { ...line, item_quantity: now, quantity: now };
+    for (const field of [
+      'tax_amount',
+      'item_tax',
+      'total',
+      'item_total',
+      'total_amount',
+      'item_discount',
+      'company_price_total',
+      'cgst_tax',
+      'sgst_tax',
+      'igst_tax',
+    ]) {
+      if (line[field] !== undefined) scaled[field] = scale(line[field]);
+    }
+    return scaled;
+  }
+
+  /** What the order's totals come to, from its lines. */
+  _onlineOrderTotals(lines, orderDoc) {
+    const qtyOf = (l) => Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0);
+    const unitOf = (l) => Number(l.unit_price != null ? l.unit_price : l.item_price || 0);
+    const lineTotalOf = (l) =>
+      Number(l.total != null ? l.total : l.item_total || l.total_amount || 0);
+    const subtotal = round(lines.reduce((s, l) => s + unitOf(l) * qtyOf(l), 0));
+    const tax = round(lines.reduce((s, l) => s + Number(l.tax_amount || l.item_tax || 0), 0));
+    const itemDiscount = round(lines.reduce((s, l) => s + Number(l.item_discount || 0), 0));
+    const extra = Number((orderDoc && orderDoc.extra_discount) || 0);
+    const food = round(lines.reduce((s, l) => s + lineTotalOf(l), 0) - extra);
+    const total = round(food + Number((orderDoc && orderDoc.delivery_fee) || 0));
+    return {
+      subtotal,
+      tax,
+      total,
+      discount: round(itemDiscount + extra),
+      number_of_items: lines.reduce((s, l) => s + qtyOf(l), 0),
+    };
+  }
+
+  /*
+   * The customer changed their mind about something already on the ticket.
+   *
+   * The kitchen is told the difference, line by line, through the same
+   * changes log a waiter's amendment writes, so a screen or a printer that
+   * already knows how to show "one biryani cancelled" needs nothing new.
+   */
+  async changeCustomerOrderItems(orderDoc, wanted) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+
+    const asked = new Map();
+    for (const want of Array.isArray(wanted) ? wanted : []) {
+      const id = String((want && want.item_id) || '');
+      const qty = Math.round(Number(want && want.quantity));
+      if (!id || !Number.isFinite(qty)) continue;
+      asked.set(id, Math.max(0, Math.min(20, qty)));
+    }
+    if (!asked.size) return { status: false, message: 'nothing_asked', data: null };
+
+    const onOrder = new Set(lines.map((l) => String(l.item_id || '')));
+    const unknown = [...asked.keys()].filter((id) => !onOrder.has(id));
+    if (unknown.length) {
+      return { status: false, message: 'not_on_this_order', data: { unknown } };
+    }
+
+    const changes = [];
+    const kept = [];
+    for (const line of lines) {
+      const id = String(line.item_id || '');
+      const was = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+      const now = asked.has(id) ? asked.get(id) : was;
+      if (now !== was) {
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        const moved = Math.abs(now - was);
+        changes.push({
+          item_id: id,
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: moved,
+          process: now > was ? 'add' : 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * moved),
+        });
+      }
+      if (now > 0) kept.push(this._scaleOrderLine(line, was, now));
+    }
+
+    if (!changes.length) return { status: false, message: 'nothing_changed', data: null };
+    /* Every line gone is a cancelled order, not an order of nothing. */
+    if (!kept.length) return this.cancelCustomerOrder(orderDoc);
+
+    const totals = this._onlineOrderTotals(kept, orderDoc);
+    const at = new Date();
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          items: kept,
+          changes: log,
+          subtotal: totals.subtotal,
+          sales_sub_total: totals.subtotal,
+          items_subtotal: totals.subtotal,
+          total: totals.total,
+          sales_total: totals.total,
+          items_total: totals.total,
+          tax: totals.tax,
+          discount: totals.discount,
+          number_of_items: totals.number_of_items,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'updated',
+    });
+
+    return {
+      status: true,
+      message: 'Order updated',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        items: kept.map((l) => ({
+          item_id: String(l.item_id || ''),
+          name: String(l.item_name || l.name || ''),
+          quantity: Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0),
+        })),
+        total: totals.total,
+      },
+    };
+  }
+
+  /*
+   * The whole order, called off.
+   *
+   * The record stays and is marked cancelled - a shop that cooked half of it
+   * needs to see that it existed - and every line goes to the kitchen as a
+   * cancellation, the same shape the console writes.
+   */
+  async cancelCustomerOrder(orderDoc) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const at = new Date();
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+    const changes = lines
+      .map((line) => {
+        const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+        if (!(qty > 0)) return null;
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        return {
+          item_id: String(line.item_id || ''),
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: qty,
+          process: 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * qty),
+        };
+      })
+      .filter(Boolean);
+
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    if (changes.length) log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          sale_process: 'cancelled',
+          payment_status: 'Cancelled',
+          payment_pending: 0,
+          changes: log,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'cancelled',
+    });
+
+    return {
+      status: true,
+      message: 'Order cancelled',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        cancelled: true,
+        total: 0,
+      },
+    };
   }
 
   async getFrequentItemsForBranch(branchId, limit, { SaleModel } = {}) {
@@ -9909,7 +10433,7 @@ class SalesRepository {
       const skip = (page - 1) * limit;
       const sort = options?.sort || { _id: -1 };
 
-      const query = {};
+      const query = { ...(await demoData.filterCurrent('sales')) };
 
       // Apply branchId filter
       if (branchId) {
@@ -9925,6 +10449,28 @@ class SalesRepository {
       if (filters && typeof filters === 'object') {
         for (const [key, value] of Object.entries(filters)) {
           if (key === 'branch_id') continue; // already handled
+          /*
+           * TAKEAWAY IS SPELLED TWO WAYS AND ONLY ONE READER KNEW.
+           *
+           * getTablesWithActiveOrders has always accepted both - the line
+           * reads `dType === 'Take away' || dType === 'Takeaway'` - which is
+           * the shape of a field that holds both in real data. This path
+           * matched whichever single string the caller happened to send.
+           *
+           * So the handset's floor drew a takeaway card, because the query
+           * behind it takes both, and tapping it asked for exactly
+           * "Take away" and got nothing. Owner: "one order show as take away,
+           * when tap, inside shows no active orders."
+           *
+           * Widened here rather than in the app, because the app that is
+           * asking the wrong question is already installed on handsets and
+           * this is the half that can be fixed without reinstalling any of
+           * them.
+           */
+          if (key === 'dine_type' && TAKEAWAY_SAID.includes(value)) {
+            query[key] = { $in: TAKEAWAY_SAID };
+            continue;
+          }
           query[key] = value;
         }
       }
@@ -9956,7 +10502,7 @@ class SalesRepository {
     }
   }
 
-  async generateSalesIdForBranch(branchIdRaw) {
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
@@ -9985,7 +10531,13 @@ class SalesRepository {
 
     void prefixLength;
     void salesCollection;
-    const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
+    /* The branch's own licence first: see nextSalesNumberForBranch. The
+       ambient one is a fallback for a branch this process cannot read. */
+    const n = await this.nextSalesNumberForBranch(
+      branchId,
+      (branchDoc && branchDoc.license) || BaseModel.license,
+      { reseed }
+    );
     return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
   }
 
@@ -10005,13 +10557,48 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw) {
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false } = {}) {
     const db = await BaseModel.getDb();
     const counters = db.collection('counters');
+
+    /*
+     * ONE COUNTER PER BRANCH, whichever door the sale came through.
+     *
+     * The licence used to be whatever the caller happened to hold, and on the
+     * customer's own ordering page there is no caller to ask: /online-ordering
+     * is public, so BaseModel.license carried whatever the last signed-in
+     * request in this process left behind - the real licence, or nothing. A
+     * branch ended up with two counters, one keyed by the licence and one by
+     * the empty string, each seeded once and each counting on alone. The
+     * moment both existed they issued the same numbers and the unique index
+     * refused the second: the customer got "E11000 duplicate key ... sales_id"
+     * where an order should have been, with a Retry that asked for the same
+     * number again.
+     *
+     * The branch's own licence is the one answer every door agrees on.
+     */
+    let license = licenseRaw;
+    if (!license && branchIdRaw) {
+      try {
+        const owner = await db.collection('branches').findOne(
+          {
+            _id: mongoose.Types.ObjectId.isValid(String(branchIdRaw))
+              ? new mongoose.Types.ObjectId(String(branchIdRaw))
+              : branchIdRaw,
+          },
+          { projection: { license: 1 } }
+        );
+        if (owner && owner.license) license = owner.license;
+      } catch (e) {
+        /* A branch that cannot be read leaves the caller's answer standing;
+           the duplicate backstop below still holds. */
+      }
+    }
+
     const key = {
       kind: 'sales_id',
       branch_key: String(branchIdRaw || ''),
-      license_key: String(licenseRaw || ''),
+      license_key: String(license || ''),
     };
 
     /* Idempotent and cheap; the unique index is what makes the concurrent
@@ -10040,6 +10627,22 @@ class SalesRepository {
       await counters
         .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
         .catch(() => {});
+    }
+
+    /*
+     * Asked for after a number came back taken: catch the counter up.
+     *
+     * A counter can sit behind the sales it is numbering - a restore that
+     * brought the sales back without the counters, or numbers issued through
+     * the second counter this method no longer creates. Adding one then walks
+     * into every taken number in turn, a failed order each time. $max only
+     * ever raises, so a number allocated concurrently cannot be undone by it.
+     */
+    if (reseed) {
+      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license);
+      if (behind > 0) {
+        await counters.updateOne(key, { $max: { seq: behind } }, { upsert: true }).catch(() => {});
+      }
     }
 
     const res = await counters.findOneAndUpdate(
@@ -10256,6 +10859,38 @@ class SalesRepository {
    * The highest number this branch has ever put on a bill, whatever the
    * prefix was at the time. Runs once per branch, to seed its counter.
    */
+  /*
+   * Insert an order, taking a fresh bill number if this one has just been taken.
+   *
+   * The till has had this since bill numbers became unique (createSaleUnique);
+   * the customer's own ordering page never did, so a collision reached the
+   * phone as "E11000 duplicate key error ... unique_sales_id_per_license",
+   * under a Retry button that asked for the very same number again. Each retry
+   * catches the counter up to the highest number the branch has actually
+   * issued, so a counter that has fallen behind is right on the next attempt
+   * rather than after as many attempts as there are taken numbers.
+   *
+   * Only a duplicate BILL NUMBER is retried. Anything else - a duplicate
+   * idempotency key above all, which means this very order is already saved -
+   * is raised, because retrying it would be how one order becomes two.
+   */
+  async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await salesCollection.insertOne(document);
+      } catch (error) {
+        if (attempt >= attempts || !this.isDuplicateSalesIdError(error)) throw error;
+        const fresh = await this.generateSalesIdForBranch(branchId, { reseed: true });
+        console.warn(
+          `[order] bill number ${document.sales_id} was already issued; taking ${fresh}`
+        );
+        document.sales_id = fresh;
+        if (document.invoice_number) document.invoice_number = fresh;
+        if (document.sale_no) document.sale_no = fresh;
+      }
+    }
+  }
+
   async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
     const db = await BaseModel.getDb();
     const asObjectId = (v) =>

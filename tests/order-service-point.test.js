@@ -136,3 +136,19 @@ test('a room number is bounded, because it goes into a URL and onto a ticket', (
   const { api } = pageAt('/order/AZ100/venue/RC/' + '9'.repeat(80));
   assert.strictEqual(api.read().unit.length, 24);
 });
+
+test('a walk with the shop in the address is not an arrival: the table stays', () => {
+  /* assets/shop-address.js keeps the shop in the bar - /order/AZ100/cart.html.
+     Read that as an arrival and the table scanned at the door is gone at
+     the first tap toward checkout. */
+  const remembered = { table: '5', venue: '', unit: '', destination: null };
+  for (const url of ['/order/AZ100/cart.html', '/order/AZ100/products.html?lang=ta', '/order/AZ100/thankyou.html?token=9']) {
+    const { api } = pageAt(url, remembered);
+    assert.strictEqual(api.read().table, '5', url + ' threw the table away');
+  }
+  /* The arrival shapes still replace it. */
+  for (const url of ['/order/AZ100', '/order/AZ100/table/7', '/order/index.html?branch=AZ100', '/order/?branch=AZ100']) {
+    const { api } = pageAt(url, remembered);
+    assert.notStrictEqual(api.read().table, '5', url + ' did not read as an arrival');
+  }
+});
