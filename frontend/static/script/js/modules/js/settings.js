@@ -8629,6 +8629,9 @@ PosnicPro.settings.storefrontLinks = function () {
     if (!base) { base = String(window.location.origin || '').replace(/\/+$/, ''); }
     $('#storefront_order_url').val(base + '/order/' + id);
     $('#storefront_menu_url').val(base + '/menu/' + id);
+    /* Lands in the conversation; harmless on a shop with the assistant off,
+       where it is the ordering page. */
+    $('#storefront_talk_url').val(base + '/order/' + id + '?ai=talk');
     row.show();
 };
 
@@ -9284,6 +9287,7 @@ PosnicPro.settings.ai = {
         if (!PosnicPro.settings.ai._switchWired) {
             PosnicPro.settings.ai._switchWired = true;
             $(document).on('change', '#ai_ordering_assistant', function () { PosnicPro.settings.ai.syncRows(); });
+            $(document).on('change', '#ai_live_voice', function () { PosnicPro.settings.ai.syncRows(); });
         }
         var on = !!$('#ai_provider').val();
         var where = PosnicPro.settings.ai.KEY_PAGES[$('#ai_provider').val() || ''];
@@ -9311,6 +9315,18 @@ PosnicPro.settings.ai = {
            door is open: a shop that has not switched it on is not asked to
            write for it. */
         $('#ai_assistant_config').toggle(on && $('#ai_ordering_assistant').is(':checked'));
+        /* Say in one word what the microphone will do, so nobody has to
+           guess from a page of hints why it only transcribed. */
+        var liveOn = $('#ai_live_voice').is(':checked');
+        var openai = $('#ai_provider').val() === 'openai';
+        $('#ai_live_voice_state')
+            .toggleClass('badge-success', liveOn && openai)
+            .toggleClass('badge-secondary', !(liveOn && openai))
+            .text(liveOn && openai
+                ? PosnicPro.i18n.t('lang_ai_live_voice_on', 'Live: the microphone opens a voice call with the assistant')
+                : liveOn
+                    ? PosnicPro.i18n.t('lang_ai_live_voice_needs_openai', 'Live voice needs an OpenAI key; with this provider the microphone works turn by turn')
+                    : PosnicPro.i18n.t('lang_ai_live_voice_off', 'Off: the microphone works turn by turn, with the phone\'s own voice'));
         /* A saved key and no key must not look the same. The key never comes
            back to the browser, so "saved" is a badge and two buttons, and the
            empty box only appears when somebody asks to replace it. */

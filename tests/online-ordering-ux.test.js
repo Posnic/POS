@@ -1049,7 +1049,9 @@ function voicePage({ voice = 'live', reply } = {}) {
   window.CONFIG = { API_BASE_URL: '' };
   window.knownBranchId = async () => 'AZ100';
   window.getCartData = async () => JSON.parse(JSON.stringify(cart));
-  window.findProduct = (id) => catalogue[id] || null;
+  /* The real page has allProducts() (global) and NOT findProduct() (inside
+     the products script's closure); the harness mirrors that. */
+  window.allProducts = () => Object.values(catalogue);
   window.updateQuantity = async (id, change) => { calls.applied.push([id, change]); };
   window.setCartItemNote = async () => {};
   window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
@@ -1172,4 +1174,96 @@ test('turn by turn: a refused microphone is said, not swallowed', async () => {
   assert.match(document.getElementById('assistant-log').textContent, /microphone was not allowed/);
   assert.strictEqual(calls.fetch.length, 0, 'the assistant was asked with nothing heard');
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'off');
+});
+
+test('a refused live line says why and talks turn by turn; the tap unlocks speech for the iPhone', async () => {
+  const { window, document, calls } = voicePage({
+    voice: 'live',
+    reply: () => (calls.fetch.length === 1
+      ? { status: 403, body: { type: 'error', message: 'This shop has not switched on live voice' } }
+      : { status: 200, body: { type: 'success', data: { reply: 'Try the biryani.', actions: [] } } }),
+  });
+  let heard = ['what is good', '', ''];
+  window.SpeechRecognition = function () {
+    this.start = () => { const said = heard.shift() || ''; setTimeout(() => { if (said) this.onresult({ resultIndex: 0, results: [[{ transcript: said }]] }); this.onend(); }, 0); };
+    this.abort = () => {};
+    this.stop = () => {};
+  };
+  const spokenInTap = [];
+  const speak = window.speechSynthesis.speak;
+  window.speechSynthesis.speak = function (u) { spokenInTap.push(u.text); return speak.call(this, u); };
+  document.getElementById('assistant-talk').click();
+  assert.deepStrictEqual(spokenInTap.slice(0, 1), [' '], 'nothing was spoken inside the tap to unlock the iPhone');
+  await settle();
+  await new Promise((r) => setTimeout(r, 40));
+  const log = document.getElementById('assistant-log').textContent;
+  assert.match(log, /Live voice is switched off for this shop/, 'the refusal was swallowed');
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/voice');
+  assert.strictEqual(calls.fetch[1].url, '/online-ordering/AZ100/assistant', 'turn by turn did not follow');
+  assert.ok(calls.spoken.includes('Try the biryani.'), 'the fallback answer was not spoken');
+});
+
+test('the live switch is the first thing under the assistant, and says what the microphone will do', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  const config = html.indexOf('id="ai_assistant_config"');
+  const live = html.indexOf('id="ai_live_voice_row"');
+  const greeting = html.indexOf('id="ai_assistant_greeting"');
+  assert.ok(config > 0 && live > config && live < greeting, 'the live switch is buried below the writing boxes');
+  assert.match(html, /id="ai_live_voice_state"/, 'no word on what the microphone will do');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /lang_ai_live_voice_on/);
+  assert.match(js, /\$\(document\)\.on\('change', '#ai_live_voice'/, 'flipping the switch does not update the word');
+});
+
+test('the page says once that you can ask or talk, and the greeting mentions the microphone where there is one', async () => {
+  const first = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  const hint = first.document.getElementById('assistant-hint');
+  assert.strictEqual(hint.hidden, false, 'a first visit gets no callout');
+  assert.strictEqual(first.document.getElementById('assistant-hint-text').textContent, "Ask me what's good, or just talk");
+  first.document.getElementById('assistant-hint-open').click();
+  assert.strictEqual(hint.hidden, true, 'opening the sheet left the callout up');
+  assert.strictEqual(first.window.localStorage.getItem('posnic_assistant_seen'), '1', 'the callout is not remembered as seen');
+  assert.match(first.document.getElementById('assistant-log').textContent, /Or tap the microphone and just talk\./);
+
+  const again = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  again.window.localStorage.setItem('posnic_assistant_seen', '1');
+  again.window.OrderingAssistant.paintSpark();
+  assert.strictEqual(again.document.getElementById('assistant-hint').hidden, true, 'a phone that has seen it is shown it again');
+
+  const typed = voicePage({ voice: '', reply: { status: 200, body: {} } });
+  assert.strictEqual(typed.document.getElementById('assistant-hint-text').textContent, "Ask me what's good");
+  typed.document.getElementById('assistant-hint-close').click();
+  assert.strictEqual(typed.document.getElementById('assistant-hint').hidden, true);
+  typed.document.getElementById('ask-ai').click();
+  assert.ok(!/microphone/.test(typed.document.getElementById('assistant-log').textContent), 'a shop with no voice is told about a microphone');
+});
+
+test('a code printed for the talk lands the customer in the conversation, ready to talk', async () => {
+  /* Owner: "Order with AI required special QR. if user scan then directly
+     land AI talk." */
+  const talk = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  talk.window.sessionStorage.setItem('posnic_ai_first', 'talk');
+  talk.window.OrderingAssistant.paintSpark();
+  assert.strictEqual(talk.document.getElementById('assistant').open, true, 'the sheet did not open on landing');
+  assert.strictEqual(talk.document.getElementById('voice').hidden, false, 'the voice panel is not up');
+  assert.strictEqual(talk.document.getElementById('voice-start').hidden, false, 'no "Tap to talk"');
+  assert.strictEqual(talk.document.getElementById('voice-status').textContent, 'Tap to talk');
+  assert.strictEqual(talk.window.sessionStorage.getItem('posnic_ai_first'), null, 'the wish is not spent');
+  assert.strictEqual(talk.document.getElementById('assistant-hint').hidden, true, 'the callout competes with the open sheet');
+
+  const ask = voicePage({ voice: '', reply: { status: 200, body: {} } });
+  ask.window.sessionStorage.setItem('posnic_ai_first', 'ask');
+  ask.window.OrderingAssistant.paintSpark();
+  assert.strictEqual(ask.document.getElementById('assistant').open, true);
+  assert.strictEqual(ask.document.getElementById('voice').hidden, true, 'a shop with no voice was stood ready to talk');
+
+  const plain = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  assert.strictEqual(plain.document.getElementById('assistant').open, false, 'a plain link opened the sheet');
+
+  const arrival = read('assets/index/script.js');
+  assert.match(arrival, /sessionStorage\.setItem\("posnic_ai_first"/, 'the arrival page drops ?ai= with its redirect');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /storefront_talk_url'\)\.val\(base \+ '\/order\/' \+ id \+ '\?ai=talk'\)/, 'the console prints no talk address');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  assert.match(html, /id="storefront_talk_url"/);
 });

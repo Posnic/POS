@@ -80,6 +80,15 @@
                             <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"></path>
                         </svg>
                     </button>
+                    <!-- Said once per phone: the spark is easy to miss, and a customer
+                         who never learns it is there never asks. -->
+                    <div class="assistant-hint" id="assistant-hint" role="status" hidden>
+                        <button type="button" class="assistant-hint-open" id="assistant-hint-open">
+                            <span class="assistant-hint-title">New</span>
+                            <span class="assistant-hint-text" id="assistant-hint-text">Ask me what's good, or just talk</span>
+                        </button>
+                        <button type="button" class="assistant-hint-close" id="assistant-hint-close" aria-label="Dismiss">&times;</button>
+                    </div>
                     <!-- The other language, named in itself. Painted by i18n.js. -->
                     <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
                     <!-- The order so far, as a glyph with the count on it. -->
@@ -255,6 +264,10 @@
             <div class="voice" id="voice" hidden>
                 <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>
                 <p class="voice-status" id="voice-status" role="status"></p>
+                <button type="button" class="voice-start" id="voice-start" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+                    <span>Tap to talk</span>
+                </button>
                 <button type="button" class="voice-stop" id="voice-stop">Stop talking</button>
             </div>
             <audio id="voice-out" autoplay playsinline hidden></audio>

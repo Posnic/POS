@@ -2138,6 +2138,102 @@ html[lang="ta"] .attract-note {
 /* ------------------------------------------------------ the assistant */
 
 /*
+ * The first-time callout: a small card under the spark, ink on paper, with
+ * a pointer. It rises once, waits a few seconds, and leaves; a tap opens
+ * the sheet, a cross dismisses it for good on this phone.
+ */
+.top-row {
+  position: relative;
+}
+
+.assistant-hint {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 88px;
+  z-index: 12;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+.assistant-hint::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+.assistant-hint-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.assistant-hint-title {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-hint-close {
+  width: 36px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0 12px 12px 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .assistant-hint:not([hidden]) {
+    animation: hint-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .assistant-hint {
+    right: 8px;
+  }
+  .assistant-hint::before {
+    right: 98px;
+  }
+}
+
+/*
  * The spark: the one thing in the header that is not the shop's own. Drawn
  * only where the shop opened its assistant, and once, when it appears, it
  * breathes - a customer should notice it exists without being nagged by it.
@@ -2315,6 +2411,39 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   margin: 0;
   color: var(--ink-soft);
   font-size: 14px;
+}
+
+.voice-orb[data-state="ready"] {
+  border-style: dashed;
+  border-color: var(--ink-soft);
+}
+
+.voice-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: var(--shadow-2);
+}
+
+.voice-start svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voice-start:not([hidden]) {
+    animation: orb-breathe 1.8s ease-in-out infinite;
+  }
 }
 
 .voice-stop {
