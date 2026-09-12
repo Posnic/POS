@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Canales de venta",
   "lang_sales_channel": "Canal de venta",
   "lang_sales_channel_2": "Canal de venta",
-  "lang_selling_beyond_the_counter_online_qr_order": "Vender más allá del mostrador: aquí llegarán la venta en línea, los pedidos por QR y los canales de socios."
+  "lang_selling_beyond_the_counter_online_qr_order": "Vender más allá del mostrador: aquí llegarán la venta en línea, los pedidos por QR y los canales de socios.",
+  "lang_ai_spent_short": "Gastado hasta ahora",
+  "lang_ai_spent_approx": "aproximado",
+  "lang_ai_spend_total": "Total hasta ahora",
+  "lang_ai_spent_note": "Estimado a partir de lo que informó cada llamada, a precios de lista, en su moneda a un tipo redondeado. La voz en vivo se cuenta por minuto de línea abierta mientras dura la llamada. El panel de su proveedor tiene la última palabra sobre la factura.",
+  "lang_ai_spend_feature": "Qué",
+  "lang_ai_spend_calls": "Llamadas",
+  "lang_ai_spend_minutes": "Minutos",
+  "lang_ai_spend_cost": "Aprox.",
+  "lang_ai_spend_of_cap": "{pct}% del límite mensual de {cap}",
+  "lang_ai_spend_no_cap": "No hay límite mensual establecido.",
+  "lang_ai_live_voice_rate": "Unos {amount} por cada minuto de conversación, descontados del límite mensual mientras dura la llamada.",
+  "lang_ai_feature_item_description": "Descripciones de artículos",
+  "lang_ai_feature_ordering_assistant": "Asistente de pedidos, escrito",
+  "lang_ai_feature_voice_order_live": "Hablar para pedir, voz en vivo",
+  "lang_ai_feature_voice_order": "Pedidos por voz en el terminal de mano"
 }

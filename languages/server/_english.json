@@ -1166,6 +1166,9 @@
   "No such price list": [
     "src/models/setting.model.js"
   ],
+  "No such voice session": [
+    "src/controllers/online-ordering.controller.js"
+  ],
   "No supplier IDs provided": [
     "src/services/supplier.service.js"
   ],
@@ -2054,6 +2057,7 @@
     "src/services/voice-session.service.js"
   ],
   "This shop has reached its monthly AI spending limit": [
+    "src/controllers/online-ordering.controller.js",
     "src/services/ai.service.js"
   ],
   "This shop transcribes on the handset, not on the server": [
@@ -2115,6 +2119,9 @@
   ],
   "Too many sign-in attempts. Please wait ten minutes and try again, ": [
     "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many voice reports in a minute.": [
+    "src/middleware/assistant-rate-limit.js"
   ],
   "Too many voice sessions in a minute. Please wait a moment and try again.": [
     "src/middleware/assistant-rate-limit.js"
@@ -2428,6 +2435,9 @@
   ],
   "no_live_voice": [
     "src/services/voice-session.service.js"
+  ],
+  "no_session": [
+    "src/services/voice-meter.js"
   ],
   "not valid": [
     "src/controllers/users.controller.js"

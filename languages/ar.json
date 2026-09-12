@@ -2951,5 +2951,20 @@
   "lang_module_channels": "قنوات البيع",
   "lang_sales_channel": "قناة البيع",
   "lang_sales_channel_2": "قناة البيع",
-  "lang_selling_beyond_the_counter_online_qr_order": "البيع خارج نطاق الكاونتر - تصل إلى هنا قنوات البيع الإلكتروني والطلب عبر QR وقنوات الشركاء."
+  "lang_selling_beyond_the_counter_online_qr_order": "البيع خارج نطاق الكاونتر - تصل إلى هنا قنوات البيع الإلكتروني والطلب عبر QR وقنوات الشركاء.",
+  "lang_ai_spent_short": "المُنفَق حتى الآن",
+  "lang_ai_spent_approx": "تقريبي",
+  "lang_ai_spend_total": "الإجمالي حتى الآن",
+  "lang_ai_spent_note": "مُقدَّر مما أبلغت عنه كل مكالمة، بأسعار القائمة، بعملتك وبسعر صرف مقرّب. يُحتسب الصوت المباشر بالدقيقة لكل خط مفتوح أثناء المكالمة. لوحة تحكم مزوّدك هي الكلمة الفصل في الفاتورة.",
+  "lang_ai_spend_feature": "ماذا",
+  "lang_ai_spend_calls": "المكالمات",
+  "lang_ai_spend_minutes": "الدقائق",
+  "lang_ai_spend_cost": "تقريبًا",
+  "lang_ai_spend_of_cap": "{pct}% من الحد الشهري {cap}",
+  "lang_ai_spend_no_cap": "لم يُحدَّد حد شهري.",
+  "lang_ai_live_voice_rate": "حوالي {amount} لكل دقيقة محادثة، تُحتسب من الحد الشهري أثناء المكالمة.",
+  "lang_ai_feature_item_description": "أوصاف الأصناف",
+  "lang_ai_feature_ordering_assistant": "مساعد الطلب، كتابةً",
+  "lang_ai_feature_voice_order_live": "تحدّث لتطلب، صوت مباشر",
+  "lang_ai_feature_voice_order": "طلبات صوتية على الجهاز المحمول"
 }

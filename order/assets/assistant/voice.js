@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, session: "", branch: "", meter: null, misses: 0 };
 
   /* ------------------------------------------------------------ the button */
 
@@ -301,6 +301,7 @@
         return startTurns();
       }
       await pc.setRemoteDescription({ type: "answer", sdp: body.data.sdp });
+      startMeter(branch, body.data);
       return true;
     } catch (e) {
       stopLine();
@@ -310,7 +311,87 @@
     }
   }
 
+  /* --------------------------------------------------------- the meter */
+
+  /*
+   * The audio never passes our server, so the server cannot see how long a
+   * call lasts. The page tells it every half minute that the line is still
+   * open, and once more as it closes; the server clocks the seconds itself
+   * and prices them against the shop's monthly limit. Past the limit it
+   * says stop, and the line is hung up with a word to the customer. A tick
+   * that fails is a network hiccup, not a free call: three in a row and the
+   * line is closed rather than left running unmetered.
+   */
+  function startMeter(branch, data) {
+    live.session = String((data && data.session) || "");
+    live.branch = branch;
+    live.misses = 0;
+    if (!live.session) return;
+    var every = Math.max(10, Number(data.tick_seconds) || 30) * 1000;
+    live.meter = setInterval(function () {
+      tick(false);
+    }, every);
+  }
+
+  function stopMeter(end) {
+    if (live.meter) clearInterval(live.meter);
+    live.meter = null;
+    if (end && live.session) tick(true);
+  }
+
+  function tickUrl() {
+    return apiBase() + "/online-ordering/" + encodeURIComponent(live.branch) + "/voice/" + encodeURIComponent(live.session) + "/tick";
+  }
+
+  async function tick(end) {
+    if (!live.session) return null;
+    var url = tickUrl();
+    if (end) {
+      /* Hanging up: one last report, sent in a way that outlives the page.
+         The beacon carries no body, so the answer is on the address. */
+      live.session = "";
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(url + "?end=1");
+        } else {
+          await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ end: true }), keepalive: true });
+        }
+      } catch (e) {
+        /* the page is going; the server sweeps what it never hears from */
+      }
+      return null;
+    }
+    try {
+      var response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ end: false }),
+      });
+      if (response.ok) {
+        live.misses = 0;
+        return true;
+      }
+      if (response.status === 403) {
+        live.session = "";
+        note(say("This shop's assistant has reached its limit for the month. You can still order the usual way."));
+        stop();
+        return false;
+      }
+      if (response.status === 404) {
+        live.session = "";
+        stop();
+        return false;
+      }
+      live.misses += 1;
+    } catch (e) {
+      live.misses += 1;
+    }
+    if (live.misses >= 3) stop();
+    return false;
+  }
+
   function stopLine() {
+    stopMeter(true);
     try {
       if (live.dc) live.dc.close();
     } catch (e) {
@@ -544,6 +625,9 @@
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) stop();
     });
+    window.addEventListener("pagehide", function () {
+      stopMeter(true);
+    });
     paintTalk();
   }
 
@@ -551,5 +635,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, live: live };
+  window.OrderingVoice = { start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

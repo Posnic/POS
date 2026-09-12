@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Canaux de vente",
   "lang_sales_channel": "Canal de vente",
   "lang_sales_channel_2": "Canal de vente",
-  "lang_selling_beyond_the_counter_online_qr_order": "La vente au-delà du comptoir - en ligne, commande par QR et canaux partenaires - arrive ici."
+  "lang_selling_beyond_the_counter_online_qr_order": "La vente au-delà du comptoir - en ligne, commande par QR et canaux partenaires - arrive ici.",
+  "lang_ai_spent_short": "Dépensé jusqu'ici",
+  "lang_ai_spent_approx": "approximatif",
+  "lang_ai_spend_total": "Total jusqu'ici",
+  "lang_ai_spent_note": "Estimé d'après ce que chaque appel a rapporté, aux prix catalogue, dans votre devise à un taux arrondi. La voix en direct est comptée à la minute de ligne ouverte pendant l'appel. Le tableau de bord de votre fournisseur a le dernier mot sur la facture.",
+  "lang_ai_spend_feature": "Quoi",
+  "lang_ai_spend_calls": "Appels",
+  "lang_ai_spend_minutes": "Minutes",
+  "lang_ai_spend_cost": "Environ",
+  "lang_ai_spend_of_cap": "{pct}% de la limite mensuelle de {cap}",
+  "lang_ai_spend_no_cap": "Aucune limite mensuelle définie.",
+  "lang_ai_live_voice_rate": "Environ {amount} par minute de conversation, décomptés de la limite mensuelle pendant l'appel.",
+  "lang_ai_feature_item_description": "Descriptions d'articles",
+  "lang_ai_feature_ordering_assistant": "Assistant de commande, au clavier",
+  "lang_ai_feature_voice_order_live": "Parler pour commander, voix en direct",
+  "lang_ai_feature_voice_order": "Commandes vocales sur le terminal"
 }

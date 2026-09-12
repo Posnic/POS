@@ -9388,19 +9388,79 @@ PosnicPro.settings.ai = {
         PosnicPro.settings.ai.loadSpend();
     },
 
-    /* What it has cost so far, because somebody spending their own money is
-       entitled to watch the meter without leaving the page. */
+    /* The meter's rows are feature keys; a shopkeeper reads what they mean. */
+    featureLabel: function (feature) {
+        var names = {
+            item_description: PosnicPro.i18n.t('lang_ai_feature_item_description', 'Item descriptions'),
+            ordering_assistant: PosnicPro.i18n.t('lang_ai_feature_ordering_assistant', 'Ordering assistant, typed'),
+            voice_order_live: PosnicPro.i18n.t('lang_ai_feature_voice_order_live', 'Talk to order, live voice'),
+            voice_order: PosnicPro.i18n.t('lang_ai_feature_voice_order', 'Voice orders on the handset')
+        };
+        return names[feature] || String(feature || '');
+    },
+
+    /* The server says which currency the figures are in, from the branch
+       record; the sign this screen saved at setup is the fallback. */
+    currencySymbol: function (data) {
+        var fromServer = data && data.currency && data.currency.symbol;
+        return String(fromServer || PosnicPro.local.get('currencySign') || '\u20B9');
+    },
+
+    /*
+     * What it has cost so far, because somebody spending their own money is
+     * entitled to watch the meter without leaving the page. Feature by
+     * feature, with the calls and, for live voice, the minutes of open line
+     * behind the figure; the total against the limit as a bar; the price of
+     * a minute beside the live switch; and the total on the folded line, so
+     * a shop that set up and left still sees the month at a glance.
+     */
     loadSpend: function () {
         PosnicPro.get('items/aiSpend', {}, function (response) {
-            var rows = (response && response.data && response.data.features) || [];
+            var data = (response && response.data) || {};
+            var rows = data.features || [];
             var host = $('#ai_spend_table').empty();
-            if (!rows.length) { PosnicPro.settings.ai.syncRows(); return; }
-            var html = '';
-            for (var i = 0; i < rows.length; i += 1) {
-                html += '<div>' + PosnicPro.escapeHtml(rows[i].feature)
-                    + ': ' + PosnicPro.escapeHtml(rows[i].spent) + '</div>';
+            var sym = PosnicPro.settings.ai.currencySymbol(data);
+            var esc = PosnicPro.escapeHtml;
+            if (data.voice && data.voice.per_minute) {
+                $('#ai_live_voice_rate').text(PosnicPro.i18n.t('lang_ai_live_voice_rate', 'About {amount} for each minute of conversation, counted against the monthly limit while the call is on.')
+                    .replace('{amount}', sym + ' ' + data.voice.per_minute));
             }
+            if (!rows.length) {
+                $('#ai_configured_spent_wrap').hide();
+                PosnicPro.settings.ai.syncRows();
+                return;
+            }
+            var html = '<table class="ai-spend"><thead><tr>'
+                + '<th>' + esc(PosnicPro.i18n.t('lang_ai_spend_feature', 'What')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_calls', 'Calls')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_minutes', 'Minutes')) + '</th>'
+                + '<th class="num">' + esc(PosnicPro.i18n.t('lang_ai_spend_cost', 'About')) + '</th>'
+                + '</tr></thead><tbody>';
+            for (var i = 0; i < rows.length; i += 1) {
+                var row = rows[i];
+                var minutes = row.seconds > 0 ? (row.seconds / 60).toFixed(1) : '';
+                html += '<tr><td>' + esc(PosnicPro.settings.ai.featureLabel(row.feature)) + '</td>'
+                    + '<td class="num">' + esc(row.calls != null ? String(row.calls) : '') + '</td>'
+                    + '<td class="num">' + esc(minutes) + '</td>'
+                    + '<td class="num">' + esc(sym + ' ' + row.spent) + '</td></tr>';
+            }
+            html += '</tbody></table>';
             host.html(html);
+            $('#ai_spend_total').text(sym + ' ' + (data.total || '0.00'));
+            var cap = Number(data.cap) || 0;
+            var total = Number(data.total) || 0;
+            if (cap > 0) {
+                var pct = Math.min(100, Math.round((total / cap) * 100));
+                $('#ai_spend_meter').show();
+                $('#ai_spend_meter_bar').css('width', pct + '%').toggleClass('is-near', pct >= 80);
+                $('#ai_spend_meter_text').text(PosnicPro.i18n.t('lang_ai_spend_of_cap', '{pct}% of the {cap} monthly limit')
+                    .replace('{pct}', String(pct)).replace('{cap}', sym + ' ' + data.cap));
+            } else {
+                $('#ai_spend_meter').hide();
+                $('#ai_spend_meter_text').text(PosnicPro.i18n.t('lang_ai_spend_no_cap', 'No monthly limit is set.'));
+            }
+            $('#ai_configured_spent').text('\u2248 ' + sym + ' ' + (data.total || '0.00'));
+            $('#ai_configured_spent_wrap').show();
             PosnicPro.settings.ai.syncRows();
         }, function () { /* no meter is not a broken page */ });
     },

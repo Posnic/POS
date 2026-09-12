@@ -2951,5 +2951,20 @@
   "lang_module_channels": "Verkaufskanäle",
   "lang_sales_channel": "Verkaufskanal",
   "lang_sales_channel_2": "Verkaufskanal",
-  "lang_selling_beyond_the_counter_online_qr_order": "Verkauf über den Tresen hinaus - online, QR-Bestellung und Partnerkanäle kommen hierher."
+  "lang_selling_beyond_the_counter_online_qr_order": "Verkauf über den Tresen hinaus - online, QR-Bestellung und Partnerkanäle kommen hierher.",
+  "lang_ai_spent_short": "Bisher ausgegeben",
+  "lang_ai_spent_approx": "ungefähr",
+  "lang_ai_spend_total": "Summe bisher",
+  "lang_ai_spent_note": "Geschätzt aus dem, was jeder Aufruf gemeldet hat, zu Listenpreisen, in Ihrer Währung zu einem gerundeten Kurs. Live-Sprache wird nach Minuten offener Leitung während des Gesprächs gezählt. Das Dashboard Ihres Anbieters hat das letzte Wort über die Rechnung.",
+  "lang_ai_spend_feature": "Was",
+  "lang_ai_spend_calls": "Aufrufe",
+  "lang_ai_spend_minutes": "Minuten",
+  "lang_ai_spend_cost": "Etwa",
+  "lang_ai_spend_of_cap": "{pct}% des Monatslimits von {cap}",
+  "lang_ai_spend_no_cap": "Kein Monatslimit festgelegt.",
+  "lang_ai_live_voice_rate": "Etwa {amount} pro Gesprächsminute, während des Gesprächs auf das Monatslimit angerechnet.",
+  "lang_ai_feature_item_description": "Artikelbeschreibungen",
+  "lang_ai_feature_ordering_assistant": "Bestellassistent, getippt",
+  "lang_ai_feature_voice_order_live": "Sprechen zum Bestellen, Live-Sprache",
+  "lang_ai_feature_voice_order": "Sprachbestellungen am Handgerät"
 }
