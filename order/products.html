@@ -72,6 +72,14 @@
                             <p class="shop-sub"><span id="shop-sub" hidden></span><span id="shop-place" class="shop-place" hidden></span></p>
                         </div>
                     </div>
+                    <!-- Ask about the menu: the shop's own assistant, where the shop
+                         has switched it on. Hidden until the storefront says so. -->
+                    <button type="button" class="icon-btn ask-ai" id="ask-ai" aria-label="Ask about the menu" hidden>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"></path>
+                            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"></path>
+                        </svg>
+                    </button>
                     <!-- The other language, named in itself. Painted by i18n.js. -->
                     <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
                     <!-- The order so far, as a glyph with the count on it. -->
@@ -224,6 +232,43 @@
         </div>
     </dialog>
 
+    <!--
+        ASK ABOUT THE MENU.
+
+        The shop's own model, on the shop's own account, answering from this
+        menu and nothing else. It proposes; the page applies, through the
+        same code a tap on "Add" uses, and says so in the conversation. It
+        never places, pays or asks for a phone number.
+    -->
+    <dialog id="assistant" class="sheet assistant" aria-labelledby="assistant-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <button type="button" id="assistant-close" class="icon-btn sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+        <div class="sheet-body assistant-body">
+            <h2 class="sheet-title assistant-title" id="assistant-title">
+                <svg class="assistant-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"></path></svg>
+                <span>Ask about the menu</span>
+            </h2>
+            <div class="assistant-log" id="assistant-log" role="log" aria-live="polite"></div>
+            <div class="assistant-chips" id="assistant-chips">
+                <button type="button" class="assistant-chip" data-ask="What do you recommend?">What do you recommend?</button>
+                <button type="button" class="assistant-chip" data-ask="Something vegetarian and spicy">Something vegetarian and spicy</button>
+                <button type="button" class="assistant-chip" data-ask="A meal for two">A meal for two</button>
+                <button type="button" class="assistant-chip" data-ask="What is quick to make?">What is quick to make?</button>
+            </div>
+            <form class="assistant-ask" id="assistant-form" autocomplete="off">
+                <label for="assistant-input" hidden>Your message</label>
+                <input type="text" id="assistant-input" class="assistant-input" maxlength="400" placeholder="Ask anything about the menu...">
+                <button type="submit" class="assistant-send" id="assistant-send" aria-label="Send">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg>
+                </button>
+            </form>
+            <p class="assistant-foot">Answers come from this shop's menu. Please confirm allergies at the counter.</p>
+        </div>
+    </dialog>
+
     <script src="assets/products/script.js?v=20260912-design"></script>
+    <script src="assets/assistant/script.js?v=20260912-design"></script>
 </body>
 </html>

@@ -777,3 +777,140 @@ test('a shop address the server no longer knows is recovered from the origin def
   assert.match(db, /response\.status === 404 && !options\?\.recovered/, 'a 404 for a remembered shop no longer tries the origin default');
   assert.match(db, /await forgetShop\(\);\s*return fetchAndStoreBranch\(next, redirect, \{ \.\.\.options, recovered: true \}\)/, 'the dead shop is not forgotten before the new one is loaded');
 });
+
+/* ------------------------------------------------------ the assistant */
+
+/**
+ * The products page with the assistant script running, a shop flag, and a
+ * server that answers what the test says.
+ */
+function assistantPage({ assistant = true, reply } = {}) {
+  const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
+  const { window } = dom;
+  const calls = { fetch: [], updateQuantity: [], notes: [] };
+  let cart = [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 1 }];
+  window.shop = { assistant, name: 'Azure' };
+  window.CONFIG = { API_BASE_URL: '' };
+  window.knownBranchId = async () => 'AZ100';
+  window.getCartData = async () => JSON.parse(JSON.stringify(cart));
+  window.updateQuantity = async (id, change) => {
+    calls.updateQuantity.push([id, change]);
+    const line = cart.find((l) => String(l.id) === String(id));
+    if (line) line.quantity += change;
+    else cart.push({ id, name: id, price: 0, quantity: change });
+    cart = cart.filter((l) => l.quantity > 0);
+  };
+  window.setCartItemNote = async (id, note) => { calls.notes.push([id, note]); };
+  window.fetch = async (url, init) => {
+    calls.fetch.push({ url, body: JSON.parse(init.body) });
+    const answer = typeof reply === 'function' ? reply(calls.fetch.length) : reply;
+    return { ok: answer.status < 400, status: answer.status, json: async () => answer.body };
+  };
+  /* <dialog> is not fully implemented in jsdom; the open flag is enough. */
+  window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+  window.eval(read('assets/assistant/script.js'));
+  window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  return { window, document: window.document, calls, cart: () => cart };
+}
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+test('the spark is drawn only where the shop opened its assistant', () => {
+  const off = assistantPage({ assistant: false, reply: { status: 200, body: {} } });
+  assert.strictEqual(off.document.getElementById('ask-ai').hidden, true);
+  const on = assistantPage({ assistant: true, reply: { status: 200, body: {} } });
+  assert.strictEqual(on.document.getElementById('ask-ai').hidden, false);
+  /* And follows the shop when it changes under the page. */
+  on.window.shop.assistant = false;
+  on.document.dispatchEvent(new on.window.Event('posnic:shop'));
+  assert.strictEqual(on.document.getElementById('ask-ai').hidden, true);
+});
+
+test('a question goes to the shop with the conversation and the order, and the answer is applied through the same code as a tap', async () => {
+  const { window, document, calls, cart } = assistantPage({
+    reply: {
+      status: 200,
+      body: {
+        type: 'success',
+        data: {
+          reply: 'Two Chicken Biryani, less spicy, coming up.',
+          actions: [
+            { verb: 'add', item_id: 'm1', name: 'Chicken Biryani', quantity: 2, note: 'less spicy' },
+            { verb: 'remove', item_id: 'd1', name: 'Fresh Lime Soda', quantity: 0 },
+          ],
+        },
+      },
+    },
+  });
+  document.getElementById('ask-ai').click();
+  assert.strictEqual(document.getElementById('assistant').open, true);
+  assert.match(document.getElementById('assistant-log').textContent, /Tell me what you feel like/, 'no greeting');
+
+  await window.OrderingAssistant.send('Two biryani, less spicy, and drop the soda');
+  await settle();
+
+  assert.strictEqual(calls.fetch.length, 1);
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/assistant');
+  assert.deepStrictEqual(calls.fetch[0].body.messages, [{ role: 'user', text: 'Two biryani, less spicy, and drop the soda' }]);
+  assert.deepStrictEqual(calls.fetch[0].body.cart, [{ id: 'd1', quantity: 1, note: '' }]);
+
+  assert.deepStrictEqual(calls.updateQuantity, [['m1', 2], ['d1', -1]], 'the order was not changed through updateQuantity');
+  assert.deepStrictEqual(calls.notes, [['m1', 'less spicy']]);
+  assert.deepStrictEqual(cart().map((l) => [l.id, l.quantity]), [['m1', 2]]);
+
+  const log = document.getElementById('assistant-log').textContent;
+  assert.match(log, /Two Chicken Biryani, less spicy, coming up\./);
+  assert.match(log, /Added 2 × Chicken Biryani/);
+  assert.match(log, /Request noted: less spicy/);
+  assert.match(log, /Removed Fresh Lime Soda/);
+  assert.strictEqual(document.getElementById('assistant-chips').hidden, true, 'the starter chips stay after the first question');
+  /* The next turn carries the whole conversation. */
+  assert.deepStrictEqual([...window.OrderingAssistant.state.messages].map((m) => m.role), ['user', 'assistant']);
+});
+
+test('a shop that switched it off since the page loaded takes the spark away; a busy minute and a bad day keep the menu working', async () => {
+  const off = assistantPage({ reply: { status: 403, body: { type: 'error', message: 'off' } } });
+  await off.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.strictEqual(off.document.getElementById('ask-ai').hidden, true);
+  assert.match(off.document.getElementById('assistant-log').textContent, /not available at this shop/);
+
+  const busy = assistantPage({ reply: { status: 429, body: { type: 'error', message: 'slow down' } } });
+  await busy.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.match(busy.document.getElementById('assistant-log').textContent, /lot of questions/);
+  assert.strictEqual(busy.window.OrderingAssistant.state.messages.length, 0, 'a refused turn stays in the conversation');
+
+  const down = assistantPage({ reply: { status: 503, body: { type: 'error', message: 'cap' } } });
+  await down.window.OrderingAssistant.send('hello');
+  await settle();
+  assert.match(down.document.getElementById('assistant-log').textContent, /menu still works/);
+  assert.deepStrictEqual(down.calls.updateQuantity, []);
+});
+
+test('the reply is written as text, never as markup', async () => {
+  const { window, document } = assistantPage({
+    reply: { status: 200, body: { type: 'success', data: { reply: '<img src=x onerror=alert(1)> Try the <b>biryani</b>', actions: [] } } },
+  });
+  await window.OrderingAssistant.send('hi');
+  await settle();
+  assert.strictEqual(document.querySelectorAll('#assistant-log img, #assistant-log b').length, 0);
+  assert.match(document.getElementById('assistant-log').textContent, /<b>biryani<\/b>/);
+});
+
+test('the wiring behind the spark: the storefront flag, the route, the switch, the console', () => {
+  const repo = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
+  assert.match(repo, /assistant: await orderingAssistant\.available\(/, 'the storefront does not say whether the assistant is available');
+  assert.match(repo, /async storefrontContext\(/, 'a store address cannot be turned into a settings context');
+  const routes = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'routes', 'online-ordering.routes.js'), 'utf8');
+  assert.match(routes, /router\.post\('\/:storeId\/assistant', assistantLimiter, bind\(controller\.assistant\)\)/, 'the turn endpoint is missing or unlimited');
+  const groups = fs.readFileSync(path.join(__dirname, '..', 'api', 'src', 'services', 'settings-groups.js'), 'utf8');
+  assert.match(groups, /'ai_ordering_assistant'/, 'the shop has no switch for the ordering page');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
+  assert.match(html, /id="ai_ordering_assistant"/, 'the console has no switch');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js'), 'utf8');
+  assert.match(js, /ai_ordering_assistant: \$\('#ai_ordering_assistant'\)\.is\(':checked'\) \? 'true' : 'false'/, 'the switch is not saved');
+  assert.match(read('indexedDB.js'), /assistant: !!\(result\.data\.features && result\.data\.features\.assistant\)/, 'the page never stores the flag');
+  assert.match(read('products.html'), /id="assistant"[^>]*class="sheet assistant"/, 'the sheet is missing');
+});

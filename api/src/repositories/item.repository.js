@@ -10,6 +10,7 @@ const partnerVenues = require('../utils/partner-venues');
 const itemChannels = require('../utils/item-channels');
 const salesChannels = require('../utils/sales-channels');
 const currencyLabel = require('../utils/currency-label');
+const orderingAssistant = require('../services/ordering-assistant.service');
 
 /*
  * The diet mark, or nothing.
@@ -4130,6 +4131,20 @@ class ItemRepository extends BaseModel {
     }
   }
 
+  /**
+   * The settings context behind a public store address.
+   *
+   * For the one storefront endpoint that spends the shop's own money (the
+   * ordering assistant), which has to read the shop's AI settings and
+   * charge its budget: the address names a branch, and the branch names
+   * the context every other feature uses. Null for an address nobody owns.
+   */
+  async storefrontContext(params = {}) {
+    const branchDoc = await this._storefrontBranch(params);
+    if (!branchDoc) return null;
+    return { branchId: branchDoc._id, licenseId: branchDoc.license };
+  }
+
   async storefront(params = {}) {
     try {
       const branchDoc = await this._storefrontBranch(params);
@@ -4496,6 +4511,13 @@ class ItemRepository extends BaseModel {
              kitchen to read it. */
           features: {
             notes: kind === 'restaurant',
+            /* Whether the spark is drawn: the shop's own AI, switched on
+               for the ordering page in particular. Decided here so a page
+               never offers a button that would fail. */
+            assistant: await orderingAssistant.available({
+              branchId: branchDoc._id,
+              licenseId: branchDoc.license,
+            }),
           },
           /*
            * What the page is allowed to do, decided here rather than on the

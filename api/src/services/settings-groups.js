@@ -152,6 +152,11 @@ const PREFERENCES = [
      a control on us. Empty means uncapped, which is their decision to make.
      See services/ai-budget.js. */
   'ai_monthly_cap',
+  /* Whether the ordering page shows the assistant to customers. A second
+     switch on purpose: the page is public and anonymous, and a door onto
+     the shop's bill is opened by the shop, never by our default. Off until
+     said otherwise. See services/ordering-assistant.service.js. */
+  'ai_ordering_assistant',
 ];
 
 const DOCUMENTS = [

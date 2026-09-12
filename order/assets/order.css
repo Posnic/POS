@@ -2104,6 +2104,262 @@ html[lang="ta"] .attract-note {
   letter-spacing: 0;
 }
 
+/* ------------------------------------------------------ the assistant */
+
+/*
+ * The spark: the one thing in the header that is not the shop's own. Drawn
+ * only where the shop opened its assistant, and once, when it appears, it
+ * breathes - a customer should notice it exists without being nagged by it.
+ */
+.ask-ai {
+  color: var(--ink);
+}
+
+.ask-ai svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ask-ai:not([hidden]) {
+    animation: spark-in 0.9s ease 0.3s both;
+  }
+}
+
+@keyframes spark-in {
+  0% {
+    transform: scale(0.6) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+dialog.assistant {
+  height: min(680px, calc(100vh - 24px));
+  height: min(680px, calc(100dvh - 24px));
+  overflow: hidden;
+}
+
+.assistant-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.assistant-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.assistant-spark {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.assistant-log {
+  flex: 1 1 auto;
+  min-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 8px;
+  scroll-behavior: smooth;
+}
+
+.assistant-msg {
+  display: flex;
+}
+
+.assistant-msg.me {
+  justify-content: flex-end;
+}
+
+.assistant-bubble {
+  max-width: 86%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.assistant-msg.me .assistant-bubble {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-bottom-right-radius: 6px;
+}
+
+.assistant-msg.ai .assistant-bubble {
+  border-bottom-left-radius: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .assistant-msg {
+    animation: line-in 0.22s ease both;
+  }
+}
+
+/* A change made to the order, said in the conversation where it was asked. */
+.assistant-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.assistant-action svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--veg);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.assistant-typing .assistant-bubble {
+  display: inline-flex;
+  gap: 5px;
+  padding: 12px 14px;
+}
+
+.assistant-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  animation: typing 1s ease-in-out infinite;
+}
+
+.assistant-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.assistant-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-typing span {
+    animation: none;
+  }
+}
+
+.assistant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 10px;
+}
+
+.assistant-chip {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.assistant-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.assistant-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.assistant-send {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.assistant-send:disabled {
+  opacity: 0.5;
+}
+
+.assistant-send svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.assistant-foot {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-align: center;
+}
+
 /* --------------------------------------------------------- the machine */
 
 /*

@@ -258,6 +258,26 @@
       "This receipt is not from an order placed on this phone.": "இந்த ரசீது இந்த போனில் செய்யப்பட்ட ஆர்டருடையது அல்ல.",
       "See the menu": "மெனுவைப் பாருங்கள்",
 
+      /* the assistant */
+      "Ask about the menu": "மெனு பற்றிக் கேளுங்கள்",
+      "What do you recommend?": "நீங்கள் எதைப் பரிந்துரைக்கிறீர்கள்?",
+      "Something vegetarian and spicy": "சைவமும் காரமுமான ஏதாவது",
+      "A meal for two": "இரண்டு பேருக்கு ஒரு உணவு",
+      "What is quick to make?": "விரைவாகத் தயாராவது எது?",
+      "Your message": "உங்கள் செய்தி",
+      "Ask anything about the menu...": "மெனு பற்றி எதையும் கேளுங்கள்...",
+      "Send": "அனுப்பு",
+      "Thinking": "யோசிக்கிறது",
+      "Answers come from this shop's menu. Please confirm allergies at the counter.": "பதில்கள் இந்தக் கடையின் மெனுவிலிருந்து வருகின்றன. ஒவ்வாமை பற்றி கவுண்டரில் உறுதிப்படுத்துங்கள்.",
+      "Hi! Tell me what you feel like, or ask what's good here. I'll suggest from the menu and can add it to your order.": "வணக்கம்! உங்களுக்கு என்ன வேண்டும் என்று சொல்லுங்கள், அல்லது இங்கே எது நன்றாக இருக்கும் என்று கேளுங்கள். மெனுவிலிருந்து பரிந்துரைத்து உங்கள் ஆர்டரில் சேர்க்கிறேன்.",
+      "Added {n} × {name}": "{name} {n} சேர்க்கப்பட்டது",
+      "Removed {name}": "{name} நீக்கப்பட்டது",
+      "Now {n} × {name}": "இப்போது {name} {n}",
+      "Request noted: {note}": "வேண்டுகோள் குறிக்கப்பட்டது: {note}",
+      "The assistant is not available at this shop right now.": "இந்தக் கடையில் உதவியாளர் இப்போது கிடைக்கவில்லை.",
+      "One moment. That is a lot of questions at once; please try again shortly.": "ஒரு நிமிடம். ஒரே நேரத்தில் நிறைய கேள்விகள்; சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+      "I could not answer just now. The menu still works the usual way.": "இப்போது பதிலளிக்க முடியவில்லை. மெனு வழக்கம் போல் வேலை செய்யும்.",
+
       /* the machine's resting screen */
       "Start your order": "ஆர்டரைத் தொடங்குங்கள்",
       "Welcome": "வரவேற்கிறோம்",

@@ -9295,7 +9295,7 @@ PosnicPro.settings.ai = {
                 ? PosnicPro.i18n.t('lang_ai_howto_3_once', 'Create a key and paste it above. It is shown once, so copy it before closing that page.')
                 : PosnicPro.i18n.t('lang_ai_howto_3_again', 'Create a key and paste it above. You can open that page again later if you need to see it.'));
         }
-        $('#ai_key_row,#ai_cap_row').toggle(on);
+        $('#ai_key_row,#ai_cap_row,#ai_assistant_row').toggle(on);
         /* A saved key and no key must not look the same. The key never comes
            back to the browser, so "saved" is a badge and two buttons, and the
            empty box only appears when somebody asks to replace it. */
@@ -9317,6 +9317,7 @@ PosnicPro.settings.ai = {
             var v = response.data.values || response.data;
             $('#ai_provider').val(v.ai_provider || '');
             $('#ai_monthly_cap').val(v.ai_monthly_cap || '');
+            $('#ai_ordering_assistant').prop('checked', String(v.ai_ordering_assistant) === 'true');
             PosnicPro.settings.ai.syncRows();
         }, function () { /* the card still lets you choose and save */ });
 
@@ -9402,7 +9403,10 @@ PosnicPro.settings.ai = {
                 /* Empty means no limit, which is a real choice and not the
                    absence of one, so it is sent as an empty string rather
                    than skipped. */
-                ai_monthly_cap: cap
+                ai_monthly_cap: cap,
+                /* The ordering page's door, as a word: 'false' is a choice
+                   the reader must not mistake for silence. */
+                ai_ordering_assistant: $('#ai_ordering_assistant').is(':checked') ? 'true' : 'false'
             })
         }, function (response) {
             if (response.type !== 'success') {
