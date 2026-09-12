@@ -18,7 +18,7 @@ const SOURCE = fs.readFileSync(
 function upiPattern() {
   const found = SOURCE.match(/!(\/\^\[A-Za-z0-9[^\n]*?\/)\.test\(upi\)/);
   expect(found).not.toBeNull();
-   
+
   return eval(found[1]);
 }
 
