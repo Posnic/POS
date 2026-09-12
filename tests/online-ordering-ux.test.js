@@ -1267,3 +1267,35 @@ test('a code printed for the talk lands the customer in the conversation, ready 
   const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'modules', 'settings_write.html'), 'utf8');
   assert.match(html, /id="storefront_talk_url"/);
 });
+
+test('the microphone is asked for inside the tap, before anything else, on both buttons', async () => {
+  /* Owner, on the ?ai=talk landing on his iPhone: "The microphone was not
+     allowed." Safari grants a microphone only while the tap is fresh; the
+     page had read the database first. */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  const order = [];
+  window.navigator.mediaDevices.getUserMedia = async () => { order.push('microphone'); return { getTracks: () => [{ stop() {} }] }; };
+  window.knownBranchId = async () => { order.push('database'); return 'AZ100'; };
+  document.getElementById('assistant-talk').click();
+  assert.deepStrictEqual(order.slice(0, 1), ['microphone'], 'the tap did not ask for the microphone at once');
+  await settle();
+  assert.deepStrictEqual(order, ['microphone', 'database']);
+  assert.strictEqual(calls.fetch[0].url, '/online-ordering/AZ100/voice');
+  window.OrderingVoice.stop();
+
+  /* The landing button asks the same way. */
+  order.length = 0;
+  window.sessionStorage.setItem('posnic_ai_first', 'talk');
+  window.OrderingAssistant.state.landed = false;
+  window.OrderingAssistant.paintSpark();
+  document.getElementById('voice-start').click();
+  assert.deepStrictEqual(order.slice(0, 1), ['microphone']);
+  await settle();
+  window.OrderingVoice.stop();
+
+  /* A phone with no microphone at all is told that. */
+  window.navigator.mediaDevices.getUserMedia = async () => { const e = new Error('none'); e.name = 'NotFoundError'; throw e; };
+  document.getElementById('assistant-talk').click();
+  await settle();
+  assert.match(document.getElementById('assistant-log').textContent, /No microphone was found on this device/);
+});
