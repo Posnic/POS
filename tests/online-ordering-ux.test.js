@@ -1450,3 +1450,76 @@ test('the assistant speaks first when the line opens, once per line', async () =
   assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1);
   window.OrderingVoice.stop();
 });
+
+/** The arrival page's script in a vm, with a fake shop store and a fake window. */
+function arrivalPage(url, { stored = [], defaultStore = 'ABC' } = {}) {
+  const parsed = new URL(url, 'https://shop.example');
+  const calls = { fetched: [], cleared: [], went: [], api: [] };
+  const mem = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), has: (k) => m.has(k) }; };
+  const session = mem();
+  const local = mem();
+  const tx = { oncomplete: null, onerror: null, objectStore: (name) => ({ clear: () => calls.cleared.push(name) }) };
+  const sandbox = {
+    window: { location: { pathname: parsed.pathname, search: parsed.search, get href() { return parsed.href; }, set href(v) { calls.went.push(v); } } },
+    console: { log() {}, warn() {}, error() {} },
+    URLSearchParams, String, JSON, Array, Object, Promise, setTimeout,
+    sessionStorage: session,
+    localStorage: local,
+    document: { getElementById: () => null, createElement: () => ({ style: {}, setAttribute() {} }), body: { appendChild() {} } },
+    loadEnvConfig: async () => {},
+    getData: async () => stored,
+    getDB: async () => ({ transaction: () => { setTimeout(() => tx.oncomplete && tx.oncomplete(), 0); return tx; } }),
+    KioskCore: { BRANCH_STORES: ['branch', 'products', 'cart'] },
+    clearOrderAttemptId: () => {},
+    fetchAndStoreBranch: async (id, redirect) => { calls.fetched.push([id, redirect]); return true; },
+    fetch: async (u) => { calls.api.push(String(u)); return { ok: true, json: async () => ({ data: { store: { id: defaultStore } } }) }; },
+    CONFIG: { API_BASE_URL: '' },
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(read('assets/index/script.js'), sandbox);
+  return { calls, session, local };
+}
+
+test('the arrival page reads the URL whenever it says anything, stored shop or not', async () => {
+  /* Owner: "https://develop.posnic.io/order/ABC?ai=talk wont work in
+     desktop?" A browser that had been to the shop went straight to the
+     menu and never read the URL; a phone worked only because it was new. */
+  const wait = () => new Promise((r) => setTimeout(r, 40));
+  const held = [{ id: 'ABC', name: 'Azure' }];
+
+  const again = arrivalPage('/order/ABC?ai=talk', { stored: held });
+  await wait();
+  assert.strictEqual(again.session.getItem('posnic_ai_first'), 'talk', 'a browser that held the shop dropped ?ai=talk');
+  assert.deepStrictEqual(again.calls.fetched, [['ABC', false]], 'the held shop was not refreshed from its address');
+  assert.deepStrictEqual(again.calls.went, ['products.html']);
+  assert.deepStrictEqual(again.calls.cleared, [], 'the same shop was cleared as if it were new');
+
+  const other = arrivalPage('/order/XYZ', { stored: held });
+  await wait();
+  assert.ok(other.calls.cleared.includes('branch'), 'a code for another shop kept the stored one');
+  assert.deepStrictEqual(other.calls.fetched, [['XYZ', true]]);
+  assert.strictEqual(other.session.getItem('posnic_ai_first'), null);
+
+  const fresh = arrivalPage('/order/ABC?ai=talk', { stored: [] });
+  await wait();
+  assert.strictEqual(fresh.session.getItem('posnic_ai_first'), 'talk');
+  assert.deepStrictEqual(fresh.calls.fetched, [['ABC', true]]);
+
+  /* A bare address with a shop held is still the fast path to the menu. */
+  const bare = arrivalPage('/order/', { stored: held });
+  await wait();
+  assert.deepStrictEqual(bare.calls.went, ['products.html']);
+  assert.deepStrictEqual(bare.calls.fetched, []);
+
+  /* No address but a wish: the default store, and the wish kept. */
+  const wish = arrivalPage('/order/?ai=ask', { stored: held });
+  await wait();
+  assert.strictEqual(wish.session.getItem('posnic_ai_first'), 'ask');
+  assert.deepStrictEqual(wish.calls.api, ['/online-ordering']);
+  assert.deepStrictEqual(wish.calls.fetched, [['ABC', true]]);
+
+  /* The older query form still arrives. */
+  const query = arrivalPage('/order/?branch=XYZ', { stored: held });
+  await wait();
+  assert.deepStrictEqual(query.calls.fetched, [['XYZ', true]]);
+});
