@@ -196,6 +196,7 @@ test('voice search listens in the language the menu is written in, not the langu
   for (const file of [['menu', 'menu.js'], ['order', 'assets', 'products', 'script.js']]) {
     const src = read(...file);
     assert.ok(!src.includes('rec.lang = document.documentElement.lang'), file.join('/') + ' follows the page language into the microphone');
-    assert.match(src, /rec\.lang = document\.documentElement\.getAttribute\("data-speech-lang"\) \|\| "en-IN"/);
+    /* menu.js is formatted by prettier and may wrap this line; order/ is not. */
+    assert.match(src, /rec\.lang =\s*document\.documentElement\.getAttribute\(\s*"data-speech-lang"\s*\)\s*\|\|\s*"en-IN"/);
   }
 });
