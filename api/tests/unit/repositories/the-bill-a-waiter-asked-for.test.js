@@ -19,7 +19,15 @@
  */
 
 const path = require('path');
-const repoPath = path.join(__dirname, '..', '..', '..', 'src', 'repositories', 'sale.repository.js');
+const repoPath = path.join(
+  __dirname,
+  '..',
+  '..',
+  '..',
+  'src',
+  'repositories',
+  'sale.repository.js'
+);
 const salesRepository = require(repoPath);
 
 /** A Sale model that records what it was asked to do, without a database. */

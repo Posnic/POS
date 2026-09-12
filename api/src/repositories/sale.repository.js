@@ -7112,9 +7112,7 @@ class SalesRepository {
       return {
         status: waiting > 0,
         message:
-          waiting > 0
-            ? 'The bill is on its way to the counter'
-            : 'Nothing is open on that table',
+          waiting > 0 ? 'The bill is on its way to the counter' : 'Nothing is open on that table',
         data: {
           table_number: table,
           marked: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
@@ -7149,10 +7147,7 @@ class SalesRepository {
       }
       if (BaseModel.license) query.license = BaseModel.license;
 
-      const sales = await Model.find(query)
-        .sort({ bill_requested_at: 1, _id: 1 })
-        .limit(20)
-        .lean();
+      const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
 
       return { status: true, message: 'success', data: sales };
     } catch (error) {

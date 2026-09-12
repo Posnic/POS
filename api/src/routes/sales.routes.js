@@ -164,11 +164,7 @@ router.post(
   ensureKioskKey,
   bindController(salesController.pendingBillPrints)
 );
-router.post(
-  '/markBillPrinted',
-  ensureKioskKey,
-  bindController(salesController.markBillPrinted)
-);
+router.post('/markBillPrinted', ensureKioskKey, bindController(salesController.markBillPrinted));
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,
