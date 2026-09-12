@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Posnic packages</title>
+<body style="font:15px/1.6 system-ui;max-width:640px;margin:60px auto;padding:0 20px;color:#16203a">
+<h1>Posnic package repository</h1>
+<p>Signed installers for the <a href="https://www.posnic.com/">Posnic open source POS and billing software</a>.</p>
+<pre style="background:#f4f6fa;padding:14px;border-radius:8px;overflow-x:auto">curl -fsSL https://packages.posnic.com/gpg.key \
+  | sudo gpg --dearmor -o /usr/share/keyrings/posnic.gpg
+echo "deb [signed-by=/usr/share/keyrings/posnic.gpg] https://packages.posnic.com/apt stable main" \
+  | sudo tee /etc/apt/sources.list.d/posnic.list
+sudo apt update &amp;&amp; sudo apt install posnic</pre>
+<p>Source code and releases: <a href="https://github.com/Posnic/POS">github.com/Posnic/POS</a>.</p>
+</body>
