@@ -32,6 +32,7 @@ const salesChannels = require('../utils/sales-channels');
 const itemService = new ItemService();
 const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
+const orderingAssistant = require('../services/ordering-assistant.service');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -214,6 +215,49 @@ class OnlineOrderingController {
       return this.respond(res, result);
     } catch (error) {
       console.error('Error in online ordering defaultMenu:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /**
+   * One turn with the shop's ordering assistant.
+   *
+   * Public and anonymous like the rest of the storefront, and paid for by
+   * the shop, so three doors have to be open before a model is asked: the
+   * address names a shop, the shop has usable AI, and the shop switched the
+   * assistant on for its ordering page. The menu the model sees is the same
+   * storefront the page drew, fetched here rather than trusted from the
+   * body - a client that sends its own menu is a client naming its own
+   * prices.
+   */
+  async assistant(req, res) {
+    try {
+      const storeId = req.params.storeId;
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop found at this address', data: null });
+      }
+      const front = await itemService.storefront({ storeId, ...servicePointFrom(req) });
+      if (!front || !front.status) return this.respond(res, front);
+
+      const result = await orderingAssistant.reply(req.body || {}, front.data, context);
+      if (result.status) return this.respond(res, result);
+      if (result.message === 'no_assistant') {
+        return res.status(403).json({
+          type: 'error',
+          message: 'This shop has not switched on the ordering assistant',
+          data: null,
+        });
+      }
+      if (result.message === 'Nothing was asked') {
+        return res.status(400).json({ type: 'error', message: result.message, data: null });
+      }
+      /* The shop's cap, a provider having a bad day: the menu still works. */
+      return res.status(503).json({ type: 'error', message: result.message, data: null });
+    } catch (error) {
+      console.error('Error in online ordering assistant:', error);
       return res.status(500).json({ type: 'error', message: error.message, data: null });
     }
   }

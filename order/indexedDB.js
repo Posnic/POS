@@ -96,7 +96,7 @@ let orderProcessingActive = false;
  * Stored with the branch row so every page - the menu, the order, paying -
  * writes a price the same way without asking the server again.
  */
-const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, fulfilment: [], payment: {}, charges: {} };
+const shop = { name: "", currency: "", currencyCode: "", kind: "restaurant", notes: false, assistant: false, fulfilment: [], payment: {}, charges: {} };
 
 async function rememberShop() {
     try {
@@ -108,12 +108,20 @@ async function rememberShop() {
         /* What kind of shop, which decides the words and the questions. */
         shop.kind = branch.kind === "retail" ? "retail" : "restaurant";
         shop.notes = branch.notes === true;
+        /* Whether the shop opened its assistant to customers; the spark. */
+        shop.assistant = branch.assistant === true;
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
         shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
     } catch (error) {
         /* No branch row yet is not an error; the fetch that stores one will
            be along in a moment. */
+    }
+    /* Whoever draws from the shop - the header, the spark - hears it changed. */
+    try {
+        document.dispatchEvent(new CustomEvent("posnic:shop", { detail: shop }));
+    } catch (e) {
+        /* no document, no listeners */
     }
     return shop;
 }
@@ -970,6 +978,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                    and how the food may travel. */
                 kind: storeInfo.kind === "retail" ? "retail" : "restaurant",
                 notes: !!(result.data.features && result.data.features.notes),
+                assistant: !!(result.data.features && result.data.features.assistant),
                 fulfilment: Array.isArray(result.data.channel && result.data.channel.fulfilment)
                     ? result.data.channel.fulfilment
                     : [],

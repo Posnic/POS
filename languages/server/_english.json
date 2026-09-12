@@ -1148,6 +1148,7 @@
     "src/models/dashboard.model.js"
   ],
   "No shop found at this address": [
+    "src/controllers/online-ordering.controller.js",
     "src/repositories/item.repository.js"
   ],
   "No shop in context": [
@@ -1265,7 +1266,8 @@
     "src/repositories/settings.repository.js"
   ],
   "Nothing was asked": [
-    "src/services/ai.service.js"
+    "src/services/ai.service.js",
+    "src/services/ordering-assistant.service.js"
   ],
   "Nothing was said": [
     "src/services/voice-intent.service.js"
@@ -1889,6 +1891,9 @@
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
   ],
+  "The assistant had no answer": [
+    "src/services/ordering-assistant.service.js"
+  ],
   "The audio could not be read": [
     "src/services/transcribe.service.js"
   ],
@@ -2031,6 +2036,12 @@
   "This shop has not set up an AI provider": [
     "src/services/ai.service.js"
   ],
+  "This shop has not switched on the ordering assistant": [
+    "src/controllers/online-ordering.controller.js"
+  ],
+  "This shop has nothing on its menu yet": [
+    "src/services/ordering-assistant.service.js"
+  ],
   "This shop has reached its monthly AI spending limit": [
     "src/services/ai.service.js"
   ],
@@ -2081,6 +2092,9 @@
   ],
   "Too many password reset requests. Please wait an hour, or contact support.": [
     "src/middleware/auth-rate-limit.js"
+  ],
+  "Too many questions in a minute. Please wait a moment and ask again.": [
+    "src/middleware/assistant-rate-limit.js"
   ],
   "Too many requests from this IP, please try again after 15 minutes": [
     "src/middleware/security.js"
@@ -2393,6 +2407,9 @@
   ],
   "no branch": [
     "src/services/po-receive-bridge.js"
+  ],
+  "no_assistant": [
+    "src/services/ordering-assistant.service.js"
   ],
   "not valid": [
     "src/controllers/users.controller.js"

@@ -797,6 +797,15 @@ class ItemService {
     }
   }
 
+  async storefrontContext(params = {}) {
+    try {
+      return await this.repository.storefrontContext(params);
+    } catch (error) {
+      console.error('Error in ItemService.storefrontContext:', error);
+      return null;
+    }
+  }
+
   async publicMenu(params = {}) {
     try {
       return await this.repository.publicMenu(params);

@@ -30,6 +30,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/online-ordering.controller');
 const { ensureKioskKey } = require('../middleware/kiosk-key');
+const { assistantLimiter } = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
 
@@ -81,5 +82,13 @@ router.get('/:storeId/device', ensureKioskKey, bind(controller.deviceStorefront)
 /* Placing an order. The channel state is checked again here, server-side, no
    matter what the page believed when it drew its cart. */
 router.post('/:storeId/orders', bind(controller.createOrder));
+
+/*
+ * One turn with the shop's ordering assistant: the conversation so far and
+ * the order so far in, a reply and the things to add out. Anonymous like
+ * the rest, billed to the shop's own AI account, so it is rate-limited per
+ * client here and switched on per shop inside.
+ */
+router.post('/:storeId/assistant', assistantLimiter, bind(controller.assistant));
 
 module.exports = router;

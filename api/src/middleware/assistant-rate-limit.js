@@ -1,0 +1,30 @@
+'use strict';
+/*
+ * How often one phone may ask the ordering assistant.
+ *
+ * Every question is a model call billed to the shop, from a page anybody can
+ * open. The shop's monthly cap is the ceiling; this is the floor under it:
+ * one client, a dozen questions a minute, which is more than a person
+ * types and far fewer than a script sends. Keyed per client and not per
+ * shop, so one phone in a loop cannot use up the minute for the whole
+ * restaurant.
+ */
+const rateLimit = require('express-rate-limit');
+const { MongoRateLimitStore } = require('./rate-limit-store');
+const { perClientKey } = require('./rate-limit-key');
+
+const assistantLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'assistant' }),
+  keyGenerator: perClientKey,
+  windowMs: 60 * 1000,
+  limit: 12,
+  message: {
+    type: 'error',
+    message: 'Too many questions in a minute. Please wait a moment and ask again.',
+    data: null,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { assistantLimiter };

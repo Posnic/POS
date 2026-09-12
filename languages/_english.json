@@ -151,6 +151,8 @@
   "lang_ai_not_subscription": "A Claude Pro or ChatGPT Plus subscription does not work here. Those pay for the chat website; an API key is billed separately and, for this kind of use, usually costs far less.",
   "lang_ai_off": "Off - no AI buttons anywhere",
   "lang_ai_openai": "OpenAI - your own account",
+  "lang_ai_ordering_assistant": "Let customers ask the assistant on your online ordering page",
+  "lang_ai_ordering_assistant_hint": "A spark appears on your ordering page. Customers ask in their own words, and the assistant answers from your menu and can add to their order. It never places or pays. Every question is billed to your account above, within the monthly limit, and it is off until you switch it on.",
   "lang_ai_provider": "Who answers",
   "lang_ai_save": "Save",
   "lang_ai_saved": "Saved. The AI button now appears on the item screen, beside Description.",
