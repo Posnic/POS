@@ -506,8 +506,7 @@ async function performPaymentSubmission() {
     if (loaderOverlay) loaderOverlay.style.display = 'flex';
     console.log("🔗 Submitting QR request with mobile number:", enteredNumber);
     try {
-        const branches = await getData(BRANCH_STORE);
-        const branchId = branches[0]?.id;
+        const branchId = await knownBranchId();
         const productsRefreshed = await fetchAndStoreBranch(branchId, false);
         if (!productsRefreshed) throw new Error("Could not refresh branch data before payment.");
         if (phoneWanted() && !numberIsValid()) {
@@ -748,8 +747,7 @@ function showAlert(message) {
 
 (async () => {
     await loadEnvConfig();
-    const branches = await getData(BRANCH_STORE);
-    const branchId = branches[0]?.id;
+    const branchId = await knownBranchId();
     const productsRefreshed = await fetchAndStoreBranch(branchId, false);
     if (!productsRefreshed) return;
     const kioskPayment = await getLatestKioskPayment(branchId);

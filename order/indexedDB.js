@@ -714,10 +714,66 @@ function updateKioskImageUI(data = {}) {
 
 
 
+/*
+ * The shop's address, from wherever this browser still has it.
+ *
+ * The branch row is the first place to look. A row written by an older
+ * bundle can lack `id`; the address is also kept in localStorage from every
+ * successful load, and the URL carries it on arrival. A page that reads
+ * the row's `id` directly asks the server for "undefined" the day the
+ * row is stale, and that is a 404 in front of a customer with a full cart.
+ */
+const STORE_ADDRESS_KEY = "posnic_store";
+
+function storeAddressFromRow(row) {
+    if (!row || typeof row !== "object") return "";
+    const raw = row.id || row.store_id || row.branch_id || row.storeId || "";
+    return typeof raw === "string" || typeof raw === "number" ? String(raw).trim() : "";
+}
+
+function rememberStoreAddress(address) {
+    try {
+        if (address) localStorage.setItem(STORE_ADDRESS_KEY, String(address));
+    } catch (e) {
+        /* A browser that keeps nothing still gets this visit. */
+    }
+}
+
+async function knownBranchId() {
+    const branches = await getData(BRANCH_STORE).catch(() => []);
+    const fromRow = storeAddressFromRow(branches && branches[0]);
+    if (fromRow) return fromRow;
+    try {
+        const kept = localStorage.getItem(STORE_ADDRESS_KEY);
+        if (kept) return String(kept).trim();
+    } catch (e) {
+        /* fall through to the URL */
+    }
+    const parts = String(window.location.pathname || "").split("/").filter(Boolean);
+    if (parts[0] === "order" || parts[0] === "menu") parts.shift();
+    const first = parts[0] || "";
+    if (/^[A-Za-z0-9]{3,6}$/.test(first) && !/\./.test(first)) return first;
+    return "";
+}
+
 // ✅ Fetch and Store Branch Data
 async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
     try {
         const silent = options?.silent === true;
+        /* Nothing to ask for is not a server error. Asking for "undefined"
+           was: a 404 dressed as "Unable to reach the server", with a Retry
+           that could never succeed. */
+        if (!branchId) {
+            console.warn("No shop address on this browser; the menu cannot be refreshed.");
+            if (!silent && typeof showAppErrorScreen === "function") {
+                showAppErrorScreen(
+                    "Menu not loaded",
+                    "Scan the code on the table again, or ask at the counter.",
+                    () => { window.location.href = "index.html"; }
+                );
+            }
+            return false;
+        }
         const db = await getDB();
         const existingBranches = await getData(BRANCH_STORE);
 
@@ -845,6 +901,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             // ✅ Save branch & products in IndexedDB
             let productChanges = null;
+            rememberStoreAddress(branchId);
             await saveData(BRANCH_STORE, [{
                 id: branchId,
                 kioskPayment: result.data.payment,
@@ -1047,7 +1104,7 @@ async function renderCart(cartData = null) {
             const note = String(item.note || "").trim();
             const noteHtml = shop.notes
                 ? (note ? `<div class="item-note">${escapeHtml(note)}</div>` : "") +
-                  `<button type="button" class="line-note-btn" data-item-id="${safeItemId}">${note ? "Edit note" : "Add a note"}</button>`
+                  `<button type="button" class="line-note-btn" data-item-id="${safeItemId}">${note ? t("Edit request") : t("Add a request: less spicy, no onion...")}</button>`
                 : "";
 
             html += `
@@ -1105,7 +1162,13 @@ async function renderCart(cartData = null) {
             const label = document.getElementById("order-note-label");
             if (label) label.textContent = shop.kind === "retail" ? "A note for the shop" : "A note for the kitchen";
             const field = document.getElementById("order-note");
-            if (field && !field.value) field.value = localStorage.getItem("note") || "";
+            if (field && !field.value) {
+                const kept = localStorage.getItem("note");
+                /* "null" and "undefined" are what setItem(null) left behind
+                   in older browsers; shown back, they read as a note. */
+                if (kept === "null" || kept === "undefined") localStorage.removeItem("note");
+                field.value = kept && kept !== "null" && kept !== "undefined" ? kept : "";
+            }
         }
 
         const loader = document.getElementById('page-loader');
@@ -1228,8 +1291,7 @@ async function loadProducts() {
          */
         console.warn("No products stored yet; fetching the menu.");
         const loader = document.getElementById("page-loader");
-        const branches = await getData("branch").catch(() => []);
-        const branchId = branches && branches[0] && branches[0].id;
+        const branchId = await knownBranchId();
         if (branchId && !loadProducts._fetching) {
             loadProducts._fetching = true;
             try {
@@ -1574,9 +1636,9 @@ async function checkBranchAndRedirect() {
         isBackgroundRefreshRunning = true;
         console.log("🔄 Checking for product updates...");
         try {
-            const branches = await getData(BRANCH_STORE);
-            if (branches.length > 0) {
-                await fetchAndStoreBranch(branches[0].id, false, { silent: true });
+            const branchId = await knownBranchId();
+            if (branchId) {
+                await fetchAndStoreBranch(branchId, false, { silent: true });
             }
         } finally {
             isBackgroundRefreshRunning = false;
@@ -1715,12 +1777,11 @@ async function performCheckout(transactionId, paymentStatus = "Upi") {
         });
 
         // 🏪 Get branch ID
-        const branches = await getData(BRANCH_STORE);
-        const branchId = branches.length > 0 ? branches[0].id : null;
+        const branchId = (await knownBranchId()) || null;
         const orderType = localStorage.getItem("orderType");
         /* "null" is what setItem(null) stores, and it was reaching tickets. */
         const rawNote = localStorage.getItem('note');
-        const note = rawNote && rawNote !== "null" ? String(rawNote).trim().slice(0, 300) : "";
+        const note = rawNote && rawNote !== "null" && rawNote !== "undefined" ? String(rawNote).trim().slice(0, 300) : "";
         /* How the food travels and, for a delivery, to whom. Chosen on the
            payment page; the table comes from the printed code first and a
            typed table number second. */
