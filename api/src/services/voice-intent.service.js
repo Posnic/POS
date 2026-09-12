@@ -34,10 +34,10 @@ const MAX_TEXT = 600;
 const SYSTEM = [
   'You convert what a restaurant waiter said into cart commands for a point-of-sale app.',
   'Reply with JSON only, no prose, in exactly this shape:',
-  '{"commands":[{"verb":"add|remove|set|place|clear|show","quantity":1,"item_id":"<id or null>","said":"<the words for this dish>","note":"<kitchen note for this dish, or empty>","candidates":["<up to 3 menu ids that might be meant, only when item_id is null>"]}],'
-  + '"table":"<the table or room the waiter named, or null>",'
-  + '"suggestions":[{"item_id":"<menu id>","why":"<3 to 6 words>"}],'
-  + '"summary":"<one short sentence restating the order, in the language the waiter spoke>"}',
+  '{"commands":[{"verb":"add|remove|set|place|clear|show","quantity":1,"item_id":"<id or null>","said":"<the words for this dish>","note":"<kitchen note for this dish, or empty>","candidates":["<up to 3 menu ids that might be meant, only when item_id is null>"]}],' +
+    '"table":"<the table or room the waiter named, or null>",' +
+    '"suggestions":[{"item_id":"<menu id>","why":"<3 to 6 words>"}],' +
+    '"summary":"<one short sentence restating the order, in the language the waiter spoke>"}',
   'Rules:',
   '- Choose item_id ONLY from the MENU provided. Match tolerantly: misheard spelling, accents, local-language names, partial names.',
   '- If no menu item plausibly matches, use item_id null and keep the words in "said". Never invent an item.',
@@ -107,7 +107,9 @@ function tidy(answer, menu) {
       quantity,
       item_id: matched,
       said: String(entry.said || '').slice(0, 120),
-      note: String(entry.note || '').trim().slice(0, 80),
+      note: String(entry.note || '')
+        .trim()
+        .slice(0, 80),
       candidates,
     });
   }
@@ -140,15 +142,24 @@ function extras(answer, menu, commands) {
   const suggestions = (answer && Array.isArray(answer.suggestions) ? answer.suggestions : [])
     .map((sug) => ({
       item_id: sug && sug.item_id != null ? String(sug.item_id) : '',
-      why: String((sug && sug.why) || '').trim().slice(0, 60),
+      why: String((sug && sug.why) || '')
+        .trim()
+        .slice(0, 60),
     }))
-    .filter((sug, i, all) => known.has(sug.item_id) && !already.has(sug.item_id)
-      && all.findIndex((o) => o.item_id === sug.item_id) === i)
+    .filter(
+      (sug, i, all) =>
+        known.has(sug.item_id) &&
+        !already.has(sug.item_id) &&
+        all.findIndex((o) => o.item_id === sug.item_id) === i
+    )
     .slice(0, 2);
-  const table = answer && answer.table != null && String(answer.table).trim()
-    ? String(answer.table).trim().slice(0, 20)
-    : null;
-  const summary = String((answer && answer.summary) || '').trim().slice(0, 160);
+  const table =
+    answer && answer.table != null && String(answer.table).trim()
+      ? String(answer.table).trim().slice(0, 20)
+      : null;
+  const summary = String((answer && answer.summary) || '')
+    .trim()
+    .slice(0, 160);
   return { table, suggestions, summary };
 }
 

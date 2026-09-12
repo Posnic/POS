@@ -26,14 +26,27 @@ afterEach(() => jest.restoreAllMocks());
 
 const modelAnswers = (obj) => {
   jest.spyOn(ai, 'available').mockResolvedValue(true);
-  return jest.spyOn(ai, 'ask').mockResolvedValue({ status: true, data: { text: JSON.stringify(obj) } });
+  return jest
+    .spyOn(ai, 'ask')
+    .mockResolvedValue({ status: true, data: { text: JSON.stringify(obj) } });
 };
 
 test('the note said for a dish rides with the dish, and is capped', async () => {
   modelAnswers({
-    commands: [{ verb: 'add', quantity: 2, item_id: '1', said: 'masala dosa', note: '  no onion, extra spicy  ' }],
+    commands: [
+      {
+        verb: 'add',
+        quantity: 2,
+        item_id: '1',
+        said: 'masala dosa',
+        note: '  no onion, extra spicy  ',
+      },
+    ],
   });
-  const result = await service.resolve({ text: 'two masala dosa no onion extra spicy', items: MENU }, context);
+  const result = await service.resolve(
+    { text: 'two masala dosa no onion extra spicy', items: MENU },
+    context
+  );
   expect(result.data.commands[0].note).toBe('no onion, extra spicy');
 
   modelAnswers({ commands: [{ verb: 'add', quantity: 1, item_id: '1', note: 'x'.repeat(500) }] });
@@ -44,7 +57,13 @@ test('the note said for a dish rides with the dish, and is capped', async () => 
 test('candidates are offered only for a dish that did not match, and only from the menu', async () => {
   modelAnswers({
     commands: [
-      { verb: 'add', quantity: 1, item_id: null, said: 'dosa', candidates: ['3', '999', '1', '3', '4', '2'] },
+      {
+        verb: 'add',
+        quantity: 1,
+        item_id: null,
+        said: 'dosa',
+        candidates: ['3', '999', '1', '3', '4', '2'],
+      },
       { verb: 'add', quantity: 1, item_id: '2', said: 'coffee', candidates: ['1'] },
     ],
   });
@@ -104,6 +123,10 @@ test('the model is told about every new field, in the shape the app reads', () =
 });
 
 test('extras() on a bare answer is empty, never undefined', () => {
-  expect(service.extras({ commands: [] }, MENU, [])).toEqual({ table: null, suggestions: [], summary: '' });
+  expect(service.extras({ commands: [] }, MENU, [])).toEqual({
+    table: null,
+    suggestions: [],
+    summary: '',
+  });
   expect(service.extras(null, MENU, [])).toEqual({ table: null, suggestions: [], summary: '' });
 });
