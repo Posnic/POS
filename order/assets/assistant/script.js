@@ -22,7 +22,7 @@
   "use strict";
 
   var MAX_TURNS_SENT = 12;
-  var state = { messages: [], busy: false, greeted: false, landed: false };
+  var state = { messages: [], busy: false, greeted: false, landed: false, placed: "" };
 
   function el(id) {
     return document.getElementById(id);
@@ -368,11 +368,59 @@
     if (on) paintReview();
   }
 
-  /* The order has gone to the kitchen from the conversation. */
+  /*
+   * The order has gone, and this is where the customer finds that out.
+   *
+   * In the sheet they were talking into, not on a screen the page jumped to:
+   * the jump was indistinguishable from a crash, and it ended the
+   * conversation in the middle of it. Two beats - it went, somebody is
+   * cooking it - and then the customer decides when to leave.
+   */
+  var placedTimer = 0;
+
+  function placedPanel(token, options) {
+    var panel = el("assistant-placed");
+    if (!panel) {
+      actionLine(say("Sent to the kitchen. Token {token}.", { token: token }));
+      return;
+    }
+    var number = el("placed-token");
+    if (number) number.textContent = String(token || "--");
+    var art = el("placed-art");
+    if (art) art.setAttribute("data-stage", "sent");
+    var said = el("placed-said");
+    if (said) said.textContent = say("Sent to the kitchen");
+    panel.hidden = false;
+    state.placed = String(token || "");
+    clearTimeout(placedTimer);
+    /* Long enough for the tick to land and be read, short enough that
+       nobody wonders whether the page has stopped. */
+    var after = options && typeof options.after === "number" ? options.after : 1800;
+    placedTimer = setTimeout(function () {
+      if (art) art.setAttribute("data-stage", "cooking");
+      if (said) said.textContent = say("The chef is preparing your order");
+    }, after);
+  }
+
   function placedLine(token) {
-    actionLine(say("Sent to the kitchen. Token {token}.", { token: token }));
-    var button = el("assistant-review");
-    if (button) button.hidden = true;
+    placedPanel(token);
+  }
+
+  /* Out of the conversation, to the token screen, when the customer says so. */
+  function placedDone() {
+    var token = state.placed;
+    hidePlaced();
+    /* Through the published seam, the way the Review button and the voice
+       line leave, so one place decides what leaving means. */
+    window.OrderingAssistant.leave(
+      token ? "thankyou.html?token=" + encodeURIComponent(token) : "products.html"
+    );
+  }
+
+  function hidePlaced() {
+    clearTimeout(placedTimer);
+    var panel = el("assistant-placed");
+    if (panel) panel.hidden = true;
   }
 
   /* --------------------------------------------------------- a turn */
@@ -496,6 +544,8 @@
     if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
     var review = el("assistant-review");
     if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
+    var done = el("placed-done");
+    if (done) done.addEventListener("click", placedDone);
     var orderList = el("assistant-order-list");
     if (orderList) {
       orderList.addEventListener("click", async function (event) {
@@ -539,5 +589,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
 })();

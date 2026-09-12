@@ -297,6 +297,29 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg>
                 </button>
             </form>
+            <!--
+                The order has gone. This is where the customer finds that out:
+                in the sheet they were just talking into, not on a screen the
+                page jumped to. A tick, then a pan with the steam coming off
+                it, then the token. Nothing moves until they tap Done.
+            -->
+            <div class="placed" id="assistant-placed" hidden>
+                <div class="placed-art" id="placed-art" data-stage="sent" aria-hidden="true">
+                    <svg class="placed-tick" viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"></circle><path d="M15 27l8 8 15-16"></path></svg>
+                    <div class="placed-pan">
+                        <span class="placed-steam"></span>
+                        <span class="placed-steam"></span>
+                        <span class="placed-steam"></span>
+                        <span class="placed-pot"></span>
+                    </div>
+                </div>
+                <p class="placed-said" id="placed-said" role="status">Sent to the kitchen</p>
+                <div class="placed-token">
+                    <span class="placed-token-label">Token</span>
+                    <span class="placed-token-number" id="placed-token">--</span>
+                </div>
+                <button type="button" class="placed-done" id="placed-done">Done</button>
+            </div>
             <!-- The way out of the conversation and into the order. The page's
                  own order bar sits under this sheet, so "tap Review order" needs
                  a button that is actually on screen. Shown once the order holds

@@ -156,16 +156,19 @@ async function renderAndPrint() {
     $("#total").text(`₹${receiptData.total.toFixed(2)}`);
     $("#orderTypePrint").text(orderType);
 
-    // ✅ Generate PDF after 1s
-    setTimeout(async () => {
-        try {
-            await generatePdfFromHtmlFile();
-            sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
-        } catch (error) {
-            console.error("Receipt PDF generation failed:", error);
-            alert(error.message || t("Receipt PDF could not be generated."));
-        }
-    }, 1000);
+    /*
+     * NOTHING IS DOWNLOADED HERE.
+     *
+     * This page used to push a PDF at the phone a second after it opened.
+     * Owner: "after order no need to show bill or pdf not required. once
+     * payment done from desktop then make bill available to download." A bill
+     * is a record of money that has changed hands, and at this moment none
+     * has: the order is a ticket in a kitchen. The shop marks it paid at the
+     * till, and the bill is offered then.
+     *
+     * generatePdfFromHtmlFile stays, and is what that button will call.
+     */
+    void printedFlagKey;
 }
 
 
