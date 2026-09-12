@@ -1095,17 +1095,52 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   assert.strictEqual(window.__pc.remote.sdp, 'v=0\r\nanswer', 'the provider\'s answer was not applied to the line');
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on');
 
-  /* The model asks for two biryani, less spicy, and for a dish that is off. */
+  /* The model asks, in ONE response, for two biryani less spicy, for a dish
+     that is off tonight, and for something that is not on the menu. The
+     arguments events alone do nothing; the calls run together when the
+     response is done, and the model is asked to speak ONCE. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c1', arguments: '{"item_id":"m1","quantity":2,"note":"less spicy"}' }) });
-  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c2', arguments: '{"item_id":"b1","quantity":1}' }) });
-  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.function_call_arguments.done', name: 'add_to_order', call_id: 'c3', arguments: '{"item_id":"ghost","quantity":1}' }) });
+  assert.deepStrictEqual(calls.sent, [], 'a tool ran before the response was done');
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.done', response: { status: 'completed', output: [
+    { type: 'message', role: 'assistant' },
+    { type: 'function_call', name: 'add_to_order', call_id: 'c1', arguments: '{"item_id":"m1","quantity":2,"note":"less spicy","asked":"chicken briyani"}' },
+    { type: 'function_call', name: 'add_to_order', call_id: 'c2', arguments: '{"item_id":"b1","quantity":1,"asked":"masala dosa"}' },
+    { type: 'function_call', name: 'add_to_order', call_id: 'c3', arguments: '{"item_id":"ghost","quantity":1,"asked":"chicken tikka"}' },
+  ] } }) });
   await settle();
   assert.deepStrictEqual(calls.applied, [['m1', 2]], 'the order was changed for something not on the menu or off tonight');
   const outputs = calls.sent.filter((e) => e.type === 'conversation.item.create').map((e) => ({ call: e.item.call_id, out: JSON.parse(e.item.output) }));
   assert.deepStrictEqual(outputs.map((o) => [o.call, o.out.ok]), [['c1', true], ['c2', false], ['c3', false]]);
   assert.strictEqual(outputs[0].out.note, 'less spicy');
-  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 3, 'the model was not asked to speak after each tool');
+  assert.strictEqual(outputs[0].out.did, 'added');
+  assert.ok(outputs[0].out.order && Array.isArray(outputs[0].out.order.lines), 'the tool did not hand back the order as it stands');
+  assert.strictEqual(outputs[1].out.reason, 'not_available_today');
+  assert.strictEqual(outputs[1].out.item, 'Masala Dosa');
+  assert.strictEqual(outputs[2].out.reason, 'not_on_menu');
+  assert.strictEqual(outputs[2].out.asked, 'chicken tikka');
+  assert.deepStrictEqual(outputs[2].out.nearest.map((n) => n.name), ['Chicken Biryani'], 'the nearest dish was not offered back');
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1, 'the model must be asked to speak once, after all the tools');
+  assert.strictEqual(calls.sent[calls.sent.length - 1].type, 'response.create', 'the outputs must all be in before the model is asked to speak');
   assert.match(document.getElementById('assistant-log').textContent, /Added 2 × Chicken Biryani/);
+
+  /* A wrong id with the customer's own words still lands on the dish;
+     "briyani" is one step from "biryani". An interrupted response runs
+     nothing. */
+  calls.sent.length = 0;
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.done', response: { status: 'completed', output: [
+    { type: 'function_call', name: 'add_to_order', call_id: 'c4', arguments: '{"item_id":"chicken-biryani","quantity":1,"asked":"oru chicken briyani"}' },
+  ] } }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.done', response: { status: 'cancelled', output: [
+    { type: 'function_call', name: 'add_to_order', call_id: 'c5', arguments: '{"item_id":"m1","quantity":9}' },
+  ] } }) });
+  await settle();
+  assert.deepStrictEqual(calls.applied, [['m1', 2], ['m1', 1]]);
+  assert.strictEqual(JSON.parse(calls.sent[0].item.output).item_id, 'm1');
+  assert.strictEqual(calls.sent.filter((e) => e.item && e.item.call_id === 'c5').length, 0, 'a cancelled response ran its tools');
+
+  /* A refused duplicate response is a warning, not the end of the call. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on', 'a passing error ended the call');
 
   /* What was said, both ways, lands in the conversation. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'two biryani please' }) });
@@ -1298,4 +1333,47 @@ test('the microphone is asked for inside the tap, before anything else, on both 
   document.getElementById('assistant-talk').click();
   await settle();
   assert.match(document.getElementById('assistant-log').textContent, /No microphone was found on this device/);
+});
+
+test('the ears lock to Tamil the moment Tamil is heard, and a transcript in another Indian alphabet is Tamil misheard', async () => {
+  /* Owner: "i keep talking in tamil only but i see text in different
+     different languages." The transcriber guessed afresh each time. */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  await window.OrderingVoice.start();
+  await settle();
+  calls.sent.length = 0;
+
+  /* Malayalam letters for a Tamil sentence: not shown, and the line is told to hear Tamil. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ഒരു ചിക്കൻ ബിരിയാണി' }) });
+  assert.ok(!/ചിക്കൻ/.test(document.getElementById('assistant-log').textContent), 'the misheard alphabet was shown to the customer');
+  const updates = calls.sent.filter((e) => e.type === 'session.update');
+  assert.strictEqual(updates.length, 1);
+  assert.deepStrictEqual(updates[0].session.audio.input.transcription, { model: 'gpt-4o-mini-transcribe', language: 'ta' });
+
+  /* Tamil shows, and the lock is not sent twice. English still shows. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு சிக்கன் பிரியாணி' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'and one lime soda' }) });
+  assert.match(document.getElementById('assistant-log').textContent, /ஒரு சிக்கன் பிரியாணி[\s\S]*and one lime soda/);
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 1, 'the lock was sent again');
+  window.OrderingVoice.stop();
+
+  /* On the older endpoint the same lock takes the older shape. */
+  const beta = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-4o-realtime-preview' } } } });
+  await beta.window.OrderingVoice.start();
+  await settle();
+  beta.calls.sent.length = 0;
+  await beta.window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'வணக்கம்' }) });
+  assert.deepStrictEqual(beta.calls.sent.filter((e) => e.type === 'session.update')[0].session, { input_audio_transcription: { model: 'whisper-1', language: 'ta' } });
+  beta.window.OrderingVoice.stop();
+
+  /* A Tamil page is locked before the first word: nothing to send later. */
+  const tamil = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
+  tamil.window.i18n = { lang: 'ta' };
+  await tamil.window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(tamil.calls.fetch[0].body.lang, 'ta');
+  tamil.calls.sent.length = 0;
+  await tamil.window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு தோசை' }) });
+  assert.strictEqual(tamil.calls.sent.filter((e) => e.type === 'session.update').length, 0);
+  tamil.window.OrderingVoice.stop();
 });

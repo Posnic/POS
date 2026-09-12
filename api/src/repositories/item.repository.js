@@ -3972,6 +3972,7 @@ class ItemRepository extends BaseModel {
               branchDoc.currency_text || branchDoc.currency
             ),
             /* "31 dishes" for a kitchen, "31 items" for a shop. */
+            ...this._publicContact(branchDoc),
             kind: await this.shopKind(branchDoc),
           },
           /* The channel state travels with the menu so the page can say "opens
@@ -4048,6 +4049,32 @@ class ItemRepository extends BaseModel {
       { show_on_menu: { $ne: false } },
       itemChannels.channelFilter(channel),
     ];
+  }
+
+  /**
+   * What a shop prints on its door and its receipts: where it is, how to
+   * ring it, its website. Public by nature, and what the assistant answers
+   * "where are you" from. Never the email, which is the owner's login on
+   * many shops, and never anything from the credentials.
+   */
+  _publicContact(branchDoc) {
+    const line = (value) =>
+      String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const address = [
+      line(branchDoc.store_address || branchDoc.address || branchDoc.printing_address),
+      line(branchDoc.city),
+      line(branchDoc.pincode),
+    ]
+      .filter(Boolean)
+      .filter((part, i, all) => all.indexOf(part) === i)
+      .join(', ');
+    const phone = [line(branchDoc.store_telephone), line(branchDoc.store_alternativephone)]
+      .filter(Boolean)
+      .filter((part, i, all) => all.indexOf(part) === i)
+      .join(' / ');
+    return { address, phone, website: line(branchDoc.website) };
   }
 
   async _storefrontBranch({ storeId, branchId }) {
@@ -4504,6 +4531,7 @@ class ItemRepository extends BaseModel {
               branchDoc.currency_text || branchDoc.currency
             ),
             /* A restaurant or a shop; the page's words and questions follow. */
+            ...this._publicContact(branchDoc),
             kind,
           },
           /* What this kind of shop offers on top of the list: a note for the

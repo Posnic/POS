@@ -209,6 +209,108 @@ describe('ordering-assistant.service', () => {
     });
   });
 
+  describe('what the shop says about itself', () => {
+    test('the facts: where, when, how to get it, how to pay, where the customer sits', () => {
+      const facts = assistant.shopFacts({
+        store: {
+          name: 'Azure Sea Foods',
+          kind: 'restaurant',
+          currency: '₹',
+          currency_code: 'INR',
+          address: '12 Beach Road, Chennai, 600001',
+          phone: '044 1234 / 98400 00000',
+          website: 'azure.example',
+        },
+        channel: {
+          accepting: false,
+          message: 'Opens at 11:00.',
+          opens_at: '2026-09-13T05:30:00.000Z',
+          hours: {
+            mon: [{ open: 660, close: 1380 }],
+            tue: [],
+            sun: [
+              { open: 660, close: 900 },
+              { open: 1080, close: 1380 },
+            ],
+          },
+          fulfilment: ['dine_in', 'delivery', 'drone'],
+          time_zone: 'Asia/Kolkata',
+        },
+        charges: { delivery: { fee: 30, free_above: 500, min_order: 200 } },
+        payment: { cash: true, upi: 'true', phonepe_merchant_id: 'M123', online: false },
+        service_point: { label: 'Table 5', venue: null },
+      });
+      expect(facts).toMatchObject({
+        name: 'Azure Sea Foods',
+        kind: 'restaurant',
+        currency: 'INR',
+        address: '12 Beach Road, Chennai, 600001',
+        phone: '044 1234 / 98400 00000',
+        website: 'azure.example',
+        taking_orders_now: false,
+        status: 'Opens at 11:00.',
+        time_zone: 'Asia/Kolkata',
+        payment: ['cash', 'upi'],
+        customer_is_at: 'Table 5',
+      });
+      expect(facts.hours).toBe(
+        'Mon 11:00-23:00; Tue closed; Wed closed; Thu closed; Fri closed; Sat closed; Sun 11:00-15:00, 18:00-23:00'
+      );
+      expect(facts.ways_to_get_it).toEqual([
+        { way: 'dine_in', means: 'eat here (at the table)' },
+        { way: 'delivery', means: 'delivery', fee: 30, fee_waived_from: 500, minimum_order: 200 },
+      ]);
+      expect(JSON.stringify(facts)).not.toContain('M123');
+
+      const room = assistant.shopFacts({
+        store: {},
+        channel: { accepting: true },
+        service_point: { venue: { name: 'Royal Club', unit_label: 'Room', unit: '123' } },
+      });
+      expect(room).toMatchObject({
+        name: 'this shop',
+        taking_orders_now: true,
+        hours: 'no fixed hours',
+        customer_is_at: 'Royal Club, Room 123',
+      });
+      expect(room.status).toBeUndefined();
+    });
+
+    test('the menu splits into what can be ordered and the names of what cannot', () => {
+      const { open, off } = assistant.splitMenu(assistant.menuFor(MENU));
+      expect(open.map((i) => i.id)).not.toContain('b1');
+      expect(open.every((i) => i.available === undefined)).toBe(true);
+      expect(off).toEqual(['Masala Dosa']);
+    });
+
+    test('the typed brief carries the two lists and the facts, and the rules name them', async () => {
+      jest.spyOn(ai, 'available').mockResolvedValue(true);
+      jest.spyOn(assistant._repo(), 'resolveGroup').mockResolvedValue({
+        status: true,
+        data: { values: { ai_ordering_assistant: 'true' } },
+      });
+      const ask = jest
+        .spyOn(ai, 'ask')
+        .mockResolvedValue({ status: true, data: { text: '{"reply":"ok","actions":[]}' } });
+      await assistant.reply(
+        { messages: [{ role: 'user', text: 'where are you?' }] },
+        {
+          categories: MENU,
+          store: { name: 'Azure', address: '12 Beach Road' },
+          channel: { accepting: true },
+        },
+        context
+      );
+      const [request] = ask.mock.calls[0];
+      expect(request.prompt).toMatch(/MENU \(JSON; what can be ordered right now/);
+      expect(request.prompt).not.toContain('"available":false');
+      expect(request.prompt).toMatch(/NOT TODAY[\s\S]*"Masala Dosa"/);
+      expect(request.prompt).toMatch(/ABOUT THE SHOP[\s\S]*"address":"12 Beach Road"/);
+      expect(assistant.SYSTEM).toContain('ABOUT THE SHOP');
+      expect(assistant.SYSTEM).toContain('NOT TODAY');
+    });
+  });
+
   describe('what the shop wrote', () => {
     test('house notes ride with the rules, after them; the greeting reaches the storefront; both are cut to size', async () => {
       jest.spyOn(ai, 'available').mockResolvedValue(true);

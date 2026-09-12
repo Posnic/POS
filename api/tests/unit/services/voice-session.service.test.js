@@ -40,7 +40,12 @@ describe('voice-session.service', () => {
     expect(brief.startsWith(voice.VOICE_SYSTEM)).toBe(true);
     expect(brief).toContain('<<<SHOP_DATA');
     expect(brief).toContain('"Chicken Biryani"');
-    expect(brief).toContain('"available":false');
+    /* Only what can be ordered carries an id; what is off today is a name. */
+    expect(brief).not.toContain('"available":false');
+    expect(brief).not.toContain('"b1"');
+    expect(brief).toMatch(/NOT TODAY[\s\S]*"Masala Dosa"/);
+    expect(brief).toContain('ABOUT THE SHOP');
+    expect(brief).toContain('LANGUAGE: the page is in English');
     expect(brief).toContain("Today's special is the prawn biryani.");
     expect(brief).not.toMatch(/Reply with JSON/);
     expect(voice.tools().map((t) => t.name)).toEqual([
@@ -103,6 +108,42 @@ describe('voice-session.service', () => {
     expect(request.instructions).toContain('Always offer a drink.');
     expect(request.instructions).toContain('"Chicken Biryani"');
     expect(request.tools.map((t) => t.name)).toContain('add_to_order');
+  });
+
+  test('the ears are told the language and the menu; a Tamil page locks Tamil from the first word', async () => {
+    jest
+      .spyOn(assistant, 'settingsFor')
+      .mockResolvedValue({ on: true, liveVoice: true, instructions: '', greeting: '' });
+    const answer = jest
+      .spyOn(ai, 'realtimeAnswer')
+      .mockResolvedValue({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });
+    const front = {
+      categories: MENU,
+      store: { name: 'Azure', address: '12 Beach Road, Chennai', phone: '044 1234' },
+    };
+
+    await voice.session({ sdp: OFFER, lang: 'ta' }, front, context);
+    let [request] = answer.mock.calls[0];
+    expect(request.transcription.language).toBe('ta');
+    expect(request.transcription.prompt).toMatch(/^Tamil or English\. Azure menu: Chicken Biryani/);
+    expect(request.transcription.prompt).not.toContain('Masala Dosa');
+    expect(request.instructions).toContain('LANGUAGE: the page is in Tamil');
+    expect(request.instructions).toContain('"address":"12 Beach Road, Chennai"');
+    expect(request.instructions).toContain('"phone":"044 1234"');
+
+    await voice.session({ sdp: OFFER, lang: 'en' }, front, context);
+    [request] = answer.mock.calls[1];
+    expect(request.transcription.language).toBeUndefined();
+    expect(request.instructions).toContain('LANGUAGE: the page is in English');
+
+    /* The brief tells the model how to add, and to own every failure. */
+    expect(voice.VOICE_SYSTEM).toContain('one call per item');
+    expect(voice.VOICE_SYSTEM).toContain('Never skip a failed one');
+    expect(voice.VOICE_SYSTEM).toContain('ABOUT THE SHOP');
+    for (const name of ['add_to_order', 'remove_from_order', 'set_quantity']) {
+      const tool = voice.tools().find((t) => t.name === name);
+      expect(tool.parameters.properties.asked).toBeDefined();
+    }
   });
 
   test('a refusal from the AI service passes through untouched', async () => {

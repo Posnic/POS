@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "" };
 
   /* ------------------------------------------------------------ the button */
 
@@ -101,17 +101,20 @@
    * products script's closure and is NOT visible here, which is how every
    * add once came back "not on this menu" on the real page.
    */
-  function findItem(id) {
-    var wanted = String(id);
+  function catalogue() {
     try {
-      if (typeof allProducts === "function") { // eslint-disable-line no-undef
-        var all = allProducts() || []; // eslint-disable-line no-undef
-        for (var i = 0; i < all.length; i++) {
-          if (all[i] && String(all[i].id) === wanted) return all[i];
-        }
-      }
+      if (typeof allProducts === "function") return allProducts() || []; // eslint-disable-line no-undef
     } catch (e) {
       /* no catalogue on this page */
+    }
+    return [];
+  }
+
+  function byId(id) {
+    var wanted = String(id);
+    var all = catalogue();
+    for (var i = 0; i < all.length; i++) {
+      if (all[i] && String(all[i].id) === wanted) return all[i];
     }
     try {
       if (typeof findProduct === "function") return findProduct(wanted) || null; // eslint-disable-line no-undef
@@ -119,6 +122,109 @@
       /* not on this page either */
     }
     return null;
+  }
+
+  /* Letters and digits only, lower case, one space between words. */
+  function plain(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\u0B80-\u0BFF]+/g, " ")
+      .trim();
+  }
+
+  /* Edits between two short words, transpositions counted once: "briyani"
+     is one step from "biryani", "tikka" one from "tika". */
+  function edits(a, b) {
+    if (a === b) return 0;
+    var la = a.length, lb = b.length;
+    if (!la) return lb;
+    if (!lb) return la;
+    var rows = [];
+    for (var i = 0; i <= la; i++) {
+      rows[i] = [i];
+    }
+    for (var j = 1; j <= lb; j++) rows[0][j] = j;
+    for (i = 1; i <= la; i++) {
+      for (j = 1; j <= lb; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        var best = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + cost);
+        if (i > 1 && j > 1 && a.charAt(i - 1) === b.charAt(j - 2) && a.charAt(i - 2) === b.charAt(j - 1)) {
+          best = Math.min(best, rows[i - 2][j - 2] + 1);
+        }
+        rows[i][j] = best;
+      }
+    }
+    return rows[la][lb];
+  }
+
+  function wordMatches(word, other) {
+    if (word === other) return true;
+    var slack = word.length >= 6 ? 2 : word.length >= 4 ? 1 : 0;
+    return slack > 0 && edits(word, other) <= slack;
+  }
+
+  /* How well the customer's words fit an item's name: the share of their
+     words found in it, less a little for every word of the name they did
+     not say, so "chicken" alone prefers the shortest chicken dish. */
+  function fit(asked, name) {
+    var said = plain(asked).split(" ").filter(Boolean);
+    var has = plain(name).split(" ").filter(Boolean);
+    if (!said.length || !has.length) return 0;
+    var hit = 0;
+    var used = {};
+    for (var i = 0; i < said.length; i++) {
+      for (var j = 0; j < has.length; j++) {
+        if (!used[j] && wordMatches(said[i], has[j])) {
+          used[j] = true;
+          hit++;
+          break;
+        }
+      }
+    }
+    if (!hit) return 0;
+    var unsaid = has.length - hit;
+    return hit / said.length - unsaid * 0.1;
+  }
+
+  /* The items closest to what was asked, best first, above `floor`. */
+  function nearest(asked, limit, floor) {
+    var all = catalogue();
+    var scored = [];
+    var least = typeof floor === "number" ? floor : 0.3;
+    for (var i = 0; i < all.length; i++) {
+      var item = all[i];
+      if (!item || !item.name) continue;
+      var score = fit(asked, item.name);
+      if (score >= least) scored.push({ item: item, score: score });
+    }
+    scored.sort(function (a, b) {
+      return b.score - a.score;
+    });
+    return scored.slice(0, limit || 3);
+  }
+
+  /*
+   * A dish by id, else by the words the customer used. The model is asked
+   * for exact ids and usually sends them; when it sends a name, a guess, or
+   * an id from an older menu, the customer's own words settle it - and if
+   * they do not settle it, the nearest names go back so the model can ask.
+   */
+  function findItem(id, asked) {
+    var exact = byId(id);
+    if (exact) return exact;
+    var words = String(asked || "").trim() || String(id || "").replace(/[_-]+/g, " ");
+    /* Picked only when most of the words fit and nothing else comes close;
+       "chicken tikka" must never quietly become Chicken Biryani. */
+    var close = nearest(words, 3, 0.6);
+    if (!close.length) return null;
+    if (close.length === 1 || close[0].score - close[1].score >= 0.25) return close[0].item;
+    return null;
+  }
+
+  function brief(item) {
+    var out = { item_id: String(item.id), name: item.name, price: Number(item.price) || 0 };
+    if (item.available === false) out.available = false;
+    return out;
   }
 
   async function cartSummary() {
@@ -136,24 +242,109 @@
     }
   }
 
-  /* The model asked for something; the page decides and answers. */
+  /*
+   * The model asked for something; the page decides and answers. Every
+   * answer carries the order as it stands, so the model reads back what IS
+   * there and not what it meant to do; a refusal says why and what is close.
+   */
   async function runTool(name, args) {
     var a = assistant();
-    if (name === "show_order") return cartSummary();
+    if (name === "show_order") return { ok: true, order: await cartSummary() };
     var id = String((args && args.item_id) || "");
-    var item = findItem(id);
-    if (!item) return { ok: false, reason: "not on this menu" };
-    if (name !== "remove_from_order" && item.available === false) return { ok: false, reason: "not available right now" };
+    var asked = String((args && args.asked) || "").replace(/\s+/g, " ").trim().slice(0, 80);
+    var item = findItem(id, asked);
+    if (!item) {
+      return {
+        ok: false,
+        reason: "not_on_menu",
+        asked: asked || id,
+        nearest: nearest(asked || id.replace(/[_-]+/g, " "), 3).map(function (n) { return brief(n.item); }),
+        order: await cartSummary()
+      };
+    }
+    if (name !== "remove_from_order" && item.available === false) {
+      return { ok: false, reason: "not_available_today", item: item.name, asked: asked || id, order: await cartSummary() };
+    }
     var quantity = Math.min(20, Math.max(1, Math.round(Number(args && args.quantity) || 1)));
-    var action = { item_id: id, name: item.name, quantity: quantity };
+    var action = { item_id: String(item.id), name: item.name, quantity: quantity };
     if (name === "add_to_order") action.verb = "add";
     else if (name === "remove_from_order") { action.verb = "remove"; action.quantity = 0; }
     else if (name === "set_quantity") action.verb = "set";
-    else return { ok: false, reason: "unknown tool" };
+    else return { ok: false, reason: "unknown_tool" };
     var noteText = String((args && args.note) || "").replace(/\s+/g, " ").trim().slice(0, 120);
     if (noteText && action.verb !== "remove") action.note = noteText;
     if (a && a.apply) await a.apply([action]);
-    return { ok: true, item: item.name, verb: action.verb, quantity: action.quantity, note: noteText || undefined };
+    var done = { ok: true, did: action.verb === "add" ? "added" : action.verb === "remove" ? "removed" : "set", item: item.name, item_id: String(item.id), quantity: action.quantity };
+    if (noteText && action.verb !== "remove") done.note = noteText;
+    done.order = await cartSummary();
+    return done;
+  }
+
+  /*
+   * All of a response's tool calls, run in order once the response is DONE,
+   * answered together, and ONE response.create after. Answering each call as
+   * its arguments arrived sent a response.create per call; the second one
+   * met a response already running and was refused, and the model read back
+   * one item of two ("i said chicken briyani and chicken tikka ... it said
+   * only chicken tikka").
+   */
+  async function runToolCalls(response) {
+    var items = (response && response.output) || [];
+    var calls = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] && items[i].type === "function_call" && items[i].call_id) calls.push(items[i]);
+    }
+    if (!calls.length) return false;
+    for (i = 0; i < calls.length; i++) {
+      var args = {};
+      try {
+        args = JSON.parse(calls[i].arguments || "{}");
+      } catch (e) {
+        args = {};
+      }
+      var output = await runTool(calls[i].name, args);
+      sendEvent({ type: "conversation.item.create", item: { type: "function_call_output", call_id: calls[i].call_id, output: JSON.stringify(output) } });
+    }
+    sendEvent({ type: "response.create" });
+    return true;
+  }
+
+  /* ------------------------------------------------------------ the ears */
+
+  /*
+   * Which script a transcript came back in. This page speaks English and
+   * Tamil; a transcript in Malayalam, Kannada, Telugu, Hindi or Urdu is
+   * Tamil speech the transcriber guessed wrong ("i keep talking in tamil
+   * only but i see text in different different languages"), and the cue to
+   * stop it guessing.
+   */
+  function scriptOf(text) {
+    var s = String(text || "");
+    var tamil = (s.match(/[\u0B80-\u0BFF]/g) || []).length;
+    var latin = (s.match(/[A-Za-z]/g) || []).length;
+    var other = (s.match(/[\u0600-\u06FF\u0900-\u0B7F\u0C00-\u0DFF]/g) || []).length;
+    if (tamil && tamil >= other) return "tamil";
+    if (other > latin) return "other";
+    return "latin";
+  }
+
+  /* Tell the line to hear Tamil from now on. Once. */
+  function lockTamil() {
+    if (live.heardLanguage) return;
+    live.heardLanguage = "ta";
+    if (live.beta) {
+      sendEvent({ type: "session.update", session: { input_audio_transcription: { model: "whisper-1", language: "ta" } } });
+    } else {
+      sendEvent({ type: "session.update", session: { type: "realtime", audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "ta" } } } } });
+    }
+  }
+
+  /* Errors the line cannot come back from; anything else is logged and the
+     conversation goes on. Stopping on every error event ended a call over a
+     refused duplicate response.create. */
+  function fatalError(error) {
+    var code = String((error && (error.code || error.type)) || "").toLowerCase();
+    return /session|expired|invalid_api_key|insufficient_quota|rate_limit|unauthori[sz]ed|forbidden/.test(code);
   }
 
   /* ----------------------------------------------------------- live line */
@@ -174,9 +365,21 @@
       case "input_audio_buffer.speech_started":
         status("listening", say("Listening..."));
         break;
-      case "conversation.item.input_audio_transcription.completed":
-        if (ev.transcript && a && a.bubble) a.bubble("me", String(ev.transcript).trim());
+      case "conversation.item.input_audio_transcription.completed": {
+        var heard = String(ev.transcript || "").trim();
+        if (!heard) break;
+        var script = scriptOf(heard);
+        if (script === "tamil") lockTamil();
+        if (script === "other") {
+          /* Tamil written down in the wrong alphabet: not worth showing.
+             The model heard the audio, not this; the next line comes back
+             in Tamil. */
+          lockTamil();
+          break;
+        }
+        if (a && a.bubble) a.bubble("me", heard);
         break;
+      }
       case "response.created":
         status("speaking", say("Speaking..."));
         break;
@@ -184,22 +387,21 @@
       case "response.audio_transcript.done":
         if (ev.transcript && a && a.bubble) a.bubble("ai", String(ev.transcript).trim());
         break;
-      case "response.function_call_arguments.done": {
-        var args = {};
-        try {
-          args = JSON.parse(ev.arguments || "{}");
-        } catch (e) {
-          args = {};
-        }
-        var output = await runTool(ev.name, args);
-        sendEvent({ type: "conversation.item.create", item: { type: "function_call_output", call_id: ev.call_id, output: JSON.stringify(output) } });
-        sendEvent({ type: "response.create" });
+      case "response.function_call_arguments.done":
+        /* Answered together at response.done; see runToolCalls. */
         break;
-      }
-      case "response.done":
+      case "response.done": {
+        var response = ev.response || {};
+        var finished = !response.status || response.status === "completed";
+        if (finished && live.active) await runToolCalls(response);
         if (live.active) status("listening", say("Listening..."));
         break;
+      }
       case "error":
+        if (!fatalError(ev.error)) {
+          if (window.console && console.warn) console.warn("[voice] line said:", ev.error && (ev.error.message || ev.error.code));
+          break;
+        }
         note(say("Could not connect the voice line. You can still type."));
         stop();
         break;
@@ -301,6 +503,8 @@
         return startTurns();
       }
       await pc.setRemoteDescription({ type: "answer", sdp: body.data.sdp });
+      live.beta = /preview/.test(String(body.data.model || ""));
+      live.heardLanguage = lang() === "ta" ? "ta" : "";
       return true;
     } catch (e) {
       stopLine();

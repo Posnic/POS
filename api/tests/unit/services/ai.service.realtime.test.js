@@ -89,6 +89,54 @@ describe('ai.service realtimeAnswer', () => {
     );
   });
 
+  test('the ears ride with the mint, on both endpoints, trimmed to what the provider takes', async () => {
+    shop();
+    jest.spyOn(budget, 'record').mockResolvedValue();
+    let calls = fetchAnswering([
+      { status: 200, json: { value: 'ek_1' } },
+      { status: 200, text: 'v=0\r\nanswer' },
+    ]);
+    await service.realtimeAnswer(
+      {
+        sdp: OFFER,
+        instructions: 'x',
+        tools: [],
+        transcription: { language: 'TA ', prompt: '  Tamil or  English. ' + 'y'.repeat(900) },
+      },
+      context
+    );
+    let ears = JSON.parse(calls[0].init.body).session.audio.input.transcription;
+    expect(ears.model).toBe('gpt-4o-mini-transcribe');
+    expect(ears.language).toBe('ta');
+    expect(ears.prompt.startsWith('Tamil or English. ')).toBe(true);
+    expect(ears.prompt.length).toBeLessThanOrEqual(800);
+
+    calls = fetchAnswering([
+      { status: 404, json: {} },
+      { status: 200, json: { client_secret: { value: 'ek_beta' } } },
+      { status: 200, text: 'v=0\r\nbeta' },
+    ]);
+    await service.realtimeAnswer(
+      { sdp: OFFER, instructions: 'x', tools: [], transcription: { language: 'ta' } },
+      context
+    );
+    ears = JSON.parse(calls[1].init.body).input_audio_transcription;
+    expect(ears).toEqual({ model: 'whisper-1', language: 'ta' });
+
+    /* Nothing asked: the model alone, no empty fields. */
+    calls = fetchAnswering([
+      { status: 200, json: { value: 'ek_2' } },
+      { status: 200, text: 'v=0\r\nanswer' },
+    ]);
+    await service.realtimeAnswer(
+      { sdp: OFFER, instructions: 'x', tools: [], transcription: { language: 'nope' } },
+      context
+    );
+    expect(JSON.parse(calls[0].init.body).session.audio.input.transcription).toEqual({
+      model: 'gpt-4o-mini-transcribe',
+    });
+  });
+
   test('falls back to the beta endpoints when the current one is not there yet', async () => {
     shop();
     jest.spyOn(budget, 'record').mockResolvedValue();

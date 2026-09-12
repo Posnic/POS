@@ -323,7 +323,23 @@ async function realtimeCapable(context) {
   }
 }
 
-async function mintRealtimeSecret({ key, model, instructions, tools, voice }) {
+/** What the transcription model is told: a language, and words to expect. */
+function transcriptionFor(transcription, model) {
+  const asked = transcription && typeof transcription === 'object' ? transcription : {};
+  const out = { model };
+  const language = String(asked.language || '')
+    .trim()
+    .toLowerCase();
+  if (/^[a-z]{2}$/.test(language)) out.language = language;
+  const prompt = String(asked.prompt || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 800);
+  if (prompt) out.prompt = prompt;
+  return out;
+}
+
+async function mintRealtimeSecret({ key, model, instructions, tools, voice, transcription }) {
   const current = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
@@ -336,7 +352,7 @@ async function mintRealtimeSecret({ key, model, instructions, tools, voice }) {
         tools,
         tool_choice: 'auto',
         audio: {
-          input: { transcription: { model: 'gpt-4o-mini-transcribe' } },
+          input: { transcription: transcriptionFor(transcription, 'gpt-4o-mini-transcribe') },
           output: { voice: voice || 'marin' },
         },
       },
@@ -363,7 +379,7 @@ async function mintRealtimeSecret({ key, model, instructions, tools, voice }) {
       tools,
       tool_choice: 'auto',
       voice: 'verse',
-      input_audio_transcription: { model: 'whisper-1' },
+      input_audio_transcription: transcriptionFor(transcription, 'whisper-1'),
     }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
@@ -433,6 +449,7 @@ async function realtimeAnswer(request, context) {
       instructions: String(request.instructions || '').slice(0, MAX_PROMPT_CHARS),
       tools: Array.isArray(request.tools) ? request.tools : [],
       voice: request.voice,
+      transcription: request.transcription,
     });
     const answer = await exchangeRealtimeSdp({
       secret: session.value,
