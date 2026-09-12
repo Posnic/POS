@@ -139,6 +139,7 @@
       "Add a note": "குறிப்பு சேர்",
       "Edit note": "குறிப்பைத் திருத்து",
       "Save note": "குறிப்பைச் சேமி",
+      "Save request": "வேண்டுகோளைச் சேமி",
       "Less spicy, no onion, cut in half...": "காரம் குறைவாக, வெங்காயம் வேண்டாம், பாதியாக வெட்டவும்...",
       "Anything we should know?": "நாங்கள் தெரிந்து கொள்ள வேண்டியது ஏதேனும்?",
       "Need more than that? The counter can help.": "இதற்கு மேல் வேண்டுமா? கவுண்டரில் கேளுங்கள்.",
