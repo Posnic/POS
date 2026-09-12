@@ -1,8 +1,9 @@
 // ✅ Ensure cart is loaded only once on page load
 $(document).ready(async function () {
-    const branches = await getData(BRANCH_STORE);
-    const branchId = branches[0]?.id;
-    await fetchAndStoreBranch(branchId, false);
+    /* Refresh the shop when its address is known; a browser with a stale
+       row still gets its order drawn from what it has. */
+    const branchId = await knownBranchId();
+    if (branchId) await fetchAndStoreBranch(branchId, false);
     let cartData = await getCartData();
     renderCart(cartData);
     showDestination();

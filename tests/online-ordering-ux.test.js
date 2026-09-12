@@ -75,6 +75,10 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'rememberShop'),
     lift(src, 'money'),
     lift(src, 'words'),
+    'const STORE_ADDRESS_KEY = "posnic_store";',
+    lift(src, 'storeAddressFromRow'),
+    lift(src, 'rememberStoreAddress'),
+    lift(src, 'knownBranchId'),
     lift(src, 'placeLabel'),
     lift(src, 'paintShop'),
     lift(src, 'chargeFor'),
@@ -452,7 +456,7 @@ test('a restaurant line takes a note for the kitchen; a shop line does not', asy
   await box.renderCart();
   const row = document.querySelector('.cart-item');
   assert.strictEqual(row.querySelector('.item-note').textContent, 'less spicy');
-  assert.strictEqual(row.querySelector('.line-note-btn').textContent, 'Edit note');
+  assert.strictEqual(row.querySelector('.line-note-btn').textContent, 'Edit request');
   assert.strictEqual(document.getElementById('order-note-label').textContent, 'A note for the kitchen');
 
   const shopPage = page('cart.html', {
@@ -678,4 +682,76 @@ test('a shop is searched, not a menu, and is not asked about veg', async () => {
   await kitchen.box.paintShop();
   assert.strictEqual(kitchen.document.getElementById('product-search').placeholder, 'Search the menu');
   assert.strictEqual(kitchen.document.getElementById('order-filter-veg').hidden, false);
+});
+
+/* ------------------------------------------------- the photo is the top */
+
+test('the photo is the top of the sheet, edge to edge, on both pages', () => {
+  /* Owner, with a screenshot: the picture had been inset with white around
+     it; "previously you made top corners with image. it was good in mobile.
+     please change back." Both pages, or the two sheets drift apart. */
+  const menuCss = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
+  const orderCss = read('assets/order.css');
+  for (const [name, css] of [['menu', menuCss], ['order', orderCss]]) {
+    const img = css.match(/\.sheet-strip img\s*\{([^}]*)\}/);
+    assert.ok(img, name + ': no rule for the photos in the strip');
+    assert.match(img[1], /flex:\s*0 0 100%/, name + ': a photo no longer fills the sheet');
+    assert.ok(!/border-radius/.test(img[1]), name + ': the photo has its own corners again instead of the sheet\'s');
+    const strip = css.match(/\.sheet-strip\s*\{([^}]*)\}/);
+    assert.ok(!/padding:\s*0 12px/.test(strip[1]), name + ': the strip is inset again');
+    const handle = css.match(/\.sheet-handle\s*\{([^}]*)\}/);
+    assert.match(handle[1], /position:\s*absolute/, name + ': the handle pushes the photo down from the top');
+    const gallery = css.match(/\.sheet-gallery\s*\{([^}]*)\}/);
+    assert.ok(gallery && !/-4px/.test(gallery[1]), name + ': the gallery still carries the old negative margin');
+  }
+  assert.match(read('products.html'), /id="dish-gallery" class="sheet-gallery"/, 'the order page gallery lost the class the shared rules key on');
+});
+
+/* ------------------------------------------------ the shop's address */
+
+test('a browser with a stale branch row still knows which shop it is in', async () => {
+  /* Owner, with a screenshot of the cart behind "Unable to reach the server,
+     Product sync failed (404): No shop found at this address": the cart had
+     asked for /online-ordering/undefined. His browser met the shop through
+     an older bundle whose branch row had no id. */
+  const stale = page('cart.html', { branch: { name: 'Azure', kind: 'restaurant' } });
+  delete stale.box.getData;
+  stale.box.getData = async (store) => (store === 'branch' ? [{ store_id: 'AZ100', name: 'Azure' }] : []);
+  assert.strictEqual(await stale.box.knownBranchId(), 'AZ100', 'a legacy row key is not read');
+
+  const kept = page('cart.html', {});
+  kept.box.getData = async () => [];
+  kept.box.localStorage = { getItem: (k) => (k === 'posnic_store' ? 'KC200' : null), setItem() {}, removeItem() {} };
+  assert.strictEqual(await kept.box.knownBranchId(), 'KC200', 'the address kept from the last load is not read');
+
+  const nothing = page('cart.html', {});
+  nothing.box.getData = async () => [];
+  assert.strictEqual(await nothing.box.knownBranchId(), '', 'an unknown shop should be empty, never "undefined"');
+});
+
+test('the cart and the payment page never refresh with an address they do not have', () => {
+  const cart = read('assets/cart/script.js');
+  assert.ok(!cart.includes('branches[0]?.id'), 'the cart still reads the row directly');
+  assert.match(cart, /const branchId = await knownBranchId\(\);\s*if \(branchId\) await fetchAndStoreBranch/, 'the cart refreshes without an address');
+  const pay = read('assets/payment/script.js');
+  assert.ok(!pay.includes('branches[0]?.id'), 'the payment page still reads the row directly');
+  const db = read('indexedDB.js');
+  assert.match(db, /if \(!branchId\) \{[\s\S]{0,400}return false;/, 'fetchAndStoreBranch still asks the server for "undefined"');
+  assert.ok(!/branches\[0\]\.id/.test(db), 'indexedDB.js still reads the row directly somewhere');
+});
+
+test('"null" left in the note box by an older build is read as nothing', async () => {
+  const { document, box } = page('cart.html', { cart: [{ id: 'p1', name: 'Dal', price: 100, quantity: 1 }], branch: { kind: 'restaurant', notes: true } });
+  box.localStorage = { getItem: (k) => (k === 'note' ? 'null' : null), setItem() {}, removeItem() {} };
+  await box.renderCart(await box.getCartData());
+  assert.strictEqual(document.getElementById('order-note').value, '', 'the word "null" is shown as the note');
+});
+
+test('a dish says in plain words that a request can be made on it', async () => {
+  const { document, box } = page('cart.html', { cart: [{ id: 'p1', name: 'Dal', price: 100, quantity: 1 }], branch: { kind: 'restaurant', notes: true } });
+  await box.rememberShop();
+  await box.renderCart(await box.getCartData());
+  assert.match(document.querySelector('.line-note-btn').textContent, /less spicy/i, 'the line does not invite a request');
+  assert.match(read('products.html'), /Any request for this dish\?/);
+  assert.match(read('cart.html'), /Any request for this dish\?/);
 });
