@@ -13,6 +13,7 @@ const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
+const demoData = require('../services/demo-data');
 
 const STATUSES = Object.freeze([
   'open',
@@ -297,7 +298,8 @@ class QuoteRepository extends BaseModel {
     try {
       const wall = this._wall(context);
       if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
-      const filter = { ...wall };
+      /* Sample quotes go with the sample sales when the switch goes off. */
+      const filter = { ...wall, ...(await demoData.filterFor('quotes', context)) };
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);
       }

@@ -1123,23 +1123,42 @@ class ItemRepository extends BaseModel {
     let purchasesRemoved = 0;
     let peopleRemoved = 0;
     try {
-      const demoScope = { demo_pack: { $exists: true }, branch_id: branch, license };
+      /*
+       * Tagged, or shaped like a sample.
+       *
+       * Sales, purchases and quotes only started carrying demo_pack in
+       * August 2026. A shop seeded before that has samples no tag can find,
+       * and they were the ones still sitting in the Purchase History after
+       * the switch promised to remove them. The seeder's own numbering -
+       * R-DEMO-000001 beside the shop's own R-000001 - finds them, and no
+       * real document is ever numbered that way.
+       *
+       * Both id shapes are matched as well: a branch that reached a seeder
+       * as a string wrote strings, and an ObjectId-only filter would delete
+       * nothing while reporting success.
+       */
+      const demoScopeFor = (collection) => ({
+        ...demoData.seededClause(collection),
+        branch_id: { $in: [branch, String(branch)] },
+        license: { $in: [license, String(license)] },
+      });
       const salesCol = await this.getCollection('sales');
-      salesRemoved = (await salesCol.deleteMany(demoScope)).deletedCount || 0;
+      salesRemoved = (await salesCol.deleteMany(demoScopeFor('sales'))).deletedCount || 0;
       const quotesCol = await this.getCollection('quotes');
-      quotesRemoved = (await quotesCol.deleteMany(demoScope)).deletedCount || 0;
+      quotesRemoved = (await quotesCol.deleteMany(demoScopeFor('quotes'))).deletedCount || 0;
       /* The sample purchases leave with the sample sales, or a Purchase
          History full of DEMO rows survives the switch that promised to
          remove them. */
       const receivingsCol = await this.getCollection('receivings');
-      purchasesRemoved = (await receivingsCol.deleteMany(demoScope)).deletedCount || 0;
+      purchasesRemoved =
+        (await receivingsCol.deleteMany(demoScopeFor('receivings'))).deletedCount || 0;
       /* The sample people go with them. A demo customer left behind after the
          samples are cleared is a stranger in the shop's own list, and nothing
          on the row says where they came from. */
       const customersCol = await this.getCollection('customers');
-      peopleRemoved += (await customersCol.deleteMany(demoScope)).deletedCount || 0;
+      peopleRemoved += (await customersCol.deleteMany(demoScopeFor('customers'))).deletedCount || 0;
       const suppliersCol = await this.getCollection('suppliers');
-      peopleRemoved += (await suppliersCol.deleteMany(demoScope)).deletedCount || 0;
+      peopleRemoved += (await suppliersCol.deleteMany(demoScopeFor('suppliers'))).deletedCount || 0;
     } catch (e) {
       /* Leaving the products behind is the safe half. Reported rather than
          thrown, because a shop asking to clear samples should not be told the

@@ -400,3 +400,24 @@
     <!-- End row -->
 </div>
 <!-- End Topbar -->
+
+<!--
+    SAMPLE DATA IS ON.
+
+    Owner: "when demo enable need some notification or obvious demo data
+    exist and able to disable quickly."
+
+    A shop that was set up with samples has products, sales and purchases it
+    never made, and nothing on any screen says so - the figures on the
+    dashboard are the demonstration's, and they are read as the shop's. So
+    while the switch is on, every page says it in one line and offers the
+    door out. Hidden by default and shown by applyModuleSidebar, which is
+    what already knows the switch; a shop that never took the samples, or
+    has switched them off, sees nothing.
+-->
+<div id="demo_data_bar" class="demo-data-bar" style="display:none;">
+    <span class="demo-data-bar-tag"><i class="feather icon-package mr-1"></i><lang class="lang_demo_bar_tag">Sample data</lang></span>
+    <span class="demo-data-bar-text"><lang class="lang_demo_bar_text">Some products, sales and purchases here are samples to try the till with, not your own records.</lang></span>
+    <a href="#/settings/demodata" class="btn btn-sm btn-outline-secondary" id="demo_data_bar_manage"><lang class="lang_demo_bar_manage">Remove or keep them</lang></a>
+    <button type="button" class="demo-data-bar-hide" id="demo_data_bar_hide" aria-label="Hide" data-t-aria-label="lang_hide"><i class="feather icon-x"></i></button>
+</div>

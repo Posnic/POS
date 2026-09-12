@@ -2877,6 +2877,15 @@ PosnicPro = {
            feature's CONFIGURATION lives here, in its own entry - the same
            door for every feature, however many we grow. */
         $('#manage_li_demodata').toggle(on('module_demo_data_enable'));
+        /*
+         * And say so on every page while it is on. Hidden for the rest of
+         * the day per device once somebody has read it - the line is there to
+         * be noticed once, not to be argued with every time a page loads.
+         */
+        var samplesOn = on('module_demo_data_enable');
+        var quiet = false;
+        try { quiet = PosnicPro.local.get('demo_bar_hidden') === new Date().toDateString(); } catch (e) { quiet = false; }
+        $('#demo_data_bar').toggle(samplesOn && !quiet);
         $('#manage_li_quotes').toggle(on('quotes_enable'));
         $('#manage_li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_tillpin').toggle(s.till_lock_enable === true);
@@ -5384,6 +5393,12 @@ $(function () { PosnicPro.injectReportExportButtons(); });
  * than the list.
  */
 PosnicPro.returnTo = '';
+/* Read once, quiet for the rest of the day on this device. */
+$(document).on('click', '#demo_data_bar_hide', function () {
+    try { PosnicPro.local.set('demo_bar_hidden', new Date().toDateString()); } catch (e) { /* private window */ }
+    $('#demo_data_bar').hide();
+});
+
 $(document).on('click', '[id^="last_created_"]', function () {
     PosnicPro.returnTo = currentHash || '';
 });
