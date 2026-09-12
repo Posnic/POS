@@ -6769,88 +6769,89 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   background-color: color-mix(in srgb, var(--theme-primary-color, #506fe4) 12%, transparent) !important;
 }
 /*
- * FEATURES, IN COLOUR.
+ * FEATURES, IN COLOUR, LIGHTLY.
  *
- * The grouped page was still pale: tiles tinted at twelve percent, grey
- * glyphs, and every off card grayscaled - which on a page where most
- * features ARE off is a wall of grey. Owner: "dull colors and icons making
- * very annoying".
+ * The first colour pass painted every tile as a solid, deep gradient with a
+ * white glyph, and dimmed the off tiles by desaturating them. Off tiles - most
+ * of the page - came out as dark, muddy blocks. Owner: "reduce darkness little
+ * bit. not too intense on color. make little lighter or glassy stuff".
  *
- * So every feature now owns a colour, carried as --fg-accent on its own card
- * (the group keeps one for its heading). The tile is a solid gradient of it
- * with a white glyph, on or off. State is no longer told by grey: an ON card
- * has the glow under its tile, the coloured top edge, the wash and the chip;
- * an OFF card has the same colour, quieter, and comes to full strength on
- * hover. The page reads as a set of coloured things some of which are lit,
- * rather than a set of grey things some of which are blue.
+ * So the tile is now a glass of its feature's colour: a light tint over the
+ * card ground, a thin edge of the colour, a white highlight along the top,
+ * and the glyph in the colour itself rather than white on it. On gets a
+ * touch more of the colour and a soft glow; off gets a touch less and no
+ * glow. Nothing is desaturated and nothing is dark, in either theme, because
+ * every tint mixes the colour into the theme's own card ground.
  *
- * Later than the block above on purpose: same selectors, so these win.
+ * Later than the two blocks above on purpose: same selectors, so these win.
  */
-/* The glyph on a coloured tile is white in every theme - it sits on the
-   tile's own colour, never on the page - so it is one token, declared once.
-   (The theme-token guards scan to the end of this file, and rightly ask
-   that no colour be spelled out by hand where a theme could want a say.) */
-:root { --fg-glyph: #fff; }
 #v-pills-modules .module-card {
-    --fg-deep: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a);
     border-color: rgba(127, 127, 127, 0.16);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 6px 18px rgba(16, 24, 40, 0.05);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 6px 18px rgba(16, 24, 40, 0.04);
 }
 #v-pills-modules .module-card:hover {
-    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.13);
+    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
 }
 #v-pills-modules .module-ico,
+#v-pills-modules .module-card.is-off .module-ico,
 #v-pills-modules .module-card:not(.is-off) .module-ico {
     flex: 0 0 50px;
     width: 50px;
     height: 50px;
     border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 30%, transparent);
     background: linear-gradient(135deg,
-        var(--fg-accent, var(--theme-primary-color, #506fe4)),
-        var(--fg-deep, var(--fg-accent, var(--theme-primary-color, #506fe4))));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.28),
-        0 6px 16px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 38%, transparent);
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 22%, var(--theme-card-bg, #fff)),
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 10%, var(--theme-card-bg, #fff)));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
     filter: none;
-    transition: filter .18s ease, opacity .18s ease, box-shadow .18s ease, transform .18s ease;
+    opacity: 1;
+    transition: box-shadow .18s ease, transform .18s ease, opacity .18s ease;
 }
 @supports not (background: color-mix(in srgb, red 10%, blue)) {
     #v-pills-modules .module-ico,
+    #v-pills-modules .module-card.is-off .module-ico,
     #v-pills-modules .module-card:not(.is-off) .module-ico {
-        background: var(--fg-accent, var(--theme-primary-color, #506fe4));
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
+        border-color: rgba(127, 127, 127, 0.3);
+        background: rgba(127, 127, 127, 0.12);
     }
 }
-#v-pills-modules .module-ico i { color: var(--fg-glyph); font-size: 23px; line-height: 1; }
-/* Any image glyph still in a tile becomes white on its colour. */
-#v-pills-modules .module-ico img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
-#v-pills-modules .module-card:hover .module-ico { transform: scale(1.04); }
-
-/* Off: its colour, quieter. Not grey. */
-#v-pills-modules .module-card.is-off { opacity: 1; }
-#v-pills-modules .module-card.is-off .module-ico {
-    filter: saturate(0.5);
-    opacity: 0.82;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+/* The glyph is the colour, not white on it. */
+#v-pills-modules .module-ico i,
+#v-pills-modules .module-card.is-off .module-ico i,
+#v-pills-modules .module-card:not(.is-off) .module-ico i {
+    color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    font-size: 23px;
+    line-height: 1;
+    opacity: 1;
 }
-#v-pills-modules .module-card.is-off .module-title { color: var(--theme-text-secondary, #3d4a60); }
-#v-pills-modules .module-card.is-off .module-desc { opacity: 0.85; }
-#v-pills-modules .module-card.is-off:hover .module-ico { filter: none; opacity: 1; }
+#v-pills-modules .module-ico img { width: 26px; height: 26px; filter: none; }
 
-/* The group heading gets the same tile at its own size, so the heading and
-   its cards are visibly one family. */
-#v-pills-modules .fg-head-ico {
-    color: var(--fg-glyph);
+/* On: a touch more colour, and a glow the colour of the feature. */
+#v-pills-modules .module-card:not(.is-off) .module-ico {
     background: linear-gradient(135deg,
-        var(--fg-accent, var(--theme-primary-color, #506fe4)),
-        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 72%, #0f172a));
-    box-shadow: 0 4px 10px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 30%, transparent);
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 30%, var(--theme-card-bg, #fff)),
+        color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 14%, var(--theme-card-bg, #fff)));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 6px 16px color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 22%, transparent);
+}
+/* Off: the same glass, a touch quieter. Never grey, never dark. */
+#v-pills-modules .module-card.is-off .module-ico { opacity: 0.8; }
+#v-pills-modules .module-card.is-off:hover .module-ico { opacity: 1; }
+
+/* The group heading tile: same glass, its own size. */
+#v-pills-modules .fg-head-ico {
+    color: var(--fg-accent, var(--theme-primary-color, #506fe4));
+    border: 1px solid color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 28%, transparent);
+    background: color-mix(in srgb, var(--fg-accent, var(--theme-primary-color, #506fe4)) 14%, var(--theme-card-bg, #fff));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 @supports not (background: color-mix(in srgb, red 10%, blue)) {
-    #v-pills-modules .fg-head-ico { background: var(--fg-accent, var(--theme-primary-color, #506fe4)); }
+    #v-pills-modules .fg-head-ico { background: rgba(127, 127, 127, 0.12); border-color: rgba(127, 127, 127, 0.3); }
 }
-/* The feature page dialog copies the tile in; give it the same look there. */
-#feature_detail_modal .fd-ico i, #fp_icon i { color: var(--fg-glyph); }
+/* The feature page dialog copies the tile in; same look there. */
+#feature_detail_modal .fd-ico i, #fp_icon i { color: var(--fg-accent, var(--theme-primary-color, #506fe4)); }
 #fp_icon .module-ico, #feature_detail_modal .fd-ico .module-ico { width: 48px; height: 48px; }
 
 @media (prefers-reduced-motion: reduce) {
