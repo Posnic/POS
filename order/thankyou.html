@@ -51,6 +51,23 @@
         </div>
         <p class="order-time">Placed <span id="orderTime">--</span></p>
 
+        <!--
+            PAY NOW, where most customers in India would rather: their own app,
+            the shop's address and the amount already in it. Shown only while
+            the order is unpaid and only where the shop has given an address.
+            Nothing here confirms anything - the counter does that.
+        -->
+        <section class="pay-upi" id="pay-upi" hidden>
+            <p class="pay-upi-amount" id="pay-upi-amount"></p>
+            <a class="btn-primary pay-upi-go" id="pay-upi-any" href="#" rel="noopener">Pay by UPI</a>
+            <p class="pay-upi-apps">
+                <a href="#" id="pay-upi-gpay" rel="noopener">Google Pay</a>
+                <a href="#" id="pay-upi-phonepe" rel="noopener">PhonePe</a>
+                <a href="#" id="pay-upi-paytm" rel="noopener">Paytm</a>
+            </p>
+            <p class="pay-upi-note">Tell the counter once you have paid. They mark it, and your bill appears here.</p>
+        </section>
+
         <!-- A bill is a record of money that has changed hands. This appears
              when the shop has marked the order paid, and not before. -->
         <button type="button" class="btn-primary done-bill" id="done-bill" hidden>Download the bill</button>

@@ -1031,6 +1031,9 @@ if ($wrapper.length) {
                 $('#payment_cod').prop('checked', payment_cod);
                 $('#payment_razorpay').prop('checked', payment_razorpay);
                 $('#payment_number').prop('checked', payment_number);
+                /* Where a UPI payment goes. Text, not a switch. */
+                $('#payment_upi_id').val(kioskData.payment_upi_id || '');
+                $('#payment_upi_name').val(kioskData.payment_upi_name || '');
 
                 /*
                  * DEFERRED, not loaded. These previews live in a pane most
@@ -4990,6 +4993,11 @@ $('#kiosk_payment_form').on('submit', function (e) {
         const id = $(this).attr('id'); // like 'payment_cod' or 'payment_razorpay', or 'payment_number'
         paymentParams[id] = $(this).is(':checked');
     });
+    /* The payee, which is typed rather than ticked: the loop above reads
+       checkboxes, and Boolean('name@bank') is simply true. */
+    paymentParams.payment_upi_id = $('#payment_upi_id').val() || '';
+    paymentParams.payment_upi_name = $('#payment_upi_name').val() || '';
+
     var params = {
         url: 'setting/kioskPayment', // change to your endpoint
         data: JSON.stringify(paymentParams)
