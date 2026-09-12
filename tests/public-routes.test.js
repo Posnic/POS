@@ -104,6 +104,7 @@ const ALLOWED_ANONYMOUS = {
        meter; its own limit per client. See services/voice-meter.js. */
     '/:storeId/voice/:session/tick',
     /* The customer's own order, held by its id and its token. */
+    '/:storeId/orders/:orderId',
     '/:storeId/orders/:orderId/items',
     '/:storeId/orders/:orderId/cancel',
   ],

@@ -180,3 +180,114 @@ describe('sale.repository, changing an order that has gone', () => {
     expect(totals.total).toBe(360);
   });
 });
+
+describe('the order, read back by the phone that placed it', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  test('reading is allowed where changing is not, and it says which', async () => {
+    /* A paid order is exactly the one a customer wants to look at, and the
+       only one with a bill behind it. */
+    const paid = order({ payment_status: 'Paid' });
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(paid);
+
+    const out = await customerOrder.read({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.status).toBe(true);
+    expect(out.data).toMatchObject({
+      order_id: ORDER_ID,
+      token: '219',
+      paid: true,
+      bill_ready: true,
+      cancelled: false,
+      can_change: false,
+      why_not: 'already_paid',
+    });
+    expect(out.data.items).toEqual([
+      { item_id: 'm1', name: 'Chicken Biryani', quantity: 2, note: '', total: 660 },
+    ]);
+  });
+
+  test('an unpaid order has no bill behind it, and may still be changed', async () => {
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(order());
+    const out = await customerOrder.read({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.data).toMatchObject({ paid: false, bill_ready: false, can_change: true });
+    expect(out.data.why_not).toBeUndefined();
+  });
+
+  test('a cancelled order says so, and never offers a bill', async () => {
+    jest
+      .spyOn(salesRepository, 'findCustomerOrder')
+      .mockResolvedValue(order({ sale_process: 'cancelled', payment_status: 'Paid' }));
+    const out = await customerOrder.read({ orderId: ORDER_ID, token: '219' }, context);
+    expect(out.data).toMatchObject({ cancelled: true, state: 'cancelled', bill_ready: false });
+  });
+
+  test('a wrong token, or none, is an unknown order', async () => {
+    const found = jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(order());
+    expect((await customerOrder.read({ orderId: ORDER_ID, token: '999' }, context)).message).toBe(
+      'not_found'
+    );
+    expect((await customerOrder.read({ orderId: ORDER_ID }, context)).message).toBe('not_found');
+    expect(found).toHaveBeenCalledTimes(1);
+  });
+
+  test("the view never carries the shop's own numbers, or the device the order came from", () => {
+    const view = salesRepository.customerOrderView(
+      order({
+        company_price_total: 180,
+        venue_commission: 42,
+        client: { ip: '49.207.1.1', user_agent: 'Mozilla', device_id: 'abc' },
+      })
+    );
+    const said = JSON.stringify(view);
+    expect(said).not.toContain('49.207.1.1');
+    expect(said).not.toContain('Mozilla');
+    expect(said).not.toContain('company_price_total');
+    expect(said).not.toContain('venue_commission');
+  });
+});
+
+describe('what an order keeps about the device it came from', () => {
+  test('the facts are kept, cut to size, and anything unrecognised is dropped', () => {
+    const facts = salesRepository._clientFacts({
+      ip: '49.207.1.1',
+      user_agent: 'Mozilla/5.0 ' + 'x'.repeat(500),
+      device_id: 'd-' + 'y'.repeat(100),
+      language: 'ta-IN',
+      platform: 'Android',
+      screen: '412x915',
+      time_zone: 'Asia/Kolkata',
+      referrer: 'https://develop.posnic.io/order/ABC',
+      /* Not ours to keep, and not asked for. */
+      email: 'someone@example.com',
+      cookies: 'session=abc',
+    });
+    expect(facts).toMatchObject({
+      ip: '49.207.1.1',
+      language: 'ta-IN',
+      platform: 'Android',
+      screen: '412x915',
+      time_zone: 'Asia/Kolkata',
+    });
+    expect(facts.user_agent).toHaveLength(300);
+    expect(facts.device_id).toHaveLength(40);
+    expect(facts.at instanceof Date).toBe(true);
+    expect(Object.keys(facts)).not.toContain('email');
+    expect(Object.keys(facts)).not.toContain('cookies');
+  });
+
+  test('a screen size that is not one is dropped, and control characters never land', () => {
+    const facts = salesRepository._clientFacts({
+      ip: '1.2.3.4',
+      screen: 'DROP TABLE',
+      platform: 'And\u0007roid',
+    });
+    expect(facts.screen).toBeUndefined();
+    expect(facts.platform).toBe('Androi\u0064'.replace('\\u0064', 'd'));
+  });
+
+  test('nothing worth keeping is nothing kept, not an empty stamp', () => {
+    expect(salesRepository._clientFacts(null)).toBeNull();
+    expect(salesRepository._clientFacts({})).toBeNull();
+    expect(salesRepository._clientFacts({ ip: '' })).toBeNull();
+  });
+});

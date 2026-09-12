@@ -122,6 +122,11 @@ router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.v
  * of the rules: a billed, paid, refused, delivered or stale order is not the
  * customer's to move, and says which of those it is.
  */
+/* Read back by the phone that placed it: where it got to, and whether the
+   shop has marked it paid, which is what puts a bill behind it. Reading is
+   allowed where changing is not - a paid order is exactly the one a customer
+   wants to look at. */
+router.get('/:storeId/orders/:orderId', placedOrderLimiter, bind(controller.readPlacedOrder));
 router.post(
   '/:storeId/orders/:orderId/items',
   placedOrderLimiter,
