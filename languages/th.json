@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "ลูกค้าขอยกเลิก",
   "lang_keep_the_order": "เก็บออร์เดอร์ไว้",
-  "lang_cancel_it": "ยกเลิก"
+  "lang_cancel_it": "ยกเลิก",
+  "lang_int_voice_key_on_file": "บันทึกคีย์แล้ว",
+  "lang_int_voice_key_remove_q": "ลบคีย์ที่บันทึกไว้?",
+  "lang_int_voice_key_remove_text": "เครื่องจะกลับไปใช้การรู้จำเสียงของโทรศัพท์เองจนกว่าจะบันทึกคีย์ใหม่ บัญชีผู้ให้บริการของคุณไม่ถูกแตะต้อง",
+  "lang_int_voice_key_removed": "ลบคีย์แล้ว"
 }

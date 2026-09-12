@@ -7983,7 +7983,65 @@ PosnicPro.settings.voice = {
            without being added here hides the field it depends on instead of
            silently showing one for a provider that has no use for it. */
         var paid = ['openai', 'google', 'deepgram', 'assembly'];
-        $('#voice_key_row').toggle(paid.indexOf($('#voice_provider').val() || '') !== -1);
+        var needsKey = paid.indexOf($('#voice_provider').val() || '') !== -1;
+        var onFile = PosnicPro.settings.voice._onFile === true && !PosnicPro.settings.voice._editing;
+        /* A saved key folds the box away and shows the card instead; the two
+           are never both up, and neither is up for a provider with no use
+           for a key. */
+        $('#voice_key_saved').toggle(needsKey && onFile);
+        $('#voice_key_row').toggle(needsKey && !onFile);
+    },
+
+    /* Must match CLEAR_SECRET in api/src/services/settings-groups.js: an
+       empty value means "leave the saved one alone", so removal has to be
+       said out loud. */
+    CLEAR_SECRET: '__posnic_clear__',
+    _onFile: false,
+    _editing: false,
+
+    /* Which provider the saved key belongs to, in the words of the dropdown,
+       so the card says what it is a key FOR. */
+    _providerWords: function () {
+        var chosen = $('#voice_provider').val() || '';
+        var label = $('#voice_provider option[value="' + chosen + '"]').text() || chosen;
+        return String(label).split(' - ')[0].trim();
+    },
+
+    edit: function () {
+        PosnicPro.settings.voice._editing = true;
+        PosnicPro.settings.voice.syncKeyRow();
+        $('#voice_api_key').val('').focus();
+    },
+
+    removeKey: function () {
+        /* Asked the way the AI card asks, with the same dialog: there is no
+           PosnicPro.confirm, and a call to a helper nobody wrote is a button
+           that quietly does nothing. */
+        swal({
+            title: PosnicPro.i18n.t('lang_int_voice_key_remove_q', 'Remove the saved key?'),
+            text: PosnicPro.i18n.t('lang_int_voice_key_remove_text', 'Handsets fall back to the phone\'s own recognition until a new key is saved. Your provider account is not touched.'),
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-danger',
+            cancelButtonClass: 'btn btn-secondary m-l-10',
+            confirmButtonText: PosnicPro.i18n.t('lang_ai_key_remove', 'Remove'),
+            cancelButtonText: PosnicPro.i18n.t('lang_cancel', 'Cancel')
+        }).then(function () {
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ voice_api_key: PosnicPro.settings.voice.CLEAR_SECRET })
+            }, function (response) {
+                if (response.type !== 'success') {
+                    PosnicPro.alert(response.type, response.message);
+                    return;
+                }
+                PosnicPro.settings.voice._onFile = false;
+                PosnicPro.settings.voice._editing = false;
+                PosnicPro.settings.voice.syncKeyRow();
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_int_voice_key_removed', 'The key is removed.'));
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_key', 'Could not save the voice key'));
+            });
+        });
     },
 
     load: function () {
@@ -7999,10 +8057,14 @@ PosnicPro.settings.voice = {
         PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var saved = (response.data.configured || {}).voice_api_key === true;
+            PosnicPro.settings.voice._onFile = saved;
+            PosnicPro.settings.voice._editing = false;
+            $('#voice_key_provider').text(PosnicPro.settings.voice._providerWords());
+            PosnicPro.settings.voice.syncKeyRow();
             $('#voice_api_key').attr('placeholder', saved
                 ? PosnicPro.i18n.t('lang_int_voice_key_saved', 'A key is saved. Type a new one to replace it.')
                 : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
-        }, function () { /* the placeholder is a courtesy, not the feature */ });
+        }, function () { /* the card is a courtesy, not the feature */ });
 
         $('#voice_saved_note').hide();
     },
@@ -8038,6 +8100,9 @@ PosnicPro.settings.voice = {
                 if (second.type === 'success') {
                     $('#voice_saved_note').show();
                     $('#voice_api_key').val('');
+                    /* Folded away again: the save has to look like something
+                       happened, which was the whole complaint. */
+                    PosnicPro.settings.voice._editing = false;
                     PosnicPro.settings.voice.load();
                 } else {
                     PosnicPro.alert(second.type, second.message);
@@ -8056,7 +8121,14 @@ $(document).on('shown.bs.tab', 'a[href="#captainvoice-line"]', function () {
     PosnicPro.settings.voice.load();
 });
 $(document).on('change', '#voice_provider', function () {
+    $('#voice_key_provider').text(PosnicPro.settings.voice._providerWords());
     PosnicPro.settings.voice.syncKeyRow();
+});
+$(document).on('click', '#voice_key_edit', function () {
+    PosnicPro.settings.voice.edit();
+});
+$(document).on('click', '#voice_key_remove', function () {
+    PosnicPro.settings.voice.removeKey();
 });
 $(document).on('click', '#voice_save', function () {
     PosnicPro.settings.voice.save();

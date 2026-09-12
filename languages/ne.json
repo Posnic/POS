@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "ग्राहकले रद्द गर्न भन्यो",
   "lang_keep_the_order": "अर्डर राख्नुहोस्",
-  "lang_cancel_it": "रद्द गर्नुहोस्"
+  "lang_cancel_it": "रद्द गर्नुहोस्",
+  "lang_int_voice_key_on_file": "कुञ्जी सुरक्षित",
+  "lang_int_voice_key_remove_q": "सुरक्षित कुञ्जी हटाउने?",
+  "lang_int_voice_key_remove_text": "नयाँ कुञ्जी नराखेसम्म ह्यान्डसेटहरू फोनकै आफ्नै पहिचानमा फर्कन्छन्। तपाईंको प्रदायक खातामा केही हुँदैन।",
+  "lang_int_voice_key_removed": "कुञ्जी हटाइयो।"
 }

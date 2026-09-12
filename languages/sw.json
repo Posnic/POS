@@ -2997,5 +2997,9 @@
   "lang_upi_id_placeholder": "9843012345@okaxis",
   "lang_cancel_requested": "Mteja ameomba kughairi",
   "lang_keep_the_order": "Weka agizo",
-  "lang_cancel_it": "Lighairi"
+  "lang_cancel_it": "Lighairi",
+  "lang_int_voice_key_on_file": "Ufunguo umehifadhiwa",
+  "lang_int_voice_key_remove_q": "Ondoa ufunguo uliohifadhiwa?",
+  "lang_int_voice_key_remove_text": "Vifaa vinarudi kwenye utambuzi wa simu yenyewe hadi ufunguo mpya uhifadhiwe. Akaunti yako kwa mtoa huduma haiguswi.",
+  "lang_int_voice_key_removed": "Ufunguo umeondolewa."
 }
