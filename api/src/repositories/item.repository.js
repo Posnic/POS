@@ -4568,7 +4568,8 @@ class ItemRepository extends BaseModel {
            */
           payment: (() => {
             const cod = config?.payment_cod === true || config?.payment_cod === 'true';
-            const razorpay = config?.payment_razorpay === true || config?.payment_razorpay === 'true';
+            const razorpay =
+              config?.payment_razorpay === true || config?.payment_razorpay === 'true';
             return {
               cod,
               razorpay,

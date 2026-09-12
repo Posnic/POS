@@ -7676,8 +7676,12 @@ class SalesRepository {
         discount_description: kiosk_discount_description || '',
         customer_phone: customerMobile || '',
         /* For a delivery: who, and where. */
-        customer_name: String(customer_name || '').trim().slice(0, 80),
-        customer_address: String(customer_address || '').trim().slice(0, 300),
+        customer_name: String(customer_name || '')
+          .trim()
+          .slice(0, 80),
+        customer_address: String(customer_address || '')
+          .trim()
+          .slice(0, 300),
         /* "null" is what a page stores when it stores nothing, and it was
            reaching tickets as a note. */
         notes: note && String(note) !== 'null' ? String(note).trim().slice(0, 300) : '',
