@@ -55,15 +55,38 @@ const say = (m) => console.log(m);
  * Declared as a function rather than a const arrow so it can be used above
  * newLogLines without depending on the order the consts happen to be in.
  */
+/*
+ * Whatever the child printed, kept for `die` below.
+ *
+ * Declared up here rather than beside the spawn: `die` runs for failures that
+ * happen before the spawn - no packaged application, for one - and `typeof` on
+ * a `let` that has not been reached yet THROWS rather than answering
+ * "undefined", so the diagnostic would have crashed instead of reporting.
+ *
+ * Capped, so an application looping on warnings cannot fill the runner.
+ */
+let said = '';
+const keep = (chunk) => {
+  said += chunk.toString();
+  if (said.length > 16000) said = said.slice(-16000);
+};
+
 function die(m) {
   console.error(`\n  FAILED: ${m}\n`);
+  const spoke = (typeof said === 'string' ? said : '').trim();
+  if (spoke) {
+    console.error('  What it printed before it stopped:');
+    for (const line of spoke.split(/\r?\n/).slice(-40)) console.error(`    ${line}`);
+    console.error('');
+  }
+
   const tail = newLogLines().trim();
   if (tail) {
     console.error('  What the application logged during this run:');
     for (const line of tail.split(/\r?\n/).slice(-40)) console.error(`    ${line}`);
     console.error('');
-  } else {
-    console.error(`  It logged nothing to ${logPath}, so it died before its logger started.\n`);
+  } else if (!spoke) {
+    console.error(`  It printed nothing and logged nothing to ${logPath}.\n`);
   }
   process.exit(1);
 }
@@ -75,7 +98,9 @@ if (!fs.existsSync(exe)) die(`no packaged application at ${exe}`);
 let logFrom = 0;
 try { logFrom = fs.statSync(logPath).size; } catch { /* first ever boot */ }
 
-const newLogLines = () => {
+/* A function declaration, not a const arrow: `die` above calls this, and it
+   runs for failures that happen before this line is reached. */
+function newLogLines() {
   try {
     const fd = fs.openSync(logPath, 'r');
     const size = fs.statSync(logPath).size;
@@ -87,7 +112,7 @@ const newLogLines = () => {
   } catch {
     return '';
   }
-};
+}
 
 /*
  * ANOTHER COPY ALREADY RUNNING IS NOT A FAILED BOOT.
@@ -119,7 +144,20 @@ if (process.platform === 'win32') {
 }
 
 say(`  starting ${exe}`);
-const child = spawn(exe, [], { detached: false, stdio: 'ignore', windowsHide: true });
+/*
+ * PIPED, NOT IGNORED.
+ *
+ * A main process that dies before its own logger starts says why on stderr and
+ * nowhere else, and `stdio: 'ignore'` throws that away - which left a build
+ * failing with "exited with code 134" and no reason anywhere, on a runner that
+ * is deleted a minute later.
+ *
+ * Kept to the last few kilobytes. An application that loops printing warnings
+ * must not be able to fill the runner's memory through this.
+ */
+const child = spawn(exe, [], { detached: false, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+if (child.stdout) child.stdout.on('data', keep);
+if (child.stderr) child.stderr.on('data', keep);
 
 let done = false;
 const finish = (code, message) => {
