@@ -138,7 +138,30 @@ PosnicPro.request = function (params, callback, failure = null) {
                 }
             }
 
-            if (!isThemeSettingsMissing && response && response.message) {
+            /*
+             * On the sign-in screen, "you are not logged in" is not news.
+             *
+             * The page loads, something in the shared bundle asks the API a
+             * question that needs a session, the API quite correctly says
+             * there is none, and the shopkeeper is shown a red alert telling
+             * them they are not logged in - on the screen whose entire purpose
+             * is that they are not logged in yet. It was the first thing a new
+             * cloud install put in front of somebody.
+             *
+             * The sign-in attempt ITSELF must still speak: a wrong password
+             * also comes back 401, with "Incorrect email or password", and
+             * swallowing that would leave the button doing nothing at all. The
+             * two are told apart by where the request went, not by reading the
+             * message - a sign-in posts to a login endpoint, and a background
+             * read does not.
+             */
+            var unauthenticatedOnAuthPage = onAuthPage
+                && xhr && xhr.status === 401
+                && !/login/i.test(String(url || ''));
+
+            if (unauthenticatedOnAuthPage) {
+                console.debug('[auth] no session yet on the sign-in screen, which is expected:', url);
+            } else if (!isThemeSettingsMissing && response && response.message) {
                 PosnicPro.alert(response.type || 'error', response.message);
             }
 

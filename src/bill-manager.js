@@ -213,12 +213,39 @@ class BillManager {
     }
     const printer = await this.hardware.getDefaultPrinter();
     const fallback = printer && printer.name ? printer.name : '';
-    if (fallback) {
-      console.warn(
-        '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
-        fallback
-      );
+    if (!fallback) return '';
+
+    /*
+     * NOT THE KITCHEN, whatever Windows prefers.
+     *
+     * Owner, on a two-printer restaurant: "receipt only send to Reception
+     * right. kitchen should receive only kot print." A till with no receipt
+     * printer chosen falls back to the Windows default, and on a restaurant
+     * machine that default is very often the kitchen roll - which is exactly
+     * how a customer's bill came out beside the cook with nothing to explain
+     * it.
+     *
+     * A printer this till already sends kitchen tickets to is, by definition,
+     * not the counter. Refusing is better than guessing wrong: the bill waits,
+     * the poll keeps it, and the log says what to do about it.
+     */
+    try {
+      const devicePrefs = require('./device-preferences');
+      if (devicePrefs.isKitchenPrinter(fallback)) {
+        console.error(
+          '[BILL] no receipt printer is set, and the Windows default (' + fallback + ') is a '
+          + 'kitchen printer. Choose a receipt printer in Hardware Manager; the bill is not printed.'
+        );
+        return '';
+      }
+    } catch (error) {
+      /* Unable to tell: fall through and use the default, as before. */
     }
+
+    console.warn(
+      '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
+      fallback
+    );
     return fallback;
   }
 

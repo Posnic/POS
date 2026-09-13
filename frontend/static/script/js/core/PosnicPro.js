@@ -2952,11 +2952,29 @@ PosnicPro = {
                till that has not been reconfigured still prints exactly as it
                did, and one that has can send a counter copy and an office copy
                from the same sale. */
-            window.electronAPI.preferences.get('receipt_printers')
+            window.electronAPI.preferences.get('receipt_printers'),
+            /* Which printers the kitchen uses, so a receipt is never sent to
+               one of them by accident. Read here with the rest because the
+               print path is synchronous and cannot await in the middle of
+               building a receipt. */
+            (window.electronAPI.kot && window.electronAPI.kot.getConfig)
+                ? window.electronAPI.kot.getConfig().catch(function () { return null; })
+                : null
         ]).then(function (values) {
             if (values[0]) PosnicPro.local.set('receipt_printer', values[0]);
             if (values[1]) PosnicPro.local.set('print_width', values[1]);
             PosnicPro.local.set('receipt_printers', values[2] || '');
+            /* Lower-cased once here so the print path can compare without
+               doing any work: it runs while a customer is waiting. */
+            var kot = values[3] || {};
+            var kitchen = []
+                .concat(Array.isArray(kot.printerNames) ? kot.printerNames : [])
+                .concat(Array.isArray(kot.printers) ? kot.printers.map(function (t) {
+                    return t && typeof t === 'object' ? t.name : t;
+                }) : []);
+            PosnicPro._kitchenPrinters = kitchen
+                .map(function (n) { return String(n || '').trim().toLowerCase(); })
+                .filter(Boolean);
             return true;
         }).catch(function (e) {
             // Printing still works off whatever was mirrored last time.
@@ -3173,9 +3191,12 @@ PosnicPro = {
          * so ask Windows what its default is and use that, which is the
          * printer they have been printing to all along.
          */
+        var usedTheDefault = false;
         Promise.resolve(PosnicPro.resolveReceiptPrinter())
         .then(function (chosen) {
-            return chosen || window.electronAPI.printer.getDefault();
+            if (chosen) { return chosen; }
+            usedTheDefault = true;
+            return window.electronAPI.printer.getDefault();
         })
         .then(function (printerName) {
             // getDefault answers with the printer object, not its name.
@@ -3184,6 +3205,28 @@ PosnicPro = {
             }
             if (!printerName) {
                 throw new Error('No printer found. Choose one in Hardware Manager, Receipt Printer.');
+            }
+            /*
+             * A RECEIPT NEVER COMES OUT IN THE KITCHEN.
+             *
+             * Owner, on a two-printer restaurant: "receipt only send to
+             * Reception right. kitchen should receive only kot print."
+             *
+             * A till with no receipt printer chosen falls back to whatever
+             * Windows calls its default, and on a restaurant machine that is
+             * very often the kitchen roll. The customer's bill then comes out
+             * beside the cook with nothing on screen to explain it - which is
+             * exactly what happened on the test machine, where the Windows
+             * default was the kitchen printer.
+             *
+             * A printer this till already sends kitchen tickets to is, by
+             * definition, not the counter. Only the GUESS is refused: a shop
+             * that deliberately chose that printer for receipts is obeyed.
+             */
+            if (usedTheDefault && PosnicPro._kitchenPrinters
+                && PosnicPro._kitchenPrinters.indexOf(String(printerName).trim().toLowerCase()) !== -1) {
+                throw new Error('No receipt printer is set, and the Windows default is your kitchen printer. '
+                    + 'Choose one in Hardware Manager, Receipt Printer.');
             }
             // Auto-open the cash drawer on a sale if the shop enabled it in
             // Hardware Manager ("Auto-open on every sale"). The main process
