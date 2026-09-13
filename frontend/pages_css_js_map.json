@@ -102,6 +102,7 @@
             "static/script/js/modules/js/kot.js",
             "static/script/js/modules/js/kothistory.js",
             "static/script/js/modules/js/settings.js",
+            "static/script/js/modules/js/print-tills.js",
             "static/script/js/modules/js/loyalty.js",
             "static/script/js/modules/js/coupons.js",
             "static/script/js/modules/js/campaigns.js",
