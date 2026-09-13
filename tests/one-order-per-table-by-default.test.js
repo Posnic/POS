@@ -139,8 +139,10 @@ test('a takeaway is not a table', () => {
 test('the floor tells a handset the limit, so it can grey a full table out', () => {
   assert.match(SALE_SVC, /table_order_limit: tableOrderLimit,/,
     'the app has to place an order and be refused to find out the table was full');
-  assert.match(SALE_SVC, /projection: \{ table_order_limit: 1 \}/,
-    'the whole branch document is pulled for one number');
+  assert.match(SALE_SVC, /Branch\.findById\(branchObjectId\)\.select\('table_order_limit'\)\.lean\(\)/,
+    'the limit must use the tenant-aware Branch model and fetch only this field');
+  assert.ok(!/collection\('branches'\)\s*\.findOne\(\{ _id: branchObjectId \}/.test(SALE_SVC),
+    'a raw collection query makes CodeQL unable to prove the ObjectId is safely cast');
   /* And a floor that cannot read the setting still draws. The refusal on the
      server is the rule; this is only so the app can be polite about it. */
   assert.match(SALE_SVC, /could not read the table order limit/);
