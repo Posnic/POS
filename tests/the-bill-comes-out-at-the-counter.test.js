@@ -144,6 +144,47 @@ test('the job is closed only AFTER the paper came out', async () => {
   assert.ok(closedAt > claimedAt, 'it closed a job it had not claimed');
 });
 
+test('the reason a bill did not print travels back with the failure', async () => {
+  /*
+   * "The bill did not come out" with nothing attached is a support call that
+   * starts from nothing. The till's own console is a window nobody has open on
+   * a shop floor, so the reason has to go somewhere a person can read it later
+   * - and the queue, which already knows the job failed, is that place.
+   */
+  const hardware = fakeHardware({ refuse: true });
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  const owned = printedBad(calls)[0];
+  assert.ok(owned, 'the failure was never reported');
+  assert.match(String(owned.body.error || ''), /offline/,
+    'the job was failed with no reason on it');
+});
+
+test('a shop with no printer at all says so, rather than failing silently', async () => {
+  const hardware = fakeHardware({ printer: '' });
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1', findReceiptPrinter: async () => '' });
+
+  await runOnce(bills);
+
+  const owned = printedBad(calls)[0];
+  assert.ok(owned, 'nobody was told the bill could not print');
+  assert.match(String(owned.body.error || ''), /printer/i);
+});
+
+test('a bill that printed carries no reason, because there is none', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(printedOk(calls)[0].body.error, '');
+});
+
 test('a printer that refuses puts the bill back, it does not swallow it', async () => {
   /* Closing it as done would lose the bill for good: nothing would ever offer
      it again, and the only person who knows is the guest still waiting. Owning

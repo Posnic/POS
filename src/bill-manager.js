@@ -437,10 +437,10 @@ class BillManager {
     for (const job of jobs) {
       /* eslint-disable-next-line no-await-in-loop -- printers are serial
          devices; two jobs sent at once interleave on the same roll. */
-      const ok = await this._printOne(job.payload || {});
-      if (ok) this.printedCount += 1;
+      const printed = await this._printOne(job.payload || {});
+      if (printed.ok) this.printedCount += 1;
       /* eslint-disable-next-line no-await-in-loop -- see above */
-      await this._finish(base, key, this._idOf(job), ok);
+      await this._finish(base, key, this._idOf(job), printed.ok, printed.error);
     }
 
     const pace = Number.isFinite(told)
@@ -521,13 +521,24 @@ class BillManager {
     return fallback;
   }
 
-  /** One bill, on the counter's roll. */
+  /**
+   * One bill, on the counter's roll.
+   *
+   * Answers WHY when it could not, not just that it could not. The reason
+   * travels back to the queue and sits on the job, which is the only place
+   * anybody can read it afterwards: the till's own console is a window nobody
+   * has open on a shop floor, and "the bill did not come out" with no reason
+   * attached is a support call that starts from nothing.
+   *
+   * @returns {Promise<{ok: boolean, error: string}>}
+   */
   async _printOne(sale) {
     try {
       const name = await this._receiptPrinterName();
       if (!name) {
-        console.error('[BILL] no receipt printer is set and Windows has no default; cannot print the bill');
-        return false;
+        const why = 'No receipt printer is set on this till and Windows has no default.';
+        console.error(`[BILL] ${why}`);
+        return { ok: false, error: why };
       }
 
       /*
@@ -560,13 +571,15 @@ class BillManager {
 
       const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
       if (!result || result.success === false) {
-        console.error('[BILL] printer refused:', result && result.error);
-        return false;
+        const why = (result && result.error) || 'the printer refused the job';
+        console.error('[BILL] printer refused:', why);
+        return { ok: false, error: `${name}: ${why}` };
       }
-      return true;
+      return { ok: true, error: '' };
     } catch (error) {
-      console.error('[BILL] could not print:', error && error.message);
-      return false;
+      const why = (error && error.message) || String(error);
+      console.error('[BILL] could not print:', why);
+      return { ok: false, error: why };
     }
   }
 
@@ -577,7 +590,7 @@ class BillManager {
    * was already counted when it was claimed, so a printer that is off cannot
    * spin for ever, and a printer that was merely busy gets another go.
    */
-  async _finish(base, key, id, ok) {
+  async _finish(base, key, id, ok, error = '') {
     if (!id) return;
     try {
       await fetch(`${base}/sales/finishPrintJob`, {
@@ -587,7 +600,7 @@ class BillManager {
           Accept: 'application/json',
           kioskkey: key,
         },
-        body: JSON.stringify({ id, ok }),
+        body: JSON.stringify({ id, ok, error: ok ? '' : String(error || '') }),
       });
     } catch (error) {
       /*
