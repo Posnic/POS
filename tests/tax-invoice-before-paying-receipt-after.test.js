@@ -51,7 +51,7 @@ test('after paying it is a receipt', () => {
 });
 
 test('the pre-payment print says UNPAID, and the receipt does not', () => {
-  assert.match(titleBlock, /beforePaying[\s\S]{0,200}lang_unpaid_title', 'UNPAID'/,
+  assert.match(titleBlock, /beforePaying[\s\S]{0,200}lang_unpaid_2', 'UNPAID'/,
     'the bill does not say it is unpaid');
   const after = titleBlock.slice(titleBlock.indexOf('beforePaying'));
   assert.match(after, /:\s*''\)/, 'a paid receipt would also be stamped UNPAID');

@@ -1489,7 +1489,7 @@ PosnicPro.sales.view = {
                         + PosnicPro.escapeHtml(docTitle) + '</span>'
                         + (beforePaying
                             ? '<div style="font-weight:700; letter-spacing:1px;">'
-                              + PosnicPro.escapeHtml(PosnicPro.i18n.t('lang_unpaid_title', 'UNPAID'))
+                              + PosnicPro.escapeHtml(PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID'))
                               + '</div>'
                             : '')
                     );
