@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const Sale = require('../models/sale.model');
-const Branch = require('../models/branch.model');
 const BaseModel = require('../models/base.model');
 const StockLogsRepository = require('../repositories/stock-log.repository');
 const ItemRepository = require('../repositories/item.repository');
@@ -1666,6 +1665,22 @@ const getTablesWithActiveOrders = async (branchId) => {
      */
     let tableOrderLimit = 1;
     try {
+      /*
+       * REQUIRED HERE, NOT AT THE TOP OF THE FILE.
+       *
+       * A top-level require of the branch model closes a cycle - the models
+       * reach the repositories, which reach back here - and the file that
+       * loses is whichever one is mid-initialisation when the circle closes.
+       * On CI it was customer.model.js, which got `{}` where BaseModel should
+       * have been and died on `class CustomerModel extends BaseModel`, taking
+       * a whole suite with it and telling nobody why.
+       *
+       * Requiring it at the one place it is used breaks the circle without
+       * giving up what it is for: this must go through the tenant-aware model
+       * rather than a process-wide connection, or one shop's table limit gets
+       * applied to another shop's floor.
+       */
+      const Branch = require('../models/branch.model');
       const branch = await Branch.findById(branchObjectId).select('table_order_limit').lean();
       const raw = branch && branch.table_order_limit;
       tableOrderLimit = Number.isFinite(Number(raw)) ? Number(raw) : 1;
