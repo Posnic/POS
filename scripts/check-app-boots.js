@@ -44,7 +44,29 @@ const PORT = Number(process.env.POSNIC_APP_PORT || 5555);
 const logPath = path.join(os.homedir(), 'AppData', 'Roaming', 'posnic', 'app.log');
 
 const say = (m) => console.log(m);
-const die = (m) => { console.error(`\n  FAILED: ${m}\n`); process.exit(1); };
+/*
+ * WHATEVER THE APPLICATION MANAGED TO SAY, printed with the failure.
+ *
+ * "exited with code 134" is a fact and not a reason, and on a CI runner the
+ * log it would have been in is thrown away with the machine. A build that
+ * fails here and takes its only evidence with it costs a whole round trip to
+ * learn one line.
+ *
+ * Declared as a function rather than a const arrow so it can be used above
+ * newLogLines without depending on the order the consts happen to be in.
+ */
+function die(m) {
+  console.error(`\n  FAILED: ${m}\n`);
+  const tail = newLogLines().trim();
+  if (tail) {
+    console.error('  What the application logged during this run:');
+    for (const line of tail.split(/\r?\n/).slice(-40)) console.error(`    ${line}`);
+    console.error('');
+  } else {
+    console.error(`  It logged nothing to ${logPath}, so it died before its logger started.\n`);
+  }
+  process.exit(1);
+}
 
 if (!fs.existsSync(exe)) die(`no packaged application at ${exe}`);
 
