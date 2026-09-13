@@ -303,7 +303,22 @@
                     <div class="assistant-more-row" id="assistant-more-row"></div>
                 </div>
             </div>
-            <!-- The voice in progress: what it is doing, and the way to stop. -->
+            <!--
+                THE LINE, AND THE ONE THING TO DO WITH IT.
+
+                Owner: "hold to talk is works. its good. but stop talking
+                button not required. hold button need some animation. like
+                finger press and hold first time. big more size ... after
+                press proper animation that user pressed and listerning. like
+                waves ... have some solid and satisfyig feeling over holing."
+
+                One control, as big as a thumb wants it, with the waves
+                driven by the customer's OWN voice rather than a loop - the
+                level is already measured to decide whether they are close
+                enough to the phone (voice.js, watchTheRoom), so the same
+                number moves the bars. The way out is the X at the top of the
+                sheet, which is where every sheet on this phone closes.
+            -->
             <div class="voice" id="voice" hidden>
                 <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>
                 <p class="voice-status" id="voice-status" role="status"></p>
@@ -311,16 +326,28 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
                     <span>Tap to talk</span>
                 </button>
+
                 <!--
                     HOLD IT AND THE LINE HEARS YOU, whatever the room is
-                    doing. Owner: "how about voice around me? how to solve
-                    this issue?" The page already judges by distance - a
-                    voice at arm's length against the room's own noise floor
-                    - and that is a measurement, so it can be wrong. This
-                    cannot: nothing measured beats a thumb.
+                    doing. The page judges by distance - a voice at arm's
+                    length against the room's own noise floor - and that is a
+                    measurement, so it can be wrong. This cannot.
                 -->
-                <button type="button" class="voice-hold" id="voice-hold">Hold to talk</button>
-                <button type="button" class="voice-stop" id="voice-stop">Stop talking</button>
+                <button type="button" class="voice-hold" id="voice-hold" aria-describedby="voice-hold-say">
+                    <!-- Driven by the real input level while held, so the
+                         bars answer the customer's voice instead of running
+                         on a timer. Six, because a waveform needs enough
+                         bars to read as one and few enough to stay calm. -->
+                    <span class="voice-wave" id="voice-wave" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i>
+                    </span>
+                    <span class="voice-hold-word" id="voice-hold-word">Hold to talk</span>
+                    <!-- Shown once, until they have held it: a fingertip
+                         coming down and staying down. It is the whole
+                         instruction, and a sentence nobody reads is not. -->
+                    <span class="voice-finger" id="voice-finger" aria-hidden="true"></span>
+                </button>
+                <p class="voice-hold-say" id="voice-hold-say">Press and hold while you speak</p>
             </div>
             <audio id="voice-out" autoplay playsinline hidden></audio>
             <div class="assistant-chips" id="assistant-chips">
@@ -328,6 +355,25 @@
                 <button type="button" class="assistant-chip" data-ask="Something vegetarian and spicy">Something vegetarian and spicy</button>
                 <button type="button" class="assistant-chip" data-ask="A meal for two">A meal for two</button>
                 <button type="button" class="assistant-chip" data-ask="What is quick to make?">What is quick to make?</button>
+            </div>
+            <!--
+                TALK, OR TYPE. Owner: "have ai talk button seperate, type
+                button seperate ... coz when user try to talk half screen
+                showing keypad. not good."
+
+                The sheet used to open onto a text box and put the cursor in
+                it, which raises the keyboard over half the screen before
+                anybody has said what they want to do - and the microphone was
+                a small button beside it, which reads as the afterthought. So
+                the choice is made first and the keyboard only ever appears
+                for somebody who asked to type.
+            -->
+            <div class="assistant-choose" id="assistant-choose" hidden>
+                <button type="button" class="assistant-choose-talk" id="assistant-choose-talk">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+                    <span>Talk to order</span>
+                </button>
+                <button type="button" class="assistant-choose-type" id="assistant-choose-type">Type instead</button>
             </div>
             <form class="assistant-ask" id="assistant-form" autocomplete="off">
                 <label for="assistant-input" hidden>Your message</label>

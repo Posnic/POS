@@ -2486,17 +2486,6 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   }
 }
 
-.voice-stop {
-  min-height: 40px;
-  padding: 0 18px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 600;
-}
-
 .assistant-log {
   flex: 1 1 auto;
   min-height: 120px;
@@ -3330,38 +3319,226 @@ dialog.sheet.assistant .assistant-foot {
 /* The edit that is waiting to be sent. Quiet until something has moved, and
    then the only loud thing on the screen, because it is the one step left. */
 /*
- * HOLD TO TALK.
+ * HOLD TO TALK: THE ONLY CONTROL ON THE SCREEN.
  *
- * The line already judges by distance - a voice at arm's length against the
- * room's own noise floor - and that is a measurement, so it can be wrong in
- * a loud room. This cannot. Big enough for a thumb, and obviously pressed
- * while it is held, because a press with no feedback is a press people
- * repeat.
+ * Owner: "hold button need some animation. like finger press and hold first
+ * time. big more size ... after press proper animation that user pressed and
+ * listerning. like waves ... have some solid and satisfyig feeling over
+ * holing."
+ *
+ * Big enough that a thumb lands on it without looking, round because that is
+ * what a press target is, and it visibly takes the press: it darkens, it
+ * sinks, and the waves inside it start answering the voice. The waves are
+ * driven by --voice-in, which voice.js sets from the level it already
+ * measures off the microphone - so they fall silent when the customer stops
+ * talking, which a keyframe loop never does.
  */
 .voice-hold {
-  min-height: 52px;
-  margin: 8px auto 0;
-  padding: 12px 22px;
-  border: 1px solid var(--line, #d9d5cb);
-  border-radius: 26px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(78vw, 260px);
+  min-height: 132px;
+  margin: 4px auto 0;
+  padding: 18px;
+  border: 2px solid var(--ink, #1d1d1b);
+  border-radius: 999px;
   background: var(--paper-2, #faf8f3);
   color: var(--ink, #1d1d1b);
-  font-size: 15px;
-  font-weight: 600;
-  /* A press, not a text selection: a long press on a phone otherwise puts
-     the word "Hold" in a selection handle instead of opening the line. */
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 0 0 rgba(0, 0, 0, 0.07);
+  /* A press, not a text selection: a long press otherwise puts the word
+     "Hold" in a selection handle instead of opening the line. */
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: none;
   cursor: pointer;
+  transition: transform 90ms ease, background 120ms ease, box-shadow 90ms ease;
 }
 
+/* HELD: it goes dark, it sinks onto the page, and it says what it is doing. */
 .voice-hold[data-held] {
   background: var(--ink, #1d1d1b);
   color: var(--paper, #fff);
-  border-color: var(--ink, #1d1d1b);
-  transform: scale(0.98);
+  transform: translateY(4px) scale(0.99);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.12);
+}
+
+.voice-hold-word {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The bars. At rest they are a flat line, which is the honest picture of a
+   microphone that is not listening. */
+.voice-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 34px;
+}
+
+.voice-wave i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.45;
+  transition: height 70ms linear, opacity 70ms linear;
+}
+
+/*
+ * Each bar reads a different share of the level, so the group moves like a
+ * waveform rather than six copies of one meter. The middle bars swing most,
+ * which is what a voice looks like.
+ */
+.voice-hold[data-held] .voice-wave i {
+  opacity: 1;
+}
+
+.voice-hold[data-held] .voice-wave i:nth-child(1),
+.voice-hold[data-held] .voice-wave i:nth-child(6) {
+  height: calc(5px + (var(--voice-in, 0) * 14px));
+}
+
+.voice-hold[data-held] .voice-wave i:nth-child(2),
+.voice-hold[data-held] .voice-wave i:nth-child(5) {
+  height: calc(5px + (var(--voice-in, 0) * 24px));
+}
+
+.voice-hold[data-held] .voice-wave i:nth-child(3),
+.voice-hold[data-held] .voice-wave i:nth-child(4) {
+  height: calc(5px + (var(--voice-in, 0) * 32px));
+}
+
+/*
+ * THE FINGERTIP, SHOWN ONCE.
+ *
+ * Owner: "like finger press and hold first time." A sentence under a button
+ * is a sentence nobody reads; a fingertip coming down and staying down is the
+ * instruction itself. It goes for good the first time they hold it.
+ */
+.voice-finger {
+  position: absolute;
+  right: 18%;
+  bottom: 10px;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--ink, #1d1d1b);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  pointer-events: none;
+  animation: voice-finger-press 2.4s ease-in-out infinite;
+}
+
+.voice-finger[hidden] {
+  display: none;
+}
+
+@keyframes voice-finger-press {
+  /* Comes down... */
+  0% { transform: translateY(-16px) scale(1); opacity: 0; }
+  14% { transform: translateY(0) scale(1); opacity: 1; }
+  /* ...and STAYS down, which is the part being taught. */
+  22% { transform: translateY(0) scale(0.82); opacity: 1; }
+  70% { transform: translateY(0) scale(0.82); opacity: 1; }
+  82% { transform: translateY(-16px) scale(1); opacity: 0; }
+  100% { transform: translateY(-16px) scale(1); opacity: 0; }
+}
+
+.voice-hold-say {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft, #5a5a52);
+  text-align: center;
+}
+
+.voice-hold[data-held] ~ .voice-hold-say {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-finger { animation: none; transform: translateY(0) scale(0.82); opacity: 1; }
+  .voice-hold, .voice-wave i { transition: none; }
+}
+
+/*
+ * TALK, OR TYPE, before either happens.
+ *
+ * Owner: "have ai talk button seperate, type button seperate ... coz when
+ * user try to talk half screen showing keypad. not good."
+ */
+.assistant-choose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+}
+
+.assistant-choose[hidden] {
+  display: none;
+}
+
+.assistant-choose-talk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(78vw, 260px);
+  min-height: 56px;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink, #1d1d1b);
+  color: var(--paper, #fff);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.assistant-choose-talk svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.assistant-choose-type {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft, #5a5a52);
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/*
+ * LESS EMPTY SPACE. Owner: "also screen now reduce empty spaces." A call
+ * shows one control and the order; the padding that suited a chat window
+ * leaves the button floating in the middle of nothing.
+ */
+dialog.sheet[data-voice="on"] .voice {
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+dialog.sheet[data-voice="on"] .voice-orb {
+  width: 44px;
+  height: 44px;
+}
+
+dialog.sheet[data-voice="on"] .assistant-body {
+  gap: 6px;
 }
 
 /*
