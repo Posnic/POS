@@ -412,15 +412,34 @@
     });
   }
 
-  /* Tell the line to hear Tamil from now on. Once. */
+  /*
+   * Tamil was heard. NOTED, AND NOTHING IS SENT.
+   *
+   * Owner: "i talk in tamil it reply in tamil but its not continuing. broken
+   * voice hearing."
+   *
+   * This used to reconfigure the live session the moment a Tamil transcript
+   * arrived - a session.update carrying only audio.input.transcription. The
+   * update REPLACES the block it names, and audio.input is also where turn
+   * detection lives. Handing over an audio.input that has a transcription and
+   * no turn_detection is asking the line to stop noticing that the customer
+   * is speaking, which is exactly what he described: it answers the first
+   * Tamil sentence and then never hears another one.
+   *
+   * The transcription language was only ever an accuracy nicety, and the
+   * transcripts are not even shown - the owner's own rule, "no need to show
+   * conversation as text in the chat". The model's REPLY language comes from
+   * the brief, which tells it to speak the customer's language, and that
+   * works: he says it does reply in Tamil. So the language is remembered for
+   * this page's own use and the line is left exactly as it was opened.
+   *
+   * A Tamil PAGE still gets Tamil ears from the first word, because that is
+   * set when the session is minted - see voice-session.service.js - which is
+   * the safe moment to say it.
+   */
   function lockTamil() {
     if (live.heardLanguage) return;
     live.heardLanguage = "ta";
-    if (live.beta) {
-      sendEvent({ type: "session.update", session: { input_audio_transcription: { model: "whisper-1", language: "ta" } } });
-    } else {
-      sendEvent({ type: "session.update", session: { type: "realtime", audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "ta" } } } } });
-    }
   }
 
   /* Errors the line cannot come back from; anything else is logged and the

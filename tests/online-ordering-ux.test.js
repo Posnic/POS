@@ -1464,9 +1464,28 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   /* Malayalam letters for a Tamil sentence: not shown, and the line is told to hear Tamil. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ഒരു ചിക്കൻ ബിരിയാണി' }) });
   assert.ok(!/ചിക്കൻ/.test(document.getElementById('assistant-log').textContent), 'the misheard alphabet was shown to the customer');
-  const updates = calls.sent.filter((e) => e.type === 'session.update');
-  assert.strictEqual(updates.length, 1);
-  assert.deepStrictEqual(updates[0].session.audio.input.transcription, { model: 'gpt-4o-mini-transcribe', language: 'ta' });
+  /*
+   * AND NOTHING IS SENT DOWN THE LINE.
+   *
+   * Owner: "i talk in tamil it reply in tamil but its not continuing. broken
+   * voice hearing." This used to answer a Tamil transcript with a
+   * session.update carrying only audio.input.transcription - and the update
+   * REPLACES the block it names, while audio.input is also where turn
+   * detection lives. Handing over an audio.input with a transcription and no
+   * turn_detection asks the line to stop noticing the customer is speaking,
+   * which is exactly what he heard: it answers the first Tamil sentence and
+   * never hears another one.
+   *
+   * The language is remembered for this page's own use. The REPLY language
+   * comes from the brief, which works - he says it does answer in Tamil - and
+   * a Tamil page gets Tamil ears when the session is minted, which is the
+   * safe moment to say it.
+   */
+  assert.deepStrictEqual(
+    calls.sent.filter((e) => e.type === 'session.update'),
+    [],
+    'the line is still reconfigured mid-call, which is what broke the hearing'
+  );
 
   /* Nothing is written down either way, and the lock is not sent twice. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு சிக்கன் பிரியாணி' }) });
@@ -1475,16 +1494,16 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
     !/ஒரு சிக்கன் பிரியாணி|and one lime soda/.test(document.getElementById('assistant-log').textContent),
     'the call was written into the chat'
   );
-  assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 1, 'the lock was sent again');
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 0, 'the line was reconfigured mid-call');
   window.OrderingVoice.stop();
 
-  /* On the older endpoint the same lock takes the older shape. */
+  /* The older endpoint is left alone for the same reason. */
   const beta = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-4o-realtime-preview' } } } });
   await beta.window.OrderingVoice.start();
   await settle();
   beta.calls.sent.length = 0;
   await beta.window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'வணக்கம்' }) });
-  assert.deepStrictEqual(beta.calls.sent.filter((e) => e.type === 'session.update')[0].session, { input_audio_transcription: { model: 'whisper-1', language: 'ta' } });
+  assert.deepStrictEqual(beta.calls.sent.filter((e) => e.type === 'session.update'), []);
   beta.window.OrderingVoice.stop();
 
   /* A Tamil page is locked before the first word: nothing to send later. */
