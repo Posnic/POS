@@ -89,8 +89,14 @@ test('a cancellation the customer asked for is said, once, and said differently'
    * also NOT the same event as a new order - collapsing them into one
    * sentence is how staff learn to ignore the one that matters.
    */
-  const asked = till({ queue: [{ sale_id: 's1', token_id: '101', cancel_requested: true }] });
-  assert.deepStrictEqual(asked.calls.toasts, [['Alert', 'Customer asked to cancel - Token 101']]);
+  const asked = till({
+    queue: [{ sale_id: 's1', sales_id: 'S-Q43L-000018', token_id: '101', cancel_requested: true }],
+  });
+  /* The BILL NUMBER leads, the way the queue card does, with the token beside
+     it: staff scan for the bill number, the customer is holding the token. */
+  assert.deepStrictEqual(asked.calls.toasts, [
+    ['Alert', 'Customer asked to cancel - S-Q43L-000018 · Token 101'],
+  ]);
 
   /* Polled again, the same order says nothing a second time. */
   asked.window.PosnicOnlineOrderWatch.look();
@@ -98,11 +104,19 @@ test('a cancellation the customer asked for is said, once, and said differently'
 
   /* A new one waiting for approval is the quieter sound. */
   asked.say([
-    { sale_id: 's1', token_id: '101', cancel_requested: true },
-    { sale_id: 's2', token_id: '102' },
+    { sale_id: 's1', sales_id: 'S-Q43L-000018', token_id: '101', cancel_requested: true },
+    { sale_id: 's2', sales_id: 'S-Q43L-000019', token_id: '102' },
   ]);
   asked.window.PosnicOnlineOrderWatch.look();
-  assert.deepStrictEqual(asked.calls.toasts[1], ['Information', 'New online order - Token 102']);
+  assert.deepStrictEqual(asked.calls.toasts[1], [
+    'Information',
+    'New online order - S-Q43L-000019 · Token 102',
+  ]);
+
+  /* An order with no bill number yet still says what it can. */
+  asked.say([{ sale_id: 's3', token_id: '103' }]);
+  asked.window.PosnicOnlineOrderWatch.look();
+  assert.deepStrictEqual(asked.calls.toasts[2], ['Information', 'New online order - Token 103']);
   asked.window.close();
 });
 

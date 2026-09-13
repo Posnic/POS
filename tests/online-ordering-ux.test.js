@@ -1186,7 +1186,20 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   await settle();
   assert.deepStrictEqual(calls.applied, [['m1', 2], ['m1', 1]]);
   assert.strictEqual(JSON.parse(calls.sent[0].item.output).item_id, 'm1');
-  assert.strictEqual(calls.sent.filter((e) => e.item && e.item.call_id === 'c5').length, 0, 'a cancelled response ran its tools');
+  /*
+   * A response the customer talked over is ANSWERED but not RUN.
+   *
+   * Not run, because adding the dish somebody interrupted to correct is how
+   * the wrong food is cooked. Answered, because a call_id the model is
+   * waiting on and never hears back about wedges the conversation - every
+   * turn after it is an acknowledgement and nothing else, which is what the
+   * owner heard: "keep saying ok ok but not able to continue".
+   */
+  const afterC5 = calls.sent.filter((e) => e.item && e.item.call_id === 'c5');
+  assert.strictEqual(afterC5.length, 1, 'an interrupted call was left unanswered, which wedges the line');
+  assert.deepStrictEqual(JSON.parse(afterC5[0].item.output), { ok: false, reason: 'interrupted' });
+  /* And nothing new was asked to be said over the customer. */
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1, 'the assistant spoke over an interruption');
 
   /* A refused duplicate response is a warning, not the end of the call. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });

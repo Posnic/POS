@@ -596,6 +596,23 @@ function jsonFrom(text) {
   const first = body.search(/[[{]/);
   const last = Math.max(body.lastIndexOf(']'), body.lastIndexOf('}'));
   if (first !== -1 && last > first) attempts.push(body.slice(first, last + 1));
+  /*
+   * The FIRST complete value, found by counting brackets.
+   *
+   * The two attempts above both run to the LAST bracket in the text, so a
+   * model that closed its object and then added one stray character -
+   * `{"reply":"..."}]` - defeats them: the slice ends at that stray bracket
+   * and parses no better than the whole string did. It is not hypothetical.
+   * The owner saw `{"reply":"...","actions":[]}]` printed into the chat as
+   * though it were a sentence, because the caller's prose fallback is what
+   * catches a parse that returns null.
+   *
+   * Counting stops at the character that closes what was opened, so trailing
+   * anything is simply not included. Quotes are tracked because a brace
+   * inside a string - a dish called "Curry {special}" - must not close it.
+   */
+  const balanced = balancedFrom(body, first);
+  if (balanced) attempts.push(balanced);
 
   for (const attempt of attempts) {
     try {
@@ -605,6 +622,33 @@ function jsonFrom(text) {
     }
   }
   return null;
+}
+
+/** The first complete {...} or [...] in `body`, brackets counted, or ''. */
+function balancedFrom(body, first) {
+  if (first === -1) return '';
+  const open = body[first];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = first; i < body.length; i += 1) {
+    const ch = body[i];
+    if (escaped) {
+      escaped = false;
+    } else if (ch === '\\') {
+      escaped = true;
+    } else if (ch === '"') {
+      inString = !inString;
+    } else if (!inString) {
+      if (ch === open) depth += 1;
+      else if (ch === close) {
+        depth -= 1;
+        if (depth === 0) return body.slice(first, i + 1);
+      }
+    }
+  }
+  return '';
 }
 
 module.exports = {

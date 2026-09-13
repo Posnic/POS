@@ -87,12 +87,23 @@
     if (announced[id] === why) return;
     announced[id] = why;
 
+    /*
+     * THE BILL NUMBER LEADS, then the token.
+     *
+     * Owner's call, and the right one: the queue card leads with the bill
+     * number and that is what staff scan for, so a toast that led with the
+     * token made somebody translate between two numbers under pressure. The
+     * token stays beside it, because it is what the customer is holding and
+     * what gets called out across the counter.
+     */
+    var bill = String(order.sales_id || '');
     var token = String(order.token_id || order.token || '');
     var line =
       why === 'cancel'
         ? t('lang_cancel_requested', 'Customer asked to cancel')
         : t('lang_new_online_order', 'New online order');
-    if (token) line += ' - ' + t('lang_token', 'Token') + ' ' + token;
+    if (bill) line += ' - ' + bill;
+    if (token) line += (bill ? ' · ' : ' - ') + t('lang_token', 'Token') + ' ' + token;
 
     try {
       if (window.PosnicPro && typeof PosnicPro.alert === 'function') {
