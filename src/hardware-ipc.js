@@ -32,9 +32,16 @@ async function readLocalBranches() {
     }
     client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
     await client.connect();
+    /* module_captain_enable rides along because the handset reachability check
+       needs it and has no database of its own. It is a settings field on the
+       branch document, and the branch document is already open. */
     const rows = await client.db('PosnicPro').collection('branches')
-      .find({}, { projection: { branch_name: 1 } }).toArray();
-    return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
+      .find({}, { projection: { branch_name: 1, module_captain_enable: 1 } }).toArray();
+    return rows.map((b) => ({
+      id: String(b._id),
+      name: b.branch_name || String(b._id),
+      module_captain_enable: b.module_captain_enable,
+    }));
   } catch (e) {
     /* A shop with no database yet is a normal state during setup, not a
        fault. The screen still works; it just cannot offer a list. */
