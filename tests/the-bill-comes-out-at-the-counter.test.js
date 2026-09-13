@@ -214,3 +214,81 @@ test('it is started when the till starts, not left to be switched on', () => {
   assert.match(main, /billManager = new BillManager\(/, 'the bill poller is never constructed');
   assert.match(main, /billManager\.start\(\)/, 'the bill poller is never started');
 });
+
+/*
+ * WHICH printer, which in a restaurant is the whole question.
+ *
+ * Owner, from a two-printer site: "usb001 is in reception, usb004 is in
+ * kitchen. Receipt print should go to reception... recept print goes not
+ * correctly." The bill asked "whatever Windows calls the default", so the
+ * customer's bill came out beside the cook. Worse, getDefaultPrinter falls
+ * back to the FIRST printer it enumerates when Windows has no default at all,
+ * so the answer could change between two boots of the same machine.
+ */
+test('the bill goes to the receipt printer, not to whatever Windows prefers', async () => {
+  const hardware = fakeHardware({ printer: 'USB004 Kitchen' });
+  fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    findReceiptPrinter: async () => 'USB001 Reception',
+  });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1, 'nothing was printed');
+  assert.equal(hardware.jobs[0].name, 'USB001 Reception',
+    'the bill was sent to the Windows default instead of the counter');
+});
+
+test('with no receipt printer chosen it still prints, on the Windows default', async () => {
+  /* Every shop running today predates the Receipt Printer setting. Refusing
+     to print a customer's bill until somebody opens Hardware Manager would be
+     worse than printing it in the wrong room. */
+  const hardware = fakeHardware({ printer: 'EPSON TM-T82' });
+  fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1', findReceiptPrinter: async () => '' });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1, 'a shop with no chosen printer lost its bill');
+  assert.equal(hardware.jobs[0].name, 'EPSON TM-T82');
+});
+
+test('a receipt printer that cannot be read falls back rather than throwing', async () => {
+  const hardware = fakeHardware({ printer: 'EPSON TM-T82' });
+  fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    findReceiptPrinter: async () => { throw new Error('preferences unreadable'); },
+  });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1, 'an unreadable setting stopped the bill');
+  assert.equal(hardware.jobs[0].name, 'EPSON TM-T82');
+});
+
+test('with no printer anywhere, nothing is marked printed', async () => {
+  const hardware = fakeHardware({ printer: '' });
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1', findReceiptPrinter: async () => '' });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 0);
+  assert.ok(!calls.some((c) => c.url.includes('/markBillPrinted')),
+    'a bill nobody printed was marked printed');
+});
+
+test('the module that answers which printer is in the packaged build', () => {
+  /*
+   * build.files is an explicit allowlist. A module left out of it works all
+   * the way through CI and then throws "Cannot find module" the first time a
+   * customer prints - on their counter, not in our tests. It has happened
+   * here before, to printer-targets.js.
+   */
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.ok(pkg.build.files.includes('src/device-preferences.js'),
+    'the receipt printer lookup is not shipped; the bill would throw on a real install');
+});
+
