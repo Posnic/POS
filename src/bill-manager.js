@@ -236,12 +236,28 @@ class BillManager {
        * is 32, and the same bytes cannot serve both - getting it wrong wraps
        * the total onto its own line, which reads as a rounding bug on paper.
        */
-      const bytes = renderSale(sale || {}, {
-        paperWidth: String(columnsFor(this.paperSize)),
-        /* The drawer is the cashier's business and this is not a payment. */
-        openDrawer: false,
-        cut: true,
-      });
+      /*
+       * The bill a waiter carries to the table is not a receipt.
+       *
+       * It reached the roll with no document heading at all, because
+       * pendingBillPrints answers raw sale documents and a sale carries no
+       * title. So the customer got an unlabelled slip, then a second slip
+       * headed SALES RECEIPT after paying.
+       *
+       * A GST-registered shop issues a TAX INVOICE for the supply; a shop
+       * without GST issues a BILL. Both say UNPAID, because this is a demand
+       * for payment, and the receipt follows once it is paid.
+       */
+      const gstin = String((sale && (sale.branch_gstin_number || sale.gstin)) || '').trim();
+      const bytes = renderSale(
+        { ...(sale || {}), title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID' },
+        {
+          paperWidth: String(columnsFor(this.paperSize)),
+          /* The drawer is the cashier business and this is not a payment. */
+          openDrawer: false,
+          cut: true,
+        }
+      );
 
       const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
       if (!result || result.success === false) {
