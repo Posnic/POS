@@ -372,9 +372,25 @@
    * transcript, which is hidden on a call: they are listening, not reading,
    * and the prices are on the page behind this sheet anyway.
    */
+  /*
+   * What the list last showed, so it is not rebuilt to look the same.
+   *
+   * Tearing five rows out of the DOM and putting five identical rows back is
+   * a flash on a phone, and it happened on every tick of the call. A cheap
+   * signature of what is about to be drawn is enough to tell the two apart.
+   */
+  var listDrawn = "";
+
   function paintOrderList(lines) {
     var box = el("assistant-order-list");
     if (!box) return;
+    var signature = JSON.stringify(
+      (lines || []).map(function (l) {
+        return [String(l.id || l.item_id || ""), Number(l.quantity) || 0, String(l.note || "")];
+      })
+    );
+    if (signature === listDrawn && box.children.length) return;
+    listDrawn = signature;
     box.textContent = "";
     if (!lines || !lines.length) {
       var empty = document.createElement("li");
@@ -422,10 +438,92 @@
   }
 
   /* Talking or typing: on a call the order shows and the transcript does not. */
+  /*
+   * The order stands in for the transcript while a call is up.
+   *
+   * REDRAWN ON THE WAY IN, NOT ON EVERY TICK. This used to repaint whenever
+   * it was called, and it is called from status() - which fires on listening,
+   * on speaking, on thinking, several times a sentence. Every one of those
+   * tore the whole list out of the DOM and built it again, which on a phone
+   * is a visible flash. Owner: "i see its flickering not showing thing."
+   *
+   * Now it draws when it is SHOWN, and after that only when the order really
+   * changes - paintOrderList leaves the DOM alone when the lines have not
+   * moved.
+   */
+  /*
+   * How the food travels, asked on this screen.
+   *
+   * Only where the shop offers more than one way and nothing has already
+   * settled it - a table code, a takeaway code, or what the customer told the
+   * assistant. One tap sends the order; there is no second confirmation,
+   * because the tap on "Confirm & send" was already the yes.
+   */
+  var WAY_WORDS = {
+    dine_in: "Eating here",
+    takeaway: "Taking it away",
+    pickup: "Collecting it",
+    delivery: "Delivered",
+  };
+
+  function askTheWay(ways) {
+    var box = el("assistant-ways");
+    var row = el("assistant-ways-row");
+    if (!box || !row) {
+      window.OrderingAssistant.leave("cart.html");
+      return;
+    }
+    var offered = (ways || []).filter(function (w) {
+      return WAY_WORDS[w];
+    });
+    if (!offered.length) {
+      window.OrderingAssistant.leave("cart.html");
+      return;
+    }
+    row.textContent = "";
+    offered.forEach(function (way) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "assistant-way";
+      button.setAttribute("data-way", way);
+      button.textContent = say(WAY_WORDS[way]);
+      row.appendChild(button);
+    });
+    box.hidden = false;
+  }
+
+  /* What this page just did, into the panel the shop asked for. Never an
+     error of its own: a log that breaks the thing it is logging is worse
+     than no log. assets/assistant/debug.js. */
+  /*
+   * A control that is waiting on the shop SAYS so.
+   *
+   * Owner: "if something is loading show loader." A button that has been
+   * tapped and is waiting on a server looks exactly like a button that did
+   * nothing, which is what makes somebody tap it again - and a second tap on
+   * a plus is a second dish.
+   */
+  function working(button, on) {
+    if (!button) return;
+    button.disabled = !!on;
+    if (button.classList) button.classList.toggle("is-working", !!on);
+  }
+
+  function report(what, detail) {
+    try {
+      if (window.VoiceDebug) window.VoiceDebug.did(what, detail);
+    } catch (e) {
+      /* nothing to report to */
+    }
+  }
+
+  var showingOrder = null;
   function showOrderInstead(on) {
+    var want = !!on;
     var box = el("assistant-order");
-    if (box) box.hidden = !on;
-    if (on) paintReview();
+    if (box) box.hidden = !want;
+    if (want && showingOrder !== true) paintReview();
+    showingOrder = want;
   }
 
   /*
@@ -658,7 +756,14 @@
 
   /** Ask the shop, then draw. */
   async function showPlacedOrder() {
-    paintPlacedOrder(await readPlaced());
+    var said = await readPlaced();
+    report(
+      "order screen",
+      said
+        ? (said.items || []).length + " lines, can_change " + said.can_change
+        : "the shop said nothing - id " + (placedOrder.id || "(none)") + ", token " + (state.placed || "(none)")
+    );
+    paintPlacedOrder(said);
   }
 
   function placedPanel(token, options) {
@@ -684,6 +789,14 @@
     if (placedStop) placedStop();
     placedStop = null;
     var art = el("placed-art");
+    report("order placed", "token " + String(token || "") + ", id " + (placedOrder.id || "(none)"));
+    if (art) {
+      var box = art.getBoundingClientRect ? art.getBoundingClientRect() : { width: 0, height: 0 };
+      /* The size the canvas actually has on screen. A scene drawn into a box
+         with no height is a scene nobody sees, and it looks from the outside
+         exactly like an animation that never ran. */
+      report("canvas", Math.round(box.width) + " x " + Math.round(box.height));
+    }
     if (window.KitchenScene && art) {
       placedStop = window.KitchenScene.play(art, {
         still: options && options.still,
@@ -903,19 +1016,68 @@
     if (review) {
       review.addEventListener("click", async function () {
         if (review.disabled) return;
-        review.disabled = true;
+        working(review, true);
         try {
           var voice = window.OrderingVoice;
-          if (voice && typeof voice.sendNow === "function") {
-            var done = await voice.sendNow();
-            if (done && done.ok) return;
-            /* The shop wants something this screen cannot ask for - a table,
-               a phone number, a way of paying. The basket page asks it. */
+          if (!voice || typeof voice.sendNow !== "function") {
+            window.OrderingAssistant.leave("cart.html");
+            return;
           }
+          var done = await voice.sendNow();
+          if (done && done.ok) return;
+          /*
+           * It could not go, and WHY decides what happens next.
+           *
+           * The small question - how the food travels - is asked right here,
+           * because it is one tap and walking somebody to another page for it
+           * is what made this feel broken. Everything else is a form with a
+           * keyboard and validation behind it, and rebuilding those in a
+           * sheet is how two versions of the same form drift apart; for those
+           * the page changes, but not before the customer is told why.
+           */
+          if (done && done.reason === "need_fulfilment") {
+            askTheWay(done.options || []);
+            return;
+          }
+          if (done && done.reason === "below_minimum") {
+            actionLine(say("This shop's smallest order that way is {amount}.", {
+              amount: typeof money === "function" ? money(done.minimum) : done.minimum // eslint-disable-line no-undef
+            }));
+            return;
+          }
+          if (done && done.reason === "empty_order") {
+            actionLine(say("Nothing to send yet."));
+            return;
+          }
+          actionLine(say("A few details are needed to finish this order."));
           window.OrderingAssistant.leave("cart.html");
         } finally {
-          review.disabled = false;
+          working(review, false);
         }
+      });
+    }
+
+    /* One tap on how it travels, and it goes. */
+    var waysRow = el("assistant-ways-row");
+    if (waysRow) {
+      waysRow.addEventListener("click", async function (event) {
+        var pick = event.target && event.target.closest ? event.target.closest(".assistant-way") : null;
+        if (!pick) return;
+        [].forEach.call(waysRow.querySelectorAll("button"), function (b) {
+          working(b, b === pick);
+          b.disabled = true;
+        });
+        var voice = window.OrderingVoice;
+        var done = voice && voice.sendNow ? await voice.sendNow(pick.getAttribute("data-way")) : null;
+        var box = el("assistant-ways");
+        if (done && done.ok) {
+          if (box) box.hidden = true;
+          return;
+        }
+        /* Still refused, and now for a reason this screen cannot ask about. */
+        if (box) box.hidden = true;
+        actionLine(say("A few details are needed to finish this order."));
+        window.OrderingAssistant.leave("cart.html");
       });
     }
 
@@ -930,8 +1092,9 @@
       moreRow.addEventListener("click", async function (event) {
         var chip = event.target && event.target.closest ? event.target.closest(".assistant-more-item") : null;
         if (!chip) return;
-        chip.disabled = true;
+        working(chip, true);
         await apply([{ verb: "add", item_id: chip.getAttribute("data-add"), quantity: 1 }]);
+        working(chip, false);
       });
     }
     var done = el("placed-done");
@@ -952,7 +1115,7 @@
 
         var step = target.closest(".placed-step");
         if (step) {
-          step.disabled = true;
+          working(step, true);
           var moved = await changePlaced("items", {
             items: [
               {
@@ -963,28 +1126,31 @@
           });
           if (moved && moved.failed) actionLine(say(refusal(moved.failed)));
           await showPlacedOrder();
+          working(step, false);
           return;
         }
 
         var add = target.closest(".placed-more-item");
         if (add) {
-          add.disabled = true;
+          working(add, true);
           var added = await changePlaced("items", {
             items: [{ item_id: add.getAttribute("data-add"), quantity: 1 }]
           });
           if (added && added.failed) {
             actionLine(say(refusal(added.failed)));
-            add.disabled = false;
+            working(add, false);
             return;
           }
           await showPlacedOrder();
+          working(add, false);
           return;
         }
 
         var off = target.closest(".placed-cancel");
         if (off) {
-          off.disabled = true;
+          working(off, true);
           var called = await changePlaced("cancel", {});
+          working(off, false);
           if (called && called.failed) actionLine(say(refusal(called.failed)));
           else if (called && called.requested) actionLine(say("The shop has been asked to cancel it"));
           else actionLine(say("Order cancelled"));

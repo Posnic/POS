@@ -275,4 +275,67 @@ describe('voice-session.service', () => {
       data: null,
     });
   });
+  /*
+   * THE ONE THE OWNER HAS SAID MOST OFTEN.
+   *
+   * "if its given as table then its bring to table only. not take away. dont
+   * ask question again. i told this 1000 time but u never hear that."
+   *
+   * The page has always sent the table. The brief never mentioned it, while a
+   * rule above told the model to ask how the food travels - so it asked, and
+   * a sticker on table thirty-four was overruled by a question.
+   */
+  describe('what the printed code already settled', () => {
+    test('a table means dine in, and the model is told not to ask', () => {
+      const said = voice.servicePointBrief({ service_point: { label: 'table 34' } }, {}).join(' ');
+      expect(said).toContain('table 34');
+      expect(said).toContain('NOT a takeaway');
+      expect(said).toMatch(/never ask whether they are eating in or taking away/i);
+      expect(said).toMatch(/never ask for the table number/i);
+      expect(said).toContain('dine_in');
+    });
+
+    test('a room at a venue is taken to the room, and is not a question either', () => {
+      const said = voice
+        .servicePointBrief(
+          {
+            service_point: {
+              venue: { unit: '123', unit_label: 'Room', name: 'Royal Club Hotel' },
+            },
+          },
+          {}
+        )
+        .join(' ');
+      expect(said).toContain('123');
+      expect(said).toContain('Royal Club Hotel');
+      expect(said).toMatch(/never ask/i);
+      expect(said).toContain('dine_in');
+    });
+
+    test('a takeaway code is settled the same way, in the other direction', () => {
+      const said = voice
+        .servicePointBrief({ service_point: {} }, { fulfilment: 'takeaway' })
+        .join(' ');
+      expect(said).toContain('takeaway');
+      expect(said).toMatch(/never ask whether they are eating in or taking away/i);
+    });
+
+    test('the plain shop code leaves it open, and says so rather than pretending', () => {
+      const said = voice.servicePointBrief({ service_point: {} }, {}).join(' ');
+      expect(said).toContain('not said');
+      expect(said).toContain('need_fulfilment');
+    });
+
+    test('the brief the model actually receives carries it', () => {
+      const brief = voice.instructionsFor(
+        { store: { name: 'Shop' }, service_point: { label: 'table 9' } },
+        [{ id: '1', name: 'Dosa', price: 40 }],
+        { on: true, liveVoice: true, instructions: '', greeting: '' },
+        'en',
+        {}
+      );
+      expect(brief).toContain('table 9');
+      expect(brief).toMatch(/never ask for the table number/i);
+    });
+  });
 });

@@ -69,6 +69,17 @@ function servicePointFrom(req) {
     table: String(said('table') || '').slice(0, 24),
     venue: String(said('venue') || '').slice(0, 12),
     unit: String(said('unit') || '').slice(0, 24),
+    /*
+     * AND HOW THE FOOD TRAVELS, which the printed code also settles.
+     *
+     * /order/ABC/table/34 is eaten at table 34 and /order/ABC/takeaway is
+     * carried out; neither is a question. This field was read nowhere, so
+     * the live assistant knew the table and still asked whether it was to
+     * eat in - the one thing the owner has said most often: "if its given
+     * as table then its bring to table only. not take away. dont ask
+     * question again. i told this 1000 time but u never hear that."
+     */
+    fulfilment: String(said('fulfilment') || '').slice(0, 16),
   };
 }
 
@@ -296,10 +307,18 @@ class OnlineOrderingController {
           .status(404)
           .json({ type: 'error', message: 'No shop found at this address', data: null });
       }
-      const front = await itemService.storefront({ storeId, ...servicePointFrom(req) });
+      const point = servicePointFrom(req);
+      const front = await itemService.storefront({ storeId, ...point });
       if (!front || !front.status) return this.respond(res, front);
 
-      const result = await voiceSession.session(req.body || {}, front.data, context);
+      /* The service point goes to the brief as well as to the menu read:
+         the storefront answer carries WHERE they are sitting, and this
+         carries HOW the food travels, which nothing else tells the model. */
+      const result = await voiceSession.session(
+        { ...(req.body || {}), ...point },
+        front.data,
+        context
+      );
       if (result.status) return this.respond(res, result);
       if (result.message === 'no_assistant' || result.message === 'no_live_voice') {
         return res.status(403).json({

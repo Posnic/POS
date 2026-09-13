@@ -359,6 +359,37 @@ function transcriptionFor(transcription, model) {
   return out;
 }
 
+/*
+ * WHEN THE LINE DECIDES SOMEBODY HAS SPOKEN.
+ *
+ * Owner: "ai keep saying ok ok ok. coz may be surrounding sound."
+ *
+ * He is right about the cause. This was never configured, so the line ran on
+ * the provider's defaults - which are tuned for somebody sitting alone at a
+ * desk. A restaurant is not that. Plates, a fan, the next table, the kitchen:
+ * all of it crosses a default threshold, the line decides a turn has ended,
+ * the model is asked to reply to nothing at all, and it does the only polite
+ * thing available and says "ok". Over and over.
+ *
+ *   threshold 0.7      how loud counts as speech. The default is around half
+ *                      that, which a busy room clears on its own.
+ *   silence 900ms      how long a gap ends a turn. Long enough to think mid
+ *                      sentence - "two biryani and... a naan" - without the
+ *                      assistant jumping into the pause.
+ *   prefix 400ms       how much of the audio BEFORE the threshold was crossed
+ *                      is kept, so the first syllable is not clipped off.
+ *
+ * The cost of going too far the other way is a customer having to speak up,
+ * which is recoverable. The cost of where it was is a conversation that talks
+ * over itself, which is not.
+ */
+const TURN_DETECTION = {
+  type: 'server_vad',
+  threshold: 0.7,
+  prefix_padding_ms: 400,
+  silence_duration_ms: 900,
+};
+
 async function mintRealtimeSecret({ key, model, instructions, tools, voice, transcription }) {
   const current = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
@@ -372,7 +403,10 @@ async function mintRealtimeSecret({ key, model, instructions, tools, voice, tran
         tools,
         tool_choice: 'auto',
         audio: {
-          input: { transcription: transcriptionFor(transcription, 'gpt-4o-mini-transcribe') },
+          input: {
+            transcription: transcriptionFor(transcription, 'gpt-4o-mini-transcribe'),
+            turn_detection: TURN_DETECTION,
+          },
           output: { voice: voice || 'marin' },
         },
       },

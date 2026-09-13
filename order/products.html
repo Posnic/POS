@@ -384,6 +384,16 @@
                  a button that is actually on screen. Shown once the order holds
                  something. -->
             <!--
+                The one thing this screen asks before it can send: how the
+                food travels. One tap, and only where the shop offers more
+                than one way and the code that was scanned did not settle it.
+            -->
+            <div class="assistant-ways" id="assistant-ways" hidden>
+                <h4 class="assistant-ways-title">How are you having it?</h4>
+                <div class="assistant-ways-row" id="assistant-ways-row"></div>
+            </div>
+
+            <!--
                 ONE BUTTON, NOT TWO. This used to say "Review order" and walk
                 the customer to the basket page to send it from there. The
                 review is now the minute AFTER it goes, when they are looking
@@ -398,9 +408,20 @@
     </dialog>
 
     <script src="assets/products/script.js?v=20260912-design"></script>
+    <!-- The docket flying to the hatch, the bell, and the pan settling over a
+         flame. It was written, styled and given a canvas in the sheet above -
+         and never loaded here, so window.KitchenScene did not exist and the
+         confirmation fell through to its no-canvas path: the bell rang, the
+         words changed, and nothing moved. Which is exactly what the owner
+         reported, twice: "i saw ting sound but never see anitmation".
+         Before script.js, which plays it. -->
+    <script src="assets/assistant/kitchen-scene.js?v=20260912-design"></script>
     <script src="assets/assistant/script.js?v=20260912-design"></script>
     <!-- The orb follows the voice actually coming back, rather than
          pulsing on a loop. Before voice.js, which hands it the stream. -->
+    <!-- Every event on the line, on the screen, when ?transcript=1 asks for
+         it. Loaded before voice.js, which reports into it. -->
+    <script src="assets/assistant/debug.js?v=20260912-design"></script>
     <script src="assets/assistant/talking.js?v=20260912-design"></script>
     <script src="assets/assistant/voice.js?v=20260912-design"></script>
 </body>

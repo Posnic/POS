@@ -116,7 +116,11 @@ test('the page keeps the meter wound, hangs up when told, and does not run on wh
   assert.match(VOICE, /live\.meter = setInterval\(function \(\) \{\s*tick\(false\);\s*\}, every\);/);
   assert.match(VOICE, /function stopLine\(\) \{\s*stopMeter\(true\);/, 'closing the line does not send the last report');
   assert.match(VOICE, /window\.addEventListener\("pagehide", function \(\) \{\s*stopMeter\(true\);/, 'a page that leaves does not report its last half minute');
-  assert.match(VOICE, /navigator\.sendBeacon\(url \+ "\?end=1"\)/, 'the hang-up report cannot outlive the page');
+  /* The beacon now carries the last words as well as the hang-up, so a call
+     that went wrong can be read back from the server instead of argued
+     about. Still a beacon: it has to outlive the page. */
+  assert.match(VOICE, /navigator\.sendBeacon\(\s*url \+ "\?end=1",\s*new Blob\(\[last\]/, 'the hang-up report cannot outlive the page');
+  assert.match(VOICE, /said: saidSoFar/, 'the last words of a call are not reported');
   assert.match(VOICE, /response\.status === 403[\s\S]*?reached its limit for the month[\s\S]*?stop\(\);/, 'past the limit the customer is not told and the line not closed');
   assert.match(VOICE, /if \(live\.misses >= 3\) stop\(\);/, 'an unreachable meter leaves the line running unmetered');
   const dict = read('order', 'assets', 'i18n.js');
