@@ -1462,6 +1462,15 @@
 
   async function startLive() {
     status("connecting", say("Connecting..."));
+    /*
+     * The longest silent wait in the bundle, and not a fetch: asking for the
+     * microphone, then a WebRTC handshake with the provider. On a slow phone
+     * that is several seconds of a page that looks like it ignored the tap.
+     */
+    var opening =
+      window.Working && window.Working.around
+        ? window.Working.around("Opening the line")
+        : function () {};
     live.placed = "";
     live.leaving = false;
     live.hangingUp = false;
@@ -1473,6 +1482,7 @@
       live.stream = await asked;
     } catch (e) {
       live.pendingStream = null;
+      opening();
       note(microphoneWords(e));
       status("", "");
       return false;
@@ -1549,14 +1559,17 @@
         note(response.status === 403
           ? say("Live voice is switched off for this shop, so I'll answer turn by turn.")
           : say("The live voice line did not open ({why}), so I'll answer turn by turn.", { why: why || response.status }));
+        opening();
         return startTurns();
       }
+      opening();
       await pc.setRemoteDescription({ type: "answer", sdp: body.data.sdp });
       live.beta = /preview/.test(String(body.data.model || ""));
       live.heardLanguage = lang() === "ta" ? "ta" : "";
       startMeter(branch, body.data);
       return true;
     } catch (e) {
+      opening();
       stopLine();
       note(say("Could not connect the voice line. You can still type."));
       status("", "");

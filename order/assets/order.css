@@ -3329,6 +3329,64 @@ dialog.sheet.assistant .assistant-foot {
 
 /* The edit that is waiting to be sent. Quiet until something has moved, and
    then the only loud thing on the screen, because it is the one step left. */
+/*
+ * THE SHOP IS SLOW, AND THE PAGE SAYS SO.
+ *
+ * Owner: "whenver we communicate or receiving show some progress then we know
+ * its network delay. otherwise it shows no sound nothing happening."
+ *
+ * Across the top, above everything, including inside a modal dialog - which
+ * is where the longest waits happen. It only ever appears once a request has
+ * taken long enough to look broken (assets/working.js), so seeing it always
+ * means something: the network is slow.
+ */
+.working-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-top, 0px));
+  background: var(--ink, #1d1d1b);
+  color: var(--paper, #fff);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.working-bar[hidden] {
+  display: none !important;
+}
+
+.working-bar-track {
+  position: relative;
+  flex: 0 0 44px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.working-bar-track::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: 2px;
+  background: currentColor;
+  animation: working-bar-slide 1s ease-in-out infinite;
+}
+
+@keyframes working-bar-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* A bar that moves is the point; one that cannot move still says the words. */
+@media (prefers-reduced-motion: reduce) {
+  .working-bar-track::after { animation: none; width: 100%; }
+}
+
 .placed-confirm-bar {
   display: flex;
   flex-direction: column;
