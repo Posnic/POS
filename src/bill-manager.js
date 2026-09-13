@@ -68,6 +68,10 @@ class BillManager {
        database of its own and can be driven by a test. */
     this.branchId = options.branchId || '';
     this.findBranchId = options.findBranchId || null;
+    /* Which printer the shop chose for receipts. Injected for the same reason
+       the branch is: this file keeps no knowledge of where settings live, and
+       a test can hand it an answer. */
+    this.findReceiptPrinter = options.findReceiptPrinter || null;
     this.paperSize = options.paperSize || '3inch';
 
     this.timer = null;
@@ -183,13 +187,47 @@ class BillManager {
     return id.toString ? id.toString() : '';
   }
 
+  /**
+   * The printer this bill belongs on.
+   *
+   * THE RECEIPT PRINTER, which in a restaurant is the one at the counter
+   * where the customer is standing. This used to ask for "whatever Windows
+   * calls the default", which in a two-printer shop is a coin toss: a shop
+   * with a counter roll and a kitchen roll had its customer's bill come out
+   * in the kitchen, and nothing said why. Worse, getDefaultPrinter falls back
+   * to the FIRST printer it enumerates when Windows has no default at all, so
+   * the answer could change between two boots of the same machine.
+   *
+   * The Windows default is still the fallback, because every shop running
+   * today predates the Receipt Printer setting and refusing to print a
+   * customer's bill until somebody opens Hardware Manager would be worse than
+   * printing it in the wrong room. It is logged, so the wrong room has a
+   * reason next to it in the log.
+   */
+  async _receiptPrinterName() {
+    try {
+      const chosen = this.findReceiptPrinter ? await this.findReceiptPrinter() : null;
+      if (chosen && String(chosen).trim()) return String(chosen).trim();
+    } catch (error) {
+      console.error('[BILL] could not read the receipt printer:', error && error.message);
+    }
+    const printer = await this.hardware.getDefaultPrinter();
+    const fallback = printer && printer.name ? printer.name : '';
+    if (fallback) {
+      console.warn(
+        '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
+        fallback
+      );
+    }
+    return fallback;
+  }
+
   /** One bill, on the counter's roll. */
   async _printOne(sale) {
     try {
-      const printer = await this.hardware.getDefaultPrinter();
-      const name = printer && printer.name ? printer.name : '';
+      const name = await this._receiptPrinterName();
       if (!name) {
-        console.error('[BILL] no printer is set as default; cannot print the bill');
+        console.error('[BILL] no receipt printer is set and Windows has no default; cannot print the bill');
         return false;
       }
 
