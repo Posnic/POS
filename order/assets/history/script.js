@@ -535,6 +535,42 @@
         }
     }
 
+    /**
+     * Redraw ONE row from what the shop just said, rather than re-asking for
+     * the whole page.
+     *
+     * Owner: "when click particulor order i see + and - button to modify but
+     * not working page broken."
+     *
+     * It was not the buttons. Every tap did the change and then repainted -
+     * and a repaint is a lookup for every order on the page. Two requests a
+     * tap against a limiter of ten a minute shared with the page load, so
+     * around the fifth tap the lookup was refused, the page fell back to
+     * what this phone remembers, a remembered order has no details panel,
+     * and the panel he had open vanished under his thumb.
+     *
+     * The change now answers with the whole order, so the row it belongs to
+     * is redrawn from that answer and nothing is asked. The full repaint is
+     * kept for the case where the answer is too thin to draw - an older
+     * server - because a row that does not redraw at all is the bug this
+     * replaces.
+     */
+    async function redraw(kept, said) {
+        if (!said || said.can_change === undefined || !Array.isArray(said.items)) {
+            await paint();
+            return;
+        }
+        const panel = document.getElementById("details-" + kept.orderId);
+        if (!panel || !panel.parentNode) {
+            await paint();
+            return;
+        }
+        const fresh = details(kept, said);
+        fresh.hidden = false;
+        panel.parentNode.replaceChild(fresh, panel);
+        startTicking();
+    }
+
     function keptFor(orderId) {
         const list = typeof rememberedOrders === "function" ? rememberedOrders() : []; // eslint-disable-line no-undef
         return list.find((row) => row && String(row.orderId) === String(orderId)) || null;
@@ -580,7 +616,7 @@
                 }
                 return;
             }
-            await paint();
+            await redraw(kept, answer);
             return;
         }
 
@@ -589,10 +625,10 @@
             const kept = keptFor(step.getAttribute("data-order"));
             if (!kept) return;
             step.disabled = true;
-            await actOn(kept, "items", {
+            const moved = await actOn(kept, "items", {
                 items: [{ item_id: step.getAttribute("data-item"), quantity: Number(step.getAttribute("data-quantity")) || 0 }]
             });
-            await paint();
+            await redraw(kept, moved);
             return;
         }
 
@@ -601,8 +637,8 @@
             const kept = keptFor(off.getAttribute("data-order"));
             if (!kept) return;
             off.disabled = true;
-            await actOn(kept, "cancel", {});
-            await paint();
+            const called = await actOn(kept, "cancel", {});
+            await redraw(kept, called);
         }
     });
 
