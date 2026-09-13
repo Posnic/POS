@@ -174,7 +174,6 @@ describe('allowing a till', () => {
 
   test('a paste that went wrong is refused, not stored', async () => {
     for (const bad of ['', '   ', 'abc123', 'Counter PC']) {
-       
       const out = await tills.allowTill(bad, 'Counter PC');
       expect(out.status).toBe(false);
     }
@@ -263,7 +262,6 @@ describe('when things are wrong', () => {
   test('an empty or short key never matches, whatever is in the collection', async () => {
     await tills.allowTill(aKey(), 'Counter PC');
     for (const bad of ['', null, undefined, 'short']) {
-       
       expect(await tills.tillIsAllowed(bad)).toBe(false);
     }
   });
