@@ -92,6 +92,51 @@ class KOTManager {
     try { return app.getPath('userData'); } catch (e) { return __dirname; }
   }
 
+  /*
+   * WHO ASKED FOR THIS TICKET.
+   *
+   * The log had a Device IP column that was this till's OWN address, from
+   * os.networkInterfaces(). It is the same on every row whatever sent the
+   * order, so it looked like it identified the handset and answered nothing.
+   * Asked directly: "i dont see which asked to print from mobile app printed
+   * or not."
+   *
+   * The sale itself knows. Every one carries a channel - and years of older
+   * ones carry only the legacy `sale_method` - so both are read, the same way
+   * sales-channels.js does it on the server. Reading `sale_method` alone is
+   * what makes a shop's history vanish at a version boundary.
+   *
+   * A staff name is worth more than a device to somebody reading this: on a
+   * floor with four handsets, "Ravi" answers the question and an IP address
+   * starts another one.
+   */
+  _orderSource(sale) {
+    const method = String((sale && sale.sale_method) || '').trim();
+    const channel = String((sale && sale.channel) || '').trim().toLowerCase();
+
+    const WHERE = {
+      tableside: 'Captain app',
+      pos: 'Till',
+      kiosk: 'Kiosk',
+      online: 'Customer phone',
+      phone: 'Phone order',
+      whatsapp: 'WhatsApp',
+      marketplace: 'Marketplace',
+    };
+    const LEGACY = {
+      'Table-Order': 'Captain app',
+      'Self-Order': 'Customer phone',
+      'Live-Order': 'Customer phone',
+      Kiosk: 'Kiosk',
+    };
+
+    /* Unknown is said as unknown. A guess here reads as fact on a screen
+       somebody is using to work out where a missing ticket went. */
+    const where = WHERE[channel] || LEGACY[method] || (method ? method : 'Till');
+    const who = String((sale && (sale.user_name || sale.userName)) || '').trim();
+    return who ? `${where} (${who})` : where;
+  }
+
   _getLocalIp() {
     try {
       const ifaces = os.networkInterfaces();
@@ -638,6 +683,10 @@ class KOTManager {
       printKind,
       kotNumber,
       deviceIp:     this._getLocalIp(),
+      /* Where the order came from, and who sent it. Absent on tickets logged
+         before this shipped, so the screen has to cope with undefined rather
+         than print "undefined" at somebody. */
+      source:       this._orderSource(sale),
       /* Absent on tickets logged before this shipped, so every reader has to
          cope with undefined rather than print "NaN ms" at somebody. */
       ms:           Number.isFinite(timing.ms) ? timing.ms : undefined,

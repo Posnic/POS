@@ -117,3 +117,4 @@ Main-[0-9]*T[0-9]*Z/
 Main-[0-9]*T[0-9]*Z.tgz
 *.mongodump/
 dump/
+src/receipt-logs/

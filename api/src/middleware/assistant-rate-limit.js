@@ -58,11 +58,26 @@ const voiceTickLimiter = rateLimit({
 /* Changing an order already on the ticket is rarer than asking about the
    menu and heavier than reading one: a handful a minute is a person changing
    their mind, and more is something else. */
+/*
+ * THIRTY, NOT TEN, BECAUSE EVERY TAP COSTS ONE.
+ *
+ * This covers reading an order back AND changing it, and the screens that
+ * change one have a plus and a minus on every line. Ten a minute is one tap
+ * every six seconds, which somebody correcting a quantity passes without
+ * noticing - and the refusal lands as a details panel that empties itself
+ * under their thumb. Owner: "not working page broken."
+ *
+ * It was worse than that: a change answered with too little to redraw from,
+ * so each tap spent TWO - the change and a read afterwards. That is fixed at
+ * the source (customer-order.service, viewOf), and this is the headroom
+ * around it. Thirty a minute is still nowhere near what hammering looks
+ * like, and the door itself is proof-bound: an id and a token per order.
+ */
 const placedOrderLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'placed_order' }),
   keyGenerator: perClientKey,
   windowMs: 60 * 1000,
-  limit: 10,
+  limit: 30,
   message: {
     type: 'error',
     message: 'Too many changes in a minute. Please wait a moment and try again.',

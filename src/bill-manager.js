@@ -632,9 +632,34 @@ class BillManager {
         }
       );
 
+      const startedAt = Date.now();
       const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
-      if (!result || result.success === false) {
-        const why = (result && result.error) || 'the printer refused the job';
+
+      /*
+       * Written down whether it printed or not, in the same day log the
+       * counter's receipts use.
+       *
+       * This path is the one a waiter cannot see. They ask for the bill from
+       * the floor and walk to the printer; if nothing is there, nothing
+       * anywhere said why. Now the row exists, with the printer's own words
+       * in it, and it says "Floor bill" so it is not mistaken for a receipt
+       * somebody took at the counter.
+       */
+      const ok = !(!result || result.success === false);
+      const why = ok ? '' : ((result && result.error) || 'the printer refused the job');
+      try {
+        require('./receipt-log').record({
+          kind: 'bill',
+          saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+          title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID',
+          total: sale && (sale.total ?? sale.sales_total),
+          source: 'Floor bill',
+          ms: Date.now() - startedAt,
+          printers: [{ name, status: ok ? 'success' : 'failed', reason: ok ? undefined : why, bytes: bytes.length }],
+        });
+      } catch (e) { /* a log that cannot be written must not lose the bill */ }
+
+      if (!ok) {
         console.error('[BILL] printer refused:', why);
         return { ok: false, error: `${name}: ${why}` };
       }
@@ -642,6 +667,17 @@ class BillManager {
     } catch (error) {
       const why = (error && error.message) || String(error);
       console.error('[BILL] could not print:', why);
+      /* A bill that never reached a printer at all is the row most worth
+         having: without it this looks like the request was ignored. */
+      try {
+        require('./receipt-log').record({
+          kind: 'bill',
+          saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+          title: 'BILL',
+          source: 'Floor bill',
+          printers: [{ name: '(never reached a printer)', status: 'failed', reason: why }],
+        });
+      } catch (e) { /* nothing further to do */ }
       return { ok: false, error: why };
     }
   }
