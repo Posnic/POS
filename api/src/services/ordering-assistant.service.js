@@ -486,6 +486,20 @@ async function reply(body, storefront, context) {
     /* A model that answered in prose still answered; the page shows it. */
     const text = String((asked.data && asked.data.text) || '').trim();
     if (!text) return { status: false, message: 'The assistant had no answer', data: null };
+    /*
+     * BUT NEVER BRACES AT A CUSTOMER.
+     *
+     * This fallback is for a model that ignored the format and wrote a plain
+     * sentence. A model that TRIED the format and produced JSON this could
+     * not parse is a different thing, and printing it drops
+     * `{"reply":"...","actions":[]}` into the chat as though it were the
+     * answer - which is exactly what the owner was shown on develop. Saying
+     * nothing useful beats saying that.
+     */
+    if (/^[[{]/.test(text)) {
+      console.warn('[assistant] the model answered in JSON that could not be parsed');
+      return { status: false, message: 'The assistant had no answer', data: null };
+    }
     return { status: true, data: { reply: text.slice(0, MAX_REPLY_CHARS), actions: [] } };
   }
   const tidied = tidy(parsed, menu);

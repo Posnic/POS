@@ -8996,6 +8996,14 @@ class SalesRepository {
     return {
       order_id: String(order._id),
       token: String(order.token_id || ''),
+      /*
+       * The shop's own number for it, which is the one printed on the bill
+       * and the one staff read off the queue. A customer holding the order
+       * may quote either that or the token, so the assistant is given both;
+       * it is on their receipt already, and this read is only reached with
+       * the order's id AND its token.
+       */
+      bill_no: String(order.sales_id || ''),
       placed_at: order.created_date || order.date || null,
       /* The three words a customer actually wants: is it off, is it paid,
          has the shop accepted it. */
