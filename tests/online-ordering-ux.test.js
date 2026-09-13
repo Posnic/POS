@@ -2480,47 +2480,58 @@ test('the order rings a bell when the kitchen takes it, on both ways of ordering
   /*
    * Owner: "give ting sound to confirm. both customer side."
    *
-   * Synthesised rather than a file: nothing to fetch, nothing for the page's
-   * CSP to allow, and no moment where the picture has arrived and the sound
-   * has not. The real assets/ting.js is evaluated here, so a change that
-   * stops it sounding fails.
+   * Built as a WAV and played through an <audio> element, NOT through the Web
+   * Audio API. That is the whole point of the shape of this file: on an
+   * iPhone, Web Audio plays through the ringer switch, so a customer who has
+   * deliberately silenced their phone would be made to chirp anyway. iOS
+   * honours the switch for media elements. A sound nobody can refuse is not a
+   * courtesy.
+   *
+   * Still not a file on disk: a data URI, so there is nothing to fetch and
+   * nothing for the page's CSP to allow.
    */
   const dom = new JSDOM('<body></body>', { url: 'https://shop.example/order/', runScripts: 'outside-only' });
   const { window } = dom;
-  const struck = [];
-  window.AudioContext = function () {
-    this.currentTime = 0;
-    this.state = 'suspended';
-    this.destination = {};
-    this.resume = () => { this.state = 'running'; };
-    this.createOscillator = () => {
-      const osc = { frequency: {}, connect() {}, start() {}, stop() {} };
-      struck.push(osc);
-      return osc;
-    };
-    this.createGain = () => ({
-      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
-      connect() {},
-    });
+  const players = [];
+  let played = 0;
+  let source = '';
+  window.Audio = function () {
+    players.push(this);
+    this.play = () => { played += 1; return Promise.resolve(); };
   };
+  Object.defineProperty(window.Audio.prototype, 'src', {
+    set(value) { source = value; },
+    get() { return source; },
+    configurable: true,
+  });
   window.eval(read('assets/ting.js'));
 
   assert.strictEqual(window.Ting.play(), true, 'the bell made no sound');
-  /* Two strikes, each a fundamental and a partial above it - a bell, not a
-     test tone. */
-  assert.strictEqual(struck.length, 4);
-  assert.deepStrictEqual(
-    struck.map((o) => Math.round(o.frequency.value)),
-    [1047, 2888, 1397, 3855]
-  );
+  assert.strictEqual(played, 1);
+  /* Never an oscillator: that is the bug this shape exists to avoid. */
+  assert.ok(!/AudioContext/.test(read('assets/ting.js')), 'the bell went back to Web Audio, which ignores the silent switch on iOS');
 
-  /* One context, reused: a new one per order leaks a hardware handle, and
-     browsers cap how many a page may hold - the twentieth order of the
-     evening would fall silent. */
-  const first = window.AudioContext;
-  window.AudioContext = function () { throw new Error('a second context was made'); };
-  assert.strictEqual(window.Ting.play(), true, 'the bell built a second audio context');
-  window.AudioContext = first;
+  /* A real, well-formed WAV, quiet and about a second long. */
+  assert.match(source, /^data:audio\/wav;base64,/);
+  const wav = Buffer.from(source.split(',')[1], 'base64');
+  assert.strictEqual(wav.toString('ascii', 0, 4), 'RIFF');
+  assert.strictEqual(wav.toString('ascii', 8, 12), 'WAVE');
+  assert.strictEqual(wav.readUInt16LE(22), 1, 'the bell is not mono');
+  assert.strictEqual(wav.readUInt32LE(24), 22050);
+  assert.strictEqual(wav.readUInt16LE(34), 16, 'the samples are not 16 bit');
+  const seconds = (wav.length - 44) / 2 / 22050;
+  assert.ok(seconds > 0.5 && seconds < 1.5, 'the bell is ' + seconds.toFixed(2) + 's long');
+  let peak = 0;
+  for (let i = 44; i + 1 < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
+  assert.ok(peak / 32767 < 0.35, 'the bell is loud enough to announce rather than confirm');
+  assert.ok(peak > 0, 'the bell is silence');
+
+  /* One element and one rendering, reused: a new Audio() per order leaves the
+     old ones alive until they are collected, and a busy evening stacks a
+     hundred of them. */
+  window.Ting.play();
+  assert.strictEqual(players.length, 1, 'a second order built a second player');
+  assert.strictEqual(played, 2);
   window.close();
 
   /* And both ways of placing an order ring it: the assistant on the beat its
