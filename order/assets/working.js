@@ -63,7 +63,7 @@
         if (/\/orders\/lookup$/.test(at) || /\/orders\/[^/?]+(\?|$)/.test(at)) return "Checking your order";
         if (/\/voice$/.test(at)) return "Opening the line";
         if (/\/assistant/.test(at)) return "Thinking";
-        if (/menu|storefront|online-ordering\/[A-Za-z0-9]+$/.test(at)) return "Loading the menu";
+        if (/menu|storefront/.test(at) || /online-ordering\/[A-Za-z0-9]+$/.test(at)) return "Loading the menu";
         return "Talking to the shop";
     }
 
