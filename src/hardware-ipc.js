@@ -168,8 +168,10 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   });
 
   // Printer Handlers
+  /* Hardware Manager's chooser, and anything else asking a person to pick:
+     always the real list, never a remembered one. */
   ipcMain.handle('printer:list', async () => {
-    return await hardwareManager.listPrinters();
+    return await hardwareManager.listPrinters({ fresh: true });
   });
 
   ipcMain.handle('printer:get-default', async () => {

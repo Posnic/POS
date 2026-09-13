@@ -124,6 +124,7 @@
       "src/escpos-receipt.js",
       "src/printer-targets.js",
       "src/device-preferences.js",
+      "src/raw-print-service.js",
       "src/escpos-report.js",
       "src/preload.js",
       "package.json",
