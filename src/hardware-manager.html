@@ -1343,6 +1343,22 @@
             if (el) el.textContent = _describeTargets(_collectTargets('rpPrinterList'));
         }
 
+        /*
+         * The summary follows the ticks, not the Save button.
+         *
+         * It was written once when the list was drawn and once more after a
+         * save, and nothing listened in between - so ticking a printer left
+         * "No printer selected." sitting under a list with a printer visibly
+         * selected. Delegated from the container because the rows are redrawn
+         * on every reload, which would strip listeners bound to them.
+         */
+        (function () {
+            const list = document.getElementById('rpPrinterList');
+            if (!list) return;
+            list.addEventListener('change', rpUpdateSummary);
+            list.addEventListener('input', rpUpdateSummary);
+        })();
+
         async function rpInit() {
             if (!rpPref()) { await rpLoadPrinters([]); return; }
             try {
@@ -1700,7 +1716,11 @@
                     printers: printerNames,
                     printerNames: printerNames.map(t => t.name)
                 });
-                kotShowStatus('✅ KOT polling started! Listening for new orders every 5 seconds.', 'success');
+                /* A sale announces itself the moment it is saved, so tickets do not wait
+   for a timer at all. The poll underneath is the net that catches what an
+   event missed, and it has been thirty seconds since that event existed -
+   this line still promised five, and promised polling as the mechanism. */
+                kotShowStatus('✅ Kitchen printing is on. Tickets print as orders arrive.', 'success');
                 kotUpdateButtons(true);
                 kotRefreshStatus();
             } catch (e) {

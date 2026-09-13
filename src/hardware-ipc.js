@@ -250,7 +250,7 @@ function setupHardwareIPC(hardwareManager, kotManager) {
           /* eslint-disable-next-line no-await-in-loop -- printers are serial
              devices; two jobs sent at once interleave on the same roll. */
           const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label);
-          results.push({ printer: target.name || '(default)', copy: copy + 1, ...r });
+          results.push({ printer: target.name || '(default)', copy: copy + 1, sent: bytes.length, ...r });
         }
       }
 
@@ -258,8 +258,20 @@ function setupHardwareIPC(hardwareManager, kotManager) {
          customer already has their copy, so success means at least one landed
          and the failures are named for the operator. */
       const failed = results.filter((r) => !r.success);
+      /*
+       * How much actually went down the wire.
+       *
+       * Hardware Manager's test print says "Sent N bytes", and N came back
+       * undefined from the day this handler learned to drive several printers:
+       * the old single-printer version answered { success, bytes } and the
+       * rewrite answered a summary that forgot to carry it. The one screen
+       * whose whole job is to prove the printer works was reporting
+       * "Sent undefined bytes".
+       */
+      const sentBytes = results.reduce((n, r) => n + (r.success ? (r.sent || 0) : 0), 0);
       return {
         success: results.some((r) => r.success),
+        bytes: sentBytes,
         printed: results.length - failed.length,
         attempted: results.length,
         failures: failed.map((r) => ({ printer: r.printer, error: r.error || 'unknown' })),
