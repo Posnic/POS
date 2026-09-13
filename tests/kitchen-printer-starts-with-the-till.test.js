@@ -28,7 +28,7 @@ const MAIN = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
 const KOT = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
 
 test('the till starts kitchen polling itself, from the config already on disk', () => {
-  const start = MAIN.indexOf('kotManager = new KOTManager();');
+  const start = MAIN.indexOf('kotManager = new KOTManager(');
   assert.notStrictEqual(start, -1, 'the kitchen manager is no longer constructed in main');
   const after = MAIN.slice(start, start + 2400);
   assert.match(after, /await kotManager\.startPolling\(kotConfig\);/,
@@ -41,7 +41,7 @@ test('a till that was never given a kitchen printer starts nothing', () => {
   /* Unchanged behaviour for every shop that does not use one, and the reason
      this cannot simply call startPolling unconditionally: the poll would ask
      the API about a branch it does not have, every thirty seconds, forever. */
-  const start = MAIN.indexOf('kotManager = new KOTManager();');
+  const start = MAIN.indexOf('kotManager = new KOTManager(');
   const after = MAIN.slice(start, start + 2400);
   assert.match(after, /if \(kotConfig && kotConfig\.branchId && printers\.length\)/,
     'it starts without checking there is a branch and a printer');
@@ -50,7 +50,7 @@ test('a till that was never given a kitchen printer starts nothing', () => {
 });
 
 test('a kitchen printer that will not start does not stop the till opening', () => {
-  const start = MAIN.indexOf('kotManager = new KOTManager();');
+  const start = MAIN.indexOf('kotManager = new KOTManager(');
   const after = MAIN.slice(start, start + 2400);
   assert.match(after, /catch \(error\) \{[\s\S]{0,220}KOT polling could not be started/,
     'a failure here would take the whole till down with it');
@@ -65,7 +65,7 @@ test('the event still refuses to act when polling is off, which is why this was 
 test('the bill manager, which always did this, still does', () => {
   assert.match(MAIN, /billManager\.start\(\);/, 'the bill poller no longer starts itself');
   assert.ok(
-    MAIN.indexOf('kotManager = new KOTManager();') < MAIN.indexOf('billManager.start();'),
+    MAIN.indexOf('kotManager = new KOTManager(') < MAIN.indexOf('billManager.start();'),
     'the two starters have been reordered; the comments beside them refer to each other'
   );
 });
