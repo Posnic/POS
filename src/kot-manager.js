@@ -673,12 +673,56 @@ class KOTManager {
 
   _buildKOTHtml(sale, printKind, kotNumber) {
     const isCancelled = printKind === 'cancel';
-    const title = isCancelled ? 'Order Cancelled' : printKind === 'edit' ? 'Modified Order' : 'New Order';
+
+    /*
+     * WHAT THE KITCHEN READS FIRST.
+     *
+     * Owner, on how a cook actually treats these: "we actually sent as item
+     * cancelled even quantity reduced. for labours they dont care mostly.
+     * only cancelled they just cancel while doing it. so keep as it is on
+     * this. when whole order cancelled then send as Order cancelled instead
+     * of item cancelled. one item or two item removal items cancelled okay.
+     * plural. quantity reduced is bad for them."
+     *
+     * So a reduction keeps printing as a cancellation, deliberately: a cook
+     * who reads "cancelled" against a line stops making that many, which is
+     * the behaviour the kitchen already has. What changes is the difference
+     * between losing the whole table's order and losing a line off it, which
+     * every ticket used to call the same thing.
+     *
+     * A whole-order cancel is the only path that stamps sale_process
+     * 'cancelled' on the sale (sale.repository.js, updateOrderModel); a line
+     * removed or reduced leaves the order open and still says KOT. So the
+     * sale itself answers which of the two this is, and the count of lines on
+     * THIS ticket decides the plural.
+     *
+     * "Modified Order" is gone. Owner: "azure asking like new order instead
+     * of modified order." A second ticket for the same table is an additional
+     * order to the kitchen, not an edit of a sheet they have already cooked
+     * from and thrown away.
+     */
+    const cancelledWholeOrder = /cancel/i.test(String(sale.sale_process || ''));
+    const cancelledLines = Array.isArray(sale.items) ? sale.items.length : 0;
+    const title = isCancelled
+      ? (cancelledWholeOrder
+          ? 'Order Cancelled'
+          : (cancelledLines > 1 ? 'Items Cancelled' : 'Item Cancelled'))
+      : (printKind === 'edit' ? 'Additional Order' : 'New Order');
 
     const dateText    = this._fmtDate(sale.updated_date || sale.updated_at || sale.created_date || sale.created_at || '');
     const tableNo     = sale.table_number || sale.tableNo || sale.table || sale.table_no || '';
     const personCount = sale.person_count ?? sale.pax ?? sale.no_of_person ?? '';
     const dineType    = sale.dine_type || sale.order_type || '';
+    /* Whatever is left to say about where this goes, once the table has had
+       its own line. A takeaway has no table and says so rather than printing
+       an empty box; a table with no pax count prints nothing extra rather
+       than an empty line. */
+    const placeParts = [];
+    if (!tableNo) placeParts.push('Table: -');
+    if (personCount !== '' && personCount !== null && personCount !== undefined) {
+      placeParts.push(`Pax: ${personCount}`);
+    }
+    const placeLine = placeParts.join('   ');
     /* What the customer said about the whole order, and - for a delivery -
        where it is going. Both were on the sale and neither was printed. */
     const orderNote   = String(sale.notes || sale.note || '').trim();
@@ -717,6 +761,11 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 .lt{font-size:18px;font-weight:700;}
 .kn{font-size:48px;font-weight:900;text-align:center;margin:8px 0;border:3px solid #000;padding:8px;background:#f5f5f5;}
 .ml{font-size:13px;margin:2px 0;text-align:center;font-weight:700;}
+/* The table is the second thing a cook needs after what kind of ticket this
+   is, and it used to print at the same size as the date, sharing a line with
+   the pax count inside square brackets. Owner: "with table number clearly
+   mentioned." */
+.tb{font-size:26px;font-weight:900;text-align:center;margin:4px 0;letter-spacing:1px;}
 .rl{border-top:4px dashed #777;margin:5px 0;}
 .fl{border-top:4px dashed #777;margin-top:5px;}
 .ir{padding:3px 0;border-top:1px dashed #777;}
@@ -733,7 +782,8 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 <div class="ml">${this._esc(dateText)}</div>
 ${dineType    ? `<div class="ml">${this._esc(dineType)}</div>` : ''}
 ${saleIdDisplay ? `<div class="ml">${this._esc(saleIdDisplay)}</div>` : ''}
-<div class="ml">Table:[${this._esc(String(tableNo))}] Pax:[${this._esc(String(personCount))}]</div>
+${tableNo ? `<div class="tb">TABLE ${this._esc(String(tableNo))}</div>` : ''}
+${placeLine ? `<div class="ml">${this._esc(placeLine)}</div>` : ''}
 ${deliverTo ? `<div class="nt">DELIVER TO: ${this._esc(deliverTo)}</div>` : ''}
 ${orderNote ? `<div class="nt">NOTE: ${this._esc(orderNote)}</div>` : ''}
 <div class="rl"></div>
