@@ -88,6 +88,31 @@ class Receipt {
   /* A row of dashes the exact width of the paper. */
   rule(ch = '-') { return this.line(ch.repeat(this.width)); }
 
+  /*
+   * A LINE WITH A RULE THROUGH IT.
+   *
+   * ESC/POS has no strikethrough. There is no bit for it in ESC ! and no
+   * command that draws one, so it is made: print the text, return the head to
+   * the start of the SAME line with a bare carriage return, and print hyphens
+   * over it. The hyphen lands on the middle of the character cell, so what
+   * comes out is a rule through the words.
+   *
+   * CR WITHOUT LF is the whole trick, and it is also the risk: a printer in
+   * line mode that treats CR as "new line" prints the hyphens underneath
+   * instead of through. That degrades to a name with a line drawn under it,
+   * which still reads as struck out - so the failure is legible rather than
+   * wrong, and no printer is left showing a cancelled dish as an ordinary one.
+   *
+   * Only as many hyphens as there are characters: running them to the paper's
+   * width would strike through the numbers beside it too, and those have to
+   * stay readable when somebody is checking what they are being charged.
+   */
+  strikeLine(s = '') {
+    const said = String(s);
+    if (!said.trim()) return this.line(said);
+    return this.text(said).raw(0x0d).text('-'.repeat(said.trimEnd().length)).raw(0x0a);
+  }
+
   feed(n = 1) { return this.raw(ESC, 0x64, n); }
 
   /*
@@ -158,7 +183,15 @@ class Receipt {
 
     const cells = rows.map((r) => {
       const { value, unit } = split(r.qty);
-      return { name: ascii(r.name), value, unit, amount: ascii(r.amount == null ? '' : r.amount) };
+      return {
+        name: ascii(r.name),
+        value,
+        unit,
+        amount: ascii(r.amount == null ? '' : r.amount),
+        /* Carried through from the view model, because the decision about what
+           is cancelled belongs to whoever built the bill, not to the printer. */
+        strike: !!r.strike,
+      };
     });
 
     const measured = header
@@ -205,11 +238,32 @@ class Receipt {
        * premium sona masoori basmati" is not a product anybody sold.
        */
       if (!stacked && n.length <= nameW) {
+        /*
+         * A cancelled line is struck through its NAME only.
+         *
+         * The quantity and the amount stay clean: somebody checking a bill has
+         * to be able to read the numbers, and a rule through them reads as an
+         * alteration to the price rather than as a dish that was taken off.
+         */
+        if (c.strike) {
+          /* The whole row, then back to the start of it, then hyphens over
+             the name's characters only - so the rule stops where the name
+             does and the numbers beside it print clean. */
+          this.text(n.padEnd(nameW) + ' ' + numbers(c))
+            .raw(0x0d)
+            .text('-'.repeat(n.length))
+            .raw(0x0a);
+          return;
+        }
         this.line(n.padEnd(nameW) + ' ' + numbers(c));
         return;
       }
 
-      for (const l of wrap(n, this.width)) this.line(l);
+      if (c.strike) {
+        for (const l of wrap(n, this.width)) this.strikeLine(l);
+      } else {
+        for (const l of wrap(n, this.width)) this.line(l);
+      }
       this.line(' '.repeat(stacked ? Math.max(0, this.width - numbers(c).length) : nameW + 1)
         + numbers(c));
     };
@@ -318,7 +372,12 @@ function renderSale(sale, options = {}) {
    * not actually use.
    */
   r.itemTable(
-    (sale.items || []).map((it) => ({ name: it.name, qty: it.qty, amount: money(it.amount) })),
+    (sale.items || []).map((it) => ({
+      name: it.name,
+      qty: it.qty,
+      amount: money(it.amount),
+      strike: !!it.cancelled,
+    })),
     { name: 'ITEM', qty: 'QTY', amount: 'AMOUNT' },
     { afterHeader: (rec) => rec.rule() },
   );
