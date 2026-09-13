@@ -2478,9 +2478,6 @@
     "src/repositories/sale.repository.js",
     "src/services/customer-order.service.js"
   ],
-  "not_on_this_order": [
-    "src/repositories/sale.repository.js"
-  ],
   "nothing_asked": [
     "src/repositories/sale.repository.js",
     "src/services/customer-order.service.js"
