@@ -2045,6 +2045,10 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
                 token: normalizedTokenId,
                 shop: String(branchId || ""),
                 shopName: String(result.data.branch_name || (typeof shop === "object" && shop ? shop.name : "") || ""),
+                /* WHERE it was placed, so a second order at the same table can
+                   find the first one instead of being refused by the shop's
+                   one-order-per-table rule. */
+                table: String(result.data.table_number || ""),
                 at: new Date().toISOString(),
                 items: (result.data.items || []).map((line) => ({
                     name: String(line.item_name || line.name || ""),

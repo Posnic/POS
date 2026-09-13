@@ -100,7 +100,11 @@ describe('voice-session.service', () => {
        second, then the one question, then go. */
     expect(voice.VOICE_SYSTEM).toContain('Anything else, or shall I send it?');
     expect(voice.VOICE_SYSTEM).toContain('OFFER SOMETHING ALONGSIDE ONCE');
-    expect(voice.VOICE_SYSTEM).toContain('No total. Not unless they ask');
+    /* And it does NOT read the order back. Owner: "in between english or
+       tamil full list of of line items? whats happenig. review not required
+       since we show the list." The list is on the screen the whole time. */
+    expect(voice.VOICE_SYSTEM).toContain('NEVER READ THE ORDER BACK');
+    expect(voice.VOICE_SYSTEM).not.toContain('Then say the order back');
     expect(voice.VOICE_SYSTEM).toContain('call send_to_kitchen with confirmed:true');
     expect(voice.VOICE_SYSTEM).toContain('everyday spoken Tamil');
     expect(voice.VOICE_SYSTEM).not.toContain('tell them to tap Review order');

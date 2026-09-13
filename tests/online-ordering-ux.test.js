@@ -1042,7 +1042,7 @@ test("the shop's own greeting opens the conversation, and the console has somewh
 /* -------------------------------------------------------- talk to order */
 
 /** The products page with both assistant scripts and a shop that allows voice. */
-function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null, order = null } = {}) {
+function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null, order = null, remembered = [] } = {}) {
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
   const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0, checkout: [], left: [] };
@@ -1069,6 +1069,11 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
     }
   };
   window.setCartItemNote = async () => {};
+  /* What this phone has ordered here before, which is how a second order at
+     the same table finds the first one instead of being refused. */
+  window.rememberedOrders = () => JSON.parse(JSON.stringify(remembered));
+  window.saveCartData = async (rows) => { cart = rows ? JSON.parse(JSON.stringify(rows)) : []; };
+  window.renderCart = async () => {};
   /* What the page has for placing an order: the code's table, the same
      checkout a tap uses (told to stay), the shop's words and money. */
   window.KioskServicePoint = { read: () => ({ table, venue: '', unit: '', destination: null }) };
@@ -2982,4 +2987,85 @@ test('a call shows what was heard and said, and can still be told not to', async
   );
   /* The meter runs on a clock; leave it running and the test never ends. */
   window.OrderingVoice.stop();
+});
+
+/*
+ * THE SAME TABLE, AGAIN.
+ *
+ * Owner: "same table not accepted. but how about adding extra or modifying
+ * same table orders?"
+ *
+ * The shop allows one open order per table, and it is right to. But from a
+ * phone there was no way to add to the one already open, so a customer who
+ * wanted one more naan halfway through the meal was simply refused. The rule
+ * said "Add to it, or settle it first" and there was no door to add through.
+ *
+ * A second send at the same table now goes ONTO the open order, with the
+ * quantities read back from the shop first - two more of something already
+ * there is what is there plus two, and only the shop knows what is there.
+ */
+test('a second order at the same table is added to the one already open', async () => {
+  const open = {
+    id: 'o9',
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }],
+    can_change: true,
+    change_seconds: 60,
+    placed_at: new Date().toISOString(),
+  };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    cartLines: [{ id: 'm1', name: 'Chicken Biryani', price: 320, quantity: 1 }, { id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 2 }],
+    order: open,
+    remembered: [{ orderId: 'o9', token: '042', shop: 'AZ100', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(done.ok, true, 'the second order was refused rather than added');
+  assert.strictEqual(done.added_to_open_order, true, 'it opened a second ticket on the same table');
+  assert.strictEqual(calls.checkout.length, 0, 'a new sale was created for a table that already had one');
+
+  /* Absolute quantities, merged with what the shop says is already there. */
+  const put = calls.fetch.filter((c) => /\/orders\/o9\/items$/.test(c.url)).pop();
+  assert.ok(put, 'nothing was added to the open order');
+  assert.strictEqual(put.body.token, '042', 'the add went without the proof that it is their order');
+  assert.deepStrictEqual(
+    put.body.items.slice().sort((a, b) => a.item_id.localeCompare(b.item_id)),
+    [{ item_id: 'd1', quantity: 2 }, { item_id: 'm1', quantity: 3 }],
+    'the quantities were not merged with what the order already had'
+  );
+
+  /* And the basket is empty, because it was sent. */
+  assert.deepStrictEqual(await window.getCartData(), [], 'the basket still holds what was just sent');
+});
+
+test('a settled table starts a fresh order rather than adding to a closed one', async () => {
+  const paid = { id: 'o9', items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }], can_change: false, why_not: 'already_paid', paid: true };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    order: paid,
+    remembered: [{ orderId: 'o9', token: '042', shop: 'AZ100', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(done.ok, true);
+  assert.ok(!done.added_to_open_order, 'it added to an order that had already been paid for');
+  assert.strictEqual(calls.checkout.length, 1, 'a new sitting did not get its own ticket');
+});
+
+test('another shop at the same table number is not the same table', async () => {
+  const open = { id: 'o9', items: [], can_change: true, change_seconds: 60, placed_at: new Date().toISOString() };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    order: open,
+    /* Table 34, but somebody else's shop. */
+    remembered: [{ orderId: 'o9', token: '042', shop: 'OTHER', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.ok(!done.added_to_open_order, 'an order at another shop was treated as this table');
+  assert.strictEqual(calls.checkout.length, 1);
 });
