@@ -3,9 +3,13 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { notifyBillRequested } = require('../helpers/bill-notify');
+const { queuePrintJob } = require('./print-job.repository');
+const { buildBillPayload } = require('../helpers/bill-payload');
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7092,8 +7096,25 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
-
+      /*
+       * NO LICENCE CLAUSE, BECAUSE THE FLOOR HAS NONE.
+       *
+       * getTablesWithActiveOrders - the query that decides a table is even on
+       * screen - matches branch, sale_process and payment_status and nothing
+       * else. Adding `license` here made this narrower than the thing that
+       * offered the button: the table appeared, the waiter tapped Print bill,
+       * and the answer was "Nothing is open on that table" about an order they
+       * were looking at.
+       *
+       * Reproduced against a real database: with BaseModel.license unset it
+       * works, with it set the same ticket vanishes. A sale written by the
+       * handset carries no licence field of its own, so the clause matched
+       * nothing at all.
+       *
+       * It is not a boundary being dropped either. Each shop has its own
+       * DATABASE - the connection is the tenancy boundary, which is why the
+       * floor query has never needed this and why the two are safe to agree.
+       */
       const result = await Model.updateMany(
         { ...query, bill_requested_at: { $in: [null, undefined] } },
         {
@@ -7108,6 +7129,85 @@ class SalesRepository {
          caller is told which, because "the bill is already on its way" and
          "there is nothing to bill" send a waiter to two different places. */
       const waiting = await Model.countDocuments(query);
+
+      /*
+       * AND THE COUNTER HEARS ABOUT IT NOW, not on the next poll.
+       *
+       * On the shop's own Wi-Fi this call is being handled BY THE TILL - the
+       * API is require()d into the desktop's main process - so this emit
+       * reaches the printer in the same tick and the paper starts before the
+       * waiter has put the phone down. A cloud shop cannot be reached from
+       * outside, so the poll underneath is what serves it; this costs nothing
+       * there.
+       *
+       * Only when something was actually marked. Announcing a request that
+       * changed nothing would wake the printer to find an empty list.
+       */
+      if (waiting > 0) {
+        /*
+         * ON THE QUEUE, CARRYING WHAT TO PRINT.
+         *
+         * This is what makes a cloud shop work at all. The flag on the sale
+         * only ever reaches a till looking at the SAME database; a job carries
+         * the bill with it, so a till asks "anything for me?" and prints the
+         * answer without owning the sale or waiting for anything to sync.
+         *
+         * One job per open ticket, because that is what comes out of the
+         * printer - a table with three rounds has three tickets and the
+         * counter wants all three.
+         */
+        const open = await Model.find(query).limit(20).lean();
+
+        /*
+         * THE SHOP'S LETTERHEAD, READ ONCE.
+         *
+         * On the shop's own database this is a local lookup. It has to happen
+         * HERE and not on the till, because a till paired to a cloud tenant
+         * does not have this database - anything it would have to look up is
+         * something it cannot look up.
+         *
+         * A branch that cannot be read is not fatal. A bill with no letterhead
+         * is still a bill, and losing a guest's bill over a cosmetic failure
+         * would be the wrong trade.
+         */
+        let shop = {};
+        try {
+          const BranchModel = require('../models/branch.model');
+          const id = ObjectId.isValid(String(branchId))
+            ? new mongoose.Types.ObjectId(String(branchId))
+            : branchId;
+          shop = (await BranchModel.findById(id).lean()) || {};
+        } catch (e) {
+          console.error('Could not read the shop for the bill header:', e && e.message);
+        }
+
+        for (const sale of open) {
+          await queuePrintJob({
+            branchId,
+            kind: 'bill',
+            saleId: sale._id,
+            label: `Table ${table}`,
+            /*
+             * BUILT FOR THE PRINTER, not handed over raw.
+             *
+             * This used to pass the sale document itself, with a comment
+             * claiming escpos-receipt rendered from exactly that shape. It does
+             * not. The renderer wants a view model - `items[].name`, `total` -
+             * and the document has `items[].item_name` and `sales_total`, so
+             * every lookup missed and the paper came out with a header, an
+             * empty item table and a total of 0.00. helpers/bill-payload.js
+             * has the full account.
+             */
+            payload: buildBillPayload(sale, shop),
+          });
+        }
+
+        notifyBillRequested({
+          branchId,
+          table,
+          count: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+        });
+      }
 
       return {
         status: waiting > 0,
@@ -7145,11 +7245,47 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
+      /* Same reason as the request above: a licence clause here made the till
+         blind to the very bills the handset had just asked for. Found by
+         running the two halves in sequence rather than each on its own. */
 
       const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
 
-      return { status: true, message: 'success', data: sales };
+      /*
+       * BUILT FOR THE PRINTER HERE TOO, and that fixes tills already in shops.
+       *
+       * This route is the old one - the queue replaced it - but every till
+       * installed before this build still asks it, and it was handing over the
+       * sale document raw. src/escpos-receipt.js cannot read a document: it
+       * wants `items[].name` and `total`, the document has `items[].item_name`
+       * and `sales_total`, so what came out of those printers was a header, an
+       * empty item table and a total of 0.00.
+       *
+       * Fixing it on this side fixes every one of them, with nobody installing
+       * anything. A till that updates uses the queue and never comes here
+       * again; one that never updates starts printing real bills tonight.
+       *
+       * `_id` is carried through because the till sends it straight back to
+       * markBillPrinted, and a bill it cannot report is a bill it prints again
+       * on every pass for ever.
+       */
+      let shop = {};
+      try {
+        const BranchModel = require('../models/branch.model');
+        const id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+        if (id) shop = (await BranchModel.findById(id).lean()) || {};
+      } catch (e) {
+        console.error('Could not read the shop for the bill header:', e && e.message);
+      }
+
+      const forThePrinter = sales.map((sale) => ({
+        _id: sale._id,
+        ...buildBillPayload(sale, shop),
+      }));
+
+      return { status: true, message: 'success', data: forThePrinter };
     } catch (error) {
       console.error('Error in pendingBillPrintsModel:', error);
       return { status: false, message: 'Could not read pending bills', data: [] };
@@ -7175,8 +7311,11 @@ class SalesRepository {
         return { status: false, message: 'No valid sale IDs to mark as billed.', data: null };
       }
 
+      /* Addressed by _id, which the till only knows because this same code
+         handed it over a moment ago. A licence clause would have let a bill
+         print and then refused to record that it had - so it would print again
+         on the next pass, for ever. */
       const query = { _id: { $in: ids } };
-      if (BaseModel.license) query.license = BaseModel.license;
 
       const result = await Model.updateMany(query, { $set: { bill_printed_at: new Date() } });
       return {
@@ -7414,6 +7553,17 @@ class SalesRepository {
         /* The shop's own table, as the printed code named it (the customer
            page) - the captain app says it as kiosk_table_no. */
         table,
+        /*
+         * WHERE THE ORDER CAME FROM, for a shop that one evening is looking
+         * at fifteen orders nobody is going to collect. The controller fills
+         * this in from the request; the page adds what only it knows.
+         *
+         * Written and never read back out to a customer. Nothing in the
+         * product acts on it yet, deliberately: blocking somebody is a
+         * decision a shopkeeper makes, and there is no point building the
+         * decision before there is anything to decide it from.
+         */
+        client,
         /* Who a delivery goes to. The phone is customerMobile above. */
         customer_name,
         customer_address,
@@ -7445,29 +7595,12 @@ class SalesRepository {
        * stored nowhere, so every retry wrote another ticket.
        */
       if (idempotencyKey) {
+        await this._ensureIdempotencyIndex(db);
         const already = await db.collection('sales').findOne({
           idempotency_key: String(idempotencyKey),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         });
-        if (already) {
-          return {
-            status: true,
-            message: 'Order placed successfully',
-            data: {
-              tokenId: already.token_id || already.tokenId || '',
-              sale_id: already._id.toString(),
-              sales_id: already.sales_id,
-              branch_name: already.branch_name,
-              items: already.items || [],
-              subtotal: already.sub_total ?? already.subtotal ?? 0,
-              discount: already.discount ?? 0,
-              tax: already.tax ?? 0,
-              total: already.sales_total ?? already.total ?? 0,
-              payment_status: already.payment_status,
-              duplicate: true,
-            },
-          };
-        }
+        if (already) return this._duplicateOrderAnswer(already);
       }
 
       if (!branchDoc) {
@@ -7580,6 +7713,50 @@ class SalesRepository {
          the shop's own floor, which needs no address. */
       const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
 
+      /*
+       * ONE OPEN ORDER PER TABLE, unless this shop says otherwise.
+       *
+       * Owner: "basically two orders in single table not possible", and then
+       * "by default one order per tabel... multiple order or only one order or
+       * maximum number of order. keep the settings."
+       *
+       * Two orders on one table was first reported as a duplicate-order bug,
+       * and the duplicate itself is fixed (a key on the order, a unique index
+       * behind it). This is the different, deliberate case: a second order,
+       * genuinely placed, on a table that already has one open. On most floors
+       * that is a mistake - somebody chose the wrong table - and the cost of
+       * finding out is a bill split in two at the end of the meal.
+       *
+       * Enforced HERE rather than on the handset because there is more than
+       * one handset, and because two waiters can tap Send on the same table in
+       * the same second. A client-side check is a courtesy; this is the rule.
+       *
+       * ADDING TO AN ORDER IS NOT PLACING ONE. This runs only on the path that
+       * creates a new sale; editing an existing ticket goes elsewhere entirely
+       * and is untouched, which is what makes a limit of 1 usable rather than
+       * infuriating.
+       */
+      const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
+      const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
+      if (openTableLimit > 0 && wantsTable) {
+        const openNow = await db.collection('sales').countDocuments({
+          branch_id: branchObjectId,
+          sale_process: 'KOT',
+          payment_status: 'Unpaid',
+          table_number: wantsTable,
+        });
+        if (openNow >= openTableLimit) {
+          return {
+            status: false,
+            message:
+              openTableLimit === 1
+                ? `Table ${wantsTable} already has an open order. Add to it, or settle it first.`
+                : `Table ${wantsTable} already has ${openNow} open orders, which is the most this shop allows.`,
+            data: { table_number: wantsTable, open_orders: openNow, limit: openTableLimit },
+          };
+        }
+      }
+
       const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
@@ -7591,133 +7768,19 @@ class SalesRepository {
       const itemCollection = db.collection('items');
       const saleItems = [];
       for (const item of items) {
-        const qty = Number(item.item_quantity) || 1;
-        const itemId = String(item.item_id || '');
-        if (!ObjectId.isValid(itemId)) {
-          return { status: false, message: 'Enter must correct item id', data: null };
-        }
-        const itemDoc = await itemCollection.findOne({
-          _id: new ObjectId(itemId),
-          license: branchDoc.license || BaseModel.license,
-          $or: [{ branch_id: branchObjectId }, { 'branch_access.branch_id': branchObjectId }],
-        });
-        if (!itemDoc) {
-          return {
-            status: false,
-            data: null,
-            message: 'This product has already been removed, so you can not modify anything.',
-          };
-        }
-
-        /*
-         * Breakfast at four in the afternoon.
-         *
-         * The page greys out a dish outside its serving period, and that is a
-         * courtesy - a stale tab, a shared link, or somebody posting straight
-         * to this endpoint all reach here with a dosa in the basket long after
-         * the griddle is cold. The kitchen finds out when the ticket prints,
-         * which is the worst moment for everyone.
-         *
-         * Named in the refusal, because "something in your order is not
-         * available" sends a customer hunting through their own basket.
-         */
-        const timing = onlineOrdering.itemAvailability(
-          itemDoc,
+        /* Priced and checked in one place, shared with a line added to an
+           order that has already gone. A refusal is returned as it stands. */
+        const priced = await this._priceOnlineLine(item, {
+          itemCollection,
+          branchDoc,
+          branchObjectId,
           servingPeriods,
           orderDay,
-          orderMinutes
-        );
-        if (!timing.available) {
-          const when = timing.periods.length
-            ? ` It is served at ${timing.periods.join(' and ')}.`
-            : '';
-          return {
-            status: false,
-            data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
-            message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
-          };
-        }
-
-        /*
-         * And a dish the shop took off the online channel by hand.
-         *
-         * The menu and the ordering page both leave it out, so reaching here
-         * with one is a stale tab or a direct post - and either way the
-         * kitchen must not see it. Same helper the channel screen uses, so
-         * "off online" means one thing everywhere.
-         */
-        const onChannel = itemChannels.availableOn(
-          itemDoc,
-          salesChannels.CHANNEL.ONLINE,
-          orderMinutes
-        );
-        if (!onChannel.available) {
-          return {
-            status: false,
-            data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
-            message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
-          };
-        }
-
-        /*
-         * The price THIS service point pays.
-         *
-         * A hotel room is quoted the marked-up price, because the hotel takes
-         * a cut of it and the restaurant is not paying that out of a plate of
-         * biryani. The shop's own tables are quoted the house price, which is
-         * what priceFor returns when there is no venue.
-         *
-         * Applied to the selling price before anything is split out of it, so
-         * tax, discount and the inclusive/exclusive arithmetic below all work
-         * on the number the customer was actually shown.
-         */
-        const sellingPrice = partnerVenues.priceFor(
-          Number(itemDoc.selling_price || 0),
-          servicePoint.venue
-        );
-        const taxRate = Number(itemDoc.tax || 0);
-        const discountAmount = Number(itemDoc.discount_amount || 0);
-        const discountPercentage = Number(itemDoc.discount_percentage || 0);
-        const isInclusive = itemDoc.tax_type === 'inclusive';
-        const baseUnitPrice =
-          isInclusive && taxRate > 0 ? sellingPrice / (1 + taxRate / 100) : sellingPrice;
-        const discountUnit =
-          discountAmount > 0 ? discountAmount : baseUnitPrice * (discountPercentage / 100);
-        const taxableUnit = baseUnitPrice - discountUnit;
-        const taxUnit = taxableUnit * (taxRate / 100);
-        const finalUnit = isInclusive ? taxableUnit * (1 + taxRate / 100) : taxableUnit + taxUnit;
-        const taxAmt = round(taxUnit * qty);
-        const itemTotal = round(finalUnit * qty);
-
-        saleItems.push({
-          item_id: itemId,
-          item_name: itemDoc.name || item.item_name || '',
-          name: itemDoc.name || item.item_name || '',
-          quantity: qty,
-          unit_price: round(baseUnitPrice),
-          tax_amount: taxAmt,
-          total: itemTotal,
-          /*
-           * THE CUSTOMER'S NOTE, not the catalogue's blurb.
-           *
-           * The kitchen ticket prints this line under the dish. It carried
-           * the item's marketing description - "charred on skewers, with
-           * mint chutney" on every ticket - and it carried it INSTEAD of
-           * anything the waiter or the customer had typed, because the
-           * catalogue text won the ||. "Less spicy" is what a kitchen needs
-           * to read; the description it already knows.
-           */
-          item_description: String(item.item_note || item.item_description || '')
-            .trim()
-            .slice(0, 200),
-          // receipt-facing fields
-          item_base_price: round(baseUnitPrice),
-          item_quantity: qty,
-          item_tax: taxAmt,
-          item_discount: round(discountUnit * qty),
-          item_discount_percentage: discountPercentage,
-          item_total: itemTotal,
+          orderMinutes,
+          servicePoint,
         });
+        if (priced.status === false) return priced;
+        saleItems.push(priced.line);
       }
 
       const subtotal = round(saleItems.reduce((s, i) => s + round(i.unit_price * i.quantity), 0));
@@ -7836,7 +7899,8 @@ class SalesRepository {
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
       const salesCollection = db.collection('sales');
-      const insertResult = await salesCollection.insertOne({
+      const clientRecord = this._clientFacts(client);
+      const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
         ...(idempotencyKey ? { idempotency_key: String(idempotencyKey) } : {}),
@@ -7931,9 +7995,47 @@ class SalesRepository {
         updated_date: now,
         transaction_id: transactionId || '',
         token_id: tokenId,
+        /* The device this came from; see the note beside `client` above.
+           Worked out once: calling twice would stamp two different times. */
+        ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
-      });
+      };
+
+      /* A number taken a moment ago is taken again, not handed to the
+         customer as a database error. */
+      let insertResult;
+      try {
+        insertResult = await this.insertSaleWithFreshNumber(
+          salesCollection,
+          saleDocument,
+          branchObjectId
+        );
+      } catch (error) {
+        /*
+         * TWO TAPS AT THE SAME INSTANT.
+         *
+         * The lookup above is a read followed by a write, so two copies of one
+         * order can both read "nothing there" and both insert. That is not
+         * theory: a waiter double-tapped Send on table 5 and the floor came
+         * back showing the table twice, with cancelling one cancelling both.
+         *
+         * The unique index is what actually decides it. Whichever insert lands
+         * second is refused by the database, and rather than surfacing that as
+         * a failure to the handset - which would make the waiter send a third
+         * time - the order the winner wrote is handed back as though this
+         * request had created it. Same answer, one order.
+         */
+        if (idempotencyKey && this.isDuplicateIdempotencyError(error)) {
+          const winner = await salesCollection.findOne({
+            idempotency_key: String(idempotencyKey),
+            ...(BaseModel.license ? { license: BaseModel.license } : {}),
+          });
+          if (winner) return this._duplicateOrderAnswer(winner);
+        }
+        throw error;
+      }
+      salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
 
@@ -8148,8 +8250,19 @@ class SalesRepository {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
 
+      /*
+       * Three things need somebody: an order waiting to be accepted, one
+       * whose customer has asked to call it off after the window closed, and
+       * one whose customer has asked for it to be CHANGED after it closed.
+       * They belong in the same queue because they are the same job - a
+       * person deciding - and a second screen is a screen nobody opens.
+       */
       const filter = {
-        order_state: orderApproval.ORDER_STATE.PENDING,
+        $or: [
+          { order_state: orderApproval.ORDER_STATE.PENDING },
+          { cancel_requested: true, sale_process: 'KOT' },
+          { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
+        ],
         ...activeTenantFilter(),
       };
       const branch = branchId || BaseModel.currentBranch;
@@ -8177,6 +8290,9 @@ class SalesRepository {
             fulfilment: 1,
             created_date: 1,
             order_state_at: 1,
+            cancel_requested: 1,
+            cancel_requested_at: 1,
+            change_requested: 1,
           },
         })
         .sort({ created_date: 1 })
@@ -8190,6 +8306,16 @@ class SalesRepository {
           sale_id: String(row._id),
           sales_id: row.sales_id || '',
           token_id: row.token_id || '',
+          /* The customer has asked for this one to be called off; the shop
+             decides, with the same two buttons. */
+          cancel_requested: row.cancel_requested === true,
+          cancel_requested_at: row.cancel_requested_at || null,
+          /* What the customer has asked to have changed, in dish names and
+             quantities, so the person deciding can read it at a glance. */
+          change_requested:
+            row.change_requested && Array.isArray(row.change_requested.items)
+              ? { items: row.change_requested.items, at: row.change_requested.at || null }
+              : null,
           /* Where it is going, in the words a person reads: a table number, or
              the hotel and the room. */
           destination: (row.venue && row.venue.label) || row.table_number || '',
@@ -8240,10 +8366,125 @@ class SalesRepository {
 
       const sale = await salesCollection.findOne(
         { _id, ...activeTenantFilter() },
-        { projection: { order_state: 1, branch_id: 1 } }
+        {
+          projection: {
+            order_state: 1,
+            branch_id: 1,
+            /* Enough to cancel it here, where the customer has asked for
+               that: the lines go to the kitchen as cancellations. */
+            cancel_requested: 1,
+            /* And enough to APPLY what they asked to have changed, which is
+               the same job through changeCustomerOrderItems. */
+            change_requested: 1,
+            sale_process: 1,
+            payment_status: 1,
+            delivery_fee: 1,
+            venue: 1,
+            venue_commission: 1,
+            created_date: 1,
+            date: 1,
+            license: 1,
+            items: 1,
+            changes: 1,
+            token_id: 1,
+            total: 1,
+          },
+        }
       );
       if (!sale) {
         return { status: false, message: 'Order not found', data: null };
+      }
+
+      /*
+       * THE CUSTOMER ASKED FOR THIS ONE TO BE CALLED OFF.
+       *
+       * Answered here rather than through the approval states, because those
+       * are about whether the kitchen may start and this is about whether
+       * the order lives. An order somebody asks to cancel is usually one the
+       * shop already accepted, so a transition has nothing to say about it.
+       * Either answer ends the request, so the queue does not keep asking.
+       */
+      /*
+       * THE CUSTOMER ASKED FOR THIS ONE TO BE CHANGED.
+       *
+       * Same shape as the cancellation above and for the same reason: the
+       * approval states are about whether the kitchen may start, and this is
+       * about what it should cook. Answered first, because an order can carry
+       * a change request and a cancellation at once and the cancellation is
+       * the bigger decision - a shop that says "cancel" has answered both.
+       *
+       * ACCEPTING RUNS IT THROUGH THE ORDINARY DOOR. changeCustomerOrderItems
+       * is what the customer's own plus and minus use inside the window: it
+       * prices new lines the way the order was priced, refuses a dish that is
+       * off the menu or out of its hours, writes the kitchen's amendment
+       * ticket, and turns an order stripped to nothing into a cancellation.
+       * None of that should have a second implementation just because a
+       * person pressed the button instead of a phone.
+       */
+      if (
+        sale.change_requested &&
+        Array.isArray(sale.change_requested.items) &&
+        sale.cancel_requested !== true &&
+        (decision === 'accept' || decision === 'reject' || decision === 'keep')
+      ) {
+        const answeredAt = new Date();
+        const said = {
+          change_requested: null,
+          change_decided_at: answeredAt,
+          change_decided_by: BaseModel.loggedUserName || '',
+          updated_date: answeredAt,
+        };
+        if (decision !== 'accept') {
+          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          return {
+            status: true,
+            message: 'The order stands',
+            data: { sale_id: String(saleId), changed: false },
+          };
+        }
+        const done = await this.changeCustomerOrderItems(
+          sale,
+          sale.change_requested.items.map((one) => ({
+            item_id: one.item_id,
+            quantity: one.quantity,
+          }))
+        );
+        /* The request is answered either way. A shop that pressed accept and
+           met a refusal - the dish went off the menu while the order sat in
+           the queue - must not be asked the same question again forever. */
+        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        if (!done.status) return done;
+        return {
+          status: true,
+          message: 'Order updated',
+          data: { sale_id: String(saleId), changed: true, ...(done.data || {}) },
+        };
+      }
+
+      if (sale.cancel_requested === true && (decision === 'cancel' || decision === 'keep')) {
+        const answeredAt = new Date();
+        const said = {
+          cancel_requested: false,
+          cancel_decided_at: answeredAt,
+          cancel_decided_by: BaseModel.loggedUserName || '',
+          updated_date: answeredAt,
+        };
+        if (decision === 'keep') {
+          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          return {
+            status: true,
+            message: 'The order stands',
+            data: { sale_id: String(saleId), cancelled: false },
+          };
+        }
+        const done = await this.cancelCustomerOrder(sale);
+        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        if (!done.status) return done;
+        return {
+          status: true,
+          message: 'Order cancelled',
+          data: { sale_id: String(saleId), cancelled: true },
+        };
       }
 
       const move = orderApproval.transition(sale.order_state, decision);
@@ -8799,6 +9040,703 @@ class SalesRepository {
         data: [],
       };
     }
+  }
+
+  /* ------------------------------- the customer's own order, after it went */
+
+  /*
+   * One line of an online order: priced, and checked the way the front door
+   * checks it.
+   *
+   * Shared by an order being placed and by a line added to one that has
+   * already gone, so a dish added afterwards costs exactly what the same
+   * dish ordered a minute earlier cost, and meets exactly the same refusals:
+   * an id that is not one, a dish this branch does not sell, a dish outside
+   * its serving period, a dish the shop took off the online channel.
+   *
+   * Answers either a REFUSAL - the very object the caller returns, written
+   * once here so neither caller invents wording of its own - or { line }.
+   * A refusal is the one with status === false.
+   */
+  async _priceOnlineLine(item, where) {
+    const {
+      itemCollection,
+      branchDoc,
+      branchObjectId,
+      servingPeriods,
+      orderDay,
+      orderMinutes,
+      servicePoint,
+    } = where;
+    const qty = Number(item.item_quantity) || 1;
+    const itemId = String(item.item_id || '');
+    if (!ObjectId.isValid(itemId)) {
+      return { status: false, message: 'Enter must correct item id', data: null };
+    }
+    const itemDoc = await itemCollection.findOne({
+      _id: new ObjectId(itemId),
+      license: branchDoc.license || BaseModel.license,
+      $or: [{ branch_id: branchObjectId }, { 'branch_access.branch_id': branchObjectId }],
+    });
+    if (!itemDoc) {
+      return {
+        status: false,
+        data: null,
+        message: 'This product has already been removed, so you can not modify anything.',
+      };
+    }
+
+    /*
+     * Breakfast at four in the afternoon.
+     *
+     * The page greys out a dish outside its serving period, and that is a
+     * courtesy - a stale tab, a shared link, or somebody posting straight
+     * to this endpoint all reach here with a dosa in the basket long after
+     * the griddle is cold. The kitchen finds out when the ticket prints,
+     * which is the worst moment for everyone.
+     *
+     * Named in the refusal, because "something in your order is not
+     * available" sends a customer hunting through their own basket.
+     */
+    const timing = onlineOrdering.itemAvailability(itemDoc, servingPeriods, orderDay, orderMinutes);
+    if (!timing.available) {
+      const when = timing.periods.length ? ` It is served at ${timing.periods.join(' and ')}.` : '';
+      return {
+        status: false,
+        data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
+        message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
+      };
+    }
+
+    /*
+     * And a dish the shop took off the online channel by hand.
+     *
+     * The menu and the ordering page both leave it out, so reaching here
+     * with one is a stale tab or a direct post - and either way the
+     * kitchen must not see it. Same helper the channel screen uses, so
+     * "off online" means one thing everywhere.
+     */
+    const onChannel = itemChannels.availableOn(itemDoc, salesChannels.CHANNEL.ONLINE, orderMinutes);
+    if (!onChannel.available) {
+      return {
+        status: false,
+        data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
+        message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
+      };
+    }
+
+    /*
+     * The price THIS service point pays.
+     *
+     * A hotel room is quoted the marked-up price, because the hotel takes
+     * a cut of it and the restaurant is not paying that out of a plate of
+     * biryani. The shop's own tables are quoted the house price, which is
+     * what priceFor returns when there is no venue.
+     *
+     * Applied to the selling price before anything is split out of it, so
+     * tax, discount and the inclusive/exclusive arithmetic below all work
+     * on the number the customer was actually shown.
+     */
+    const sellingPrice = partnerVenues.priceFor(
+      Number(itemDoc.selling_price || 0),
+      servicePoint.venue
+    );
+    const taxRate = Number(itemDoc.tax || 0);
+    const discountAmount = Number(itemDoc.discount_amount || 0);
+    const discountPercentage = Number(itemDoc.discount_percentage || 0);
+    const isInclusive = itemDoc.tax_type === 'inclusive';
+    const baseUnitPrice =
+      isInclusive && taxRate > 0 ? sellingPrice / (1 + taxRate / 100) : sellingPrice;
+    const discountUnit =
+      discountAmount > 0 ? discountAmount : baseUnitPrice * (discountPercentage / 100);
+    const taxableUnit = baseUnitPrice - discountUnit;
+    const taxUnit = taxableUnit * (taxRate / 100);
+    const finalUnit = isInclusive ? taxableUnit * (1 + taxRate / 100) : taxableUnit + taxUnit;
+    const taxAmt = round(taxUnit * qty);
+    const itemTotal = round(finalUnit * qty);
+
+    return {
+      line: {
+        item_id: itemId,
+        item_name: itemDoc.name || item.item_name || '',
+        name: itemDoc.name || item.item_name || '',
+        quantity: qty,
+        unit_price: round(baseUnitPrice),
+        tax_amount: taxAmt,
+        total: itemTotal,
+        /*
+         * THE CUSTOMER'S NOTE, not the catalogue's blurb.
+         *
+         * The kitchen ticket prints this line under the dish. It carried
+         * the item's marketing description - "charred on skewers, with
+         * mint chutney" on every ticket - and it carried it INSTEAD of
+         * anything the waiter or the customer had typed, because the
+         * catalogue text won the ||. "Less spicy" is what a kitchen needs
+         * to read; the description it already knows.
+         */
+        item_description: String(item.item_note || item.item_description || '')
+          .trim()
+          .slice(0, 200),
+        // receipt-facing fields
+        item_base_price: round(baseUnitPrice),
+        item_quantity: qty,
+        item_tax: taxAmt,
+        item_discount: round(discountUnit * qty),
+        item_discount_percentage: discountPercentage,
+        item_total: itemTotal,
+      },
+    };
+  }
+
+  /*
+   * What we keep about the device an order came from: an address, what the
+   * browser calls itself, and the random id that browser keeps for itself.
+   * Everything is cut to a length, and anything not recognised is dropped, so
+   * a crafted payload cannot turn this into storage of its own.
+   */
+  _clientFacts(client) {
+    const from = client && typeof client === 'object' ? client : {};
+    /* Control characters go by code point, not by a regular expression: a
+       regex holding them is refused by the linter, for the good reason that
+       nobody can read one. */
+    const text = (value, max) => {
+      let out = '';
+      for (const character of String(value == null ? '' : value)) {
+        const code = character.codePointAt(0);
+        if (code >= 32 && code !== 127) out += character;
+      }
+      return out.trim().slice(0, max);
+    };
+    const facts = {};
+    const ip = text(from.ip, 64);
+    if (ip) facts.ip = ip;
+    const agent = text(from.user_agent, 300);
+    if (agent) facts.user_agent = agent;
+    const device = text(from.device_id, 40);
+    if (device) facts.device_id = device;
+    const language = text(from.language, 24);
+    if (language) facts.language = language;
+    const platform = text(from.platform, 60);
+    if (platform) facts.platform = platform;
+    const screen = text(from.screen, 24);
+    if (/^\d{2,5}x\d{2,5}$/.test(screen)) facts.screen = screen;
+    const zone = text(from.time_zone, 60);
+    if (zone) facts.time_zone = zone;
+    const referrer = text(from.referrer, 200);
+    if (referrer) facts.referrer = referrer;
+    facts.at = new Date();
+    return Object.keys(facts).length > 1 ? facts : null;
+  }
+
+  /**
+   * What this order will be asked back for by the phone that placed it:
+   * where it has got to, and what was on it. Never the whole sale document -
+   * that carries the shop's costs, its margins and the device the order came
+   * from, none of which is the customer's.
+   */
+  customerOrderView(order) {
+    if (!order) return null;
+    const process = String(order.sale_process || '');
+    const paymentStatus = String(order.payment_status || '');
+    const cancelled = process === 'cancelled' || paymentStatus === 'Cancelled';
+    return {
+      order_id: String(order._id),
+      token: String(order.token_id || ''),
+      /*
+       * The shop's own number for it, which is the one printed on the bill
+       * and the one staff read off the queue. A customer holding the order
+       * may quote either that or the token, so the assistant is given both;
+       * it is on their receipt already, and this read is only reached with
+       * the order's id AND its token.
+       */
+      bill_no: String(order.sales_id || ''),
+      placed_at: order.created_date || order.date || null,
+      /* The three words a customer actually wants: is it off, is it paid,
+         has the shop accepted it. */
+      state: cancelled ? 'cancelled' : String(order.order_state || 'accepted'),
+      cancelled,
+      paid: paymentStatus === 'Paid',
+      /* A bill is a record of money that has changed hands. Until it has,
+         there is nothing to hand anybody. */
+      bill_ready: paymentStatus === 'Paid' && !cancelled,
+      payment_status: paymentStatus,
+      payment_mode: String(order.payment_mode || ''),
+      /* Asked for, and waiting on the shop. */
+      cancel_requested: order.cancel_requested === true,
+      fulfilment: String(order.fulfilment || ''),
+      table_number: String(order.table_number || ''),
+      items: (Array.isArray(order.items) ? order.items : []).map((line) => ({
+        item_id: String(line.item_id || ''),
+        name: String(line.item_name || line.name || ''),
+        quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
+        note: String(line.item_description || ''),
+        total: Number(line.total != null ? line.total : line.item_total || 0),
+      })),
+      total: Number(order.total != null ? order.total : order.sales_total || 0),
+      tax: Number(order.tax || 0),
+      discount: Number(order.discount || 0),
+      delivery_fee: Number(order.delivery_fee || 0),
+      shop: String(order.branch_name || ''),
+    };
+  }
+
+  /** One order of this branch's, by its id. Nothing wider: no list, no search. */
+  async findCustomerOrder({ branchId, orderId }) {
+    if (!mongoose.Types.ObjectId.isValid(String(orderId || ''))) return null;
+    const db = await BaseModel.getDb();
+    const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
+      ? new mongoose.Types.ObjectId(String(branchId))
+      : branchId;
+    return db.collection('sales').findOne({
+      _id: new mongoose.Types.ObjectId(String(orderId)),
+      branch_id: branchObjectId,
+    });
+  }
+
+  /*
+   * One line of an order, at a different quantity.
+   *
+   * EXACT, and it has to be. Every money field on an online order's line is
+   * linear in its quantity: the unit price, the tax, the discount and the
+   * total were each worked out per unit when the order was taken and
+   * multiplied up. Scaling a line to a new quantity therefore reproduces
+   * exactly what that order would have cost had it been placed that way - and
+   * it does it from the order's OWN stored prices, so a customer is held to
+   * the price they were quoted rather than to whatever the catalogue says by
+   * the time they change their mind.
+   */
+  _scaleOrderLine(line, was, now) {
+    if (!(was > 0) || now === was) return { ...line, item_quantity: now, quantity: now };
+    const factor = now / was;
+    const scale = (value) => round(Number(value || 0) * factor);
+    const scaled = { ...line, item_quantity: now, quantity: now };
+    for (const field of [
+      'tax_amount',
+      'item_tax',
+      'total',
+      'item_total',
+      'total_amount',
+      'item_discount',
+      'company_price_total',
+      'cgst_tax',
+      'sgst_tax',
+      'igst_tax',
+    ]) {
+      if (line[field] !== undefined) scaled[field] = scale(line[field]);
+    }
+    return scaled;
+  }
+
+  /** What the order's totals come to, from its lines. */
+  _onlineOrderTotals(lines, orderDoc) {
+    const qtyOf = (l) => Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0);
+    const unitOf = (l) => Number(l.unit_price != null ? l.unit_price : l.item_price || 0);
+    const lineTotalOf = (l) =>
+      Number(l.total != null ? l.total : l.item_total || l.total_amount || 0);
+    const subtotal = round(lines.reduce((s, l) => s + unitOf(l) * qtyOf(l), 0));
+    const tax = round(lines.reduce((s, l) => s + Number(l.tax_amount || l.item_tax || 0), 0));
+    const itemDiscount = round(lines.reduce((s, l) => s + Number(l.item_discount || 0), 0));
+    const extra = Number((orderDoc && orderDoc.extra_discount) || 0);
+    const food = round(lines.reduce((s, l) => s + lineTotalOf(l), 0) - extra);
+    const total = round(food + Number((orderDoc && orderDoc.delivery_fee) || 0));
+    return {
+      subtotal,
+      tax,
+      total,
+      discount: round(itemDiscount + extra),
+      number_of_items: lines.reduce((s, l) => s + qtyOf(l), 0),
+    };
+  }
+
+  /*
+   * The customer changed their mind about something already on the ticket.
+   *
+   * The kitchen is told the difference, line by line, through the same
+   * changes log a waiter's amendment writes, so a screen or a printer that
+   * already knows how to show "one biryani cancelled" needs nothing new.
+   */
+  async changeCustomerOrderItems(orderDoc, wanted) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+
+    const asked = new Map();
+    for (const want of Array.isArray(wanted) ? wanted : []) {
+      const id = String((want && want.item_id) || '');
+      const qty = Math.round(Number(want && want.quantity));
+      if (!id || !Number.isFinite(qty)) continue;
+      asked.set(id, Math.max(0, Math.min(20, qty)));
+    }
+    if (!asked.size) return { status: false, message: 'nothing_asked', data: null };
+
+    /*
+     * A dish that is not on the order yet is ADDED, priced exactly the way
+     * the order itself was priced. Asking for nought of something that was
+     * never there is not a change, it is a typo, and is ignored.
+     */
+    const onOrder = new Set(lines.map((l) => String(l.item_id || '')));
+    const adding = [...asked.entries()].filter(([id, qty]) => !onOrder.has(id) && qty > 0);
+    const added = [];
+    if (adding.length) {
+      const priced = await this._priceAddedLines(orderDoc, adding);
+      if (priced.status === false) return priced;
+      added.push(...priced.lines);
+    }
+
+    const changes = [];
+    const kept = [];
+    for (const line of lines) {
+      const id = String(line.item_id || '');
+      const was = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+      const now = asked.has(id) ? asked.get(id) : was;
+      if (now !== was) {
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        const moved = Math.abs(now - was);
+        changes.push({
+          item_id: id,
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: moved,
+          process: now > was ? 'add' : 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * moved),
+        });
+      }
+      if (now > 0) kept.push(this._scaleOrderLine(line, was, now));
+    }
+
+    for (const line of added) {
+      const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+      const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+      changes.push({
+        item_id: String(line.item_id || ''),
+        item_name: String(line.item_name || line.name || ''),
+        item_quantity: qty,
+        process: 'add',
+        item_code: String(line.item_sku || ''),
+        unit: String(line.item_unit || 'qty'),
+        price: unit,
+        total: round(unit * qty),
+      });
+      kept.push(line);
+    }
+
+    if (!changes.length) return { status: false, message: 'nothing_changed', data: null };
+    /* Every line gone is a cancelled order, not an order of nothing. */
+    if (!kept.length) return this.cancelCustomerOrder(orderDoc);
+
+    const totals = this._onlineOrderTotals(kept, orderDoc);
+    const at = new Date();
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          items: kept,
+          changes: log,
+          subtotal: totals.subtotal,
+          sales_sub_total: totals.subtotal,
+          items_subtotal: totals.subtotal,
+          total: totals.total,
+          sales_total: totals.total,
+          items_total: totals.total,
+          tax: totals.tax,
+          discount: totals.discount,
+          number_of_items: totals.number_of_items,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'updated',
+    });
+
+    return {
+      status: true,
+      message: 'Order updated',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        items: kept.map((l) => ({
+          item_id: String(l.item_id || ''),
+          name: String(l.item_name || l.name || ''),
+          quantity: Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0),
+        })),
+        total: totals.total,
+      },
+    };
+  }
+
+  /**
+   * The customer wants the order changed, and the window has closed - so ASK.
+   *
+   * Owner, on the history page: "why order history dont have any option to
+   * other than cancel? coz of time?" It was: past the window the plus and
+   * minus went away and only Cancel remained, which is an odd thing to offer
+   * somebody whose actual wish is one more naan. If a customer may ask the
+   * shop to call an order OFF after the kitchen has it, they may ask for it
+   * to be CHANGED, and the kitchen decides either way.
+   *
+   * Nothing is changed here. What they asked for is recorded on the order and
+   * announced into the same queue the shop already accepts orders from, and a
+   * person applies it or refuses it there - see decideOnOrder.
+   *
+   * @param {object} orderDoc
+   * @param {Array<{item_id: string, quantity: number}>} wanted
+   * @param {Array} lines the order's lines, for naming what was asked
+   */
+  async requestCustomerChange(orderDoc, wanted, lines) {
+    const db = await BaseModel.getDb();
+    const at = new Date();
+
+    /*
+     * Said in dish names, not ids.
+     *
+     * The person reading this is standing at a till deciding in a hurry, and
+     * "2 to 3 Chicken Biryani" is a decision they can make. A row of
+     * twenty-four character ids is not.
+     */
+    const onOrder = new Map(
+      (Array.isArray(lines) ? lines : []).map((line) => [
+        String(line.item_id || ''),
+        {
+          name: String(line.item_name || line.name || ''),
+          quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
+        },
+      ])
+    );
+    const asked = [];
+    for (const one of Array.isArray(wanted) ? wanted : []) {
+      const id = String((one && one.item_id) || '');
+      if (!id) continue;
+      const quantity = Math.max(0, Math.round(Number(one.quantity) || 0));
+      const was = onOrder.get(id);
+      asked.push({
+        item_id: id,
+        /* A dish that is not on the order yet has no name here; the queue
+           fills it in from the menu when it draws the card. */
+        name: was ? was.name : String(one.name || ''),
+        was: was ? was.quantity : 0,
+        quantity,
+      });
+    }
+    if (!asked.length) return { status: false, message: 'nothing_asked', data: null };
+
+    const result = await db.collection('sales').updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          /* The LAST thing they asked for, not a pile of them. A customer who
+             changes their mind twice before anybody looks meant the second
+             one, and a till asked to work through a history of wishes is a
+             till that gets it wrong. */
+          change_requested: { items: asked, at },
+          updated_date: at,
+        },
+      }
+    );
+    if (!result.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    notifyOrderAttention({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      alert: 'waiting',
+      state: 'change_requested',
+      total: Number(orderDoc.total || 0),
+    });
+
+    return {
+      status: true,
+      message: 'Change requested',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        change_requested: true,
+        items: asked,
+      },
+    };
+  }
+
+  /*
+   * Dishes added to an order that has already gone, priced the way the order
+   * was priced.
+   *
+   * Everything the front door checks is checked again here, by the same
+   * method: a dish out of its serving period, or one the shop has taken off
+   * the online channel, cannot be slipped onto an order after the fact any
+   * more than it could be ordered in the first place. The service point
+   * comes off the order itself, so a hotel room keeps its marked-up price.
+   */
+  async _priceAddedLines(orderDoc, adding) {
+    const db = await BaseModel.getDb();
+    const branchObjectId = orderDoc.branch_id;
+    const branchDoc = await db.collection('branches').findOne({ _id: branchObjectId });
+    if (!branchDoc) return { status: false, message: 'not_found', data: null };
+
+    /* The same clock the order was taken by, in the shop's own time zone. */
+    const now = new Date();
+    const local = moment(now).tz(branchDoc.time_zone || 'Asia/Calcutta');
+    const orderDay = local.day();
+    const orderMinutes = local.hours() * 60 + local.minutes();
+    /* The serving periods, read the way the order read them. */
+    let servingPeriods = [];
+    try {
+      const settingsDoc = await db
+        .collection('settings')
+        .findOne({ menu_dayparts: { $exists: true } });
+      servingPeriods = onlineOrdering.normalizeDayparts(
+        (settingsDoc && settingsDoc.menu_dayparts) || []
+      );
+    } catch (e) {
+      /* No dayparts is every dish served all day, which is what a shop that
+         never set one means. */
+    }
+
+    /*
+     * House prices, always. An order bound for a hotel room cannot be
+     * changed from a phone at all - customer-order.service refuses it as
+     * at_the_counter, because its total carries a markup and a commission
+     * that are not the customer's to move - so there is no marked-up case
+     * to reproduce here, and inventing one would be a guess about money.
+     */
+    const servicePoint = { venue: null };
+
+    const lines = [];
+    for (const [itemId, quantity] of adding) {
+      const priced = await this._priceOnlineLine(
+        { item_id: itemId, item_quantity: quantity },
+        {
+          itemCollection: db.collection('items'),
+          branchDoc,
+          branchObjectId,
+          servingPeriods,
+          orderDay,
+          orderMinutes,
+          servicePoint,
+        }
+      );
+      if (priced.status === false) return priced;
+      lines.push(priced.line);
+    }
+    return { status: true, lines };
+  }
+
+  /*
+   * The customer has asked the shop to cancel an order the kitchen has
+   * already had a while.
+   *
+   * Recorded on the order and announced, so it turns up where a shop is
+   * already looking - the queue it accepts orders from - rather than in a
+   * screen somebody has to remember to open. Nothing is cancelled here:
+   * that is the shop's call, and a kitchen that has cooked it needs to say
+   * so.
+   */
+  async requestCustomerCancel(orderDoc) {
+    const db = await BaseModel.getDb();
+    const at = new Date();
+    const result = await db.collection('sales').updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          cancel_requested: true,
+          cancel_requested_at: at,
+          updated_date: at,
+        },
+      }
+    );
+    if (!result.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    notifyOrderAttention({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      alert: 'waiting',
+      state: 'cancel_requested',
+      total: Number(orderDoc.total || 0),
+    });
+
+    return {
+      status: true,
+      message: 'Cancellation requested',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        cancel_requested: true,
+      },
+    };
+  }
+
+  /*
+   * The whole order, called off.
+   *
+   * The record stays and is marked cancelled - a shop that cooked half of it
+   * needs to see that it existed - and every line goes to the kitchen as a
+   * cancellation, the same shape the console writes.
+   */
+  async cancelCustomerOrder(orderDoc) {
+    const db = await BaseModel.getDb();
+    const salesCollection = db.collection('sales');
+    const at = new Date();
+    const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+    const changes = lines
+      .map((line) => {
+        const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+        if (!(qty > 0)) return null;
+        const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+        return {
+          item_id: String(line.item_id || ''),
+          item_name: String(line.item_name || line.name || ''),
+          item_quantity: qty,
+          process: 'cancel',
+          item_code: String(line.item_sku || ''),
+          unit: String(line.item_unit || 'qty'),
+          price: unit,
+          total: round(unit * qty),
+        };
+      })
+      .filter(Boolean);
+
+    const log = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
+    if (changes.length) log.push({ timestamp: at, items: changes });
+
+    const result = await salesCollection.updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          sale_process: 'cancelled',
+          payment_status: 'Cancelled',
+          payment_pending: 0,
+          changes: log,
+          updated_date: at,
+          updated_by: 'Customer',
+        },
+      }
+    );
+    if (!result.modifiedCount) return { status: false, message: 'nothing_changed', data: null };
+
+    notifyKotReady({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      reason: 'cancelled',
+    });
+
+    return {
+      status: true,
+      message: 'Order cancelled',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        cancelled: true,
+        total: 0,
+      },
+    };
   }
 
   async getFrequentItemsForBranch(branchId, limit, { SaleModel } = {}) {
@@ -10087,7 +11025,7 @@ class SalesRepository {
       const skip = (page - 1) * limit;
       const sort = options?.sort || { _id: -1 };
 
-      const query = {};
+      const query = { ...(await demoData.filterCurrent('sales')) };
 
       // Apply branchId filter
       if (branchId) {
@@ -10156,7 +11094,7 @@ class SalesRepository {
     }
   }
 
-  async generateSalesIdForBranch(branchIdRaw) {
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
@@ -10185,7 +11123,13 @@ class SalesRepository {
 
     void prefixLength;
     void salesCollection;
-    const n = await this.nextSalesNumberForBranch(branchId, BaseModel.license);
+    /* The branch's own licence first: see nextSalesNumberForBranch. The
+       ambient one is a fallback for a branch this process cannot read. */
+    const n = await this.nextSalesNumberForBranch(
+      branchId,
+      (branchDoc && branchDoc.license) || BaseModel.license,
+      { reseed }
+    );
     return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
   }
 
@@ -10205,13 +11149,48 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw) {
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false } = {}) {
     const db = await BaseModel.getDb();
     const counters = db.collection('counters');
+
+    /*
+     * ONE COUNTER PER BRANCH, whichever door the sale came through.
+     *
+     * The licence used to be whatever the caller happened to hold, and on the
+     * customer's own ordering page there is no caller to ask: /online-ordering
+     * is public, so BaseModel.license carried whatever the last signed-in
+     * request in this process left behind - the real licence, or nothing. A
+     * branch ended up with two counters, one keyed by the licence and one by
+     * the empty string, each seeded once and each counting on alone. The
+     * moment both existed they issued the same numbers and the unique index
+     * refused the second: the customer got "E11000 duplicate key ... sales_id"
+     * where an order should have been, with a Retry that asked for the same
+     * number again.
+     *
+     * The branch's own licence is the one answer every door agrees on.
+     */
+    let license = licenseRaw;
+    if (!license && branchIdRaw) {
+      try {
+        const owner = await db.collection('branches').findOne(
+          {
+            _id: mongoose.Types.ObjectId.isValid(String(branchIdRaw))
+              ? new mongoose.Types.ObjectId(String(branchIdRaw))
+              : branchIdRaw,
+          },
+          { projection: { license: 1 } }
+        );
+        if (owner && owner.license) license = owner.license;
+      } catch (e) {
+        /* A branch that cannot be read leaves the caller's answer standing;
+           the duplicate backstop below still holds. */
+      }
+    }
+
     const key = {
       kind: 'sales_id',
       branch_key: String(branchIdRaw || ''),
-      license_key: String(licenseRaw || ''),
+      license_key: String(license || ''),
     };
 
     /* Idempotent and cheap; the unique index is what makes the concurrent
@@ -10240,6 +11219,22 @@ class SalesRepository {
       await counters
         .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
         .catch(() => {});
+    }
+
+    /*
+     * Asked for after a number came back taken: catch the counter up.
+     *
+     * A counter can sit behind the sales it is numbering - a restore that
+     * brought the sales back without the counters, or numbers issued through
+     * the second counter this method no longer creates. Adding one then walks
+     * into every taken number in turn, a failed order each time. $max only
+     * ever raises, so a number allocated concurrently cannot be undone by it.
+     */
+    if (reseed) {
+      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license);
+      if (behind > 0) {
+        await counters.updateOne(key, { $max: { seq: behind } }, { upsert: true }).catch(() => {});
+      }
     }
 
     const res = await counters.findOneAndUpdate(
@@ -10426,6 +11421,71 @@ class SalesRepository {
     );
   }
 
+  /*
+   * The answer for an order that already exists.
+   *
+   * Built in one place because it is returned from two: the lookup before the
+   * insert, and the insert that lost the race to a unique index. If those ever
+   * answered differently, a handset would behave differently depending on
+   * which microsecond its retry arrived in.
+   *
+   * `duplicate: true` is on it so the app can tell "your order is in" from "we
+   * took your order just now", which matters when a waiter is standing there
+   * wondering whether to send again.
+   */
+  _duplicateOrderAnswer(already) {
+    return {
+      status: true,
+      message: 'Order placed successfully',
+      data: {
+        tokenId: already.token_id || already.tokenId || '',
+        sale_id: already._id.toString(),
+        sales_id: already.sales_id,
+        branch_name: already.branch_name,
+        items: already.items || [],
+        subtotal: already.sub_total ?? already.subtotal ?? 0,
+        discount: already.discount ?? 0,
+        tax: already.tax ?? 0,
+        total: already.sales_total ?? already.total ?? 0,
+        payment_status: already.payment_status,
+        duplicate: true,
+      },
+    };
+  }
+
+  /*
+   * One order per key, enforced by the database rather than by a lookup.
+   *
+   * A read-then-write cannot stop two simultaneous copies of the same order:
+   * both read nothing, both write. Only the index can, and it has to be there
+   * for EVERY shop, which is why it goes through ensureIndexOnce - a static
+   * boolean would give it to whichever shop made the first table order after
+   * a restart and to nobody else.
+   *
+   * Partial, on a string key, so the millions of till sales that carry no key
+   * are not all colliding on null.
+   */
+  async _ensureIdempotencyIndex(db) {
+    await ensureIndexOnce(
+      db.collection('sales'),
+      { license: 1, idempotency_key: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { idempotency_key: { $type: 'string' } },
+        name: 'unique_idempotency_key_per_license',
+      }
+    );
+  }
+
+  /* A clash on the key above, told apart from a clash on the bill number so
+     the two are handled differently: a bill number is re-taken, a repeated
+     order is answered with the order that already exists. */
+  isDuplicateIdempotencyError(err) {
+    if (!err || (err.code !== 11000 && err.code !== 11001)) return false;
+    const where = `${err.message || ''} ${JSON.stringify(err.keyPattern || err.keyValue || {})}`;
+    return /idempotency_key/i.test(where);
+  }
+
   isDuplicateSalesIdError(err) {
     if (!err || (err.code !== 11000 && err.code !== 11001)) return false;
     const where = `${err.message || ''} ${JSON.stringify(err.keyPattern || err.keyValue || {})}`;
@@ -10456,6 +11516,38 @@ class SalesRepository {
    * The highest number this branch has ever put on a bill, whatever the
    * prefix was at the time. Runs once per branch, to seed its counter.
    */
+  /*
+   * Insert an order, taking a fresh bill number if this one has just been taken.
+   *
+   * The till has had this since bill numbers became unique (createSaleUnique);
+   * the customer's own ordering page never did, so a collision reached the
+   * phone as "E11000 duplicate key error ... unique_sales_id_per_license",
+   * under a Retry button that asked for the very same number again. Each retry
+   * catches the counter up to the highest number the branch has actually
+   * issued, so a counter that has fallen behind is right on the next attempt
+   * rather than after as many attempts as there are taken numbers.
+   *
+   * Only a duplicate BILL NUMBER is retried. Anything else - a duplicate
+   * idempotency key above all, which means this very order is already saved -
+   * is raised, because retrying it would be how one order becomes two.
+   */
+  async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await salesCollection.insertOne(document);
+      } catch (error) {
+        if (attempt >= attempts || !this.isDuplicateSalesIdError(error)) throw error;
+        const fresh = await this.generateSalesIdForBranch(branchId, { reseed: true });
+        console.warn(
+          `[order] bill number ${document.sales_id} was already issued; taking ${fresh}`
+        );
+        document.sales_id = fresh;
+        if (document.invoice_number) document.invoice_number = fresh;
+        if (document.sale_no) document.sale_no = fresh;
+      }
+    }
+  }
+
   async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
     const db = await BaseModel.getDb();
     const asObjectId = (v) =>

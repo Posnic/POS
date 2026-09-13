@@ -96,6 +96,34 @@
             point.venue = clean(parts[2], 12);
             point.unit = clean(parts[3]);
         }
+
+        /*
+         * WHAT THE PRINTED CODE HAS ALREADY SETTLED.
+         *
+         * Owner: "mostly QR code we placed in tabels. so dont ask its take
+         * away or able. its table only." He is right - a sticker on table
+         * thirty-four has answered that question before anybody asks it, and
+         * asking again is the page admitting it did not read its own address.
+         *
+         *   /order/ABC/table/34    dine in, at table 34
+         *   /order/ABC/takeaway    take away
+         *   /order/ABC             the shop's own code: ask, nothing was said
+         *
+         * SPELLED OUT, NOT ABBREVIATED. He offered /order/ABC/ta, and the
+         * short form cannot be made safe: a store address is three to six
+         * letters and digits, so `ta` reads as somebody's shop code, and
+         * /order/ABC/table/ta reads as a table that somebody named "ta". The
+         * whole word costs five characters on a sticker nobody types by hand,
+         * and it can never be mistaken for a table number.
+         *
+         * ?takeaway=1 is accepted too, for a link pasted into a message where
+         * a path cannot be changed.
+         */
+        if (parts[1] === 'takeaway' || query.get('takeaway') === '1') {
+            point.fulfilment = 'takeaway';
+        } else if (point.table) {
+            point.fulfilment = 'dine_in';
+        }
         return point;
     }
 
@@ -139,6 +167,8 @@
                 table: url.table,
                 venue: url.venue,
                 unit: url.unit,
+                /* What the code already settled, so nothing asks again. */
+                fulfilment: url.fulfilment || '',
                 /* What the customer confirmed at checkout, filled in later.
                    Cleared here on purpose: a new code is a new destination,
                    and the last one's correction must not follow it. */
@@ -149,7 +179,7 @@
         }
 
         var saved = stored();
-        return saved || { table: '', venue: '', unit: '', destination: null };
+        return saved || { table: '', venue: '', unit: '', fulfilment: '', destination: null };
     }
 
     /*

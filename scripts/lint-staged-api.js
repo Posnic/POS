@@ -32,4 +32,29 @@ const result = spawnSync(eslint, ["--fix", ...files], {
 });
 
 if (result.error) throw result.error;
-process.exit(result.status || 0);
+if (result.status) process.exit(result.status);
+
+/*
+ * PRETTIER LAST, because eslint --fix can undo it.
+ *
+ * lint-staged runs `prettier --write` first and this second, and removing a
+ * redundant eslint-disable comment leaves behind the blank line it was on.
+ * The commit then contains a file prettier would reformat, `format:check`
+ * fails in CI, and Full CI failing means beta.yml builds no installer at all -
+ * so a stray blank line quietly costs a release. Running the formatter after
+ * the fixer closes that.
+ */
+const prettier = path.join(
+  apiRoot,
+  "node_modules",
+  ".bin",
+  process.platform === "win32" ? "prettier.cmd" : "prettier",
+);
+const formatted = spawnSync(prettier, ["--write", ...files], {
+  cwd: apiRoot,
+  stdio: "inherit",
+  shell: process.platform === "win32",
+});
+
+if (formatted.error) throw formatted.error;
+process.exit(formatted.status || 0);

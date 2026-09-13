@@ -182,6 +182,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reprint:      (logEntry) => ipcRenderer.invoke('kot:reprint', logEntry)
   },
   /*
+   * The bill printer, which has two doors and can fail at either.
+   *
+   * Read-only on purpose: Hardware Manager shows what is happening, it does
+   * not drive it. The poller starts with the app and stopping it would leave a
+   * shop wondering why bills stopped without anybody touching a setting.
+   */
+  bill: {
+    getStatus:     () => ipcRenderer.invoke('bill:get-status'),
+    /* This machine's own key, for pasting into the shop so it will accept
+       bills from here. See api/src/models/print-till.model.js. */
+    getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key'),
+    /* A day of receipt prints, tried as well as done - the same shape the KOT
+       log already has, so one screen reads both. */
+    getReceiptLogs: (date) => ipcRenderer.invoke('receipt:get-logs', date),
+    deleteReceiptLog: (date, id) => ipcRenderer.invoke('receipt:delete-log', date, id)
+  },
+  /*
    * The sound an online order makes.
    *
    * Every other way this till learns about a sale has a person standing in

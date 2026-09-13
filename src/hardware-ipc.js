@@ -103,7 +103,7 @@ function getLocalIP() {
 let _ipcSetupDone = false;
 
 // Hardware Manager IPC Handlers
-function setupHardwareIPC(hardwareManager, kotManager) {
+function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   if (_ipcSetupDone) {
     console.log('Hardware IPC handlers already registered, skipping duplicate call');
     return;
@@ -168,8 +168,10 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   });
 
   // Printer Handlers
+  /* Hardware Manager's chooser, and anything else asking a person to pick:
+     always the real list, never a remembered one. */
   ipcMain.handle('printer:list', async () => {
-    return await hardwareManager.listPrinters();
+    return await hardwareManager.listPrinters({ fresh: true });
   });
 
   ipcMain.handle('printer:get-default', async () => {
@@ -208,6 +210,20 @@ function setupHardwareIPC(hardwareManager, kotManager) {
    * paper.
    */
   ipcMain.handle('printer:print-receipt', async (event, sale, options = {}) => {
+    /*
+     * Every receipt is written down, printed or not.
+     *
+     * Kitchen tickets have had a day's log with a screen for a long time;
+     * receipts had nothing at all. When a customer says their bill never came
+     * out there was no way to tell whether the till had tried, which printer
+     * it went to, or what the printer said back.
+     *
+     * TRIED is the half that matters. A receipt that failed is the one
+     * somebody is asking about, and a log of successes only is silent at
+     * exactly the moment it is needed.
+     */
+    const startedAt = Date.now();
+    const receiptLog = require('./receipt-log');
     try {
       const { renderSale } = require('./escpos-receipt');
       const { normalizeTargets, columnsFor } = require('./printer-targets');
@@ -248,7 +264,7 @@ function setupHardwareIPC(hardwareManager, kotManager) {
           /* eslint-disable-next-line no-await-in-loop -- printers are serial
              devices; two jobs sent at once interleave on the same roll. */
           const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label);
-          results.push({ printer: target.name || '(default)', copy: copy + 1, ...r });
+          results.push({ printer: target.name || '(default)', copy: copy + 1, sent: bytes.length, ...r });
         }
       }
 
@@ -256,8 +272,39 @@ function setupHardwareIPC(hardwareManager, kotManager) {
          customer already has their copy, so success means at least one landed
          and the failures are named for the operator. */
       const failed = results.filter((r) => !r.success);
+      /*
+       * How much actually went down the wire.
+       *
+       * Hardware Manager's test print says "Sent N bytes", and N came back
+       * undefined from the day this handler learned to drive several printers:
+       * the old single-printer version answered { success, bytes } and the
+       * rewrite answered a summary that forgot to carry it. The one screen
+       * whose whole job is to prove the printer works was reporting
+       * "Sent undefined bytes".
+       */
+      const sentBytes = results.reduce((n, r) => n + (r.success ? (r.sent || 0) : 0), 0);
+
+      receiptLog.record({
+        kind: options.kind || 'receipt',
+        saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+        title: (sale && sale.title) || options.docName || 'Receipt',
+        total: sale && (sale.total ?? sale.sales_total),
+        /* Who asked. The floor bill passes its own; anything else is somebody
+           standing at the counter. */
+        source: options.source || 'Till',
+        ms: Date.now() - startedAt,
+        printers: results.map((r) => ({
+          name: r.printer,
+          copy: r.copy,
+          status: r.success ? 'success' : 'failed',
+          reason: r.success ? undefined : (r.error || 'unknown'),
+          bytes: r.sent,
+        })),
+      });
+
       return {
         success: results.some((r) => r.success),
+        bytes: sentBytes,
         printed: results.length - failed.length,
         attempted: results.length,
         failures: failed.map((r) => ({ printer: r.printer, error: r.error || 'unknown' })),
@@ -266,9 +313,32 @@ function setupHardwareIPC(hardwareManager, kotManager) {
       };
     } catch (err) {
       console.error('[Print] receipt render failed:', err.message);
+      /*
+       * A receipt that never reached a printer is the most important row in
+       * the log, not the least. Without this the failures that happen BEFORE
+       * any printer is touched - a layout that will not draw, a missing
+       * setting - would leave no trace at all and look like the till simply
+       * ignored the button.
+       */
+      receiptLog.record({
+        kind: options.kind || 'receipt',
+        saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+        title: (sale && sale.title) || options.docName || 'Receipt',
+        total: sale && (sale.total ?? sale.sales_total),
+        source: options.source || 'Till',
+        ms: Date.now() - startedAt,
+        printers: [{ name: '(never reached a printer)', status: 'failed', reason: err.message }],
+      });
       return { success: false, error: err.message };
     }
   });
+
+  /* The day's receipts, for the Hardware Manager screen. */
+  ipcMain.handle('receipt:get-logs', (event, date) => require('./receipt-log').forDate(date));
+
+  ipcMain.handle('receipt:delete-log', (event, date, id) => ({
+    success: require('./receipt-log').remove(date, id),
+  }));
 
   /*
    * A report on a roll, as ESC/POS.
@@ -346,6 +416,25 @@ function setupHardwareIPC(hardwareManager, kotManager) {
       }
     }
   }, 3000);
+
+  /*
+   * A KEY FOR THE CLOUD THAT IS NOT THIS MACHINE'S KIOSK KEY.
+   *
+   * The first version sent KIOSK_API_KEY to the shop's cloud address, and that
+   * key guards every kiosk route on this till's OWN api - the kitchen display,
+   * the tablet, the phone ordering routes. Sending it out means a mistyped
+   * address, or one compromised server, hands over far more than printing.
+   *
+   * So the far door gets its own secret, worth exactly one thing: taking print
+   * jobs from a shop that has allowed it. Made once, here, where the
+   * preferences object already lives - a second writer of that file would drop
+   * whatever the first had in memory.
+   */
+  if (!preferences.cloud_print_key) {
+    preferences.cloud_print_key = require('crypto').randomBytes(32).toString('hex');
+    _savePrefs(preferences);
+    console.log('[BILL] made this till a printing key for the cloud');
+  }
 
   ipcMain.handle('preferences:get', (event, key) => {
     return preferences[key] ?? null;
@@ -552,6 +641,35 @@ function setupHardwareIPC(hardwareManager, kotManager) {
     if (!kotManager) return { isPolling: false };
     return kotManager.getStatus();
   });
+
+  /*
+   * WHAT THE BILL PRINTER IS DOING, for a person rather than a log file.
+   *
+   * BillManager has kept this since it was written and nothing ever asked for
+   * it, so when a bill did not come out the answer lived in a console window
+   * nobody has open on a shop floor. "It is not printing" and "no receipt
+   * printer is set on this till" are the same sentence to a shopkeeper until
+   * something tells them apart.
+   */
+  ipcMain.handle('bill:get-status', () => {
+    if (!billManager) return { isPolling: false };
+    return billManager.getStatus();
+  });
+
+  /*
+   * THIS COMPUTER'S PRINTING KEY, so it can be pasted into the shop.
+   *
+   * A key of its own, NOT this machine's kiosk key: that one guards every
+   * kiosk route on this till and is worth far more than printing. Made at
+   * startup above and shown on screen so the shopkeeper can allow it in their
+   * shop - see api/src/models/print-till.model.js for why the key travels from
+   * the till rather than a server secret travelling into a browser.
+   *
+   * ipcMain.handle THROWS on a duplicate channel, and this was registered
+   * twice by a patch that ran twice. Everything after it in this function -
+   * the KOT log handlers, reprint, the scale - never registered at all.
+   */
+  ipcMain.handle('bill:get-printing-key', () => preferences.cloud_print_key || '');
 
   ipcMain.handle('kot:get-logs', (event, date) => {
     if (!kotManager) return [];

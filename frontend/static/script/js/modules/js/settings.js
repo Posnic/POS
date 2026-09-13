@@ -1,6 +1,47 @@
 PosnicPro.settings = {
     /* which reference lists have been fetched this session */
     _refLoaded: {},
+
+    /*
+     * ORDERS PER TABLE: one number, typed through two controls.
+     *
+     * The setting is a single integer - 1 for one order per table, 0 for no
+     * limit, N for at most N - because that is what the server enforces and
+     * what a count is compared against. A dropdown plus a number box is only
+     * a way of typing it that does not ask a shopkeeper to know that zero
+     * means unlimited.
+     */
+    showTableOrderLimit: function (value) {
+        var n = parseInt(value, 10);
+        if (isNaN(n) || n < 0) { n = 1; }
+        var mode = n === 0 ? '0' : (n === 1 ? '1' : 'max');
+        $('#table_order_limit_mode').val(mode);
+        /* Keep the box at something usable even when it is hidden: a shop
+           that switches to "at most this many" should not find a 1 in a box
+           whose own minimum is 2. */
+        $('#table_order_limit_max').val(String(n > 1 ? n : 2));
+        PosnicPro.settings.tableOrderLimitMode();
+    },
+
+    /** Show or hide the number box. The value itself is read at save time by
+        tableOrderLimitValue, so there is nothing here to keep in step. */
+    tableOrderLimitMode: function () {
+        $('#table_order_limit_max_wrap').toggle($('#table_order_limit_mode').val() === 'max');
+    },
+
+    /** The number that is actually saved. Always a string, like every other
+        field in the settings payload. */
+    tableOrderLimitValue: function () {
+        var mode = $('#table_order_limit_mode').val();
+        if (mode === '0') { return '0'; }
+        if (mode === '1') { return '1'; }
+        var n = parseInt($('#table_order_limit_max').val(), 10);
+        /* A blank or nonsense box must not save as "no limit", which is what
+           parseInt('') || 0 would have done. Two is the smallest number that
+           means anything under "at most this many". */
+        if (isNaN(n) || n < 2) { n = 2; }
+        return String(Math.min(n, 99));
+    },
     store_telephone: null,
     /*
      * #/settings/<x> serves two callers: a 24-hex Mongo id is a recycle-bin
@@ -472,6 +513,10 @@ PosnicPro.settings = {
            alone never fires on the way in - the switches would sit at their
            markup default and disagree with what is stored. */
         PosnicPro.settings.loadSharing();
+        /* Which tills may print this shop's bills. Guarded because the module
+           is only on the pages that carry the card, and a settings page that
+           throws here would stop drawing everything after it. */
+        if (PosnicPro.printTills) PosnicPro.printTills.render();
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {
@@ -857,6 +902,13 @@ PosnicPro.settings = {
                 $('#hardware_weight_machine_enable').prop('checked', data.hardware_weight_machine_enable === true);
                 $('#till_lock_enable').prop('checked', data.till_lock_enable === true);
                 $('#till_lock_idle_minutes').val(String(data.till_lock_idle_minutes || 0));
+                /*
+                 * `?? 1`, NOT `|| 1`. Zero is a real answer here - it means no
+                 * limit - and `||` would quietly turn a shop that deliberately
+                 * allows any number of orders per table back into a shop that
+                 * allows one, every time this screen loaded.
+                 */
+                PosnicPro.settings.showTableOrderLimit(data.table_order_limit ?? 1);
                 $('#staff_shifts_enable').prop('checked', data.staff_shifts_enable !== false);
                 $('#staff_tips_enable').prop('checked', data.staff_tips_enable === true);
                 $('#staff_roster_enable').prop('checked', data.staff_roster_enable !== false);
@@ -892,6 +944,7 @@ PosnicPro.settings = {
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
                     till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
+                    table_order_limit: data.table_order_limit ?? 1,
                     staff_shifts_enable: data.staff_shifts_enable !== false,
                     staff_tips_enable: data.staff_tips_enable === true,
                     staff_roster_enable: data.staff_roster_enable !== false,
@@ -1031,6 +1084,9 @@ if ($wrapper.length) {
                 $('#payment_cod').prop('checked', payment_cod);
                 $('#payment_razorpay').prop('checked', payment_razorpay);
                 $('#payment_number').prop('checked', payment_number);
+                /* Where a UPI payment goes. Text, not a switch. */
+                $('#payment_upi_id').val(kioskData.payment_upi_id || '');
+                $('#payment_upi_name').val(kioskData.payment_upi_name || '');
 
                 /*
                  * DEFERRED, not loaded. These previews live in a pane most
@@ -2046,6 +2102,7 @@ if ($wrapper.length) {
                 hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                 till_lock_enable: $('#till_lock_enable').is(':checked') ? 'true' : 'false',
                 till_lock_idle_minutes: $('#till_lock_idle_minutes').val() || '0',
+                table_order_limit: PosnicPro.settings.tableOrderLimitValue(),
                 staff_shifts_enable: $('#staff_shifts_enable').is(':checked') ? 'true' : 'false',
                 staff_tips_enable: $('#staff_tips_enable').is(':checked') ? 'true' : 'false',
                 staff_roster_enable: $('#staff_roster_enable').is(':checked') ? 'true' : 'false',
@@ -2176,6 +2233,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                     till_lock_enable: $('#till_lock_enable').is(':checked'),
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
+                    table_order_limit: parseInt(PosnicPro.settings.tableOrderLimitValue(), 10),
                     staff_shifts_enable: $('#staff_shifts_enable').is(':checked'),
                     staff_tips_enable: $('#staff_tips_enable').is(':checked'),
                     staff_roster_enable: $('#staff_roster_enable').is(':checked'),
@@ -4990,6 +5048,11 @@ $('#kiosk_payment_form').on('submit', function (e) {
         const id = $(this).attr('id'); // like 'payment_cod' or 'payment_razorpay', or 'payment_number'
         paymentParams[id] = $(this).is(':checked');
     });
+    /* The payee, which is typed rather than ticked: the loop above reads
+       checkboxes, and Boolean('name@bank') is simply true. */
+    paymentParams.payment_upi_id = $('#payment_upi_id').val() || '';
+    paymentParams.payment_upi_name = $('#payment_upi_name').val() || '';
+
     var params = {
         url: 'setting/kioskPayment', // change to your endpoint
         data: JSON.stringify(paymentParams)
@@ -5639,7 +5702,7 @@ PosnicPro.features = {
         ['module_cashbook_enable', 'Cash book', 'Expenses and cash movements beside sales.'],
         ['quick_sale_enable', 'Quick sale', 'Type an amount, take payment - the busy-counter pad on the sale screen.'],
         ['module_recyclebin_enable', 'Recycle bin', 'Deleted records are kept and restorable.'],
-        ['module_demo_data_enable', 'Demo data', 'Sample products, sales and people to try the till with. Off removes them (it asks first).'],
+        ['module_demo_data_enable', 'Demo data', 'Sample products, sales, purchases and people to try the till with. Off removes the samples and nothing of your own (it asks first).'],
         ['module_themes_enable', 'Themes', 'Change how the till looks.']
     ],
     _blob: function () {
@@ -7532,10 +7595,16 @@ PosnicPro.settings.demoPacks = {
     _loaded: false,
 
     /*
-     * Loaded when the page is opened, not at boot: this list is needed by one
-     * screen that most shops never visit, and a request at boot is a request
-     * on the critical path to a first sale.
+     * Remove the samples, from the page somebody is already on.
+     *
+     * One implementation, in the shell: this is offered from three places now
+     * - here, the line every page carries, and the dashboard card - and three
+     * copies of a deletion is three things to keep in step.
      */
+    removeAll: function () {
+        PosnicPro.demoSamples.remove();
+    },
+
     load: function () {
         var self = PosnicPro.settings.demoPacks;
         if (self._loaded) { self.paint(); return; }
@@ -7710,6 +7779,9 @@ $(document).on('change', '#demo_pack_choice', function () {
 $(document).on('click', '#demo_pack_install', function () {
     PosnicPro.settings.demoPacks.install();
 });
+$(document).on('click', '#demo_remove_all', function () {
+    PosnicPro.settings.demoPacks.removeAll();
+});
 $(document).on('click', '#demo_pack_reset', function () {
     PosnicPro.settings.demoPacks.reset();
 });
@@ -7801,7 +7873,8 @@ PosnicPro.settings.suggestPartner = function (checkbox) {
 PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     swal({
         title: PosnicPro.i18n.t('lang_switch_off_demo_data_and_remove_the_sample', 'Switch off Demo Data and remove the samples?'),
-        text: 'The sample records created for the demo - products, sales, quotes, customers and suppliers - will be removed. Anything you have edited, sold or received yourself is kept.',
+        text: 'The sample records created for the demo - products, sales, purchases, quotes, customers and suppliers - will be removed. '
+            + 'Nothing you created yourself is removed: your own products, sales and purchases stay, and any sample you have edited, sold or received is kept.',
         showCancelButton: true,
         confirmButtonClass: 'btn btn-danger',
         cancelButtonClass: 'btn btn-light m-l-10',
@@ -7965,7 +8038,65 @@ PosnicPro.settings.voice = {
            without being added here hides the field it depends on instead of
            silently showing one for a provider that has no use for it. */
         var paid = ['openai', 'google', 'deepgram', 'assembly'];
-        $('#voice_key_row').toggle(paid.indexOf($('#voice_provider').val() || '') !== -1);
+        var needsKey = paid.indexOf($('#voice_provider').val() || '') !== -1;
+        var onFile = PosnicPro.settings.voice._onFile === true && !PosnicPro.settings.voice._editing;
+        /* A saved key folds the box away and shows the card instead; the two
+           are never both up, and neither is up for a provider with no use
+           for a key. */
+        $('#voice_key_saved').toggle(needsKey && onFile);
+        $('#voice_key_row').toggle(needsKey && !onFile);
+    },
+
+    /* Must match CLEAR_SECRET in api/src/services/settings-groups.js: an
+       empty value means "leave the saved one alone", so removal has to be
+       said out loud. */
+    CLEAR_SECRET: '__posnic_clear__',
+    _onFile: false,
+    _editing: false,
+
+    /* Which provider the saved key belongs to, in the words of the dropdown,
+       so the card says what it is a key FOR. */
+    _providerWords: function () {
+        var chosen = $('#voice_provider').val() || '';
+        var label = $('#voice_provider option[value="' + chosen + '"]').text() || chosen;
+        return String(label).split(' - ')[0].trim();
+    },
+
+    edit: function () {
+        PosnicPro.settings.voice._editing = true;
+        PosnicPro.settings.voice.syncKeyRow();
+        $('#voice_api_key').val('').focus();
+    },
+
+    removeKey: function () {
+        /* Asked the way the AI card asks, with the same dialog: there is no
+           PosnicPro.confirm, and a call to a helper nobody wrote is a button
+           that quietly does nothing. */
+        swal({
+            title: PosnicPro.i18n.t('lang_int_voice_key_remove_q', 'Remove the saved key?'),
+            text: PosnicPro.i18n.t('lang_int_voice_key_remove_text', 'Handsets fall back to the phone\'s own recognition until a new key is saved. Your provider account is not touched.'),
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-danger',
+            cancelButtonClass: 'btn btn-secondary m-l-10',
+            confirmButtonText: PosnicPro.i18n.t('lang_ai_key_remove', 'Remove'),
+            cancelButtonText: PosnicPro.i18n.t('lang_cancel', 'Cancel')
+        }).then(function () {
+            PosnicPro.put({
+                url: 'settings/group/secrets',
+                data: JSON.stringify({ voice_api_key: PosnicPro.settings.voice.CLEAR_SECRET })
+            }, function (response) {
+                if (response.type !== 'success') {
+                    PosnicPro.alert(response.type, response.message);
+                    return;
+                }
+                PosnicPro.settings.voice._onFile = false;
+                PosnicPro.settings.voice._editing = false;
+                PosnicPro.settings.voice.syncKeyRow();
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_int_voice_key_removed', 'The key is removed.'));
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_voice_key', 'Could not save the voice key'));
+            });
+        });
     },
 
     load: function () {
@@ -7981,10 +8112,14 @@ PosnicPro.settings.voice = {
         PosnicPro.get({ url: 'settings/group/secrets' }, function (response) {
             if (response.type !== 'success' || !response.data) { return; }
             var saved = (response.data.configured || {}).voice_api_key === true;
+            PosnicPro.settings.voice._onFile = saved;
+            PosnicPro.settings.voice._editing = false;
+            $('#voice_key_provider').text(PosnicPro.settings.voice._providerWords());
+            PosnicPro.settings.voice.syncKeyRow();
             $('#voice_api_key').attr('placeholder', saved
                 ? PosnicPro.i18n.t('lang_int_voice_key_saved', 'A key is saved. Type a new one to replace it.')
                 : PosnicPro.i18n.t('lang_paste_the_key_from_your_provider', 'Paste the key from your provider'));
-        }, function () { /* the placeholder is a courtesy, not the feature */ });
+        }, function () { /* the card is a courtesy, not the feature */ });
 
         $('#voice_saved_note').hide();
     },
@@ -8020,6 +8155,9 @@ PosnicPro.settings.voice = {
                 if (second.type === 'success') {
                     $('#voice_saved_note').show();
                     $('#voice_api_key').val('');
+                    /* Folded away again: the save has to look like something
+                       happened, which was the whole complaint. */
+                    PosnicPro.settings.voice._editing = false;
                     PosnicPro.settings.voice.load();
                 } else {
                     PosnicPro.alert(second.type, second.message);
@@ -8038,7 +8176,14 @@ $(document).on('shown.bs.tab', 'a[href="#captainvoice-line"]', function () {
     PosnicPro.settings.voice.load();
 });
 $(document).on('change', '#voice_provider', function () {
+    $('#voice_key_provider').text(PosnicPro.settings.voice._providerWords());
     PosnicPro.settings.voice.syncKeyRow();
+});
+$(document).on('click', '#voice_key_edit', function () {
+    PosnicPro.settings.voice.edit();
+});
+$(document).on('click', '#voice_key_remove', function () {
+    PosnicPro.settings.voice.removeKey();
 });
 $(document).on('click', '#voice_save', function () {
     PosnicPro.settings.voice.save();
@@ -8331,6 +8476,17 @@ PosnicPro.salesChannels = {
                the survivable direction. */
             var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
             $("#online_order_approval").val(approval);
+            /*
+             * How long a customer may still change what they ordered.
+             *
+             * An unset shop is thirty seconds, which is what the server falls
+             * back to; a stored value that is not one of the offered lengths
+             * is shown as the nearest one rather than blanking the box and
+             * silently rewriting the shop's choice on the next save.
+             */
+            $("#online_order_change_seconds").val(
+                PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
+            );
             /* Serving periods are NOT drawn here any more - they moved to the
                Restaurant page. Rendering them into markup that no longer
                exists is harmless; COLLECTING them from it is not, which is
@@ -8424,7 +8580,7 @@ PosnicPro.salesChannels = {
             };
         });
 
-        return {
+        var out = {
             /*
              * sales_channels_enabled is DELIBERATELY ABSENT, for exactly the
              * reason menu_dayparts is below.
@@ -8454,6 +8610,43 @@ PosnicPro.salesChannels = {
             channel_charges: charges,
             online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
         };
+
+        /*
+         * The window, ONLY when the box on screen actually holds one.
+         *
+         * An empty select reads as 0, and 0 means "no changes after
+         * ordering". Sending that from a screen that never loaded would
+         * switch the feature off for a shop that never touched it, with a
+         * green toast on top. The group endpoint writes only what it is
+         * given, so leaving the key out keeps the stored value safe.
+         */
+        var window_ = $("#online_order_change_seconds").val();
+        if (window_ !== undefined && window_ !== null && String(window_) !== '') {
+            out.online_order_change_seconds = Number(window_);
+        }
+        return out;
+    },
+
+    /*
+     * The offered length closest to what is stored.
+     *
+     * A shop whose value was set by hand, or by an older build, must not have
+     * it quietly rewritten to 30 the next time somebody saves this page for
+     * an unrelated reason.
+     */
+    nearestWindow: function (stored) {
+        var offered = [0, 30, 60, 120, 300, 600, 900];
+        /* An unset shop is one minute, which is what the server falls back
+           to; the two must agree or the screen shows a shop a window it does
+           not have. */
+        if (stored === undefined || stored === null || String(stored).trim() === '') return '60';
+        var want = Math.round(Number(stored));
+        if (!isFinite(want) || want < 0) return '60';
+        var best = offered[0];
+        offered.forEach(function (one) {
+            if (Math.abs(one - want) < Math.abs(best - want)) best = one;
+        });
+        return String(best);
     },
 
     /**

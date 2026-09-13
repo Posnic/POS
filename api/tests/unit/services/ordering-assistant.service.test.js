@@ -261,6 +261,12 @@ describe('ordering-assistant.service', () => {
         { way: 'delivery', means: 'delivery', fee: 30, fee_waived_from: 500, minimum_order: 200 },
       ]);
       expect(JSON.stringify(facts)).not.toContain('M123');
+      /* What time it is where the SHOP is, so a four o'clock order can be
+         offered a cold drink and a late one cannot. Owner: "if user order
+         something in after noon ... inform we have cool drinks, fresh juice
+         and mojito like that." */
+      expect(facts.part_of_day).toMatch(/morning|afternoon|evening|late night/);
+      expect(facts.now).toMatch(/^\w+ \d{2}:\d{2}$/);
 
       const room = assistant.shopFacts({
         store: {},
@@ -276,11 +282,78 @@ describe('ordering-assistant.service', () => {
       expect(room.status).toBeUndefined();
     });
 
+    test("the clock is the shop's own, and the parts of the day are named", () => {
+      /* Midday UTC is half past five in the evening in Kolkata and half past
+         seven in the morning in New York: the kitchen's afternoon, not the
+         server's. */
+      const noonUtc = new Date('2026-09-12T12:00:00.000Z');
+      expect(assistant.clockAt('Asia/Kolkata', noonUtc)).toEqual({
+        day: 'Saturday',
+        time: '17:30',
+        part: 'evening',
+      });
+      expect(assistant.clockAt('America/New_York', noonUtc)).toMatchObject({
+        time: '08:00',
+        part: 'morning',
+      });
+      /* A time zone nobody recognises still answers with a part of the day. */
+      expect(assistant.clockAt('Mars/Olympus', noonUtc).part).toMatch(
+        /morning|afternoon|evening|late night/
+      );
+      expect([10, 13, 18, 23].map(assistant.partOfDay)).toEqual([
+        'morning',
+        'afternoon',
+        'evening',
+        'late night',
+      ]);
+    });
+
     test('the menu splits into what can be ordered and the names of what cannot', () => {
       const { open, off } = assistant.splitMenu(assistant.menuFor(MENU));
       expect(open.map((i) => i.id)).not.toContain('b1');
       expect(open.every((i) => i.available === undefined)).toBe(true);
       expect(off).toEqual(['Masala Dosa']);
+    });
+
+    test('a model that cannot see is not sent pictures, and prose is capped', () => {
+      /*
+       * Owner: "actually charging for this conversation from openai too much.
+       * few conversatin goes up to 1usd."
+       *
+       * On the live voice line this menu is re-billed as context every time
+       * the assistant opens its mouth, and it was carrying image URLs and a
+       * photos array - 3,464 characters of them on the 31-dish sandbox menu -
+       * to something that cannot see and will never say a URL.
+       *
+       * What earns its place stays: the description answers "what is in it?"
+       * and goes_with is where the cross-selling suggestion comes from.
+       */
+      const source = {
+        id: 'd1',
+        name: 'Masala Dosa',
+        price: 120,
+        available: true,
+        image: '/uploads/demo/dosa.jpg',
+        photos: ['/uploads/a.jpg', '/uploads/b.jpg'],
+        icon: '🥞',
+        description: 'x'.repeat(400),
+        goes_with: ['d2'],
+        category_name: 'Breakfast',
+      };
+      const { open } = assistant.splitMenu([source]);
+      const dish = open[0];
+      for (const blind of ['image', 'photos', 'icon']) {
+        expect(dish[blind]).toBeUndefined();
+      }
+      expect(dish.description).toHaveLength(120);
+      expect(dish.goes_with).toEqual(['d2']);
+      expect(dish).toMatchObject({ id: 'd1', name: 'Masala Dosa', price: 120 });
+      /* And the CALLER's object is untouched. The storefront hands these same
+         objects to the page, which very much does want the pictures; trimming
+         them in place would strip the images off the customer's menu. */
+      expect(source.image).toBe('/uploads/demo/dosa.jpg');
+      expect(source.photos).toHaveLength(2);
+      expect(source.description).toHaveLength(400);
     });
 
     test('the typed brief carries the two lists and the facts, and the rules name them', async () => {

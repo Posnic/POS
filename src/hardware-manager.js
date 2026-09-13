@@ -6,6 +6,13 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const rawPrintService = require('./raw-print-service');
+
+/* How long the printer list may be remembered. Long enough that a receipt
+   never pays the spooler for it, short enough that a printer plugged in
+   during service turns up on its own. Measured at about two seconds per
+   enumeration on a till with eight queues installed. */
+const LIST_CACHE_MS = 15000;
 
 class HardwareManager {
   constructor() {
@@ -335,7 +342,32 @@ class HardwareManager {
     return { connected: false };
   }
 
-  async listPrinters() {
+  /*
+   * THE PRINTER LIST, WHICH IS NOT FREE.
+   *
+   * getPrintersAsync goes to the Windows spooler and asks every installed
+   * queue about itself. Measured on a machine with eight printers installed -
+   * two thermal, a fax, an XPS writer, a PDF writer, a label printer - it
+   * takes about two seconds, and it was being paid on the way to the paper: a
+   * receipt with no chosen printer asks for the default, the default comes
+   * from this list, and nothing cached it.
+   *
+   * Fifteen seconds of memory takes that off every print without making the
+   * list stale to a person. Anyone CHOOSING a printer asks for a fresh one,
+   * because somebody who has just plugged a printer in is standing there
+   * waiting for it to appear.
+   */
+  async listPrinters({ fresh = false } = {}) {
+    const now = Date.now();
+    if (!fresh && this._printerCache && now - this._printerCache.at < LIST_CACHE_MS) {
+      return this._printerCache.list;
+    }
+    const list = await this._listPrintersUncached();
+    this._printerCache = { at: now, list };
+    return list;
+  }
+
+  async _listPrintersUncached() {
     try {
       const { webContents } = require('electron');
       
@@ -383,10 +415,16 @@ class HardwareManager {
 
     const requested = String(printerName).trim();
     if (!requested) return '';
-    if (requested.toUpperCase() === 'POS-80C') {
-      console.warn('Ignoring stale POS-80C printer fallback; using Windows default printer');
-      return '';
-    }
+    /*
+     * POS-80C used to be discarded here and replaced by the Windows default.
+     * It is the factory name on most generic 80mm units, so a shop whose
+     * printer is genuinely called that could not address it by name: the job
+     * went somewhere else and a console warning was the only trace. The same
+     * rewrite was found and removed from the kitchen path, and
+     * tests/printer-targets.test.js has pinned it gone there ever since. It
+     * was left here, on the path that prints A4 receipts, reports and the
+     * drawer kick.
+     */
 
     const printers = await this.listPrinters();
     const normalized = requested.toLowerCase();
@@ -868,6 +906,23 @@ try {
       const tmpBin = path.join(rawTempDir, 'receipt.bin');
       const tmpPs1 = path.join(rawTempDir, 'print.ps1');
       fs.writeFileSync(tmpBin, buffer, { mode: 0o600, flag: 'wx' });
+
+      /*
+       * THE WARM HELPER FIRST.
+       *
+       * Starting PowerShell and compiling the interop class costs 350 to
+       * 550 ms on a real till, and it was paid on every copy of every
+       * receipt. src/raw-print-service.js keeps one alive and answers a job
+       * in under a millisecond. If it cannot be used - it would not start,
+       * it stopped, this is not Windows - it says so rather than failing the
+       * print, and the original per-job spawn below runs unchanged.
+       */
+      const warm = await rawPrintService.send({ printer: printerName, file: tmpBin, doc: docName });
+      if (!warm.unavailable) {
+        if (warm.success) return { success: true, bytes: buffer.length };
+        return { success: false, error: warm.error || 'The spooler did not confirm the job' };
+      }
+      console.warn('[Print] the warm print helper is unavailable; starting one PowerShell for this job');
 
       const safePrinter = String(printerName).replace(/'/g, "''");
       const safeBin = tmpBin.replace(/\\/g, '\\\\');

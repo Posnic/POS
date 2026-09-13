@@ -243,6 +243,44 @@ async function main() {
     }
   }
 
+  /* ---- the ordering page, which is most of what this box is for --------
+   *
+   * seed.js has never done this, so a sandbox rebuilt from scratch came up
+   * with no store address: /online-ordering answered "none_configured" and
+   * every QR link 404'd. It went unnoticed because the nightly reset usually
+   * RESTORES a snapshot, where the address was already set by hand.
+   *
+   * The address is FIXED rather than generated. It is printed in QR codes,
+   * pasted into messages and typed into phones, and one that changes on
+   * every rebuild breaks every one of them - which is exactly what happened
+   * when it went ABC123, then FJ5AF, then ABC.
+   */
+  const STORE_ADDRESS = process.env.SEED_STORE_ADDRESS || 'ABC';
+  {
+    const branches = db.collection('branches');
+    const shop = await branches.findOne({});
+    if (shop && !(shop.online_ordering && shop.online_ordering.store_id)) {
+      const onlineOrdering = require(
+        path.join(APP_DIR, 'api', 'src', 'utils', 'online-ordering.js')
+      );
+      await branches.updateOne(
+        { _id: shop._id },
+        {
+          $set: {
+            online_ordering: {
+              ...onlineOrdering.defaultConfig(),
+              store_id: STORE_ADDRESS,
+              branch_id: shop._id,
+            },
+          },
+        }
+      );
+      say('online ordering: on, at /order/' + STORE_ADDRESS);
+    } else if (shop) {
+      say('online ordering: already at /order/' + shop.online_ordering.store_id);
+    }
+  }
+
   /* ---- what is actually in there --------------------------------------- */
 
   const counts = {};

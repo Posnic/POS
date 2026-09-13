@@ -153,6 +153,10 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 router.post('/aiDescription', bindController(itemsController.aiDescription));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
 router.get('/aiSpend', bindController(itemsController.aiSpend));
+// GET /api/items/aiVoiceCalls - the last few live voice calls with what was
+// said on each. The audio goes phone to provider, so this is the only view
+// of a call the shop has; the page hands the lines over with the meter tick.
+router.get('/aiVoiceCalls', bindController(itemsController.aiVoiceCalls));
 
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
@@ -178,6 +182,11 @@ router.post('/demo', bindController(itemsController.reseedDemoData));
 // matches in order, and a parameterised sibling added later would otherwise
 // swallow this path and answer it with the wrong handler.
 router.get('/demo/packs', bindController(itemsController.listDemoPacks));
+
+// GET /api/items/demo/status - whether samples are still here and how many of
+// each. What the dashboard card and the sample-data line on every page are
+// both drawn from, so neither says anything once the samples are gone.
+router.get('/demo/status', bindController(itemsController.demoStatus));
 
 // Raise/lower prices across many items at once; and a per-item price history.
 // V1 variant families: all-or-nothing creation of linked variant items,

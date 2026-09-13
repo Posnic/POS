@@ -6950,6 +6950,90 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * THE PRINT QUEUE, as a till sees it.
+   *
+   * Two calls: take whatever is waiting for me, and say what happened to it.
+   * Identical whether the till is asking its own localhost API or the shop's
+   * cloud one - which is the entire point of the queue existing.
+   */
+  /**
+   * A till asking "anything for me?".
+   *
+   * Two things beyond the claim itself, both of them about the cloud case:
+   *
+   * THE ANSWER CARRIES THE PACE. Owner: "should not give so much load to cloud
+   * also... polling should happen only when app connected and logged in
+   * corrently acitve." The till cannot know whether a waiter has the app open;
+   * this side can. So the server tells it when to come back - five seconds
+   * while somebody is working the floor, a minute when nobody is - and the
+   * whole estate can be re-paced by editing helpers/print-pace.js, with no new
+   * desktop build for anybody.
+   *
+   * AND A CLAIM MAY BE HELD OPEN. When the floor IS active and there is
+   * nothing to hand over yet, the request waits up to twenty seconds for one
+   * rather than answering empty. That is FEWER requests than a five second
+   * poll and the bill comes out the moment it is asked for instead of on the
+   * next tick. A shop with nobody working is answered at once and told to come
+   * back in a minute, so an empty restaurant costs one request a minute.
+   */
+  async claimPrintJobs(req, res) {
+    try {
+      const { claimPrintJobs } = require('../repositories/print-job.repository');
+      const { pacingFor, waitForJob, worthHolding } = require('../helpers/print-pace');
+
+      const ask = {
+        branchId: req.body.branchId,
+        tillId: req.body.tillId || req.body.till_id || '',
+        kind: req.body.kind || 'bill',
+        limit: req.body.limit,
+      };
+
+      let out = await claimPrintJobs(ask);
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+      }
+
+      /*
+       * HOLD, BUT ONLY WHEN SOMEBODY IS WORKING.
+       *
+       * An idle shop is answered immediately and told to come back in a
+       * minute: holding a socket open for a restaurant that is closed is the
+       * waste the owner is objecting to. A shop with a waiter on the floor is
+       * held, because that is the one case where a bill might arrive in the
+       * next few seconds and waiting for it beats asking again for it.
+       */
+      const waitAsked = req.body.wait === true || req.body.wait === 'true';
+      if (waitAsked && !(out.data || []).length && worthHolding(ask.branchId)) {
+        const arrived = await waitForJob(ask.branchId);
+        if (arrived) out = await claimPrintJobs(ask);
+      }
+
+      const jobs = this.mongoDateFilter(this.mongoIDFilter(out.data || []));
+      return this.success(res, { jobs, poll: pacingFor(ask.branchId, jobs.length) }, 'success');
+    } catch (error) {
+      console.error('Error in claimPrintJobs:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  async finishPrintJob(req, res) {
+    try {
+      const { finishPrintJob } = require('../repositories/print-job.repository');
+      const out = await finishPrintJob(req.body.id || req.body.jobId, {
+        ok: req.body.ok !== false,
+        error: req.body.error || '',
+      });
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      return this.success(res, out.data, 'success');
+    } catch (error) {
+      console.error('Error in finishPrintJob:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /** What the till still owes the counter, read by the till itself. */
   async pendingBillPrints(req, res) {
     try {
@@ -7733,6 +7817,23 @@ class SalesController extends BaseController {
           data: [],
         });
       }
+
+      /*
+       * SOMEBODY IS WORKING THIS FLOOR.
+       *
+       * Owner: "polling should happen only when app connected and logged in
+       * corrently acitve. otherwise there is no app and no one going to give
+       * anything then its waste of time polling stuff."
+       *
+       * This is the signal that makes that possible. A handset asks for this
+       * list every few seconds for as long as a waiter has the app open, so
+       * noting the time here tells the till - which cannot know - whether the
+       * cloud is worth asking quickly or slowly. It costs a Map write.
+       *
+       * helpers/print-pace.js turns it into the pace, and claimPrintJobs sends
+       * that pace back with every answer.
+       */
+      require('../helpers/print-pace').seenOnTheFloor(branchId);
 
       // getTablesWithActiveOrders is in sales.service.js which is required as salesService
       const result = await salesService.getTablesWithActiveOrders(branchId);

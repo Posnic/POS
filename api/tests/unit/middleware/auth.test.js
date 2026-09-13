@@ -106,4 +106,37 @@ describe('middleware/auth', () => {
     const forwarded = next.mock.calls[0][0];
     expect(String(forwarded.message)).toMatch(/invalid token or user not found/i);
   });
+
+  /*
+   * The cookie outlives its token by six days. Left in place, the browser
+   * keeps sending it, every read is a 401, and the login page cannot get past
+   * the CSRF token bound to it. So a dead cookie is cleared as it is refused,
+   * and only the cookie: a bad Bearer header says nothing about the cookie.
+   */
+  test('an expired COOKIE is cleared as it is refused, by both guards', async () => {
+    const expired = new Error('jwt expired');
+    expired.name = 'TokenExpiredError';
+    jwt.verify.mockRejectedValue(expired);
+    const res = { clearCookie: jest.fn(), status: jest.fn().mockReturnThis(), json: jest.fn() };
+    await auth.auth({ headers: {}, cookies: { jwt: 'old' } }, res, jest.fn());
+    expect(res.clearCookie).toHaveBeenCalledWith('jwt', expect.any(Object));
+
+    const res2 = { clearCookie: jest.fn(), status: jest.fn().mockReturnThis(), json: jest.fn() };
+    await auth.protect({ headers: {}, cookies: { jwt: 'old' }, session: {} }, res2, jest.fn());
+    expect(res2.status).toHaveBeenCalledWith(401);
+    expect(res2.clearCookie).toHaveBeenCalledWith('jwt', expect.any(Object));
+  });
+
+  test('a bad Bearer header does not clear the cookie beside it', async () => {
+    const bad = new Error('jwt malformed');
+    bad.name = 'JsonWebTokenError';
+    jwt.verify.mockRejectedValue(bad);
+    const res = { clearCookie: jest.fn(), status: jest.fn().mockReturnThis(), json: jest.fn() };
+    await auth.auth(
+      { headers: { authorization: 'Bearer nonsense' }, cookies: { jwt: 'fine' } },
+      res,
+      jest.fn()
+    );
+    expect(res.clearCookie).not.toHaveBeenCalled();
+  });
 });

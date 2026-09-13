@@ -612,14 +612,29 @@ PosnicPro.kot = {
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group" style="gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
                                     ${discountButtonHtml}
+                                    <!--
+                                      THE BUTTON SAYS WHAT COMES OUT OF THE PRINTER.
+                                      "Sale Print" told nobody what it did, and the same action is
+                                      called Print Bill on the two list screens, so a shop learning
+                                      the till met three names for one thing. This is the paper the
+                                      waiter carries to the table before anybody pays. The paper
+                                      itself is headed TAX INVOICE where GST runs and BILL where it
+                                      does not; the button says Print Bill either way, because that
+                                      is the word every floor already uses for it.
+                                    -->
                                     <button type="button" class="btn btn-info" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')">
-                                        <i class="feather icon-printer"></i> Sale Print
+                                        <i class="feather icon-printer"></i> <lang class="lang_print_bill">Print Bill</lang>
                                     </button>
                                     <button type="button" class="btn kot-print-btn" style="background:#6f42c1; color:#fff; display:none;" onclick="PosnicPro.kot.printKOTSlip('${kot._id}')">
                                         <i class="feather icon-printer"></i> KOT Print
                                     </button>
+                                    <!--
+                                      And this one takes the money. "Settle" and "Settlement" were
+                                      both in use for it, neither of which says whether it prints,
+                                      pays, or closes the table.
+                                    -->
                                     <button type="button" class="btn btn-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')">
-                                        <i class="feather icon-credit-card"></i> Settle
+                                        <i class="feather icon-credit-card"></i> <lang class="lang_settlement">Take Payment</lang>
                                     </button>
                                 </div>
                             </div>
@@ -1547,10 +1562,10 @@ PosnicPro.kot = {
                         <a href="javascript:void(0);" class="btn btn-sm btn-warning-rgba mr-1" data-toggle="tooltip" title="Discount" data-t-title="lang_discount_title" onclick="PosnicPro.kot.showDiscount('${kot._id}')">
                             <i class="feather icon-percent"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-success-rgba mr-1" data-toggle="tooltip" title="Settlement" data-t-title="lang_settlement" onclick="PosnicPro.kothistory.proceed('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-success-rgba mr-1" data-toggle="tooltip" title="Take Payment" data-t-title="lang_settlement" onclick="PosnicPro.kothistory.proceed('${kot._id}')">
                             <i class="feather icon-arrow-right-circle"></i>
                         </a>
-                        <a href="javascript:void(0);" class="btn btn-sm btn-secondary-rgba mr-1" data-toggle="tooltip" title="Print" data-t-title="lang_printed" onclick="PosnicPro.kothistory.print('${kot._id}')">
+                        <a href="javascript:void(0);" class="btn btn-sm btn-secondary-rgba mr-1" data-toggle="tooltip" title="Print Bill" data-t-title="lang_print_bill" onclick="PosnicPro.kothistory.print('${kot._id}')">
                             <i class="feather icon-printer"></i>
                         </a>
                         <a href="javascript:void(0);" class="btn btn-sm btn-danger-rgba" data-toggle="tooltip" title="Cancel" data-t-title="lang_cancel_title" onclick="PosnicPro.kothistory.cancel('${kot._id}')">
@@ -1619,7 +1634,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-t-title="lang_view_kot" data-toggle="tooltip">
                                     <i class="feather icon-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-t-title="lang_settlement" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Take Payment" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
@@ -1695,7 +1710,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.viewKOT('${kot._id}')" title="View KOT" data-t-title="lang_view_kot" data-toggle="tooltip">
                                     <i class="feather icon-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Settlement" data-t-title="lang_settlement" data-toggle="tooltip">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Take Payment" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">

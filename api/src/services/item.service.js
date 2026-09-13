@@ -1359,6 +1359,22 @@ class ItemService {
    * which refuses anything sold, received or edited - and reports what it
    * kept by name.
    */
+  async demoStatus({ branchId, licenseId } = {}) {
+    try {
+      if (!branchId || !licenseId)
+        return { status: true, data: { on: false, counts: {}, total: 0 } };
+      const [{ counts, total }, on] = await Promise.all([
+        this.repository.demoCounts({ branchId, licenseId }),
+        require('./demo-data').isShown({ branchId, licenseId }),
+      ]);
+      return { status: true, data: { on, counts, total } };
+    } catch (error) {
+      console.error('Error in ItemService.demoStatus:', error);
+      /* A dashboard that cannot read this simply does not mention samples. */
+      return { status: true, data: { on: false, counts: {}, total: 0 } };
+    }
+  }
+
   async purgeDemoData({ branchId, licenseId, user } = {}) {
     try {
       if (!branchId || !licenseId) {

@@ -29,7 +29,7 @@ const context = { branchId: 'b1', licenseId: 'lic' };
 describe('voice-session.service', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  test('the brief carries how to speak, the fenced menu and the house notes, and the four tools', () => {
+  test('the brief carries how to speak, the fenced menu, the house notes and every tool', () => {
     const menu = assistant.menuFor(MENU);
     const brief = voice.instructionsFor(
       { store: { name: 'Azure Sea Foods', currency: '₹' } },
@@ -54,8 +54,39 @@ describe('voice-session.service', () => {
       'remove_from_order',
       'set_quantity',
       'show_order',
+      /* Everything this phone has ordered here, so the assistant can act on
+         an earlier order and not only the one it just placed. */
+      'show_order_history',
+      'change_placed_order',
+      'cancel_placed_order',
       'send_to_kitchen',
     ]);
+    /* An order that has already gone is the customer's to change or call off,
+       and calling it off takes their word for it. */
+    expect(voice.tools().find((t) => t.name === 'cancel_placed_order').parameters.required).toEqual(
+      ['confirmed']
+    );
+    /*
+     * Either may be told WHICH order, by EITHER number the customer holds -
+     * the token they were given or the bill number on their receipt, since
+     * they will quote whichever is in front of them. Optional, so the common
+     * case - "make it two" moments after ordering - stays one word.
+     */
+    ['change_placed_order', 'cancel_placed_order'].forEach((name) => {
+      const tool = voice.tools().find((t) => t.name === name);
+      expect(tool.parameters.properties.order_ref.type).toBe('string');
+      expect(tool.parameters.properties.order_ref.description).toMatch(/bill number/i);
+      expect(tool.parameters.required).not.toContain('order_ref');
+      /* The old name is gone: leaving both would let the model send a token
+         under a key nothing reads. */
+      expect(tool.parameters.properties.token).toBeUndefined();
+    });
+    expect(voice.tools().find((t) => t.name === 'show_order_history').description).toMatch(
+      /bill number/i
+    );
+    expect(voice.tools().find((t) => t.name === 'change_placed_order').parameters.required).toEqual(
+      ['items']
+    );
     /* Sending needs the customer's yes, and the brief says when to ask. */
     const send = voice.tools().find((t) => t.name === 'send_to_kitchen');
     expect(send.parameters.required).toEqual(['confirmed']);
@@ -65,8 +96,17 @@ describe('voice-session.service', () => {
       'pickup',
       'delivery',
     ]);
-    expect(voice.VOICE_SYSTEM).toContain('Shall I send it to the kitchen?');
-    expect(voice.VOICE_SYSTEM).toContain('Only on a clear yes call send_to_kitchen');
+    /* The manner the owner asked for: no totals, one offer alongside and no
+       second, then the one question, then go. */
+    expect(voice.VOICE_SYSTEM).toContain('Anything else, or shall I send it?');
+    expect(voice.VOICE_SYSTEM).toContain('OFFER SOMETHING ALONGSIDE ONCE');
+    /* And it does NOT read the order back. Owner: "in between english or
+       tamil full list of of line items? whats happenig. review not required
+       since we show the list." The list is on the screen the whole time. */
+    expect(voice.VOICE_SYSTEM).toContain('NEVER READ THE ORDER BACK');
+    expect(voice.VOICE_SYSTEM).not.toContain('Then say the order back');
+    expect(voice.VOICE_SYSTEM).toContain('call send_to_kitchen with confirmed:true');
+    expect(voice.VOICE_SYSTEM).toContain('everyday spoken Tamil');
     expect(voice.VOICE_SYSTEM).not.toContain('tell them to tap Review order');
     for (const tool of voice.tools()) expect(tool.type).toBe('function');
   });
@@ -237,6 +277,69 @@ describe('voice-session.service', () => {
       status: false,
       message: 'Live voice needs an OpenAI key',
       data: null,
+    });
+  });
+  /*
+   * THE ONE THE OWNER HAS SAID MOST OFTEN.
+   *
+   * "if its given as table then its bring to table only. not take away. dont
+   * ask question again. i told this 1000 time but u never hear that."
+   *
+   * The page has always sent the table. The brief never mentioned it, while a
+   * rule above told the model to ask how the food travels - so it asked, and
+   * a sticker on table thirty-four was overruled by a question.
+   */
+  describe('what the printed code already settled', () => {
+    test('a table means dine in, and the model is told not to ask', () => {
+      const said = voice.servicePointBrief({ service_point: { label: 'table 34' } }, {}).join(' ');
+      expect(said).toContain('table 34');
+      expect(said).toContain('NOT a takeaway');
+      expect(said).toMatch(/never ask whether they are eating in or taking away/i);
+      expect(said).toMatch(/never ask for the table number/i);
+      expect(said).toContain('dine_in');
+    });
+
+    test('a room at a venue is taken to the room, and is not a question either', () => {
+      const said = voice
+        .servicePointBrief(
+          {
+            service_point: {
+              venue: { unit: '123', unit_label: 'Room', name: 'Royal Club Hotel' },
+            },
+          },
+          {}
+        )
+        .join(' ');
+      expect(said).toContain('123');
+      expect(said).toContain('Royal Club Hotel');
+      expect(said).toMatch(/never ask/i);
+      expect(said).toContain('dine_in');
+    });
+
+    test('a takeaway code is settled the same way, in the other direction', () => {
+      const said = voice
+        .servicePointBrief({ service_point: {} }, { fulfilment: 'takeaway' })
+        .join(' ');
+      expect(said).toContain('takeaway');
+      expect(said).toMatch(/never ask whether they are eating in or taking away/i);
+    });
+
+    test('the plain shop code leaves it open, and says so rather than pretending', () => {
+      const said = voice.servicePointBrief({ service_point: {} }, {}).join(' ');
+      expect(said).toContain('not said');
+      expect(said).toContain('need_fulfilment');
+    });
+
+    test('the brief the model actually receives carries it', () => {
+      const brief = voice.instructionsFor(
+        { store: { name: 'Shop' }, service_point: { label: 'table 9' } },
+        [{ id: '1', name: 'Dosa', price: 40 }],
+        { on: true, liveVoice: true, instructions: '', greeting: '' },
+        'en',
+        {}
+      );
+      expect(brief).toContain('table 9');
+      expect(brief).toMatch(/never ask for the table number/i);
     });
   });
 });

@@ -2877,6 +2877,20 @@ PosnicPro = {
            feature's CONFIGURATION lives here, in its own entry - the same
            door for every feature, however many we grow. */
         $('#manage_li_demodata').toggle(on('module_demo_data_enable'));
+        /*
+         * And say so on every page while it is on. Hidden for the rest of
+         * the day per device once somebody has read it - the line is there to
+         * be noticed once, not to be argued with every time a page loads.
+         */
+        var samplesOn = on('module_demo_data_enable');
+        if (!samplesOn) {
+            PosnicPro.demoSamples._status = { on: false, total: 0, counts: {} };
+            $('#demo_data_bar,#demo_data_card').hide();
+        } else {
+            /* How many, before anything is said: a shop whose samples are all
+               gone but whose switch is still on is told nothing. */
+            PosnicPro.demoSamples.load();
+        }
         $('#manage_li_quotes').toggle(on('quotes_enable'));
         $('#manage_li_invoices').toggle(on('invoices_enable'));
         $('#manage_li_tillpin').toggle(s.till_lock_enable === true);
@@ -2938,11 +2952,29 @@ PosnicPro = {
                till that has not been reconfigured still prints exactly as it
                did, and one that has can send a counter copy and an office copy
                from the same sale. */
-            window.electronAPI.preferences.get('receipt_printers')
+            window.electronAPI.preferences.get('receipt_printers'),
+            /* Which printers the kitchen uses, so a receipt is never sent to
+               one of them by accident. Read here with the rest because the
+               print path is synchronous and cannot await in the middle of
+               building a receipt. */
+            (window.electronAPI.kot && window.electronAPI.kot.getConfig)
+                ? window.electronAPI.kot.getConfig().catch(function () { return null; })
+                : null
         ]).then(function (values) {
             if (values[0]) PosnicPro.local.set('receipt_printer', values[0]);
             if (values[1]) PosnicPro.local.set('print_width', values[1]);
             PosnicPro.local.set('receipt_printers', values[2] || '');
+            /* Lower-cased once here so the print path can compare without
+               doing any work: it runs while a customer is waiting. */
+            var kot = values[3] || {};
+            var kitchen = []
+                .concat(Array.isArray(kot.printerNames) ? kot.printerNames : [])
+                .concat(Array.isArray(kot.printers) ? kot.printers.map(function (t) {
+                    return t && typeof t === 'object' ? t.name : t;
+                }) : []);
+            PosnicPro._kitchenPrinters = kitchen
+                .map(function (n) { return String(n || '').trim().toLowerCase(); })
+                .filter(Boolean);
             return true;
         }).catch(function (e) {
             // Printing still works off whatever was mirrored last time.
@@ -3159,9 +3191,12 @@ PosnicPro = {
          * so ask Windows what its default is and use that, which is the
          * printer they have been printing to all along.
          */
+        var usedTheDefault = false;
         Promise.resolve(PosnicPro.resolveReceiptPrinter())
         .then(function (chosen) {
-            return chosen || window.electronAPI.printer.getDefault();
+            if (chosen) { return chosen; }
+            usedTheDefault = true;
+            return window.electronAPI.printer.getDefault();
         })
         .then(function (printerName) {
             // getDefault answers with the printer object, not its name.
@@ -3170,6 +3205,28 @@ PosnicPro = {
             }
             if (!printerName) {
                 throw new Error('No printer found. Choose one in Hardware Manager, Receipt Printer.');
+            }
+            /*
+             * A RECEIPT NEVER COMES OUT IN THE KITCHEN.
+             *
+             * Owner, on a two-printer restaurant: "receipt only send to
+             * Reception right. kitchen should receive only kot print."
+             *
+             * A till with no receipt printer chosen falls back to whatever
+             * Windows calls its default, and on a restaurant machine that is
+             * very often the kitchen roll. The customer's bill then comes out
+             * beside the cook with nothing on screen to explain it - which is
+             * exactly what happened on the test machine, where the Windows
+             * default was the kitchen printer.
+             *
+             * A printer this till already sends kitchen tickets to is, by
+             * definition, not the counter. Only the GUESS is refused: a shop
+             * that deliberately chose that printer for receipts is obeyed.
+             */
+            if (usedTheDefault && PosnicPro._kitchenPrinters
+                && PosnicPro._kitchenPrinters.indexOf(String(printerName).trim().toLowerCase()) !== -1) {
+                throw new Error('No receipt printer is set, and the Windows default is your kitchen printer. '
+                    + 'Choose one in Hardware Manager, Receipt Printer.');
             }
             // Auto-open the cash drawer on a sale if the shop enabled it in
             // Hardware Manager ("Auto-open on every sale"). The main process
@@ -5384,6 +5441,144 @@ $(function () { PosnicPro.injectReportExportButtons(); });
  * than the list.
  */
 PosnicPro.returnTo = '';
+/*
+ * SAMPLE DATA, WHEREVER YOU ARE STANDING.
+ *
+ * Owner: "some customer ping ask how to remove data. so remove data one
+ * dashboard or all pages might be helpful. should not annoy but it should be
+ * very useful."
+ *
+ * A link to a settings page is the answer to "where is the button", and the
+ * question underneath it is "how much of what I am looking at is not mine".
+ * So this reads the count once per visit and both surfaces draw from it: the
+ * dashboard card, which says what is there and removes it, and the one line
+ * every other page carries. Both stop saying anything the moment the total
+ * is zero, which is what keeps it from becoming noise.
+ *
+ * The removal itself lives here rather than in the settings screen, because
+ * a shop should be able to do it from wherever it noticed - and both doors
+ * then run the same guarded removal, which refuses anything edited, sold or
+ * received and names it back.
+ */
+PosnicPro.demoSamples = {
+    _status: null,
+    _asked: false,
+
+    /** Shown only while there is something to say. Never throws. */
+    load: function (done) {
+        var self = PosnicPro.demoSamples;
+        if (self._asked) { if (done) { done(self._status); } return; }
+        self._asked = true;
+        PosnicPro.get({ url: 'items/demo/status', data: '' }, function (response) {
+            self._status = (response && response.data) || { on: false, total: 0, counts: {} };
+            if (done) { done(self._status); }
+            self.paint();
+        }, function () {
+            /* No answer means no claim: a shop is never told it has samples
+               on the strength of a request that failed. */
+            self._status = { on: false, total: 0, counts: {} };
+            if (done) { done(self._status); }
+            self.paint();
+        });
+    },
+
+    /** Is there anything to say, and has it been quietened? */
+    showable: function () {
+        var s = PosnicPro.demoSamples._status;
+        if (!s || !s.on || !(Number(s.total) > 0)) { return false; }
+        try {
+            if (PosnicPro.local.get('demo_bar_hidden') === new Date().toDateString()) { return false; }
+        } catch (e) { /* private window: say it */ }
+        return true;
+    },
+
+    /*
+     * One line, or the card, never both. The dashboard's card says the same
+     * thing with the counts and the buttons, and a page that says it twice is
+     * the kind of nagging that gets a useful thing switched off.
+     */
+    paint: function () {
+        var show = PosnicPro.demoSamples.showable();
+        var onCard = show && $('#demo_data_card').is(':visible');
+        $('#demo_data_bar').toggle(show && !onCard);
+    },
+
+    /*
+     * Remove them, from wherever this was asked.
+     *
+     * The switch goes off FIRST and the removal second. A removal that fails
+     * after the switch is off leaves the samples hidden, which is what was
+     * asked for; a switch that fails after the removal leaves a shop looking
+     * at a feature that says the samples are on and a catalogue that no
+     * longer has them.
+     */
+    remove: function (done) {
+        swal({
+            title: PosnicPro.i18n.t('lang_demoremove_q', 'Remove the sample data?'),
+            text: PosnicPro.i18n.t('lang_demoremove_text',
+                'The sample products, sales, purchases, quotes, customers and suppliers go. '
+                + 'Nothing you created yourself is removed, and a sample you have edited, sold '
+                + 'or received is kept - it is your record now.'),
+            showCancelButton: true,
+            confirmButtonClass: 'btn btn-danger',
+            cancelButtonClass: 'btn btn-light m-l-10',
+            confirmButtonText: PosnicPro.i18n.t('lang_demoremove_button', 'Remove the sample data'),
+            cancelButtonText: PosnicPro.i18n.t('lang_keep_the_samples', 'Keep the samples')
+            /* SweetAlert v6 REJECTS on cancel; without the second handler a
+               declined question is an unhandled rejection. */
+        }).then(function () {
+            $('#demo_remove_all,#demo_data_bar_remove,#demo_card_remove').prop('disabled', true);
+            PosnicPro.put({
+                url: 'settings/group/features',
+                data: JSON.stringify({ module_demo_data_enable: false })
+            }, function () {
+                /* The settings screen keeps its own memory of the switch, so
+                   that a later save there does not ask to remove them again. */
+                if (PosnicPro.settings) { PosnicPro.settings._demoWasOn = false; }
+                $('#module_demo_data_enable').prop('checked', false);
+                PosnicPro.delete({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
+                    PosnicPro.demoSamples._done(response && response.message, response && response.type === 'success');
+                    if (done) { done(true, response); }
+                }, function (xhr) {
+                    var resp = {};
+                    try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
+                    var msg = resp.message || '';
+                    /* Nothing to remove is the outcome asked for, not a fault. */
+                    var harmless = /nothing|no sample|not found/i.test(msg);
+                    PosnicPro.demoSamples._done(harmless ? null : (msg || PosnicPro.i18n.t('lang_could_not_remove_the_sample_data', 'Could not remove the sample data')), harmless);
+                    if (done) { done(harmless, resp); }
+                });
+            }, function () {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_switch_sample_data_off', 'Could not switch sample data off'));
+                $('#demo_remove_all,#demo_data_bar_remove,#demo_card_remove').prop('disabled', false);
+                if (done) { done(false, null); }
+            });
+        }, function () { /* kept */ });
+    },
+
+    /* Gone: nothing left to say, anywhere, and the till forgets the samples
+       it had cached. */
+    _done: function (message, ok) {
+        PosnicPro.demoSamples._status = { on: false, total: 0, counts: {} };
+        $('#demo_data_bar,#demo_data_card').hide();
+        $('#demo_remove_all,#demo_data_bar_remove,#demo_card_remove').prop('disabled', false);
+        $('#demo_remove_status').text(message || '');
+        if (PosnicPro.sales && PosnicPro.sales.itemCache) { PosnicPro.sales.itemCache.clear(); }
+        if (message) { PosnicPro.alert(ok ? 'success' : 'error', message); }
+    }
+};
+
+/* Read once, quiet for the rest of the day on this device. */
+$(document).on('click', '#demo_data_bar_hide', function () {
+    try { PosnicPro.local.set('demo_bar_hidden', new Date().toDateString()); } catch (e) { /* private window */ }
+    $('#demo_data_bar').hide();
+});
+
+/* The same removal, from the line every page carries. */
+$(document).on('click', '#demo_data_bar_remove', function () {
+    PosnicPro.demoSamples.remove();
+});
+
 $(document).on('click', '[id^="last_created_"]', function () {
     PosnicPro.returnTo = currentHash || '';
 });

@@ -31,6 +31,9 @@
     <script src="assets/channel-state.js?v=20260912-design"></script>
     <script src="assets/service-point.js?v=20260912-design"></script>
     <script src="assets/shop-address.js?v=20260912-design"></script>
+    <!-- The bell an order makes when the kitchen takes it. Synthesised,
+         so there is no file to fetch and nothing for the CSP to allow. -->
+    <script src="assets/ting.js?v=20260912-design"></script>
     <script src="assets/kiosk-core.js?v=20260912-design"></script>
     <script src="indexedDB.js?v=20260912-design"></script>
 </head>
@@ -92,6 +95,14 @@
                     </div>
                     <!-- The other language, named in itself. Painted by i18n.js. -->
                     <button type="button" class="lang-toggle" data-lang-toggle hidden>தமிழ்</button>
+                    <!-- What this phone has ordered before, which is the only
+                         order history there can be without an account. -->
+                    <button type="button" class="icon-btn top-history" id="top-history" aria-label="Your orders" hidden>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 8v5l3 2"></path>
+                            <path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.5V3"></path>
+                        </svg>
+                    </button>
                     <!-- The order so far, as a glyph with the count on it. -->
                     <button type="button" class="icon-btn top-cart next-page" id="top-cart" aria-label="Your order">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -261,6 +272,34 @@
                 <span>Ask about the menu</span>
             </h2>
             <div class="assistant-log" id="assistant-log" role="log" aria-live="polite"></div>
+            <!-- While the customer is talking, the order itself stands in for a
+                 transcript nobody reads back. Owner: "no need to show
+                 conversation as text in the chat. just hide." -->
+            <div class="assistant-order" id="assistant-order" hidden>
+                <div class="assistant-order-head">
+                    <h3 class="assistant-order-title" id="assistant-order-title">Your order</h3>
+                    <!-- The customer works the top half by hand while the
+                         assistant listens at the bottom. Both at once, which
+                         is the point: it is a helper, not a turn-taker. -->
+                    <button type="button" class="assistant-add" id="assistant-add">
+                        <span aria-hidden="true">+</span>
+                        <span>Add item</span>
+                    </button>
+                </div>
+                <ul class="assistant-order-list" id="assistant-order-list"></ul>
+
+                <!--
+                    Things that go with it. A WRAPPED row, not a sideways
+                    scroller - owner: "cross selling i saw horrizontal scroll.
+                    not soo good." A row that scrolls hides most of itself and
+                    asks for a gesture nobody makes on a screen they are
+                    reading downwards.
+                -->
+                <div class="assistant-more" id="assistant-more" hidden>
+                    <h4 class="assistant-more-title">Anything else?</h4>
+                    <div class="assistant-more-row" id="assistant-more-row"></div>
+                </div>
+            </div>
             <!-- The voice in progress: what it is doing, and the way to stop. -->
             <div class="voice" id="voice" hidden>
                 <div class="voice-orb" id="voice-orb" data-state="" aria-hidden="true"></div>
@@ -290,12 +329,98 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"></path></svg>
                 </button>
             </form>
+            <!--
+                The order has gone. This is where the customer finds that out:
+                in the sheet they were just talking into, not on a screen the
+                page jumped to. A tick, then a pan with the steam coming off
+                it, then the token. Nothing moves until they tap Done.
+            -->
+            <div class="placed" id="assistant-placed" hidden>
+                <!--
+                    The order going to the kitchen, drawn: a docket flies to the
+                    hatch, the bell rings, and the scene settles into a pan with
+                    a flame under it. assets/assistant/kitchen-scene.js. Drawn
+                    rather than filmed so it takes the page's own colours, costs
+                    no download, and is sharp on any phone.
+                -->
+                <canvas class="placed-art" id="placed-art" width="280" height="170" aria-hidden="true"></canvas>
+                <p class="placed-said" id="placed-said" role="status">Sent to the kitchen</p>
+                <div class="placed-token">
+                    <span class="placed-token-label">Token</span>
+                    <span class="placed-token-number" id="placed-token">--</span>
+                </div>
+
+                <!--
+                    THE ORDER'S OWN SCREEN, which opens as the scene settles.
+                    Before this the confirmation stopped at a token and a Done
+                    button, so the conversation had been replaced by a dead
+                    end - the owner read it as having the call cut on him.
+                    From here the order can still be changed, added to, or
+                    called off, and the line stays up throughout.
+                -->
+                <div class="placed-order" id="placed-order" hidden>
+                    <div class="placed-order-head">
+                        <h3 class="placed-order-title">Your order</h3>
+                        <span class="placed-clock" id="placed-clock"></span>
+                    </div>
+                    <!-- Past the minute the plus and minus still work, but
+                         they ask the shop instead of changing it outright.
+                         Said here so nobody taps twice wondering why nothing
+                         moved. -->
+                    <p class="placed-mode" id="placed-mode" hidden></p>
+                    <ul class="placed-lines" id="placed-lines"></ul>
+
+                    <!-- Things that go with what they ordered. One row, tapped
+                         to add; never a catalogue, and never a second ask. -->
+                    <div class="placed-more" id="placed-more" hidden>
+                        <h4 class="placed-more-title">Anything else?</h4>
+                        <div class="placed-more-row" id="placed-more-row"></div>
+                    </div>
+
+                    <!--
+                        NOTHING LEAVES THE PHONE UNTIL THIS IS PRESSED. The
+                        plus and the minus move a number on this screen; this
+                        sends the whole edit in one request. Owner: "customer
+                        cant change in one touch. after changes. he need to
+                        review and click confirmation."
+                    -->
+                    <div class="placed-confirm-bar" id="placed-confirm-bar" hidden>
+                        <span class="placed-confirm-count" id="placed-confirm-count"></span>
+                        <div class="placed-confirm-row">
+                            <button type="button" class="placed-discard" id="placed-discard">Undo</button>
+                            <button type="button" class="placed-confirm" id="placed-confirm">Confirm the change</button>
+                        </div>
+                    </div>
+
+                    <div class="placed-actions">
+                        <button type="button" class="placed-cancel" id="placed-cancel">Cancel the order</button>
+                    </div>
+                </div>
+
+                <button type="button" class="placed-done" id="placed-done">Done</button>
+            </div>
             <!-- The way out of the conversation and into the order. The page's
                  own order bar sits under this sheet, so "tap Review order" needs
                  a button that is actually on screen. Shown once the order holds
                  something. -->
-            <button type="button" class="assistant-review" id="assistant-review" hidden>
-                <span>Review order</span>
+            <!--
+                The one thing this screen asks before it can send: how the
+                food travels. One tap, and only where the shop offers more
+                than one way and the code that was scanned did not settle it.
+            -->
+            <div class="assistant-ways" id="assistant-ways" hidden>
+                <h4 class="assistant-ways-title">How are you having it?</h4>
+                <div class="assistant-ways-row" id="assistant-ways-row"></div>
+            </div>
+
+            <!--
+                ONE BUTTON, NOT TWO. This used to say "Review order" and walk
+                the customer to the basket page to send it from there. The
+                review is now the minute AFTER it goes, when they are looking
+                at what the kitchen actually has - so this sends it.
+            -->
+            <button type="button" class="assistant-confirm" id="assistant-review" hidden>
+                <span>Confirm &amp; send</span>
                 <span class="assistant-review-sum" id="assistant-review-sum"></span>
             </button>
             <p class="assistant-foot">Answers come from this shop's menu. Please confirm allergies at the counter.</p>
@@ -303,7 +428,21 @@
     </dialog>
 
     <script src="assets/products/script.js?v=20260912-design"></script>
+    <!-- The docket flying to the hatch, the bell, and the pan settling over a
+         flame. It was written, styled and given a canvas in the sheet above -
+         and never loaded here, so window.KitchenScene did not exist and the
+         confirmation fell through to its no-canvas path: the bell rang, the
+         words changed, and nothing moved. Which is exactly what the owner
+         reported, twice: "i saw ting sound but never see anitmation".
+         Before script.js, which plays it. -->
+    <script src="assets/assistant/kitchen-scene.js?v=20260912-design"></script>
     <script src="assets/assistant/script.js?v=20260912-design"></script>
+    <!-- The orb follows the voice actually coming back, rather than
+         pulsing on a loop. Before voice.js, which hands it the stream. -->
+    <!-- Every event on the line, on the screen, when ?transcript=1 asks for
+         it. Loaded before voice.js, which reports into it. -->
+    <script src="assets/assistant/debug.js?v=20260912-design"></script>
+    <script src="assets/assistant/talking.js?v=20260912-design"></script>
     <script src="assets/assistant/voice.js?v=20260912-design"></script>
 </body>
 </html>

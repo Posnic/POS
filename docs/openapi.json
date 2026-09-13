@@ -6639,6 +6639,29 @@
         }
       }
     },
+    "/items/aiVoiceCalls": {
+      "get": {
+        "summary": "aiVoiceCalls",
+        "operationId": "get_items_aiVoiceCalls",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/items/exportItems": {
       "post": {
         "summary": "exportItems",
@@ -6735,6 +6758,29 @@
       "get": {
         "summary": "listDemoPacks",
         "operationId": "get_items_demo_packs",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/items/demo/status": {
+      "get": {
+        "summary": "demoStatus",
+        "operationId": "get_items_demo_status",
         "tags": [
           "Items"
         ],
@@ -8148,6 +8194,165 @@
           },
           {
             "name": "session",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/online-ordering/{storeId}/orders/lookup": {
+      "post": {
+        "summary": "readPlacedOrders",
+        "operationId": "post_online_ordering_storeId_orders_lookup",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/online-ordering/{storeId}/orders/{orderId}": {
+      "get": {
+        "summary": "readPlacedOrder",
+        "operationId": "get_online_ordering_storeId_orders_orderId",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/online-ordering/{storeId}/orders/{orderId}/items": {
+      "post": {
+        "summary": "changePlacedOrder",
+        "operationId": "post_online_ordering_storeId_orders_orderId_items",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/online-ordering/{storeId}/orders/{orderId}/cancel": {
+      "post": {
+        "summary": "cancelPlacedOrder",
+        "operationId": "post_online_ordering_storeId_orders_orderId_cancel",
+        "tags": [
+          "Online ordering"
+        ],
+        "parameters": [
+          {
+            "name": "storeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
             "in": "path",
             "required": true,
             "schema": {
@@ -10725,6 +10930,54 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/sales/claimPrintJobs": {
+      "post": {
+        "summary": "claimPrintJobs",
+        "operationId": "post_sales_claimPrintJobs",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/finishPrintJob": {
+      "post": {
+        "summary": "finishPrintJob",
+        "operationId": "post_sales_finishPrintJob",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/sales/markKitchenPrinted": {
       "post": {
         "summary": "markKitchenPrinted",
@@ -13242,6 +13495,84 @@
         "operationId": "get_settings_backupTable",
         "tags": [
           "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/settings/printTills": {
+      "get": {
+        "summary": "listPrintTills",
+        "operationId": "get_settings_printTills",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "allowPrintTill",
+        "operationId": "post_settings_printTills",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/settings/printTills/{id}": {
+      "delete": {
+        "summary": "forgetPrintTill",
+        "operationId": "delete_settings_printTills_id",
+        "tags": [
+          "Settings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {

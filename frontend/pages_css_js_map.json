@@ -102,6 +102,7 @@
             "static/script/js/modules/js/kot.js",
             "static/script/js/modules/js/kothistory.js",
             "static/script/js/modules/js/settings.js",
+            "static/script/js/modules/js/print-tills.js",
             "static/script/js/modules/js/loyalty.js",
             "static/script/js/modules/js/coupons.js",
             "static/script/js/modules/js/campaigns.js",
@@ -121,7 +122,8 @@
             "static/script/js/core/signup-link.js",
             "static/script/js/core/demo-mode.js",
             "static/script/js/core/desktop-nudge.js",
-            "static/script/js/core/order-alert.js"
+            "static/script/js/core/order-alert.js",
+            "static/script/js/core/online-order-watch.js"
         ]
     },
     "login": {

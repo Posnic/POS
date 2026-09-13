@@ -71,6 +71,18 @@ router.get(
 
 router.get('/backupTable', bindController(settingController.backupTable));
 
+/*
+ * The tills allowed to print this shop's bills.
+ *
+ * Behind `protect` like everything else here: allowing a machine to take this
+ * shop's bills is a shopkeeper's decision, and the bills carry customer names
+ * and totals. The key itself is stored as a digest and never comes back out,
+ * so these read as "which machines", not "what are their keys".
+ */
+router.get('/printTills', bindController(settingController.listPrintTills));
+router.post('/printTills', bindController(settingController.allowPrintTill));
+router.delete('/printTills/:id', bindController(settingController.forgetPrintTill));
+
 router.put('/starterLocale', bindController(settingController.updateStarterLocale));
 
 // PUT /api/setting/general - Update general settings

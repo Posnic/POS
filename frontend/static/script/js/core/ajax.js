@@ -100,6 +100,13 @@ PosnicPro.request = function (params, callback, failure = null) {
         request.fail(function (xhr, status, error) {
             $(".loadingSpinner").remove();
 
+            /* The token rides on every credentialed answer, refusals
+               included. A page whose reads all fail, such as the login page
+               under an expired login, still learns the token it needs for
+               its next write instead of being refused for not having it. */
+            var refreshed = xhr && xhr.getResponseHeader && xhr.getResponseHeader('X-CSRF-TOKEN');
+            if (refreshed) { PosnicPro.csrfToken = refreshed; }
+
             // A non-JSON body (proxy error page, dropped connection, offline)
             // used to throw here and kill the whole handler, so the user saw
             // nothing at all. Fall back to null and keep going.
@@ -131,7 +138,36 @@ PosnicPro.request = function (params, callback, failure = null) {
                 }
             }
 
-            if (!isThemeSettingsMissing && response && response.message) {
+            /*
+             * A SIGN-IN SCREEN HAS NO SESSION. THAT IS NOT AN ERROR.
+             *
+             * Opening the till straight after a cloud download put a red
+             * "You are not logged in!" across the sign-in form. Nothing was
+             * actually wrong: the page fetches its theme and settings before
+             * anybody has typed a password, the server answers 401 because
+             * there is no session yet, and this handler toasted the sentence
+             * that came back with it. The owner read that as the cloud sign-in
+             * having failed, which is exactly what it looks like.
+             *
+             * A 401 from signing in ITSELF stays loud, because a wrong
+             * password has to say so. Every door that takes a password is
+             * named below, not just the one this build happens to use: the
+             * till posts to users/verify, the handsets to users/mobileLogin,
+             * single sign-on to users/ssoClientLogin, and users/login and
+             * auth/login both still answer. Missing one of those would leave
+             * the Sign in button looking dead, which is far worse than the
+             * toast being removed here.
+             *
+             * Every other 401 on this screen is the expected answer to asking
+             * a question before anybody has signed in.
+             */
+            var signInCall = /(users\/(verify|login|ssoClientLogin|mobileLogin|kioskMobileLogin)|auth\/login)/i
+                .test(String(url || ''));
+            var noSessionYet = onAuthPage && xhr && xhr.status === 401 && !signInCall;
+
+            if (noSessionYet) {
+                console.debug('[auth] no session yet on the sign-in screen, which is expected:', url);
+            } else if (!isThemeSettingsMissing && response && response.message) {
                 PosnicPro.alert(response.type || 'error', response.message);
             }
 
@@ -177,7 +213,7 @@ PosnicPro.request = function (params, callback, failure = null) {
             if (failure !== null) {
                 failure(xhr)
             } else {
-                if (!isThemeSettingsMissing && !(response && response.message)) {
+                if (!noSessionYet && !isThemeSettingsMissing && !(response && response.message)) {
                     /*
                      * Honest failures only. This branch used to expire the
                      * login cookie for EVERY status below (a 404 logged the

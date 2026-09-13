@@ -54,6 +54,25 @@ async function checkBranchFromURL() {
         /* a browser that keeps nothing lands on the menu, which still works */
     }
 
+    /*
+     * ?transcript=1: SHOW WHAT THE LINE THOUGHT IT HEARD.
+     *
+     * Kept here for the same reason ?ai= is, and it was the reason the flag
+     * did nothing: the redirect below drops the whole query, so by the time
+     * the conversation is running on products.html there is no ?transcript=1
+     * left to read. Owner: "first show what transcribtion text converstation
+     * in the screen. then only i know what input gone to ai."
+     *
+     * A visit, not a setting: sessionStorage, gone when the tab closes.
+     */
+    try {
+        const wanted = String(urlParams.get("transcript") || "");
+        if (wanted === "1") sessionStorage.setItem("posnic_show_transcript", "1");
+        else if (wanted === "0") sessionStorage.removeItem("posnic_show_transcript");
+    } catch (e) {
+        /* nothing kept; the words simply are not shown */
+    }
+
     if (branchId) {
         console.log("🔗 Branch from QR URL:", branchId);
         const existingBranches = await getData("branch");

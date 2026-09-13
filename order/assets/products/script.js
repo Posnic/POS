@@ -21,6 +21,16 @@
         await loadProducts();
         await openDB();
         await paintShop();
+        /* Shown only once this phone has ordered something: an empty history
+           is a button that teaches nothing. */
+        const history = el("top-history");
+        if (history && typeof rememberedOrders === "function" && rememberedOrders().length) {
+            history.hidden = false;
+        }
+    });
+
+    $(document).on("click", "#top-history", function () {
+        window.location.href = "history.html";
     });
 
     /* ------------------------------------------------------------ the pill */

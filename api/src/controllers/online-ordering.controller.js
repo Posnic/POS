@@ -34,6 +34,8 @@ const salesService = require('../services/sale.service');
 const SaleModel = require('../models/sale.model');
 const orderingAssistant = require('../services/ordering-assistant.service');
 const voiceSession = require('../services/voice-session.service');
+const customerOrder = require('../services/customer-order.service');
+const { clientIp } = require('../utils/client-ip');
 
 /**
  * Where the customer is sitting, as their own URL described it.
@@ -48,11 +50,36 @@ const voiceSession = require('../services/voice-session.service');
  * looks up the terms itself.
  */
 function servicePointFrom(req) {
+  /*
+   * The address first, then the BODY.
+   *
+   * A menu read is a GET and carries this in the query. Opening a voice line
+   * is a POST - the connection offer is far too big for a URL - so that one
+   * sends the same three fields in the body instead. Reading only the query
+   * meant the live assistant was opened knowing nothing about where the
+   * customer was sitting, and so it asked for a table the printed code had
+   * already named, and its opening line had no table to say.
+   *
+   * Owner: "table number already gone and ai asking me again table number."
+   */
   const q = (req && req.query) || {};
+  const body = (req && typeof req.body === 'object' && req.body) || {};
+  const said = (name) => (q[name] !== undefined && q[name] !== '' ? q[name] : body[name]);
   return {
-    table: String(q.table || '').slice(0, 24),
-    venue: String(q.venue || '').slice(0, 12),
-    unit: String(q.unit || '').slice(0, 24),
+    table: String(said('table') || '').slice(0, 24),
+    venue: String(said('venue') || '').slice(0, 12),
+    unit: String(said('unit') || '').slice(0, 24),
+    /*
+     * AND HOW THE FOOD TRAVELS, which the printed code also settles.
+     *
+     * /order/ABC/table/34 is eaten at table 34 and /order/ABC/takeaway is
+     * carried out; neither is a question. This field was read nowhere, so
+     * the live assistant knew the table and still asked whether it was to
+     * eat in - the one thing the owner has said most often: "if its given
+     * as table then its bring to table only. not take away. dont ask
+     * question again. i told this 1000 time but u never hear that."
+     */
+    fulfilment: String(said('fulfilment') || '').slice(0, 16),
   };
 }
 
@@ -280,10 +307,18 @@ class OnlineOrderingController {
           .status(404)
           .json({ type: 'error', message: 'No shop found at this address', data: null });
       }
-      const front = await itemService.storefront({ storeId, ...servicePointFrom(req) });
+      const point = servicePointFrom(req);
+      const front = await itemService.storefront({ storeId, ...point });
       if (!front || !front.status) return this.respond(res, front);
 
-      const result = await voiceSession.session(req.body || {}, front.data, context);
+      /* The service point goes to the brief as well as to the menu read:
+         the storefront answer carries WHERE they are sitting, and this
+         carries HOW the food travels, which nothing else tells the model. */
+      const result = await voiceSession.session(
+        { ...(req.body || {}), ...point },
+        front.data,
+        context
+      );
       if (result.status) return this.respond(res, result);
       if (result.message === 'no_assistant' || result.message === 'no_live_voice') {
         return res.status(403).json({
@@ -343,6 +378,106 @@ class OnlineOrderingController {
     }
   }
 
+  /*
+   * The order the customer already placed: changed, or called off.
+   *
+   * One handler for both, because the door is the same door - the order's id
+   * and its token, and a state that still belongs to the customer. The
+   * refusals are named rather than numbered so the assistant can say which
+   * one it is: "you have already paid, so the counter will have to do it."
+   */
+  async _actOnPlacedOrder(req, res, act) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await act(
+        { ...(req.body || {}), orderId: req.params.orderId, token: (req.body || {}).token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+
+      const said = String((result && result.message) || 'not_found');
+      if (said === 'not_found') {
+        return res.status(404).json({ type: 'error', message: said, data: null });
+      }
+      if (said === 'nothing_asked' || said === 'not_on_this_order' || said === 'nothing_changed') {
+        return res
+          .status(400)
+          .json({ type: 'error', message: said, data: (result && result.data) || null });
+      }
+      /* The order exists and is simply not the customer's to move any more. */
+      return res.status(409).json({ type: 'error', message: said, data: null });
+    } catch (error) {
+      console.error('Error acting on a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /*
+   * The order, read back by the phone that placed it: where it has got to,
+   * and whether there is a bill to be had yet. The same door as changing it -
+   * the id and the token together - and the same named refusals, except that
+   * reading is allowed for an order the customer may no longer change: a
+   * paid order is exactly the one they want to see.
+   */
+  async readPlacedOrder(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await customerOrder.read(
+        { orderId: req.params.orderId, token: req.query.token },
+        context
+      );
+      if (result && result.status) return this.respond(res, result);
+      return res.status(404).json({ type: 'error', message: 'not_found', data: null });
+    } catch (error) {
+      console.error('Error reading a placed order:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  /*
+   * A page of orders, read back in one request.
+   *
+   * POST rather than GET because the proof of each one - its id and its token
+   * - is a list, and a list of secrets does not belong in a URL that lands in
+   * logs, history and referrers.
+   */
+  async readPlacedOrders(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await customerOrder.readMany(req.body, context);
+      return this.respond(res, result);
+    } catch (error) {
+      console.error('Error reading placed orders:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  async changePlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.change);
+  }
+
+  async cancelPlacedOrder(req, res) {
+    return this._actOnPlacedOrder(req, res, customerOrder.cancel);
+  }
+
   async createOrder(req, res) {
     try {
       /*
@@ -350,8 +485,19 @@ class OnlineOrderingController {
        * both would let a caller name one shop in the URL and another in the
        * payload, and leave two readers to disagree about which one they meant.
        */
+      /*
+       * Where it came from, taken from the REQUEST rather than the body.
+       * The page describes its own browser; the address and the user agent
+       * are ours to read, and a body that tries to set them is overruled.
+       */
+      const client = {
+        ...(req.body && typeof req.body.client === 'object' ? req.body.client : {}),
+        ip: clientIp(req),
+        user_agent: req.get('User-Agent') || '',
+        referrer: req.get('Referer') || '',
+      };
       const result = await salesService.createOnlineOrder(
-        { ...req.body, branch: req.params.storeId },
+        { ...req.body, client, branch: req.params.storeId },
         { SaleModel }
       );
       return this.respond(res, result);

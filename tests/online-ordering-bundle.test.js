@@ -689,7 +689,7 @@ test('every local script and stylesheet carries the version tag, on both bundles
 test('every page a customer walks through puts the shop back into the address bar', () => {
   /* Owner: "i see develop.posnic.io/order/products.html ... its missing ABC
      as branch. its better to keep user might refresh page or copy page." */
-  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'history.html', 'home.html', 'phonepe_status.html']) {
     assert.match(readBundle(page), /assets\/shop-address\.js/, 'order/' + page + ' does not keep the shop in its address');
   }
   assert.ok(!/shop-address\.js/.test(readBundle('index.html')), 'the arrival page manages its own address');
@@ -701,7 +701,7 @@ test('the server answers an inner page under a shop, and only the pages', () => 
   assert.ok(literal, 'app.js no longer serves /order/AZ100/<page>.html');
   // eslint-disable-next-line no-eval
   const re = eval(literal);
-  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'home.html', 'phonepe_status.html']) {
+  for (const page of ['products.html', 'cart.html', 'payment.html', 'thankyou.html', 'history.html', 'home.html', 'phonepe_status.html']) {
     const m = re.exec('/AZ100/' + page);
     assert.ok(m && m[1] === page, literal + ' does not serve /AZ100/' + page);
   }
@@ -710,4 +710,38 @@ test('the server answers an inner page under a shop, and only the pages', () => 
   }
   assert.ok(src.indexOf('const STORE_PAGE') > src.indexOf("app.use('/order', orderStatic)"), 'the static mount must come first');
   assert.match(src, /sendFile\(path\.join\(ORDER_BUNDLE, page\[1\]\), PAGE_HEADERS\)/, 'the page is not served as no-cache HTML');
+});
+
+/*
+ * THE SCENE NOBODY SAW.
+ *
+ * kitchen-scene.js was written, styled, given a canvas in the sheet, and
+ * described in a comment on the very element it draws into - and no page ever
+ * loaded it. So window.KitchenScene did not exist, the confirmation took its
+ * own no-canvas path, and the result was a bell and a caption with nothing
+ * moving. From the outside that is indistinguishable from an animation that
+ * ran badly, which is why it survived three rounds of the owner saying "i
+ * dont see any animation".
+ *
+ * The assistant's scripts all serve one sheet, and that sheet is on one page.
+ * So the rule is simply that the page carries all of them: a file in that
+ * folder that nothing loads is either a bug of this kind or dead weight, and
+ * both are worth failing over.
+ */
+test('the page with the assistant loads every one of the assistant scripts', () => {
+  const dir = path.join(BUNDLE, 'assets', 'assistant');
+  const scripts = fs.readdirSync(dir).filter((f) => f.endsWith('.js'));
+  assert.ok(scripts.length >= 4, 'expected the assistant to be more than one file');
+
+  const html = readBundle('products.html');
+  const loaded = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1].split('?')[0]);
+
+  for (const file of scripts) {
+    const at = 'assets/assistant/' + file;
+    assert.ok(
+      loaded.includes(at),
+      `order/${at} is never loaded by products.html, so anything guarded on the ` +
+        `global it defines silently takes its fallback path`
+    );
+  }
 });

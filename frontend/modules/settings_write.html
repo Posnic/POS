@@ -546,6 +546,104 @@
                     </div>
                 </div>
 
+                <!--
+                    WHICH TILLS MAY PRINT THIS SHOP'S BILLS.
+
+                    A waiter asks for a bill on a phone; a computer by the
+                    printer prints it. On the shop's own Wi-Fi those two talk
+                    directly and none of this is needed.
+
+                    Over the internet they need introducing, and they cannot do
+                    it themselves: every Posnic installation makes its own
+                    printing key the first time it starts, so a till and this
+                    shop's server have different ones and always will. The
+                    shopkeeper copies the key off the till's Hardware Manager
+                    screen and allows it here, once.
+
+                    The key is stored only as a digest. It is never sent back to
+                    this page, which is why the table shows what a person needs
+                    to recognise a machine - its name, the last few characters,
+                    and whether it has ever actually asked for work - and not
+                    the key itself.
+                -->
+                <div class="row" id="print_tills_row">
+                    <div class="col-12">
+                        <div class="card m-b-30">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">
+                                    <lang class="lang_print_tills">Tills that may print bills</lang>
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-primary" id="print_till_add_btn"
+                                    data-toggle="modal" data-target="#print_till_add_modal">
+                                    <i class="feather icon-plus mr-1"></i><lang class="lang_print_till_allow">Allow a till</lang>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">
+                                    <lang class="lang_print_tills_hint">Only needed when waiters' phones are not on the shop's own Wi-Fi. Open Hardware Manager on the computer beside the printer, copy its printing key, and allow it here.</lang>
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th><lang class="lang_print_till_name">Computer</lang></th>
+                                                <th><lang class="lang_print_till_key">Key</lang></th>
+                                                <th><lang class="lang_print_till_seen">Last asked</lang></th>
+                                                <th class="text-right"><lang class="lang_action">Action</lang></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="print_tills_body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="print_till_add_modal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="feather icon-printer mr-2"></i><lang class="lang_print_till_allow">Allow a till</lang>
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                    data-t-aria-label="lang_close_title">
+                                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label><lang class="lang_print_till_name">Computer</lang></label>
+                                    <input type="text" class="form-control" id="print_till_label"
+                                        placeholder="Counter PC" data-t-placeholder="lang_counter_pc">
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_print_till_name_hint">What you call that machine, so you can recognise it later.</lang>
+                                    </small>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label><lang class="lang_print_till_key">Key</lang></label>
+                                    <textarea class="form-control" id="print_till_key" rows="2"
+                                        placeholder="Paste the printing key from Hardware Manager"
+                                        data-t-placeholder="lang_paste_the_printing_key_from_hardware"></textarea>
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_print_till_key_hint">Hardware Manager, under bills asked for from outside the shop. Press Copy there and paste it here.</lang>
+                                    </small>
+                                </div>
+                                <div class="alert alert-danger mt-3 mb-0" id="print_till_error" style="display:none;"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                    <lang class="lang_cancel">Cancel</lang>
+                                </button>
+                                <button type="button" class="btn btn-primary" id="print_till_save">
+                                    <lang class="lang_print_till_allow">Allow a till</lang>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- The open flow starts from a row's Open button in the table
                      above; the only question a row cannot answer is the float. -->
                 <div class="modal fade" id="register_open_modal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -3083,6 +3181,52 @@
                                                     under Settings &gt; Modules. This page manages the tables it uses.</lang>
                                                 </small>
                                             </div>
+                                    <!--
+                                        HOW MANY OPEN ORDERS ONE TABLE MAY HAVE.
+
+                                        "basically two orders in single table not possible", and
+                                        then: by default one, with a setting for shops that want
+                                        more. Most floors mean one bill per table, added to as the
+                                        meal goes on. Some genuinely run a ticket per round.
+
+                                        It sits here, on Tables, rather than as a switch on the
+                                        Features list: Features says whether the restaurant exists,
+                                        this says how its floor behaves.
+                                    -->
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title">
+                                                <lang class="lang_orders_per_table">Orders per table</lang>
+                                            </h5>
+                                            <small class="text-muted"><lang class="lang_orders_per_table_hint">How many open orders one table may have at the same time. Adding items to an order that is already open is never blocked.</lang></small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <div class="form-group mb-0">
+                                                        <select name="table_order_limit_mode" id="table_order_limit_mode"
+                                                            class="form-control form-control-sm border-control"
+                                                            aria-label="Orders per table"
+                                                            data-t-aria-label="lang_orders_per_table"
+                                                            onchange="PosnicPro.settings.tableOrderLimitMode()">
+                                                            <option value="1"><lang class="lang_one_order_per_table">One order per table</lang></option>
+                                                            <option value="max"><lang class="lang_at_most_this_many">At most this many</lang></option>
+                                                            <option value="0"><lang class="lang_no_limit">No limit</lang></option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3" id="table_order_limit_max_wrap" style="display:none;">
+                                                    <div class="form-group mb-0">
+                                                        <input type="number" min="2" max="99" step="1"
+                                                            name="table_order_limit_max" id="table_order_limit_max"
+                                                            class="form-control form-control-sm border-control"
+                                                            value="2" aria-label="Maximum open orders per table"
+                                                            data-t-aria-label="lang_maximum_open_orders_per_table">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="card m-b-30">
                                         <div class="card-header">
                                             <h5 class="card-title">
@@ -3423,7 +3567,7 @@
                                             <label for="ai_assistant_greeting"><lang class="lang_ai_assistant_greeting">First thing it says</lang></label>
                                             <input type="text" id="ai_assistant_greeting" class="form-control border-control" maxlength="200" autocomplete="off"
                                                    placeholder="Hi! Tell me what you feel like, or ask what's good here." data-t-placeholder="lang_ai_assistant_greeting_placeholder">
-                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_greeting_hint">Spoken first on a live call and shown first in the chat. Leave it empty for the standard line: “Welcome to <your shop’s name>, table 5. What can I get you today?” The shop’s name is the store name on your Branch page, never the branch code. Write it in the language most of your customers use; the assistant answers each customer in whatever language they use.</lang></small>
+                                            <small class="form-text text-muted"><lang class="lang_ai_assistant_greeting_hint">Spoken first on a live call and shown first in the chat. Leave it empty for the standard line, which uses your own shop’s name: “Welcome to Azure Coastal Kitchen, table 5. What can I get you today?” That name is the store name on your Branch page, never the branch code. Write it in the language most of your customers use; the assistant answers each customer in whatever language they use.</lang></small>
                                         </div>
                                         <div class="form-group">
                                             <label for="ai_assistant_instructions"><lang class="lang_ai_assistant_instructions">House notes for the assistant</lang></label>
@@ -3783,10 +3927,39 @@
                                         </div>
                                         <small id="demo_pack_summary" class="text-muted d-block mt-1"></small>
                                         <p class="text-muted mt-2 mb-0" style="font-size:12.5px;">
-                                            <lang class="lang_demopack_note">Only sample products are replaced.
-                                                Anything you have edited, sold or received is kept, and named
+                                            <lang class="lang_demopack_note">Only the sample products are replaced.
+                                                Records you created yourself are never touched, and a sample you have
+                                                edited, sold or received has become yours - it is kept, and named
                                                 if it cannot be removed.</lang>
                                         </p>
+                                    </div>
+
+                                    <!--
+                                        THE DOOR OUT, where somebody looking at the samples is
+                                        standing. Owner: "able to disable quickly ... people also
+                                        afraid clear existing data option will delete newly created
+                                        or not. so make it clear on this things."
+
+                                        The Features switch can still do this, and asks the same
+                                        question. What it cannot do is be found by somebody who is
+                                        already on this page wondering how to be rid of them.
+                                    -->
+                                    <div class="fc-section" id="fc_demoremove">
+                                        <h6 class="fc-title"><lang class="lang_demoremove_title">Finished with the samples?</lang></h6>
+                                        <p class="text-muted mb-2" style="font-size:13px;">
+                                            <lang class="lang_demoremove_help">This removes the sample products, sales,
+                                                purchases, quotes, customers and suppliers, and switches sample data off.</lang>
+                                        </p>
+                                        <div class="demo-safe-note">
+                                            <i class="feather icon-shield mr-1"></i>
+                                            <span><lang class="lang_demoremove_safe">Nothing you created yourself is removed.
+                                                Your own products, sales, purchases and people are untouched, and so is
+                                                any sample you have edited, sold or received - that one is yours now.</lang></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="demo_remove_all">
+                                            <i class="feather icon-trash-2 mr-1"></i><lang class="lang_demoremove_button">Remove the sample data</lang>
+                                        </button>
+                                        <small id="demo_remove_status" class="text-muted d-block mt-1"></small>
                                     </div>
                                 </div>
                             </div>
@@ -5530,6 +5703,32 @@
                                                                 </div>
                                                             </div>
 
+                                                            <!--
+                                                                UPI, which in India is how most customers would rather
+                                                                pay: they tap, their own app opens with the amount
+                                                                already in it, and the money lands in the shop's own
+                                                                account. Nothing here confirms it - the counter sees
+                                                                the payment and marks the order paid, the same as cash.
+                                                            -->
+                                                            <div class="col-md-12 mb-3">
+                                                                <label class="font-weight-bold"><lang class="lang_upi_heading">Pay by UPI</lang></label>
+                                                                <small class="form-text text-muted mb-2">
+                                                                    <lang class="lang_upi_help">Put your UPI id here and a customer looking at an unpaid order gets a button that opens their own app, with your name and the amount already filled in. The money goes straight to you. Nobody here checks it: your counter sees the payment and marks the order paid, exactly as it does with cash. Leave it empty and no button appears.</lang>
+                                                                </small>
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="payment_upi_id"><lang class="lang_upi_id">UPI id</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="payment_upi_id"
+                                                                            autocomplete="off" maxlength="80" placeholder="9843012345@okaxis" data-t-placeholder="lang_upi_id_placeholder">
+                                                                    </div>
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="payment_upi_name"><lang class="lang_upi_name">Name your customer will see</lang></label>
+                                                                        <input type="text" class="form-control border-control" id="payment_upi_name"
+                                                                            autocomplete="off" maxlength="60">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
                                                         </div>
 
                                                         <!-- Submit Button -->
@@ -5570,6 +5769,29 @@
                                                                             <option value="auto"><lang class="lang_order_approval_auto">Send to the kitchen straight away</lang></option>
                                                                             <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
                                                                         </select>
+                                                                    </div>
+                                                                    <!--
+                                                                        How long an order stays the customer's own. The server has
+                                                                        read this per shop since the feature was built; without a
+                                                                        control every shop was stuck on the default thirty
+                                                                        seconds. A kitchen that starts at once wants a short one;
+                                                                        one that batches can afford longer. Zero switches it off,
+                                                                        and cancelling then becomes a request this till decides on.
+                                                                    -->
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_change_seconds"><lang class="lang_time_to_change_an_order">Time to change an order</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_change_seconds">
+                                                                            <option value="0"><lang class="lang_no_changes_after_ordering">No changes after ordering</lang></option>
+                                                                            <option value="30">30s</option>
+                                                                            <option value="60">1m</option>
+                                                                            <option value="120">2m</option>
+                                                                            <option value="300">5m</option>
+                                                                            <option value="600">10m</option>
+                                                                            <option value="900">15m</option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_change_window_help">Restaurants only. After this, changing becomes a request the till approves.</lang>
+                                                                        </small>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -6019,6 +6241,30 @@
                                                                 <input type="text" id="voice_language" class="form-control border-control"
                                                                     maxlength="20" placeholder="en-IN" data-t-placeholder="lang_en_in" autocomplete="off">
                                                                 <small class="form-text text-muted"><lang class="lang_int_voice_language_hint">en-IN, ta-IN, hi-IN, en-US. A recogniser told the wrong language mishears numbers before anything else, and a number is half of every order. Leaving this on en-IN does not stop a waiter counting in Tamil or Hindi - "rendu chicken biryani" is two - and a handset can read a menu said in Tamil or Devanagari letters as well.</lang></small>
+                                                            </div>
+
+                                                            <!--
+                                                                KEY ON FILE.
+
+                                                                The key is never sent back to a browser, so a saved one
+                                                                and no key looked identical here: the same open box every
+                                                                visit, with a placeholder as the only tell. Owner: "i
+                                                                saved here nothing happened. need close form have edit or
+                                                                delete symbol."
+
+                                                                The AI card answered this once already; this is the same
+                                                                answer. While a key is saved the box is folded away and
+                                                                this line stands in its place. Edit opens an empty box -
+                                                                empty means "leave the saved one alone", so typing is the
+                                                                only way to replace it. Remove says so out loud.
+                                                            -->
+                                                            <div id="voice_key_saved" class="ai-key-status" style="max-width:420px; display:none;">
+                                                                <span class="ai-key-badge"><i class="feather icon-check-circle"></i><lang class="lang_int_voice_key_on_file">Key saved</lang></span>
+                                                                <span class="ai-key-hint" id="voice_key_provider"></span>
+                                                                <span class="ai-key-actions">
+                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="voice_key_edit"><i class="feather icon-edit mr-1"></i><lang class="lang_ai_edit">Edit</lang></button>
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm" id="voice_key_remove"><i class="feather icon-x mr-1"></i><lang class="lang_ai_key_remove">Remove</lang></button>
+                                                                </span>
                                                             </div>
 
                                                             <div class="form-group" id="voice_key_row" style="max-width:420px; display:none;">

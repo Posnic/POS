@@ -4,6 +4,41 @@
           <div class="col-md-12 loader-login spin">
             <!-- Setup checklist (Lightspeed study LS1): what this shop has not
                  done yet, from live state. Hides itself when done or dismissed. -->
+            <!--
+                SAMPLE DATA, ON THE SCREEN THAT COUNTS.
+
+                Owner: "some customer ping ask how to remove data. so remove
+                data one dashboard or all pages might be helpful."
+
+                The figures on this page include the samples, so this is the
+                one screen where not knowing costs something. It says how many
+                of each kind are still here and removes them from here; it is
+                drawn only when there is something to say, and "Keep them"
+                quiets it for a month rather than for ever - a shop that meant
+                to clear them and got interrupted should be asked again.
+            -->
+            <div class="row" id="demo_data_card" style="display:none;">
+                <div class="col-lg-12">
+                    <div class="card m-b-30 demo-data-card">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap mb-1" style="gap:8px;">
+                                <span class="demo-data-card-title">
+                                    <i class="feather icon-package mr-1"></i><lang class="lang_demo_card_title">Your shop still has its sample records</lang>
+                                </span>
+                                <span class="demo-data-card-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="demo_card_remove"><lang class="lang_demoremove_button">Remove the sample data</lang></button>
+                                    <button type="button" class="btn btn-sm btn-link text-muted" id="demo_card_keep"><lang class="lang_demo_card_keep">Keep them for now</lang></button>
+                                </span>
+                            </div>
+                            <div class="demo-data-card-counts" id="demo_data_card_counts"></div>
+                            <small class="text-muted d-block mt-1">
+                                <lang class="lang_demo_card_help">These came with the demo so you could try the till, and the figures on this page include them.
+                                    Removing them takes nothing you created yourself.</lang>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="row" id="setup_checklist_strip" style="display:none;">
                 <div class="col-lg-12">
                     <div class="card m-b-30">

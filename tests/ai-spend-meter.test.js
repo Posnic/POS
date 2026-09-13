@@ -31,7 +31,20 @@ const SPEND = read('api', 'src', 'controllers', 'items.controller.js');
 const DECISIONS = JSON.parse(read('api', 'src', 'sync', 'collections.json'));
 
 const pane = HTML.slice(HTML.indexOf('id="v-pills-ai"'), HTML.indexOf('id="v-pills-recyclebin"'));
-const loadSpend = JS.slice(JS.indexOf('    loadSpend: function () {'), JS.indexOf('    removeKey: function () {'));
+/*
+ * The AI object's loadSpend, and only it.
+ *
+ * The end is searched from the start of the block, not from the top of the
+ * file: the Captain App's voice card has a removeKey of its own that sits
+ * hundreds of lines earlier, and an end before the start gives an empty
+ * slice - which matches no regex and fails every assertion below while
+ * explaining none of them.
+ */
+const loadSpendAt = JS.indexOf('    loadSpend: function () {');
+const loadSpendEnd = JS.indexOf('    removeKey: function () {', loadSpendAt);
+assert.ok(loadSpendAt > -1, 'settings.js no longer has an AI loadSpend');
+assert.ok(loadSpendEnd > loadSpendAt, 'the AI loadSpend has no end after it');
+const loadSpend = JS.slice(loadSpendAt, loadSpendEnd);
 
 test('the screen has a meter: a table, a total, a bar against the limit, and the note that it is approximate', () => {
   for (const id of ['ai_spend_row', 'ai_spend_table', 'ai_spend_total', 'ai_spend_meter', 'ai_spend_meter_bar', 'ai_spend_meter_text']) {
@@ -103,7 +116,11 @@ test('the page keeps the meter wound, hangs up when told, and does not run on wh
   assert.match(VOICE, /live\.meter = setInterval\(function \(\) \{\s*tick\(false\);\s*\}, every\);/);
   assert.match(VOICE, /function stopLine\(\) \{\s*stopMeter\(true\);/, 'closing the line does not send the last report');
   assert.match(VOICE, /window\.addEventListener\("pagehide", function \(\) \{\s*stopMeter\(true\);/, 'a page that leaves does not report its last half minute');
-  assert.match(VOICE, /navigator\.sendBeacon\(url \+ "\?end=1"\)/, 'the hang-up report cannot outlive the page');
+  /* The beacon now carries the last words as well as the hang-up, so a call
+     that went wrong can be read back from the server instead of argued
+     about. Still a beacon: it has to outlive the page. */
+  assert.match(VOICE, /navigator\.sendBeacon\(\s*url \+ "\?end=1",\s*new Blob\(\[last\]/, 'the hang-up report cannot outlive the page');
+  assert.match(VOICE, /said: saidSoFar/, 'the last words of a call are not reported');
   assert.match(VOICE, /response\.status === 403[\s\S]*?reached its limit for the month[\s\S]*?stop\(\);/, 'past the limit the customer is not told and the line not closed');
   assert.match(VOICE, /if \(live\.misses >= 3\) stop\(\);/, 'an unreachable meter leaves the line running unmetered');
   const dict = read('order', 'assets', 'i18n.js');

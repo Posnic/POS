@@ -107,6 +107,7 @@ jest.mock('../../../src/middleware/sales.validation', () => ({
   prepareCreateSalePayload: jest.fn((req, res, next) => next()),
   prepareUpdateSalePayload: jest.fn((req, res, next) => next()),
   ensureKioskKey: jest.fn((req, res, next) => next()),
+  ensurePrintDevice: jest.fn((req, res, next) => next()),
 }));
 
 jest.mock('../../../src/middleware/validation', () => ({

@@ -1025,6 +1025,61 @@ PosnicPro.dashboard.dismissSetupChecklist = function () {
     PosnicPro.local.set('setup_checklist_dismissed', 'true');
     $('#setup_checklist_strip').hide();
 };
+
+/*
+ * The sample records this shop still has, said where the figures are.
+ *
+ * The counts come from the shell, which reads them once a visit and is what
+ * the line on every other page is drawn from too - so the two can never
+ * disagree, and both go quiet together the moment the samples are gone.
+ */
+PosnicPro.dashboard.DEMO_KINDS = ['items', 'sales', 'receivings', 'quotes', 'customers', 'suppliers'];
+/* Written out rather than looked up from a table: the translation scanner
+   reads literal t('lang_...') calls, and a key held in a variable is a key no
+   translator is ever offered. */
+PosnicPro.dashboard.demoKindLabel = function (kind) {
+    if (kind === 'items') { return PosnicPro.i18n.t('lang_demo_kind_items', 'products'); }
+    if (kind === 'sales') { return PosnicPro.i18n.t('lang_demo_kind_sales', 'sales'); }
+    if (kind === 'receivings') { return PosnicPro.i18n.t('lang_demo_kind_purchases', 'purchases'); }
+    if (kind === 'quotes') { return PosnicPro.i18n.t('lang_demo_kind_quotes', 'quotes'); }
+    if (kind === 'customers') { return PosnicPro.i18n.t('lang_demo_kind_customers', 'customers'); }
+    if (kind === 'suppliers') { return PosnicPro.i18n.t('lang_demo_kind_suppliers', 'suppliers'); }
+    return kind;
+};
+PosnicPro.dashboard.loadDemoCard = function () {
+    /* Kept for a month, not for ever: somebody who meant to clear them and
+       was interrupted by a customer at the counter should be asked again. */
+    var quiet = PosnicPro.local.get('demo_card_kept');
+    if (quiet && (Date.now() - Number(quiet)) < 30 * 24 * 60 * 60 * 1000) { return; }
+    PosnicPro.demoSamples.load(function (status) {
+        if (!status || !status.on || !(Number(status.total) > 0)) {
+            $('#demo_data_card').hide();
+            PosnicPro.demoSamples.paint();
+            return;
+        }
+        var counts = status.counts || {};
+        var html = PosnicPro.dashboard.DEMO_KINDS.map(function (kind) {
+            var n = Number(counts[kind]) || 0;
+            if (!n) { return ''; }
+            return '<span class="demo-count"><strong>' + n + '</strong> '
+                + PosnicPro.escapeHtml(PosnicPro.dashboard.demoKindLabel(kind)) + '</span>';
+        }).join('');
+        $('#demo_data_card_counts').html(html);
+        $('#demo_data_card').show();
+        /* The card and the line say the same thing; only one of them at a time. */
+        PosnicPro.demoSamples.paint();
+    });
+};
+$(document).on('click', '#demo_card_remove', function () {
+    PosnicPro.demoSamples.remove();
+});
+$(document).on('click', '#demo_card_keep', function () {
+    PosnicPro.local.set('demo_card_kept', String(Date.now()));
+    $('#demo_data_card').hide();
+    PosnicPro.demoSamples.paint();
+});
+
 $(document).ready(function () {
     setTimeout(function () { PosnicPro.dashboard.loadSetupChecklist(); }, 1800);
+    setTimeout(function () { PosnicPro.dashboard.loadDemoCard(); }, 2000);
 });

@@ -1537,8 +1537,19 @@ if (fs.existsSync(ORDER_BUNDLE)) {
    * on a three-segment URL would resolve to /order/AZ100/venue/assets/... and
    * the page would load nothing at all.
    */
+  /*
+   * `/AZ100/takeaway`, because the printed code already knows.
+   *
+   * Owner: "mostly QR code we placed in tabels. so dont ask its take away or
+   * able. its table only ... if url like /order/ABC/ta then its take away."
+   * The idea is right; the abbreviation cannot be made safe. A store address
+   * is three to six letters and digits, so `ta` reads as somebody's shop
+   * code, and `/table/ta` reads as a table that somebody named "ta". The
+   * whole word can be mistaken for neither, and nobody types a QR code by
+   * hand. See order/assets/service-point.js, which reads the same shapes.
+   */
   const STORE_ADDRESS =
-    /^\/[A-Za-z0-9]{3,6}(\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
+    /^\/[A-Za-z0-9]{3,6}(\/takeaway|\/table\/[A-Za-z0-9_-]{1,24}|\/venue\/[A-Za-z0-9]{1,12}(\/[A-Za-z0-9_-]{1,24})?)?$/;
   /*
    * `/AZ100/cart.html` - an inner page with the shop in front of it.
    *
@@ -1551,7 +1562,7 @@ if (fs.existsSync(ORDER_BUNDLE)) {
    * page must not be the one from four hours ago.
    */
   const STORE_PAGE =
-    /^\/[A-Za-z0-9]{3,6}\/((?:home|products|cart|payment|thankyou|phonepe_status|receipt|access-denied)\.html)$/;
+    /^\/[A-Za-z0-9]{3,6}\/((?:home|products|cart|payment|thankyou|history|phonepe_status|receipt|access-denied)\.html)$/;
   const PAGE_HEADERS = { headers: { 'Cache-Control': 'no-cache' } };
   const serveOrderPage = (req, res, next) => {
     const page = STORE_PAGE.exec(req.path);

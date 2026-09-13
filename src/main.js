@@ -4394,9 +4394,59 @@ app.whenReady().then(async () => {
   hardwareManager = new HardwareManager();
   console.log('HardwareManager initialized');
 
+  /*
+   * Start the raw print helper before the first sale, not on it.
+   *
+   * Starting PowerShell and compiling its interop class costs 350 to 550 ms.
+   * Paid here it is paid once, while nobody is waiting; paid on the first
+   * receipt it is paid in front of a customer. Failure is not fatal: the
+   * print path falls back to a per-job spawn exactly as it always did.
+   */
+  require('./raw-print-service').warm().then((ok) => {
+    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; prints will start their own');
+  });
+
   // Initialize KOT manager
-  kotManager = new KOTManager();
+  /* Given the printer, a kitchen ticket goes out as ESC/POS like a receipt
+     instead of through a window and a PDF. See src/escpos-kot.js. */
+  kotManager = new KOTManager({ hardware: hardwareManager });
   console.log('KOTManager initialized');
+
+  /*
+   * AND START IT, if this till has already been told where its kitchen is.
+   *
+   * Constructing the manager is not the same as running it. The only thing
+   * that ever called startPolling was the Hardware Manager window, so after
+   * every restart, update or power cut a restaurant printed NOTHING in the
+   * kitchen until somebody happened to open that window and land on the KOT
+   * tab - not by the event, which returns early unless isPolling, and not by
+   * the safety-net poll, which was not running either. To a kitchen that
+   * presents as "printing is very slow", because tickets arrive whenever
+   * someone opens a settings screen.
+   *
+   * The saved config is complete and sitting on disk; it was only ever being
+   * read back by that window. A till that has never been given a kitchen
+   * printer starts nothing, exactly as before. Same reasoning as BillManager
+   * below, which has always started itself.
+   */
+  (async () => {
+    try {
+      const kotConfig = await kotManager.loadConfig();
+      const printers = Array.isArray(kotConfig && kotConfig.printerNames)
+        ? kotConfig.printerNames.filter((n) => n && String(n).trim())
+        : [];
+      if (kotConfig && kotConfig.branchId && printers.length) {
+        await kotManager.startPolling(kotConfig);
+        console.log('KOT polling restored from saved settings at startup');
+      } else {
+        console.log('KOT polling not started: no kitchen printer is configured on this till');
+      }
+    } catch (error) {
+      /* A kitchen printer that cannot be started must never stop the till
+         from opening. The Hardware Manager window can still start it. */
+      console.error('KOT polling could not be started at startup:', error && error.message);
+    }
+  })();
 
   /*
    * THE BILL A WAITER ASKED FOR FROM THE FLOOR.
@@ -4413,6 +4463,34 @@ app.whenReady().then(async () => {
    * served. This one runs inside the till, so it looks.
    */
   billManager = new BillManager(hardwareManager, {
+    /*
+     * WHETHER TO ASK THE CLOUD AT ALL, read fresh on every pass.
+     *
+     * Off unless a shop turned it on. A handset on the shop's own Wi-Fi is
+     * served in-process by the API running inside this very executable, so the
+     * near path needs nothing configured and no packet leaves the building.
+     * The far path is for the shop whose waiters are on mobile data, and a
+     * till that polls a tenant it never uses is pure waste.
+     *
+     * A function rather than a value so the switch takes effect on the next
+     * tick instead of the next restart.
+     */
+    findCloudPrint: async () => {
+      try {
+        return require('./device-preferences').cloudPrintRelay();
+      } catch (e) {
+        return { enabled: false, apiUrl: '', key: '' };
+      }
+    },
+    /* The counter's roll, not whatever Windows calls the default. See
+       src/device-preferences.js for why this had to be readable from here. */
+    findReceiptPrinter: async () => {
+      try {
+        return require('./device-preferences').receiptPrinterName();
+      } catch (e) {
+        return null;
+      }
+    },
     findBranchId: async () => {
       /* Whatever the kitchen printer was told, if anything - the same shop
          either way - and otherwise the only branch there is. */
@@ -4458,7 +4536,7 @@ app.whenReady().then(async () => {
   });
 
   // Setup IPC handlers
-  setupHardwareIPC(hardwareManager, kotManager);
+  setupHardwareIPC(hardwareManager, kotManager, billManager);
   console.log('Hardware IPC handlers registered');
 
   // Start server

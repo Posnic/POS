@@ -97,11 +97,54 @@ PosnicPro.onlineorders = {
             ? '<div class="small text-muted">' + t('lang_delivery_fee', 'Delivery') + ': ' + money(order.delivery_fee) + '</div>'
             : '';
 
-        return '<div class="card border mb-3 online-order-card" data-id="' + safe(order.sale_id) + '">' +
+        /*
+         * An order whose customer has asked to call it off. It sits in this
+         * same queue because it is the same job - somebody deciding - and
+         * the two buttons mean the obvious thing: accept the request and the
+         * order is cancelled, refuse it and the order stands.
+         */
+        var asked = order.cancel_requested === true;
+        var askedChip = asked
+            ? '<span class="badge badge-danger mr-2 align-middle">' +
+              t('lang_cancel_requested', 'Customer asked to cancel') +
+              '</span>'
+            : '';
+
+        /*
+         * AN ORDER WHOSE CUSTOMER HAS ASKED FOR IT TO BE CHANGED.
+         *
+         * Same queue, same two buttons, for the same reason as a cancellation:
+         * it is a person deciding, and a second screen is a screen nobody
+         * opens. Written out in dish names and quantities - "2 to 3 Chicken
+         * Biryani" - because whoever is reading this is standing at a till in
+         * a hurry, and that is a decision they can make at a glance.
+         */
+        var wants = (order.change_requested && order.change_requested.items) || [];
+        var wanted = wants.length
+            ? '<div class="alert alert-warning py-2 px-3 mb-2">' +
+              '<strong>' + t('lang_change_requested', 'Customer asked to change this') + '</strong>' +
+              '<ul class="pl-3 mb-0 mt-1">' +
+              wants
+                  .map(function (one) {
+                      var name = safe(one.name || '');
+                      var was = Number(one.was || 0);
+                      var now = Number(one.quantity || 0);
+                      if (!was) return '<li>+ ' + now + ' &times; ' + name + '</li>';
+                      if (!now) return '<li>' + t('lang_remove', 'Remove') + ' ' + name + '</li>';
+                      return '<li>' + name + ': ' + was + ' &rarr; ' + now + '</li>';
+                  })
+                  .join('') +
+              '</ul></div>'
+            : '';
+
+        return '<div class="card border mb-3 online-order-card' +
+            (asked ? ' border-danger' : wants.length ? ' border-warning' : '') +
+            '" data-id="' + safe(order.sale_id) + '" data-asked="' + (asked ? '1' : '0') +
+            '" data-wants="' + (wants.length ? '1' : '0') + '">' +
             '<div class="card-body">' +
             '<div class="d-flex justify-content-between align-items-start flex-wrap">' +
             '<div>' +
-            '<h6 class="mb-1">' + howChip + where + '</h6>' +
+            '<h6 class="mb-1">' + askedChip + howChip + where + '</h6>' +
             '<div class="small text-muted mb-2">' +
             safe(order.sales_id || '') +
             (order.token_id ? ' &middot; ' + t('lang_token', 'Token') + ' ' + safe(order.token_id) : '') +
@@ -114,21 +157,56 @@ PosnicPro.onlineorders = {
             '</div>' +
             '</div>' +
             '<ul class="pl-3 mb-2">' + lines + '</ul>' +
+            wanted +
             customerNote +
             note +
             '<div class="text-right">' +
             '<button type="button" class="btn btn-outline-danger btn-sm mr-2 online-order-reject">' +
-            t('lang_reject_order', 'Reject') +
+            (asked
+                ? t('lang_keep_the_order', 'Keep the order')
+                : wants.length
+                    ? t('lang_leave_it_as_it_is', 'Leave it as it is')
+                    : t('lang_reject_order', 'Reject')) +
             '</button>' +
             '<button type="button" class="btn btn-primary-rgba btn-sm online-order-accept">' +
-            t('lang_accept_and_print', 'Accept and print') +
+            (asked
+                ? t('lang_cancel_it', 'Cancel it')
+                : wants.length
+                    ? t('lang_make_the_change', 'Make the change')
+                    : t('lang_accept_and_print', 'Accept and print')) +
             '</button>' +
             '</div>' +
             '</div></div>';
     },
 
+    /*
+     * While somebody is actually looking at the queue, keep it current.
+     *
+     * The page used to draw once and then sit there: an order accepted on
+     * another till, or a cancellation asked for while this screen was open,
+     * showed up only if somebody pressed Refresh. core/online-order-watch.js
+     * carries the count everywhere else; this is the same idea for the one
+     * screen where the rows themselves matter.
+     */
+    watch: function () {
+        var self = PosnicPro.onlineorders;
+        if (self._watching) return;
+        self._watching = setInterval(function () {
+            if (document.hidden) return;
+            /* Gone from this screen: stop rather than reload a page nobody
+               is on. The badge keeps watching. */
+            if (!document.getElementById('onlineorders_list')) {
+                clearInterval(self._watching);
+                self._watching = 0;
+                return;
+            }
+            self.load();
+        }, 20000);
+    },
+
     load: function () {
         var self = PosnicPro.onlineorders;
+        self.watch();
         var loader = $('.loader-view-onlineorders');
         loader.find('.loadingSpinner:first').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -199,9 +277,30 @@ PosnicPro.onlineorders = {
 };
 
 $(document).on('click', '.online-order-accept', function () {
-    PosnicPro.onlineorders.decide($(this).closest('.online-order-card').data('id'), 'accepted');
+    var card = $(this).closest('.online-order-card');
+    /* On a cancellation request the primary button means the customer's
+       wish, which is the order off. */
+    if (String(card.data('asked')) === '1') {
+        PosnicPro.onlineorders.decide(card.data('id'), 'cancel');
+        return;
+    }
+    /* On a change request the primary button means "make it so". The server
+       runs it through the same door the customer's own plus and minus use, so
+       a dish that has gone off the menu meanwhile is still refused. */
+    if (String(card.data('wants')) === '1') {
+        PosnicPro.onlineorders.decide(card.data('id'), 'accept');
+        return;
+    }
+    PosnicPro.onlineorders.decide(card.data('id'), 'accepted');
 });
 
 $(document).on('click', '.online-order-reject', function () {
-    PosnicPro.onlineorders.decide($(this).closest('.online-order-card').data('id'), 'rejected');
+    var card = $(this).closest('.online-order-card');
+    /* Refusing a cancellation, or a change, leaves the order exactly as it
+       was - which is what "keep" means to the server for both. */
+    if (String(card.data('asked')) === '1' || String(card.data('wants')) === '1') {
+        PosnicPro.onlineorders.decide(card.data('id'), 'keep');
+        return;
+    }
+    PosnicPro.onlineorders.decide(card.data('id'), 'rejected');
 });

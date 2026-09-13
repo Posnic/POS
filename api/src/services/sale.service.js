@@ -1654,6 +1654,40 @@ const getTablesWithActiveOrders = async (branchId) => {
 
     const results = await salesRepository.aggregate(pipeline);
 
+    /*
+     * Read once for the whole floor rather than per table. Absent on a branch
+     * written before the setting existed, and one is the default there.
+     *
+     * Through the tenant-aware Branch model, not a raw collection query. Each
+     * shop has its own database and one process serves many of them, so a
+     * process-wide connection could read another restaurant's table limit and
+     * apply it to this floor.
+     */
+    let tableOrderLimit = 1;
+    try {
+      /*
+       * REQUIRED HERE, NOT AT THE TOP OF THE FILE.
+       *
+       * branch.model pulls in customer.model and supplier-legacy.model, both of
+       * which `extend BaseModel`. Required from this file's top level that
+       * closes a cycle: base.model is still half-built when customer.model
+       * reads it, so `class CustomerModel extends BaseModel` sees `{}` and
+       * throws "Class extends value is not a constructor" - which surfaces as
+       * an entire suite failing to run, nowhere near the line that caused it.
+       *
+       * The same lazy-require note is on print-job.repository.js for the same
+       * reason. One cached require per call costs nothing.
+       */
+      const Branch = require('../models/branch.model');
+      const branch = await Branch.findById(branchObjectId).select('table_order_limit').lean();
+      const raw = branch && branch.table_order_limit;
+      tableOrderLimit = Number.isFinite(Number(raw)) ? Number(raw) : 1;
+    } catch (e) {
+      /* A floor that cannot read the setting still draws. The server refuses
+         an over-limit order either way. */
+      console.warn('[tables] could not read the table order limit:', e.message);
+    }
+
     const tables = [];
     const detail = new Map();
     let hasTakeaway = false;
@@ -1715,6 +1749,17 @@ const getTablesWithActiveOrders = async (branchId) => {
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
+        /*
+         * How many open orders a table may have, so a handset can grey out a
+         * full table instead of letting a waiter walk to it, type an order and
+         * be refused at the end. The rule itself is enforced on the server; a
+         * client that ignores this simply gets the refusal it would have got
+         * anyway, which is why it is safe to add to a response old apps
+         * already read.
+         *
+         * 0 means no limit.
+         */
+        table_order_limit: tableOrderLimit,
         table_details,
         takeaway_detail: takeaway
           ? {

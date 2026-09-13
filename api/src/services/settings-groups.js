@@ -70,6 +70,10 @@ const FEATURES = [
   'custom_charges_enable',
   'sale_quick_edit_enable',
   'table_options',
+  /* How many open orders one table may have. Lives with the feature it
+     belongs to rather than in PREFERENCES, because it decides what the
+     floor is allowed to do, not how a receipt looks. */
+  'table_order_limit',
   'hardware_weight_machine_enable',
   'enable_multi_payment',
   'till_lock_idle_minutes',
@@ -367,6 +371,12 @@ const CHANNELS = [
      auto - see utils/order-approval for why that is the survivable
      direction. */
   'online_order_approval',
+  /* How long after placing a customer may still change or cancel their own
+     order, in seconds. Every delivery app in the world has one of these,
+     and its length is the shop's business: thirty seconds is right for a
+     kitchen that starts at once and wrong for one that batches. 0 switches
+     it off; after it, cancelling becomes a request the shop decides on. */
+  'online_order_change_seconds',
   /* [{ code, name, unit_label, address, delivery_note, ask_floor,
      price_adjust_percent, commission_percent, enabled }] - hotels, offices and
      anywhere else that is not the shop's own floor. The code is what a printed

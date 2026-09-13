@@ -75,9 +75,45 @@ jobs:
 
           Nothing here is new work - it is main's own commits."
 
-          if gh pr list --head "$BRANCH" --state open --json number --jq 'length' | grep -q '^0$'; then
+          # ------------------------------------------------------------------
+          # THIS CANNOT OPEN THE PULL REQUEST, AND THAT IS A REPOSITORY SETTING.
+          #
+          # "GitHub Actions is not permitted to create or approve pull requests"
+          # is off here, so `gh pr create` fails on every run that gets this
+          # far. It has failed on every release this workflow has ever seen -
+          # #644, #651, #665 - and each failure read as though the sync itself
+          # had broken. It had not: the branch pushed above is correct and
+          # ready every time.
+          #
+          # The cost was never the red mark. It was that develop stayed behind
+          # main after each release, so the NEXT release pull request opened
+          # "out-of-date with the base branch" and somebody had to work that out
+          # from a workflow log nobody reads. release-promote.yml is blocked by
+          # the same setting.
+          #
+          # So this stops asking for a permission it will never be given. It
+          # still tries, in case the setting is turned on one day, but a refusal
+          # no longer fails the run. What the owner actually needs is a link,
+          # and it goes in the run summary where they are already looking while
+          # a release is in progress.
+          # ------------------------------------------------------------------
+          OPEN=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length' || echo 1)
+
+          if [ "$OPEN" = "0" ]; then
             gh pr create --base develop --head "$BRANCH" \
-              --title "Sync main into develop" --body "$BODY" --label "area: contributor"
+              --title "Sync main into develop" --body "$BODY" \
+              --label "area: contributor" || echo "could not open it here; see the summary"
           else
             echo "a sync pull request is already open"
           fi
+
+          # Said plainly whether the above worked or not.
+          {
+            echo "### develop is ${{ steps.check.outputs.behind }} commit(s) behind main"
+            echo
+            echo "$BODY"
+            echo
+            echo "Branch **$BRANCH** is pushed and ready."
+            echo
+            echo "[Open the sync pull request](https://github.com/$GITHUB_REPOSITORY/compare/develop...$BRANCH?expand=1)"
+          } >> "$GITHUB_STEP_SUMMARY"

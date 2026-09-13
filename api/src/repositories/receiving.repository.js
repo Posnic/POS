@@ -1,5 +1,6 @@
 // src/repositories/receiving.repository.js
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const { ObjectId } = require('mongodb');
 const StockLogsRepository = require('./stock-log.repository');
 
@@ -26,6 +27,7 @@ class ReceivingRepository extends BaseModel {
     const query = {
       ...filters,
       license: BaseModel.license,
+      ...(await demoData.filterCurrent('receivings')),
     };
 
     const collection = await this.getCollection(this.collectionName);
@@ -85,6 +87,7 @@ class ReceivingRepository extends BaseModel {
     const query = {
       supplier: new ObjectId(supplierId),
       license: BaseModel.license,
+      ...(await demoData.filterCurrent('receivings')),
     };
 
     const collection = await this.getCollection(this.collectionName);
@@ -121,6 +124,7 @@ class ReceivingRepository extends BaseModel {
     const query = {
       branch_id: new ObjectId(branchId),
       license: BaseModel.license,
+      ...(await demoData.filterCurrent('receivings')),
     };
 
     const collection = await this.getCollection(this.collectionName);
@@ -377,6 +381,7 @@ class ReceivingRepository extends BaseModel {
     const query = {
       status: status,
       license: BaseModel.license,
+      ...(await demoData.filterCurrent('receivings')),
     };
 
     const collection = await this.getCollection(this.collectionName);
@@ -413,6 +418,7 @@ class ReceivingRepository extends BaseModel {
     const query = {
       payment_status: paymentStatus,
       license: BaseModel.license,
+      ...(await demoData.filterCurrent('receivings')),
     };
 
     const collection = await this.getCollection(this.collectionName);

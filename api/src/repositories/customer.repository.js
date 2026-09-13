@@ -1,5 +1,6 @@
 // src/repositories/customer.repository.js
 const BaseModel = require('../models/base.model');
+const demoData = require('../services/demo-data');
 const { ObjectId } = require('mongodb');
 const { withBranchScope } = require('../services/branch-scope');
 const dataSharing = require('../services/data-sharing');
@@ -24,6 +25,7 @@ class CustomerRepository extends BaseModel {
       ...filters,
       license: BaseModel.license,
       is_deleted: { $ne: true },
+      ...(await demoData.filterCurrent('customers')),
     };
 
     const collection = await this.getCollection(this.collectionName);
@@ -114,6 +116,7 @@ class CustomerRepository extends BaseModel {
     let query = {
       license: BaseModel.license,
       is_deleted: { $ne: true },
+      ...(await demoData.filterCurrent('customers')),
       $or: [
         { name: new RegExp(searchTerm, 'i') },
         { email: new RegExp(searchTerm, 'i') },
@@ -521,6 +524,7 @@ class CustomerRepository extends BaseModel {
       ...filters,
       license: BaseModel.license,
       is_deleted: { $ne: true },
+      ...(await demoData.filterCurrent('customers')),
     };
 
     const collection = await this.getCollection(this.collectionName);

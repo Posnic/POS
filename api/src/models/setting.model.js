@@ -746,6 +746,32 @@ class SettingModel extends BaseModel {
       till_lock_idle_minutes = Math.min(till_lock_idle_minutes, 120);
 
       /*
+       * HOW MANY OPEN ORDERS ONE TABLE MAY HAVE.
+       *
+       * Owner: "by default one order per tabel... multiple order or only one
+       * order or maximum number of order. keep the settings."
+       *
+       *   1   one open order per table. The default, and what a restaurant
+       *       floor means by "table five" - one bill, added to as the meal
+       *       goes on.
+       *   0   no limit. Some shops genuinely run a ticket per round, or per
+       *       person, and the till must not argue with them.
+       *   N   at most N.
+       *
+       * Defaulted to 1 rather than 0 on purpose. Two orders on one table was
+       * reported as a BUG from a live floor - a double tap made two, and
+       * cancelling one cancelled both - so the shape a shop expects without
+       * being asked is one.
+       */
+      let table_order_limit = parseInt(data.table_order_limit, 10);
+      if (isNaN(table_order_limit) || table_order_limit < 0) {
+        table_order_limit = 1;
+      }
+      /* Capped so a typo cannot make the limit meaningless while still
+         reading as a limit. */
+      table_order_limit = Math.min(table_order_limit, 99);
+
+      /*
        * Staff clock-in / attendance. On unless the shop turns it off - the
        * shift system shipped live, so an update (or an old client that does
        * not send the field) must not take the clock button away from shops
@@ -880,6 +906,7 @@ class SettingModel extends BaseModel {
         ...ifSent('hardware_weight_machine_enable', hardware_weight_machine_enable),
         ...ifSent('till_lock_enable', till_lock_enable),
         ...ifSent('till_lock_idle_minutes', till_lock_idle_minutes),
+        ...ifSent('table_order_limit', table_order_limit),
         ...ifSent('staff_shifts_enable', staff_shifts_enable),
         ...ifSent('staff_tips_enable', staff_tips_enable),
         ...ifSent('staff_roster_enable', staff_roster_enable),
@@ -937,6 +964,7 @@ class SettingModel extends BaseModel {
         hardware_weight_machine_enable: hardware_weight_machine_enable,
         till_lock_enable: till_lock_enable,
         till_lock_idle_minutes: till_lock_idle_minutes,
+        table_order_limit: table_order_limit,
         staff_shifts_enable: staff_shifts_enable,
         staff_tips_enable: staff_tips_enable,
         staff_roster_enable: staff_roster_enable,
@@ -1411,6 +1439,11 @@ class SettingModel extends BaseModel {
         if (isNaN(idle) || idle < 0) idle = 0;
         updateFields.till_lock_idle_minutes = Math.min(idle, 120);
       }
+      if (data.table_order_limit !== undefined) {
+        let cap = parseInt(data.table_order_limit, 10);
+        if (isNaN(cap) || cap < 0) cap = 1;
+        updateFields.table_order_limit = Math.min(cap, 99);
+      }
 
       /*
        * Partial-save safety: this endpoint also takes small PATCH-style
@@ -1559,6 +1592,11 @@ class SettingModel extends BaseModel {
         let idle = parseInt(data.till_lock_idle_minutes, 10);
         if (isNaN(idle) || idle < 0) idle = 0;
         updateFields.till_lock_idle_minutes = Math.min(idle, 120);
+      }
+      if (data.table_order_limit !== undefined) {
+        let cap = parseInt(data.table_order_limit, 10);
+        if (isNaN(cap) || cap < 0) cap = 1;
+        updateFields.table_order_limit = Math.min(cap, 99);
       }
       if (!Object.keys(updateFields).length) {
         return { status: true, data: null, message: 'success' };
@@ -5038,6 +5076,35 @@ class SettingModel extends BaseModel {
         if (data[field] !== undefined) {
           updateData[`online_ordering.${field}`] = Boolean(data[field]);
         }
+      }
+
+      /*
+       * The UPI payee: an address and the name a customer's app will show
+       * them. Text, not a switch, so it cannot go through the loop above -
+       * Boolean('anything') is true and would have written "true" into the
+       * field a customer pays into.
+       *
+       * A UPI address is name@handle. Anything else is refused rather than
+       * stored, because a wrong one sends a customer's money to a stranger
+       * or nowhere, and neither shows up until somebody complains.
+       */
+      if (data.payment_upi_id !== undefined) {
+        const upi = String(data.payment_upi_id || '')
+          .trim()
+          .slice(0, 80);
+        if (upi && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9.-]{1,30}$/.test(upi)) {
+          return {
+            status: false,
+            data: null,
+            message: 'That does not look like a UPI id. It should read like name@bank.',
+          };
+        }
+        updateData['online_ordering.payment_upi_id'] = upi;
+      }
+      if (data.payment_upi_name !== undefined) {
+        updateData['online_ordering.payment_upi_name'] = String(data.payment_upi_name || '')
+          .trim()
+          .slice(0, 60);
       }
 
       if (Object.keys(updateData).length === 0) {

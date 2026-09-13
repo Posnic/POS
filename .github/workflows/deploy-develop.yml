@@ -120,6 +120,24 @@ jobs:
                 done
           done
           REMOTE
+          # THE SANDBOX'S OWN SCRIPTS, which used to be copied by hand.
+          #
+          # reset.sh and seed.js decide what the box looks like every morning,
+          # and a copy on the box that nobody can diff against the repository
+          # drifts until the two are different programs. A fix committed here
+          # would sit in git doing nothing until somebody remembered to scp
+          # it - which is exactly how the nightly reset came to be wiping
+          # credentials that were supposed to be permanent.
+          #
+          # tests/sandbox-scripts-deployed.test.js pins this to what reset.sh
+          # actually calls.
+          rsync -az \
+            -e "ssh -i ~/.ssh/develop.pem" \
+            scripts/sandbox/reset.sh scripts/sandbox/seed.js scripts/sandbox/keep-branches.js \
+            "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}:~/posnic-develop/"
+          ssh -i ~/.ssh/develop.pem "${{ secrets.DEVELOP_USER }}@${{ secrets.DEVELOP_HOST }}" \
+            'chmod +x ~/posnic-develop/reset.sh' || echo "sandbox: could not mark reset.sh executable"
+
           # The sandbox's own nginx config lives in the repository (scripts/sandbox),
           # and the banner it injects is part of what people come here to see. Applied
           # on every deploy when the box allows it; otherwise noted and skipped, never

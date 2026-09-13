@@ -318,14 +318,30 @@ describe('purgeDemoData', () => {
       expect(r.quotesRemoved).toBeGreaterThan(0);
     });
 
-    test('only the tagged ones, scoped to the branch and licence', async () => {
-      /* A shop's real sales are not ours to delete under any circumstances. */
+    test('only samples, scoped to the branch and licence', async () => {
+      /*
+       * A shop's real sales are not ours to delete under any circumstances.
+       * "Sample" means tagged, or - for the sales, purchases and quotes seeded
+       * before the tag existed in August 2026 - numbered the way the seeder
+       * numbers them, which no real document ever is. Both shapes of id are
+       * matched because a branch that reached a seeder as a string wrote
+       * strings, and an ObjectId-only filter deletes nothing while reporting
+       * success.
+       */
       setup({ items: [item('a1', 'Croissant')] });
       await run();
-      for (const [, filter] of deleted) {
-        expect(filter.demo_pack).toEqual({ $exists: true });
-        expect(filter.license).toBeTruthy();
-        expect(filter.branch_id).toBeTruthy();
+      expect(deleted.length).toBeGreaterThan(0);
+      for (const [collection, filter] of deleted) {
+        const tagged = filter.$or ? filter.$or[0] : filter;
+        expect(tagged.demo_pack).toEqual({ $exists: true });
+        if (filter.$or) {
+          /* A RegExp stringifies to {}, so read its source, not its JSON. */
+          const legacy = String(Object.values(filter.$or[1])[0]);
+          expect(legacy).toMatch(/DEMO-/);
+        }
+        expect(String(collection)).toMatch(/sales|quotes|receivings|customers|suppliers/);
+        expect(filter.license.$in.filter(Boolean).length).toBe(2);
+        expect(filter.branch_id.$in.filter(Boolean).length).toBe(2);
       }
     });
 

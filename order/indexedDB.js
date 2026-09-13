@@ -772,6 +772,84 @@ async function knownBranchId() {
     return "";
 }
 
+/* ------------------------------------------------- what this phone ordered
+ *
+ * There is no account behind a QR code and no address to write to, so the
+ * only place a customer's own order history can live is the browser that
+ * placed it. Twenty is plenty: this is "what did I order", not an archive,
+ * and the shop keeps the real record.
+ */
+const ORDER_HISTORY_KEY = "posnic_orders";
+const ORDER_HISTORY_KEEP = 20;
+
+function rememberedOrders() {
+    try {
+        const raw = localStorage.getItem(ORDER_HISTORY_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+    } catch (e) {
+        /* Private mode, cleared storage, or something that is not JSON. */
+        return [];
+    }
+}
+
+function rememberOrder(entry) {
+    if (!entry || !entry.orderId || !entry.token) return;
+    try {
+        const list = rememberedOrders().filter((row) => row && row.orderId !== entry.orderId);
+        list.unshift(entry);
+        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(list.slice(0, ORDER_HISTORY_KEEP)));
+    } catch (e) {
+        /* A browser that keeps nothing still placed the order. */
+    }
+}
+
+function forgetOrder(orderId) {
+    try {
+        const list = rememberedOrders().filter((row) => row && row.orderId !== String(orderId));
+        localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+        /* nothing kept, nothing to forget */
+    }
+}
+
+/*
+ * WHAT THIS DEVICE IS, sent with an order.
+ *
+ * Not for the customer and not shown anywhere: it rides with the sale so a
+ * shop looking at fifteen prank orders one evening has something to act on.
+ * The address and the user agent are the server's to read; this is what only
+ * the browser knows. A random id kept in this browser makes the same device
+ * recognisable across orders without knowing who is holding it.
+ */
+const DEVICE_KEY = "posnic_device";
+
+function deviceId() {
+    try {
+        let id = localStorage.getItem(DEVICE_KEY);
+        if (!id) {
+            id = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(DEVICE_KEY, id);
+        }
+        return id;
+    } catch (e) {
+        return "";
+    }
+}
+
+function clientFacts() {
+    const facts = { device_id: deviceId() };
+    try {
+        facts.language = String(navigator.language || "");
+        facts.platform = String(navigator.userAgentData?.platform || navigator.platform || "");
+        if (window.screen) facts.screen = String(window.screen.width) + "x" + String(window.screen.height);
+        facts.time_zone = String(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+    } catch (e) {
+        /* A browser that will not say is a browser we do not describe. */
+    }
+    return facts;
+}
+
 /*
  * The origin's default store, when a remembered address is dead.
  *
@@ -1129,6 +1207,16 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
  * foot. Also keeps the counts on the ordering page in step, because the same
  * data feeds both and this is the one place that reads it.
  */
+/*
+ * Set while checkout is clearing a basket it has just SENT.
+ *
+ * renderCart cannot tell an emptied basket from a sent one by looking at it -
+ * both are zero lines - and the difference decides whether the customer is
+ * taken back to the menu or left exactly where they are, watching their order
+ * reach the kitchen.
+ */
+let orderJustPlaced = false;
+
 async function renderCart(cartData = null) {
     if (window.POSNIC_SILENT_REFRESH) return;
 
@@ -1152,9 +1240,28 @@ async function renderCart(cartData = null) {
             $("#cart-total").text(money(0));
             $("#cart-qty,#mobile-cart-count").text("0");
             $("#summary-display").text(`0 items · ${money(0)}`);
-            setTimeout(() => {
-                window.location.href = "products.html";
-            }, 2000);
+            /*
+             * ONLY THE BASKET PAGE GOES BACK TO THE MENU, and only when the
+             * basket was emptied rather than SENT.
+             *
+             * This used to fire wherever renderCart was called from. checkout()
+             * clears the basket and calls renderCart([]) on completion, so two
+             * seconds after an order went to the kitchen the page reloaded:
+             * on products.html that closed the assistant sheet, which stops
+             * the voice line, and killed the kitchen animation before its last
+             * beat. From the customer's side the call was cut mid-sentence.
+             *
+             * #cart-summary is the card this branch just wrote into and only
+             * cart.html has one; anywhere else there is nothing to take them
+             * back FROM. And a basket emptied BY the checkout is not an empty
+             * basket, it is a placed order.
+             */
+            const onBasketPage = !!document.getElementById("cart-summary");
+            if (onBasketPage && !orderJustPlaced) {
+                setTimeout(() => {
+                    window.location.href = "products.html";
+                }, 2000);
+            }
             return;
         }
 
@@ -1893,6 +2000,8 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             },
             body: JSON.stringify({
                 items: payload,
+                /* What this device is, for the shop's own records. */
+                client: typeof clientFacts === "function" ? clientFacts() : undefined,
                 customerMobile: '+91' + savedNumber,
                 transactionId: transactionId,
                 idempotencyKey: orderAttemptId,
@@ -1928,12 +2037,36 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             result.data.tokenId = normalizedTokenId;
             result.data.payment_status = result.data.payment_status || paymentStatus;
             sessionStorage.setItem("kioskReceipt", JSON.stringify(result.data));
+            /* This phone's own list of what it has ordered: see
+               rememberedOrders above. The shop is asked for the state of
+               each one when the list is drawn. */
+            rememberOrder({
+                orderId: String(result.data.sale_id || ""),
+                token: normalizedTokenId,
+                shop: String(branchId || ""),
+                shopName: String(result.data.branch_name || (typeof shop === "object" && shop ? shop.name : "") || ""),
+                /* WHERE it was placed, so a second order at the same table can
+                   find the first one instead of being refused by the shop's
+                   one-order-per-table rule. */
+                table: String(result.data.table_number || ""),
+                at: new Date().toISOString(),
+                items: (result.data.items || []).map((line) => ({
+                    name: String(line.item_name || line.name || ""),
+                    quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0)
+                })),
+                total: Number(result.data.total || 0)
+            });
             localStorage.removeItem("kioskReceipt"); // Remove data left by older versions.
             console.log(result.data);
             console.log("✅ Checkout successful! Token:", tokenId);
             // 🧹 Clear cart in IndexedDB
+            /* Emptied because it was SENT: renderCart must not read this as a
+               customer who changed their mind and walk them back to the menu.
+               See orderJustPlaced above. */
+            orderJustPlaced = true;
             await saveCartData([]);
             await renderCart([]);
+            orderJustPlaced = false;
             sessionStorage.removeItem("kiosk_mobile_number");
             sessionStorage.removeItem("qr_id");
             localStorage.removeItem("kiosk_mobile_number"); // Remove data left by older versions.
@@ -1943,7 +2076,15 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             /* A caller with something to say first - the voice, which reads
                the token out - stays on this page and is handed the token; it
                moves to the receipt when it is done. */
-            if (options && options.stay) return { placed: true, token: normalizedTokenId };
+            if (options && options.stay) {
+                return {
+                    placed: true,
+                    token: normalizedTokenId,
+                    /* Changing this order later needs its id as well as its
+                       token; the id is what proves the caller placed it. */
+                    saleId: String(result.data.sale_id || result.data.order_id || "")
+                };
+            }
             window.location.href = `thankyou.html?token=${encodeURIComponent(normalizedTokenId)}`;
             return true;
         } else {
@@ -2194,6 +2335,108 @@ function scoreItem(query, fields) {
 
 /* What the customer has narrowed the catalogue to. */
 var orderView = { query: "", vegOnly: false, sort: "menu" };
+
+/*
+ * A few things that go with what somebody has already ordered.
+ *
+ * From categories they have NOT ordered from, so a customer who asked for
+ * biryani is offered a drink rather than more biryani; never anything already
+ * on the order; never a dish the shop has switched off. Cheapest first,
+ * because something to add on is a small yes and not a second meal. Three -
+ * a fourth is a catalogue, and the owner asked for "short cross selling".
+ *
+ * Here, rather than in either page, because the confirmation screen and the
+ * order history both offer it and two copies of a rule like this drift.
+ *
+ * @param {Array} on        the lines already on the order
+ * @param {Array} catalogue every product, as allProducts() gives them
+ */
+/*
+ * WHAT THE SHOP SAYS GOES WITH IT, and a drink when it has not said.
+ *
+ * Owner: "for checken briyani its suggessting french fries. not good
+ * combination. ask would like to add cock. only related prducts good."
+ *
+ * He is right and the old rule earned it: anything from a category they had
+ * not ordered from, cheapest first. That is not a pairing, it is a leftover -
+ * it offered chips with biryani because chips were cheap and in another
+ * category, and it would have offered soup with ice cream just as happily.
+ *
+ * TWO RULES NOW, in order.
+ *
+ * First, whatever the shop itself has said goes with a dish - item.goes_with,
+ * a list of item ids on the product. Nothing guesses better than the person
+ * who wrote the menu, and a shop that fills this in gets exactly the pairings
+ * it wants. That field is the proper answer and the shop owns it.
+ *
+ * Second, where nothing has been said: a DRINK. It is the one pairing that is
+ * safe with every dish on every menu in the world, it is what he asked for by
+ * name, and it is the offer a waiter actually makes. Categories are named by
+ * each shop, so they are recognised by the words shops use, and a menu with
+ * no drinks on it simply gets no suggestion - which is better than a wrong
+ * one. Cheapest first within that, because something alongside is a small yes
+ * and not a second meal.
+ */
+function goesWithOrder(on, catalogue) {
+    /* Kept INSIDE, so the function carries everything it needs. Lifted out of
+       this file to be tested on its own, a helper that reaches for a
+       module-level const finds nothing and dies on the first call - which is
+       exactly what happened here. */
+    const DRINKS = /drink|beverage|juice|soda|shake|smoothie|tea|coffee|water|cold|mocktail|lassi|refresh/i;
+    const SWEETS = /dessert|sweet|ice.?cream|pudding|cake|halwa|payasam/i;
+    const all = Array.isArray(catalogue) ? catalogue : [];
+    const have = new Set();
+    const theirs = new Set();
+    const named = [];
+    (on || []).forEach((line) => {
+        const id = String(line.item_id != null ? line.item_id : line.id || "");
+        have.add(id);
+        all.forEach((p) => {
+            if (String(p.id) !== id) return;
+            if (p.category_name) theirs.add(p.category_name);
+            /* What this dish itself says goes with it. */
+            (Array.isArray(p.goes_with) ? p.goes_with : []).forEach((w) => named.push(String(w)));
+        });
+    });
+
+    const sellable = (p) => p && p.id && !have.has(String(p.id)) && p.available !== false;
+    const cheapest = (x, y) => (Number(x.price) || 0) - (Number(y.price) || 0);
+
+    /* What the shop named, in the order the shop named it. */
+    const asked = [];
+    named.forEach((id) => {
+        if (asked.some((p) => String(p.id) === id)) return;
+        const found = all.find((p) => String(p.id) === id && sellable(p));
+        if (found) asked.push(found);
+    });
+    if (asked.length >= 3) return asked.slice(0, 3);
+
+    /* Then a drink, then something sweet, and nothing else - an unrelated
+       dish from an unrelated category is what this is here to stop. */
+    const room = 3 - asked.length;
+    const chosen = asked.slice();
+    [DRINKS, SWEETS].forEach((kind) => {
+        all
+            .filter(
+                (p) =>
+                    sellable(p) &&
+                    !theirs.has(p.category_name) &&
+                    /* The CATEGORY or the NAME. Plenty of shops file
+                       everything under one category, or none at all, and
+                       "Fresh Lime Soda" says what it is perfectly well
+                       without help. Reading only the category left those
+                       menus with no suggestion at all. */
+                    (kind.test(String(p.category_name || "")) || kind.test(String(p.name || ""))) &&
+                    !chosen.some((c) => String(c.id) === String(p.id))
+            )
+            .sort(cheapest)
+            .slice(0, room)
+            .forEach((p) => {
+                if (chosen.length < 3) chosen.push(p);
+            });
+    });
+    return chosen.slice(0, 3);
+}
 
 /** Every product across every category, flattened once. */
 function allProducts() {

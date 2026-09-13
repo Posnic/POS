@@ -197,6 +197,7 @@ const auth = async (req, res, next) => {
         error.name === 'TokenExpiredError' ||
         error.name === 'NotBeforeError')
     ) {
+      dropDeadCookie(req, res, getTokenFromRequest(req));
       return next(new UnauthorizedError('Invalid token or user not found'));
     }
     return next(error);
@@ -218,6 +219,26 @@ const getTokenFromRequest = (req) => {
     return req.query.token;
   }
   return null;
+};
+
+/*
+ * A cookie whose token is dead is cleared as it is refused.
+ *
+ * The cookie is kept for seven days and the token inside it for one, so from
+ * the second day of a remembered login the browser sends a cookie that
+ * authenticates nothing. Left in place it made every read a 401 and, through
+ * the CSRF token bound to it, kept the login page from ever succeeding until
+ * the shop cleared its cookies by hand. Only the cookie is cleared, and only
+ * when the cookie is what carried the dead token: a bad Bearer header says
+ * nothing about the cookie beside it.
+ */
+const dropDeadCookie = (req, res, token) => {
+  if (!token || !req.cookies || req.cookies.jwt !== token) return;
+  try {
+    res.clearCookie('jwt', authCookieOptions());
+  } catch (e) {
+    /* headers already gone; the next request clears it */
+  }
 };
 
 // Protect routes - PHP-style: session is primary, JWT is only for restoring session
@@ -310,11 +331,13 @@ const protect = async (req, res, next) => {
       decoded = await promisify(jwt.verify)(token, getJwtSecret());
     } catch (err) {
       if (err.name === 'JsonWebTokenError') {
+        dropDeadCookie(req, res, token);
         return res.status(401).json({
           status: 'error',
           message: 'Invalid token. Please log in again!',
         });
       } else if (err.name === 'TokenExpiredError') {
+        dropDeadCookie(req, res, token);
         return res.status(401).json({
           status: 'error',
           message: 'Your session has expired. Please log in again.',

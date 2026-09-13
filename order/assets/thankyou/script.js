@@ -54,6 +54,25 @@ async function renderAndPrint() {
     });
 
     /*
+     * One short bell, once per order.
+     *
+     * This is the other way an order gets placed - tapped through the basket
+     * rather than spoken - and it confirms itself the same way the assistant
+     * does. Keyed to the token, so a refresh or a customer coming back later
+     * to look at their number does not ring it again.
+     */
+    (function ting() {
+        try {
+            const rung = `rung_${token}`;
+            if (sessionStorage.getItem(rung) === "true") return;
+            sessionStorage.setItem(rung, "true");
+            if (window.Ting && typeof window.Ting.play === "function") window.Ting.play();
+        } catch (e) {
+            /* The screen says the same thing; the sound is a courtesy. */
+        }
+    })();
+
+    /*
      * What happens next, in the customer's terms: to the table, at the
      * counter, from the shop, or on its way; and what is still owed if the
      * order was not paid here.
@@ -156,18 +175,151 @@ async function renderAndPrint() {
     $("#total").text(`₹${receiptData.total.toFixed(2)}`);
     $("#orderTypePrint").text(orderType);
 
-    // ✅ Generate PDF after 1s
-    setTimeout(async () => {
-        try {
-            await generatePdfFromHtmlFile();
-            sessionStorage.setItem(printedFlagKey, "true"); // ✅ Mark as printed
-        } catch (error) {
-            console.error("Receipt PDF generation failed:", error);
-            alert(error.message || t("Receipt PDF could not be generated."));
-        }
-    }, 1000);
+    /*
+     * NOTHING IS DOWNLOADED HERE.
+     *
+     * This page used to push a PDF at the phone a second after it opened.
+     * Owner: "after order no need to show bill or pdf not required. once
+     * payment done from desktop then make bill available to download." A bill
+     * is a record of money that has changed hands, and at this moment none
+     * has: the order is a ticket in a kitchen. The shop marks it paid at the
+     * till, and the bill is offered then.
+     *
+     * generatePdfFromHtmlFile stays, and is what that button will call.
+     */
+    void printedFlagKey;
+
+    /*
+     * The bill appears when the shop says the money is in.
+     *
+     * Asked once as the page opens and again on the way back to it, because
+     * the till is where that changes and nothing tells this page when it
+     * does. A shop that has not been asked, or an order it has never heard
+     * of, simply leaves the button hidden.
+     */
+    offerBillWhenPaid(token);
 }
 
+
+/* What the shop takes, as the storefront describes it. */
+async function getLatestShopPayment(shopId) {
+    try {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return null;
+        const body = await response.json();
+        return (body && body.data && body.data.payment) || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/*
+ * The UPI links for one order.
+ *
+ * pa is who is paid, pn the name their app shows, am the amount, tn what it
+ * is for. The generic upi: scheme opens the phone's chooser, which is every
+ * UPI app it has; the named ones are for phones that do not offer one.
+ *
+ * Everything is encoded: a shop name with an ampersand in it would otherwise
+ * end the amount early, and a customer would be shown the wrong number to
+ * pay - which is the one bug this must not have.
+ */
+function upiLinks({ upiId, upiName, amount, token, orderId }) {
+    const money = Number(amount || 0).toFixed(2);
+    const fields =
+        "pa=" + encodeURIComponent(upiId) +
+        "&pn=" + encodeURIComponent(upiName || "") +
+        "&am=" + encodeURIComponent(money) +
+        "&cu=INR" +
+        "&tn=" + encodeURIComponent(t("Order {token}", { token: token })) +
+        (orderId ? "&tr=" + encodeURIComponent(String(orderId).slice(0, 35)) : "");
+    return {
+        any: "upi://pay?" + fields,
+        gpay: "tez://upi/pay?" + fields,
+        phonepe: "phonepe://pay?" + fields,
+        paytm: "paytmmp://pay?" + fields,
+        amount: money
+    };
+}
+
+/* The money a customer still owes, offered to their own app. */
+function offerUpi(said, shopPayment, token, orderId) {
+    const box = document.getElementById("pay-upi");
+    if (!box) return;
+    const upiId = String((shopPayment && shopPayment.upi_id) || "");
+    /* Nothing owed, nothing to pay, or nowhere to send it. */
+    if (!upiId || !said || said.paid || said.cancelled || !(Number(said.total) > 0)) return;
+    const links = upiLinks({
+        upiId,
+        upiName: String((shopPayment && shopPayment.upi_name) || said.shop || ""),
+        amount: said.total,
+        token,
+        orderId
+    });
+    const amount = document.getElementById("pay-upi-amount");
+    if (amount) {
+        amount.textContent = t("Pay {amount} to {who}", {
+            amount: "\u20b9" + links.amount.replace(/\.00$/, ""),
+            who: String((shopPayment && shopPayment.upi_name) || said.shop || "")
+        });
+    }
+    const where = { "pay-upi-any": links.any, "pay-upi-gpay": links.gpay, "pay-upi-phonepe": links.phonepe, "pay-upi-paytm": links.paytm };
+    Object.keys(where).forEach((id) => {
+        const link = document.getElementById(id);
+        if (link) link.href = where[id];
+    });
+    box.hidden = false;
+}
+
+/* Does the shop say this order is paid? If so, the bill is worth having. */
+async function offerBillWhenPaid(token) {
+    const button = document.getElementById("done-bill");
+    if (!button) return;
+    const kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []).find(
+        (row) => row && String(row.token) === String(token)
+    );
+    const orderId = new URLSearchParams(window.location.search).get("order") || (kept && kept.orderId) || "";
+    const shopId = (kept && kept.shop) || (typeof knownBranchId === "function" ? await knownBranchId() : "");
+    if (!orderId || !shopId) return;
+    try {
+        const response = await fetch(
+            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return;
+        const body = await response.json();
+        if (!body || body.type !== "success" || !body.data) return;
+        /* Unpaid: offer to pay it. Paid: offer the bill. Never both. */
+        if (!body.data.bill_ready) {
+            let payment = {};
+            try {
+                payment = (await getLatestShopPayment(shopId)) || {};
+            } catch (e) {
+                payment = {};
+            }
+            offerUpi(body.data, payment, token, orderId);
+            return;
+        }
+        button.hidden = false;
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            try {
+                await generatePdfFromHtmlFile();
+            } catch (error) {
+                console.error("Receipt PDF generation failed:", error);
+                alert(error.message || t("Receipt PDF could not be generated."));
+            } finally {
+                button.disabled = false;
+            }
+        });
+    } catch (error) {
+        /* Offline, or a shop that cannot be reached: no bill offered, which
+           is the same as before this existed. */
+    }
+}
 
 async function generatePdfFromHtmlFile() {
 

@@ -804,7 +804,7 @@
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
             + (unpaid
-                ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
+                ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
             + '<div class="btn-group">'
@@ -1883,7 +1883,18 @@
                     $('#wallet_balance').attr('disabled', 'disabled');
                 }
             } else {
-                $('#Partial_amount').val(PosnicPro.sales.EditRecentSaleParams.partial_amounts.toFixed(2));
+                /*
+                 * partial_amounts is the money ALREADY taken on this sale. On a
+                 * settlement nothing has been taken yet, so this opened the Pay
+                 * amount box on 0.00 and the customer's whole table then read as
+                 * an overpayment. Where something HAS been paid the box still
+                 * opens on it, which is what a partial top-up wants.
+                 *
+                 * parseFloat also keeps a stored string from throwing on
+                 * toFixed, which used to abort the whole tender silently.
+                 */
+                var alreadyPaid = parseFloat(PosnicPro.sales.EditRecentSaleParams.partial_amounts) || 0;
+                $('#Partial_amount').val((alreadyPaid > 0 ? alreadyPaid : saleNewTot).toFixed(2));
                 if (PosnicPro.sales.EditRecentSaleParams.wallet_amount > 0) {
                     $('#wallet_balance').prop('checked', false);
                     $('.showhidewallet').hide();
@@ -2013,10 +2024,27 @@
                 '</div>';
             $('#payment_id').append(paymentMethod);
         }
-        let SalePaymentType = PosnicPro.configPaymentType;
-        if (SalePaymentType.leght !== 0) {
+        /*
+         * The same rule as the split-tender screen above: Cash is built in, so
+         * a shop that also listed it in Settings must not get a second button
+         * with the same id. `leght` was a typo for `length`, which made the
+         * guard around this loop always true; $.each handles an empty list, so
+         * the guard is simply gone.
+         */
+        let SalePaymentType = PosnicPro.configPaymentType || [];
+        var renderedModes = { cash: true };
+        if (localStorage.getItem("payment_gateway") === 'true') {
+            renderedModes.qrpay = true;
+            renderedModes.razorpay = true;
+        }
+        var modeKey = function (value) {
+            return String(value || '').replace(/\s+/g, '').toLowerCase();
+        };
+        {
             $.each(SalePaymentType, function (key, val) {
                 var payment_mode_active = val.payment_value + '_active';
+                if (renderedModes[modeKey(val.payment_value)]) { return; }
+                renderedModes[modeKey(val.payment_value)] = true;
                 if (sales_payment_mode !== val.payment_value) {
                     $('.payment_mode').val(sales_payment_mode);
                     let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
@@ -2422,18 +2450,41 @@
             );
         }
 
+        /*
+         * A TILE PER METHOD, AND NEVER THE SAME METHOD TWICE.
+         *
+         * Cash is built in here, and a shop that had also added "Cash" to its
+         * own payment list got two Cash tiles. They were not cosmetic
+         * duplicates: both carried the same element ids and both read the same
+         * stored amount, so a 690 rupee bill showed 690 in each and typing in
+         * one never reached the other.
+         *
+         * The shop's list is typed by hand, so the match is deliberately loose
+         * - "Cash", "cash" and "CASH " are one tile. A built-in's id AND its
+         * title both count, so a shop that typed "Razorpay" does not get a
+         * second tile beside the Qrpay one that already says Razorpay.
+         */
+        var renderedMethods = {};
+        function addPaymentBlock(id, title, isActive) {
+            var key = normalizeKey(String(id || ''));
+            if (!key || renderedMethods[key]) { return; }
+            renderedMethods[key] = true;
+            renderedMethods[normalizeKey(String(title || ''))] = true;
+            $('#payment_id').append(createPaymentBlock(id, title, isActive));
+        }
+
         // --- Cash ---
-        $('#payment_id').append(createPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash')));
+        addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
         // --- QR / Razorpay ---
         if (localStorage.getItem("payment_gateway") === 'true') {
-            $('#payment_id').append(createPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay')));
+            addPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay'));
         }
 
         // --- Other Configured Payment Modes ---
         let SalePaymentType = PosnicPro.configPaymentType;
         if (SalePaymentType && SalePaymentType.length !== 0) {
             $.each(SalePaymentType, function (key, val) {
-                $('#payment_id').append(createPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value)));
+                addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
             });
         }
 
@@ -2794,9 +2845,42 @@
         return paymentObj;
     },
 
+    /*
+     * THE ONE NUMBER A PAYMENT IS MEASURED AGAINST.
+     *
+     * Two places cap the payment tiles, and they disagreed. The tender screen
+     * read Pay amount and, when that came out empty or zero, fell back to the
+     * cart total - so a 420 rupee table looked fine and Save stayed lit. The
+     * final check inside cartOrderSubmit read Pay amount with a bare `|| 0` and
+     * no fallback, so the same settlement was refused the instant the owner
+     * pressed Pay:
+     *
+     *   "Total payment (420.00) cannot exceed Pay amount (0.00)"
+     *
+     * Pay amount is zero on a settlement whenever the sale is flagged partial,
+     * because the box is then filled from the sale's partial_balance - the
+     * money ALREADY taken, which on an unpaid table is nothing at all. Nothing
+     * here is a rounding or decimal problem: both sides are rounded to two
+     * places and compared with a 0.01 tolerance.
+     *
+     * So the cap is worked out once, here, and both places ask for it. The
+     * stored sales_total is the last fallback on purpose: it is the very number
+     * showMultiPaymentMode fills the Cash tile from, so the two sides cannot
+     * contradict each other again.
+     */
+    payableCap: function () {
+        var typed = parseFloat($('#Partial_amount').val());
+        if (!isNaN(typed) && typed > 0) { return parseFloat(typed.toFixed(2)); }
+        var cart = parseFloat(PosnicPro.sales.extraDiscount && PosnicPro.sales.extraDiscount.sale_new_tot);
+        if (!isNaN(cart) && cart > 0) { return parseFloat(cart.toFixed(2)); }
+        var stored = parseFloat(PosnicPro.sales.EditRecentSaleParams && PosnicPro.sales.EditRecentSaleParams.sales_total);
+        if (!isNaN(stored) && stored > 0) { return parseFloat(stored.toFixed(2)); }
+        return 0;
+    },
+
     initPaymentValidation: function () {
         const totalAmount = parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
-        const payAmount = parseFloat($('#Partial_amount').val()) || totalAmount;
+        const payAmount = PosnicPro.sales.payableCap();
         const isPaid = $('#unpaid_payment_toggle').is(':checked');
         var sum = 0;
 
@@ -2809,6 +2893,16 @@
         // Round to 2 decimal places to avoid floating point issues
         sum = parseFloat(sum.toFixed(2));
         const payAmountRounded = parseFloat(payAmount.toFixed(2));
+
+        /*
+         * No bill to measure against. Either the tender is not open or the cart
+         * has been cleared, and the tiles are still carrying the figures of the
+         * sale just settled. Refusing here is how a finished table threw an
+         * overpayment toast across the KOT screen.
+         */
+        if (payAmountRounded <= 0) {
+            return;
+        }
 
         // Always validate multipayment total against Pay amount
         // Check if multipayment total exceeds Pay amount (with 0.01 tolerance)
@@ -3649,9 +3743,9 @@ PosnicPro.sales.addSale = {
                 multipaymentTotal += parseFloat(payments[mode]) || 0;
             }
             multipaymentTotal = parseFloat(multipaymentTotal.toFixed(2));
-            var payAmount = parseFloat(partial) || 0;
-            
-            if (multipaymentTotal > payAmount + 0.01) {
+            var payAmount = PosnicPro.sales.payableCap();
+
+            if (payAmount > 0 && multipaymentTotal > payAmount + 0.01) {
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
                 $("#save_submit").removeClass('disabled');

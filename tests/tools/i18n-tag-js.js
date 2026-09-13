@@ -70,7 +70,11 @@ const isWords = (t) => /[A-Za-z]{2,}/.test(t) && !/[{}'"+`]/.test(t);
 /* Ternaries that pick a VALUE, not a label: a select's option value, an order
    type the API stores, an HTTP method, a date format, a CSV export cell. */
 const DENY = new Set(['Received|Open', 'Take away|Dine-in', 'Active|Inactive', 'PUT|POST',
-  'FullReturn|PartialReturn', 'MM/DD/YYYY|DD/MM/YYYY']);
+  'FullReturn|PartialReturn', 'MM/DD/YYYY|DD/MM/YYYY',
+  /* PosnicPro.alert picks its ICON from the heading - 'Information' and
+     'Alert' mean info, anything else is used as the class name itself and
+     lowercased. Translating these makes the icon a Tamil word. */
+  'Alert|Information']);
 /*
  * Proper nouns. Swiggy is Swiggy in Tamil.
  *

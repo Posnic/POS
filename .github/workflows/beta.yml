@@ -23,9 +23,9 @@ on:
     branches: [main]
     # Documentation and licence changes do not need three installers built.
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
+      - "**/*.md"
+      - "docs/**"
+      - "LICENSE"
   workflow_dispatch:
 
 # Two pushes to main in quick succession should produce the newer build, not
@@ -76,9 +76,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, name: Windows, flag: '--win --x64' }
-          - { os: macos-latest,   name: macOS,   flag: '--mac' }
-          - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
+          - { os: windows-latest, name: Windows, flag: "--win --x64" }
+          - { os: macos-latest, name: macOS, flag: "--mac" }
+          - { os: ubuntu-latest, name: Linux, flag: "--linux --x64" }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -167,6 +167,22 @@ jobs:
       - name: Native binaries can load on a clean Windows
         if: matrix.name == 'Windows'
         run: node scripts/check-native-runtime.js
+
+      # A build whose every test passed still shipped an application that
+      # could not start: a duplicate ipcMain.handle threw inside the boot
+      # chain and the window sat on "Starting services" for ever. Unit tests
+      # import modules; they never boot the thing. This does.
+      - name: The application actually starts
+        if: matrix.name == 'Windows'
+        run: node scripts/check-app-boots.js
+        # NO `env: ELECTRON_RUN_AS_NODE: ""` here, deliberately.
+        #
+        # Setting it to empty DEFINES it, and Electron tests for the variable
+        # being present rather than for what it says - so that line made
+        # Posnic.exe run as plain Node, abort on a failed snapshot assertion,
+        # and this step blame the application. check-app-boots.js deletes the
+        # variable from the child's environment instead, which is right whether
+        # it is run here or on somebody's machine.
 
       # electron-builder names the update manifest after the version's
       # prerelease tag: 2.0.2-beta.7 produces beta.yml, not latest.yml. An

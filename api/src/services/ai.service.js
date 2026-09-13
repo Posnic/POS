@@ -310,8 +310,28 @@ const DATA_GUARD = [
  * this call; the secret does the exchange, and neither it nor the key
  * reaches the page. Only OpenAI offers this today.
  */
-const REALTIME_MODEL = 'gpt-realtime';
-const REALTIME_BETA_MODEL = 'gpt-4o-realtime-preview';
+/*
+ * THE MINI, BECAUSE THIS IS NOT A HARD CONVERSATION.
+ *
+ * Owner: "actually charging for this conversation from openai too much. few
+ * conversatin goes up to 1usd. crazy." Then, on the choice: "yes change to
+ * mini. ours is not that complex tax. we arleady have well defined rules to
+ * respond."
+ *
+ * He is right about the work. Taking an order off a menu of thirty dishes,
+ * against a brief that already spells out every rule, is not a reasoning
+ * problem - it is listening, matching a name, and calling a tool. The full
+ * model was three times the price for judgement this job does not need.
+ *
+ *   gpt-realtime        $32.00 / $64.00 per 1M audio tokens in / out
+ *   gpt-realtime-mini   $10.00 / $20.00
+ *
+ * A shop can still name a different realtime model in its settings, and that
+ * choice wins - see the caller. This is only what a shop that has said
+ * nothing gets.
+ */
+const REALTIME_MODEL = 'gpt-realtime-mini';
+const REALTIME_BETA_MODEL = 'gpt-4o-mini-realtime-preview';
 
 /** Can this shop's provider hold a live line at all? Never throws. */
 async function realtimeCapable(context) {
@@ -339,6 +359,37 @@ function transcriptionFor(transcription, model) {
   return out;
 }
 
+/*
+ * WHEN THE LINE DECIDES SOMEBODY HAS SPOKEN.
+ *
+ * Owner: "ai keep saying ok ok ok. coz may be surrounding sound."
+ *
+ * He is right about the cause. This was never configured, so the line ran on
+ * the provider's defaults - which are tuned for somebody sitting alone at a
+ * desk. A restaurant is not that. Plates, a fan, the next table, the kitchen:
+ * all of it crosses a default threshold, the line decides a turn has ended,
+ * the model is asked to reply to nothing at all, and it does the only polite
+ * thing available and says "ok". Over and over.
+ *
+ *   threshold 0.7      how loud counts as speech. The default is around half
+ *                      that, which a busy room clears on its own.
+ *   silence 900ms      how long a gap ends a turn. Long enough to think mid
+ *                      sentence - "two biryani and... a naan" - without the
+ *                      assistant jumping into the pause.
+ *   prefix 400ms       how much of the audio BEFORE the threshold was crossed
+ *                      is kept, so the first syllable is not clipped off.
+ *
+ * The cost of going too far the other way is a customer having to speak up,
+ * which is recoverable. The cost of where it was is a conversation that talks
+ * over itself, which is not.
+ */
+const TURN_DETECTION = {
+  type: 'server_vad',
+  threshold: 0.7,
+  prefix_padding_ms: 400,
+  silence_duration_ms: 900,
+};
+
 async function mintRealtimeSecret({ key, model, instructions, tools, voice, transcription }) {
   const current = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
@@ -352,7 +403,10 @@ async function mintRealtimeSecret({ key, model, instructions, tools, voice, tran
         tools,
         tool_choice: 'auto',
         audio: {
-          input: { transcription: transcriptionFor(transcription, 'gpt-4o-mini-transcribe') },
+          input: {
+            transcription: transcriptionFor(transcription, 'gpt-4o-mini-transcribe'),
+            turn_detection: TURN_DETECTION,
+          },
           output: { voice: voice || 'marin' },
         },
       },
@@ -596,6 +650,23 @@ function jsonFrom(text) {
   const first = body.search(/[[{]/);
   const last = Math.max(body.lastIndexOf(']'), body.lastIndexOf('}'));
   if (first !== -1 && last > first) attempts.push(body.slice(first, last + 1));
+  /*
+   * The FIRST complete value, found by counting brackets.
+   *
+   * The two attempts above both run to the LAST bracket in the text, so a
+   * model that closed its object and then added one stray character -
+   * `{"reply":"..."}]` - defeats them: the slice ends at that stray bracket
+   * and parses no better than the whole string did. It is not hypothetical.
+   * The owner saw `{"reply":"...","actions":[]}]` printed into the chat as
+   * though it were a sentence, because the caller's prose fallback is what
+   * catches a parse that returns null.
+   *
+   * Counting stops at the character that closes what was opened, so trailing
+   * anything is simply not included. Quotes are tracked because a brace
+   * inside a string - a dish called "Curry {special}" - must not close it.
+   */
+  const balanced = balancedFrom(body, first);
+  if (balanced) attempts.push(balanced);
 
   for (const attempt of attempts) {
     try {
@@ -605,6 +676,33 @@ function jsonFrom(text) {
     }
   }
   return null;
+}
+
+/** The first complete {...} or [...] in `body`, brackets counted, or ''. */
+function balancedFrom(body, first) {
+  if (first === -1) return '';
+  const open = body[first];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = first; i < body.length; i += 1) {
+    const ch = body[i];
+    if (escaped) {
+      escaped = false;
+    } else if (ch === '\\') {
+      escaped = true;
+    } else if (ch === '"') {
+      inString = !inString;
+    } else if (!inString) {
+      if (ch === open) depth += 1;
+      else if (ch === close) {
+        depth -= 1;
+        if (depth === 0) return body.slice(first, i + 1);
+      }
+    }
+  }
+  return '';
 }
 
 module.exports = {

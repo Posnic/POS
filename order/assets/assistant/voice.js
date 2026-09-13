@@ -50,7 +50,7 @@
     return (window.i18n && window.i18n.lang) || "en";
   }
 
-  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false, placed: "", leaving: false, leaveTimer: 0 };
+  var live = { active: false, mode: "", pc: null, dc: null, stream: null, pendingStream: null, rec: null, speaking: false, beta: false, heardLanguage: "", session: "", branch: "", meter: null, misses: 0, greeted: false, placed: "", leaving: false, leaveTimer: 0, placedId: "" };
 
   /* ------------------------------------------------------------ the button */
 
@@ -76,6 +76,8 @@
   /* ------------------------------------------------------------- the state */
 
   function status(state, text) {
+    var a = assistant();
+    if (a && a.showOrderInstead) a.showOrderInstead(!!state);
     var panel = el("voice");
     var orb = el("voice-orb");
     var line = el("voice-status");
@@ -243,14 +245,43 @@
   }
 
   /*
-   * The model asked for something; the page decides and answers. Every
-   * answer carries the order as it stands, so the model reads back what IS
-   * there and not what it meant to do; a refusal says why and what is close.
+   * HOW BIG THE ORDER IS, NOT WHAT IS ON IT.
+   *
+   * Owner: "in between i see conversation large list of items. its you
+   * sending? i mean software? why cant send first and tell all instructions
+   * and boundaries."
+   *
+   * The instructions and the whole menu ARE sent once, when the line opens,
+   * and never again - he is right that this is the way to do it. What was
+   * repeating is the ORDER: every tool answer carried every line of it, so
+   * adding four dishes sent the growing list back four times, and every
+   * refusal sent it again. The model does not need it. It is on the screen
+   * the customer is looking at, and the page is the thing that knows what is
+   * on it.
+   *
+   * So an answer says how many lines and what it comes to. show_order still
+   * returns the list in full - that is what it is for, and the model calls it
+   * on the rare turn it genuinely needs one.
+   */
+  function orderSize(order) {
+    return {
+      lines: (order && order.lines ? order.lines : []).length,
+      total: (order && order.total) || 0
+    };
+  }
+
+  /*
+   * The model asked for something; the page decides and answers. A refusal
+   * says why and what is close.
    */
   async function runTool(name, args) {
     var a = assistant();
     if (name === "show_order") return { ok: true, order: await cartSummary() };
+    /* THE ONE ABOVE is the exception: it exists to hand over the list. */
+    if (name === "show_order_history") return orderHistory();
     if (name === "send_to_kitchen") return sendToKitchen(args);
+    if (name === "change_placed_order") return changePlacedOrder(args);
+    if (name === "cancel_placed_order") return cancelPlacedOrder(args);
     var id = String((args && args.item_id) || "");
     var asked = String((args && args.asked) || "").replace(/\s+/g, " ").trim().slice(0, 80);
     var item = findItem(id, asked);
@@ -260,11 +291,11 @@
         reason: "not_on_menu",
         asked: asked || id,
         nearest: nearest(asked || id.replace(/[_-]+/g, " "), 3).map(function (n) { return brief(n.item); }),
-        order: await cartSummary()
+        order: orderSize(await cartSummary())
       };
     }
     if (name !== "remove_from_order" && item.available === false) {
-      return { ok: false, reason: "not_available_today", item: item.name, asked: asked || id, order: await cartSummary() };
+      return { ok: false, reason: "not_available_today", item: item.name, asked: asked || id, order: orderSize(await cartSummary()) };
     }
     var quantity = Math.min(20, Math.max(1, Math.round(Number(args && args.quantity) || 1)));
     var action = { item_id: String(item.id), name: item.name, quantity: quantity };
@@ -277,7 +308,8 @@
     if (a && a.apply) await a.apply([action]);
     var done = { ok: true, did: action.verb === "add" ? "added" : action.verb === "remove" ? "removed" : "set", item: item.name, item_id: String(item.id), quantity: action.quantity };
     if (noteText && action.verb !== "remove") done.note = noteText;
-    done.order = await cartSummary();
+    /* How big it is, not what is on it - see orderSize. */
+    done.order = orderSize(await cartSummary());
     return done;
   }
 
@@ -289,13 +321,43 @@
    * one item of two ("i said chicken briyani and chicken tikka ... it said
    * only chicken tikka").
    */
-  async function runToolCalls(response) {
+  async function runToolCalls(response, interrupted) {
     var items = (response && response.output) || [];
     var calls = [];
     for (var i = 0; i < items.length; i++) {
       if (items[i] && items[i].type === "function_call" && items[i].call_id) calls.push(items[i]);
     }
     if (!calls.length) return false;
+
+    /*
+     * A RESPONSE THE CUSTOMER TALKED OVER IS ANSWERED, NOT RUN.
+     *
+     * Two things are true at once. A tool call from a cancelled response must
+     * NOT be carried out - the customer interrupted for a reason, and adding
+     * the dish they talked over is how the wrong food is cooked. But a
+     * call_id the model is waiting on and never hears back about wedges the
+     * conversation: every turn afterwards is an acknowledgement and nothing
+     * else, which is what the owner heard - "keep saying ok ok but not able
+     * to continue".
+     *
+     * So the call is answered and refused. Nothing is added, and the model is
+     * free to carry on. No response.create either: the customer is mid
+     * sentence, and asking the model to speak now talks over them again.
+     */
+    if (interrupted) {
+      for (i = 0; i < calls.length; i++) {
+        sendEvent({
+          type: "conversation.item.create",
+          item: {
+            type: "function_call_output",
+            call_id: calls[i].call_id,
+            output: JSON.stringify({ ok: false, reason: "interrupted" })
+          }
+        });
+      }
+      return false;
+    }
+
     for (i = 0; i < calls.length; i++) {
       var args = {};
       try {
@@ -303,7 +365,21 @@
       } catch (e) {
         args = {};
       }
-      var output = await runTool(calls[i].name, args);
+      /*
+       * EVERY call gets an output, even one this page does not understand.
+       *
+       * A call_id left unanswered is a conversation that cannot move: the
+       * model is waiting on a result that will never arrive, so every turn
+       * after it is an acknowledgement and nothing else. The owner heard
+       * exactly that - "keep saying ok ok but not able to continue".
+       */
+      var output = null;
+      try {
+        output = await runTool(calls[i].name, args);
+      } catch (e) {
+        output = { ok: false, reason: "not_done" };
+      }
+      if (!output) output = { ok: false, reason: "not_done" };
       sendEvent({ type: "conversation.item.create", item: { type: "function_call_output", call_id: calls[i].call_id, output: JSON.stringify(output) } });
     }
     sendEvent({ type: "response.create" });
@@ -335,29 +411,114 @@
    * "welcome" before anyone orders. One system note tells the model the
    * line is open and one response.create asks it to speak. Once per line.
    */
+  /*
+   * SPEAK FIRST, AND SAY THE SHOP'S NAME.
+   *
+   * Owner: "welcome greeting not said."
+   *
+   * This used to put a system MESSAGE into the conversation and then ask for
+   * any response at all, which is two things that can go wrong to do one job:
+   * a system item is not a shape every build of the line accepts, and a bare
+   * response.create leaves the model to decide what the moment calls for -
+   * which, at the very start of a call with nothing said yet, is often
+   * nothing.
+   *
+   * A response carries its own instructions. Asking for ONE response and
+   * telling it what that response is for is the documented way to steer a
+   * single turn, and it does not depend on an item being accepted first.
+   */
   function greetFirst() {
     if (live.greeted) return;
     live.greeted = true;
     sendEvent({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "system",
-        content: [{ type: "input_text", text: "The line has just opened. Say your OPENING LINE now, in one sentence, in the page's language, then wait for the customer." }],
-      },
+      type: "response.create",
+      response: {
+        instructions:
+          "The line has just opened and the customer has said nothing yet. Say your OPENING LINE now, word for word, in one sentence, in the page's language - then stop and listen. Do not add anything to it and do not read the menu."
+      }
     });
-    sendEvent({ type: "response.create" });
   }
 
-  /* Tell the line to hear Tamil from now on. Once. */
+  /* ------------------------------------------------- seeing what it heard
+   *
+   * Owner: "also enable what is converted text i want to see. soemthing
+   * wrong. i see its flickering not showing thing."
+   *
+   * A call normally shows no text at all - his own rule, and the right one
+   * for a customer, who is listening rather than reading. But when something
+   * IS wrong, the words the line thought it heard are the evidence, and
+   * guessing at them from outside is how an afternoon gets lost.
+   *
+   * SHOWN, NOW, BY DEFAULT. It was behind ?transcript=1 and the owner has
+   * asked to see it five times running - most recently "i want know what
+   * trascribed in the chat. not abel see" - which settles it: a flag he has
+   * to remember to type is a feature he does not have. His earlier "no need
+   * to show conversation as text" was about a line that worked; this one
+   * does not yet, and the words are the only evidence of why.
+   *
+   * ?transcript=0 turns it off for anybody who wants the clean screen back,
+   * and that choice is remembered for the visit - the flag would otherwise
+   * be lost the moment the page walks from the arrival URL to products.html.
+   */
+  var TRANSCRIPT_KEY = "posnic_show_transcript";
+
+  function showingTranscript() {
+    try {
+      var asked = new URLSearchParams(window.location.search).get("transcript");
+      if (asked === "1") sessionStorage.setItem(TRANSCRIPT_KEY, "1");
+      if (asked === "0") sessionStorage.setItem(TRANSCRIPT_KEY, "0");
+      return sessionStorage.getItem(TRANSCRIPT_KEY) !== "0";
+    } catch (e) {
+      /* A browser that keeps nothing still shows them; this is the safe
+         side now, because the alternative is the owner testing blind. */
+      return true;
+    }
+  }
+
+  /*
+   * One line of what was heard or said, marked with the alphabet it came back
+   * in - because "the transcript is in Kannada again" is the single most
+   * useful thing this can tell anybody about a Tamil call.
+   */
+  function transcribed(who, text, script) {
+    if (!text) return;
+    var a = assistant();
+    if (!a || !a.bubble) return;
+    var row = a.bubble(who === "me" ? "me" : "ai", text);
+    if (row && row.setAttribute) {
+      row.setAttribute("data-transcript", "yes");
+      if (script) row.setAttribute("data-script", script);
+    }
+  }
+
+  /*
+   * Tamil was heard. NOTED, AND NOTHING IS SENT.
+   *
+   * Owner: "i talk in tamil it reply in tamil but its not continuing. broken
+   * voice hearing."
+   *
+   * This used to reconfigure the live session the moment a Tamil transcript
+   * arrived - a session.update carrying only audio.input.transcription. The
+   * update REPLACES the block it names, and audio.input is also where turn
+   * detection lives. Handing over an audio.input that has a transcription and
+   * no turn_detection is asking the line to stop noticing that the customer
+   * is speaking, which is exactly what he described: it answers the first
+   * Tamil sentence and then never hears another one.
+   *
+   * The transcription language was only ever an accuracy nicety, and the
+   * transcripts are not even shown - the owner's own rule, "no need to show
+   * conversation as text in the chat". The model's REPLY language comes from
+   * the brief, which tells it to speak the customer's language, and that
+   * works: he says it does reply in Tamil. So the language is remembered for
+   * this page's own use and the line is left exactly as it was opened.
+   *
+   * A Tamil PAGE still gets Tamil ears from the first word, because that is
+   * set when the session is minted - see voice-session.service.js - which is
+   * the safe moment to say it.
+   */
   function lockTamil() {
     if (live.heardLanguage) return;
     live.heardLanguage = "ta";
-    if (live.beta) {
-      sendEvent({ type: "session.update", session: { input_audio_transcription: { model: "whisper-1", language: "ta" } } });
-    } else {
-      sendEvent({ type: "session.update", session: { type: "realtime", audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "ta" } } } } });
-    }
   }
 
   /* Errors the line cannot come back from; anything else is logged and the
@@ -446,22 +607,264 @@
    * exactly why so it can say so. The customer's clear yes is the model's
    * to obtain; confirmed:false places nothing.
    */
+  /*
+   * The Confirm & send button, pressed.
+   *
+   * The same door the spoken "send it" uses, so there is exactly one way an
+   * order leaves this page: same checks, same refusals, same confirmation
+   * screen and bell afterwards. A tap IS the customer's yes, so it carries
+   * confirmed:true - there is nothing else a press of that button could mean.
+   *
+   * When it goes, the assistant is told, because it is mid-conversation and
+   * must not carry on asking whether to send something that has gone.
+   */
+  async function sendNow(way) {
+    var done = await sendToKitchen(way ? { confirmed: true, fulfilment: way } : { confirmed: true });
+    if (done.ok) {
+      tellTheAssistant(
+        'The customer pressed "Confirm and send" and the order has gone to the kitchen. Say in ONE sentence that it has gone and will be served soon. Do not read the order back.'
+      );
+    }
+    return done;
+  }
+
+  /*
+   * WHAT THE CUSTOMER JUST DID BY HAND, said into the conversation.
+   *
+   * Owner: "also AI should know about the changes what user doing. its kind
+   * of helper too."
+   *
+   * The top half of the screen is worked with fingers while the assistant
+   * listens at the bottom, and an assistant that cannot see that is worse
+   * than useless - it offers a dish that is already on the order, or reads
+   * back a quantity the customer has just corrected. This puts the change
+   * into the conversation as something the customer said, which is what it
+   * is, and does NOT ask for a reply: the customer is looking at the screen
+   * and does not need it narrated back at them.
+   */
+  function tellTheAssistant(what, speak) {
+    if (!live.active || !live.dc || live.dc.readyState !== "open") return false;
+    sendEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: String(what || "") }]
+      }
+    });
+    if (speak) sendEvent({ type: "response.create" });
+    return true;
+  }
+
+  /** One line about a change made by hand, for the assistant's benefit. */
+  function noticed(verb, name, quantity) {
+    if (!name) return;
+    var said =
+      verb === "remove" || Number(quantity) === 0
+        ? 'The customer has just taken ' + name + ' off the order themselves, by tapping the screen.'
+        : verb === "add"
+          ? 'The customer has just added ' + name + ' themselves, by tapping the screen.'
+          : 'The customer has just set ' + name + ' to ' + quantity + ' themselves, by tapping the screen.';
+    tellTheAssistant(said + ' Do not say anything about it unless they bring it up.');
+  }
+
+  /*
+   * THE SAME TABLE, AGAIN.
+   *
+   * Owner: "same table not accepted. but how about adding extra or modifying
+   * same table orders?"
+   *
+   * The shop allows one open order per table by default, and it is right to:
+   * two tickets on one table is usually somebody picking the wrong table, and
+   * the cost of finding out is a bill split in two at the end of the meal.
+   * The rule even says what to do instead - "Add to it, or settle it first."
+   *
+   * But from a customer's phone there was no way to add to it. They scanned
+   * table 34, ordered, ate half of it, wanted one more naan, and the shop
+   * said no. A rule with no door next to it is just a wall.
+   *
+   * So this is the door. A second send at the same table, from the phone that
+   * placed the first one, ADDS to that order rather than opening a second. It
+   * goes through the customer's own change endpoint, which means the shop's
+   * rules still decide: inside the window it simply changes, past it the
+   * kitchen may have started so it becomes a request the shop answers, and a
+   * billed or paid order refuses and this falls through to a fresh ticket -
+   * which is correct, because a settled table is a new sitting.
+   *
+   * THE PROOF IS THE TOKEN, as everywhere else here. Another diner at the
+   * same table holds no token for this order and cannot touch it; they get
+   * the shop's refusal, which is the honest answer for them.
+   */
+  async function orderHereBefore(point) {
+    var table = String((point && point.table) || "").trim();
+    if (!table) return null;
+    /* The shop is asked for, not assumed from the call: this runs on the
+       button as well as the line, and a phone that ordered at table 5 in one
+       shop must not add to that when it scans table 5 in another. */
+    var shop = await branchNow();
+    var mine = myOrders();
+    for (var i = 0; i < mine.length; i += 1) {
+      var row = mine[i];
+      if (!row || !row.orderId || !row.token) continue;
+      if (String(row.table || "").trim() !== table) continue;
+      if (shop && String(row.shop || "") !== String(shop)) continue;
+      return row;
+    }
+    return null;
+  }
+
+  /**
+   * Add this basket to an order already open at this table.
+   *
+   * @returns {Promise<null|{ok: boolean, reason?: string, requested?: boolean, token?: string}>}
+   *          null when there is nothing to add to and the caller should place
+   *          a new order instead.
+   */
+  async function addToTheOpenOne(row, lines) {
+    var shop = await branchNow();
+    if (!shop) return null;
+    var base =
+      apiBase() + "/online-ordering/" + encodeURIComponent(shop) + "/orders/" + encodeURIComponent(row.orderId);
+
+    /* What the shop says is on it NOW. The quantities this endpoint takes are
+       absolute, so two more of something already there is what is there plus
+       two - and asking the shop rather than trusting this phone is the only
+       way that arithmetic is right after somebody else has touched it. */
+    var said = null;
+    try {
+      var read = await fetch(base + "?token=" + encodeURIComponent(row.token), {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+      if (!read.ok) return null;
+      var body = await read.json();
+      said = body && body.type === "success" ? body.data : null;
+    } catch (e) {
+      return null;
+    }
+    /* Settled, called off, or refused: that sitting is over and the next
+       order is a new one. */
+    if (!said || said.cancelled || said.paid) return null;
+    if (said.why_not && said.why_not !== "too_late") return null;
+
+    var already = {};
+    (said.items || []).forEach(function (line) {
+      already[String(line.item_id || "")] = Number(line.quantity) || 0;
+    });
+    var wanted = lines.map(function (line) {
+      var id = String(line.item_id || "");
+      return { item_id: id, quantity: (already[id] || 0) + (Number(line.quantity) || 0) };
+    });
+    if (!wanted.length) return null;
+
+    try {
+      var sent = await fetch(base + "/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ token: row.token, items: wanted }),
+      });
+      var answer = await sent.json().catch(function () {
+        return null;
+      });
+      if (!sent.ok || !answer || answer.type !== "success") return null;
+
+      /* It went onto the order, so the basket has been sent. Emptied the way
+         checkout empties it, or the next screen shows it all over again. */
+      try {
+        if (typeof saveCartData === "function") await saveCartData([]); // eslint-disable-line no-undef
+        if (typeof renderCart === "function") await renderCart([]); // eslint-disable-line no-undef
+      } catch (e) {
+        /* an order that went is more important than a basket that lingers */
+      }
+      var data = answer.data || {};
+      live.placed = String(row.token || "");
+      live.placedId = String(row.orderId || "");
+      var a = assistant();
+      /* The docket flies for something that actually went to the kitchen. A
+         request past the window has NOT gone - a person still has to say yes
+         - so that one opens on a still, or the drawing tells a lie. */
+      if (a && a.placedPanel) {
+        a.placedPanel(live.placed, { orderId: live.placedId, still: data.requested === true });
+      }
+      handUpAfterSending();
+      return { ok: true, added: true, requested: data.requested === true, token: live.placed };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /*
+   * THE LINE GOES DOWN WHEN THE ORDER GOES IN.
+   *
+   * Owner: "for changnig ai assistant not needed until user click mic icon.
+   * once order sent switch off mic."
+   *
+   * It used to stay up on purpose - the customer might want to change
+   * something - but an open microphone nobody is talking into is a microphone
+   * listening to a restaurant, and every burst of room noise it decides is
+   * speech costs a reply and a fraction of a rupee. The order screen has its
+   * own buttons for changing things; the line comes back the moment the mic
+   * is tapped, and the customer is the one who decides that.
+   */
+  function handUpAfterSending() {
+    /*
+     * AFTER IT HAS FINISHED SPEAKING, not the instant the order goes.
+     *
+     * Closing the line here would cut the model off mid-sentence and, worse,
+     * stop the tool answer ever reaching it - so it would never say the order
+     * had gone at all. That is the very first thing the owner reported in
+     * this feature: "after sending to order ai voice suddenly closing."
+     *
+     * So the intention is recorded and onEvent closes the line once the
+     * speaker has gone quiet. A line that somehow never speaks again is shut
+     * by the guard below rather than left listening to the room.
+     */
+    live.hangingUp = true;
+    clearTimeout(hangUpGuard);
+    hangUpGuard = setTimeout(function () {
+      if (live.hangingUp) closeTheLine();
+    }, 12000);
+  }
+
+  var hangUpGuard = 0;
+
+  function closeTheLine() {
+    live.hangingUp = false;
+    clearTimeout(hangUpGuard);
+    try {
+      stop();
+    } catch (e) {
+      /* an order that went is more important than a line that will not close */
+    }
+  }
+
   async function sendToKitchen(args) {
     var order = await cartSummary();
-    if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
-    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: order };
+    if (!order.lines.length) return { ok: false, reason: "empty_order", order: orderSize(order) };
+    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: orderSize(order) };
     var way = resolveWay(args && args.fulfilment);
-    if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: order };
-    if (way === "delivery") return { ok: false, reason: "needs_details", next: "review", order: order };
+    if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: orderSize(order) };
+    /*
+     * THERE IS NO REVIEW BUTTON, so this must not say "review".
+     *
+     * Owner: "AI asking to review and click review button. there is not
+     * review button." He is right, and this field is where the word came
+     * from: the model reads this answer as JSON and says what it finds. The
+     * button under the conversation used to say Review order and now says
+     * Confirm and send, because the review is the minute AFTER the order
+     * goes. A field naming a button that was renamed a while ago sent him
+     * hunting the screen for it.
+     */
+    if (way === "delivery") return { ok: false, reason: "needs_details", next: "the_page_finishes_it", order: orderSize(order) };
     var s = shopNow();
     var payment = (s && s.payment) || {};
-    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "review", order: order };
-    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "review", order: order };
+    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "the_page_finishes_it", order: orderSize(order) };
+    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "the_page_finishes_it", order: orderSize(order) };
     var point = servicePoint();
     try {
       if (way === "dine_in" && !(point && (point.table || point.venue))) {
         var table = String((args && args.table) || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 12);
-        if (!table) return { ok: false, reason: "need_table", order: order };
+        if (!table) return { ok: false, reason: "need_table", order: orderSize(order) };
         localStorage.setItem("order_table", table);
       } else {
         localStorage.removeItem("order_table");
@@ -469,7 +872,7 @@
       if (typeof chargeFor === "function") { // eslint-disable-line no-undef
         var charge = chargeFor(way, order.total); // eslint-disable-line no-undef
         if (charge && charge.allowed === false) {
-          return { ok: false, reason: "below_minimum", minimum: charge.minimum, short: charge.short, order: order };
+          return { ok: false, reason: "below_minimum", minimum: charge.minimum, short: charge.short, order: orderSize(order) };
         }
       }
       localStorage.setItem("order_fulfilment", way);
@@ -477,42 +880,346 @@
     } catch (e) {
       /* a browser that keeps nothing still places the order below */
     }
-    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "review", order: order }; // eslint-disable-line no-undef
+    /*
+     * ALREADY EATING AT THIS TABLE? Then this is one more thing on the same
+     * order, not a second ticket the shop would refuse. Tried before the
+     * checkout, and a null answer means there is nothing to add to - so the
+     * ordinary path below still runs and nothing is lost.
+     */
+    if (way === "dine_in") {
+      var here = await orderHereBefore(point);
+      if (here) {
+        var joined = await addToTheOpenOne(here, order.lines);
+        if (joined && joined.ok) {
+          return {
+            ok: true,
+            token: joined.token,
+            added_to_open_order: true,
+            requested: joined.requested === true,
+            total: order.total,
+            way: way,
+            pay: "at the counter",
+            order: orderSize(order)
+          };
+        }
+      }
+    }
+
+    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: orderSize(order) }; // eslint-disable-line no-undef
     var placed = null;
     try {
       placed = await checkout("", "Cash", { stay: true }); // eslint-disable-line no-undef
     } catch (e) {
       placed = null;
     }
-    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "review", order: order };
+    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: orderSize(order) };
     live.placed = String(placed.token);
+    live.placedId = String(placed.saleId || "");
     var a = assistant();
-    if (a && a.placedLine) a.placedLine(live.placed);
+    /* With the id as well as the token, the confirmation can open into the
+       order itself rather than stop at a number. */
+    if (a && a.placedPanel) a.placedPanel(live.placed, { orderId: live.placedId });
+    else if (a && a.placedLine) a.placedLine(live.placed);
+    handUpAfterSending();
     return {
       ok: true,
       token: live.placed,
       total: order.total,
       way: way,
       pay: way === "dine_in" ? "at the counter" : "when collecting",
-      order: order
+      order: orderSize(order)
     };
   }
 
-  /* Once the token has been said, the page goes to the receipt: when the
-     audio has stopped, or a few seconds after the reply is done. */
-  function armLeave() {
-    if (live.leaving) return;
-    clearTimeout(live.leaveTimer);
-    live.leaveTimer = setTimeout(leaveNow, 6000);
+  /*
+   * The order has gone, and the customer has changed their mind.
+   *
+   * The server decides whether it is still theirs to move - billed, paid,
+   * refused, or simply too late - and names the reason so the assistant can
+   * say which it is rather than inventing one. A dish they think of AFTER
+   * sending is not a change; it is a second ticket, which the model sends
+   * with add_to_order and send_to_kitchen again.
+   */
+  /*
+   * What this phone has ordered, as the shop sees it now.
+   *
+   * The browser holds the list - there is no account behind a QR code - and
+   * the shop is asked about all of them in ONE request, the same door the
+   * history page uses. Money is left out on purpose: the owner's rule is that
+   * the assistant does not read totals aloud.
+   */
+  /*
+   * What the shop says about every order this phone holds, newest first.
+   *
+   * One request for all of them, the same door the history page uses. Shared
+   * with orderNamed below, which needs the shop's answer to match a BILL
+   * number - the shop's own number, which the browser does not keep.
+   */
+  async function lookupOrders(kept) {
+    if (!kept || !kept.length) return [];
+    var branch = await branchNow();
+    if (!branch) return [];
+    try {
+      var response = await fetch(
+        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/lookup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ orders: kept.map(function (row) { return { orderId: row.orderId, token: row.token }; }) })
+        }
+      );
+      if (!response.ok) return [];
+      var answer = await response.json();
+      var orders = (answer && answer.data && answer.data.orders) || [];
+      /* Newest first, which is the order a person thinks in. */
+      orders.sort(function (a, b) {
+        return new Date(b.placed_at || 0) - new Date(a.placed_at || 0);
+      });
+      return orders;
+    } catch (e) {
+      return [];
+    }
   }
 
-  function leaveNow() {
-    if (live.leaving || !live.placed) return;
-    live.leaving = true;
-    clearTimeout(live.leaveTimer);
-    var token = live.placed;
-    stop();
-    window.OrderingVoice.leave("thankyou.html?token=" + encodeURIComponent(token));
+  async function orderHistory() {
+    var kept = myOrders();
+    if (!kept.length) return { ok: true, orders: [] };
+    var branch = await branchNow();
+    if (!branch) return { ok: false, reason: "no_shop" };
+    var orders = await lookupOrders(kept);
+    return {
+      ok: true,
+      orders: orders.map(function (order) {
+          return {
+            token: order.token,
+            /* The number on their receipt, so the customer may quote either. */
+            bill_no: order.bill_no,
+            placed_at: order.placed_at,
+            state: order.cancelled ? "cancelled" : order.paid ? "paid" : order.state,
+            can_change: order.can_change === true,
+            why_not: order.why_not,
+            seconds_left: order.can_change
+              ? Math.max(0, Math.round((new Date(order.placed_at).getTime() + (Number(order.change_seconds) || 0) * 1000 - Date.now()) / 1000))
+              : 0,
+            cancel_requested: order.cancel_requested === true,
+            lines: (order.items || []).map(function (line) {
+              return { item_id: line.item_id, name: line.name, quantity: line.quantity };
+            })
+        };
+      })
+    };
+  }
+
+  /* Where the printed code said this customer is, for the line's brief. */
+  function servicePointNow() {
+    try {
+      if (!window.KioskServicePoint) return {};
+      var point = window.KioskServicePoint.read() || {};
+      var out = {};
+      if (point.table) out.table = String(point.table);
+      if (point.venue) out.venue = String(point.venue);
+      if (point.unit) out.unit = String(point.unit);
+      if (point.fulfilment) out.fulfilment = String(point.fulfilment);
+      return out;
+    } catch (e) {
+      /* No service point is the shop's own floor, which is the safe read. */
+      return {};
+    }
+  }
+
+  /** The shop this line is talking to. */
+  async function branchNow() {
+    try {
+      return typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function myOrders() {
+    try {
+      return (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /* A bill number as a machine would compare it: S-Q43L-000018, s q43l 18 and
+     "000018" are one number said three ways. */
+  function tidyRef(said) {
+    return String(said || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+
+  /* The digits on the end of a bill number, without their leading zeros -
+     what a person says when they read one out ("eighteen"). */
+  function tailNumber(said) {
+    var digits = tidyRef(said).match(/(\d+)$/);
+    return digits ? String(Number(digits[1])) : "";
+  }
+
+  /*
+   * Which order a tool call means.
+   *
+   * EITHER NUMBER THE CUSTOMER HAS. The token is what they were told and what
+   * is called out; the bill number is what is printed on their receipt and
+   * what the shop's own queue leads with. They will say whichever is in front
+   * of them, so both are accepted - the token first, because it is short and
+   * the one people usually quote.
+   *
+   * The bill number is the shop's, so matching on it needs the shop's answer;
+   * that costs one request, and only when a token did not match.
+   *
+   * With no reference at all: the order placed during this call, and failing
+   * that the most recent this phone remembers - which is what somebody means
+   * when they ring back and say "make that two".
+   */
+  async function orderNamed(ref) {
+    var asked = String(ref || "").trim();
+    if (!asked && live.placedId && live.placed) {
+      return { orderId: live.placedId, token: live.placed };
+    }
+    var kept = myOrders();
+    if (!asked) {
+      var newest = kept
+        .slice()
+        .sort(function (a, b) {
+          return new Date(b.at || 0) - new Date(a.at || 0);
+        })[0];
+      return newest ? { orderId: newest.orderId, token: newest.token } : null;
+    }
+
+    var byToken = kept.filter(function (row) {
+      return String(row.token) === asked;
+    })[0];
+    if (byToken) return { orderId: byToken.orderId, token: byToken.token };
+
+    /* Not a token this phone holds. Ask the shop what these orders are
+       numbered, and try the bill number. */
+    var said = await lookupOrders(kept);
+    if (!said.length) return null;
+    var want = tidyRef(asked);
+    var tail = tailNumber(asked);
+    var hits = said.filter(function (order) {
+      var bill = tidyRef(order.bill_no);
+      if (!bill) return false;
+      /* The whole number, or the part of it a person reads aloud. Never a
+         bare prefix: "S" must not match every order this shop ever took. */
+      return bill === want || (tail && tailNumber(order.bill_no) === tail);
+    });
+    /* Two of their own orders answer to what they said. Guessing between
+       them is how the wrong dinner gets cancelled. */
+    if (hits.length > 1) return { ambiguous: hits.map(function (o) { return o.token; }) };
+    if (!hits.length) return null;
+    return { orderId: hits[0].order_id, token: hits[0].token };
+  }
+
+  async function placedOrderCall(what, body, ref) {
+    var which = await orderNamed(ref);
+    if (which && which.ambiguous) return { ok: false, reason: "which_order", tokens: which.ambiguous };
+    if (!which) return { ok: false, reason: "nothing_placed" };
+    /* Named locally so the rest of this function reads as it did. */
+    var placedId = which.orderId;
+    var placedToken = which.token;
+    var branch = "";
+    try {
+      branch = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      branch = "";
+    }
+    if (!branch) return { ok: false, reason: "no_shop", which: which };
+    try {
+      var response = await fetch(
+        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/" + encodeURIComponent(placedId) + "/" + what,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(Object.assign({ token: placedToken }, body || {}))
+        }
+      );
+      var answer = null;
+      try {
+        answer = await response.json();
+      } catch (e) {
+        answer = null;
+      }
+      if (!response.ok || !answer || answer.type !== "success") {
+        return { ok: false, reason: String((answer && answer.message) || "not_changed"), which: which };
+      }
+      return { ok: true, data: (answer && answer.data) || {}, which: which };
+    } catch (e) {
+      return { ok: false, reason: "not_changed", which: which };
+    }
+  }
+
+  /* The cart on this phone, brought back in step with what the shop now holds,
+     so the sheet shows the order as it really is. */
+  async function matchCartTo(lines) {
+    var a = assistant();
+    if (!a || !a.apply) return;
+    var actions = [];
+    (lines || []).forEach(function (line) {
+      actions.push({ verb: "set", item_id: String(line.item_id || ""), name: String(line.name || ""), quantity: Number(line.quantity) || 0 });
+    });
+    var have = await cartSummary();
+    have.lines.forEach(function (line) {
+      var still = (lines || []).some(function (l) {
+        return String(l.item_id) === String(line.item_id);
+      });
+      if (!still) actions.push({ verb: "remove", item_id: String(line.item_id), name: String(line.name || ""), quantity: 0 });
+    });
+    if (actions.length) await a.apply(actions);
+  }
+
+  async function changePlacedOrder(args) {
+    var wanted = (args && args.items) || [];
+    if (!wanted.length) return { ok: false, reason: "nothing_asked" };
+    var asked = [];
+    for (var i = 0; i < wanted.length; i++) {
+      var id = String((wanted[i] && wanted[i].item_id) || "");
+      var found = id ? byId(id) : null;
+      if (!found) {
+        var near = nearest(String((wanted[i] && wanted[i].asked) || id.replace(/[_-]+/g, " ")), 3);
+        if (!near.length) return { ok: false, reason: "not_on_this_order", asked: id };
+        found = near[0].item;
+      }
+      asked.push({ item_id: String(found.id), quantity: Math.max(0, Math.min(20, Math.round(Number(wanted[i].quantity) || 0))) });
+    }
+    /* Which order it acted on comes BACK from the call rather than being
+       worked out twice: naming one by its bill number costs a request, and
+       asking the same question again would cost a second. */
+    var done = await placedOrderCall("items", { items: asked }, args && args.order_ref);
+    var which = done.which;
+    if (!done.ok) return { ok: false, reason: done.reason, tokens: done.tokens, token: which && which.token };
+    /* The basket on screen belongs to the order being built NOW. Rewriting it
+       to match an order from an earlier visit would throw that away. */
+    if (which && live.placedId && which.orderId === live.placedId) {
+      await matchCartTo(done.data.items || []);
+    }
+    var a = assistant();
+    if (a && a.actionLine) a.actionLine(say("Order changed"));
+    return {
+      ok: true,
+      token: (which && which.token) || live.placed,
+      order: { lines: (done.data.items || []).length, total: done.data.total }
+    };
+  }
+
+  async function cancelPlacedOrder(args) {
+    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed" };
+    var done = await placedOrderCall("cancel", {}, args && args.order_ref);
+    var which = done.which;
+    if (!done.ok) return { ok: false, reason: done.reason, tokens: done.tokens, token: which && which.token };
+    /* Only the order this call placed is the one the screen is showing. An
+       older one being called off leaves the basket and the panel alone. */
+    var wasThisCall = which && live.placedId && which.orderId === live.placedId;
+    if (wasThisCall) {
+      await matchCartTo([]);
+      live.placed = "";
+      live.placedId = "";
+    }
+    var a = assistant();
+    if (a && a.actionLine) a.actionLine(say("Order cancelled"));
+    return { ok: true, cancelled: true };
   }
 
   function leave(url) {
@@ -525,6 +1232,71 @@
     if (live.dc && live.dc.readyState === "open") live.dc.send(JSON.stringify(payload));
   }
 
+  /*
+   * THE MICROPHONE GOES DEAF WHILE THE ASSISTANT IS SPEAKING.
+   *
+   * Owner, three times and counting: "why noise cancel not working? why keep
+   * saying ah.. yes.. aha..i want know what trascribed in the chat."
+   *
+   * Echo cancellation was switched on and it is not enough. It is built for a
+   * headset and a conversation between two people; a phone lying on a table
+   * playing a synthetic voice through its loudspeaker in a restaurant is the
+   * case it handles worst. What is left over is enough for the far end's
+   * voice detector to call it speech, so the line hears its own sentence,
+   * decides the customer said something, and answers it - with "ah", "yes",
+   * "aha", because there is nothing there to answer.
+   *
+   * So the microphone is switched OFF for as long as the assistant's voice is
+   * actually coming out of the speaker, and switched back on a quarter of a
+   * second after it stops. The line then physically cannot hear itself.
+   *
+   * WHAT IT COSTS: talking over the assistant no longer interrupts it. In a
+   * quiet room that is a loss. In a restaurant, which is what this is for, a
+   * line that answers the room is not a line at all.
+   *
+   * AND IT CANNOT GET STUCK. A muted microphone that is never unmuted is a
+   * dead assistant, which is far worse than a chatty one, so a guard turns it
+   * back on regardless after a few seconds - longer than any single spoken
+   * answer, short enough that a lost "stopped" event costs one reply.
+   */
+  var SPEAKING_TAIL = 250;
+  var LONGEST_ANSWER = 20000;
+  var deafTail = 0;
+  var deafGuard = 0;
+
+  function hearing(on) {
+    try {
+      if (!live.stream || !live.stream.getAudioTracks) return;
+      live.stream.getAudioTracks().forEach(function (track) {
+        track.enabled = !!on;
+      });
+      if (window.VoiceDebug) window.VoiceDebug.did("microphone", on ? "listening" : "off - the assistant is speaking");
+    } catch (e) {
+      /* A browser that will not let go of the track still gets the call. */
+    }
+  }
+
+  /** The assistant started speaking: stop listening until it stops. */
+  function itIsSpeaking() {
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
+    hearing(false);
+    deafGuard = setTimeout(function () {
+      /* Whatever happened to the "stopped" event, the customer gets their
+         microphone back. */
+      hearing(true);
+    }, LONGEST_ANSWER);
+  }
+
+  /** It stopped. Listen again, once the speaker has actually gone quiet. */
+  function itIsDone() {
+    clearTimeout(deafGuard);
+    clearTimeout(deafTail);
+    deafTail = setTimeout(function () {
+      hearing(true);
+    }, SPEAKING_TAIL);
+  }
+
   async function onEvent(message) {
     var ev;
     try {
@@ -532,8 +1304,32 @@
     } catch (e) {
       return;
     }
+    /* Every event on the screen, where the shop asked to see them. This is
+       the only place the whole line is visible, and it is what answers "why
+       does it say ok with nobody talking". assets/assistant/debug.js. */
+    try {
+      if (window.VoiceDebug) window.VoiceDebug.event(ev);
+    } catch (e) {
+      /* a panel that fails must never take the conversation with it */
+    }
     var a = assistant();
     switch (ev.type) {
+      /*
+       * WebRTC's own pair of events, which say when audio is genuinely
+       * leaving the speaker rather than when a response began or ended.
+       * response.done arrives while the last second is still playing, which
+       * is exactly the second the line would otherwise hear itself in.
+       */
+      case "output_audio_buffer.started":
+        itIsSpeaking();
+        break;
+      case "output_audio_buffer.stopped":
+      case "output_audio_buffer.cleared":
+        itIsDone();
+        /* The order has gone and the assistant has finished saying so, which
+           is the moment the line has no more work. See handUpAfterSending. */
+        if (live.hangingUp) closeTheLine();
+        break;
       case "input_audio_buffer.speech_started":
         status("listening", say("Listening..."));
         break;
@@ -542,14 +1338,21 @@
         if (!heard) break;
         var script = scriptOf(heard);
         if (script === "tamil") lockTamil();
-        if (script === "other") {
-          /* Tamil written down in the wrong alphabet: not worth showing.
-             The model heard the audio, not this; the next line comes back
-             in Tamil. */
-          lockTamil();
-          break;
-        }
-        if (a && a.bubble) a.bubble("me", heard);
+        if (script === "other") lockTamil();
+        /*
+         * NORMALLY NOT DRAWN: on a call the order stands in for the
+         * transcript, which is the owner's own rule - "no need to show
+         * conversation as text in the chat. just hide."
+         *
+         * With ?transcript=1 it is drawn anyway, because when something IS
+         * wrong the words the line thought it heard are the evidence. Owner:
+         * "also enable what is converted text i want to see. soemthing
+         * wrong." Including a transcript that came back in the wrong
+         * alphabet - especially that one, since it is what Tamil misheard
+         * looks like.
+         */
+        keepSaid("customer", heard);
+        if (showingTranscript()) transcribed("me", heard, script);
         break;
       }
       case "response.created":
@@ -557,24 +1360,29 @@
         break;
       case "response.output_audio_transcript.done":
       case "response.audio_transcript.done":
-        if (ev.transcript && a && a.bubble) a.bubble("ai", String(ev.transcript).trim());
+        /* Not drawn either; the customer is listening, not reading - unless
+           somebody is looking for what went wrong. */
+        keepSaid("ai", String(ev.transcript || "").trim());
+        if (showingTranscript()) transcribed("ai", String(ev.transcript || "").trim(), "");
         break;
       case "response.function_call_arguments.done":
         /* Answered together at response.done; see runToolCalls. */
         break;
       case "response.done": {
         var response = ev.response || {};
+        /*
+         * A response the customer talked over is still ANSWERED.
+         *
+         * Its tools are not run - see runToolCalls - but every call_id it
+         * emitted gets a refusal, because one the model is waiting on and
+         * never hears back about leaves it able to do nothing but say "ok".
+         */
         var finished = !response.status || response.status === "completed";
-        var ran = finished && live.active ? await runToolCalls(response) : false;
-        /* The reply after a placed order is the token being said; the page
-           leaves for the receipt once it has been heard. */
-        if (live.placed && !ran) armLeave();
+        if (live.active) await runToolCalls(response, !finished);
         if (live.active) status("listening", say("Listening..."));
         break;
       }
-      case "output_audio_buffer.stopped":
-        if (live.placed) leaveNow();
-        break;
+
       case "error":
         if (!fatalError(ev.error)) {
           if (window.console && console.warn) console.warn("[voice] line said:", ev.error && (ev.error.message || ev.error.code));
@@ -593,10 +1401,48 @@
    * a microphone request only while the tap is fresh; a database read
    * first, and the answer is "not allowed" with no dialog shown.
    */
+  /*
+   * WHAT THE MICROPHONE IS ASKED FOR.
+   *
+   * Owner: "ai keep saying ok ok ok. coz may be surrounding sound", and then
+   * "i want see mic noise cancellation".
+   *
+   * This asked for `audio: true`, which is the bare default - a raw
+   * microphone with nothing switched on. Every browser can do better, and in
+   * a restaurant the difference is the whole feature:
+   *
+   *   noiseSuppression   the fan, the fridge, the room. Steady sound the
+   *                      phone can recognise as not-speech and remove.
+   *   echoCancellation   the assistant's OWN voice coming back in through the
+   *                      speaker. Without it the line hears itself, decides
+   *                      somebody spoke, and answers - which is how a
+   *                      conversation talks itself in circles.
+   *   autoGainControl    a customer half a metre from the phone in a loud
+   *                      room, brought up to a level the far end can use.
+   *
+   * ASKED FOR, NOT DEMANDED. These are plain values rather than `{ exact: }`,
+   * so a device that cannot do one of them gives what it can instead of
+   * refusing the microphone altogether - and a refused microphone is no
+   * ordering at all, which is much worse than a noisy one.
+   *
+   * The channel and rate matter too: one channel at 16kHz is what speech
+   * recognition wants, and asking for less than the phone would send by
+   * default means less of the room arriving at the far end.
+   */
+  var MICROPHONE = {
+    audio: {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: true,
+      channelCount: 1,
+      sampleRate: 16000,
+    },
+  };
+
   function grabMicrophone() {
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") return null;
     try {
-      var p = navigator.mediaDevices.getUserMedia({ audio: true });
+      var p = navigator.mediaDevices.getUserMedia(MICROPHONE);
       /* A rejection nobody has awaited yet is still a rejection; keep it
          from surfacing as an unhandled error while start() gets there. */
       if (p && p.catch) p.catch(function () {});
@@ -618,6 +1464,8 @@
     status("connecting", say("Connecting..."));
     live.placed = "";
     live.leaving = false;
+    live.hangingUp = false;
+    clearTimeout(hangUpGuard);
     try {
       var asked = live.pendingStream || grabMicrophone();
       live.pendingStream = null;
@@ -645,6 +1493,14 @@
       if (out && event.streams && event.streams[0]) {
         out.srcObject = event.streams[0];
         out.play && out.play().catch(function () {});
+        /* And the orb follows the voice actually coming back, rather than
+           pulsing on a fixed loop that talks whatever is being said.
+           assets/assistant/talking.js. */
+        try {
+          if (window.VoiceTalking) window.VoiceTalking.follow(event.streams[0], el("voice-orb"));
+        } catch (e) {
+          /* The page keeps its own CSS animation; nobody notices. */
+        }
       }
     };
     var dc = pc.createDataChannel("oai-events");
@@ -663,7 +1519,19 @@
       var response = await fetch(apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ sdp: offer.sdp, lang: lang() }),
+        /*
+         * WHERE THE CUSTOMER IS SITTING GOES WITH THE LINE.
+         *
+         * Owner: "table number already gone and ai asking me again table
+         * number." It was not gone - the page had it the whole time - but the
+         * line was opened with nothing but the offer and the language, so the
+         * assistant genuinely did not know, and its opening line had no table
+         * to name either. A code stuck to table thirty-four has answered that
+         * question before anybody asks it.
+         */
+        body: JSON.stringify(
+          Object.assign({ sdp: offer.sdp, lang: lang() }, servicePointNow())
+        ),
       });
       var body = null;
       try {
@@ -724,6 +1592,29 @@
     if (end && live.session) tick(true);
   }
 
+  /*
+   * WHAT WAS SAID, RIDING ALONG WITH THE METER.
+   *
+   * Owner: "watch my conversation via server." The audio goes phone to
+   * provider and never reaches us, so the only way the shop can ever see
+   * what a call did is if this page says. It is already talking to the
+   * server every half minute to keep the meter honest, so the words go with
+   * that - no extra request, and the whole call is on its own session row
+   * where a bad call can be read back afterwards.
+   *
+   * Held here between ticks and handed over once. A line the server has
+   * taken is dropped, so a slow network repeats nothing.
+   */
+  var saidSoFar = [];
+  var MOST_HELD = 40;
+
+  function keepSaid(who, text) {
+    var line = String(text || "").trim();
+    if (!line) return;
+    saidSoFar.push({ who: who === "ai" ? "ai" : "customer", text: line.slice(0, 300) });
+    while (saidSoFar.length > MOST_HELD) saidSoFar.shift();
+  }
+
   function tickUrl() {
     return apiBase() + "/online-ordering/" + encodeURIComponent(live.branch) + "/voice/" + encodeURIComponent(live.session) + "/tick";
   }
@@ -737,7 +1628,12 @@
       live.session = "";
       try {
         if (navigator.sendBeacon) {
-          navigator.sendBeacon(url + "?end=1");
+          /* The last words go with the hang-up. A beacon can carry a body,
+             and the end of a call is exactly the part worth reading: the
+             refusal, the misheard dish, the "aha" nobody prompted. */
+          var last = JSON.stringify({ end: true, said: saidSoFar });
+          saidSoFar = [];
+          navigator.sendBeacon(url + "?end=1", new Blob([last], { type: "application/json" }));
         } else {
           await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ end: true }), keepalive: true });
         }
@@ -747,13 +1643,16 @@
       return null;
     }
     try {
+      var handing = saidSoFar.slice();
       var response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ end: false }),
+        body: JSON.stringify({ end: false, said: handing }),
       });
       if (response.ok) {
         live.misses = 0;
+        /* Taken. Anything said while this was in flight is still here. */
+        saidSoFar = saidSoFar.slice(handing.length);
         return true;
       }
       if (response.status === 403) {
@@ -777,6 +1676,13 @@
 
   function stopLine() {
     stopMeter(true);
+    /* Let go of the voice before the stream under it goes, or the analyser
+       keeps a handle on a track that has ended. */
+    try {
+      if (window.VoiceTalking) window.VoiceTalking.stop();
+    } catch (e) {
+      /* nothing was following */
+    }
     try {
       if (live.dc) live.dc.close();
     } catch (e) {
@@ -921,6 +1827,9 @@
       return;
     }
     live.active = false;
+    /* Nothing is speaking any more, so nothing is waiting to hear again. */
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
     stopLine();
     try {
       if (live.rec) live.rec.abort ? live.rec.abort() : live.rec.stop();
@@ -930,6 +1839,12 @@
     live.rec = null;
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     status("", "");
+    /*
+     * Nothing navigates here. An order placed during this call is already
+     * confirmed in the sheet, with its token and a Done button; a page that
+     * walked off the moment the line closed was the "cut suddenly" the owner
+     * saw, and it is indistinguishable from a crash.
+     */
   }
 
   /*
@@ -1021,5 +1936,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

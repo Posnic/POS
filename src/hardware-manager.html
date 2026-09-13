@@ -412,6 +412,115 @@
                     </div>
                 </div>
 
+                <!--
+                    BILLS THAT COME IN FROM OUTSIDE THE SHOP.
+
+                    Owner: "may be configuration or toggle to poll cloud. it
+                    needs to be on only when required. otherwise let app connect
+                    via lan and give print."
+
+                    A waiter on the shop's own Wi-Fi needs nothing here: the
+                    handset talks straight to this computer and the paper starts
+                    in the same moment. This switch is only for the shop whose
+                    waiters are on mobile data or a guest network that cannot
+                    see this computer at all.
+
+                    It is off by default and should stay off unless a shop needs
+                    it, which is the honest thing to tell a shopkeeper rather
+                    than a setting dressed up as an upgrade.
+                -->
+                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">
+                        ☁️ Bills asked for from outside the shop
+                    </div>
+                    <div style="font-size:13px;color:#9ca3af;margin-bottom:14px;">
+                        Leave this off if your waiters' phones are on the shop's own Wi-Fi.
+                        They already reach this computer directly, which is faster and keeps
+                        working if the internet goes down.
+                    </div>
+                    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+                        <input type="checkbox" id="cpEnabled" style="margin-top:3px;width:18px;height:18px;">
+                        <span style="font-size:14px;color:#2c3e50;">
+                            Print bills that waiters ask for over the internet
+                            <span style="display:block;font-size:12px;color:#9ca3af;margin-top:3px;">
+                                Turn this on only if the phones use mobile data or a different network.
+                                One computer per shop, the one beside the customer's printer.
+                            </span>
+                        </span>
+                    </label>
+                    <div style="margin-top:14px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                            Your shop's internet address
+                        </label>
+                        <input type="text" id="cpApiUrl" placeholder="https://yourshop.posnic.io/api"
+                            style="width:100%;padding:12px 14px;border:2px solid #e9ecef;border-radius:10px;font-size:14px;">
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                            The same address the phones use. Leave blank if you are not sure -
+                            nothing is sent anywhere until both of these are filled in.
+                        </div>
+                    </div>
+                    <!--
+                        THIS COMPUTER'S KEY, FOR PASTING INTO THE SHOP.
+
+                        Every Posnic installation makes its own printing key the
+                        first time it starts, and a shop's internet server is an
+                        installation: it has a different one. So a till asking
+                        its shop over the internet is turned away every time,
+                        and a refusal used to look exactly like "nothing to
+                        print".
+
+                        Somebody has to introduce the two, and the key travels
+                        in THIS direction on purpose: a key that starts life on
+                        this machine and is stored by the shop only as a digest
+                        never puts a server secret into a web page.
+                    -->
+                    <div style="margin-top:14px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                            This computer's printing key
+                        </label>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <input type="text" id="cpTillKey" readonly
+                                style="flex:1 1 auto;min-width:0;padding:12px 14px;border:2px solid #e9ecef;
+                                       border-radius:10px;font-size:13px;font-family:ui-monospace,Consolas,monospace;
+                                       background:#f9fafb;color:#374151;">
+                            <button class="btn btn-secondary" id="cpCopyKey" onclick="cpCopyKey()"
+                                style="padding:12px 18px;border-radius:10px;white-space:nowrap;">Copy</button>
+                        </div>
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                            Open your shop in a browser, go to Settings, and allow this key under
+                            bill printing. Until you do, your shop will turn this computer away.
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:14px;">
+                        <button class="btn btn-secondary" onclick="cpSave()"
+                            style="padding:12px 20px;border-radius:10px;">💾 Save</button>
+                        <span id="cpSummary" style="font-size:13px;color:#6b7280;"></span>
+                    </div>
+                </div>
+
+                <!--
+                    WHAT THE BILL PRINTER IS ACTUALLY DOING.
+
+                    A waiter taps Print bill and nothing comes out. Until now
+                    the reason lived in a console window nobody has open on a
+                    shop floor, so "it is not printing" and "no receipt printer
+                    is set on this till" were the same sentence to the person
+                    standing at the counter.
+
+                    Two lines because there are two doors and they fail
+                    separately: a shop can have a perfectly working counter
+                    printer and a cloud address with a typo in it.
+                -->
+                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+                        <div style="font-weight:700;color:#2c3e50;">🧾 Bills asked for by waiters</div>
+                        <span id="bpPrinted" style="font-size:13px;color:#6b7280;"></span>
+                    </div>
+                    <div id="bpRows" style="font-size:14px;color:#2c3e50;"></div>
+                    <div id="bpTrouble" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+                                               background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:13px;"></div>
+                </div>
+
                 <div style="text-align:center;margin:26px 0;">
                     <button id="rpTestBtn" onclick="rpTestPrint()"
                         style="background:linear-gradient(135deg,#43cea2,#185a9d);color:#fff;border:none;
@@ -636,8 +745,32 @@
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Table</th>
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Type</th>
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">KOT#</th>
-                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Device IP</th>
+                                    <!--
+                                      WHO ASKED FOR IT, not which machine printed it.
+
+                                      This column was Device IP, filled from the
+                                      till's own os.networkInterfaces(). Identical
+                                      on every row, whatever sent the order, so it
+                                      looked like it identified the handset and
+                                      answered nothing. The question it was being
+                                      asked is "did the one from the mobile app
+                                      print?", and now it answers that.
+                                    -->
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">From</th>
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                    <!--
+                                      HOW LONG IT TOOK, ON THIS COUNTER.
+
+                                      The order-to-paper numbers behind the
+                                      ESC/POS work were measured on one
+                                      developer machine with two virtual
+                                      printers. A shop needs to be able to read
+                                      its own, because the standard set for this
+                                      was "every seconds counts here" and nobody
+                                      could answer that with anything but a
+                                      number off somebody else's laptop.
+                                    -->
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
                                     <th style="padding:10px 12px;text-align:center;font-weight:700;color:#374151;">Actions</th>
                                 </tr>
                             </thead>
@@ -645,6 +778,48 @@
                         </table>
                         <div id="kotLogsPagination" style="display:none;padding:10px 14px;border-top:1px solid #e9ecef;"></div>
                     </div>
+                </div>
+            </div>
+
+            <!--
+                RECEIPTS, THE SAME WAY.
+
+                Asked for directly: "receipt also will have 1 day log? just to
+                see what printed ?? or tried to print.. something same like KOT?"
+
+                Kitchen tickets have had this for a long time and receipts had
+                nothing at all. When a customer says their bill never came out,
+                there was no way to tell whether the till had tried, which
+                printer it went to, or what the printer said back.
+
+                TRIED is the half that matters, so a failed row is shown in red
+                rather than left out. A log of successes only is silent at
+                exactly the moment somebody needs it.
+            -->
+            <div style="margin-top:26px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="font-size:15px;font-weight:700;color:#374151;">🧾 Receipt &amp; Bill Prints</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="date" id="rcptLogDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        <button onclick="rcptLoadLogs()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load</button>
+                    </div>
+                </div>
+                <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
+                    <div id="rcptLogsEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Select a date and click Load to view receipt prints.</div>
+                    <table id="rcptLogsTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fa;border-bottom:2px solid #e9ecef;">
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Time</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Bill</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Document</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">From</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcptLogsBody"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1226,6 +1401,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             autoReconnect();
             rpInit();
+            cpInit();
+            bpRefresh();
+            if (!bpTimer) bpTimer = setInterval(bpRefresh, 5000);
             cdInit();
             kotInit();
         });
@@ -1343,6 +1521,22 @@
             if (el) el.textContent = _describeTargets(_collectTargets('rpPrinterList'));
         }
 
+        /*
+         * The summary follows the ticks, not the Save button.
+         *
+         * It was written once when the list was drawn and once more after a
+         * save, and nothing listened in between - so ticking a printer left
+         * "No printer selected." sitting under a list with a printer visibly
+         * selected. Delegated from the container because the rows are redrawn
+         * on every reload, which would strip listeners bound to them.
+         */
+        (function () {
+            const list = document.getElementById('rpPrinterList');
+            if (!list) return;
+            list.addEventListener('change', rpUpdateSummary);
+            list.addEventListener('input', rpUpdateSummary);
+        })();
+
         async function rpInit() {
             if (!rpPref()) { await rpLoadPrinters([]); return; }
             try {
@@ -1376,6 +1570,235 @@
                         + missing.join(', ') + ' not connected. Tick another or reconnect it.', 'warn');
                 }            } catch (e) {
                 console.warn('rpInit:', e.message);
+            }
+        }
+
+        /*
+         * THE FAR DOOR'S SWITCH.
+         *
+         * Two keys and nothing clever. src/bill-manager.js reads them through
+         * device-preferences on every pass, so saving here takes effect within
+         * seconds and no restart is needed either way.
+         *
+         * A true boolean, not the string "true". The desktop has been bitten
+         * before by a setting stored as text: `'false'` is a truthy string, so
+         * a switch saved as text reads as ON for ever after.
+         */
+        /*
+         * Read every five seconds while this screen is open, and never faster:
+         * it is a status line, not an instrument, and the answer changes at
+         * the speed a person walks to the printer.
+         */
+        let bpTimer = null;
+
+        function bpWhen(iso) {
+            if (!iso) return 'not yet';
+            const then = new Date(iso).getTime();
+            if (!then) return 'not yet';
+            const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+            if (secs < 10) return 'just now';
+            if (secs < 60) return secs + ' seconds ago';
+            /* Floor, not round. With `round` the first minute band started at
+               90 seconds and rounded to 2, so "1 minute ago" was a line of
+               code that could never run. */
+            const mins = Math.floor(secs / 60);
+            if (mins < 90) return mins + ' minute' + (mins === 1 ? '' : 's') + ' ago';
+            return new Date(iso).toLocaleTimeString();
+        }
+
+        function bpRow(title, state, detail, good) {
+            const dot = good === null ? '#9ca3af' : (good ? '#12b76a' : '#f04438');
+            return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;">'
+                + '<span style="width:9px;height:9px;border-radius:50%;background:' + dot + ';margin-top:6px;flex:0 0 auto;"></span>'
+                + '<div><div style="font-weight:600;">' + title + ' <span style="font-weight:400;color:#6b7280;">' + state + '</span></div>'
+                + '<div style="font-size:12px;color:#9ca3af;margin-top:2px;">' + detail + '</div></div></div>';
+        }
+
+        async function bpRefresh() {
+            const rows = document.getElementById('bpRows');
+            if (!rows || !window.electronAPI || !window.electronAPI.bill) return;
+            let s;
+            try {
+                s = await window.electronAPI.bill.getStatus();
+            } catch (e) {
+                return;
+            }
+            if (!s) return;
+
+            /*
+             * "no branch" is NOT ready, and reading it as ready is the whole
+             * reason this panel is worth having. A till that has not worked
+             * out which shop it is will never print anything and will never
+             * say why - it just sits there answering nobody, looking fine.
+             */
+            const near = String(s.lastStatus || '');
+            const nearBad = near.indexOf('error') === 0;
+            const noBranch = near === 'no branch';
+            let html;
+            if (!s.isPolling) {
+                html = bpRow('On the shop Wi-Fi', 'not running',
+                    'The bill printer did not start with this computer. Restarting it is the usual fix.',
+                    false);
+            } else if (noBranch) {
+                html = bpRow('On the shop Wi-Fi', 'waiting for the shop',
+                    'This computer has not worked out which branch it is yet, so no bill can be matched to it. '
+                    + 'It keeps trying; if it stays here, set the branch in Kitchen printing.',
+                    false);
+            } else if (nearBad) {
+                html = bpRow('On the shop Wi-Fi', 'not answering',
+                    near.replace(/^error:\s*/, ''), false);
+            } else if (near === 'idle') {
+                html = bpRow('On the shop Wi-Fi', 'starting up',
+                    'It has not looked yet. This clears within a few seconds.', null);
+            } else {
+                html = bpRow('On the shop Wi-Fi', 'ready',
+                    'Phones on this network print straight to this computer. Last checked '
+                    + bpWhen(s.lastPollAt) + '.', true);
+            }
+
+            const cloud = String((s.cloud && s.cloud.status) || 'off');
+            if (cloud === 'off') {
+                html += bpRow('Over the internet', 'off',
+                    'Nothing is sent outside the shop. Turn it on above only if the phones are not on this Wi-Fi.',
+                    null);
+            } else if (cloud === 'no branch') {
+                html += bpRow('Over the internet', 'waiting for the shop',
+                    'Switched on, but this computer does not know which branch it is yet.', false);
+            } else if (cloud.indexOf('refused by') > -1) {
+                /* The one cloud failure with an exact remedy, so it gets its
+                   own words rather than being filed under "not answering". */
+                html += bpRow('Over the internet', 'turned away',
+                    'Your shop has not allowed this computer yet. Copy the printing key above, '
+                    + 'open your shop in a browser, and allow it under Settings.', false);
+            } else if (cloud.indexOf('error') === 0) {
+                html += bpRow('Over the internet', 'not answering',
+                    cloud.replace(/^error:\s*/, ''), false);
+            } else {
+                html += bpRow('Over the internet', 'ready',
+                    'Last checked ' + bpWhen(s.cloud && s.cloud.lastPollAt) + '.', true);
+            }
+            rows.innerHTML = html;
+
+            const printed = document.getElementById('bpPrinted');
+            if (printed) {
+                printed.textContent = s.printed
+                    ? s.printed + ' printed since this computer started, last ' + bpWhen(s.lastPrintedAt)
+                    : 'none printed yet';
+            }
+
+            /*
+             * The printer's own words, which is the only line here a
+             * shopkeeper can act on: a roll that has run out, a printer that
+             * is switched off, a till nobody has chosen a receipt printer on.
+             */
+            const trouble = document.getElementById('bpTrouble');
+            if (trouble) {
+                if (s.lastPrintError) {
+                    trouble.textContent = 'The last bill did not print: ' + s.lastPrintError;
+                    trouble.style.display = 'block';
+                } else {
+                    trouble.style.display = 'none';
+                }
+            }
+        }
+
+        /*
+         * This computer's own key, on screen so it can be pasted into the shop.
+         *
+         * Shown in full rather than masked: it is only useful when somebody can
+         * read it, this is the machine that owns it, and a masked field beside
+         * a Copy button is how people end up pasting the mask.
+         */
+        async function cpShowKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !window.electronAPI || !window.electronAPI.bill) return;
+            try {
+                field.value = (await window.electronAPI.bill.getPrintingKey()) || '';
+            } catch (e) {
+                field.value = '';
+            }
+            if (!field.value) field.value = 'Not ready yet - restart this app';
+        }
+
+        async function cpCopyKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !field.value) return;
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                /* A denied clipboard is not a dead end: select it so the
+                   shopkeeper can copy it the way they already know. */
+                field.select();
+            }
+            const btn = document.getElementById('cpCopyKey');
+            if (btn) {
+                btn.textContent = 'Copied';
+                setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+            }
+        }
+
+        async function cpInit() {
+            if (!rpPref()) return;
+            try {
+                const on = await rpPref().get('cloud_print_relay');
+                const url = await rpPref().get('cloud_api_url');
+                const box = document.getElementById('cpEnabled');
+                const field = document.getElementById('cpApiUrl');
+                if (box) box.checked = on === true || on === 'true';
+                if (field) field.value = url || '';
+                await cpShowKey();
+                cpSummary();
+            } catch (e) {
+                console.warn('cpInit:', e.message);
+            }
+        }
+
+        function cpSummary() {
+            const el = document.getElementById('cpSummary');
+            if (!el) return;
+            const box = document.getElementById('cpEnabled');
+            const url = (document.getElementById('cpApiUrl') || {}).value || '';
+            if (!box || !box.checked) {
+                el.textContent = 'Off. Phones on the shop Wi-Fi still print, straight to this computer.';
+                return;
+            }
+            if (!url.trim()) {
+                el.textContent = 'On, but no address yet - nothing will be checked until one is filled in.';
+                return;
+            }
+            el.textContent = 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.';
+        }
+
+        (function () {
+            /* Bound once here rather than inline on the elements, so the
+               summary cannot drift out of step with what is on screen - the
+               receipt printer list had exactly that bug. */
+            document.addEventListener('DOMContentLoaded', function () {
+                const box = document.getElementById('cpEnabled');
+                const field = document.getElementById('cpApiUrl');
+                if (box) box.addEventListener('change', cpSummary);
+                if (field) field.addEventListener('input', cpSummary);
+            });
+        }());
+
+        async function cpSave() {
+            if (!rpPref()) return;
+            const box = document.getElementById('cpEnabled');
+            const field = document.getElementById('cpApiUrl');
+            const on = !!(box && box.checked);
+            const url = ((field && field.value) || '').trim();
+            try {
+                await rpPref().set('cloud_print_relay', on);
+                await rpPref().set('cloud_api_url', url);
+                cpSummary();
+                let said;
+                if (!on) said = 'Saved. Nothing is sent over the internet from this computer.';
+                else if (!url) said = 'Saved, but fill in your shop address or nothing will be checked.';
+                else said = 'Saved. Allow the key below in your shop, and bills asked for over '
+                    + 'the internet will print here.';
+                rpShowStatus(said, on && !url ? 'warn' : 'success');
+            } catch (e) {
+                rpShowStatus('Could not save: ' + e.message, 'error');
             }
         }
 
@@ -1700,7 +2123,11 @@
                     printers: printerNames,
                     printerNames: printerNames.map(t => t.name)
                 });
-                kotShowStatus('✅ KOT polling started! Listening for new orders every 5 seconds.', 'success');
+                /* A sale announces itself the moment it is saved, so tickets do not wait
+   for a timer at all. The poll underneath is the net that catches what an
+   event missed, and it has been thirty seconds since that event existed -
+   this line still promised five, and promised polling as the mechanism. */
+                kotShowStatus('✅ Kitchen printing is on. Tickets print as orders arrive.', 'success');
                 kotUpdateButtons(true);
                 kotRefreshStatus();
             } catch (e) {
@@ -1814,6 +2241,8 @@
                 // Set log date to today and load
                 const todayStr = new Date().toISOString().slice(0, 10);
                 document.getElementById('kotLogDate').value = todayStr;
+                const rd = document.getElementById('rcptLogDate');
+                if (rd) rd.value = todayStr;
                 kotLoadLogs();
             } catch (e) {
                 console.warn('kotInit error:', e.message);
@@ -1905,6 +2334,118 @@
                 _kotCurrentLogs = logs || [];
                 kotRenderLogs();
             } catch (e) { /* silent */ }
+        }
+
+        /*
+         * A DAY OF RECEIPT PRINTS, TRIED AS WELL AS DONE.
+         *
+         * The list deliberately shows failures in red rather than hiding them.
+         * A receipt that printed is not the one anybody comes to this screen
+         * about; the one that did not is, and until now nothing anywhere
+         * recorded it.
+         */
+        /*
+         * EVERYTHING FROM A PRINT JOB IS SOMEBODY ELSE'S TEXT.
+         *
+         * Both logs are drawn with innerHTML, and their rows carry values that
+         * did not come from this machine: a bill number, a document title, a
+         * printer's own error message, and - for a job taken off the cloud
+         * queue - a whole record written by another installation.
+         *
+         * CodeQL found the file half of this (alert #919) and it was bounded at
+         * the point of writing, which stops control bytes and unbounded strings
+         * reaching the file. It does not make the text safe to paste into
+         * markup: `<img src=x onerror=...>` survives every one of those checks
+         * intact.
+         *
+         * This window is sandboxed with contextIsolation on, so injected script
+         * cannot reach Node - but it CAN call everything preload.js exposes,
+         * which is the printers, the KOT configuration and the log deletion.
+         * That is not a thing to leave open on a diagnostics screen.
+         *
+         * One helper, used on every value either log renders.
+         */
+        function logEsc(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function rcptLoadLogs() {
+            const date = document.getElementById('rcptLogDate').value;
+            const empty = document.getElementById('rcptLogsEmpty');
+            const table = document.getElementById('rcptLogsTable');
+            const body  = document.getElementById('rcptLogsBody');
+            if (!date) { empty.textContent = 'Pick a date first.'; return; }
+
+            let rows = [];
+            try {
+                rows = await window.electronAPI.bill.getReceiptLogs(date) || [];
+            } catch (e) {
+                empty.textContent = 'Could not read the receipt log: ' + e.message;
+                table.style.display = 'none'; empty.style.display = 'block';
+                return;
+            }
+
+            if (!rows.length) {
+                empty.textContent = 'No receipts or bills were printed on ' + date + '.';
+                table.style.display = 'none'; empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+            body.innerHTML = '';
+
+            /* Newest first: somebody opening this is asking about the last one. */
+            [...rows].reverse().forEach((r, i) => {
+                const t = new Date(r.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const ok = r.status === 'printed';
+
+                const printers = (r.printers || []).map(p => {
+                    const good = p.status === 'success';
+                    const why = good ? '' : ' title="' + String(p.reason || '').replace(/"/g, '&quot;') + '"';
+                    return '<span' + why + ' style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;'
+                        + 'background:' + (good ? '#d4edda' : '#f8d7da') + ';color:' + (good ? '#155724' : '#721c24') + ';">'
+                        + (good ? '✓ ' : '✗ ') + logEsc(p.name || '(default)') + '</span>';
+                }).join('') || '<span style="color:#9ca3af;">-</span>';
+
+                /* Same thresholds as the kitchen ticket log, so one number means
+                   the same thing on both. */
+                let speed = '<span style="color:#9ca3af;">-</span>';
+                if (Number.isFinite(r.ms)) {
+                    const colour = r.ms < 1000 ? '#155724' : (r.ms < 3000 ? '#856404' : '#721c24');
+                    const bg     = r.ms < 1000 ? '#d4edda' : (r.ms < 3000 ? '#fff3cd' : '#f8d7da');
+                    const shown  = r.ms < 1000 ? (r.ms + ' ms') : ((r.ms / 1000).toFixed(1) + ' s');
+                    speed = '<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:'
+                          + bg + ';color:' + colour + ';">' + shown + '</span>';
+                }
+
+                /* The printer's own words, not a summary of them. */
+                const firstWhy = (r.printers || []).map(p => p.reason).filter(Boolean)[0] || '';
+                const result = ok
+                    ? '<span style="font-weight:700;color:#155724;">✓ Printed</span>'
+                    : '<span style="font-weight:700;color:#b91c1c;" title="' + logEsc(firstWhy) + '">✗ Failed</span>'
+                      + (firstWhy ? '<div style="font-size:11px;color:#b91c1c;">' + logEsc(firstWhy) + '</div>' : '');
+
+                const tr = document.createElement('tr');
+                tr.style.background = ok ? (i % 2 === 0 ? '#fff' : '#f9fafb') : '#fff5f5';
+                tr.style.borderBottom = '1px solid #f0f0f0';
+                tr.innerHTML =
+                    '<td style="padding:10px 12px;color:#374151;">' + t + '</td>'
+                  + '<td style="padding:10px 12px;font-weight:600;color:#2563eb;">' + logEsc(r.saleId || '-') + '</td>'
+                  + '<td style="padding:10px 12px;color:#374151;">' + logEsc(r.title || (r.kind === 'bill' ? 'Bill' : 'Receipt')) + '</td>'
+                  /* The fallback is markup of OURS, so it is the one thing here
+                     that must not be escaped. */
+                  + '<td style="padding:10px 12px;font-weight:600;color:#374151;">' + (r.source ? logEsc(r.source) : '<span style="color:#9ca3af;font-weight:400;">not recorded</span>') + '</td>'
+                  + '<td style="padding:10px 12px;">' + printers + '</td>'
+                  + '<td style="padding:10px 12px;">' + speed + '</td>'
+                  + '<td style="padding:10px 12px;">' + result + '</td>';
+                body.appendChild(tr);
+            });
         }
 
         async function kotLoadLogs() {
@@ -2008,11 +2549,41 @@
                 const kindColors = { new: '#28a745', modified: '#fd7e14', edit: '#fd7e14', cancel: '#dc3545' };
                 const kindLabel  = { new: '🆕 New', modified: '✏️ Modified', edit: '✏️ Modified', cancel: '❌ Cancel' };
 
+                /*
+                 * Green under a second, amber under three, red past that, and
+                 * nothing at all for a ticket printed before this shipped - an
+                 * empty cell is honest, "0 ms" is not.
+                 *
+                 * `via` is called out only when it is the slow path. A ticket
+                 * that fell back to the window and PDF is roughly ten times
+                 * slower, and until now it looked exactly like a fast one in
+                 * this table.
+                 */
+                const speedHtml = (() => {
+                    if (!Number.isFinite(log.ms)) return '<span style="color:#9ca3af;">-</span>';
+                    const colour = log.ms < 1000 ? '#155724' : (log.ms < 3000 ? '#856404' : '#721c24');
+                    const bg     = log.ms < 1000 ? '#d4edda' : (log.ms < 3000 ? '#fff3cd' : '#f8d7da');
+                    const shown  = log.ms < 1000 ? `${log.ms} ms` : `${(log.ms / 1000).toFixed(1)} s`;
+                    const slow   = log.via === 'window'
+                        ? '<span style="font-size:10px;color:#856404;margin-left:4px;" title="Fell back to the window and PDF path, which is far slower than sending bytes">via window</span>'
+                        : '';
+                    return `<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:${bg};color:${colour};">${shown}</span>${slow}`;
+                })();
+
+                /*
+                 * Older rows carry only the till's own IP, which answers nothing.
+                 * Shown greyed rather than dropped, so a row from before this
+                 * shipped reads as "not recorded" instead of looking broken.
+                 */
+                const sourceHtml = log.source
+                    ? `<span style="font-weight:600;">${logEsc(log.source)}</span>`
+                    : `<span style="color:#9ca3af;" title="This ticket was printed before the source was recorded">-</span>`;
+
                 const printerHtml = (log.printers || []).map(p =>
                     `<span style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;
                         background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};
                         color:${p.status === 'success' ? '#155724' : '#721c24'};">
-                        ${p.status === 'success' ? '✓' : '✗'} ${p.name.length > 14 ? p.name.slice(0,14)+'…' : p.name}
+                        ${p.status === 'success' ? '✓' : '✗'} ${logEsc(p.name.length > 14 ? p.name.slice(0,14)+'…' : p.name)}
                     </span>`
                 ).join('');
 
@@ -2026,16 +2597,17 @@
                             style="width:15px;height:15px;cursor:pointer;accent-color:#6f42c1;">
                     </td>
                     <td style="padding:10px 12px;color:#374151;">${timeStr}</td>
-                    <td style="padding:10px 12px;font-weight:600;color:#2563eb;">${log.saleDisplayId || ', '}</td>
-                    <td style="padding:10px 12px;color:#374151;">${log.table || ', '}</td>
+                    <td style="padding:10px 12px;font-weight:600;color:#2563eb;">${logEsc(log.saleDisplayId || ', ')}</td>
+                    <td style="padding:10px 12px;color:#374151;">${logEsc(log.table || ', ')}</td>
                     <td style="padding:10px 12px;">
                         <span style="font-size:12px;font-weight:700;color:${kindColors[log.printKind]||'#6c757d'}">
                             ${kindLabel[log.printKind] || log.printKind}
                         </span>
                     </td>
                     <td style="padding:10px 12px;font-weight:700;color:#374151;">#${log.kotNumber}</td>
-                    <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#6f42c1;">${log.deviceIp || ', '}</td>
+                    <td style="padding:10px 12px;font-size:12px;color:#374151;">${sourceHtml}</td>
                     <td style="padding:10px 12px;">${printerHtml}</td>
+                    <td style="padding:10px 12px;">${speedHtml}</td>
                     <td style="padding:10px 12px;text-align:center;">
                         <button onclick='kotViewDetail(${JSON.stringify(log).replace(/'/g,"&apos;")})' title="View details"
                             style="background:#6f42c1;color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;margin:2px;">👁</button>
@@ -2076,10 +2648,13 @@
             document.getElementById('kotDetailBody').innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TIME</div><div style="font-weight:600;">${t}</div></div>
-                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">SALE ID</div><div style="font-weight:700;color:#2563eb;">${log.saleDisplayId||', '}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">SALE ID</div><div style="font-weight:700;color:#2563eb;">${logEsc(log.saleDisplayId||', ')}</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TABLE</div><div style="font-weight:600;">${log.table||', '} (Pax: ${log.pax||', '})</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TYPE</div><div style="font-weight:700;">${kindLabel[log.printKind]||log.printKind} &nbsp; KOT#${log.kotNumber}</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">DINE TYPE</div><div style="font-weight:600;">${log.dineType||', '}</div></div>
+                    <!-- The question this panel is usually opened to answer:
+                         did the one from the mobile app print? -->
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">FROM</div><div style="font-weight:600;">${log.source ? logEsc(log.source) : '<span style="color:#9ca3af;font-weight:400;">not recorded</span>'}</div></div>
                 </div>
                 <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">Items</div>
                 <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:16px;">
