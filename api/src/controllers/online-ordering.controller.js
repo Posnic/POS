@@ -413,6 +413,30 @@ class OnlineOrderingController {
     }
   }
 
+  /*
+   * A page of orders, read back in one request.
+   *
+   * POST rather than GET because the proof of each one - its id and its token
+   * - is a list, and a list of secrets does not belong in a URL that lands in
+   * logs, history and referrers.
+   */
+  async readPlacedOrders(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+      const result = await customerOrder.readMany(req.body, context);
+      return this.respond(res, result);
+    } catch (error) {
+      console.error('Error reading placed orders:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async changePlacedOrder(req, res) {
     return this._actOnPlacedOrder(req, res, customerOrder.change);
   }

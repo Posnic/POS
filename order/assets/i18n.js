@@ -313,6 +313,8 @@
       "Cancel the order": "ஆர்டரை ரத்து செய்",
       "Ask the shop to cancel": "ரத்து செய்யக் கடையிடம் கேளுங்கள்",
       "The shop has your cancellation request": "உங்கள் ரத்துக் கோரிக்கை கடையிடம் உள்ளது",
+      "Could not reach the shop just now. This is what this phone remembers.": "இப்போது கடையைத் தொடர்பு கொள்ள முடியல. இந்த போன் நினைவில் வெச்சிருக்கறது இதுதான்.",
+      "That could not be added. The shop may have started on your order.": "அதைச் சேர்க்க முடியல. கடை உங்கள் ஆர்டரைத் தயார் செய்ய ஆரம்பிச்சிருக்கலாம்.",
       "See the bill": "பில்லைப் பார்க்க",
       "Pay by UPI": "UPI மூலம் பணம் செலுத்து",
       "Pay {amount} to {who}": "{who}-க்கு {amount} செலுத்தவும்",

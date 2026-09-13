@@ -3000,8 +3000,13 @@
   "lang_cancel_requested": "Kunde bittet um Stornierung",
   "lang_keep_the_order": "Bestellung behalten",
   "lang_cancel_it": "Stornieren",
+  "lang_change_window_help": "Nur für Restaurants. Danach wird eine Änderung zu einer Anfrage, die die Kasse genehmigt.",
   "lang_int_voice_key_on_file": "Schlüssel gespeichert",
   "lang_int_voice_key_remove_q": "Gespeicherten Schlüssel entfernen?",
   "lang_int_voice_key_remove_text": "Die Handgeräte fallen auf die Spracherkennung des Telefons zurück, bis ein neuer Schlüssel gespeichert ist. Ihr Anbieterkonto bleibt unberührt.",
-  "lang_int_voice_key_removed": "Der Schlüssel wurde entfernt."
+  "lang_int_voice_key_removed": "Der Schlüssel wurde entfernt.",
+  "lang_new_online_order": "Neue Online-Bestellung",
+  "lang_no_changes_after_ordering": "Keine Änderungen nach der Bestellung",
+  "lang_orders_waiting": "wartende Bestellungen",
+  "lang_time_to_change_an_order": "Zeit zum Ändern einer Bestellung"
 }

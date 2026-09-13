@@ -151,6 +151,42 @@ test('the quiet branch is decided by the status code, not by the sentence', () =
      another the day a secret was rotated. Matching sentences is what made this
      handler unreliable in the first place. */
   assert.match(SRC, /var noSessionYet = onAuthPage && xhr && xhr\.status === 401 && !signInCall;/);
-  assert.match(SRC, /var signInCall = \/users\\\/\(verify\|ssoClientLogin\)\/i\.test\(String\(url \|\| ''\)\);/,
-    'the sign-in calls are matched some other way; check a wrong password still speaks');
+});
+
+test('every door that takes a password is excluded, not just the one this build uses', () => {
+  /*
+   * The till posts to users/verify. The handsets post to users/mobileLogin, a
+   * kiosk to users/kioskMobileLogin, single sign-on to users/ssoClientLogin,
+   * and users/login and auth/login both still answer. Silencing one of those
+   * by accident leaves the Sign in button looking dead, which is a worse bug
+   * than the toast this change removes.
+   */
+  const rule = SRC.slice(SRC.indexOf('var signInCall ='), SRC.indexOf('var noSessionYet'));
+  for (const door of ['verify', 'login', 'ssoClientLogin', 'mobileLogin', 'kioskMobileLogin']) {
+    assert.ok(rule.indexOf(door) !== -1, 'the ' + door + ' door is not excluded');
+  }
+  assert.ok(rule.indexOf('auth') !== -1, 'the auth/login door is not excluded');
+});
+
+test('the server statuses this rule was written against have not moved', () => {
+  /*
+   * Two different sign-in failures with two different codes, and the exclusion
+   * above only matters for one of them. If either moves, the wording in
+   * ajax.js is describing something that no longer happens.
+   */
+  const controller = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'src', 'controllers', 'users.controller.js'), 'utf8'
+  );
+  assert.match(controller, /new AppError\('Incorrect email or password', httpStatus\.UNAUTHORIZED\)/,
+    'the 401 sign-in failure moved; re-check the exclusion in ajax.js');
+  assert.match(controller, /message: LOGIN_FAILED_MESSAGE/,
+    'the message the till sign-in fails with moved');
+});
+
+test('no auto sign-in was added, because that was not wanted', () => {
+  /* Owner: "i dont want auto login." Cloud activation hands the till a device
+     credential, not a person, and nothing here should quietly change that. */
+  const main = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
+  assert.ok(!/autoLogin|signInAfterActivation|autoSignIn/i.test(main),
+    'something now signs a user in after cloud activation');
 });

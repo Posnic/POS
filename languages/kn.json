@@ -3000,8 +3000,13 @@
   "lang_cancel_requested": "ಗ್ರಾಹಕರು ರದ್ದು ಕೇಳಿದ್ದಾರೆ",
   "lang_keep_the_order": "ಆರ್ಡರ್ ಉಳಿಸಿ",
   "lang_cancel_it": "ರದ್ದು ಮಾಡಿ",
+  "lang_change_window_help": "ರೆಸ್ಟೋರೆಂಟ್‌ಗಳಿಗೆ ಮಾತ್ರ. ಇದರ ನಂತರ ಬದಲಾವಣೆ ಕೌಂಟರ್ ಒಪ್ಪಿಗೆ ನೀಡುವ ವಿನಂತಿಯಾಗುತ್ತದೆ.",
   "lang_int_voice_key_on_file": "ಕೀ ಉಳಿಸಲಾಗಿದೆ",
   "lang_int_voice_key_remove_q": "ಉಳಿಸಿದ ಕೀ ತೆಗೆಯುವುದೇ?",
   "lang_int_voice_key_remove_text": "ಹೊಸ ಕೀ ಉಳಿಸುವವರೆಗೆ ಹ್ಯಾಂಡ್‌ಸೆಟ್‌ಗಳು ಫೋನಿನ ಸ್ವಂತ ಗುರುತಿಸುವಿಕೆಯನ್ನೇ ಬಳಸುತ್ತವೆ. ನಿಮ್ಮ ಪೂರೈಕೆದಾರರ ಖಾತೆಗೆ ಏನೂ ಆಗುವುದಿಲ್ಲ.",
-  "lang_int_voice_key_removed": "ಕೀ ತೆಗೆಯಲಾಗಿದೆ."
+  "lang_int_voice_key_removed": "ಕೀ ತೆಗೆಯಲಾಗಿದೆ.",
+  "lang_new_online_order": "ಹೊಸ ಆನ್‌ಲೈನ್ ಆರ್ಡರ್",
+  "lang_no_changes_after_ordering": "ಆರ್ಡರ್ ಮಾಡಿದ ನಂತರ ಬದಲಾವಣೆ ಇಲ್ಲ",
+  "lang_orders_waiting": "ಕಾಯುತ್ತಿರುವ ಆರ್ಡರ್‌ಗಳು",
+  "lang_time_to_change_an_order": "ಆರ್ಡರ್ ಬದಲಾಯಿಸಲು ಸಮಯ"
 }

@@ -79,4 +79,37 @@ function receiptPrinterName() {
   return null;
 }
 
-module.exports = { all, get, receiptPrinterName, prefsPath };
+/**
+ * The printers this till sends KITCHEN TICKETS to.
+ *
+ * Kept in its own file by the kitchen manager, not in preferences.json, which
+ * is why this reads a second one. Needed here because a receipt must never
+ * come out on one of them: owner, on a two-printer restaurant, "receipt only
+ * send to Reception right. kitchen should receive only kot print."
+ */
+function kotPrinterNames() {
+  try {
+    const { app } = require('electron');
+    const file = path.join(app.getPath('userData'), 'kot-config.json');
+    if (!fs.existsSync(file)) return [];
+    const cfg = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
+    const fromList = Array.isArray(cfg.printers)
+      ? cfg.printers.map((t) => (t && typeof t === 'object' ? t.name : t))
+      : [];
+    const names = [...(Array.isArray(cfg.printerNames) ? cfg.printerNames : []), ...fromList];
+    return names.map((n) => String(n || '').trim()).filter(Boolean);
+  } catch (e) {
+    /* No kitchen config is the ordinary case for a shop with one printer. */
+    return [];
+  }
+}
+
+/** Is this printer one the kitchen prints on? Matched loosely, like every
+    other printer name in this codebase, because people type them. */
+function isKitchenPrinter(name) {
+  const wanted = String(name || '').trim().toLowerCase();
+  if (!wanted) return false;
+  return kotPrinterNames().some((n) => n.toLowerCase() === wanted);
+}
+
+module.exports = { all, get, receiptPrinterName, kotPrinterNames, isKitchenPrinter, prefsPath };

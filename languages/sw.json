@@ -3000,8 +3000,13 @@
   "lang_cancel_requested": "Mteja ameomba kughairi",
   "lang_keep_the_order": "Weka agizo",
   "lang_cancel_it": "Lighairi",
+  "lang_change_window_help": "Migahawa pekee. Baada ya hapo, kubadilisha huwa ombi ambalo kaunta huidhinisha.",
   "lang_int_voice_key_on_file": "Ufunguo umehifadhiwa",
   "lang_int_voice_key_remove_q": "Ondoa ufunguo uliohifadhiwa?",
   "lang_int_voice_key_remove_text": "Vifaa vinarudi kwenye utambuzi wa simu yenyewe hadi ufunguo mpya uhifadhiwe. Akaunti yako kwa mtoa huduma haiguswi.",
-  "lang_int_voice_key_removed": "Ufunguo umeondolewa."
+  "lang_int_voice_key_removed": "Ufunguo umeondolewa.",
+  "lang_new_online_order": "Agizo jipya mtandaoni",
+  "lang_no_changes_after_ordering": "Hakuna mabadiliko baada ya kuagiza",
+  "lang_orders_waiting": "maagizo yanayosubiri",
+  "lang_time_to_change_an_order": "Muda wa kubadilisha agizo"
 }

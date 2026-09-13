@@ -5626,6 +5626,29 @@
                                                                             <option value="manual"><lang class="lang_order_approval_manual">Hold for approval</lang></option>
                                                                         </select>
                                                                     </div>
+                                                                    <!--
+                                                                        How long an order stays the customer's own. The server has
+                                                                        read this per shop since the feature was built; without a
+                                                                        control every shop was stuck on the default thirty
+                                                                        seconds. A kitchen that starts at once wants a short one;
+                                                                        one that batches can afford longer. Zero switches it off,
+                                                                        and cancelling then becomes a request this till decides on.
+                                                                    -->
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_change_seconds"><lang class="lang_time_to_change_an_order">Time to change an order</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_change_seconds">
+                                                                            <option value="0"><lang class="lang_no_changes_after_ordering">No changes after ordering</lang></option>
+                                                                            <option value="30">30s</option>
+                                                                            <option value="60">1m</option>
+                                                                            <option value="120">2m</option>
+                                                                            <option value="300">5m</option>
+                                                                            <option value="600">10m</option>
+                                                                            <option value="900">15m</option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_change_window_help">Restaurants only. After this, changing becomes a request the till approves.</lang>
+                                                                        </small>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div class="card-footer text-right">

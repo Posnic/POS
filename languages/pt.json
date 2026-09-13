@@ -3000,8 +3000,13 @@
   "lang_cancel_requested": "O cliente pediu para cancelar",
   "lang_keep_the_order": "Manter o pedido",
   "lang_cancel_it": "Cancelar",
+  "lang_change_window_help": "Apenas restaurantes. Depois disso, alterar torna-se um pedido que o caixa aprova.",
   "lang_int_voice_key_on_file": "Chave guardada",
   "lang_int_voice_key_remove_q": "Remover a chave guardada?",
   "lang_int_voice_key_remove_text": "Os aparelhos voltam ao reconhecimento do próprio telefone até guardar uma chave nova. A sua conta no fornecedor não é tocada.",
-  "lang_int_voice_key_removed": "Chave removida."
+  "lang_int_voice_key_removed": "Chave removida.",
+  "lang_new_online_order": "Novo pedido online",
+  "lang_no_changes_after_ordering": "Sem alterações após o pedido",
+  "lang_orders_waiting": "pedidos em espera",
+  "lang_time_to_change_an_order": "Tempo para alterar um pedido"
 }

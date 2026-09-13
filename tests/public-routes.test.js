@@ -105,6 +105,11 @@ const ALLOWED_ANONYMOUS = {
     '/:storeId/voice/:session/tick',
     /* The customer's own order, held by its id and its token. */
     '/:storeId/orders/:orderId',
+    /* Several of them at once, each still proved by its OWN id and token -
+       an entry that does not prove itself is simply absent from the answer.
+       POST because a list of tokens does not belong in a URL that lands in
+       logs, history and referrers. */
+    '/:storeId/orders/lookup',
     '/:storeId/orders/:orderId/items',
     '/:storeId/orders/:orderId/cancel',
   ],

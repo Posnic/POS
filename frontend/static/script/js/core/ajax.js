@@ -150,11 +150,19 @@ PosnicPro.request = function (params, callback, failure = null) {
              * having failed, which is exactly what it looks like.
              *
              * A 401 from signing in ITSELF stays loud, because a wrong
-             * password has to say so. Those are the two calls named below.
+             * password has to say so. Every door that takes a password is
+             * named below, not just the one this build happens to use: the
+             * till posts to users/verify, the handsets to users/mobileLogin,
+             * single sign-on to users/ssoClientLogin, and users/login and
+             * auth/login both still answer. Missing one of those would leave
+             * the Sign in button looking dead, which is far worse than the
+             * toast being removed here.
+             *
              * Every other 401 on this screen is the expected answer to asking
-             * a question before signing in.
+             * a question before anybody has signed in.
              */
-            var signInCall = /users\/(verify|ssoClientLogin)/i.test(String(url || ''));
+            var signInCall = /(users\/(verify|login|ssoClientLogin|mobileLogin|kioskMobileLogin)|auth\/login)/i
+                .test(String(url || ''));
             var noSessionYet = onAuthPage && xhr && xhr.status === 401 && !signInCall;
 
             if (noSessionYet) {
