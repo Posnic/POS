@@ -7,6 +7,7 @@ const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { notifyBillRequested } = require('../helpers/bill-notify');
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7126,6 +7127,27 @@ class SalesRepository {
          caller is told which, because "the bill is already on its way" and
          "there is nothing to bill" send a waiter to two different places. */
       const waiting = await Model.countDocuments(query);
+
+      /*
+       * AND THE COUNTER HEARS ABOUT IT NOW, not on the next poll.
+       *
+       * On the shop's own Wi-Fi this call is being handled BY THE TILL - the
+       * API is require()d into the desktop's main process - so this emit
+       * reaches the printer in the same tick and the paper starts before the
+       * waiter has put the phone down. A cloud shop cannot be reached from
+       * outside, so the poll underneath is what serves it; this costs nothing
+       * there.
+       *
+       * Only when something was actually marked. Announcing a request that
+       * changed nothing would wake the printer to find an empty list.
+       */
+      if (waiting > 0) {
+        notifyBillRequested({
+          branchId,
+          table,
+          count: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+        });
+      }
 
       return {
         status: waiting > 0,

@@ -164,4 +164,47 @@ describe('a bill asked for from the floor', () => {
     const out = await repo.requestBillPrintModel(String(branch), 'T5', '');
     expect(out.status).toBe(false);
   });
+
+  test('asking announces it, so a local till prints without polling', async () => {
+    /*
+     * Owner: "i want proper and fastest solution."
+     *
+     * On the shop's own Wi-Fi this very call is being handled BY THE TILL -
+     * the API is require()d into the desktop's main process - so the emit
+     * reaches the printer in the same tick. The poll underneath is for cloud
+     * shops, which cannot be reached from outside their own router.
+     */
+    const branch = new mongoose.Types.ObjectId();
+    await openTicket(branch, 'T4');
+
+    const heard = [];
+    const listener = (payload) => heard.push(payload);
+    process.on('posnic:bill-requested', listener);
+    try {
+      await repo.requestBillPrintModel(String(branch), 'T4', 'ravi');
+    } finally {
+      process.removeListener('posnic:bill-requested', listener);
+    }
+
+    expect(heard).toHaveLength(1);
+    expect(heard[0].table).toBe('T4');
+    expect(String(heard[0].branchId)).toBe(String(branch));
+  });
+
+  test('a request that marked nothing announces nothing', async () => {
+    /* Waking the printer to find an empty list is a wasted spin-up and a log
+       line that means nothing. */
+    const branch = new mongoose.Types.ObjectId();
+
+    const heard = [];
+    const listener = () => heard.push(1);
+    process.on('posnic:bill-requested', listener);
+    try {
+      await repo.requestBillPrintModel(String(branch), 'T-nothing-here', '');
+    } finally {
+      process.removeListener('posnic:bill-requested', listener);
+    }
+
+    expect(heard).toHaveLength(0);
+  });
 });
