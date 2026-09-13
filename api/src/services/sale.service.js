@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const Sale = require('../models/sale.model');
-const Branch = require('../models/branch.model');
 const BaseModel = require('../models/base.model');
 const StockLogsRepository = require('../repositories/stock-log.repository');
 const ItemRepository = require('../repositories/item.repository');
@@ -1666,6 +1665,20 @@ const getTablesWithActiveOrders = async (branchId) => {
      */
     let tableOrderLimit = 1;
     try {
+      /*
+       * REQUIRED HERE, NOT AT THE TOP OF THE FILE.
+       *
+       * branch.model pulls in customer.model and supplier-legacy.model, both of
+       * which `extend BaseModel`. Required from this file's top level that
+       * closes a cycle: base.model is still half-built when customer.model
+       * reads it, so `class CustomerModel extends BaseModel` sees `{}` and
+       * throws "Class extends value is not a constructor" - which surfaces as
+       * an entire suite failing to run, nowhere near the line that caused it.
+       *
+       * The same lazy-require note is on print-job.repository.js for the same
+       * reason. One cached require per call costs nothing.
+       */
+      const Branch = require('../models/branch.model');
       const branch = await Branch.findById(branchObjectId).select('table_order_limit').lean();
       const raw = branch && branch.table_order_limit;
       tableOrderLimit = Number.isFinite(Number(raw)) ? Number(raw) : 1;
