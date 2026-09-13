@@ -771,7 +771,6 @@ class SettingModel extends BaseModel {
          reading as a limit. */
       table_order_limit = Math.min(table_order_limit, 99);
 
-
       /*
        * Staff clock-in / attendance. On unless the shop turns it off - the
        * shift system shipped live, so an update (or an old client that does

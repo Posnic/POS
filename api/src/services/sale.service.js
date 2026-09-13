@@ -1654,11 +1654,20 @@ const getTablesWithActiveOrders = async (branchId) => {
 
     const results = await salesRepository.aggregate(pipeline);
 
-    /* Read once for the whole floor rather than per table. Absent on a branch
-       written before the setting existed, and one is the default there. */
+    /*
+     * Read once for the whole floor rather than per table. Absent on a branch
+     * written before the setting existed, and one is the default there.
+     *
+     * Through BaseModel.getDb(), NOT mongoose.connection.db. Each shop has its
+     * own database and one process serves many of them, so the process-wide
+     * connection is whichever shop happened to connect first - this would have
+     * read another restaurant's table limit and applied it to this floor. CI
+     * refuses that spelling on purpose; see tests/unit/db/single-entry-point.
+     */
     let tableOrderLimit = 1;
     try {
-      const branch = await mongoose.connection.db
+      const db = await BaseModel.getDb();
+      const branch = await db
         .collection('branches')
         .findOne({ _id: branchObjectId }, { projection: { table_order_limit: 1 } });
       const raw = branch && branch.table_order_limit;
