@@ -4242,7 +4242,17 @@ class ItemRepository extends BaseModel {
   async storefrontContext(params = {}) {
     const branchDoc = await this._storefrontBranch(params);
     if (!branchDoc) return null;
-    return { branchId: branchDoc._id, licenseId: branchDoc.license };
+    /*
+     * The kind travels with the context because what a customer may do to an
+     * order they have already placed depends on it: a restaurant has a minute
+     * before the kitchen starts, a retail counter that has picked and packed
+     * does not. See services/customer-order.service.js.
+     */
+    return {
+      branchId: branchDoc._id,
+      licenseId: branchDoc.license,
+      kind: await this.shopKind(branchDoc),
+    };
   }
 
   async storefront(params = {}) {

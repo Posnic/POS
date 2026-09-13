@@ -3000,8 +3000,13 @@
   "lang_cancel_requested": "ग्राहक ने रद्द करने को कहा",
   "lang_keep_the_order": "ऑर्डर रहने दें",
   "lang_cancel_it": "रद्द करें",
+  "lang_change_window_help": "केवल रेस्टोरेंट के लिए। इसके बाद बदलाव एक अनुरोध बन जाता है जिसे काउंटर मंज़ूर करता है।",
   "lang_int_voice_key_on_file": "कुंजी सहेजी गई",
   "lang_int_voice_key_remove_q": "सहेजी गई कुंजी हटाएँ?",
   "lang_int_voice_key_remove_text": "नई कुंजी सहेजे जाने तक हैंडसेट फ़ोन की अपनी पहचान पर लौट आते हैं। आपके प्रदाता के खाते को कुछ नहीं होता।",
-  "lang_int_voice_key_removed": "कुंजी हटा दी गई।"
+  "lang_int_voice_key_removed": "कुंजी हटा दी गई।",
+  "lang_new_online_order": "नया ऑनलाइन ऑर्डर",
+  "lang_no_changes_after_ordering": "ऑर्डर के बाद कोई बदलाव नहीं",
+  "lang_orders_waiting": "ऑर्डर प्रतीक्षा में",
+  "lang_time_to_change_an_order": "ऑर्डर बदलने का समय"
 }

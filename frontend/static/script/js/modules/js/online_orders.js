@@ -143,8 +143,34 @@ PosnicPro.onlineorders = {
             '</div></div>';
     },
 
+    /*
+     * While somebody is actually looking at the queue, keep it current.
+     *
+     * The page used to draw once and then sit there: an order accepted on
+     * another till, or a cancellation asked for while this screen was open,
+     * showed up only if somebody pressed Refresh. core/online-order-watch.js
+     * carries the count everywhere else; this is the same idea for the one
+     * screen where the rows themselves matter.
+     */
+    watch: function () {
+        var self = PosnicPro.onlineorders;
+        if (self._watching) return;
+        self._watching = setInterval(function () {
+            if (document.hidden) return;
+            /* Gone from this screen: stop rather than reload a page nobody
+               is on. The badge keeps watching. */
+            if (!document.getElementById('onlineorders_list')) {
+                clearInterval(self._watching);
+                self._watching = 0;
+                return;
+            }
+            self.load();
+        }, 20000);
+    },
+
     load: function () {
         var self = PosnicPro.onlineorders;
+        self.watch();
         var loader = $('.loader-view-onlineorders');
         loader.find('.loadingSpinner:first').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);

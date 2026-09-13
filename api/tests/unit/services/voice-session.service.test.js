@@ -54,6 +54,9 @@ describe('voice-session.service', () => {
       'remove_from_order',
       'set_quantity',
       'show_order',
+      /* Everything this phone has ordered here, so the assistant can act on
+         an earlier order and not only the one it just placed. */
+      'show_order_history',
       'change_placed_order',
       'cancel_placed_order',
       'send_to_kitchen',
@@ -63,6 +66,14 @@ describe('voice-session.service', () => {
     expect(voice.tools().find((t) => t.name === 'cancel_placed_order').parameters.required).toEqual(
       ['confirmed']
     );
+    /* Either may be told WHICH order, by the token the customer holds; with
+       none they act on the one just placed. Optional, so the common case -
+       "make it two" moments after ordering - stays one word. */
+    ['change_placed_order', 'cancel_placed_order'].forEach((name) => {
+      const tool = voice.tools().find((t) => t.name === name);
+      expect(tool.parameters.properties.token.type).toBe('string');
+      expect(tool.parameters.required).not.toContain('token');
+    });
     expect(voice.tools().find((t) => t.name === 'change_placed_order').parameters.required).toEqual(
       ['items']
     );

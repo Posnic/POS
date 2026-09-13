@@ -126,6 +126,10 @@ router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.v
    shop has marked it paid, which is what puts a bill behind it. Reading is
    allowed where changing is not - a paid order is exactly the one a customer
    wants to look at. */
+/* Every order this phone is holding, in ONE request. The history page used
+   to ask per order and ran itself into the limiter below; see
+   services/customer-order.service.js readMany. */
+router.post('/:storeId/orders/lookup', placedOrderLimiter, bind(controller.readPlacedOrders));
 router.get('/:storeId/orders/:orderId', placedOrderLimiter, bind(controller.readPlacedOrder));
 router.post(
   '/:storeId/orders/:orderId/items',

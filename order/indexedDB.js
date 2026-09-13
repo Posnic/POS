@@ -2332,6 +2332,38 @@ function scoreItem(query, fields) {
 /* What the customer has narrowed the catalogue to. */
 var orderView = { query: "", vegOnly: false, sort: "menu" };
 
+/*
+ * A few things that go with what somebody has already ordered.
+ *
+ * From categories they have NOT ordered from, so a customer who asked for
+ * biryani is offered a drink rather than more biryani; never anything already
+ * on the order; never a dish the shop has switched off. Cheapest first,
+ * because something to add on is a small yes and not a second meal. Three -
+ * a fourth is a catalogue, and the owner asked for "short cross selling".
+ *
+ * Here, rather than in either page, because the confirmation screen and the
+ * order history both offer it and two copies of a rule like this drift.
+ *
+ * @param {Array} on        the lines already on the order
+ * @param {Array} catalogue every product, as allProducts() gives them
+ */
+function goesWithOrder(on, catalogue) {
+    const all = Array.isArray(catalogue) ? catalogue : [];
+    const have = new Set();
+    const theirs = new Set();
+    (on || []).forEach((line) => {
+        const id = String(line.item_id != null ? line.item_id : line.id || "");
+        have.add(id);
+        all.forEach((p) => {
+            if (String(p.id) === id && p.category_name) theirs.add(p.category_name);
+        });
+    });
+    return all
+        .filter((p) => p && p.id && !have.has(String(p.id)) && p.available !== false && !theirs.has(p.category_name))
+        .sort((x, y) => (Number(x.price) || 0) - (Number(y.price) || 0))
+        .slice(0, 3);
+}
+
 /** Every product across every category, flattened once. */
 function allProducts() {
     var out = [];

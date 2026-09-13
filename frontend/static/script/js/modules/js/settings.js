@@ -8421,6 +8421,17 @@ PosnicPro.salesChannels = {
                the survivable direction. */
             var approval = values.online_order_approval === 'manual' ? 'manual' : 'auto';
             $("#online_order_approval").val(approval);
+            /*
+             * How long a customer may still change what they ordered.
+             *
+             * An unset shop is thirty seconds, which is what the server falls
+             * back to; a stored value that is not one of the offered lengths
+             * is shown as the nearest one rather than blanking the box and
+             * silently rewriting the shop's choice on the next save.
+             */
+            $("#online_order_change_seconds").val(
+                PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
+            );
             /* Serving periods are NOT drawn here any more - they moved to the
                Restaurant page. Rendering them into markup that no longer
                exists is harmless; COLLECTING them from it is not, which is
@@ -8514,7 +8525,7 @@ PosnicPro.salesChannels = {
             };
         });
 
-        return {
+        var out = {
             /*
              * sales_channels_enabled is DELIBERATELY ABSENT, for exactly the
              * reason menu_dayparts is below.
@@ -8544,6 +8555,40 @@ PosnicPro.salesChannels = {
             channel_charges: charges,
             online_order_approval: $("#online_order_approval").val() === 'manual' ? 'manual' : 'auto'
         };
+
+        /*
+         * The window, ONLY when the box on screen actually holds one.
+         *
+         * An empty select reads as 0, and 0 means "no changes after
+         * ordering". Sending that from a screen that never loaded would
+         * switch the feature off for a shop that never touched it, with a
+         * green toast on top. The group endpoint writes only what it is
+         * given, so leaving the key out keeps the stored value safe.
+         */
+        var window_ = $("#online_order_change_seconds").val();
+        if (window_ !== undefined && window_ !== null && String(window_) !== '') {
+            out.online_order_change_seconds = Number(window_);
+        }
+        return out;
+    },
+
+    /*
+     * The offered length closest to what is stored.
+     *
+     * A shop whose value was set by hand, or by an older build, must not have
+     * it quietly rewritten to 30 the next time somebody saves this page for
+     * an unrelated reason.
+     */
+    nearestWindow: function (stored) {
+        var offered = [0, 30, 60, 120, 300, 600, 900];
+        if (stored === undefined || stored === null || String(stored).trim() === '') return '30';
+        var want = Math.round(Number(stored));
+        if (!isFinite(want) || want < 0) return '30';
+        var best = offered[0];
+        offered.forEach(function (one) {
+            if (Math.abs(one - want) < Math.abs(best - want)) best = one;
+        });
+        return String(best);
     },
 
     /**
