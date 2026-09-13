@@ -67,6 +67,35 @@ const newLogLines = () => {
   }
 };
 
+/*
+ * ANOTHER COPY ALREADY RUNNING IS NOT A FAILED BOOT.
+ *
+ * Posnic takes a single-instance lock. Start a second copy while one is open
+ * and the new process exits 0 immediately, in silence - which is
+ * indistinguishable from the silent non-start this script exists to catch, and
+ * on a developer's machine it is by far the commoner of the two. It reported a
+ * perfectly good build as broken within an hour of being written.
+ *
+ * CI never hits this; a person running it locally hits it constantly. So it is
+ * detected and said plainly rather than guessed at either way.
+ */
+if (process.platform === 'win32') {
+  try {
+    const { execSync } = require('child_process');
+    const out = execSync('tasklist /FI "IMAGENAME eq Posnic.exe" /NH', { encoding: 'utf8', timeout: 15000 });
+    if (/Posnic\.exe/i.test(out)) {
+      say('');
+      say('  SKIPPED: Posnic is already running, and it holds the single-instance lock.');
+      say('  A second copy exits immediately, which would read here as a failed boot.');
+      say('  Close it and run this again.');
+      say('');
+      process.exit(0);
+    }
+  } catch (e) {
+    /* tasklist missing or refused: carry on and let the boot speak for itself. */
+  }
+}
+
 say(`  starting ${exe}`);
 const child = spawn(exe, [], { detached: false, stdio: 'ignore', windowsHide: true });
 
@@ -84,7 +113,22 @@ const finish = (code, message) => {
 
 child.on('error', (e) => finish(1, `the application could not be started: ${e.message}`));
 child.on('exit', (code) => {
-  if (!done) finish(1, `the application exited with code ${code} before its API answered`);
+  if (!done) {
+    /*
+     * Exiting 0 within seconds has two ordinary causes and neither is a broken
+     * build. Naming them beats making somebody rediscover them.
+     */
+    const quick = Date.now() - started < 5000;
+    const hint = quick && code === 0
+      ? [
+        '',
+        '    Exiting 0 within seconds usually means one of two things:',
+        '    ELECTRON_RUN_AS_NODE is set in this shell, which makes Posnic.exe',
+        '    run as plain Node; or another copy holds the single-instance lock.',
+      ].join('\n')
+      : '';
+    finish(1, `the application exited with code ${code} before its API answered${hint}`);
+  }
 });
 
 const started = Date.now();

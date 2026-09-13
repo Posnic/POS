@@ -781,6 +781,48 @@
                 </div>
             </div>
 
+            <!--
+                RECEIPTS, THE SAME WAY.
+
+                Asked for directly: "receipt also will have 1 day log? just to
+                see what printed ?? or tried to print.. something same like KOT?"
+
+                Kitchen tickets have had this for a long time and receipts had
+                nothing at all. When a customer says their bill never came out,
+                there was no way to tell whether the till had tried, which
+                printer it went to, or what the printer said back.
+
+                TRIED is the half that matters, so a failed row is shown in red
+                rather than left out. A log of successes only is silent at
+                exactly the moment somebody needs it.
+            -->
+            <div style="margin-top:26px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="font-size:15px;font-weight:700;color:#374151;">🧾 Receipt &amp; Bill Prints</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="date" id="rcptLogDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        <button onclick="rcptLoadLogs()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load</button>
+                    </div>
+                </div>
+                <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
+                    <div id="rcptLogsEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Select a date and click Load to view receipt prints.</div>
+                    <table id="rcptLogsTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fa;border-bottom:2px solid #e9ecef;">
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Time</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Bill</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Document</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">From</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcptLogsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- KOT Delete Confirm Modal -->
             <div id="kotDeleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;">
                 <div style="background:#fff;width:360px;max-width:92%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;">
@@ -2199,6 +2241,8 @@
                 // Set log date to today and load
                 const todayStr = new Date().toISOString().slice(0, 10);
                 document.getElementById('kotLogDate').value = todayStr;
+                const rd = document.getElementById('rcptLogDate');
+                if (rd) rd.value = todayStr;
                 kotLoadLogs();
             } catch (e) {
                 console.warn('kotInit error:', e.message);
@@ -2290,6 +2334,86 @@
                 _kotCurrentLogs = logs || [];
                 kotRenderLogs();
             } catch (e) { /* silent */ }
+        }
+
+        /*
+         * A DAY OF RECEIPT PRINTS, TRIED AS WELL AS DONE.
+         *
+         * The list deliberately shows failures in red rather than hiding them.
+         * A receipt that printed is not the one anybody comes to this screen
+         * about; the one that did not is, and until now nothing anywhere
+         * recorded it.
+         */
+        async function rcptLoadLogs() {
+            const date = document.getElementById('rcptLogDate').value;
+            const empty = document.getElementById('rcptLogsEmpty');
+            const table = document.getElementById('rcptLogsTable');
+            const body  = document.getElementById('rcptLogsBody');
+            if (!date) { empty.textContent = 'Pick a date first.'; return; }
+
+            let rows = [];
+            try {
+                rows = await window.electronAPI.bill.getReceiptLogs(date) || [];
+            } catch (e) {
+                empty.textContent = 'Could not read the receipt log: ' + e.message;
+                table.style.display = 'none'; empty.style.display = 'block';
+                return;
+            }
+
+            if (!rows.length) {
+                empty.textContent = 'No receipts or bills were printed on ' + date + '.';
+                table.style.display = 'none'; empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+            body.innerHTML = '';
+
+            /* Newest first: somebody opening this is asking about the last one. */
+            [...rows].reverse().forEach((r, i) => {
+                const t = new Date(r.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const ok = r.status === 'printed';
+
+                const printers = (r.printers || []).map(p => {
+                    const good = p.status === 'success';
+                    const why = good ? '' : ' title="' + String(p.reason || '').replace(/"/g, '&quot;') + '"';
+                    return '<span' + why + ' style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;'
+                        + 'background:' + (good ? '#d4edda' : '#f8d7da') + ';color:' + (good ? '#155724' : '#721c24') + ';">'
+                        + (good ? '✓ ' : '✗ ') + (p.name || '(default)') + '</span>';
+                }).join('') || '<span style="color:#9ca3af;">-</span>';
+
+                /* Same thresholds as the kitchen ticket log, so one number means
+                   the same thing on both. */
+                let speed = '<span style="color:#9ca3af;">-</span>';
+                if (Number.isFinite(r.ms)) {
+                    const colour = r.ms < 1000 ? '#155724' : (r.ms < 3000 ? '#856404' : '#721c24');
+                    const bg     = r.ms < 1000 ? '#d4edda' : (r.ms < 3000 ? '#fff3cd' : '#f8d7da');
+                    const shown  = r.ms < 1000 ? (r.ms + ' ms') : ((r.ms / 1000).toFixed(1) + ' s');
+                    speed = '<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:'
+                          + bg + ';color:' + colour + ';">' + shown + '</span>';
+                }
+
+                /* The printer's own words, not a summary of them. */
+                const firstWhy = (r.printers || []).map(p => p.reason).filter(Boolean)[0] || '';
+                const result = ok
+                    ? '<span style="font-weight:700;color:#155724;">✓ Printed</span>'
+                    : '<span style="font-weight:700;color:#b91c1c;" title="' + String(firstWhy).replace(/"/g, '&quot;') + '">✗ Failed</span>'
+                      + (firstWhy ? '<div style="font-size:11px;color:#b91c1c;">' + firstWhy + '</div>' : '');
+
+                const tr = document.createElement('tr');
+                tr.style.background = ok ? (i % 2 === 0 ? '#fff' : '#f9fafb') : '#fff5f5';
+                tr.style.borderBottom = '1px solid #f0f0f0';
+                tr.innerHTML =
+                    '<td style="padding:10px 12px;color:#374151;">' + t + '</td>'
+                  + '<td style="padding:10px 12px;font-weight:600;color:#2563eb;">' + (r.saleId || '-') + '</td>'
+                  + '<td style="padding:10px 12px;color:#374151;">' + (r.title || (r.kind === 'bill' ? 'Bill' : 'Receipt')) + '</td>'
+                  + '<td style="padding:10px 12px;font-weight:600;color:#374151;">' + (r.source || '<span style="color:#9ca3af;font-weight:400;">not recorded</span>') + '</td>'
+                  + '<td style="padding:10px 12px;">' + printers + '</td>'
+                  + '<td style="padding:10px 12px;">' + speed + '</td>'
+                  + '<td style="padding:10px 12px;">' + result + '</td>';
+                body.appendChild(tr);
+            });
         }
 
         async function kotLoadLogs() {
