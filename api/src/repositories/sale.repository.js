@@ -7182,7 +7182,6 @@ class SalesRepository {
         }
 
         for (const sale of open) {
-           
           await queuePrintJob({
             branchId,
             kind: 'bill',

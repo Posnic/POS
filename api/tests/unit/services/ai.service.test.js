@@ -356,9 +356,10 @@ describe('reading JSON back out of an answer', () => {
      * stops at the character that closes what was opened, so whatever
      * follows is simply not part of it.
      */
-    expect(
-      service.jsonFrom('{"reply":"Both are delicious options.","actions":[]}]')
-    ).toEqual({ reply: 'Both are delicious options.', actions: [] });
+    expect(service.jsonFrom('{"reply":"Both are delicious options.","actions":[]}]')).toEqual({
+      reply: 'Both are delicious options.',
+      actions: [],
+    });
     expect(service.jsonFrom('[{"verb":"add"}]]')).toEqual([{ verb: 'add' }]);
     expect(service.jsonFrom('{"a":1}} trailing words')).toEqual({ a: 1 });
   });

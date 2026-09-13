@@ -155,7 +155,7 @@ function tools() {
           order_ref: {
             type: 'string',
             description:
-              "Which order: the TOKEN the customer was given, or the BILL NUMBER off their receipt - whichever they say. Leave it out for the one they have just placed. Take it from show_order_history rather than guessing.",
+              'Which order: the TOKEN the customer was given, or the BILL NUMBER off their receipt - whichever they say. Leave it out for the one they have just placed. Take it from show_order_history rather than guessing.',
           },
         },
         required: ['items'],

@@ -151,8 +151,7 @@ describe('the index that makes a resend safe', () => {
     await repo._ensureIdempotencyIndex(mongoose.connection.db);
     await repo._ensureIdempotencyIndex(second.db ? second.db : second);
 
-    const names = async (db) =>
-      (await db.collection('sales').indexes()).map((i) => i.name);
+    const names = async (db) => (await db.collection('sales').indexes()).map((i) => i.name);
 
     expect(await names(mongoose.connection.db)).toContain('unique_idempotency_key_per_license');
     expect(await names(second.db ? second.db : second)).toContain(
