@@ -111,6 +111,9 @@ const branchSchema = new Schema(
     supplier_checkbox: { type: Boolean, default: false },
     tax_checkbox: { type: Boolean, default: false },
     table_options: { type: Boolean, default: false },
+    /* See setting.model.js for what the numbers mean. 1 = one open
+       order per table, 0 = no limit, N = at most N. */
+    table_order_limit: { type: Number, default: 1 },
 
     printing_size: { type: String, default: 'receipt_medium' },
     // Paper width in millimetres: '58', '80' or 'a4'. Separate from
@@ -728,6 +731,14 @@ class BranchModel {
       withDefaults.till_lock_enable = withDefaults.till_lock_enable ?? false;
       withDefaults.till_lock_idle_minutes = withDefaults.till_lock_idle_minutes ?? 0;
       /*
+       * One open order per table unless a shop says otherwise. A branch
+       * written before this existed has no value at all, and `?? 1` is
+       * what makes the default reach it: reading it as 0 would mean
+       * every upgraded shop silently kept no limit, which is the state
+       * that was reported as a bug.
+       */
+      withDefaults.table_order_limit = withDefaults.table_order_limit ?? 1;
+      /*
        * Staff clock-in shipped live (no dark launch), so the default is ON:
        * a shop that never visited Settings keeps the clock button it already
        * uses. Only an explicit false hides it.
@@ -1076,6 +1087,7 @@ class BranchModel {
          */
         till_lock_enable: false,
         till_lock_idle_minutes: 0,
+        table_order_limit: 1,
         staff_shifts_enable: true,
         staff_tips_enable: false,
         staff_roster_enable: true,

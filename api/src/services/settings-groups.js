@@ -70,6 +70,10 @@ const FEATURES = [
   'custom_charges_enable',
   'sale_quick_edit_enable',
   'table_options',
+  /* How many open orders one table may have. Lives with the feature it
+     belongs to rather than in PREFERENCES, because it decides what the
+     floor is allowed to do, not how a receipt looks. */
+  'table_order_limit',
   'hardware_weight_machine_enable',
   'enable_multi_payment',
   'till_lock_idle_minutes',
