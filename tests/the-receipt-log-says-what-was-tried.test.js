@@ -65,6 +65,38 @@ test('and so is one that did NOT, with the printer\'s own words', () => {
   assert.strictEqual(row.printers[0].reason, 'The spooler did not confirm the job');
 });
 
+test('a network print job is reduced to bounded display-safe receipt data', () => {
+  const row = receiptLog.record({
+    time: 'not-a-date',
+    kind: 'anything',
+    saleId: `BILL\u0000${'x'.repeat(200)}`,
+    title: 'Bill\nprint',
+    source: 'Cloud\tqueue',
+    ms: -4,
+    printers: [{
+      name: `Counter\u0000${'x'.repeat(200)}`,
+      status: 'unexpected',
+      reason: `No\nresponse${'x'.repeat(600)}`,
+      bytes: -1,
+      nested: { never: 'persisted' },
+    }, { status: 'success' }, { status: 'success' }, { status: 'success' },
+      { status: 'success' }, { status: 'success' }, { status: 'success' },
+      { status: 'success' }, { status: 'success' }, { status: 'success' },
+      { status: 'success' }, { status: 'success' }, { status: 'success' },
+      { status: 'success' }, { status: 'success' }, { status: 'success' },
+      { status: 'success' }],
+  });
+  assert.strictEqual(row.kind, 'receipt');
+  assert.ok(!/[\u0000-\u001f\u007f]/.test(row.saleId + row.title + row.source));
+  assert.ok(row.saleId.length <= 128 && row.printers[0].name.length <= 128);
+  assert.ok(row.printers[0].reason.length <= 512);
+  assert.strictEqual(row.ms, 0);
+  assert.strictEqual(row.printers[0].status, 'failed');
+  assert.strictEqual(row.printers[0].bytes, 0);
+  assert.strictEqual(row.printers.length, 16);
+  assert.ok(!Object.hasOwn(row.printers[0], 'nested'));
+});
+
 test('one printer failing does not call the whole receipt failed', () => {
   /* The customer has their copy; the file copy did not print. Those are not
      the same event and a shopkeeper should not chase the first. */
