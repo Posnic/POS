@@ -2351,21 +2351,91 @@ var orderView = { query: "", vegOnly: false, sort: "menu" };
  * @param {Array} on        the lines already on the order
  * @param {Array} catalogue every product, as allProducts() gives them
  */
+/*
+ * WHAT THE SHOP SAYS GOES WITH IT, and a drink when it has not said.
+ *
+ * Owner: "for checken briyani its suggessting french fries. not good
+ * combination. ask would like to add cock. only related prducts good."
+ *
+ * He is right and the old rule earned it: anything from a category they had
+ * not ordered from, cheapest first. That is not a pairing, it is a leftover -
+ * it offered chips with biryani because chips were cheap and in another
+ * category, and it would have offered soup with ice cream just as happily.
+ *
+ * TWO RULES NOW, in order.
+ *
+ * First, whatever the shop itself has said goes with a dish - item.goes_with,
+ * a list of item ids on the product. Nothing guesses better than the person
+ * who wrote the menu, and a shop that fills this in gets exactly the pairings
+ * it wants. That field is the proper answer and the shop owns it.
+ *
+ * Second, where nothing has been said: a DRINK. It is the one pairing that is
+ * safe with every dish on every menu in the world, it is what he asked for by
+ * name, and it is the offer a waiter actually makes. Categories are named by
+ * each shop, so they are recognised by the words shops use, and a menu with
+ * no drinks on it simply gets no suggestion - which is better than a wrong
+ * one. Cheapest first within that, because something alongside is a small yes
+ * and not a second meal.
+ */
 function goesWithOrder(on, catalogue) {
+    /* Kept INSIDE, so the function carries everything it needs. Lifted out of
+       this file to be tested on its own, a helper that reaches for a
+       module-level const finds nothing and dies on the first call - which is
+       exactly what happened here. */
+    const DRINKS = /drink|beverage|juice|soda|shake|smoothie|tea|coffee|water|cold|mocktail|lassi|refresh/i;
+    const SWEETS = /dessert|sweet|ice.?cream|pudding|cake|halwa|payasam/i;
     const all = Array.isArray(catalogue) ? catalogue : [];
     const have = new Set();
     const theirs = new Set();
+    const named = [];
     (on || []).forEach((line) => {
         const id = String(line.item_id != null ? line.item_id : line.id || "");
         have.add(id);
         all.forEach((p) => {
-            if (String(p.id) === id && p.category_name) theirs.add(p.category_name);
+            if (String(p.id) !== id) return;
+            if (p.category_name) theirs.add(p.category_name);
+            /* What this dish itself says goes with it. */
+            (Array.isArray(p.goes_with) ? p.goes_with : []).forEach((w) => named.push(String(w)));
         });
     });
-    return all
-        .filter((p) => p && p.id && !have.has(String(p.id)) && p.available !== false && !theirs.has(p.category_name))
-        .sort((x, y) => (Number(x.price) || 0) - (Number(y.price) || 0))
-        .slice(0, 3);
+
+    const sellable = (p) => p && p.id && !have.has(String(p.id)) && p.available !== false;
+    const cheapest = (x, y) => (Number(x.price) || 0) - (Number(y.price) || 0);
+
+    /* What the shop named, in the order the shop named it. */
+    const asked = [];
+    named.forEach((id) => {
+        if (asked.some((p) => String(p.id) === id)) return;
+        const found = all.find((p) => String(p.id) === id && sellable(p));
+        if (found) asked.push(found);
+    });
+    if (asked.length >= 3) return asked.slice(0, 3);
+
+    /* Then a drink, then something sweet, and nothing else - an unrelated
+       dish from an unrelated category is what this is here to stop. */
+    const room = 3 - asked.length;
+    const chosen = asked.slice();
+    [DRINKS, SWEETS].forEach((kind) => {
+        all
+            .filter(
+                (p) =>
+                    sellable(p) &&
+                    !theirs.has(p.category_name) &&
+                    /* The CATEGORY or the NAME. Plenty of shops file
+                       everything under one category, or none at all, and
+                       "Fresh Lime Soda" says what it is perfectly well
+                       without help. Reading only the category left those
+                       menus with no suggestion at all. */
+                    (kind.test(String(p.category_name || "")) || kind.test(String(p.name || ""))) &&
+                    !chosen.some((c) => String(c.id) === String(p.id))
+            )
+            .sort(cheapest)
+            .slice(0, room)
+            .forEach((p) => {
+                if (chosen.length < 3) chosen.push(p);
+            });
+    });
+    return chosen.slice(0, 3);
 }
 
 /** Every product across every category, flattened once. */
