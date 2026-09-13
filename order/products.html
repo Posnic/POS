@@ -377,6 +377,21 @@
                         <div class="placed-more-row" id="placed-more-row"></div>
                     </div>
 
+                    <!--
+                        NOTHING LEAVES THE PHONE UNTIL THIS IS PRESSED. The
+                        plus and the minus move a number on this screen; this
+                        sends the whole edit in one request. Owner: "customer
+                        cant change in one touch. after changes. he need to
+                        review and click confirmation."
+                    -->
+                    <div class="placed-confirm-bar" id="placed-confirm-bar" hidden>
+                        <span class="placed-confirm-count" id="placed-confirm-count"></span>
+                        <div class="placed-confirm-row">
+                            <button type="button" class="placed-discard" id="placed-discard">Undo</button>
+                            <button type="button" class="placed-confirm" id="placed-confirm">Confirm the change</button>
+                        </div>
+                    </div>
+
                     <div class="placed-actions">
                         <button type="button" class="placed-cancel" id="placed-cancel">Cancel the order</button>
                     </div>
