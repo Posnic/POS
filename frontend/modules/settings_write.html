@@ -546,6 +546,104 @@
                     </div>
                 </div>
 
+                <!--
+                    WHICH TILLS MAY PRINT THIS SHOP'S BILLS.
+
+                    A waiter asks for a bill on a phone; a computer by the
+                    printer prints it. On the shop's own Wi-Fi those two talk
+                    directly and none of this is needed.
+
+                    Over the internet they need introducing, and they cannot do
+                    it themselves: every Posnic installation makes its own
+                    printing key the first time it starts, so a till and this
+                    shop's server have different ones and always will. The
+                    shopkeeper copies the key off the till's Hardware Manager
+                    screen and allows it here, once.
+
+                    The key is stored only as a digest. It is never sent back to
+                    this page, which is why the table shows what a person needs
+                    to recognise a machine - its name, the last few characters,
+                    and whether it has ever actually asked for work - and not
+                    the key itself.
+                -->
+                <div class="row" id="print_tills_row">
+                    <div class="col-12">
+                        <div class="card m-b-30">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">
+                                    <lang class="lang_print_tills">Tills that may print bills</lang>
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-primary" id="print_till_add_btn"
+                                    data-toggle="modal" data-target="#print_till_add_modal">
+                                    <i class="feather icon-plus mr-1"></i><lang class="lang_print_till_allow">Allow a till</lang>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">
+                                    <lang class="lang_print_tills_hint">Only needed when waiters' phones are not on the shop's own Wi-Fi. Open Hardware Manager on the computer beside the printer, copy its printing key, and allow it here.</lang>
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th><lang class="lang_print_till_name">Computer</lang></th>
+                                                <th><lang class="lang_print_till_key">Key</lang></th>
+                                                <th><lang class="lang_print_till_seen">Last asked</lang></th>
+                                                <th class="text-right"><lang class="lang_action">Action</lang></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="print_tills_body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="print_till_add_modal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="feather icon-printer mr-2"></i><lang class="lang_print_till_allow">Allow a till</lang>
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                    data-t-aria-label="lang_close_title">
+                                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label><lang class="lang_print_till_name">Computer</lang></label>
+                                    <input type="text" class="form-control" id="print_till_label"
+                                        placeholder="Counter PC" data-t-placeholder="lang_counter_pc">
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_print_till_name_hint">What you call that machine, so you can recognise it later.</lang>
+                                    </small>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label><lang class="lang_print_till_key">Key</lang></label>
+                                    <textarea class="form-control" id="print_till_key" rows="2"
+                                        placeholder="Paste the printing key from Hardware Manager"
+                                        data-t-placeholder="lang_paste_the_printing_key_from_hardware"></textarea>
+                                    <small class="form-text text-muted">
+                                        <lang class="lang_print_till_key_hint">Hardware Manager, under bills asked for from outside the shop. Press Copy there and paste it here.</lang>
+                                    </small>
+                                </div>
+                                <div class="alert alert-danger mt-3 mb-0" id="print_till_error" style="display:none;"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                    <lang class="lang_cancel">Cancel</lang>
+                                </button>
+                                <button type="button" class="btn btn-primary" id="print_till_save">
+                                    <lang class="lang_print_till_allow">Allow a till</lang>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- The open flow starts from a row's Open button in the table
                      above; the only question a row cannot answer is the float. -->
                 <div class="modal fade" id="register_open_modal" tabindex="-1" role="dialog" aria-hidden="true">
