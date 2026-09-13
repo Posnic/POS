@@ -1285,15 +1285,22 @@ describe('SalesRepository', () => {
       });
     };
 
-    test('it asks for the two things that need a person: undecided orders, and cancellations customers have asked for', async () => {
-      /* Both are the same job - somebody deciding - so they belong in one
-         queue. A second screen is a screen nobody opens. */
+    test('it asks for the three things that need a person: undecided orders, and the cancellations and changes customers have asked for', async () => {
+      /*
+       * All three are the same job - somebody deciding - so they belong in
+       * one queue. A second screen is a screen nobody opens.
+       *
+       * The third arrived when the owner asked why an order past its window
+       * offered nothing but Cancel. If a customer may ask for the whole order
+       * to be called off, they may ask for two of something to be three.
+       */
       rows([]);
       await salesRepository.pendingOnlineOrders({ branchId: FAKE_BRANCH });
       const filter = collections.sales.find.mock.calls[0][0];
       expect(filter.$or).toEqual([
         { order_state: 'pending' },
         { cancel_requested: true, sale_process: 'KOT' },
+        { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
       ]);
     });
 

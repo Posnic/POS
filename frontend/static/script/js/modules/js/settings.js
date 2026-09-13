@@ -8581,9 +8581,12 @@ PosnicPro.salesChannels = {
      */
     nearestWindow: function (stored) {
         var offered = [0, 30, 60, 120, 300, 600, 900];
-        if (stored === undefined || stored === null || String(stored).trim() === '') return '30';
+        /* An unset shop is one minute, which is what the server falls back
+           to; the two must agree or the screen shows a shop a window it does
+           not have. */
+        if (stored === undefined || stored === null || String(stored).trim() === '') return '60';
         var want = Math.round(Number(stored));
-        if (!isFinite(want) || want < 0) return '30';
+        if (!isFinite(want) || want < 0) return '60';
         var best = offered[0];
         offered.forEach(function (one) {
             if (Math.abs(one - want) < Math.abs(best - want)) best = one;

@@ -363,6 +363,10 @@
   "Category with this name already exists in this branch": [
     "src/services/category.service.js"
   ],
+  "Change requested": [
+    "src/repositories/sale.repository.js",
+    "src/services/customer-order.service.js"
+  ],
   "Changes Retrieved": [
     "src/controllers/categories.controller.js",
     "src/controllers/customer-categories.controller.js"

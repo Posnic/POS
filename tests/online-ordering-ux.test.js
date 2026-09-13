@@ -2314,7 +2314,22 @@ test('once the window has closed, cancelling asks the shop instead of doing it',
   document.querySelector('.history-open').click();
   const panel = document.getElementById('details-o1');
 
-  assert.strictEqual(panel.querySelectorAll('.history-step').length, 0, 'a closed window still offers to change the order');
+  /*
+   * PAST THE WINDOW THE STEPPERS STAY, AND ASK.
+   *
+   * Owner, looking at this very screen: "why order history dont have any
+   * option to other than cancel? coz of time?" It was the time - and taking
+   * the controls away left somebody whose wish is one more naan being offered
+   * nothing but Cancel, while cancelling past the window was already allowed
+   * to become a request. They are marked, so a tap is never a surprise.
+   */
+  const steps = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(steps.length, 2, 'a closed window offers nothing but cancel again');
+  assert.ok(
+    steps.every((b) => b.getAttribute('data-asks') === 'yes'),
+    'a closed window still changes the order outright instead of asking'
+  );
+  assert.match(panel.querySelector('.history-asks').textContent, /go to the shop to approve/);
   assert.strictEqual(panel.querySelector('.history-clock'), null, 'a closed window is still counting down');
   const off = panel.querySelector('.history-cancel');
   assert.strictEqual(off.textContent, 'Ask the shop to cancel', 'the button still claims to cancel it outright');
@@ -2468,10 +2483,17 @@ test('an order the shop has closed offers nothing to change', async () => {
   await new Promise((r) => setTimeout(r, 30));
 
   const panel = page.document.getElementById('details-o1');
-  assert.deepStrictEqual([...panel.querySelectorAll('.history-step')], [], 'a stepper that could only fail');
-  assert.strictEqual(panel.querySelector('.history-more'), null, 'something was offered that could not be added');
-  /* Asking is still allowed: cancelling is a different flow and every shop
-     has it. */
+  /* Past the window nothing is taken away - it is all turned into asking, and
+     marked as such so a tap is never a surprise. */
+  const closed = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(closed.length, 2);
+  assert.ok(closed.every((b) => b.getAttribute('data-asks') === 'yes'));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.strictEqual(
+    panel.querySelector('.history-more-row').getAttribute('data-asks'),
+    'yes',
+    'a dish added past the window would go straight to the kitchen'
+  );
   assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Ask the shop to cancel');
   page.window.close();
 });
