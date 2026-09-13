@@ -528,6 +528,67 @@
    * exactly why so it can say so. The customer's clear yes is the model's
    * to obtain; confirmed:false places nothing.
    */
+  /*
+   * The Confirm & send button, pressed.
+   *
+   * The same door the spoken "send it" uses, so there is exactly one way an
+   * order leaves this page: same checks, same refusals, same confirmation
+   * screen and bell afterwards. A tap IS the customer's yes, so it carries
+   * confirmed:true - there is nothing else a press of that button could mean.
+   *
+   * When it goes, the assistant is told, because it is mid-conversation and
+   * must not carry on asking whether to send something that has gone.
+   */
+  async function sendNow() {
+    var done = await sendToKitchen({ confirmed: true });
+    if (done.ok) {
+      tellTheAssistant(
+        'The customer pressed "Confirm and send" and the order has gone to the kitchen. Say in ONE sentence that it has gone and will be served soon. Do not read the order back.'
+      );
+    }
+    return done;
+  }
+
+  /*
+   * WHAT THE CUSTOMER JUST DID BY HAND, said into the conversation.
+   *
+   * Owner: "also AI should know about the changes what user doing. its kind
+   * of helper too."
+   *
+   * The top half of the screen is worked with fingers while the assistant
+   * listens at the bottom, and an assistant that cannot see that is worse
+   * than useless - it offers a dish that is already on the order, or reads
+   * back a quantity the customer has just corrected. This puts the change
+   * into the conversation as something the customer said, which is what it
+   * is, and does NOT ask for a reply: the customer is looking at the screen
+   * and does not need it narrated back at them.
+   */
+  function tellTheAssistant(what, speak) {
+    if (!live.active || !live.dc || live.dc.readyState !== "open") return false;
+    sendEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: String(what || "") }]
+      }
+    });
+    if (speak) sendEvent({ type: "response.create" });
+    return true;
+  }
+
+  /** One line about a change made by hand, for the assistant's benefit. */
+  function noticed(verb, name, quantity) {
+    if (!name) return;
+    var said =
+      verb === "remove" || Number(quantity) === 0
+        ? 'The customer has just taken ' + name + ' off the order themselves, by tapping the screen.'
+        : verb === "add"
+          ? 'The customer has just added ' + name + ' themselves, by tapping the screen.'
+          : 'The customer has just set ' + name + ' to ' + quantity + ' themselves, by tapping the screen.';
+    tellTheAssistant(said + ' Do not say anything about it unless they bring it up.');
+  }
+
   async function sendToKitchen(args) {
     var order = await cartSummary();
     if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
@@ -1401,5 +1462,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

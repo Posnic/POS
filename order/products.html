@@ -276,8 +276,29 @@
                  transcript nobody reads back. Owner: "no need to show
                  conversation as text in the chat. just hide." -->
             <div class="assistant-order" id="assistant-order" hidden>
-                <h3 class="assistant-order-title" id="assistant-order-title">Your order</h3>
+                <div class="assistant-order-head">
+                    <h3 class="assistant-order-title" id="assistant-order-title">Your order</h3>
+                    <!-- The customer works the top half by hand while the
+                         assistant listens at the bottom. Both at once, which
+                         is the point: it is a helper, not a turn-taker. -->
+                    <button type="button" class="assistant-add" id="assistant-add">
+                        <span aria-hidden="true">+</span>
+                        <span>Add item</span>
+                    </button>
+                </div>
                 <ul class="assistant-order-list" id="assistant-order-list"></ul>
+
+                <!--
+                    Things that go with it. A WRAPPED row, not a sideways
+                    scroller - owner: "cross selling i saw horrizontal scroll.
+                    not soo good." A row that scrolls hides most of itself and
+                    asks for a gesture nobody makes on a screen they are
+                    reading downwards.
+                -->
+                <div class="assistant-more" id="assistant-more" hidden>
+                    <h4 class="assistant-more-title">Anything else?</h4>
+                    <div class="assistant-more-row" id="assistant-more-row"></div>
+                </div>
             </div>
             <!-- The voice in progress: what it is doing, and the way to stop. -->
             <div class="voice" id="voice" hidden>
@@ -362,8 +383,14 @@
                  own order bar sits under this sheet, so "tap Review order" needs
                  a button that is actually on screen. Shown once the order holds
                  something. -->
-            <button type="button" class="assistant-review" id="assistant-review" hidden>
-                <span>Review order</span>
+            <!--
+                ONE BUTTON, NOT TWO. This used to say "Review order" and walk
+                the customer to the basket page to send it from there. The
+                review is now the minute AFTER it goes, when they are looking
+                at what the kitchen actually has - so this sends it.
+            -->
+            <button type="button" class="assistant-confirm" id="assistant-review" hidden>
+                <span>Confirm &amp; send</span>
                 <span class="assistant-review-sum" id="assistant-review-sum"></span>
             </button>
             <p class="assistant-foot">Answers come from this shop's menu. Please confirm allergies at the counter.</p>

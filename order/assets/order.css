@@ -2801,7 +2801,7 @@ dialog.sheet[data-voice="on"] .assistant-foot {
    basket is empty, and "Review order" is behind them. */
 dialog.sheet:has(.placed:not([hidden])) .assistant-order,
 dialog.sheet:has(.placed:not([hidden])) .assistant-chips,
-dialog.sheet:has(.placed:not([hidden])) .assistant-review,
+dialog.sheet:has(.placed:not([hidden])) .assistant-confirm,
 dialog.sheet:has(.placed:not([hidden])) .assistant-foot {
   display: none;
 }
@@ -2826,6 +2826,227 @@ dialog.sheet:has(.placed:not([hidden])):not(:has(.placed-order:not([hidden]))) .
   padding-bottom: 14px;
   border-bottom: 1px solid var(--line);
 }
+
+/* ===================================================== the assistant's screen
+ *
+ * Owner: "when ai click occupie full screen ... not right bottom only. utlize
+ * the the space and make line item modifiable and have 'confirm & send
+ * order'. bottom only should have mic and ai anmiation, top user normal able
+ * increase edit add item with add button etc."
+ *
+ * So: the whole height, the order as the page rather than a summary under a
+ * chat log, and the microphone in a bar at the bottom where a thumb is. The
+ * top half stays workable by hand while the assistant listens at the bottom -
+ * which is the point of it. It is a helper, not a turn-taker.
+ */
+dialog.sheet.assistant {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+
+@media (min-width: 720px) {
+  /* On a desktop a full-bleed dialog is a wall. A tall column, centred, is
+     the same screen at a size a person can read. */
+  dialog.sheet.assistant {
+    width: min(560px, 100%);
+    height: min(860px, 94dvh);
+    margin: auto;
+    border-radius: 16px;
+  }
+}
+
+/* The body is a column: title, the order, then the bar. Only the middle
+   scrolls, so the button a customer is reaching for never moves. */
+dialog.sheet.assistant .assistant-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+/* ------------------------------------------------ the order, up top */
+
+.assistant-order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.assistant-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assistant-add span:first-child {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+}
+
+/*
+ * BIG. Owner: "when ai found the line item show big font and nice
+ * professional design user able increase or decrease mean time."
+ *
+ * A line is the thing the customer is checking, out loud, against what they
+ * just said. Seventeen pixels and a tabular quantity so a glance is enough.
+ */
+dialog.sheet.assistant .assistant-order-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 17px;
+}
+
+dialog.sheet.assistant .assistant-order-list li:last-child {
+  border-bottom: 0;
+}
+
+dialog.sheet.assistant .assistant-order-qty {
+  min-width: 2.4em;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+dialog.sheet.assistant .assistant-order-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+}
+
+dialog.sheet.assistant .assistant-order-step {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* WRAPPED, never a sideways scroller. Owner: "cross selling i saw horrizontal
+   scroll. not soo good." A row that scrolls hides most of itself and asks for
+   a gesture nobody makes on a screen they are reading downwards. */
+.assistant-more {
+  margin-top: 18px;
+}
+
+.assistant-more-title {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-more-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assistant-more-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.assistant-more-item[disabled] {
+  opacity: 0.5;
+}
+
+.assistant-more-plus {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* --------------------------------------- what scrolls and what does not
+ *
+ * The sheet itself must NOT scroll, or the send button and the microphone
+ * slide off the bottom exactly when somebody reaches for them. The order in
+ * the middle scrolls instead, inside its own box, and everything either side
+ * of it is pinned.
+ */
+dialog.sheet.assistant {
+  overflow: hidden;
+}
+
+dialog.sheet.assistant .assistant-order {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* The transcript takes what is left when there is no order yet, and gives it
+   all up the moment there is one: the order is what a customer checks against
+   what they just said, not a list of sentences they have already heard. */
+dialog.sheet.assistant:has(.assistant-order:not([hidden])) .assistant-log {
+  flex: 0 0 auto;
+  max-height: 96px;
+}
+
+/*
+ * THE BAR AT THE BOTTOM, and nothing else in it.
+ *
+ * Owner: "bottom only should have mic and ai anmiation." It sits below the
+ * order, above the safe area, and does not move while the order is scrolled.
+ */
+dialog.sheet.assistant .voice,
+dialog.sheet.assistant .assistant-ask,
+dialog.sheet.assistant .assistant-confirm,
+dialog.sheet.assistant .assistant-chips {
+  flex: 0 0 auto;
+}
+
+dialog.sheet.assistant .voice {
+  margin-top: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+dialog.sheet.assistant .assistant-ask {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+dialog.sheet.assistant .assistant-foot {
+  flex: 0 0 auto;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* ------------------------------------------- the one button that sends */
 
 /* Said once at the top of the history, not on every row. */
 .history-offline {
@@ -3042,21 +3263,34 @@ dialog.sheet:has(.placed:not([hidden])):not(:has(.placed-order:not([hidden]))) .
 
 /* The way out of the conversation: the order, and the button that reviews
    and places it. The page's own order bar is under this sheet, out of reach. */
-.assistant-review {
+/*
+ * ONE RULE FOR THE BUTTON THAT SENDS THE ORDER.
+ *
+ * It used to say "Review order" and walk the customer to the basket to send
+ * it from there. It now sends. Owner, having reasoned it out himself: "confirm
+ * order visible once order ... if required we can do two steps. review and
+ * send.. i believe one enought. since we give 1 minute to modify item." He is
+ * right - a review before sending and a minute to change after are the same
+ * safety net paid for twice, and the second is the better one, because by
+ * then the customer is looking at what the kitchen actually has.
+ *
+ * Taller than a tap target, because it is the last thing anybody does here.
+ */
+.assistant-confirm {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: var(--tap);
-  margin: 10px 0 0;
+  min-height: 54px;
+  margin: 12px 0 0;
   padding: 12px 18px;
   border: 0;
   border-radius: 14px;
   background: var(--accent);
   color: var(--on-accent);
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   text-align: left;
 }
