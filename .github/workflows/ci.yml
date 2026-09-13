@@ -52,7 +52,7 @@ env:
   # postinstall downloads a whole Chrome from Google's CDN - which 403s
   # often enough to fail unrelated commits at `npm ci`. No CI job launches
   # a browser, so the download is pure risk with no benefit.
-  PUPPETEER_SKIP_DOWNLOAD: '1'
+  PUPPETEER_SKIP_DOWNLOAD: "1"
 
 # Least privilege for GITHUB_TOKEN.
 #
@@ -203,7 +203,11 @@ jobs:
         run: npm run docs:lint
 
   lint:
-    name: Lint (reporting only)
+    # NOT reporting only, whatever it used to be. Both steps below gate, and a
+    # red one here fails Full CI - which the desktop build workflow needs, so a
+    # stray trailing space stops an installer being produced. The old name said
+    # the opposite and cost a release: the failure was read as noise and left.
+    name: Lint and formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
