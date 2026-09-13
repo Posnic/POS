@@ -741,14 +741,41 @@ test('a queue that cannot be told is logged, not thrown', async () => {
  * field and one honest error.
  */
 
-test('both doors carry this machine\'s own key, which is the only one it has', async () => {
+test('the far door carries its own key, never this machine\'s kiosk key', async () => {
   /*
-   * The key is made once at first boot and never anywhere else. Its own API
-   * knows it because they share a process. Its shop's cloud server knows it
-   * because somebody pasted it into Settings once - see
-   * api/src/models/print-till.model.js for why the key travels in that
-   * direction rather than a server secret travelling into a web page.
+   * KIOSK_API_KEY guards every kiosk route on this till - the kitchen display,
+   * the tablet, the phone ordering routes. Sending it to an address somebody
+   * typed into a settings box would risk all of that to buy printing, and a
+   * mistyped hostname is not a hypothetical.
+   *
+   * The far door's key is worth exactly one thing: taking print jobs from a
+   * shop that has allowed it.
    */
+  process.env.KIOSK_API_KEY = 'guards-every-kiosk-route';
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+    cloudKey: 'only-good-for-printing',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+  delete process.env.KIOSK_API_KEY;
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.ok(asked, 'it never asked');
+  assert.equal(asked.headers.kioskkey, 'only-good-for-printing');
+  assert.notEqual(asked.headers.kioskkey, 'guards-every-kiosk-route',
+    'the till sent the key that guards its own kiosk routes to an address off a settings box');
+});
+
+test('the near door still uses this machine\'s own key', async () => {
+  /* Its own api knows that one because they share a process, and nothing
+     leaves the building on this path. */
   process.env.KIOSK_API_KEY = 'this-machines-own-key';
   const hardware = fakeHardware();
   const calls = fakeApi([]);
@@ -756,19 +783,14 @@ test('both doors carry this machine\'s own key, which is the only one it has', a
     branchId: 'b1',
     cloudPrint: true,
     cloudApi: 'https://kiranastore.posnic.io/api',
+    cloudKey: 'only-good-for-printing',
   });
 
-  bills.polling = true;
-  await bills._pollCloud();
-  await bills._poll();
-  bills.stop();
+  await runOnce(bills);
   delete process.env.KIOSK_API_KEY;
 
-  const asked = calls.filter((c) => c.url.includes('/claimPrintJobs'));
-  assert.equal(asked.length, 2, 'one of the two doors never asked');
-  for (const one of asked) {
-    assert.equal(one.headers.kioskkey, 'this-machines-own-key');
-  }
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.headers.kioskkey, 'this-machines-own-key');
 });
 
 test('being turned away is reported, not counted as an empty queue', async () => {

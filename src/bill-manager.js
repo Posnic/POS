@@ -171,6 +171,9 @@ class BillManager {
      * never meant to relay cloud bills makes no request at all, ever.
      */
     this.cloudApi = options.cloudApi || '';
+    /* The far door's own key. See _drain: this machine's kiosk key is worth
+       far more than printing and does not leave the building. */
+    this.cloudKey = options.cloudKey || '';
     this.cloudPrint = !!options.cloudPrint;
     this.findCloudPrint = options.findCloudPrint || null;
 
@@ -342,13 +345,18 @@ class BillManager {
         return {
           enabled: said.enabled === undefined ? this.cloudPrint : !!said.enabled,
           apiUrl: String(said.apiUrl || this.cloudApi || '').trim(),
+          key: String(said.key || this.cloudKey || '').trim(),
         };
       } catch (error) {
         /* An unreadable preferences file must not decide a shop's printing.
            Fall through to whatever this manager was constructed with. */
       }
     }
-    return { enabled: !!this.cloudPrint, apiUrl: String(this.cloudApi || '').trim() };
+    return {
+      enabled: !!this.cloudPrint,
+      apiUrl: String(this.cloudApi || '').trim(),
+      key: String(this.cloudKey || '').trim(),
+    };
   }
 
   /**
@@ -385,7 +393,11 @@ class BillManager {
         return this._scheduleCloud(CLOUD_IDLE_MS);
       }
 
-      const out = await this._drain(base, { wait: true, timeoutMs: CLOUD_TIMEOUT_MS });
+      const out = await this._drain(base, {
+        wait: true,
+        timeoutMs: CLOUD_TIMEOUT_MS,
+        key: settings.key,
+      });
       this.cloudPollAt = new Date().toISOString();
       this.cloudStatus = 'ok';
       return this._scheduleCloud(out.pace);
@@ -408,17 +420,22 @@ class BillManager {
    * gets a different job, or none. Two tills in one shop is exactly when that
    * matters and exactly when a shop is busy enough to have two running.
    */
-  async _drain(base, { wait = false, timeoutMs = 0 } = {}) {
+  async _drain(base, { wait = false, timeoutMs = 0, key: given = '' } = {}) {
     /*
-     * THIS MACHINE'S OWN KEY, at both doors.
+     * A DIFFERENT KEY AT EACH DOOR, and the difference is the point.
      *
-     * Made once at first boot (main.js, crypto.randomBytes(32)) and never
-     * anywhere else. Its own API knows it because they share a process; the
-     * shop's cloud server knows it because somebody pasted it into Settings
-     * once - see api/src/models/print-till.model.js for why the key travels in
-     * that direction rather than the other.
+     * NEAR: this machine's kiosk key. Its own api knows it because they share
+     * a process, and nothing leaves the building.
+     *
+     * FAR: a key made only for this, which the shop allowed once. The kiosk
+     * key guards every kiosk route on this till - the kitchen display, the
+     * tablet, the phone ordering routes - so sending it to an address a person
+     * typed would risk all of that to buy printing. This one buys printing.
+     *
+     * See api/src/models/print-till.model.js for why the key travels from the
+     * till to the shop rather than the other way.
      */
-    const key = process.env.KIOSK_API_KEY || '';
+    const key = String(given || '').trim() || process.env.KIOSK_API_KEY || '';
     const request = {
       method: 'POST',
       headers: {

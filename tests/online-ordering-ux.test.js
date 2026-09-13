@@ -3209,3 +3209,41 @@ test('a shop that answers with too little to draw still gets the row repainted',
   );
   window.close();
 });
+
+/*
+ * A CANCELLATION HAS TO REACH THE ROW, not only the panel inside it.
+ *
+ * The state badge, the token and the total live in the button above the
+ * details. Replace only the details and a cancelled order sits there still
+ * saying "With the kitchen" - the order really is off, the screen just does
+ * not say so, which is worse than not redrawing at all. Found by driving the
+ * deployed page against the real sandbox.
+ */
+test('cancelling from the history page says so on the row, with the panel still open', async () => {
+  const live = {
+    order_id: 'o1', token: '219', shop: 'Azure', paid: false, bill_ready: false, cancelled: false,
+    state: 'accepted', placed_at: new Date().toISOString(), can_change: true, change_seconds: 60,
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+  };
+  const off = { ...live, cancelled: true, can_change: false, why_not: 'already_cancelled', state: 'cancelled' };
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [] }];
+  const { window, document } = historyPage({ kept, says: { o1: live }, change: off });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 80));
+  document.querySelector('.history-open').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+
+  assert.strictEqual(document.querySelector('.history-state').textContent, 'With the kitchen');
+  document.querySelector('.history-cancel').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 140));
+
+  assert.strictEqual(
+    document.querySelector('.history-state').textContent,
+    'Cancelled',
+    'the order was cancelled and the row still says it is with the kitchen'
+  );
+  /* And the customer is still looking at the order they just cancelled. */
+  const panel = document.querySelector('.history-details');
+  assert.ok(panel && !panel.hidden, 'the panel shut itself, which is the "page restarted" the owner reported');
+  window.close();
+});
