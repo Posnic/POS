@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "പുതിയ ഓൺലൈൻ ഓർഡർ",
   "lang_no_changes_after_ordering": "ഓർഡർ ചെയ്ത ശേഷം മാറ്റങ്ങളില്ല",
   "lang_orders_waiting": "കാത്തിരിക്കുന്ന ഓർഡറുകൾ",
-  "lang_time_to_change_an_order": "ഓർഡർ മാറ്റാനുള്ള സമയം"
+  "lang_time_to_change_an_order": "ഓർഡർ മാറ്റാനുള്ള സമയം",
+  "lang_goes_with": "ഇതിനൊപ്പം നന്നായിരിക്കും",
+  "lang_goes_with_help": "ഇത് ഓർഡർ ചെയ്ത ഉപഭോക്താവിന് നിർദേശിക്കുന്നു. ഒഴിച്ചിട്ടാൽ ഒരേ ബിൽലിൽ വിൽക്കുന്നതിൽ നിന്ന് കട ഇത് കണ്ടെത്തും.",
+  "lang_goes_with_placeholder": "ഒന്നിച്ച് വിൽക്കുന്നതിൽ നിന്ന് കണ്ടെത്തുന്നത്"
 }

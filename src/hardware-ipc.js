@@ -32,9 +32,16 @@ async function readLocalBranches() {
     }
     client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
     await client.connect();
+    /* module_captain_enable rides along because the handset reachability check
+       needs it and has no database of its own. It is a settings field on the
+       branch document, and the branch document is already open. */
     const rows = await client.db('PosnicPro').collection('branches')
-      .find({}, { projection: { branch_name: 1 } }).toArray();
-    return rows.map((b) => ({ id: String(b._id), name: b.branch_name || String(b._id) }));
+      .find({}, { projection: { branch_name: 1, module_captain_enable: 1 } }).toArray();
+    return rows.map((b) => ({
+      id: String(b._id),
+      name: b.branch_name || String(b._id),
+      module_captain_enable: b.module_captain_enable,
+    }));
   } catch (e) {
     /* A shop with no database yet is a normal state during setup, not a
        fault. The screen still works; it just cannot offer a list. */
@@ -684,6 +691,43 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('kot:reprint', async (event, logEntry) => {
     if (!kotManager) return { success: false, error: 'KOT manager not initialized' };
     return await kotManager.reprint(logEntry);
+  });
+
+  /*
+   * Is Windows letting handsets reach this till?
+   *
+   * The startup check asks once and can be dismissed for good, which is right
+   * for a shop that does not use handsets and wrong for the shop standing at
+   * the counter wondering why a phone stopped finding the till. This is the
+   * screen they open when that happens, so the answer belongs here too.
+   */
+  const handsetVerdict = async () => {
+    const handsets = require('./handset-reachability');
+    const result = await handsets.check({
+      exePath: process.execPath,
+      port: Number(process.env.PORT) || 5555,
+      lanIp: getLocalIP(),
+    });
+    /* The sentence is built here rather than in the window: explain() lives
+       beside the rule that produced the verdict, and a screen that writes its
+       own wording is a screen that drifts from it. */
+    return { ...result, message: handsets.explain(result) };
+  };
+
+  ipcMain.handle('handsets:check', async () => handsetVerdict());
+
+  /*
+   * Adding the rule, which needs an administrator, so Windows prompts.
+   *
+   * The verdict afterwards comes from looking again rather than from assuming
+   * the command worked: a cancelled elevation prompt and a successful one look
+   * identical from here otherwise.
+   */
+  ipcMain.handle('handsets:allow', async () => {
+    const handsets = require('./handset-reachability');
+    const applied = await handsets.applyFix({ exePath: process.execPath });
+    if (!applied.ok) return { ok: false, error: applied.error || 'Windows did not grant permission' };
+    return { ok: true, result: await handsetVerdict() };
   });
 
   console.log('Hardware IPC handlers registered');

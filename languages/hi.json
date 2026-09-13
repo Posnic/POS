@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "नया ऑनलाइन ऑर्डर",
   "lang_no_changes_after_ordering": "ऑर्डर के बाद कोई बदलाव नहीं",
   "lang_orders_waiting": "ऑर्डर प्रतीक्षा में",
-  "lang_time_to_change_an_order": "ऑर्डर बदलने का समय"
+  "lang_time_to_change_an_order": "ऑर्डर बदलने का समय",
+  "lang_goes_with": "इसके साथ अच्छा लगता है",
+  "lang_goes_with_help": "यह ऑर्डर करने वाले ग्राहक को सुझाया जाता है। खाली छोड़ें और दुकान इसे एक ही बिल में बिकने वाली चीज़ों से तय कर लेगी।",
+  "lang_goes_with_placeholder": "साथ बिकने वाली चीज़ों से तय"
 }

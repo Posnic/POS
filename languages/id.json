@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Pesanan online baru",
   "lang_no_changes_after_ordering": "Tidak ada perubahan setelah memesan",
   "lang_orders_waiting": "pesanan menunggu",
-  "lang_time_to_change_an_order": "Waktu untuk mengubah pesanan"
+  "lang_time_to_change_an_order": "Waktu untuk mengubah pesanan",
+  "lang_goes_with": "Cocok dengan",
+  "lang_goes_with_help": "Ditawarkan kepada pelanggan yang memesan ini. Biarkan kosong dan toko akan menentukannya dari apa yang terjual pada nota yang sama.",
+  "lang_goes_with_placeholder": "Ditentukan dari yang terjual bersama"
 }

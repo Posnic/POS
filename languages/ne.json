@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "नयाँ अनलाइन अर्डर",
   "lang_no_changes_after_ordering": "अर्डर पछि कुनै परिवर्तन छैन",
   "lang_orders_waiting": "पर्खिरहेका अर्डरहरू",
-  "lang_time_to_change_an_order": "अर्डर परिवर्तन गर्ने समय"
+  "lang_time_to_change_an_order": "अर्डर परिवर्तन गर्ने समय",
+  "lang_goes_with": "यससँग मिल्छ",
+  "lang_goes_with_help": "यो अर्डर गर्ने ग्राहकलाई सुझाइन्छ। खाली छोड्नुहोस्, पसलले एउटै बिलमा बिक्ने कुराबाट पत्ता लगाउँछ।",
+  "lang_goes_with_placeholder": "सँगै बिक्ने कुराबाट पत्ता लगाइएको"
 }

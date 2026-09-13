@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Nouvelle commande en ligne",
   "lang_no_changes_after_ordering": "Aucune modification après la commande",
   "lang_orders_waiting": "commandes en attente",
-  "lang_time_to_change_an_order": "Délai pour modifier une commande"
+  "lang_time_to_change_an_order": "Délai pour modifier une commande",
+  "lang_goes_with": "Va bien avec",
+  "lang_goes_with_help": "Propose au client qui a commande ceci. Laissez vide et la boutique le deduit de ce qui se vend sur la meme note.",
+  "lang_goes_with_placeholder": "Deduit de ce qui se vend ensemble"
 }

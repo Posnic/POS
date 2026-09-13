@@ -779,6 +779,47 @@
                         <div id="kotLogsPagination" style="display:none;padding:10px 14px;border-top:1px solid #e9ecef;"></div>
                     </div>
                 </div>
+                <!--
+                    EVERY RECEIPT THIS TILL TRIED TO PRINT.
+
+                    Owner: "how can i verif print out ?"
+
+                    Kitchen tickets have had a log with a screen for a long
+                    time; receipts had the log and no screen, so when a
+                    customer said their bill never came out there was no way
+                    to tell whether the till had tried, which printer it went
+                    to, or what the printer said back.
+
+                    TRIED counts, not just printed. A receipt that failed is
+                    the one somebody is asking about, and a list of successes
+                    is silent at exactly the moment it is needed.
+                -->
+                <div style="margin-top:24px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <div style="font-size:15px;font-weight:700;color:#374151;">&#129534; Receipt print log</div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="date" id="rlDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                            <button onclick="rlLoad()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">&#128269; Load</button>
+                        </div>
+                    </div>
+                    <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
+                        <div id="rlEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">
+                            Pick a date and press Load to see what this computer printed.
+                        </div>
+                        <table id="rlTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb;">
+                                    <th style="padding:10px 12px;text-align:left;">Time</th>
+                                    <th style="padding:10px 12px;text-align:left;">What</th>
+                                    <th style="padding:10px 12px;text-align:left;">Printer</th>
+                                    <th style="padding:10px 12px;text-align:left;">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rlBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
             <!--
@@ -920,7 +961,7 @@
                         <span style="font-size:28px;">📡</span>
                         <div>
                             <div style="font-weight:700;font-size:15px;color:#1e3a8a;">Local Network Server</div>
-                            <div style="font-size:12px;color:#3b5ac6;">Point your Table Order app to this address</div>
+                            <div style="font-size:12px;color:#3b5ac6;">Point your Captain app to this address</div>
                         </div>
                         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                             <span id="mobileServerStatus" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#16a34a;background:#dcfce7;padding:4px 11px;border-radius:20px;">
@@ -935,8 +976,29 @@
                         <button id="mobileCopyBtn" onclick="copyApiUrl(this)" style="padding:10px 18px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-weight:700;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .2s;">📋 Copy</button>
                     </div>
                     <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-                        <span style="font-size:12px;color:#64748b;">Set this URL in the Table Order app → Server Settings → API URL</span>
+                        <span style="font-size:12px;color:#64748b;">Set this URL in the Captain app → Server Settings → API URL</span>
                         <span id="mobileLastRefresh" style="font-size:11px;color:#94a3b8;"></span>
+                    </div>
+
+                    <!--
+                      THE ADDRESS ABOVE BEING RIGHT IS NOT THE SAME AS IT WORKING.
+
+                      Windows Firewall does not refuse a blocked connection, it
+                      drops it. The phone shows an empty screen, this window
+                      shows a correct address, and the two look identical from
+                      the floor. The startup check asks about this once and can
+                      be dismissed for good; this is the screen somebody opens
+                      when a handset has stopped finding the till, so the answer
+                      belongs here as well.
+                    -->
+                    <div id="fwRow" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span id="fwIcon" style="font-size:20px;line-height:1;">🛡</span>
+                        <div style="flex:1;min-width:220px;">
+                            <div id="fwTitle" style="font-weight:700;font-size:13px;color:#374151;">Checking Windows Firewall…</div>
+                            <div id="fwDetail" style="font-size:12px;color:#64748b;margin-top:3px;line-height:1.55;"></div>
+                        </div>
+                        <button id="fwFixBtn" onclick="fwAllow(this)" style="display:none;padding:9px 16px;border:none;border-radius:8px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;">Allow through Firewall</button>
+                        <button id="fwCheckBtn" onclick="fwCheck(this)" style="padding:9px 14px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;color:#64748b;font-weight:600;cursor:pointer;font-size:13px;white-space:nowrap;">Check again</button>
                     </div>
                 </div>
 
@@ -1709,6 +1771,95 @@
          * read it, this is the machine that owns it, and a masked field beside
          * a Copy button is how people end up pasting the mask.
          */
+
+        /*
+         * WHAT THIS COMPUTER PRINTED, and what it tried to print.
+         *
+         * Owner: "how can i verif print out ?"
+         *
+         * src/receipt-log.js has recorded this since the day it was written -
+         * which printer, how long it took, and what the printer said back -
+         * and nothing has ever read it. The record is only worth keeping if
+         * somebody can open it on the machine that has the problem.
+         */
+        function rlWhen(iso) {
+            try {
+                return new Date(iso).toLocaleTimeString();
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function rlSafe(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        async function rlLoad() {
+            const body = document.getElementById('rlBody');
+            const table = document.getElementById('rlTable');
+            const empty = document.getElementById('rlEmpty');
+            if (!body || !window.electronAPI || !window.electronAPI.bill) return;
+
+            const picked = document.getElementById('rlDate');
+            const date = (picked && picked.value) || new Date().toISOString().slice(0, 10);
+
+            let rows = [];
+            try {
+                rows = (await window.electronAPI.bill.getReceiptLogs(date)) || [];
+            } catch (e) {
+                rows = [];
+            }
+
+            if (!rows.length) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+                empty.textContent = 'Nothing was printed on ' + date + '.';
+                return;
+            }
+
+            /* Newest first: the receipt somebody is asking about is the one
+               that just failed, not the first of the morning. */
+            rows = rows.slice().reverse();
+
+            body.innerHTML = rows.map(function (row) {
+                const printers = (row.printers || []);
+                const where = printers.map(function (p) { return rlSafe(p.name); }).join(', ') || '-';
+                /*
+                 * The printer's own words when it refused. "Failed" sends
+                 * somebody to us; "out of paper" sends them to the roll.
+                 */
+                const said = printers
+                    .filter(function (p) { return p.status !== 'success'; })
+                    .map(function (p) { return rlSafe(p.error || 'refused'); })
+                    .join('; ');
+                const ok = row.status === 'printed';
+                const took = row.ms ? ' <span style="color:#9ca3af;">(' + Math.round(row.ms) + 'ms)</span>' : '';
+                return '<tr style="border-bottom:1px solid #f1f5f9;">'
+                    + '<td style="padding:10px 12px;white-space:nowrap;">' + rlWhen(row.time) + '</td>'
+                    + '<td style="padding:10px 12px;">' + (rlSafe(row.title) || rlSafe(row.kind))
+                    + (row.total ? ' <span style="color:#6b7280;">' + rlSafe(row.total) + '</span>' : '')
+                    + (row.source ? ' <span style="color:#9ca3af;">via ' + rlSafe(row.source) + '</span>' : '')
+                    + '</td>'
+                    + '<td style="padding:10px 12px;">' + where + '</td>'
+                    + '<td style="padding:10px 12px;">'
+                    + (ok
+                        ? '<span style="color:#12b76a;font-weight:700;">printed</span>' + took
+                        : '<span style="color:#f04438;font-weight:700;">did not print</span>'
+                          + (said ? ' <span style="color:#b42318;">' + said + '</span>' : ''))
+                    + '</td></tr>';
+            }).join('');
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        /* Today, so pressing Load answers the usual question without typing. */
+        document.addEventListener('DOMContentLoaded', function () {
+            const picked = document.getElementById('rlDate');
+            if (picked && !picked.value) picked.value = new Date().toISOString().slice(0, 10);
+        });
+
         async function cpShowKey() {
             const field = document.getElementById('cpTillKey');
             if (!field || !window.electronAPI || !window.electronAPI.bill) return;
@@ -2742,6 +2893,100 @@
             }
         }
 
+        /*
+         * WHAT WINDOWS SAYS ABOUT HANDSETS, ON THE SCREEN SOMEBODY OPENS.
+         *
+         * Four answers worth showing, and three of them are faults with
+         * different causes, so each gets its own sentence rather than one
+         * "connection problem". The sentences are built in the main process,
+         * beside the rule that produced the verdict, so this screen cannot
+         * drift away from what the check actually decided.
+         *
+         * An answer we could not read shows nothing at all. A diagnostic that
+         * invents a fault when it cannot see is worse than a blank space.
+         */
+        const FW_LOOKS = {
+            'reachable':     { icon: '✅', border: '#bbf7d0', bg: '#f0fdf4', title: 'Windows Firewall is letting handsets through' },
+            'firewall-off':  { icon: 'ℹ️', border: '#e2e8f0', bg: '#ffffff', title: 'Windows Firewall is switched off on this network' },
+            'blocked':       { icon: '⛔', border: '#fecaca', bg: '#fef2f2', title: 'Windows Firewall is blocking this till' },
+            'wrong-profile': { icon: '⚠️', border: '#fed7aa', bg: '#fff7ed', title: 'The permission does not cover this network' },
+            'no-rule':       { icon: '⚠️', border: '#fed7aa', bg: '#fff7ed', title: 'Nothing is letting handsets through' }
+        };
+
+        let _fwBusy = false;
+
+        function fwHide() { document.getElementById('fwRow').style.display = 'none'; }
+
+        function fwPaint(result) {
+            const look = FW_LOOKS[result && result.kind];
+            if (!look) { fwHide(); return; }        // unknown, or not Windows
+
+            const row = document.getElementById('fwRow');
+            row.style.display = 'flex';
+            row.style.borderColor = look.border;
+            row.style.background = look.bg;
+            document.getElementById('fwIcon').textContent = look.icon;
+            document.getElementById('fwTitle').textContent = look.title;
+
+            /*
+             * Escaped, because a Wi-Fi name is whatever somebody called their
+             * router and this row is built through innerHTML. Same rule, and
+             * the same reason, as the two print logs above.
+             */
+            const network = result.network ? ' on <strong>' + logEsc(result.network) + '</strong>' : '';
+            document.getElementById('fwDetail').innerHTML = result.ok
+                ? 'Phones running the Captain app on this Wi-Fi can reach the address above' + network + '.'
+                : logEsc(result.message || '');
+
+            /* Offered only where it is the actual repair. A firewall that is
+               switched off is not a thing to add a rule for. */
+            document.getElementById('fwFixBtn').style.display = result.ok ? 'none' : 'inline-block';
+        }
+
+        async function fwCheck(btn) {
+            if (_fwBusy) return;
+            _fwBusy = true;
+            const check = document.getElementById('fwCheckBtn');
+            const wasChecking = btn ? check.textContent : null;
+            if (btn) { check.disabled = true; check.textContent = 'Checking…'; }
+            try {
+                fwPaint(await window.electronAPI.mobile.checkFirewall());
+            } catch (e) {
+                /* No handler, an older build, anything at all: say nothing
+                   rather than report a firewall problem we did not find. */
+                fwHide();
+            } finally {
+                _fwBusy = false;
+                if (btn) { check.disabled = false; check.textContent = wasChecking; }
+            }
+        }
+
+        async function fwAllow(btn) {
+            if (_fwBusy) return;
+            _fwBusy = true;
+            const label = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Waiting for Windows…';
+            try {
+                const res = await window.electronAPI.mobile.allowThroughFirewall();
+                if (res && res.ok) {
+                    fwPaint(res.result);
+                } else {
+                    /* A cancelled administrator prompt changes nothing, and
+                       saying so is better than a row that silently stays red. */
+                    document.getElementById('fwTitle').textContent = 'Nothing was changed';
+                    document.getElementById('fwDetail').textContent =
+                        'Windows did not grant permission, so the firewall was left exactly as it was.';
+                }
+            } catch (e) {
+                document.getElementById('fwDetail').textContent = 'The firewall could not be changed from here.';
+            } finally {
+                _fwBusy = false;
+                btn.disabled = false;
+                btn.textContent = label;
+            }
+        }
+
         async function refreshMobileInfo(btn) {
             const refreshBtn = btn || document.getElementById('mobileRefreshBtn');
             if (refreshBtn) {
@@ -2755,6 +3000,10 @@
                 _mobileApiUrl = info.apiUrl;
                 document.getElementById('mobileApiUrl').textContent = info.apiUrl;
             } catch (e) { /* ignore */ }
+
+            /* Not awaited: the firewall read spawns PowerShell and takes a few
+               seconds, and the device list has no reason to wait for it. */
+            fwCheck();
 
 
             // Load blocked IPs first (used in device table rendering)

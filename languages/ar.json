@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "طلب جديد عبر الإنترنت",
   "lang_no_changes_after_ordering": "لا تعديلات بعد الطلب",
   "lang_orders_waiting": "طلبات في الانتظار",
-  "lang_time_to_change_an_order": "مدة تعديل الطلب"
+  "lang_time_to_change_an_order": "مدة تعديل الطلب",
+  "lang_goes_with": "يناسب مع",
+  "lang_goes_with_help": "يُقترح على العميل الذي طلب هذا. اتركه فارغًا وسيحدده المتجر مما يُباع على نفس الفاتورة.",
+  "lang_goes_with_placeholder": "يُحدد مما يُباع معًا"
 }

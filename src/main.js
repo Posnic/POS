@@ -4544,6 +4544,107 @@ app.whenReady().then(async () => {
 });
 
 /*
+ * Tell the shop when a handset cannot reach this till, and offer to fix it.
+ *
+ * The Captain app finds the till by sweeping the shop Wi-Fi, so everything it
+ * does depends on Windows letting this machine answer. When Windows does not,
+ * it does not refuse - it drops the packet. The handset shows an empty screen,
+ * the till shows a working one, and nobody can tell that apart from a dead
+ * router. See handset-reachability.js for the two ways a correctly installed
+ * till ends up in that state.
+ *
+ * Three rules this follows, none of them optional:
+ *
+ *   NOTHING IS CHANGED WITHOUT BEING ASKED. The repair needs an administrator,
+ *   and a machine-level firewall rule is not something to add to a shop's till
+ *   while they are looking the other way.
+ *
+ *   SILENT UNLESS THE SHOP USES HANDSETS. module_captain_enable, read with the
+ *   same absent-means-on rule the rest of the app uses.
+ *
+ *   SILENT UNLESS SOMETHING IS ACTUALLY WRONG. A machine that cannot be read
+ *   produces no dialog at all; see verdict().
+ */
+async function reportHandsetReachability() {
+  if (process.platform !== 'win32') return;
+
+  const handsets = require('./handset-reachability');
+  const branches = await readLocalBranches();
+  if (!branches.length) return;                 // still setting up
+  if (!handsets.captainIsOn(branches)) return;  // no handsets in this shop
+
+  const exePath = process.execPath;
+  const result = await handsets.check({ exePath, port: apiPort(), lanIp: getLocalIP() });
+  console.log(`[Handsets] ${result.kind} on ${result.network || 'this network'} (${result.category || 'unknown'})`);
+  if (result.ok) return;
+
+  /*
+   * Keyed on the fault and the network profile, not on the network name. A
+   * shop that has said "we do not use handsets" should stay quiet on every
+   * network; a shop whose firewall then develops a different fault should not.
+   */
+  const fingerprint = `handsets:${result.kind}:${result.category}`;
+  const dismissed = readHealthDismissals() || [];
+  if (dismissed.includes(fingerprint)) {
+    console.log('[Handsets] known finding, dialog suppressed:', fingerprint);
+    return;
+  }
+
+  const target = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+  const answer = await dialog.showMessageBox(target, {
+    type: 'warning',
+    title: 'Handsets cannot reach this till',
+    message: 'Staff phones running the Captain app will not be able to send orders to this computer.',
+    detail: `${handsets.explain(result)}\n\n`
+      + 'Posnic itself is running normally. Allowing it through Windows Firewall needs an '
+      + 'administrator, so Windows will ask for permission first.',
+    buttons: ['Allow through Windows Firewall', 'Not now', 'We do not use handsets'],
+    defaultId: 0,
+    cancelId: 1,
+    noLink: true,
+  });
+
+  if (answer.response === 2) {
+    writeHealthDismissals([...dismissed, fingerprint]);
+    console.log('[Handsets] dismissed; a different problem will still be reported');
+    return;
+  }
+  if (answer.response !== 0) return;
+
+  const fixed = await handsets.applyFix({ exePath });
+  if (!fixed.ok) {
+    console.warn('[Handsets] the firewall rule was not created:', fixed.error);
+    await dialog.showMessageBox(target, {
+      type: 'info',
+      title: 'Nothing was changed',
+      message: 'Windows did not grant permission, so the firewall was left as it was.',
+      detail: 'Nothing on this computer has changed. You can try again from the Windows Firewall '
+        + 'settings, or the next time Posnic starts.',
+      buttons: ['OK'],
+      noLink: true,
+    });
+    return;
+  }
+
+  /* Say whether it worked, by looking again rather than by assuming. */
+  const after = await handsets.check({ exePath, port: apiPort(), lanIp: getLocalIP() });
+  console.log(`[Handsets] after repair: ${after.kind}`);
+  await dialog.showMessageBox(target, {
+    type: after.ok ? 'info' : 'warning',
+    title: after.ok ? 'Handsets can reach this till' : 'Still blocked',
+    message: after.ok
+      ? 'Windows Firewall now allows Posnic to accept connections from the shop network.'
+      : 'The rule was added, but something is still refusing connections.',
+    detail: after.ok
+      ? 'Staff phones on the same Wi-Fi should find this till straight away. There is nothing '
+        + 'to restart.'
+      : `${handsets.explain(after)}\n\nThis is worth sending to support along with the log file.`,
+    buttons: ['OK'],
+    noLink: true,
+  });
+}
+
+/*
  * Put the brand shipped inside the installer in place, once.
  *
  * refreshBrand() fetches branding from the cloud, but gives up immediately
@@ -5016,6 +5117,18 @@ function startServer() {
           console.log('[Health] known findings, dialog suppressed:', fingerprint.slice(0, 8));
         }
       }
+
+      /*
+       * And whether a handset can reach this till at all.
+       *
+       * Off the startup path on purpose: it spawns PowerShell and reads the
+       * Windows Firewall, which takes a few seconds, and nothing about a till
+       * that is already serving should wait on it.
+       */
+      setTimeout(() => {
+        reportHandsetReachability().catch((e) =>
+          console.warn('[Handsets] reachability check failed:', e.message));
+      }, 25_000);
     } else {
       updateHealthStatus({
         status: 'error',

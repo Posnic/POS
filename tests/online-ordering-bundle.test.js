@@ -745,3 +745,66 @@ test('the page with the assistant loads every one of the assistant scripts', () 
     );
   }
 });
+
+
+/*
+ * WHAT GOES WITH A DISH: WHAT THE SHOP SAID, THEN WHAT IT LEARNED.
+ *
+ * Owner: "for checken briyani its suggessting french fries. not good
+ * combination. ask would like to add cock. only related prducts good. we need
+ * to provide relations or some indication about related products with product
+ * information."
+ *
+ * Two sources answering different questions. salesSignals watches what leaves
+ * the kitchen on the same bill - the better answer for a shop with history,
+ * and no answer at all for a new one. The goes_with field is the shop saying
+ * it outright, which beats any amount of data when somebody has filled it in,
+ * most often to STOP a pairing the numbers keep producing.
+ */
+test('a dish is paired by what the shop said first, then by what sells with it', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
+  const from = src.indexOf('  pairingsFor(row, learned) {');
+  assert.ok(from !== -1, 'the shop can no longer say what goes with a dish');
+  const body = src.slice(from, src.indexOf('\n  }', from) + 4).replace('pairingsFor(row, learned) {', 'function pairingsFor(row, learned) {');
+  // eslint-disable-next-line no-new-func
+  const pairingsFor = new Function(body + '; return pairingsFor;')();
+
+  assert.deepStrictEqual(
+    pairingsFor({ goes_with: ['coke'] }, [{ id: 'fries' }, { id: 'salad' }]),
+    ['coke', 'fries', 'salad'],
+    'the shop said coke and was not listened to first'
+  );
+  assert.deepStrictEqual(pairingsFor({}, [{ id: 'fries' }]), ['fries'], 'a shop that said nothing lost its learned pairs');
+  assert.deepStrictEqual(pairingsFor({ goes_with: ['coke'] }, undefined), ['coke'], 'a new shop with no sales lost what it typed');
+  assert.deepStrictEqual(pairingsFor({ goes_with: ['coke'] }, [{ id: 'coke' }, { id: 'fries' }]), ['coke', 'fries'], 'the same dish was offered twice');
+  assert.strictEqual(pairingsFor({ goes_with: ['a', 'b', 'c', 'd', 'e'] }, [{ id: 'f' }]).length, 3, 'the suggestion became a catalogue');
+});
+
+test('what the shop types as a pairing is normalised, never trusted', () => {
+  /* It arrives from a form and is read back by a customer-facing page. */
+  const src = fs.readFileSync(path.join(ROOT, 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
+  const at = src.indexOf('goes_with: Array.isArray(data.goes_with)');
+  assert.ok(at !== -1, 'the item write path no longer stores a pairing');
+  const block = src.slice(at, at + 600);
+  assert.match(block, /\[A-Za-z0-9\]\{1,64\}/, 'anything at all can be written as a pairing id');
+  assert.match(block, /v !== String\(id \|\| ''\)/, 'a dish can be its own pairing');
+  assert.match(block, /new Set\(/, 'the same pairing can be stored twice');
+  assert.match(block, /\.slice\(0, 6\)/, 'a pairing list can grow without limit');
+});
+
+test('the pairing a shop chose reaches the page that offers it', () => {
+  /* Written on the item, projected out of the menu read, merged with the
+     learned pairs, and read by the chooser on the ordering page. A break
+     anywhere in that chain is a field that silently does nothing. */
+  const repo = fs.readFileSync(path.join(ROOT, 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
+  assert.match(repo, /goes_with: Array\.isArray\(data\.goes_with\)/, 'nothing writes it');
+  assert.match(repo, /goes_with: 1,/, 'the menu read does not project it');
+  assert.match(repo, /goes_with: this\.pairingsFor\(row, signals\.related/, 'the menu output drops it');
+  assert.match(repo, /goes_with: this\.pairingsFor\(item, ordering\.related/, 'the storefront output drops it');
+  assert.match(readBundle('indexedDB.js'), /Array\.isArray\(p\.goes_with\)/, 'the ordering page ignores it');
+  const form = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'items_write.html'), 'utf8');
+  assert.match(form, /id="item_goes_with"/, 'there is no way for a shop to say it');
+  const js = fs.readFileSync(path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'), 'utf8');
+  assert.match(js, /goes_with: \$\('#item_goes_with'\)\.val\(\)/, 'the form never sends it');
+  assert.match(js, /PosnicPro\.itemGoesWith\.set\(data\.goes_with/, 'the form never reads it back');
+});

@@ -3454,3 +3454,263 @@ test('what goes alongside is what the shop said, or a drink, and never a leftove
   /* A menu with nothing suitable offers NOTHING, which beats offering wrong. */
   assert.deepStrictEqual(box.goesWithOrder([{ item_id: 'm1' }], [menu[0], menu[1], menu[4]]), []);
 });
+
+
+/*
+ * A SLOW SHOP LOOKS SLOW, NOT DEAD.
+ *
+ * Owner: "whenver we communicate or receiving show some progress then we know
+ * its network delay. otherwise it shows no sound nothing happening."
+ *
+ * A phone on a restaurant's wifi waits two seconds for the shop and shows
+ * nothing, so the customer cannot tell a slow network from a dead button -
+ * and what they do about it is tap again, which on a plus is a second dish.
+ *
+ * It wraps fetch rather than asking every call site to report in, because a
+ * call site that forgets is exactly the silent wait being described and there
+ * is no way to notice one is missing.
+ */
+function workingPage() {
+  const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  let settle = null;
+  window.fetch = () => new Promise((resolve) => { settle = resolve; });
+  window.eval(read('assets/working.js'));
+  return { window, d: window.document, answer: () => settle && settle({ ok: true }) };
+}
+
+const tick = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('a request that drags shows a progress bar, and a quick one never flickers', async () => {
+  const { window, d, answer } = workingPage();
+
+  /* Quick: answered well inside the delay, so nothing is ever drawn. */
+  const quick = window.fetch('/online-ordering/ABC/orders/o1?token=042');
+  answer();
+  await quick;
+  await tick(400);
+  assert.strictEqual(d.getElementById('working-bar'), null, 'a fast request flashed a progress bar at the customer');
+
+  /* Slow: nothing at first, then the bar, saying what it is waiting for. */
+  const slow = workingPage();
+  slow.window.fetch('/online-ordering/ABC/orders/o1/items', { method: 'POST' });
+  await tick(120);
+  assert.ok(!slow.d.getElementById('working-bar') || slow.d.getElementById('working-bar').hidden, 'the bar appeared before the request had taken any time');
+  await tick(350);
+  const bar = slow.d.getElementById('working-bar');
+  assert.ok(bar && !bar.hidden, 'the shop was slow and the page said nothing');
+  assert.strictEqual(bar.querySelector('.working-bar-text').textContent, 'Changing your order', 'the bar does not say what it is waiting for');
+
+  slow.answer();
+  await tick(60);
+  assert.strictEqual(slow.d.getElementById('working-bar').hidden, true, 'the bar stayed up after the shop answered');
+  window.close();
+  slow.window.close();
+});
+
+test('the heartbeat that meters a call never raises a bar', async () => {
+  /* Nobody is waiting on it, and a bar that appears twice a minute during a
+     call for no reason teaches people to ignore the bar. */
+  const { window, d } = workingPage();
+  window.fetch('/online-ordering/ABC/voice/s1/tick', { method: 'POST' });
+  await tick(420);
+  assert.ok(!d.getElementById('working-bar') || d.getElementById('working-bar').hidden, 'the meter heartbeat raised a progress bar');
+  window.close();
+});
+
+test('two requests at once raise one bar, and it goes when the last one lands', async () => {
+  const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  const waiting = [];
+  window.fetch = () => new Promise((resolve) => waiting.push(resolve));
+  window.eval(read('assets/working.js'));
+  window.fetch('/online-ordering/ABC/orders/lookup', { method: 'POST' });
+  window.fetch('/online-ordering/ABC/menu');
+  await tick(420);
+  assert.strictEqual(window.document.querySelectorAll('.working-bar').length, 1, 'every request drew its own bar');
+  waiting[0]({ ok: true });
+  await tick(40);
+  assert.strictEqual(window.document.getElementById('working-bar').hidden, false, 'the bar went while a request was still out');
+  waiting[1]({ ok: true });
+  await tick(40);
+  assert.strictEqual(window.document.getElementById('working-bar').hidden, true, 'the bar never went');
+  window.close();
+});
+
+test('the bar goes inside an open dialog, where the longest waits happen', async () => {
+  /* A modal dialog draws in the browser top layer, above every z-index on
+     the page, so a bar parked on body is invisible during a voice call. */
+  const dom = new JSDOM('<!doctype html><body><dialog open id="sheet"></dialog></body>', { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.fetch = () => new Promise(() => {});
+  window.eval(read('assets/working.js'));
+  window.fetch('/online-ordering/ABC/voice', { method: 'POST' });
+  await tick(420);
+  const bar = window.document.getElementById('working-bar');
+  assert.ok(bar, 'no bar at all');
+  assert.strictEqual(bar.parentNode.id, 'sheet', 'the bar sits under the dialog, where nobody can see it');
+  window.close();
+});
+
+test('every ordering page a customer waits on loads the progress bar', () => {
+  for (const page of ['index.html', 'home.html', 'products.html', 'cart.html', 'payment.html', 'thankyou.html', 'history.html']) {
+    assert.match(read(page), /assets\/working\.js/, 'order/' + page + ' waits on the shop in silence');
+  }
+});
+
+
+/*
+ * THE NEXT TABLE DOES NOT ORDER FOR YOU.
+ *
+ * Owner: "how about voice around me ? how to solve this issue ?"
+ *
+ * A restaurant is full of people talking and none of them are ordering from
+ * this phone. Turn detection cannot tell them apart - to a voice detector the
+ * next table is speech, and speech is a turn - and raising the threshold only
+ * trades one mistake for the other.
+ *
+ * What separates them is DISTANCE. The phone is about forty centimetres from
+ * the person holding it and two or three metres from the next table, and
+ * sound falls off with the square of the distance, so the holder arrives
+ * roughly thirty times louder. This drives the real code with a fake
+ * analyser and asserts the microphone track follows.
+ */
+function roomPage(levels) {
+  const page = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const { window } = page;
+  /* A fake analyser whose loudness the test drives, and a clock the test
+     steps, so a second of room noise does not cost a second of test. */
+  let level = 0;
+  const frames = [];
+  window.requestAnimationFrame = (fn) => { frames.push(fn); return frames.length; };
+  window.cancelAnimationFrame = () => {};
+  window.AudioContext = function () {
+    this.createMediaStreamSource = () => ({ connect() {} });
+    this.createAnalyser = () => ({
+      fftSize: 1024,
+      getByteTimeDomainData(data) {
+        /* RMS of a square wave at `level`, which is what the real code
+           measures off a microphone. */
+        for (let i = 0; i < data.length; i += 1) data[i] = 128 + Math.round(level * 128);
+      },
+    });
+    this.close = () => {};
+  };
+  const step = (n) => {
+    for (let i = 0; i < n; i += 1) {
+      const run = frames.shift();
+      if (run) run();
+    }
+  };
+  return { ...page, set: (v) => { level = v; }, step, levels };
+}
+
+test('the room is measured, and only a voice close to the phone opens the line', async () => {
+  const page = roomPage();
+  const { window } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  /* While the room is being measured the line hears everything, because a
+     gate that judged before it had a floor would judge wrongly. */
+  page.set(0.01);
+  page.step(3);
+  assert.strictEqual(track.enabled, true, 'the line went deaf before it knew what the room sounds like');
+
+  /* A second passes and the floor is learned. */
+  /* The PAGE's clock, not this process's: the script under test runs in
+     the jsdom realm and reads its Date, not ours. */
+  const realNow = window.Date.now;
+  window.Date.now = () => realNow() + 3000;
+  try {
+    page.set(0.01);
+    page.step(2);
+    /* The next table, at the room's own level: NOT heard. */
+    assert.strictEqual(track.enabled, false, 'the room itself still opens the line, so the next table can order');
+
+    /* Somebody speaking into the phone: far louder than the floor. */
+    page.set(0.30);
+    page.step(1);
+    assert.strictEqual(track.enabled, true, 'a customer speaking into the phone was not heard');
+  } finally {
+    window.Date.now = realNow;
+  }
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('a thumb on the button beats anything the room is doing', async () => {
+  /* Nothing measured can be perfect; something held is. */
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  /* The PAGE's clock, not this process's: the script under test runs in
+     the jsdom realm and reads its Date, not ours. */
+  const realNow = window.Date.now;
+  window.Date.now = () => realNow() + 3000;
+  try {
+    page.set(0.01);
+    page.step(3);
+    assert.strictEqual(track.enabled, false, 'the quiet room already had the line open');
+
+    const hold = document.getElementById('voice-hold');
+    assert.ok(hold, 'there is no hold-to-talk button');
+    hold.dispatchEvent(new window.Event('pointerdown'));
+    assert.strictEqual(track.enabled, true, 'holding the button did not open the line');
+    assert.strictEqual(hold.getAttribute('data-held'), 'yes', 'the button does not look held');
+
+    hold.dispatchEvent(new window.Event('pointerup'));
+    assert.strictEqual(track.enabled, false, 'letting go left the microphone open');
+    assert.strictEqual(hold.getAttribute('data-held'), null);
+  } finally {
+    window.Date.now = realNow;
+  }
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('the assistant speaking still wins over a thumb, and over the room', async () => {
+  /* Otherwise the line hears itself, which is the "ah.. yes.. aha" the owner
+     reported, and holding the button would bring it straight back. */
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  document.getElementById('voice-hold').dispatchEvent(new window.Event('pointerdown'));
+  assert.strictEqual(track.enabled, true);
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.started' }) });
+  assert.strictEqual(track.enabled, false, 'the line can hear itself again whenever the button is held');
+
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
+  await new Promise((r) => setTimeout(r, 400));
+  assert.strictEqual(track.enabled, true, 'the thumb was forgotten once the assistant stopped');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('a browser with no analyser hears everything rather than nothing', async () => {
+  /* A gate that cannot measure must fail OPEN. Failing shut is a phone that
+     silently never hears the customer at all, which is far worse than one
+     that sometimes hears the room. */
+  const page = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const { window } = page;
+  window.AudioContext = undefined;
+  window.webkitAudioContext = undefined;
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(window.__track.enabled, true, 'a phone with no analyser went permanently deaf');
+  window.OrderingVoice.stop();
+  window.close();
+});

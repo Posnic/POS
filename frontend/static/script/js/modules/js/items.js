@@ -937,6 +937,9 @@ PosnicPro.items = {
             show_on_menu: $('#item_show_on_menu').is(':checked'),
             diet: String($('#item_diet').val() || ''),
             daypart_ids: $('#item_dayparts').val() || [],
+            /* What the shop says goes with this dish. Empty is normal and
+               means "work it out from what sells on the same bill". */
+            goes_with: $('#item_goes_with').val() || [],
             channel_off: $('#item_channel_off').val() || [],
             prep_note: String($('#item_prep_note').val() || '').trim(),
             prep_minutes: Number($('#item_prep_minutes').val()) || 0,
@@ -1213,6 +1216,7 @@ PosnicPro.items = {
                     show_on_menu: $('#item_show_on_menu').is(':checked'),
                     diet: String($('#item_diet').val() || ''),
                     daypart_ids: $('#item_dayparts').val() || [],
+                    goes_with: $('#item_goes_with').val() || [],
                     channel_off: $('#item_channel_off').val() || [],
                     prep_note: String($('#item_prep_note').val() || '').trim(),
                     prep_minutes: Number($('#item_prep_minutes').val()) || 0,
@@ -1762,6 +1766,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 PosnicPro.itemDayparts.set(data.daypart_ids || []);
+                PosnicPro.itemGoesWith.set(data.goes_with || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
@@ -2426,6 +2431,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 PosnicPro.itemDayparts.set(data.daypart_ids || []);
+                PosnicPro.itemGoesWith.set(data.goes_with || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
@@ -5508,6 +5514,92 @@ PosnicPro.itemChannels = {
     set: function (values) {
         PosnicPro.itemChannels.load(function () {
             $('#item_channel_off').val(values || []).trigger('change');
+        });
+    }
+};
+
+/*
+ * WHAT GOES WITH THIS DISH, chosen from the shop's own menu.
+ *
+ * Owner: "for checken briyani its suggessting french fries. not good
+ * combination. ask would like to add cock. only related prducts good. we need
+ * to provide relations or some indication about related products with product
+ * information."
+ *
+ * The ordering pages already offer something alongside a placed order, and
+ * without this they work it out from what has sold on the same bill over the
+ * last month. That is a reasonable guess and it is only a guess: it offered
+ * chips with biryani because chips and biryani had happened to share bills.
+ * This is the shop saying it outright, and what is said here comes first -
+ * most often to STOP a pairing the numbers keep producing.
+ *
+ * SAME SHAPE AS itemDayparts ABOVE, including the part that matters: set()
+ * waits for the options to exist before choosing, because select2 silently
+ * drops an id it has no option for, and the next save would then write the
+ * empty box back and quietly unpair the dish.
+ *
+ * The list is fetched ONCE per page and kept, because it is the same menu for
+ * every dish opened in that visit, and asking again per dish would make
+ * opening an item wait on a second request for nothing.
+ */
+PosnicPro.itemGoesWith = {
+    _options: null,
+    _asking: false,
+    _waiting: [],
+
+    load: function (done) {
+        var self = PosnicPro.itemGoesWith;
+        if (self._options) { if (done) { done(); } return; }
+        if (done) { self._waiting.push(done); }
+        if (self._asking) { return; }
+        self._asking = true;
+        PosnicPro.get({
+            /* Enough of the menu to pair from. A shop with more dishes than
+               this is choosing from a list nobody reads to the bottom anyway,
+               and the field takes at most a handful. */
+            url: 'items',
+            data: { page: 1, limit: 500 }
+        }, function (response) {
+            var rows = ((response && response.data) || {}).list || [];
+            self._options = rows
+                .filter(function (r) { return r && (r._id || r.id) && r.name; })
+                .map(function (r) { return { id: String(r._id || r.id), name: String(r.name) }; });
+            self._asking = false;
+            self.fill();
+            var waiting = self._waiting;
+            self._waiting = [];
+            waiting.forEach(function (fn) { fn(); });
+        }, function () {
+            /* A menu that cannot be listed still saves the dish; the field is
+               simply empty, which reads as "work it out from the bills". */
+            self._options = [];
+            self._asking = false;
+            var waiting = self._waiting;
+            self._waiting = [];
+            waiting.forEach(function (fn) { fn(); });
+        });
+    },
+
+    fill: function () {
+        var $sel = $('#item_goes_with');
+        if (!$sel.length) { return; }
+        var chosen = $sel.val() || [];
+        /* Never itself: a dish that goes with itself is a suggestion the
+           customer has already taken. */
+        var mine = String($('#itemid').val() || '');
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        $sel.html((PosnicPro.itemGoesWith._options || [])
+            .filter(function (o) { return o.id !== mine; })
+            .map(function (o) {
+                return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>';
+            }).join(''));
+        $sel.val(chosen).trigger('change');
+    },
+
+    set: function (values) {
+        PosnicPro.itemGoesWith.load(function () {
+            PosnicPro.itemGoesWith.fill();
+            $('#item_goes_with').val(values || []).trigger('change');
         });
     }
 };

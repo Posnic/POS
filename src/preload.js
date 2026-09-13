@@ -230,7 +230,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     removeDevice:  (ip) => ipcRenderer.invoke('mobile:remove-device', ip),
     getBlocked:    () => ipcRenderer.invoke('mobile:get-blocked'),
     unblockDevice: (ip) => ipcRenderer.invoke('mobile:unblock-device', ip),
-    clear:          () => ipcRenderer.invoke('mobile:clear')
+    clear:          () => ipcRenderer.invoke('mobile:clear'),
+    /* Whether Windows is letting handsets in at all. The startup check asks
+       this once and can be dismissed; this is the place somebody looks when a
+       phone has stopped finding the till. */
+    checkFirewall: () => ipcRenderer.invoke('handsets:check'),
+    allowThroughFirewall: () => ipcRenderer.invoke('handsets:allow')
   }
 });
 

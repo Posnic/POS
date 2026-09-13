@@ -2200,6 +2200,9 @@
   "Too many requests from this IP, please try again later!": [
     "app.js"
   ],
+  "Too many requests from this network. Please wait a moment and try again.": [
+    "src/middleware/assistant-rate-limit.js"
+  ],
   "Too many sign-in attempts. Please wait ten minutes and try again, ": [
     "src/middleware/auth-rate-limit.js"
   ],

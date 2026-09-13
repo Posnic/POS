@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Nieuwe online bestelling",
   "lang_no_changes_after_ordering": "Geen wijzigingen na bestellen",
   "lang_orders_waiting": "wachtende bestellingen",
-  "lang_time_to_change_an_order": "Tijd om een bestelling te wijzigen"
+  "lang_time_to_change_an_order": "Tijd om een bestelling te wijzigen",
+  "lang_goes_with": "Past goed bij",
+  "lang_goes_with_help": "Wordt aangeboden aan een klant die dit heeft besteld. Laat het leeg en de winkel leidt het af uit wat op dezelfde bon wordt verkocht.",
+  "lang_goes_with_placeholder": "Afgeleid uit wat samen wordt verkocht"
 }

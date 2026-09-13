@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Novo pedido online",
   "lang_no_changes_after_ordering": "Sem alterações após o pedido",
   "lang_orders_waiting": "pedidos em espera",
-  "lang_time_to_change_an_order": "Tempo para alterar um pedido"
+  "lang_time_to_change_an_order": "Tempo para alterar um pedido",
+  "lang_goes_with": "Combina bem com",
+  "lang_goes_with_help": "Oferecido a um cliente que pediu isto. Deixe vazio e a loja deduz a partir do que se vende na mesma conta.",
+  "lang_goes_with_placeholder": "Deduzido do que se vende em conjunto"
 }
