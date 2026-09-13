@@ -275,8 +275,64 @@ function vocabularyFor(storefront, menu) {
   return out.replace(/, $/, '.');
 }
 
+/*
+ * WHERE THEY ARE AND HOW THE FOOD TRAVELS - as a settled fact, not a topic.
+ *
+ * Owner, and this is the thing he has repeated more than anything else in
+ * the feature: "if its given as table then its bring to table only. not take
+ * away. dont ask question again. i told this 1000 time but u never hear
+ * that."
+ *
+ * He is right that it was never heard. The page has sent the table since the
+ * line was built, the opening line even says it - and the brief then said
+ * nothing about it at all, while a rule further up told the model to ask
+ * whether they were eating in or taking away. So it asked. A sticker on
+ * table thirty-four answered that before the customer sat down.
+ *
+ * Said twice on purpose: what is true, and then what not to do about it.
+ * A model told only the fact still finds a polite reason to confirm it.
+ */
+function servicePointBrief(storefront, body) {
+  const tidy = (value, max) =>
+    String(value == null ? '' : value)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, max);
+  const point = (storefront && storefront.service_point) || {};
+  const way = tidy(body && body.fulfilment, 16).toLowerCase();
+
+  if (point.venue && point.venue.unit) {
+    const label = tidy(point.venue.unit_label || 'room', 20).toLowerCase();
+    const where = `${label} ${tidy(point.venue.unit, 24)} at ${tidy(point.venue.name, 60)}`;
+    return [
+      `WHERE THEY ARE: ${ai.fence(where)}. The code they scanned says so.`,
+      'ALREADY SETTLED: it is taken to them there. Never ask whether they are eating in or taking away, never ask for a table or room number, and never offer to change it. Call send_to_kitchen with fulfilment "dine_in".',
+    ];
+  }
+
+  const table = tidy(point.label, 40);
+  if (table) {
+    return [
+      `WHERE THEY ARE: ${ai.fence(table)}. The code they scanned says so.`,
+      'ALREADY SETTLED: this is eaten there and carried to that table. It is NOT a takeaway. Never ask whether they are eating in or taking away, never ask for the table number, and never offer to change it. Call send_to_kitchen with fulfilment "dine_in".',
+    ];
+  }
+
+  if (way === 'takeaway' || way === 'pickup') {
+    return [
+      'WHERE THEY ARE: taking it away. The code they scanned says so.',
+      'ALREADY SETTLED: it is packed to carry out. Never ask whether they are eating in or taking away, and never ask for a table number. Call send_to_kitchen with fulfilment "takeaway".',
+    ];
+  }
+
+  return [
+    'WHERE THEY ARE: not said. They opened the plain shop code rather than one printed for a table.',
+    'So how it travels is the one thing genuinely unknown. Do not raise it while they are choosing; ask only if send_to_kitchen answers need_fulfilment.',
+  ];
+}
+
 /** The brief: how to speak, the shop, the menu, the house notes. */
-function instructionsFor(storefront, menu, settings, lang) {
+function instructionsFor(storefront, menu, settings, lang, body) {
   const store = (storefront && storefront.store) || {};
   const lists = assistant.splitMenu(menu);
   const parts = [
@@ -287,6 +343,7 @@ function instructionsFor(storefront, menu, settings, lang) {
     `CURRENCY: ${String(store.currency || '').slice(0, 4) || 'INR'}`,
     languageLine(lang),
     `OPENING LINE: ${ai.fence(openingLine(storefront, settings))}`,
+    ...servicePointBrief(storefront, body),
     '',
     'MENU (JSON; what can be ordered right now: id, name, category, price, diet, about, served):',
     ai.fence(JSON.stringify(lists.open)),
@@ -335,7 +392,7 @@ async function session(body, storefront, context) {
     {
       feature: FEATURE,
       sdp,
-      instructions: instructionsFor(storefront, menu, settings, lang),
+      instructions: instructionsFor(storefront, menu, settings, lang, body),
       tools: tools(),
       /* The ears: Tamil from the first word on a Tamil page; on an English
          page the language is guessed, with the menu's words to guess by,
@@ -373,6 +430,7 @@ module.exports = {
   tick,
   tools,
   instructionsFor,
+  servicePointBrief,
   languageLine,
   openingLine,
   vocabularyFor,

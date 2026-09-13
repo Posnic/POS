@@ -346,6 +346,18 @@
       "Anything else?": "வேறு ஏதாவது வேணுமா?",
       "Add item": "உணவு சேர்க்க",
       "Confirm & send": "உறுதி செய்து அனுப்பு",
+
+      /* The one question this screen asks before it can send, and what it
+         says when it cannot. */
+      "How are you having it?": "எப்படி சாப்பிடப் போறீங்க?",
+      "Eating here": "இங்கேயே சாப்பிட",
+      "Taking it away": "பார்சல் எடுத்துப் போக",
+      "Collecting it": "வந்து வாங்கிக்க",
+      "Delivered": "வீட்டுக்கு டெலிவரி",
+      "Nothing to send yet.": "இன்னும் அனுப்ப ஒன்றும் இல்லை.",
+      "A few details are needed to finish this order.": "இந்த ஆர்டரை முடிக்க சில விவரங்கள் தேவை.",
+      "This shop's smallest order that way is {amount}.": "அந்த முறையில் இந்தக் கடையின் குறைந்தபட்ச ஆர்டர் {amount}.",
+
       "Add {name}": "{name} சேர்க்க",
       "Cancellation asked for": "ரத்துக் கோரிக்கை அனுப்பிட்டோம்",
       "The shop has been asked to cancel it": "ரத்து செய்யக் கடையிடம் கேட்டுவிட்டோம்",

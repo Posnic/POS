@@ -14,6 +14,7 @@ const { CHANNEL } = require('../utils/sales-channels');
 const ai = require('../services/ai.service');
 const itemDescription = require('../services/ai-item-description');
 const budget = require('../services/ai-budget');
+const voiceMeter = require('../services/voice-meter');
 
 class ItemsController extends BaseController {
   constructor() {
@@ -2437,6 +2438,36 @@ class ItemsController extends BaseController {
    * bills and what a shopkeeper can picture. With it, the limit the shop set
    * and what a minute of live voice costs, so the switch can say its price.
    */
+  /**
+   * The last few live voice calls, with what was heard and said on each.
+   *
+   * Owner: "watch my conversation via server. why noise cancel not working?
+   * why keep saying ah.. yes.. aha.. i want know what trascribed in the
+   * chat."
+   *
+   * The audio never touches this server, so until now nobody here could see
+   * a call at all - which is why "it keeps answering the room" has been
+   * argued about from the outside instead of read off the transcript. The
+   * page hands its lines over with the meter tick; this is where they are
+   * read back. Behind the staff door, like the spend meter next to it, and
+   * scoped to the caller's own branch.
+   */
+  async aiVoiceCalls(req, res) {
+    try {
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.query?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.success(res, { calls: [] });
+      const calls = await voiceMeter.recent(context, Number(req.query?.calls) || 5);
+      return this.success(res, { calls });
+    } catch (error) {
+      console.error('Error in aiVoiceCalls:', error);
+      return this.success(res, { calls: [] });
+    }
+  }
+
   async aiSpend(req, res) {
     try {
       await this.ensureContext(req);

@@ -156,6 +156,31 @@ function chooseFulfilment(key) {
     /* A table, when it is not already known from the code. */
     const tableField = document.getElementById("table-field");
     if (tableField) tableField.hidden = !(key === "dine_in" && !payState.tableFromCode && !payState.placeFromCode);
+
+    /*
+     * AND THE TABLE THEY HAVE ALREADY GIVEN, PUT BACK.
+     *
+     * ensureDetails WRITES order_table and nothing ever read it again, so a
+     * customer who typed 34, went back to the menu for one more dish and
+     * returned found an empty box and was asked a second time. The assistant
+     * writes the same key when a customer tells it where they are sitting, so
+     * this covers that too. Owner: "where is table number i entered? again
+     * asking table number."
+     *
+     * Only when the box is empty: whatever they are typing right now wins
+     * over what they typed before.
+     */
+    if (tableField && !tableField.hidden) {
+        const box = document.getElementById("table-number");
+        if (box && !String(box.value || "").trim()) {
+            try {
+                const known = localStorage.getItem("order_table");
+                if (known) box.value = known;
+            } catch (e) {
+                /* a browser that keeps nothing asks again, as it did before */
+            }
+        }
+    }
     if (typeof paintKnownPlace === "function") paintKnownPlace(fulfilmentChoices());
     /* Somewhere to send it. */
     const delivery = document.getElementById("delivery-form");

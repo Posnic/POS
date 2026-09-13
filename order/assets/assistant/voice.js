@@ -412,6 +412,58 @@
     });
   }
 
+  /* ------------------------------------------------- seeing what it heard
+   *
+   * Owner: "also enable what is converted text i want to see. soemthing
+   * wrong. i see its flickering not showing thing."
+   *
+   * A call normally shows no text at all - his own rule, and the right one
+   * for a customer, who is listening rather than reading. But when something
+   * IS wrong, the words the line thought it heard are the evidence, and
+   * guessing at them from outside is how an afternoon gets lost.
+   *
+   * SHOWN, NOW, BY DEFAULT. It was behind ?transcript=1 and the owner has
+   * asked to see it five times running - most recently "i want know what
+   * trascribed in the chat. not abel see" - which settles it: a flag he has
+   * to remember to type is a feature he does not have. His earlier "no need
+   * to show conversation as text" was about a line that worked; this one
+   * does not yet, and the words are the only evidence of why.
+   *
+   * ?transcript=0 turns it off for anybody who wants the clean screen back,
+   * and that choice is remembered for the visit - the flag would otherwise
+   * be lost the moment the page walks from the arrival URL to products.html.
+   */
+  var TRANSCRIPT_KEY = "posnic_show_transcript";
+
+  function showingTranscript() {
+    try {
+      var asked = new URLSearchParams(window.location.search).get("transcript");
+      if (asked === "1") sessionStorage.setItem(TRANSCRIPT_KEY, "1");
+      if (asked === "0") sessionStorage.setItem(TRANSCRIPT_KEY, "0");
+      return sessionStorage.getItem(TRANSCRIPT_KEY) !== "0";
+    } catch (e) {
+      /* A browser that keeps nothing still shows them; this is the safe
+         side now, because the alternative is the owner testing blind. */
+      return true;
+    }
+  }
+
+  /*
+   * One line of what was heard or said, marked with the alphabet it came back
+   * in - because "the transcript is in Kannada again" is the single most
+   * useful thing this can tell anybody about a Tamil call.
+   */
+  function transcribed(who, text, script) {
+    if (!text) return;
+    var a = assistant();
+    if (!a || !a.bubble) return;
+    var row = a.bubble(who === "me" ? "me" : "ai", text);
+    if (row && row.setAttribute) {
+      row.setAttribute("data-transcript", "yes");
+      if (script) row.setAttribute("data-script", script);
+    }
+  }
+
   /*
    * Tamil was heard. NOTED, AND NOTHING IS SENT.
    *
@@ -539,8 +591,8 @@
    * When it goes, the assistant is told, because it is mid-conversation and
    * must not carry on asking whether to send something that has gone.
    */
-  async function sendNow() {
-    var done = await sendToKitchen({ confirmed: true });
+  async function sendNow(way) {
+    var done = await sendToKitchen(way ? { confirmed: true, fulfilment: way } : { confirmed: true });
     if (done.ok) {
       tellTheAssistant(
         'The customer pressed "Confirm and send" and the order has gone to the kitchen. Say in ONE sentence that it has gone and will be served soon. Do not read the order back.'
@@ -946,6 +998,71 @@
     if (live.dc && live.dc.readyState === "open") live.dc.send(JSON.stringify(payload));
   }
 
+  /*
+   * THE MICROPHONE GOES DEAF WHILE THE ASSISTANT IS SPEAKING.
+   *
+   * Owner, three times and counting: "why noise cancel not working? why keep
+   * saying ah.. yes.. aha..i want know what trascribed in the chat."
+   *
+   * Echo cancellation was switched on and it is not enough. It is built for a
+   * headset and a conversation between two people; a phone lying on a table
+   * playing a synthetic voice through its loudspeaker in a restaurant is the
+   * case it handles worst. What is left over is enough for the far end's
+   * voice detector to call it speech, so the line hears its own sentence,
+   * decides the customer said something, and answers it - with "ah", "yes",
+   * "aha", because there is nothing there to answer.
+   *
+   * So the microphone is switched OFF for as long as the assistant's voice is
+   * actually coming out of the speaker, and switched back on a quarter of a
+   * second after it stops. The line then physically cannot hear itself.
+   *
+   * WHAT IT COSTS: talking over the assistant no longer interrupts it. In a
+   * quiet room that is a loss. In a restaurant, which is what this is for, a
+   * line that answers the room is not a line at all.
+   *
+   * AND IT CANNOT GET STUCK. A muted microphone that is never unmuted is a
+   * dead assistant, which is far worse than a chatty one, so a guard turns it
+   * back on regardless after a few seconds - longer than any single spoken
+   * answer, short enough that a lost "stopped" event costs one reply.
+   */
+  var SPEAKING_TAIL = 250;
+  var LONGEST_ANSWER = 20000;
+  var deafTail = 0;
+  var deafGuard = 0;
+
+  function hearing(on) {
+    try {
+      if (!live.stream || !live.stream.getAudioTracks) return;
+      live.stream.getAudioTracks().forEach(function (track) {
+        track.enabled = !!on;
+      });
+      if (window.VoiceDebug) window.VoiceDebug.did("microphone", on ? "listening" : "off - the assistant is speaking");
+    } catch (e) {
+      /* A browser that will not let go of the track still gets the call. */
+    }
+  }
+
+  /** The assistant started speaking: stop listening until it stops. */
+  function itIsSpeaking() {
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
+    hearing(false);
+    deafGuard = setTimeout(function () {
+      /* Whatever happened to the "stopped" event, the customer gets their
+         microphone back. */
+      hearing(true);
+    }, LONGEST_ANSWER);
+  }
+
+  /** It stopped. Listen again, once the speaker has actually gone quiet. */
+  function itIsDone() {
+    clearTimeout(deafGuard);
+    clearTimeout(deafTail);
+    deafTail = setTimeout(function () {
+      hearing(true);
+    }, SPEAKING_TAIL);
+  }
+
   async function onEvent(message) {
     var ev;
     try {
@@ -953,8 +1070,29 @@
     } catch (e) {
       return;
     }
+    /* Every event on the screen, where the shop asked to see them. This is
+       the only place the whole line is visible, and it is what answers "why
+       does it say ok with nobody talking". assets/assistant/debug.js. */
+    try {
+      if (window.VoiceDebug) window.VoiceDebug.event(ev);
+    } catch (e) {
+      /* a panel that fails must never take the conversation with it */
+    }
     var a = assistant();
     switch (ev.type) {
+      /*
+       * WebRTC's own pair of events, which say when audio is genuinely
+       * leaving the speaker rather than when a response began or ended.
+       * response.done arrives while the last second is still playing, which
+       * is exactly the second the line would otherwise hear itself in.
+       */
+      case "output_audio_buffer.started":
+        itIsSpeaking();
+        break;
+      case "output_audio_buffer.stopped":
+      case "output_audio_buffer.cleared":
+        itIsDone();
+        break;
       case "input_audio_buffer.speech_started":
         status("listening", say("Listening..."));
         break;
@@ -963,14 +1101,21 @@
         if (!heard) break;
         var script = scriptOf(heard);
         if (script === "tamil") lockTamil();
-        if (script === "other") {
-          /* Tamil written down in the wrong alphabet: not worth showing.
-             The model heard the audio, not this; the next line comes back
-             in Tamil. */
-          lockTamil();
-          break;
-        }
-        /* Not drawn: on a call the order stands in for the transcript. */
+        if (script === "other") lockTamil();
+        /*
+         * NORMALLY NOT DRAWN: on a call the order stands in for the
+         * transcript, which is the owner's own rule - "no need to show
+         * conversation as text in the chat. just hide."
+         *
+         * With ?transcript=1 it is drawn anyway, because when something IS
+         * wrong the words the line thought it heard are the evidence. Owner:
+         * "also enable what is converted text i want to see. soemthing
+         * wrong." Including a transcript that came back in the wrong
+         * alphabet - especially that one, since it is what Tamil misheard
+         * looks like.
+         */
+        keepSaid("customer", heard);
+        if (showingTranscript()) transcribed("me", heard, script);
         break;
       }
       case "response.created":
@@ -978,7 +1123,10 @@
         break;
       case "response.output_audio_transcript.done":
       case "response.audio_transcript.done":
-        /* Not drawn either; the customer is listening, not reading. */
+        /* Not drawn either; the customer is listening, not reading - unless
+           somebody is looking for what went wrong. */
+        keepSaid("ai", String(ev.transcript || "").trim());
+        if (showingTranscript()) transcribed("ai", String(ev.transcript || "").trim(), "");
         break;
       case "response.function_call_arguments.done":
         /* Answered together at response.done; see runToolCalls. */
@@ -1016,10 +1164,48 @@
    * a microphone request only while the tap is fresh; a database read
    * first, and the answer is "not allowed" with no dialog shown.
    */
+  /*
+   * WHAT THE MICROPHONE IS ASKED FOR.
+   *
+   * Owner: "ai keep saying ok ok ok. coz may be surrounding sound", and then
+   * "i want see mic noise cancellation".
+   *
+   * This asked for `audio: true`, which is the bare default - a raw
+   * microphone with nothing switched on. Every browser can do better, and in
+   * a restaurant the difference is the whole feature:
+   *
+   *   noiseSuppression   the fan, the fridge, the room. Steady sound the
+   *                      phone can recognise as not-speech and remove.
+   *   echoCancellation   the assistant's OWN voice coming back in through the
+   *                      speaker. Without it the line hears itself, decides
+   *                      somebody spoke, and answers - which is how a
+   *                      conversation talks itself in circles.
+   *   autoGainControl    a customer half a metre from the phone in a loud
+   *                      room, brought up to a level the far end can use.
+   *
+   * ASKED FOR, NOT DEMANDED. These are plain values rather than `{ exact: }`,
+   * so a device that cannot do one of them gives what it can instead of
+   * refusing the microphone altogether - and a refused microphone is no
+   * ordering at all, which is much worse than a noisy one.
+   *
+   * The channel and rate matter too: one channel at 16kHz is what speech
+   * recognition wants, and asking for less than the phone would send by
+   * default means less of the room arriving at the far end.
+   */
+  var MICROPHONE = {
+    audio: {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: true,
+      channelCount: 1,
+      sampleRate: 16000,
+    },
+  };
+
   function grabMicrophone() {
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") return null;
     try {
-      var p = navigator.mediaDevices.getUserMedia({ audio: true });
+      var p = navigator.mediaDevices.getUserMedia(MICROPHONE);
       /* A rejection nobody has awaited yet is still a rejection; keep it
          from surfacing as an unhandled error while start() gets there. */
       if (p && p.catch) p.catch(function () {});
@@ -1167,6 +1353,29 @@
     if (end && live.session) tick(true);
   }
 
+  /*
+   * WHAT WAS SAID, RIDING ALONG WITH THE METER.
+   *
+   * Owner: "watch my conversation via server." The audio goes phone to
+   * provider and never reaches us, so the only way the shop can ever see
+   * what a call did is if this page says. It is already talking to the
+   * server every half minute to keep the meter honest, so the words go with
+   * that - no extra request, and the whole call is on its own session row
+   * where a bad call can be read back afterwards.
+   *
+   * Held here between ticks and handed over once. A line the server has
+   * taken is dropped, so a slow network repeats nothing.
+   */
+  var saidSoFar = [];
+  var MOST_HELD = 40;
+
+  function keepSaid(who, text) {
+    var line = String(text || "").trim();
+    if (!line) return;
+    saidSoFar.push({ who: who === "ai" ? "ai" : "customer", text: line.slice(0, 300) });
+    while (saidSoFar.length > MOST_HELD) saidSoFar.shift();
+  }
+
   function tickUrl() {
     return apiBase() + "/online-ordering/" + encodeURIComponent(live.branch) + "/voice/" + encodeURIComponent(live.session) + "/tick";
   }
@@ -1180,7 +1389,12 @@
       live.session = "";
       try {
         if (navigator.sendBeacon) {
-          navigator.sendBeacon(url + "?end=1");
+          /* The last words go with the hang-up. A beacon can carry a body,
+             and the end of a call is exactly the part worth reading: the
+             refusal, the misheard dish, the "aha" nobody prompted. */
+          var last = JSON.stringify({ end: true, said: saidSoFar });
+          saidSoFar = [];
+          navigator.sendBeacon(url + "?end=1", new Blob([last], { type: "application/json" }));
         } else {
           await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ end: true }), keepalive: true });
         }
@@ -1190,13 +1404,16 @@
       return null;
     }
     try {
+      var handing = saidSoFar.slice();
       var response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ end: false }),
+        body: JSON.stringify({ end: false, said: handing }),
       });
       if (response.ok) {
         live.misses = 0;
+        /* Taken. Anything said while this was in flight is still here. */
+        saidSoFar = saidSoFar.slice(handing.length);
         return true;
       }
       if (response.status === 403) {
@@ -1371,6 +1588,9 @@
       return;
     }
     live.active = false;
+    /* Nothing is speaking any more, so nothing is waiting to hear again. */
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
     stopLine();
     try {
       if (live.rec) live.rec.abort ? live.rec.abort() : live.rec.stop();

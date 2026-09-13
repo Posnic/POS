@@ -1089,7 +1089,14 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
     close() {}
   }
   window.RTCPeerConnection = FakePC;
-  window.navigator.mediaDevices = { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) };
+  /* A track that remembers whether it is enabled, because whether the
+     microphone is live while the assistant speaks is the whole question in
+     "why keep saying ah.. yes.. aha". */
+  const track = { enabled: true, stop() {} };
+  window.__track = track;
+  window.navigator.mediaDevices = {
+    getUserMedia: async () => ({ getTracks: () => [track], getAudioTracks: () => [track] }),
+  };
   window.fetch = async (url, init = {}) => {
     const body = init.body ? JSON.parse(init.body) : null;
     calls.fetch.push({ url, body, method: init.method || 'GET' });
@@ -1205,14 +1212,19 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on', 'a passing error ended the call');
 
-  /* What was said is NOT written down. Owner: "no need to show conversation
-     as text in the chat. just hide." A customer on a call is listening, not
-     reading, and the order itself stands in the transcript's place. */
+  /*
+   * What was said IS written down, and the order is still the main thing on
+   * the screen. His earlier rule was "no need to show conversation as text in
+   * the chat. just hide", and it held while the line worked; it does not yet,
+   * and he has asked five times since to see the words - most recently "i
+   * want know what trascribed in the chat. not abel see". Both at once: the
+   * order stands where it always did, with the transcript under it.
+   */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'two biryani please' }) });
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.output_audio_transcript.done', transcript: 'Two Chicken Biryani, less spicy, added.' }) });
   const spokenLog = document.getElementById('assistant-log').textContent;
-  assert.ok(!/two biryani please/.test(spokenLog), 'what the customer said was written into the chat');
-  assert.ok(!/less spicy, added/.test(spokenLog), 'what the assistant said was written into the chat');
+  assert.ok(/two biryani please/.test(spokenLog), 'what the customer said is not on the screen');
+  assert.ok(/less spicy, added/.test(spokenLog), 'what the assistant said is not on the screen');
   assert.strictEqual(document.getElementById('assistant-order').hidden, false, 'the order does not stand in for the transcript');
   /* Two, then the one the misspelt id landed on. */
   assert.match(document.getElementById('assistant-order-list').textContent, /3×Chicken Biryani/);
@@ -1241,7 +1253,9 @@ test('talk to order: the line reports itself to the meter, and the monthly limit
 
   assert.strictEqual(await window.OrderingVoice.tick(false), true);
   assert.strictEqual(calls.fetch[1].url, '/online-ordering/AZ100/voice/s1/tick');
-  assert.deepStrictEqual(calls.fetch[1].body, { end: false });
+  /* Nothing was said on this call, so nothing rides along - but the field is
+     there, which is how the server gets to see a call that went wrong. */
+  assert.deepStrictEqual(calls.fetch[1].body, { end: false, said: [] });
   assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on', 'a metered tick closed the line');
 
   assert.strictEqual(await window.OrderingVoice.tick(false), false);
@@ -1461,9 +1475,18 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   await settle();
   calls.sent.length = 0;
 
-  /* Malayalam letters for a Tamil sentence: not shown, and the line is told to hear Tamil. */
+  /*
+   * Malayalam letters for a Tamil sentence. IT IS SHOWN, and marked with the
+   * alphabet it came back in - which is the whole point of showing it. This
+   * test used to assert the opposite, from the rule that a call shows no
+   * text; the owner has since asked five times to see what was transcribed,
+   * and a transcript in the wrong alphabet is the single most useful thing
+   * the screen can tell anybody about a Tamil call going wrong.
+   */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ഒരു ചിക്കൻ ബിരിയാണി' }) });
-  assert.ok(!/ചിക്കൻ/.test(document.getElementById('assistant-log').textContent), 'the misheard alphabet was shown to the customer');
+  const misheard = document.getElementById('assistant-log').querySelector('[data-transcript]');
+  assert.ok(misheard && /ചിക്കൻ/.test(misheard.textContent), 'what the line heard was not shown');
+  assert.strictEqual(misheard.getAttribute('data-script'), 'other', 'the alphabet it came back in was not marked');
   /*
    * AND NOTHING IS SENT DOWN THE LINE.
    *
@@ -1487,13 +1510,12 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
     'the line is still reconfigured mid-call, which is what broke the hearing'
   );
 
-  /* Nothing is written down either way, and the lock is not sent twice. */
+  /* Tamil and English are both written down, marked with their alphabet, and
+     the lock is still not sent twice. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு சிக்கன் பிரியாணி' }) });
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'and one lime soda' }) });
-  assert.ok(
-    !/ஒரு சிக்கன் பிரியாணி|and one lime soda/.test(document.getElementById('assistant-log').textContent),
-    'the call was written into the chat'
-  );
+  const written = document.getElementById('assistant-log').textContent;
+  assert.ok(/ஒரு சிக்கன் பிரியாணி/.test(written) && /and one lime soda/.test(written), 'the call was not written into the chat');
   assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 0, 'the line was reconfigured mid-call');
   window.OrderingVoice.stop();
 
@@ -2887,4 +2909,77 @@ test('the scene tells the caption which beat it is on, and stops when it is told
   const more = [];
   window.KitchenScene.play(null, { onBeat: (name) => more.push(name) })();
   assert.deepStrictEqual(more, ['sending']);
+});
+
+/*
+ * THE LINE CANNOT HEAR ITSELF.
+ *
+ * Owner, after testing on a real phone in a real room: "why noise cancel not
+ * working? why keep saying ah.. yes.. aha.."
+ *
+ * Echo cancellation was already asked for and was not enough - it is built
+ * for a headset, not a phone on a table playing a synthetic voice through a
+ * loudspeaker in a restaurant. What leaks past it is enough for the far end
+ * to call it speech, so the line answers its own sentence with a filler word,
+ * because there is nothing there to answer.
+ *
+ * So the microphone is switched off while the assistant's audio is actually
+ * playing. And - this is the part that must never break - it always comes
+ * back on, or the customer is talking to a phone that stopped listening.
+ */
+test('the microphone is deaf while the assistant speaks, and never stays deaf', async () => {
+  const { window } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+  assert.strictEqual(track.enabled, true, 'the microphone is not live on a fresh call');
+
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.started' }) });
+  assert.strictEqual(track.enabled, false, 'the microphone stayed live while the assistant was speaking - which is how it hears itself');
+
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
+  /* Not instantly: the speaker is still emptying, and that tail is exactly
+     the part it used to answer. */
+  assert.strictEqual(track.enabled, false, 'it started listening before the speaker had gone quiet');
+  await new Promise((r) => setTimeout(r, 400));
+  assert.strictEqual(track.enabled, true, 'the microphone never came back, so the customer is talking to nothing');
+
+  /* And hanging up leaves nothing armed. */
+  window.OrderingVoice.stop();
+});
+
+/*
+ * WHAT IT HEARD, ON THE SCREEN, WITHOUT HAVING TO ASK FOR IT.
+ *
+ * Owner, five times: "i want know what trascribed in the chat. not abel
+ * see." It was behind ?transcript=1, which is a feature nobody has.
+ */
+test('a call shows what was heard and said, and can still be told not to', async () => {
+  const { window, document, calls } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime', session: 's1', tick_seconds: 30 } } },
+  });
+  await window.OrderingVoice.start();
+  await settle();
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'two biryani please' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'response.output_audio_transcript.done', transcript: 'Two biryani, added.' }) });
+  const shown = [...document.getElementById('assistant-log').querySelectorAll('[data-transcript]')].map((n) => n.textContent);
+  assert.ok(shown.some((t) => /two biryani please/.test(t)), 'what the line heard is not on the screen');
+  assert.ok(shown.some((t) => /Two biryani, added/.test(t)), 'what the line said is not on the screen');
+
+  /* And it goes with the meter tick, so a call can be read back afterwards
+     from the server rather than argued about. */
+  await window.OrderingVoice.tick(false);
+  const ticked = calls.fetch.filter((c) => /\/tick$/.test(c.url)).pop();
+  assert.ok(ticked, 'no tick was sent');
+  assert.deepStrictEqual(
+    (ticked.body.said || []).map((l) => l.who + ': ' + l.text),
+    ['customer: two biryani please', 'ai: Two biryani, added.'],
+    'the words did not travel with the meter, so the server still cannot see the call'
+  );
+  /* The meter runs on a clock; leave it running and the test never ends. */
+  window.OrderingVoice.stop();
 });

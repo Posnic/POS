@@ -35,6 +35,46 @@ const budget = require('./ai-budget');
    api/src/sync/collections.json. */
 const sessionCollection = 'ai_voice_sessions';
 
+/*
+ * WHAT WAS ACTUALLY SAID, KEPT WITH THE CALL.
+ *
+ * Owner: "watch my conversation via server ... i want know what trascribed
+ * in the chat. not abel see."
+ *
+ * The audio never touches this server - phone to provider, which is the
+ * point - so the only way anybody here can see what a call did is if the
+ * page tells us. It already speaks to us every half minute to keep the
+ * meter honest; the lines it heard and said ride along on that, which costs
+ * no extra request. Diagnosing "it keeps saying aha at nothing" from the
+ * outside has now cost several afternoons, and one look at the words ends
+ * it: a line of room noise transcribed as speech is unmistakable.
+ *
+ * ON THE SESSION ROW, which is the shop's own data, scoped to the shop's
+ * branch and swept with the rest of it. No public endpoint reads this back.
+ * The last forty lines only: this is for looking at a call that went wrong,
+ * not an archive of what customers say.
+ */
+const MOST_LINES = 40;
+const LINE_CHARS = 300;
+
+function linesFrom(body) {
+  const asked = Array.isArray(body && body.said) ? body.said.slice(-MOST_LINES) : [];
+  const out = [];
+  for (const one of asked) {
+    const text = String((one && one.text) || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, LINE_CHARS);
+    if (!text) continue;
+    out.push({
+      who: String((one && one.who) || '') === 'ai' ? 'ai' : 'customer',
+      text,
+      at: new Date(),
+    });
+  }
+  return out;
+}
+
 /** How often the page reports the line is open. */
 const TICK_SECONDS = 30;
 /** The most one tick may add. A late tick is a slow network, not a longer call. */
@@ -88,6 +128,7 @@ async function tick(id, body, context) {
     return { status: false, message: 'no_session', data: null };
   }
   const end = !!(body && (body.end === true || /^(true|1)$/i.test(String(body.end))));
+  const said = linesFrom(body);
   const db = await BaseModel.getDb();
   const rows = db.collection(sessionCollection);
   const now = new Date();
@@ -98,7 +139,11 @@ async function tick(id, body, context) {
   const delta = Math.max(0, Math.min(TICK_MAX_SECONDS, Math.round(since)));
   await rows.updateOne(
     { _id: row._id },
-    { $inc: { seconds: delta }, $set: { last_seen_at: now, ended: end } }
+    {
+      $inc: { seconds: delta },
+      $set: { last_seen_at: now, ended: end },
+      ...(said.length ? { $push: { said: { $each: said, $slice: -MOST_LINES } } } : {}),
+    }
   );
   if (delta > 0) {
     await budget.record(
@@ -127,4 +172,45 @@ async function tick(id, body, context) {
   return { status: true, data: { seconds, ended: end, next: end ? 0 : TICK_SECONDS } };
 }
 
-module.exports = { open, tick, TICK_SECONDS, TICK_MAX_SECONDS, STALE_AFTER_MS, sessionCollection };
+/**
+ * The last few calls on this shop's line, with what was said on each.
+ *
+ * For the shop, about the shop, behind the staff door - the same door the
+ * AI spend meter is behind. Owner: "watch my conversation via server."
+ * Diagnosing a live line from the outside means guessing at what it heard,
+ * and guessing is what has cost the time.
+ *
+ * @param {{branchId?: string}} context
+ * @param {number} [howMany] calls to return, newest first
+ */
+async function recent(context, howMany = 5) {
+  const db = await BaseModel.getDb();
+  const rows = await db
+    .collection(sessionCollection)
+    .find(scope(context))
+    .sort({ started_at: -1 })
+    .limit(Math.max(1, Math.min(20, Number(howMany) || 5)))
+    .toArray();
+  return rows.map((row) => ({
+    id: String(row._id),
+    started_at: row.started_at,
+    seconds: Number(row.seconds) || 0,
+    ended: row.ended === true,
+    model: row.model || '',
+    said: Array.isArray(row.said)
+      ? row.said.map((one) => ({ who: one.who, text: one.text, at: one.at }))
+      : [],
+  }));
+}
+
+module.exports = {
+  open,
+  tick,
+  recent,
+  linesFrom,
+  MOST_LINES,
+  TICK_SECONDS,
+  TICK_MAX_SECONDS,
+  STALE_AFTER_MS,
+  sessionCollection,
+};
