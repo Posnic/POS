@@ -155,7 +155,32 @@ say(`  starting ${exe}`);
  * Kept to the last few kilobytes. An application that loops printing warnings
  * must not be able to fill the runner's memory through this.
  */
-const child = spawn(exe, [], { detached: false, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+/*
+ * ELECTRON_RUN_AS_NODE IS REMOVED, NOT BLANKED.
+ *
+ * Electron tests whether the variable is PRESENT, not what it says. Setting it
+ * to "" in a workflow still defines it on Windows, so Posnic.exe started as
+ * plain Node, hit
+ *
+ *   Assertion failed: (isolate_data->snapshot_data()) != nullptr
+ *
+ * and aborted with 134 before it could log a thing - and this script reported
+ * a perfectly good build as an application that would not start. Two days of
+ * "the till does not boot" were this line.
+ *
+ * Deleted here rather than only in the workflow, because the same leak comes
+ * from a developer's shell and from the harness that runs this locally, and
+ * the check has to be right wherever it is run from.
+ */
+const childEnv = { ...process.env };
+delete childEnv.ELECTRON_RUN_AS_NODE;
+
+const child = spawn(exe, [], {
+  detached: false,
+  stdio: ['ignore', 'pipe', 'pipe'],
+  windowsHide: true,
+  env: childEnv,
+});
 if (child.stdout) child.stdout.on('data', keep);
 if (child.stderr) child.stderr.on('data', keep);
 
