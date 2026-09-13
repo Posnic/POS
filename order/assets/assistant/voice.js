@@ -1335,6 +1335,8 @@
   var GAP = 700;
 
   var room = { ctx: null, node: null, data: null, frame: 0, floor: 0, seen: [], until: 0, since: 0 };
+  /* The smoothed level the waves are drawn at; see look(). */
+  var shown = 0;
 
   function watchTheRoom(stream) {
     stopWatchingTheRoom();
@@ -1397,6 +1399,28 @@
     }
 
     var enough = Math.max(room.floor * NEAR_ENOUGH, QUIETEST);
+    /*
+     * THE BARS ANSWER THE CUSTOMER'S OWN VOICE.
+     *
+     * Owner: "after press proper animation that user pressed and listerning.
+     * like waves or international standard ux on that."
+     *
+     * The level is already measured here to decide whether somebody is close
+     * enough to the phone, so the same number moves the bars rather than a
+     * keyframe loop running at a fixed rate. The eye catches a loop
+     * immediately - it is a thing pretending to listen - and the difference
+     * between that and bars that fall silent when you stop talking is the
+     * whole "solid and satisfying" he is asking for.
+     *
+     * Scaled against what counts as near, so it fills on an ordinary voice
+     * rather than needing a shout, and smoothed on the way down so it settles
+     * between words instead of flickering.
+     */
+    var loud = Math.max(0, Math.min(1, level / (enough * 3 || 1)));
+    shown = loud > shown ? loud : shown * 0.82 + loud * 0.18;
+    var panel = el("voice");
+    if (panel && panel.style) panel.style.setProperty("--voice-in", shown.toFixed(3));
+
     if (level >= enough) room.until = now + GAP;
     var near = now < room.until;
     if (near !== mic.near) {
@@ -1419,10 +1443,62 @@
   }
 
   /** The button, held. Nothing measured beats a thumb. */
+  /* Once they have held it, the fingertip hint has done its job and never
+     comes back. Owner: "like finger press and hold first time." */
+  var HELD_ONCE = "posnic_held_to_talk";
+
+  function heldBefore() {
+    try {
+      return localStorage.getItem(HELD_ONCE) === "1";
+    } catch (e) {
+      /* A browser that keeps nothing shows the hint every time, which is
+         the harmless side of this. */
+      return false;
+    }
+  }
+
   function holdToTalk(on) {
     mic.holding = !!on;
+    var panel = el("voice");
+    if (panel) panel.setAttribute("data-held", on ? "yes" : "");
+    if (on) {
+      try {
+        localStorage.setItem(HELD_ONCE, "1");
+      } catch (e) {
+        /* nothing kept; the hint simply shows again */
+      }
+      var hint = el("voice-finger");
+      if (hint) hint.hidden = true;
+      /*
+       * A short tap of haptics on the way down and a shorter one on the way
+       * up. Owner: "have some solid and satisfyig feeling over holing." A
+       * button that answers the thumb is the difference between a control
+       * and a picture of one; phones that do not vibrate simply do not.
+       */
+      try {
+        if (navigator.vibrate) navigator.vibrate(12);
+      } catch (e) {
+        /* no haptics on this device */
+      }
+    } else {
+      try {
+        if (navigator.vibrate) navigator.vibrate(6);
+      } catch (e) {
+        /* no haptics on this device */
+      }
+      shown = 0;
+      if (panel && panel.style) panel.style.setProperty("--voice-in", "0");
+    }
+    var word = el("voice-hold-word");
+    if (word) word.textContent = on ? say("Listening") : say("Hold to talk");
     if (window.VoiceDebug) window.VoiceDebug.did("hold to talk", on ? "held" : "let go");
     decideMic();
+  }
+
+  /** The fingertip, shown until they have held it once. */
+  function showTheHint() {
+    var hint = el("voice-finger");
+    if (hint) hint.hidden = heldBefore();
   }
 
   /** The assistant started speaking: stop listening until it stops. */
@@ -1660,7 +1736,9 @@
     mic.speaking = false;
     mic.holding = false;
     mic.near = true;
+    shown = 0;
     watchTheRoom(live.stream);
+    showTheHint();
     pc.ontrack = function (event) {
       var out = el("voice-out");
       if (out && event.streams && event.streams[0]) {
@@ -1996,8 +2074,6 @@
   function stop() {
     var go = el("voice-start");
     if (go) go.hidden = true;
-    var stopButton = el("voice-stop");
-    if (stopButton) stopButton.hidden = false;
     if (!live.active && !live.pc) {
       status("", "");
       return;
@@ -2069,19 +2145,28 @@
     status("ready", say("Tap to talk"));
     var go = el("voice-start");
     if (go) go.hidden = false;
-    var stopButton = el("voice-stop");
-    if (stopButton) stopButton.hidden = true;
   }
 
+  /*
+   * ONCE, like script.js beside it.
+   *
+   * A document that is already complete when this file runs is wired
+   * immediately, and then hears a DOMContentLoaded anyway - so every handler
+   * was bound twice. Idempotent handlers hid it; the haptic tap did not,
+   * buzzing twice on one press, which is how it was caught. A second binding
+   * on the send button would have been a second order.
+   */
+  var wired = false;
+
   function wire() {
+    if (wired) return;
     var button = el("assistant-talk");
     if (!button) return;
+    wired = true;
     var go = el("voice-start");
     if (go) {
       go.addEventListener("click", function () {
         go.hidden = true;
-        var stopButton = el("voice-stop");
-        if (stopButton) stopButton.hidden = false;
         if (voiceMode() === "live") live.pendingStream = grabMicrophone();
         unlockSpeech();
         warmSpeaker();
@@ -2098,9 +2183,6 @@
       warmSpeaker();
       start();
     });
-    var stopButton = el("voice-stop");
-    if (stopButton) stopButton.addEventListener("click", stop);
-
     /*
      * HOLD TO TALK, which is the only complete answer to a noisy room.
      *
@@ -2164,5 +2246,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { holdToTalk: holdToTalk, mic: mic, watchTheRoom: watchTheRoom, changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { holdToTalk: holdToTalk, showTheHint: showTheHint, mic: mic, watchTheRoom: watchTheRoom, changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();
