@@ -561,13 +561,32 @@
             return;
         }
         const panel = document.getElementById("details-" + kept.orderId);
-        if (!panel || !panel.parentNode) {
+        const item = panel && panel.parentNode;
+        if (!item || !item.parentNode) {
             await paint();
             return;
         }
-        const fresh = details(kept, said);
-        fresh.hidden = false;
-        panel.parentNode.replaceChild(fresh, panel);
+        /*
+         * THE WHOLE ROW, not just the panel inside it.
+         *
+         * The first cut replaced only the details, and a cancellation then
+         * left the row above it still saying "With the kitchen" - the state
+         * badge, the token and the total all live in the button, outside the
+         * panel. The order really had been cancelled; the screen just did not
+         * say so, which is the worst of both.
+         *
+         * So the row is rebuilt from the same answer and dropped in place,
+         * with its details left OPEN - which is the whole point: the old
+         * full repaint rebuilt every row and every panel starts closed, so
+         * the one the customer was looking at shut itself on every tap.
+         * Owner: "if i click + or - then page restarted and not working."
+         */
+        const fresh = row(kept, said);
+        const opened = fresh.querySelector(".history-details");
+        if (opened) opened.hidden = false;
+        const button = fresh.querySelector(".history-open");
+        if (button) button.setAttribute("aria-expanded", "true");
+        item.parentNode.replaceChild(fresh, item);
         startTicking();
     }
 
