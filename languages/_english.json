@@ -1232,6 +1232,9 @@
   "lang_georgia": "Georgia",
   "lang_give_the_role_a_name": "Give the role a name.",
   "lang_global_discount": "Global Discount &nbsp;&nbsp;",
+  "lang_goes_with": "Goes well with",
+  "lang_goes_with_help": "Offered to a customer who has ordered this. Leave it empty and the shop works it out from what sells on the same bill.",
+  "lang_goes_with_placeholder": "Worked out from what sells together",
   "lang_goldwins": "Goldwins",
   "lang_good_afternoon": "Good Afternoon",
   "lang_good_evening": "Good Evening",
@@ -3232,8 +3235,5 @@
   "lang_your_online_address": "Your online address",
   "lang_your_own_provider_account": "your own provider account",
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
-  "lang_yourselecteddetails_title": "Selected details will be deleted",
-  "lang_goes_with": "Goes well with",
-  "lang_goes_with_help": "Offered to a customer who has ordered this. Leave it empty and the shop works it out from what sells on the same bill.",
-  "lang_goes_with_placeholder": "Worked out from what sells together"
+  "lang_yourselecteddetails_title": "Selected details will be deleted"
 }

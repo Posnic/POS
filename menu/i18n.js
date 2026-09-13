@@ -364,6 +364,7 @@
       "The shop has been asked to change it": "மாற்றம் செய்யக் கடையிடம் கேட்டுவிட்டோம்",
       "Confirm the change": "மாற்றத்தை உறுதி செய்",
       "Ask the shop for this change": "இந்த மாற்றத்தைக் கடையிடம் கேள்",
+      "Hold to talk": "பேச அழுத்திப் பிடிக்கவும்",
       "Undo": "மீட்டெடு",
       "Sending your order": "உங்கள் ஆர்டரை அனுப்புகிறோம்...",
       "Changing your order": "உங்கள் ஆர்டரை மாற்றுகிறோம்...",

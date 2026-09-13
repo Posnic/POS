@@ -3557,3 +3557,160 @@ test('every ordering page a customer waits on loads the progress bar', () => {
     assert.match(read(page), /assets\/working\.js/, 'order/' + page + ' waits on the shop in silence');
   }
 });
+
+
+/*
+ * THE NEXT TABLE DOES NOT ORDER FOR YOU.
+ *
+ * Owner: "how about voice around me ? how to solve this issue ?"
+ *
+ * A restaurant is full of people talking and none of them are ordering from
+ * this phone. Turn detection cannot tell them apart - to a voice detector the
+ * next table is speech, and speech is a turn - and raising the threshold only
+ * trades one mistake for the other.
+ *
+ * What separates them is DISTANCE. The phone is about forty centimetres from
+ * the person holding it and two or three metres from the next table, and
+ * sound falls off with the square of the distance, so the holder arrives
+ * roughly thirty times louder. This drives the real code with a fake
+ * analyser and asserts the microphone track follows.
+ */
+function roomPage(levels) {
+  const page = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const { window } = page;
+  /* A fake analyser whose loudness the test drives, and a clock the test
+     steps, so a second of room noise does not cost a second of test. */
+  let level = 0;
+  const frames = [];
+  window.requestAnimationFrame = (fn) => { frames.push(fn); return frames.length; };
+  window.cancelAnimationFrame = () => {};
+  window.AudioContext = function () {
+    this.createMediaStreamSource = () => ({ connect() {} });
+    this.createAnalyser = () => ({
+      fftSize: 1024,
+      getByteTimeDomainData(data) {
+        /* RMS of a square wave at `level`, which is what the real code
+           measures off a microphone. */
+        for (let i = 0; i < data.length; i += 1) data[i] = 128 + Math.round(level * 128);
+      },
+    });
+    this.close = () => {};
+  };
+  const step = (n) => {
+    for (let i = 0; i < n; i += 1) {
+      const run = frames.shift();
+      if (run) run();
+    }
+  };
+  return { ...page, set: (v) => { level = v; }, step, levels };
+}
+
+test('the room is measured, and only a voice close to the phone opens the line', async () => {
+  const page = roomPage();
+  const { window } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  /* While the room is being measured the line hears everything, because a
+     gate that judged before it had a floor would judge wrongly. */
+  page.set(0.01);
+  page.step(3);
+  assert.strictEqual(track.enabled, true, 'the line went deaf before it knew what the room sounds like');
+
+  /* A second passes and the floor is learned. */
+  /* The PAGE's clock, not this process's: the script under test runs in
+     the jsdom realm and reads its Date, not ours. */
+  const realNow = window.Date.now;
+  window.Date.now = () => realNow() + 3000;
+  try {
+    page.set(0.01);
+    page.step(2);
+    /* The next table, at the room's own level: NOT heard. */
+    assert.strictEqual(track.enabled, false, 'the room itself still opens the line, so the next table can order');
+
+    /* Somebody speaking into the phone: far louder than the floor. */
+    page.set(0.30);
+    page.step(1);
+    assert.strictEqual(track.enabled, true, 'a customer speaking into the phone was not heard');
+  } finally {
+    window.Date.now = realNow;
+  }
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('a thumb on the button beats anything the room is doing', async () => {
+  /* Nothing measured can be perfect; something held is. */
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  /* The PAGE's clock, not this process's: the script under test runs in
+     the jsdom realm and reads its Date, not ours. */
+  const realNow = window.Date.now;
+  window.Date.now = () => realNow() + 3000;
+  try {
+    page.set(0.01);
+    page.step(3);
+    assert.strictEqual(track.enabled, false, 'the quiet room already had the line open');
+
+    const hold = document.getElementById('voice-hold');
+    assert.ok(hold, 'there is no hold-to-talk button');
+    hold.dispatchEvent(new window.Event('pointerdown'));
+    assert.strictEqual(track.enabled, true, 'holding the button did not open the line');
+    assert.strictEqual(hold.getAttribute('data-held'), 'yes', 'the button does not look held');
+
+    hold.dispatchEvent(new window.Event('pointerup'));
+    assert.strictEqual(track.enabled, false, 'letting go left the microphone open');
+    assert.strictEqual(hold.getAttribute('data-held'), null);
+  } finally {
+    window.Date.now = realNow;
+  }
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('the assistant speaking still wins over a thumb, and over the room', async () => {
+  /* Otherwise the line hears itself, which is the "ah.. yes.. aha" the owner
+     reported, and holding the button would bring it straight back. */
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const track = window.__track;
+
+  document.getElementById('voice-hold').dispatchEvent(new window.Event('pointerdown'));
+  assert.strictEqual(track.enabled, true);
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.started' }) });
+  assert.strictEqual(track.enabled, false, 'the line can hear itself again whenever the button is held');
+
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
+  await new Promise((r) => setTimeout(r, 400));
+  assert.strictEqual(track.enabled, true, 'the thumb was forgotten once the assistant stopped');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('a browser with no analyser hears everything rather than nothing', async () => {
+  /* A gate that cannot measure must fail OPEN. Failing shut is a phone that
+     silently never hears the customer at all, which is far worse than one
+     that sometimes hears the room. */
+  const page = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const { window } = page;
+  window.AudioContext = undefined;
+  window.webkitAudioContext = undefined;
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(window.__track.enabled, true, 'a phone with no analyser went permanently deaf');
+  window.OrderingVoice.stop();
+  window.close();
+});
