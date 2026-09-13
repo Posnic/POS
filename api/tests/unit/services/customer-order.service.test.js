@@ -409,3 +409,82 @@ describe('cancelling after the window has closed', () => {
     });
   });
 });
+
+describe('adding a dish to an order that has already gone', () => {
+  const BaseModel = require('../../../src/models/base.model');
+  let written;
+
+  beforeEach(() => {
+    /* changeCustomerOrderItems opens a database on its first line; this
+       stands in for it and keeps what was written. */
+    written = [];
+    jest.spyOn(BaseModel, 'getDb').mockResolvedValue({
+      collection: () => ({
+        updateOne: async (...args) => {
+          written.push(args);
+          return { modifiedCount: 1 };
+        },
+      }),
+    });
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  test('a dish that was never on the order is priced and added, not refused', async () => {
+    /* Owner: "if any changes like add new item to the order possible?" */
+    const fresh = {
+      item_id: 'd1',
+      item_name: 'Fresh Lime Soda',
+      name: 'Fresh Lime Soda',
+      item_quantity: 2,
+      quantity: 2,
+      unit_price: 80,
+      tax_amount: 8,
+      total: 176,
+      item_total: 176,
+      item_discount: 0,
+    };
+    const doc = order();
+    jest
+      .spyOn(salesRepository, '_priceAddedLines')
+      .mockResolvedValue({ status: true, lines: [fresh] });
+
+    const out = await salesRepository.changeCustomerOrderItems(doc, [
+      { item_id: 'd1', quantity: 2 },
+    ]);
+    expect(out.status).toBe(true);
+    expect(salesRepository._priceAddedLines).toHaveBeenCalledWith(doc, [['d1', 2]]);
+
+    /* It is on the order, and the kitchen was told it was added. */
+    const set = written[0][1].$set;
+    expect(set.items.map((l) => l.item_id)).toEqual(['m1', 'd1']);
+    const latest = set.changes[set.changes.length - 1].items;
+    expect(latest).toEqual([
+      expect.objectContaining({ item_id: 'd1', process: 'add', item_quantity: 2, price: 80 }),
+    ]);
+    /* And the total moved by exactly what the new line costs. */
+    expect(set.total).toBe(660 + 176);
+  });
+
+  test("a dish the shop will not sell right now is refused, in the shop's own words", async () => {
+    jest.spyOn(salesRepository, '_priceAddedLines').mockResolvedValue({
+      status: false,
+      data: { state: 'item_out_of_hours', item: 'Masala Dosa' },
+      message: 'Masala Dosa is not being served right now. It is served at Breakfast.',
+    });
+    const out = await salesRepository.changeCustomerOrderItems(order(), [
+      { item_id: 'b1', quantity: 1 },
+    ]);
+    expect(out.status).toBe(false);
+    expect(out.message).toMatch(/not being served right now/);
+    expect(written).toHaveLength(0);
+  });
+
+  test('asking for none of something that was never there changes nothing', async () => {
+    const priced = jest.spyOn(salesRepository, '_priceAddedLines');
+    const out = await salesRepository.changeCustomerOrderItems(order(), [
+      { item_id: 'ghost', quantity: 0 },
+    ]);
+    expect(out).toEqual({ status: false, message: 'nothing_changed', data: null });
+    expect(priced).not.toHaveBeenCalled();
+  });
+});

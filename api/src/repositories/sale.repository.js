@@ -7603,133 +7603,19 @@ class SalesRepository {
       const itemCollection = db.collection('items');
       const saleItems = [];
       for (const item of items) {
-        const qty = Number(item.item_quantity) || 1;
-        const itemId = String(item.item_id || '');
-        if (!ObjectId.isValid(itemId)) {
-          return { status: false, message: 'Enter must correct item id', data: null };
-        }
-        const itemDoc = await itemCollection.findOne({
-          _id: new ObjectId(itemId),
-          license: branchDoc.license || BaseModel.license,
-          $or: [{ branch_id: branchObjectId }, { 'branch_access.branch_id': branchObjectId }],
-        });
-        if (!itemDoc) {
-          return {
-            status: false,
-            data: null,
-            message: 'This product has already been removed, so you can not modify anything.',
-          };
-        }
-
-        /*
-         * Breakfast at four in the afternoon.
-         *
-         * The page greys out a dish outside its serving period, and that is a
-         * courtesy - a stale tab, a shared link, or somebody posting straight
-         * to this endpoint all reach here with a dosa in the basket long after
-         * the griddle is cold. The kitchen finds out when the ticket prints,
-         * which is the worst moment for everyone.
-         *
-         * Named in the refusal, because "something in your order is not
-         * available" sends a customer hunting through their own basket.
-         */
-        const timing = onlineOrdering.itemAvailability(
-          itemDoc,
+        /* Priced and checked in one place, shared with a line added to an
+           order that has already gone. A refusal is returned as it stands. */
+        const priced = await this._priceOnlineLine(item, {
+          itemCollection,
+          branchDoc,
+          branchObjectId,
           servingPeriods,
           orderDay,
-          orderMinutes
-        );
-        if (!timing.available) {
-          const when = timing.periods.length
-            ? ` It is served at ${timing.periods.join(' and ')}.`
-            : '';
-          return {
-            status: false,
-            data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
-            message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
-          };
-        }
-
-        /*
-         * And a dish the shop took off the online channel by hand.
-         *
-         * The menu and the ordering page both leave it out, so reaching here
-         * with one is a stale tab or a direct post - and either way the
-         * kitchen must not see it. Same helper the channel screen uses, so
-         * "off online" means one thing everywhere.
-         */
-        const onChannel = itemChannels.availableOn(
-          itemDoc,
-          salesChannels.CHANNEL.ONLINE,
-          orderMinutes
-        );
-        if (!onChannel.available) {
-          return {
-            status: false,
-            data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
-            message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
-          };
-        }
-
-        /*
-         * The price THIS service point pays.
-         *
-         * A hotel room is quoted the marked-up price, because the hotel takes
-         * a cut of it and the restaurant is not paying that out of a plate of
-         * biryani. The shop's own tables are quoted the house price, which is
-         * what priceFor returns when there is no venue.
-         *
-         * Applied to the selling price before anything is split out of it, so
-         * tax, discount and the inclusive/exclusive arithmetic below all work
-         * on the number the customer was actually shown.
-         */
-        const sellingPrice = partnerVenues.priceFor(
-          Number(itemDoc.selling_price || 0),
-          servicePoint.venue
-        );
-        const taxRate = Number(itemDoc.tax || 0);
-        const discountAmount = Number(itemDoc.discount_amount || 0);
-        const discountPercentage = Number(itemDoc.discount_percentage || 0);
-        const isInclusive = itemDoc.tax_type === 'inclusive';
-        const baseUnitPrice =
-          isInclusive && taxRate > 0 ? sellingPrice / (1 + taxRate / 100) : sellingPrice;
-        const discountUnit =
-          discountAmount > 0 ? discountAmount : baseUnitPrice * (discountPercentage / 100);
-        const taxableUnit = baseUnitPrice - discountUnit;
-        const taxUnit = taxableUnit * (taxRate / 100);
-        const finalUnit = isInclusive ? taxableUnit * (1 + taxRate / 100) : taxableUnit + taxUnit;
-        const taxAmt = round(taxUnit * qty);
-        const itemTotal = round(finalUnit * qty);
-
-        saleItems.push({
-          item_id: itemId,
-          item_name: itemDoc.name || item.item_name || '',
-          name: itemDoc.name || item.item_name || '',
-          quantity: qty,
-          unit_price: round(baseUnitPrice),
-          tax_amount: taxAmt,
-          total: itemTotal,
-          /*
-           * THE CUSTOMER'S NOTE, not the catalogue's blurb.
-           *
-           * The kitchen ticket prints this line under the dish. It carried
-           * the item's marketing description - "charred on skewers, with
-           * mint chutney" on every ticket - and it carried it INSTEAD of
-           * anything the waiter or the customer had typed, because the
-           * catalogue text won the ||. "Less spicy" is what a kitchen needs
-           * to read; the description it already knows.
-           */
-          item_description: String(item.item_note || item.item_description || '')
-            .trim()
-            .slice(0, 200),
-          // receipt-facing fields
-          item_base_price: round(baseUnitPrice),
-          item_quantity: qty,
-          item_tax: taxAmt,
-          item_discount: round(discountUnit * qty),
-          item_discount_percentage: discountPercentage,
-          item_total: itemTotal,
+          orderMinutes,
+          servicePoint,
         });
+        if (priced.status === false) return priced;
+        saleItems.push(priced.line);
       }
 
       const subtotal = round(saleItems.reduce((s, i) => s + round(i.unit_price * i.quantity), 0));
@@ -8891,6 +8777,150 @@ class SalesRepository {
   /* ------------------------------- the customer's own order, after it went */
 
   /*
+   * One line of an online order: priced, and checked the way the front door
+   * checks it.
+   *
+   * Shared by an order being placed and by a line added to one that has
+   * already gone, so a dish added afterwards costs exactly what the same
+   * dish ordered a minute earlier cost, and meets exactly the same refusals:
+   * an id that is not one, a dish this branch does not sell, a dish outside
+   * its serving period, a dish the shop took off the online channel.
+   *
+   * Answers either a REFUSAL - the very object the caller returns, written
+   * once here so neither caller invents wording of its own - or { line }.
+   * A refusal is the one with status === false.
+   */
+  async _priceOnlineLine(item, where) {
+    const {
+      itemCollection,
+      branchDoc,
+      branchObjectId,
+      servingPeriods,
+      orderDay,
+      orderMinutes,
+      servicePoint,
+    } = where;
+    const qty = Number(item.item_quantity) || 1;
+    const itemId = String(item.item_id || '');
+    if (!ObjectId.isValid(itemId)) {
+      return { status: false, message: 'Enter must correct item id', data: null };
+    }
+    const itemDoc = await itemCollection.findOne({
+      _id: new ObjectId(itemId),
+      license: branchDoc.license || BaseModel.license,
+      $or: [{ branch_id: branchObjectId }, { 'branch_access.branch_id': branchObjectId }],
+    });
+    if (!itemDoc) {
+      return {
+        status: false,
+        data: null,
+        message: 'This product has already been removed, so you can not modify anything.',
+      };
+    }
+
+    /*
+     * Breakfast at four in the afternoon.
+     *
+     * The page greys out a dish outside its serving period, and that is a
+     * courtesy - a stale tab, a shared link, or somebody posting straight
+     * to this endpoint all reach here with a dosa in the basket long after
+     * the griddle is cold. The kitchen finds out when the ticket prints,
+     * which is the worst moment for everyone.
+     *
+     * Named in the refusal, because "something in your order is not
+     * available" sends a customer hunting through their own basket.
+     */
+    const timing = onlineOrdering.itemAvailability(itemDoc, servingPeriods, orderDay, orderMinutes);
+    if (!timing.available) {
+      const when = timing.periods.length ? ` It is served at ${timing.periods.join(' and ')}.` : '';
+      return {
+        status: false,
+        data: { state: 'item_out_of_hours', item: itemDoc.name || '' },
+        message: `${itemDoc.name || 'That dish'} is not being served right now.${when}`,
+      };
+    }
+
+    /*
+     * And a dish the shop took off the online channel by hand.
+     *
+     * The menu and the ordering page both leave it out, so reaching here
+     * with one is a stale tab or a direct post - and either way the
+     * kitchen must not see it. Same helper the channel screen uses, so
+     * "off online" means one thing everywhere.
+     */
+    const onChannel = itemChannels.availableOn(itemDoc, salesChannels.CHANNEL.ONLINE, orderMinutes);
+    if (!onChannel.available) {
+      return {
+        status: false,
+        data: { state: 'item_not_on_channel', item: itemDoc.name || '' },
+        message: `${itemDoc.name || 'That dish'} is not available for online orders.`,
+      };
+    }
+
+    /*
+     * The price THIS service point pays.
+     *
+     * A hotel room is quoted the marked-up price, because the hotel takes
+     * a cut of it and the restaurant is not paying that out of a plate of
+     * biryani. The shop's own tables are quoted the house price, which is
+     * what priceFor returns when there is no venue.
+     *
+     * Applied to the selling price before anything is split out of it, so
+     * tax, discount and the inclusive/exclusive arithmetic below all work
+     * on the number the customer was actually shown.
+     */
+    const sellingPrice = partnerVenues.priceFor(
+      Number(itemDoc.selling_price || 0),
+      servicePoint.venue
+    );
+    const taxRate = Number(itemDoc.tax || 0);
+    const discountAmount = Number(itemDoc.discount_amount || 0);
+    const discountPercentage = Number(itemDoc.discount_percentage || 0);
+    const isInclusive = itemDoc.tax_type === 'inclusive';
+    const baseUnitPrice =
+      isInclusive && taxRate > 0 ? sellingPrice / (1 + taxRate / 100) : sellingPrice;
+    const discountUnit =
+      discountAmount > 0 ? discountAmount : baseUnitPrice * (discountPercentage / 100);
+    const taxableUnit = baseUnitPrice - discountUnit;
+    const taxUnit = taxableUnit * (taxRate / 100);
+    const finalUnit = isInclusive ? taxableUnit * (1 + taxRate / 100) : taxableUnit + taxUnit;
+    const taxAmt = round(taxUnit * qty);
+    const itemTotal = round(finalUnit * qty);
+
+    return {
+      line: {
+        item_id: itemId,
+        item_name: itemDoc.name || item.item_name || '',
+        name: itemDoc.name || item.item_name || '',
+        quantity: qty,
+        unit_price: round(baseUnitPrice),
+        tax_amount: taxAmt,
+        total: itemTotal,
+        /*
+         * THE CUSTOMER'S NOTE, not the catalogue's blurb.
+         *
+         * The kitchen ticket prints this line under the dish. It carried
+         * the item's marketing description - "charred on skewers, with
+         * mint chutney" on every ticket - and it carried it INSTEAD of
+         * anything the waiter or the customer had typed, because the
+         * catalogue text won the ||. "Less spicy" is what a kitchen needs
+         * to read; the description it already knows.
+         */
+        item_description: String(item.item_note || item.item_description || '')
+          .trim()
+          .slice(0, 200),
+        // receipt-facing fields
+        item_base_price: round(baseUnitPrice),
+        item_quantity: qty,
+        item_tax: taxAmt,
+        item_discount: round(discountUnit * qty),
+        item_discount_percentage: discountPercentage,
+        item_total: itemTotal,
+      },
+    };
+  }
+
+  /*
    * What we keep about the device an order came from: an address, what the
    * browser calls itself, and the random id that browser keeps for itself.
    * Everything is cut to a length, and anything not recognised is dropped, so
@@ -9063,10 +9093,18 @@ class SalesRepository {
     }
     if (!asked.size) return { status: false, message: 'nothing_asked', data: null };
 
+    /*
+     * A dish that is not on the order yet is ADDED, priced exactly the way
+     * the order itself was priced. Asking for nought of something that was
+     * never there is not a change, it is a typo, and is ignored.
+     */
     const onOrder = new Set(lines.map((l) => String(l.item_id || '')));
-    const unknown = [...asked.keys()].filter((id) => !onOrder.has(id));
-    if (unknown.length) {
-      return { status: false, message: 'not_on_this_order', data: { unknown } };
+    const adding = [...asked.entries()].filter(([id, qty]) => !onOrder.has(id) && qty > 0);
+    const added = [];
+    if (adding.length) {
+      const priced = await this._priceAddedLines(orderDoc, adding);
+      if (priced.status === false) return priced;
+      added.push(...priced.lines);
     }
 
     const changes = [];
@@ -9090,6 +9128,22 @@ class SalesRepository {
         });
       }
       if (now > 0) kept.push(this._scaleOrderLine(line, was, now));
+    }
+
+    for (const line of added) {
+      const qty = Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0);
+      const unit = Number(line.unit_price != null ? line.unit_price : line.item_price || 0);
+      changes.push({
+        item_id: String(line.item_id || ''),
+        item_name: String(line.item_name || line.name || ''),
+        item_quantity: qty,
+        process: 'add',
+        item_code: String(line.item_sku || ''),
+        unit: String(line.item_unit || 'qty'),
+        price: unit,
+        total: round(unit * qty),
+      });
+      kept.push(line);
     }
 
     if (!changes.length) return { status: false, message: 'nothing_changed', data: null };
@@ -9143,6 +9197,70 @@ class SalesRepository {
         total: totals.total,
       },
     };
+  }
+
+  /*
+   * Dishes added to an order that has already gone, priced the way the order
+   * was priced.
+   *
+   * Everything the front door checks is checked again here, by the same
+   * method: a dish out of its serving period, or one the shop has taken off
+   * the online channel, cannot be slipped onto an order after the fact any
+   * more than it could be ordered in the first place. The service point
+   * comes off the order itself, so a hotel room keeps its marked-up price.
+   */
+  async _priceAddedLines(orderDoc, adding) {
+    const db = await BaseModel.getDb();
+    const branchObjectId = orderDoc.branch_id;
+    const branchDoc = await db.collection('branches').findOne({ _id: branchObjectId });
+    if (!branchDoc) return { status: false, message: 'not_found', data: null };
+
+    /* The same clock the order was taken by, in the shop's own time zone. */
+    const now = new Date();
+    const local = moment(now).tz(branchDoc.time_zone || 'Asia/Calcutta');
+    const orderDay = local.day();
+    const orderMinutes = local.hours() * 60 + local.minutes();
+    /* The serving periods, read the way the order read them. */
+    let servingPeriods = [];
+    try {
+      const settingsDoc = await db
+        .collection('settings')
+        .findOne({ menu_dayparts: { $exists: true } });
+      servingPeriods = onlineOrdering.normalizeDayparts(
+        (settingsDoc && settingsDoc.menu_dayparts) || []
+      );
+    } catch (e) {
+      /* No dayparts is every dish served all day, which is what a shop that
+         never set one means. */
+    }
+
+    /*
+     * House prices, always. An order bound for a hotel room cannot be
+     * changed from a phone at all - customer-order.service refuses it as
+     * at_the_counter, because its total carries a markup and a commission
+     * that are not the customer's to move - so there is no marked-up case
+     * to reproduce here, and inventing one would be a guess about money.
+     */
+    const servicePoint = { venue: null };
+
+    const lines = [];
+    for (const [itemId, quantity] of adding) {
+      const priced = await this._priceOnlineLine(
+        { item_id: itemId, item_quantity: quantity },
+        {
+          itemCollection: db.collection('items'),
+          branchDoc,
+          branchObjectId,
+          servingPeriods,
+          orderDay,
+          orderMinutes,
+          servicePoint,
+        }
+      );
+      if (priced.status === false) return priced;
+      lines.push(priced.line);
+    }
+    return { status: true, lines };
   }
 
   /*
