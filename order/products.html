@@ -311,6 +311,15 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
                     <span>Tap to talk</span>
                 </button>
+                <!--
+                    HOLD IT AND THE LINE HEARS YOU, whatever the room is
+                    doing. Owner: "how about voice around me? how to solve
+                    this issue?" The page already judges by distance - a
+                    voice at arm's length against the room's own noise floor
+                    - and that is a measurement, so it can be wrong. This
+                    cannot: nothing measured beats a thumb.
+                -->
+                <button type="button" class="voice-hold" id="voice-hold">Hold to talk</button>
                 <button type="button" class="voice-stop" id="voice-stop">Stop talking</button>
             </div>
             <audio id="voice-out" autoplay playsinline hidden></audio>

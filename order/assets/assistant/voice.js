@@ -1267,24 +1267,175 @@
   function hearing(on) {
     try {
       if (!live.stream || !live.stream.getAudioTracks) return;
+      var was = null;
       live.stream.getAudioTracks().forEach(function (track) {
+        if (was === null) was = track.enabled;
         track.enabled = !!on;
       });
-      if (window.VoiceDebug) window.VoiceDebug.did("microphone", on ? "listening" : "off - the assistant is speaking");
+      if (was !== !!on && window.VoiceDebug) {
+        window.VoiceDebug.did("microphone", on ? "listening" : "off");
+      }
     } catch (e) {
       /* A browser that will not let go of the track still gets the call. */
     }
+  }
+
+  /*
+   * WHOSE VOICE THE LINE IS ALLOWED TO HEAR.
+   *
+   * Owner: "how about voice around me? how to solve this issue?"
+   *
+   * A restaurant is full of people talking and none of them are ordering from
+   * this phone. Turn detection cannot tell them apart: to a voice detector,
+   * the next table is speech, and speech is a turn. Raising the threshold
+   * only trades one mistake for the other - too high and the customer has to
+   * shout, too low and the room orders for them.
+   *
+   * THE THING THAT ACTUALLY SEPARATES THEM IS DISTANCE. The phone is about
+   * forty centimetres from the person holding it and two or three metres from
+   * the next table. Sound falls off with the square of the distance, so the
+   * person holding it arrives something like thirty times louder. That is an
+   * enormous gap - far bigger than the difference between a loud voice and a
+   * quiet one, which is all a fixed threshold can see - and it is measurable
+   * on any phone with an analyser.
+   *
+   * So: listen to the room for a moment when the line opens, learn how loud
+   * it is when nobody is speaking into the phone, and let audio through only
+   * when it is loud enough to be somebody who is. A customer who leans in and
+   * talks is heard. The next table is not.
+   *
+   * AND A BUTTON, WHICH IS THE ONLY COMPLETE ANSWER. Hold it and the line
+   * hears you whatever the room is doing. Nothing measured can be perfect;
+   * something held is.
+   *
+   * THREE FACTS, ONE DECISION, so the microphone never has two owners:
+   *   speaking  the assistant is talking, and must not hear itself
+   *   holding   a thumb is on the button, which overrules everything
+   *   near      somebody is speaking close to the phone
+   */
+  var mic = { speaking: false, holding: false, near: false };
+
+  function decideMic() {
+    hearing(!mic.speaking && (mic.holding || mic.near));
+  }
+
+  /* How much louder than the room something has to be before it counts as
+     somebody speaking INTO the phone. Four times the noise floor in
+     amplitude is a voice at arm's length against a busy room; it is a ratio
+     rather than a level, so a quiet cafe and a loud one both work. */
+  var NEAR_ENOUGH = 4;
+  /* A floor of its own, so a silent room does not make every whisper across
+     the restaurant count as near. */
+  var QUIETEST = 0.02;
+  /* The room is measured for this long before the gate means anything. The
+     line is connecting during it, so it costs the customer nothing. */
+  var LISTEN_TO_THE_ROOM = 1200;
+  /* Speech has gaps in it. Closing the moment a word ends would cut the
+     customer off mid-sentence, so the gate stays open through the pause. */
+  var GAP = 700;
+
+  var room = { ctx: null, node: null, data: null, frame: 0, floor: 0, seen: [], until: 0, since: 0 };
+
+  function watchTheRoom(stream) {
+    stopWatchingTheRoom();
+    try {
+      var Maker = window.AudioContext || window.webkitAudioContext;
+      if (!Maker || !stream) return;
+      room.ctx = new Maker();
+      var from = room.ctx.createMediaStreamSource(stream);
+      room.node = room.ctx.createAnalyser();
+      room.node.fftSize = 1024;
+      /* Connected to nothing: this measures the microphone, it must never
+         play it back. */
+      from.connect(room.node);
+      room.data = new Uint8Array(room.node.fftSize);
+      room.since = Date.now();
+      room.seen = [];
+      room.floor = 0;
+      look();
+    } catch (e) {
+      /* No analyser, so nothing can be judged by distance. The line falls
+         back to hearing everything, which is where it started. */
+      mic.near = true;
+      decideMic();
+    }
+  }
+
+  function loudness() {
+    room.node.getByteTimeDomainData(room.data);
+    var sum = 0;
+    for (var i = 0; i < room.data.length; i += 1) {
+      var v = (room.data[i] - 128) / 128;
+      sum += v * v;
+    }
+    return Math.sqrt(sum / room.data.length);
+  }
+
+  function look() {
+    if (!room.node) return;
+    room.frame = requestAnimationFrame(look);
+    var now = Date.now();
+    var level = loudness();
+
+    /* Still learning what the room sounds like. */
+    if (now - room.since < LISTEN_TO_THE_ROOM) {
+      room.seen.push(level);
+      mic.near = true;
+      decideMic();
+      return;
+    }
+    if (!room.floor && room.seen.length) {
+      /* The MEDIAN, not the average: somebody saying "hello?" during the
+         first second would drag an average up and deafen the gate for the
+         rest of the call. */
+      var sorted = room.seen.slice().sort(function (a, b) { return a - b; });
+      room.floor = sorted[Math.floor(sorted.length / 2)] || 0;
+      room.seen = [];
+      if (window.VoiceDebug) {
+        window.VoiceDebug.did("the room", "noise floor " + room.floor.toFixed(4) + ", speaking needs " + Math.max(room.floor * NEAR_ENOUGH, QUIETEST).toFixed(4));
+      }
+    }
+
+    var enough = Math.max(room.floor * NEAR_ENOUGH, QUIETEST);
+    if (level >= enough) room.until = now + GAP;
+    var near = now < room.until;
+    if (near !== mic.near) {
+      mic.near = near;
+      decideMic();
+    }
+  }
+
+  function stopWatchingTheRoom() {
+    if (room.frame) cancelAnimationFrame(room.frame);
+    room.frame = 0;
+    room.node = null;
+    room.data = null;
+    try {
+      if (room.ctx && room.ctx.close) room.ctx.close();
+    } catch (e) {
+      /* a context that will not close is not worth an error */
+    }
+    room.ctx = null;
+  }
+
+  /** The button, held. Nothing measured beats a thumb. */
+  function holdToTalk(on) {
+    mic.holding = !!on;
+    if (window.VoiceDebug) window.VoiceDebug.did("hold to talk", on ? "held" : "let go");
+    decideMic();
   }
 
   /** The assistant started speaking: stop listening until it stops. */
   function itIsSpeaking() {
     clearTimeout(deafTail);
     clearTimeout(deafGuard);
-    hearing(false);
+    mic.speaking = true;
+    decideMic();
     deafGuard = setTimeout(function () {
       /* Whatever happened to the "stopped" event, the customer gets their
          microphone back. */
-      hearing(true);
+      mic.speaking = false;
+      decideMic();
     }, LONGEST_ANSWER);
   }
 
@@ -1293,7 +1444,12 @@
     clearTimeout(deafGuard);
     clearTimeout(deafTail);
     deafTail = setTimeout(function () {
-      hearing(true);
+      mic.speaking = false;
+      /* And the room is measured afresh from here: the gate must not spend
+         the rest of the call judging against a floor it learned while the
+         assistant's own voice was in the room. */
+      room.until = 0;
+      decideMic();
     }, SPEAKING_TAIL);
   }
 
@@ -1498,6 +1654,13 @@
     live.stream.getTracks().forEach(function (track) {
       pc.addTrack(track, live.stream);
     });
+    /* Learn what this room sounds like with nobody speaking into the phone,
+       then let through only what is loud enough to be somebody who is. See
+       watchTheRoom. */
+    mic.speaking = false;
+    mic.holding = false;
+    mic.near = true;
+    watchTheRoom(live.stream);
     pc.ontrack = function (event) {
       var out = el("voice-out");
       if (out && event.streams && event.streams[0]) {
@@ -1843,6 +2006,9 @@
     /* Nothing is speaking any more, so nothing is waiting to hear again. */
     clearTimeout(deafTail);
     clearTimeout(deafGuard);
+    mic.holding = false;
+    mic.speaking = false;
+    stopWatchingTheRoom();
     stopLine();
     try {
       if (live.rec) live.rec.abort ? live.rec.abort() : live.rec.stop();
@@ -1934,6 +2100,55 @@
     });
     var stopButton = el("voice-stop");
     if (stopButton) stopButton.addEventListener("click", stop);
+
+    /*
+     * HOLD TO TALK, which is the only complete answer to a noisy room.
+     *
+     * Pointer events rather than mouse or touch: one set of events covers a
+     * finger, a stylus and a mouse, and the browser tells us when the press
+     * ends even if the thumb has slid off the button by then - which on a
+     * phone it usually has. Without pointercancel and the capture below, a
+     * thumb that drifts leaves the line held open for the rest of the call.
+     */
+    var hold = el("voice-hold");
+    if (hold) {
+      var down = function (event) {
+        if (event && event.preventDefault) event.preventDefault();
+        try {
+          if (event && event.pointerId != null && hold.setPointerCapture) {
+            hold.setPointerCapture(event.pointerId);
+          }
+        } catch (e) {
+          /* no capture; the up handlers below still cover it */
+        }
+        hold.setAttribute("data-held", "yes");
+        holdToTalk(true);
+      };
+      var up = function () {
+        hold.removeAttribute("data-held");
+        holdToTalk(false);
+      };
+      hold.addEventListener("pointerdown", down);
+      hold.addEventListener("pointerup", up);
+      hold.addEventListener("pointercancel", up);
+      hold.addEventListener("pointerleave", up);
+      /* A page that leaves, a call that ends, a phone that locks: the same
+         let-go, because a button held by nobody is a microphone left open. */
+      window.addEventListener("blur", up);
+      /* Keyboard: space or enter on a focused button fires click, which has
+         no press and release. Holding is a pointer idea, so the keyboard
+         gets a toggle instead of nothing. */
+      hold.addEventListener("keydown", function (event) {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          if (!mic.holding) down(null);
+        }
+      });
+      hold.addEventListener("keyup", function (event) {
+        if (event.key === " " || event.key === "Enter") up();
+      });
+    }
+
     var sheet = el("assistant");
     if (sheet) sheet.addEventListener("close", stop);
     document.addEventListener("visibilitychange", function () {
@@ -1949,5 +2164,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { holdToTalk: holdToTalk, mic: mic, watchTheRoom: watchTheRoom, changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();
