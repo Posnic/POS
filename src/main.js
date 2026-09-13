@@ -4407,7 +4407,9 @@ app.whenReady().then(async () => {
   });
 
   // Initialize KOT manager
-  kotManager = new KOTManager();
+  /* Given the printer, a kitchen ticket goes out as ESC/POS like a receipt
+     instead of through a window and a PDF. See src/escpos-kot.js. */
+  kotManager = new KOTManager({ hardware: hardwareManager });
   console.log('KOTManager initialized');
 
   /*
