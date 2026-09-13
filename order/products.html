@@ -408,6 +408,14 @@
     </dialog>
 
     <script src="assets/products/script.js?v=20260912-design"></script>
+    <!-- The docket flying to the hatch, the bell, and the pan settling over a
+         flame. It was written, styled and given a canvas in the sheet above -
+         and never loaded here, so window.KitchenScene did not exist and the
+         confirmation fell through to its no-canvas path: the bell rang, the
+         words changed, and nothing moved. Which is exactly what the owner
+         reported, twice: "i saw ting sound but never see anitmation".
+         Before script.js, which plays it. -->
+    <script src="assets/assistant/kitchen-scene.js?v=20260912-design"></script>
     <script src="assets/assistant/script.js?v=20260912-design"></script>
     <!-- The orb follows the voice actually coming back, rather than
          pulsing on a loop. Before voice.js, which hands it the stream. -->

@@ -422,9 +422,16 @@
    * IS wrong, the words the line thought it heard are the evidence, and
    * guessing at them from outside is how an afternoon gets lost.
    *
-   * ?transcript=1 turns them on for that visit and nothing else. Remembered
-   * for the session, because the flag would otherwise be lost the moment the
-   * page walks from the arrival URL to products.html.
+   * SHOWN, NOW, BY DEFAULT. It was behind ?transcript=1 and the owner has
+   * asked to see it five times running - most recently "i want know what
+   * trascribed in the chat. not abel see" - which settles it: a flag he has
+   * to remember to type is a feature he does not have. His earlier "no need
+   * to show conversation as text" was about a line that worked; this one
+   * does not yet, and the words are the only evidence of why.
+   *
+   * ?transcript=0 turns it off for anybody who wants the clean screen back,
+   * and that choice is remembered for the visit - the flag would otherwise
+   * be lost the moment the page walks from the arrival URL to products.html.
    */
   var TRANSCRIPT_KEY = "posnic_show_transcript";
 
@@ -432,10 +439,12 @@
     try {
       var asked = new URLSearchParams(window.location.search).get("transcript");
       if (asked === "1") sessionStorage.setItem(TRANSCRIPT_KEY, "1");
-      if (asked === "0") sessionStorage.removeItem(TRANSCRIPT_KEY);
-      return sessionStorage.getItem(TRANSCRIPT_KEY) === "1";
+      if (asked === "0") sessionStorage.setItem(TRANSCRIPT_KEY, "0");
+      return sessionStorage.getItem(TRANSCRIPT_KEY) !== "0";
     } catch (e) {
-      return false;
+      /* A browser that keeps nothing still shows them; this is the safe
+         side now, because the alternative is the owner testing blind. */
+      return true;
     }
   }
 
@@ -989,6 +998,71 @@
     if (live.dc && live.dc.readyState === "open") live.dc.send(JSON.stringify(payload));
   }
 
+  /*
+   * THE MICROPHONE GOES DEAF WHILE THE ASSISTANT IS SPEAKING.
+   *
+   * Owner, three times and counting: "why noise cancel not working? why keep
+   * saying ah.. yes.. aha..i want know what trascribed in the chat."
+   *
+   * Echo cancellation was switched on and it is not enough. It is built for a
+   * headset and a conversation between two people; a phone lying on a table
+   * playing a synthetic voice through its loudspeaker in a restaurant is the
+   * case it handles worst. What is left over is enough for the far end's
+   * voice detector to call it speech, so the line hears its own sentence,
+   * decides the customer said something, and answers it - with "ah", "yes",
+   * "aha", because there is nothing there to answer.
+   *
+   * So the microphone is switched OFF for as long as the assistant's voice is
+   * actually coming out of the speaker, and switched back on a quarter of a
+   * second after it stops. The line then physically cannot hear itself.
+   *
+   * WHAT IT COSTS: talking over the assistant no longer interrupts it. In a
+   * quiet room that is a loss. In a restaurant, which is what this is for, a
+   * line that answers the room is not a line at all.
+   *
+   * AND IT CANNOT GET STUCK. A muted microphone that is never unmuted is a
+   * dead assistant, which is far worse than a chatty one, so a guard turns it
+   * back on regardless after a few seconds - longer than any single spoken
+   * answer, short enough that a lost "stopped" event costs one reply.
+   */
+  var SPEAKING_TAIL = 250;
+  var LONGEST_ANSWER = 20000;
+  var deafTail = 0;
+  var deafGuard = 0;
+
+  function hearing(on) {
+    try {
+      if (!live.stream || !live.stream.getAudioTracks) return;
+      live.stream.getAudioTracks().forEach(function (track) {
+        track.enabled = !!on;
+      });
+      if (window.VoiceDebug) window.VoiceDebug.did("microphone", on ? "listening" : "off - the assistant is speaking");
+    } catch (e) {
+      /* A browser that will not let go of the track still gets the call. */
+    }
+  }
+
+  /** The assistant started speaking: stop listening until it stops. */
+  function itIsSpeaking() {
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
+    hearing(false);
+    deafGuard = setTimeout(function () {
+      /* Whatever happened to the "stopped" event, the customer gets their
+         microphone back. */
+      hearing(true);
+    }, LONGEST_ANSWER);
+  }
+
+  /** It stopped. Listen again, once the speaker has actually gone quiet. */
+  function itIsDone() {
+    clearTimeout(deafGuard);
+    clearTimeout(deafTail);
+    deafTail = setTimeout(function () {
+      hearing(true);
+    }, SPEAKING_TAIL);
+  }
+
   async function onEvent(message) {
     var ev;
     try {
@@ -1006,6 +1080,19 @@
     }
     var a = assistant();
     switch (ev.type) {
+      /*
+       * WebRTC's own pair of events, which say when audio is genuinely
+       * leaving the speaker rather than when a response began or ended.
+       * response.done arrives while the last second is still playing, which
+       * is exactly the second the line would otherwise hear itself in.
+       */
+      case "output_audio_buffer.started":
+        itIsSpeaking();
+        break;
+      case "output_audio_buffer.stopped":
+      case "output_audio_buffer.cleared":
+        itIsDone();
+        break;
       case "input_audio_buffer.speech_started":
         status("listening", say("Listening..."));
         break;
@@ -1027,6 +1114,7 @@
          * alphabet - especially that one, since it is what Tamil misheard
          * looks like.
          */
+        keepSaid("customer", heard);
         if (showingTranscript()) transcribed("me", heard, script);
         break;
       }
@@ -1037,6 +1125,7 @@
       case "response.audio_transcript.done":
         /* Not drawn either; the customer is listening, not reading - unless
            somebody is looking for what went wrong. */
+        keepSaid("ai", String(ev.transcript || "").trim());
         if (showingTranscript()) transcribed("ai", String(ev.transcript || "").trim(), "");
         break;
       case "response.function_call_arguments.done":
@@ -1264,6 +1353,29 @@
     if (end && live.session) tick(true);
   }
 
+  /*
+   * WHAT WAS SAID, RIDING ALONG WITH THE METER.
+   *
+   * Owner: "watch my conversation via server." The audio goes phone to
+   * provider and never reaches us, so the only way the shop can ever see
+   * what a call did is if this page says. It is already talking to the
+   * server every half minute to keep the meter honest, so the words go with
+   * that - no extra request, and the whole call is on its own session row
+   * where a bad call can be read back afterwards.
+   *
+   * Held here between ticks and handed over once. A line the server has
+   * taken is dropped, so a slow network repeats nothing.
+   */
+  var saidSoFar = [];
+  var MOST_HELD = 40;
+
+  function keepSaid(who, text) {
+    var line = String(text || "").trim();
+    if (!line) return;
+    saidSoFar.push({ who: who === "ai" ? "ai" : "customer", text: line.slice(0, 300) });
+    while (saidSoFar.length > MOST_HELD) saidSoFar.shift();
+  }
+
   function tickUrl() {
     return apiBase() + "/online-ordering/" + encodeURIComponent(live.branch) + "/voice/" + encodeURIComponent(live.session) + "/tick";
   }
@@ -1277,7 +1389,12 @@
       live.session = "";
       try {
         if (navigator.sendBeacon) {
-          navigator.sendBeacon(url + "?end=1");
+          /* The last words go with the hang-up. A beacon can carry a body,
+             and the end of a call is exactly the part worth reading: the
+             refusal, the misheard dish, the "aha" nobody prompted. */
+          var last = JSON.stringify({ end: true, said: saidSoFar });
+          saidSoFar = [];
+          navigator.sendBeacon(url + "?end=1", new Blob([last], { type: "application/json" }));
         } else {
           await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ end: true }), keepalive: true });
         }
@@ -1287,13 +1404,16 @@
       return null;
     }
     try {
+      var handing = saidSoFar.slice();
       var response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ end: false }),
+        body: JSON.stringify({ end: false, said: handing }),
       });
       if (response.ok) {
         live.misses = 0;
+        /* Taken. Anything said while this was in flight is still here. */
+        saidSoFar = saidSoFar.slice(handing.length);
         return true;
       }
       if (response.status === 403) {
@@ -1468,6 +1588,9 @@
       return;
     }
     live.active = false;
+    /* Nothing is speaking any more, so nothing is waiting to hear again. */
+    clearTimeout(deafTail);
+    clearTimeout(deafGuard);
     stopLine();
     try {
       if (live.rec) live.rec.abort ? live.rec.abort() : live.rec.stop();

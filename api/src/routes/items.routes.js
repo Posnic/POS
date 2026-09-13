@@ -153,6 +153,10 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 router.post('/aiDescription', bindController(itemsController.aiDescription));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
 router.get('/aiSpend', bindController(itemsController.aiSpend));
+// GET /api/items/aiVoiceCalls - the last few live voice calls with what was
+// said on each. The audio goes phone to provider, so this is the only view
+// of a call the shop has; the page hands the lines over with the meter tick.
+router.get('/aiVoiceCalls', bindController(itemsController.aiVoiceCalls));
 
 // PHP: exportItems() - Excel export
 router.post('/exportItems', bindController(itemsController.exportItems));
