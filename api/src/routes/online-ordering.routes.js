@@ -35,6 +35,7 @@ const {
   voiceLimiter,
   voiceTickLimiter,
   placedOrderLimiter,
+  placedOrderFloodLimiter,
 } = require('../middleware/assistant-rate-limit');
 
 const bind = (handler) => handler.bind(controller);
@@ -129,15 +130,27 @@ router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.v
 /* Every order this phone is holding, in ONE request. The history page used
    to ask per order and ran itself into the limiter below; see
    services/customer-order.service.js readMany. */
-router.post('/:storeId/orders/lookup', placedOrderLimiter, bind(controller.readPlacedOrders));
-router.get('/:storeId/orders/:orderId', placedOrderLimiter, bind(controller.readPlacedOrder));
+router.post(
+  '/:storeId/orders/lookup',
+  placedOrderFloodLimiter,
+  placedOrderLimiter,
+  bind(controller.readPlacedOrders)
+);
+router.get(
+  '/:storeId/orders/:orderId',
+  placedOrderFloodLimiter,
+  placedOrderLimiter,
+  bind(controller.readPlacedOrder)
+);
 router.post(
   '/:storeId/orders/:orderId/items',
+  placedOrderFloodLimiter,
   placedOrderLimiter,
   bind(controller.changePlacedOrder)
 );
 router.post(
   '/:storeId/orders/:orderId/cancel',
+  placedOrderFloodLimiter,
   placedOrderLimiter,
   bind(controller.cancelPlacedOrder)
 );

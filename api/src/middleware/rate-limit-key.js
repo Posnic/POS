@@ -97,4 +97,37 @@ function perClientKey(req) {
   return clientAddress(req);
 }
 
-module.exports = { perShopKey, perClientKey, clientAddress, shopOf };
+/**
+ * Key for the routes that read and change a PLACED ORDER: per order.
+ *
+ * A RESTAURANT IS ONE ADDRESS. Every diner in the room is behind the shop's
+ * own wifi, so keying these by the client address gives the whole restaurant
+ * a single budget: one table correcting a quantity spends the allowance and
+ * the next table is told to wait for traffic it had no part in. Owner: "still
+ * sometimes broken." It was, and this is one of the reasons - a refusal
+ * earned by somebody else at another table.
+ *
+ * The order is the right unit. Every one of these routes carries an order id
+ * and can only be used by somebody holding that order's token, so one key per
+ * order is one key per customer: they get their own budget, and hammering one
+ * order still caps at that order. The address stays in the key as well, so a
+ * script cannot borrow another customer's allowance by naming their order.
+ *
+ * A request with no order in it - the history page asking about several at
+ * once - falls back to the address, which is the old behaviour and correct:
+ * that one IS per device.
+ *
+ * @param {import('express').Request} req
+ * @returns {string}
+ */
+function perPlacedOrderKey(req) {
+  const base = perShopKey(req);
+  const named =
+    (req.params && req.params.orderId) ||
+    (req.body && typeof req.body === 'object' && req.body.orderId) ||
+    '';
+  const order = String(named || '').slice(0, 64);
+  return order ? `${base}|${order}` : base;
+}
+
+module.exports = { perShopKey, perClientKey, perPlacedOrderKey, clientAddress, shopOf };

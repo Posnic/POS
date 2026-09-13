@@ -20,6 +20,7 @@
 
 const {
   perShopKey,
+  perPlacedOrderKey,
   perClientKey,
   clientAddress,
   shopOf,
@@ -121,5 +122,59 @@ describe('the shop is read from the request scope', () => {
        has to separate shops, and the host it arrived on is the thing that
        chose the shop in the first place. */
     expect(shopOf(req({ headers: { host: 'alpha.posnic.io' } }))).toEqual('alpha.posnic.io');
+  });
+});
+
+/*
+ * A RESTAURANT IS ONE ADDRESS.
+ *
+ * Every diner is behind the shop's own wifi, so keying the placed-order
+ * routes by the client address hands the whole room a single budget: one
+ * table correcting a quantity spends the minute and the next table is refused
+ * for traffic it had no part in. Owner: "still sometimes broken." It was, and
+ * this was one of the reasons.
+ */
+describe('the placed-order routes are counted per order, not per restaurant', () => {
+  const at = (orderId, ip, body) => ({
+    params: orderId ? { orderId } : {},
+    body: body || {},
+    ip,
+    headers: {},
+    socket: {},
+  });
+
+  test('two diners on the same wifi do not share a budget', () => {
+    expect(perPlacedOrderKey(at('order-a', '203.0.113.7'))).not.toEqual(
+      perPlacedOrderKey(at('order-b', '203.0.113.7'))
+    );
+  });
+
+  test('the same order from another address is still another bucket', () => {
+    /* So nobody can spend a customer's allowance by naming their order. */
+    expect(perPlacedOrderKey(at('order-a', '203.0.113.7'))).not.toEqual(
+      perPlacedOrderKey(at('order-a', '198.51.100.4'))
+    );
+  });
+
+  test('the same diner on the same order keeps one budget', () => {
+    expect(perPlacedOrderKey(at('order-a', '203.0.113.7'))).toEqual(
+      perPlacedOrderKey(at('order-a', '203.0.113.7'))
+    );
+  });
+
+  test('a request naming no order falls back to the address, which is right for it', () => {
+    /* The history page asks about several orders at once; that one really is
+       per device. */
+    expect(perPlacedOrderKey(at('', '203.0.113.7'))).toEqual(perShopKey(at('', '203.0.113.7')));
+  });
+
+  test('an order named in the body counts the same as one in the path', () => {
+    expect(perPlacedOrderKey(at('', '203.0.113.7', { orderId: 'order-a' }))).toEqual(
+      perPlacedOrderKey(at('order-a', '203.0.113.7'))
+    );
+  });
+
+  test('an absurdly long order id cannot grow the key without limit', () => {
+    expect(perPlacedOrderKey(at('x'.repeat(5000), '203.0.113.7')).length).toBeLessThan(200);
   });
 });

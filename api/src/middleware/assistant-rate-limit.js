@@ -11,7 +11,7 @@
  */
 const rateLimit = require('express-rate-limit');
 const { MongoRateLimitStore } = require('./rate-limit-store');
-const { perClientKey } = require('./rate-limit-key');
+const { perClientKey, perPlacedOrderKey, perShopKey } = require('./rate-limit-key');
 
 const assistantLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'assistant' }),
@@ -75,7 +75,11 @@ const voiceTickLimiter = rateLimit({
  */
 const placedOrderLimiter = rateLimit({
   store: new MongoRateLimitStore({ prefix: 'placed_order' }),
-  keyGenerator: perClientKey,
+  /* PER ORDER, NOT PER ADDRESS. A restaurant is one address: every diner is
+     behind the shop's own wifi, so an address key hands the whole room one
+     budget and refuses one table for another table's taps. See
+     perPlacedOrderKey, which keeps the address in the key as well. */
+  keyGenerator: perPlacedOrderKey,
   windowMs: 60 * 1000,
   limit: 30,
   message: {
@@ -87,4 +91,33 @@ const placedOrderLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { assistantLimiter, voiceLimiter, voiceTickLimiter, placedOrderLimiter };
+/*
+ * THE BACKSTOP, because the limiter above is deliberately generous per order.
+ *
+ * Giving every order its own budget is right for customers and would be wrong
+ * on its own: a script naming a new order id each time would get a fresh
+ * budget every request. This one is per address and per shop, set high enough
+ * that a full restaurant never reaches it - fifty tables tapping at once is
+ * far short - and low enough that a machine hammering the shop does.
+ */
+const placedOrderFloodLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'placed_order_flood' }),
+  keyGenerator: perShopKey,
+  windowMs: 60 * 1000,
+  limit: 600,
+  message: {
+    type: 'error',
+    message: 'Too many requests from this network. Please wait a moment and try again.',
+    data: null,
+  },
+  standardHeaders: false,
+  legacyHeaders: false,
+});
+
+module.exports = {
+  assistantLimiter,
+  voiceLimiter,
+  voiceTickLimiter,
+  placedOrderLimiter,
+  placedOrderFloodLimiter,
+};
