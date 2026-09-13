@@ -4536,7 +4536,7 @@ app.whenReady().then(async () => {
   });
 
   // Setup IPC handlers
-  setupHardwareIPC(hardwareManager, kotManager);
+  setupHardwareIPC(hardwareManager, kotManager, billManager);
   console.log('Hardware IPC handlers registered');
 
   // Start server

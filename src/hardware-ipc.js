@@ -103,7 +103,7 @@ function getLocalIP() {
 let _ipcSetupDone = false;
 
 // Hardware Manager IPC Handlers
-function setupHardwareIPC(hardwareManager, kotManager) {
+function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   if (_ipcSetupDone) {
     console.log('Hardware IPC handlers already registered, skipping duplicate call');
     return;
@@ -565,6 +565,20 @@ function setupHardwareIPC(hardwareManager, kotManager) {
   ipcMain.handle('kot:get-status', () => {
     if (!kotManager) return { isPolling: false };
     return kotManager.getStatus();
+  });
+
+  /*
+   * WHAT THE BILL PRINTER IS DOING, for a person rather than a log file.
+   *
+   * BillManager has kept this since it was written and nothing ever asked for
+   * it, so when a bill did not come out the answer lived in a console window
+   * nobody has open on a shop floor. "It is not printing" and "no receipt
+   * printer is set on this till" are the same sentence to a shopkeeper until
+   * something tells them apart.
+   */
+  ipcMain.handle('bill:get-status', () => {
+    if (!billManager) return { isPolling: false };
+    return billManager.getStatus();
   });
 
   ipcMain.handle('kot:get-logs', (event, date) => {

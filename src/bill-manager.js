@@ -182,6 +182,17 @@ class BillManager {
     this.cloudStatus = 'off';
     this.cloudPollAt = null;
     this.printedCount = 0;
+
+    /*
+     * THE LAST THING THAT WENT WRONG WITH THE PAPER, kept rather than logged.
+     *
+     * `lastStatus` is about the conversation with the API; this is about the
+     * printer, and they fail independently. A till can be talking to its queue
+     * perfectly while every bill is refused because the roll is out - and the
+     * one of those a shopkeeper can act on is this one.
+     */
+    this.lastPrintError = '';
+    this.lastPrintedAt = null;
   }
 
   getStatus() {
@@ -190,6 +201,8 @@ class BillManager {
       lastPollAt: this.lastPollAt,
       lastStatus: this.lastStatus,
       printed: this.printedCount,
+      lastPrintedAt: this.lastPrintedAt,
+      lastPrintError: this.lastPrintError,
       branchId: this.branchId,
       tillId: this.tillId,
       /* Reported separately because the two doors fail separately: a shop can
@@ -438,7 +451,13 @@ class BillManager {
       /* eslint-disable-next-line no-await-in-loop -- printers are serial
          devices; two jobs sent at once interleave on the same roll. */
       const printed = await this._printOne(job.payload || {});
-      if (printed.ok) this.printedCount += 1;
+      if (printed.ok) {
+        this.printedCount += 1;
+        this.lastPrintedAt = new Date().toISOString();
+        this.lastPrintError = '';
+      } else {
+        this.lastPrintError = printed.error || 'the printer refused the job';
+      }
       /* eslint-disable-next-line no-await-in-loop -- see above */
       await this._finish(base, key, this._idOf(job), printed.ok, printed.error);
     }
