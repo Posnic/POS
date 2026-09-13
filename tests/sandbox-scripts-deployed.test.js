@@ -101,3 +101,51 @@ test('the keep never lands in the repository, because it holds real keys', () =>
   );
   assert.match(RESET, /KEEP=\$HOME_DIR\/keep/, 'the keep moved out of the box-only directory');
 });
+
+test('a rebuilt sandbox comes up with a shop that can take an order', () => {
+  /*
+   * Owner: "Live voice is switched off for this shop ... i didnt do. may be
+   * db reset?" It was: the box rebuilt from the seeder, and the seeder had
+   * never configured online ordering, so /online-ordering answered
+   * "none_configured" and every printed code pointed at nothing.
+   */
+  const seed = read('scripts', 'sandbox', 'seed.js');
+  assert.match(seed, /online_ordering: \{/, 'the seeder still leaves the shop unable to take an order');
+  assert.match(seed, /store_id: STORE_ADDRESS/, 'the seeded shop has no store address');
+  assert.match(
+    seed,
+    /const STORE_ADDRESS = process\.env\.SEED_STORE_ADDRESS \|\| 'ABC'/,
+    'the address is not fixed, so every rebuild breaks the printed codes'
+  );
+  /* It must not stamp over a shop that already has one. */
+  assert.match(seed, /!\(shop\.online_ordering && shop\.online_ordering\.store_id\)/);
+});
+
+test('a rebuilt shop inherits what the old one was configured with', () => {
+  /*
+   * The settings rows are keyed by licence and branch id. A rebuild mints
+   * new ones, so a faithfully restored key pointed at a branch that no
+   * longer existed and the shop read as though nothing had ever been set.
+   */
+  const keeper = read('scripts', 'sandbox', 'keep-branches.js');
+  assert.match(keeper, /branch_secrets/, 'the secrets are not re-homed');
+  assert.match(keeper, /branch_preferences/, 'the preferences are not re-homed');
+  assert.match(
+    keeper,
+    /rows\.updateMany\(\{ branch_id: null \}, \{ \$set: \{ license: shopNow\.license \} \}\)/,
+    'an account row is given a branch it does not belong to'
+  );
+  assert.match(
+    keeper,
+    /rows\.updateMany\(\s*\{ branch_id: \{ \$ne: null \} \}/,
+    'branch rows are not pointed at the new branch'
+  );
+
+  /* One shop is not a guess; several would be. */
+  assert.match(keeper, /countDocuments\(\) === 1 \? collection\.findOne\(\{\}\) : null/);
+  assert.match(keeper, /left alone rather than guessed at/);
+
+  /* And the restore case still lands the ordinary way. */
+  assert.match(keeper, /\$set: \{ online_ordering: row\.online_ordering \}/);
+  assert.match(keeper, /db\.kept_branches\.drop\(\);/);
+});
