@@ -192,7 +192,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getStatus:     () => ipcRenderer.invoke('bill:get-status'),
     /* This machine's own key, for pasting into the shop so it will accept
        bills from here. See api/src/models/print-till.model.js. */
-    getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key')
+    getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key'),
+    /* A day of receipt prints, tried as well as done - the same shape the KOT
+       log already has, so one screen reads both. */
+    getReceiptLogs: (date) => ipcRenderer.invoke('receipt:get-logs', date),
+    deleteReceiptLog: (date, id) => ipcRenderer.invoke('receipt:delete-log', date, id)
   },
   /*
    * The sound an online order makes.
