@@ -2998,8 +2998,13 @@
   "lang_cancel_requested": "Le client demande l’annulation",
   "lang_keep_the_order": "Garder la commande",
   "lang_cancel_it": "L’annuler",
+  "lang_change_window_help": "Restaurants uniquement. Ensuite, une modification devient une demande que la caisse approuve.",
   "lang_int_voice_key_on_file": "Clé enregistrée",
   "lang_int_voice_key_remove_q": "Supprimer la clé enregistrée ?",
   "lang_int_voice_key_remove_text": "Les terminaux reviennent à la reconnaissance du téléphone jusqu'à ce qu'une nouvelle clé soit enregistrée. Votre compte chez le fournisseur n'est pas touché.",
-  "lang_int_voice_key_removed": "Clé supprimée."
+  "lang_int_voice_key_removed": "Clé supprimée.",
+  "lang_new_online_order": "Nouvelle commande en ligne",
+  "lang_no_changes_after_ordering": "Aucune modification après la commande",
+  "lang_orders_waiting": "commandes en attente",
+  "lang_time_to_change_an_order": "Délai pour modifier une commande"
 }

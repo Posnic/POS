@@ -44,8 +44,20 @@ const _settings = () => {
   return settings;
 };
 
-/** How long this shop leaves an order open, in seconds. */
+/**
+ * How long this shop leaves an order open, in seconds.
+ *
+ * ZERO FOR A SHOP THAT IS NOT A RESTAURANT. Owner: "this is specifig
+ * functionality about after order and modify. also restaurent specific. other
+ * business usually wont have this feature." Changing an order after it has
+ * gone is a kitchen idea: nothing has been cooked yet, so for a minute it is
+ * still the customer's. A counter that has already picked and packed has no
+ * such minute, and offering one there is a promise the shop cannot keep.
+ * Cancelling is NOT gated by this - it becomes a request the shop decides on,
+ * which is the flow every kind of shop already has.
+ */
 async function changeSeconds(context) {
+  if (context && context.kind && String(context.kind) !== 'restaurant') return 0;
   try {
     const read = await _settings().resolveGroup('preferences', context);
     const values = (read && read.status && read.data && read.data.values) || {};
@@ -147,6 +159,51 @@ async function read(body, context) {
   };
 }
 
+/**
+ * Several orders, in one question.
+ *
+ * The history page holds a list of what this phone has ordered and used to
+ * ask about each one separately. Against a limiter of ten requests a minute
+ * that is a page which breaks itself: every row after the tenth answers
+ * "Not checked", and a row with no answer draws no details, so tapping it
+ * does nothing. One question, one answer, one rate-limit slot.
+ *
+ * Each entry is proved the same way a single read is - the id AND the token
+ * together - so this is not a way to read somebody else's orders in bulk. An
+ * entry that does not prove itself is simply absent from the answer, exactly
+ * as a single read would 404, and the page forgets it.
+ */
+const MOST_ORDERS_AT_ONCE = 20;
+
+async function readMany(body, context) {
+  const asked = Array.isArray(body && body.orders) ? body.orders.slice(0, MOST_ORDERS_AT_ONCE) : [];
+  if (!asked.length) return { status: true, message: 'OK', data: { orders: [] } };
+
+  /* The window is the shop's, not the order's, so it is read once. */
+  const seconds = await changeSeconds(context);
+  const now = Date.now();
+  const found = [];
+  for (const one of asked) {
+    const orderId = String((one && one.orderId) || '').trim();
+    const token = String((one && one.token) || '').trim();
+    if (!orderId || !token) continue;
+    const order = await salesRepository.findCustomerOrder({
+      branchId: context && context.branchId,
+      orderId,
+    });
+    if (!order || String(order.token_id || '') !== token) continue;
+    const reason = whyNot(order, now, seconds);
+    found.push({
+      ...salesRepository.customerOrderView(order),
+      can_change: reason === '',
+      why_not: reason || undefined,
+      change_seconds: seconds,
+      cancel_requested: order.cancel_requested === true,
+    });
+  }
+  return { status: true, message: 'OK', data: { orders: found } };
+}
+
 /** Set the quantity of lines already on the order; 0 takes a line off it. */
 async function change(body, context) {
   const { order, reason } = await heldOrder(body, context);
@@ -190,6 +247,8 @@ module.exports = {
   /* The seam a test stands in for, as ordering-assistant.service does. */
   _settings,
   read,
+  readMany,
+  MOST_ORDERS_AT_ONCE,
   change,
   cancel,
   heldOrder,

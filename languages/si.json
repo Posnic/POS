@@ -2998,8 +2998,13 @@
   "lang_cancel_requested": "පාරිභෝගිකයා අවලංගු කරන්න ඉල්ලා ඇත",
   "lang_keep_the_order": "ඇණවුම තබාගන්න",
   "lang_cancel_it": "අවලංගු කරන්න",
+  "lang_change_window_help": "අවන්හල් සඳහා පමණි. ඉන් පසු වෙනස් කිරීම කවුන්ටරය අනුමත කරන ඉල්ලීමකි.",
   "lang_int_voice_key_on_file": "යතුර සුරකින ලදි",
   "lang_int_voice_key_remove_q": "සුරැකි යතුර ඉවත් කරන්නද?",
   "lang_int_voice_key_remove_text": "නව යතුරක් සුරකින තෙක් උපකරණ දුරකථනයේම හඳුනාගැනීමට නැවත යයි. ඔබේ සැපයුම්කරු ගිණුමට කිසිවක් නොවේ.",
-  "lang_int_voice_key_removed": "යතුර ඉවත් කරන ලදි."
+  "lang_int_voice_key_removed": "යතුර ඉවත් කරන ලදි.",
+  "lang_new_online_order": "නව සබැඳි ඇණවුමක්",
+  "lang_no_changes_after_ordering": "ඇණවුම් කිරීමෙන් පසු වෙනස්කම් නැත",
+  "lang_orders_waiting": "බලා සිටින ඇණවුම්",
+  "lang_time_to_change_an_order": "ඇණවුම වෙනස් කිරීමට කාලය"
 }

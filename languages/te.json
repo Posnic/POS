@@ -2998,8 +2998,13 @@
   "lang_cancel_requested": "కస్టమర్ రద్దు కోరారు",
   "lang_keep_the_order": "ఆర్డర్ ఉంచు",
   "lang_cancel_it": "రద్దు చెయ్",
+  "lang_change_window_help": "రెస్టారెంట్‌లకు మాత్రమే. ఆ తర్వాత మార్పు అనేది కౌంటర్ ఆమోదించే అభ్యర్థన అవుతుంది.",
   "lang_int_voice_key_on_file": "కీ భద్రపరచబడింది",
   "lang_int_voice_key_remove_q": "భద్రపరచిన కీని తొలగించాలా?",
   "lang_int_voice_key_remove_text": "కొత్త కీ భద్రపరిచే వరకు హ్యాండ్‌సెట్‌లు ఫోన్ సొంత గుర్తింపునే వాడతాయి. మీ ప్రొవైడర్ ఖాతాకు ఏమీ కాదు.",
-  "lang_int_voice_key_removed": "కీ తొలగించబడింది."
+  "lang_int_voice_key_removed": "కీ తొలగించబడింది.",
+  "lang_new_online_order": "కొత్త ఆన్‌లైన్ ఆర్డర్",
+  "lang_no_changes_after_ordering": "ఆర్డర్ చేసిన తర్వాత మార్పులు లేవు",
+  "lang_orders_waiting": "వేచి ఉన్న ఆర్డర్‌లు",
+  "lang_time_to_change_an_order": "ఆర్డర్ మార్చడానికి సమయం"
 }

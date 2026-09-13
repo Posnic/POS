@@ -2998,8 +2998,13 @@
   "lang_cancel_requested": "Il cliente chiede di annullare",
   "lang_keep_the_order": "Mantieni l’ordine",
   "lang_cancel_it": "Annullalo",
+  "lang_change_window_help": "Solo ristoranti. Dopo, la modifica diventa una richiesta che la cassa approva.",
   "lang_int_voice_key_on_file": "Chiave salvata",
   "lang_int_voice_key_remove_q": "Rimuovere la chiave salvata?",
   "lang_int_voice_key_remove_text": "I palmari tornano al riconoscimento del telefono finché non viene salvata una nuova chiave. Il suo account presso il fornitore non viene toccato.",
-  "lang_int_voice_key_removed": "Chiave rimossa."
+  "lang_int_voice_key_removed": "Chiave rimossa.",
+  "lang_new_online_order": "Nuovo ordine online",
+  "lang_no_changes_after_ordering": "Nessuna modifica dopo l'ordine",
+  "lang_orders_waiting": "ordini in attesa",
+  "lang_time_to_change_an_order": "Tempo per modificare un ordine"
 }

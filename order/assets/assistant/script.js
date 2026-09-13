@@ -470,28 +470,14 @@
    * on is a small yes and not a second meal. Three: a fourth is a catalogue.
    */
   function goesWith(on) {
-    var all = [];
     try {
-      all = (typeof allProducts === "function" ? allProducts() : []) || []; // eslint-disable-line no-undef
+      var all = (typeof allProducts === "function" ? allProducts() : []) || []; // eslint-disable-line no-undef
+      /* The rule itself lives in indexedDB.js, because the order history
+         offers the same row and two copies of it would drift. */
+      return typeof goesWithOrder === "function" ? goesWithOrder(on, all) : []; // eslint-disable-line no-undef
     } catch (e) {
       return [];
     }
-    var have = {};
-    var theirs = {};
-    (on || []).forEach(function (line) {
-      have[String(line.item_id)] = true;
-      all.forEach(function (p) {
-        if (String(p.id) === String(line.item_id) && p.category_name) theirs[p.category_name] = true;
-      });
-    });
-    return all
-      .filter(function (p) {
-        return p && p.id && !have[String(p.id)] && p.available !== false && !theirs[p.category_name];
-      })
-      .sort(function (x, y) {
-        return (Number(x.price) || 0) - (Number(y.price) || 0);
-      })
-      .slice(0, 3);
   }
 
   function paintPlacedOrder(said) {

@@ -7083,3 +7083,27 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     text-decoration: underline;
     color: var(--theme-text-muted, #5b6577);
 }
+
+/*
+ * How many online orders are waiting, on the menu entry itself.
+ *
+ * The person who needs to know is on another screen - that is the whole
+ * point of it - so the count lives where they can see it from anywhere
+ * rather than on the page they are not looking at.
+ */
+.online-orders-badge {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 9px;
+  /* From the theme, never a literal: a shop on a dark preset gets its own
+     danger colour, and tests/first-run-welcome.test.js pins the rule. */
+  background: var(--theme-danger-color, #f04438);
+  color: var(--theme-btn-primary-text, #ffffff);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  vertical-align: middle;
+}

@@ -2998,8 +2998,13 @@
   "lang_cancel_requested": "ग्राहकले रद्द गर्न भन्यो",
   "lang_keep_the_order": "अर्डर राख्नुहोस्",
   "lang_cancel_it": "रद्द गर्नुहोस्",
+  "lang_change_window_help": "रेस्टुरेन्टका लागि मात्र। त्यसपछि परिवर्तन काउन्टरले स्वीकृत गर्ने अनुरोध बन्छ।",
   "lang_int_voice_key_on_file": "कुञ्जी सुरक्षित",
   "lang_int_voice_key_remove_q": "सुरक्षित कुञ्जी हटाउने?",
   "lang_int_voice_key_remove_text": "नयाँ कुञ्जी नराखेसम्म ह्यान्डसेटहरू फोनकै आफ्नै पहिचानमा फर्कन्छन्। तपाईंको प्रदायक खातामा केही हुँदैन।",
-  "lang_int_voice_key_removed": "कुञ्जी हटाइयो।"
+  "lang_int_voice_key_removed": "कुञ्जी हटाइयो।",
+  "lang_new_online_order": "नयाँ अनलाइन अर्डर",
+  "lang_no_changes_after_ordering": "अर्डर पछि कुनै परिवर्तन छैन",
+  "lang_orders_waiting": "पर्खिरहेका अर्डरहरू",
+  "lang_time_to_change_an_order": "अर्डर परिवर्तन गर्ने समय"
 }
