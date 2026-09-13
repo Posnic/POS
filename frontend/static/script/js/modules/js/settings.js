@@ -513,6 +513,10 @@ PosnicPro.settings = {
            alone never fires on the way in - the switches would sit at their
            markup default and disagree with what is stored. */
         PosnicPro.settings.loadSharing();
+        /* Which tills may print this shop's bills. Guarded because the module
+           is only on the pages that carry the card, and a settings page that
+           throws here would stop drawing everything after it. */
+        if (PosnicPro.printTills) PosnicPro.printTills.render();
     },
     settingImageFormSubmit: function () {
         if ($('#setting_image_value').val() !== '') {

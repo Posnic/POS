@@ -175,11 +175,14 @@ jobs:
       - name: The application actually starts
         if: matrix.name == 'Windows'
         run: node scripts/check-app-boots.js
-        env:
-          # The leak that makes Posnic.exe run as plain Node and exit 0 in
-          # silence. Cleared explicitly so a green run means the app started,
-          # not that the checker was fooled.
-          ELECTRON_RUN_AS_NODE: ""
+        # NO `env: ELECTRON_RUN_AS_NODE: ""` here, deliberately.
+        #
+        # Setting it to empty DEFINES it, and Electron tests for the variable
+        # being present rather than for what it says - so that line made
+        # Posnic.exe run as plain Node, abort on a failed snapshot assertion,
+        # and this step blame the application. check-app-boots.js deletes the
+        # variable from the child's environment instead, which is right whether
+        # it is run here or on somebody's machine.
 
       # electron-builder names the update manifest after the version's
       # prerelease tag: 2.0.2-beta.7 produces beta.yml, not latest.yml. An

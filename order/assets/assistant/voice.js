@@ -245,13 +245,39 @@
   }
 
   /*
-   * The model asked for something; the page decides and answers. Every
-   * answer carries the order as it stands, so the model reads back what IS
-   * there and not what it meant to do; a refusal says why and what is close.
+   * HOW BIG THE ORDER IS, NOT WHAT IS ON IT.
+   *
+   * Owner: "in between i see conversation large list of items. its you
+   * sending? i mean software? why cant send first and tell all instructions
+   * and boundaries."
+   *
+   * The instructions and the whole menu ARE sent once, when the line opens,
+   * and never again - he is right that this is the way to do it. What was
+   * repeating is the ORDER: every tool answer carried every line of it, so
+   * adding four dishes sent the growing list back four times, and every
+   * refusal sent it again. The model does not need it. It is on the screen
+   * the customer is looking at, and the page is the thing that knows what is
+   * on it.
+   *
+   * So an answer says how many lines and what it comes to. show_order still
+   * returns the list in full - that is what it is for, and the model calls it
+   * on the rare turn it genuinely needs one.
+   */
+  function orderSize(order) {
+    return {
+      lines: (order && order.lines ? order.lines : []).length,
+      total: (order && order.total) || 0
+    };
+  }
+
+  /*
+   * The model asked for something; the page decides and answers. A refusal
+   * says why and what is close.
    */
   async function runTool(name, args) {
     var a = assistant();
     if (name === "show_order") return { ok: true, order: await cartSummary() };
+    /* THE ONE ABOVE is the exception: it exists to hand over the list. */
     if (name === "show_order_history") return orderHistory();
     if (name === "send_to_kitchen") return sendToKitchen(args);
     if (name === "change_placed_order") return changePlacedOrder(args);
@@ -265,11 +291,11 @@
         reason: "not_on_menu",
         asked: asked || id,
         nearest: nearest(asked || id.replace(/[_-]+/g, " "), 3).map(function (n) { return brief(n.item); }),
-        order: await cartSummary()
+        order: orderSize(await cartSummary())
       };
     }
     if (name !== "remove_from_order" && item.available === false) {
-      return { ok: false, reason: "not_available_today", item: item.name, asked: asked || id, order: await cartSummary() };
+      return { ok: false, reason: "not_available_today", item: item.name, asked: asked || id, order: orderSize(await cartSummary()) };
     }
     var quantity = Math.min(20, Math.max(1, Math.round(Number(args && args.quantity) || 1)));
     var action = { item_id: String(item.id), name: item.name, quantity: quantity };
@@ -282,7 +308,8 @@
     if (a && a.apply) await a.apply([action]);
     var done = { ok: true, did: action.verb === "add" ? "added" : action.verb === "remove" ? "removed" : "set", item: item.name, item_id: String(item.id), quantity: action.quantity };
     if (noteText && action.verb !== "remove") done.note = noteText;
-    done.order = await cartSummary();
+    /* How big it is, not what is on it - see orderSize. */
+    done.order = orderSize(await cartSummary());
     return done;
   }
 
@@ -759,18 +786,64 @@
       if (a && a.placedPanel) {
         a.placedPanel(live.placed, { orderId: live.placedId, still: data.requested === true });
       }
+      handUpAfterSending();
       return { ok: true, added: true, requested: data.requested === true, token: live.placed };
     } catch (e) {
       return null;
     }
   }
 
+  /*
+   * THE LINE GOES DOWN WHEN THE ORDER GOES IN.
+   *
+   * Owner: "for changnig ai assistant not needed until user click mic icon.
+   * once order sent switch off mic."
+   *
+   * It used to stay up on purpose - the customer might want to change
+   * something - but an open microphone nobody is talking into is a microphone
+   * listening to a restaurant, and every burst of room noise it decides is
+   * speech costs a reply and a fraction of a rupee. The order screen has its
+   * own buttons for changing things; the line comes back the moment the mic
+   * is tapped, and the customer is the one who decides that.
+   */
+  function handUpAfterSending() {
+    /*
+     * AFTER IT HAS FINISHED SPEAKING, not the instant the order goes.
+     *
+     * Closing the line here would cut the model off mid-sentence and, worse,
+     * stop the tool answer ever reaching it - so it would never say the order
+     * had gone at all. That is the very first thing the owner reported in
+     * this feature: "after sending to order ai voice suddenly closing."
+     *
+     * So the intention is recorded and onEvent closes the line once the
+     * speaker has gone quiet. A line that somehow never speaks again is shut
+     * by the guard below rather than left listening to the room.
+     */
+    live.hangingUp = true;
+    clearTimeout(hangUpGuard);
+    hangUpGuard = setTimeout(function () {
+      if (live.hangingUp) closeTheLine();
+    }, 12000);
+  }
+
+  var hangUpGuard = 0;
+
+  function closeTheLine() {
+    live.hangingUp = false;
+    clearTimeout(hangUpGuard);
+    try {
+      stop();
+    } catch (e) {
+      /* an order that went is more important than a line that will not close */
+    }
+  }
+
   async function sendToKitchen(args) {
     var order = await cartSummary();
-    if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
-    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: order };
+    if (!order.lines.length) return { ok: false, reason: "empty_order", order: orderSize(order) };
+    if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: orderSize(order) };
     var way = resolveWay(args && args.fulfilment);
-    if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: order };
+    if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: orderSize(order) };
     /*
      * THERE IS NO REVIEW BUTTON, so this must not say "review".
      *
@@ -782,16 +855,16 @@
      * goes. A field naming a button that was renamed a while ago sent him
      * hunting the screen for it.
      */
-    if (way === "delivery") return { ok: false, reason: "needs_details", next: "the_page_finishes_it", order: order };
+    if (way === "delivery") return { ok: false, reason: "needs_details", next: "the_page_finishes_it", order: orderSize(order) };
     var s = shopNow();
     var payment = (s && s.payment) || {};
-    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "the_page_finishes_it", order: order };
-    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "the_page_finishes_it", order: order };
+    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "the_page_finishes_it", order: orderSize(order) };
+    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "the_page_finishes_it", order: orderSize(order) };
     var point = servicePoint();
     try {
       if (way === "dine_in" && !(point && (point.table || point.venue))) {
         var table = String((args && args.table) || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 12);
-        if (!table) return { ok: false, reason: "need_table", order: order };
+        if (!table) return { ok: false, reason: "need_table", order: orderSize(order) };
         localStorage.setItem("order_table", table);
       } else {
         localStorage.removeItem("order_table");
@@ -799,7 +872,7 @@
       if (typeof chargeFor === "function") { // eslint-disable-line no-undef
         var charge = chargeFor(way, order.total); // eslint-disable-line no-undef
         if (charge && charge.allowed === false) {
-          return { ok: false, reason: "below_minimum", minimum: charge.minimum, short: charge.short, order: order };
+          return { ok: false, reason: "below_minimum", minimum: charge.minimum, short: charge.short, order: orderSize(order) };
         }
       }
       localStorage.setItem("order_fulfilment", way);
@@ -826,20 +899,20 @@
             total: order.total,
             way: way,
             pay: "at the counter",
-            order: order
+            order: orderSize(order)
           };
         }
       }
     }
 
-    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order }; // eslint-disable-line no-undef
+    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: orderSize(order) }; // eslint-disable-line no-undef
     var placed = null;
     try {
       placed = await checkout("", "Cash", { stay: true }); // eslint-disable-line no-undef
     } catch (e) {
       placed = null;
     }
-    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order };
+    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: orderSize(order) };
     live.placed = String(placed.token);
     live.placedId = String(placed.saleId || "");
     var a = assistant();
@@ -847,13 +920,14 @@
        order itself rather than stop at a number. */
     if (a && a.placedPanel) a.placedPanel(live.placed, { orderId: live.placedId });
     else if (a && a.placedLine) a.placedLine(live.placed);
+    handUpAfterSending();
     return {
       ok: true,
       token: live.placed,
       total: order.total,
       way: way,
       pay: way === "dine_in" ? "at the counter" : "when collecting",
-      order: order
+      order: orderSize(order)
     };
   }
 
@@ -1126,7 +1200,7 @@
     return {
       ok: true,
       token: (which && which.token) || live.placed,
-      order: { lines: done.data.items || [], total: done.data.total }
+      order: { lines: (done.data.items || []).length, total: done.data.total }
     };
   }
 
@@ -1252,6 +1326,9 @@
       case "output_audio_buffer.stopped":
       case "output_audio_buffer.cleared":
         itIsDone();
+        /* The order has gone and the assistant has finished saying so, which
+           is the moment the line has no more work. See handUpAfterSending. */
+        if (live.hangingUp) closeTheLine();
         break;
       case "input_audio_buffer.speech_started":
         status("listening", say("Listening..."));
@@ -1387,6 +1464,8 @@
     status("connecting", say("Connecting..."));
     live.placed = "";
     live.leaving = false;
+    live.hangingUp = false;
+    clearTimeout(hangUpGuard);
     try {
       var asked = live.pendingStream || grabMicrophone();
       live.pendingStream = null;

@@ -1175,7 +1175,10 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   assert.deepStrictEqual(outputs.map((o) => [o.call, o.out.ok]), [['c1', true], ['c2', false], ['c3', false]]);
   assert.strictEqual(outputs[0].out.note, 'less spicy');
   assert.strictEqual(outputs[0].out.did, 'added');
-  assert.ok(outputs[0].out.order && Array.isArray(outputs[0].out.order.lines), 'the tool did not hand back the order as it stands');
+  /* HOW BIG, not what is on it. The list is on the screen the customer is
+     looking at; sending it back every turn is what filled the conversation
+     with it. Owner: "in between i see conversation large list of items." */
+  assert.strictEqual(typeof outputs[0].out.order.lines, 'number', 'the whole list went back down the line again');
   assert.strictEqual(outputs[1].out.reason, 'not_available_today');
   assert.strictEqual(outputs[1].out.item, 'Masala Dosa');
   assert.strictEqual(outputs[2].out.reason, 'not_on_menu');
@@ -2067,6 +2070,15 @@ test('the order lands in the sheet, and nothing moves until Done', async () => {
 });
 
 /** A placed order the way the shop describes one. */
+/* goesWithOrder lives in indexedDB.js, which needs a browser; lifted out so
+   the chooser can be reasoned about on its own. */
+function liftGoesWith() {
+  const box = {};
+  // eslint-disable-next-line no-new-func
+  new Function('box', 'with (box) {' + lift(read('indexedDB.js'), 'goesWithOrder') + '; box.goesWithOrder = goesWithOrder; }')(box);
+  return box;
+}
+
 function placedOrder(extra) {
   return Object.assign(
     {
@@ -2113,11 +2125,19 @@ test('the confirmation opens into the order, and the order can still be changed'
 
   const lines = [...document.querySelectorAll('#placed-lines li')];
   assert.deepStrictEqual(lines.map((li) => li.querySelector('.placed-line-qty').textContent + ' ' + li.querySelector('.placed-line-name').textContent), ['2\u00d7 Chicken Biryani']);
-  assert.deepStrictEqual([...lines[0].querySelectorAll('.placed-step')].map((b) => b.getAttribute('data-quantity')), ['1', '3'], 'the steppers do not move the line by one');
+  assert.deepStrictEqual([...lines[0].querySelectorAll('.placed-step')].map((b) => b.getAttribute('data-by')), ['-1', '1'], 'the steppers do not move the line by one');
   assert.match(document.getElementById('placed-clock').textContent, /^\d+s to change it$/, 'nothing says how long they have');
 
-  /* One more, and the screen redraws from what the shop then says. */
+  /*
+   * One more - STAGED, then confirmed. Owner: "customer cant change in one
+   * touch. after changes. he need to review and click confirmation." This
+   * test used to assert the tap itself reached the shop.
+   */
   lines[0].querySelectorAll('.placed-step')[1].click();
+  await settle();
+  assert.deepStrictEqual(calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url)), [], 'a single tap reached the shop');
+  assert.strictEqual(document.querySelector('#placed-lines .placed-line-qty').textContent, '3\u00d7', 'the tap did not move the number on screen');
+  document.getElementById('placed-confirm').click();
   await settle();
   const sent = calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url));
   assert.strictEqual(sent.length, 1);
@@ -2142,7 +2162,13 @@ test('something to go with it, and a way to call the whole thing off', async () 
   assert.deepStrictEqual(more.map((b) => b.getAttribute('data-add')), ['d1'], 'the suggestions offered the order back to itself, or a dish that is off');
   assert.strictEqual(document.getElementById('placed-more').hidden, false);
 
+  /* Staged like any other change, so one Confirm covers "two more of this
+     and a lime soda" instead of sending them one at a time. */
   more[0].click();
+  await settle();
+  assert.deepStrictEqual([...document.querySelectorAll('#placed-lines .placed-line-name')].map((n) => n.textContent), ['Chicken Biryani', 'Fresh Lime Soda'], 'the staged line is not on screen');
+  assert.deepStrictEqual(calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url)), [], 'one tap on a suggestion reached the shop');
+  document.getElementById('placed-confirm').click();
   await settle();
   const added = calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url));
   assert.deepStrictEqual(added[0].body, { token: '042', items: [{ item_id: 'd1', quantity: 1 }] });
@@ -2167,11 +2193,16 @@ test('a shop that says no is quoted, not swallowed', async () => {
 
   document.querySelectorAll('.placed-step')[1].click();
   await settle();
+  document.getElementById('placed-confirm').click();
+  await settle();
   assert.match(
     document.getElementById('assistant-log').textContent,
     /The kitchen has started on it/,
     'the refusal never reached the customer'
   );
+  /* And the edit is KEPT, so they can try again or undo it themselves
+     rather than rebuild an edit the shop refused. */
+  assert.strictEqual(document.getElementById('placed-confirm-bar').hidden, false, 'a refused edit was thrown away');
   assert.strictEqual(
     window.OrderingAssistant.refusal('not_a_reason_we_know'),
     'not_a_reason_we_know',
@@ -3246,4 +3277,180 @@ test('cancelling from the history page says so on the row, with the panel still 
   const panel = document.querySelector('.history-details');
   assert.ok(panel && !panel.hidden, 'the panel shut itself, which is the "page restarted" the owner reported');
   window.close();
+});
+
+
+/*
+ * NOTHING LEAVES THE PHONE ON ONE TOUCH.
+ *
+ * Owner: "flow is not correct. customer cant change in one touch. after
+ * changes. he need to review and click confirmation."
+ *
+ * Every plus went straight to the shop, which put one tap between a thumb on
+ * a moving bus and a kitchen cooking something nobody ordered - and gave the
+ * customer nothing to look at before committing. A tap now moves a number on
+ * this screen; one button sends the whole edit.
+ */
+test('the plus and minus stage a change, and one button sends the lot', async () => {
+  const order = placedOrder({ can_change: true });
+  const { window, document, calls } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await window.OrderingAssistant.showPlacedOrder();
+
+  const before = calls.fetch.length;
+  const steps = () => [...document.querySelectorAll('.placed-step')];
+  steps()[1].click();
+  await settle();
+  assert.strictEqual(calls.fetch.length, before, 'a single tap reached the shop');
+  assert.strictEqual(document.querySelector('.placed-line-qty').textContent, '3×', 'the tap did not move the number on screen');
+  assert.strictEqual(document.getElementById('placed-confirm-bar').hidden, false, 'nothing offered to confirm the change');
+  assert.strictEqual(document.getElementById('placed-confirm-count').textContent, '1 line changed');
+
+  /* Two more taps, still nothing sent, and the count stays at one line. */
+  steps()[1].click();
+  await settle();
+  assert.strictEqual(document.querySelector('.placed-line-qty').textContent, '4×');
+  assert.strictEqual(calls.fetch.length, before, 'staging reached the shop');
+  assert.strictEqual(document.getElementById('placed-confirm-count').textContent, '1 line changed');
+
+  /* Confirm sends ONE request carrying the finished quantity. */
+  document.getElementById('placed-confirm').click();
+  await settle();
+  const sent = calls.fetch.filter((c) => /\/orders\/o1\/items$/.test(c.url));
+  assert.strictEqual(sent.length, 1, 'the edit was not sent as one request');
+  assert.deepStrictEqual(sent[0].body.items, [{ item_id: 'm1', quantity: 4 }]);
+  assert.strictEqual(document.getElementById('placed-confirm-bar').hidden, true, 'the bar stayed up after sending');
+  window.close();
+});
+
+test('a staged change can be taken back without ever reaching the shop', async () => {
+  const order = placedOrder({ can_change: true });
+  const { window, document, calls } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await window.OrderingAssistant.showPlacedOrder();
+  const before = calls.fetch.length;
+
+  document.querySelectorAll('.placed-step')[1].click();
+  await settle();
+  document.getElementById('placed-discard').click();
+  await settle();
+  assert.strictEqual(document.querySelector('.placed-line-qty').textContent, '2×', 'undo did not put the order back');
+  assert.strictEqual(document.getElementById('placed-confirm-bar').hidden, true);
+  assert.strictEqual(calls.fetch.length, before, 'undo still talked to the shop');
+
+  /* And stepping back to where it started is not a change either. */
+  document.querySelectorAll('.placed-step')[1].click();
+  await settle();
+  document.querySelectorAll('.placed-step')[0].click();
+  await settle();
+  assert.strictEqual(document.getElementById('placed-confirm-bar').hidden, true, 'a line put back where it was still counts as a change');
+  window.close();
+});
+
+/*
+ * THE LINE GOES DOWN WHEN THE ORDER GOES IN.
+ *
+ * Owner: "for changnig ai assistant not needed until user click mic icon.
+ * once order sent switch off mic." An open microphone nobody is talking into
+ * is a microphone listening to a restaurant, and every burst of room noise it
+ * takes for speech costs a reply.
+ */
+test('the microphone is switched off once the order has gone', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(document.getElementById('assistant').getAttribute('data-voice'), 'on');
+
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(done.ok, true);
+  await settle();
+  /*
+   * NOT YET. Closing the line the instant the order goes cuts the assistant
+   * off mid-sentence and stops the tool answer ever reaching it, so it never
+   * says the order has gone at all - which is the first thing the owner ever
+   * reported here: "after sending to order ai voice suddenly closing."
+   */
+  assert.strictEqual(
+    document.getElementById('assistant').getAttribute('data-voice'),
+    'on',
+    'the line was cut before the assistant could say the order had gone'
+  );
+
+  /* It says so, and the speaker goes quiet. NOW the line has no more work. */
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.started' }) });
+  await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'output_audio_buffer.stopped' }) });
+  await settle();
+  assert.strictEqual(
+    document.getElementById('assistant').getAttribute('data-voice'),
+    'off',
+    'the line is still open after the order went, listening to the room'
+  );
+  window.close();
+});
+
+/*
+ * THE ORDER IS NOT REPEATED BACK DOWN THE LINE.
+ *
+ * Owner: "in between i see conversation large list of items. its you sending?
+ * i mean software? why cant send first and tell all instructions and
+ * boundaries." The instructions and the whole menu ARE sent once, when the
+ * line opens. What was repeating is the order: every tool answer carried
+ * every line of it, so adding four dishes sent the growing list back four
+ * times, and every refusal sent it again.
+ */
+test('a tool answer says how big the order is, not what is on it', async () => {
+  const page = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  await page.window.OrderingVoice.start();
+  await settle();
+  const answer = await page.window.OrderingVoice.runTool('add_to_order', { item_id: 'm1', quantity: 2 });
+  assert.strictEqual(answer.ok, true);
+  assert.strictEqual(typeof answer.order.lines, 'number', 'the whole list went back down the line again');
+  assert.ok('total' in answer.order);
+
+  /* show_order is the exception: asking for the list is what it is for. */
+  const list = await page.window.OrderingVoice.runTool('show_order', {});
+  assert.ok(Array.isArray(list.order.lines), 'show_order stopped answering with the order');
+  page.window.OrderingVoice.stop();
+  page.window.close();
+});
+
+/*
+ * FRENCH FRIES DO NOT GO WITH BIRYANI.
+ *
+ * Owner: "for checken briyani its suggessting french fries. not good
+ * combination. ask would like to add cock. only related prducts good."
+ *
+ * The old rule was not a pairing, it was a leftover: anything from a category
+ * they had not ordered from, cheapest first. It offered chips with biryani
+ * because chips were cheap and filed elsewhere, and would have offered soup
+ * with ice cream just as happily.
+ */
+test('what goes alongside is what the shop said, or a drink, and never a leftover', () => {
+  const box = liftGoesWith();
+  const menu = [
+    { id: 'm1', name: 'Chicken Biryani', category_name: 'Biryani', price: 320 },
+    { id: 'f1', name: 'French Fries', category_name: 'Starters', price: 90 },
+    { id: 'c1', name: 'Coke', category_name: 'Cold Drinks', price: 60 },
+    { id: 'g1', name: 'Gulab Jamun', category_name: 'Desserts', price: 70 },
+    { id: 's1', name: 'Mutton Soup', category_name: 'Soups', price: 140 },
+  ];
+  const names = (l) => l.map((p) => p.name);
+
+  const withBiryani = names(box.goesWithOrder([{ item_id: 'm1' }], menu));
+  assert.ok(!withBiryani.includes('French Fries'), 'chips are still offered with biryani');
+  assert.ok(!withBiryani.includes('Mutton Soup'), 'soup is still offered with biryani');
+  assert.ok(withBiryani.includes('Coke'), 'no drink was offered, which is the one safe pairing');
+
+  /* The shop's own word wins over any rule here. */
+  const told = menu.map((p) => (p.id === 'm1' ? { ...p, goes_with: ['g1'] } : p));
+  assert.strictEqual(names(box.goesWithOrder([{ item_id: 'm1' }], told))[0], 'Gulab Jamun', 'the shop said what goes with it and was ignored');
+
+  /* A menu with nothing suitable offers NOTHING, which beats offering wrong. */
+  assert.deepStrictEqual(box.goesWithOrder([{ item_id: 'm1' }], [menu[0], menu[1], menu[4]]), []);
 });
