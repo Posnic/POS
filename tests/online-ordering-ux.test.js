@@ -2476,6 +2476,66 @@ test('an order the shop has closed offers nothing to change', async () => {
   page.window.close();
 });
 
+test('the order rings a bell when the kitchen takes it, on both ways of ordering', () => {
+  /*
+   * Owner: "give ting sound to confirm. both customer side."
+   *
+   * Synthesised rather than a file: nothing to fetch, nothing for the page's
+   * CSP to allow, and no moment where the picture has arrived and the sound
+   * has not. The real assets/ting.js is evaluated here, so a change that
+   * stops it sounding fails.
+   */
+  const dom = new JSDOM('<body></body>', { url: 'https://shop.example/order/', runScripts: 'outside-only' });
+  const { window } = dom;
+  const struck = [];
+  window.AudioContext = function () {
+    this.currentTime = 0;
+    this.state = 'suspended';
+    this.destination = {};
+    this.resume = () => { this.state = 'running'; };
+    this.createOscillator = () => {
+      const osc = { frequency: {}, connect() {}, start() {}, stop() {} };
+      struck.push(osc);
+      return osc;
+    };
+    this.createGain = () => ({
+      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+      connect() {},
+    });
+  };
+  window.eval(read('assets/ting.js'));
+
+  assert.strictEqual(window.Ting.play(), true, 'the bell made no sound');
+  /* Two strikes, each a fundamental and a partial above it - a bell, not a
+     test tone. */
+  assert.strictEqual(struck.length, 4);
+  assert.deepStrictEqual(
+    struck.map((o) => Math.round(o.frequency.value)),
+    [1047, 2888, 1397, 3855]
+  );
+
+  /* One context, reused: a new one per order leaks a hardware handle, and
+     browsers cap how many a page may hold - the twentieth order of the
+     evening would fall silent. */
+  const first = window.AudioContext;
+  window.AudioContext = function () { throw new Error('a second context was made'); };
+  assert.strictEqual(window.Ting.play(), true, 'the bell built a second audio context');
+  window.AudioContext = first;
+  window.close();
+
+  /* And both ways of placing an order ring it: the assistant on the beat its
+     drawn bell is struck, and the token screen for a basket tapped through. */
+  const assistant = read('assets/assistant/script.js');
+  assert.match(assistant, /if \(beat === "landed"\) ting\(\);/, 'the assistant never rings the bell');
+  assert.match(assistant, /window\.Ting && typeof window\.Ting\.play === "function"/);
+  const token = read('assets/thankyou/script.js');
+  assert.match(token, /window\.Ting\.play\(\)/, 'a basket tapped through confirms itself in silence');
+  assert.match(token, /rung_\$\{token\}/, 'a refresh of the token screen rings the bell again');
+  for (const page of ['products.html', 'thankyou.html']) {
+    assert.match(read(page), /assets\/ting\.js/, page + ' never loads the bell');
+  }
+});
+
 test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {
   /* Owner: "i want very cool animation ... sending order to kitchen. and
      they got it preparing." Three beats, and the drawing changes with them. */
