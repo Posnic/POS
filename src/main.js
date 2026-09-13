@@ -4479,7 +4479,7 @@ app.whenReady().then(async () => {
       try {
         return require('./device-preferences').cloudPrintRelay();
       } catch (e) {
-        return { enabled: false, apiUrl: '' };
+        return { enabled: false, apiUrl: '', key: '' };
       }
     },
     /* The counter's roll, not whatever Windows calls the default. See
@@ -4536,7 +4536,7 @@ app.whenReady().then(async () => {
   });
 
   // Setup IPC handlers
-  setupHardwareIPC(hardwareManager, kotManager);
+  setupHardwareIPC(hardwareManager, kotManager, billManager);
   console.log('Hardware IPC handlers registered');
 
   // Start server

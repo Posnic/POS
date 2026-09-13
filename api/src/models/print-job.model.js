@@ -109,6 +109,12 @@ const printJobSchema = new mongoose.Schema(
    this scales past one shop: branch + status + age. */
 printJobSchema.index({ branch_id: 1, status: 1, created_at: 1 });
 
+/* Named explicitly, though this is exactly what mongoose already derives.
+   Written down so tests/sync-classification.test.js can see it: a collection
+   it cannot see is a collection nobody has had to make a decision about, and
+   that test exists because a whole collection once shipped unlisted. */
+printJobSchema.set('collection', 'printjobs');
+
 const PrintJob = defineModel('PrintJob', printJobSchema);
 
 module.exports = PrintJob;

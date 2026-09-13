@@ -459,11 +459,66 @@
                             nothing is sent anywhere until both of these are filled in.
                         </div>
                     </div>
+                    <!--
+                        THIS COMPUTER'S KEY, FOR PASTING INTO THE SHOP.
+
+                        Every Posnic installation makes its own printing key the
+                        first time it starts, and a shop's internet server is an
+                        installation: it has a different one. So a till asking
+                        its shop over the internet is turned away every time,
+                        and a refusal used to look exactly like "nothing to
+                        print".
+
+                        Somebody has to introduce the two, and the key travels
+                        in THIS direction on purpose: a key that starts life on
+                        this machine and is stored by the shop only as a digest
+                        never puts a server secret into a web page.
+                    -->
+                    <div style="margin-top:14px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                            This computer's printing key
+                        </label>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <input type="text" id="cpTillKey" readonly
+                                style="flex:1 1 auto;min-width:0;padding:12px 14px;border:2px solid #e9ecef;
+                                       border-radius:10px;font-size:13px;font-family:ui-monospace,Consolas,monospace;
+                                       background:#f9fafb;color:#374151;">
+                            <button class="btn btn-secondary" id="cpCopyKey" onclick="cpCopyKey()"
+                                style="padding:12px 18px;border-radius:10px;white-space:nowrap;">Copy</button>
+                        </div>
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                            Open your shop in a browser, go to Settings, and allow this key under
+                            bill printing. Until you do, your shop will turn this computer away.
+                        </div>
+                    </div>
                     <div style="display:flex;gap:12px;align-items:center;margin-top:14px;">
                         <button class="btn btn-secondary" onclick="cpSave()"
                             style="padding:12px 20px;border-radius:10px;">💾 Save</button>
                         <span id="cpSummary" style="font-size:13px;color:#6b7280;"></span>
                     </div>
+                </div>
+
+                <!--
+                    WHAT THE BILL PRINTER IS ACTUALLY DOING.
+
+                    A waiter taps Print bill and nothing comes out. Until now
+                    the reason lived in a console window nobody has open on a
+                    shop floor, so "it is not printing" and "no receipt printer
+                    is set on this till" were the same sentence to the person
+                    standing at the counter.
+
+                    Two lines because there are two doors and they fail
+                    separately: a shop can have a perfectly working counter
+                    printer and a cloud address with a typo in it.
+                -->
+                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+                        <div style="font-weight:700;color:#2c3e50;">🧾 Bills asked for by waiters</div>
+                        <span id="bpPrinted" style="font-size:13px;color:#6b7280;"></span>
+                    </div>
+                    <div id="bpRows" style="font-size:14px;color:#2c3e50;"></div>
+                    <div id="bpTrouble" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+                                               background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:13px;"></div>
                 </div>
 
                 <div style="text-align:center;margin:26px 0;">
@@ -1294,6 +1349,8 @@
             autoReconnect();
             rpInit();
             cpInit();
+            bpRefresh();
+            if (!bpTimer) bpTimer = setInterval(bpRefresh, 5000);
             cdInit();
             kotInit();
         });
@@ -1474,6 +1531,159 @@
          * before by a setting stored as text: `'false'` is a truthy string, so
          * a switch saved as text reads as ON for ever after.
          */
+        /*
+         * Read every five seconds while this screen is open, and never faster:
+         * it is a status line, not an instrument, and the answer changes at
+         * the speed a person walks to the printer.
+         */
+        let bpTimer = null;
+
+        function bpWhen(iso) {
+            if (!iso) return 'not yet';
+            const then = new Date(iso).getTime();
+            if (!then) return 'not yet';
+            const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+            if (secs < 10) return 'just now';
+            if (secs < 60) return secs + ' seconds ago';
+            /* Floor, not round. With `round` the first minute band started at
+               90 seconds and rounded to 2, so "1 minute ago" was a line of
+               code that could never run. */
+            const mins = Math.floor(secs / 60);
+            if (mins < 90) return mins + ' minute' + (mins === 1 ? '' : 's') + ' ago';
+            return new Date(iso).toLocaleTimeString();
+        }
+
+        function bpRow(title, state, detail, good) {
+            const dot = good === null ? '#9ca3af' : (good ? '#12b76a' : '#f04438');
+            return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;">'
+                + '<span style="width:9px;height:9px;border-radius:50%;background:' + dot + ';margin-top:6px;flex:0 0 auto;"></span>'
+                + '<div><div style="font-weight:600;">' + title + ' <span style="font-weight:400;color:#6b7280;">' + state + '</span></div>'
+                + '<div style="font-size:12px;color:#9ca3af;margin-top:2px;">' + detail + '</div></div></div>';
+        }
+
+        async function bpRefresh() {
+            const rows = document.getElementById('bpRows');
+            if (!rows || !window.electronAPI || !window.electronAPI.bill) return;
+            let s;
+            try {
+                s = await window.electronAPI.bill.getStatus();
+            } catch (e) {
+                return;
+            }
+            if (!s) return;
+
+            /*
+             * "no branch" is NOT ready, and reading it as ready is the whole
+             * reason this panel is worth having. A till that has not worked
+             * out which shop it is will never print anything and will never
+             * say why - it just sits there answering nobody, looking fine.
+             */
+            const near = String(s.lastStatus || '');
+            const nearBad = near.indexOf('error') === 0;
+            const noBranch = near === 'no branch';
+            let html;
+            if (!s.isPolling) {
+                html = bpRow('On the shop Wi-Fi', 'not running',
+                    'The bill printer did not start with this computer. Restarting it is the usual fix.',
+                    false);
+            } else if (noBranch) {
+                html = bpRow('On the shop Wi-Fi', 'waiting for the shop',
+                    'This computer has not worked out which branch it is yet, so no bill can be matched to it. '
+                    + 'It keeps trying; if it stays here, set the branch in Kitchen printing.',
+                    false);
+            } else if (nearBad) {
+                html = bpRow('On the shop Wi-Fi', 'not answering',
+                    near.replace(/^error:\s*/, ''), false);
+            } else if (near === 'idle') {
+                html = bpRow('On the shop Wi-Fi', 'starting up',
+                    'It has not looked yet. This clears within a few seconds.', null);
+            } else {
+                html = bpRow('On the shop Wi-Fi', 'ready',
+                    'Phones on this network print straight to this computer. Last checked '
+                    + bpWhen(s.lastPollAt) + '.', true);
+            }
+
+            const cloud = String((s.cloud && s.cloud.status) || 'off');
+            if (cloud === 'off') {
+                html += bpRow('Over the internet', 'off',
+                    'Nothing is sent outside the shop. Turn it on above only if the phones are not on this Wi-Fi.',
+                    null);
+            } else if (cloud === 'no branch') {
+                html += bpRow('Over the internet', 'waiting for the shop',
+                    'Switched on, but this computer does not know which branch it is yet.', false);
+            } else if (cloud.indexOf('refused by') > -1) {
+                /* The one cloud failure with an exact remedy, so it gets its
+                   own words rather than being filed under "not answering". */
+                html += bpRow('Over the internet', 'turned away',
+                    'Your shop has not allowed this computer yet. Copy the printing key above, '
+                    + 'open your shop in a browser, and allow it under Settings.', false);
+            } else if (cloud.indexOf('error') === 0) {
+                html += bpRow('Over the internet', 'not answering',
+                    cloud.replace(/^error:\s*/, ''), false);
+            } else {
+                html += bpRow('Over the internet', 'ready',
+                    'Last checked ' + bpWhen(s.cloud && s.cloud.lastPollAt) + '.', true);
+            }
+            rows.innerHTML = html;
+
+            const printed = document.getElementById('bpPrinted');
+            if (printed) {
+                printed.textContent = s.printed
+                    ? s.printed + ' printed since this computer started, last ' + bpWhen(s.lastPrintedAt)
+                    : 'none printed yet';
+            }
+
+            /*
+             * The printer's own words, which is the only line here a
+             * shopkeeper can act on: a roll that has run out, a printer that
+             * is switched off, a till nobody has chosen a receipt printer on.
+             */
+            const trouble = document.getElementById('bpTrouble');
+            if (trouble) {
+                if (s.lastPrintError) {
+                    trouble.textContent = 'The last bill did not print: ' + s.lastPrintError;
+                    trouble.style.display = 'block';
+                } else {
+                    trouble.style.display = 'none';
+                }
+            }
+        }
+
+        /*
+         * This computer's own key, on screen so it can be pasted into the shop.
+         *
+         * Shown in full rather than masked: it is only useful when somebody can
+         * read it, this is the machine that owns it, and a masked field beside
+         * a Copy button is how people end up pasting the mask.
+         */
+        async function cpShowKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !window.electronAPI || !window.electronAPI.bill) return;
+            try {
+                field.value = (await window.electronAPI.bill.getPrintingKey()) || '';
+            } catch (e) {
+                field.value = '';
+            }
+            if (!field.value) field.value = 'Not ready yet - restart this app';
+        }
+
+        async function cpCopyKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !field.value) return;
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                /* A denied clipboard is not a dead end: select it so the
+                   shopkeeper can copy it the way they already know. */
+                field.select();
+            }
+            const btn = document.getElementById('cpCopyKey');
+            if (btn) {
+                btn.textContent = 'Copied';
+                setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+            }
+        }
+
         async function cpInit() {
             if (!rpPref()) return;
             try {
@@ -1483,6 +1693,7 @@
                 const field = document.getElementById('cpApiUrl');
                 if (box) box.checked = on === true || on === 'true';
                 if (field) field.value = url || '';
+                await cpShowKey();
                 cpSummary();
             } catch (e) {
                 console.warn('cpInit:', e.message);
@@ -1498,9 +1709,11 @@
                 el.textContent = 'Off. Phones on the shop Wi-Fi still print, straight to this computer.';
                 return;
             }
-            el.textContent = url.trim()
-                ? 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.'
-                : 'On, but no address yet - nothing will be checked until one is filled in.';
+            if (!url.trim()) {
+                el.textContent = 'On, but no address yet - nothing will be checked until one is filled in.';
+                return;
+            }
+            el.textContent = 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.';
         }
 
         (function () {
@@ -1525,14 +1738,12 @@
                 await rpPref().set('cloud_print_relay', on);
                 await rpPref().set('cloud_api_url', url);
                 cpSummary();
-                rpShowStatus(
-                    on && url
-                        ? 'Saved. This computer will print bills asked for over the internet.'
-                        : on
-                            ? 'Saved, but fill in your shop address or nothing will be checked.'
-                            : 'Saved. Nothing is sent over the internet from this computer.',
-                    on && !url ? 'warn' : 'success'
-                );
+                let said;
+                if (!on) said = 'Saved. Nothing is sent over the internet from this computer.';
+                else if (!url) said = 'Saved, but fill in your shop address or nothing will be checked.';
+                else said = 'Saved. Allow the key below in your shop, and bills asked for over '
+                    + 'the internet will print here.';
+                rpShowStatus(said, on && !url ? 'warn' : 'success');
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }

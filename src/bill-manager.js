@@ -182,6 +182,17 @@ class BillManager {
     this.cloudStatus = 'off';
     this.cloudPollAt = null;
     this.printedCount = 0;
+
+    /*
+     * THE LAST THING THAT WENT WRONG WITH THE PAPER, kept rather than logged.
+     *
+     * `lastStatus` is about the conversation with the API; this is about the
+     * printer, and they fail independently. A till can be talking to its queue
+     * perfectly while every bill is refused because the roll is out - and the
+     * one of those a shopkeeper can act on is this one.
+     */
+    this.lastPrintError = '';
+    this.lastPrintedAt = null;
   }
 
   getStatus() {
@@ -190,6 +201,8 @@ class BillManager {
       lastPollAt: this.lastPollAt,
       lastStatus: this.lastStatus,
       printed: this.printedCount,
+      lastPrintedAt: this.lastPrintedAt,
+      lastPrintError: this.lastPrintError,
       branchId: this.branchId,
       tillId: this.tillId,
       /* Reported separately because the two doors fail separately: a shop can
@@ -396,6 +409,15 @@ class BillManager {
    * matters and exactly when a shop is busy enough to have two running.
    */
   async _drain(base, { wait = false, timeoutMs = 0 } = {}) {
+    /*
+     * THIS MACHINE'S OWN KEY, at both doors.
+     *
+     * Made once at first boot (main.js, crypto.randomBytes(32)) and never
+     * anywhere else. Its own API knows it because they share a process; the
+     * shop's cloud server knows it because somebody pasted it into Settings
+     * once - see api/src/models/print-till.model.js for why the key travels in
+     * that direction rather than the other.
+     */
     const key = process.env.KIOSK_API_KEY || '';
     const request = {
       method: 'POST',
@@ -419,6 +441,24 @@ class BillManager {
     }
 
     const response = await fetch(`${base}/sales/claimPrintJobs`, request);
+
+    /*
+     * A REFUSAL LOOKS EXACTLY LIKE AN EMPTY QUEUE, and must not.
+     *
+     * 401 answers `{ status: false, data: null }`, so reading the list out of
+     * it gives [] - a till that is being turned away every single time reports
+     * "ok, nothing to print" for ever, and the only clue is that bills never
+     * arrive. Said out loud here instead, because it is fixable in one field:
+     * the key belongs to the shop's server, not to this machine.
+     */
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        'refused by ' + base + ': this shop has not allowed this till to print. ' +
+          'Copy the printing key shown in Hardware Manager and paste it into your shop, ' +
+          'under Settings.'
+      );
+    }
+
     const answer = await response.json();
     this.lastPollAt = new Date().toISOString();
 
@@ -438,7 +478,13 @@ class BillManager {
       /* eslint-disable-next-line no-await-in-loop -- printers are serial
          devices; two jobs sent at once interleave on the same roll. */
       const printed = await this._printOne(job.payload || {});
-      if (printed.ok) this.printedCount += 1;
+      if (printed.ok) {
+        this.printedCount += 1;
+        this.lastPrintedAt = new Date().toISOString();
+        this.lastPrintError = '';
+      } else {
+        this.lastPrintError = printed.error || 'the printer refused the job';
+      }
       /* eslint-disable-next-line no-await-in-loop -- see above */
       await this._finish(base, key, this._idOf(job), printed.ok, printed.error);
     }
