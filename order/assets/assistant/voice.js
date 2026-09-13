@@ -641,17 +641,152 @@
     tellTheAssistant(said + ' Do not say anything about it unless they bring it up.');
   }
 
+  /*
+   * THE SAME TABLE, AGAIN.
+   *
+   * Owner: "same table not accepted. but how about adding extra or modifying
+   * same table orders?"
+   *
+   * The shop allows one open order per table by default, and it is right to:
+   * two tickets on one table is usually somebody picking the wrong table, and
+   * the cost of finding out is a bill split in two at the end of the meal.
+   * The rule even says what to do instead - "Add to it, or settle it first."
+   *
+   * But from a customer's phone there was no way to add to it. They scanned
+   * table 34, ordered, ate half of it, wanted one more naan, and the shop
+   * said no. A rule with no door next to it is just a wall.
+   *
+   * So this is the door. A second send at the same table, from the phone that
+   * placed the first one, ADDS to that order rather than opening a second. It
+   * goes through the customer's own change endpoint, which means the shop's
+   * rules still decide: inside the window it simply changes, past it the
+   * kitchen may have started so it becomes a request the shop answers, and a
+   * billed or paid order refuses and this falls through to a fresh ticket -
+   * which is correct, because a settled table is a new sitting.
+   *
+   * THE PROOF IS THE TOKEN, as everywhere else here. Another diner at the
+   * same table holds no token for this order and cannot touch it; they get
+   * the shop's refusal, which is the honest answer for them.
+   */
+  async function orderHereBefore(point) {
+    var table = String((point && point.table) || "").trim();
+    if (!table) return null;
+    /* The shop is asked for, not assumed from the call: this runs on the
+       button as well as the line, and a phone that ordered at table 5 in one
+       shop must not add to that when it scans table 5 in another. */
+    var shop = await branchNow();
+    var mine = myOrders();
+    for (var i = 0; i < mine.length; i += 1) {
+      var row = mine[i];
+      if (!row || !row.orderId || !row.token) continue;
+      if (String(row.table || "").trim() !== table) continue;
+      if (shop && String(row.shop || "") !== String(shop)) continue;
+      return row;
+    }
+    return null;
+  }
+
+  /**
+   * Add this basket to an order already open at this table.
+   *
+   * @returns {Promise<null|{ok: boolean, reason?: string, requested?: boolean, token?: string}>}
+   *          null when there is nothing to add to and the caller should place
+   *          a new order instead.
+   */
+  async function addToTheOpenOne(row, lines) {
+    var shop = await branchNow();
+    if (!shop) return null;
+    var base =
+      apiBase() + "/online-ordering/" + encodeURIComponent(shop) + "/orders/" + encodeURIComponent(row.orderId);
+
+    /* What the shop says is on it NOW. The quantities this endpoint takes are
+       absolute, so two more of something already there is what is there plus
+       two - and asking the shop rather than trusting this phone is the only
+       way that arithmetic is right after somebody else has touched it. */
+    var said = null;
+    try {
+      var read = await fetch(base + "?token=" + encodeURIComponent(row.token), {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+      if (!read.ok) return null;
+      var body = await read.json();
+      said = body && body.type === "success" ? body.data : null;
+    } catch (e) {
+      return null;
+    }
+    /* Settled, called off, or refused: that sitting is over and the next
+       order is a new one. */
+    if (!said || said.cancelled || said.paid) return null;
+    if (said.why_not && said.why_not !== "too_late") return null;
+
+    var already = {};
+    (said.items || []).forEach(function (line) {
+      already[String(line.item_id || "")] = Number(line.quantity) || 0;
+    });
+    var wanted = lines.map(function (line) {
+      var id = String(line.item_id || "");
+      return { item_id: id, quantity: (already[id] || 0) + (Number(line.quantity) || 0) };
+    });
+    if (!wanted.length) return null;
+
+    try {
+      var sent = await fetch(base + "/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ token: row.token, items: wanted }),
+      });
+      var answer = await sent.json().catch(function () {
+        return null;
+      });
+      if (!sent.ok || !answer || answer.type !== "success") return null;
+
+      /* It went onto the order, so the basket has been sent. Emptied the way
+         checkout empties it, or the next screen shows it all over again. */
+      try {
+        if (typeof saveCartData === "function") await saveCartData([]); // eslint-disable-line no-undef
+        if (typeof renderCart === "function") await renderCart([]); // eslint-disable-line no-undef
+      } catch (e) {
+        /* an order that went is more important than a basket that lingers */
+      }
+      var data = answer.data || {};
+      live.placed = String(row.token || "");
+      live.placedId = String(row.orderId || "");
+      var a = assistant();
+      /* The docket flies for something that actually went to the kitchen. A
+         request past the window has NOT gone - a person still has to say yes
+         - so that one opens on a still, or the drawing tells a lie. */
+      if (a && a.placedPanel) {
+        a.placedPanel(live.placed, { orderId: live.placedId, still: data.requested === true });
+      }
+      return { ok: true, added: true, requested: data.requested === true, token: live.placed };
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function sendToKitchen(args) {
     var order = await cartSummary();
     if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
     if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: order };
     var way = resolveWay(args && args.fulfilment);
     if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: order };
-    if (way === "delivery") return { ok: false, reason: "needs_details", next: "review", order: order };
+    /*
+     * THERE IS NO REVIEW BUTTON, so this must not say "review".
+     *
+     * Owner: "AI asking to review and click review button. there is not
+     * review button." He is right, and this field is where the word came
+     * from: the model reads this answer as JSON and says what it finds. The
+     * button under the conversation used to say Review order and now says
+     * Confirm and send, because the review is the minute AFTER the order
+     * goes. A field naming a button that was renamed a while ago sent him
+     * hunting the screen for it.
+     */
+    if (way === "delivery") return { ok: false, reason: "needs_details", next: "the_page_finishes_it", order: order };
     var s = shopNow();
     var payment = (s && s.payment) || {};
-    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "review", order: order };
-    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "review", order: order };
+    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "the_page_finishes_it", order: order };
+    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "the_page_finishes_it", order: order };
     var point = servicePoint();
     try {
       if (way === "dine_in" && !(point && (point.table || point.venue))) {
@@ -672,14 +807,39 @@
     } catch (e) {
       /* a browser that keeps nothing still places the order below */
     }
-    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "review", order: order }; // eslint-disable-line no-undef
+    /*
+     * ALREADY EATING AT THIS TABLE? Then this is one more thing on the same
+     * order, not a second ticket the shop would refuse. Tried before the
+     * checkout, and a null answer means there is nothing to add to - so the
+     * ordinary path below still runs and nothing is lost.
+     */
+    if (way === "dine_in") {
+      var here = await orderHereBefore(point);
+      if (here) {
+        var joined = await addToTheOpenOne(here, order.lines);
+        if (joined && joined.ok) {
+          return {
+            ok: true,
+            token: joined.token,
+            added_to_open_order: true,
+            requested: joined.requested === true,
+            total: order.total,
+            way: way,
+            pay: "at the counter",
+            order: order
+          };
+        }
+      }
+    }
+
+    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order }; // eslint-disable-line no-undef
     var placed = null;
     try {
       placed = await checkout("", "Cash", { stay: true }); // eslint-disable-line no-undef
     } catch (e) {
       placed = null;
     }
-    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "review", order: order };
+    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order };
     live.placed = String(placed.token);
     live.placedId = String(placed.saleId || "");
     var a = assistant();

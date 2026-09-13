@@ -210,6 +210,20 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    * paper.
    */
   ipcMain.handle('printer:print-receipt', async (event, sale, options = {}) => {
+    /*
+     * Every receipt is written down, printed or not.
+     *
+     * Kitchen tickets have had a day's log with a screen for a long time;
+     * receipts had nothing at all. When a customer says their bill never came
+     * out there was no way to tell whether the till had tried, which printer
+     * it went to, or what the printer said back.
+     *
+     * TRIED is the half that matters. A receipt that failed is the one
+     * somebody is asking about, and a log of successes only is silent at
+     * exactly the moment it is needed.
+     */
+    const startedAt = Date.now();
+    const receiptLog = require('./receipt-log');
     try {
       const { renderSale } = require('./escpos-receipt');
       const { normalizeTargets, columnsFor } = require('./printer-targets');
@@ -269,6 +283,25 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
        * "Sent undefined bytes".
        */
       const sentBytes = results.reduce((n, r) => n + (r.success ? (r.sent || 0) : 0), 0);
+
+      receiptLog.record({
+        kind: options.kind || 'receipt',
+        saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+        title: (sale && sale.title) || options.docName || 'Receipt',
+        total: sale && (sale.total ?? sale.sales_total),
+        /* Who asked. The floor bill passes its own; anything else is somebody
+           standing at the counter. */
+        source: options.source || 'Till',
+        ms: Date.now() - startedAt,
+        printers: results.map((r) => ({
+          name: r.printer,
+          copy: r.copy,
+          status: r.success ? 'success' : 'failed',
+          reason: r.success ? undefined : (r.error || 'unknown'),
+          bytes: r.sent,
+        })),
+      });
+
       return {
         success: results.some((r) => r.success),
         bytes: sentBytes,
@@ -280,9 +313,32 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
       };
     } catch (err) {
       console.error('[Print] receipt render failed:', err.message);
+      /*
+       * A receipt that never reached a printer is the most important row in
+       * the log, not the least. Without this the failures that happen BEFORE
+       * any printer is touched - a layout that will not draw, a missing
+       * setting - would leave no trace at all and look like the till simply
+       * ignored the button.
+       */
+      receiptLog.record({
+        kind: options.kind || 'receipt',
+        saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
+        title: (sale && sale.title) || options.docName || 'Receipt',
+        total: sale && (sale.total ?? sale.sales_total),
+        source: options.source || 'Till',
+        ms: Date.now() - startedAt,
+        printers: [{ name: '(never reached a printer)', status: 'failed', reason: err.message }],
+      });
       return { success: false, error: err.message };
     }
   });
+
+  /* The day's receipts, for the Hardware Manager screen. */
+  ipcMain.handle('receipt:get-logs', (event, date) => require('./receipt-log').forDate(date));
+
+  ipcMain.handle('receipt:delete-log', (event, date, id) => ({
+    success: require('./receipt-log').remove(date, id),
+  }));
 
   /*
    * A report on a roll, as ESC/POS.

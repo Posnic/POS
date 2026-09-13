@@ -147,29 +147,78 @@ async function read(body, context) {
   if (!order || String(order.token_id || '') !== token) {
     return { status: false, message: 'not_found', data: null };
   }
+  return { status: true, message: 'OK', data: await viewOf(order, context) };
+}
+
+/*
+ * THE WHOLE ANSWER, SO THE PHONE NEED NOT ASK TWICE.
+ *
+ * Owner: "when click particulor order i see + and - button to modify but not
+ * working page broken."
+ *
+ * It was not the buttons. A change answered with the items and the total and
+ * nothing else - no can_change, no seconds, no state - so both screens that
+ * offer a plus had to read the order back afterwards to redraw. Two requests
+ * per tap, against a limiter of ten a minute shared with the page load: on
+ * the fifth tap the read was refused, the screen had no answer to draw from,
+ * the details panel vanished under his thumb and the row collapsed. Exactly
+ * "not working, page broken", and nothing to do with the buttons.
+ *
+ * So a change answers with what a read answers. One request per tap, and the
+ * screen is drawn from the same shape either way, which is also the only way
+ * the two cannot drift apart.
+ */
+async function viewOf(order, context) {
   const seconds = await changeSeconds(context);
   const reason = whyNot(order, Date.now(), seconds);
   return {
-    status: true,
-    message: 'OK',
-    data: {
-      ...salesRepository.customerOrderView(order),
-      /* Whether they may still move it, why not, and how long the shop
+    ...salesRepository.customerOrderView(order),
+    /* Whether they may still move it, why not, and how long the shop
          leaves it open - so one read answers every question the page has,
          including what to count down. */
-      can_change: reason === '',
-      why_not: reason || undefined,
-      change_seconds: seconds,
-      /* Already asked for; the shop has it in the queue it accepts from. */
-      cancel_requested: order.cancel_requested === true,
-      /* And a change they have already asked for, so the page says "asked
+    can_change: reason === '',
+    why_not: reason || undefined,
+    change_seconds: seconds,
+    /* Already asked for; the shop has it in the queue it accepts from. */
+    cancel_requested: order.cancel_requested === true,
+    /* And a change they have already asked for, so the page says "asked
          for" rather than offering to ask again. */
-      change_requested:
-        order.change_requested && Array.isArray(order.change_requested.items)
-          ? order.change_requested.items
-          : null,
-    },
+    change_requested:
+      order.change_requested && Array.isArray(order.change_requested.items)
+        ? order.change_requested.items
+        : null,
   };
+}
+
+/**
+ * A change or a cancellation, answered with the order it left behind.
+ *
+ * The repository answers with what it wrote, which is the honest thing for
+ * it to say. This adds what the SCREEN needs to redraw without asking again:
+ * the state, the window, and the seconds left. Re-read rather than patched
+ * together from the old document, because a change can turn an order into a
+ * cancellation and the screen must be told which it is looking at.
+ *
+ * A refusal passes through untouched: there is nothing to draw.
+ */
+async function withTheWholeOrder(done, order, context) {
+  if (!done || !done.status) return done;
+  const fresh = await salesRepository.findCustomerOrder({
+    branchId: context && context.branchId,
+    orderId: String(order._id),
+  });
+  if (!fresh) return done;
+  /*
+   * THE WRITE WINS, and the view only fills the gaps.
+   *
+   * Spread the other way round and the re-read overwrites what the write
+   * just reported: a cancellation came back saying cancelled:false, because
+   * the read had not caught up with it. The repository has just told us what
+   * it did and is the authority on that; this read is here for the fields it
+   * does not carry - can_change, the seconds left, the state - and for
+   * nothing else.
+   */
+  return { ...done, data: { ...(await viewOf(fresh, context)), ...(done.data || {}) } };
 }
 
 /**
@@ -241,7 +290,10 @@ async function change(body, context) {
   const { order, reason, held } = await heldOrder(body, context);
   const wanted = Array.isArray(body && body.items) ? body.items.slice(0, 40) : [];
   if (!wanted.length) return { status: false, message: 'nothing_asked', data: null };
-  if (order) return salesRepository.changeCustomerOrderItems(order, wanted);
+  if (order) {
+    const done = await salesRepository.changeCustomerOrderItems(order, wanted);
+    return withTheWholeOrder(done, order, context);
+  }
 
   /* Nothing to ask about: not theirs, already off, or already money. A
      billed or paid order is a matter for the counter, and a shop that
@@ -277,7 +329,10 @@ async function change(body, context) {
  */
 async function cancel(body, context) {
   const { order, reason, held } = await heldOrder(body, context);
-  if (order) return salesRepository.cancelCustomerOrder(order);
+  if (order) {
+    const done = await salesRepository.cancelCustomerOrder(order);
+    return withTheWholeOrder(done, order, context);
+  }
 
   /* Nothing to ask about: it is already off, already billed, or not theirs. */
   if (!held || reason === 'not_found' || reason === 'already_cancelled') {

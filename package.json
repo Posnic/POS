@@ -88,6 +88,7 @@
       "src/shutdown-state.js",
       "src/scheduled-task.js",
       "src/startup-auth.js",
+      "src/receipt-log.js",
       "src/sync-agent-manager.js",
       "src/asset-updater.js",
       "src/asset-channel.js",

@@ -1042,7 +1042,7 @@ test("the shop's own greeting opens the conversation, and the console has somewh
 /* -------------------------------------------------------- talk to order */
 
 /** The products page with both assistant scripts and a shop that allows voice. */
-function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null, order = null } = {}) {
+function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null, order = null, remembered = [] } = {}) {
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
   const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0, checkout: [], left: [] };
@@ -1069,6 +1069,11 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
     }
   };
   window.setCartItemNote = async () => {};
+  /* What this phone has ordered here before, which is how a second order at
+     the same table finds the first one instead of being refused. */
+  window.rememberedOrders = () => JSON.parse(JSON.stringify(remembered));
+  window.saveCartData = async (rows) => { cart = rows ? JSON.parse(JSON.stringify(rows)) : []; };
+  window.renderCart = async () => {};
   /* What the page has for placing an order: the code's table, the same
      checkout a tap uses (told to stay), the shop's words and money. */
   window.KioskServicePoint = { read: () => ({ table, venue: '', unit: '', destination: null }) };
@@ -1786,7 +1791,7 @@ test('sending to the kitchen asks for what the code did not say, and hands the r
     await settle();
     const answer = lastOutput(page.calls);
     assert.strictEqual(answer.reason, reason, label);
-    assert.strictEqual(answer.next, 'review', label);
+    assert.strictEqual(answer.next, 'the_page_finishes_it', label);
     assert.deepStrictEqual(page.calls.checkout, [], label + ': placed anyway');
     page.window.OrderingVoice.stop();
   }
@@ -2176,24 +2181,56 @@ test('a shop that says no is quoted, not swallowed', async () => {
   window.close();
 });
 
-test('an order the shop has closed is a record, not a set of controls', async () => {
+/*
+ * PAST THE MINUTE, THE CONTROLS STAY AND BECOME A REQUEST.
+ *
+ * This test used to assert the opposite - no steppers once the window shut -
+ * and it was wrong about what the shop does. The server has taken a change
+ * past the window as a REQUEST since that work landed: a person answers it in
+ * the queue the shop already works. Nothing on the phone could reach it, so
+ * the screen offered Cancel and nothing else, which is a strange thing to show
+ * somebody whose actual wish is one more naan. Owner, twice: "60 seconds.
+ * after than only can request", and then "if user want can edit it".
+ */
+test('past the minute the plus and minus ask the shop instead of vanishing', async () => {
   const order = placedOrder({ can_change: false, why_not: 'too_late', paid: false });
   const { window, document } = voicePage({ order, reply: { status: 200, body: {} } });
   window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
   await window.OrderingAssistant.showPlacedOrder();
 
   assert.strictEqual(document.getElementById('placed-order').hidden, false, 'the order vanished the moment it could not be changed');
-  assert.deepStrictEqual([...document.querySelectorAll('.placed-step')], [], 'a stepper that could only fail');
-  assert.strictEqual(document.getElementById('placed-more').hidden, true, 'something was offered that could not be added');
-  /* Asking is still allowed: the customer is never told to go and find a person. */
+  assert.ok(document.querySelectorAll('.placed-step').length > 0, 'nothing to ask with: the screen offers only Cancel');
+  assert.strictEqual(document.getElementById('placed-more').hidden, false, 'nothing can be added even by asking');
+  /* And it says which, because a plus that quietly becomes a request is a
+     plus that gets tapped twice. */
+  const mode = document.getElementById('placed-mode');
+  assert.strictEqual(mode.hidden, false, 'the screen does not say a change is now a request');
+  assert.match(mode.textContent, /goes to the shop to confirm/);
   assert.strictEqual(document.getElementById('placed-cancel').textContent, 'Ask the shop to cancel');
   assert.strictEqual(document.getElementById('placed-clock').textContent, '', 'a countdown on an order that cannot be changed');
+  window.close();
+});
 
-  const paid = voicePage({ order: placedOrder({ can_change: false, paid: true }), reply: { status: 200, body: {} } });
+test('an order that is money is a record, and says nothing about asking', async () => {
+  /* Paid, billed, cancelled, or somebody else's cut in the total: asking
+     would only be refused, and the answer to those is the counter. */
+  for (const [label, shape] of [
+    ['paid', { can_change: false, why_not: 'already_paid', paid: true }],
+    ['billed', { can_change: false, why_not: 'already_billed', paid: false }],
+    ['a hotel room', { can_change: false, why_not: 'at_the_counter', paid: false }],
+  ]) {
+    const page = voicePage({ order: placedOrder(shape), reply: { status: 200, body: {} } });
+    page.window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+    await page.window.OrderingAssistant.showPlacedOrder();
+    assert.deepStrictEqual([...page.document.querySelectorAll('.placed-step')], [], label + ': a stepper that could only fail');
+    assert.strictEqual(page.document.getElementById('placed-mode').hidden, true, label + ': offered to ask when asking is refused');
+    page.window.close();
+  }
+
+  const paid = voicePage({ order: placedOrder({ can_change: false, why_not: 'already_paid', paid: true }), reply: { status: 200, body: {} } });
   paid.window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
   await paid.window.OrderingAssistant.showPlacedOrder();
   assert.strictEqual(paid.document.getElementById('placed-cancel').hidden, true, 'a paid order offers to cancel itself');
-  window.close();
   paid.window.close();
 });
 
@@ -2286,7 +2323,7 @@ test('the token screen downloads nothing and shows no bill', () => {
 });
 
 /** The history page in jsdom, with what a browser kept and what a shop says. */
-function historyPage({ kept = [], says = {}, menu = [], reachable = true } = {}) {
+function historyPage({ kept = [], says = {}, menu = [], reachable = true, change = null } = {}) {
   const dom = new JSDOM(read('history.html'), {
     url: 'https://shop.example/order/history.html',
     runScripts: 'outside-only',
@@ -2322,7 +2359,9 @@ function historyPage({ kept = [], says = {}, menu = [], reachable = true } = {})
     }
     if (init && init.method === 'POST') {
       calls.posted.push({ url: at, body: JSON.parse(init.body) });
-      return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ok: true } }) };
+      /* What a change answers with. The shop now hands back the whole order,
+         which is what lets one tap cost one request. */
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: change || { ok: true } }) };
     }
     calls.asked.push(at);
     return { ok: false, status: 404, json: async () => ({}) };
@@ -2982,4 +3021,191 @@ test('a call shows what was heard and said, and can still be told not to', async
   );
   /* The meter runs on a clock; leave it running and the test never ends. */
   window.OrderingVoice.stop();
+});
+
+/*
+ * THE SAME TABLE, AGAIN.
+ *
+ * Owner: "same table not accepted. but how about adding extra or modifying
+ * same table orders?"
+ *
+ * The shop allows one open order per table, and it is right to. But from a
+ * phone there was no way to add to the one already open, so a customer who
+ * wanted one more naan halfway through the meal was simply refused. The rule
+ * said "Add to it, or settle it first" and there was no door to add through.
+ *
+ * A second send at the same table now goes ONTO the open order, with the
+ * quantities read back from the shop first - two more of something already
+ * there is what is there plus two, and only the shop knows what is there.
+ */
+test('a second order at the same table is added to the one already open', async () => {
+  const open = {
+    id: 'o9',
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }],
+    can_change: true,
+    change_seconds: 60,
+    placed_at: new Date().toISOString(),
+  };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    cartLines: [{ id: 'm1', name: 'Chicken Biryani', price: 320, quantity: 1 }, { id: 'd1', name: 'Fresh Lime Soda', price: 80, quantity: 2 }],
+    order: open,
+    remembered: [{ orderId: 'o9', token: '042', shop: 'AZ100', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(done.ok, true, 'the second order was refused rather than added');
+  assert.strictEqual(done.added_to_open_order, true, 'it opened a second ticket on the same table');
+  assert.strictEqual(calls.checkout.length, 0, 'a new sale was created for a table that already had one');
+
+  /* Absolute quantities, merged with what the shop says is already there. */
+  const put = calls.fetch.filter((c) => /\/orders\/o9\/items$/.test(c.url)).pop();
+  assert.ok(put, 'nothing was added to the open order');
+  assert.strictEqual(put.body.token, '042', 'the add went without the proof that it is their order');
+  assert.deepStrictEqual(
+    put.body.items.slice().sort((a, b) => a.item_id.localeCompare(b.item_id)),
+    [{ item_id: 'd1', quantity: 2 }, { item_id: 'm1', quantity: 3 }],
+    'the quantities were not merged with what the order already had'
+  );
+
+  /* And the basket is empty, because it was sent. */
+  assert.deepStrictEqual(await window.getCartData(), [], 'the basket still holds what was just sent');
+});
+
+test('a settled table starts a fresh order rather than adding to a closed one', async () => {
+  const paid = { id: 'o9', items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }], can_change: false, why_not: 'already_paid', paid: true };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    order: paid,
+    remembered: [{ orderId: 'o9', token: '042', shop: 'AZ100', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(done.ok, true);
+  assert.ok(!done.added_to_open_order, 'it added to an order that had already been paid for');
+  assert.strictEqual(calls.checkout.length, 1, 'a new sitting did not get its own ticket');
+});
+
+test('another shop at the same table number is not the same table', async () => {
+  const open = { id: 'o9', items: [], can_change: true, change_seconds: 60, placed_at: new Date().toISOString() };
+  const { window, calls } = voicePage({
+    voice: 'live',
+    table: '34',
+    order: open,
+    /* Table 34, but somebody else's shop. */
+    remembered: [{ orderId: 'o9', token: '042', shop: 'OTHER', table: '34' }],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.ok(!done.added_to_open_order, 'an order at another shop was treated as this table');
+  assert.strictEqual(calls.checkout.length, 1);
+});
+
+/*
+ * THERE IS NO REVIEW BUTTON.
+ *
+ * Owner: "AI asking to review and click review button. there is not review
+ * button."
+ *
+ * He is right, and the word came from the page itself: send_to_kitchen
+ * answered with next:"review", the model reads that answer as JSON and says
+ * what it finds. The button under the conversation was renamed to Confirm
+ * and send a while ago - the review is the minute AFTER the order goes - so
+ * he was hunting the screen for something that had been gone for weeks.
+ */
+test('nothing the model reads back names a button that is not on the screen', async () => {
+  const page = voicePage({
+    voice: 'live',
+    table: '',
+    fulfilment: ['delivery'],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const answer = await page.window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(answer.ok, false);
+  assert.strictEqual(answer.reason, 'needs_details');
+  assert.ok(
+    !/review/i.test(JSON.stringify(answer)),
+    'the answer the model reads still says "review", so it will tell the customer to press a button that does not exist'
+  );
+  page.window.close();
+
+  /* And the button really does say something else. */
+  const html = read('products.html');
+  assert.match(html, /id="assistant-review"[\s\S]{0,200}Confirm &amp; send/, 'the one button no longer says Confirm and send');
+});
+
+/*
+ * THE PANEL THAT EMPTIED ITSELF UNDER HIS THUMB.
+ *
+ * Owner: "when click particulor order i see + and - button to modify but not
+ * working page broken."
+ *
+ * It was never the buttons. Every tap did the change and then repainted the
+ * whole page - and a repaint is a lookup covering every order on it. Two
+ * requests a tap, against a limiter of ten a minute shared with the page
+ * load, so around the fifth tap the lookup was refused; the page fell back to
+ * what the phone remembers; a remembered order carries no details; and the
+ * panel he had open disappeared.
+ *
+ * The change now answers with the whole order, so the row is redrawn from
+ * that answer and NOTHING is asked. This drives the real page and counts.
+ */
+test('changing an order from the history page asks the shop once, not twice', async () => {
+  const order = {
+    order_id: 'o1', token: '219', shop: 'Azure', paid: false, bill_ready: false, cancelled: false,
+    state: 'accepted', placed_at: new Date().toISOString(), can_change: true, change_seconds: 60,
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+  };
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [{ name: 'Chicken Biryani', quantity: 2 }] }];
+  const { window, document, calls } = historyPage({ kept, says: { o1: order }, change: order });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 80));
+
+  document.querySelector('.history-open').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.strictEqual(document.querySelectorAll('.history-step').length, 2, 'the row opened without its controls');
+
+  const lookupsBefore = calls.asked.filter((c) => /lookup/.test(c.url || c)).length;
+  document.querySelectorAll('.history-step')[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(calls.posted.length, 1, 'the tap did not reach the shop');
+  assert.deepStrictEqual(calls.posted[0].body.items, [{ item_id: 'm1', quantity: 3 }]);
+  assert.strictEqual(
+    calls.asked.filter((c) => /lookup/.test(c.url || c)).length,
+    lookupsBefore,
+    'the page read every order back after one tap, which is what ran it into the limiter'
+  );
+
+  /* And the panel is still there, redrawn, with its controls. */
+  const panel = document.getElementById('details-o1');
+  assert.ok(panel && !panel.hidden, 'the details panel vanished after a tap');
+  assert.strictEqual(document.querySelectorAll('.history-step').length, 2, 'the controls did not come back');
+  window.close();
+});
+
+test('a shop that answers with too little to draw still gets the row repainted', async () => {
+  /* The fallback matters: a row that does not redraw at all is the bug this
+     replaced, so an answer without can_change must still repaint. */
+  const order = {
+    order_id: 'o1', token: '219', shop: 'Azure', paid: false, bill_ready: false, cancelled: false,
+    state: 'accepted', placed_at: new Date().toISOString(), can_change: true, change_seconds: 60,
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+  };
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [] }];
+  const { window, document, calls } = historyPage({ kept, says: { o1: order }, change: { order_id: 'o1', items: [], total: 0 } });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 80));
+  document.querySelector('.history-open').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const before = calls.asked.filter((c) => /lookup/.test(c.url || c)).length;
+  document.querySelectorAll('.history-step')[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 140));
+  assert.ok(
+    calls.asked.filter((c) => /lookup/.test(c.url || c)).length > before,
+    'an answer too thin to draw from left the row stale'
+  );
+  window.close();
 });

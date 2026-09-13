@@ -363,6 +363,11 @@
                         <h3 class="placed-order-title">Your order</h3>
                         <span class="placed-clock" id="placed-clock"></span>
                     </div>
+                    <!-- Past the minute the plus and minus still work, but
+                         they ask the shop instead of changing it outright.
+                         Said here so nobody taps twice wondering why nothing
+                         moved. -->
+                    <p class="placed-mode" id="placed-mode" hidden></p>
                     <ul class="placed-lines" id="placed-lines"></ul>
 
                     <!-- Things that go with what they ordered. One row, tapped

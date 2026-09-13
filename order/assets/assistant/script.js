@@ -638,6 +638,19 @@
     }
   }
 
+  /*
+   * Past the minute, but still something a person could say yes to.
+   *
+   * The shop's own reasons, from customer-order.service: too_late is the
+   * kitchen having had it a while, which is precisely the case a request is
+   * for. Everything else - billed, paid, cancelled, refused, a total with a
+   * hotel's cut in it - is the counter's, and asking would only be refused.
+   */
+  function canStillAsk(said) {
+    if (!said || said.cancelled || said.paid) return false;
+    return String(said.why_not || "") === "too_late";
+  }
+
   function paintPlacedOrder(said) {
     var box = el("placed-order");
     if (!box) return;
@@ -652,6 +665,16 @@
     placedOrder.seconds = said.can_change ? Number(said.change_seconds) || 0 : 0;
     placedOrder.at = new Date(said.placed_at || 0).getTime();
 
+    /* Which the buttons are now: their own order, or a wish a person answers.
+       Said once, above the lines, because a plus that quietly becomes a
+       request is a plus that gets tapped twice. */
+    var mode = el("placed-mode");
+    if (mode) {
+      var asking = !said.can_change && canStillAsk(said);
+      mode.hidden = !asking;
+      if (asking) mode.textContent = say("The kitchen has it. A change now goes to the shop to confirm.");
+    }
+
     var lines = el("placed-lines");
     if (lines) {
       lines.textContent = "";
@@ -665,9 +688,26 @@
         name.textContent = String(line.name || "");
         row.appendChild(qty);
         row.appendChild(name);
-        /* Steppers only while it is still theirs to move; once the shop has
-           closed the window the row is a record, not a control. */
-        if (said.can_change) {
+        /*
+         * STEPPERS STAY PAST THE WINDOW, and become a request.
+         *
+         * Owner: "after that show animation and order details page. if user
+         * want can edit it", and earlier "60 seconds. after than only can
+         * request. request will go to cpatain app or desktop app."
+         *
+         * They used to disappear the moment the minute ran out, which left a
+         * screen offering nothing but Cancel - a strange thing to show
+         * somebody whose actual wish is one more naan, and the exact
+         * complaint that started this. The server has taken changes as
+         * requests past the window since then; nothing on the phone could
+         * reach it. So the controls stay, and the words above them say which
+         * they are now.
+         *
+         * Off entirely only when the order is genuinely beyond asking: paid,
+         * billed, cancelled, or somebody else's money in the total. The shop
+         * names that in why_not, and the answer to those is the counter.
+         */
+        if (said.can_change || canStillAsk(said)) {
           [
             [-1, "\u2212", "One less {name}"],
             [1, "+", "One more {name}"]
@@ -692,7 +732,7 @@
     /* Something alongside, while there is still time to add it. */
     var more = el("placed-more");
     var row = el("placed-more-row");
-    var suggestions = said.can_change ? goesWith(said.items || []) : [];
+    var suggestions = said.can_change || canStillAsk(said) ? goesWith(said.items || []) : [];
     if (more && row) {
       row.textContent = "";
       suggestions.forEach(function (item) {
@@ -752,6 +792,23 @@
     }
     clock.textContent = say("{n}s to change it", { n: left });
     placedOrder.tick = setTimeout(paintPlacedClock, 1000);
+  }
+
+  /**
+   * Draw what the shop just said, and only ask again if it said too little.
+   *
+   * A change answers with the whole order now (customer-order.service,
+   * viewOf), so the ordinary path costs one request per tap instead of two.
+   * The fallback is kept because an older server, or a refusal, answers with
+   * nothing worth drawing - and a screen that does not redraw at all is the
+   * bug this replaced.
+   */
+  async function redraw(said) {
+    if (said && !said.failed && Array.isArray(said.items) && said.can_change !== undefined) {
+      paintPlacedOrder(said);
+      return;
+    }
+    await showPlacedOrder();
   }
 
   /** Ask the shop, then draw. */
@@ -1125,7 +1182,12 @@
             ]
           });
           if (moved && moved.failed) actionLine(say(refusal(moved.failed)));
-          await showPlacedOrder();
+          else if (moved && moved.requested) actionLine(say("The shop has been asked to change it"));
+          /* DRAWN FROM THE ANSWER, not from a second question. The change
+             now comes back as the whole order, so asking again would cost a
+             request for nothing - and the limiter that covers both is what
+             emptied this panel mid-tap. */
+          await redraw(moved);
           working(step, false);
           return;
         }
@@ -1141,7 +1203,8 @@
             working(add, false);
             return;
           }
-          await showPlacedOrder();
+          if (added && added.requested) actionLine(say("The shop has been asked to add it"));
+          await redraw(added);
           working(add, false);
           return;
         }
@@ -1154,7 +1217,7 @@
           if (called && called.failed) actionLine(say(refusal(called.failed)));
           else if (called && called.requested) actionLine(say("The shop has been asked to cancel it"));
           else actionLine(say("Order cancelled"));
-          await showPlacedOrder();
+          await redraw(called);
         }
       });
     }

@@ -192,7 +192,7 @@ function lanAddress() {
 }
 
 /*
- * A certificate for this address, made once and kept.
+ * A certificate for this address, made in a private directory for this run.
  *
  * Self-signed, so the phone warns the first time: accept it and the page is
  * a secure context from then on. Without one the microphone button does
@@ -200,19 +200,14 @@ function lanAddress() {
  * outside localhost and https.
  */
 function certificate(host) {
-  const dir = path.join(os.tmpdir(), 'posnic-dev-cert');
+  /* A predictable directory in the shared OS temp folder lets another local
+     process pre-create or replace the key files. A private, unique directory
+     gives this development-only certificate the same ownership boundary as a
+     production secret without leaving a reusable path behind. */
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-dev-cert-'));
   const key = path.join(dir, 'key.pem');
   const crt = path.join(dir, 'cert.pem');
   try {
-    if (fs.existsSync(key) && fs.existsSync(crt)) {
-      const made = fs.readFileSync(path.join(dir, 'host.txt'), 'utf8').trim();
-      if (made === host) return { key: fs.readFileSync(key), cert: fs.readFileSync(crt) };
-    }
-  } catch (e) {
-    /* make a fresh one */
-  }
-  try {
-    fs.mkdirSync(dir, { recursive: true });
     execFileSync(
       'openssl',
       [
@@ -225,7 +220,6 @@ function certificate(host) {
       ],
       { stdio: 'ignore' }
     );
-    fs.writeFileSync(path.join(dir, 'host.txt'), host);
     return { key: fs.readFileSync(key), cert: fs.readFileSync(crt) };
   } catch (e) {
     return null;
