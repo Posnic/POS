@@ -41,6 +41,15 @@
 const { renderSale } = require('./escpos-receipt');
 const { columnsFor } = require('./printer-targets');
 
+/*
+ * The same string the API emits on. Declared here rather than required from
+ * the API, because that ships OUTSIDE the ASAR archive while this file lives
+ * inside it - requiring across that line gives two module instances and an
+ * event that goes nowhere. kot-manager.js has the same note for the same
+ * reason. If one side ever changes this word, both must.
+ */
+const BILL_EVENT = 'posnic:bill-requested';
+
 /* Long enough not to hammer a local API, short enough that the paper is
    waiting by the time somebody has crossed the room. */
 const POLL_MS = 10000;
@@ -96,6 +105,42 @@ class BillManager {
     if (config.paperSize) this.paperSize = config.paperSize;
     if (this.polling) return;
     this.polling = true;
+
+    /*
+     * THE FAST PATH, AND THE REASON THIS IS NOT JUST A POLLER.
+     *
+     * When a handset is on the shop's own Wi-Fi it talks to THIS MACHINE's
+     * API, and that API is require()d into this same process - so a bill
+     * requested on the floor arrives here as an in-process event, and the
+     * paper starts in the same tick. No ten second wait, no round trip, no
+     * database sync in between.
+     *
+     * A cloud shop cannot be reached from outside its router, so nothing can
+     * push to it and the poll below is the only way it learns anything. The
+     * event simply never fires there, which costs nothing.
+     *
+     * The poll stays underneath in both cases: it is what catches a request
+     * made while this app was starting, one whose print failed, and one that
+     * arrived in the gap while the printer was busy.
+     */
+    if (!this._onRequested) {
+      this._onRequested = (payload) => {
+        if (!this.polling) return;
+        /* A branch arriving on the event is used when nothing is configured,
+           the way the KOT manager takes one from a sale. */
+        if (!this.branchId && payload && payload.branchId) {
+          this.branchId = String(payload.branchId);
+        }
+        console.log('[BILL] asked for from the floor - printing now');
+        this._schedule(0);
+      };
+      try {
+        process.on(BILL_EVENT, this._onRequested);
+      } catch (e) {
+        /* No event bus is survivable: the poll below still serves. */
+      }
+    }
+
     this._schedule(0);
   }
 
@@ -103,6 +148,14 @@ class BillManager {
     this.polling = false;
     clearTimeout(this.timer);
     this.timer = null;
+    if (this._onRequested) {
+      try {
+        process.removeListener(BILL_EVENT, this._onRequested);
+      } catch (e) {
+        /* going away anyway */
+      }
+      this._onRequested = null;
+    }
   }
 
   _schedule(ms) {
