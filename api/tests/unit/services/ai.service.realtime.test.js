@@ -68,23 +68,26 @@ describe('ai.service realtimeAnswer', () => {
       },
       context
     );
-    expect(out).toEqual({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } });
+    expect(out).toEqual({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime-mini' } });
     expect(JSON.stringify(out)).not.toContain('sk-live-secret');
     expect(JSON.stringify(out)).not.toContain('ek_short_lived');
 
     expect(calls[0].url).toBe('https://api.openai.com/v1/realtime/client_secrets');
     expect(calls[0].init.headers.authorization).toBe('Bearer sk-live-secret');
     const minted = JSON.parse(calls[0].init.body);
-    expect(minted.session.model).toBe('gpt-realtime');
+    /* The MINI by default. Owner: "ours is not that complex tax. we
+       arleady have well defined rules to respond." Three times cheaper for
+       judgement this job does not need. */
+    expect(minted.session.model).toBe('gpt-realtime-mini');
     expect(minted.session.instructions).toBe('Be brief.');
     expect(minted.session.tools[0].name).toBe('show_order');
 
-    expect(calls[1].url).toBe('https://api.openai.com/v1/realtime/calls?model=gpt-realtime');
+    expect(calls[1].url).toBe('https://api.openai.com/v1/realtime/calls?model=gpt-realtime-mini');
     expect(calls[1].init.headers.authorization).toBe('Bearer ek_short_lived');
     expect(calls[1].init.headers['content-type']).toBe('application/sdp');
     expect(calls[1].init.body).toBe(OFFER);
     expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ feature: 'voice_order_live', model: 'gpt-realtime' }),
+      expect.objectContaining({ feature: 'voice_order_live', model: 'gpt-realtime-mini' }),
       context
     );
   });
@@ -148,11 +151,11 @@ describe('ai.service realtimeAnswer', () => {
     const out = await service.realtimeAnswer({ sdp: OFFER, instructions: 'x', tools: [] }, context);
     expect(out).toEqual({
       status: true,
-      data: { sdp: 'v=0\r\nbeta answer', model: 'gpt-4o-realtime-preview' },
+      data: { sdp: 'v=0\r\nbeta answer', model: 'gpt-4o-mini-realtime-preview' },
     });
     expect(calls[1].url).toBe('https://api.openai.com/v1/realtime/sessions');
     expect(calls[1].init.headers['OpenAI-Beta']).toBe('realtime=v1');
-    expect(calls[2].url).toBe('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview');
+    expect(calls[2].url).toBe('https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview');
     expect(calls[2].init.headers.authorization).toBe('Bearer ek_beta');
   });
 
