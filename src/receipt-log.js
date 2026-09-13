@@ -45,6 +45,33 @@ const dayOf = (iso) => new Date(iso).toISOString().slice(0, 10);
    A day of receipts is what was asked for; more than this is a different
    feature with different storage. */
 const MAX_PER_DAY = 2000;
+const MAX_PRINTERS = 16;
+
+/* Receipt jobs can arrive from another installation. Persist a deliberately
+   small, plain-data record rather than copying its network payload into the
+   local log: this keeps control bytes, oversized strings, and unexpected
+   object shapes out of a file the Hardware Manager later displays. */
+function text(value, limit) {
+  return String(value ?? '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .trim()
+    .slice(0, limit);
+}
+
+function timestamp(value) {
+  const parsed = new Date(value || Date.now());
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function printers(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, MAX_PRINTERS).map((printer) => ({
+    name: text(printer?.name, 128),
+    status: printer?.status === 'success' ? 'success' : 'failed',
+    reason: text(printer?.reason, 512) || undefined,
+    bytes: Number.isFinite(Number(printer?.bytes)) ? Math.max(0, Number(printer.bytes)) : undefined,
+  }));
+}
 
 function newId() {
   try {
@@ -70,17 +97,17 @@ function newId() {
  */
 function record(entry = {}) {
   try {
-    const time = entry.time || new Date().toISOString();
+    const time = timestamp(entry.time);
     const row = {
       id: newId(),
       time,
-      kind: entry.kind || 'receipt',
-      saleId: String(entry.saleId || ''),
-      title: String(entry.title || ''),
-      total: Number(entry.total) || 0,
-      source: entry.source || undefined,
-      ms: Number.isFinite(entry.ms) ? entry.ms : undefined,
-      printers: Array.isArray(entry.printers) ? entry.printers : [],
+      kind: ['receipt', 'bill', 'report'].includes(entry.kind) ? entry.kind : 'receipt',
+      saleId: text(entry.saleId, 128),
+      title: text(entry.title, 128),
+      total: Number.isFinite(Number(entry.total)) ? Number(entry.total) : 0,
+      source: text(entry.source, 64) || undefined,
+      ms: Number.isFinite(Number(entry.ms)) ? Math.max(0, Number(entry.ms)) : undefined,
+      printers: printers(entry.printers),
     };
     /* Said once here rather than recomputed by every reader: a receipt counts
        as printed when at least one copy landed, because the customer has their

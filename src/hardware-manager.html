@@ -2344,6 +2344,36 @@
          * about; the one that did not is, and until now nothing anywhere
          * recorded it.
          */
+        /*
+         * EVERYTHING FROM A PRINT JOB IS SOMEBODY ELSE'S TEXT.
+         *
+         * Both logs are drawn with innerHTML, and their rows carry values that
+         * did not come from this machine: a bill number, a document title, a
+         * printer's own error message, and - for a job taken off the cloud
+         * queue - a whole record written by another installation.
+         *
+         * CodeQL found the file half of this (alert #919) and it was bounded at
+         * the point of writing, which stops control bytes and unbounded strings
+         * reaching the file. It does not make the text safe to paste into
+         * markup: `<img src=x onerror=...>` survives every one of those checks
+         * intact.
+         *
+         * This window is sandboxed with contextIsolation on, so injected script
+         * cannot reach Node - but it CAN call everything preload.js exposes,
+         * which is the printers, the KOT configuration and the log deletion.
+         * That is not a thing to leave open on a diagnostics screen.
+         *
+         * One helper, used on every value either log renders.
+         */
+        function logEsc(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         async function rcptLoadLogs() {
             const date = document.getElementById('rcptLogDate').value;
             const empty = document.getElementById('rcptLogsEmpty');
@@ -2380,7 +2410,7 @@
                     const why = good ? '' : ' title="' + String(p.reason || '').replace(/"/g, '&quot;') + '"';
                     return '<span' + why + ' style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;'
                         + 'background:' + (good ? '#d4edda' : '#f8d7da') + ';color:' + (good ? '#155724' : '#721c24') + ';">'
-                        + (good ? '✓ ' : '✗ ') + (p.name || '(default)') + '</span>';
+                        + (good ? '✓ ' : '✗ ') + logEsc(p.name || '(default)') + '</span>';
                 }).join('') || '<span style="color:#9ca3af;">-</span>';
 
                 /* Same thresholds as the kitchen ticket log, so one number means
@@ -2398,17 +2428,19 @@
                 const firstWhy = (r.printers || []).map(p => p.reason).filter(Boolean)[0] || '';
                 const result = ok
                     ? '<span style="font-weight:700;color:#155724;">✓ Printed</span>'
-                    : '<span style="font-weight:700;color:#b91c1c;" title="' + String(firstWhy).replace(/"/g, '&quot;') + '">✗ Failed</span>'
-                      + (firstWhy ? '<div style="font-size:11px;color:#b91c1c;">' + firstWhy + '</div>' : '');
+                    : '<span style="font-weight:700;color:#b91c1c;" title="' + logEsc(firstWhy) + '">✗ Failed</span>'
+                      + (firstWhy ? '<div style="font-size:11px;color:#b91c1c;">' + logEsc(firstWhy) + '</div>' : '');
 
                 const tr = document.createElement('tr');
                 tr.style.background = ok ? (i % 2 === 0 ? '#fff' : '#f9fafb') : '#fff5f5';
                 tr.style.borderBottom = '1px solid #f0f0f0';
                 tr.innerHTML =
                     '<td style="padding:10px 12px;color:#374151;">' + t + '</td>'
-                  + '<td style="padding:10px 12px;font-weight:600;color:#2563eb;">' + (r.saleId || '-') + '</td>'
-                  + '<td style="padding:10px 12px;color:#374151;">' + (r.title || (r.kind === 'bill' ? 'Bill' : 'Receipt')) + '</td>'
-                  + '<td style="padding:10px 12px;font-weight:600;color:#374151;">' + (r.source || '<span style="color:#9ca3af;font-weight:400;">not recorded</span>') + '</td>'
+                  + '<td style="padding:10px 12px;font-weight:600;color:#2563eb;">' + logEsc(r.saleId || '-') + '</td>'
+                  + '<td style="padding:10px 12px;color:#374151;">' + logEsc(r.title || (r.kind === 'bill' ? 'Bill' : 'Receipt')) + '</td>'
+                  /* The fallback is markup of OURS, so it is the one thing here
+                     that must not be escaped. */
+                  + '<td style="padding:10px 12px;font-weight:600;color:#374151;">' + (r.source ? logEsc(r.source) : '<span style="color:#9ca3af;font-weight:400;">not recorded</span>') + '</td>'
                   + '<td style="padding:10px 12px;">' + printers + '</td>'
                   + '<td style="padding:10px 12px;">' + speed + '</td>'
                   + '<td style="padding:10px 12px;">' + result + '</td>';
@@ -2544,14 +2576,14 @@
                  * shipped reads as "not recorded" instead of looking broken.
                  */
                 const sourceHtml = log.source
-                    ? `<span style="font-weight:600;">${log.source}</span>`
+                    ? `<span style="font-weight:600;">${logEsc(log.source)}</span>`
                     : `<span style="color:#9ca3af;" title="This ticket was printed before the source was recorded">-</span>`;
 
                 const printerHtml = (log.printers || []).map(p =>
                     `<span style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;
                         background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};
                         color:${p.status === 'success' ? '#155724' : '#721c24'};">
-                        ${p.status === 'success' ? '✓' : '✗'} ${p.name.length > 14 ? p.name.slice(0,14)+'…' : p.name}
+                        ${p.status === 'success' ? '✓' : '✗'} ${logEsc(p.name.length > 14 ? p.name.slice(0,14)+'…' : p.name)}
                     </span>`
                 ).join('');
 
@@ -2565,8 +2597,8 @@
                             style="width:15px;height:15px;cursor:pointer;accent-color:#6f42c1;">
                     </td>
                     <td style="padding:10px 12px;color:#374151;">${timeStr}</td>
-                    <td style="padding:10px 12px;font-weight:600;color:#2563eb;">${log.saleDisplayId || ', '}</td>
-                    <td style="padding:10px 12px;color:#374151;">${log.table || ', '}</td>
+                    <td style="padding:10px 12px;font-weight:600;color:#2563eb;">${logEsc(log.saleDisplayId || ', ')}</td>
+                    <td style="padding:10px 12px;color:#374151;">${logEsc(log.table || ', ')}</td>
                     <td style="padding:10px 12px;">
                         <span style="font-size:12px;font-weight:700;color:${kindColors[log.printKind]||'#6c757d'}">
                             ${kindLabel[log.printKind] || log.printKind}
@@ -2616,13 +2648,13 @@
             document.getElementById('kotDetailBody').innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TIME</div><div style="font-weight:600;">${t}</div></div>
-                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">SALE ID</div><div style="font-weight:700;color:#2563eb;">${log.saleDisplayId||', '}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">SALE ID</div><div style="font-weight:700;color:#2563eb;">${logEsc(log.saleDisplayId||', ')}</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TABLE</div><div style="font-weight:600;">${log.table||', '} (Pax: ${log.pax||', '})</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">TYPE</div><div style="font-weight:700;">${kindLabel[log.printKind]||log.printKind} &nbsp; KOT#${log.kotNumber}</div></div>
                     <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">DINE TYPE</div><div style="font-weight:600;">${log.dineType||', '}</div></div>
                     <!-- The question this panel is usually opened to answer:
                          did the one from the mobile app print? -->
-                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">FROM</div><div style="font-weight:600;">${log.source || '<span style="color:#9ca3af;font-weight:400;">not recorded</span>'}</div></div>
+                    <div><div style="font-size:11px;color:#9ca3af;font-weight:600;">FROM</div><div style="font-weight:600;">${log.source ? logEsc(log.source) : '<span style="color:#9ca3af;font-weight:400;">not recorded</span>'}</div></div>
                 </div>
                 <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">Items</div>
                 <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:16px;">
