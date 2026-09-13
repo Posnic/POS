@@ -41,6 +41,15 @@
 const { renderSale } = require('./escpos-receipt');
 const { columnsFor } = require('./printer-targets');
 
+/*
+ * The same string the API emits on. Declared here rather than required from
+ * the API, because that ships OUTSIDE the ASAR archive while this file lives
+ * inside it - requiring across that line gives two module instances and an
+ * event that goes nowhere. kot-manager.js has the same note for the same
+ * reason. If one side ever changes this word, both must.
+ */
+const BILL_EVENT = 'posnic:bill-requested';
+
 /* Long enough not to hammer a local API, short enough that the paper is
    waiting by the time somebody has crossed the room. */
 const POLL_MS = 10000;
@@ -96,6 +105,42 @@ class BillManager {
     if (config.paperSize) this.paperSize = config.paperSize;
     if (this.polling) return;
     this.polling = true;
+
+    /*
+     * THE FAST PATH, AND THE REASON THIS IS NOT JUST A POLLER.
+     *
+     * When a handset is on the shop's own Wi-Fi it talks to THIS MACHINE's
+     * API, and that API is require()d into this same process - so a bill
+     * requested on the floor arrives here as an in-process event, and the
+     * paper starts in the same tick. No ten second wait, no round trip, no
+     * database sync in between.
+     *
+     * A cloud shop cannot be reached from outside its router, so nothing can
+     * push to it and the poll below is the only way it learns anything. The
+     * event simply never fires there, which costs nothing.
+     *
+     * The poll stays underneath in both cases: it is what catches a request
+     * made while this app was starting, one whose print failed, and one that
+     * arrived in the gap while the printer was busy.
+     */
+    if (!this._onRequested) {
+      this._onRequested = (payload) => {
+        if (!this.polling) return;
+        /* A branch arriving on the event is used when nothing is configured,
+           the way the KOT manager takes one from a sale. */
+        if (!this.branchId && payload && payload.branchId) {
+          this.branchId = String(payload.branchId);
+        }
+        console.log('[BILL] asked for from the floor - printing now');
+        this._schedule(0);
+      };
+      try {
+        process.on(BILL_EVENT, this._onRequested);
+      } catch (e) {
+        /* No event bus is survivable: the poll below still serves. */
+      }
+    }
+
     this._schedule(0);
   }
 
@@ -103,6 +148,14 @@ class BillManager {
     this.polling = false;
     clearTimeout(this.timer);
     this.timer = null;
+    if (this._onRequested) {
+      try {
+        process.removeListener(BILL_EVENT, this._onRequested);
+      } catch (e) {
+        /* going away anyway */
+      }
+      this._onRequested = null;
+    }
   }
 
   _schedule(ms) {
@@ -213,12 +266,39 @@ class BillManager {
     }
     const printer = await this.hardware.getDefaultPrinter();
     const fallback = printer && printer.name ? printer.name : '';
-    if (fallback) {
-      console.warn(
-        '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
-        fallback
-      );
+    if (!fallback) return '';
+
+    /*
+     * NOT THE KITCHEN, whatever Windows prefers.
+     *
+     * Owner, on a two-printer restaurant: "receipt only send to Reception
+     * right. kitchen should receive only kot print." A till with no receipt
+     * printer chosen falls back to the Windows default, and on a restaurant
+     * machine that default is very often the kitchen roll - which is exactly
+     * how a customer's bill came out beside the cook with nothing to explain
+     * it.
+     *
+     * A printer this till already sends kitchen tickets to is, by definition,
+     * not the counter. Refusing is better than guessing wrong: the bill waits,
+     * the poll keeps it, and the log says what to do about it.
+     */
+    try {
+      const devicePrefs = require('./device-preferences');
+      if (devicePrefs.isKitchenPrinter(fallback)) {
+        console.error(
+          '[BILL] no receipt printer is set, and the Windows default (' + fallback + ') is a '
+          + 'kitchen printer. Choose a receipt printer in Hardware Manager; the bill is not printed.'
+        );
+        return '';
+      }
+    } catch (error) {
+      /* Unable to tell: fall through and use the default, as before. */
     }
+
+    console.warn(
+      '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
+      fallback
+    );
     return fallback;
   }
 
@@ -236,12 +316,28 @@ class BillManager {
        * is 32, and the same bytes cannot serve both - getting it wrong wraps
        * the total onto its own line, which reads as a rounding bug on paper.
        */
-      const bytes = renderSale(sale || {}, {
-        paperWidth: String(columnsFor(this.paperSize)),
-        /* The drawer is the cashier's business and this is not a payment. */
-        openDrawer: false,
-        cut: true,
-      });
+      /*
+       * The bill a waiter carries to the table is not a receipt.
+       *
+       * It reached the roll with no document heading at all, because
+       * pendingBillPrints answers raw sale documents and a sale carries no
+       * title. So the customer got an unlabelled slip, then a second slip
+       * headed SALES RECEIPT after paying.
+       *
+       * A GST-registered shop issues a TAX INVOICE for the supply; a shop
+       * without GST issues a BILL. Both say UNPAID, because this is a demand
+       * for payment, and the receipt follows once it is paid.
+       */
+      const gstin = String((sale && (sale.branch_gstin_number || sale.gstin)) || '').trim();
+      const bytes = renderSale(
+        { ...(sale || {}), title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID' },
+        {
+          paperWidth: String(columnsFor(this.paperSize)),
+          /* The drawer is the cashier business and this is not a payment. */
+          openDrawer: false,
+          cut: true,
+        }
+      );
 
       const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
       if (!result || result.success === false) {
