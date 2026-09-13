@@ -11,6 +11,24 @@ describe('config modules', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+
+    /*
+     * THE ENVIRONMENT THESE TESTS SET, AND NOTHING ELSE.
+     *
+     * Deleting a variable is not enough on its own. Every config module calls
+     * dotenv.config() at require time, and jest.resetModules() makes that run
+     * again on each load - so dotenv read the developer's own api/.env and put
+     * the variables a test had just deleted straight back.
+     *
+     * On a machine whose .env pointed MONGODB_URI at port 47017, the defaults
+     * test failed with a value that appears nowhere in this repository. That
+     * reads like a regression and is not one. CI passes, because CI has no
+     * .env, which is the worst shape this can take: it breaks only for the
+     * person trying to work on it, and only on their machine.
+     *
+     * Tests about what the code defaults to must not be able to see a file.
+     */
+    jest.doMock('dotenv', () => ({ config: () => ({ parsed: {} }) }));
   });
 
   afterEach(() => {
