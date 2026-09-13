@@ -460,27 +460,35 @@
                         </div>
                     </div>
                     <!--
-                        THE KEY THE SHOP'S SERVER WILL ACCEPT, which is not this
-                        computer's.
+                        THIS COMPUTER'S KEY, FOR PASTING INTO THE SHOP.
 
                         Every Posnic installation makes its own printing key the
                         first time it starts, and a shop's internet server is an
-                        installation: it has a different one. So a till that
-                        sends its own key is turned away every time - and a
-                        refusal used to look exactly like "nothing to print".
+                        installation: it has a different one. So a till asking
+                        its shop over the internet is turned away every time,
+                        and a refusal used to look exactly like "nothing to
+                        print".
 
-                        One copy and paste, once, and it is done.
+                        Somebody has to introduce the two, and the key travels
+                        in THIS direction on purpose: a key that starts life on
+                        this machine and is stored by the shop only as a digest
+                        never puts a server secret into a web page.
                     -->
                     <div style="margin-top:14px;">
                         <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
-                            Printing key from your shop
+                            This computer's printing key
                         </label>
-                        <input type="password" id="cpApiKey" placeholder="Paste the key from Settings, Bill printing"
-                            autocomplete="off" spellcheck="false"
-                            style="width:100%;padding:12px 14px;border:2px solid #e9ecef;border-radius:10px;font-size:14px;">
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <input type="text" id="cpTillKey" readonly
+                                style="flex:1 1 auto;min-width:0;padding:12px 14px;border:2px solid #e9ecef;
+                                       border-radius:10px;font-size:13px;font-family:ui-monospace,Consolas,monospace;
+                                       background:#f9fafb;color:#374151;">
+                            <button class="btn btn-secondary" id="cpCopyKey" onclick="cpCopyKey()"
+                                style="padding:12px 18px;border-radius:10px;white-space:nowrap;">Copy</button>
+                        </div>
                         <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
-                            Open your shop in a browser, go to Settings and copy the bill printing key.
-                            Without it your shop's server will not accept anything from this computer.
+                            Open your shop in a browser, go to Settings, and allow this key under
+                            bill printing. Until you do, your shop will turn this computer away.
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;align-items:center;margin-top:14px;">
@@ -1607,9 +1615,8 @@
                 /* The one cloud failure with an exact remedy, so it gets its
                    own words rather than being filed under "not answering". */
                 html += bpRow('Over the internet', 'turned away',
-                    'Your shop is not accepting this computer. Paste the printing key from your '
-                    + 'shop above - the key this computer makes for itself is not the one your '
-                    + 'shop expects.', false);
+                    'Your shop has not allowed this computer yet. Copy the printing key above, '
+                    + 'open your shop in a browser, and allow it under Settings.', false);
             } else if (cloud.indexOf('error') === 0) {
                 html += bpRow('Over the internet', 'not answering',
                     cloud.replace(/^error:\s*/, ''), false);
@@ -1642,18 +1649,51 @@
             }
         }
 
+        /*
+         * This computer's own key, on screen so it can be pasted into the shop.
+         *
+         * Shown in full rather than masked: it is only useful when somebody can
+         * read it, this is the machine that owns it, and a masked field beside
+         * a Copy button is how people end up pasting the mask.
+         */
+        async function cpShowKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !window.electronAPI || !window.electronAPI.bill) return;
+            try {
+                field.value = (await window.electronAPI.bill.getPrintingKey()) || '';
+            } catch (e) {
+                field.value = '';
+            }
+            if (!field.value) field.value = 'Not ready yet - restart this app';
+        }
+
+        async function cpCopyKey() {
+            const field = document.getElementById('cpTillKey');
+            if (!field || !field.value) return;
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                /* A denied clipboard is not a dead end: select it so the
+                   shopkeeper can copy it the way they already know. */
+                field.select();
+            }
+            const btn = document.getElementById('cpCopyKey');
+            if (btn) {
+                btn.textContent = 'Copied';
+                setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+            }
+        }
+
         async function cpInit() {
             if (!rpPref()) return;
             try {
                 const on = await rpPref().get('cloud_print_relay');
                 const url = await rpPref().get('cloud_api_url');
-                const key = await rpPref().get('cloud_api_key');
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
-                const keyField = document.getElementById('cpApiKey');
                 if (box) box.checked = on === true || on === 'true';
                 if (field) field.value = url || '';
-                if (keyField) keyField.value = key || '';
+                await cpShowKey();
                 cpSummary();
             } catch (e) {
                 console.warn('cpInit:', e.message);
@@ -1669,14 +1709,8 @@
                 el.textContent = 'Off. Phones on the shop Wi-Fi still print, straight to this computer.';
                 return;
             }
-            const keyField = document.getElementById('cpApiKey');
-            const key = ((keyField && keyField.value) || '').trim();
             if (!url.trim()) {
                 el.textContent = 'On, but no address yet - nothing will be checked until one is filled in.';
-                return;
-            }
-            if (!key) {
-                el.textContent = 'On, but no key yet - your shop will turn this computer away without one.';
                 return;
             }
             el.textContent = 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.';
@@ -1689,10 +1723,8 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
-                const keyField = document.getElementById('cpApiKey');
                 if (box) box.addEventListener('change', cpSummary);
                 if (field) field.addEventListener('input', cpSummary);
-                if (keyField) keyField.addEventListener('input', cpSummary);
             });
         }());
 
@@ -1700,21 +1732,18 @@
             if (!rpPref()) return;
             const box = document.getElementById('cpEnabled');
             const field = document.getElementById('cpApiUrl');
-            const keyField = document.getElementById('cpApiKey');
             const on = !!(box && box.checked);
             const url = ((field && field.value) || '').trim();
-            const key = ((keyField && keyField.value) || '').trim();
             try {
                 await rpPref().set('cloud_print_relay', on);
                 await rpPref().set('cloud_api_url', url);
-                await rpPref().set('cloud_api_key', key);
                 cpSummary();
                 let said;
                 if (!on) said = 'Saved. Nothing is sent over the internet from this computer.';
                 else if (!url) said = 'Saved, but fill in your shop address or nothing will be checked.';
-                else if (!key) said = 'Saved, but without the key from your shop this computer will be turned away.';
-                else said = 'Saved. This computer will print bills asked for over the internet.';
-                rpShowStatus(said, on && (!url || !key) ? 'warn' : 'success');
+                else said = 'Saved. Allow the key below in your shop, and bills asked for over '
+                    + 'the internet will print here.';
+                rpShowStatus(said, on && !url ? 'warn' : 'success');
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }

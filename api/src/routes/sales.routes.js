@@ -23,6 +23,7 @@ const {
   prepareCreateSalePayload,
   prepareUpdateSalePayload,
   ensureKioskKey,
+  ensurePrintDevice,
   protectOrKioskKey,
 } = require('../middleware/sales.validation');
 const { handleValidationErrors } = require('../middleware/validation');
@@ -170,8 +171,20 @@ router.post('/markBillPrinted', ensureKioskKey, bindController(salesController.m
  * happened to it. Behind the installation key like every other printer route -
  * this is a machine talking about its own hardware.
  */
-router.post('/claimPrintJobs', ensureKioskKey, bindController(salesController.claimPrintJobs));
-router.post('/finishPrintJob', ensureKioskKey, bindController(salesController.finishPrintJob));
+/*
+ * These two accept a SECOND kind of caller: a till this shop has allowed.
+ *
+ * A till on the shop's own network is this installation and shares its key. A
+ * till printing for a cloud shop is a different installation with a key of its
+ * own, and the cloud tenant has a different one again - they can never match,
+ * which is why the queue worked and no cloud shop ever printed. The shop
+ * introduces them once in Settings; see middleware/kiosk-key.js.
+ *
+ * Deliberately only these two. An allowed till may take print jobs and say
+ * what happened to them, and nothing else.
+ */
+router.post('/claimPrintJobs', ensurePrintDevice, bindController(salesController.claimPrintJobs));
+router.post('/finishPrintJob', ensurePrintDevice, bindController(salesController.finishPrintJob));
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,

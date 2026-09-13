@@ -1906,6 +1906,61 @@ class SettingController extends BaseController {
   async getJSONGstState(req, res) {
     return sendJsonResponse(res, 'gst_state_code.json');
   }
+
+  /*
+   * WHICH TILLS THIS SHOP LETS PRINT ITS BILLS.
+   *
+   * Owner: "there should be way to communicate the till via localhos or via
+   * cloude. thats the whole point."
+   *
+   * The queue made that possible and then could not be used. Every Posnic
+   * installation generates its own kiosk key the first time it starts, and a
+   * cloud tenant IS an installation with a random one of its own - so a till
+   * asking its shop's cloud address is refused every time, for every shop, and
+   * the only symptom is that bills never arrive.
+   *
+   * These three endpoints are the introduction: the shopkeeper copies the key
+   * off the till's own screen, pastes it here once, and that machine can take
+   * print jobs. The key is stored only as a digest and is never sent back.
+   */
+  async listPrintTills(req, res) {
+    try {
+      const { listTills } = require('../repositories/print-till.repository');
+      const out = await listTills();
+      return res
+        .status(out.status ? 200 : 500)
+        .json({ type: out.status ? 'success' : 'error', message: out.message, data: out.data });
+    } catch (error) {
+      console.error('Error in listPrintTills:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: [] });
+    }
+  }
+
+  async allowPrintTill(req, res) {
+    try {
+      const { allowTill } = require('../repositories/print-till.repository');
+      const out = await allowTill(req.body.key, req.body.label);
+      return res
+        .status(out.status ? 200 : 400)
+        .json({ type: out.status ? 'success' : 'error', message: out.message, data: out.data });
+    } catch (error) {
+      console.error('Error in allowPrintTill:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  async forgetPrintTill(req, res) {
+    try {
+      const { forgetTill } = require('../repositories/print-till.repository');
+      const out = await forgetTill(req.params.id || req.body.id);
+      return res
+        .status(out.status ? 200 : 404)
+        .json({ type: out.status ? 'success' : 'error', message: out.message, data: null });
+    } catch (error) {
+      console.error('Error in forgetPrintTill:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
 }
 
 const settingControllerInstance = new SettingController();

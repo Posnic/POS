@@ -189,7 +189,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
    * shop wondering why bills stopped without anybody touching a setting.
    */
   bill: {
-    getStatus: () => ipcRenderer.invoke('bill:get-status')
+    getStatus:     () => ipcRenderer.invoke('bill:get-status'),
+    /* This machine's own key, for pasting into the shop so it will accept
+       bills from here. See api/src/models/print-till.model.js. */
+    getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key')
   },
   /*
    * The sound an online order makes.

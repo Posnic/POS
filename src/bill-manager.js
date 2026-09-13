@@ -171,9 +171,6 @@ class BillManager {
      * never meant to relay cloud bills makes no request at all, ever.
      */
     this.cloudApi = options.cloudApi || '';
-    /* The shop's own printing key, for the far door only. See _drain: this
-       machine's key is not the one its cloud tenant accepts. */
-    this.cloudKey = options.cloudKey || '';
     this.cloudPrint = !!options.cloudPrint;
     this.findCloudPrint = options.findCloudPrint || null;
 
@@ -345,18 +342,13 @@ class BillManager {
         return {
           enabled: said.enabled === undefined ? this.cloudPrint : !!said.enabled,
           apiUrl: String(said.apiUrl || this.cloudApi || '').trim(),
-          key: String(said.key || this.cloudKey || '').trim(),
         };
       } catch (error) {
         /* An unreadable preferences file must not decide a shop's printing.
            Fall through to whatever this manager was constructed with. */
       }
     }
-    return {
-      enabled: !!this.cloudPrint,
-      apiUrl: String(this.cloudApi || '').trim(),
-      key: String(this.cloudKey || '').trim(),
-    };
+    return { enabled: !!this.cloudPrint, apiUrl: String(this.cloudApi || '').trim() };
   }
 
   /**
@@ -393,11 +385,7 @@ class BillManager {
         return this._scheduleCloud(CLOUD_IDLE_MS);
       }
 
-      const out = await this._drain(base, {
-        wait: true,
-        timeoutMs: CLOUD_TIMEOUT_MS,
-        key: settings.key,
-      });
+      const out = await this._drain(base, { wait: true, timeoutMs: CLOUD_TIMEOUT_MS });
       this.cloudPollAt = new Date().toISOString();
       this.cloudStatus = 'ok';
       return this._scheduleCloud(out.pace);
@@ -420,16 +408,17 @@ class BillManager {
    * gets a different job, or none. Two tills in one shop is exactly when that
    * matters and exactly when a shop is busy enough to have two running.
    */
-  async _drain(base, { wait = false, timeoutMs = 0, key: given = '' } = {}) {
+  async _drain(base, { wait = false, timeoutMs = 0 } = {}) {
     /*
-     * WHOSE KEY. This machine's for its own API; the shop's for the shop's.
+     * THIS MACHINE'S OWN KEY, at both doors.
      *
-     * Every installation generates its own kiosk key at first boot, and a
-     * cloud tenant is an installation with a random one of its own. A till
-     * presenting its LOCAL key to its shop's cloud address is refused every
-     * time, so the far door carries a key the shop copied in.
+     * Made once at first boot (main.js, crypto.randomBytes(32)) and never
+     * anywhere else. Its own API knows it because they share a process; the
+     * shop's cloud server knows it because somebody pasted it into Settings
+     * once - see api/src/models/print-till.model.js for why the key travels in
+     * that direction rather than the other.
      */
-    const key = String(given || '').trim() || process.env.KIOSK_API_KEY || '';
+    const key = process.env.KIOSK_API_KEY || '';
     const request = {
       method: 'POST',
       headers: {
@@ -464,8 +453,9 @@ class BillManager {
      */
     if (response.status === 401 || response.status === 403) {
       throw new Error(
-        'refused by ' + base + ': this till is presenting a key that server does not accept. ' +
-          'Copy the printing key from your shop and paste it into Hardware Manager.'
+        'refused by ' + base + ': this shop has not allowed this till to print. ' +
+          'Copy the printing key shown in Hardware Manager and paste it into your shop, ' +
+          'under Settings.'
       );
     }
 
