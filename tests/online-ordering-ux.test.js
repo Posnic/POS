@@ -1186,7 +1186,20 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   await settle();
   assert.deepStrictEqual(calls.applied, [['m1', 2], ['m1', 1]]);
   assert.strictEqual(JSON.parse(calls.sent[0].item.output).item_id, 'm1');
-  assert.strictEqual(calls.sent.filter((e) => e.item && e.item.call_id === 'c5').length, 0, 'a cancelled response ran its tools');
+  /*
+   * A response the customer talked over is ANSWERED but not RUN.
+   *
+   * Not run, because adding the dish somebody interrupted to correct is how
+   * the wrong food is cooked. Answered, because a call_id the model is
+   * waiting on and never hears back about wedges the conversation - every
+   * turn after it is an acknowledgement and nothing else, which is what the
+   * owner heard: "keep saying ok ok but not able to continue".
+   */
+  const afterC5 = calls.sent.filter((e) => e.item && e.item.call_id === 'c5');
+  assert.strictEqual(afterC5.length, 1, 'an interrupted call was left unanswered, which wedges the line');
+  assert.deepStrictEqual(JSON.parse(afterC5[0].item.output), { ok: false, reason: 'interrupted' });
+  /* And nothing new was asked to be said over the customer. */
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1, 'the assistant spoke over an interruption');
 
   /* A refused duplicate response is a warning, not the end of the call. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });
@@ -2461,6 +2474,77 @@ test('an order the shop has closed offers nothing to change', async () => {
      has it. */
   assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Ask the shop to cancel');
   page.window.close();
+});
+
+test('the order rings a bell when the kitchen takes it, on both ways of ordering', () => {
+  /*
+   * Owner: "give ting sound to confirm. both customer side."
+   *
+   * Built as a WAV and played through an <audio> element, NOT through the Web
+   * Audio API. That is the whole point of the shape of this file: on an
+   * iPhone, Web Audio plays through the ringer switch, so a customer who has
+   * deliberately silenced their phone would be made to chirp anyway. iOS
+   * honours the switch for media elements. A sound nobody can refuse is not a
+   * courtesy.
+   *
+   * Still not a file on disk: a data URI, so there is nothing to fetch and
+   * nothing for the page's CSP to allow.
+   */
+  const dom = new JSDOM('<body></body>', { url: 'https://shop.example/order/', runScripts: 'outside-only' });
+  const { window } = dom;
+  const players = [];
+  let played = 0;
+  let source = '';
+  window.Audio = function () {
+    players.push(this);
+    this.play = () => { played += 1; return Promise.resolve(); };
+  };
+  Object.defineProperty(window.Audio.prototype, 'src', {
+    set(value) { source = value; },
+    get() { return source; },
+    configurable: true,
+  });
+  window.eval(read('assets/ting.js'));
+
+  assert.strictEqual(window.Ting.play(), true, 'the bell made no sound');
+  assert.strictEqual(played, 1);
+  /* Never an oscillator: that is the bug this shape exists to avoid. */
+  assert.ok(!/AudioContext/.test(read('assets/ting.js')), 'the bell went back to Web Audio, which ignores the silent switch on iOS');
+
+  /* A real, well-formed WAV, quiet and about a second long. */
+  assert.match(source, /^data:audio\/wav;base64,/);
+  const wav = Buffer.from(source.split(',')[1], 'base64');
+  assert.strictEqual(wav.toString('ascii', 0, 4), 'RIFF');
+  assert.strictEqual(wav.toString('ascii', 8, 12), 'WAVE');
+  assert.strictEqual(wav.readUInt16LE(22), 1, 'the bell is not mono');
+  assert.strictEqual(wav.readUInt32LE(24), 22050);
+  assert.strictEqual(wav.readUInt16LE(34), 16, 'the samples are not 16 bit');
+  const seconds = (wav.length - 44) / 2 / 22050;
+  assert.ok(seconds > 0.5 && seconds < 1.5, 'the bell is ' + seconds.toFixed(2) + 's long');
+  let peak = 0;
+  for (let i = 44; i + 1 < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
+  assert.ok(peak / 32767 < 0.35, 'the bell is loud enough to announce rather than confirm');
+  assert.ok(peak > 0, 'the bell is silence');
+
+  /* One element and one rendering, reused: a new Audio() per order leaves the
+     old ones alive until they are collected, and a busy evening stacks a
+     hundred of them. */
+  window.Ting.play();
+  assert.strictEqual(players.length, 1, 'a second order built a second player');
+  assert.strictEqual(played, 2);
+  window.close();
+
+  /* And both ways of placing an order ring it: the assistant on the beat its
+     drawn bell is struck, and the token screen for a basket tapped through. */
+  const assistant = read('assets/assistant/script.js');
+  assert.match(assistant, /if \(beat === "landed"\) ting\(\);/, 'the assistant never rings the bell');
+  assert.match(assistant, /window\.Ting && typeof window\.Ting\.play === "function"/);
+  const token = read('assets/thankyou/script.js');
+  assert.match(token, /window\.Ting\.play\(\)/, 'a basket tapped through confirms itself in silence');
+  assert.match(token, /rung_\$\{token\}/, 'a refresh of the token screen rings the bell again');
+  for (const page of ['products.html', 'thankyou.html']) {
+    assert.match(read(page), /assets\/ting\.js/, page + ' never loads the bell');
+  }
 });
 
 test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {

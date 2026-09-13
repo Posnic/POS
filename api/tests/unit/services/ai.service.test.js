@@ -340,4 +340,40 @@ describe('reading JSON back out of an answer', () => {
       expect(service.jsonFrom(said)).toBeNull();
     }
   });
+
+  test('one stray bracket after the answer does not throw the answer away', () => {
+    /*
+     * WHAT THE OWNER WAS SHOWN, on develop, in the chat, as if it were a
+     * sentence:
+     *
+     *   {"reply":"You might enjoy the Paneer Butter Masala or the Veg
+     *   Thali! Both are delicious options.","actions":[]}]
+     *
+     * The model closed its object and added one character. Both of the old
+     * attempts run to the LAST bracket in the text, so both ended on that
+     * stray one and both failed; jsonFrom returned null, and the caller's
+     * prose fallback printed the JSON at the customer. Counting brackets
+     * stops at the character that closes what was opened, so whatever
+     * follows is simply not part of it.
+     */
+    expect(service.jsonFrom('{"reply":"Both are delicious options.","actions":[]}]')).toEqual({
+      reply: 'Both are delicious options.',
+      actions: [],
+    });
+    expect(service.jsonFrom('[{"verb":"add"}]]')).toEqual([{ verb: 'add' }]);
+    expect(service.jsonFrom('{"a":1}} trailing words')).toEqual({ a: 1 });
+  });
+
+  test('a bracket inside a dish name is not the end of the answer', () => {
+    /* A shop may well have typed "Curry {special}" on its menu, and a brace
+       counted inside a string would cut the object off mid-answer. */
+    expect(service.jsonFrom('{"reply":"Try the Curry {special}","actions":[]}}')).toEqual({
+      reply: 'Try the Curry {special}',
+      actions: [],
+    });
+    expect(service.jsonFrom('{"reply":"He said \\"}\\" to me","actions":[]}')).toEqual({
+      reply: 'He said "}" to me',
+      actions: [],
+    });
+  });
 });
