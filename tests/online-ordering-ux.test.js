@@ -1788,6 +1788,91 @@ test('sending to the kitchen asks for what the code did not say, and hands the r
   assert.deepStrictEqual(empty.calls.checkout, []);
 });
 
+test('the orb follows the voice actually coming back, not a loop', () => {
+  /*
+   * Owner: "have talking ai or some animation whill talk. little not too much
+   * annoy."
+   *
+   * A CSS keyframe loop pulses at a fixed rate whatever is being said, and
+   * the eye catches that at once: it is a thing pretending to talk. This
+   * measures the audio arriving from the provider and hands the page a level,
+   * so the orb swells on a vowel and settles in the gap between words.
+   */
+  const dom = new JSDOM('<body><div id="orb"></div></body>', { runScripts: 'outside-only' });
+  const { window } = dom;
+  const orb = window.document.getElementById('orb');
+  let wiredToSpeakers = false;
+  const analyser = {
+    fftSize: 0,
+    smoothingTimeConstant: 0,
+    getByteTimeDomainData(into) {
+      /* A loud, steady tone: every sample well away from the 128 midpoint. */
+      for (let i = 0; i < into.length; i += 1) into[i] = i % 2 ? 200 : 56;
+    },
+  };
+  window.AudioContext = function () {
+    const speakers = { NAME: 'speakers' };
+    this.state = 'running';
+    this.destination = speakers;
+    this.resume = () => {};
+    this.createMediaStreamSource = () => ({
+      connect(to) {
+        if (to === speakers) wiredToSpeakers = true;
+      },
+      disconnect() {},
+    });
+    this.createAnalyser = () => analyser;
+  };
+  let frames = 0;
+  /* Two turns of the loop, then stop: enough to watch the level settle. */
+  window.requestAnimationFrame = (fn) => {
+    if (frames++ < 2) fn();
+    return frames;
+  };
+  window.cancelAnimationFrame = () => {};
+  window.eval(read('assets/assistant/talking.js'));
+
+  assert.strictEqual(window.VoiceTalking.follow({}, orb), true, 'nothing followed the voice');
+  assert.strictEqual(orb.getAttribute('data-follows'), 'yes');
+  const level = Number(orb.style.getPropertyValue('--voice-level'));
+  assert.ok(level > 0.2, 'a loud voice barely moved the orb: ' + level);
+  assert.ok(level <= 1, 'the level ran past one: ' + level);
+
+  /*
+   * AND IT NEVER PLAYS THE AUDIO. The <audio> element is already playing this
+   * stream; wiring the analyser to the destination as well would be a second
+   * copy of the assistant's voice, half a beat behind itself.
+   */
+  assert.strictEqual(wiredToSpeakers, false, 'the analyser was wired to the speakers');
+
+  /* Letting go leaves the orb still and hands the loop back to CSS. */
+  window.VoiceTalking.stop();
+  assert.strictEqual(orb.getAttribute('data-follows'), null);
+  assert.strictEqual(orb.style.getPropertyValue('--voice-level'), '');
+
+  /* A browser with no AudioContext keeps its own animation, and says so
+     rather than throwing. */
+  const bare = new JSDOM('<body><div id="orb"></div></body>', { runScripts: 'outside-only' });
+  bare.window.eval(read('assets/assistant/talking.js'));
+  assert.strictEqual(
+    bare.window.VoiceTalking.follow({}, bare.window.document.getElementById('orb')),
+    false
+  );
+
+  /* The page loads it, the line hands it the stream and lets go at the end,
+     and the CSS stands its keyframe loop down while something real is being
+     followed - or the two would run at once. */
+  assert.match(read('products.html'), /assets\/assistant\/talking\.js/);
+  const js = read('assets/assistant/voice.js');
+  assert.match(js, /VoiceTalking\.follow\(event\.streams\[0\], el\("voice-orb"\)\)/);
+  assert.match(js, /VoiceTalking\.stop\(\)/);
+  const orbCss = read('assets/order.css');
+  assert.match(orbCss, /\.voice-orb\[data-follows="yes"\] \{[^}]*--voice-level/);
+  assert.match(orbCss, /\.voice-orb\[data-follows="yes"\] \{\s*\n\s*animation: none;/);
+  window.close();
+  bare.window.close();
+});
+
 test('the assistant takes the whole screen, and the order leads it', () => {
   /*
    * Owner: "when ai click occupie full screen ... not right bottom only.

@@ -1068,6 +1068,14 @@
       if (out && event.streams && event.streams[0]) {
         out.srcObject = event.streams[0];
         out.play && out.play().catch(function () {});
+        /* And the orb follows the voice actually coming back, rather than
+           pulsing on a fixed loop that talks whatever is being said.
+           assets/assistant/talking.js. */
+        try {
+          if (window.VoiceTalking) window.VoiceTalking.follow(event.streams[0], el("voice-orb"));
+        } catch (e) {
+          /* The page keeps its own CSS animation; nobody notices. */
+        }
       }
     };
     var dc = pc.createDataChannel("oai-events");
@@ -1212,6 +1220,13 @@
 
   function stopLine() {
     stopMeter(true);
+    /* Let go of the voice before the stream under it goes, or the analyser
+       keeps a handle on a track that has ended. */
+    try {
+      if (window.VoiceTalking) window.VoiceTalking.stop();
+    } catch (e) {
+      /* nothing was following */
+    }
     try {
       if (live.dc) live.dc.close();
     } catch (e) {
