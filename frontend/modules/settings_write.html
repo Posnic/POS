@@ -3083,6 +3083,52 @@
                                                     under Settings &gt; Modules. This page manages the tables it uses.</lang>
                                                 </small>
                                             </div>
+                                    <!--
+                                        HOW MANY OPEN ORDERS ONE TABLE MAY HAVE.
+
+                                        "basically two orders in single table not possible", and
+                                        then: by default one, with a setting for shops that want
+                                        more. Most floors mean one bill per table, added to as the
+                                        meal goes on. Some genuinely run a ticket per round.
+
+                                        It sits here, on Tables, rather than as a switch on the
+                                        Features list: Features says whether the restaurant exists,
+                                        this says how its floor behaves.
+                                    -->
+                                    <div class="card m-b-30">
+                                        <div class="card-header">
+                                            <h5 class="card-title">
+                                                <lang class="lang_orders_per_table">Orders per table</lang>
+                                            </h5>
+                                            <small class="text-muted"><lang class="lang_orders_per_table_hint">How many open orders one table may have at the same time. Adding items to an order that is already open is never blocked.</lang></small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <div class="form-group mb-0">
+                                                        <select name="table_order_limit_mode" id="table_order_limit_mode"
+                                                            class="form-control form-control-sm border-control"
+                                                            aria-label="Orders per table"
+                                                            data-t-aria-label="lang_orders_per_table"
+                                                            onchange="PosnicPro.settings.tableOrderLimitMode()">
+                                                            <option value="1"><lang class="lang_one_order_per_table">One order per table</lang></option>
+                                                            <option value="max"><lang class="lang_at_most_this_many">At most this many</lang></option>
+                                                            <option value="0"><lang class="lang_no_limit">No limit</lang></option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3" id="table_order_limit_max_wrap" style="display:none;">
+                                                    <div class="form-group mb-0">
+                                                        <input type="number" min="2" max="99" step="1"
+                                                            name="table_order_limit_max" id="table_order_limit_max"
+                                                            class="form-control form-control-sm border-control"
+                                                            value="2" aria-label="Maximum open orders per table"
+                                                            data-t-aria-label="lang_maximum_open_orders_per_table">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="card m-b-30">
                                         <div class="card-header">
                                             <h5 class="card-title">

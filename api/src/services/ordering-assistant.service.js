@@ -100,6 +100,26 @@ function categoriesOf(storefront) {
  * however it is asked; the names let it say "not today" instead of "never
  * heard of it".
  */
+/*
+ * WHAT A LANGUAGE MODEL IS SENT, AND WHAT IT IS NOT.
+ *
+ * The picture fields go. A model that is answering out loud cannot see an
+ * image and will never say a URL, and on the live voice line this menu is
+ * re-billed as context EVERY time the assistant opens its mouth. Measured on
+ * the 31-dish sandbox: 1,701 characters of `image` and 1,763 of `photos`,
+ * sent again and again, for nothing.
+ *
+ * The description stays, capped: it is how "what is in it?" gets answered,
+ * and a shop that has written three sentences about a dosa has written them
+ * for a reader, not for a brief. So does goes_with, which is what the
+ * cross-selling suggestion is drawn from.
+ *
+ * Owner: "actually charging for this conversation from openai too much."
+ * See Intranet docs/VOICE_ORDERING_COST.md for what the rest of it costs.
+ */
+const MENU_BLIND_FIELDS = ['image', 'photos', 'icon', 'thumbnail'];
+const MAX_DISH_WORDS = 120;
+
 function splitMenu(menu) {
   const open = [];
   const off = [];
@@ -108,6 +128,8 @@ function splitMenu(menu) {
     if (item.available === false) off.push(String(item.name || '').slice(0, 80));
     else {
       const { available, ...rest } = item;
+      for (const blind of MENU_BLIND_FIELDS) delete rest[blind];
+      if (rest.description) rest.description = String(rest.description).slice(0, MAX_DISH_WORDS);
       open.push(rest);
     }
   }
@@ -486,6 +508,20 @@ async function reply(body, storefront, context) {
     /* A model that answered in prose still answered; the page shows it. */
     const text = String((asked.data && asked.data.text) || '').trim();
     if (!text) return { status: false, message: 'The assistant had no answer', data: null };
+    /*
+     * BUT NEVER BRACES AT A CUSTOMER.
+     *
+     * This fallback is for a model that ignored the format and wrote a plain
+     * sentence. A model that TRIED the format and produced JSON this could
+     * not parse is a different thing, and printing it drops
+     * `{"reply":"...","actions":[]}` into the chat as though it were the
+     * answer - which is exactly what the owner was shown on develop. Saying
+     * nothing useful beats saying that.
+     */
+    if (/^[[{]/.test(text)) {
+      console.warn('[assistant] the model answered in JSON that could not be parsed');
+      return { status: false, message: 'The assistant had no answer', data: null };
+    }
     return { status: true, data: { reply: text.slice(0, MAX_REPLY_CHARS), actions: [] } };
   }
   const tidied = tidy(parsed, menu);

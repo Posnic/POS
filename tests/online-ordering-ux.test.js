@@ -1186,7 +1186,20 @@ test('talk to order: the microphone follows the shop, and a live line applies th
   await settle();
   assert.deepStrictEqual(calls.applied, [['m1', 2], ['m1', 1]]);
   assert.strictEqual(JSON.parse(calls.sent[0].item.output).item_id, 'm1');
-  assert.strictEqual(calls.sent.filter((e) => e.item && e.item.call_id === 'c5').length, 0, 'a cancelled response ran its tools');
+  /*
+   * A response the customer talked over is ANSWERED but not RUN.
+   *
+   * Not run, because adding the dish somebody interrupted to correct is how
+   * the wrong food is cooked. Answered, because a call_id the model is
+   * waiting on and never hears back about wedges the conversation - every
+   * turn after it is an acknowledgement and nothing else, which is what the
+   * owner heard: "keep saying ok ok but not able to continue".
+   */
+  const afterC5 = calls.sent.filter((e) => e.item && e.item.call_id === 'c5');
+  assert.strictEqual(afterC5.length, 1, 'an interrupted call was left unanswered, which wedges the line');
+  assert.deepStrictEqual(JSON.parse(afterC5[0].item.output), { ok: false, reason: 'interrupted' });
+  /* And nothing new was asked to be said over the customer. */
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'response.create').length, 1, 'the assistant spoke over an interruption');
 
   /* A refused duplicate response is a warning, not the end of the call. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', code: 'conversation_already_has_active_response', message: 'busy' } }) });
@@ -1451,9 +1464,28 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   /* Malayalam letters for a Tamil sentence: not shown, and the line is told to hear Tamil. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ഒരു ചിക്കൻ ബിരിയാണി' }) });
   assert.ok(!/ചിക്കൻ/.test(document.getElementById('assistant-log').textContent), 'the misheard alphabet was shown to the customer');
-  const updates = calls.sent.filter((e) => e.type === 'session.update');
-  assert.strictEqual(updates.length, 1);
-  assert.deepStrictEqual(updates[0].session.audio.input.transcription, { model: 'gpt-4o-mini-transcribe', language: 'ta' });
+  /*
+   * AND NOTHING IS SENT DOWN THE LINE.
+   *
+   * Owner: "i talk in tamil it reply in tamil but its not continuing. broken
+   * voice hearing." This used to answer a Tamil transcript with a
+   * session.update carrying only audio.input.transcription - and the update
+   * REPLACES the block it names, while audio.input is also where turn
+   * detection lives. Handing over an audio.input with a transcription and no
+   * turn_detection asks the line to stop noticing the customer is speaking,
+   * which is exactly what he heard: it answers the first Tamil sentence and
+   * never hears another one.
+   *
+   * The language is remembered for this page's own use. The REPLY language
+   * comes from the brief, which works - he says it does answer in Tamil - and
+   * a Tamil page gets Tamil ears when the session is minted, which is the
+   * safe moment to say it.
+   */
+  assert.deepStrictEqual(
+    calls.sent.filter((e) => e.type === 'session.update'),
+    [],
+    'the line is still reconfigured mid-call, which is what broke the hearing'
+  );
 
   /* Nothing is written down either way, and the lock is not sent twice. */
   await window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'ஒரு சிக்கன் பிரியாணி' }) });
@@ -1462,16 +1494,16 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
     !/ஒரு சிக்கன் பிரியாணி|and one lime soda/.test(document.getElementById('assistant-log').textContent),
     'the call was written into the chat'
   );
-  assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 1, 'the lock was sent again');
+  assert.strictEqual(calls.sent.filter((e) => e.type === 'session.update').length, 0, 'the line was reconfigured mid-call');
   window.OrderingVoice.stop();
 
-  /* On the older endpoint the same lock takes the older shape. */
+  /* The older endpoint is left alone for the same reason. */
   const beta = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-4o-realtime-preview' } } } });
   await beta.window.OrderingVoice.start();
   await settle();
   beta.calls.sent.length = 0;
   await beta.window.OrderingVoice.onEvent({ data: JSON.stringify({ type: 'conversation.item.input_audio_transcription.completed', transcript: 'வணக்கம்' }) });
-  assert.deepStrictEqual(beta.calls.sent.filter((e) => e.type === 'session.update')[0].session, { input_audio_transcription: { model: 'whisper-1', language: 'ta' } });
+  assert.deepStrictEqual(beta.calls.sent.filter((e) => e.type === 'session.update'), []);
   beta.window.OrderingVoice.stop();
 
   /* A Tamil page is locked before the first word: nothing to send later. */
@@ -1486,6 +1518,41 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   tamil.window.OrderingVoice.stop();
 });
 
+test('the line is opened knowing which table the code was stuck to', () => {
+  /*
+   * Owner: "table number already gone and ai asking me again table number.
+   * mostly QR code we placed in tabels. so dont ask its take away or able."
+   *
+   * The table was never gone - service-point.js had it in sessionStorage the
+   * whole walk - but the voice line was opened with nothing but the offer and
+   * the language. So the assistant genuinely did not know, asked for a table
+   * the printed code had already named, and its opening line had no table to
+   * say either. Both halves are checked: the page sends it, and the server
+   * reads it out of the BODY, which is where a POST puts it.
+   */
+  const js = read('assets/assistant/voice.js');
+  assert.match(js, /Object\.assign\(\{ sdp: offer\.sdp, lang: lang\(\) \}, servicePointNow\(\)\)/);
+  assert.match(js, /function servicePointNow\(\)/);
+  assert.match(js, /window\.KioskServicePoint\.read\(\)/);
+  for (const field of ['table', 'venue', 'unit', 'fulfilment']) {
+    assert.match(js, new RegExp('point\\.' + field), 'the line is not told the ' + field);
+  }
+
+  const controller = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'src', 'controllers', 'online-ordering.controller.js'),
+    'utf8'
+  );
+  assert.match(controller, /const body = \(req && typeof req\.body === 'object' && req\.body\) \|\| \{\}/);
+  assert.match(controller, /said\('table'\)/, 'the server still reads the table only from the address');
+
+  /* And the printed code settles how they are eating, so nothing asks. */
+  const point = read('assets/service-point.js');
+  assert.match(point, /parts\[1\] === 'takeaway'/, 'a takeaway code is not recognised');
+  assert.match(point, /else if \(point\.table\) \{\s*\n\s*point\.fulfilment = 'dine_in';/, 'a table does not imply dining in');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'api', 'app.js'), 'utf8');
+  assert.match(app, /\\\/takeaway\|\\\/table\\\//, 'the server does not serve /order/ABC/takeaway');
+});
+
 test('the assistant speaks first when the line opens, once per line', async () => {
   /* Owner: "when it starts with greeting? like welcome to shop name". */
   const { window, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
@@ -1493,13 +1560,25 @@ test('the assistant speaks first when the line opens, once per line', async () =
   await settle();
   calls.sent.length = 0;
   window.__pc.channel.onopen();
-  assert.strictEqual(calls.sent.length, 2, 'opening the line did not ask the assistant to speak');
-  assert.strictEqual(calls.sent[0].type, 'conversation.item.create');
-  assert.strictEqual(calls.sent[0].item.role, 'system');
-  assert.match(calls.sent[0].item.content[0].text, /OPENING LINE/);
-  assert.strictEqual(calls.sent[1].type, 'response.create');
+  /*
+   * ONE event, carrying its own instructions.
+   *
+   * Owner: "welcome greeting not said." It used to put a system MESSAGE into
+   * the conversation and then ask for any response at all - two things that
+   * can go wrong to do one job. A system item is not a shape every build of
+   * the line accepts, and a bare response.create leaves the model to decide
+   * what the moment calls for, which at the start of a call with nothing yet
+   * said is often nothing at all. A response carries its own instructions.
+   */
+  assert.strictEqual(calls.sent.length, 1, 'opening the line did not ask the assistant to speak');
+  assert.strictEqual(calls.sent[0].type, 'response.create');
+  assert.match(calls.sent[0].response.instructions, /OPENING LINE/);
+  assert.ok(
+    !calls.sent.some((e) => e.type === 'conversation.item.create'),
+    'the greeting still depends on a system item being accepted first'
+  );
   window.__pc.channel.onopen();
-  assert.strictEqual(calls.sent.length, 2, 'the greeting was asked for twice on one line');
+  assert.strictEqual(calls.sent.length, 1, 'the greeting was asked for twice on one line');
 
   /* A new line greets again. */
   window.OrderingVoice.stop();
@@ -1709,17 +1788,209 @@ test('sending to the kitchen asks for what the code did not say, and hands the r
   assert.deepStrictEqual(empty.calls.checkout, []);
 });
 
-test('the sheet carries a Review order button with the count and the total, once there is something to review', async () => {
-  /* Owner: "ai asking to click review and order. but there is no button." */
-  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
-  const button = document.getElementById('assistant-review');
-  assert.ok(button, 'no Review order button in the sheet');
+test('the orb follows the voice actually coming back, not a loop', () => {
+  /*
+   * Owner: "have talking ai or some animation whill talk. little not too much
+   * annoy."
+   *
+   * A CSS keyframe loop pulses at a fixed rate whatever is being said, and
+   * the eye catches that at once: it is a thing pretending to talk. This
+   * measures the audio arriving from the provider and hands the page a level,
+   * so the orb swells on a vowel and settles in the gap between words.
+   */
+  const dom = new JSDOM('<body><div id="orb"></div></body>', { runScripts: 'outside-only' });
+  const { window } = dom;
+  const orb = window.document.getElementById('orb');
+  let wiredToSpeakers = false;
+  const analyser = {
+    fftSize: 0,
+    smoothingTimeConstant: 0,
+    getByteTimeDomainData(into) {
+      /* A loud, steady tone: every sample well away from the 128 midpoint. */
+      for (let i = 0; i < into.length; i += 1) into[i] = i % 2 ? 200 : 56;
+    },
+  };
+  window.AudioContext = function () {
+    const speakers = { NAME: 'speakers' };
+    this.state = 'running';
+    this.destination = speakers;
+    this.resume = () => {};
+    this.createMediaStreamSource = () => ({
+      connect(to) {
+        if (to === speakers) wiredToSpeakers = true;
+      },
+      disconnect() {},
+    });
+    this.createAnalyser = () => analyser;
+  };
+  let frames = 0;
+  /* Two turns of the loop, then stop: enough to watch the level settle. */
+  window.requestAnimationFrame = (fn) => {
+    if (frames++ < 2) fn();
+    return frames;
+  };
+  window.cancelAnimationFrame = () => {};
+  window.eval(read('assets/assistant/talking.js'));
+
+  assert.strictEqual(window.VoiceTalking.follow({}, orb), true, 'nothing followed the voice');
+  assert.strictEqual(orb.getAttribute('data-follows'), 'yes');
+  const level = Number(orb.style.getPropertyValue('--voice-level'));
+  assert.ok(level > 0.2, 'a loud voice barely moved the orb: ' + level);
+  assert.ok(level <= 1, 'the level ran past one: ' + level);
+
+  /*
+   * AND IT NEVER PLAYS THE AUDIO. The <audio> element is already playing this
+   * stream; wiring the analyser to the destination as well would be a second
+   * copy of the assistant's voice, half a beat behind itself.
+   */
+  assert.strictEqual(wiredToSpeakers, false, 'the analyser was wired to the speakers');
+
+  /* Letting go leaves the orb still and hands the loop back to CSS. */
+  window.VoiceTalking.stop();
+  assert.strictEqual(orb.getAttribute('data-follows'), null);
+  assert.strictEqual(orb.style.getPropertyValue('--voice-level'), '');
+
+  /* A browser with no AudioContext keeps its own animation, and says so
+     rather than throwing. */
+  const bare = new JSDOM('<body><div id="orb"></div></body>', { runScripts: 'outside-only' });
+  bare.window.eval(read('assets/assistant/talking.js'));
+  assert.strictEqual(
+    bare.window.VoiceTalking.follow({}, bare.window.document.getElementById('orb')),
+    false
+  );
+
+  /* The page loads it, the line hands it the stream and lets go at the end,
+     and the CSS stands its keyframe loop down while something real is being
+     followed - or the two would run at once. */
+  assert.match(read('products.html'), /assets\/assistant\/talking\.js/);
+  const js = read('assets/assistant/voice.js');
+  assert.match(js, /VoiceTalking\.follow\(event\.streams\[0\], el\("voice-orb"\)\)/);
+  assert.match(js, /VoiceTalking\.stop\(\)/);
+  const orbCss = read('assets/order.css');
+  assert.match(orbCss, /\.voice-orb\[data-follows="yes"\] \{[^}]*--voice-level/);
+  assert.match(orbCss, /\.voice-orb\[data-follows="yes"\] \{\s*\n\s*animation: none;/);
+  window.close();
+  bare.window.close();
+});
+
+test('the assistant takes the whole screen, and the order leads it', () => {
+  /*
+   * Owner: "when ai click occupie full screen ... not right bottom only.
+   * utlize the the space and make line item modifiable ... bottom only should
+   * have mic and ai anmiation, top user normal able increase edit add item
+   * with add button etc. same time he can do."
+   */
+  const css = read('assets/order.css');
+
+  /* The whole height, and a readable column rather than a wall on a desktop. */
+  assert.match(css, /dialog\.sheet\.assistant \{[^}]*height: 100dvh/);
+  assert.match(css, /@media \(min-width: 720px\) \{\s*\n[^}]*dialog\.sheet\.assistant \{[^}]*width: min\(560px/);
+
+  /*
+   * The SHEET must not scroll, or the send button and the microphone slide
+   * off the bottom exactly when somebody reaches for them. The order in the
+   * middle scrolls instead.
+   */
+  assert.match(css, /dialog\.sheet\.assistant \{\s*\n\s*overflow: hidden;/);
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order \{[^}]*overflow-y: auto/);
+
+  /* Big lines, because that is what the customer checks against what they
+     just said out loud. */
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order-list li \{[^}]*font-size: 17px/);
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order-step \{[^}]*width: 38px/);
+
+  /* WRAPPED, never a sideways scroller: "cross selling i saw horrizontal
+     scroll. not soo good." */
+  const more = css.slice(css.indexOf('.assistant-more-row {'));
+  const rule = more.slice(0, more.indexOf('}'));
+  assert.match(rule, /flex-wrap: wrap/);
+  assert.ok(!/overflow-x/.test(rule), 'the suggestions still scroll sideways');
+
+  /* And the markup carries the Add button and the wrapped row. */
+  const html = read('products.html');
+  assert.match(html, /id="assistant-add"/, 'there is no way to add an item by hand');
+  assert.match(html, /id="assistant-more-row"/);
+  assert.match(html, /Confirm &amp; send/);
+});
+
+test('the assistant is told what the customer changes with their thumb', async () => {
+  /*
+   * Owner: "also AI should know about the changes what user doing. its kind
+   * of helper too."
+   *
+   * The top of the screen is worked by hand while the assistant listens at
+   * the bottom. One that cannot see the thumb offers a dish already on the
+   * order, or reads back a quantity just corrected.
+   */
+  const { window, document, calls } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime-mini' } } },
+  });
+  await window.OrderingVoice.start();
+  await settle();
   document.getElementById('ask-ai').click();
   await settle();
-  assert.strictEqual(button.hidden, false, 'the button is hidden with an order to review');
+  calls.sent.length = 0;
+
+  const plus = [...document.querySelectorAll('.assistant-order-step')].find(
+    (b) => b.getAttribute('data-step') === '1'
+  );
+  assert.ok(plus, 'there is no way to change a line by hand');
+  plus.click();
+  await settle();
+
+  const told = calls.sent.filter((e) => e.type === 'conversation.item.create');
+  assert.strictEqual(told.length, 1, 'the assistant was not told what the customer did');
+  const words = told[0].item.content[0].text;
+  /* Named by DISH. An id in the conversation is a thing it might read out. */
+  assert.match(words, /Fresh Lime Soda/);
+  assert.match(words, /tapping the screen/);
+  assert.ok(!/d1/.test(words), 'the assistant was handed an item id to say out loud');
+  /* And quietly: the customer is looking at the screen and does not need it
+     narrated back at them. */
+  assert.deepStrictEqual(
+    calls.sent.filter((e) => e.type === 'response.create'),
+    [],
+    'the assistant was made to talk about a change the customer just watched happen'
+  );
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('the sheet carries ONE button, and it sends the order', async () => {
+  /*
+   * It used to say "Review order" and walk the customer to the basket page to
+   * place it from there. Owner: "have 'confirm & send order'. if user click
+   * say thank you and send it to kitchen ... if required we can do two steps.
+   * review and send.. i believe one enought. since we give 1 minute to modify
+   * item."
+   *
+   * He reasoned it out himself and he is right: a review before sending and a
+   * minute to change after are the same safety net paid for twice, and the
+   * second one is the better of the two, because by then the customer is
+   * looking at what the kitchen actually has.
+   */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  const button = document.getElementById('assistant-review');
+  assert.ok(button, 'no Confirm and send button in the sheet');
+  assert.match(button.className, /assistant-confirm/);
+  assert.match(button.textContent, /Confirm/);
+  document.getElementById('ask-ai').click();
+  await settle();
+  assert.strictEqual(button.hidden, false, 'the button is hidden with an order to send');
   assert.strictEqual(document.getElementById('assistant-review-sum').textContent, '1 dish · ₹80');
+
+  /* A tap IS the customer's yes - there is nothing else that button could
+     mean - so it goes through the same door the spoken "send it" uses. */
   button.click();
-  assert.deepStrictEqual(calls.left, ['cart.html']);
+  await settle();
+  assert.strictEqual(calls.checkout.length, 1, 'the button did not send the order');
+  assert.deepStrictEqual(calls.left, [], 'the button walked the customer away instead of sending');
+  assert.strictEqual(
+    document.getElementById('assistant-placed').hidden,
+    false,
+    'nothing confirmed that the order had gone'
+  );
 
   const bare = voicePage({ voice: 'live', reply: { status: 200, body: {} }, cartLines: [] });
   bare.document.getElementById('ask-ai').click();
@@ -2301,7 +2572,22 @@ test('once the window has closed, cancelling asks the shop instead of doing it',
   document.querySelector('.history-open').click();
   const panel = document.getElementById('details-o1');
 
-  assert.strictEqual(panel.querySelectorAll('.history-step').length, 0, 'a closed window still offers to change the order');
+  /*
+   * PAST THE WINDOW THE STEPPERS STAY, AND ASK.
+   *
+   * Owner, looking at this very screen: "why order history dont have any
+   * option to other than cancel? coz of time?" It was the time - and taking
+   * the controls away left somebody whose wish is one more naan being offered
+   * nothing but Cancel, while cancelling past the window was already allowed
+   * to become a request. They are marked, so a tap is never a surprise.
+   */
+  const steps = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(steps.length, 2, 'a closed window offers nothing but cancel again');
+  assert.ok(
+    steps.every((b) => b.getAttribute('data-asks') === 'yes'),
+    'a closed window still changes the order outright instead of asking'
+  );
+  assert.match(panel.querySelector('.history-asks').textContent, /go to the shop to approve/);
   assert.strictEqual(panel.querySelector('.history-clock'), null, 'a closed window is still counting down');
   const off = panel.querySelector('.history-cancel');
   assert.strictEqual(off.textContent, 'Ask the shop to cancel', 'the button still claims to cancel it outright');
@@ -2455,12 +2741,90 @@ test('an order the shop has closed offers nothing to change', async () => {
   await new Promise((r) => setTimeout(r, 30));
 
   const panel = page.document.getElementById('details-o1');
-  assert.deepStrictEqual([...panel.querySelectorAll('.history-step')], [], 'a stepper that could only fail');
-  assert.strictEqual(panel.querySelector('.history-more'), null, 'something was offered that could not be added');
-  /* Asking is still allowed: cancelling is a different flow and every shop
-     has it. */
+  /* Past the window nothing is taken away - it is all turned into asking, and
+     marked as such so a tap is never a surprise. */
+  const closed = [...panel.querySelectorAll('.history-step')];
+  assert.strictEqual(closed.length, 2);
+  assert.ok(closed.every((b) => b.getAttribute('data-asks') === 'yes'));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.strictEqual(
+    panel.querySelector('.history-more-row').getAttribute('data-asks'),
+    'yes',
+    'a dish added past the window would go straight to the kitchen'
+  );
   assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Ask the shop to cancel');
   page.window.close();
+});
+
+test('the order rings a bell when the kitchen takes it, on both ways of ordering', () => {
+  /*
+   * Owner: "give ting sound to confirm. both customer side."
+   *
+   * Built as a WAV and played through an <audio> element, NOT through the Web
+   * Audio API. That is the whole point of the shape of this file: on an
+   * iPhone, Web Audio plays through the ringer switch, so a customer who has
+   * deliberately silenced their phone would be made to chirp anyway. iOS
+   * honours the switch for media elements. A sound nobody can refuse is not a
+   * courtesy.
+   *
+   * Still not a file on disk: a data URI, so there is nothing to fetch and
+   * nothing for the page's CSP to allow.
+   */
+  const dom = new JSDOM('<body></body>', { url: 'https://shop.example/order/', runScripts: 'outside-only' });
+  const { window } = dom;
+  const players = [];
+  let played = 0;
+  let source = '';
+  window.Audio = function () {
+    players.push(this);
+    this.play = () => { played += 1; return Promise.resolve(); };
+  };
+  Object.defineProperty(window.Audio.prototype, 'src', {
+    set(value) { source = value; },
+    get() { return source; },
+    configurable: true,
+  });
+  window.eval(read('assets/ting.js'));
+
+  assert.strictEqual(window.Ting.play(), true, 'the bell made no sound');
+  assert.strictEqual(played, 1);
+  /* Never an oscillator: that is the bug this shape exists to avoid. */
+  assert.ok(!/AudioContext/.test(read('assets/ting.js')), 'the bell went back to Web Audio, which ignores the silent switch on iOS');
+
+  /* A real, well-formed WAV, quiet and about a second long. */
+  assert.match(source, /^data:audio\/wav;base64,/);
+  const wav = Buffer.from(source.split(',')[1], 'base64');
+  assert.strictEqual(wav.toString('ascii', 0, 4), 'RIFF');
+  assert.strictEqual(wav.toString('ascii', 8, 12), 'WAVE');
+  assert.strictEqual(wav.readUInt16LE(22), 1, 'the bell is not mono');
+  assert.strictEqual(wav.readUInt32LE(24), 22050);
+  assert.strictEqual(wav.readUInt16LE(34), 16, 'the samples are not 16 bit');
+  const seconds = (wav.length - 44) / 2 / 22050;
+  assert.ok(seconds > 0.5 && seconds < 1.5, 'the bell is ' + seconds.toFixed(2) + 's long');
+  let peak = 0;
+  for (let i = 44; i + 1 < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)));
+  assert.ok(peak / 32767 < 0.35, 'the bell is loud enough to announce rather than confirm');
+  assert.ok(peak > 0, 'the bell is silence');
+
+  /* One element and one rendering, reused: a new Audio() per order leaves the
+     old ones alive until they are collected, and a busy evening stacks a
+     hundred of them. */
+  window.Ting.play();
+  assert.strictEqual(players.length, 1, 'a second order built a second player');
+  assert.strictEqual(played, 2);
+  window.close();
+
+  /* And both ways of placing an order ring it: the assistant on the beat its
+     drawn bell is struck, and the token screen for a basket tapped through. */
+  const assistant = read('assets/assistant/script.js');
+  assert.match(assistant, /if \(beat === "landed"\) ting\(\);/, 'the assistant never rings the bell');
+  assert.match(assistant, /window\.Ting && typeof window\.Ting\.play === "function"/);
+  const token = read('assets/thankyou/script.js');
+  assert.match(token, /window\.Ting\.play\(\)/, 'a basket tapped through confirms itself in silence');
+  assert.match(token, /rung_\$\{token\}/, 'a refresh of the token screen rings the bell again');
+  for (const page of ['products.html', 'thankyou.html']) {
+    assert.match(read(page), /assets\/ting\.js/, page + ' never loads the bell');
+  }
 });
 
 test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {

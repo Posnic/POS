@@ -54,6 +54,25 @@ async function renderAndPrint() {
     });
 
     /*
+     * One short bell, once per order.
+     *
+     * This is the other way an order gets placed - tapped through the basket
+     * rather than spoken - and it confirms itself the same way the assistant
+     * does. Keyed to the token, so a refresh or a customer coming back later
+     * to look at their number does not ring it again.
+     */
+    (function ting() {
+        try {
+            const rung = `rung_${token}`;
+            if (sessionStorage.getItem(rung) === "true") return;
+            sessionStorage.setItem(rung, "true");
+            if (window.Ting && typeof window.Ting.play === "function") window.Ting.play();
+        } catch (e) {
+            /* The screen says the same thing; the sound is a courtesy. */
+        }
+    })();
+
+    /*
      * What happens next, in the customer's terms: to the table, at the
      * counter, from the shop, or on its way; and what is still owed if the
      * order was not paid here.

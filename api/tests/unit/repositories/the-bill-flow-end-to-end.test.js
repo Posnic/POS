@@ -376,10 +376,9 @@ describe('the queue between the floor and the counter', () => {
     await askForABill(branch);
 
     for (let i = 0; i < 8; i += 1) {
-       
       const got = await queue.claimPrintJobs({ branchId: String(branch), tillId: 'COUNTER' });
       if (!got.data.length) break;
-       
+
       await queue.finishPrintJob(String(got.data[0]._id), { ok: false, error: 'offline' });
     }
 

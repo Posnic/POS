@@ -294,13 +294,43 @@
    * one item of two ("i said chicken briyani and chicken tikka ... it said
    * only chicken tikka").
    */
-  async function runToolCalls(response) {
+  async function runToolCalls(response, interrupted) {
     var items = (response && response.output) || [];
     var calls = [];
     for (var i = 0; i < items.length; i++) {
       if (items[i] && items[i].type === "function_call" && items[i].call_id) calls.push(items[i]);
     }
     if (!calls.length) return false;
+
+    /*
+     * A RESPONSE THE CUSTOMER TALKED OVER IS ANSWERED, NOT RUN.
+     *
+     * Two things are true at once. A tool call from a cancelled response must
+     * NOT be carried out - the customer interrupted for a reason, and adding
+     * the dish they talked over is how the wrong food is cooked. But a
+     * call_id the model is waiting on and never hears back about wedges the
+     * conversation: every turn afterwards is an acknowledgement and nothing
+     * else, which is what the owner heard - "keep saying ok ok but not able
+     * to continue".
+     *
+     * So the call is answered and refused. Nothing is added, and the model is
+     * free to carry on. No response.create either: the customer is mid
+     * sentence, and asking the model to speak now talks over them again.
+     */
+    if (interrupted) {
+      for (i = 0; i < calls.length; i++) {
+        sendEvent({
+          type: "conversation.item.create",
+          item: {
+            type: "function_call_output",
+            call_id: calls[i].call_id,
+            output: JSON.stringify({ ok: false, reason: "interrupted" })
+          }
+        });
+      }
+      return false;
+    }
+
     for (i = 0; i < calls.length; i++) {
       var args = {};
       try {
@@ -308,7 +338,21 @@
       } catch (e) {
         args = {};
       }
-      var output = await runTool(calls[i].name, args);
+      /*
+       * EVERY call gets an output, even one this page does not understand.
+       *
+       * A call_id left unanswered is a conversation that cannot move: the
+       * model is waiting on a result that will never arrive, so every turn
+       * after it is an acknowledgement and nothing else. The owner heard
+       * exactly that - "keep saying ok ok but not able to continue".
+       */
+      var output = null;
+      try {
+        output = await runTool(calls[i].name, args);
+      } catch (e) {
+        output = { ok: false, reason: "not_done" };
+      }
+      if (!output) output = { ok: false, reason: "not_done" };
       sendEvent({ type: "conversation.item.create", item: { type: "function_call_output", call_id: calls[i].call_id, output: JSON.stringify(output) } });
     }
     sendEvent({ type: "response.create" });
@@ -340,29 +384,62 @@
    * "welcome" before anyone orders. One system note tells the model the
    * line is open and one response.create asks it to speak. Once per line.
    */
+  /*
+   * SPEAK FIRST, AND SAY THE SHOP'S NAME.
+   *
+   * Owner: "welcome greeting not said."
+   *
+   * This used to put a system MESSAGE into the conversation and then ask for
+   * any response at all, which is two things that can go wrong to do one job:
+   * a system item is not a shape every build of the line accepts, and a bare
+   * response.create leaves the model to decide what the moment calls for -
+   * which, at the very start of a call with nothing said yet, is often
+   * nothing.
+   *
+   * A response carries its own instructions. Asking for ONE response and
+   * telling it what that response is for is the documented way to steer a
+   * single turn, and it does not depend on an item being accepted first.
+   */
   function greetFirst() {
     if (live.greeted) return;
     live.greeted = true;
     sendEvent({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "system",
-        content: [{ type: "input_text", text: "The line has just opened. Say your OPENING LINE now, in one sentence, in the page's language, then wait for the customer." }],
-      },
+      type: "response.create",
+      response: {
+        instructions:
+          "The line has just opened and the customer has said nothing yet. Say your OPENING LINE now, word for word, in one sentence, in the page's language - then stop and listen. Do not add anything to it and do not read the menu."
+      }
     });
-    sendEvent({ type: "response.create" });
   }
 
-  /* Tell the line to hear Tamil from now on. Once. */
+  /*
+   * Tamil was heard. NOTED, AND NOTHING IS SENT.
+   *
+   * Owner: "i talk in tamil it reply in tamil but its not continuing. broken
+   * voice hearing."
+   *
+   * This used to reconfigure the live session the moment a Tamil transcript
+   * arrived - a session.update carrying only audio.input.transcription. The
+   * update REPLACES the block it names, and audio.input is also where turn
+   * detection lives. Handing over an audio.input that has a transcription and
+   * no turn_detection is asking the line to stop noticing that the customer
+   * is speaking, which is exactly what he described: it answers the first
+   * Tamil sentence and then never hears another one.
+   *
+   * The transcription language was only ever an accuracy nicety, and the
+   * transcripts are not even shown - the owner's own rule, "no need to show
+   * conversation as text in the chat". The model's REPLY language comes from
+   * the brief, which tells it to speak the customer's language, and that
+   * works: he says it does reply in Tamil. So the language is remembered for
+   * this page's own use and the line is left exactly as it was opened.
+   *
+   * A Tamil PAGE still gets Tamil ears from the first word, because that is
+   * set when the session is minted - see voice-session.service.js - which is
+   * the safe moment to say it.
+   */
   function lockTamil() {
     if (live.heardLanguage) return;
     live.heardLanguage = "ta";
-    if (live.beta) {
-      sendEvent({ type: "session.update", session: { input_audio_transcription: { model: "whisper-1", language: "ta" } } });
-    } else {
-      sendEvent({ type: "session.update", session: { type: "realtime", audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "ta" } } } } });
-    }
   }
 
   /* Errors the line cannot come back from; anything else is logged and the
@@ -451,6 +528,67 @@
    * exactly why so it can say so. The customer's clear yes is the model's
    * to obtain; confirmed:false places nothing.
    */
+  /*
+   * The Confirm & send button, pressed.
+   *
+   * The same door the spoken "send it" uses, so there is exactly one way an
+   * order leaves this page: same checks, same refusals, same confirmation
+   * screen and bell afterwards. A tap IS the customer's yes, so it carries
+   * confirmed:true - there is nothing else a press of that button could mean.
+   *
+   * When it goes, the assistant is told, because it is mid-conversation and
+   * must not carry on asking whether to send something that has gone.
+   */
+  async function sendNow() {
+    var done = await sendToKitchen({ confirmed: true });
+    if (done.ok) {
+      tellTheAssistant(
+        'The customer pressed "Confirm and send" and the order has gone to the kitchen. Say in ONE sentence that it has gone and will be served soon. Do not read the order back.'
+      );
+    }
+    return done;
+  }
+
+  /*
+   * WHAT THE CUSTOMER JUST DID BY HAND, said into the conversation.
+   *
+   * Owner: "also AI should know about the changes what user doing. its kind
+   * of helper too."
+   *
+   * The top half of the screen is worked with fingers while the assistant
+   * listens at the bottom, and an assistant that cannot see that is worse
+   * than useless - it offers a dish that is already on the order, or reads
+   * back a quantity the customer has just corrected. This puts the change
+   * into the conversation as something the customer said, which is what it
+   * is, and does NOT ask for a reply: the customer is looking at the screen
+   * and does not need it narrated back at them.
+   */
+  function tellTheAssistant(what, speak) {
+    if (!live.active || !live.dc || live.dc.readyState !== "open") return false;
+    sendEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: String(what || "") }]
+      }
+    });
+    if (speak) sendEvent({ type: "response.create" });
+    return true;
+  }
+
+  /** One line about a change made by hand, for the assistant's benefit. */
+  function noticed(verb, name, quantity) {
+    if (!name) return;
+    var said =
+      verb === "remove" || Number(quantity) === 0
+        ? 'The customer has just taken ' + name + ' off the order themselves, by tapping the screen.'
+        : verb === "add"
+          ? 'The customer has just added ' + name + ' themselves, by tapping the screen.'
+          : 'The customer has just set ' + name + ' to ' + quantity + ' themselves, by tapping the screen.';
+    tellTheAssistant(said + ' Do not say anything about it unless they bring it up.');
+  }
+
   async function sendToKitchen(args) {
     var order = await cartSummary();
     if (!order.lines.length) return { ok: false, reason: "empty_order", order: order };
@@ -524,16 +662,17 @@
    * history page uses. Money is left out on purpose: the owner's rule is that
    * the assistant does not read totals aloud.
    */
-  async function orderHistory() {
-    var kept = [];
-    try {
-      kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
-    } catch (e) {
-      kept = [];
-    }
-    if (!kept.length) return { ok: true, orders: [] };
+  /*
+   * What the shop says about every order this phone holds, newest first.
+   *
+   * One request for all of them, the same door the history page uses. Shared
+   * with orderNamed below, which needs the shop's answer to match a BILL
+   * number - the shop's own number, which the browser does not keep.
+   */
+  async function lookupOrders(kept) {
+    if (!kept || !kept.length) return [];
     var branch = await branchNow();
-    if (!branch) return { ok: false, reason: "no_shop" };
+    if (!branch) return [];
     try {
       var response = await fetch(
         apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/lookup",
@@ -543,18 +682,32 @@
           body: JSON.stringify({ orders: kept.map(function (row) { return { orderId: row.orderId, token: row.token }; }) })
         }
       );
-      if (!response.ok) return { ok: false, reason: "not_read" };
+      if (!response.ok) return [];
       var answer = await response.json();
       var orders = (answer && answer.data && answer.data.orders) || [];
       /* Newest first, which is the order a person thinks in. */
       orders.sort(function (a, b) {
         return new Date(b.placed_at || 0) - new Date(a.placed_at || 0);
       });
-      return {
-        ok: true,
-        orders: orders.map(function (order) {
+      return orders;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function orderHistory() {
+    var kept = myOrders();
+    if (!kept.length) return { ok: true, orders: [] };
+    var branch = await branchNow();
+    if (!branch) return { ok: false, reason: "no_shop" };
+    var orders = await lookupOrders(kept);
+    return {
+      ok: true,
+      orders: orders.map(function (order) {
           return {
             token: order.token,
+            /* The number on their receipt, so the customer may quote either. */
+            bill_no: order.bill_no,
             placed_at: order.placed_at,
             state: order.cancelled ? "cancelled" : order.paid ? "paid" : order.state,
             can_change: order.can_change === true,
@@ -566,11 +719,25 @@
             lines: (order.items || []).map(function (line) {
               return { item_id: line.item_id, name: line.name, quantity: line.quantity };
             })
-          };
-        })
-      };
+        };
+      })
+    };
+  }
+
+  /* Where the printed code said this customer is, for the line's brief. */
+  function servicePointNow() {
+    try {
+      if (!window.KioskServicePoint) return {};
+      var point = window.KioskServicePoint.read() || {};
+      var out = {};
+      if (point.table) out.table = String(point.table);
+      if (point.venue) out.venue = String(point.venue);
+      if (point.unit) out.unit = String(point.unit);
+      if (point.fulfilment) out.fulfilment = String(point.fulfilment);
+      return out;
     } catch (e) {
-      return { ok: false, reason: "not_read" };
+      /* No service point is the shop's own floor, which is the safe read. */
+      return {};
     }
   }
 
@@ -583,41 +750,86 @@
     }
   }
 
+  function myOrders() {
+    try {
+      return (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /* A bill number as a machine would compare it: S-Q43L-000018, s q43l 18 and
+     "000018" are one number said three ways. */
+  function tidyRef(said) {
+    return String(said || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+
+  /* The digits on the end of a bill number, without their leading zeros -
+     what a person says when they read one out ("eighteen"). */
+  function tailNumber(said) {
+    var digits = tidyRef(said).match(/(\d+)$/);
+    return digits ? String(Number(digits[1])) : "";
+  }
+
   /*
    * Which order a tool call means.
    *
-   * The token the customer was given, because that is the number in front of
-   * them. With none, the one placed during this call; with none of those, the
-   * most recent this phone remembers - which is what somebody means when they
-   * ring back and say "make that two".
+   * EITHER NUMBER THE CUSTOMER HAS. The token is what they were told and what
+   * is called out; the bill number is what is printed on their receipt and
+   * what the shop's own queue leads with. They will say whichever is in front
+   * of them, so both are accepted - the token first, because it is short and
+   * the one people usually quote.
+   *
+   * The bill number is the shop's, so matching on it needs the shop's answer;
+   * that costs one request, and only when a token did not match.
+   *
+   * With no reference at all: the order placed during this call, and failing
+   * that the most recent this phone remembers - which is what somebody means
+   * when they ring back and say "make that two".
    */
-  function orderNamed(token) {
-    var asked = String(token || "").trim();
+  async function orderNamed(ref) {
+    var asked = String(ref || "").trim();
     if (!asked && live.placedId && live.placed) {
       return { orderId: live.placedId, token: live.placed };
     }
-    var kept = [];
-    try {
-      kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
-    } catch (e) {
-      kept = [];
+    var kept = myOrders();
+    if (!asked) {
+      var newest = kept
+        .slice()
+        .sort(function (a, b) {
+          return new Date(b.at || 0) - new Date(a.at || 0);
+        })[0];
+      return newest ? { orderId: newest.orderId, token: newest.token } : null;
     }
-    if (asked) {
-      var match = kept.filter(function (row) {
-        return String(row.token) === asked;
-      })[0];
-      return match ? { orderId: match.orderId, token: match.token } : null;
-    }
-    var newest = kept
-      .slice()
-      .sort(function (a, b) {
-        return new Date(b.at || 0) - new Date(a.at || 0);
-      })[0];
-    return newest ? { orderId: newest.orderId, token: newest.token } : null;
+
+    var byToken = kept.filter(function (row) {
+      return String(row.token) === asked;
+    })[0];
+    if (byToken) return { orderId: byToken.orderId, token: byToken.token };
+
+    /* Not a token this phone holds. Ask the shop what these orders are
+       numbered, and try the bill number. */
+    var said = await lookupOrders(kept);
+    if (!said.length) return null;
+    var want = tidyRef(asked);
+    var tail = tailNumber(asked);
+    var hits = said.filter(function (order) {
+      var bill = tidyRef(order.bill_no);
+      if (!bill) return false;
+      /* The whole number, or the part of it a person reads aloud. Never a
+         bare prefix: "S" must not match every order this shop ever took. */
+      return bill === want || (tail && tailNumber(order.bill_no) === tail);
+    });
+    /* Two of their own orders answer to what they said. Guessing between
+       them is how the wrong dinner gets cancelled. */
+    if (hits.length > 1) return { ambiguous: hits.map(function (o) { return o.token; }) };
+    if (!hits.length) return null;
+    return { orderId: hits[0].order_id, token: hits[0].token };
   }
 
-  async function placedOrderCall(what, body, token) {
-    var which = orderNamed(token);
+  async function placedOrderCall(what, body, ref) {
+    var which = await orderNamed(ref);
+    if (which && which.ambiguous) return { ok: false, reason: "which_order", tokens: which.ambiguous };
     if (!which) return { ok: false, reason: "nothing_placed" };
     /* Named locally so the rest of this function reads as it did. */
     var placedId = which.orderId;
@@ -628,7 +840,7 @@
     } catch (e) {
       branch = "";
     }
-    if (!branch) return { ok: false, reason: "no_shop" };
+    if (!branch) return { ok: false, reason: "no_shop", which: which };
     try {
       var response = await fetch(
         apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/" + encodeURIComponent(placedId) + "/" + what,
@@ -645,11 +857,11 @@
         answer = null;
       }
       if (!response.ok || !answer || answer.type !== "success") {
-        return { ok: false, reason: String((answer && answer.message) || "not_changed") };
+        return { ok: false, reason: String((answer && answer.message) || "not_changed"), which: which };
       }
-      return { ok: true, data: (answer && answer.data) || {} };
+      return { ok: true, data: (answer && answer.data) || {}, which: which };
     } catch (e) {
-      return { ok: false, reason: "not_changed" };
+      return { ok: false, reason: "not_changed", which: which };
     }
   }
 
@@ -686,9 +898,12 @@
       }
       asked.push({ item_id: String(found.id), quantity: Math.max(0, Math.min(20, Math.round(Number(wanted[i].quantity) || 0))) });
     }
-    var which = orderNamed(args && args.token);
-    var done = await placedOrderCall("items", { items: asked }, args && args.token);
-    if (!done.ok) return { ok: false, reason: done.reason, token: which && which.token };
+    /* Which order it acted on comes BACK from the call rather than being
+       worked out twice: naming one by its bill number costs a request, and
+       asking the same question again would cost a second. */
+    var done = await placedOrderCall("items", { items: asked }, args && args.order_ref);
+    var which = done.which;
+    if (!done.ok) return { ok: false, reason: done.reason, tokens: done.tokens, token: which && which.token };
     /* The basket on screen belongs to the order being built NOW. Rewriting it
        to match an order from an earlier visit would throw that away. */
     if (which && live.placedId && which.orderId === live.placedId) {
@@ -705,9 +920,9 @@
 
   async function cancelPlacedOrder(args) {
     if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed" };
-    var which = orderNamed(args && args.token);
-    var done = await placedOrderCall("cancel", {}, args && args.token);
-    if (!done.ok) return { ok: false, reason: done.reason, token: which && which.token };
+    var done = await placedOrderCall("cancel", {}, args && args.order_ref);
+    var which = done.which;
+    if (!done.ok) return { ok: false, reason: done.reason, tokens: done.tokens, token: which && which.token };
     /* Only the order this call placed is the one the screen is showing. An
        older one being called off leaves the basket and the panel alone. */
     var wasThisCall = which && live.placedId && which.orderId === live.placedId;
@@ -770,8 +985,15 @@
         break;
       case "response.done": {
         var response = ev.response || {};
+        /*
+         * A response the customer talked over is still ANSWERED.
+         *
+         * Its tools are not run - see runToolCalls - but every call_id it
+         * emitted gets a refusal, because one the model is waiting on and
+         * never hears back about leaves it able to do nothing but say "ok".
+         */
         var finished = !response.status || response.status === "completed";
-        if (finished && live.active) await runToolCalls(response);
+        if (live.active) await runToolCalls(response, !finished);
         if (live.active) status("listening", say("Listening..."));
         break;
       }
@@ -846,6 +1068,14 @@
       if (out && event.streams && event.streams[0]) {
         out.srcObject = event.streams[0];
         out.play && out.play().catch(function () {});
+        /* And the orb follows the voice actually coming back, rather than
+           pulsing on a fixed loop that talks whatever is being said.
+           assets/assistant/talking.js. */
+        try {
+          if (window.VoiceTalking) window.VoiceTalking.follow(event.streams[0], el("voice-orb"));
+        } catch (e) {
+          /* The page keeps its own CSS animation; nobody notices. */
+        }
       }
     };
     var dc = pc.createDataChannel("oai-events");
@@ -864,7 +1094,19 @@
       var response = await fetch(apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ sdp: offer.sdp, lang: lang() }),
+        /*
+         * WHERE THE CUSTOMER IS SITTING GOES WITH THE LINE.
+         *
+         * Owner: "table number already gone and ai asking me again table
+         * number." It was not gone - the page had it the whole time - but the
+         * line was opened with nothing but the offer and the language, so the
+         * assistant genuinely did not know, and its opening line had no table
+         * to name either. A code stuck to table thirty-four has answered that
+         * question before anybody asks it.
+         */
+        body: JSON.stringify(
+          Object.assign({ sdp: offer.sdp, lang: lang() }, servicePointNow())
+        ),
       });
       var body = null;
       try {
@@ -978,6 +1220,13 @@
 
   function stopLine() {
     stopMeter(true);
+    /* Let go of the voice before the stream under it goes, or the analyser
+       keeps a handle on a track that has ended. */
+    try {
+      if (window.VoiceTalking) window.VoiceTalking.stop();
+    } catch (e) {
+      /* nothing was following */
+    }
     try {
       if (live.dc) live.dc.close();
     } catch (e) {
@@ -1228,5 +1477,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
+  window.OrderingVoice = { changePlacedOrder: changePlacedOrder, cancelPlacedOrder: cancelPlacedOrder, leave: leave, sendToKitchen: sendToKitchen, sendNow: sendNow, noticed: noticed, tellTheAssistant: tellTheAssistant, start: start, stop: stop, standReady: standReady, runTool: runTool, onEvent: onEvent, voiceMode: voiceMode, paintTalk: paintTalk, tick: tick, live: live };
 })();

@@ -50,11 +50,25 @@ const { clientIp } = require('../utils/client-ip');
  * looks up the terms itself.
  */
 function servicePointFrom(req) {
+  /*
+   * The address first, then the BODY.
+   *
+   * A menu read is a GET and carries this in the query. Opening a voice line
+   * is a POST - the connection offer is far too big for a URL - so that one
+   * sends the same three fields in the body instead. Reading only the query
+   * meant the live assistant was opened knowing nothing about where the
+   * customer was sitting, and so it asked for a table the printed code had
+   * already named, and its opening line had no table to say.
+   *
+   * Owner: "table number already gone and ai asking me again table number."
+   */
   const q = (req && req.query) || {};
+  const body = (req && typeof req.body === 'object' && req.body) || {};
+  const said = (name) => (q[name] !== undefined && q[name] !== '' ? q[name] : body[name]);
   return {
-    table: String(q.table || '').slice(0, 24),
-    venue: String(q.venue || '').slice(0, 12),
-    unit: String(q.unit || '').slice(0, 24),
+    table: String(said('table') || '').slice(0, 24),
+    venue: String(said('venue') || '').slice(0, 12),
+    unit: String(said('unit') || '').slice(0, 24),
   };
 }
 

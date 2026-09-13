@@ -29,11 +29,18 @@ const SettingsRepository = require('../repositories/settings.repository');
 /*
  * How long an order stays the customer's, when the shop has not said.
  *
- * Thirty seconds is what the delivery apps settled on and what a customer
- * expects: long enough to catch "no, two" the moment they hear themselves,
- * short enough that a kitchen is not amending something already on the pass.
+ * ONE MINUTE. Owner: "up to 1 min he can change. after also he can change but
+ * instead of confirm change, request changes."
+ *
+ * It was thirty seconds, which is what the delivery apps settled on - and too
+ * short to reach. The owner went looking on the history page and found nothing
+ * but Cancel, because by the time anybody taps out of the confirmation, finds
+ * the history and opens a row, thirty seconds is gone. A minute is long enough
+ * to actually get there and still short enough that a kitchen is not amending
+ * something already on the pass. Past it, nothing is taken away: changing
+ * simply becomes a request the shop answers.
  */
-const DEFAULT_CHANGE_SECONDS = 30;
+const DEFAULT_CHANGE_SECONDS = 60;
 /* A window nobody would call a window: a shop cannot leave an order open to
    editing for a day and be surprised by what comes back. */
 const MAX_CHANGE_SECONDS = 900;
@@ -155,6 +162,12 @@ async function read(body, context) {
       change_seconds: seconds,
       /* Already asked for; the shop has it in the queue it accepts from. */
       cancel_requested: order.cancel_requested === true,
+      /* And a change they have already asked for, so the page says "asked
+         for" rather than offering to ask again. */
+      change_requested:
+        order.change_requested && Array.isArray(order.change_requested.items)
+          ? order.change_requested.items
+          : null,
     },
   };
 }
@@ -199,18 +212,57 @@ async function readMany(body, context) {
       why_not: reason || undefined,
       change_seconds: seconds,
       cancel_requested: order.cancel_requested === true,
+      change_requested:
+        order.change_requested && Array.isArray(order.change_requested.items)
+          ? order.change_requested.items
+          : null,
     });
   }
   return { status: true, message: 'OK', data: { orders: found } };
 }
 
-/** Set the quantity of lines already on the order; 0 takes a line off it. */
+/**
+ * Set the quantity of lines already on the order - or, once the window has
+ * closed, ASK the shop to.
+ *
+ * Owner, looking at the history page: "why order history dont have any option
+ * to other than cancel? coz of time?" It was. Past the window the plus and
+ * minus went away and only Cancel remained, which is a strange thing to offer
+ * somebody whose actual wish is one more naan - and an arbitrary asymmetry,
+ * because cancelling past the window was already allowed to become a REQUEST
+ * the shop decides on. A customer who may ask for the whole order to be
+ * called off may ask for two of something to be three.
+ *
+ * So the same shape as cancel(): inside the window it is their own order and
+ * it simply changes; outside it the kitchen may have started, so the wish is
+ * recorded and a person answers it in the queue the shop already works.
+ */
 async function change(body, context) {
-  const { order, reason } = await heldOrder(body, context);
-  if (!order) return { status: false, message: reason, data: null };
+  const { order, reason, held } = await heldOrder(body, context);
   const wanted = Array.isArray(body && body.items) ? body.items.slice(0, 40) : [];
   if (!wanted.length) return { status: false, message: 'nothing_asked', data: null };
-  return salesRepository.changeCustomerOrderItems(order, wanted);
+  if (order) return salesRepository.changeCustomerOrderItems(order, wanted);
+
+  /* Nothing to ask about: not theirs, already off, or already money. A
+     billed or paid order is a matter for the counter, and a shop that
+     refused the order is not going to amend it. */
+  if (!held || reason === 'not_found' || reason === 'already_cancelled') {
+    return { status: false, message: reason, data: null };
+  }
+  if (reason === 'already_billed' || reason === 'already_paid' || reason === 'refused_by_shop') {
+    return { status: false, message: reason, data: null };
+  }
+  /* A hotel room or a delivery carries somebody else's money in the total,
+     so it is not the customer's alone to move even by asking. */
+  if (reason === 'at_the_counter') return { status: false, message: reason, data: null };
+
+  const asked = await salesRepository.requestCustomerChange(held, wanted, held.items);
+  if (!asked.status) return asked;
+  return {
+    status: true,
+    message: 'Change requested',
+    data: { ...asked.data, requested: true, why_not: reason },
+  };
 }
 
 /**

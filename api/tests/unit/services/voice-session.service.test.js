@@ -66,14 +66,24 @@ describe('voice-session.service', () => {
     expect(voice.tools().find((t) => t.name === 'cancel_placed_order').parameters.required).toEqual(
       ['confirmed']
     );
-    /* Either may be told WHICH order, by the token the customer holds; with
-       none they act on the one just placed. Optional, so the common case -
-       "make it two" moments after ordering - stays one word. */
+    /*
+     * Either may be told WHICH order, by EITHER number the customer holds -
+     * the token they were given or the bill number on their receipt, since
+     * they will quote whichever is in front of them. Optional, so the common
+     * case - "make it two" moments after ordering - stays one word.
+     */
     ['change_placed_order', 'cancel_placed_order'].forEach((name) => {
       const tool = voice.tools().find((t) => t.name === name);
-      expect(tool.parameters.properties.token.type).toBe('string');
-      expect(tool.parameters.required).not.toContain('token');
+      expect(tool.parameters.properties.order_ref.type).toBe('string');
+      expect(tool.parameters.properties.order_ref.description).toMatch(/bill number/i);
+      expect(tool.parameters.required).not.toContain('order_ref');
+      /* The old name is gone: leaving both would let the model send a token
+         under a key nothing reads. */
+      expect(tool.parameters.properties.token).toBeUndefined();
     });
+    expect(voice.tools().find((t) => t.name === 'show_order_history').description).toMatch(
+      /bill number/i
+    );
     expect(voice.tools().find((t) => t.name === 'change_placed_order').parameters.required).toEqual(
       ['items']
     );

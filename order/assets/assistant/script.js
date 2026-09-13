@@ -296,6 +296,7 @@
     });
     button.hidden = !count;
     paintOrderList(lines);
+    paintMore(lines);
     var sum = el("assistant-review-sum");
     if (!sum) return;
     if (!count) {
@@ -305,6 +306,65 @@
     var w = typeof words === "function" ? words() : { one: "item", many: "items" }; // eslint-disable-line no-undef
     var amount = typeof money === "function" ? money(total) : String(total); // eslint-disable-line no-undef
     sum.textContent = say("{n} " + (count === 1 ? w.one : w.many), { n: count }) + " · " + amount;
+  }
+
+  /*
+   * A few things that go with what is in the basket.
+   *
+   * Wrapped, never a sideways scroller - owner: "cross selling i saw
+   * horrizontal scroll. not soo good." Drawn by the same chooser the
+   * confirmation screen and the order history use, so all three offer the
+   * same thing for the same reasons.
+   */
+  /*
+   * Tell the open voice line what the customer just changed with their thumb.
+   *
+   * Named by DISH, not by id: the assistant talks about food, and a
+   * twenty-four character id in the conversation is a thing it might read out
+   * loud. Quiet - it does not ask for a reply, because the customer is
+   * looking at the screen and does not need it narrated back.
+   */
+  async function tellVoice(id) {
+    try {
+      var voice = window.OrderingVoice;
+      if (!voice || typeof voice.noticed !== "function") return;
+      var now = await quantityOf(id);
+      var all = typeof allProducts === "function" ? allProducts() || [] : []; // eslint-disable-line no-undef
+      var item = all.filter(function (p) {
+        return String(p.id) === String(id);
+      })[0];
+      voice.noticed(now > 0 ? "set" : "remove", (item && item.name) || "", now);
+    } catch (e) {
+      /* A line that is not open has nothing to be told. */
+    }
+  }
+
+  function paintMore(lines) {
+    var more = el("assistant-more");
+    var row = el("assistant-more-row");
+    if (!more || !row) return;
+    var on = (lines || []).map(function (l) {
+      return { item_id: l.id, quantity: l.quantity };
+    });
+    var suggestions = on.length ? goesWith(on) : [];
+    row.textContent = "";
+    suggestions.forEach(function (item) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "assistant-more-item";
+      button.setAttribute("data-add", String(item.id));
+      button.setAttribute("aria-label", say("Add {name}", { name: item.name }));
+      var plus = document.createElement("span");
+      plus.className = "assistant-more-plus";
+      plus.setAttribute("aria-hidden", "true");
+      plus.textContent = "+";
+      var name = document.createElement("span");
+      name.textContent = String(item.name || "");
+      button.appendChild(plus);
+      button.appendChild(name);
+      row.appendChild(button);
+    });
+    more.hidden = !suggestions.length;
   }
 
   /*
@@ -630,19 +690,34 @@
         onBeat: function (beat) {
           if (art.setAttribute) art.setAttribute("data-stage", beat);
           if (said && PLACED_WORDS[beat]) said.textContent = say(PLACED_WORDS[beat]);
+          /* The bell in the drawing is struck on this beat, so the sound
+             belongs to it: one event, not a picture and a noise. */
+          if (beat === "landed") ting();
           /* The kitchen has it and somebody is cooking it: from here the
              sheet belongs to the order, not to the animation. */
           if (beat === "cooking") showPlacedOrder();
         },
       });
     } else if (said) {
-      /* No scene to draw: the words still arrive, on their own clock. */
+      /* No scene to draw: the words still arrive, on their own clock, and so
+         does the bell. Nothing a customer is told depends on a canvas. */
       clearTimeout(placedTimer);
+      ting();
       var after = options && typeof options.after === "number" ? options.after : 1800;
       placedTimer = setTimeout(function () {
         said.textContent = say(PLACED_WORDS.cooking);
         showPlacedOrder();
       }, after);
+    }
+  }
+
+  /* One short bell, when the kitchen takes the order. assets/ting.js; absent
+     on a page that does not load it, which is not worth an error. */
+  function ting() {
+    try {
+      if (window.Ting && typeof window.Ting.play === "function") window.Ting.play();
+    } catch (e) {
+      /* A confirmation nobody can hear is still a confirmation on screen. */
     }
   }
 
@@ -812,8 +887,53 @@
     if (hintOpen) hintOpen.addEventListener("click", open);
     var hintClose = el("assistant-hint-close");
     if (hintClose) hintClose.addEventListener("click", function () { hideHint(true); });
+    /*
+     * ONE BUTTON, AND IT SENDS.
+     *
+     * It used to walk the customer to the basket page to place it from there.
+     * Owner: "have 'confirm & send order'. if user click say thank you and
+     * send it to kitchen ... i believe one enought. since we give 1 minute to
+     * modify item."
+     *
+     * Through OrderingVoice where a line is open, because that is what knows
+     * how to read the token back and open the order screen; through the
+     * basket page only where there is no voice to do it.
+     */
     var review = el("assistant-review");
-    if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
+    if (review) {
+      review.addEventListener("click", async function () {
+        if (review.disabled) return;
+        review.disabled = true;
+        try {
+          var voice = window.OrderingVoice;
+          if (voice && typeof voice.sendNow === "function") {
+            var done = await voice.sendNow();
+            if (done && done.ok) return;
+            /* The shop wants something this screen cannot ask for - a table,
+               a phone number, a way of paying. The basket page asks it. */
+          }
+          window.OrderingAssistant.leave("cart.html");
+        } finally {
+          review.disabled = false;
+        }
+      });
+    }
+
+    /* Back to the menu, with the sheet left open behind it: the customer is
+       adding to the order they are in the middle of, not starting again. */
+    var add = el("assistant-add");
+    if (add) add.addEventListener("click", function () { close(); });
+
+    /* Something alongside, added by hand. */
+    var moreRow = el("assistant-more-row");
+    if (moreRow) {
+      moreRow.addEventListener("click", async function (event) {
+        var chip = event.target && event.target.closest ? event.target.closest(".assistant-more-item") : null;
+        if (!chip) return;
+        chip.disabled = true;
+        await apply([{ verb: "add", item_id: chip.getAttribute("data-add"), quantity: 1 }]);
+      });
+    }
     var done = el("placed-done");
     if (done) done.addEventListener("click", placedDone);
 
@@ -882,6 +1002,11 @@
         if (!id || !by || typeof updateQuantity !== "function") return; // eslint-disable-line no-undef
         await updateQuantity(id, by); // eslint-disable-line no-undef
         paintReview();
+        /* And the assistant is told. It is listening at the bottom of this
+           same screen, and one that cannot see a thumb reads back a quantity
+           the customer has just corrected. Owner: "AI should know about the
+           changes what user doing. its kind of helper too." */
+        await tellVoice(id);
       });
     }
     var closeButton = el("assistant-close");

@@ -144,6 +144,47 @@ test('the job is closed only AFTER the paper came out', async () => {
   assert.ok(closedAt > claimedAt, 'it closed a job it had not claimed');
 });
 
+test('the reason a bill did not print travels back with the failure', async () => {
+  /*
+   * "The bill did not come out" with nothing attached is a support call that
+   * starts from nothing. The till's own console is a window nobody has open on
+   * a shop floor, so the reason has to go somewhere a person can read it later
+   * - and the queue, which already knows the job failed, is that place.
+   */
+  const hardware = fakeHardware({ refuse: true });
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  const owned = printedBad(calls)[0];
+  assert.ok(owned, 'the failure was never reported');
+  assert.match(String(owned.body.error || ''), /offline/,
+    'the job was failed with no reason on it');
+});
+
+test('a shop with no printer at all says so, rather than failing silently', async () => {
+  const hardware = fakeHardware({ printer: '' });
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1', findReceiptPrinter: async () => '' });
+
+  await runOnce(bills);
+
+  const owned = printedBad(calls)[0];
+  assert.ok(owned, 'nobody was told the bill could not print');
+  assert.match(String(owned.body.error || ''), /printer/i);
+});
+
+test('a bill that printed carries no reason, because there is none', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(printedOk(calls)[0].body.error, '');
+});
+
 test('a printer that refuses puts the bill back, it does not swallow it', async () => {
   /* Closing it as done would lose the bill for good: nothing would ever offer
      it again, and the only person who knows is the guest still waiting. Owning
@@ -682,6 +723,81 @@ test('a queue that cannot be told is logged, not thrown', async () => {
 
   assert.equal(hardware.jobs.length, 1, 'the bill never printed');
   assert.equal(bills.getStatus().lastStatus, 'ok', 'a failed close took the poll down with it');
+});
+
+/* ------------------------------- whose key the far door is supposed to carry */
+
+/*
+ * EVERY INSTALLATION MAKES ITS OWN KEY, and a cloud tenant is an installation.
+ *
+ * main.js generates this machine's with crypto.randomBytes(32) at first boot;
+ * the provisioner writes a cloud tenant a random one of its own. They can
+ * never match. So a till presenting its LOCAL key to its shop's cloud address
+ * is refused every single time - and until this, a refusal answered
+ * `{ status: false, data: null }`, which read out as an empty list and left
+ * the till reporting "ok, nothing to print" for ever.
+ *
+ * Two bills' worth of silence is a guest waiting at a table. The fix is one
+ * field and one honest error.
+ */
+
+test('both doors carry this machine\'s own key, which is the only one it has', async () => {
+  /*
+   * The key is made once at first boot and never anywhere else. Its own API
+   * knows it because they share a process. Its shop's cloud server knows it
+   * because somebody pasted it into Settings once - see
+   * api/src/models/print-till.model.js for why the key travels in that
+   * direction rather than a server secret travelling into a web page.
+   */
+  process.env.KIOSK_API_KEY = 'this-machines-own-key';
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  await bills._poll();
+  bills.stop();
+  delete process.env.KIOSK_API_KEY;
+
+  const asked = calls.filter((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.length, 2, 'one of the two doors never asked');
+  for (const one of asked) {
+    assert.equal(one.headers.kioskkey, 'this-machines-own-key');
+  }
+});
+
+test('being turned away is reported, not counted as an empty queue', async () => {
+  const hardware = fakeHardware();
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url: String(url) });
+    /* What ensureKioskKey actually answers: a body that looks, to anything
+       reading `data`, exactly like "nothing waiting". */
+    return {
+      status: 401,
+      json: async () => ({ type: 'error', status: false, message: 'Unauthorized', data: null }),
+    };
+  };
+
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+
+  const said = bills.getStatus().cloud.status;
+  assert.match(said, /refused by/, `a refusal was reported as "${said}"`);
+  assert.match(said, /Settings/, 'it does not say where to fix it');
+  assert.notEqual(said, 'ok', 'a till being turned away every time said it was fine');
 });
 
 /* ------------------------------------------ printing the moment it is asked */

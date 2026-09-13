@@ -600,22 +600,31 @@ class KOTManager {
           + (target.copies > 1 ? ` (${copy + 1}/${target.copies})` : '');
         /* eslint-disable-next-line no-await-in-loop -- printers are serial
            devices; two jobs at once interleave on the same roll. */
+        const startedAt = Date.now();
         const sent = await this.hardware.sendRawToPrinter(target.name, bytes, label);
+        const ms = Date.now() - startedAt;
         if (sent && sent.success) {
-          console.log(`[KOT] Printed -> ${target.name}`);
-          results.push({ name: target.name, status: 'success' });
+          console.log(`[KOT] Printed -> ${target.name} (${ms} ms)`);
+          results.push({ name: target.name, status: 'success', ms, via: 'bytes' });
         } else {
           const reason = (sent && sent.error) || 'unknown';
-          console.error(`[KOT] Print failed (${target.name}):`, reason);
-          results.push({ name: target.name, status: 'failed', reason });
+          console.error(`[KOT] Print failed (${target.name}) after ${ms} ms:`, reason);
+          results.push({ name: target.name, status: 'failed', reason, ms, via: 'bytes' });
         }
       }
     }
     return results;
   }
 
-  /** One line in the day's ticket log, whichever way the ticket was printed. */
-  _logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults) {
+  /**
+   * One line in the day's ticket log, whichever way the ticket was printed.
+   *
+   * @param {object} [timing]       how long it took and which path it took
+   * @param {number} [timing.ms]    order accepted to last copy accepted
+   * @param {string} [timing.via]   'bytes' for ESC/POS, 'window' for the PDF
+   *                                fallback, which is about ten times slower
+   */
+  _logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults, timing = {}) {
     const uid = crypto.randomUUID ? crypto.randomUUID()
               : crypto.createHash('md5').update(`${Date.now()}-${Math.random()}`).digest('hex');
     this._appendLog({
@@ -629,6 +638,10 @@ class KOTManager {
       printKind,
       kotNumber,
       deviceIp:     this._getLocalIp(),
+      /* Absent on tickets logged before this shipped, so every reader has to
+         cope with undefined rather than print "NaN ms" at somebody. */
+      ms:           Number.isFinite(timing.ms) ? timing.ms : undefined,
+      via:          timing.via || undefined,
       items:        Array.isArray(sale.items) ? sale.items : [],
       printers:     printerResults,
       _saleData: {
@@ -643,6 +656,28 @@ class KOTManager {
   }
 
   async silentPrint(sale, printerNames, skipLog = false) {
+    /*
+     * HOW LONG IT ACTUALLY TOOK, ON THE SHOP'S OWN COUNTER.
+     *
+     * The order-to-paper numbers behind this work - 2,080 ms before, 184 ms
+     * after - were measured on one developer machine with two virtual
+     * printers. That is enough to choose a design and not enough to know what
+     * a real kitchen sees, on a real roll, at the end of a long USB extension
+     * run down a corridor.
+     *
+     * Owner: "every seconds counts here." There was no way to answer him with
+     * anything but a number from somebody else's laptop.
+     *
+     * So every ticket records what it cost: per printer, and end to end. The
+     * log already exists and already has a screen; it simply never said this.
+     * Now a slow shop is a fact somebody can read off Hardware Manager rather
+     * than an impression.
+     *
+     * `via` matters as much as the milliseconds. A ticket that quietly fell
+     * back to the window and PDF path is roughly ten times slower, and until
+     * now it looked identical in the log to a fast one.
+     */
+    const ticketStartedAt = Date.now();
     const printKind  = (sale._printKind || '').toLowerCase();
     const saleDispId = sale.sales_id || sale.sid || sale.sale_id || '';
     const saleDbId   = sale._id?.toString ? sale._id.toString() : String(sale._id || '');
@@ -663,7 +698,10 @@ class KOTManager {
     if (this.hardware && typeof this.hardware.sendRawToPrinter === 'function') {
       const rawResults = await this._printRaw(sale, printKind, kotNumber, printerNames);
       if (rawResults) {
-        if (!skipLog) this._logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, rawResults);
+        if (!skipLog) {
+          this._logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, rawResults,
+            { ms: Date.now() - ticketStartedAt, via: 'bytes' });
+        }
         return rawResults;
       }
     }
@@ -730,13 +768,15 @@ class KOTManager {
         const next = async () => {
           const job = jobs[idx];
           const deviceName = job.name;
+          const startedAt = Date.now();
           const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize);
+          const ms = Date.now() - startedAt;
           if (!result.success) {
-            console.error(`[KOT] Print failed (${deviceName}):`, result.reason);
-            printerResults.push({ name: deviceName, status: 'failed', reason: result.reason || 'unknown' });
+            console.error(`[KOT] Print failed (${deviceName}) after ${ms} ms:`, result.reason);
+            printerResults.push({ name: deviceName, status: 'failed', reason: result.reason || 'unknown', ms, via: 'window' });
           } else {
-            console.log(`[KOT] Printed -> ${deviceName}`);
-            printerResults.push({ name: deviceName, status: 'success' });
+            console.log(`[KOT] Printed -> ${deviceName} (${ms} ms, window)`);
+            printerResults.push({ name: deviceName, status: 'success', ms, via: 'window' });
           }
           idx++;
           if (idx < jobs.length) next(); else resolve();
@@ -748,7 +788,11 @@ class KOTManager {
     }
 
     if (!skipLog) {
-      this._logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults);
+      /* 'window' is the loud part of this line. A shop whose tickets are all
+         coming out this way has lost the fast path, and the only visible sign
+         used to be that printing felt slow. */
+      this._logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults,
+        { ms: Date.now() - ticketStartedAt, via: 'window' });
     }
 
     return printerResults;

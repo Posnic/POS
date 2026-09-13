@@ -89,8 +89,14 @@ test('a cancellation the customer asked for is said, once, and said differently'
    * also NOT the same event as a new order - collapsing them into one
    * sentence is how staff learn to ignore the one that matters.
    */
-  const asked = till({ queue: [{ sale_id: 's1', token_id: '101', cancel_requested: true }] });
-  assert.deepStrictEqual(asked.calls.toasts, [['Alert', 'Customer asked to cancel - Token 101']]);
+  const asked = till({
+    queue: [{ sale_id: 's1', sales_id: 'S-Q43L-000018', token_id: '101', cancel_requested: true }],
+  });
+  /* The BILL NUMBER leads, the way the queue card does, with the token beside
+     it: staff scan for the bill number, the customer is holding the token. */
+  assert.deepStrictEqual(asked.calls.toasts, [
+    ['Alert', 'Customer asked to cancel - S-Q43L-000018 · Token 101'],
+  ]);
 
   /* Polled again, the same order says nothing a second time. */
   asked.window.PosnicOnlineOrderWatch.look();
@@ -98,11 +104,19 @@ test('a cancellation the customer asked for is said, once, and said differently'
 
   /* A new one waiting for approval is the quieter sound. */
   asked.say([
-    { sale_id: 's1', token_id: '101', cancel_requested: true },
-    { sale_id: 's2', token_id: '102' },
+    { sale_id: 's1', sales_id: 'S-Q43L-000018', token_id: '101', cancel_requested: true },
+    { sale_id: 's2', sales_id: 'S-Q43L-000019', token_id: '102' },
   ]);
   asked.window.PosnicOnlineOrderWatch.look();
-  assert.deepStrictEqual(asked.calls.toasts[1], ['Information', 'New online order - Token 102']);
+  assert.deepStrictEqual(asked.calls.toasts[1], [
+    'Information',
+    'New online order - S-Q43L-000019 · Token 102',
+  ]);
+
+  /* An order with no bill number yet still says what it can. */
+  asked.say([{ sale_id: 's3', token_id: '103' }]);
+  asked.window.PosnicOnlineOrderWatch.look();
+  assert.deepStrictEqual(asked.calls.toasts[2], ['Information', 'New online order - Token 103']);
   asked.window.close();
 });
 
@@ -150,6 +164,70 @@ test('the toast heading stays English, because it is the icon', () => {
   /* And the sentence beside it, which a person actually reads, IS translated. */
   assert.match(src, /t\('lang_cancel_requested', 'Customer asked to cancel'\)/);
   assert.match(src, /t\('lang_new_online_order', 'New online order'\)/);
+});
+
+test('a new order makes a noise, and a cancellation makes a louder one', () => {
+  /*
+   * Owner: "one order sound in desktop also. play. new order came."
+   *
+   * A shop on the web frontend had no sound at all: the tones are synthesised
+   * by the desktop's MAIN process and handed to a window, and on the web
+   * there is no main process to hand them over.
+   */
+  const played = [];
+  const page = till({ queue: [] });
+  /* A real oscillator, counted rather than heard. */
+  page.window.AudioContext = function () {
+    this.currentTime = 0;
+    this.state = 'running';
+    this.destination = {};
+    this.createOscillator = () => ({
+      frequency: {},
+      connect() {},
+      start() {},
+      stop() {},
+      set type(v) {},
+    });
+    this.createGain = () => ({
+      gain: {
+        setValueAtTime(v) {
+          if (v > 0.01) played.push(v);
+        },
+        exponentialRampToValueAtTime(v) {
+          if (v > 0.01) played.push(v);
+        },
+      },
+      connect() {},
+    });
+  };
+
+  assert.strictEqual(page.window.PosnicOnlineOrderWatch.sound('received'), true, 'a new order was silent');
+  const quiet = played.length;
+  assert.ok(quiet > 0, 'nothing was sounded');
+
+  played.length = 0;
+  assert.strictEqual(page.window.PosnicOnlineOrderWatch.sound('waiting'), true);
+  /* Three notes rather than two, and louder: this one has to carry. */
+  assert.ok(played.length > quiet, 'a cancellation sounds the same as an ordinary order');
+  assert.ok(Math.max(...played) > 0.35, 'the cancellation is no louder than a new order');
+  page.window.close();
+});
+
+test('the desktop app keeps its own sound, and is not rung twice', () => {
+  /*
+   * Inside Electron the main process already plays these, and keeps playing
+   * until the queue is dealt with - a better alarm than this one. Two sounds
+   * at once is how a shop learns to mute the app.
+   */
+  const page = till({ queue: [] });
+  page.window.electronAPI = { orderAlert: { on() {}, resolve() {}, clear() {} } };
+  assert.strictEqual(page.window.PosnicOnlineOrderWatch.hasDesktopAlert(), true);
+  assert.strictEqual(
+    page.window.PosnicOnlineOrderWatch.sound('received'),
+    false,
+    'the web sound played on top of the desktop alarm'
+  );
+  page.window.close();
 });
 
 test('the watcher is loaded by the shell, and the queue on screen refreshes itself', () => {

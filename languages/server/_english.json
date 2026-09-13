@@ -363,6 +363,10 @@
   "Category with this name already exists in this branch": [
     "src/services/category.service.js"
   ],
+  "Change requested": [
+    "src/repositories/sale.repository.js",
+    "src/services/customer-order.service.js"
+  ],
   "Changes Retrieved": [
     "src/controllers/categories.controller.js",
     "src/controllers/customer-categories.controller.js"
@@ -381,6 +385,9 @@
   ],
   "Common settings updated": [
     "src/controllers/settings.controller.js"
+  ],
+  "Could not allow that till": [
+    "src/repositories/print-till.repository.js"
   ],
   "Could not ask for the bill": [
     "src/repositories/sale.repository.js"
@@ -433,11 +440,17 @@
   "Could not read state": [
     "app.js"
   ],
+  "Could not read the allowed tills": [
+    "src/repositories/print-till.repository.js"
+  ],
   "Could not read the print queue": [
     "src/repositories/print-job.repository.js"
   ],
   "Could not register webhook": [
     "app.js"
+  ],
+  "Could not remove that till": [
+    "src/repositories/print-till.repository.js"
   ],
   "Could not remove webhook": [
     "app.js"
@@ -1200,6 +1213,9 @@
   "No such price list": [
     "src/models/setting.model.js"
   ],
+  "No such till": [
+    "src/repositories/print-till.repository.js"
+  ],
   "No such voice session": [
     "src/controllers/online-ordering.controller.js"
   ],
@@ -1917,6 +1933,9 @@
   "That does not look like a UPI id. It should read like name@bank.": [
     "src/models/setting.model.js"
   ],
+  "That does not look like a printing key": [
+    "src/repositories/print-till.repository.js"
+  ],
   "That is more than the ": [
     "src/services/invoice-sync.js"
   ],
@@ -1937,6 +1956,15 @@
   ],
   "That store address is reserved. Please choose another.": [
     "src/models/setting.model.js"
+  ],
+  "That till can no longer print this shop's bills": [
+    "src/repositories/print-till.repository.js"
+  ],
+  "That till can now print this shop's bills": [
+    "src/repositories/print-till.repository.js"
+  ],
+  "That till was already allowed": [
+    "src/repositories/print-till.repository.js"
   ],
   "The AI answer could not be read": [
     "src/services/voice-intent.service.js"
@@ -2547,6 +2575,7 @@
     "src/repositories/invoice.repository.js",
     "src/repositories/item.repository.js",
     "src/repositories/print-job.repository.js",
+    "src/repositories/print-till.repository.js",
     "src/repositories/purchase-order.repository.js",
     "src/repositories/quote.repository.js",
     "src/repositories/register.repository.js",

@@ -1,6 +1,47 @@
 PosnicPro.settings = {
     /* which reference lists have been fetched this session */
     _refLoaded: {},
+
+    /*
+     * ORDERS PER TABLE: one number, typed through two controls.
+     *
+     * The setting is a single integer - 1 for one order per table, 0 for no
+     * limit, N for at most N - because that is what the server enforces and
+     * what a count is compared against. A dropdown plus a number box is only
+     * a way of typing it that does not ask a shopkeeper to know that zero
+     * means unlimited.
+     */
+    showTableOrderLimit: function (value) {
+        var n = parseInt(value, 10);
+        if (isNaN(n) || n < 0) { n = 1; }
+        var mode = n === 0 ? '0' : (n === 1 ? '1' : 'max');
+        $('#table_order_limit_mode').val(mode);
+        /* Keep the box at something usable even when it is hidden: a shop
+           that switches to "at most this many" should not find a 1 in a box
+           whose own minimum is 2. */
+        $('#table_order_limit_max').val(String(n > 1 ? n : 2));
+        PosnicPro.settings.tableOrderLimitMode();
+    },
+
+    /** Show or hide the number box. The value itself is read at save time by
+        tableOrderLimitValue, so there is nothing here to keep in step. */
+    tableOrderLimitMode: function () {
+        $('#table_order_limit_max_wrap').toggle($('#table_order_limit_mode').val() === 'max');
+    },
+
+    /** The number that is actually saved. Always a string, like every other
+        field in the settings payload. */
+    tableOrderLimitValue: function () {
+        var mode = $('#table_order_limit_mode').val();
+        if (mode === '0') { return '0'; }
+        if (mode === '1') { return '1'; }
+        var n = parseInt($('#table_order_limit_max').val(), 10);
+        /* A blank or nonsense box must not save as "no limit", which is what
+           parseInt('') || 0 would have done. Two is the smallest number that
+           means anything under "at most this many". */
+        if (isNaN(n) || n < 2) { n = 2; }
+        return String(Math.min(n, 99));
+    },
     store_telephone: null,
     /*
      * #/settings/<x> serves two callers: a 24-hex Mongo id is a recycle-bin
@@ -857,6 +898,13 @@ PosnicPro.settings = {
                 $('#hardware_weight_machine_enable').prop('checked', data.hardware_weight_machine_enable === true);
                 $('#till_lock_enable').prop('checked', data.till_lock_enable === true);
                 $('#till_lock_idle_minutes').val(String(data.till_lock_idle_minutes || 0));
+                /*
+                 * `?? 1`, NOT `|| 1`. Zero is a real answer here - it means no
+                 * limit - and `||` would quietly turn a shop that deliberately
+                 * allows any number of orders per table back into a shop that
+                 * allows one, every time this screen loaded.
+                 */
+                PosnicPro.settings.showTableOrderLimit(data.table_order_limit ?? 1);
                 $('#staff_shifts_enable').prop('checked', data.staff_shifts_enable !== false);
                 $('#staff_tips_enable').prop('checked', data.staff_tips_enable === true);
                 $('#staff_roster_enable').prop('checked', data.staff_roster_enable !== false);
@@ -892,6 +940,7 @@ PosnicPro.settings = {
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
                     till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
+                    table_order_limit: data.table_order_limit ?? 1,
                     staff_shifts_enable: data.staff_shifts_enable !== false,
                     staff_tips_enable: data.staff_tips_enable === true,
                     staff_roster_enable: data.staff_roster_enable !== false,
@@ -2049,6 +2098,7 @@ if ($wrapper.length) {
                 hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                 till_lock_enable: $('#till_lock_enable').is(':checked') ? 'true' : 'false',
                 till_lock_idle_minutes: $('#till_lock_idle_minutes').val() || '0',
+                table_order_limit: PosnicPro.settings.tableOrderLimitValue(),
                 staff_shifts_enable: $('#staff_shifts_enable').is(':checked') ? 'true' : 'false',
                 staff_tips_enable: $('#staff_tips_enable').is(':checked') ? 'true' : 'false',
                 staff_roster_enable: $('#staff_roster_enable').is(':checked') ? 'true' : 'false',
@@ -2179,6 +2229,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                     till_lock_enable: $('#till_lock_enable').is(':checked'),
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
+                    table_order_limit: parseInt(PosnicPro.settings.tableOrderLimitValue(), 10),
                     staff_shifts_enable: $('#staff_shifts_enable').is(':checked'),
                     staff_tips_enable: $('#staff_tips_enable').is(':checked'),
                     staff_roster_enable: $('#staff_roster_enable').is(':checked'),
@@ -8581,9 +8632,12 @@ PosnicPro.salesChannels = {
      */
     nearestWindow: function (stored) {
         var offered = [0, 30, 60, 120, 300, 600, 900];
-        if (stored === undefined || stored === null || String(stored).trim() === '') return '30';
+        /* An unset shop is one minute, which is what the server falls back
+           to; the two must agree or the screen shows a shop a window it does
+           not have. */
+        if (stored === undefined || stored === null || String(stored).trim() === '') return '60';
         var want = Math.round(Number(stored));
-        if (!isFinite(want) || want < 0) return '30';
+        if (!isFinite(want) || want < 0) return '60';
         var best = offered[0];
         offered.forEach(function (one) {
             if (Math.abs(one - want) < Math.abs(best - want)) best = one;

@@ -461,13 +461,17 @@ const prepareGstThreeReportContext = (req, res, next) => {
  * and an authentication guard should not be reachable only by loading the
  * validation layer.
  */
-const { makeEnsureKioskKey, makeProtectOrKioskKey } = require('./kiosk-key');
+const { makeEnsureKioskKey, makeProtectOrKioskKey, makeEnsurePrintDevice } = require('./kiosk-key');
 
 const ensureKioskKey = makeEnsureKioskKey(ERROR_MESSAGES);
 const protectOrKioskKey = makeProtectOrKioskKey(ERROR_MESSAGES);
+/* Only the two print-queue routes. See kiosk-key.js for why they need a
+   second door and why nothing else gets one. */
+const ensurePrintDevice = makeEnsurePrintDevice(ERROR_MESSAGES);
 
 module.exports = {
   protectOrKioskKey,
+  ensurePrintDevice,
   validateCreateSale,
   validateUpdateSale,
   prepareCreateSalePayload,

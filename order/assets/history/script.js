@@ -174,6 +174,17 @@
      * person. Once the window closes they disappear and the Cancel button
      * changes its words - it asks the shop instead of doing it.
      */
+    /*
+     * Whether a change may still be ASKED for, past the window.
+     *
+     * Not for one already cancelled, already paid, or with a request already
+     * sitting in the shop's queue - asking twice for the same order is how a
+     * till ends up with two answers to give.
+     */
+    function mayAskNow(said) {
+        return Boolean(said && !said.cancelled && !said.paid && !said.change_requested);
+    }
+
     function details(kept, said) {
         const box = document.createElement("div");
         box.className = "history-details";
@@ -203,7 +214,18 @@
                 cost.textContent = money(line.total);
                 row.appendChild(cost);
             }
-            if (said && said.can_change && line.item_id) {
+            /*
+             * The plus and the minus STAY past the window; they stop doing
+             * and start asking.
+             *
+             * Owner: "why order history dont have any option to other than
+             * cancel? coz of time?" It was the time - and taking the controls
+             * away left somebody whose wish is one more naan being offered
+             * nothing but Cancel. Cancelling past the window was already
+             * allowed to become a request the shop answers, so there is no
+             * reason changing should not be.
+             */
+            if (said && (said.can_change || mayAskNow(said)) && line.item_id) {
                 [["-1", "\u2212"], ["1", "+"]].forEach(([by, glyph]) => {
                     const step = document.createElement("button");
                     step.type = "button";
@@ -211,6 +233,16 @@
                     step.setAttribute("data-order", kept.orderId);
                     step.setAttribute("data-item", String(line.item_id));
                     step.setAttribute("data-quantity", String(Math.max(0, (Number(line.quantity) || 0) + Number(by))));
+                    if (!said.can_change) {
+                        /* Marked, so a tap is never a surprise: this one goes
+                           to the shop to be answered rather than straight
+                           through to the kitchen. */
+                        step.setAttribute("data-asks", "yes");
+                        step.setAttribute(
+                            "aria-label",
+                            say(by === "1" ? "Ask for one more {name}" : "Ask for one less {name}", { name: line.name })
+                        );
+                    }
                     step.textContent = glyph;
                     row.appendChild(step);
                 });
@@ -241,6 +273,20 @@
             asked.className = "history-asked";
             asked.textContent = say("The shop has your cancellation request");
             foot.appendChild(asked);
+        } else if (said && said.change_requested) {
+            /* Asked and waiting. The buttons are gone above, so this is the
+               only thing that explains why. */
+            const asked = document.createElement("span");
+            asked.className = "history-asked";
+            asked.textContent = say("The shop has your change request");
+            foot.appendChild(asked);
+        } else if (said && !said.cancelled && !said.paid) {
+            /* Past the window: say what the buttons will now do, before
+               somebody presses one. */
+            const asks = document.createElement("span");
+            asks.className = "history-asks";
+            asks.textContent = say("Changes now go to the shop to approve");
+            foot.appendChild(asks);
         }
         if (said && !said.cancelled && !said.paid) {
             const off = document.createElement("button");
@@ -258,7 +304,7 @@
          * for "add new item ... need to be there". Filled in after the menu
          * arrives, so the panel opens at once and does not wait on a fetch.
          */
-        if (said && said.can_change) {
+        if (said && (said.can_change || mayAskNow(said))) {
             const more = document.createElement("div");
             more.className = "history-more";
             more.hidden = true;
@@ -268,6 +314,7 @@
             const row = document.createElement("div");
             row.className = "history-more-row";
             row.setAttribute("data-order", kept.orderId);
+            if (!said.can_change) row.setAttribute("data-asks", "yes");
             more.appendChild(title);
             more.appendChild(row);
             box.appendChild(more);

@@ -315,6 +315,47 @@ describe('ordering-assistant.service', () => {
       expect(off).toEqual(['Masala Dosa']);
     });
 
+    test('a model that cannot see is not sent pictures, and prose is capped', () => {
+      /*
+       * Owner: "actually charging for this conversation from openai too much.
+       * few conversatin goes up to 1usd."
+       *
+       * On the live voice line this menu is re-billed as context every time
+       * the assistant opens its mouth, and it was carrying image URLs and a
+       * photos array - 3,464 characters of them on the 31-dish sandbox menu -
+       * to something that cannot see and will never say a URL.
+       *
+       * What earns its place stays: the description answers "what is in it?"
+       * and goes_with is where the cross-selling suggestion comes from.
+       */
+      const source = {
+        id: 'd1',
+        name: 'Masala Dosa',
+        price: 120,
+        available: true,
+        image: '/uploads/demo/dosa.jpg',
+        photos: ['/uploads/a.jpg', '/uploads/b.jpg'],
+        icon: '🥞',
+        description: 'x'.repeat(400),
+        goes_with: ['d2'],
+        category_name: 'Breakfast',
+      };
+      const { open } = assistant.splitMenu([source]);
+      const dish = open[0];
+      for (const blind of ['image', 'photos', 'icon']) {
+        expect(dish[blind]).toBeUndefined();
+      }
+      expect(dish.description).toHaveLength(120);
+      expect(dish.goes_with).toEqual(['d2']);
+      expect(dish).toMatchObject({ id: 'd1', name: 'Masala Dosa', price: 120 });
+      /* And the CALLER's object is untouched. The storefront hands these same
+         objects to the page, which very much does want the pictures; trimming
+         them in place would strip the images off the customer's menu. */
+      expect(source.image).toBe('/uploads/demo/dosa.jpg');
+      expect(source.photos).toHaveLength(2);
+      expect(source.description).toHaveLength(400);
+    });
+
     test('the typed brief carries the two lists and the facts, and the rules name them', async () => {
       jest.spyOn(ai, 'available').mockResolvedValue(true);
       jest.spyOn(assistant._repo(), 'resolveGroup').mockResolvedValue({
