@@ -79,4 +79,40 @@ function receiptPrinterName() {
   return null;
 }
 
-module.exports = { all, get, receiptPrinterName, prefsPath };
+/**
+ * WHETHER THIS TILL RELAYS BILLS THAT CAME IN OVER THE INTERNET.
+ *
+ * Owner: "may be configuration or toggle to poll cloud. it needs to be on only
+ * when required. otherwise let app connect via lan and give print."
+ *
+ * Off unless somebody turned it on, and that is the right default: a handset
+ * on the shop's own Wi-Fi talks to this machine directly, which is faster,
+ * works with the line cut, and costs nothing. The switch is for the shop whose
+ * waiters are on mobile data or a guest network that cannot see the till.
+ *
+ * Per machine rather than per shop, like the printers beside it. A shop with
+ * two tills wants ONE of them relaying cloud bills - the one by the printer
+ * the customer is standing at - not both of them racing for the same job.
+ *
+ * The address is separate so a shop can be pointed at its tenant without the
+ * relay being on, and so turning the relay off does not lose the address.
+ */
+function cloudPrintRelay() {
+  const prefs = all();
+  const said = prefs.cloud_print_relay;
+  return {
+    /*
+     * ON only for a real yes.
+     *
+     * Both spellings accepted because a preferences file can be hand-edited
+     * and older builds of anything here have written settings as text. What
+     * must never happen is the reverse: the string 'false' is a TRUTHY string,
+     * so a lazier test would read a switch somebody turned off as ON, for ever.
+     * This desktop has been bitten by that before.
+     */
+    enabled: said === true || said === 'true',
+    apiUrl: String(prefs.cloud_api_url || '').trim(),
+  };
+}
+
+module.exports = { all, get, receiptPrinterName, cloudPrintRelay, prefsPath };
