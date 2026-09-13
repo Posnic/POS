@@ -261,6 +261,7 @@
   "lang_bill_date": "Data fattura",
   "lang_bill_date_oldest": "Data fattura: meno recente",
   "lang_bill_no": "N. scontrino",
+  "lang_bill_title": "CONTO",
   "lang_bill_to": "Fatturare a",
   "lang_bill_to_2": "Fatturato a",
   "lang_bind_to_the_customer": "Vincola al cliente",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "Pronto per la prima vendita",
   "lang_reason_e_g_theft_expiry": "Motivo (es. Furto, Scadenza)",
   "lang_reason_required": "Motivo (obbligatorio)",
+  "lang_receipt_title": "RICEVUTA",
   "lang_receiptbarcode_title": "Codice a barre scontrino",
   "lang_receive": "Carica",
   "lang_receive_empty": "Ordine di carico vuoto",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "Il cliente chiede di annullare",
   "lang_keep_the_order": "Mantieni l’ordine",
   "lang_cancel_it": "Annullalo",
+  "lang_change_window_help": "Solo ristoranti. Dopo, la modifica diventa una richiesta che la cassa approva.",
   "lang_int_voice_key_on_file": "Chiave salvata",
   "lang_int_voice_key_remove_q": "Rimuovere la chiave salvata?",
   "lang_int_voice_key_remove_text": "I palmari tornano al riconoscimento del telefono finché non viene salvata una nuova chiave. Il suo account presso il fornitore non viene toccato.",
-  "lang_int_voice_key_removed": "Chiave rimossa."
+  "lang_int_voice_key_removed": "Chiave rimossa.",
+  "lang_new_online_order": "Nuovo ordine online",
+  "lang_no_changes_after_ordering": "Nessuna modifica dopo l'ordine",
+  "lang_orders_waiting": "ordini in attesa",
+  "lang_time_to_change_an_order": "Tempo per modificare un ordine"
 }

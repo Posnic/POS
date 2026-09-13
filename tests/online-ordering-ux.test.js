@@ -91,6 +91,9 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
     lift(src, 'renderProductCards'),
+    /* var, not let: a let in a vm context is a lexical binding the test
+       cannot reach, and this one has to be settable from outside. */
+    'var orderJustPlaced = false;',
     lift(src, 'renderCart'),
   ].join('\n');
 
@@ -1116,6 +1119,10 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   };
   window.speechSynthesis = { cancel() {}, getVoices: () => [], speak(u) { calls.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); } };
   window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+  /* The real page loads indexedDB.js before the assistant, and the chooser
+     for the things that go with an order lives there, so the order history
+     and the confirmation screen cannot drift apart. */
+  window.eval(lift(read('indexedDB.js'), 'goesWithOrder'));
   window.eval(read('assets/assistant/kitchen-scene.js'));
   window.eval(read('assets/assistant/script.js'));
   window.eval(read('assets/assistant/voice.js'));
@@ -1923,6 +1930,56 @@ test('the call is still up once the order is on screen', () => {
   assert.match(read('assets/assistant/voice.js'), /a\.placedPanel\(live\.placed, \{ orderId: live\.placedId \}\)/);
 });
 
+test('an order that has gone does not walk the customer back to the menu', async () => {
+  /*
+   * THE BUG THE OWNER HIT TWICE. "after sending to order ai voice suddenly
+   * closing. no fucking animation is going order to kitchen."
+   *
+   * checkout() empties the basket and calls renderCart([]). renderCart's
+   * empty-basket branch navigated to products.html after two seconds -
+   * wherever it was called from. On products.html, with the assistant sheet
+   * open, that reloaded the page: the dialog went, the voice line went with
+   * it, and the kitchen scene died at 2s, before its last beat at 2.9s.
+   *
+   * Nothing caught it because the harness stubs setTimeout to a no-op. This
+   * keeps what was scheduled.
+   */
+  const onMenu = page('products.html', { cart: [], products: {} });
+  const scheduled = [];
+  onMenu.box.setTimeout = (fn, ms) => { scheduled.push(ms); return 1; };
+  await onMenu.box.renderCart([]);
+  assert.deepStrictEqual(scheduled, [], 'the menu page still sends itself somewhere after an order');
+
+  /* The basket page still does what it says on it: a customer who emptied
+     their own basket is taken back to the menu. */
+  const onBasket = page('cart.html', { cart: [], products: {} });
+  const basketScheduled = [];
+  onBasket.box.setTimeout = (fn, ms) => { basketScheduled.push(ms); return 1; };
+  await onBasket.box.renderCart([]);
+  assert.deepStrictEqual(basketScheduled, [2000], 'an emptied basket no longer goes back to the menu');
+
+  /* But not when the basket is empty because it was SENT. */
+  const afterSending = page('cart.html', { cart: [], products: {} });
+  const sentScheduled = [];
+  afterSending.box.setTimeout = (fn, ms) => { sentScheduled.push(ms); return 1; };
+  afterSending.box.orderJustPlaced = true;
+  await afterSending.box.renderCart([]);
+  assert.deepStrictEqual(sentScheduled, [], 'a basket emptied by checkout was read as one the customer emptied');
+});
+
+test('checkout says the basket was sent, not emptied', () => {
+  /* The flag has to be raised around the clear, or renderCart cannot tell
+     the two apart and the test above proves nothing about the real page. */
+  const db = read('indexedDB.js');
+  const raise = db.indexOf('orderJustPlaced = true;');
+  const clear = db.indexOf('await saveCartData([]);', raise);
+  const drawn = db.indexOf('await renderCart([]);', raise);
+  const lower = db.indexOf('orderJustPlaced = false;', raise);
+  assert.ok(raise !== -1 && clear > raise, 'the basket is cleared before checkout says it was sent');
+  assert.ok(drawn > clear, 'renderCart is not drawn inside the flag');
+  assert.ok(lower > drawn, 'the flag is never lowered, so the basket page stops going back to the menu');
+});
+
 test('the token screen downloads nothing and shows no bill', () => {
   /* Owner: "after order no need to show bill or pdf not required. once
      payment done from desktop then make bill available to download." */
@@ -1936,7 +1993,7 @@ test('the token screen downloads nothing and shows no bill', () => {
 });
 
 /** The history page in jsdom, with what a browser kept and what a shop says. */
-function historyPage({ kept = [], says = {} } = {}) {
+function historyPage({ kept = [], says = {}, menu = [], reachable = true } = {}) {
   const dom = new JSDOM(read('history.html'), {
     url: 'https://shop.example/order/history.html',
     runScripts: 'outside-only',
@@ -1949,16 +2006,36 @@ function historyPage({ kept = [], says = {} } = {}) {
   window.forgetOrder = (id) => calls.forgotten.push(id);
   window.fetch = async (url, init) => {
     const at = String(url);
+    /*
+     * ONE lookup for the whole page. It used to be a GET per order, which
+     * ran the page into the placed-order limiter and made every row after
+     * the tenth say "Not checked" - see readMany.
+     */
+    if (/\/orders\/lookup$/.test(at)) {
+      const body = JSON.parse(init.body);
+      calls.asked.push({ url: at, body });
+      if (!reachable) return { ok: false, status: 503, json: async () => ({}) };
+      const orders = body.orders
+        .map((one) => says[one.orderId])
+        .filter(Boolean);
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: { orders } }) };
+    }
+    if (/\/menu$/.test(at)) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ type: 'success', data: { categories: menu } }),
+      };
+    }
     if (init && init.method === 'POST') {
       calls.posted.push({ url: at, body: JSON.parse(init.body) });
       return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ok: true } }) };
     }
     calls.asked.push(at);
-    const id = at.split('/orders/')[1].split('?')[0];
-    const answer = says[id];
-    if (!answer) return { ok: false, status: 404, json: async () => ({}) };
-    return { ok: true, status: 200, json: async () => ({ type: 'success', data: answer }) };
+    return { ok: false, status: 404, json: async () => ({}) };
   };
+  /* The chooser lives in indexedDB.js, which this page loads for real. */
+  window.eval(lift(read('indexedDB.js'), 'goesWithOrder'));
   window.eval(read('assets/history/script.js'));
   /* The countdown is a real interval; a test that opens a row must close
      the page or the runner never exits. */
@@ -2002,11 +2079,26 @@ test('what this phone ordered is kept on this phone, and the shop says where eac
   for (const id of ['o1', 'o2', 'gone']) {
     const token = kept.find((row) => row.orderId === id).token;
     assert.ok(
-      calls.asked.some((url) => url === '/online-ordering/ABC/orders/' + id + '?token=' + token),
+      calls.asked.some((call) => call.body && call.body.orders.some((one) => one.orderId === id && one.token === token)),
       id + ' was not asked for with its own token'
     );
   }
-  assert.ok(calls.asked.every((url) => /\/orders\/(o1|o2|gone)\?token=\d+$/.test(url)), 'something else was asked for');
+  /*
+   * And each paint asks ONCE for the whole page rather than once per order.
+   *
+   * That is the bug the owner hit: a request per row against a limiter of
+   * ten a minute, so most rows answered nothing and said "Not checked". The
+   * count of paints is still not pinned, for the reason above.
+   */
+  assert.ok(calls.asked.length >= 1, 'the shop was never asked');
+  assert.ok(
+    calls.asked.every(
+      (call) =>
+        call.url === '/online-ordering/ABC/orders/lookup' &&
+        call.body.orders.map((o) => o.orderId).join() === 'o1,o2,gone'
+    ),
+    'the page asks the shop once per order again'
+  );
 });
 
 test('a phone that has ordered nothing is told so, and a shop that cannot be reached keeps the list', async () => {
@@ -2028,7 +2120,11 @@ test('a phone that has ordered nothing is told so, and a shop that cannot be rea
   await new Promise((r) => setTimeout(r, 40));
   const row = offline.document.querySelector('.history-row');
   assert.ok(row, 'an offline phone lost its own record');
-  assert.strictEqual(row.querySelector('.history-state').textContent, 'Not checked');
+  /* Owner: "don show that not checked and all." A row nobody has answered
+     carries no label; the page says once, at the top, that the shop could
+     not be reached. */
+  assert.strictEqual(row.querySelector('.history-state').hidden, true);
+  assert.strictEqual(offline.document.getElementById('history-offline').hidden, false);
   assert.deepStrictEqual(offline.calls.forgotten, [], 'an unreachable shop made the page forget an order');
 });
 
@@ -2269,11 +2365,113 @@ function recordingCanvas(window) {
   return { canvas, calls };
 }
 
+test('a row nobody has answered carries no label, and an unreachable shop says so once', async () => {
+  /*
+   * Owner: "i requested one order both order status saying as not checked.
+   * don show that not checked and all." A row that has not been answered
+   * carries no label at all; the shop being unreachable is said ONCE, at the
+   * top, because that is a fact about the page and not about twelve orders.
+   */
+  const kept = [
+    { orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T10:00:00.000Z', items: [{ name: 'Chicken Biryani', quantity: 2 }] },
+    { orderId: 'o2', token: '220', shop: 'ABC', shopName: 'Azure', at: '2026-09-12T09:00:00.000Z', items: [{ name: 'Masala Dosa', quantity: 1 }] },
+  ];
+  const page = historyPage({ kept, says: {}, reachable: false });
+  page.document.dispatchEvent(new page.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  assert.strictEqual(page.document.getElementById('history-offline').hidden, false, 'nothing said the shop could not be reached');
+  const labels = [...page.document.querySelectorAll('.history-state')];
+  assert.ok(labels.every((one) => one.hidden), 'a row is still labelled "Not checked"');
+  assert.ok(!page.document.body.textContent.includes('Not checked'), '"Not checked" is still on the page');
+  /* And nothing was forgotten: a shop that cannot be reached has not said
+     it never heard of these orders. */
+  assert.deepStrictEqual(page.calls.forgotten, []);
+  page.window.close();
+});
+
+test('a row opens into the order, and a dish that was never on it can be added', async () => {
+  /*
+   * Owner: "when i click order history full details needs to be open. and add
+   * new item, existing item change etc, need to be there." The details were
+   * built; a row with no answer got no panel, and the rate limiter meant most
+   * rows had no answer. The suggestions are new.
+   */
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [{ name: 'Chicken Biryani', quantity: 2 }] }];
+  const says = {
+    o1: {
+      order_id: 'o1', token: '219', shop: 'Azure', paid: false, cancelled: false, state: 'accepted',
+      placed_at: new Date().toISOString(), can_change: true, change_seconds: 30, cancel_requested: false,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+    },
+  };
+  const menu = [
+    { name: 'Mains', items: [{ id: 'm1', name: 'Chicken Biryani', price: 320, available: true }] },
+    { name: 'Drinks', items: [{ id: 'd1', name: 'Fresh Lime Soda', price: 80, available: true }, { id: 'd2', name: 'Cold Coffee', price: 140, available: true }] },
+  ];
+  const page = historyPage({ kept, says, menu });
+  page.document.dispatchEvent(new page.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  const open = page.document.querySelector('.history-open');
+  assert.ok(open, 'there is no row to open');
+  open.click();
+  const panel = page.document.getElementById('details-o1');
+  assert.ok(panel && !panel.hidden, 'the row did not open');
+
+  /* Every line, with a minus and a plus. */
+  assert.deepStrictEqual(
+    [...panel.querySelectorAll('.history-step')].map((b) => b.getAttribute('data-quantity')),
+    ['1', '3']
+  );
+
+  /* And something that was never on it - from a category they have not
+     ordered from, cheapest first, never the biryani they already have. */
+  await new Promise((r) => setTimeout(r, 20));
+  const offered = [...panel.querySelectorAll('.history-more-item')];
+  assert.deepStrictEqual(offered.map((b) => b.getAttribute('data-add')), ['d1', 'd2']);
+
+  offered[0].click();
+  await new Promise((r) => setTimeout(r, 40));
+  const added = page.calls.posted.filter((c) => /\/orders\/o1\/items$/.test(c.url));
+  assert.strictEqual(added.length, 1, 'the add button did nothing');
+  assert.deepStrictEqual(added[0].body, { token: '219', items: [{ item_id: 'd1', quantity: 1 }] });
+  page.window.close();
+});
+
+test('an order the shop has closed offers nothing to change', async () => {
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [] }];
+  const says = {
+    o1: {
+      order_id: 'o1', token: '219', shop: 'Azure', paid: false, cancelled: false, state: 'accepted',
+      placed_at: new Date().toISOString(), can_change: false, why_not: 'too_late', change_seconds: 0,
+      cancel_requested: false, items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }], total: 640,
+    },
+  };
+  const page = historyPage({ kept, says, menu: [{ name: 'Drinks', items: [{ id: 'd1', name: 'Fresh Lime Soda', price: 80 }] }] });
+  page.document.dispatchEvent(new page.window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+  page.document.querySelector('.history-open').click();
+  await new Promise((r) => setTimeout(r, 30));
+
+  const panel = page.document.getElementById('details-o1');
+  assert.deepStrictEqual([...panel.querySelectorAll('.history-step')], [], 'a stepper that could only fail');
+  assert.strictEqual(panel.querySelector('.history-more'), null, 'something was offered that could not be added');
+  /* Asking is still allowed: cancelling is a different flow and every shop
+     has it. */
+  assert.strictEqual(panel.querySelector('.history-cancel').textContent, 'Ask the shop to cancel');
+  page.window.close();
+});
+
 test('the kitchen scene draws the docket first, then the pan, and says which beat it is on', () => {
   /* Owner: "i want very cool animation ... sending order to kitchen. and
      they got it preparing." Three beats, and the drawing changes with them. */
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
   const { window } = dom;
+  /* The real page loads indexedDB.js before the assistant, and the chooser
+     for the things that go with an order lives there, so the order history
+     and the confirmation screen cannot drift apart. */
+  window.eval(lift(read('indexedDB.js'), 'goesWithOrder'));
   window.eval(read('assets/assistant/kitchen-scene.js'));
   const scene = window.KitchenScene;
   /* Spread: an array from the page's realm is not reference-equal to one
@@ -2304,6 +2502,10 @@ test('the kitchen scene draws the docket first, then the pan, and says which bea
 test('the scene tells the caption which beat it is on, and stops when it is told to', async () => {
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only' });
   const { window } = dom;
+  /* The real page loads indexedDB.js before the assistant, and the chooser
+     for the things that go with an order lives there, so the order history
+     and the confirmation screen cannot drift apart. */
+  window.eval(lift(read('indexedDB.js'), 'goesWithOrder'));
   window.eval(read('assets/assistant/kitchen-scene.js'));
 
   /* A canvas that hands back no context - an old browser, a hardened one -

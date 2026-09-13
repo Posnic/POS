@@ -261,6 +261,7 @@
   "lang_bill_date": "Tanggal nota",
   "lang_bill_date_oldest": "Tanggal nota: terlama",
   "lang_bill_no": "No. nota",
+  "lang_bill_title": "TAGIHAN",
   "lang_bill_to": "Ditagihkan kepada",
   "lang_bill_to_2": "Ditagihkan kepada",
   "lang_bind_to_the_customer": "Ikat ke pelanggan",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "Siap untuk penjualan pertama",
   "lang_reason_e_g_theft_expiry": "Alasan (mis. Pencurian, Kedaluwarsa)",
   "lang_reason_required": "Alasan (wajib)",
+  "lang_receipt_title": "STRUK",
   "lang_receiptbarcode_title": "Barcode struk",
   "lang_receive": "Terima",
   "lang_receive_empty": "Pesanan penerimaan kosong",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "Pelanggan minta dibatalkan",
   "lang_keep_the_order": "Pertahankan pesanan",
   "lang_cancel_it": "Batalkan",
+  "lang_change_window_help": "Khusus restoran. Setelah itu, perubahan menjadi permintaan yang disetujui kasir.",
   "lang_int_voice_key_on_file": "Kunci tersimpan",
   "lang_int_voice_key_remove_q": "Hapus kunci yang tersimpan?",
   "lang_int_voice_key_remove_text": "Perangkat kembali memakai pengenalan suara ponsel sampai kunci baru disimpan. Akun penyedia Anda tidak disentuh.",
-  "lang_int_voice_key_removed": "Kunci dihapus."
+  "lang_int_voice_key_removed": "Kunci dihapus.",
+  "lang_new_online_order": "Pesanan online baru",
+  "lang_no_changes_after_ordering": "Tidak ada perubahan setelah memesan",
+  "lang_orders_waiting": "pesanan menunggu",
+  "lang_time_to_change_an_order": "Waktu untuk mengubah pesanan"
 }

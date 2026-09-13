@@ -261,6 +261,7 @@
   "lang_bill_date": "ಬಿಲ್ ದಿನಾಂಕ",
   "lang_bill_date_oldest": "ಬಿಲ್ ದಿನಾಂಕ: ಹಳೆಯದು ಮೊದಲು",
   "lang_bill_no": "ಬಿಲ್ ಸಂಖ್ಯೆ",
+  "lang_bill_title": "ಬಿಲ್",
   "lang_bill_to": "ಬಿಲ್ ಯಾರಿಗೆ",
   "lang_bill_to_2": "ಬಿಲ್ ಯಾರಿಗೆ",
   "lang_bind_to_the_customer": "ಗ್ರಾಹಕರಿಗೆ ಜೋಡಿಸಿ",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "ಮೊದಲ ಮಾರಾಟಕ್ಕೆ ಸಿದ್ಧ",
   "lang_reason_e_g_theft_expiry": "ಕಾರಣ (ಉದಾ. ಕಳ್ಳತನ, ಅವಧಿ ಮುಕ್ತಾಯ)",
   "lang_reason_required": "ಕಾರಣ (ಅಗತ್ಯ)",
+  "lang_receipt_title": "ರಸೀದಿ",
   "lang_receiptbarcode_title": "ರಸೀದಿ ಬಾರ್‌ಕೋಡ್",
   "lang_receive": "ಸ್ವೀಕರಿಸಿ",
   "lang_receive_empty": "ಸ್ವೀಕೃತಿ ಆರ್ಡರ್ ಖಾಲಿಯಿದೆ",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "ಗ್ರಾಹಕರು ರದ್ದು ಕೇಳಿದ್ದಾರೆ",
   "lang_keep_the_order": "ಆರ್ಡರ್ ಉಳಿಸಿ",
   "lang_cancel_it": "ರದ್ದು ಮಾಡಿ",
+  "lang_change_window_help": "ರೆಸ್ಟೋರೆಂಟ್‌ಗಳಿಗೆ ಮಾತ್ರ. ಇದರ ನಂತರ ಬದಲಾವಣೆ ಕೌಂಟರ್ ಒಪ್ಪಿಗೆ ನೀಡುವ ವಿನಂತಿಯಾಗುತ್ತದೆ.",
   "lang_int_voice_key_on_file": "ಕೀ ಉಳಿಸಲಾಗಿದೆ",
   "lang_int_voice_key_remove_q": "ಉಳಿಸಿದ ಕೀ ತೆಗೆಯುವುದೇ?",
   "lang_int_voice_key_remove_text": "ಹೊಸ ಕೀ ಉಳಿಸುವವರೆಗೆ ಹ್ಯಾಂಡ್‌ಸೆಟ್‌ಗಳು ಫೋನಿನ ಸ್ವಂತ ಗುರುತಿಸುವಿಕೆಯನ್ನೇ ಬಳಸುತ್ತವೆ. ನಿಮ್ಮ ಪೂರೈಕೆದಾರರ ಖಾತೆಗೆ ಏನೂ ಆಗುವುದಿಲ್ಲ.",
-  "lang_int_voice_key_removed": "ಕೀ ತೆಗೆಯಲಾಗಿದೆ."
+  "lang_int_voice_key_removed": "ಕೀ ತೆಗೆಯಲಾಗಿದೆ.",
+  "lang_new_online_order": "ಹೊಸ ಆನ್‌ಲೈನ್ ಆರ್ಡರ್",
+  "lang_no_changes_after_ordering": "ಆರ್ಡರ್ ಮಾಡಿದ ನಂತರ ಬದಲಾವಣೆ ಇಲ್ಲ",
+  "lang_orders_waiting": "ಕಾಯುತ್ತಿರುವ ಆರ್ಡರ್‌ಗಳು",
+  "lang_time_to_change_an_order": "ಆರ್ಡರ್ ಬದಲಾಯಿಸಲು ಸಮಯ"
 }

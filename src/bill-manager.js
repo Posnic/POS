@@ -485,12 +485,39 @@ class BillManager {
     }
     const printer = await this.hardware.getDefaultPrinter();
     const fallback = printer && printer.name ? printer.name : '';
-    if (fallback) {
-      console.warn(
-        '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
-        fallback
-      );
+    if (!fallback) return '';
+
+    /*
+     * NOT THE KITCHEN, whatever Windows prefers.
+     *
+     * Owner, on a two-printer restaurant: "receipt only send to Reception
+     * right. kitchen should receive only kot print." A till with no receipt
+     * printer chosen falls back to the Windows default, and on a restaurant
+     * machine that default is very often the kitchen roll - which is exactly
+     * how a customer's bill came out beside the cook with nothing to explain
+     * it.
+     *
+     * A printer this till already sends kitchen tickets to is, by definition,
+     * not the counter. Refusing is better than guessing wrong: the bill waits,
+     * the poll keeps it, and the log says what to do about it.
+     */
+    try {
+      const devicePrefs = require('./device-preferences');
+      if (devicePrefs.isKitchenPrinter(fallback)) {
+        console.error(
+          '[BILL] no receipt printer is set, and the Windows default (' + fallback + ') is a '
+          + 'kitchen printer. Choose a receipt printer in Hardware Manager; the bill is not printed.'
+        );
+        return '';
+      }
+    } catch (error) {
+      /* Unable to tell: fall through and use the default, as before. */
     }
+
+    console.warn(
+      '[BILL] no receipt printer is set for this till, so the bill goes to the Windows default:',
+      fallback
+    );
     return fallback;
   }
 
@@ -508,12 +535,28 @@ class BillManager {
        * is 32, and the same bytes cannot serve both - getting it wrong wraps
        * the total onto its own line, which reads as a rounding bug on paper.
        */
-      const bytes = renderSale(sale || {}, {
-        paperWidth: String(columnsFor(this.paperSize)),
-        /* The drawer is the cashier's business and this is not a payment. */
-        openDrawer: false,
-        cut: true,
-      });
+      /*
+       * The bill a waiter carries to the table is not a receipt.
+       *
+       * It reached the roll with no document heading at all, because
+       * pendingBillPrints answers raw sale documents and a sale carries no
+       * title. So the customer got an unlabelled slip, then a second slip
+       * headed SALES RECEIPT after paying.
+       *
+       * A GST-registered shop issues a TAX INVOICE for the supply; a shop
+       * without GST issues a BILL. Both say UNPAID, because this is a demand
+       * for payment, and the receipt follows once it is paid.
+       */
+      const gstin = String((sale && (sale.branch_gstin_number || sale.gstin)) || '').trim();
+      const bytes = renderSale(
+        { ...(sale || {}), title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID' },
+        {
+          paperWidth: String(columnsFor(this.paperSize)),
+          /* The drawer is the cashier business and this is not a payment. */
+          openDrawer: false,
+          cut: true,
+        }
+      );
 
       const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
       if (!result || result.success === false) {

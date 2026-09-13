@@ -488,3 +488,87 @@ describe('adding a dish to an order that has already gone', () => {
     expect(priced).not.toHaveBeenCalled();
   });
 });
+
+describe('after the order, by kind and in bulk', () => {
+  /* shopAllows() above is the seam that actually works: changeSeconds calls
+     the module-local _settings binding, so spying on the EXPORT does nothing
+     at all and the test would quietly run against the real repository. */
+  afterEach(() => jest.restoreAllMocks());
+
+  test('a shop that is not a restaurant has no window at all', async () => {
+    /*
+     * Owner: "this is specifig functionality about after order and modify.
+     * also restaurent specific. other business usually wont have this
+     * feature." A counter that has picked and packed has no minute in which
+     * the order is still the customer's, so it is not offered one - whatever
+     * the stored number says.
+     */
+    shopAllows(300);
+    expect(await customerOrder.changeSeconds({ branchId: 'b1', kind: 'retail' })).toBe(0);
+    /* And a restaurant gets exactly what the shop set. */
+    expect(await customerOrder.changeSeconds({ branchId: 'b1', kind: 'restaurant' })).toBe(300);
+    /* A context with no kind is not assumed to be a shop: the storefront
+       always carries one, and guessing "retail" here would switch the
+       feature off for every restaurant on an older caller. */
+    expect(await customerOrder.changeSeconds({ branchId: 'b1' })).toBe(300);
+  });
+
+  test('the shop never leaves an order open for longer than it said it would', async () => {
+    shopAllows(100000);
+    expect(await customerOrder.changeSeconds({ branchId: 'b1', kind: 'restaurant' })).toBe(
+      customerOrder.MAX_CHANGE_SECONDS
+    );
+    shopAllows(undefined);
+    expect(await customerOrder.changeSeconds({ branchId: 'b1', kind: 'restaurant' })).toBe(
+      customerOrder.DEFAULT_CHANGE_SECONDS
+    );
+  });
+
+  test('a page of orders is read in one go, and each one still has to prove itself', async () => {
+    /*
+     * Owner: "i requested one order both order status saying as not checked."
+     * The history page asked once PER ORDER against a limiter of ten a
+     * minute. One question for the page; and an entry whose token is wrong is
+     * simply absent, exactly as a single read would answer not_found, so this
+     * is not a way to read somebody else's orders in bulk.
+     */
+    shopAllows(30);
+    const now = new Date();
+    const orders = {
+      o1: { _id: 'o1', token_id: '111', sale_process: 'KOT', created_date: now, items: [], total: 0 },
+      o2: { _id: 'o2', token_id: '222', sale_process: 'KOT', created_date: now, items: [], total: 0 },
+    };
+    jest
+      .spyOn(salesRepository, 'findCustomerOrder')
+      .mockImplementation(async ({ orderId }) => orders[orderId] || null);
+
+    const out = await customerOrder.readMany(
+      {
+        orders: [
+          { orderId: 'o1', token: '111' },
+          { orderId: 'o2', token: 'WRONG' },
+          { orderId: 'gone', token: '333' },
+        ],
+      },
+      { branchId: 'b1', kind: 'restaurant' }
+    );
+    expect(out.status).toBe(true);
+    expect(out.data.orders.map((o) => o.order_id)).toEqual(['o1']);
+    expect(out.data.orders[0].can_change).toBe(true);
+    expect(out.data.orders[0].change_seconds).toBe(30);
+  });
+
+  test('a phone cannot ask about an unbounded number of orders at once', async () => {
+    shopAllows(30);
+    const asked = jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(null);
+    const many = [];
+    for (let i = 0; i < 60; i += 1) many.push({ orderId: 'o' + i, token: 't' });
+    await customerOrder.readMany({ orders: many }, { branchId: 'b1', kind: 'restaurant' });
+    expect(asked).toHaveBeenCalledTimes(customerOrder.MOST_ORDERS_AT_ONCE);
+  });
+
+  test('nothing asked is an empty answer, not an error', async () => {
+    const out = await customerOrder.readMany({ orders: [] }, { branchId: 'b1' });
+    expect(out).toEqual({ status: true, message: 'OK', data: { orders: [] } });
+  });
+});

@@ -1207,6 +1207,16 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
  * foot. Also keeps the counts on the ordering page in step, because the same
  * data feeds both and this is the one place that reads it.
  */
+/*
+ * Set while checkout is clearing a basket it has just SENT.
+ *
+ * renderCart cannot tell an emptied basket from a sent one by looking at it -
+ * both are zero lines - and the difference decides whether the customer is
+ * taken back to the menu or left exactly where they are, watching their order
+ * reach the kitchen.
+ */
+let orderJustPlaced = false;
+
 async function renderCart(cartData = null) {
     if (window.POSNIC_SILENT_REFRESH) return;
 
@@ -1230,9 +1240,28 @@ async function renderCart(cartData = null) {
             $("#cart-total").text(money(0));
             $("#cart-qty,#mobile-cart-count").text("0");
             $("#summary-display").text(`0 items · ${money(0)}`);
-            setTimeout(() => {
-                window.location.href = "products.html";
-            }, 2000);
+            /*
+             * ONLY THE BASKET PAGE GOES BACK TO THE MENU, and only when the
+             * basket was emptied rather than SENT.
+             *
+             * This used to fire wherever renderCart was called from. checkout()
+             * clears the basket and calls renderCart([]) on completion, so two
+             * seconds after an order went to the kitchen the page reloaded:
+             * on products.html that closed the assistant sheet, which stops
+             * the voice line, and killed the kitchen animation before its last
+             * beat. From the customer's side the call was cut mid-sentence.
+             *
+             * #cart-summary is the card this branch just wrote into and only
+             * cart.html has one; anywhere else there is nothing to take them
+             * back FROM. And a basket emptied BY the checkout is not an empty
+             * basket, it is a placed order.
+             */
+            const onBasketPage = !!document.getElementById("cart-summary");
+            if (onBasketPage && !orderJustPlaced) {
+                setTimeout(() => {
+                    window.location.href = "products.html";
+                }, 2000);
+            }
             return;
         }
 
@@ -2027,8 +2056,13 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             console.log(result.data);
             console.log("✅ Checkout successful! Token:", tokenId);
             // 🧹 Clear cart in IndexedDB
+            /* Emptied because it was SENT: renderCart must not read this as a
+               customer who changed their mind and walk them back to the menu.
+               See orderJustPlaced above. */
+            orderJustPlaced = true;
             await saveCartData([]);
             await renderCart([]);
+            orderJustPlaced = false;
             sessionStorage.removeItem("kiosk_mobile_number");
             sessionStorage.removeItem("qr_id");
             localStorage.removeItem("kiosk_mobile_number"); // Remove data left by older versions.
@@ -2297,6 +2331,38 @@ function scoreItem(query, fields) {
 
 /* What the customer has narrowed the catalogue to. */
 var orderView = { query: "", vegOnly: false, sort: "menu" };
+
+/*
+ * A few things that go with what somebody has already ordered.
+ *
+ * From categories they have NOT ordered from, so a customer who asked for
+ * biryani is offered a drink rather than more biryani; never anything already
+ * on the order; never a dish the shop has switched off. Cheapest first,
+ * because something to add on is a small yes and not a second meal. Three -
+ * a fourth is a catalogue, and the owner asked for "short cross selling".
+ *
+ * Here, rather than in either page, because the confirmation screen and the
+ * order history both offer it and two copies of a rule like this drift.
+ *
+ * @param {Array} on        the lines already on the order
+ * @param {Array} catalogue every product, as allProducts() gives them
+ */
+function goesWithOrder(on, catalogue) {
+    const all = Array.isArray(catalogue) ? catalogue : [];
+    const have = new Set();
+    const theirs = new Set();
+    (on || []).forEach((line) => {
+        const id = String(line.item_id != null ? line.item_id : line.id || "");
+        have.add(id);
+        all.forEach((p) => {
+            if (String(p.id) === id && p.category_name) theirs.add(p.category_name);
+        });
+    });
+    return all
+        .filter((p) => p && p.id && !have.has(String(p.id)) && p.available !== false && !theirs.has(p.category_name))
+        .sort((x, y) => (Number(x.price) || 0) - (Number(y.price) || 0))
+        .slice(0, 3);
+}
 
 /** Every product across every category, flattened once. */
 function allProducts() {

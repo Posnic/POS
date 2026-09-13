@@ -261,6 +261,7 @@
   "lang_bill_date": "ബിൽ തീയതി",
   "lang_bill_date_oldest": "ബിൽ തീയതി: പഴയത് ആദ്യം",
   "lang_bill_no": "ബിൽ നമ്പർ",
+  "lang_bill_title": "ബിൽ",
   "lang_bill_to": "ബിൽ ചെയ്യുന്നത്",
   "lang_bill_to_2": "ബിൽ ചെയ്യുന്നത്",
   "lang_bind_to_the_customer": "ഉപഭോക്താവുമായി ബന്ധിപ്പിക്കുക",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "ആദ്യ വിൽപ്പനയ്ക്ക് തയ്യാർ",
   "lang_reason_e_g_theft_expiry": "കാരണം (ഉദാ. മോഷണം, കാലാവധി തീരൽ)",
   "lang_reason_required": "കാരണം (നിർബന്ധം)",
+  "lang_receipt_title": "രസീത്",
   "lang_receiptbarcode_title": "രസീത് ബാർകോഡ്",
   "lang_receive": "സ്വീകരിക്കുക",
   "lang_receive_empty": "സ്റ്റോക്ക് വരവ് ഓർഡർ ശൂന്യമാണ്",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "ഉപഭോക്താവ് റദ്ദാക്കാൻ ആവശ്യപ്പെട്ടു",
   "lang_keep_the_order": "ഓർഡർ നിലനിർത്തുക",
   "lang_cancel_it": "റദ്ദാക്കുക",
+  "lang_change_window_help": "റെസ്റ്റോറന്റുകൾക്ക് മാത്രം. ഇതിനുശേഷം മാറ്റം കൗണ്ടർ അംഗീകരിക്കുന്ന ഒരു അഭ്യർത്ഥനയാകും.",
   "lang_int_voice_key_on_file": "കീ സൂക്ഷിച്ചു",
   "lang_int_voice_key_remove_q": "സൂക്ഷിച്ച കീ നീക്കണോ?",
   "lang_int_voice_key_remove_text": "പുതിയ കീ സൂക്ഷിക്കുന്നതുവരെ ഹാൻഡ്‌സെറ്റുകൾ ഫോണിന്റെ സ്വന്തം തിരിച്ചറിയലിലേക്കു മടങ്ങും. നിങ്ങളുടെ ദാതാവിന്റെ അക്കൗണ്ടിന് ഒന്നും സംഭവിക്കില്ല.",
-  "lang_int_voice_key_removed": "കീ നീക്കി."
+  "lang_int_voice_key_removed": "കീ നീക്കി.",
+  "lang_new_online_order": "പുതിയ ഓൺലൈൻ ഓർഡർ",
+  "lang_no_changes_after_ordering": "ഓർഡർ ചെയ്ത ശേഷം മാറ്റങ്ങളില്ല",
+  "lang_orders_waiting": "കാത്തിരിക്കുന്ന ഓർഡറുകൾ",
+  "lang_time_to_change_an_order": "ഓർഡർ മാറ്റാനുള്ള സമയം"
 }

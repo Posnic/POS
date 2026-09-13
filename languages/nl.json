@@ -261,6 +261,7 @@
   "lang_bill_date": "Bondatum",
   "lang_bill_date_oldest": "Bondatum: oudste",
   "lang_bill_no": "Bonnummer",
+  "lang_bill_title": "REKENING",
   "lang_bill_to": "Factureren aan",
   "lang_bill_to_2": "Factureren aan",
   "lang_bind_to_the_customer": "Koppelen aan de klant",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "Klaar voor de eerste verkoop",
   "lang_reason_e_g_theft_expiry": "Reden (bijv. diefstal, houdbaarheid)",
   "lang_reason_required": "Reden (verplicht)",
+  "lang_receipt_title": "KWITANTIE",
   "lang_receiptbarcode_title": "Bon-streepjescode",
   "lang_receive": "Ontvangen",
   "lang_receive_empty": "Ontvangstorder leeg",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "Klant vraagt om annulering",
   "lang_keep_the_order": "Bestelling behouden",
   "lang_cancel_it": "Annuleren",
+  "lang_change_window_help": "Alleen restaurants. Daarna wordt wijzigen een verzoek dat de kassa goedkeurt.",
   "lang_int_voice_key_on_file": "Sleutel opgeslagen",
   "lang_int_voice_key_remove_q": "Opgeslagen sleutel verwijderen?",
   "lang_int_voice_key_remove_text": "De toestellen vallen terug op de spraakherkenning van de telefoon tot er een nieuwe sleutel is opgeslagen. Uw account bij de aanbieder blijft ongemoeid.",
-  "lang_int_voice_key_removed": "Sleutel verwijderd."
+  "lang_int_voice_key_removed": "Sleutel verwijderd.",
+  "lang_new_online_order": "Nieuwe online bestelling",
+  "lang_no_changes_after_ordering": "Geen wijzigingen na bestellen",
+  "lang_orders_waiting": "wachtende bestellingen",
+  "lang_time_to_change_an_order": "Tijd om een bestelling te wijzigen"
 }

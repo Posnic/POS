@@ -261,6 +261,7 @@
   "lang_bill_date": "बिल मिति",
   "lang_bill_date_oldest": "बिल मिति: पुरानो पहिले",
   "lang_bill_no": "बिल नं",
+  "lang_bill_title": "बिल",
   "lang_bill_to": "बिल पाउने",
   "lang_bill_to_2": "बिल पाउने",
   "lang_bind_to_the_customer": "ग्राहकसँग जोड्नुहोस्",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "पहिलो बिक्रीका लागि तयार",
   "lang_reason_e_g_theft_expiry": "कारण (जस्तै, चोरी, म्याद सकिएको)",
   "lang_reason_required": "कारण (अनिवार्य)",
+  "lang_receipt_title": "रसिद",
   "lang_receiptbarcode_title": "रसिद बारकोड",
   "lang_receive": "प्राप्त गर्नुहोस्",
   "lang_receive_empty": "प्राप्ति अर्डर खाली छ",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "ग्राहकले रद्द गर्न भन्यो",
   "lang_keep_the_order": "अर्डर राख्नुहोस्",
   "lang_cancel_it": "रद्द गर्नुहोस्",
+  "lang_change_window_help": "रेस्टुरेन्टका लागि मात्र। त्यसपछि परिवर्तन काउन्टरले स्वीकृत गर्ने अनुरोध बन्छ।",
   "lang_int_voice_key_on_file": "कुञ्जी सुरक्षित",
   "lang_int_voice_key_remove_q": "सुरक्षित कुञ्जी हटाउने?",
   "lang_int_voice_key_remove_text": "नयाँ कुञ्जी नराखेसम्म ह्यान्डसेटहरू फोनकै आफ्नै पहिचानमा फर्कन्छन्। तपाईंको प्रदायक खातामा केही हुँदैन।",
-  "lang_int_voice_key_removed": "कुञ्जी हटाइयो।"
+  "lang_int_voice_key_removed": "कुञ्जी हटाइयो।",
+  "lang_new_online_order": "नयाँ अनलाइन अर्डर",
+  "lang_no_changes_after_ordering": "अर्डर पछि कुनै परिवर्तन छैन",
+  "lang_orders_waiting": "पर्खिरहेका अर्डरहरू",
+  "lang_time_to_change_an_order": "अर्डर परिवर्तन गर्ने समय"
 }

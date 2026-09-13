@@ -252,6 +252,7 @@
   async function runTool(name, args) {
     var a = assistant();
     if (name === "show_order") return { ok: true, order: await cartSummary() };
+    if (name === "show_order_history") return orderHistory();
     if (name === "send_to_kitchen") return sendToKitchen(args);
     if (name === "change_placed_order") return changePlacedOrder(args);
     if (name === "cancel_placed_order") return cancelPlacedOrder(args);
@@ -515,8 +516,112 @@
    * sending is not a change; it is a second ticket, which the model sends
    * with add_to_order and send_to_kitchen again.
    */
-  async function placedOrderCall(what, body) {
-    if (!live.placedId || !live.placed) return { ok: false, reason: "nothing_placed" };
+  /*
+   * What this phone has ordered, as the shop sees it now.
+   *
+   * The browser holds the list - there is no account behind a QR code - and
+   * the shop is asked about all of them in ONE request, the same door the
+   * history page uses. Money is left out on purpose: the owner's rule is that
+   * the assistant does not read totals aloud.
+   */
+  async function orderHistory() {
+    var kept = [];
+    try {
+      kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      kept = [];
+    }
+    if (!kept.length) return { ok: true, orders: [] };
+    var branch = await branchNow();
+    if (!branch) return { ok: false, reason: "no_shop" };
+    try {
+      var response = await fetch(
+        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/lookup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ orders: kept.map(function (row) { return { orderId: row.orderId, token: row.token }; }) })
+        }
+      );
+      if (!response.ok) return { ok: false, reason: "not_read" };
+      var answer = await response.json();
+      var orders = (answer && answer.data && answer.data.orders) || [];
+      /* Newest first, which is the order a person thinks in. */
+      orders.sort(function (a, b) {
+        return new Date(b.placed_at || 0) - new Date(a.placed_at || 0);
+      });
+      return {
+        ok: true,
+        orders: orders.map(function (order) {
+          return {
+            token: order.token,
+            placed_at: order.placed_at,
+            state: order.cancelled ? "cancelled" : order.paid ? "paid" : order.state,
+            can_change: order.can_change === true,
+            why_not: order.why_not,
+            seconds_left: order.can_change
+              ? Math.max(0, Math.round((new Date(order.placed_at).getTime() + (Number(order.change_seconds) || 0) * 1000 - Date.now()) / 1000))
+              : 0,
+            cancel_requested: order.cancel_requested === true,
+            lines: (order.items || []).map(function (line) {
+              return { item_id: line.item_id, name: line.name, quantity: line.quantity };
+            })
+          };
+        })
+      };
+    } catch (e) {
+      return { ok: false, reason: "not_read" };
+    }
+  }
+
+  /** The shop this line is talking to. */
+  async function branchNow() {
+    try {
+      return typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      return "";
+    }
+  }
+
+  /*
+   * Which order a tool call means.
+   *
+   * The token the customer was given, because that is the number in front of
+   * them. With none, the one placed during this call; with none of those, the
+   * most recent this phone remembers - which is what somebody means when they
+   * ring back and say "make that two".
+   */
+  function orderNamed(token) {
+    var asked = String(token || "").trim();
+    if (!asked && live.placedId && live.placed) {
+      return { orderId: live.placedId, token: live.placed };
+    }
+    var kept = [];
+    try {
+      kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      kept = [];
+    }
+    if (asked) {
+      var match = kept.filter(function (row) {
+        return String(row.token) === asked;
+      })[0];
+      return match ? { orderId: match.orderId, token: match.token } : null;
+    }
+    var newest = kept
+      .slice()
+      .sort(function (a, b) {
+        return new Date(b.at || 0) - new Date(a.at || 0);
+      })[0];
+    return newest ? { orderId: newest.orderId, token: newest.token } : null;
+  }
+
+  async function placedOrderCall(what, body, token) {
+    var which = orderNamed(token);
+    if (!which) return { ok: false, reason: "nothing_placed" };
+    /* Named locally so the rest of this function reads as it did. */
+    var placedId = which.orderId;
+    var placedToken = which.token;
     var branch = "";
     try {
       branch = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
@@ -526,11 +631,11 @@
     if (!branch) return { ok: false, reason: "no_shop" };
     try {
       var response = await fetch(
-        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/" + encodeURIComponent(live.placedId) + "/" + what,
+        apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/orders/" + encodeURIComponent(placedId) + "/" + what,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(Object.assign({ token: live.placed }, body || {}))
+          body: JSON.stringify(Object.assign({ token: placedToken }, body || {}))
         }
       );
       var answer = null;
@@ -581,21 +686,36 @@
       }
       asked.push({ item_id: String(found.id), quantity: Math.max(0, Math.min(20, Math.round(Number(wanted[i].quantity) || 0))) });
     }
-    var done = await placedOrderCall("items", { items: asked });
-    if (!done.ok) return { ok: false, reason: done.reason, token: live.placed };
-    await matchCartTo(done.data.items || []);
+    var which = orderNamed(args && args.token);
+    var done = await placedOrderCall("items", { items: asked }, args && args.token);
+    if (!done.ok) return { ok: false, reason: done.reason, token: which && which.token };
+    /* The basket on screen belongs to the order being built NOW. Rewriting it
+       to match an order from an earlier visit would throw that away. */
+    if (which && live.placedId && which.orderId === live.placedId) {
+      await matchCartTo(done.data.items || []);
+    }
     var a = assistant();
     if (a && a.actionLine) a.actionLine(say("Order changed"));
-    return { ok: true, token: live.placed, order: { lines: done.data.items || [], total: done.data.total } };
+    return {
+      ok: true,
+      token: (which && which.token) || live.placed,
+      order: { lines: done.data.items || [], total: done.data.total }
+    };
   }
 
   async function cancelPlacedOrder(args) {
     if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed" };
-    var done = await placedOrderCall("cancel", {});
-    if (!done.ok) return { ok: false, reason: done.reason, token: live.placed };
-    await matchCartTo([]);
-    live.placed = "";
-    live.placedId = "";
+    var which = orderNamed(args && args.token);
+    var done = await placedOrderCall("cancel", {}, args && args.token);
+    if (!done.ok) return { ok: false, reason: done.reason, token: which && which.token };
+    /* Only the order this call placed is the one the screen is showing. An
+       older one being called off leaves the basket and the panel alone. */
+    var wasThisCall = which && live.placedId && which.orderId === live.placedId;
+    if (wasThisCall) {
+      await matchCartTo([]);
+      live.placed = "";
+      live.placedId = "";
+    }
     var a = assistant();
     if (a && a.actionLine) a.actionLine(say("Order cancelled"));
     return { ok: true, cancelled: true };

@@ -2827,6 +2827,69 @@ dialog.sheet:has(.placed:not([hidden])):not(:has(.placed-order:not([hidden]))) .
   border-bottom: 1px solid var(--line);
 }
 
+/* Said once at the top of the history, not on every row. */
+.history-offline {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* Something that was never on the order, offered inside the row that is
+   open. The same shape as the confirmation screen's, because it is the same
+   offer and a customer should not have to learn it twice. */
+.history-more {
+  margin-top: 14px;
+}
+
+.history-more-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.history-more-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.history-more-item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.history-more-item[disabled] {
+  opacity: 0.5;
+}
+
+.history-more-plus {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.history-refused {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
 /* ------------------------------------------- the order's own screen
  *
  * It opens under the scene once the kitchen has the order. Quiet: the token

@@ -261,6 +261,7 @@
   "lang_bill_date": "Belegdatum",
   "lang_bill_date_oldest": "Belegdatum: älteste",
   "lang_bill_no": "Belegnummer",
+  "lang_bill_title": "RECHNUNG",
   "lang_bill_to": "Rechnung an",
   "lang_bill_to_2": "Rechnung an",
   "lang_bind_to_the_customer": "An den Kunden binden",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "Bereit für den ersten Verkauf",
   "lang_reason_e_g_theft_expiry": "Grund (z. B. Diebstahl, Ablauf)",
   "lang_reason_required": "Grund (erforderlich)",
+  "lang_receipt_title": "QUITTUNG",
   "lang_receiptbarcode_title": "Beleg-Barcode",
   "lang_receive": "Annehmen",
   "lang_receive_empty": "Wareneingang leer",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "Kunde bittet um Stornierung",
   "lang_keep_the_order": "Bestellung behalten",
   "lang_cancel_it": "Stornieren",
+  "lang_change_window_help": "Nur für Restaurants. Danach wird eine Änderung zu einer Anfrage, die die Kasse genehmigt.",
   "lang_int_voice_key_on_file": "Schlüssel gespeichert",
   "lang_int_voice_key_remove_q": "Gespeicherten Schlüssel entfernen?",
   "lang_int_voice_key_remove_text": "Die Handgeräte fallen auf die Spracherkennung des Telefons zurück, bis ein neuer Schlüssel gespeichert ist. Ihr Anbieterkonto bleibt unberührt.",
-  "lang_int_voice_key_removed": "Der Schlüssel wurde entfernt."
+  "lang_int_voice_key_removed": "Der Schlüssel wurde entfernt.",
+  "lang_new_online_order": "Neue Online-Bestellung",
+  "lang_no_changes_after_ordering": "Keine Änderungen nach der Bestellung",
+  "lang_orders_waiting": "wartende Bestellungen",
+  "lang_time_to_change_an_order": "Zeit zum Ändern einer Bestellung"
 }
