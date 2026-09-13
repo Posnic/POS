@@ -122,6 +122,7 @@
       "src/print-window-guard.js",
       "src/print-pdf.js",
       "src/escpos-receipt.js",
+      "src/escpos-kot.js",
       "src/printer-targets.js",
       "src/device-preferences.js",
       "src/raw-print-service.js",
