@@ -17,6 +17,9 @@
   "A parked cart is not a sale": [
     "src/services/invoice-sync.js"
   ],
+  "A print job needs a branch": [
+    "src/repositories/print-job.repository.js"
+  ],
   "A sale id is required": [
     "src/repositories/invoice.repository.js"
   ],
@@ -391,6 +394,9 @@
   "Could not check the sales history, so nothing was removed.": [
     "src/repositories/item.repository.js"
   ],
+  "Could not close the print job": [
+    "src/repositories/print-job.repository.js"
+  ],
   "Could not complete the sign-in": [
     "src/controllers/users.controller.js"
   ],
@@ -415,6 +421,9 @@
   "Could not mark the bill printed": [
     "src/repositories/sale.repository.js"
   ],
+  "Could not queue the print job": [
+    "src/repositories/print-job.repository.js"
+  ],
   "Could not read branch modules": [
     "src/controllers/settings.controller.js"
   ],
@@ -423,6 +432,9 @@
   ],
   "Could not read state": [
     "app.js"
+  ],
+  "Could not read the print queue": [
+    "src/repositories/print-job.repository.js"
   ],
   "Could not register webhook": [
     "app.js"
@@ -1076,6 +1088,9 @@
   "No audio was sent": [
     "src/services/transcribe.service.js"
   ],
+  "No branch": [
+    "src/repositories/print-job.repository.js"
+  ],
   "No branch IDs provided": [
     "src/models/branch.model.js"
   ],
@@ -1176,6 +1191,9 @@
   "No such branch in this shop": [
     "src/models/setting.model.js"
   ],
+  "No such job": [
+    "src/repositories/print-job.repository.js"
+  ],
   "No such modifier group": [
     "src/models/setting.model.js"
   ],
@@ -1249,6 +1267,9 @@
   ],
   "Not Found": [
     "src/controllers/settings.controller.js"
+  ],
+  "Not a job id": [
+    "src/repositories/print-job.repository.js"
   ],
   "Not a valid family id": [
     "src/repositories/item.repository.js"
@@ -1503,6 +1524,9 @@
   ],
   "Quantity updated": [
     "src/repositories/item.repository.js"
+  ],
+  "Queued": [
+    "src/repositories/print-job.repository.js"
   ],
   "Quote ": [
     "src/repositories/quote.repository.js"
@@ -2522,6 +2546,7 @@
     "src/repositories/customer.repository.js",
     "src/repositories/invoice.repository.js",
     "src/repositories/item.repository.js",
+    "src/repositories/print-job.repository.js",
     "src/repositories/purchase-order.repository.js",
     "src/repositories/quote.repository.js",
     "src/repositories/register.repository.js",

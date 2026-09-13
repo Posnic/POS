@@ -8,6 +8,8 @@ const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
 const { notifyBillRequested } = require('../helpers/bill-notify');
+const { queuePrintJob } = require('./print-job.repository');
+const { buildBillPayload } = require('../helpers/bill-payload');
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7142,6 +7144,65 @@ class SalesRepository {
        * changed nothing would wake the printer to find an empty list.
        */
       if (waiting > 0) {
+        /*
+         * ON THE QUEUE, CARRYING WHAT TO PRINT.
+         *
+         * This is what makes a cloud shop work at all. The flag on the sale
+         * only ever reaches a till looking at the SAME database; a job carries
+         * the bill with it, so a till asks "anything for me?" and prints the
+         * answer without owning the sale or waiting for anything to sync.
+         *
+         * One job per open ticket, because that is what comes out of the
+         * printer - a table with three rounds has three tickets and the
+         * counter wants all three.
+         */
+        const open = await Model.find(query).limit(20).lean();
+
+        /*
+         * THE SHOP'S LETTERHEAD, READ ONCE.
+         *
+         * On the shop's own database this is a local lookup. It has to happen
+         * HERE and not on the till, because a till paired to a cloud tenant
+         * does not have this database - anything it would have to look up is
+         * something it cannot look up.
+         *
+         * A branch that cannot be read is not fatal. A bill with no letterhead
+         * is still a bill, and losing a guest's bill over a cosmetic failure
+         * would be the wrong trade.
+         */
+        let shop = {};
+        try {
+          const BranchModel = require('../models/branch.model');
+          const id = ObjectId.isValid(String(branchId))
+            ? new mongoose.Types.ObjectId(String(branchId))
+            : branchId;
+          shop = (await BranchModel.findById(id).lean()) || {};
+        } catch (e) {
+          console.error('Could not read the shop for the bill header:', e && e.message);
+        }
+
+        for (const sale of open) {
+           
+          await queuePrintJob({
+            branchId,
+            kind: 'bill',
+            saleId: sale._id,
+            label: `Table ${table}`,
+            /*
+             * BUILT FOR THE PRINTER, not handed over raw.
+             *
+             * This used to pass the sale document itself, with a comment
+             * claiming escpos-receipt rendered from exactly that shape. It does
+             * not. The renderer wants a view model - `items[].name`, `total` -
+             * and the document has `items[].item_name` and `sales_total`, so
+             * every lookup missed and the paper came out with a header, an
+             * empty item table and a total of 0.00. helpers/bill-payload.js
+             * has the full account.
+             */
+            payload: buildBillPayload(sale, shop),
+          });
+        }
+
         notifyBillRequested({
           branchId,
           table,
@@ -7191,7 +7252,41 @@ class SalesRepository {
 
       const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
 
-      return { status: true, message: 'success', data: sales };
+      /*
+       * BUILT FOR THE PRINTER HERE TOO, and that fixes tills already in shops.
+       *
+       * This route is the old one - the queue replaced it - but every till
+       * installed before this build still asks it, and it was handing over the
+       * sale document raw. src/escpos-receipt.js cannot read a document: it
+       * wants `items[].name` and `total`, the document has `items[].item_name`
+       * and `sales_total`, so what came out of those printers was a header, an
+       * empty item table and a total of 0.00.
+       *
+       * Fixing it on this side fixes every one of them, with nobody installing
+       * anything. A till that updates uses the queue and never comes here
+       * again; one that never updates starts printing real bills tonight.
+       *
+       * `_id` is carried through because the till sends it straight back to
+       * markBillPrinted, and a bill it cannot report is a bill it prints again
+       * on every pass for ever.
+       */
+      let shop = {};
+      try {
+        const BranchModel = require('../models/branch.model');
+        const id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+        if (id) shop = (await BranchModel.findById(id).lean()) || {};
+      } catch (e) {
+        console.error('Could not read the shop for the bill header:', e && e.message);
+      }
+
+      const forThePrinter = sales.map((sale) => ({
+        _id: sale._id,
+        ...buildBillPayload(sale, shop),
+      }));
+
+      return { status: true, message: 'success', data: forThePrinter };
     } catch (error) {
       console.error('Error in pendingBillPrintsModel:', error);
       return { status: false, message: 'Could not read pending bills', data: [] };

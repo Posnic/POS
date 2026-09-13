@@ -165,6 +165,13 @@ router.post(
   bindController(salesController.pendingBillPrints)
 );
 router.post('/markBillPrinted', ensureKioskKey, bindController(salesController.markBillPrinted));
+/*
+ * THE PRINT QUEUE. A till asking what it should print, and saying what
+ * happened to it. Behind the installation key like every other printer route -
+ * this is a machine talking about its own hardware.
+ */
+router.post('/claimPrintJobs', ensureKioskKey, bindController(salesController.claimPrintJobs));
+router.post('/finishPrintJob', ensureKioskKey, bindController(salesController.finishPrintJob));
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,

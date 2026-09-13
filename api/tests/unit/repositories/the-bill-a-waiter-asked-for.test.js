@@ -45,9 +45,16 @@ function fakeModel({ waiting = 1 } = {}) {
     },
     find: (query) => {
       seen.queries.push(query);
-      return {
-        sort: () => ({ limit: () => ({ lean: async () => [{ _id: 'a' }] }) }),
-      };
+      /*
+       * Both spellings, because callers here differ: the bill request reads
+       * `.limit().lean()` and the older readers sort first. A fake that only
+       * answers one of them throws inside a try/catch and turns a passing path
+       * into a silent `status: false` - which is exactly how this stopped
+       * testing what it says it tests.
+       */
+      const done = { lean: async () => [{ _id: 'a' }] };
+      const chain = { limit: () => done, sort: () => ({ limit: () => done }), lean: done.lean };
+      return chain;
     },
   };
 }
@@ -145,6 +152,49 @@ describe('the till collecting what it owes the counter', () => {
     const { update } = Model.seen.updates[0];
     expect(update.$set.bill_printed_at).toBeInstanceOf(Date);
     expect(Object.keys(update.$set)).not.toContain('payment_status');
+  });
+
+  test('what the till is handed is something a printer can print', async () => {
+    /*
+     * THE BUG THIS PINS PRINTED BLANK PAPER, AND THIS IS THE HALF THAT FIXES
+     * TILLS ALREADY IN SHOPS.
+     *
+     * This route hands the till what it prints. It used to hand over the sale
+     * DOCUMENT, and src/escpos-receipt.js cannot read documents: it wants
+     * `items[].name` and `total`, the document has `items[].item_name` and
+     * `sales_total`. Every lookup missed and a slip came out with a header, an
+     * empty item table and a total of 0.00. Nothing errored anywhere.
+     *
+     * Building it here fixes every till already installed, with nobody
+     * installing anything - the same reasoning as the takeaway spelling fix.
+     * `_id` has to survive because the till sends it straight back to
+     * markBillPrinted, and a bill it cannot report is one it reprints for ever.
+     */
+    const Model = {
+      seen: { queries: [] },
+      find(query) {
+        this.seen.queries.push(query);
+        const done = {
+          lean: async () => [
+            {
+              _id: '507f1f77bcf86cd799439011',
+              sales_id: 'INV-7',
+              items: [{ name: 'Idli', quantity: 2, unit_price: 30, total: 60 }],
+              sales_total: 60,
+            },
+          ],
+        };
+        return { sort: () => ({ limit: () => done }), limit: () => done };
+      },
+    };
+
+    const out = await salesRepository.pendingBillPrintsModel('', { SaleModel: Model });
+    const bill = out.data[0];
+
+    expect(String(bill._id)).toBe('507f1f77bcf86cd799439011');
+    expect(bill.items).toEqual([{ name: 'Idli', qty: '2', amount: 60 }]);
+    expect(bill.total).toBe(60);
+    expect(bill.billNo).toBe('INV-7');
   });
 
   test('a rubbish id marks nothing at all', async () => {

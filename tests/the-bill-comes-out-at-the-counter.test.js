@@ -30,19 +30,43 @@ function fakeHardware({ printer = 'EPSON TM-T82', refuse = false } = {}) {
   };
 }
 
-/** The API, answering with whatever the test wants and recording the asks. */
-function fakeApi(pending) {
+/**
+ * The queue, answering with whatever the test wants and recording the asks.
+ *
+ * A claimed job CARRIES the bill rather than pointing at it. That is the whole
+ * reason the queue exists: a cloud-paired till has no copy of the shop's sales
+ * and never will, so anything it has to look up first is a bill it cannot
+ * print.
+ */
+function fakeApi(pending, { poll = null, oldShape = false } = {}) {
   const calls = [];
   global.fetch = async (url, options) => {
     const body = options && options.body ? JSON.parse(options.body) : {};
     calls.push({ url: String(url), body, headers: (options && options.headers) || {} });
-    if (String(url).includes('/pendingBillPrints')) {
-      return { json: async () => ({ status: true, data: pending }) };
+    if (String(url).includes('/claimPrintJobs')) {
+      const jobs = pending.map((sale, i) => ({
+        _id: 'job-' + i,
+        kind: 'bill',
+        label: 'Table 4',
+        payload: sale,
+      }));
+      /* An API from before the queue answered with the list itself. Tills in
+         shops are updated when the shopkeeper gets round to it. */
+      const data = oldShape ? jobs : { jobs, poll: poll || { nextMs: 60000, reason: 'quiet' } };
+      return { json: async () => ({ status: true, data }) };
     }
-    return { json: async () => ({ status: true, data: { marked: 1 } }) };
+    return { json: async () => ({ status: true, data: { ok: true } }) };
   };
   return calls;
 }
+
+/** The times this till told the queue a job came out on paper. */
+const printedOk = (calls) =>
+  calls.filter((c) => c.url.includes('/finishPrintJob') && c.body.ok === true);
+
+/** The times it owned up to a job that did not. */
+const printedBad = (calls) =>
+  calls.filter((c) => c.url.includes('/finishPrintJob') && c.body.ok === false);
 
 /**
  * One pass of the poller, without leaving a timer running.
@@ -58,11 +82,31 @@ async function runOnce(bills) {
   bills.stop();
 }
 
+/** One pass of the FAR door, which is a separate loop with its own switch. */
+async function runCloudOnce(bills) {
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+}
+
+/*
+ * A BILL AS THE QUEUE CARRIES IT.
+ *
+ * Not a sale document. api/src/helpers/bill-payload.js turns one into this
+ * before it goes on the queue, and the difference is not cosmetic: the job
+ * used to carry the raw document, whose field names the renderer does not
+ * know, and what came out of the printer was a header, an empty item table and
+ * a total of 0.00. The round trip is pinned further down.
+ */
 const aSale = (id) => ({
-  _id: id,
-  sales_id: 'INV-' + id,
-  items: [{ item_name: 'Chicken Biryani', quantity: 2, item_total: 440 }],
-  sales_total: 440,
+  storeName: 'Kirana Store',
+  title: 'BILL',
+  billNo: 'INV-' + id,
+  date: '13/09/2026 20:41',
+  items: [{ name: 'Chicken Biryani', qty: '2', amount: 440 }],
+  subTotal: 440,
+  total: 440,
+  itemCount: 1,
 });
 
 test('a requested bill is printed on the counter printer', async () => {
@@ -76,10 +120,10 @@ test('a requested bill is printed on the counter printer', async () => {
   assert.equal(hardware.jobs[0].name, 'EPSON TM-T82');
   assert.ok(hardware.jobs[0].bytes && hardware.jobs[0].bytes.length, 'an empty job was sent');
   assert.match(hardware.jobs[0].label, /bill/i, 'the job is not named as a bill');
-  assert.ok(calls.some((c) => c.url.includes('/pendingBillPrints')));
+  assert.ok(calls.some((c) => c.url.includes('/claimPrintJobs')));
 });
 
-test('it is marked printed only AFTER the paper came out', async () => {
+test('the job is closed only AFTER the paper came out', async () => {
   /*
    * The order matters and it is the one that can go wrong quietly. A till that
    * dies mid-job asks again when it returns, which costs a duplicate slip at
@@ -92,24 +136,26 @@ test('it is marked printed only AFTER the paper came out', async () => {
 
   await runOnce(bills);
 
-  const printedAt = calls.findIndex((c) => c.url.includes('/markBillPrinted'));
-  assert.ok(printedAt > -1, 'it never said the bill printed');
-  assert.equal(hardware.jobs.length, 1, 'it marked without printing');
+  assert.equal(printedOk(calls).length, 1, 'it never said the bill printed');
+  assert.equal(hardware.jobs.length, 1, 'it closed the job without printing');
+
+  const claimedAt = calls.findIndex((c) => c.url.includes('/claimPrintJobs'));
+  const closedAt = calls.findIndex((c) => c.url.includes('/finishPrintJob'));
+  assert.ok(closedAt > claimedAt, 'it closed a job it had not claimed');
 });
 
-test('a printer that refuses does not get the bill marked printed', async () => {
-  /* Marking it would lose the bill for good: nothing would ever offer it
-     again, and the only person who knows is the guest still waiting. */
+test('a printer that refuses puts the bill back, it does not swallow it', async () => {
+  /* Closing it as done would lose the bill for good: nothing would ever offer
+     it again, and the only person who knows is the guest still waiting. Owning
+     up to the failure is what sends it round again on the next pass. */
   const hardware = fakeHardware({ refuse: true });
   const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
   const bills = new BillManager(hardware, { branchId: 'b1' });
 
   await runOnce(bills);
 
-  assert.ok(
-    !calls.some((c) => c.url.includes('/markBillPrinted')),
-    'a bill that never printed was marked as printed'
-  );
+  assert.equal(printedOk(calls).length, 0, 'a bill that never printed was closed as printed');
+  assert.equal(printedBad(calls).length, 1, 'the failure was never reported, so nobody retries it');
 });
 
 test('no default printer is reported, not silently swallowed', async () => {
@@ -120,7 +166,7 @@ test('no default printer is reported, not silently swallowed', async () => {
   await runOnce(bills);
 
   assert.equal(hardware.jobs.length, 0);
-  assert.ok(!calls.some((c) => c.url.includes('/markBillPrinted')));
+  assert.equal(printedOk(calls).length, 0);
 });
 
 test('the cash drawer is never opened', async () => {
@@ -151,7 +197,7 @@ test('a till with no branch yet waits instead of erroring', async () => {
   await runOnce(bills);
 
   assert.equal(bills.getStatus().lastStatus, 'no branch');
-  assert.ok(!calls.some((c) => c.url.includes('/pendingBillPrints')), 'it asked about no shop');
+  assert.ok(!calls.some((c) => c.url.includes('/claimPrintJobs')), 'it asked about no shop');
 });
 
 test('the branch is looked up rather than demanded', async () => {
@@ -161,7 +207,7 @@ test('the branch is looked up rather than demanded', async () => {
 
   await runOnce(bills);
 
-  const asked = calls.find((c) => c.url.includes('/pendingBillPrints'));
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
   assert.equal(asked && asked.body.branchId, 'found-branch');
 });
 
@@ -176,7 +222,7 @@ test('it presents this installation\'s kiosk key', async () => {
   await runOnce(bills);
   delete process.env.KIOSK_API_KEY;
 
-  const asked = calls.find((c) => c.url.includes('/pendingBillPrints'));
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
   assert.equal(asked.headers.kioskkey, 'the-key');
 });
 
@@ -276,8 +322,7 @@ test('with no printer anywhere, nothing is marked printed', async () => {
   await runOnce(bills);
 
   assert.equal(hardware.jobs.length, 0);
-  assert.ok(!calls.some((c) => c.url.includes('/markBillPrinted')),
-    'a bill nobody printed was marked printed');
+  assert.equal(printedOk(calls).length, 0, 'a bill nobody printed was closed as printed');
 });
 
 test('the module that answers which printer is in the packaged build', () => {
@@ -292,6 +337,352 @@ test('the module that answers which printer is in the packaged build', () => {
     'the receipt printer lookup is not shipped; the bill would throw on a real install');
 });
 
+
+/* --------------------------------------- a till that is not on the shop's LAN */
+
+/*
+ * Owner: "there should be way to communicate the till via localhos or via
+ * cloude. thats the whole point. make it happen. may be seperate collection for
+ * print? need solution that which till need to send for bill also there."
+ *
+ * Two shops, one binary. A local install IS its own server, so it asks
+ * localhost. A till paired to a cloud tenant is not: the shop's data lives at
+ * that tenant's address, the handsets talk to it, and the queue fills up
+ * THERE. Asking localhost in that case is asking a database that has never
+ * heard of the bill - which is exactly the shape the old poller had, and
+ * exactly why a cloud shop never printed.
+ *
+ * Nothing can push INTO a shop: a till sits behind the shop's router with no
+ * address anybody outside can reach. So the till asks. The only thing that
+ * changes between the two shops is who it asks.
+ */
+
+test('a cloud-paired till asks its shop, not its own localhost', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+  });
+
+  await runCloudOnce(bills);
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.ok(asked, 'it never asked anybody');
+  assert.match(asked.url, /^https:\/\/kiranastore\.posnic\.io\/api\//,
+    'a cloud till asked its own localhost, where the bill does not exist');
+  assert.equal(hardware.jobs.length, 1, 'a cloud shop got no paper');
+});
+
+test('a trailing slash on the shop address does not double up', async () => {
+  /* Owners paste addresses. `.../api/` + `/sales/...` is a 404 and a bill
+     nobody prints, which is a silly way to lose one. */
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api/',
+  });
+
+  await runCloudOnce(bills);
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.url, 'https://kiranastore.posnic.io/api/sales/claimPrintJobs');
+});
+
+/*
+ * WHAT IT COSTS A SHOP THAT DOES NOT NEED THE CLOUD.
+ *
+ * Owner: "print always look for cloud api instead of local. should not give so
+ * much load to cloud also... polling should happen only when app connected and
+ * logged in corrently acitve. otherwise there is no app and no one going to
+ * give anything then its waste of time polling stuff. also its not restaurent
+ * business app not there or not logged in so far. its also waste. may be
+ * configuration or toggle to poll cloud. it needs to be on only when required."
+ *
+ * So: nothing. Not a slower poll, not a smaller one - no request at all.
+ */
+
+test('with the cloud door shut, nothing leaves the building', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudApi: 'https://kiranastore.posnic.io/api',
+    /* the address is known and the switch is off, which is the default */
+  });
+
+  await runCloudOnce(bills);
+
+  assert.deepEqual(calls, [], 'a till nobody asked to relay cloud bills polled the cloud');
+  assert.equal(bills.getStatus().cloud.status, 'off');
+});
+
+test('a grocer with no cloud address never asks anybody', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, { branchId: 'b1', cloudPrint: true });
+
+  await runCloudOnce(bills);
+
+  assert.deepEqual(calls, [], 'it polled an address it does not have');
+});
+
+test('the switch is read on every pass, not captured at startup', async () => {
+  /* A shopkeeper turning cloud printing on should not have to restart the
+     till, and turning it OFF has to actually stop the requests. */
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  let on = false;
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    findCloudPrint: async () => ({ enabled: on, apiUrl: 'https://shop.posnic.io/api' }),
+  });
+
+  await runCloudOnce(bills);
+  assert.deepEqual(calls, [], 'it asked while the switch was off');
+
+  on = true;
+  await runCloudOnce(bills);
+  assert.ok(calls.some((c) => c.url.includes('/claimPrintJobs')), 'the switch did nothing');
+});
+
+test('an unreadable switch does not decide a shop\'s printing', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://shop.posnic.io/api',
+    findCloudPrint: async () => { throw new Error('preferences unreadable'); },
+  });
+
+  await runCloudOnce(bills);
+
+  assert.ok(calls.some((c) => c.url.includes('/claimPrintJobs')),
+    'an unreadable preferences file stopped a shop printing');
+});
+
+/*
+ * THE SERVER SETS THE PACE.
+ *
+ * The till cannot know whether a waiter has the app open; the API can, because
+ * the handset is talking to it. So the answer carries how long to wait before
+ * asking again, and this side obeys. The whole estate can be re-paced from
+ * api/src/helpers/print-pace.js without shipping a desktop build to anybody.
+ */
+
+test('it comes back when the server says to come back', async () => {
+  const hardware = fakeHardware();
+  fakeApi([], { poll: { nextMs: 5000, reason: 'somebody is on the floor' } });
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://shop.posnic.io/api',
+  });
+
+  const waits = [];
+  bills._scheduleCloud = (ms) => waits.push(ms);
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.polling = false;
+
+  assert.deepEqual(waits, [5000], 'it ignored the pace the server set');
+});
+
+test('a quiet shop is told to wait, and waits', async () => {
+  const hardware = fakeHardware();
+  fakeApi([], { poll: { nextMs: 60000, reason: 'nobody is on the floor' } });
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://shop.posnic.io/api',
+  });
+
+  const waits = [];
+  bills._scheduleCloud = (ms) => waits.push(ms);
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.polling = false;
+
+  assert.deepEqual(waits, [60000]);
+});
+
+test('a nonsense pace cannot switch a shop off for the day', async () => {
+  /* A bug or a mangled reply must not be able to tell a till to come back
+     tomorrow. Whatever the server says is clamped before it is believed. */
+  const hardware = fakeHardware();
+  fakeApi([], { poll: { nextMs: 86400000, reason: 'corrupt' } });
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://shop.posnic.io/api',
+  });
+
+  const waits = [];
+  bills._scheduleCloud = (ms) => waits.push(ms);
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.polling = false;
+
+  assert.ok(waits[0] <= 15 * 60 * 1000, `it agreed to sleep for ${waits[0]}ms`);
+});
+
+test('it asks the cloud to hold rather than asking again', async () => {
+  /*
+   * A held request is both fewer requests than polling and faster than it: one
+   * every twenty seconds instead of one every five, and the bill leaves the
+   * moment it is asked for. The near door never asks for this - it is talking
+   * to itself and a held call would just block its own API.
+   */
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://shop.posnic.io/api',
+  });
+
+  await runCloudOnce(bills);
+  const far = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(far.body.wait, true, 'the cloud is being polled instead of held');
+
+  const local = fakeApi([]);
+  await runOnce(new BillManager(fakeHardware(), { branchId: 'b1' }));
+  const near = local.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.ok(!near.body.wait, 'the till asked its own API to hold a call open');
+});
+
+test('an API that has not been updated yet is still understood', async () => {
+  /* Tills are updated when a shopkeeper gets round to it. A desktop that is
+     ahead of its own API must not stop printing because of a reply shape. */
+  const hardware = fakeHardware();
+  fakeApi([aSale('507f1f77bcf86cd799439011')], { oldShape: true });
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1, 'an older reply shape lost the bill');
+});
+
+test('a local till still asks the machine it is running on', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.match(asked.url, /^http:\/\/127\.0\.0\.1:/,
+    'a local till went out to the internet for its own bill');
+});
+
+test('the till says which machine it is', async () => {
+  /*
+   * Owner: "need solution that which till need to send for bill also there."
+   *
+   * A shop with a counter till and a first-floor till has two printers in two
+   * rooms. A job addressed to one must not come out in the other, so the till
+   * has to be able to say who it is when it asks.
+   */
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, { branchId: 'b1', tillId: 'COUNTER-PC' });
+
+  await runOnce(bills);
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.body.tillId, 'COUNTER-PC');
+  assert.equal(asked.body.kind, 'bill', 'it would claim the kitchen slips too');
+});
+
+test('a till nobody named still has a name', async () => {
+  /* The hostname is what the shopkeeper already calls that machine, and every
+     install has one. A blank till id would claim only unaddressed jobs. */
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.ok(String(asked.body.tillId || '').trim(), 'the till could not say who it is');
+});
+
+test('it prints what the job carried, without looking anything up', async () => {
+  /*
+   * The reason the job carries the bill instead of its id. A cloud-paired till
+   * has no copy of the shop's sales and never will - one round trip to fetch
+   * the sale is one more thing to be down, and on a shop wifi it is the slow
+   * half of the whole operation.
+   */
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1);
+  const paper = Buffer.from(hardware.jobs[0].bytes).toString('latin1');
+  assert.match(paper, /Chicken Biryani/, 'the payload never reached the paper');
+
+  const lookups = calls.filter(
+    (c) => !c.url.includes('/claimPrintJobs') && !c.url.includes('/finishPrintJob')
+  );
+  assert.deepEqual(lookups, [], 'it went back to the API for something it was already handed');
+});
+
+test('three rounds on one table come out as three slips', async () => {
+  const hardware = fakeHardware();
+  const calls = fakeApi([
+    aSale('507f1f77bcf86cd799439011'),
+    aSale('507f1f77bcf86cd799439012'),
+    aSale('507f1f77bcf86cd799439013'),
+  ]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 3, 'a table lost a round');
+  assert.equal(printedOk(calls).length, 3, 'a printed slip was left on the queue');
+  const closed = printedOk(calls).map((c) => c.body.id);
+  assert.deepEqual(closed, ['job-0', 'job-1', 'job-2'], 'it closed the wrong jobs');
+});
+
+test('the job id is what is closed, never the sale id', async () => {
+  /*
+   * They are different things and mixing them up is silent: the queue would
+   * find no job with that id, leave the real one claimed, and print the same
+   * bill again two minutes later when it went stale.
+   */
+  const hardware = fakeHardware();
+  const calls = fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+
+  await runOnce(bills);
+
+  assert.equal(printedOk(calls)[0].body.id, 'job-0');
+});
+
+test('a queue that cannot be told is logged, not thrown', async () => {
+  /* The paper is already out. Failing to close the job costs a duplicate slip
+     later; throwing here would take the whole poller down with it. */
+  const hardware = fakeHardware();
+  fakeApi([aSale('507f1f77bcf86cd799439011')]);
+  const honest = global.fetch;
+  global.fetch = async (url, options) => {
+    if (String(url).includes('/finishPrintJob')) throw new Error('wifi dropped');
+    return honest(url, options);
+  };
+
+  const bills = new BillManager(hardware, { branchId: 'b1' });
+  await runOnce(bills);
+
+  assert.equal(hardware.jobs.length, 1, 'the bill never printed');
+  assert.equal(bills.getStatus().lastStatus, 'ok', 'a failed close took the poll down with it');
+});
 
 /* ------------------------------------------ printing the moment it is asked */
 
@@ -348,7 +739,7 @@ test('a till with no branch yet takes one off the event', async () => {
   await new Promise((r) => setTimeout(r, 120));
   bills.stop();
 
-  const asked = calls.find((c) => c.url.includes('/pendingBillPrints'));
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
   assert.ok(asked, 'it never asked about any shop');
   assert.equal(asked.body.branchId, 'from-the-event');
 });
@@ -383,4 +774,166 @@ test('starting twice does not subscribe twice', async () => {
   bills.start();
   assert.equal(process.listenerCount(BILL_EVENT), before + 1, 'it subscribed twice');
   bills.stop();
+});
+
+
+/* ------------------------------- the sale, all the way to the paper */
+
+/*
+ * THE BUG THIS PINS PRINTED PERFECTLY BLANK PAPER.
+ *
+ * A waiter asked for a bill, the printer ran, a slip came out - with a header,
+ * an empty item table and a total of 0.00. Nothing errored anywhere.
+ *
+ * The queue was carrying the sale DOCUMENT, and src/escpos-receipt.js does not
+ * read documents. It reads a view model: `items[].name`, `total`. The document
+ * has `items[].item_name` and `sales_total`. Every lookup missed, quietly, and
+ * the result looked exactly like a printer fault.
+ *
+ * On the counter's own screen that view model is scraped out of the shop's
+ * rendered receipt template by frontend/.../receipt-data.js. There is no
+ * template on the floor, so api/src/helpers/bill-payload.js builds one from
+ * the sale, on the server, where the shop's letterhead also lives - a
+ * cloud-paired till has no copy of that database and never will.
+ *
+ * This test walks the whole way: a sale as Mongo holds it, through the
+ * builder, through the renderer, to the characters that reach the printer.
+ */
+
+const { buildBillPayload } = require(
+  path.join(__dirname, '..', 'api', 'src', 'helpers', 'bill-payload.js')
+);
+const { renderSale } = require(path.join(__dirname, '..', 'src', 'escpos-receipt.js'));
+
+/** The characters of a rendered slip, with the control codes taken out. */
+function onPaper(bytes) {
+  return Buffer.from(bytes)
+    .toString('latin1')
+    /* ESC/GS sequences: two bytes of command and, for the ones used here, one
+       of argument. Stripped so an assertion reads about words, not bytes. */
+    .replace(/\x1B[@EadtV!][\s\S]?/g, '')
+    .replace(/\x1D[!V][\s\S]?/g, '');
+}
+
+const A_REAL_SALE = {
+  _id: '507f1f77bcf86cd799439011',
+  sales_id: 'INV-2291',
+  date: new Date('2026-09-13T20:41:00'),
+  branch_name: 'Kirana Store',
+  table_number: 'T4',
+  dine_type: 'Dine in',
+  person_count: 3,
+  customer_name: 'Walk-in',
+  items: [
+    { name: 'Chicken Biryani', quantity: 2, unit_price: 220, total: 440 },
+    { name: 'Butter Naan', quantity: 3, unit_price: 40, total: 120 },
+  ],
+  sales_sub_total: 560,
+  tax: 28,
+  discount: 10,
+  round_off: 0,
+  sales_total: 578,
+};
+
+const THE_SHOP = {
+  branch_name: 'Kirana Store',
+  store_address: '12 Anna Salai',
+  store_telephone: '044 2345 6789',
+  branch_gstin_number: '33ABCDE1234F1Z5',
+};
+
+test('a real sale reaches the paper with its items and its total on it', () => {
+  const paper = onPaper(
+    renderSale(buildBillPayload(A_REAL_SALE, THE_SHOP), { paperWidth: '48' })
+  );
+
+  assert.match(paper, /Chicken Biryani/, 'the items never reached the paper');
+  assert.match(paper, /Butter Naan/, 'a line was lost');
+  assert.match(paper, /440\.00/, 'a line amount never reached the paper');
+  assert.match(paper, /TOTAL\s+578\.00/, 'the total printed as zero - the blank-bill bug');
+  assert.match(paper, /Kirana Store/, 'the shop has no name on its own bill');
+  assert.match(paper, /INV-2291/, 'the bill has no number to refer to');
+});
+
+test('the bill says which table it belongs to', () => {
+  /* The waiter carrying it has to know whose it is, and on the floor that is
+     the table number, not the invoice number. */
+  const paper = onPaper(
+    renderSale(buildBillPayload(A_REAL_SALE, THE_SHOP), { paperWidth: '48' })
+  );
+  assert.match(paper, /Table\s+T4/, 'nothing on the slip says which table');
+  assert.match(paper, /Covers\s+3/, 'the cover count was dropped');
+});
+
+test('it is a bill, not a receipt and not a tax invoice', () => {
+  /* Nobody has paid yet. Calling it either of the others would be a document
+     this shop has not issued. */
+  const payload = buildBillPayload(A_REAL_SALE, THE_SHOP);
+  assert.equal(payload.title, 'BILL');
+  assert.deepEqual(payload.payments || [], [], 'a bill nobody has paid carries a payment row');
+});
+
+test('a walk-in gets no empty customer line', () => {
+  const payload = buildBillPayload(A_REAL_SALE, THE_SHOP);
+  assert.deepEqual(payload.customer, [], 'an unnamed guest printed a blank name line');
+});
+
+test('a guest who gave a name gets it', () => {
+  const payload = buildBillPayload(
+    { ...A_REAL_SALE, customer_name: 'Meera', customer_phone: '98400 12345' },
+    THE_SHOP
+  );
+  assert.deepEqual(payload.customer, ['Meera', '98400 12345']);
+});
+
+test('a returned line is not billed to the guest', () => {
+  const payload = buildBillPayload(
+    {
+      ...A_REAL_SALE,
+      items: [...A_REAL_SALE.items, { name: 'Sent back', quantity: 1, total: 60, return: true }],
+    },
+    THE_SHOP
+  );
+  const names = payload.items.map((it) => it.name);
+  assert.ok(!names.includes('Sent back'), 'a returned dish was billed to the guest');
+});
+
+test('something sold by weight keeps its decimals', () => {
+  /* 0.3 of a kilo is what was ordered. Rounding it to zero, or printing
+     "0.300" for two plates, are both wrong in different directions. */
+  const payload = buildBillPayload(
+    { ...A_REAL_SALE, items: [{ name: 'Mutton', quantity: 0.35, unit_price: 900, total: 315 }] },
+    THE_SHOP
+  );
+  assert.equal(payload.items[0].qty, '0.35');
+  assert.equal(buildBillPayload(A_REAL_SALE, THE_SHOP).items[0].qty, '2', 'a plate printed as 2.000');
+});
+
+test('a shop whose branch row could not be read still gets a bill', () => {
+  /* Losing a guest their bill over a missing letterhead would be the wrong
+     trade: the items and the total are what the guest is paying against. */
+  const paper = onPaper(renderSale(buildBillPayload(A_REAL_SALE, {}), { paperWidth: '48' }));
+  assert.match(paper, /Chicken Biryani/);
+  assert.match(paper, /578\.00/);
+});
+
+test('an Indian shop sees its tax split the way its paper always splits it', () => {
+  const payload = buildBillPayload(A_REAL_SALE, { ...THE_SHOP, indian_gst: 'enable' });
+  assert.deepEqual(
+    payload.taxes.map((t) => t.label),
+    ['CGST', 'SGST']
+  );
+  assert.equal(payload.taxes[0].amount + payload.taxes[1].amount, 28);
+});
+
+test('a shop that does not use Indian GST gets one tax row', () => {
+  const payload = buildBillPayload(A_REAL_SALE, THE_SHOP);
+  assert.deepEqual(payload.taxes, [{ label: 'Tax', amount: 28 }]);
+});
+
+test('a sale with no tax prints no tax row at all', () => {
+  /* A receipt with an empty tax line reads as broken; one without the line
+     simply does not mention tax. */
+  const payload = buildBillPayload({ ...A_REAL_SALE, tax: 0 }, THE_SHOP);
+  assert.deepEqual(payload.taxes, []);
 });
