@@ -310,8 +310,28 @@ const DATA_GUARD = [
  * this call; the secret does the exchange, and neither it nor the key
  * reaches the page. Only OpenAI offers this today.
  */
-const REALTIME_MODEL = 'gpt-realtime';
-const REALTIME_BETA_MODEL = 'gpt-4o-realtime-preview';
+/*
+ * THE MINI, BECAUSE THIS IS NOT A HARD CONVERSATION.
+ *
+ * Owner: "actually charging for this conversation from openai too much. few
+ * conversatin goes up to 1usd. crazy." Then, on the choice: "yes change to
+ * mini. ours is not that complex tax. we arleady have well defined rules to
+ * respond."
+ *
+ * He is right about the work. Taking an order off a menu of thirty dishes,
+ * against a brief that already spells out every rule, is not a reasoning
+ * problem - it is listening, matching a name, and calling a tool. The full
+ * model was three times the price for judgement this job does not need.
+ *
+ *   gpt-realtime        $32.00 / $64.00 per 1M audio tokens in / out
+ *   gpt-realtime-mini   $10.00 / $20.00
+ *
+ * A shop can still name a different realtime model in its settings, and that
+ * choice wins - see the caller. This is only what a shop that has said
+ * nothing gets.
+ */
+const REALTIME_MODEL = 'gpt-realtime-mini';
+const REALTIME_BETA_MODEL = 'gpt-4o-mini-realtime-preview';
 
 /** Can this shop's provider hold a live line at all? Never throws. */
 async function realtimeCapable(context) {
