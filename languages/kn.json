@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "ಹೊಸ ಆನ್‌ಲೈನ್ ಆರ್ಡರ್",
   "lang_no_changes_after_ordering": "ಆರ್ಡರ್ ಮಾಡಿದ ನಂತರ ಬದಲಾವಣೆ ಇಲ್ಲ",
   "lang_orders_waiting": "ಕಾಯುತ್ತಿರುವ ಆರ್ಡರ್‌ಗಳು",
-  "lang_time_to_change_an_order": "ಆರ್ಡರ್ ಬದಲಾಯಿಸಲು ಸಮಯ"
+  "lang_time_to_change_an_order": "ಆರ್ಡರ್ ಬದಲಾಯಿಸಲು ಸಮಯ",
+  "lang_goes_with": "ಇದರೊಂದಿಗೆ ಚೆನ್ನಾಗುತ್ತದೆ",
+  "lang_goes_with_help": "ಇದನ್ನು ಆರ್ಡರ್ ಮಾಡಿದ ಗಾಹಕರಿಗೆ ಸೂಚಿಸಲಾಗುತ್ತದೆ. ಖಾಲಿ ಬಿಟ್ಟರೆ ಅಂಗಡಿಯು ಒಂದೇ ಬಿಲ್ನಲ್ಲಿ ಮಾರಾಟವಾಗುವುದರಿಂದ ನಿರ್ಧರಿಸುತ್ತದೆ.",
+  "lang_goes_with_placeholder": "ಒಟ್ಟಿಗೆ ಮಾರಾಟವಾಗುವುದರಿಂದ ನಿರ್ಧರಿತ"
 }

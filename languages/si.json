@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "නව සබැඳි ඇණවුමක්",
   "lang_no_changes_after_ordering": "ඇණවුම් කිරීමෙන් පසු වෙනස්කම් නැත",
   "lang_orders_waiting": "බලා සිටින ඇණවුම්",
-  "lang_time_to_change_an_order": "ඇණවුම වෙනස් කිරීමට කාලය"
+  "lang_time_to_change_an_order": "ඇණවුම වෙනස් කිරීමට කාලය",
+  "lang_goes_with": "හා ගිලපෙන්නේ",
+  "lang_goes_with_help": "සොයා ගැනීම කළ ග්‍රාහකයාට සුදුසු කරයි. හිස්ව තිබුණොත් එකම බිල්පතෙහි විකිණෙන දේ අනුව සාප්පුව යොදා ගනී.",
+  "lang_goes_with_placeholder": "එකට විකිණෙන දේ අනුව යොදා ගනා"
 }

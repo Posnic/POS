@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Agizo jipya mtandaoni",
   "lang_no_changes_after_ordering": "Hakuna mabadiliko baada ya kuagiza",
   "lang_orders_waiting": "maagizo yanayosubiri",
-  "lang_time_to_change_an_order": "Muda wa kubadilisha agizo"
+  "lang_time_to_change_an_order": "Muda wa kubadilisha agizo",
+  "lang_goes_with": "Huendana vizuri na",
+  "lang_goes_with_help": "Hupendekezwa kwa mteja aliyeagiza hii. Iache wazi na duka litakadiria kutokana na kile kinachouzwa kwenye ankara moja.",
+  "lang_goes_with_placeholder": "Hukadiriwa kutokana na vinavyouzwa pamoja"
 }

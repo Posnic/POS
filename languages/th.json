@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "คำสั่งซื้อออนไลน์ใหม่",
   "lang_no_changes_after_ordering": "แก้ไขไม่ได้หลังสั่งซื้อ",
   "lang_orders_waiting": "คำสั่งซื้อที่รอ",
-  "lang_time_to_change_an_order": "เวลาในการแก้ไขคำสั่งซื้อ"
+  "lang_time_to_change_an_order": "เวลาในการแก้ไขคำสั่งซื้อ",
+  "lang_goes_with": "เข้ากันดีกับ",
+  "lang_goes_with_help": "เสนอให้ลูกค้าที่สั่งรายการนี้ หากเว้นว่างไว้ ร้านจะคำนวณจากสิ่งที่ขายในบิลเดียวกัน",
+  "lang_goes_with_placeholder": "คำนวณจากสิ่งที่ขายคู่กัน"
 }
