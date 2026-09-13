@@ -1540,29 +1540,51 @@
             }
             if (!s) return;
 
+            /*
+             * "no branch" is NOT ready, and reading it as ready is the whole
+             * reason this panel is worth having. A till that has not worked
+             * out which shop it is will never print anything and will never
+             * say why - it just sits there answering nobody, looking fine.
+             */
             const near = String(s.lastStatus || '');
             const nearBad = near.indexOf('error') === 0;
-            let html = bpRow(
-                'On the shop Wi-Fi',
-                s.isPolling ? (nearBad ? 'not answering' : 'ready') : 'not running',
-                nearBad
-                    ? near.replace(/^error:\s*/, '')
-                    : 'Phones on this network print straight to this computer. Last checked ' + bpWhen(s.lastPollAt) + '.',
-                s.isPolling ? !nearBad : null
-            );
+            const noBranch = near === 'no branch';
+            let html;
+            if (!s.isPolling) {
+                html = bpRow('On the shop Wi-Fi', 'not running',
+                    'The bill printer did not start with this computer. Restarting it is the usual fix.',
+                    false);
+            } else if (noBranch) {
+                html = bpRow('On the shop Wi-Fi', 'waiting for the shop',
+                    'This computer has not worked out which branch it is yet, so no bill can be matched to it. '
+                    + 'It keeps trying; if it stays here, set the branch in Kitchen printing.',
+                    false);
+            } else if (nearBad) {
+                html = bpRow('On the shop Wi-Fi', 'not answering',
+                    near.replace(/^error:\s*/, ''), false);
+            } else if (near === 'idle') {
+                html = bpRow('On the shop Wi-Fi', 'starting up',
+                    'It has not looked yet. This clears within a few seconds.', null);
+            } else {
+                html = bpRow('On the shop Wi-Fi', 'ready',
+                    'Phones on this network print straight to this computer. Last checked '
+                    + bpWhen(s.lastPollAt) + '.', true);
+            }
 
             const cloud = String((s.cloud && s.cloud.status) || 'off');
             if (cloud === 'off') {
                 html += bpRow('Over the internet', 'off',
                     'Nothing is sent outside the shop. Turn it on above only if the phones are not on this Wi-Fi.',
                     null);
+            } else if (cloud === 'no branch') {
+                html += bpRow('Over the internet', 'waiting for the shop',
+                    'Switched on, but this computer does not know which branch it is yet.', false);
+            } else if (cloud.indexOf('error') === 0) {
+                html += bpRow('Over the internet', 'not answering',
+                    cloud.replace(/^error:\s*/, ''), false);
             } else {
-                const cloudBad = cloud.indexOf('error') === 0;
-                html += bpRow('Over the internet', cloudBad ? 'not answering' : 'ready',
-                    cloudBad
-                        ? cloud.replace(/^error:\s*/, '')
-                        : 'Last checked ' + bpWhen(s.cloud && s.cloud.lastPollAt) + '.',
-                    !cloudBad);
+                html += bpRow('Over the internet', 'ready',
+                    'Last checked ' + bpWhen(s.cloud && s.cloud.lastPollAt) + '.', true);
             }
             rows.innerHTML = html;
 

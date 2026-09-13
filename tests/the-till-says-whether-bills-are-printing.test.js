@@ -151,6 +151,45 @@ test('a cloud address that is wrong is reported separately from the counter', as
   assert.match(seen.rows, /ENOTFOUND/);
 });
 
+test('a till that does not know its shop is NOT called ready', async () => {
+  /*
+   * The state this panel exists for. "no branch" means the till has not worked
+   * out which shop it is, so no bill can ever be matched to it - and it sits
+   * there answering nobody, looking perfectly healthy. The first draft of this
+   * screen called it "ready", which is worse than no screen at all: it would
+   * have sent somebody hunting the printer.
+   */
+  const seen = await render({ ...healthy, lastStatus: 'no branch' });
+
+  assert.doesNotMatch(seen.rows, /Wi-Fi <span[^>]*>ready/,
+    'a till that cannot name its shop was reported as ready');
+  assert.match(seen.rows, /waiting for the shop/);
+  assert.match(seen.rows, /which branch it is/, 'it does not say what is wrong');
+});
+
+test('a poller that never started says so, rather than looking idle', async () => {
+  const seen = await render({ ...healthy, isPolling: false });
+
+  assert.match(seen.rows, /not running/);
+  assert.match(seen.rows, /Restarting it/, 'it does not say what to do');
+});
+
+test('the first few seconds after opening are not reported as a fault', async () => {
+  const seen = await render({ ...healthy, lastStatus: 'idle', lastPollAt: null });
+
+  assert.match(seen.rows, /starting up/);
+  assert.doesNotMatch(seen.rows, /not answering/);
+});
+
+test('a cloud door that is on but shopless says that too', async () => {
+  const seen = await render({
+    ...healthy,
+    cloud: { status: 'no branch', lastPollAt: null },
+  });
+
+  assert.match(seen.rows, /Over the internet <span[^>]*>waiting for the shop/);
+});
+
 test('a till that has printed nothing yet says so rather than showing a zero', async () => {
   const seen = await render({ ...healthy, printed: 0, lastPrintedAt: null });
   assert.match(seen.printed, /none printed yet/);
