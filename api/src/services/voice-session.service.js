@@ -154,7 +154,7 @@ function tools() {
           token: {
             type: 'string',
             description:
-              "Which order, by the token the customer was given. Leave it out for the one they have just placed. Take it from show_order_history rather than guessing.",
+              'Which order, by the token the customer was given. Leave it out for the one they have just placed. Take it from show_order_history rather than guessing.',
           },
         },
         required: ['items'],

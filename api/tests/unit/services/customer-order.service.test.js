@@ -535,8 +535,22 @@ describe('after the order, by kind and in bulk', () => {
     shopAllows(30);
     const now = new Date();
     const orders = {
-      o1: { _id: 'o1', token_id: '111', sale_process: 'KOT', created_date: now, items: [], total: 0 },
-      o2: { _id: 'o2', token_id: '222', sale_process: 'KOT', created_date: now, items: [], total: 0 },
+      o1: {
+        _id: 'o1',
+        token_id: '111',
+        sale_process: 'KOT',
+        created_date: now,
+        items: [],
+        total: 0,
+      },
+      o2: {
+        _id: 'o2',
+        token_id: '222',
+        sale_process: 'KOT',
+        created_date: now,
+        items: [],
+        total: 0,
+      },
     };
     jest
       .spyOn(salesRepository, 'findCustomerOrder')
