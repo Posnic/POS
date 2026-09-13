@@ -1499,6 +1499,41 @@ test('the ears lock to Tamil the moment Tamil is heard, and a transcript in anot
   tamil.window.OrderingVoice.stop();
 });
 
+test('the line is opened knowing which table the code was stuck to', () => {
+  /*
+   * Owner: "table number already gone and ai asking me again table number.
+   * mostly QR code we placed in tabels. so dont ask its take away or able."
+   *
+   * The table was never gone - service-point.js had it in sessionStorage the
+   * whole walk - but the voice line was opened with nothing but the offer and
+   * the language. So the assistant genuinely did not know, asked for a table
+   * the printed code had already named, and its opening line had no table to
+   * say either. Both halves are checked: the page sends it, and the server
+   * reads it out of the BODY, which is where a POST puts it.
+   */
+  const js = read('assets/assistant/voice.js');
+  assert.match(js, /Object\.assign\(\{ sdp: offer\.sdp, lang: lang\(\) \}, servicePointNow\(\)\)/);
+  assert.match(js, /function servicePointNow\(\)/);
+  assert.match(js, /window\.KioskServicePoint\.read\(\)/);
+  for (const field of ['table', 'venue', 'unit', 'fulfilment']) {
+    assert.match(js, new RegExp('point\\.' + field), 'the line is not told the ' + field);
+  }
+
+  const controller = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'src', 'controllers', 'online-ordering.controller.js'),
+    'utf8'
+  );
+  assert.match(controller, /const body = \(req && typeof req\.body === 'object' && req\.body\) \|\| \{\}/);
+  assert.match(controller, /said\('table'\)/, 'the server still reads the table only from the address');
+
+  /* And the printed code settles how they are eating, so nothing asks. */
+  const point = read('assets/service-point.js');
+  assert.match(point, /parts\[1\] === 'takeaway'/, 'a takeaway code is not recognised');
+  assert.match(point, /else if \(point\.table\) \{\s*\n\s*point\.fulfilment = 'dine_in';/, 'a table does not imply dining in');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'api', 'app.js'), 'utf8');
+  assert.match(app, /\\\/takeaway\|\\\/table\\\//, 'the server does not serve /order/ABC/takeaway');
+});
+
 test('the assistant speaks first when the line opens, once per line', async () => {
   /* Owner: "when it starts with greeting? like welcome to shop name". */
   const { window, calls } = voicePage({ voice: 'live', reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } } });
@@ -1506,13 +1541,25 @@ test('the assistant speaks first when the line opens, once per line', async () =
   await settle();
   calls.sent.length = 0;
   window.__pc.channel.onopen();
-  assert.strictEqual(calls.sent.length, 2, 'opening the line did not ask the assistant to speak');
-  assert.strictEqual(calls.sent[0].type, 'conversation.item.create');
-  assert.strictEqual(calls.sent[0].item.role, 'system');
-  assert.match(calls.sent[0].item.content[0].text, /OPENING LINE/);
-  assert.strictEqual(calls.sent[1].type, 'response.create');
+  /*
+   * ONE event, carrying its own instructions.
+   *
+   * Owner: "welcome greeting not said." It used to put a system MESSAGE into
+   * the conversation and then ask for any response at all - two things that
+   * can go wrong to do one job. A system item is not a shape every build of
+   * the line accepts, and a bare response.create leaves the model to decide
+   * what the moment calls for, which at the start of a call with nothing yet
+   * said is often nothing at all. A response carries its own instructions.
+   */
+  assert.strictEqual(calls.sent.length, 1, 'opening the line did not ask the assistant to speak');
+  assert.strictEqual(calls.sent[0].type, 'response.create');
+  assert.match(calls.sent[0].response.instructions, /OPENING LINE/);
+  assert.ok(
+    !calls.sent.some((e) => e.type === 'conversation.item.create'),
+    'the greeting still depends on a system item being accepted first'
+  );
   window.__pc.channel.onopen();
-  assert.strictEqual(calls.sent.length, 2, 'the greeting was asked for twice on one line');
+  assert.strictEqual(calls.sent.length, 1, 'the greeting was asked for twice on one line');
 
   /* A new line greets again. */
   window.OrderingVoice.stop();

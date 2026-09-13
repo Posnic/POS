@@ -384,18 +384,32 @@
    * "welcome" before anyone orders. One system note tells the model the
    * line is open and one response.create asks it to speak. Once per line.
    */
+  /*
+   * SPEAK FIRST, AND SAY THE SHOP'S NAME.
+   *
+   * Owner: "welcome greeting not said."
+   *
+   * This used to put a system MESSAGE into the conversation and then ask for
+   * any response at all, which is two things that can go wrong to do one job:
+   * a system item is not a shape every build of the line accepts, and a bare
+   * response.create leaves the model to decide what the moment calls for -
+   * which, at the very start of a call with nothing said yet, is often
+   * nothing.
+   *
+   * A response carries its own instructions. Asking for ONE response and
+   * telling it what that response is for is the documented way to steer a
+   * single turn, and it does not depend on an item being accepted first.
+   */
   function greetFirst() {
     if (live.greeted) return;
     live.greeted = true;
     sendEvent({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "system",
-        content: [{ type: "input_text", text: "The line has just opened. Say your OPENING LINE now, in one sentence, in the page's language, then wait for the customer." }],
-      },
+      type: "response.create",
+      response: {
+        instructions:
+          "The line has just opened and the customer has said nothing yet. Say your OPENING LINE now, word for word, in one sentence, in the page's language - then stop and listen. Do not add anything to it and do not read the menu."
+      }
     });
-    sendEvent({ type: "response.create" });
   }
 
   /* Tell the line to hear Tamil from now on. Once. */
@@ -628,6 +642,23 @@
         };
       })
     };
+  }
+
+  /* Where the printed code said this customer is, for the line's brief. */
+  function servicePointNow() {
+    try {
+      if (!window.KioskServicePoint) return {};
+      var point = window.KioskServicePoint.read() || {};
+      var out = {};
+      if (point.table) out.table = String(point.table);
+      if (point.venue) out.venue = String(point.venue);
+      if (point.unit) out.unit = String(point.unit);
+      if (point.fulfilment) out.fulfilment = String(point.fulfilment);
+      return out;
+    } catch (e) {
+      /* No service point is the shop's own floor, which is the safe read. */
+      return {};
+    }
   }
 
   /** The shop this line is talking to. */
@@ -975,7 +1006,19 @@
       var response = await fetch(apiBase() + "/online-ordering/" + encodeURIComponent(branch) + "/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ sdp: offer.sdp, lang: lang() }),
+        /*
+         * WHERE THE CUSTOMER IS SITTING GOES WITH THE LINE.
+         *
+         * Owner: "table number already gone and ai asking me again table
+         * number." It was not gone - the page had it the whole time - but the
+         * line was opened with nothing but the offer and the language, so the
+         * assistant genuinely did not know, and its opening line had no table
+         * to name either. A code stuck to table thirty-four has answered that
+         * question before anybody asks it.
+         */
+        body: JSON.stringify(
+          Object.assign({ sdp: offer.sdp, lang: lang() }, servicePointNow())
+        ),
       });
       var body = null;
       try {
