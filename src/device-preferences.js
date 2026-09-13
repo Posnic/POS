@@ -112,6 +112,16 @@ function cloudPrintRelay() {
      */
     enabled: said === true || said === 'true',
     apiUrl: String(prefs.cloud_api_url || '').trim(),
+    /*
+     * The key the FAR door presents, which is deliberately not this machine's
+     * kiosk key. That one guards every kiosk route on this till's own api;
+     * sending it to an address somebody typed would risk all of them to buy
+     * nothing. This one is worth taking print jobs and nothing else.
+     *
+     * Made by hardware-ipc at startup. Empty here means a till that has not
+     * started since this shipped, and the far door simply stays shut.
+     */
+    key: String(prefs.cloud_print_key || '').trim(),
   };
 }
 
