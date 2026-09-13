@@ -1769,17 +1769,124 @@ test('sending to the kitchen asks for what the code did not say, and hands the r
   assert.deepStrictEqual(empty.calls.checkout, []);
 });
 
-test('the sheet carries a Review order button with the count and the total, once there is something to review', async () => {
-  /* Owner: "ai asking to click review and order. but there is no button." */
-  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
-  const button = document.getElementById('assistant-review');
-  assert.ok(button, 'no Review order button in the sheet');
+test('the assistant takes the whole screen, and the order leads it', () => {
+  /*
+   * Owner: "when ai click occupie full screen ... not right bottom only.
+   * utlize the the space and make line item modifiable ... bottom only should
+   * have mic and ai anmiation, top user normal able increase edit add item
+   * with add button etc. same time he can do."
+   */
+  const css = read('assets/order.css');
+
+  /* The whole height, and a readable column rather than a wall on a desktop. */
+  assert.match(css, /dialog\.sheet\.assistant \{[^}]*height: 100dvh/);
+  assert.match(css, /@media \(min-width: 720px\) \{\s*\n[^}]*dialog\.sheet\.assistant \{[^}]*width: min\(560px/);
+
+  /*
+   * The SHEET must not scroll, or the send button and the microphone slide
+   * off the bottom exactly when somebody reaches for them. The order in the
+   * middle scrolls instead.
+   */
+  assert.match(css, /dialog\.sheet\.assistant \{\s*\n\s*overflow: hidden;/);
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order \{[^}]*overflow-y: auto/);
+
+  /* Big lines, because that is what the customer checks against what they
+     just said out loud. */
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order-list li \{[^}]*font-size: 17px/);
+  assert.match(css, /dialog\.sheet\.assistant \.assistant-order-step \{[^}]*width: 38px/);
+
+  /* WRAPPED, never a sideways scroller: "cross selling i saw horrizontal
+     scroll. not soo good." */
+  const more = css.slice(css.indexOf('.assistant-more-row {'));
+  const rule = more.slice(0, more.indexOf('}'));
+  assert.match(rule, /flex-wrap: wrap/);
+  assert.ok(!/overflow-x/.test(rule), 'the suggestions still scroll sideways');
+
+  /* And the markup carries the Add button and the wrapped row. */
+  const html = read('products.html');
+  assert.match(html, /id="assistant-add"/, 'there is no way to add an item by hand');
+  assert.match(html, /id="assistant-more-row"/);
+  assert.match(html, /Confirm &amp; send/);
+});
+
+test('the assistant is told what the customer changes with their thumb', async () => {
+  /*
+   * Owner: "also AI should know about the changes what user doing. its kind
+   * of helper too."
+   *
+   * The top of the screen is worked by hand while the assistant listens at
+   * the bottom. One that cannot see the thumb offers a dish already on the
+   * order, or reads back a quantity just corrected.
+   */
+  const { window, document, calls } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime-mini' } } },
+  });
+  await window.OrderingVoice.start();
+  await settle();
   document.getElementById('ask-ai').click();
   await settle();
-  assert.strictEqual(button.hidden, false, 'the button is hidden with an order to review');
+  calls.sent.length = 0;
+
+  const plus = [...document.querySelectorAll('.assistant-order-step')].find(
+    (b) => b.getAttribute('data-step') === '1'
+  );
+  assert.ok(plus, 'there is no way to change a line by hand');
+  plus.click();
+  await settle();
+
+  const told = calls.sent.filter((e) => e.type === 'conversation.item.create');
+  assert.strictEqual(told.length, 1, 'the assistant was not told what the customer did');
+  const words = told[0].item.content[0].text;
+  /* Named by DISH. An id in the conversation is a thing it might read out. */
+  assert.match(words, /Fresh Lime Soda/);
+  assert.match(words, /tapping the screen/);
+  assert.ok(!/d1/.test(words), 'the assistant was handed an item id to say out loud');
+  /* And quietly: the customer is looking at the screen and does not need it
+     narrated back at them. */
+  assert.deepStrictEqual(
+    calls.sent.filter((e) => e.type === 'response.create'),
+    [],
+    'the assistant was made to talk about a change the customer just watched happen'
+  );
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('the sheet carries ONE button, and it sends the order', async () => {
+  /*
+   * It used to say "Review order" and walk the customer to the basket page to
+   * place it from there. Owner: "have 'confirm & send order'. if user click
+   * say thank you and send it to kitchen ... if required we can do two steps.
+   * review and send.. i believe one enought. since we give 1 minute to modify
+   * item."
+   *
+   * He reasoned it out himself and he is right: a review before sending and a
+   * minute to change after are the same safety net paid for twice, and the
+   * second one is the better of the two, because by then the customer is
+   * looking at what the kitchen actually has.
+   */
+  const { window, document, calls } = voicePage({ voice: 'live', reply: { status: 200, body: {} } });
+  const button = document.getElementById('assistant-review');
+  assert.ok(button, 'no Confirm and send button in the sheet');
+  assert.match(button.className, /assistant-confirm/);
+  assert.match(button.textContent, /Confirm/);
+  document.getElementById('ask-ai').click();
+  await settle();
+  assert.strictEqual(button.hidden, false, 'the button is hidden with an order to send');
   assert.strictEqual(document.getElementById('assistant-review-sum').textContent, '1 dish · ₹80');
+
+  /* A tap IS the customer's yes - there is nothing else that button could
+     mean - so it goes through the same door the spoken "send it" uses. */
   button.click();
-  assert.deepStrictEqual(calls.left, ['cart.html']);
+  await settle();
+  assert.strictEqual(calls.checkout.length, 1, 'the button did not send the order');
+  assert.deepStrictEqual(calls.left, [], 'the button walked the customer away instead of sending');
+  assert.strictEqual(
+    document.getElementById('assistant-placed').hidden,
+    false,
+    'nothing confirmed that the order had gone'
+  );
 
   const bare = voicePage({ voice: 'live', reply: { status: 200, body: {} }, cartLines: [] });
   bare.document.getElementById('ask-ai').click();

@@ -344,6 +344,8 @@
 
       /* the order's own screen, once the kitchen has it */
       "Anything else?": "வேறு ஏதாவது வேணுமா?",
+      "Add item": "உணவு சேர்க்க",
+      "Confirm & send": "உறுதி செய்து அனுப்பு",
       "Add {name}": "{name} சேர்க்க",
       "Cancellation asked for": "ரத்துக் கோரிக்கை அனுப்பிட்டோம்",
       "The shop has been asked to cancel it": "ரத்து செய்யக் கடையிடம் கேட்டுவிட்டோம்",
