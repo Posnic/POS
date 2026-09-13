@@ -112,15 +112,35 @@ describe('customer-order.service', () => {
         const asked = jest
           .spyOn(salesRepository, 'requestCustomerCancel')
           .mockResolvedValue({ status: true, data: { cancel_requested: true } });
+        const askedToChange = jest
+          .spyOn(salesRepository, 'requestCustomerChange')
+          .mockResolvedValue({ status: true, data: { change_requested: true } });
 
-        expect(
-          (
-            await customerOrder.change(
-              { orderId: ORDER_ID, token: '219', items: [{ item_id: 'm1', quantity: 1 }] },
-              context
-            )
-          ).message
-        ).toBe(reason);
+        /*
+         * CHANGING IS THE SAME SHAPE AS CANCELLING, and for the same reason.
+         *
+         * Owner, looking at the history page: "why order history dont have
+         * any option to other than cancel? coz of time?" Past the window the
+         * plus and minus went away and only Cancel remained - an odd thing to
+         * offer somebody whose wish is one more naan, and an arbitrary
+         * asymmetry, since cancelling past the window was already allowed to
+         * become a request. Now a window that has merely CLOSED turns a
+         * change into a request; everything that has settled the order -
+         * a bill, a payment, a refusal - still refuses, and so does a hotel
+         * room or a delivery, whose total is not the customer's alone.
+         */
+        const changing = await customerOrder.change(
+          { orderId: ORDER_ID, token: '219', items: [{ item_id: 'm1', quantity: 1 }] },
+          context
+        );
+        if (reason === 'too_late') {
+          expect(changing.status).toBe(true);
+          expect(changing.data).toMatchObject({ requested: true, why_not: 'too_late' });
+          expect(askedToChange).toHaveBeenCalled();
+        } else {
+          expect(changing.message).toBe(reason);
+          expect(askedToChange).not.toHaveBeenCalled();
+        }
         expect(changed).not.toHaveBeenCalled();
         expect(cancelled).not.toHaveBeenCalled();
 

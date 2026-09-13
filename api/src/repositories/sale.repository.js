@@ -8208,8 +8208,9 @@ class SalesRepository {
       const salesCollection = db.collection('sales');
 
       /*
-       * Two things need somebody: an order waiting to be accepted, and one
-       * whose customer has asked to call it off after the window closed.
+       * Three things need somebody: an order waiting to be accepted, one
+       * whose customer has asked to call it off after the window closed, and
+       * one whose customer has asked for it to be CHANGED after it closed.
        * They belong in the same queue because they are the same job - a
        * person deciding - and a second screen is a screen nobody opens.
        */
@@ -8217,6 +8218,7 @@ class SalesRepository {
         $or: [
           { order_state: orderApproval.ORDER_STATE.PENDING },
           { cancel_requested: true, sale_process: 'KOT' },
+          { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
         ],
         ...activeTenantFilter(),
       };
@@ -8247,6 +8249,7 @@ class SalesRepository {
             order_state_at: 1,
             cancel_requested: 1,
             cancel_requested_at: 1,
+            change_requested: 1,
           },
         })
         .sort({ created_date: 1 })
@@ -8264,6 +8267,12 @@ class SalesRepository {
              decides, with the same two buttons. */
           cancel_requested: row.cancel_requested === true,
           cancel_requested_at: row.cancel_requested_at || null,
+          /* What the customer has asked to have changed, in dish names and
+             quantities, so the person deciding can read it at a glance. */
+          change_requested:
+            row.change_requested && Array.isArray(row.change_requested.items)
+              ? { items: row.change_requested.items, at: row.change_requested.at || null }
+              : null,
           /* Where it is going, in the words a person reads: a table number, or
              the hotel and the room. */
           destination: (row.venue && row.venue.label) || row.table_number || '',
@@ -8321,6 +8330,17 @@ class SalesRepository {
             /* Enough to cancel it here, where the customer has asked for
                that: the lines go to the kitchen as cancellations. */
             cancel_requested: 1,
+            /* And enough to APPLY what they asked to have changed, which is
+               the same job through changeCustomerOrderItems. */
+            change_requested: 1,
+            sale_process: 1,
+            payment_status: 1,
+            delivery_fee: 1,
+            venue: 1,
+            venue_commission: 1,
+            created_date: 1,
+            date: 1,
+            license: 1,
             items: 1,
             changes: 1,
             token_id: 1,
@@ -8341,6 +8361,63 @@ class SalesRepository {
        * shop already accepted, so a transition has nothing to say about it.
        * Either answer ends the request, so the queue does not keep asking.
        */
+      /*
+       * THE CUSTOMER ASKED FOR THIS ONE TO BE CHANGED.
+       *
+       * Same shape as the cancellation above and for the same reason: the
+       * approval states are about whether the kitchen may start, and this is
+       * about what it should cook. Answered first, because an order can carry
+       * a change request and a cancellation at once and the cancellation is
+       * the bigger decision - a shop that says "cancel" has answered both.
+       *
+       * ACCEPTING RUNS IT THROUGH THE ORDINARY DOOR. changeCustomerOrderItems
+       * is what the customer's own plus and minus use inside the window: it
+       * prices new lines the way the order was priced, refuses a dish that is
+       * off the menu or out of its hours, writes the kitchen's amendment
+       * ticket, and turns an order stripped to nothing into a cancellation.
+       * None of that should have a second implementation just because a
+       * person pressed the button instead of a phone.
+       */
+      if (
+        sale.change_requested &&
+        Array.isArray(sale.change_requested.items) &&
+        sale.cancel_requested !== true &&
+        (decision === 'accept' || decision === 'reject' || decision === 'keep')
+      ) {
+        const answeredAt = new Date();
+        const said = {
+          change_requested: null,
+          change_decided_at: answeredAt,
+          change_decided_by: BaseModel.loggedUserName || '',
+          updated_date: answeredAt,
+        };
+        if (decision !== 'accept') {
+          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          return {
+            status: true,
+            message: 'The order stands',
+            data: { sale_id: String(saleId), changed: false },
+          };
+        }
+        const done = await this.changeCustomerOrderItems(
+          sale,
+          sale.change_requested.items.map((one) => ({
+            item_id: one.item_id,
+            quantity: one.quantity,
+          }))
+        );
+        /* The request is answered either way. A shop that pressed accept and
+           met a refusal - the dish went off the menu while the order sat in
+           the queue - must not be asked the same question again forever. */
+        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        if (!done.status) return done;
+        return {
+          status: true,
+          message: 'Order updated',
+          data: { sale_id: String(saleId), changed: true, ...(done.data || {}) },
+        };
+      }
+
       if (sale.cancel_requested === true && (decision === 'cancel' || decision === 'keep')) {
         const answeredAt = new Date();
         const said = {
@@ -9351,6 +9428,96 @@ class SalesRepository {
           quantity: Number(l.item_quantity != null ? l.item_quantity : l.quantity || 0),
         })),
         total: totals.total,
+      },
+    };
+  }
+
+  /**
+   * The customer wants the order changed, and the window has closed - so ASK.
+   *
+   * Owner, on the history page: "why order history dont have any option to
+   * other than cancel? coz of time?" It was: past the window the plus and
+   * minus went away and only Cancel remained, which is an odd thing to offer
+   * somebody whose actual wish is one more naan. If a customer may ask the
+   * shop to call an order OFF after the kitchen has it, they may ask for it
+   * to be CHANGED, and the kitchen decides either way.
+   *
+   * Nothing is changed here. What they asked for is recorded on the order and
+   * announced into the same queue the shop already accepts orders from, and a
+   * person applies it or refuses it there - see decideOnOrder.
+   *
+   * @param {object} orderDoc
+   * @param {Array<{item_id: string, quantity: number}>} wanted
+   * @param {Array} lines the order's lines, for naming what was asked
+   */
+  async requestCustomerChange(orderDoc, wanted, lines) {
+    const db = await BaseModel.getDb();
+    const at = new Date();
+
+    /*
+     * Said in dish names, not ids.
+     *
+     * The person reading this is standing at a till deciding in a hurry, and
+     * "2 to 3 Chicken Biryani" is a decision they can make. A row of
+     * twenty-four character ids is not.
+     */
+    const onOrder = new Map(
+      (Array.isArray(lines) ? lines : []).map((line) => [
+        String(line.item_id || ''),
+        {
+          name: String(line.item_name || line.name || ''),
+          quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
+        },
+      ])
+    );
+    const asked = [];
+    for (const one of Array.isArray(wanted) ? wanted : []) {
+      const id = String((one && one.item_id) || '');
+      if (!id) continue;
+      const quantity = Math.max(0, Math.round(Number(one.quantity) || 0));
+      const was = onOrder.get(id);
+      asked.push({
+        item_id: id,
+        /* A dish that is not on the order yet has no name here; the queue
+           fills it in from the menu when it draws the card. */
+        name: was ? was.name : String(one.name || ''),
+        was: was ? was.quantity : 0,
+        quantity,
+      });
+    }
+    if (!asked.length) return { status: false, message: 'nothing_asked', data: null };
+
+    const result = await db.collection('sales').updateOne(
+      { _id: orderDoc._id },
+      {
+        $set: {
+          /* The LAST thing they asked for, not a pile of them. A customer who
+             changes their mind twice before anybody looks meant the second
+             one, and a till asked to work through a history of wishes is a
+             till that gets it wrong. */
+          change_requested: { items: asked, at },
+          updated_date: at,
+        },
+      }
+    );
+    if (!result.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    notifyOrderAttention({
+      branchId: String(orderDoc.branch_id || ''),
+      saleId: String(orderDoc._id),
+      alert: 'waiting',
+      state: 'change_requested',
+      total: Number(orderDoc.total || 0),
+    });
+
+    return {
+      status: true,
+      message: 'Change requested',
+      data: {
+        order_id: String(orderDoc._id),
+        token_id: String(orderDoc.token_id || ''),
+        change_requested: true,
+        items: asked,
       },
     };
   }
