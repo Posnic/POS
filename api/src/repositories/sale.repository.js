@@ -7093,8 +7093,25 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
-
+      /*
+       * NO LICENCE CLAUSE, BECAUSE THE FLOOR HAS NONE.
+       *
+       * getTablesWithActiveOrders - the query that decides a table is even on
+       * screen - matches branch, sale_process and payment_status and nothing
+       * else. Adding `license` here made this narrower than the thing that
+       * offered the button: the table appeared, the waiter tapped Print bill,
+       * and the answer was "Nothing is open on that table" about an order they
+       * were looking at.
+       *
+       * Reproduced against a real database: with BaseModel.license unset it
+       * works, with it set the same ticket vanishes. A sale written by the
+       * handset carries no licence field of its own, so the clause matched
+       * nothing at all.
+       *
+       * It is not a boundary being dropped either. Each shop has its own
+       * DATABASE - the connection is the tenancy boundary, which is why the
+       * floor query has never needed this and why the two are safe to agree.
+       */
       const result = await Model.updateMany(
         { ...query, bill_requested_at: { $in: [null, undefined] } },
         {
@@ -7146,7 +7163,9 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
+      /* Same reason as the request above: a licence clause here made the till
+         blind to the very bills the handset had just asked for. Found by
+         running the two halves in sequence rather than each on its own. */
 
       const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
 
@@ -7176,8 +7195,11 @@ class SalesRepository {
         return { status: false, message: 'No valid sale IDs to mark as billed.', data: null };
       }
 
+      /* Addressed by _id, which the till only knows because this same code
+         handed it over a moment ago. A licence clause would have let a bill
+         print and then refused to record that it had - so it would print again
+         on the next pass, for ever. */
       const query = { _id: { $in: ids } };
-      if (BaseModel.license) query.license = BaseModel.license;
 
       const result = await Model.updateMany(query, { $set: { bill_printed_at: new Date() } });
       return {

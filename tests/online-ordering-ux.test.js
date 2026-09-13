@@ -91,6 +91,9 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
     lift(src, 'renderProductCards'),
+    /* var, not let: a let in a vm context is a lexical binding the test
+       cannot reach, and this one has to be settable from outside. */
+    'var orderJustPlaced = false;',
     lift(src, 'renderCart'),
   ].join('\n');
 
@@ -1039,7 +1042,7 @@ test("the shop's own greeting opens the conversation, and the console has somewh
 /* -------------------------------------------------------- talk to order */
 
 /** The products page with both assistant scripts and a shop that allows voice. */
-function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null } = {}) {
+function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in', 'takeaway'], payment = { offline: true }, cartLines = null, order = null } = {}) {
   const dom = new JSDOM(read('products.html'), { url: 'https://shop.example/order/products.html', runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
   const calls = { fetch: [], applied: [], sent: [], spoken: [], recognitions: 0, checkout: [], left: [] };
@@ -1069,7 +1072,7 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   /* What the page has for placing an order: the code's table, the same
      checkout a tap uses (told to stay), the shop's words and money. */
   window.KioskServicePoint = { read: () => ({ table, venue: '', unit: '', destination: null }) };
-  window.checkout = async (tx, status, options) => { calls.checkout.push([tx, status, options]); cart = []; return { placed: true, token: '042' }; };
+  window.checkout = async (tx, status, options) => { calls.checkout.push([tx, status, options]); cart = []; return { placed: true, token: '042', saleId: 'o1' }; };
   window.words = () => ({ one: 'dish', many: 'dishes' });
   window.money = (n) => '₹' + n;
   window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
@@ -1087,8 +1090,30 @@ function voicePage({ voice = 'live', reply, table = '5', fulfilment = ['dine_in'
   }
   window.RTCPeerConnection = FakePC;
   window.navigator.mediaDevices = { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) };
-  window.fetch = async (url, init) => {
-    calls.fetch.push({ url, body: JSON.parse(init.body) });
+  window.fetch = async (url, init = {}) => {
+    const body = init.body ? JSON.parse(init.body) : null;
+    calls.fetch.push({ url, body, method: init.method || 'GET' });
+    /*
+     * The placed order answers for itself: read it back, change a quantity,
+     * call it off. A shop that refuses says so the way the real one does -
+     * a named reason, not a thrown error - so the screen can be checked for
+     * what it does with one.
+     */
+    const at = String(url).match(/\/orders\/([^/?]+)(?:\/(items|cancel))?/);
+    if (at && order) {
+      if (at[2] === 'items') {
+        const no = typeof order.refuse === 'function' ? order.refuse(body.items) : order.refuse;
+        if (no) return { ok: false, status: 400, json: async () => ({ type: 'error', message: no, data: null }) };
+        (body.items || []).forEach((asked) => {
+          const line = order.items.find((l) => String(l.item_id) === String(asked.item_id));
+          if (line) line.quantity = Number(asked.quantity) || 0;
+          else order.items.push({ item_id: asked.item_id, name: (catalogue[asked.item_id] || {}).name || asked.item_id, quantity: Number(asked.quantity) || 0 });
+          order.items = order.items.filter((l) => l.quantity > 0);
+        });
+      }
+      if (at[2] === 'cancel') order.cancelled = true;
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: order }) };
+    }
     const answer = typeof reply === 'function' ? reply() : reply;
     return { ok: answer.status < 400, status: answer.status, json: async () => answer.body };
   };
@@ -1737,6 +1762,218 @@ test('the order lands in the sheet, and nothing moves until Done', async () => {
     'Sending your order to the kitchen',
     'a beat arrived after the panel was closed'
   );
+});
+
+/** A placed order the way the shop describes one. */
+function placedOrder(extra) {
+  return Object.assign(
+    {
+      order_id: 'o1',
+      token: '042',
+      placed_at: new Date().toISOString(),
+      state: 'accepted',
+      cancelled: false,
+      paid: false,
+      cancel_requested: false,
+      can_change: true,
+      change_seconds: 30,
+      items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }],
+      total: 640,
+    },
+    extra || {}
+  );
+}
+
+test('the confirmation opens into the order, and the order can still be changed', async () => {
+  /*
+   * Owner: "AI chat suddenly closed when start order send... its kind of some
+   * one cut the call before finish ... after sending to kitchen show animation
+   * kitchen received order and processing. and the show the order detail page.
+   * cutomer should able to see proper nativigation add new item to the order.
+   * modify existing."
+   *
+   * Nothing was closing the sheet. The confirmation REPLACED the conversation
+   * and dead-ended at a token and a Done button, which from the customer's
+   * side is being hung up on. The scene now settles into the order itself.
+   */
+  const order = placedOrder();
+  const { window, document, calls } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  const box = document.getElementById('placed-order');
+  assert.strictEqual(box.hidden, true, 'the order jumped the scene');
+
+  await window.OrderingAssistant.showPlacedOrder();
+  assert.strictEqual(box.hidden, false, 'the scene settled into nothing');
+
+  /* Read from the SHOP, not from the basket the page just emptied. */
+  const asked = calls.fetch.filter((c) => /\/orders\/o1\?token=042$/.test(c.url));
+  assert.strictEqual(asked.length, 1, 'the screen drew from something other than the shop');
+
+  const lines = [...document.querySelectorAll('#placed-lines li')];
+  assert.deepStrictEqual(lines.map((li) => li.querySelector('.placed-line-qty').textContent + ' ' + li.querySelector('.placed-line-name').textContent), ['2\u00d7 Chicken Biryani']);
+  assert.deepStrictEqual([...lines[0].querySelectorAll('.placed-step')].map((b) => b.getAttribute('data-quantity')), ['1', '3'], 'the steppers do not move the line by one');
+  assert.match(document.getElementById('placed-clock').textContent, /^\d+s to change it$/, 'nothing says how long they have');
+
+  /* One more, and the screen redraws from what the shop then says. */
+  lines[0].querySelectorAll('.placed-step')[1].click();
+  await settle();
+  const sent = calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url));
+  assert.strictEqual(sent.length, 1);
+  assert.deepStrictEqual(sent[0].body, { token: '042', items: [{ item_id: 'm1', quantity: 3 }] });
+  assert.strictEqual(document.querySelector('#placed-lines .placed-line-qty').textContent, '3\u00d7');
+
+  /* The countdown is a real timer; left running it holds the runner open. */
+  window.OrderingAssistant.hidePlaced();
+  window.close();
+});
+
+test('something to go with it, and a way to call the whole thing off', async () => {
+  /* Owner: "also some cross selling suggession below to add into current
+     order." From a category they have NOT ordered from, never anything
+     already on the order, and never a dish the shop has switched off. */
+  const order = placedOrder();
+  const { window, document, calls } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await window.OrderingAssistant.showPlacedOrder();
+
+  const more = [...document.querySelectorAll('.placed-more-item')];
+  assert.deepStrictEqual(more.map((b) => b.getAttribute('data-add')), ['d1'], 'the suggestions offered the order back to itself, or a dish that is off');
+  assert.strictEqual(document.getElementById('placed-more').hidden, false);
+
+  more[0].click();
+  await settle();
+  const added = calls.fetch.filter((c) => c.method === 'POST' && /\/orders\/o1\/items$/.test(c.url));
+  assert.deepStrictEqual(added[0].body, { token: '042', items: [{ item_id: 'd1', quantity: 1 }] });
+  assert.deepStrictEqual([...document.querySelectorAll('#placed-lines .placed-line-name')].map((n) => n.textContent), ['Chicken Biryani', 'Fresh Lime Soda']);
+
+  /* And off. The shop says it is cancelled, so the screen stops offering to
+     change something that is no longer there. */
+  document.getElementById('placed-cancel').click();
+  await settle();
+  assert.ok(calls.fetch.some((c) => c.method === 'POST' && /\/orders\/o1\/cancel$/.test(c.url)));
+  assert.strictEqual(document.getElementById('placed-order').hidden, true, 'a cancelled order still offers a plus button');
+  window.close();
+});
+
+test('a shop that says no is quoted, not swallowed', async () => {
+  /* The server names its reasons - too_late, already_billed - so the page can
+     say which it is instead of a button that quietly did nothing. */
+  const order = placedOrder({ refuse: 'too_late' });
+  const { window, document } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await window.OrderingAssistant.showPlacedOrder();
+
+  document.querySelectorAll('.placed-step')[1].click();
+  await settle();
+  assert.match(
+    document.getElementById('assistant-log').textContent,
+    /The kitchen has started on it/,
+    'the refusal never reached the customer'
+  );
+  assert.strictEqual(
+    window.OrderingAssistant.refusal('not_a_reason_we_know'),
+    'not_a_reason_we_know',
+    'a sentence the server composed itself was thrown away'
+  );
+  window.OrderingAssistant.hidePlaced();
+  window.close();
+});
+
+test('an order the shop has closed is a record, not a set of controls', async () => {
+  const order = placedOrder({ can_change: false, why_not: 'too_late', paid: false });
+  const { window, document } = voicePage({ order, reply: { status: 200, body: {} } });
+  window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await window.OrderingAssistant.showPlacedOrder();
+
+  assert.strictEqual(document.getElementById('placed-order').hidden, false, 'the order vanished the moment it could not be changed');
+  assert.deepStrictEqual([...document.querySelectorAll('.placed-step')], [], 'a stepper that could only fail');
+  assert.strictEqual(document.getElementById('placed-more').hidden, true, 'something was offered that could not be added');
+  /* Asking is still allowed: the customer is never told to go and find a person. */
+  assert.strictEqual(document.getElementById('placed-cancel').textContent, 'Ask the shop to cancel');
+  assert.strictEqual(document.getElementById('placed-clock').textContent, '', 'a countdown on an order that cannot be changed');
+
+  const paid = voicePage({ order: placedOrder({ can_change: false, paid: true }), reply: { status: 200, body: {} } });
+  paid.window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+  await paid.window.OrderingAssistant.showPlacedOrder();
+  assert.strictEqual(paid.document.getElementById('placed-cancel').hidden, true, 'a paid order offers to cancel itself');
+  window.close();
+  paid.window.close();
+});
+
+test('the call is still up once the order is on screen', () => {
+  /*
+   * The thing that read as the line being cut: a stylesheet rule that hid the
+   * transcript AND the box to talk into for as long as the confirmation was
+   * up. They now stand aside only while the scene is playing.
+   */
+  const css = read('assets/order.css');
+  const hide = css.match(/dialog\.sheet:has\(\.placed:not\(\[hidden\]\)\) \.assistant-[a-z]+/g) || [];
+  assert.ok(!hide.some((s) => /assistant-ask$/.test(s)), 'the box to talk into is still hidden for the whole confirmation');
+  assert.ok(!hide.some((s) => /assistant-log$/.test(s)), 'the transcript is still hidden for the whole confirmation');
+  assert.match(
+    css,
+    /:not\(:has\(\.placed-order:not\(\[hidden\]\)\)\) \.assistant-ask/,
+    'nothing brings the conversation back when the order opens'
+  );
+  /* And the order leads the sheet rather than sitting under the input box,
+     which is where the markup alone would put it. */
+  assert.match(css, /\.assistant-body:has\(\.placed-order:not\(\[hidden\]\)\) \.placed \{\s*\n\s*order: -1;/);
+
+  /* The last beat of the scene is what opens it, and the voice hands the id
+     over so there is an order to open. */
+  const script = read('assets/assistant/script.js');
+  assert.match(script, /if \(beat === "cooking"\) showPlacedOrder\(\);/, 'the order never opens on its own');
+  assert.match(read('assets/assistant/voice.js'), /a\.placedPanel\(live\.placed, \{ orderId: live\.placedId \}\)/);
+});
+
+test('an order that has gone does not walk the customer back to the menu', async () => {
+  /*
+   * THE BUG THE OWNER HIT TWICE. "after sending to order ai voice suddenly
+   * closing. no fucking animation is going order to kitchen."
+   *
+   * checkout() empties the basket and calls renderCart([]). renderCart's
+   * empty-basket branch navigated to products.html after two seconds -
+   * wherever it was called from. On products.html, with the assistant sheet
+   * open, that reloaded the page: the dialog went, the voice line went with
+   * it, and the kitchen scene died at 2s, before its last beat at 2.9s.
+   *
+   * Nothing caught it because the harness stubs setTimeout to a no-op. This
+   * keeps what was scheduled.
+   */
+  const onMenu = page('products.html', { cart: [], products: {} });
+  const scheduled = [];
+  onMenu.box.setTimeout = (fn, ms) => { scheduled.push(ms); return 1; };
+  await onMenu.box.renderCart([]);
+  assert.deepStrictEqual(scheduled, [], 'the menu page still sends itself somewhere after an order');
+
+  /* The basket page still does what it says on it: a customer who emptied
+     their own basket is taken back to the menu. */
+  const onBasket = page('cart.html', { cart: [], products: {} });
+  const basketScheduled = [];
+  onBasket.box.setTimeout = (fn, ms) => { basketScheduled.push(ms); return 1; };
+  await onBasket.box.renderCart([]);
+  assert.deepStrictEqual(basketScheduled, [2000], 'an emptied basket no longer goes back to the menu');
+
+  /* But not when the basket is empty because it was SENT. */
+  const afterSending = page('cart.html', { cart: [], products: {} });
+  const sentScheduled = [];
+  afterSending.box.setTimeout = (fn, ms) => { sentScheduled.push(ms); return 1; };
+  afterSending.box.orderJustPlaced = true;
+  await afterSending.box.renderCart([]);
+  assert.deepStrictEqual(sentScheduled, [], 'a basket emptied by checkout was read as one the customer emptied');
+});
+
+test('checkout says the basket was sent, not emptied', () => {
+  /* The flag has to be raised around the clear, or renderCart cannot tell
+     the two apart and the test above proves nothing about the real page. */
+  const db = read('indexedDB.js');
+  const raise = db.indexOf('orderJustPlaced = true;');
+  const clear = db.indexOf('await saveCartData([]);', raise);
+  const drawn = db.indexOf('await renderCart([]);', raise);
+  const lower = db.indexOf('orderJustPlaced = false;', raise);
+  assert.ok(raise !== -1 && clear > raise, 'the basket is cleared before checkout says it was sent');
+  assert.ok(drawn > clear, 'renderCart is not drawn inside the flag');
+  assert.ok(lower > drawn, 'the flag is never lowered, so the basket page stops going back to the menu');
 });
 
 test('the token screen downloads nothing and shows no bill', () => {

@@ -139,27 +139,33 @@ PosnicPro.request = function (params, callback, failure = null) {
             }
 
             /*
-             * On the sign-in screen, "you are not logged in" is not news.
+             * A SIGN-IN SCREEN HAS NO SESSION. THAT IS NOT AN ERROR.
              *
-             * The page loads, something in the shared bundle asks the API a
-             * question that needs a session, the API quite correctly says
-             * there is none, and the shopkeeper is shown a red alert telling
-             * them they are not logged in - on the screen whose entire purpose
-             * is that they are not logged in yet. It was the first thing a new
-             * cloud install put in front of somebody.
+             * Opening the till straight after a cloud download put a red
+             * "You are not logged in!" across the sign-in form. Nothing was
+             * actually wrong: the page fetches its theme and settings before
+             * anybody has typed a password, the server answers 401 because
+             * there is no session yet, and this handler toasted the sentence
+             * that came back with it. The owner read that as the cloud sign-in
+             * having failed, which is exactly what it looks like.
              *
-             * The sign-in attempt ITSELF must still speak: a wrong password
-             * also comes back 401, with "Incorrect email or password", and
-             * swallowing that would leave the button doing nothing at all. The
-             * two are told apart by where the request went, not by reading the
-             * message - a sign-in posts to a login endpoint, and a background
-             * read does not.
+             * A 401 from signing in ITSELF stays loud, because a wrong
+             * password has to say so. Every door that takes a password is
+             * named below, not just the one this build happens to use: the
+             * till posts to users/verify, the handsets to users/mobileLogin,
+             * single sign-on to users/ssoClientLogin, and users/login and
+             * auth/login both still answer. Missing one of those would leave
+             * the Sign in button looking dead, which is far worse than the
+             * toast being removed here.
+             *
+             * Every other 401 on this screen is the expected answer to asking
+             * a question before anybody has signed in.
              */
-            var unauthenticatedOnAuthPage = onAuthPage
-                && xhr && xhr.status === 401
-                && !/login/i.test(String(url || ''));
+            var signInCall = /(users\/(verify|login|ssoClientLogin|mobileLogin|kioskMobileLogin)|auth\/login)/i
+                .test(String(url || ''));
+            var noSessionYet = onAuthPage && xhr && xhr.status === 401 && !signInCall;
 
-            if (unauthenticatedOnAuthPage) {
+            if (noSessionYet) {
                 console.debug('[auth] no session yet on the sign-in screen, which is expected:', url);
             } else if (!isThemeSettingsMissing && response && response.message) {
                 PosnicPro.alert(response.type || 'error', response.message);
@@ -207,7 +213,7 @@ PosnicPro.request = function (params, callback, failure = null) {
             if (failure !== null) {
                 failure(xhr)
             } else {
-                if (!isThemeSettingsMissing && !(response && response.message)) {
+                if (!noSessionYet && !isThemeSettingsMissing && !(response && response.message)) {
                     /*
                      * Honest failures only. This branch used to expire the
                      * login cookie for EVERY status below (a 404 logged the

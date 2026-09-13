@@ -378,6 +378,8 @@
    */
   var placedTimer = 0;
   var placedStop = null;
+  /* Which order this screen is showing, and the shop's window on it. */
+  var placedOrder = { id: "", seconds: 0, at: 0, tick: 0, expired: false };
 
   /* What each beat of the drawn scene is called, in the customer's words. */
   var PLACED_WORDS = {
@@ -385,6 +387,233 @@
     landed: "The kitchen has it",
     cooking: "The chef is preparing your order",
   };
+
+  /* ---------------------------------------- the order's own screen */
+
+  /*
+   * What the shop says is on the order NOW.
+   *
+   * Asked rather than assumed: the basket was emptied the moment the order
+   * went, and after a change it is the shop's answer that is true.
+   */
+  async function readPlaced() {
+    if (!placedOrder.id || !state.placed) return null;
+    var shop = "";
+    try {
+      shop = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      shop = "";
+    }
+    if (!shop) return null;
+    try {
+      var response = await fetch(
+        apiBase() +
+          "/online-ordering/" +
+          encodeURIComponent(shop) +
+          "/orders/" +
+          encodeURIComponent(placedOrder.id) +
+          "?token=" +
+          encodeURIComponent(state.placed),
+        { method: "GET", headers: { Accept: "application/json" } }
+      );
+      if (!response.ok) return null;
+      var body = await response.json();
+      return body && body.type === "success" && body.data ? body.data : null;
+    } catch (e) {
+      /* Offline. The token above is still the customer's proof. */
+      return null;
+    }
+  }
+
+  /** Tell the shop, and hand back what it said. */
+  async function changePlaced(what, body) {
+    var shop = "";
+    try {
+      shop = typeof knownBranchId === "function" ? await knownBranchId() : ""; // eslint-disable-line no-undef
+    } catch (e) {
+      shop = "";
+    }
+    if (!shop) return { failed: "no_shop" };
+    try {
+      var response = await fetch(
+        apiBase() +
+          "/online-ordering/" +
+          encodeURIComponent(shop) +
+          "/orders/" +
+          encodeURIComponent(placedOrder.id) +
+          "/" +
+          what,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(Object.assign({ token: state.placed }, body || {}))
+        }
+      );
+      var answer = await response.json().catch(function () {
+        return null;
+      });
+      if (!response.ok || !answer || answer.type !== "success") {
+        return { failed: String((answer && answer.message) || "not_changed") };
+      }
+      return answer.data || {};
+    } catch (e) {
+      return { failed: "not_changed" };
+    }
+  }
+
+  /*
+   * A few things that go with what they ordered.
+   *
+   * Drawn from categories they have NOT ordered from, so somebody who asked
+   * for biryani is offered a drink rather than more biryani, and never
+   * anything already on the order. Cheapest first, because something to add
+   * on is a small yes and not a second meal. Three: a fourth is a catalogue.
+   */
+  function goesWith(on) {
+    var all = [];
+    try {
+      all = (typeof allProducts === "function" ? allProducts() : []) || []; // eslint-disable-line no-undef
+    } catch (e) {
+      return [];
+    }
+    var have = {};
+    var theirs = {};
+    (on || []).forEach(function (line) {
+      have[String(line.item_id)] = true;
+      all.forEach(function (p) {
+        if (String(p.id) === String(line.item_id) && p.category_name) theirs[p.category_name] = true;
+      });
+    });
+    return all
+      .filter(function (p) {
+        return p && p.id && !have[String(p.id)] && p.available !== false && !theirs[p.category_name];
+      })
+      .sort(function (x, y) {
+        return (Number(x.price) || 0) - (Number(y.price) || 0);
+      })
+      .slice(0, 3);
+  }
+
+  function paintPlacedOrder(said) {
+    var box = el("placed-order");
+    if (!box) return;
+    if (!said || said.cancelled) {
+      box.hidden = true;
+      clearTimeout(placedOrder.tick);
+      return;
+    }
+    box.hidden = false;
+    /* The clock counts only while there is something to count down to: an
+       order the shop has closed must not say "30s to change it". */
+    placedOrder.seconds = said.can_change ? Number(said.change_seconds) || 0 : 0;
+    placedOrder.at = new Date(said.placed_at || 0).getTime();
+
+    var lines = el("placed-lines");
+    if (lines) {
+      lines.textContent = "";
+      (said.items || []).forEach(function (line) {
+        var row = document.createElement("li");
+        var qty = document.createElement("span");
+        qty.className = "placed-line-qty";
+        qty.textContent = String(Number(line.quantity) || 0) + "\u00d7";
+        var name = document.createElement("span");
+        name.className = "placed-line-name";
+        name.textContent = String(line.name || "");
+        row.appendChild(qty);
+        row.appendChild(name);
+        /* Steppers only while it is still theirs to move; once the shop has
+           closed the window the row is a record, not a control. */
+        if (said.can_change) {
+          [
+            [-1, "\u2212", "One less {name}"],
+            [1, "+", "One more {name}"]
+          ].forEach(function (step) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "placed-step";
+            button.setAttribute("data-item", String(line.item_id || ""));
+            button.setAttribute(
+              "data-quantity",
+              String(Math.max(0, (Number(line.quantity) || 0) + step[0]))
+            );
+            button.setAttribute("aria-label", say(step[2], { name: line.name }));
+            button.textContent = step[1];
+            row.appendChild(button);
+          });
+        }
+        lines.appendChild(row);
+      });
+    }
+
+    /* Something alongside, while there is still time to add it. */
+    var more = el("placed-more");
+    var row = el("placed-more-row");
+    var suggestions = said.can_change ? goesWith(said.items || []) : [];
+    if (more && row) {
+      row.textContent = "";
+      suggestions.forEach(function (item) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "placed-more-item";
+        button.setAttribute("data-add", String(item.id));
+        button.setAttribute("aria-label", say("Add {name}", { name: item.name }));
+        var plus = document.createElement("span");
+        plus.className = "placed-more-plus";
+        plus.setAttribute("aria-hidden", "true");
+        plus.textContent = "+";
+        var name = document.createElement("span");
+        name.textContent = String(item.name || "");
+        button.appendChild(plus);
+        button.appendChild(name);
+        row.appendChild(button);
+      });
+      more.hidden = !suggestions.length;
+    }
+
+    /* Off is always offered while there is an order to call off - inside the
+       window it simply goes, outside it the shop is asked. The words say
+       which, so nobody taps one expecting the other. */
+    var off = el("placed-cancel");
+    if (off) {
+      off.hidden = !!said.paid;
+      off.disabled = said.cancel_requested === true;
+      off.textContent = said.cancel_requested
+        ? say("Cancellation asked for")
+        : say(said.can_change ? "Cancel the order" : "Ask the shop to cancel");
+    }
+
+    paintPlacedClock();
+  }
+
+  function paintPlacedClock() {
+    var clock = el("placed-clock");
+    if (!clock) return;
+    clearTimeout(placedOrder.tick);
+    if (!placedOrder.seconds || !placedOrder.at) {
+      clock.textContent = "";
+      return;
+    }
+    var left = Math.ceil((placedOrder.at + placedOrder.seconds * 1000 - Date.now()) / 1000);
+    if (left <= 0) {
+      /* The window has closed under them. Ask the shop what that means now,
+         ONCE, rather than leave buttons up that would only fail. Once,
+         because the answer is what sets this clock: a shop that still says
+         the order can be changed would otherwise be asked forever. */
+      clock.textContent = "";
+      if (!placedOrder.expired) {
+        placedOrder.expired = true;
+        showPlacedOrder();
+      }
+      return;
+    }
+    clock.textContent = say("{n}s to change it", { n: left });
+    placedOrder.tick = setTimeout(paintPlacedClock, 1000);
+  }
+
+  /** Ask the shop, then draw. */
+  async function showPlacedOrder() {
+    paintPlacedOrder(await readPlaced());
+  }
 
   function placedPanel(token, options) {
     var panel = el("assistant-placed");
@@ -398,6 +627,11 @@
     if (said) said.textContent = say(PLACED_WORDS.sending);
     panel.hidden = false;
     state.placed = String(token || "");
+    placedOrder.id = String((options && options.orderId) || "");
+    placedOrder.expired = false;
+    clearTimeout(placedOrder.tick);
+    var orderBox = el("placed-order");
+    if (orderBox) orderBox.hidden = true;
 
     /* One scene at a time: a second order during the same visit must not
        leave the first one's loop running behind it. */
@@ -410,6 +644,9 @@
         onBeat: function (beat) {
           if (art.setAttribute) art.setAttribute("data-stage", beat);
           if (said && PLACED_WORDS[beat]) said.textContent = say(PLACED_WORDS[beat]);
+          /* The kitchen has it and somebody is cooking it: from here the
+             sheet belongs to the order, not to the animation. */
+          if (beat === "cooking") showPlacedOrder();
         },
       });
     } else if (said) {
@@ -418,6 +655,7 @@
       var after = options && typeof options.after === "number" ? options.after : 1800;
       placedTimer = setTimeout(function () {
         said.textContent = say(PLACED_WORDS.cooking);
+        showPlacedOrder();
       }, after);
     }
   }
@@ -435,6 +673,30 @@
     window.OrderingAssistant.leave(
       token ? "thankyou.html?token=" + encodeURIComponent(token) : "products.html"
     );
+  }
+
+  /*
+   * The reasons the server names, said the way a person would.
+   *
+   * customer-order.service.js answers with a short word for each - too_late,
+   * already_billed - so that the assistant can say which it is instead of
+   * inventing a sentence. Anything else it sends is already a sentence.
+   */
+  var REFUSALS = {
+    too_late: "The kitchen has started on it, so it cannot be changed now",
+    already_billed: "The shop has made the bill, so the counter has to change it",
+    already_paid: "It is paid for, so the counter has to change it",
+    already_cancelled: "That order is already cancelled",
+    refused_by_shop: "The shop could not take that order",
+    at_the_counter: "This one has to be changed at the counter",
+    not_found: "That order cannot be found",
+    nothing_changed: "Nothing to change there",
+    nothing_asked: "Nothing to change there",
+    no_shop: "The shop cannot be reached right now",
+    not_changed: "That did not go through. Please try again"
+  };
+  function refusal(why) {
+    return REFUSALS[String(why || "")] || String(why || "");
   }
 
   function hidePlaced() {
@@ -568,6 +830,62 @@
     if (review) review.addEventListener("click", function () { window.OrderingAssistant.leave("cart.html"); });
     var done = el("placed-done");
     if (done) done.addEventListener("click", placedDone);
+
+    /*
+     * A quantity, something alongside, or calling it off. Each one waits for
+     * the shop and then redraws from what the shop now says, so the screen is
+     * never ahead of the kitchen. A refusal is shown in the shop's own words
+     * - "the kitchen has started on it" - in the conversation the customer is
+     * still in, rather than as a button that quietly did nothing.
+     */
+    var orderBox = el("placed-order");
+    if (orderBox) {
+      orderBox.addEventListener("click", async function (event) {
+        var target = event.target;
+        if (!target || !target.closest) return;
+
+        var step = target.closest(".placed-step");
+        if (step) {
+          step.disabled = true;
+          var moved = await changePlaced("items", {
+            items: [
+              {
+                item_id: step.getAttribute("data-item"),
+                quantity: Number(step.getAttribute("data-quantity")) || 0
+              }
+            ]
+          });
+          if (moved && moved.failed) actionLine(say(refusal(moved.failed)));
+          await showPlacedOrder();
+          return;
+        }
+
+        var add = target.closest(".placed-more-item");
+        if (add) {
+          add.disabled = true;
+          var added = await changePlaced("items", {
+            items: [{ item_id: add.getAttribute("data-add"), quantity: 1 }]
+          });
+          if (added && added.failed) {
+            actionLine(say(refusal(added.failed)));
+            add.disabled = false;
+            return;
+          }
+          await showPlacedOrder();
+          return;
+        }
+
+        var off = target.closest(".placed-cancel");
+        if (off) {
+          off.disabled = true;
+          var called = await changePlaced("cancel", {});
+          if (called && called.failed) actionLine(say(refusal(called.failed)));
+          else if (called && called.requested) actionLine(say("The shop has been asked to cancel it"));
+          else actionLine(say("Order cancelled"));
+          await showPlacedOrder();
+        }
+      });
+    }
     var orderList = el("assistant-order-list");
     if (orderList) {
       orderList.addEventListener("click", async function (event) {
@@ -611,5 +929,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
+  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showPlacedOrder: showPlacedOrder, goesWith: goesWith, refusal: refusal, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
 })();
