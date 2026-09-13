@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>posnic</id>
+    <version>1.6.1</version>
+    <title>Posnic</title>
+    <authors>Posnic Innovations Private Limited</authors>
+    <owners>Posnic Innovations Private Limited</owners>
+    <projectUrl>https://www.posnic.com/</projectUrl>
+    <packageSourceUrl>https://github.com/Posnic/POS/tree/develop/packaging/chocolatey</packageSourceUrl>
+    <iconUrl>https://www.posnic.com/posnic-logo.svg</iconUrl>
+    <licenseUrl>https://github.com/Posnic/POS/blob/v1.6.1/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/Posnic/POS</projectSourceUrl>
+    <docsUrl>https://github.com/Posnic/POS/tree/v1.6.1/docs</docsUrl>
+    <bugTrackerUrl>https://github.com/Posnic/POS/issues</bugTrackerUrl>
+    <releaseNotes>https://github.com/Posnic/POS/releases/tag/v1.6.1</releaseNotes>
+    <summary>Offline-first open source POS and billing software.</summary>
+    <description>Posnic is open source POS and billing software for retail shops and restaurants. It supports offline-first operation on Windows and optional online/offline workflows.</description>
+    <tags>posnic pos point-of-sale billing billing-software retail restaurant offline open-source desktop</tags>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
