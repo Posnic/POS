@@ -459,6 +459,30 @@
                             nothing is sent anywhere until both of these are filled in.
                         </div>
                     </div>
+                    <!--
+                        THE KEY THE SHOP'S SERVER WILL ACCEPT, which is not this
+                        computer's.
+
+                        Every Posnic installation makes its own printing key the
+                        first time it starts, and a shop's internet server is an
+                        installation: it has a different one. So a till that
+                        sends its own key is turned away every time - and a
+                        refusal used to look exactly like "nothing to print".
+
+                        One copy and paste, once, and it is done.
+                    -->
+                    <div style="margin-top:14px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                            Printing key from your shop
+                        </label>
+                        <input type="password" id="cpApiKey" placeholder="Paste the key from Settings, Bill printing"
+                            autocomplete="off" spellcheck="false"
+                            style="width:100%;padding:12px 14px;border:2px solid #e9ecef;border-radius:10px;font-size:14px;">
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                            Open your shop in a browser, go to Settings and copy the bill printing key.
+                            Without it your shop's server will not accept anything from this computer.
+                        </div>
+                    </div>
                     <div style="display:flex;gap:12px;align-items:center;margin-top:14px;">
                         <button class="btn btn-secondary" onclick="cpSave()"
                             style="padding:12px 20px;border-radius:10px;">💾 Save</button>
@@ -1579,6 +1603,13 @@
             } else if (cloud === 'no branch') {
                 html += bpRow('Over the internet', 'waiting for the shop',
                     'Switched on, but this computer does not know which branch it is yet.', false);
+            } else if (cloud.indexOf('refused by') > -1) {
+                /* The one cloud failure with an exact remedy, so it gets its
+                   own words rather than being filed under "not answering". */
+                html += bpRow('Over the internet', 'turned away',
+                    'Your shop is not accepting this computer. Paste the printing key from your '
+                    + 'shop above - the key this computer makes for itself is not the one your '
+                    + 'shop expects.', false);
             } else if (cloud.indexOf('error') === 0) {
                 html += bpRow('Over the internet', 'not answering',
                     cloud.replace(/^error:\s*/, ''), false);
@@ -1616,10 +1647,13 @@
             try {
                 const on = await rpPref().get('cloud_print_relay');
                 const url = await rpPref().get('cloud_api_url');
+                const key = await rpPref().get('cloud_api_key');
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
+                const keyField = document.getElementById('cpApiKey');
                 if (box) box.checked = on === true || on === 'true';
                 if (field) field.value = url || '';
+                if (keyField) keyField.value = key || '';
                 cpSummary();
             } catch (e) {
                 console.warn('cpInit:', e.message);
@@ -1635,9 +1669,17 @@
                 el.textContent = 'Off. Phones on the shop Wi-Fi still print, straight to this computer.';
                 return;
             }
-            el.textContent = url.trim()
-                ? 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.'
-                : 'On, but no address yet - nothing will be checked until one is filled in.';
+            const keyField = document.getElementById('cpApiKey');
+            const key = ((keyField && keyField.value) || '').trim();
+            if (!url.trim()) {
+                el.textContent = 'On, but no address yet - nothing will be checked until one is filled in.';
+                return;
+            }
+            if (!key) {
+                el.textContent = 'On, but no key yet - your shop will turn this computer away without one.';
+                return;
+            }
+            el.textContent = 'On. Checking ' + url.trim().replace(/\/+$/, '') + ' for bills.';
         }
 
         (function () {
@@ -1647,8 +1689,10 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
+                const keyField = document.getElementById('cpApiKey');
                 if (box) box.addEventListener('change', cpSummary);
                 if (field) field.addEventListener('input', cpSummary);
+                if (keyField) keyField.addEventListener('input', cpSummary);
             });
         }());
 
@@ -1656,20 +1700,21 @@
             if (!rpPref()) return;
             const box = document.getElementById('cpEnabled');
             const field = document.getElementById('cpApiUrl');
+            const keyField = document.getElementById('cpApiKey');
             const on = !!(box && box.checked);
             const url = ((field && field.value) || '').trim();
+            const key = ((keyField && keyField.value) || '').trim();
             try {
                 await rpPref().set('cloud_print_relay', on);
                 await rpPref().set('cloud_api_url', url);
+                await rpPref().set('cloud_api_key', key);
                 cpSummary();
-                rpShowStatus(
-                    on && url
-                        ? 'Saved. This computer will print bills asked for over the internet.'
-                        : on
-                            ? 'Saved, but fill in your shop address or nothing will be checked.'
-                            : 'Saved. Nothing is sent over the internet from this computer.',
-                    on && !url ? 'warn' : 'success'
-                );
+                let said;
+                if (!on) said = 'Saved. Nothing is sent over the internet from this computer.';
+                else if (!url) said = 'Saved, but fill in your shop address or nothing will be checked.';
+                else if (!key) said = 'Saved, but without the key from your shop this computer will be turned away.';
+                else said = 'Saved. This computer will print bills asked for over the internet.';
+                rpShowStatus(said, on && (!url || !key) ? 'warn' : 'success');
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }

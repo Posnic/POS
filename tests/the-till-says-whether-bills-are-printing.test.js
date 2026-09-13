@@ -190,6 +190,28 @@ test('a cloud door that is on but shopless says that too', async () => {
   assert.match(seen.rows, /Over the internet <span[^>]*>waiting for the shop/);
 });
 
+test('a till the shop turned away is told to paste the key, not to check its wiring', async () => {
+  /*
+   * The one cloud failure with an exact remedy. Filed under "not answering" it
+   * sends somebody to look at their internet; named properly it is one copy
+   * and paste.
+   */
+  const seen = await render({
+    ...healthy,
+    cloud: {
+      status: 'error: refused by https://kiranastore.posnic.io/api: this till is presenting a key '
+        + 'that server does not accept. Copy the printing key from your shop and paste it into '
+        + 'Hardware Manager.',
+      lastPollAt: null,
+    },
+  });
+
+  assert.match(seen.rows, /turned away/);
+  assert.match(seen.rows, /printing key/, 'it does not say what to paste');
+  assert.doesNotMatch(seen.rows, /not answering/,
+    'a refusal was filed as an unreachable server');
+});
+
 test('a till that has printed nothing yet says so rather than showing a zero', async () => {
   const seen = await render({ ...healthy, printed: 0, lastPrintedAt: null });
   assert.match(seen.printed, /none printed yet/);

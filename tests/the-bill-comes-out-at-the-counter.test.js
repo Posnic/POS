@@ -725,6 +725,114 @@ test('a queue that cannot be told is logged, not thrown', async () => {
   assert.equal(bills.getStatus().lastStatus, 'ok', 'a failed close took the poll down with it');
 });
 
+/* ------------------------------- whose key the far door is supposed to carry */
+
+/*
+ * EVERY INSTALLATION MAKES ITS OWN KEY, and a cloud tenant is an installation.
+ *
+ * main.js generates this machine's with crypto.randomBytes(32) at first boot;
+ * the provisioner writes a cloud tenant a random one of its own. They can
+ * never match. So a till presenting its LOCAL key to its shop's cloud address
+ * is refused every single time - and until this, a refusal answered
+ * `{ status: false, data: null }`, which read out as an empty list and left
+ * the till reporting "ok, nothing to print" for ever.
+ *
+ * Two bills' worth of silence is a guest waiting at a table. The fix is one
+ * field and one honest error.
+ */
+
+test('the far door carries the key the shop gave, not this machine\'s', async () => {
+  process.env.KIOSK_API_KEY = 'this-machines-own-key';
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+    cloudKey: 'the-shops-key',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+  delete process.env.KIOSK_API_KEY;
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.ok(asked, 'it never asked');
+  assert.equal(asked.headers.kioskkey, 'the-shops-key',
+    'it sent its own key, which its shop will refuse every time');
+});
+
+test('with no key given, the far door falls back to this machine\'s', async () => {
+  /* Right for a till whose "cloud" address points back at this same install
+     through a hostname, which is how a shop on a fixed IP is often set up. */
+  process.env.KIOSK_API_KEY = 'this-machines-own-key';
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+  delete process.env.KIOSK_API_KEY;
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.headers.kioskkey, 'this-machines-own-key');
+});
+
+test('the near door keeps using this machine\'s key, whatever the shop pasted', async () => {
+  process.env.KIOSK_API_KEY = 'this-machines-own-key';
+  const hardware = fakeHardware();
+  const calls = fakeApi([]);
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+    cloudKey: 'the-shops-key',
+  });
+
+  await runOnce(bills);
+  delete process.env.KIOSK_API_KEY;
+
+  const asked = calls.find((c) => c.url.includes('/claimPrintJobs'));
+  assert.equal(asked.headers.kioskkey, 'this-machines-own-key',
+    'the local API was sent a key belonging to a different installation');
+});
+
+test('being turned away is reported, not counted as an empty queue', async () => {
+  const hardware = fakeHardware();
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url: String(url) });
+    /* What ensureKioskKey actually answers: a body that looks, to anything
+       reading `data`, exactly like "nothing waiting". */
+    return {
+      status: 401,
+      json: async () => ({ type: 'error', status: false, message: 'Unauthorized', data: null }),
+    };
+  };
+
+  const bills = new BillManager(hardware, {
+    branchId: 'b1',
+    cloudPrint: true,
+    cloudApi: 'https://kiranastore.posnic.io/api',
+    cloudKey: 'a-stale-key',
+  });
+
+  bills.polling = true;
+  await bills._pollCloud();
+  bills.stop();
+
+  const said = bills.getStatus().cloud.status;
+  assert.match(said, /refused by/, `a refusal was reported as "${said}"`);
+  assert.match(said, /Hardware Manager/, 'it does not say where to fix it');
+  assert.notEqual(said, 'ok', 'a till being turned away every time said it was fine');
+});
+
 /* ------------------------------------------ printing the moment it is asked */
 
 /*

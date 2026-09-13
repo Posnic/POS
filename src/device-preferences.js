@@ -112,6 +112,21 @@ function cloudPrintRelay() {
      */
     enabled: said === true || said === 'true',
     apiUrl: String(prefs.cloud_api_url || '').trim(),
+    /*
+     * THE KEY THE SHOP'S SERVER WILL ACCEPT, which is not this machine's.
+     *
+     * Every installation generates its own kiosk key at first boot
+     * (main.js, crypto.randomBytes(32)), and a cloud tenant is an
+     * installation: the provisioner writes it a random one of its own. So a
+     * till presenting its LOCAL key to its shop's cloud address is refused,
+     * every time, for ever - and a refusal used to read as "nothing to print",
+     * which is the worst way for this to fail.
+     *
+     * So the shop's own key is copied in, once, from the cloud app. Empty
+     * means "use this machine's", which is right when the address points back
+     * at this same install through a hostname.
+     */
+    key: String(prefs.cloud_api_key || '').trim(),
   };
 }
 
