@@ -7596,29 +7596,12 @@ class SalesRepository {
        * stored nowhere, so every retry wrote another ticket.
        */
       if (idempotencyKey) {
+        await this._ensureIdempotencyIndex(db);
         const already = await db.collection('sales').findOne({
           idempotency_key: String(idempotencyKey),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         });
-        if (already) {
-          return {
-            status: true,
-            message: 'Order placed successfully',
-            data: {
-              tokenId: already.token_id || already.tokenId || '',
-              sale_id: already._id.toString(),
-              sales_id: already.sales_id,
-              branch_name: already.branch_name,
-              items: already.items || [],
-              subtotal: already.sub_total ?? already.subtotal ?? 0,
-              discount: already.discount ?? 0,
-              tax: already.tax ?? 0,
-              total: already.sales_total ?? already.total ?? 0,
-              payment_status: already.payment_status,
-              duplicate: true,
-            },
-          };
-        }
+        if (already) return this._duplicateOrderAnswer(already);
       }
 
       if (!branchDoc) {
@@ -7978,11 +7961,37 @@ class SalesRepository {
 
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
-      const insertResult = await this.insertSaleWithFreshNumber(
-        salesCollection,
-        saleDocument,
-        branchObjectId
-      );
+      let insertResult;
+      try {
+        insertResult = await this.insertSaleWithFreshNumber(
+          salesCollection,
+          saleDocument,
+          branchObjectId
+        );
+      } catch (error) {
+        /*
+         * TWO TAPS AT THE SAME INSTANT.
+         *
+         * The lookup above is a read followed by a write, so two copies of one
+         * order can both read "nothing there" and both insert. That is not
+         * theory: a waiter double-tapped Send on table 5 and the floor came
+         * back showing the table twice, with cancelling one cancelling both.
+         *
+         * The unique index is what actually decides it. Whichever insert lands
+         * second is refused by the database, and rather than surfacing that as
+         * a failure to the handset - which would make the waiter send a third
+         * time - the order the winner wrote is handed back as though this
+         * request had created it. Same answer, one order.
+         */
+        if (idempotencyKey && this.isDuplicateIdempotencyError(error)) {
+          const winner = await salesCollection.findOne({
+            idempotency_key: String(idempotencyKey),
+            ...(BaseModel.license ? { license: BaseModel.license } : {}),
+          });
+          if (winner) return this._duplicateOrderAnswer(winner);
+        }
+        throw error;
+      }
       salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
@@ -11192,6 +11201,71 @@ class SalesRepository {
         name: 'unique_sales_id_per_license',
       }
     );
+  }
+
+  /*
+   * The answer for an order that already exists.
+   *
+   * Built in one place because it is returned from two: the lookup before the
+   * insert, and the insert that lost the race to a unique index. If those ever
+   * answered differently, a handset would behave differently depending on
+   * which microsecond its retry arrived in.
+   *
+   * `duplicate: true` is on it so the app can tell "your order is in" from "we
+   * took your order just now", which matters when a waiter is standing there
+   * wondering whether to send again.
+   */
+  _duplicateOrderAnswer(already) {
+    return {
+      status: true,
+      message: 'Order placed successfully',
+      data: {
+        tokenId: already.token_id || already.tokenId || '',
+        sale_id: already._id.toString(),
+        sales_id: already.sales_id,
+        branch_name: already.branch_name,
+        items: already.items || [],
+        subtotal: already.sub_total ?? already.subtotal ?? 0,
+        discount: already.discount ?? 0,
+        tax: already.tax ?? 0,
+        total: already.sales_total ?? already.total ?? 0,
+        payment_status: already.payment_status,
+        duplicate: true,
+      },
+    };
+  }
+
+  /*
+   * One order per key, enforced by the database rather than by a lookup.
+   *
+   * A read-then-write cannot stop two simultaneous copies of the same order:
+   * both read nothing, both write. Only the index can, and it has to be there
+   * for EVERY shop, which is why it goes through ensureIndexOnce - a static
+   * boolean would give it to whichever shop made the first table order after
+   * a restart and to nobody else.
+   *
+   * Partial, on a string key, so the millions of till sales that carry no key
+   * are not all colliding on null.
+   */
+  async _ensureIdempotencyIndex(db) {
+    await ensureIndexOnce(
+      db.collection('sales'),
+      { license: 1, idempotency_key: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { idempotency_key: { $type: 'string' } },
+        name: 'unique_idempotency_key_per_license',
+      }
+    );
+  }
+
+  /* A clash on the key above, told apart from a clash on the bill number so
+     the two are handled differently: a bill number is re-taken, a repeated
+     order is answered with the order that already exists. */
+  isDuplicateIdempotencyError(err) {
+    if (!err || (err.code !== 11000 && err.code !== 11001)) return false;
+    const where = `${err.message || ''} ${JSON.stringify(err.keyPattern || err.keyValue || {})}`;
+    return /idempotency_key/i.test(where);
   }
 
   isDuplicateSalesIdError(err) {

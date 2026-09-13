@@ -38,10 +38,33 @@ test('the key the apps already send is read', () => {
 test('a repeat returns the order that already exists', () => {
   const source = qrOrderSource();
   assert.match(source, /idempotency_key: String\(idempotencyKey\)/);
-  assert.match(source, /if \(already\)/,
+  assert.match(source, /if \(already\) return this\._duplicateOrderAnswer\(already\);/,
     'without returning the existing sale, a resend writes a second ticket');
-  assert.match(source, /duplicate: true/,
+  /*
+   * The answer is built in one place now, because it is returned from two: the
+   * lookup here, and the insert that loses a race to the unique index. Its
+   * shape, duplicate flag included, is asserted against the real function in
+   * api/tests/unit/repositories/one-order-per-tap.test.js.
+   */
+  assert.match(SOURCE, /_duplicateOrderAnswer\(already\) \{[\s\S]{0,900}duplicate: true/,
     'the caller should be able to tell a resend from a fresh order');
+});
+
+test('and a repeat that the lookup could not see is caught by the database', () => {
+  /*
+   * The lookup above is a read followed by a write. Two copies of one order
+   * arriving together both read "nothing there" and both insert, which is how
+   * a double tap put table 5 on the floor twice. Only the unique index closes
+   * that window, and the insert that loses has to answer with the order that
+   * won rather than surface a database error to a waiter.
+   */
+  const source = qrOrderSource();
+  assert.match(source, /await this\._ensureIdempotencyIndex\(db\);/,
+    'nothing creates the index, so the race stays open');
+  assert.match(source, /this\.isDuplicateIdempotencyError\(error\)/,
+    'a lost race is not recognised, so the waiter is told the order failed');
+  assert.match(source, /if \(winner\) return this\._duplicateOrderAnswer\(winner\);/,
+    'the order that won the race is not handed back');
 });
 
 test('the lookup is scoped to the shop', () => {
