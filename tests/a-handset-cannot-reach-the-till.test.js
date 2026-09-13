@@ -362,6 +362,89 @@ test('the module is in the packaged build', () => {
   assert.ok(pkg.build.files.includes('src/handset-reachability.js'));
 });
 
+/* ----------------------------------------------------------- the screen too */
+
+/*
+ * The startup dialog asks once, and a shop can dismiss it for good. That is
+ * right for a kirana store and wrong for the one standing at the counter at
+ * four o'clock wondering why a phone stopped finding the till - they open
+ * Hardware Manager, and until now the only thing it told them was the address,
+ * which was correct the whole time and is not what was broken.
+ */
+
+test('the mobile screen can ask, and can act on the answer', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const preload = fs.readFileSync(path.join(ROOT, 'src', 'preload.js'), 'utf8');
+
+  assert.match(preload, /checkFirewall: \(\) => ipcRenderer\.invoke\('handsets:check'\)/);
+  assert.match(preload, /allowThroughFirewall: \(\) => ipcRenderer\.invoke\('handsets:allow'\)/);
+  assert.match(IPC, /ipcMain\.handle\('handsets:check'/, 'nothing answers the screen');
+  assert.match(IPC, /ipcMain\.handle\('handsets:allow'/);
+  assert.match(html, /id="fwRow"/, 'the screen has nowhere to show the answer');
+  assert.match(html, /window\.electronAPI\.mobile\.checkFirewall\(\)/);
+});
+
+test('the wording comes from the check, not from the screen', () => {
+  /* explain() lives beside the rule that produced the verdict. A screen that
+     writes its own version of the sentence is a screen that drifts from it. */
+  assert.match(IPC, /message: handsets\.explain\(result\)/);
+});
+
+test('the screen escapes what Windows hands it', () => {
+  /*
+   * A Wi-Fi name is whatever somebody called their router, and this row is
+   * built through innerHTML. Same rule, and the same reason, as the two print
+   * logs on the screen above it.
+   */
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const fn = html.slice(html.indexOf('function fwPaint'), html.indexOf('async function fwCheck'));
+  assert.match(fn, /logEsc\(result\.network\)/, 'the network name is rendered raw');
+  assert.match(fn, /logEsc\(result\.message/, 'the reason is rendered raw');
+});
+
+test('an answer the check could not read shows nothing at all', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const fn = html.slice(html.indexOf('function fwPaint'), html.indexOf('async function fwCheck'));
+  assert.match(fn, /if \(!look\) \{ fwHide\(\); return; \}/,
+    'an unknown verdict would paint an empty red row');
+  /* And there is no look for the two non-answers, which is what makes that
+     branch fire rather than something being invented for them. */
+  assert.ok(!/'unknown':/.test(html) && !/'not-windows':/.test(html));
+});
+
+test('the repair button is offered only where it is the repair', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const fn = html.slice(html.indexOf('function fwPaint'), html.indexOf('async function fwCheck'));
+  assert.match(fn, /fwFixBtn'\)\.style\.display = result\.ok \? 'none' : 'inline-block'/);
+});
+
+test('a cancelled administrator prompt is said out loud, not left red', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const fn = html.slice(html.indexOf('async function fwAllow'));
+  assert.match(fn.slice(0, 2000), /Nothing was changed/);
+  assert.match(IPC, /return \{ ok: true, result: await handsetVerdict\(\) \}/,
+    'the screen is told it worked without anybody looking');
+});
+
+test('the firewall read does not hold up the device list', () => {
+  /* It spawns PowerShell and takes seconds. The rest of the screen has no
+     reason to wait on a diagnostic. */
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  const fn = html.slice(html.indexOf('async function refreshMobileInfo'), html.indexOf('const MAX_D'));
+  assert.match(fn, /\n\s*fwCheck\(\);/, 'the check is not started from the refresh');
+  assert.ok(!/await fwCheck\(/.test(fn), 'the device list waits for the firewall read');
+});
+
+test('the screen names the app the shop actually has', () => {
+  /* Posnic/captain ships; Posnic/Table_Order does not. A shopkeeper told to
+     open "the Table Order app" is being sent to look for something that is
+     not on their phone. */
+  const html = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+  assert.ok(!/Table Order app/.test(html), 'the screen still names a superseded app');
+  assert.match(html, /Point your Captain app to this address/);
+  assert.match(html, /Set this URL in the Captain app/);
+});
+
 test('the old firewall batch file is gone rather than left to mislead', () => {
   /*
    * src/open-firewall-port.bat opened port 5555 for all profiles. It was never
