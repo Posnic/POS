@@ -68,7 +68,10 @@ describe('ai.service realtimeAnswer', () => {
       },
       context
     );
-    expect(out).toEqual({ status: true, data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime-mini' } });
+    expect(out).toEqual({
+      status: true,
+      data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime-mini' },
+    });
     expect(JSON.stringify(out)).not.toContain('sk-live-secret');
     expect(JSON.stringify(out)).not.toContain('ek_short_lived');
 
@@ -155,7 +158,9 @@ describe('ai.service realtimeAnswer', () => {
     });
     expect(calls[1].url).toBe('https://api.openai.com/v1/realtime/sessions');
     expect(calls[1].init.headers['OpenAI-Beta']).toBe('realtime=v1');
-    expect(calls[2].url).toBe('https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview');
+    expect(calls[2].url).toBe(
+      'https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview'
+    );
     expect(calls[2].init.headers.authorization).toBe('Bearer ek_beta');
   });
 
