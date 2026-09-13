@@ -779,6 +779,47 @@
                         <div id="kotLogsPagination" style="display:none;padding:10px 14px;border-top:1px solid #e9ecef;"></div>
                     </div>
                 </div>
+                <!--
+                    EVERY RECEIPT THIS TILL TRIED TO PRINT.
+
+                    Owner: "how can i verif print out ?"
+
+                    Kitchen tickets have had a log with a screen for a long
+                    time; receipts had the log and no screen, so when a
+                    customer said their bill never came out there was no way
+                    to tell whether the till had tried, which printer it went
+                    to, or what the printer said back.
+
+                    TRIED counts, not just printed. A receipt that failed is
+                    the one somebody is asking about, and a list of successes
+                    is silent at exactly the moment it is needed.
+                -->
+                <div style="margin-top:24px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <div style="font-size:15px;font-weight:700;color:#374151;">&#129534; Receipt print log</div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="date" id="rlDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                            <button onclick="rlLoad()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">&#128269; Load</button>
+                        </div>
+                    </div>
+                    <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
+                        <div id="rlEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">
+                            Pick a date and press Load to see what this computer printed.
+                        </div>
+                        <table id="rlTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb;">
+                                    <th style="padding:10px 12px;text-align:left;">Time</th>
+                                    <th style="padding:10px 12px;text-align:left;">What</th>
+                                    <th style="padding:10px 12px;text-align:left;">Printer</th>
+                                    <th style="padding:10px 12px;text-align:left;">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rlBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
             <!--
@@ -1730,6 +1771,95 @@
          * read it, this is the machine that owns it, and a masked field beside
          * a Copy button is how people end up pasting the mask.
          */
+
+        /*
+         * WHAT THIS COMPUTER PRINTED, and what it tried to print.
+         *
+         * Owner: "how can i verif print out ?"
+         *
+         * src/receipt-log.js has recorded this since the day it was written -
+         * which printer, how long it took, and what the printer said back -
+         * and nothing has ever read it. The record is only worth keeping if
+         * somebody can open it on the machine that has the problem.
+         */
+        function rlWhen(iso) {
+            try {
+                return new Date(iso).toLocaleTimeString();
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function rlSafe(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        async function rlLoad() {
+            const body = document.getElementById('rlBody');
+            const table = document.getElementById('rlTable');
+            const empty = document.getElementById('rlEmpty');
+            if (!body || !window.electronAPI || !window.electronAPI.bill) return;
+
+            const picked = document.getElementById('rlDate');
+            const date = (picked && picked.value) || new Date().toISOString().slice(0, 10);
+
+            let rows = [];
+            try {
+                rows = (await window.electronAPI.bill.getReceiptLogs(date)) || [];
+            } catch (e) {
+                rows = [];
+            }
+
+            if (!rows.length) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+                empty.textContent = 'Nothing was printed on ' + date + '.';
+                return;
+            }
+
+            /* Newest first: the receipt somebody is asking about is the one
+               that just failed, not the first of the morning. */
+            rows = rows.slice().reverse();
+
+            body.innerHTML = rows.map(function (row) {
+                const printers = (row.printers || []);
+                const where = printers.map(function (p) { return rlSafe(p.name); }).join(', ') || '-';
+                /*
+                 * The printer's own words when it refused. "Failed" sends
+                 * somebody to us; "out of paper" sends them to the roll.
+                 */
+                const said = printers
+                    .filter(function (p) { return p.status !== 'success'; })
+                    .map(function (p) { return rlSafe(p.error || 'refused'); })
+                    .join('; ');
+                const ok = row.status === 'printed';
+                const took = row.ms ? ' <span style="color:#9ca3af;">(' + Math.round(row.ms) + 'ms)</span>' : '';
+                return '<tr style="border-bottom:1px solid #f1f5f9;">'
+                    + '<td style="padding:10px 12px;white-space:nowrap;">' + rlWhen(row.time) + '</td>'
+                    + '<td style="padding:10px 12px;">' + (rlSafe(row.title) || rlSafe(row.kind))
+                    + (row.total ? ' <span style="color:#6b7280;">' + rlSafe(row.total) + '</span>' : '')
+                    + (row.source ? ' <span style="color:#9ca3af;">via ' + rlSafe(row.source) + '</span>' : '')
+                    + '</td>'
+                    + '<td style="padding:10px 12px;">' + where + '</td>'
+                    + '<td style="padding:10px 12px;">'
+                    + (ok
+                        ? '<span style="color:#12b76a;font-weight:700;">printed</span>' + took
+                        : '<span style="color:#f04438;font-weight:700;">did not print</span>'
+                          + (said ? ' <span style="color:#b42318;">' + said + '</span>' : ''))
+                    + '</td></tr>';
+            }).join('');
+
+            empty.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        /* Today, so pressing Load answers the usual question without typing. */
+        document.addEventListener('DOMContentLoaded', function () {
+            const picked = document.getElementById('rlDate');
+            if (picked && !picked.value) picked.value = new Date().toISOString().slice(0, 10);
+        });
+
         async function cpShowKey() {
             const field = document.getElementById('cpTillKey');
             if (!field || !window.electronAPI || !window.electronAPI.bill) return;
