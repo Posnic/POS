@@ -804,7 +804,7 @@
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
             + (unpaid
-                ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i>Settle payment</button>'
+                ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
             + '<div class="btn-group">'
