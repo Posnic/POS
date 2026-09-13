@@ -753,7 +753,12 @@
       live.placed = String(row.token || "");
       live.placedId = String(row.orderId || "");
       var a = assistant();
-      if (a && a.placedPanel) a.placedPanel(live.placed, { orderId: live.placedId, still: true });
+      /* The docket flies for something that actually went to the kitchen. A
+         request past the window has NOT gone - a person still has to say yes
+         - so that one opens on a still, or the drawing tells a lie. */
+      if (a && a.placedPanel) {
+        a.placedPanel(live.placed, { orderId: live.placedId, still: data.requested === true });
+      }
       return { ok: true, added: true, requested: data.requested === true, token: live.placed };
     } catch (e) {
       return null;
@@ -766,11 +771,22 @@
     if (!(args && args.confirmed === true)) return { ok: false, reason: "not_confirmed", order: order };
     var way = resolveWay(args && args.fulfilment);
     if (!way) return { ok: false, reason: "need_fulfilment", options: waysOffered(), order: order };
-    if (way === "delivery") return { ok: false, reason: "needs_details", next: "review", order: order };
+    /*
+     * THERE IS NO REVIEW BUTTON, so this must not say "review".
+     *
+     * Owner: "AI asking to review and click review button. there is not
+     * review button." He is right, and this field is where the word came
+     * from: the model reads this answer as JSON and says what it finds. The
+     * button under the conversation used to say Review order and now says
+     * Confirm and send, because the review is the minute AFTER the order
+     * goes. A field naming a button that was renamed a while ago sent him
+     * hunting the screen for it.
+     */
+    if (way === "delivery") return { ok: false, reason: "needs_details", next: "the_page_finishes_it", order: order };
     var s = shopNow();
     var payment = (s && s.payment) || {};
-    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "review", order: order };
-    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "review", order: order };
+    if (!offlineAllowed(payment)) return { ok: false, reason: "pay_online", next: "the_page_finishes_it", order: order };
+    if (phoneWanted(payment)) return { ok: false, reason: "needs_phone", next: "the_page_finishes_it", order: order };
     var point = servicePoint();
     try {
       if (way === "dine_in" && !(point && (point.table || point.venue))) {
@@ -816,14 +832,14 @@
       }
     }
 
-    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "review", order: order }; // eslint-disable-line no-undef
+    if (typeof checkout !== "function") return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order }; // eslint-disable-line no-undef
     var placed = null;
     try {
       placed = await checkout("", "Cash", { stay: true }); // eslint-disable-line no-undef
     } catch (e) {
       placed = null;
     }
-    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "review", order: order };
+    if (!placed || !placed.token) return { ok: false, reason: "not_placed", next: "the_page_finishes_it", order: order };
     live.placed = String(placed.token);
     live.placedId = String(placed.saleId || "");
     var a = assistant();

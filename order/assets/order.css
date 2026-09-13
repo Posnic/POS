@@ -3229,6 +3229,16 @@ dialog.sheet.assistant .assistant-foot {
   font-variant-numeric: tabular-nums;
 }
 
+/* The one line that says a plus is now a request rather than a change.
+   Quiet: it is a note about the buttons, not a warning. */
+.placed-mode {
+  margin: 0 0 2px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-soft, #5a5a52);
+  text-align: left;
+}
+
 .placed-lines {
   margin: 6px 0 0;
   padding: 0;

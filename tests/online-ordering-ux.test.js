@@ -1791,7 +1791,7 @@ test('sending to the kitchen asks for what the code did not say, and hands the r
     await settle();
     const answer = lastOutput(page.calls);
     assert.strictEqual(answer.reason, reason, label);
-    assert.strictEqual(answer.next, 'review', label);
+    assert.strictEqual(answer.next, 'the_page_finishes_it', label);
     assert.deepStrictEqual(page.calls.checkout, [], label + ': placed anyway');
     page.window.OrderingVoice.stop();
   }
@@ -2181,24 +2181,56 @@ test('a shop that says no is quoted, not swallowed', async () => {
   window.close();
 });
 
-test('an order the shop has closed is a record, not a set of controls', async () => {
+/*
+ * PAST THE MINUTE, THE CONTROLS STAY AND BECOME A REQUEST.
+ *
+ * This test used to assert the opposite - no steppers once the window shut -
+ * and it was wrong about what the shop does. The server has taken a change
+ * past the window as a REQUEST since that work landed: a person answers it in
+ * the queue the shop already works. Nothing on the phone could reach it, so
+ * the screen offered Cancel and nothing else, which is a strange thing to show
+ * somebody whose actual wish is one more naan. Owner, twice: "60 seconds.
+ * after than only can request", and then "if user want can edit it".
+ */
+test('past the minute the plus and minus ask the shop instead of vanishing', async () => {
   const order = placedOrder({ can_change: false, why_not: 'too_late', paid: false });
   const { window, document } = voicePage({ order, reply: { status: 200, body: {} } });
   window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
   await window.OrderingAssistant.showPlacedOrder();
 
   assert.strictEqual(document.getElementById('placed-order').hidden, false, 'the order vanished the moment it could not be changed');
-  assert.deepStrictEqual([...document.querySelectorAll('.placed-step')], [], 'a stepper that could only fail');
-  assert.strictEqual(document.getElementById('placed-more').hidden, true, 'something was offered that could not be added');
-  /* Asking is still allowed: the customer is never told to go and find a person. */
+  assert.ok(document.querySelectorAll('.placed-step').length > 0, 'nothing to ask with: the screen offers only Cancel');
+  assert.strictEqual(document.getElementById('placed-more').hidden, false, 'nothing can be added even by asking');
+  /* And it says which, because a plus that quietly becomes a request is a
+     plus that gets tapped twice. */
+  const mode = document.getElementById('placed-mode');
+  assert.strictEqual(mode.hidden, false, 'the screen does not say a change is now a request');
+  assert.match(mode.textContent, /goes to the shop to confirm/);
   assert.strictEqual(document.getElementById('placed-cancel').textContent, 'Ask the shop to cancel');
   assert.strictEqual(document.getElementById('placed-clock').textContent, '', 'a countdown on an order that cannot be changed');
+  window.close();
+});
 
-  const paid = voicePage({ order: placedOrder({ can_change: false, paid: true }), reply: { status: 200, body: {} } });
+test('an order that is money is a record, and says nothing about asking', async () => {
+  /* Paid, billed, cancelled, or somebody else's cut in the total: asking
+     would only be refused, and the answer to those is the counter. */
+  for (const [label, shape] of [
+    ['paid', { can_change: false, why_not: 'already_paid', paid: true }],
+    ['billed', { can_change: false, why_not: 'already_billed', paid: false }],
+    ['a hotel room', { can_change: false, why_not: 'at_the_counter', paid: false }],
+  ]) {
+    const page = voicePage({ order: placedOrder(shape), reply: { status: 200, body: {} } });
+    page.window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
+    await page.window.OrderingAssistant.showPlacedOrder();
+    assert.deepStrictEqual([...page.document.querySelectorAll('.placed-step')], [], label + ': a stepper that could only fail');
+    assert.strictEqual(page.document.getElementById('placed-mode').hidden, true, label + ': offered to ask when asking is refused');
+    page.window.close();
+  }
+
+  const paid = voicePage({ order: placedOrder({ can_change: false, why_not: 'already_paid', paid: true }), reply: { status: 200, body: {} } });
   paid.window.OrderingAssistant.placedPanel('042', { orderId: 'o1' });
   await paid.window.OrderingAssistant.showPlacedOrder();
   assert.strictEqual(paid.document.getElementById('placed-cancel').hidden, true, 'a paid order offers to cancel itself');
-  window.close();
   paid.window.close();
 });
 
@@ -3068,4 +3100,37 @@ test('another shop at the same table number is not the same table', async () => 
   const done = await window.OrderingVoice.sendToKitchen({ confirmed: true });
   assert.ok(!done.added_to_open_order, 'an order at another shop was treated as this table');
   assert.strictEqual(calls.checkout.length, 1);
+});
+
+/*
+ * THERE IS NO REVIEW BUTTON.
+ *
+ * Owner: "AI asking to review and click review button. there is not review
+ * button."
+ *
+ * He is right, and the word came from the page itself: send_to_kitchen
+ * answered with next:"review", the model reads that answer as JSON and says
+ * what it finds. The button under the conversation was renamed to Confirm
+ * and send a while ago - the review is the minute AFTER the order goes - so
+ * he was hunting the screen for something that had been gone for weeks.
+ */
+test('nothing the model reads back names a button that is not on the screen', async () => {
+  const page = voicePage({
+    voice: 'live',
+    table: '',
+    fulfilment: ['delivery'],
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  const answer = await page.window.OrderingVoice.sendToKitchen({ confirmed: true });
+  assert.strictEqual(answer.ok, false);
+  assert.strictEqual(answer.reason, 'needs_details');
+  assert.ok(
+    !/review/i.test(JSON.stringify(answer)),
+    'the answer the model reads still says "review", so it will tell the customer to press a button that does not exist'
+  );
+  page.window.close();
+
+  /* And the button really does say something else. */
+  const html = read('products.html');
+  assert.match(html, /id="assistant-review"[\s\S]{0,200}Confirm &amp; send/, 'the one button no longer says Confirm and send');
 });
