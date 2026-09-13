@@ -2366,6 +2366,41 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   border-color: var(--ink-soft);
 }
 
+/*
+ * WHILE IT IS ACTUALLY TALKING, the orb follows the voice.
+ *
+ * assets/assistant/talking.js measures the audio coming back and writes
+ * --voice-level, nothing to one, many times a second. A ring grows out of the
+ * orb with it and the orb itself swells a few per cent: enough to read as
+ * speech, small enough to forget. Owner: "little not too much annoy."
+ *
+ * The keyframe loop below is what plays when there is nothing to follow - a
+ * browser with no AudioContext, or the turn-by-turn mode, where the voice is
+ * the phone's own and never passes through here. data-follows is the switch
+ * between them, so the two never run at once.
+ */
+.voice-orb[data-follows="yes"] {
+  --voice-level: 0;
+  transform: scale(calc(1 + var(--voice-level) * 0.12));
+  transition: none;
+}
+
+.voice-orb[data-follows="yes"]::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: calc(var(--voice-level) * 0.5);
+  transform: scale(calc(1 + var(--voice-level) * 0.25));
+  pointer-events: none;
+}
+
+/* The orb has to be a positioning context for that ring, and it was not. */
+.voice-orb {
+  position: relative;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .voice-orb[data-state="listening"] {
     animation: orb-breathe 1.6s ease-in-out infinite;
@@ -2373,6 +2408,11 @@ dialog.assistant[data-voice="on"] .assistant-chips {
 
   .voice-orb[data-state="speaking"] {
     animation: orb-talk 0.6s ease-in-out infinite;
+  }
+
+  /* Following the real voice beats a loop, so the loop stands down. */
+  .voice-orb[data-follows="yes"] {
+    animation: none;
   }
 
   .voice-orb[data-state="connecting"],
