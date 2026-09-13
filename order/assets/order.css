@@ -2687,8 +2687,16 @@ dialog.assistant[data-voice="on"] .assistant-chips {
  * Talking, not chatting: while a voice line is open the transcript is hidden
  * and the order takes its place. A customer on a call is listening, not
  * reading, and the one thing worth looking at is what they have ordered.
+ *
+ * UNLESS SOMEBODY IS LOOKING FOR WHAT WENT WRONG. This rule is why
+ * ?transcript=1 appeared to do nothing: the words were written into the log
+ * and the log was hidden outright. Owner: "first show what transcribtion text
+ * converstation in the screen. then only i know what input gone to ai."
+ *
+ * :has() on the log itself, so it comes back only once there is a transcript
+ * line in it - which only happens on a visit that asked for one.
  */
-dialog.sheet[data-voice="on"] .assistant-log {
+dialog.sheet[data-voice="on"] .assistant-log:not(:has([data-transcript])) {
   display: none;
 }
 
@@ -3084,6 +3092,42 @@ dialog.sheet.assistant .assistant-ask {
 dialog.sheet.assistant .assistant-foot {
   flex: 0 0 auto;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* The one question this screen asks before it can send. */
+.assistant-ways {
+  flex: 0 0 auto;
+  margin-top: 12px;
+}
+
+.assistant-ways-title {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-ways-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Equal width and equal weight: neither way is the one we would rather they
+   picked, and a big button beside a small one is a thumb being steered. */
+.assistant-way {
+  flex: 1 1 140px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* ------------------------------------------- the one button that sends */
@@ -4248,4 +4292,157 @@ dialog.sheet[open]::backdrop {
 
 .history-cancel[disabled] {
   opacity: 0.5;
+}
+
+/* ------------------------------------------------ seeing what it heard
+ *
+ * ?transcript=1 turns the spoken words into the conversation for that visit,
+ * which is normally empty on a call. Owner: "also enable what is converted
+ * text i want to see. soemthing wrong."
+ *
+ * The log is short while an order is up, because the order is what a customer
+ * checks. Somebody who has deliberately asked to see the words wants to read
+ * them, so it gets room - and only then.
+ */
+dialog.sheet.assistant:has(.assistant-order:not([hidden])) .assistant-log:has([data-transcript]) {
+  max-height: 38vh;
+}
+
+/*
+ * A transcript that came back in the wrong alphabet is the single most useful
+ * thing this can show about a Tamil call, so it is marked rather than left to
+ * be squinted at.
+ */
+.assistant-msg[data-transcript] .assistant-bubble {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.assistant-msg[data-script="other"] .assistant-bubble {
+  border: 1px dashed var(--warn);
+  color: var(--warn);
+}
+
+/* ================================================ what the line is doing
+ *
+ * Owner, three times: "i asked you so many times show what was talking or
+ * server logs you show me."
+ *
+ * Only on a visit that asked for it with ?transcript=1. A customer ordering
+ * lunch must never see any of this, so there is no switch on the page - only
+ * the link.
+ */
+.voice-debug {
+  flex: 0 0 auto;
+  max-height: 34vh;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.voice-debug-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.voice-debug-clear {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.voice-debug-list {
+  margin: 0;
+  padding: 4px 10px 8px;
+  list-style: none;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.voice-debug-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.voice-debug-when {
+  display: inline-block;
+  min-width: 3.6em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.voice-debug-detail {
+  margin-top: 2px;
+  padding-left: 3.6em;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* What was heard is the line worth finding at a glance, and an error is the
+   line worth finding without looking. */
+.voice-debug-row[data-kind="heard"] .voice-debug-detail { color: var(--ink); font-weight: 600; }
+.voice-debug-row[data-kind="said"] .voice-debug-detail { color: var(--ok); }
+.voice-debug-row[data-kind="tool"] .voice-debug-detail { color: var(--warn); }
+.voice-debug-row[data-kind="error"] { background: var(--danger-bg); }
+.voice-debug-row[data-kind="error"] .voice-debug-what { color: var(--danger); font-weight: 700; }
+.voice-debug-row[data-kind="did"] .voice-debug-what { color: var(--accent); }
+
+/* ------------------------------------------------- something is happening
+ *
+ * Owner: "if something is loading show loader."
+ *
+ * A button that has been tapped and is waiting on a shop server looks exactly
+ * like a button that did nothing, which is what makes somebody tap it again.
+ * Every control that goes to the server wears this while it waits.
+ */
+.is-working {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.is-working::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  color: var(--on-accent);
+  animation: is-working-spin 0.7s linear infinite;
+}
+
+/* On a pale button the ring has to read against the paper, not the accent. */
+.assistant-way.is-working::after,
+.placed-step.is-working::after,
+.assistant-more-item.is-working::after,
+.placed-cancel.is-working::after {
+  color: var(--ink-soft);
+}
+
+@keyframes is-working-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-working::after { animation: none; opacity: 0.6; }
 }

@@ -412,6 +412,49 @@
     });
   }
 
+  /* ------------------------------------------------- seeing what it heard
+   *
+   * Owner: "also enable what is converted text i want to see. soemthing
+   * wrong. i see its flickering not showing thing."
+   *
+   * A call normally shows no text at all - his own rule, and the right one
+   * for a customer, who is listening rather than reading. But when something
+   * IS wrong, the words the line thought it heard are the evidence, and
+   * guessing at them from outside is how an afternoon gets lost.
+   *
+   * ?transcript=1 turns them on for that visit and nothing else. Remembered
+   * for the session, because the flag would otherwise be lost the moment the
+   * page walks from the arrival URL to products.html.
+   */
+  var TRANSCRIPT_KEY = "posnic_show_transcript";
+
+  function showingTranscript() {
+    try {
+      var asked = new URLSearchParams(window.location.search).get("transcript");
+      if (asked === "1") sessionStorage.setItem(TRANSCRIPT_KEY, "1");
+      if (asked === "0") sessionStorage.removeItem(TRANSCRIPT_KEY);
+      return sessionStorage.getItem(TRANSCRIPT_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /*
+   * One line of what was heard or said, marked with the alphabet it came back
+   * in - because "the transcript is in Kannada again" is the single most
+   * useful thing this can tell anybody about a Tamil call.
+   */
+  function transcribed(who, text, script) {
+    if (!text) return;
+    var a = assistant();
+    if (!a || !a.bubble) return;
+    var row = a.bubble(who === "me" ? "me" : "ai", text);
+    if (row && row.setAttribute) {
+      row.setAttribute("data-transcript", "yes");
+      if (script) row.setAttribute("data-script", script);
+    }
+  }
+
   /*
    * Tamil was heard. NOTED, AND NOTHING IS SENT.
    *
@@ -539,8 +582,8 @@
    * When it goes, the assistant is told, because it is mid-conversation and
    * must not carry on asking whether to send something that has gone.
    */
-  async function sendNow() {
-    var done = await sendToKitchen({ confirmed: true });
+  async function sendNow(way) {
+    var done = await sendToKitchen(way ? { confirmed: true, fulfilment: way } : { confirmed: true });
     if (done.ok) {
       tellTheAssistant(
         'The customer pressed "Confirm and send" and the order has gone to the kitchen. Say in ONE sentence that it has gone and will be served soon. Do not read the order back.'
@@ -953,6 +996,14 @@
     } catch (e) {
       return;
     }
+    /* Every event on the screen, where the shop asked to see them. This is
+       the only place the whole line is visible, and it is what answers "why
+       does it say ok with nobody talking". assets/assistant/debug.js. */
+    try {
+      if (window.VoiceDebug) window.VoiceDebug.event(ev);
+    } catch (e) {
+      /* a panel that fails must never take the conversation with it */
+    }
     var a = assistant();
     switch (ev.type) {
       case "input_audio_buffer.speech_started":
@@ -963,14 +1014,20 @@
         if (!heard) break;
         var script = scriptOf(heard);
         if (script === "tamil") lockTamil();
-        if (script === "other") {
-          /* Tamil written down in the wrong alphabet: not worth showing.
-             The model heard the audio, not this; the next line comes back
-             in Tamil. */
-          lockTamil();
-          break;
-        }
-        /* Not drawn: on a call the order stands in for the transcript. */
+        if (script === "other") lockTamil();
+        /*
+         * NORMALLY NOT DRAWN: on a call the order stands in for the
+         * transcript, which is the owner's own rule - "no need to show
+         * conversation as text in the chat. just hide."
+         *
+         * With ?transcript=1 it is drawn anyway, because when something IS
+         * wrong the words the line thought it heard are the evidence. Owner:
+         * "also enable what is converted text i want to see. soemthing
+         * wrong." Including a transcript that came back in the wrong
+         * alphabet - especially that one, since it is what Tamil misheard
+         * looks like.
+         */
+        if (showingTranscript()) transcribed("me", heard, script);
         break;
       }
       case "response.created":
@@ -978,7 +1035,9 @@
         break;
       case "response.output_audio_transcript.done":
       case "response.audio_transcript.done":
-        /* Not drawn either; the customer is listening, not reading. */
+        /* Not drawn either; the customer is listening, not reading - unless
+           somebody is looking for what went wrong. */
+        if (showingTranscript()) transcribed("ai", String(ev.transcript || "").trim(), "");
         break;
       case "response.function_call_arguments.done":
         /* Answered together at response.done; see runToolCalls. */
@@ -1016,10 +1075,48 @@
    * a microphone request only while the tap is fresh; a database read
    * first, and the answer is "not allowed" with no dialog shown.
    */
+  /*
+   * WHAT THE MICROPHONE IS ASKED FOR.
+   *
+   * Owner: "ai keep saying ok ok ok. coz may be surrounding sound", and then
+   * "i want see mic noise cancellation".
+   *
+   * This asked for `audio: true`, which is the bare default - a raw
+   * microphone with nothing switched on. Every browser can do better, and in
+   * a restaurant the difference is the whole feature:
+   *
+   *   noiseSuppression   the fan, the fridge, the room. Steady sound the
+   *                      phone can recognise as not-speech and remove.
+   *   echoCancellation   the assistant's OWN voice coming back in through the
+   *                      speaker. Without it the line hears itself, decides
+   *                      somebody spoke, and answers - which is how a
+   *                      conversation talks itself in circles.
+   *   autoGainControl    a customer half a metre from the phone in a loud
+   *                      room, brought up to a level the far end can use.
+   *
+   * ASKED FOR, NOT DEMANDED. These are plain values rather than `{ exact: }`,
+   * so a device that cannot do one of them gives what it can instead of
+   * refusing the microphone altogether - and a refused microphone is no
+   * ordering at all, which is much worse than a noisy one.
+   *
+   * The channel and rate matter too: one channel at 16kHz is what speech
+   * recognition wants, and asking for less than the phone would send by
+   * default means less of the room arriving at the far end.
+   */
+  var MICROPHONE = {
+    audio: {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: true,
+      channelCount: 1,
+      sampleRate: 16000,
+    },
+  };
+
   function grabMicrophone() {
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") return null;
     try {
-      var p = navigator.mediaDevices.getUserMedia({ audio: true });
+      var p = navigator.mediaDevices.getUserMedia(MICROPHONE);
       /* A rejection nobody has awaited yet is still a rejection; keep it
          from surfacing as an unhandled error while start() gets there. */
       if (p && p.catch) p.catch(function () {});
