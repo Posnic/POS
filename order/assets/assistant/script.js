@@ -639,6 +639,68 @@
   }
 
   /*
+   * WHAT THEY HAVE CHANGED BUT NOT YET SENT.
+   *
+   * Owner: "flow is not correct. customer cant change in one touch. after
+   * changes. he need to review and click confirmation."
+   *
+   * Every plus and minus used to go straight to the shop. That is one tap
+   * between a thumb on a moving bus and a kitchen cooking something nobody
+   * ordered, and it gave the customer nothing to look at before committing -
+   * they were editing the kitchen live. Now a tap moves a number ON THIS
+   * SCREEN, the screen says what it will send, and one button sends the lot.
+   *
+   * ABSOLUTE QUANTITIES, keyed by item, which is what the change endpoint
+   * takes: a line staged to 0 is a line taken off, and an id that is not on
+   * the order yet is a line added. So a whole edit - two more of this, none
+   * of that, one of something new - is ONE request when they confirm.
+   */
+  var staged = { forOrder: "", lines: {} };
+
+  function stageFor(orderId) {
+    if (staged.forOrder !== String(orderId || "")) {
+      staged.forOrder = String(orderId || "");
+      staged.lines = {};
+    }
+  }
+
+  function stagedCount() {
+    return Object.keys(staged.lines).length;
+  }
+
+  function dropStaged() {
+    staged.lines = {};
+  }
+
+  /** What the customer would be sending: only what actually differs. */
+  function stagedChanges(said) {
+    var was = {};
+    (said && said.items ? said.items : []).forEach(function (line) {
+      was[String(line.item_id || "")] = Number(line.quantity) || 0;
+    });
+    var out = [];
+    Object.keys(staged.lines).forEach(function (id) {
+      var want = Number(staged.lines[id].quantity) || 0;
+      if (want !== (was[id] || 0)) out.push({ item_id: id, quantity: want });
+    });
+    return out;
+  }
+
+  /** Move a line by one, on this screen only. */
+  function stageStep(said, id, name, by) {
+    stageFor(placedOrder.id);
+    var was = 0;
+    (said && said.items ? said.items : []).forEach(function (line) {
+      if (String(line.item_id || "") === String(id)) was = Number(line.quantity) || 0;
+    });
+    var now = staged.lines[id] ? Number(staged.lines[id].quantity) || 0 : was;
+    var want = Math.max(0, Math.min(20, now + by));
+    staged.lines[id] = { quantity: want, name: String(name || (staged.lines[id] || {}).name || "") };
+    /* Back where it started is not a change at all, so it stops being one. */
+    if (want === was) delete staged.lines[id];
+  }
+
+  /*
    * Past the minute, but still something a person could say yes to.
    *
    * The shop's own reasons, from customer-order.service: too_late is the
@@ -651,7 +713,12 @@
     return String(said.why_not || "") === "too_late";
   }
 
+  /* What the shop last said this order is. Staging is relative to it, and
+     the screen is repainted from it on every tap without asking again. */
+  var lastSaid = null;
+
   function paintPlacedOrder(said) {
+    lastSaid = said;
     var box = el("placed-order");
     if (!box) return;
     if (!said || said.cancelled) {
@@ -675,14 +742,39 @@
       if (asking) mode.textContent = say("The kitchen has it. A change now goes to the shop to confirm.");
     }
 
+    stageFor(placedOrder.id);
     var lines = el("placed-lines");
     if (lines) {
       lines.textContent = "";
-      (said.items || []).forEach(function (line) {
+      /* The order as the shop has it, plus anything staged that is not on
+         it yet, so a line being added is visible before it is sent. */
+      var drawing = (said.items || []).map(function (line) {
+        return {
+          item_id: String(line.item_id || ""),
+          name: String(line.name || ""),
+          quantity: Number(line.quantity) || 0
+        };
+      });
+      var already = {};
+      drawing.forEach(function (line) { already[line.item_id] = true; });
+      Object.keys(staged.lines).forEach(function (id) {
+        if (!already[id]) drawing.push({ item_id: id, name: staged.lines[id].name, quantity: 0 });
+      });
+
+      drawing.forEach(function (line) {
+        var want = staged.lines[line.item_id]
+          ? Number(staged.lines[line.item_id].quantity) || 0
+          : line.quantity;
         var row = document.createElement("li");
+        /* Marked, so the customer can see what they have moved before
+           they send it - including a line taken down to nothing, which
+           stays on screen so it can be put back. */
+        if (staged.lines[line.item_id]) {
+          row.setAttribute("data-staged", want === 0 ? "gone" : "moved");
+        }
         var qty = document.createElement("span");
         qty.className = "placed-line-qty";
-        qty.textContent = String(Number(line.quantity) || 0) + "\u00d7";
+        qty.textContent = String(want) + "\u00d7";
         var name = document.createElement("span");
         name.className = "placed-line-name";
         name.textContent = String(line.name || "");
@@ -716,10 +808,11 @@
             button.type = "button";
             button.className = "placed-step";
             button.setAttribute("data-item", String(line.item_id || ""));
-            button.setAttribute(
-              "data-quantity",
-              String(Math.max(0, (Number(line.quantity) || 0) + step[0]))
-            );
+            /* WHICH WAY, not what to send. The quantity is worked out when
+               the customer confirms, from what they have staged - a button
+               carrying a fixed number could only ever be pressed once. */
+            button.setAttribute("data-by", String(step[0]));
+            button.setAttribute("data-name", String(line.name || ""));
             button.setAttribute("aria-label", say(step[2], { name: line.name }));
             button.textContent = step[1];
             row.appendChild(button);
@@ -727,6 +820,35 @@
         }
         lines.appendChild(row);
       });
+    }
+
+    /*
+     * NOTHING IS SENT UNTIL THIS IS PRESSED.
+     *
+     * Owner: "customer cant change in one touch. after changes. he need to
+     * review and click confirmation."
+     *
+     * Every plus went straight to the shop, which put one tap between a
+     * thumb and a kitchen cooking something nobody ordered, and gave the
+     * customer nothing to look at before committing. The bar appears only
+     * once something has actually moved, says how much is waiting, and
+     * sends the whole edit in ONE request.
+     */
+    var bar = el("placed-confirm-bar");
+    if (bar) {
+      var pending = stagedChanges(said).length;
+      bar.hidden = pending === 0;
+      var go = el("placed-confirm");
+      if (go) {
+        go.textContent = said.can_change
+          ? say("Confirm the change")
+          : say("Ask the shop for this change");
+      }
+      var count = el("placed-confirm-count");
+      if (count) {
+        count.textContent =
+          pending === 1 ? say("1 line changed") : say("{n} lines changed", { n: pending });
+      }
     }
 
     /* Something alongside, while there is still time to add it. */
@@ -740,6 +862,7 @@
         button.type = "button";
         button.className = "placed-more-item";
         button.setAttribute("data-add", String(item.id));
+        button.setAttribute("data-name", String(item.name || ""));
         button.setAttribute("aria-label", say("Add {name}", { name: item.name }));
         var plus = document.createElement("span");
         plus.className = "placed-more-plus";
@@ -1170,42 +1293,58 @@
         var target = event.target;
         if (!target || !target.closest) return;
 
+        /*
+         * A TAP MOVES A NUMBER ON THIS SCREEN. Nothing leaves the phone
+         * until Confirm is pressed - see stageStep and the bar below.
+         */
         var step = target.closest(".placed-step");
         if (step) {
-          working(step, true);
-          var moved = await changePlaced("items", {
-            items: [
-              {
-                item_id: step.getAttribute("data-item"),
-                quantity: Number(step.getAttribute("data-quantity")) || 0
-              }
-            ]
-          });
-          if (moved && moved.failed) actionLine(say(refusal(moved.failed)));
-          else if (moved && moved.requested) actionLine(say("The shop has been asked to change it"));
-          /* DRAWN FROM THE ANSWER, not from a second question. The change
-             now comes back as the whole order, so asking again would cost a
-             request for nothing - and the limiter that covers both is what
-             emptied this panel mid-tap. */
+          stageStep(
+            lastSaid,
+            step.getAttribute("data-item"),
+            step.getAttribute("data-name"),
+            Number(step.getAttribute("data-by")) || 0
+          );
+          paintPlacedOrder(lastSaid);
+          return;
+        }
+
+        /* Everything staged, in one request. */
+        var confirm = target.closest("#placed-confirm");
+        if (confirm) {
+          var wanted = stagedChanges(lastSaid);
+          if (!wanted.length) return;
+          working(confirm, true);
+          var moved = await changePlaced("items", { items: wanted });
+          working(confirm, false);
+          if (moved && moved.failed) {
+            actionLine(say(refusal(moved.failed)));
+            /* Kept, not thrown away: the customer can try again or undo it
+               themselves rather than rebuild an edit the shop refused. */
+            await redraw(lastSaid);
+            return;
+          }
+          dropStaged();
+          if (moved && moved.requested) actionLine(say("The shop has been asked to change it"));
+          else actionLine(say("Your order has been changed"));
           await redraw(moved);
-          working(step, false);
+          return;
+        }
+
+        /* Put it back the way the shop has it. */
+        var undo = target.closest("#placed-discard");
+        if (undo) {
+          dropStaged();
+          paintPlacedOrder(lastSaid);
           return;
         }
 
         var add = target.closest(".placed-more-item");
         if (add) {
-          working(add, true);
-          var added = await changePlaced("items", {
-            items: [{ item_id: add.getAttribute("data-add"), quantity: 1 }]
-          });
-          if (added && added.failed) {
-            actionLine(say(refusal(added.failed)));
-            working(add, false);
-            return;
-          }
-          if (added && added.requested) actionLine(say("The shop has been asked to add it"));
-          await redraw(added);
-          working(add, false);
+          /* Staged like any other change, so one Confirm covers "two more of
+             this and a lime soda" rather than sending them one at a time. */
+          stageStep(lastSaid, add.getAttribute("data-add"), add.getAttribute("data-name"), 1);
+          paintPlacedOrder(lastSaid);
           return;
         }
 

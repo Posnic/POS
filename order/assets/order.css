@@ -3327,6 +3327,66 @@ dialog.sheet.assistant .assistant-foot {
   line-height: 1;
 }
 
+/* The edit that is waiting to be sent. Quiet until something has moved, and
+   then the only loud thing on the screen, because it is the one step left. */
+.placed-confirm-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 10px;
+  border: 1px solid var(--line, #d9d5cb);
+  border-radius: 10px;
+  background: var(--paper-2, #faf8f3);
+}
+
+.placed-confirm-count {
+  font-size: 13px;
+  color: var(--ink-soft, #5a5a52);
+}
+
+.placed-confirm-row {
+  display: flex;
+  gap: 8px;
+}
+
+.placed-confirm {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink, #1d1d1b);
+  color: var(--paper, #fff);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.placed-discard {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line, #d9d5cb);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft, #5a5a52);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* A line the customer has moved but not yet sent, and one they have taken
+   down to nothing - still on screen, so it can be put back. */
+.placed-lines li[data-staged] .placed-line-qty {
+  font-weight: 700;
+  color: var(--ink, #1d1d1b);
+}
+
+.placed-lines li[data-staged="gone"] .placed-line-name {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
 .placed-actions {
   display: flex;
   justify-content: flex-end;
