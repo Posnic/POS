@@ -1668,17 +1668,15 @@ const getTablesWithActiveOrders = async (branchId) => {
       /*
        * REQUIRED HERE, NOT AT THE TOP OF THE FILE.
        *
-       * A top-level require of the branch model closes a cycle - the models
-       * reach the repositories, which reach back here - and the file that
-       * loses is whichever one is mid-initialisation when the circle closes.
-       * On CI it was customer.model.js, which got `{}` where BaseModel should
-       * have been and died on `class CustomerModel extends BaseModel`, taking
-       * a whole suite with it and telling nobody why.
+       * branch.model pulls in customer.model and supplier-legacy.model, both of
+       * which `extend BaseModel`. Required from this file's top level that
+       * closes a cycle: base.model is still half-built when customer.model
+       * reads it, so `class CustomerModel extends BaseModel` sees `{}` and
+       * throws "Class extends value is not a constructor" - which surfaces as
+       * an entire suite failing to run, nowhere near the line that caused it.
        *
-       * Requiring it at the one place it is used breaks the circle without
-       * giving up what it is for: this must go through the tenant-aware model
-       * rather than a process-wide connection, or one shop's table limit gets
-       * applied to another shop's floor.
+       * The same lazy-require note is on print-job.repository.js for the same
+       * reason. One cached require per call costs nothing.
        */
       const Branch = require('../models/branch.model');
       const branch = await Branch.findById(branchObjectId).select('table_order_limit').lean();
