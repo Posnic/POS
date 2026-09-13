@@ -7714,6 +7714,50 @@ class SalesRepository {
          the shop's own floor, which needs no address. */
       const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
 
+      /*
+       * ONE OPEN ORDER PER TABLE, unless this shop says otherwise.
+       *
+       * Owner: "basically two orders in single table not possible", and then
+       * "by default one order per tabel... multiple order or only one order or
+       * maximum number of order. keep the settings."
+       *
+       * Two orders on one table was first reported as a duplicate-order bug,
+       * and the duplicate itself is fixed (a key on the order, a unique index
+       * behind it). This is the different, deliberate case: a second order,
+       * genuinely placed, on a table that already has one open. On most floors
+       * that is a mistake - somebody chose the wrong table - and the cost of
+       * finding out is a bill split in two at the end of the meal.
+       *
+       * Enforced HERE rather than on the handset because there is more than
+       * one handset, and because two waiters can tap Send on the same table in
+       * the same second. A client-side check is a courtesy; this is the rule.
+       *
+       * ADDING TO AN ORDER IS NOT PLACING ONE. This runs only on the path that
+       * creates a new sale; editing an existing ticket goes elsewhere entirely
+       * and is untouched, which is what makes a limit of 1 usable rather than
+       * infuriating.
+       */
+      const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
+      const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
+      if (openTableLimit > 0 && wantsTable) {
+        const openNow = await db.collection('sales').countDocuments({
+          branch_id: branchObjectId,
+          sale_process: 'KOT',
+          payment_status: 'Unpaid',
+          table_number: wantsTable,
+        });
+        if (openNow >= openTableLimit) {
+          return {
+            status: false,
+            message:
+              openTableLimit === 1
+                ? `Table ${wantsTable} already has an open order. Add to it, or settle it first.`
+                : `Table ${wantsTable} already has ${openNow} open orders, which is the most this shop allows.`,
+            data: { table_number: wantsTable, open_orders: openNow, limit: openTableLimit },
+          };
+        }
+      }
+
       const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
