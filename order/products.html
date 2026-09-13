@@ -325,6 +325,34 @@
                     <span class="placed-token-label">Token</span>
                     <span class="placed-token-number" id="placed-token">--</span>
                 </div>
+
+                <!--
+                    THE ORDER'S OWN SCREEN, which opens as the scene settles.
+                    Before this the confirmation stopped at a token and a Done
+                    button, so the conversation had been replaced by a dead
+                    end - the owner read it as having the call cut on him.
+                    From here the order can still be changed, added to, or
+                    called off, and the line stays up throughout.
+                -->
+                <div class="placed-order" id="placed-order" hidden>
+                    <div class="placed-order-head">
+                        <h3 class="placed-order-title">Your order</h3>
+                        <span class="placed-clock" id="placed-clock"></span>
+                    </div>
+                    <ul class="placed-lines" id="placed-lines"></ul>
+
+                    <!-- Things that go with what they ordered. One row, tapped
+                         to add; never a catalogue, and never a second ask. -->
+                    <div class="placed-more" id="placed-more" hidden>
+                        <h4 class="placed-more-title">Anything else?</h4>
+                        <div class="placed-more-row" id="placed-more-row"></div>
+                    </div>
+
+                    <div class="placed-actions">
+                        <button type="button" class="placed-cancel" id="placed-cancel">Cancel the order</button>
+                    </div>
+                </div>
+
                 <button type="button" class="placed-done" id="placed-done">Done</button>
             </div>
             <!-- The way out of the conversation and into the order. The page's

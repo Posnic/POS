@@ -492,7 +492,10 @@
     live.placed = String(placed.token);
     live.placedId = String(placed.saleId || "");
     var a = assistant();
-    if (a && a.placedLine) a.placedLine(live.placed);
+    /* With the id as well as the token, the confirmation can open into the
+       order itself rather than stop at a number. */
+    if (a && a.placedPanel) a.placedPanel(live.placed, { orderId: live.placedId });
+    else if (a && a.placedLine) a.placedLine(live.placed);
     return {
       ok: true,
       token: live.placed,
