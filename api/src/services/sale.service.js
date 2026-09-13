@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const Sale = require('../models/sale.model');
+const Branch = require('../models/branch.model');
 const BaseModel = require('../models/base.model');
 const StockLogsRepository = require('../repositories/stock-log.repository');
 const ItemRepository = require('../repositories/item.repository');
@@ -1658,18 +1659,14 @@ const getTablesWithActiveOrders = async (branchId) => {
      * Read once for the whole floor rather than per table. Absent on a branch
      * written before the setting existed, and one is the default there.
      *
-     * Through BaseModel.getDb(), NOT mongoose.connection.db. Each shop has its
-     * own database and one process serves many of them, so the process-wide
-     * connection is whichever shop happened to connect first - this would have
-     * read another restaurant's table limit and applied it to this floor. CI
-     * refuses that spelling on purpose; see tests/unit/db/single-entry-point.
+     * Through the tenant-aware Branch model, not a raw collection query. Each
+     * shop has its own database and one process serves many of them, so a
+     * process-wide connection could read another restaurant's table limit and
+     * apply it to this floor.
      */
     let tableOrderLimit = 1;
     try {
-      const db = await BaseModel.getDb();
-      const branch = await db
-        .collection('branches')
-        .findOne({ _id: branchObjectId }, { projection: { table_order_limit: 1 } });
+      const branch = await Branch.findById(branchObjectId).select('table_order_limit').lean();
       const raw = branch && branch.table_order_limit;
       tableOrderLimit = Number.isFinite(Number(raw)) ? Number(raw) : 1;
     } catch (e) {
