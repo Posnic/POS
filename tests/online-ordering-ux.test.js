@@ -91,6 +91,9 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
     lift(src, 'renderProductCards'),
+    /* var, not let: a let in a vm context is a lexical binding the test
+       cannot reach, and this one has to be settable from outside. */
+    'var orderJustPlaced = false;',
     lift(src, 'renderCart'),
   ].join('\n');
 
@@ -1938,6 +1941,56 @@ test('the call is still up once the order is on screen', () => {
   const script = read('assets/assistant/script.js');
   assert.match(script, /if \(beat === "cooking"\) showPlacedOrder\(\);/, 'the order never opens on its own');
   assert.match(read('assets/assistant/voice.js'), /a\.placedPanel\(live\.placed, \{ orderId: live\.placedId \}\)/);
+});
+
+test('an order that has gone does not walk the customer back to the menu', async () => {
+  /*
+   * THE BUG THE OWNER HIT TWICE. "after sending to order ai voice suddenly
+   * closing. no fucking animation is going order to kitchen."
+   *
+   * checkout() empties the basket and calls renderCart([]). renderCart's
+   * empty-basket branch navigated to products.html after two seconds -
+   * wherever it was called from. On products.html, with the assistant sheet
+   * open, that reloaded the page: the dialog went, the voice line went with
+   * it, and the kitchen scene died at 2s, before its last beat at 2.9s.
+   *
+   * Nothing caught it because the harness stubs setTimeout to a no-op. This
+   * keeps what was scheduled.
+   */
+  const onMenu = page('products.html', { cart: [], products: {} });
+  const scheduled = [];
+  onMenu.box.setTimeout = (fn, ms) => { scheduled.push(ms); return 1; };
+  await onMenu.box.renderCart([]);
+  assert.deepStrictEqual(scheduled, [], 'the menu page still sends itself somewhere after an order');
+
+  /* The basket page still does what it says on it: a customer who emptied
+     their own basket is taken back to the menu. */
+  const onBasket = page('cart.html', { cart: [], products: {} });
+  const basketScheduled = [];
+  onBasket.box.setTimeout = (fn, ms) => { basketScheduled.push(ms); return 1; };
+  await onBasket.box.renderCart([]);
+  assert.deepStrictEqual(basketScheduled, [2000], 'an emptied basket no longer goes back to the menu');
+
+  /* But not when the basket is empty because it was SENT. */
+  const afterSending = page('cart.html', { cart: [], products: {} });
+  const sentScheduled = [];
+  afterSending.box.setTimeout = (fn, ms) => { sentScheduled.push(ms); return 1; };
+  afterSending.box.orderJustPlaced = true;
+  await afterSending.box.renderCart([]);
+  assert.deepStrictEqual(sentScheduled, [], 'a basket emptied by checkout was read as one the customer emptied');
+});
+
+test('checkout says the basket was sent, not emptied', () => {
+  /* The flag has to be raised around the clear, or renderCart cannot tell
+     the two apart and the test above proves nothing about the real page. */
+  const db = read('indexedDB.js');
+  const raise = db.indexOf('orderJustPlaced = true;');
+  const clear = db.indexOf('await saveCartData([]);', raise);
+  const drawn = db.indexOf('await renderCart([]);', raise);
+  const lower = db.indexOf('orderJustPlaced = false;', raise);
+  assert.ok(raise !== -1 && clear > raise, 'the basket is cleared before checkout says it was sent');
+  assert.ok(drawn > clear, 'renderCart is not drawn inside the flag');
+  assert.ok(lower > drawn, 'the flag is never lowered, so the basket page stops going back to the menu');
 });
 
 test('the token screen downloads nothing and shows no bill', () => {
