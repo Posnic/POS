@@ -692,6 +692,19 @@
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">KOT#</th>
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Device IP</th>
                                     <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                    <!--
+                                      HOW LONG IT TOOK, ON THIS COUNTER.
+
+                                      The order-to-paper numbers behind the
+                                      ESC/POS work were measured on one
+                                      developer machine with two virtual
+                                      printers. A shop needs to be able to read
+                                      its own, because the standard set for this
+                                      was "every seconds counts here" and nobody
+                                      could answer that with anything but a
+                                      number off somebody else's laptop.
+                                    -->
+                                    <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
                                     <th style="padding:10px 12px;text-align:center;font-weight:700;color:#374151;">Actions</th>
                                 </tr>
                             </thead>
@@ -2158,6 +2171,27 @@
                 const kindColors = { new: '#28a745', modified: '#fd7e14', edit: '#fd7e14', cancel: '#dc3545' };
                 const kindLabel  = { new: '🆕 New', modified: '✏️ Modified', edit: '✏️ Modified', cancel: '❌ Cancel' };
 
+                /*
+                 * Green under a second, amber under three, red past that, and
+                 * nothing at all for a ticket printed before this shipped - an
+                 * empty cell is honest, "0 ms" is not.
+                 *
+                 * `via` is called out only when it is the slow path. A ticket
+                 * that fell back to the window and PDF is roughly ten times
+                 * slower, and until now it looked exactly like a fast one in
+                 * this table.
+                 */
+                const speedHtml = (() => {
+                    if (!Number.isFinite(log.ms)) return '<span style="color:#9ca3af;">-</span>';
+                    const colour = log.ms < 1000 ? '#155724' : (log.ms < 3000 ? '#856404' : '#721c24');
+                    const bg     = log.ms < 1000 ? '#d4edda' : (log.ms < 3000 ? '#fff3cd' : '#f8d7da');
+                    const shown  = log.ms < 1000 ? `${log.ms} ms` : `${(log.ms / 1000).toFixed(1)} s`;
+                    const slow   = log.via === 'window'
+                        ? '<span style="font-size:10px;color:#856404;margin-left:4px;" title="Fell back to the window and PDF path, which is far slower than sending bytes">via window</span>'
+                        : '';
+                    return `<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:${bg};color:${colour};">${shown}</span>${slow}`;
+                })();
+
                 const printerHtml = (log.printers || []).map(p =>
                     `<span style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;margin:1px;
                         background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};
@@ -2186,6 +2220,7 @@
                     <td style="padding:10px 12px;font-weight:700;color:#374151;">#${log.kotNumber}</td>
                     <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#6f42c1;">${log.deviceIp || ', '}</td>
                     <td style="padding:10px 12px;">${printerHtml}</td>
+                    <td style="padding:10px 12px;">${speedHtml}</td>
                     <td style="padding:10px 12px;text-align:center;">
                         <button onclick='kotViewDetail(${JSON.stringify(log).replace(/'/g,"&apos;")})' title="View details"
                             style="background:#6f42c1;color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;margin:2px;">👁</button>
