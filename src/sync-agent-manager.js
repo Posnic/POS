@@ -228,9 +228,20 @@ class SyncAgentManager {
     });
 
     this.child.stdout.on('data', (d) => {
-      const line = String(d).trim();
-      console.log('[SyncAgent]', line);
-      this._trackSyncState(line);
+      /*
+       * A chunk is not a line. Node hands over whatever arrived, which on a
+       * busy cycle is several lines at once, and every reader below was
+       * written as though it were one. Testing the whole blob still finds a
+       * substring, so the online/offline notice happened to survive it; a
+       * regex does not, and would have read only the first of three
+       * collections a pull filled.
+       */
+      for (const line of String(d).split(/\r?\n/)) {
+        const text = line.trim();
+        if (!text) continue;
+        console.log('[SyncAgent]', text);
+        this._trackSyncState(text);
+      }
     });
     this.child.stderr.on('data', (d) => console.warn('[SyncAgent]', String(d).trim()));
 
@@ -265,7 +276,82 @@ class SyncAgentManager {
 
   // Surface connectivity transitions as native notifications so the shop
   // knows sync state without opening anything.
+  /*
+   * AN ORDER THAT ARRIVED FROM THE CLOUD REACHES THE KITCHEN AT ONCE.
+   *
+   * A captain handset off the shop Wi-Fi, or a customer's phone, writes its
+   * order into the tenant's CLOUD database. Nothing on this machine can find
+   * it until the sync agent pulls it down, so "check the local database
+   * instead of asking" returns nothing, faster.
+   *
+   * What happened once the agent had pulled it was the real cost. The row
+   * landed and the agent said nothing about it, so the kitchen printer found
+   * the ticket on its own thirty second fallback poll, and no chime sounded at
+   * all, because the chime listens for an event that only a sale rung up on
+   * THIS machine emits. Measured worst case, about forty-five seconds of
+   * silence for an order somebody is standing and waiting on.
+   *
+   * The channel was already here. This class spawns the agent and reads its
+   * stdout; it simply had nothing to hear. The agent now names each collection
+   * a pull actually filled, and an order collection becomes the same two
+   * events a counter sale raises. Both reach the printer and the speaker the
+   * way they always have, so nothing downstream has to know an order can now
+   * come from somewhere else.
+   *
+   * THE FORMAT IS A CONTRACT with Posnic/Gateway, shipped separately and
+   * updated separately. Pinned by a test on both sides. An agent too old to
+   * say this line is not broken by it: the fallback poll underneath is exactly
+   * what it always was.
+   */
+  _announcePulled(line) {
+    const m = /\[agent\] pulled (\d+) into ([a-z_]+)/.exec(line);
+    if (!m) return false;
+
+    const rows = Number(m[1]) || 0;
+    const collection = m[2];
+    /* Only what a kitchen or a counter is waiting on. Pulling customers or
+       items must not set off a chime in an empty shop. */
+    if (rows <= 0 || collection !== 'sales') return false;
+
+    try {
+      /*
+       * Required by name, not through the API's helpers: those ship outside
+       * the ASAR archive while this file lives inside it, so the two halves
+       * cannot rely on sharing a module instance. `process` is the bus both
+       * already have, which is the same reason kot-notify uses it.
+       */
+      process.emit('posnic:kot-created', {
+        branchId: '',
+        saleId: '',
+        /* Not 'created': this sale was made somewhere else and has only just
+           got here, and a log line saying so is the difference between
+           diagnosing a slow shop in a minute and in a morning. */
+        reason: 'synced',
+        at: Date.now(),
+      });
+      process.emit('posnic:order-attention', {
+        branchId: '',
+        saleId: '',
+        /* The short chime. An order that arrived is information; only one
+           held for approval is an alarm, and the agent cannot tell which this
+           is. The quieter sound is the safe answer. */
+        alert: 'received',
+        state: '',
+        total: 0,
+        at: new Date().toISOString(),
+      });
+      console.log(`[SyncAgent] ${rows} order(s) arrived from the cloud - printing now`);
+      return true;
+    } catch (e) {
+      /* A ticket that misses this still prints on the poll underneath. */
+      console.warn('[SyncAgent] could not announce a synced order:', e.message);
+      return false;
+    }
+  }
+
   _trackSyncState(line) {
+    this._announcePulled(line);
+
     if (line.includes('cycle failed') && this._syncState !== 'offline') {
       this._syncState = 'offline';
       this._notify(

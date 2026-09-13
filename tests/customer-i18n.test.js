@@ -89,12 +89,18 @@ test('every sentence the scripts compose around a number has its Tamil, with the
     ['order', 'assets', 'cart', 'script.js'],
     ['order', 'assets', 'payment', 'script.js'],
     ['order', 'assets', 'thankyou', 'script.js'],
+    /* The assistant and the order history say most of what a customer reads
+       after they have ordered, and neither was ever ratcheted. */
+    ['order', 'assets', 'assistant', 'script.js'],
+    ['order', 'assets', 'assistant', 'voice.js'],
+    ['order', 'assets', 'history', 'script.js'],
     ['menu', 'menu.js'],
   ];
   const missing = [];
   for (const file of scripts) {
     const src = read(...file);
-    const re = /\bt\(\s*(["'])((?:(?!\1).)+)\1/g;
+    /* say() is what the bundles call t() through, so both count. */
+    const re = /\b(?:t|say)\(\s*(["'])((?:(?!\1).)+)\1/g;
     let m;
     while ((m = re.exec(src))) {
       const key = m[2].replace(/\\(["'])/g, '$1');

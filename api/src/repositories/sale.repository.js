@@ -7,6 +7,9 @@ const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { notifyBillRequested } = require('../helpers/bill-notify');
+const { queuePrintJob } = require('./print-job.repository');
+const { buildBillPayload } = require('../helpers/bill-payload');
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7093,8 +7096,25 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
-
+      /*
+       * NO LICENCE CLAUSE, BECAUSE THE FLOOR HAS NONE.
+       *
+       * getTablesWithActiveOrders - the query that decides a table is even on
+       * screen - matches branch, sale_process and payment_status and nothing
+       * else. Adding `license` here made this narrower than the thing that
+       * offered the button: the table appeared, the waiter tapped Print bill,
+       * and the answer was "Nothing is open on that table" about an order they
+       * were looking at.
+       *
+       * Reproduced against a real database: with BaseModel.license unset it
+       * works, with it set the same ticket vanishes. A sale written by the
+       * handset carries no licence field of its own, so the clause matched
+       * nothing at all.
+       *
+       * It is not a boundary being dropped either. Each shop has its own
+       * DATABASE - the connection is the tenancy boundary, which is why the
+       * floor query has never needed this and why the two are safe to agree.
+       */
       const result = await Model.updateMany(
         { ...query, bill_requested_at: { $in: [null, undefined] } },
         {
@@ -7109,6 +7129,86 @@ class SalesRepository {
          caller is told which, because "the bill is already on its way" and
          "there is nothing to bill" send a waiter to two different places. */
       const waiting = await Model.countDocuments(query);
+
+      /*
+       * AND THE COUNTER HEARS ABOUT IT NOW, not on the next poll.
+       *
+       * On the shop's own Wi-Fi this call is being handled BY THE TILL - the
+       * API is require()d into the desktop's main process - so this emit
+       * reaches the printer in the same tick and the paper starts before the
+       * waiter has put the phone down. A cloud shop cannot be reached from
+       * outside, so the poll underneath is what serves it; this costs nothing
+       * there.
+       *
+       * Only when something was actually marked. Announcing a request that
+       * changed nothing would wake the printer to find an empty list.
+       */
+      if (waiting > 0) {
+        /*
+         * ON THE QUEUE, CARRYING WHAT TO PRINT.
+         *
+         * This is what makes a cloud shop work at all. The flag on the sale
+         * only ever reaches a till looking at the SAME database; a job carries
+         * the bill with it, so a till asks "anything for me?" and prints the
+         * answer without owning the sale or waiting for anything to sync.
+         *
+         * One job per open ticket, because that is what comes out of the
+         * printer - a table with three rounds has three tickets and the
+         * counter wants all three.
+         */
+        const open = await Model.find(query).limit(20).lean();
+
+        /*
+         * THE SHOP'S LETTERHEAD, READ ONCE.
+         *
+         * On the shop's own database this is a local lookup. It has to happen
+         * HERE and not on the till, because a till paired to a cloud tenant
+         * does not have this database - anything it would have to look up is
+         * something it cannot look up.
+         *
+         * A branch that cannot be read is not fatal. A bill with no letterhead
+         * is still a bill, and losing a guest's bill over a cosmetic failure
+         * would be the wrong trade.
+         */
+        let shop = {};
+        try {
+          const BranchModel = require('../models/branch.model');
+          const id = ObjectId.isValid(String(branchId))
+            ? new mongoose.Types.ObjectId(String(branchId))
+            : branchId;
+          shop = (await BranchModel.findById(id).lean()) || {};
+        } catch (e) {
+          console.error('Could not read the shop for the bill header:', e && e.message);
+        }
+
+        for (const sale of open) {
+           
+          await queuePrintJob({
+            branchId,
+            kind: 'bill',
+            saleId: sale._id,
+            label: `Table ${table}`,
+            /*
+             * BUILT FOR THE PRINTER, not handed over raw.
+             *
+             * This used to pass the sale document itself, with a comment
+             * claiming escpos-receipt rendered from exactly that shape. It does
+             * not. The renderer wants a view model - `items[].name`, `total` -
+             * and the document has `items[].item_name` and `sales_total`, so
+             * every lookup missed and the paper came out with a header, an
+             * empty item table and a total of 0.00. helpers/bill-payload.js
+             * has the full account.
+             */
+            payload: buildBillPayload(sale, shop),
+          });
+        }
+
+        notifyBillRequested({
+          branchId,
+          table,
+          count: result && typeof result.modifiedCount === 'number' ? result.modifiedCount : 0,
+        });
+      }
 
       return {
         status: waiting > 0,
@@ -7146,11 +7246,47 @@ class SalesRepository {
           ? new mongoose.Types.ObjectId(String(branchId))
           : branchId;
       }
-      if (BaseModel.license) query.license = BaseModel.license;
+      /* Same reason as the request above: a licence clause here made the till
+         blind to the very bills the handset had just asked for. Found by
+         running the two halves in sequence rather than each on its own. */
 
       const sales = await Model.find(query).sort({ bill_requested_at: 1, _id: 1 }).limit(20).lean();
 
-      return { status: true, message: 'success', data: sales };
+      /*
+       * BUILT FOR THE PRINTER HERE TOO, and that fixes tills already in shops.
+       *
+       * This route is the old one - the queue replaced it - but every till
+       * installed before this build still asks it, and it was handing over the
+       * sale document raw. src/escpos-receipt.js cannot read a document: it
+       * wants `items[].name` and `total`, the document has `items[].item_name`
+       * and `sales_total`, so what came out of those printers was a header, an
+       * empty item table and a total of 0.00.
+       *
+       * Fixing it on this side fixes every one of them, with nobody installing
+       * anything. A till that updates uses the queue and never comes here
+       * again; one that never updates starts printing real bills tonight.
+       *
+       * `_id` is carried through because the till sends it straight back to
+       * markBillPrinted, and a bill it cannot report is a bill it prints again
+       * on every pass for ever.
+       */
+      let shop = {};
+      try {
+        const BranchModel = require('../models/branch.model');
+        const id = ObjectId.isValid(String(branchId))
+          ? new mongoose.Types.ObjectId(String(branchId))
+          : branchId;
+        if (id) shop = (await BranchModel.findById(id).lean()) || {};
+      } catch (e) {
+        console.error('Could not read the shop for the bill header:', e && e.message);
+      }
+
+      const forThePrinter = sales.map((sale) => ({
+        _id: sale._id,
+        ...buildBillPayload(sale, shop),
+      }));
+
+      return { status: true, message: 'success', data: forThePrinter };
     } catch (error) {
       console.error('Error in pendingBillPrintsModel:', error);
       return { status: false, message: 'Could not read pending bills', data: [] };
@@ -7176,8 +7312,11 @@ class SalesRepository {
         return { status: false, message: 'No valid sale IDs to mark as billed.', data: null };
       }
 
+      /* Addressed by _id, which the till only knows because this same code
+         handed it over a moment ago. A licence clause would have let a bill
+         print and then refused to record that it had - so it would print again
+         on the next pass, for ever. */
       const query = { _id: { $in: ids } };
-      if (BaseModel.license) query.license = BaseModel.license;
 
       const result = await Model.updateMany(query, { $set: { bill_printed_at: new Date() } });
       return {
@@ -7457,29 +7596,12 @@ class SalesRepository {
        * stored nowhere, so every retry wrote another ticket.
        */
       if (idempotencyKey) {
+        await this._ensureIdempotencyIndex(db);
         const already = await db.collection('sales').findOne({
           idempotency_key: String(idempotencyKey),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         });
-        if (already) {
-          return {
-            status: true,
-            message: 'Order placed successfully',
-            data: {
-              tokenId: already.token_id || already.tokenId || '',
-              sale_id: already._id.toString(),
-              sales_id: already.sales_id,
-              branch_name: already.branch_name,
-              items: already.items || [],
-              subtotal: already.sub_total ?? already.subtotal ?? 0,
-              discount: already.discount ?? 0,
-              tax: already.tax ?? 0,
-              total: already.sales_total ?? already.total ?? 0,
-              payment_status: already.payment_status,
-              duplicate: true,
-            },
-          };
-        }
+        if (already) return this._duplicateOrderAnswer(already);
       }
 
       if (!branchDoc) {
@@ -7839,11 +7961,37 @@ class SalesRepository {
 
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
-      const insertResult = await this.insertSaleWithFreshNumber(
-        salesCollection,
-        saleDocument,
-        branchObjectId
-      );
+      let insertResult;
+      try {
+        insertResult = await this.insertSaleWithFreshNumber(
+          salesCollection,
+          saleDocument,
+          branchObjectId
+        );
+      } catch (error) {
+        /*
+         * TWO TAPS AT THE SAME INSTANT.
+         *
+         * The lookup above is a read followed by a write, so two copies of one
+         * order can both read "nothing there" and both insert. That is not
+         * theory: a waiter double-tapped Send on table 5 and the floor came
+         * back showing the table twice, with cancelling one cancelling both.
+         *
+         * The unique index is what actually decides it. Whichever insert lands
+         * second is refused by the database, and rather than surfacing that as
+         * a failure to the handset - which would make the waiter send a third
+         * time - the order the winner wrote is handed back as though this
+         * request had created it. Same answer, one order.
+         */
+        if (idempotencyKey && this.isDuplicateIdempotencyError(error)) {
+          const winner = await salesCollection.findOne({
+            idempotency_key: String(idempotencyKey),
+            ...(BaseModel.license ? { license: BaseModel.license } : {}),
+          });
+          if (winner) return this._duplicateOrderAnswer(winner);
+        }
+        throw error;
+      }
       salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
@@ -11053,6 +11201,71 @@ class SalesRepository {
         name: 'unique_sales_id_per_license',
       }
     );
+  }
+
+  /*
+   * The answer for an order that already exists.
+   *
+   * Built in one place because it is returned from two: the lookup before the
+   * insert, and the insert that lost the race to a unique index. If those ever
+   * answered differently, a handset would behave differently depending on
+   * which microsecond its retry arrived in.
+   *
+   * `duplicate: true` is on it so the app can tell "your order is in" from "we
+   * took your order just now", which matters when a waiter is standing there
+   * wondering whether to send again.
+   */
+  _duplicateOrderAnswer(already) {
+    return {
+      status: true,
+      message: 'Order placed successfully',
+      data: {
+        tokenId: already.token_id || already.tokenId || '',
+        sale_id: already._id.toString(),
+        sales_id: already.sales_id,
+        branch_name: already.branch_name,
+        items: already.items || [],
+        subtotal: already.sub_total ?? already.subtotal ?? 0,
+        discount: already.discount ?? 0,
+        tax: already.tax ?? 0,
+        total: already.sales_total ?? already.total ?? 0,
+        payment_status: already.payment_status,
+        duplicate: true,
+      },
+    };
+  }
+
+  /*
+   * One order per key, enforced by the database rather than by a lookup.
+   *
+   * A read-then-write cannot stop two simultaneous copies of the same order:
+   * both read nothing, both write. Only the index can, and it has to be there
+   * for EVERY shop, which is why it goes through ensureIndexOnce - a static
+   * boolean would give it to whichever shop made the first table order after
+   * a restart and to nobody else.
+   *
+   * Partial, on a string key, so the millions of till sales that carry no key
+   * are not all colliding on null.
+   */
+  async _ensureIdempotencyIndex(db) {
+    await ensureIndexOnce(
+      db.collection('sales'),
+      { license: 1, idempotency_key: 1 },
+      {
+        unique: true,
+        partialFilterExpression: { idempotency_key: { $type: 'string' } },
+        name: 'unique_idempotency_key_per_license',
+      }
+    );
+  }
+
+  /* A clash on the key above, told apart from a clash on the bill number so
+     the two are handled differently: a bill number is re-taken, a repeated
+     order is answered with the order that already exists. */
+  isDuplicateIdempotencyError(err) {
+    if (!err || (err.code !== 11000 && err.code !== 11001)) return false;
+    const where = `${err.message || ''} ${JSON.stringify(err.keyPattern || err.keyValue || {})}`;
+    return /idempotency_key/i.test(where);
   }
 
   isDuplicateSalesIdError(err) {

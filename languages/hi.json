@@ -261,6 +261,7 @@
   "lang_bill_date": "बिल की तारीख",
   "lang_bill_date_oldest": "बिल की तारीख: सबसे पुराना",
   "lang_bill_no": "बिल नंबर",
+  "lang_bill_title": "बिल",
   "lang_bill_to": "बिल प्राप्तकर्ता",
   "lang_bill_to_2": "बिल प्राप्तकर्ता",
   "lang_bind_to_the_customer": "ग्राहक से जोड़ें",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "पहली बिक्री के लिए तैयार",
   "lang_reason_e_g_theft_expiry": "कारण (उदा. चोरी, एक्सपायरी)",
   "lang_reason_required": "कारण (ज़रूरी)",
+  "lang_receipt_title": "रसीद",
   "lang_receiptbarcode_title": "रसीद बारकोड",
   "lang_receive": "प्राप्त करें",
   "lang_receive_empty": "माल प्राप्ति ऑर्डर खाली है",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "ग्राहक ने रद्द करने को कहा",
   "lang_keep_the_order": "ऑर्डर रहने दें",
   "lang_cancel_it": "रद्द करें",
+  "lang_change_window_help": "केवल रेस्टोरेंट के लिए। इसके बाद बदलाव एक अनुरोध बन जाता है जिसे काउंटर मंज़ूर करता है।",
   "lang_int_voice_key_on_file": "कुंजी सहेजी गई",
   "lang_int_voice_key_remove_q": "सहेजी गई कुंजी हटाएँ?",
   "lang_int_voice_key_remove_text": "नई कुंजी सहेजे जाने तक हैंडसेट फ़ोन की अपनी पहचान पर लौट आते हैं। आपके प्रदाता के खाते को कुछ नहीं होता।",
-  "lang_int_voice_key_removed": "कुंजी हटा दी गई।"
+  "lang_int_voice_key_removed": "कुंजी हटा दी गई।",
+  "lang_new_online_order": "नया ऑनलाइन ऑर्डर",
+  "lang_no_changes_after_ordering": "ऑर्डर के बाद कोई बदलाव नहीं",
+  "lang_orders_waiting": "ऑर्डर प्रतीक्षा में",
+  "lang_time_to_change_an_order": "ऑर्डर बदलने का समय"
 }

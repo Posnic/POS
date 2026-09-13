@@ -4463,6 +4463,25 @@ app.whenReady().then(async () => {
    * served. This one runs inside the till, so it looks.
    */
   billManager = new BillManager(hardwareManager, {
+    /*
+     * WHETHER TO ASK THE CLOUD AT ALL, read fresh on every pass.
+     *
+     * Off unless a shop turned it on. A handset on the shop's own Wi-Fi is
+     * served in-process by the API running inside this very executable, so the
+     * near path needs nothing configured and no packet leaves the building.
+     * The far path is for the shop whose waiters are on mobile data, and a
+     * till that polls a tenant it never uses is pure waste.
+     *
+     * A function rather than a value so the switch takes effect on the next
+     * tick instead of the next restart.
+     */
+    findCloudPrint: async () => {
+      try {
+        return require('./device-preferences').cloudPrintRelay();
+      } catch (e) {
+        return { enabled: false, apiUrl: '' };
+      }
+    },
     /* The counter's roll, not whatever Windows calls the default. See
        src/device-preferences.js for why this had to be readable from here. */
     findReceiptPrinter: async () => {

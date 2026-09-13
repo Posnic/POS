@@ -2797,14 +2797,247 @@ dialog.sheet[data-voice="on"] .assistant-foot {
   font-weight: 700;
 }
 
-/* While it is up, the conversation's own furniture is out of the way. */
-dialog.sheet:has(.placed:not([hidden])) .assistant-log,
+/* While it is up, the conversation's own furniture is out of the way. The
+   basket is empty, and "Review order" is behind them. */
 dialog.sheet:has(.placed:not([hidden])) .assistant-order,
 dialog.sheet:has(.placed:not([hidden])) .assistant-chips,
-dialog.sheet:has(.placed:not([hidden])) .assistant-ask,
 dialog.sheet:has(.placed:not([hidden])) .assistant-review,
 dialog.sheet:has(.placed:not([hidden])) .assistant-foot {
   display: none;
+}
+
+/* The transcript and the box to talk into stand aside only while the scene
+   is playing. Once the order is on screen they come back, because the call
+   never ended - and an answer to "add a coke to that" has to land somewhere
+   the customer can see it. */
+dialog.sheet:has(.placed:not([hidden])):not(:has(.placed-order:not([hidden]))) .assistant-log,
+dialog.sheet:has(.placed:not([hidden])):not(:has(.placed-order:not([hidden]))) .assistant-ask {
+  display: none;
+}
+
+/* And then the order leads the sheet. It sits above the transcript rather
+   than under the box you type into, which is where the markup alone would
+   put it. */
+.assistant-body:has(.placed-order:not([hidden])) .placed {
+  order: -1;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Said once at the top of the history, not on every row. */
+.history-offline {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* Something that was never on the order, offered inside the row that is
+   open. The same shape as the confirmation screen's, because it is the same
+   offer and a customer should not have to learn it twice. */
+.history-more {
+  margin-top: 14px;
+}
+
+.history-more-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.history-more-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.history-more-item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.history-more-item[disabled] {
+  opacity: 0.5;
+}
+
+.history-more-plus {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.history-refused {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* ------------------------------------------- the order's own screen
+ *
+ * It opens under the scene once the kitchen has the order. Quiet: the token
+ * is the loud thing above it, and everything here is a small decision the
+ * customer may or may not want to make.
+ */
+.placed-order {
+  width: 100%;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.placed-order-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.placed-order-title {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.placed-clock {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.placed-lines {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.placed-lines li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+
+.placed-lines li:last-child {
+  border-bottom: 0;
+}
+
+.placed-line-qty {
+  min-width: 2.2em;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.placed-line-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.placed-step {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.placed-more {
+  margin-top: 14px;
+}
+
+.placed-more-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* One row, scrolled sideways rather than wrapped into a wall of choices. */
+.placed-more-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.placed-more-item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.placed-more-item[disabled] {
+  opacity: 0.5;
+}
+
+.placed-more-plus {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.placed-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.placed-cancel {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.placed-cancel[disabled] {
+  opacity: 0.5;
+}
+
+/* Once the order is on screen the scene has done its job, so it steps back
+   rather than holding the top half of a phone. */
+.placed:has(.placed-order:not([hidden])) .placed-art {
+  height: 96px;
 }
 
 /* The way out of the conversation: the order, and the button that reviews

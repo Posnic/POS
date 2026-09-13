@@ -1454,14 +1454,45 @@ PosnicPro.sales.view = {
                 $('.hide-receiving-print').show();
                 var itemPrintTaxDetails = [];
                 if (name === 'sale') {
-                    $('.print-title').html(PosnicPro.local.get('sale_title'));
-                    // set AFTER sale_title, which would otherwise overwrite it
-                    if (PosnicPro.sales.view._isA4()
-                        && (branchGstin || PosnicPro.local.get('gst_action') === 'enable')) {
-                        $('.print-title').html(
-                            '<span style="font-size:16px !important; font-weight:900; letter-spacing:1px;"><lang class="lang_tax_invoice">TAX INVOICE</lang></span>'
-                        );
-                    }
+                    /*
+                     * WHAT THE PAPER CALLS ITSELF, BEFORE AND AFTER PAYING.
+                     *
+                     * Owner: "before pay customer that print out called what?
+                     * ... second after customer pay we give receipt what to
+                     * call?" and then "i am okay with within india Bill. up to
+                     * you and standards."
+                     *
+                     * The standard, not a preference. A receipt is proof that
+                     * money changed hands, so nothing handed over BEFORE
+                     * payment may be called one - that was the real problem,
+                     * because both prints came out headed SALES RECEIPT.
+                     *
+                     * Before paying: a GST-registered shop must issue a TAX
+                     * INVOICE for the supply, and in a restaurant that is the
+                     * document the waiter presents. A shop with no GST issues
+                     * a BILL. Either way it says UNPAID, because it is a demand
+                     * for payment.
+                     *
+                     * After paying: RECEIPT, carrying the SAME invoice number.
+                     * One sale, one number - two differently numbered documents
+                     * for one meal is what creates audit problems.
+                     */
+                    var gstShop = !!branchGstin || PosnicPro.local.get('gst_action') === 'enable';
+                    var beforePaying = !!isKotPrint;
+                    var docTitle = beforePaying
+                        ? (gstShop
+                            ? PosnicPro.i18n.t('lang_tax_invoice', 'TAX INVOICE')
+                            : PosnicPro.i18n.t('lang_bill_title', 'BILL'))
+                        : PosnicPro.i18n.t('lang_receipt_title', 'RECEIPT');
+                    $('.print-title').html(
+                        '<span style="font-weight:900; letter-spacing:1px;">'
+                        + PosnicPro.escapeHtml(docTitle) + '</span>'
+                        + (beforePaying
+                            ? '<div style="font-weight:700; letter-spacing:1px;">'
+                              + PosnicPro.escapeHtml(PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID'))
+                              + '</div>'
+                            : '')
+                    );
                     $('.print_date').text(data.created_date);
                     if (PosnicPro.sales.view._isA4()) {
                         var rowHTMLTaxLine;

@@ -261,6 +261,7 @@
   "lang_bill_date": "Date de la facture",
   "lang_bill_date_oldest": "Date de facture : plus ancienne",
   "lang_bill_no": "N° de ticket",
+  "lang_bill_title": "ADDITION",
   "lang_bill_to": "Facturer à",
   "lang_bill_to_2": "Facturé à",
   "lang_bind_to_the_customer": "Lier au client",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "Prêt pour la première vente",
   "lang_reason_e_g_theft_expiry": "Motif (ex. vol, péremption)",
   "lang_reason_required": "Motif (obligatoire)",
+  "lang_receipt_title": "REÇU",
   "lang_receiptbarcode_title": "Code-barres sur le reçu",
   "lang_receive": "Réceptionner",
   "lang_receive_empty": "Aucun article dans la réception",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "Le client demande l’annulation",
   "lang_keep_the_order": "Garder la commande",
   "lang_cancel_it": "L’annuler",
+  "lang_change_window_help": "Restaurants uniquement. Ensuite, une modification devient une demande que la caisse approuve.",
   "lang_int_voice_key_on_file": "Clé enregistrée",
   "lang_int_voice_key_remove_q": "Supprimer la clé enregistrée ?",
   "lang_int_voice_key_remove_text": "Les terminaux reviennent à la reconnaissance du téléphone jusqu'à ce qu'une nouvelle clé soit enregistrée. Votre compte chez le fournisseur n'est pas touché.",
-  "lang_int_voice_key_removed": "Clé supprimée."
+  "lang_int_voice_key_removed": "Clé supprimée.",
+  "lang_new_online_order": "Nouvelle commande en ligne",
+  "lang_no_changes_after_ordering": "Aucune modification après la commande",
+  "lang_orders_waiting": "commandes en attente",
+  "lang_time_to_change_an_order": "Délai pour modifier une commande"
 }

@@ -261,6 +261,7 @@
   "lang_bill_date": "బిల్లు తేదీ",
   "lang_bill_date_oldest": "బిల్లు తేదీ: పాతది ముందు",
   "lang_bill_no": "బిల్లు నంబర్",
+  "lang_bill_title": "బిల్లు",
   "lang_bill_to": "బిల్లు ఎవరికి",
   "lang_bill_to_2": "బిల్లు ఎవరికి",
   "lang_bind_to_the_customer": "కస్టమర్‌కు జతపరచు",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "మొదటి అమ్మకానికి సిద్ధం",
   "lang_reason_e_g_theft_expiry": "కారణం (ఉదా. చోరీ, గడువు ముగింపు)",
   "lang_reason_required": "కారణం (తప్పనిసరి)",
+  "lang_receipt_title": "రసీదు",
   "lang_receiptbarcode_title": "రసీదు బార్‌కోడ్",
   "lang_receive": "స్వీకరించు",
   "lang_receive_empty": "స్వీకరణ ఆర్డర్ ఖాళీగా ఉంది",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "కస్టమర్ రద్దు కోరారు",
   "lang_keep_the_order": "ఆర్డర్ ఉంచు",
   "lang_cancel_it": "రద్దు చెయ్",
+  "lang_change_window_help": "రెస్టారెంట్‌లకు మాత్రమే. ఆ తర్వాత మార్పు అనేది కౌంటర్ ఆమోదించే అభ్యర్థన అవుతుంది.",
   "lang_int_voice_key_on_file": "కీ భద్రపరచబడింది",
   "lang_int_voice_key_remove_q": "భద్రపరచిన కీని తొలగించాలా?",
   "lang_int_voice_key_remove_text": "కొత్త కీ భద్రపరిచే వరకు హ్యాండ్‌సెట్‌లు ఫోన్ సొంత గుర్తింపునే వాడతాయి. మీ ప్రొవైడర్ ఖాతాకు ఏమీ కాదు.",
-  "lang_int_voice_key_removed": "కీ తొలగించబడింది."
+  "lang_int_voice_key_removed": "కీ తొలగించబడింది.",
+  "lang_new_online_order": "కొత్త ఆన్‌లైన్ ఆర్డర్",
+  "lang_no_changes_after_ordering": "ఆర్డర్ చేసిన తర్వాత మార్పులు లేవు",
+  "lang_orders_waiting": "వేచి ఉన్న ఆర్డర్‌లు",
+  "lang_time_to_change_an_order": "ఆర్డర్ మార్చడానికి సమయం"
 }

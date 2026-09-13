@@ -261,6 +261,7 @@
   "lang_bill_date": "බිල් දිනය",
   "lang_bill_date_oldest": "බිල් දිනය: පැරණිතම",
   "lang_bill_no": "බිල් අංකය",
+  "lang_bill_title": "බිල",
   "lang_bill_to": "බිල් කරන්නේ",
   "lang_bill_to_2": "බිල් කරන්නේ",
   "lang_bind_to_the_customer": "පාරිභෝගිකයාට බැඳ තබන්න",
@@ -2071,6 +2072,7 @@
   "lang_ready_for_the_first_sale": "පළමු විකුණුමට සූදානම්",
   "lang_reason_e_g_theft_expiry": "හේතුව (උදා: සොරකම, කල් ඉකුත්වීම)",
   "lang_reason_required": "හේතුව (අවශ්‍යයි)",
+  "lang_receipt_title": "රිසිට්පත",
   "lang_receiptbarcode_title": "රිසිට්පත් බාර්කෝඩ්",
   "lang_receive": "ලබාගන්න",
   "lang_receive_empty": "භාණ්ඩ ලැබීමේ ඇණවුම හිස්ය",
@@ -2998,8 +3000,13 @@
   "lang_cancel_requested": "පාරිභෝගිකයා අවලංගු කරන්න ඉල්ලා ඇත",
   "lang_keep_the_order": "ඇණවුම තබාගන්න",
   "lang_cancel_it": "අවලංගු කරන්න",
+  "lang_change_window_help": "අවන්හල් සඳහා පමණි. ඉන් පසු වෙනස් කිරීම කවුන්ටරය අනුමත කරන ඉල්ලීමකි.",
   "lang_int_voice_key_on_file": "යතුර සුරකින ලදි",
   "lang_int_voice_key_remove_q": "සුරැකි යතුර ඉවත් කරන්නද?",
   "lang_int_voice_key_remove_text": "නව යතුරක් සුරකින තෙක් උපකරණ දුරකථනයේම හඳුනාගැනීමට නැවත යයි. ඔබේ සැපයුම්කරු ගිණුමට කිසිවක් නොවේ.",
-  "lang_int_voice_key_removed": "යතුර ඉවත් කරන ලදි."
+  "lang_int_voice_key_removed": "යතුර ඉවත් කරන ලදි.",
+  "lang_new_online_order": "නව සබැඳි ඇණවුමක්",
+  "lang_no_changes_after_ordering": "ඇණවුම් කිරීමෙන් පසු වෙනස්කම් නැත",
+  "lang_orders_waiting": "බලා සිටින ඇණවුම්",
+  "lang_time_to_change_an_order": "ඇණවුම වෙනස් කිරීමට කාලය"
 }

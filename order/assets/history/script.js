@@ -57,6 +57,75 @@
             .join(", ");
     }
 
+    /*
+     * What the shop says about EVERY order this phone is holding, in one
+     * request.
+     *
+     * It used to be one request per row against a limiter of ten a minute,
+     * so a customer with a few orders behind them saw "Not checked" on most
+     * of the page and could not open any of those rows. Answers come back
+     * keyed by order id; an order the shop cannot place - reseeded sandbox,
+     * restored database, a shop that closed - is simply absent, and the row
+     * is forgotten rather than insisted upon.
+     *
+     * Returns null when the SHOP could not be reached at all, which is a
+     * different thing from an order it has never heard of and is said once
+     * for the page rather than on every row.
+     */
+    async function askAll(kept) {
+        const shop = (kept[0] && kept[0].shop) || "";
+        if (!shop) return null;
+        try {
+            const response = await fetch(
+                apiBase() + "/online-ordering/" + encodeURIComponent(shop) + "/orders/lookup",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify({
+                        orders: kept.map((row) => ({ orderId: row.orderId, token: row.token }))
+                    })
+                }
+            );
+            if (!response.ok) return null;
+            const body = await response.json();
+            if (!body || body.type !== "success" || !body.data) return null;
+            const byId = new Map();
+            (body.data.orders || []).forEach((order) => byId.set(String(order.order_id), order));
+            return byId;
+        } catch (e) {
+            /* Offline: what the browser kept is still worth showing. */
+            return null;
+        }
+    }
+
+    /*
+     * The shop's menu, fetched once, for the row of things that go with an
+     * order. The history page does not otherwise load a catalogue.
+     */
+    let menuCache = null;
+    async function menu(shop) {
+        if (menuCache) return menuCache;
+        if (!shop) return [];
+        try {
+            const response = await fetch(apiBase() + "/online-ordering/" + encodeURIComponent(shop) + "/menu", {
+                headers: { Accept: "application/json" }
+            });
+            if (!response.ok) return [];
+            const body = await response.json();
+            const groups = (body && body.data && (body.data.categories || body.data.menu)) || [];
+            const flat = [];
+            groups.forEach((group) => {
+                (group.items || group.products || []).forEach((item) => {
+                    flat.push({ ...item, category_name: item.category_name || group.name || group.category_name || "" });
+                });
+            });
+            menuCache = flat;
+            return flat;
+        } catch (e) {
+            return [];
+        }
+    }
+
     /* What the shop says about one remembered order, or null when it has
        never heard of it. */
     async function ask(kept) {
@@ -182,8 +251,59 @@
             if (said.cancel_requested) off.disabled = true;
             foot.appendChild(off);
         }
+        /*
+         * Something that was never on the order.
+         *
+         * The plus and minus only move what is already there; the owner asked
+         * for "add new item ... need to be there". Filled in after the menu
+         * arrives, so the panel opens at once and does not wait on a fetch.
+         */
+        if (said && said.can_change) {
+            const more = document.createElement("div");
+            more.className = "history-more";
+            more.hidden = true;
+            const title = document.createElement("h4");
+            title.className = "history-more-title";
+            title.textContent = say("Anything else?");
+            const row = document.createElement("div");
+            row.className = "history-more-row";
+            row.setAttribute("data-order", kept.orderId);
+            more.appendChild(title);
+            more.appendChild(row);
+            box.appendChild(more);
+            paintMore(row, said, kept);
+        }
+
         if (foot.children.length) box.appendChild(foot);
         return box;
+    }
+
+    /** The suggestions, once the menu has arrived. */
+    async function paintMore(row, said, kept) {
+        const catalogue = await menu(kept.shop);
+        if (!row.isConnected) return;
+        const chooser = typeof goesWithOrder === "function" ? goesWithOrder : null; // eslint-disable-line no-undef
+        const suggestions = chooser ? chooser(said.items || [], catalogue) : [];
+        row.textContent = "";
+        suggestions.forEach((item) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "history-more-item";
+            button.setAttribute("data-order", kept.orderId);
+            button.setAttribute("data-add", String(item.id));
+            button.setAttribute("aria-label", say("Add {name}", { name: item.name }));
+            const plus = document.createElement("span");
+            plus.className = "history-more-plus";
+            plus.setAttribute("aria-hidden", "true");
+            plus.textContent = "+";
+            const name = document.createElement("span");
+            name.textContent = String(item.name || "");
+            button.appendChild(plus);
+            button.appendChild(name);
+            row.appendChild(button);
+        });
+        const more = row.parentNode;
+        if (more) more.hidden = !suggestions.length;
     }
 
     function row(kept, said) {
@@ -212,12 +332,20 @@
         token.textContent = say("Token {token}", { token: (said && said.token) || kept.token });
         const state = document.createElement("span");
         state.className = "history-state";
+        /*
+         * The state, or nothing.
+         *
+         * Owner: "both order status saying as not checked. don show that not
+         * checked and all." It said that whenever the shop had not answered
+         * YET - which, once the page ran into the rate limiter, was most
+         * rows. A row that has not been answered simply carries no label;
+         * the one at the top of the page says when the shop is unreachable.
+         */
         if (said && !said.unknown) {
             state.setAttribute("data-state", said.cancelled ? "cancelled" : said.paid ? "paid" : "kitchen");
             state.textContent = stateWords(said);
         } else {
-            state.setAttribute("data-state", "unknown");
-            state.textContent = say("Not checked");
+            state.hidden = true;
         }
         foot.appendChild(token);
         foot.appendChild(state);
@@ -269,25 +397,36 @@
         if (empty) empty.hidden = true;
 
         /* Drawn from what the browser kept first, so the list is there at
-           once; each row then says what the shop says. */
+           once; the shop is then asked about all of them together. */
         const rows = kept.map((order) => {
             const drawn = row(order, null);
             list.appendChild(drawn);
             return { order, drawn };
         });
 
+        const said = await askAll(kept);
+        /* A newer paint has taken over; this one's rows are gone. */
+        if (mine !== painting) return;
+
+        /*
+         * The shop could not be reached at all. Said ONCE, at the top, rather
+         * than stamped on every row: a customer whose train went into a
+         * tunnel has not got twelve unknown orders, they have no signal.
+         */
+        const offline = el("history-offline");
+        if (offline) offline.hidden = said !== null;
+        if (said === null) return;
+
         for (const { order, drawn } of rows) {
-            const said = await ask(order);
-            /* A newer paint has taken over; this one's rows are gone. */
-            if (mine !== painting) return;
-            if (said === null) {
+            const one = said.get(String(order.orderId));
+            if (!one) {
                 /* The shop has never heard of it: forget it rather than
                    insist. */
                 if (typeof forgetOrder === "function") forgetOrder(order.orderId); // eslint-disable-line no-undef
                 drawn.remove();
                 continue;
             }
-            if (drawn.parentNode === list) list.replaceChild(row(order, said), drawn);
+            if (drawn.parentNode === list) list.replaceChild(row(order, one), drawn);
         }
 
         if (!list.children.length && empty) empty.hidden = false;
@@ -369,6 +508,32 @@
             panel.hidden = !showing;
             open.setAttribute("aria-expanded", showing ? "true" : "false");
             if (showing) startTicking();
+            return;
+        }
+
+        /* Something that was never on the order. */
+        const add = target.closest(".history-more-item");
+        if (add) {
+            const kept = keptFor(add.getAttribute("data-order"));
+            if (!kept) return;
+            add.disabled = true;
+            const answer = await actOn(kept, "items", {
+                items: [{ item_id: add.getAttribute("data-add"), quantity: 1 }]
+            });
+            /* The shop refused it - off the menu, out of hours, too late -
+               and said why. Its words, on the button's own row. */
+            if (!answer) {
+                add.disabled = false;
+                const row = add.parentNode;
+                if (row) {
+                    const said = document.createElement("p");
+                    said.className = "history-refused";
+                    said.textContent = say("That could not be added. The shop may have started on your order.");
+                    row.parentNode.appendChild(said);
+                }
+                return;
+            }
+            await paint();
             return;
         }
 
