@@ -630,19 +630,34 @@
         onBeat: function (beat) {
           if (art.setAttribute) art.setAttribute("data-stage", beat);
           if (said && PLACED_WORDS[beat]) said.textContent = say(PLACED_WORDS[beat]);
+          /* The bell in the drawing is struck on this beat, so the sound
+             belongs to it: one event, not a picture and a noise. */
+          if (beat === "landed") ting();
           /* The kitchen has it and somebody is cooking it: from here the
              sheet belongs to the order, not to the animation. */
           if (beat === "cooking") showPlacedOrder();
         },
       });
     } else if (said) {
-      /* No scene to draw: the words still arrive, on their own clock. */
+      /* No scene to draw: the words still arrive, on their own clock, and so
+         does the bell. Nothing a customer is told depends on a canvas. */
       clearTimeout(placedTimer);
+      ting();
       var after = options && typeof options.after === "number" ? options.after : 1800;
       placedTimer = setTimeout(function () {
         said.textContent = say(PLACED_WORDS.cooking);
         showPlacedOrder();
       }, after);
+    }
+  }
+
+  /* One short bell, when the kitchen takes the order. assets/ting.js; absent
+     on a page that does not load it, which is not worth an error. */
+  function ting() {
+    try {
+      if (window.Ting && typeof window.Ting.play === "function") window.Ting.play();
+    } catch (e) {
+      /* A confirmation nobody can hear is still a confirmation on screen. */
     }
   }
 

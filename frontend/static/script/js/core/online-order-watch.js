@@ -55,6 +55,95 @@
     return fallback;
   }
 
+  /* ------------------------------------------------------------- the noise
+   *
+   * Owner: "one order sound in desktop also. play. new order came."
+   *
+   * ONLY WHERE NOTHING ELSE IS MAKING IT. Inside the desktop app the main
+   * process already synthesises these two tones and hands them to a window to
+   * play (src/order-alert.js, core/order-alert.js) - that path is better,
+   * because it keeps sounding until somebody deals with the queue. A shop on
+   * the web frontend has no main process at all and so had no sound of any
+   * kind. This is that shop's sound, and it steps aside where the other one
+   * exists rather than ringing twice.
+   */
+  function hasDesktopAlert() {
+    try {
+      return !!(window.electronAPI && window.electronAPI.orderAlert);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  var box = null;
+  function context() {
+    if (box) return box;
+    try {
+      var Maker = window.AudioContext || window.webkitAudioContext;
+      box = Maker ? new Maker() : null;
+    } catch (e) {
+      box = null;
+    }
+    return box;
+  }
+
+  /*
+   * THE SAME TWO TONES THE DESKTOP MAKES, so a shop that runs both hears one
+   * product rather than two. src/order-alert.js builds them as WAV; these are
+   * the same notes and lengths through the browser's own oscillator.
+   *
+   *   received  a rising two-note chime, brief and forgettable - it happens
+   *             forty times an hour.
+   *   waiting   three insistent notes, louder and longer, because this one
+   *             has to carry across a room.
+   */
+  var TONES = {
+    received: [
+      [784, 0.11, 0.35],
+      [1047, 0.16, 0.35],
+    ],
+    waiting: [
+      [988, 0.15, 0.5],
+      [740, 0.15, 0.5],
+      [988, 0.26, 0.5],
+    ],
+  };
+
+  function sound(which) {
+    if (hasDesktopAlert()) return false;
+    var ctx = context();
+    if (!ctx) return false;
+    try {
+      /* Browsers refuse audio until the page has been interacted with. A till
+         somebody is working at has been; one sitting untouched since it was
+         switched on has not, and the badge is what carries it there. */
+      if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+      var at = ctx.currentTime;
+      (TONES[which] || TONES.received).forEach(function (note) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.frequency.value = note[0];
+        osc.type = 'sine';
+        /* Short ramps at both ends: a square-edged start and stop is heard as
+           a click, which is what makes a synthesised tone sound cheap. */
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(note[2], at + 0.012);
+        gain.gain.setValueAtTime(note[2], at + note[1] - 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + note[1]);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(at);
+        osc.stop(at + note[1] + 0.01);
+        at += note[1];
+      });
+      return true;
+    } catch (e) {
+      /* No audio device, or a policy that refuses even this. The badge and
+         the toast are the parts that must never depend on sound. */
+      return false;
+    }
+  }
+
   /*
    * The count, on the menu entry.
    *
@@ -104,6 +193,10 @@
         : t('lang_new_online_order', 'New online order');
     if (bill) line += ' - ' + bill;
     if (token) line += (bill ? ' · ' : ' - ') + t('lang_token', 'Token') + ' ' + token;
+
+    /* A new order chimes; one the customer wants called off is the louder,
+       longer pattern, because it is the one somebody has to act on. */
+    sound(why === 'cancel' ? 'waiting' : 'received');
 
     try {
       if (window.PosnicPro && typeof PosnicPro.alert === 'function') {
@@ -177,5 +270,11 @@
     if (!document.hidden) look();
   });
 
-  window.PosnicOnlineOrderWatch = { look: look, badge: badge, _announced: announced };
+  window.PosnicOnlineOrderWatch = {
+    look: look,
+    badge: badge,
+    sound: sound,
+    hasDesktopAlert: hasDesktopAlert,
+    _announced: announced,
+  };
 })();
