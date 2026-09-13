@@ -3032,5 +3032,8 @@
   "lang_new_online_order": "Neue Online-Bestellung",
   "lang_no_changes_after_ordering": "Keine Änderungen nach der Bestellung",
   "lang_orders_waiting": "wartende Bestellungen",
-  "lang_time_to_change_an_order": "Zeit zum Ändern einer Bestellung"
+  "lang_time_to_change_an_order": "Zeit zum Ändern einer Bestellung",
+  "lang_goes_with": "Passt gut zu",
+  "lang_goes_with_help": "Wird einem Gast vorgeschlagen, der dies bestellt hat. Leer lassen, dann ermittelt es der Shop aus dem, was auf derselben Rechnung verkauft wird.",
+  "lang_goes_with_placeholder": "Wird aus dem ermittelt, was zusammen verkauft wird"
 }

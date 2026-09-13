@@ -1664,6 +1664,36 @@ class ItemRepository extends BaseModel {
           ? data.daypart_ids.map((v) => String(v || '').trim()).filter(Boolean)
           : [],
         /*
+         * WHAT GOES WITH THIS DISH, said by the shop.
+         *
+         * Owner: "for checken briyani its suggessting french fries. not good
+         * combination. ask would like to add cock. only related prducts good.
+         * we need to provide relations or some indication about related
+         * products with product information."
+         *
+         * The ordering pages offer something alongside a placed order. With
+         * nothing to go on they fall back to a drink, which is safe but
+         * generic; nobody pairs a menu better than the person who wrote it,
+         * and this is where they say so. Empty is normal and means "use the
+         * fallback", not "offer nothing".
+         *
+         * IDS, NORMALISED, AND NEVER THE DISH ITSELF. They arrive from a form
+         * and are read back by a customer-facing page, so anything that is
+         * not a plain id is dropped, an item cannot be its own pairing, and
+         * the list is capped - a pairing list of forty is a catalogue, which
+         * is the thing this exists to avoid. Sync replaces whole documents,
+         * so this is written on every save or the next one deletes it.
+         */
+        goes_with: Array.isArray(data.goes_with)
+          ? [
+              ...new Set(
+                data.goes_with
+                  .map((v) => String(v == null ? '' : v).trim())
+                  .filter((v) => /^[A-Za-z0-9]{1,64}$/.test(v) && v !== String(id || ''))
+              ),
+            ].slice(0, 6)
+          : [],
+        /*
          * The channels this item is NOT sold on.
          *
          * Normalised here rather than trusted, because it arrives from a form
@@ -3742,6 +3772,37 @@ class ItemRepository extends BaseModel {
    * with no sales behind it shows no "popular" badge and no suggestions rather
    * than inventing either.
    */
+  /*
+   * WHAT GOES WITH A DISH: what the shop SAID, then what it has LEARNED.
+   *
+   * Two sources, and they answer different questions. salesSignals watches
+   * what actually leaves the kitchen on the same bill, which is the better
+   * answer for a shop with history and no answer at all for a new one. The
+   * goes_with field on the item is the shop saying it outright, which beats
+   * any amount of data when somebody has bothered to fill it in.
+   *
+   * SAID FIRST, because a shop that has taken the trouble to pair a dish has
+   * overruled the statistics on purpose - most often to STOP a pairing the
+   * numbers keep producing, which is exactly the complaint this came from:
+   * "for checken briyani its suggessting french fries. not good combination."
+   *
+   * Three: what fits under a dish on a phone without the suggestion becoming
+   * the page.
+   */
+  pairingsFor(row, learned) {
+    const said = Array.isArray(row && row.goes_with) ? row.goes_with : [];
+    const out = [];
+    for (const id of said) {
+      const clean = String(id || '').trim();
+      if (clean && !out.includes(clean)) out.push(clean);
+    }
+    for (const pair of learned || []) {
+      const id = String((pair && pair.id) || '');
+      if (id && !out.includes(id)) out.push(id);
+    }
+    return out.slice(0, 3);
+  }
+
   async salesSignals({ branchId, days = 30, maxSales = 4000 } = {}) {
     const empty = { popularity: new Map(), related: new Map() };
     try {
@@ -3852,6 +3913,9 @@ class ItemRepository extends BaseModel {
             category_name: 1,
             sort_order: 1,
             diet: 1,
+            /* What the shop said goes with this dish; the ordering pages
+               offer it alongside a placed order. */
+            goes_with: 1,
             icon: 1,
             multi_image: 1,
             isAvailable: 1,
@@ -3972,7 +4036,7 @@ class ItemRepository extends BaseModel {
           /* The dishes most often on the same bill, best first. Ids only -
              the page already holds every dish and looking them up there beats
              sending three copies of each name down a phone connection. */
-          goes_with: (signals.related.get(String(row._id)) || []).map((r) => r.id),
+          goes_with: this.pairingsFor(row, signals.related.get(String(row._id))),
           /* Internal, stripped before the page sees it: only the category
              ranking above needs it. */
           _sort: Number(row.sort_order) || 0,
@@ -4557,7 +4621,7 @@ class ItemRepository extends BaseModel {
         group.items = (group.items || []).map((item) => ({
           ...item,
           ordered_count: ordering.popularity.get(String(item.id)) || 0,
-          goes_with: (ordering.related.get(String(item.id)) || []).map((r) => r.id),
+          goes_with: this.pairingsFor(item, ordering.related.get(String(item.id))),
         }));
       }
 

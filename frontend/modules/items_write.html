@@ -1016,6 +1016,34 @@
                                             <lang class="lang_prep_note_help">Printed on every ticket for this dish. The customer never sees it.</lang>
                                         </small>
                                     </div>
+                                    <!--
+                                        WHAT GOES WITH THIS DISH.
+
+                                        Owner: "for checken briyani its
+                                        suggessting french fries. not good
+                                        combination. ask would like to add
+                                        cock. only related prducts good."
+
+                                        The ordering pages offer something
+                                        alongside a placed order, and without
+                                        this they work it out from what sells
+                                        on the same bill. That is a reasonable
+                                        guess and it is only a guess; this is
+                                        the shop saying it outright, and what
+                                        is said here comes first. Leave it
+                                        empty and the guess is used, which is
+                                        the right default for most of a menu.
+                                    -->
+                                    <div class="form-group col-md-12">
+                                        <label for="item_goes_with"><lang class="lang_goes_with">Goes well with</lang></label>
+                                        <select class="form-control border-control select2" id="item_goes_with"
+                                            name="item_goes_with" multiple="multiple"
+                                            data-placeholder="Worked out from what sells together"
+                                            data-t-placeholder="lang_goes_with_placeholder"></select>
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_goes_with_help">Offered to a customer who has ordered this. Leave it empty and the shop works it out from what sells on the same bill.</lang>
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
