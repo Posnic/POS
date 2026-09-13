@@ -794,6 +794,23 @@
     placedOrder.tick = setTimeout(paintPlacedClock, 1000);
   }
 
+  /**
+   * Draw what the shop just said, and only ask again if it said too little.
+   *
+   * A change answers with the whole order now (customer-order.service,
+   * viewOf), so the ordinary path costs one request per tap instead of two.
+   * The fallback is kept because an older server, or a refusal, answers with
+   * nothing worth drawing - and a screen that does not redraw at all is the
+   * bug this replaced.
+   */
+  async function redraw(said) {
+    if (said && !said.failed && Array.isArray(said.items) && said.can_change !== undefined) {
+      paintPlacedOrder(said);
+      return;
+    }
+    await showPlacedOrder();
+  }
+
   /** Ask the shop, then draw. */
   async function showPlacedOrder() {
     var said = await readPlaced();
@@ -1166,7 +1183,11 @@
           });
           if (moved && moved.failed) actionLine(say(refusal(moved.failed)));
           else if (moved && moved.requested) actionLine(say("The shop has been asked to change it"));
-          await showPlacedOrder();
+          /* DRAWN FROM THE ANSWER, not from a second question. The change
+             now comes back as the whole order, so asking again would cost a
+             request for nothing - and the limiter that covers both is what
+             emptied this panel mid-tap. */
+          await redraw(moved);
           working(step, false);
           return;
         }
@@ -1183,7 +1204,7 @@
             return;
           }
           if (added && added.requested) actionLine(say("The shop has been asked to add it"));
-          await showPlacedOrder();
+          await redraw(added);
           working(add, false);
           return;
         }
@@ -1196,7 +1217,7 @@
           if (called && called.failed) actionLine(say(refusal(called.failed)));
           else if (called && called.requested) actionLine(say("The shop has been asked to cancel it"));
           else actionLine(say("Order cancelled"));
-          await showPlacedOrder();
+          await redraw(called);
         }
       });
     }

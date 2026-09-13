@@ -2323,7 +2323,7 @@ test('the token screen downloads nothing and shows no bill', () => {
 });
 
 /** The history page in jsdom, with what a browser kept and what a shop says. */
-function historyPage({ kept = [], says = {}, menu = [], reachable = true } = {}) {
+function historyPage({ kept = [], says = {}, menu = [], reachable = true, change = null } = {}) {
   const dom = new JSDOM(read('history.html'), {
     url: 'https://shop.example/order/history.html',
     runScripts: 'outside-only',
@@ -2359,7 +2359,9 @@ function historyPage({ kept = [], says = {}, menu = [], reachable = true } = {})
     }
     if (init && init.method === 'POST') {
       calls.posted.push({ url: at, body: JSON.parse(init.body) });
-      return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ok: true } }) };
+      /* What a change answers with. The shop now hands back the whole order,
+         which is what lets one tap cost one request. */
+      return { ok: true, status: 200, json: async () => ({ type: 'success', data: change || { ok: true } }) };
     }
     calls.asked.push(at);
     return { ok: false, status: 404, json: async () => ({}) };
@@ -3133,4 +3135,77 @@ test('nothing the model reads back names a button that is not on the screen', as
   /* And the button really does say something else. */
   const html = read('products.html');
   assert.match(html, /id="assistant-review"[\s\S]{0,200}Confirm &amp; send/, 'the one button no longer says Confirm and send');
+});
+
+/*
+ * THE PANEL THAT EMPTIED ITSELF UNDER HIS THUMB.
+ *
+ * Owner: "when click particulor order i see + and - button to modify but not
+ * working page broken."
+ *
+ * It was never the buttons. Every tap did the change and then repainted the
+ * whole page - and a repaint is a lookup covering every order on it. Two
+ * requests a tap, against a limiter of ten a minute shared with the page
+ * load, so around the fifth tap the lookup was refused; the page fell back to
+ * what the phone remembers; a remembered order carries no details; and the
+ * panel he had open disappeared.
+ *
+ * The change now answers with the whole order, so the row is redrawn from
+ * that answer and NOTHING is asked. This drives the real page and counts.
+ */
+test('changing an order from the history page asks the shop once, not twice', async () => {
+  const order = {
+    order_id: 'o1', token: '219', shop: 'Azure', paid: false, bill_ready: false, cancelled: false,
+    state: 'accepted', placed_at: new Date().toISOString(), can_change: true, change_seconds: 60,
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+  };
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [{ name: 'Chicken Biryani', quantity: 2 }] }];
+  const { window, document, calls } = historyPage({ kept, says: { o1: order }, change: order });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 80));
+
+  document.querySelector('.history-open').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 20));
+  assert.strictEqual(document.querySelectorAll('.history-step').length, 2, 'the row opened without its controls');
+
+  const lookupsBefore = calls.asked.filter((c) => /lookup/.test(c.url || c)).length;
+  document.querySelectorAll('.history-step')[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(calls.posted.length, 1, 'the tap did not reach the shop');
+  assert.deepStrictEqual(calls.posted[0].body.items, [{ item_id: 'm1', quantity: 3 }]);
+  assert.strictEqual(
+    calls.asked.filter((c) => /lookup/.test(c.url || c)).length,
+    lookupsBefore,
+    'the page read every order back after one tap, which is what ran it into the limiter'
+  );
+
+  /* And the panel is still there, redrawn, with its controls. */
+  const panel = document.getElementById('details-o1');
+  assert.ok(panel && !panel.hidden, 'the details panel vanished after a tap');
+  assert.strictEqual(document.querySelectorAll('.history-step').length, 2, 'the controls did not come back');
+  window.close();
+});
+
+test('a shop that answers with too little to draw still gets the row repainted', async () => {
+  /* The fallback matters: a row that does not redraw at all is the bug this
+     replaced, so an answer without can_change must still repaint. */
+  const order = {
+    order_id: 'o1', token: '219', shop: 'Azure', paid: false, bill_ready: false, cancelled: false,
+    state: 'accepted', placed_at: new Date().toISOString(), can_change: true, change_seconds: 60,
+    items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2, total: 640 }], total: 640,
+  };
+  const kept = [{ orderId: 'o1', token: '219', shop: 'ABC', shopName: 'Azure', at: new Date().toISOString(), items: [] }];
+  const { window, document, calls } = historyPage({ kept, says: { o1: order }, change: { order_id: 'o1', items: [], total: 0 } });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 80));
+  document.querySelector('.history-open').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const before = calls.asked.filter((c) => /lookup/.test(c.url || c)).length;
+  document.querySelectorAll('.history-step')[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 140));
+  assert.ok(
+    calls.asked.filter((c) => /lookup/.test(c.url || c)).length > before,
+    'an answer too thin to draw from left the row stale'
+  );
+  window.close();
 });
