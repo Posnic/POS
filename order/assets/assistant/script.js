@@ -1215,7 +1215,21 @@
     greet();
     paintReview();
     if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
-    if (canTalk()) {
+    /*
+     * NOT WHILE A CALL IS GOING. start() opens the sheet on its way to the
+     * line, so offering the choice here put "Talk to order" and "Type
+     * instead" UNDER a connecting call - three controls for one job, which
+     * is what the journey photographs showed. The choice belongs to a sheet
+     * that has just been opened with nothing decided.
+     */
+    var talking = false;
+    try {
+      talking = !!(window.OrderingVoice && window.OrderingVoice.live && window.OrderingVoice.live.active);
+    } catch (e) {
+      talking = false;
+    }
+    if (talking) chooseHow(false);
+    else if (canTalk()) {
       /* NOTHING IS FOCUSED. A focused text box is a keyboard, and a customer
          who came to talk has not asked for one. */
       chooseHow(true);
