@@ -4407,6 +4407,21 @@ class ItemRepository extends BaseModel {
                  * the app treats a price of zero as the same question.
                  */
                 open_price: '$open_price',
+                /*
+                 * THE FLAG CONTRACT: daily_price + price_set_on.
+                 *
+                 * `daily_price` says this dish is priced from the morning's
+                 * market. `price_set_on` says when somebody last did it. A
+                 * dish that is daily and was priced TODAY is an ordinary dish
+                 * with an ordinary price; one priced yesterday is not, because
+                 * yesterday's rate for a pomfret is not today's.
+                 *
+                 * Both sent to the screens rather than a computed answer, so
+                 * the contract stays one thing and each surface can say what
+                 * it needs to say about it.
+                 */
+                daily_price: '$daily_price',
+                price_set_on: '$price_set_on',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
                 tax: '$tax',

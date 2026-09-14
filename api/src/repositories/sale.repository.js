@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const datePreference = require('../utils/date-preference');
 const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
@@ -9091,6 +9092,43 @@ class SalesRepository {
    * once here so neither caller invents wording of its own - or { line }.
    * A refusal is the one with status === false.
    */
+  /**
+   * Was this dish's price set TODAY, where the shop is?
+   *
+   * Part of the daily_price / price_set_on contract. A dish priced from the
+   * morning's market is an ordinary dish once somebody has entered the
+   * morning's number; the question is only ever "is that number from today".
+   *
+   * THE SHOP'S TIMEZONE, never the server's. A till in Chennai and a process
+   * in a data centre disagree about when a day starts, and the hours they
+   * disagree about are the evening - a restaurant's busiest. Getting this
+   * wrong would mean a price entered at 8pm counting as yesterday's, and the
+   * handset asking a waiter for a number that is already on the screen.
+   *
+   * An absent or unreadable date is "not today", which is the safe way round:
+   * the waiter is asked, rather than a stale price being charged quietly.
+   *
+   * @param {*} setOn what price_set_on holds
+   * @param {object} [branch] the branch, for its timezone
+   */
+  _pricedToday(setOn, branch) {
+    if (!setOn) return false;
+    const when = new Date(setOn);
+    if (Number.isNaN(when.getTime())) return false;
+
+    const zone = datePreference.branchTimezone(branch);
+    const day = (d) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
+      } catch (e) {
+        /* An unknown zone must not stop a sale. UTC is wrong by hours, never
+           by a sale: the worst it does is ask for a price already entered. */
+        return d.toISOString().slice(0, 10);
+      }
+    };
+    return day(when) === day(new Date());
+  }
+
   async _priceOnlineLine(item, where) {
     const {
       itemCollection,
@@ -9195,7 +9233,28 @@ class SalesRepository {
      * a line that reaches the kitchen worth nothing is what started this.
      */
     const catalogue = Number(itemDoc.selling_price || 0);
-    const dynamic = itemDoc.open_price === true || catalogue <= 0;
+    /*
+     * THE FLAG CONTRACT: daily_price + price_set_on.
+     *
+     * A dish marked `daily_price` is priced from the morning's market, and
+     * `price_set_on` is when somebody last did it. Priced TODAY, it is an
+     * ordinary dish charged at the catalogue rate - that is the entire point
+     * of the shop updating it when they open. Priced yesterday, it is not:
+     * yesterday's rate for a pomfret is not today's, and quietly charging it
+     * would be worse than the zero this started as, because it would look
+     * right.
+     *
+     * `open_price` is different and stays always-ask: the shop is saying the
+     * price is settled at the counter, every time.
+     *
+     * An item with none of these fields - every shop until the flag ships -
+     * falls through to "has it got a price at all", which is exactly what it
+     * did before.
+     */
+    const dynamic =
+      itemDoc.open_price === true ||
+      (itemDoc.daily_price === true && !this._pricedToday(itemDoc.price_set_on, branchDoc)) ||
+      catalogue <= 0;
     /* Three spellings because three callers already exist: the handset's order
        payload says `item_price`, a line added to a live order says
        `unit_price`, and `price` is what anything hand-written reaches for. */

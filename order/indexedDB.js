@@ -1674,6 +1674,56 @@ async function showCategory(category, element) {
     await renderProductCards(products[category] || []);
 }
 
+/*
+ * IS THIS DISH WAITING FOR TODAY'S PRICE?
+ *
+ * Whole fish, crab, lobster: the rate comes from the morning's market, so the
+ * shop enters it when it opens and the catalogue holds nothing until then.
+ * Owner: "for menu and order say its just market price... dont let customer
+ * add or menu see the price."
+ *
+ * THE FLAG CONTRACT: daily_price + price_set_on. `daily_price` says the rate
+ * comes from the market; `price_set_on` says when somebody last entered it.
+ * Priced TODAY it is an ordinary dish and this page says nothing special
+ * about it. Priced YESTERDAY it is not - yesterday's rate for a pomfret is
+ * not today's, and a card that prints it has misled a guest before anybody
+ * notices.
+ *
+ * An item with neither field - every shop until the flag ships - falls
+ * through to "has it got a price at all", which is what this did before.
+ *
+ * `open_price` is deliberately NOT read here. It means the price is settled
+ * at the counter, and a guest ordering from this page has no counter to
+ * settle it at; those dishes carry a card price today and are ordered with
+ * it, and taking that away is not this change's business.
+ *
+ * The day is this phone's. The server decides in the SHOP's timezone and
+ * refuses a stale price outright, so the worst a travelling guest meets is a
+ * question they did not need - never a wrong number on a bill.
+ *
+ * Lives at the top level because the card and the dish sheet are two files
+ * drawing the same dish: one rule, or they will eventually disagree and the
+ * sheet will sell what the card refused.
+ */
+function waitingForTodaysPrice(product) {
+    if (!product) return true;
+    if (product.daily_price === true && !pricedToday(product.price_set_on)) return true;
+    return !(Number(product.price) > 0);
+}
+
+/** Was price_set_on today, on this phone's calendar? Unreadable is "no". */
+function pricedToday(setOn) {
+    if (!setOn) return false;
+    const when = new Date(setOn);
+    if (Number.isNaN(when.getTime())) return false;
+    const now = new Date();
+    return (
+        when.getFullYear() === now.getFullYear() &&
+        when.getMonth() === now.getMonth() &&
+        when.getDate() === now.getDate()
+    );
+}
+
 /**
  * Draw a list of products into the grid.
  *
@@ -1699,20 +1749,7 @@ async function renderProductCards(list) {
         const safeProductName = escapeHtml(String(product.name ?? "Unknown"));
         const description = String(product.description || "");
         const price = Number(product.price) || 0;
-        /*
-         * TODAY'S PRICE IS NOT SET YET.
-         *
-         * Whole fish, crab, lobster: the rate comes from the morning's market,
-         * so the shop enters it when it opens and the catalogue holds nothing
-         * until then. Owner: "for menu and order say its just market price...
-         * dont let customer add or menu see the price."
-         *
-         * Zero is that state, and there is nothing to confuse it with - a
-         * kitchen does not sell a dish for nothing. The moment a real price is
-         * entered this is false and the card is ordinary again, with no other
-         * switch to remember.
-         */
-        const marketPriced = !(price > 0);
+        const marketPriced = waitingForTodaysPrice(product);
 
         /*
          * Off its hours: shown, greyed, and told why. Hiding it makes a
