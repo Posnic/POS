@@ -6,28 +6,41 @@
  * Owner, with a screenshot of a word with a line through it: "i need to check
  * like strick throug in the cancelled item. esc/pos instruction i want to see".
  *
- * There is no ESC/POS instruction. The standard has bold, underline, reverse
- * video and character size, and that is the entire list of text effects. The
- * HTML ticket had `text-decoration: line-through` and never had to think about
- * it; when the ticket became bytes to get from 2,080 ms to 184 ms, that was the
- * one thing the fast path could not carry, and the heading took over the whole
- * job of saying a sheet was a cancellation.
+ * There is no instruction. ESC/POS has bold, underline, reverse video and
+ * character size, and that is the entire list of text effects. The HTML ticket
+ * had `text-decoration: line-through` and never had to think about it; when the
+ * ticket became bytes to get from 2,080 ms to 184 ms, that was the one thing
+ * the fast path could not carry.
  *
- * THE LINE IS DRAWN BY HAND. ESC 3 0 sets the line feed to zero dots, so the LF
- * after the text does not advance the paper and the next thing printed lands on
- * the same row. That next thing is a rule. ESC 2 puts the spacing back.
+ * FOUR WAYS WERE PRINTED ON HIS POS-80C BEFORE THIS ONE, and three of them are
+ * cheaper. All three are wrong on the hardware:
  *
- * Owner again, which is where the cheap version came from: "how about line
- * image on the text line or line text on the text ?" - both, and the text one
- * wins. Four ways were built and rendered at true dot pitch before choosing:
+ *   A rule overprinted on the text, holding the paper still with ESC 3 0. 109
+ *   bytes, and correct by the specification - the standard says a zero line
+ *   feed does not advance. This printer advances anyway: "no. 2 line is in
+ *   below text". Every overprint idea dies there, and only paper could say so.
+ *   A version of it was merged and had to be taken back out.
  *
- *   hyphens over the text             103 bytes   dashed, gaps at every cell
- *   a CP437 rule over the text        109 bytes   solid            <- this one
- *   the stroke alone as a raster      999 bytes   solid
- *   the whole line rasterised       1,737 bytes   solid
+ *   Reverse video, GS B. Four bytes and perfectly crisp, but the printer
+ *   applies it to the WHOLE line however the run is bracketed - tried for the
+ *   full line and again for the dish name alone, and both came back "i see
+ *   full black as background".
  *
- * Thirty-five times the bytes for the same picture, on the one print whose
- * whole complaint was that it was slow.
+ *   Underline, ESC - 2. Under the words, not through them.
+ *
+ * So the line is rasterised, at 1,736 bytes against 49 for text. Only a
+ * cancelled dish pays it, and a cancellation is rare.
+ *
+ * THE SHAPE OF THE TYPE TOOK FOUR MORE ROUNDS, all of them on paper:
+ *
+ *   "text is small"                -> 17.5px is the em box, not the letter.
+ *   "little strong but not big"    -> 28px matches the printer's cap height.
+ *   "text without strong looks
+ *    good"                         -> regular weight, not bold.
+ *   "strick going from start to
+ *    end x1. better strick only
+ *    one text"                     -> the stroke stops at the words.
+ *   "reduce line width little"     -> three dots thick, three below centre.
  */
 
 const test = require('node:test');
@@ -37,100 +50,199 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 const { renderKitchenTicket } = require(path.join(ROOT, 'src', 'escpos-kot.js'));
+const raster = require(path.join(ROOT, 'src', 'escpos-raster-text.js'));
 const preview = require(path.join(ROOT, 'src', 'escpos-preview.js'));
 
 const TICKET = {
   title: 'Item Cancelled',
   number: 12,
-  dateText: '14-09-2026 01:20 AM',
+  dateText: '14-09-2026 02:10 AM',
   tableNo: '6A',
   dineType: 'Dine-in',
   saleId: 'SB1D12-000038',
   items: [{ name: 'Barbeque - Full', quantity: 1 }],
 };
+const bytes = (over = {}, options = {}) => renderKitchenTicket({ ...TICKET, ...over }, options);
 
-const bytes = (over = {}, options = {}) =>
-  renderKitchenTicket({ ...TICKET, ...over }, options);
+/** Dots set in one row of a raster body. */
+function inkInRow(body, wBytes, y) {
+  let n = 0;
+  for (let i = 0; i < wBytes; i += 1) {
+    for (let bit = 0; bit < 8; bit += 1) if (body[y * wBytes + i] & (1 << bit)) n += 1;
+  }
+  return n;
+}
 
-/* ------------------------------------------------------- the bytes themselves */
+/* ------------------------------------------------------------- the baked face */
 
-test('a cancelled dish carries the overprint, and a live one does not', () => {
-  const cancelled = bytes({ cancelled: true });
-  const normal = bytes({ cancelled: false });
-
-  /* ESC 3 0 - zero line feed - is the whole mechanism. Without it the rule
-     lands on the next line and reads as a divider. */
-  assert.ok(cancelled.includes(Buffer.from([0x1b, 0x33, 0x00])), 'no zero line feed');
-  assert.ok(cancelled.includes(Buffer.from([0x1b, 0x32])), 'the line spacing is never put back');
-  assert.ok(!normal.includes(Buffer.from([0x1b, 0x33, 0x00])),
-    'a ticket that is not a cancellation is overprinting something');
-});
-
-test('the rule is the box-drawing character, not a hyphen', () => {
+test('the font travels with the app, because the till cannot draw text', () => {
   /*
-   * THE DETAIL THE WHOLE LOOK TURNS ON. A hyphen is drawn inside its own
-   * 12-dot cell with space either side, so a row of them prints dashed and
-   * reads as a dotted line rather than a deletion. 0xC4 in code page 437 joins
-   * edge to edge, and sits at the middle of the cell.
+   * There is no canvas in the Electron main process, and rendering through a
+   * hidden window is the 1,114 ms step this whole path exists to avoid. The
+   * face is baked by scripts/build-escpos-font.ps1 and committed - which also
+   * means a ticket looks the same in every shop instead of depending on which
+   * fonts that Windows happens to have.
    */
-  const out = bytes({ cancelled: true });
-  assert.ok(out.includes(Buffer.from([0x1b, 0x74, 0x00])), 'code page 437 is never selected');
-  assert.ok(out.includes(Buffer.alloc(20, 0xc4)), 'the rule is not the box-drawing character');
-  assert.ok(out.includes(Buffer.from([0x1b, 0x74, 0x10])),
-    'the code page is left on 437, so every rupee sign after this is wrong');
+  const meta = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'escpos-font-a.json'), 'utf8'));
+  assert.strictEqual(meta.cellWidth, 12, 'font A on an 80mm roll is a 12 dot cell');
+  assert.strictEqual(meta.cellHeight, 24);
+  assert.strictEqual(meta.encoding, 'windows-1252', 'the app selects this code page with ESC t 16');
+  assert.strictEqual(meta.firstByte, 0x20);
+  assert.strictEqual(meta.lastByte, 0xff);
+  const glyphs = Buffer.from(meta.glyphs, 'base64');
+  assert.strictEqual(glyphs.length, (0xff - 0x20 + 1) * 24 * 2, 'the table is not the size it claims');
+  assert.ok(glyphs.some((b) => b !== 0), 'the table is blank');
 });
 
-test('the code page goes back straight after the rule', () => {
-  /* Leaving the printer on 437 would corrupt the next receipt, not just this
-     ticket: the page is printer state and survives the job. */
-  const out = bytes({ cancelled: true });
-  const to437 = out.indexOf(Buffer.from([0x1b, 0x74, 0x00]));
-  const back = out.indexOf(Buffer.from([0x1b, 0x74, 0x10]), to437);
-  assert.ok(to437 > -1 && back > to437, 'the code page is not restored after the rule');
-  const between = out.slice(to437 + 3, back);
-  assert.ok(between.every((b) => b === 0xc4), 'ordinary text is being printed in code page 437');
+test('the generator is committed beside what it generates', () => {
+  /* CI cannot rebuild it - an Ubuntu runner has no Consolas - so the recipe has
+     to be readable next to the result or nobody can ever change the type. */
+  const gen = fs.readFileSync(path.join(ROOT, 'scripts', 'build-escpos-font.ps1'), 'utf8');
+  assert.match(gen, /\$FontPx = 28/, 'the size settled on paper is not what the generator uses');
+  assert.match(gen, /\$Threshold = 640/);
+  assert.match(gen, /FontStyle\]::Regular/, 'bold was tried and rejected on paper');
 });
 
-test('the rule is exactly as long as the line it crosses', () => {
-  /* Shorter and the strike stops early; longer and it runs off into the
-     margin. Both look like a fault rather than a cancellation. */
-  const out = bytes({ cancelled: true });
-  const to437 = out.indexOf(Buffer.from([0x1b, 0x74, 0x00]));
-  const back = out.indexOf(Buffer.from([0x1b, 0x74, 0x10]), to437);
-  assert.strictEqual(back - (to437 + 3), 48, '80mm is 48 columns, so the rule should be 48 wide');
+/* ----------------------------------------------------------------- the stroke */
 
-  const narrow = renderKitchenTicket({ ...TICKET, cancelled: true }, { paperWidth: '32' });
-  const n437 = narrow.indexOf(Buffer.from([0x1b, 0x74, 0x00]));
-  const nBack = narrow.indexOf(Buffer.from([0x1b, 0x74, 0x10]), n437);
-  assert.strictEqual(nBack - (n437 + 3), 32, 'a 58mm roll is 32 columns');
+test('the stroke is three dots thick and sits three below the middle', () => {
+  assert.strictEqual(raster.STROKE_THICKNESS, 3);
+  assert.strictEqual(raster.STROKE_DROP, 3);
+
+  const line = 'BARBEQUE - FULL'.padEnd(46) + 'x1';
+  const buf = raster.renderLine(line, { columns: 48 });
+  const body = buf.slice(8);
+  const wBytes = 72;
+
+  /* 12 is the middle of a 24 dot cell, so the stroke owns 15, 16 and 17. */
+  for (const y of [15, 16, 17]) {
+    assert.ok(inkInRow(body, wBytes, y) >= 180, 'row ' + y + ' has no stroke');
+  }
+  /* And the rows either side are just letters. */
+  assert.ok(inkInRow(body, wBytes, 14) < 120, 'the stroke is thicker than three dots');
+  assert.ok(inkInRow(body, wBytes, 18) < 120);
 });
 
-test('it stays cheap, which was the point of this path existing', () => {
+test('the stroke stops at the words, not at the quantity', () => {
   /*
-   * The ticket became bytes to get off a 2,080 ms HTML-and-PDF round trip. A
-   * strike-through that rasterised the line would put 1,737 bytes back per
-   * cancelled dish. Sixty is the price of this one.
+   * Owner, looking at a slip: "strick going from start to end x1. better
+   * strick only one text". A line laid out by pair() is a dish name, a run of
+   * spaces, then a count hard against the right edge, and a stroke that
+   * reaches the count crosses out the count.
    */
-  const cost = bytes({ cancelled: true }).length - bytes({ cancelled: false }).length;
-  assert.ok(cost > 0 && cost < 200, 'the strike costs ' + cost + ' bytes, which is not a rule any more');
+  const line = 'BARBEQUE - FULL'.padEnd(46) + 'x1';
+  const buf = raster.renderLine(line, { columns: 48 });
+  const body = buf.slice(8);
+  const wBytes = 72;
+  const dot = (x) => (body[16 * wBytes + (x >> 3)] & (0x80 >> (x & 7))) !== 0;
+
+  assert.ok(dot(0) && dot(179), 'the stroke does not cover the dish name');
+  assert.ok(!dot(180), 'the stroke runs past the end of the words');
+  assert.ok(!dot(560), 'the stroke reaches the quantity');
 });
 
-/* --------------------------------------------------------------- the escape */
-
-test('a printer that will not overprint can be switched off the strike', () => {
+test('a single space inside a name does not end the stroke', () => {
   /*
-   * Zero line feed is a hardware behaviour, not a guarantee. A printer that
-   * advances anyway prints the rule on the NEXT line, where it reads as a
-   * divider - so the shop needs a way out that is not a release.
+   * THE TRAP. "BARBEQUE - FULL" has two single spaces in it. Stopping at the
+   * first space strikes one word; stopping at the LAST run of two stops just
+   * before the quantity, which is the whole line again. Both were written
+   * before the first run of two was.
    */
+  assert.strictEqual(raster.wordCells('BARBEQUE - FULL'.padEnd(46) + 'x1'), 15);
+  assert.strictEqual(raster.wordCells('ICE TEA'.padEnd(46) + 'x1'), 7);
+  /* Nothing to the right at all: the stroke runs to the end of the text. */
+  assert.strictEqual(raster.wordCells('PLAIN DOSA'), 10);
+  assert.strictEqual(raster.wordCells('PLAIN DOSA    '), 10, 'trailing space is not a word');
+});
+
+test('the stroke can be asked for explicitly, or not at all', () => {
+  const line = 'ICE TEA'.padEnd(46) + 'x1';
+  const withNone = raster.renderLine(line, { columns: 48, strike: false }).slice(8);
+  assert.ok(inkInRow(withNone, 72, 16) < 60, 'a line asked not to be struck was struck');
+
+  const wide = raster.renderLine(line, { columns: 48, strikeCells: 48 }).slice(8);
+  const dot = (x) => (wide[16 * 72 + (x >> 3)] & (0x80 >> (x & 7))) !== 0;
+  assert.ok(dot(570), 'strikeCells did not widen the stroke');
+});
+
+/* ------------------------------------------------------------------ the bitmap */
+
+test('the raster is a well formed GS v 0 of the right size', () => {
+  const buf = raster.renderLine('ICE TEA', { columns: 48 });
+  assert.deepStrictEqual([...buf.slice(0, 4)], [0x1d, 0x76, 0x30, 0x00]);
+  assert.strictEqual(buf[4] | (buf[5] << 8), 72, '80mm is 576 dots, so 72 bytes a row');
+  assert.strictEqual(buf[6] | (buf[7] << 8), 24);
+  assert.strictEqual(buf.length, 8 + 72 * 24);
+
+  const narrow = raster.renderLine('ICE TEA', { columns: 32 });
+  assert.strictEqual(narrow[4] | (narrow[5] << 8), 48, '58mm is 384 dots');
+  assert.strictEqual(narrow.length, 8 + 48 * 24);
+});
+
+test('the letters are actually drawn, not just the stroke', () => {
+  /* A table read with the wrong stride gives a page of nothing and every test
+     above it still passes. */
+  const body = raster.renderLine('ICE TEA', { columns: 48, strike: false }).slice(8);
+  const above = [...Array(14).keys()].reduce((n, y) => n + inkInRow(body, 72, y), 0);
+  assert.ok(above > 100, 'there is no type above the stroke line');
+});
+
+test('a character the table does not have is skipped, not drawn as rubbish', () => {
+  assert.doesNotThrow(() => raster.renderLine('中文 TEA', { columns: 48 }));
+});
+
+test('a line longer than the paper is cut, not wrapped into the next row', () => {
+  const buf = raster.renderLine('X'.repeat(200), { columns: 48 });
+  assert.strictEqual(buf.length, 8 + 72 * 24, 'an overlong line grew the raster');
+});
+
+/* ------------------------------------------------------------------ the ticket */
+
+test('a cancelled dish is rasterised and a live one is text', () => {
+  const cancelled = preview.parse(bytes({ cancelled: true }), 48);
+  const normal = preview.parse(bytes({ cancelled: false }), 48);
+
+  assert.strictEqual(cancelled.rows.filter((r) => r.kind === 'raster').length, 1);
+  assert.strictEqual(normal.rows.filter((r) => r.kind === 'raster').length, 0);
+  assert.ok(preview.asLines(normal).some((l) => /^BARBEQUE - FULL\s+x1$/.test(l)),
+    'a live dish should still be ordinary text');
+});
+
+test('none of the three approaches that failed on paper is still in the bytes', () => {
+  /* Each of these was printed and rejected. A merge that quietly brought one
+     back would look right in a diff and wrong on the roll. */
+  const out = bytes({ cancelled: true });
+  assert.ok(!out.includes(Buffer.from([0x1b, 0x33, 0x00])), 'zero line feed is back');
+  assert.ok(!out.includes(Buffer.from([0x1d, 0x42, 0x01])), 'reverse video is back');
+  assert.ok(!out.includes(Buffer.alloc(8, 0xc4)), 'the CP437 rule is back');
+});
+
+test('the rest of the ticket still reads as a ticket', () => {
+  const lines = preview.asLines(preview.parse(bytes({ cancelled: true }), 48));
+  assert.ok(lines.includes('Item Cancelled'), 'the heading is gone');
+  assert.ok(lines.includes('#12'), 'the serial the pass shouts is gone');
+  assert.ok(lines.includes('TABLE 6A'), 'the table is gone');
+});
+
+test('only the cancelled dish pays for it', () => {
+  /*
+   * The whole reason this path exists is speed. One raster is 1,736 bytes; a
+   * new order, which is nearly every ticket, must not carry any.
+   */
+  const plain = bytes({ cancelled: false }).length;
+  const struck = bytes({ cancelled: true }).length;
+  assert.ok(struck - plain > 1500 && struck - plain < 1800, 'unexpected cost: ' + (struck - plain));
+  assert.ok(plain < 800, 'a normal ticket has grown: ' + plain + ' bytes');
+});
+
+test('a printer that cannot take a raster can be switched back to plain', () => {
   const off = bytes({ cancelled: true }, { strikeCancelled: false });
-  assert.ok(!off.includes(Buffer.from([0x1b, 0x33, 0x00])), 'the strike cannot be switched off');
-  assert.ok(!off.includes(Buffer.alloc(8, 0xc4)));
+  assert.strictEqual(preview.parse(off, 48).rows.filter((r) => r.kind === 'raster').length, 0);
 });
 
 test('absent means on, because that is what was asked for', () => {
-  assert.ok(bytes({ cancelled: true }, {}).includes(Buffer.from([0x1b, 0x33, 0x00])));
-  assert.ok(bytes({ cancelled: true }, { strikeCancelled: true }).includes(Buffer.from([0x1b, 0x33, 0x00])));
+  assert.strictEqual(preview.parse(bytes({ cancelled: true }, {}), 48)
+    .rows.filter((r) => r.kind === 'raster').length, 1);
 });
 
 test('the till passes the shop setting and the cancelled flag through', () => {
@@ -139,61 +251,22 @@ test('the till passes the shop setting and the cancelled flag through', () => {
   assert.match(kot, /strikeCancelled: !\(this\.config && this\.config\.strikeCancelled === false\)/);
 });
 
-/* ------------------------------------------------------- reading it back out */
-
-test('the paper can be read back, and says the line was crossed out', () => {
-  /*
-   * This is the half that makes the rest checkable. Without it, the only way
-   * to know a change did what it says is to walk to a printer - and on the
-   * night this was written, the printer was offline with a jammed queue.
-   */
-  const doc = preview.parse(bytes({ cancelled: true }), 48);
-  const struck = preview.struckRows(doc);
-  assert.strictEqual(struck.length, 1, 'expected exactly one struck line');
-  assert.match(struck[0].text, /^BARBEQUE - FULL\s+x1$/);
-  assert.strictEqual(struck[0].over, '─'.repeat(48), 'the cover is not a solid rule');
+test('the receipt builder still has the methods a ticket needs', () => {
+  /* Replacing strikeLine once took cut() and openDrawer() out with it, and the
+     ticket threw at the very last line it builds. */
+  const { Receipt } = require(path.join(ROOT, 'src', 'escpos-receipt.js'));
+  const r = new Receipt('80');
+  for (const method of ['cut', 'openDrawer', 'strikeLine', 'pair', 'rule', 'line', 'centre']) {
+    assert.strictEqual(typeof r[method], 'function', method + ' is missing');
+  }
 });
 
-test('and says nothing was crossed out on a live ticket', () => {
-  assert.deepStrictEqual(preview.struckRows(preview.parse(bytes({ cancelled: false }), 48)), []);
-});
-
-test('the rest of the ticket still reads as a ticket', () => {
-  /* A strike that quietly ate the heading or the table number would pass every
-     test above. */
-  const lines = preview.asLines(preview.parse(bytes({ cancelled: true }), 48));
-  assert.ok(lines.includes('Item Cancelled'), 'the heading is gone');
-  assert.ok(lines.includes('#12'), 'the serial the pass shouts is gone');
-  assert.ok(lines.includes('TABLE 6A'), 'the table is gone');
-  assert.ok(lines.some((l) => l.startsWith('[over]')), 'nothing is marked as overprinted');
-});
-
-test('the preview reads the styling, not just the words', () => {
-  const doc = preview.parse(bytes({ cancelled: true }), 48);
-  const serial = doc.rows.find((r) => r.text === '#12');
-  assert.strictEqual(serial.h, 3, 'the serial is no longer the biggest thing on the sheet');
-  assert.strictEqual(serial.align, 1, 'the serial is not centred');
-  const heading = doc.rows.find((r) => r.text === 'Item Cancelled');
-  assert.strictEqual(heading.bold, true);
-});
-
-test('an unknown command shifts a row rather than corrupting the rest', () => {
-  /*
-   * Every command is skipped by its own documented length. Guessing one byte
-   * wrong turns the next command into text and every row after it into
-   * nonsense, which is the failure that makes a reader worse than useless.
-   */
-  const doc = preview.parse(Buffer.concat([
-    Buffer.from([0x1b, 0x40]),
-    Buffer.from([0x1b, 0x56, 0x00]),        // not a command we emit
-    Buffer.from('STILL HERE\n', 'latin1'),
-  ]), 48);
-  assert.ok(preview.asLines(doc).includes('STILL HERE'));
-});
-
-test('the preview is in the packaged build', () => {
-  /* build.files is an allowlist, and this one is required by a test today and
-     by the Hardware Manager preview next. */
+test('both new files are in the packaged build', () => {
+  /* build.files is an allowlist. A missing module throws "Cannot find module"
+     on a customer's counter and nowhere else - and a missing font table would
+     take the kitchen ticket down with it. */
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  assert.ok(pkg.build.files.includes('src/escpos-raster-text.js'));
+  assert.ok(pkg.build.files.includes('src/escpos-font-a.json'));
   assert.ok(pkg.build.files.includes('src/escpos-preview.js'));
 });
