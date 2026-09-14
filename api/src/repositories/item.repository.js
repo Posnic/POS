@@ -1157,7 +1157,7 @@ class ItemRepository extends BaseModel {
     return { counts, total };
   }
 
-  async purgeDemoData({ branchId, licenseId, user } = {}) {
+  async purgeDemoData({ branchId, licenseId, user, replacing = false } = {}) {
     const items = await this.getCollection(this.collectionName);
     const branch = this.toObjectId(branchId);
     const license = this.toObjectId(licenseId);
@@ -1300,12 +1300,35 @@ class ItemRepository extends BaseModel {
         kept.push({ name: c.name, why: 'sold or received' });
         continue;
       }
+      /*
+       * "EDITED" IS A GUESS, AND A TRADE SWITCH IS NOT THE PLACE FOR ONE.
+       *
+       * Owner, looking at a restaurant menu with an A5 ruled notebook and a
+       * pack of laundry clips still in it: "i installed cafe restaurant demo
+       * data but system may be not deleted the exsiting demo data from
+       * existing data. it need to be wiped first and install restuarent demo
+       * data."
+       *
+       * He is right, and this rule is why it happened. The heuristic is
+       * `updated_date` later than `demo_seeded_at`, which is a good guess for
+       * "the shop changed this" on the Remove button - and a bad one here,
+       * because the seeder itself bumps updated_date on any row it touches in
+       * a second pass (rewriting an image path after the dataset zip is
+       * extracted is enough). Those rows are not the shop's work. They are
+       * the PREVIOUS PACK's, and leaving a handful of them behind is how a
+       * restaurant ends up selling stationery.
+       *
+       * What is NOT relaxed is the rule above: an item referenced by a sale
+       * or a receiving that is not itself demo data stays, always. That one
+       * is a fact rather than a guess - somebody rang it up on the till - and
+       * deleting it would leave a real sale pointing at nothing.
+       */
       const seeded = c.demo_seeded_at ? new Date(c.demo_seeded_at).getTime() : 0;
       const touched = c.updated_date ? new Date(c.updated_date).getTime() : 0;
       /* A second of slack: the seed writes created_date and updated_date in
          the same pass, and clock resolution should not make every row look
          edited. */
-      if (seeded && touched && touched > seeded + 1000) {
+      if (!replacing && seeded && touched && touched > seeded + 1000) {
         kept.push({ name: c.name, why: 'you have edited it' });
         continue;
       }
