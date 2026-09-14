@@ -255,12 +255,61 @@ function isDialable(raw) {
   return true;
 }
 
+/*
+ * A GSTIN is a shape, and the shape is the test.
+ *
+ * Two digits of state code, a ten-character PAN, one entity digit, the literal
+ * Z, and a check character. The customer form already validates it on the way
+ * in, so this is the second gate rather than the first - a number that reached
+ * an old sale before the form checked anything, or arrived from a device that
+ * did not, must not be printed on a tax invoice as though it had been checked.
+ *
+ * Printing a malformed GSTIN is worse than printing none. The customer files
+ * the invoice, claims against it, and finds out months later that the claim
+ * fails - and by then the bill is the only record and it looks right.
+ */
+const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+/*
+ * WHO THE BILL IS MADE OUT TO, and for a business that is a legal question.
+ *
+ * Owner: "some customer ask bill with their GST details to claim or something.
+ * we need provision for that. so customer can have field GST as optional. if
+ * they given we can print and give."
+ *
+ * That is input tax credit. A registered business buying a meal for its staff
+ * can reclaim the GST on it, but only against an invoice carrying ITS OWN
+ * GSTIN - an invoice without one is not a document the claim can be made on,
+ * and the customer finds out at filing time, not at the counter.
+ *
+ * NO SETTING GATES THIS. Every other optional row on the bill is a switch,
+ * because a shop decides once whether it wants table numbers on its paper. A
+ * GSTIN is not a shop decision: it is a customer who handed one over, once,
+ * and asked for it on the bill. Making them wait while somebody finds a
+ * settings page is the failure this is fixing. Given means printed.
+ *
+ * The COMPANY NAME goes above it, because the name on a claimable invoice has
+ * to be the registered business and a customer record is often a person -
+ * "Ramesh Kumar" against a company GSTIN is a defective invoice. Absent, the
+ * customer name stands, which is right for a sole proprietor billing under
+ * their own name.
+ */
 function customerLines(sale) {
   const out = [];
   const name = String((sale && sale.customer_name) || '').trim();
   const phone = String((sale && sale.customer_phone) || '').trim();
+  const company = String((sale && sale.customer_company_name) || '').trim();
+  const gstin = String((sale && sale.customer_gst_number) || '')
+    .trim()
+    .toUpperCase();
+
   if (name && !/^walk[\s-]?in$/i.test(name)) out.push(name);
   if (phone && isDialable(phone)) out.push(phone);
+
+  if (GSTIN.test(gstin)) {
+    if (company) out.push(company);
+    out.push('GSTIN: ' + gstin);
+  }
   return out;
 }
 

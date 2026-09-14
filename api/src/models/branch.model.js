@@ -105,6 +105,24 @@ const branchSchema = new Schema(
     print_logoimg: { type: Boolean, default: false },
     print_sale_notes: { type: Boolean, default: false },
     receipt_barcode: { type: Boolean, default: false },
+    /*
+     * WHAT THE BILL CARRIES, beyond the dishes and the total.
+     *
+     * Table, order type, covers, steward, total quantity and where the order
+     * came from. Every one is the restaurant talking to itself on a document
+     * the customer keeps, and the kitchen ticket carries all of them anyway -
+     * so every one defaults FALSE.
+     *
+     * That direction is the whole point. 90 shops print today; a default of
+     * true would put new rows on every one of their bills the morning this
+     * deploys. A hotel restaurant that bills with all of it turns them on.
+     */
+    bill_print_table: { type: Boolean, default: false },
+    bill_print_dine_type: { type: Boolean, default: false },
+    bill_print_covers: { type: Boolean, default: false },
+    bill_print_steward: { type: Boolean, default: false },
+    bill_print_total_qty: { type: Boolean, default: false },
+    bill_print_source: { type: Boolean, default: false },
     keyboard_view: { type: Boolean, default: false },
     balance_view: { type: Boolean, default: true },
     customer_checkbox: { type: Boolean, default: false },
@@ -252,6 +270,12 @@ class BranchModel {
       print_logoimg: { type: 'String', select: true },
       print_sale_notes: { type: 'String', select: true },
       receipt_barcode: { type: 'String', select: true },
+      bill_print_table: { type: 'String', select: true },
+      bill_print_dine_type: { type: 'String', select: true },
+      bill_print_covers: { type: 'String', select: true },
+      bill_print_steward: { type: 'String', select: true },
+      bill_print_total_qty: { type: 'String', select: true },
+      bill_print_source: { type: 'String', select: true },
       print_type: { type: 'String', select: true },
       printing_size: { type: 'String', select: true },
       print_width: { type: 'String', select: true },
@@ -1031,6 +1055,12 @@ class BranchModel {
         print_logoimg: false,
         print_sale_notes: false,
         receipt_barcode: false,
+        bill_print_table: false,
+        bill_print_dine_type: false,
+        bill_print_covers: false,
+        bill_print_steward: false,
+        bill_print_total_qty: false,
+        bill_print_source: false,
         api: [],
         printall: false,
         keyboard_view: false,

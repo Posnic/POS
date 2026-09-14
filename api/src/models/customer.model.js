@@ -88,6 +88,22 @@ class CustomerModel extends BaseModel {
         select: true,
         match: [/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid GST number'],
       },
+      /*
+       * The registered business the invoice should be made out to.
+       *
+       * A GSTIN belongs to an entity, and the name printed above it has to be
+       * that entity or the invoice is not one the customer can claim against.
+       * The customer's own name is very often the person who walked in and
+       * handed the card over, which is not the same thing.
+       *
+       * Optional, and empty is the right answer for a sole proprietor billing
+       * under their own name - the customer name then stands on its own.
+       */
+      company_name: {
+        type: 'String',
+        trim: true,
+        select: true,
+      },
 
       // Loyalty Program
       loyalty: {
@@ -223,6 +239,7 @@ class CustomerModel extends BaseModel {
       gst: 'disable',
       gst_type: 'consumer',
       gst_number: '',
+      company_name: '',
       loyalty: {
         points: 0,
         pointsEarned: 0,

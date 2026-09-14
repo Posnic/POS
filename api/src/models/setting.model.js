@@ -1260,6 +1260,19 @@ class SettingModel extends BaseModel {
       const printall = this.toBoolean(data.printall);
       const printLogoImg = this.toBoolean(data.print_logoimg);
       const printSaleNotes = this.toBoolean(data.print_sale_notes);
+      /*
+       * What the bill carries. The form posts 'true' / 'false' as STRINGS, so
+       * these go through toBoolean like every other switch on the card - a
+       * stored 'false' read as a boolean is truthy, which is how a switched-off
+       * setting silently stays on.
+       */
+      const billPrint = {};
+      billPrint.bill_print_table = this.toBoolean(data.bill_print_table);
+      billPrint.bill_print_dine_type = this.toBoolean(data.bill_print_dine_type);
+      billPrint.bill_print_covers = this.toBoolean(data.bill_print_covers);
+      billPrint.bill_print_steward = this.toBoolean(data.bill_print_steward);
+      billPrint.bill_print_total_qty = this.toBoolean(data.bill_print_total_qty);
+      billPrint.bill_print_source = this.toBoolean(data.bill_print_source);
       const keyboardView = this.toBoolean(data.keyboard_view);
       const customerCheckbox = this.toBoolean(data.customer_checkbox);
       const supplierCheckbox = this.toBoolean(data.supplier_checkbox);
@@ -1346,6 +1359,12 @@ class SettingModel extends BaseModel {
         print_url: printUrl,
         print_logoimg: printLogoImg,
         print_sale_notes: printSaleNotes,
+        bill_print_table: billPrint.bill_print_table,
+        bill_print_dine_type: billPrint.bill_print_dine_type,
+        bill_print_covers: billPrint.bill_print_covers,
+        bill_print_steward: billPrint.bill_print_steward,
+        bill_print_total_qty: billPrint.bill_print_total_qty,
+        bill_print_source: billPrint.bill_print_source,
         sales_sms: smsReceipt,
         auto_sms: smsAutoReceipt,
         enable_sms_reminders: enableSmsReminders,
@@ -1474,6 +1493,12 @@ class SettingModel extends BaseModel {
         print_url: 'print_url',
         print_logoimg: 'print_logoimg',
         print_sale_notes: 'print_sale_notes',
+        bill_print_table: 'bill_print_table',
+        bill_print_dine_type: 'bill_print_dine_type',
+        bill_print_covers: 'bill_print_covers',
+        bill_print_steward: 'bill_print_steward',
+        bill_print_total_qty: 'bill_print_total_qty',
+        bill_print_source: 'bill_print_source',
         sales_sms: 'sales_sms',
         auto_sms: 'auto_sms',
         enable_sms_reminders: 'enable_sms_reminders',
