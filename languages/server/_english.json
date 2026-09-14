@@ -75,6 +75,9 @@
     "src/models/supplier-legacy.model.js",
     "src/services/supplier.service.js"
   ],
+  "Already answered": [
+    "src/repositories/item.repository.js"
+  ],
   "Already applied": [
     "src/services/coupon.service.js"
   ],
@@ -1337,6 +1340,9 @@
   "Nothing to write": [
     "src/repositories/settings.repository.js"
   ],
+  "Nothing usable to store": [
+    "src/repositories/item.repository.js"
+  ],
   "Nothing was asked": [
     "src/services/ai.service.js",
     "src/services/ordering-assistant.service.js"
@@ -1786,6 +1792,9 @@
   ],
   "Store details not found": [
     "src/models/setting.model.js"
+  ],
+  "Stored as an estimate": [
+    "src/repositories/item.repository.js"
   ],
   "Subscribed": [
     "app.js"

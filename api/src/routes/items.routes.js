@@ -156,6 +156,15 @@ router.post('/aiDescription', bindController(itemsController.aiDescription));
 // a person looks at them before saving. Same gate as aiDescription, and for
 // the same reason: it spends the shop's own AI balance.
 router.post('/aiDishFacts', bindController(itemsController.aiDishFacts));
+// GET /api/items/dishesWantingNutrition - which dishes a nutrition pass would
+// touch, asked BEFORE it runs so the shop is told what it is about to spend:
+// one call to their own AI provider per dish.
+router.get('/dishesWantingNutrition', bindController(itemsController.dishesWantingNutrition));
+// POST /api/items/aiDishFactsFor - estimate ONE dish and store it AS an
+// estimate. The client walks its own list so the pass can be watched and
+// stopped; nothing derived from an estimate is published until a person
+// confirms it. Same gate as the other AI routes.
+router.post('/aiDishFactsFor', bindController(itemsController.aiDishFactsFor));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
 router.get('/aiSpend', bindController(itemsController.aiSpend));
 // GET /api/items/aiVoiceCalls - the last few live voice calls with what was

@@ -274,10 +274,51 @@
    *
    * @returns {{nutrition: object, tags: string[], marks: string[], claims: string[]}}
    */
+  /*
+   * WHO SAID SO. '' and 'kitchen' mean a person entered or accepted these
+   * numbers; 'estimated' means a machine guessed them from the dish name and
+   * nobody has checked yet.
+   *
+   * Empty reads as kitchen ON PURPOSE. Every number stored before this field
+   * existed got there because somebody typed it into the item screen and
+   * pressed Save, so it IS confirmed; treating the absence as "unverified"
+   * would silently strip the badges off every dish already done.
+   */
+  function estimatedOnly(item) {
+    return String((item && item.nutrition_source) || '').trim() === 'estimated';
+  }
+
+  /**
+   * Everything a customer-facing menu should show for one dish.
+   *
+   * A GUESS EARNS NOTHING. Until this field existed the question could not
+   * arise: the only way numbers reached an item was a person typing them, or
+   * pressing Estimate and then Save - either way a person put them there. The
+   * moment anything writes estimates in bulk that stops being true, and an
+   * unchecked guess would start earning "Heart healthy" and "Diabetic
+   * friendly" on a live menu.
+   *
+   * That is the same harm the owner ruled out - "only be shown when the
+   * recipe/nutrition actually supports the claim" - arriving by a different
+   * door. A tick box was the obvious way in and was refused; a machine
+   * guessing is the less obvious one.
+   *
+   * So estimated numbers are held back from the CUSTOMER entirely: no claims
+   * and no calorie figure, because a number on a menu is itself a claim. The
+   * shop still sees them on its own screen, where they are a draft to check
+   * rather than something published.
+   *
+   * The recipe tags survive, because the kitchen ticked those itself and
+   * nothing about them was estimated.
+   */
   function factsFor(item) {
     const nutrition = cleanNutrition(item && item.nutrition);
     const tags = cleanTags(item && item.food_tags, FOOD_TAGS);
     const marks = cleanTags(item && item.menu_marks, MENU_MARKS);
+
+    if (estimatedOnly(item)) {
+      return { nutrition: {}, tags, marks, claims: claimsFor({}, tags) };
+    }
     return { nutrition, tags, marks, claims: claimsFor(nutrition, tags) };
   }
 
@@ -291,6 +332,7 @@
     cleanTags,
     claimsFor,
     factsFor,
+    estimatedOnly,
   };
 
   /* Node takes it as a module; the desktop bundle hangs it on the window,
