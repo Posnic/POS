@@ -9137,10 +9137,66 @@ class SalesRepository {
      * tax, discount and the inclusive/exclusive arithmetic below all work
      * on the number the customer was actually shown.
      */
-    const sellingPrice = partnerVenues.priceFor(
-      Number(itemDoc.selling_price || 0),
-      servicePoint.venue
-    );
+    /*
+     * A DISH SOLD AT TODAY'S PRICE.
+     *
+     * Owner, after two fish went out at zero on a live table: "zero price
+     * items are actually dyanmic pricing. its based current price. so if you
+     * find that kind of item we need to allow captain to update the price and
+     * give order."
+     *
+     * Whole fish, crab, lobster: the shop cannot put a number on the card
+     * because it does not know one until the morning's market. The catalogue
+     * carries no selling price, the handset showed 0.00, and the order went to
+     * the kitchen worth nothing.
+     *
+     * THE DOOR OPENS ONLY WHERE THERE IS NO PRICE TO OVERRIDE. Every other
+     * line is still priced from the catalogue and the client's number is
+     * ignored, because a caller that can name its own price can buy a biryani
+     * for one rupee - and the handset is a phone in a pocket, not a trusted
+     * machine. An item is dynamic when the shop marked it `open_price`, or
+     * when it simply has no selling price, which is how these are set up
+     * today.
+     *
+     * Refused rather than silently zeroed if the price is missing or absurd:
+     * a line that reaches the kitchen worth nothing is what started this.
+     */
+    const catalogue = Number(itemDoc.selling_price || 0);
+    const dynamic = itemDoc.open_price === true || catalogue <= 0;
+    /* Three spellings because three callers already exist: the handset's order
+       payload says `item_price`, a line added to a live order says
+       `unit_price`, and `price` is what anything hand-written reaches for. */
+    const said = [item.unit_price, item.item_price, item.price].find((v) => v != null);
+    const asked = Number(said);
+
+    if (dynamic) {
+      if (!Number.isFinite(asked) || asked <= 0) {
+        return {
+          status: false,
+          data: { state: 'item_needs_price', item: itemDoc.name || '' },
+          /*
+           * Worded for whoever is holding the screen, and two different people
+           * can be: a waiter with the handset, who needs to be told to enter a
+           * price, and a customer on the self-service page, who cannot be
+           * asked one and must be sent to a member of staff. The `state` above
+           * is what an app keys on; this is the sentence a person reads.
+           */
+          message: `${itemDoc.name || 'That dish'} is priced on the day, so it needs today's price. A member of staff can add it.`,
+        };
+      }
+      /* A ceiling, because a fat finger on a phone is the likeliest way a
+         wrong number gets here and ten lakh for a fish should not be quietly
+         accepted. */
+      if (asked > 1000000) {
+        return {
+          status: false,
+          data: { state: 'item_price_too_high', item: itemDoc.name || '' },
+          message: `${asked} looks wrong for ${itemDoc.name || 'that dish'}. Check the price.`,
+        };
+      }
+    }
+
+    const sellingPrice = partnerVenues.priceFor(dynamic ? asked : catalogue, servicePoint.venue);
     const taxRate = Number(itemDoc.tax || 0);
     const discountAmount = Number(itemDoc.discount_amount || 0);
     const discountPercentage = Number(itemDoc.discount_percentage || 0);

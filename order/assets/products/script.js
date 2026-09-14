@@ -182,15 +182,31 @@
         desc.hidden = !item.description;
 
         showFacts(item);
-        el("dish-price").textContent = money(item.price);
+        /*
+         * TODAY'S PRICE IS NOT SET YET.
+         *
+         * Whole fish, crab, lobster: the rate comes from the morning's market
+         * and the shop enters it when it opens. Owner: "dont let customer add
+         * or menu see the price. ask for pricing."
+         *
+         * The sheet says so and withholds the button, using the same pair the
+         * out-of-hours case already uses - so there is one way this screen
+         * says "not now" rather than two.
+         */
+        const marketPriced = !(Number(item.price) > 0);
+        el("dish-price").textContent = marketPriced ? t("Market price") : money(item.price);
 
         /* Off its hours: no pill, and a line saying when instead. */
         const available = item.available !== false;
         const served = Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [];
-        el("dish-add").hidden = !available;
+        el("dish-add").hidden = !available || marketPriced;
         const off = el("dish-off");
-        off.hidden = available;
-        off.textContent = served.length ? t("Served at {when} only", { when: served.join(t(" and ")) }) : t("Not available right now");
+        off.hidden = available && !marketPriced;
+        off.textContent = marketPriced
+            ? t("Ask staff for today's price")
+            : served.length
+                ? t("Served at {when} only", { when: served.join(t(" and ")) })
+                : t("Not available right now");
 
         const line = (await getCartData()).find((row) => String(row.id) === openId);
         paintSheetQty(line ? line.quantity : 0);

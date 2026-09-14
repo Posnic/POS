@@ -139,6 +139,21 @@
    * bill in the country - and a CODE or a word keeps its space: "Rs 280",
    * "INR 280". The server sends the symbol where the shop has one.
    */
+  /*
+   * HAS THE SHOP SET TODAY'S PRICE YET?
+   *
+   * Whole fish, crab, lobster: the price comes from the morning's market, so
+   * the card cannot carry one and the catalogue holds nothing until the shop
+   * opens and enters it.
+   *
+   * Zero is that state. A dish that costs nothing is not a thing a kitchen
+   * sells, so there is no case to confuse this with - and the moment a real
+   * price is entered, this is false and the dish is ordinary everywhere.
+   */
+  function marketPriced(item) {
+    return !(Number(item && item.price) > 0);
+  }
+
   function money(amount) {
     var n = Number(amount) || 0;
     var text = n % 1 === 0 ? String(n) : n.toFixed(2);
@@ -277,7 +292,12 @@
       "</span></span>" +
       desc +
       '<span class="dish-price">' +
-      escapeHtml(money(item.price)) +
+      /*
+       * The words, not a number. A 0.00 on a menu board reads as free, and a
+       * guest who believes it has been misled by the shop - which is the one
+       * thing a printed price must never do.
+       */
+      escapeHtml(marketPriced(item) ? t("Market price") : money(item.price)) +
       "</span>" +
       (off || prep ? '<span class="dish-meta">' + off + prep + "</span>" : "") +
       "</span>" +
@@ -335,7 +355,7 @@
       "</span>" +
       "</span>" +
       '<span class="result-price">' +
-      escapeHtml(money(item.price)) +
+      escapeHtml(marketPriced(item) ? t("Market price") : money(item.price)) +
       "</span>" +
       "</button>"
     );

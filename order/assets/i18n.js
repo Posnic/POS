@@ -125,6 +125,8 @@
       "Right now": "இப்போது",
       "Available": "கிடைக்கிறது",
       "Not available today": "இன்று கிடைக்காது",
+      "Market price": "சନ்தை விலை",
+      "Ask staff for today's price": "இன்றைய விலையை பணியாளரிடம் கேட்கவும்",
       "Not available right now": "இப்போது கிடைக்காது",
       "Not being served - {when} only": "இப்போது பரிமாறப்படவில்லை - {when} மட்டும்",
       "{when} only": "{when} மட்டும்",
