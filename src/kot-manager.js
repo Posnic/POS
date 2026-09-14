@@ -11,6 +11,25 @@ const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 const { normalizeTargets, pageSizeFor, columnsFor } = require('./printer-targets');
 const { renderKitchenTicket } = require('./escpos-kot');
+const printLedger = require('./print-ledger');
+
+/*
+ * What a print attempt came back as.
+ *
+ * silentPrint answers with one entry per printer per copy. One printer failing
+ * while another succeeded is not a failed ticket - the kitchen has its copy and
+ * the file copy did not print, and those are different events.
+ */
+function _anyPrinted(results) {
+  if (!Array.isArray(results)) return false;
+  return results.some((r) => r && r.status === 'success');
+}
+
+function _firstReason(results) {
+  if (!Array.isArray(results)) return '';
+  const bad = results.find((r) => r && r.status !== 'success');
+  return bad ? String(bad.reason || 'unknown') : '';
+}
 
 /*
  * Where our own API is listening, right now.
@@ -64,6 +83,11 @@ class KOTManager {
     this.kotSlotMapping = {};
 
     // Dedup: track printed job hashes
+    /*
+     * In-memory, and now backed by src/print-ledger.js so it survives a
+     * restart. The Set alone was the whole reason a crash mid-batch reprinted
+     * every ticket in it.
+     */
     this.printedJobs = new Set();
 
     /*
@@ -83,6 +107,9 @@ class KOTManager {
     this.configPath = path.join(base, 'kot-config.json');
     this.statePath  = path.join(base, 'kot-state.json');
     this.logsDir    = path.join(base, 'kot-logs');
+    /* Beside the ticket logs, in the app's own data directory, so it survives
+       an update as well as a restart. */
+    printLedger.setDir(base);
     this._ensureLogsDir();
 
     this._loadState();
@@ -355,6 +382,32 @@ class KOTManager {
     } catch (e) { /* ignore */ }
   }
 
+  /*
+   * May this ticket print, and has it been written down first?
+   *
+   * The write happens BEFORE the paper, which is the whole point: a till that
+   * dies halfway must not reprint on the way back up. The cost of that choice
+   * is that a ticket lost to a crash stays lost until somebody notices, which
+   * is the trade the owner asked for - a duplicate is silent and costs food, a
+   * miss is loud and costs a reminder.
+   *
+   * Returns false when this exact ticket has been attempted before, on this run
+   * or any earlier one. False means DO NOT PRINT.
+   */
+  _claimForPrint(key, about) {
+    if (this.printedJobs.has(key)) return false;
+    /* The durable half. A false here is a duplicate that would have printed
+       before this existed, so it is worth saying out loud rather than passing
+       over in silence. */
+    if (!printLedger.claim(key, about)) {
+      this.printedJobs.add(key);
+      console.warn(`[KOT] already printed on an earlier run, not printing again: ${about.saleId || key}`);
+      return false;
+    }
+    this.printedJobs.add(key);
+    return true;
+  }
+
   _maybeDailyReset() {
     const today = new Date().toISOString().slice(0, 10);
     if (this.kotCounterDate !== today) {
@@ -505,13 +558,17 @@ class KOTManager {
             const jobHash  = crypto.createHash('md5').update(raw).digest('hex');
             const jobKey   = `${saleId}:${jobType}:${jobHash}`;
 
-            if (this.printedJobs.has(jobKey)) continue;
+            /* Written down first, then printed. See _claimForPrint. */
+            if (!this._claimForPrint(jobKey, { saleId, kind: jobType })) continue;
 
-            await this.silentPrint(
+            const jobResults = await this.silentPrint(
               { ...sale, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems },
               printerNames
             );
-            this.printedJobs.add(jobKey);
+            /* Recorded for measurement only. Nothing reads this to decide
+               whether to print - a failed ticket is not retried here, and
+               changing that is a bigger decision than this change. */
+            printLedger.settle(jobKey, _anyPrinted(jobResults), _firstReason(jobResults));
           }
 
           printedSaleIds.push(saleId);
@@ -534,17 +591,20 @@ class KOTManager {
         const token     = crypto.createHash('md5').update(rawToken).digest('hex');
         const key       = `${isCancel ? 'cancel' : 'kot'}:${saleId}:${token}`;
 
-        if (this.printedJobs.has(key)) continue;
+        if (!this._claimForPrint(key, { saleId, kind: isCancel ? 'cancel' : 'kot' })) continue;
 
         if (!isCancel) {
-          sale._printKind = this.printedJobs.has(`ever:${saleId}`) ? 'edit' : 'new';
+          /* Durable too, so a ticket after a restart is still an amendment
+             rather than announcing itself as a brand new order. */
+          const firstEver = printLedger.claim(`ever:${saleId}`, { saleId, kind: 'marker' });
+          sale._printKind = firstEver && !this.printedJobs.has(`ever:${saleId}`) ? 'new' : 'edit';
           this.printedJobs.add(`ever:${saleId}`);
         } else {
           sale._printKind = 'cancel';
         }
 
-        await this.silentPrint(sale, printerNames);
-        this.printedJobs.add(key);
+        const results = await this.silentPrint(sale, printerNames);
+        printLedger.settle(key, _anyPrinted(results), _firstReason(results));
         printedSaleIds.push(saleId);
       }
 

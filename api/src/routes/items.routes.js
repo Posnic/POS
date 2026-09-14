@@ -151,6 +151,11 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // whether to show the button at all; it moves to its own route when a
 // second screen needs it.
 router.post('/aiDescription', bindController(itemsController.aiDescription));
+// POST /api/items/aiDishFacts - estimate the nutrition of a dish from its
+// name. Writes nothing; the numbers land in the form marked as estimates and
+// a person looks at them before saving. Same gate as aiDescription, and for
+// the same reason: it spends the shop's own AI balance.
+router.post('/aiDishFacts', bindController(itemsController.aiDishFacts));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
 router.get('/aiSpend', bindController(itemsController.aiSpend));
 // GET /api/items/aiVoiceCalls - the last few live voice calls with what was

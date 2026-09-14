@@ -116,6 +116,13 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
        dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
     lift(src, 'pricedToday'),
     lift(src, 'waitingForTodaysPrice'),
+    /* The card markup was pulled out of the render loop so the flat search
+       list and the grouped menu draw the same card. Both renderers call it,
+       so it has to come along or neither can draw. */
+    liftConst(src, 'MARK_WORDS'),
+    liftConst(src, 'CLAIM_WORDS'),
+    lift(src, 'badgesFor'),
+    lift(src, 'cardHtml'),
     lift(src, 'renderProductCards'),
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */
@@ -273,7 +280,19 @@ test("a dish waiting for today's price says so, and cannot be added", async () =
   /* And the moment the shop enters this morning's number, an ordinary card. */
   const today = page('products.html', { branch: { currency: '₹' } });
   await today.box.rememberShop();
-  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(2) }));
+  /*
+   * Priced TODAY, whatever time the test runs.
+   *
+   * This was `hoursAgo(2)`, which reads as "the shop entered it this morning"
+   * and is yesterday whenever the suite runs within two hours of midnight.
+   * pricedToday compares CALENDAR DAYS, so the fixture has to be an unambiguous
+   * today rather than a small offset from now - it failed at 00:32 on a machine
+   * and in CI on the same code that had passed hours earlier.
+   *
+   * `new Date()` is today by definition, at every hour. The stale case keeps
+   * its 26 hours, which crosses midnight from any starting point.
+   */
+  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: new Date().toISOString() }));
   const priced = today.document.querySelector('.product-card[data-id="f1"]');
   assert.strictEqual(priced.querySelector('.product-price').textContent, '₹900');
   assert.ok(priced.querySelector('.cart-controls'), 'a priced dish cannot be ordered');
@@ -460,7 +479,16 @@ test('a long dish name cannot push a column under the order panel', () => {
    */
   const css = read('assets/order.css');
   assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(css), 'a bare 1fr track is back in order.css');
-  assert.match(css, /\.product-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  /*
+   * The floor was `minmax(0, 1fr)` and is now `minmax(min(100%, 264px), 1fr)`,
+   * because counting columns off the viewport broke the card on a desktop
+   * where this grid sits inside a column. What matters to THIS test is
+   * unchanged and is what is asserted: the track minimum is an explicit
+   * length, never `auto`, so no name can make a track grow past its column.
+   */
+  const gridRule = (css.match(/\.product-grid\s*\{[^}]*\}/) || [''])[0];
+  assert.match(gridRule, /grid-template-columns:\s*repeat\(auto-fill, minmax\(min\(100%, \d+px\), 1fr\)\)/);
+  assert.ok(!/minmax\(\s*auto/.test(gridRule), 'an auto-sized track can grow past its column');
   assert.match(css, /\.product-name\s*\{[^}]*min-width:\s*0/, 'the name has no floor of its own');
   const menu = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
   assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(menu), 'a bare 1fr track is back in the menu');
@@ -766,7 +794,14 @@ test('a shop is searched, not a menu, and is not asked about veg', async () => {
   });
   await shop.box.paintShop();
   assert.strictEqual(shop.document.getElementById('product-search').placeholder, 'Search products');
-  assert.strictEqual(shop.document.querySelector('#order-sort option[value="menu"]').textContent, 'Catalogue order');
+  /* Sorting moved out of the section row and into the sort-and-filter sheet,
+     so the shop's own word for its default order lives on a radio's label
+     now rather than on an <option>. A selector that matches nothing fails
+     silently, and a stationer would quietly go back to reading "Menu order". */
+  assert.strictEqual(
+    shop.document.querySelector('#filters-sort input[value="menu"] + span').textContent,
+    'Catalogue order'
+  );
   assert.strictEqual(shop.document.getElementById('order-filter-veg').hidden, true, 'a stationer is asked about veg');
 
   const kitchen = page('products.html', {
@@ -4039,6 +4074,10 @@ function checkoutPage({ cart = [], table = '', checkout: answer = null, kept = [
     'var orderJustPlaced = false;',
     lift(src, 'myOpenOrderHere'),
     lift(src, 'addToMyOpenOrder'),
+    /* performCheckout reads the stored phone through this, so the sandbox
+       needs it or the whole checkout throws a ReferenceError and the test
+       sees a refusal that never happened. */
+    lift(src, 'notAWord'),
     lift(src, 'performCheckout'),
   ].join('\n');
 

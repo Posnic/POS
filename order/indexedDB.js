@@ -21,6 +21,10 @@ const ORDER_ATTEMPT_KEY = "kiosk_order_attempt_id";
 let db;
 let cart = {}; // ✅ Cart stored in IndexedDB
 let products = Object.create(null);
+/* Section key to the shop's own word for it. Built beside `products` and
+   read by the renderer, which draws the heading of every section rather than
+   one chip's label. */
+let categoryNames = new Map();
 const checkoutSingleFlight = KioskCore.createSingleFlight();
 
 function getOrCreateOrderAttemptId() {
@@ -253,7 +257,11 @@ async function paintShop() {
     if (search) search.placeholder = searchWord;
     const searchLabel = document.querySelector('label[for="product-search"]');
     if (searchLabel) searchLabel.textContent = searchWord;
-    const firstSort = document.querySelector('#order-sort option[value="menu"]');
+    /* Sorting moved from a select in the section row into the filter sheet,
+       so this reads the radio's own label rather than an <option> that no
+       longer exists - a selector that matches nothing fails silently, and a
+       retail shop would have quietly gone back to being told "Menu order". */
+    const firstSort = document.querySelector('#filters-sort input[value="menu"] + span');
     if (firstSort) firstSort.textContent = shop.kind === "retail" ? t("Catalogue order") : t("Menu order");
     const veg = document.getElementById("order-filter-veg");
     if (veg && typeof allProducts === "function") {
@@ -1634,6 +1642,7 @@ async function loadProducts() {
         products[categoryKey].push(product);
         categories.set(categoryKey, categoryName);
     });
+    categoryNames = categories;
 
     /* The chip strip on a phone and the rail on a wide screen carry the
        same sections; one delegated handler answers both. Buttons, so a
@@ -1650,28 +1659,21 @@ async function loadProducts() {
         if ($categoryRail.length) chip.clone().appendTo($categoryRail);
     });
 
-    // ✅ Retrieve last active category from localStorage
-    let lastActiveCategory = localStorage.getItem("lastActiveCategory");
+    /*
+     * Every section is drawn, so there is no category to "open" and nothing
+     * here decides what a customer sees. The only job left is which chip
+     * starts out lit, and that is the first one: the page opens at the top
+     * of the menu, which is where the first section is.
+     *
+     * lastActiveCategory is deliberately NOT restored. It made sense when a
+     * chip chose the whole page and somebody coming back wanted their place;
+     * now it would mean opening scrolled into the middle of the menu with no
+     * explanation, and the scroll watcher rewrites it on the first scroll
+     * anyway.
+     */
+    $(".category-item").first().addClass("active");
 
-    // ✅ Ensure the last active category is marked as active
-    if (lastActiveCategory && products[lastActiveCategory]) {
-        const categoryElement = $(".category-item").filter((_, element) => (
-            String($(element).attr("data-category")) === String(lastActiveCategory)
-        ));
-        if (categoryElement.length) {
-            categoryElement.addClass("active");
-            showCategory(lastActiveCategory, categoryElement[0]);
-            return;
-        }
-    }
-
-    // ✅ If no last active category, select the first one
-    if (Object.keys(products).length > 0) {
-        let firstCategory = Object.keys(products)[0];
-        let firstElement = $(".category-item").first();
-        firstElement.addClass("active");
-        showCategory(firstCategory, firstElement[0]);
-    }
+    await refreshProductView();
 }
 
 $(document).on("click", ".category-item", function () {
@@ -1679,25 +1681,28 @@ $(document).on("click", ".category-item", function () {
     if (category) showCategory(category, this);
 });
 
+/*
+ * Go to a section. It is already on the page.
+ *
+ * This used to REPLACE the page with one category, which is what made the
+ * ordering page a set of fourteen small pages instead of a menu. Now every
+ * section is drawn and a chip scrolls to one, so nothing is redrawn, nothing
+ * is fetched, and the scroll position of everywhere else survives.
+ */
 async function showCategory(category, element) {
     if (!document.getElementById("product-list")) {
         return;
     }
 
-    /* Lit in both lists, so the rail and the strip never disagree. */
-    $(".category-item").removeClass("active");
-    $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === String(category)).addClass("active");
+    lightChip(String(category));
 
-    // ✅ Update heading dynamically
-    let categoryName = $(element).text();
-    $("#category-heading").text(categoryName);
-    /* The chip above already says this word. See body.one-section. */
-    sayWhetherOneSection(true);
-
-    // ✅ Store the last active category in localStorage
-    localStorage.setItem("lastActiveCategory", category);
-
-    await renderProductCards(products[category] || []);
+    var heading = document.getElementById("sec-" + String(category));
+    if (heading && typeof heading.scrollIntoView === "function") {
+        heading.scrollIntoView({ behavior: "smooth", block: "start" });
+        /* Moved for the eye; moved for a screen reader too, or the page has
+           silently changed subject for one reader and not the other. */
+        if (typeof heading.focus === "function") heading.focus({ preventScroll: true });
+    }
 }
 
 /*
@@ -1758,17 +1763,66 @@ function pricedToday(setOn) {
  * two copies of the card markup would mean the search results quietly losing
  * a button the category view still had.
  */
-async function renderProductCards(list) {
-    if (!document.getElementById("product-list")) return;
+/*
+ * THE BADGES ON A DISH CARD.
+ *
+ * Owner asked for "signature dishes, chef pick, nutritions, veg or non veg,
+ * calories, health benefits, ready in 10 minutes, something like how top
+ * international food brands are having options", and then: "not too annoying
+ * make it very very professional and neat."
+ *
+ * Those two pull against each other, and the second one wins here. A dish
+ * that is a chef's pick, high protein, low carb, keto friendly, under 300
+ * kcal, gluten free and ready in ten minutes has SEVEN things to say, and a
+ * card carrying all seven is not a menu, it is a nutrition label with a price
+ * on it. Somebody choosing lunch reads the name and the price.
+ *
+ * So: at most two badges on a card, taken in the order below, and the rest
+ * live in the dish sheet where a person who wants them has asked for them.
+ *
+ * The order is deliberate. What the SHOP says about a dish - signature,
+ * chef's pick - comes first, because it is the shop recommending its own food
+ * and that is the thing a menu is for. The health claims follow, and only
+ * ever the ones the numbers earned; they are computed server-side by
+ * utils/dish-facts.js and this page cannot invent one.
+ */
+const MARK_WORDS = {
+    signature: "Signature",
+    chefs_pick: "Chef's pick",
+    house_special: "House special",
+    new: "New"
+};
 
-    const storedCart = await getCartData();
-    const cartByProductId = new Map(storedCart.map(item => [String(item.id), item]));
-    let html = "";
+/* Only the claims worth a card. The finer ones - source of protein, low fat,
+   under 500 kcal - are true and quiet, and belong in the sheet rather than
+   competing with a dish name for the same two lines. */
+const CLAIM_WORDS = {
+    high_protein: "High protein",
+    keto_friendly: "Keto friendly",
+    diabetic_friendly: "Diabetic friendly",
+    heart_healthy: "Heart healthy",
+    high_fibre: "High fibre",
+    under_300: "Under 300 kcal",
+    no_added_sugar: "No added sugar"
+};
 
-    for (const product of (list || [])) {
+function badgesFor(product) {
+    var out = [];
+
+    (product.marks || []).forEach(function (key) {
+        if (MARK_WORDS[key]) out.push({ kind: "mark", word: t(MARK_WORDS[key]) });
+    });
+
+    (product.claims || []).forEach(function (key) {
+        if (CLAIM_WORDS[key]) out.push({ kind: "claim", word: t(CLAIM_WORDS[key]) });
+    });
+
+    return out.slice(0, 2);
+}
+
+function cardHtml(product, quantity) {
+    {
         const productId = String(product.id ?? "");
-        const cartItem = cartByProductId.get(productId);
-        const quantity = cartItem ? Number(cartItem.quantity) || 0 : 0;
         const activeClass = quantity > 0 ? "active" : "";
 
         const safeProductId = escapeHtml(productId);
@@ -1790,6 +1844,17 @@ async function renderProductCards(list) {
             meta.push(t("~{n} min", { n: Number(product.prep_minutes) }));
         }
 
+        /*
+         * Calories sit with the preparation time rather than among the
+         * badges: it is a fact of the same kind - a small number somebody
+         * either wants or ignores - and putting it in a coloured pill makes
+         * a plain figure look like a claim.
+         *
+         * Only shown when the kitchen entered it. Nothing here estimates.
+         */
+        const kcal = product.nutrition && Number(product.nutrition.kcal);
+        if (kcal > 0) meta.push(t("{n} kcal", { n: Math.round(kcal) }));
+
         /* A photograph if the shop uploaded one, the drawn icon if not, and
            the old placeholder only when there is neither. */
         const media = product.img
@@ -1798,11 +1863,17 @@ async function renderProductCards(list) {
                 ? `<span class="product-icon" aria-hidden="true">${escapeHtml(product.icon)}</span>`
                 : `<img src="images/default-product.png" alt="" loading="lazy">`;
 
-        html += `
+        return `
         <div class="product-card ${activeClass}" data-id="${safeProductId}" data-qty="${quantity}" data-available="${available ? "true" : "false"}" role="button" tabindex="0">
             <div class="product-body">
                 <p class="product-title">${dietMarkHtml(product.diet)}<span class="product-name">${safeProductName}</span></p>
                 ${description ? `<p class="product-desc">${escapeHtml(description)}</p>` : ""}
+                ${(() => {
+                    const badges = badgesFor(product);
+                    return badges.length
+                        ? `<p class="product-badges">${badges.map(b => `<span class="dish-badge dish-badge-${b.kind}">${escapeHtml(b.word)}</span>`).join("")}</p>`
+                        : "";
+                })()}
                 <p class="product-price">${escapeHtml(marketPriced ? t("Market price") : money(price))}</p>
                 ${meta.length ? `<div class="product-meta">${meta.map(m => `<span>${escapeHtml(m)}</span>`).join("")}</div>` : ""}
             </div>
@@ -1820,11 +1891,452 @@ async function renderProductCards(list) {
             </div>
         </div>`;
     }
+}
 
-    $("#product-list").html(html);
+/*
+ * Draw a flat list of cards. What a SEARCH answers with.
+ *
+ * A search spans the whole menu, so what comes back is not a section and must
+ * not be dressed as one - somebody who typed "biryani" is asking the
+ * restaurant a question, not browsing Rice & Biryani.
+ */
+async function renderProductCards(list) {
+    if (!document.getElementById("product-list")) return;
+
+    const storedCart = await getCartData();
+    const cartByProductId = new Map(storedCart.map(item => [String(item.id), item]));
+
+    /* Wrapped in its own grid: the container is a plain block so that a
+       section and a search result are laid out by the same rule, one level
+       down, rather than one of them inheriting a grid from its parent. */
+    $("#product-list").html('<div class="product-grid">' + (list || []).map(function (product) {
+        const cartItem = cartByProductId.get(String(product.id ?? ""));
+        return cardHtml(product, cartItem ? Number(cartItem.quantity) || 0 : 0);
+    }).join("") + '</div>');
+
     await updateCart(storedCart);
     const loader = document.getElementById('page-loader');
     if (loader) loader.style.display = 'none';
+}
+
+/*
+ * Draw the WHOLE MENU, grouped under its section headings.
+ *
+ * Owner: "/menu/ is not same as /order/table/123 coz inside there is not menu
+ * button. thats actually good. its grouping the menu and easy to navigate.
+ * add it here too."
+ *
+ * He is right, and driving both pages showed it is worse than a missing
+ * button. The ordering page drew ONE category at a time and opened on
+ * whichever sorted first - so a customer at table 34 of a restaurant opened
+ * the page and saw a single A5 ruled notebook, with 85% of the screen blank
+ * and the words "32 dishes" above it. Every dish in the place was two taps
+ * away behind a chip strip whose second chip was already cut off by the edge
+ * of the screen.
+ *
+ * The public menu had none of that: fourteen sections, everything under a
+ * heading, scroll and you have read the menu. That is what a menu is, and the
+ * page people actually order from is the one that needed it most.
+ *
+ * So the chips stop SWITCHING and start JUMPING, which is what a chip strip
+ * over a grouped page means everywhere else in the world.
+ */
+async function renderWholeMenu(bySection) {
+    if (!document.getElementById("product-list")) return;
+
+    const storedCart = await getCartData();
+    const cartByProductId = new Map(storedCart.map(item => [String(item.id), item]));
+
+    const sections = (bySection || []).filter(s => (s.items || []).length);
+
+    $("#product-list").html(sections.map(function (section) {
+        const cards = section.items.map(function (product) {
+            const cartItem = cartByProductId.get(String(product.id ?? ""));
+            return cardHtml(product, cartItem ? Number(cartItem.quantity) || 0 : 0);
+        }).join("");
+
+        /* The count under each heading is not decoration: it is what tells
+           somebody whether a section is worth scrolling into before they
+           have scrolled into it. */
+        const many = section.items.length !== 1;
+        return `
+        <section class="menu-section" data-section="${escapeHtml(String(section.key))}">
+            <h3 class="menu-section-name" id="sec-${escapeHtml(String(section.key))}" tabindex="-1">${escapeHtml(String(section.name))}</h3>
+            <p class="menu-section-count">${escapeHtml(t(many ? "{n} items" : "{n} item", { n: section.items.length }))}</p>
+            <div class="product-grid">${cards}</div>
+        </section>`;
+    }).join(""));
+
+    watchSections();
+    fillMenuIndex(sections);
+    fillFilters();
+
+    await updateCart(storedCart);
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.style.display = 'none';
+}
+
+/*
+ * Light the chip for the section being read.
+ *
+ * Without this the strip is a set of links that never answer back, and after
+ * one scroll it is lying about where you are. The rail on a wide screen shows
+ * the same state from the same observer, so the two cannot disagree.
+ *
+ * rootMargin pulls the trigger line down near the top of the viewport: the
+ * section people are READING is the one under the header, not whichever
+ * happens to be crossing the middle of the screen.
+ */
+var sectionWatcher = null;
+function watchSections() {
+    if (sectionWatcher) sectionWatcher.disconnect();
+    if (typeof IntersectionObserver !== "function") return;
+
+    sectionWatcher = new IntersectionObserver(function (entries) {
+        if (atTheBottom()) return lightLastSection();
+        var top = entries
+            .filter(e => e.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (!top) return;
+        lightChip(String(top.target.getAttribute("data-section") || ""));
+    }, { rootMargin: "-88px 0px -70% 0px", threshold: 0 });
+
+    document.querySelectorAll(".menu-section").forEach(s => sectionWatcher.observe(s));
+
+    /*
+     * THE LAST SECTION CAN NEVER WIN THE BAND.
+     *
+     * The trigger line sits just under the header, and the page runs out of
+     * scroll before the last heading can reach it. So tapping "Desserts" in
+     * the menu sheet scrolled correctly to the desserts, which filled the
+     * screen - and left "Drinks" lit, because Drinks was the last heading
+     * that got under the line. A guest who asked for desserts, got desserts,
+     * and is told they are in Drinks concludes the button is broken.
+     *
+     * Every scrolling menu meets this and the answer is the same everywhere:
+     * at the bottom of the page you are in the last section, whatever the
+     * observer thinks. Bound once here rather than inside the observer so it
+     * also fires on an ordinary scroll to the end, not only on a jump.
+     */
+    window.removeEventListener("scroll", onScrollEnd);
+    window.addEventListener("scroll", onScrollEnd, { passive: true });
+}
+
+/* Within a few pixels: a phone's momentum scroll rarely lands exactly on
+   the last pixel, and a rule that needs it to would almost never fire. */
+function atTheBottom() {
+    var doc = document.documentElement;
+    var y = window.scrollY || doc.scrollTop || 0;
+    return y + window.innerHeight >= (doc.scrollHeight || 0) - 4;
+}
+
+function lightLastSection() {
+    var all = document.querySelectorAll(".menu-section");
+    if (!all.length) return;
+    lightChip(String(all[all.length - 1].getAttribute("data-section") || ""));
+}
+
+function onScrollEnd() {
+    if (atTheBottom()) lightLastSection();
+}
+
+/*
+ * FILTERS THAT ONLY OFFER WHAT THIS MENU CAN ANSWER.
+ *
+ * Owner: "very user friend ux and advanced options to choose" and, in the
+ * same breath, "filter options. not too annoying make it very very
+ * professional and neat."
+ *
+ * Those two are usually a trade and here they are not, because the honest
+ * version is also the smaller one: a filter is offered only when at least one
+ * dish on THIS menu carries it, with the count beside it. A shop that has
+ * entered no nutrition sees no health filters and no button at all - not an
+ * empty sheet, and never a filter that can only ever return nothing.
+ *
+ * That also makes the list self-explaining. "Gluten free 4" says both what
+ * the filter does and what it is worth, and a guest who ticks it cannot be
+ * surprised by the result.
+ */
+const FILTER_TAG_WORDS = {
+    plant_based: "Plant based",
+    eggetarian: "Eggetarian",
+    jain: "Jain",
+    satvik: "Satvik",
+    gluten_free: "Gluten free",
+    dairy_free: "Dairy free",
+    lactose_free: "Lactose free",
+    nut_free: "Nut free",
+    organic: "Organic",
+    no_added_sugar: "No added sugar"
+};
+
+const FILTER_CLAIM_WORDS = {
+    high_protein: "High protein",
+    protein_source: "Source of protein",
+    low_fat: "Low fat",
+    high_fibre: "High fibre",
+    keto_friendly: "Keto friendly",
+    low_carb: "Low carb",
+    diabetic_friendly: "Diabetic friendly",
+    heart_healthy: "Heart healthy",
+    under_300: "Under 300 kcal",
+    under_500: "Under 500 kcal",
+    no_added_sugar: "No added sugar"
+};
+
+/** How many dishes on the whole menu carry each key of one field. */
+function countBy(field, allowed) {
+    var counts = Object.create(null);
+    allProducts().forEach(function (p) {
+        var keys = Array.isArray(p[field]) ? p[field] : [];
+        keys.forEach(function (k) {
+            if (allowed[k]) counts[k] = (counts[k] || 0) + 1;
+        });
+    });
+    return counts;
+}
+
+function filterGroupHtml(title, field, allowed, chosen) {
+    var counts = countBy(field, allowed);
+    var keys = Object.keys(allowed).filter(function (k) { return counts[k]; });
+    if (!keys.length) return "";
+
+    return '<section class="filters-group">'
+        + '<h3 class="filters-group-name">' + escapeHtml(t(title)) + '</h3>'
+        + '<div class="filters-pills">'
+        + keys.map(function (k) {
+            var on = chosen.indexOf(k) !== -1;
+            return '<label class="filters-pill"' + (on ? ' data-on="true"' : '') + '>'
+                + '<input type="checkbox" data-field="' + escapeHtml(field) + '" value="' + escapeHtml(k) + '"' + (on ? ' checked' : '') + '>'
+                + '<span>' + escapeHtml(t(allowed[k])) + '</span>'
+                + '<b>' + counts[k] + '</b>'
+                + '</label>';
+        }).join("")
+        + '</div></section>';
+}
+
+function fillFilters() {
+    var groups = document.getElementById("filters-groups");
+    var button = document.getElementById("order-filter-more");
+    if (!groups || !button) return;
+
+    var html = filterGroupHtml("What you can eat", "tags", FILTER_TAG_WORDS, orderView.tags)
+        + filterGroupHtml("Good for", "claims", FILTER_CLAIM_WORDS, orderView.claims);
+
+    /* The button always stands now, because sorting is always worth
+       offering; the filter GROUPS are what appear only when this menu can
+       answer them. A shop that has entered no nutrition gets a sheet with
+       sorting in it and nothing else, which is honest and still useful. */
+    button.hidden = false;
+    groups.innerHTML = html;
+
+    var chosen = orderView.tags.length + orderView.claims.length;
+    var badge = document.getElementById("order-filter-count");
+    if (badge) {
+        badge.hidden = chosen === 0;
+        badge.textContent = String(chosen);
+    }
+    button.setAttribute("aria-pressed", chosen ? "true" : "false");
+}
+
+/* How many dishes the sheet's current ticks would leave, so the button at the
+   bottom says what pressing it does rather than just "Apply". */
+function paintFilterCount() {
+    var apply = document.getElementById("filters-apply");
+    if (!apply) return;
+    var n = orderViewList(allProducts()).length;
+    apply.textContent = n === 1 ? t("Show 1 dish") : t("Show {n} dishes", { n: n });
+    apply.disabled = n === 0;
+}
+
+$(document).on("click", "#order-filter-more", function (e) {
+    e.preventDefault();
+    fillFilters();
+    paintFilterCount();
+    var sheet = document.getElementById("filters");
+    if (!sheet) return;
+    if (typeof sheet.showModal === "function") sheet.showModal();
+    else sheet.setAttribute("open", "open");
+});
+
+function closeFilters() {
+    var sheet = document.getElementById("filters");
+    if (!sheet) return;
+    if (typeof sheet.close === "function") sheet.close();
+    else sheet.removeAttribute("open");
+}
+
+$(document).on("click", "#filters-close, #filters-apply", function (e) {
+    e.preventDefault();
+    closeFilters();
+});
+
+$(document).on("click", "#filters-clear", async function (e) {
+    e.preventDefault();
+    orderView.tags = [];
+    orderView.claims = [];
+    fillFilters();
+    paintFilterCount();
+    await refreshProductView();
+});
+
+/*
+ * A tick narrows the menu straight away, behind the sheet.
+ *
+ * Deliberately not on Apply. The count on the button is the answer to "what
+ * will this do", and the page behind is already that answer - so closing the
+ * sheet is confirmation of something already seen, not a commit step that can
+ * surprise somebody.
+ */
+$(document).on("change", "#filters-groups input[type=checkbox]", async function () {
+    var field = String($(this).data("field") || "");
+    var value = String(this.value || "");
+    if (field !== "tags" && field !== "claims") return;
+
+    var list = orderView[field];
+    var at = list.indexOf(value);
+    if (this.checked && at === -1) list.push(value);
+    if (!this.checked && at !== -1) list.splice(at, 1);
+
+    $(this).closest(".filters-pill").attr("data-on", this.checked ? "true" : null);
+
+    await refreshProductView();
+    paintFilterCount();
+
+    var badge = document.getElementById("order-filter-count");
+    var chosen = orderView.tags.length + orderView.claims.length;
+    if (badge) {
+        badge.hidden = chosen === 0;
+        badge.textContent = String(chosen);
+    }
+});
+
+/*
+ * THE MENU BUTTON: the contents page of the menu.
+ *
+ * Filled from the sections that are actually drawn, so a section filtered
+ * away by "Veg only" is not offered here either - an index that lists a
+ * section and then jumps to nothing is worse than no index.
+ *
+ * Hidden entirely below four sections. A contents page for three headings
+ * that are all on the screen already is a button that exists to be ignored,
+ * and the one thing this page cannot afford is another control.
+ */
+var INDEX_WORTH_IT = 4;
+
+/*
+ * A PICTURE FOR A SECTION, WITHOUT A FIELD FOR ONE.
+ *
+ * Owner: "if possible have category image ( menu ). show some image as
+ * ccategory. how many items inside."
+ *
+ * A category has no image of its own anywhere in the product, and adding one
+ * would mean a new field, a new upload, and a shop photographing fourteen
+ * categories before this button is worth pressing - which means it stays
+ * empty everywhere, like every other optional image.
+ *
+ * So the section borrows from the food. The first dish with a photograph
+ * stands for the section, which is what a person would have chosen anyway;
+ * failing that the first emoji, which utils/dish-icons.js puts on almost
+ * every dish from its name alone; and failing both, a letter. Every section
+ * therefore has something to look at on the day this ships, with nobody
+ * uploading anything.
+ */
+function sectionPicture(section) {
+    var items = section.items || [];
+
+    for (var i = 0; i < items.length; i++) {
+        if (items[i] && items[i].img) {
+            /* Eager, unlike every other image on this page. The sheet is
+               short, the tiles are small, and most of these URLs are already
+               cached from the menu underneath - and a contents page that
+               opens half blank and fills in as you scroll is the thing that
+               made it look unfinished. */
+            return '<img src="' + escapeHtml(getSafeImageUrl(items[i].img)) + '" alt="" decoding="async">';
+        }
+    }
+
+    for (var j = 0; j < items.length; j++) {
+        if (items[j] && items[j].icon) {
+            return '<span class="menu-index-emoji" aria-hidden="true">' + escapeHtml(items[j].icon) + '</span>';
+        }
+    }
+
+    /* The section's own initial. Never empty, never a broken image. */
+    var letter = String(section.name || "?").trim().charAt(0).toUpperCase();
+    return '<span class="menu-index-letter" aria-hidden="true">' + escapeHtml(letter) + '</span>';
+}
+
+function fillMenuIndex(sections) {
+    var list = document.getElementById("menu-index-list");
+    var button = document.getElementById("menu-index-btn");
+    if (!list || !button) return;
+
+    var worth = (sections || []).filter(function (s) { return (s.items || []).length; });
+    button.hidden = worth.length < INDEX_WORTH_IT;
+    if (button.hidden) return;
+
+    list.innerHTML = worth.map(function (s) {
+        var many = s.items.length !== 1;
+        return '<button type="button" class="menu-index-row" data-go="' + escapeHtml(String(s.key)) + '">'
+            + '<span class="menu-index-pic">' + sectionPicture(s) + '</span>'
+            + '<span class="menu-index-words">'
+            + '<span class="menu-index-name">' + escapeHtml(String(s.name)) + '</span>'
+            + '<span class="menu-index-count">' + escapeHtml(t(many ? "{n} items" : "{n} item", { n: s.items.length })) + '</span>'
+            + '</span>'
+            + '</button>';
+    }).join("");
+}
+
+function openMenuIndex() {
+    var sheet = document.getElementById("menu-index");
+    if (!sheet) return;
+    if (typeof sheet.showModal === "function") sheet.showModal();
+    else sheet.setAttribute("open", "open");
+}
+
+function closeMenuIndex() {
+    var sheet = document.getElementById("menu-index");
+    if (!sheet) return;
+    if (typeof sheet.close === "function") sheet.close();
+    else sheet.removeAttribute("open");
+}
+
+$(document).on("click", "#menu-index-btn", function (e) {
+    e.preventDefault();
+    openMenuIndex();
+});
+
+$(document).on("click", "#menu-index-close", function (e) {
+    e.preventDefault();
+    closeMenuIndex();
+});
+
+/* Close FIRST, then jump. A dialog still open while the page scrolls under
+   it means the guest watches nothing happen and taps again. */
+$(document).on("click", ".menu-index-row", function (e) {
+    e.preventDefault();
+    var key = String($(this).attr("data-go") || "");
+    closeMenuIndex();
+    if (key) showCategory(key, this);
+});
+
+/** One chosen chip, in both lists, and dragged into view in the strip. */
+function lightChip(key) {
+    if (!key) return;
+    localStorage.setItem("lastActiveCategory", key);
+
+    $(".category-item").removeClass("active");
+    var chosen = $(".category-item").filter((_, chip) => String($(chip).attr("data-category")) === key);
+    chosen.addClass("active");
+
+    /* A lit chip off the end of a scrolling strip is the same as no lit chip.
+       Only the horizontal strip is scrolled; the rail is a column and moving
+       it under somebody's reading finger would be worse than leaving it. */
+    var chip = chosen.filter((_, el) => !!el.closest(".category-scroll-container"))[0];
+    if (chip && typeof chip.scrollIntoView === "function") {
+        chip.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }
 }
 
 // ✅ Event Binding for `.product-card` Clicks
@@ -2139,6 +2651,19 @@ async function checkout(transactionId, paymentStatus = "Upi", options = {}) {
     });
 }
 
+/**
+ * A stored string that actually says something.
+ *
+ * Browser storage keeps strings and nothing else, so `setItem(k, null)` comes
+ * back as "null" and `setItem(k, undefined)` as "undefined" - both truthy,
+ * both useless, and both have shipped as "+91null" on a real order.
+ */
+function notAWord(value) {
+    const text = String(value == null ? "" : value).trim();
+    if (!text || text === "null" || text === "undefined" || text === "NaN") return "";
+    return text;
+}
+
 async function performCheckout(transactionId, paymentStatus = "Upi", options = {}) {
     try {
         // 🔄 Get cart data from IndexedDB
@@ -2184,7 +2709,20 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             console.log("Branch not found.");
             return false;
         }
-        const savedNumber = sessionStorage.getItem("kiosk_mobile_number");
+        /*
+         * "null" IS A STRING, AND IT IS TRUTHY.
+         *
+         * Owner's screenshot of the order queue: a customer row reading
+         * "+91null". sessionStorage only stores strings, so anything that
+         * writes an absent value writes the WORD - and `saved ? '+91' + saved
+         * : ''` then happily builds a phone number out of it. The guard on
+         * that line was already there and could not help.
+         *
+         * Fixed at the READ rather than at each writer: the voice line, the
+         * payment page and whatever comes next all land here, and a reader
+         * that cannot be fooled is one place instead of three.
+         */
+        const savedNumber = notAWord(sessionStorage.getItem("kiosk_mobile_number"));
         const generatedTokenId = generateUniqueToken();
         const orderAttemptId = getOrCreateOrderAttemptId();
 
@@ -2589,7 +3127,7 @@ function scoreItem(query, fields) {
 }
 
 /* What the customer has narrowed the catalogue to. */
-var orderView = { query: "", vegOnly: false, sort: "menu" };
+var orderView = { query: "", vegOnly: false, sort: "menu", tags: [], claims: [] };
 
 /*
  * A few things that go with what somebody has already ordered.
@@ -2724,6 +3262,33 @@ function orderViewList(source) {
         });
     }
 
+    /*
+     * WITHIN A GROUP, ANY. ACROSS GROUPS, ALL.
+     *
+     * Somebody who ticks "Gluten free" and "Nut free" needs BOTH to be true
+     * of the same dish - those are things they cannot eat, and a dish that
+     * satisfies one of them is not an answer. The same rule reads correctly
+     * for the health claims, so both groups use it and there is one
+     * behaviour on the sheet rather than two.
+     *
+     * The claims were decided on the server from the shop's own numbers.
+     * Nothing here recomputes one, so a filter cannot disagree with the badge
+     * on the card it just hid.
+     */
+    if (orderView.tags.length) {
+        list = list.filter(function (p) {
+            var has = Array.isArray(p.tags) ? p.tags : [];
+            return orderView.tags.every(function (want) { return has.indexOf(want) !== -1; });
+        });
+    }
+
+    if (orderView.claims.length) {
+        list = list.filter(function (p) {
+            var has = Array.isArray(p.claims) ? p.claims : [];
+            return orderView.claims.every(function (want) { return has.indexOf(want) !== -1; });
+        });
+    }
+
     if (q) {
         list = list
             .map(function (p, i) {
@@ -2758,26 +3323,52 @@ async function refreshProductView() {
     if (!document.getElementById("product-list")) return;
 
     var searching = !!orderView.query.trim();
-    var active = String(localStorage.getItem("lastActiveCategory") || "");
 
-    /* Searching leaves the categories behind: the answer is a flat list across
-       the whole menu, and a category strip beside it would be navigating
+    /* Searching leaves the sections behind: the answer is a flat list across
+       the whole menu, and a section strip beside it would be navigating
        something that is no longer there. */
     $(".fixed-categories").toggle(!searching);
 
-    var source = searching ? allProducts() : (products[active] || []);
-    var list = orderViewList(source);
+    /*
+     * TWO SHAPES, AND ONLY TWO.
+     *
+     * Searching answers with a flat list, because a question about the menu
+     * is not a place in it. Not searching draws the WHOLE menu grouped under
+     * its headings - every section, every time - so the page is a menu rather
+     * than fourteen small pages behind a chip strip.
+     *
+     * The filters run per section rather than over one list, so "Veg only" on
+     * a menu with no vegetarian starters simply has no Starters heading,
+     * instead of a heading with nothing under it.
+     */
+    var list = [];
+    if (searching) {
+        list = orderViewList(allProducts());
+        await renderProductCards(list);
+        /* No sections are drawn, so there is nothing to index and nowhere
+           for a row in it to jump to. */
+        var indexBtn = document.getElementById("menu-index-btn");
+        if (indexBtn) indexBtn.hidden = true;
+    } else {
+        var sections = Object.keys(products).map(function (key) {
+            var items = orderViewList(products[key] || []);
+            list = list.concat(items);
+            return { key: key, name: categoryNames.get(key) || key, items: items };
+        });
+        await renderWholeMenu(sections);
 
-    $("#category-heading").text(
-        searching
-            ? "Results"
-            : ($(".category-item.active").first().text() || "Our Menu")
-    );
-    /* Searching shows "Results", which no chip is claiming; one chosen
-       section shows the chip's own word two rows under the chip. */
-    sayWhetherOneSection(!searching && $(".category-item.active").length > 0);
+        /* A section that filtered down to nothing has no chip to jump to. */
+        var alive = new Set(sections.filter(s => s.items.length).map(s => s.key));
+        $(".category-item").each(function () {
+            $(this).toggle(alive.has(String($(this).attr("data-category"))));
+        });
+    }
 
-    await renderProductCards(list);
+    $("#category-heading").text(searching ? "Results" : "Our Menu");
+    /* Every section now carries its own heading, so the one at the top of the
+       page would be a second word for the same thing. It stays only for a
+       search, where no section heading is drawn at all. */
+    sayWhetherOneSection(!searching);
 
     var counter = document.getElementById("order-result-count");
     if (!counter) {
@@ -2789,7 +3380,7 @@ async function refreshProductView() {
         if (host) host.appendChild(counter);
     }
 
-    var narrowed = searching || orderView.vegOnly;
+    var narrowed = searching || orderView.vegOnly || orderView.tags.length > 0 || orderView.claims.length > 0;
     counter.hidden = !narrowed;
     if (narrowed) {
         counter.textContent = list.length === 0
@@ -2823,7 +3414,10 @@ $(document).on("click", "#order-filter-veg", function () {
     refreshProductView();
 });
 
-$(document).on("change", "#order-sort", function () {
-    orderView.sort = String($(this).val() || "menu");
-    refreshProductView();
+$(document).on("change", "#filters-sort input[type=radio]", async function () {
+    orderView.sort = String(this.value || "menu");
+    $("#filters-sort .filters-pill").attr("data-on", null);
+    $(this).closest(".filters-pill").attr("data-on", "true");
+    await refreshProductView();
+    paintFilterCount();
 });

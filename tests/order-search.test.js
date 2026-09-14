@@ -161,12 +161,27 @@ test('the page ships the controls the handlers are bound to', () => {
      carries is a search box that does nothing, and that passes every static
      check here. */
   const html = fs.readFileSync(path.join(__dirname, '..', 'order', 'products.html'), 'utf8');
-  for (const id of ['product-search', 'product-search-clear', 'order-filter-veg', 'order-sort']) {
+  /* Sorting moved out of the section row and into the sort-and-filter sheet,
+     where it is a group of radios rather than a select: the Filters button
+     beside it had squeezed the section chips down to one and a fragment. */
+  for (const id of [
+    'product-search',
+    'product-search-clear',
+    'order-filter-veg',
+    'order-filter-more',
+    'filters-sort',
+  ]) {
     assert.ok(html.includes(`id="${id}"`), `products.html has no #${id} for its handler`);
   }
 
   const js = fs.readFileSync(BUNDLE, 'utf8');
-  for (const id of ['#product-search', '#product-search-clear', '#order-filter-veg', '#order-sort']) {
+  for (const id of [
+    '#product-search',
+    '#product-search-clear',
+    '#order-filter-veg',
+    '#order-filter-more',
+    '#filters-sort',
+  ]) {
     assert.ok(js.includes(id), `nothing is bound to ${id}`);
   }
 });

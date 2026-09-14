@@ -89,6 +89,7 @@
       "src/scheduled-task.js",
       "src/startup-auth.js",
       "src/receipt-log.js",
+      "src/print-ledger.js",
       "src/handset-reachability.js",
       "src/sync-agent-manager.js",
       "src/asset-updater.js",

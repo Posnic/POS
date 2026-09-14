@@ -13,6 +13,7 @@ const dishIcons = require('../utils/dish-icons');
 const { CHANNEL } = require('../utils/sales-channels');
 const ai = require('../services/ai.service');
 const itemDescription = require('../services/ai-item-description');
+const dishFactsDraft = require('../services/ai-dish-facts');
 const budget = require('../services/ai-budget');
 const voiceMeter = require('../services/voice-meter');
 
@@ -2392,6 +2393,40 @@ class ItemsController extends BaseController {
     } catch (error) {
       console.error('Error in aiDescription:', error);
       return this.error(res, 'Could not draft a description', 500);
+    }
+  }
+
+  /**
+   * Estimate the nutrition of the dish being filled in. Writes nothing.
+   *
+   * Same gate as aiDescription - the shop is spending its own AI balance, so
+   * somebody who cannot edit an item has no reason to spend it - and the same
+   * contract: the answer lands in form fields a person reviews and saves.
+   *
+   * Nothing here can produce a health claim. The service asks only for
+   * numbers and recipe facts, and cleans the reply through the same filter
+   * the write path uses, so a model that volunteers "keto" has volunteered a
+   * value with nowhere to land. See utils/dish-facts.js.
+   */
+  async aiDishFacts(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await dishFactsDraft.draft(req.body || {}, context);
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, 'Nutrition estimated');
+    } catch (error) {
+      console.error('Error in aiDishFacts:', error);
+      return this.error(res, 'Could not estimate the nutrition', 500);
     }
   }
 

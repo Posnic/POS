@@ -1018,7 +1018,16 @@ class InstallService {
         /* item.service exports the CLASS - a lesson this repo has already
            paid for once. */
         const ItemService = require('./item.service');
-        const purge = await new ItemService().purgeDemoData({ branchId, licenseId, user });
+        /* `replacing`: a trade was CHOSEN, so the previous pack goes -
+           including rows whose updated_date drifted after the seed and only
+           LOOK edited. Anything a real sale or receiving touched still
+           stays; see purgeDemoData. */
+        const purge = await new ItemService().purgeDemoData({
+          branchId,
+          licenseId,
+          user,
+          replacing: true,
+        });
         const kept = (purge && purge.data && purge.data.kept) || (purge && purge.kept) || [];
         if (kept.length) {
           keptNote =
