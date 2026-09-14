@@ -609,12 +609,40 @@ class KOTManager {
       }
 
       if (printedSaleIds.length > 0) {
-        await fetch(`${apiUrl}/sales/markKitchenPrinted`, {
+        /*
+         * THE ANSWER IS CHECKED, because this call is the only thing that stops
+         * a ticket being offered again.
+         *
+         * fetch does not throw on a 401 or a 500 - it resolves with ok:false -
+         * so this was `await fetch(...)` followed by a line claiming success
+         * whatever came back. If the call was failing, nothing advanced
+         * `last_printed_change_index` on the server, every poll re-offered the
+         * same jobs, and only the in-memory set was hiding it. Restart the till
+         * and the whole day printed again.
+         *
+         * Owner: "whenver i start polling, i see all prints are going. i dont
+         * know how 10 or 15 prints going".
+         *
+         * This is the third time in this area that a return value which was the
+         * only evidence of success was thrown away: the winspool calls, the
+         * result of silentPrint, and now this.
+         */
+        const marked = await fetch(`${apiUrl}/sales/markKitchenPrinted`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'kioskkey': KIOSK_KEY },
           body:    JSON.stringify({ saleIds: printedSaleIds, printedIndexes })
         });
-        console.log(`[KOT] Marked ${printedSaleIds.length} order(s) as printed`);
+        if (marked && marked.ok) {
+          console.log(`[KOT] Marked ${printedSaleIds.length} order(s) as printed`);
+        } else {
+          /* Loud, because the consequence is silent: tickets that print again
+             on the next start, and nothing else anywhere says why. */
+          console.error(
+            `[KOT] COULD NOT mark ${printedSaleIds.length} order(s) as printed ` +
+            `(HTTP ${marked ? marked.status : '?'}). They will be offered again; ` +
+            `the print ledger is what stops them printing twice.`
+          );
+        }
       }
     } catch (err) {
       console.error('[KOT] Poll error:', err.message);
