@@ -763,23 +763,26 @@ body.one-section .fixed-heading {
  * Envelopes 25 envelope pack". Zero as the floor lets the ellipsis do its
  * job.
  */
+/*
+ * COLUMNS THE CARD CAN ACTUALLY LIVE IN.
+ *
+ * This counted columns off the VIEWPORT - two at 720px, three at 1100px -
+ * which is only right when the grid is as wide as the window. It is not: on
+ * a wide screen the page is a 220px rail, the menu, and a 340px order panel,
+ * so three viewport-counted columns inside the middle one came out about
+ * 200px each. A card is a row (text beside a 96px photo), and at 200px the
+ * text had 68px, so the photo sat on top of the name and the price.
+ *
+ * auto-fit with a floor asks the question the right way round: fit as many
+ * columns as will hold a card, in whatever width this grid actually has. It
+ * gives the same answer as before at full width and the right one inside a
+ * column, and it cannot be broken again by nesting or by a new sidebar.
+ */
 .product-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 264px), 1fr));
   gap: 10px;
   padding: 0 0 12px;
-}
-
-@media (min-width: 720px) {
-  .product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1100px) {
-  .product-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 .product-card {
@@ -1162,7 +1165,15 @@ body.one-section .fixed-heading {
  */
 dialog.sheet {
   width: min(520px, 100%);
+  /*
+   * dvh, not vh. On a phone 100vh is the LARGE viewport - the height the page
+   * would have if the browser's own bars were hidden - so a sheet sized in vh
+   * is taller than what you can actually see, and the bottom of it sits under
+   * the address bar with no way to reach it. Owner: "not able to scroll."
+   * vh stays first as the fallback for anything that has no dvh.
+   */
   max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
   margin: auto auto 0;
@@ -4487,9 +4498,10 @@ dialog.sheet[open]::backdrop {
     padding: 0;
   }
 
-  .product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  /* No column count here. The grid fits as many columns as will hold a
+     card, in the width it actually has - which inside this middle column is
+     the only question worth asking. A count written against the viewport is
+     what put the photo on top of the price. */
 
   .order-panel {
     display: flex;
@@ -5195,10 +5207,23 @@ dialog.sheet.assistant:has(.assistant-order:not([hidden])) .assistant-log:has([d
   padding-bottom: 8px;
 }
 
+/*
+ * TILES, NOT A LIST OF WORDS.
+ *
+ * Owner: "menu looks like shit... if possible have category image ( menu ).
+ * show some image as ccategory. how many items inside."
+ *
+ * A column of section names is a table of contents, which is accurate and
+ * dull; a diner scanning for "what do they have" reads pictures faster than
+ * words. Two across, so a fourteen-section menu is two screens rather than
+ * five, and every tile carries its count - which is the thing that says
+ * whether a section is worth the trip.
+ */
 .menu-index-list {
-  display: flex;
-  flex-direction: column;
-  margin-top: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 10px;
+  margin-top: 6px;
 }
 
 /*
@@ -5210,40 +5235,77 @@ dialog.sheet.assistant:has(.assistant-order:not([hidden])) .assistant-log:has([d
  */
 .menu-index-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
-  padding: 13px 2px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  background: none;
+  padding: 0 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
   color: var(--ink);
-  font-size: 16px;
+  font-size: 15px;
   text-align: left;
+  overflow: hidden;
   cursor: pointer;
-}
-
-.menu-index-row:last-child {
-  border-bottom: 0;
 }
 
 .menu-index-row:active {
   background: var(--raised);
 }
 
+/* A band, not a square: a whole menu of squares is a lot of picture and
+   very little name, and the name is what is being chosen. */
+.menu-index-pic {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--raised);
+  overflow: hidden;
+}
+
+.menu-index-pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* No photograph anywhere in the section: the emoji almost every dish gets
+   from its own name, or the section's initial. Never a broken image. */
+.menu-index-emoji,
+.menu-index-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.menu-index-letter {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.menu-index-words {
+  display: block;
+  padding: 0 10px;
+}
+
 .menu-index-name {
+  display: block;
   min-width: 0;
   font-weight: 600;
-  /* A long section name wraps rather than pushing the count off the row:
-     the count is the reason this list is worth reading. */
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
 .menu-index-count {
-  flex: none;
+  display: block;
+  margin-top: 2px;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
 }
 

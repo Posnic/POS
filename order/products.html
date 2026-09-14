@@ -200,7 +200,13 @@
             <div class="fixed-heading">
                 <h2 class="section-heading" id="category-heading">Our Menu</h2>
             </div>
-            <div class="product-grid" id="product-list"></div>
+            <!-- A PLAIN BLOCK, not a grid. It holds sections now, and each of
+                 those carries its own .product-grid; a search wraps its flat
+                 results in one. It used to be the grid itself, which on a wide
+                 screen quietly made it a two-column grid OF SECTIONS with a
+                 second grid inside each - every card squeezed to about 200px
+                 with the photo sitting on top of the name and the price. -->
+            <div id="product-list"></div>
         </main>
 
         <!-- And the order so far on the right, building as dishes are added,
