@@ -1050,6 +1050,197 @@
                     </div>
 
                     
+                    <!--
+                        WHAT IS ON THE PLATE.
+
+                        Owner asked for nutrition, diet types, food preferences and
+                        marketing tags, and then the rule that decides the shape of this
+                        card: tags such as "diabetic friendly", "heart healthy", "keto" or
+                        exact calorie numbers should only be shown when the recipe or
+                        nutrition actually supports the claim.
+
+                        So there is no tick box for any of those words, and there never can
+                        be. A kitchen enters NUMBERS and says what is IN the dish; the
+                        badges a customer sees are worked out from those numbers by
+                        utils/dish-facts.js every time the menu is read. The strip at the
+                        bottom of this card shows what the dish currently earns, live, so a
+                        cook typing a protein figure watches the badge appear and learns
+                        the rule without reading a paragraph about it.
+
+                        Restaurant only, same switch as the card above.
+                    -->
+                    <div class="card m-b-30 restaurant-only" id="item_plate_card">
+                        <div class="card-header" data-toggle="collapse" data-target="#item_plate_collapse"
+                            style="cursor:pointer;">
+                            <h5 class="card-title mb-0">
+                                <lang class="lang_item_plate_title">What is on the plate</lang>
+                                <small class="text-muted ml-2" style="font-weight:400;"><lang class="lang_item_plate_hint">nutrition, what is in it, how it is billed</lang></small>
+                            </h5>
+                        </div>
+                        <div class="collapse" id="item_plate_collapse">
+                            <div class="card-body">
+
+                                <div class="plate-head">
+                                    <div>
+                                        <strong><lang class="lang_plate_nutrition">Nutrition</lang></strong>
+                                        <small class="form-text text-muted mt-0">
+                                            <lang class="lang_plate_nutrition_help">Per serving, as it leaves the kitchen. Leave a box empty if you do not know it; empty is honest and nothing is guessed from it.</lang>
+                                        </small>
+                                    </div>
+                                    <!-- Hidden until aiAvailability says the shop has a key,
+                                         the same gate the description button uses. -->
+                                    <button type="button" class="btn btn-sm btn-light" id="item_plate_ai" style="display:none;">
+                                        <i class="feather icon-zap mr-1"></i><lang class="lang_plate_ai">Estimate for me</lang>
+                                    </button>
+                                </div>
+
+                                <div class="plate-grid">
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_kcal"><lang class="lang_n_kcal">Calories</lang> <span class="plate-unit"><lang class="lang_kcal">kcal</lang></span></label>
+                                        <input type="number" min="0" max="5000" step="any" class="form-control border-control"
+                                            id="item_n_kcal" name="item_n_kcal" data-nutrient="kcal" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_protein_g"><lang class="lang_n_protein">Protein</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="500" step="any" class="form-control border-control"
+                                            id="item_n_protein_g" name="item_n_protein_g" data-nutrient="protein_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_carbs_g"><lang class="lang_n_carbs">Carbohydrate</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="500" step="any" class="form-control border-control"
+                                            id="item_n_carbs_g" name="item_n_carbs_g" data-nutrient="carbs_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_fat_g"><lang class="lang_n_fat">Fat</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="500" step="any" class="form-control border-control"
+                                            id="item_n_fat_g" name="item_n_fat_g" data-nutrient="fat_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_sat_fat_g"><lang class="lang_n_sat_fat">Saturated fat</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="500" step="any" class="form-control border-control"
+                                            id="item_n_sat_fat_g" name="item_n_sat_fat_g" data-nutrient="sat_fat_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_fibre_g"><lang class="lang_n_fibre">Fibre</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="200" step="any" class="form-control border-control"
+                                            id="item_n_fibre_g" name="item_n_fibre_g" data-nutrient="fibre_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_sugar_g"><lang class="lang_n_sugar">Sugar</lang> <span class="plate-unit"><lang class="lang_g">g</lang></span></label>
+                                        <input type="number" min="0" max="500" step="any" class="form-control border-control"
+                                            id="item_n_sugar_g" name="item_n_sugar_g" data-nutrient="sugar_g" placeholder="-">
+                                    </div>
+                                    <div class="form-group plate-num">
+                                        <label for="item_n_sodium_mg"><lang class="lang_n_sodium">Sodium</lang> <span class="plate-unit"><lang class="lang_mg">mg</lang></span></label>
+                                        <input type="number" min="0" max="20000" step="any" class="form-control border-control"
+                                            id="item_n_sodium_mg" name="item_n_sodium_mg" data-nutrient="sodium_mg" placeholder="-">
+                                    </div>
+                                </div>
+
+                                <!-- Raised when the assistant filled these in, and cleared
+                                     the moment a person edits any of them. The numbers
+                                     become public badges, so nobody should save eight of
+                                     them believing the kitchen measured them. -->
+                                <div class="plate-estimated" id="item_plate_estimated" style="display:none;">
+                                    <i class="feather icon-alert-triangle"></i>
+                                    <span><lang class="lang_plate_estimated">Estimated from the dish name. Check these against your own recipe before saving.</lang></span>
+                                </div>
+
+                                <hr class="plate-rule">
+
+                                <strong><lang class="lang_plate_contains">What is in it</lang></strong>
+                                <small class="form-text text-muted mt-0 mb-2">
+                                    <lang class="lang_plate_contains_help">Only what your kitchen can stand behind. Allergy tags are read by people who need them to be right.</lang>
+                                </small>
+                                <div class="plate-pills">
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="plant_based">
+                                            <span><lang class="lang_tag_plant_based">Plant based</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="eggetarian">
+                                            <span><lang class="lang_tag_eggetarian">Eggetarian</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="jain">
+                                            <span><lang class="lang_tag_jain">Jain</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="satvik">
+                                            <span><lang class="lang_tag_satvik">Satvik</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="gluten_free">
+                                            <span><lang class="lang_tag_gluten_free">Gluten free</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="dairy_free">
+                                            <span><lang class="lang_tag_dairy_free">Dairy free</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="lactose_free">
+                                            <span><lang class="lang_tag_lactose_free">Lactose free</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="nut_free">
+                                            <span><lang class="lang_tag_nut_free">Nut free</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="organic">
+                                            <span><lang class="lang_tag_organic">Organic</lang></span>
+                                        </label>
+                                        <label class="plate-pill">
+                                            <input type="checkbox" class="item-food-tag" value="no_added_sugar">
+                                            <span><lang class="lang_tag_no_added_sugar">No added sugar</lang></span>
+                                        </label>
+                                </div>
+
+                                <hr class="plate-rule">
+
+                                <strong><lang class="lang_plate_marks">How you bill it</lang></strong>
+                                <small class="form-text text-muted mt-0 mb-2">
+                                    <lang class="lang_plate_marks_help">Shown on the menu as you set them. These are your own words about your own food.</lang>
+                                </small>
+                                <div class="plate-pills">
+                                        <label class="plate-pill plate-pill-mark">
+                                            <input type="checkbox" class="item-menu-mark" value="signature">
+                                            <span><lang class="lang_mark_signature">Signature dish</lang></span>
+                                        </label>
+                                        <label class="plate-pill plate-pill-mark">
+                                            <input type="checkbox" class="item-menu-mark" value="chefs_pick">
+                                            <span><lang class="lang_mark_chefs_pick">Chef&#39;s pick</lang></span>
+                                        </label>
+                                        <label class="plate-pill plate-pill-mark">
+                                            <input type="checkbox" class="item-menu-mark" value="house_special">
+                                            <span><lang class="lang_mark_house_special">House special</lang></span>
+                                        </label>
+                                        <label class="plate-pill plate-pill-mark">
+                                            <input type="checkbox" class="item-menu-mark" value="new">
+                                            <span><lang class="lang_mark_new">New</lang></span>
+                                        </label>
+                                </div>
+
+                                <!--
+                                    THE POINT OF THE WHOLE CARD, AND THE ONLY PLACE THE
+                                    HEALTH BADGES APPEAR ON THIS SCREEN: as an OUTPUT.
+
+                                    Nothing here is clickable. It redraws from the numbers
+                                    above on every keystroke, so the answer to "why does my
+                                    dish not say high protein" is visible in the same glance
+                                    as the field that would fix it.
+                                -->
+                                <div class="plate-earned" id="item_plate_earned">
+                                    <div class="plate-earned-head">
+                                        <lang class="lang_plate_earned">Badges this dish earns</lang>
+                                        <small><lang class="lang_plate_earned_help">Worked out from the numbers. Not chosen.</lang></small>
+                                    </div>
+                                    <div class="plate-earned-list" id="item_plate_earned_list"></div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- A tabbed form with no way forward makes people hunt for the
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->

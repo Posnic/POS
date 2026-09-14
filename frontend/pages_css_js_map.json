@@ -90,6 +90,7 @@
             "static/script/js/modules/js/roles.js",
             "static/script/js/modules/js/registers.js",
             "static/script/js/modules/js/expenses.js",
+            "static/script/js/core/dish-facts.js",
             "static/script/js/modules/js/items.js",
             "static/script/js/modules/js/quick_items.js",
             "static/script/js/modules/js/lowstock.js",

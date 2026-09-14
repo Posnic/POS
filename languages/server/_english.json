@@ -5,6 +5,9 @@
   "A branch cannot copy its catalogue from itself": [
     "src/services/catalogue-copy.js"
   ],
+  "A dish name is needed first": [
+    "src/services/ai-dish-facts.js"
+  ],
   "A family needs at least two variants.": [
     "src/services/item.service.js"
   ],
@@ -1980,6 +1983,12 @@
   ],
   "The Google Analytics id should look like G-XXXXXXXXXX": [
     "src/repositories/settings.repository.js"
+  ],
+  "The assistant could not place this dish. Fill it in by hand.": [
+    "src/services/ai-dish-facts.js"
+  ],
+  "The assistant did not answer with numbers. Try again.": [
+    "src/services/ai-dish-facts.js"
   ],
   "The assistant had no answer": [
     "src/services/ordering-assistant.service.js"
