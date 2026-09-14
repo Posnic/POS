@@ -92,6 +92,22 @@
       "{n} dishes": "{n} உணவுகள்",
       "{n} item": "{n} பொருள்",
       "{n} items": "{n} பொருட்கள்",
+      "{n} kcal": "{n} கலோரி",
+
+      /* The badges on a dish card. What the SHOP says about its own food
+         first, then the health claims the numbers earned - which are worked
+         out on the server by utils/dish-facts.js and cannot be typed in. */
+      "Signature": "தனிச்சிறப்பு",
+      "Chef's pick": "சமையல்காரரின் தேர்வு",
+      "House special": "எங்கள் சிறப்பு",
+      "New": "புதியது",
+      "High protein": "அதிக புரதம்",
+      "Keto friendly": "கீட்டோவுக்கு ஏற்றது",
+      "Diabetic friendly": "நீரிழிவுக்கு ஏற்றது",
+      "Heart healthy": "இதயத்துக்கு நல்லது",
+      "High fibre": "அதிக நார்ச்சத்து",
+      "Under 300 kcal": "300 கலோரிக்குக் கீழ்",
+      "No added sugar": "சர்க்கரை சேர்க்கப்படவில்லை",
       "{n} dish found": "{n} உணவு கிடைத்தது",
       "{n} dishes found": "{n} உணவுகள் கிடைத்தன",
       "{n} item found": "{n} பொருள் கிடைத்தது",

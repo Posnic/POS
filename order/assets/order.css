@@ -5007,3 +5007,129 @@ dialog.sheet.assistant:has(.assistant-order:not([hidden])) .assistant-log:has([d
 @media (prefers-reduced-motion: reduce) {
   .is-working::after { animation: none; opacity: 0.6; }
 }
+
+
+/* ==================================================================
+   THE MENU IS ONE PAGE, GROUPED.
+
+   The ordering page used to draw one category at a time, so a guest at
+   a table opened it and saw a single A5 ruled notebook under the words
+   "32 dishes" - whichever section sorted first, with the rest two taps
+   away behind a chip strip. The public menu had always done this the
+   right way. Owner: "its grouping the menu and easy to navigate. add
+   it here too."
+
+   A heading is a place, so it has to survive being scrolled to: the
+   chips jump here, and a heading that lands under the sticky header is
+   a jump that looks like it did nothing.
+   ================================================================== */
+
+.menu-section {
+  scroll-margin-top: 96px;
+}
+
+.menu-section + .menu-section {
+  margin-top: 20px;
+}
+
+/*
+ * The section owns the space under its last card, not the grid.
+ *
+ * .product-grid carries a 12px bottom padding from when it was the only
+ * thing on the page. Inside a section that stacks with the section's own
+ * margin AND the card's 18px bottom padding, and the gap between a dish
+ * and the next heading came out near 50px - which on a phone is a screen
+ * of nothing every few dishes. Owner, on an earlier round of this page:
+ * "screen now reduce empty spaces."
+ */
+.menu-section .product-grid {
+  padding-bottom: 0;
+}
+
+.menu-section-name {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  /* Jumped to, and focused for a screen reader when it is. The ring is
+     the browser's own on keyboard focus only, so a tap does not leave a
+     box drawn around a heading nobody is editing. */
+  scroll-margin-top: 96px;
+}
+
+.menu-section-name:focus {
+  outline: none;
+}
+
+.menu-section-name:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.menu-section-count {
+  margin: 2px 0 10px;
+  padding: 0 2px;
+  font-size: 12.5px;
+  opacity: 0.62;
+}
+
+/* ------------------------------------------------------------------
+   BADGES.
+
+   At most two on a card - see badgesFor(). What the shop says about a
+   dish and what its numbers earned are different kinds of statement,
+   so they do not look alike: the shop's own recommendation is filled
+   and warm, a health claim is outlined and quiet.
+
+   The claim is outlined on purpose. A filled green pill saying "Heart
+   healthy" is advertising; an outline reads as a fact about the food,
+   which is what it is, and what the numbers behind it will support.
+   ------------------------------------------------------------------ */
+
+.product-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px 0 0;
+}
+
+.dish-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* The shop's own recommendation: ink, with the text punched out of it.
+   The ordering pages are one ink-on-paper system, so this borrows the
+   accent the rest of the page already uses rather than introducing the
+   only second hue on the screen. */
+.dish-badge-mark {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* A health claim is outlined, not filled. A solid green pill reading
+   "Heart healthy" is advertising; an outline reads as a fact about the
+   food, which is what it is and all the numbers behind it support. */
+.dish-badge-claim {
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+/* A long badge must not push a price off a narrow card. */
+@media (max-width: 380px) {
+  .dish-badge {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
