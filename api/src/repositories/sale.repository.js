@@ -8491,6 +8491,22 @@ class SalesRepository {
             /* And enough to APPLY what they asked to have changed, which is
                the same job through changeCustomerOrderItems. */
             change_requested: 1,
+            /*
+             * AND ENOUGH TO SEE THAT IT IS ALREADY OFF.
+             *
+             * These two are read a few lines below to answer "the customer
+             * already cancelled this, so either button just means seen". They
+             * were not projected, so that branch could never fire: the read
+             * came back without the fields, `undefined === false` is false,
+             * and an order the customer had called off fell through to the
+             * approval state machine instead. If its state was already
+             * accepted the machine said "no change", reported success, and
+             * left the row exactly where it was - so the order sat in the
+             * queue and NEITHER BUTTON COULD SHIFT IT. Owner: "online order
+             * even i accept it not working."
+             */
+            cancel_seen: 1,
+            customer_cancelled_at: 1,
             sale_process: 1,
             payment_status: 1,
             delivery_fee: 1,
@@ -8557,11 +8573,66 @@ class SalesRepository {
        * None of that should have a second implementation just because a
        * person pressed the button instead of a phone.
        */
+      /*
+       * THE SCREEN AND THIS FUNCTION MUST AGREE ON WHAT A CHANGE REQUEST IS.
+       *
+       * The queue puts an order here on `change_requested.at`. The screen
+       * decides which buttons to draw on `change_requested.items.length`, and
+       * a request with an empty list therefore reads as an ordinary new order
+       * - so the button sends `accepted`, which is a word this branch did not
+       * answer to. It fell through to the state machine, the request was
+       * never cleared, and the order stayed in the queue no matter how many
+       * times anybody pressed Accept.
+       *
+       * So `accepted` and `rejected` are answered here too. A person pressing
+       * the only button on the card has decided; which word the screen
+       * happened to send is not something the shop should have to know.
+       */
+      /*
+       * AN EMPTY REQUEST IS NOT A REQUEST TO EMPTY THE ORDER.
+       *
+       * changeCustomerOrderItems takes ABSOLUTE quantities, so handing it an
+       * empty list means "the order is now nothing", which it correctly turns
+       * into a cancellation. That is right when a customer really did remove
+       * every line. It is very wrong here: a request with no items in it
+       * draws as an ordinary new order - the card decides on
+       * `items.length` - so a person reading "New order" and pressing
+       * "Accept and print" would have CANCELLED it.
+       *
+       * So an empty request is answered by clearing it, and the order carries
+       * on through the approval states below, which is what the card said the
+       * button would do. Found by writing the test for the stuck queue and
+       * watching it fail on the accept, not on the clear.
+       */
       if (
         sale.change_requested &&
         Array.isArray(sale.change_requested.items) &&
+        sale.change_requested.items.length === 0 &&
+        sale.cancel_requested !== true
+      ) {
+        const answeredAt = new Date();
+        await salesCollection.updateOne(
+          { _id, ...activeTenantFilter() },
+          {
+            $set: {
+              change_requested: null,
+              change_decided_at: answeredAt,
+              change_decided_by: BaseModel.loggedUserName || '',
+              updated_date: answeredAt,
+            },
+          }
+        );
+        /* Deliberately NOT a return: the order still has to be accepted or
+           rejected, and the state machine below is what does that. Clearing
+           the request here is only what gets it out of the queue. */
+      }
+
+      if (
+        sale.change_requested &&
+        Array.isArray(sale.change_requested.items) &&
+        sale.change_requested.items.length > 0 &&
         sale.cancel_requested !== true &&
-        (decision === 'accept' || decision === 'reject' || decision === 'keep')
+        ['accept', 'accepted', 'reject', 'rejected', 'keep'].includes(decision)
       ) {
         const answeredAt = new Date();
         const said = {
@@ -8570,7 +8641,7 @@ class SalesRepository {
           change_decided_by: BaseModel.loggedUserName || '',
           updated_date: answeredAt,
         };
-        if (decision !== 'accept') {
+        if (decision !== 'accept' && decision !== 'accepted') {
           await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
           return {
             status: true,
@@ -8600,7 +8671,12 @@ class SalesRepository {
         };
       }
 
-      if (sale.cancel_requested === true && (decision === 'cancel' || decision === 'keep')) {
+      /* Same agreement as the change branch above: whichever word the screen
+         sent, a person has answered the request in front of them. */
+      if (
+        sale.cancel_requested === true &&
+        ['cancel', 'keep', 'accepted', 'rejected'].includes(decision)
+      ) {
         const answeredAt = new Date();
         const said = {
           cancel_requested: false,
@@ -8608,7 +8684,9 @@ class SalesRepository {
           cancel_decided_by: BaseModel.loggedUserName || '',
           updated_date: answeredAt,
         };
-        if (decision === 'keep') {
+        /* `rejected` means "no, do not cancel it" - the order stands. The
+           screen's own wording ("Keep the order") is the truth of it. */
+        if (decision === 'keep' || decision === 'rejected') {
           await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
           return {
             status: true,

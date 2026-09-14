@@ -7283,6 +7283,46 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   pointer-events: none;
 }
 
+/*
+ * THE WAY OUT THAT IS NOT AN ANSWER.
+ *
+ * Owner: "some way i want close this request right side if i dont want.
+ * close button." Top right of the panel, over the first card rather than
+ * taking a row of its own - the panel is already tall and every row of chrome
+ * pushes a real order further down the screen.
+ */
+.request-dock-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--theme-card-bg, #fff);
+  color: var(--theme-text-muted, #5b6577);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.request-dock-close:hover {
+  background: var(--theme-table-row-hover, #eef2fd);
+  color: var(--theme-text-primary, #16203a);
+}
+
+.request-dock-close:focus-visible {
+  outline: 2px solid var(--theme-primary-color, #506fe4);
+  outline-offset: 2px;
+}
+
+/* The panel is the positioning context for it. */
+.request-dock-panel {
+  position: relative;
+}
+
 .request-dock-all {
   display: block;
   margin-top: 10px;

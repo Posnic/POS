@@ -202,6 +202,20 @@
       '<span class="request-dock-count" id="request-dock-count">0</span>' +
       '</button>' +
       '<div class="request-dock-panel" id="request-dock-panel" hidden>' +
+      /*
+       * A WAY OUT THAT IS NOT AN ANSWER.
+       *
+       * Owner: "some way i want close this request right side if i dont want.
+       * close button. dont show this close."
+       *
+       * The tab toggles, but a panel that opened itself over the screen needs
+       * its own way out at the point somebody is looking - and Refuse is NOT
+       * that way out. Without this the only two things on the panel both
+       * decide a customer's order, so "I am busy, go away" had to be spelled
+       * as a refusal.
+       */
+      '<button type="button" class="request-dock-close" id="request-dock-close" ' +
+      'aria-label="' + t('lang_close', 'Close') + '">&times;</button>' +
       '<ul class="request-dock-list" id="request-dock-list"></ul>' +
       '<a class="request-dock-all" href="#/onlineorders">' +
       t('lang_see_all_orders', 'Open the order queue') + '</a>' +
@@ -210,6 +224,25 @@
 
     dock.querySelector('#request-dock-tab').addEventListener('click', function () {
       open = !open;
+      /* Opening it by hand is a fresh look at everything: whatever was
+         dismissed before is being asked for now. */
+      if (open) dismissed = {};
+      paint();
+    });
+
+    dock.querySelector('#request-dock-close').addEventListener('click', function () {
+      open = false;
+      /*
+       * AND IT STAYS SHUT. "dont show this close" - closing it must mean
+       * something, or the next poll reopens it and the button is a joke.
+       *
+       * What is remembered is WHICH requests were on screen, not simply
+       * "closed". A shop that waves this away and then receives a genuinely
+       * new order must still be told; one that waves it away and is shown
+       * the same two orders again thirty seconds later learns to ignore it,
+       * which costs more than the panel ever saved.
+       */
+      known.forEach(function (o) { dismissed[String(o.sale_id)] = true; });
       paint();
     });
     dock.addEventListener('click', onDo);
@@ -310,6 +343,10 @@
     if (list && open) list.innerHTML = known.map(card).join('');
   }
 
+  /* Requests the shop has waved away, by id. Never persisted: a reload is a
+     new shift at the till and everything waiting deserves to be seen again. */
+  var dismissed = {};
+
   var asking = false;
 
   function look() {
@@ -325,6 +362,15 @@
              page reads it; anything else is a shop with nothing waiting. */
           var rows = (response && response.data) || [];
           known = Array.isArray(rows) ? rows : [];
+          /* Forget the ones that have gone. Otherwise a shop that dismissed
+             an order, answered it on the queue page, and then received a new
+             one carrying a recycled id would never be shown it. */
+          var here = {};
+          known.forEach(function (o) {
+            var id = String(o.sale_id);
+            if (dismissed[id]) here[id] = true;
+          });
+          dismissed = here;
           paint();
         },
         function () {
@@ -373,7 +419,11 @@
    * that answers it rather than an announcement on its own.
    */
   function show() {
-    open = true;
+    /* Only for something the shop has not already waved away. The toast
+       calls this on every arrival, so without the check a dismissed panel
+       springs back the moment anything else happens. */
+    var fresh = known.filter(function (o) { return !dismissed[String(o.sale_id)]; });
+    if (!known.length || fresh.length) open = true;
     look();
     paint();
   }

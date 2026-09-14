@@ -4062,6 +4062,10 @@ function checkoutPage({ cart = [], table = '', checkout: answer = null, kept = [
     'var orderJustPlaced = false;',
     lift(src, 'myOpenOrderHere'),
     lift(src, 'addToMyOpenOrder'),
+    /* performCheckout reads the stored phone through this, so the sandbox
+       needs it or the whole checkout throws a ReferenceError and the test
+       sees a refusal that never happened. */
+    lift(src, 'notAWord'),
     lift(src, 'performCheckout'),
   ].join('\n');
 
