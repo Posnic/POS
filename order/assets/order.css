@@ -1442,12 +1442,27 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   min-width: 0;
 }
 
+/*
+ * THE NAME ELLIPSISES INSTEAD OF BEING GUILLOTINED.
+ *
+ * text-overflow acts on the box that holds the TEXT, and here the text is in
+ * a span inside a flex row - so the row clipped its child mid-character and
+ * no ellipsis was ever drawn: "A5 Ruled Notebook 1 not". That reads as a
+ * rendering fault, which is worse than a truncation; a truncation at least
+ * looks deliberate. The rules move onto the span, and both boxes are allowed
+ * to be narrower than their words.
+ */
 .item-name {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+.item-name > span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1552,10 +1567,74 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   color: var(--ink-soft);
 }
 
+/*
+ * BACK TO THE MENU, FROM THE BASKET.
+ *
+ * Every cart worth copying has this and this one did not: the only ways out
+ * were the back arrow and Continue. It matters most in a restaurant, where
+ * people order in rounds - somebody who has just added a biryani and wants a
+ * lassi should not have to work out that the arrow at the top is how.
+ */
+.add-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 0 14px;
+  padding: 9px 2px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.add-more span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Where the food is going, said once, right where it is committed to. */
+.going-to {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.going-to b {
+  color: var(--ink);
+}
+
+/*
+ * CLEARING THE ORDER IS POSSIBLE, NOT INVITED.
+ *
+ * Centred in the empty half of the screen it was the second most prominent
+ * thing on the page - and it is the destructive one. It belongs at the foot,
+ * small and quiet, where somebody looking for it will find it and nobody
+ * else will reach for it by accident.
+ */
 .order-clear {
   display: flex;
-  justify-content: center;
-  padding: 12px 0 8px;
+  justify-content: flex-start;
+  padding: 18px 0 8px;
+}
+
+/*
+ * The button itself, not just the row around it: .btn-text sets its own size
+ * and .is-danger its own colour, so quieting the wrapper did nothing and it
+ * stayed the loudest thing on a half-empty screen.
+ */
+.order-clear .btn-text {
+  min-height: 36px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: underline;
 }
 
 /* Where the food is going, for a hotel room or another partner venue. */

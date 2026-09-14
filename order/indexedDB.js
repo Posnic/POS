@@ -1433,7 +1433,33 @@ async function renderCart(cartData = null) {
         $("#bill-items-row").prop("hidden", totalTax <= 0);
         $("#bill").toggleClass("bill-plain", totalTax <= 0);
         $("#bill-total").text(money(totalPrice));
-        $("#bill").prop("hidden", false);
+        /*
+         * THE SUMS ONLY WHERE THERE ARE SUMS.
+         *
+         * With no tax to show this card was one row - "Total 90" - sitting
+         * above a bar that already said "2 items - 90". The same number
+         * twice, in two shapes, on a screen that was otherwise half empty.
+         * It earns its place the moment there is a breakdown to break down.
+         */
+        $("#bill").prop("hidden", totalTax <= 0);
+
+        /*
+         * WHERE IT IS GOING, at the moment of committing to it.
+         *
+         * The table was on the menu screen and nowhere near the button that
+         * sends the order, so the last thing a customer saw before paying
+         * never told them which table the food was for. On a printed code
+         * that is the one fact they cannot check any other way.
+         */
+        const goingTo = document.getElementById("going-to");
+        if (goingTo) {
+            const where = typeof placeLabel === "function" ? placeLabel() : "";
+            goingTo.hidden = !where;
+            if (where) {
+                goingTo.innerHTML =
+                    escapeHtml(t("Going to")) + " <b>" + escapeHtml(where) + "</b>";
+            }
+        }
 
         $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
         $("#cart-qty,#mobile-cart-count").text(totalQty);
