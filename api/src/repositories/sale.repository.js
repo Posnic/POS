@@ -7918,6 +7918,9 @@ class SalesRepository {
             unit: 'qty',
             price,
             total,
+            /* See the note at the cancel flow below: this list is what the
+               kitchen ticket is printed from. */
+            item_description: String(si.item_description || ''),
           };
         })
         .filter((it) => it.item_id && it.item_quantity > 0);
@@ -8929,10 +8932,24 @@ class SalesRepository {
           const qty = parseFloat(ex.item_quantity || 0);
           if (qty <= 0) continue;
           const price = parseFloat(ex.item_price || 0);
+          /*
+           * THE NOTE TRAVELS WITH THE ITEM.
+           *
+           * A change record is what the kitchen ticket is printed FROM - the poller
+           * builds its print jobs out of `changes[].items`, not out of `sale.items` - and
+           * this list carried seven fields, none of them the note. So "less spicy" was
+           * stored correctly on the sale and never reached the paper.
+           *
+           * Owner: "when item print, item notes not printed. example \"less spicy\" not
+           * printed in the kot. its bad very bad". He is right that it is bad: the note
+           * is the one line on a ticket the kitchen cannot work out for itself, and a
+           * customer who asked for something and did not get it blames the restaurant.
+           */
           changesItems.push({
             item_id: idStr,
             item_name: String(ex.item_name || ''),
             item_quantity: qty,
+            item_description: String(ex.item_description || ''),
             process: 'cancel',
             item_code: String(ex.item_sku || ''),
             unit: String(ex.item_unit || 'qty'),
@@ -8974,6 +8991,9 @@ class SalesRepository {
         oldItemsData[idStr] = {
           quantity: parseFloat(ex.item_quantity || 0),
           name: String(ex.item_name || ''),
+          /* Carried so a REMOVED line can still say which one it was. Two of
+             the same dish on one table are told apart by the note. */
+          description: String(ex.item_description || ''),
           item_code: String(ex.item_sku || ''),
           price: parseFloat(ex.item_price || 0),
           unit: String(ex.item_unit || 'qty'),
@@ -9040,6 +9060,9 @@ class SalesRepository {
             item_id: productId,
             item_name: String(itemDoc.name || item.name || ''),
             item_quantity: changeQty,
+            /* From the request first: an amendment carries the note the person
+               just typed, and the stored copy is the one before it. */
+            item_description: String(item.item_note || item.item_description || ''),
             process: changeProcess,
             item_code: String(itemDoc.itemid || ''),
             unit: String(itemDoc.item_unit || itemDoc.unit || 'qty'),
@@ -9150,6 +9173,7 @@ class SalesRepository {
           item_id: String(remItemId),
           item_name: String(remItemData.name || ''),
           item_quantity: remQty,
+          item_description: String(remItemData.description || ''),
           process: 'cancel',
           item_code: String(remItemData.item_code || ''),
           unit: String(remItemData.unit || 'qty'),
