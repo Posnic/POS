@@ -116,6 +116,13 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
        dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
     lift(src, 'pricedToday'),
     lift(src, 'waitingForTodaysPrice'),
+    /* The card markup was pulled out of the render loop so the flat search
+       list and the grouped menu draw the same card. Both renderers call it,
+       so it has to come along or neither can draw. */
+    liftConst(src, 'MARK_WORDS'),
+    liftConst(src, 'CLAIM_WORDS'),
+    lift(src, 'badgesFor'),
+    lift(src, 'cardHtml'),
     lift(src, 'renderProductCards'),
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */
@@ -766,7 +773,14 @@ test('a shop is searched, not a menu, and is not asked about veg', async () => {
   });
   await shop.box.paintShop();
   assert.strictEqual(shop.document.getElementById('product-search').placeholder, 'Search products');
-  assert.strictEqual(shop.document.querySelector('#order-sort option[value="menu"]').textContent, 'Catalogue order');
+  /* Sorting moved out of the section row and into the sort-and-filter sheet,
+     so the shop's own word for its default order lives on a radio's label
+     now rather than on an <option>. A selector that matches nothing fails
+     silently, and a stationer would quietly go back to reading "Menu order". */
+  assert.strictEqual(
+    shop.document.querySelector('#filters-sort input[value="menu"] + span').textContent,
+    'Catalogue order'
+  );
   assert.strictEqual(shop.document.getElementById('order-filter-veg').hidden, true, 'a stationer is asked about veg');
 
   const kitchen = page('products.html', {

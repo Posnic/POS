@@ -122,6 +122,49 @@ const itemSchema = new mongoose.Schema(
        be ready. Zero means the shop has not said, and nothing guesses. */
     prep_minutes: { type: Number, default: 0 },
 
+    /*
+     * WHAT IS ON THE PLATE, per serving. Energy in kcal and the macros in
+     * grams, plus sodium in milligrams.
+     *
+     * Per SERVING, not per 100g. Nutrition regulation is written per 100g
+     * because it was written for a packet on a shelf; a restaurant knows what
+     * it puts on the plate and a customer eats the plate, so the plate is the
+     * unit here. utils/dish-facts.js states which thresholds carry across
+     * unchanged (the proportional ones) and which are restated per serving.
+     *
+     * A nutrient ABSENT means the shop has not said, which is not zero and
+     * must never be read as zero: an unsaid sugar is not "no sugar", and a
+     * catalogue of three hundred dishes nobody has analysed would otherwise
+     * wear a low-fat badge on every one of them.
+     *
+     * Sodium sits here for one specific reason: without it "heart healthy"
+     * cannot be earned, only guessed at.
+     */
+    nutrition: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+    /*
+     * What is and is not IN the dish: plant based, Jain, gluten free, nut
+     * free, organic, no added sugar. See FOOD_TAGS in utils/dish-facts.js.
+     *
+     * Facts about the recipe, which is exactly the thing a kitchen is in a
+     * position to assert - nobody else knows whether there are nuts in it.
+     *
+     * Note what is NOT here and cannot be written here. "Heart healthy",
+     * "diabetic friendly", "keto", "high protein" are CLAIMS, derived from
+     * the numbers above every time they are read and never stored. The owner
+     * asked for exactly that: a claim shows "only when the recipe/nutrition
+     * actually supports the claim". The write path filters this array against
+     * the tickable list, so asking for a claim by name stores nothing.
+     */
+    food_tags: { type: [String], default: [] },
+
+    /*
+     * How the shop positions the dish: signature, chef's pick, house special,
+     * new. Not health claims, so the shop says them freely - nobody can be
+     * misled about whether the chef likes something.
+     */
+    menu_marks: { type: [String], default: [] },
+
     license: { type: mongoose.Schema.Types.ObjectId, ref: 'License' },
     is_active: { type: Boolean, default: true },
   },
@@ -218,6 +261,9 @@ class ItemModel {
     daypart_ids: { type: 'Array', select: true },
     prep_note: { type: 'String', select: true },
     prep_minutes: { type: 'Number', select: true },
+    nutrition: { type: 'Object', select: true },
+    food_tags: { type: 'Array', select: true },
+    menu_marks: { type: 'Array', select: true },
     isAvailable: { type: 'Boolean', select: true },
     negative_stock: { type: 'Boolean', select: true },
     sort_order: { type: 'Number', select: true },

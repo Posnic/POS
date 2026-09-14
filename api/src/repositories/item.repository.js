@@ -22,6 +22,7 @@ const orderingAssistant = require('../services/ordering-assistant.service');
  */
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
 const dishIcons = require('../utils/dish-icons');
+const dishFacts = require('../utils/dish-facts');
 const voiceSettings = require('../utils/voice-settings');
 
 const onlineOrderingDiet = (value) => {
@@ -1710,6 +1711,23 @@ class ItemRepository extends BaseModel {
           .trim()
           .slice(0, 200),
         prep_minutes: Math.max(0, Math.min(480, Number(data.prep_minutes) || 0)),
+        /*
+         * What is on the plate, and what the kitchen says is in it.
+         *
+         * Cleaned rather than trusted, in the one direction that matters:
+         * cleanNutrition keeps only real numbers so a typed "about 300" is
+         * NOT SAID rather than stored as something, and cleanTags filters
+         * against the tickable list so a client - or a helpful AI autofill -
+         * asking for `heart_healthy` stores nothing at all. The health claims
+         * are derived at read time from the numbers and are never storable;
+         * see utils/dish-facts.js for why that is the whole design.
+         *
+         * Sync replaces whole documents, so all three are written on every
+         * save or the next one deletes them.
+         */
+        nutrition: dishFacts.cleanNutrition(data.nutrition),
+        food_tags: dishFacts.cleanTags(data.food_tags, dishFacts.FOOD_TAGS),
+        menu_marks: dishFacts.cleanTags(data.menu_marks, dishFacts.MENU_MARKS),
         isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
@@ -3922,6 +3940,12 @@ class ItemRepository extends BaseModel {
             ecommerce: 1,
             daypart_ids: 1,
             prep_minutes: 1,
+            /* What is on the plate and what is in it. The health badges are
+               NOT read - they are derived from these below, so a dish can
+               never carry a claim its own nutrition contradicts. */
+            nutrition: 1,
+            food_tags: 1,
+            menu_marks: 1,
           },
         })
         .sort({ sort_order: 1, name: 1 })
@@ -4037,6 +4061,18 @@ class ItemRepository extends BaseModel {
              the page already holds every dish and looking them up there beats
              sending three copies of each name down a phone connection. */
           goes_with: this.pairingsFor(row, signals.related.get(String(row._id))),
+          /*
+           * What is on the plate, what is in it, how the shop bills it, and
+           * what may honestly be said about it.
+           *
+           * `claims` is computed here from `nutrition` and never read from
+           * the document, because it is never stored: the owner asked that a
+           * badge appear "only when the recipe/nutrition actually supports
+           * the claim", and the only way to guarantee that is to have no
+           * other way for one to exist. A dish with nothing entered gets an
+           * empty list, not a page of unearned badges.
+           */
+          ...dishFacts.factsFor(row),
           /* Internal, stripped before the page sees it: only the category
              ranking above needs it. */
           _sort: Number(row.sort_order) || 0,
@@ -4391,6 +4427,11 @@ class ItemRepository extends BaseModel {
                    people actually order from did not. */
                 diet: '$diet',
                 prep_minutes: '$prep_minutes',
+                /* What is on the plate and what is in it. Folded into
+                   facts and CLAIMS below and do not travel raw. */
+                nutrition: '$nutrition',
+                food_tags: '$food_tags',
+                menu_marks: '$menu_marks',
                 /* Every photo, and the serving periods, so the ordering page
                    can show the gallery and grey a dish outside its hours the
                    way the menu does. Both are folded into `photos`,
@@ -4581,12 +4622,20 @@ class ItemRepository extends BaseModel {
       for (const group of results) {
         group.items = (group.items || []).map((item) => {
           const timing = onlineOrdering.itemAvailability(item, dayparts, nowDay, nowMinutes);
-          const { multi_image, daypart_ids, ...rest } = item;
+          const { multi_image, daypart_ids, nutrition, food_tags, menu_marks, ...rest } = item;
           return {
             ...rest,
             photos: onlineOrdering.photoList({ image: item.img, multi_image }),
             available: timing.available,
             served_in: timing.periods,
+            /*
+             * Cleaned facts, and the health claims DERIVED from them. The
+             * three raw fields above are destructured away deliberately so
+             * the only badges that can reach a customer are ones the numbers
+             * earned - there is no second path where a stored claim could
+             * slip out beside them.
+             */
+            ...dishFacts.factsFor({ nutrition, food_tags, menu_marks }),
           };
         });
       }

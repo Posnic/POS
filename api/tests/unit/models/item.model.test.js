@@ -785,8 +785,11 @@ describe('Item.LegacyItemModel › class identity', () => {
     // (the no-image sale-grid tile) + brand/tags/reorder_point (LS1)
     // + gtin/gtin14 (PIM1: the GLOBAL identifier, kept apart from barcode_id
     // because that one may hold an in-store code or free text - see
-    // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(73);
+    // utils/gtin.js and PRODUCT_INFORMATION_MODEL.md)
+    // + nutrition/food_tags/menu_marks (what is on the plate - see
+    // utils/dish-facts.js; the health CLAIMS are derived from these and are
+    // deliberately NOT fields, so a dish can never store one).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(76);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
@@ -801,6 +804,14 @@ describe('Item.LegacyItemModel › class identity', () => {
            and a field dropped from this map goes missing from both without a
            single test turning red. */
         icon: expect.any(Object),
+        /* What is on the plate. Named for the same reason as icon: all three
+           are projected by the storefront and the public menu, and a field
+           dropped from this map goes missing from both without a single test
+           turning red - the menu would simply stop showing nutrition and
+           nobody would know which change did it. */
+        nutrition: expect.any(Object),
+        food_tags: expect.any(Object),
+        menu_marks: expect.any(Object),
       })
     );
   });

@@ -7292,3 +7292,206 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   font-size: 12.5px;
   text-align: center;
 }
+
+
+/* ------------------------------------------------------------------
+   WHAT IS ON THE PLATE - the item screen's nutrition and tags card.
+
+   Owner: "impelement all of stuff easily tick of these. also very good
+   design on the menu. filter options. not too annoying make it very very
+   professional and neat."
+
+   Twenty-two tick boxes and eight number boxes is a lot of screen, and
+   the obvious build - a stacked column of Bootstrap checkboxes - is a
+   wall nobody fills in. So the numbers are a dense auto-fitting grid and
+   the tags are pills that wrap, which puts the whole card in about the
+   height of two ordinary form rows.
+
+   Every colour is a --theme-* token: custom.css loads before
+   theme-variables.css and a hardcoded colour here is a dark-mode bug
+   somebody finds later.
+   ------------------------------------------------------------------ */
+
+.plate-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Auto-fit rather than a fixed column count: eight nutrients sit four up
+   on a desktop card and two up on a narrow one without a media query. */
+.plate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  gap: 10px 12px;
+}
+
+.plate-num {
+  margin-bottom: 0;
+}
+
+.plate-num label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--theme-text-secondary, #3a4459);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The unit belongs to the label, not the box: "Protein g" reads in one
+   glance, and an input with a unit inside it cannot be typed into. */
+.plate-unit {
+  color: var(--theme-text-muted, #5b6577);
+  font-weight: 400;
+}
+
+.plate-num input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.plate-rule {
+  margin: 18px 0 12px;
+  border-top-color: var(--theme-border-color, #e5e8ef);
+}
+
+.plate-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/*
+ * A pill IS the checkbox. The native box is hidden rather than removed so
+ * the label still toggles it, the keyboard still reaches it, and the form
+ * still reads it - all of which a div with a click handler would lose.
+ */
+.plate-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 7px 13px;
+  border: 1px solid var(--theme-border-color, #e5e8ef);
+  border-radius: 999px;
+  background: var(--theme-card-bg, #fff);
+  color: var(--theme-text-secondary, #3a4459);
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.plate-pill input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.plate-pill:hover {
+  border-color: var(--theme-text-muted, #5b6577);
+}
+
+.plate-pill input:focus-visible + span {
+  outline: 2px solid var(--theme-primary-color, #506fe4);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+/* Ticked reads as ticked at a glance across a wrapped block of twenty-two:
+   filled, not merely outlined, because an outline change is invisible in
+   peripheral vision and this card is scanned, not read. */
+.plate-pill input:checked + span {
+  color: var(--theme-btn-primary-text, #fff);
+}
+
+.plate-pill:has(input:checked) {
+  border-color: var(--theme-primary-color, #506fe4);
+  background: var(--theme-primary-color, #506fe4);
+  color: var(--theme-btn-primary-text, #fff);
+}
+
+/* How the shop bills a dish is a different kind of statement from what is
+   in it, so the two blocks do not look like one list of thirty. */
+.plate-pill-mark:has(input:checked) {
+  border-color: var(--theme-warning-color, #f79009);
+  background: var(--theme-warning-color, #f79009);
+}
+
+.plate-estimated {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--theme-warning-color, #f79009);
+  border-radius: 6px;
+  color: var(--theme-text-primary, #16203a);
+  font-size: 12.5px;
+}
+
+.plate-estimated i {
+  flex: none;
+  margin-top: 1px;
+  color: var(--theme-warning-color, #f79009);
+}
+
+/*
+ * The earned badges. An output, so it must not look like the inputs above
+ * it - no pill border, no hover, no pointer. A reader who tries to click
+ * one of these has misunderstood the whole card.
+ */
+.plate-earned {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--theme-table-header-bg, #f6f7fb);
+}
+
+.plate-earned-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 9px;
+  color: var(--theme-text-primary, #16203a);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plate-earned-head small {
+  color: var(--theme-text-muted, #5b6577);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.plate-earned-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.plate-earned-list span {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--theme-success-color, #16b364);
+  color: var(--theme-btn-primary-text, #fff);
+  font-size: 12.5px;
+  line-height: 1.2;
+}
+
+/* Nothing earned yet is the normal state of a dish nobody has measured,
+   and it is not an error. Said quietly, in words, rather than as an empty
+   row that looks like something failed to load. */
+.plate-earned-none {
+  color: var(--theme-text-muted, #5b6577);
+  font-size: 12.5px;
+}

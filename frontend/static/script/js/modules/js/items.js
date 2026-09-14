@@ -73,7 +73,11 @@ PosnicPro.items = {
                 category_name: $.trim($('#items_category option:selected').text() || ''),
                 brand: $.trim($('#items_brand').val() || ''),
                 unit: $.trim($('#items_unit option:selected').text() || ''),
-                diet: $.trim($('input[name="item_diet"]:checked').val() || ''),
+                /* The diet mark is a SELECT, not a radio group. This read
+                   was written against a radio and so matched nothing and
+                   sent nothing, silently, for the life of the button - the
+                   drafter was never told whether a dish was vegetarian. */
+                diet: $.trim($('#item_diet').val() || ''),
                 language: (PosnicPro.local && PosnicPro.local.get('language')) || ''
             })
         }, function (response) {
@@ -106,6 +110,12 @@ PosnicPro.items = {
     },
     showAdd: function () {
         PosnicPro.items.aiRefresh();
+        /* A fresh form has no dish on it, so the plate card is emptied and
+           its badge strip redrawn - otherwise the last dish edited leaves its
+           nutrition sitting in the boxes of the next one. */
+        PosnicPro.itemPlate.wire();
+        PosnicPro.itemPlate.aiRefresh();
+        PosnicPro.itemPlate.clear();
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         loader.find(".loadingSpinner:first").remove();
@@ -158,6 +168,12 @@ PosnicPro.items = {
     },
     showEdit: function (id) {
         PosnicPro.items.aiRefresh();
+        /* Cleared here too: the read below fills it from the saved dish, and
+           if that read is slow or fails the boxes must not still be showing
+           whatever was open a moment ago. */
+        PosnicPro.itemPlate.wire();
+        PosnicPro.itemPlate.aiRefresh();
+        PosnicPro.itemPlate.clear();
         var loader = $(".loader-item");
         loader.find(".loadingSpinner:first").remove();
         $('#product_without_variant').prop('checked', true);
@@ -943,6 +959,11 @@ PosnicPro.items = {
             channel_off: $('#item_channel_off').val() || [],
             prep_note: String($('#item_prep_note').val() || '').trim(),
             prep_minutes: Number($('#item_prep_minutes').val()) || 0,
+            /* Nutrition, what is in the dish, and how the shop bills it.
+               No health claim is ever sent: they are derived from these. */
+            nutrition: PosnicPro.itemPlate.payload().nutrition,
+            food_tags: PosnicPro.itemPlate.payload().food_tags,
+            menu_marks: PosnicPro.itemPlate.payload().menu_marks,
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
@@ -1220,6 +1241,9 @@ PosnicPro.items = {
                     channel_off: $('#item_channel_off').val() || [],
                     prep_note: String($('#item_prep_note').val() || '').trim(),
                     prep_minutes: Number($('#item_prep_minutes').val()) || 0,
+                    nutrition: PosnicPro.itemPlate.payload().nutrition,
+                    food_tags: PosnicPro.itemPlate.payload().food_tags,
+                    menu_marks: PosnicPro.itemPlate.payload().menu_marks,
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
@@ -1770,6 +1794,7 @@ PosnicPro.items = {
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
+                PosnicPro.itemPlate.set(data);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
@@ -2435,6 +2460,7 @@ PosnicPro.items = {
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
                 $('#item_prep_minutes').val(data.prep_minutes || '');
+                PosnicPro.itemPlate.set(data);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
@@ -5603,6 +5629,313 @@ PosnicPro.itemGoesWith = {
         });
     }
 };
+
+/*
+ * WHAT IS ON THE PLATE: the nutrition numbers, what is in the dish, and the
+ * badges those numbers earn.
+ *
+ * Owner asked for nutrition, diet types, food preference tags and marketing
+ * tags on an item, and then set the rule that shapes the screen: tags such as
+ * "diabetic friendly", "heart healthy", "keto" or exact calorie numbers
+ * should only be shown when the recipe or nutrition actually supports the
+ * claim.
+ *
+ * So this module reads and writes FACTS only. There is no control anywhere on
+ * the card for a health badge, and `earned` below is the only thing that
+ * produces one - from core/dish-facts.js, which is the same file the server
+ * derives with, so the strip on this screen and the badge on the menu cannot
+ * disagree.
+ *
+ * The live redraw is the point. A cook types a protein figure and watches
+ * "High protein" appear, which teaches the rule in one keystroke; and when a
+ * shop asks why a dish does not say it, the answer is the empty box in the
+ * same glance.
+ */
+PosnicPro.itemPlate = {
+
+    /*
+     * The claim keys dish-facts can produce, in the words a shop reads.
+     *
+     * A function rather than a table, and every key spelled out in full,
+     * because the translation scanner reads LITERAL t() calls out of this
+     * file: built keys like t('lang_claim_' + key) are invisible to it, so
+     * the strings never reach a language pack and every shop outside English
+     * reads these badges in English. That is a silent failure and the test
+     * that catches it is the only reason anybody would notice.
+     *
+     * The menu shows the same claims in the customer's language from its own
+     * dictionary; these are the shop's side of the same list.
+     */
+    words: function () {
+        /* Spelled out in full on every line rather than aliased to a local
+           `t`: the scanner matches the whole call, so `var t = ...` hides
+           every one of these from it just as surely as building the key did. */
+        return {
+            high_protein: PosnicPro.i18n.t('lang_claim_high_protein', 'High protein'),
+            protein_source: PosnicPro.i18n.t('lang_claim_protein_source', 'Source of protein'),
+            low_fat: PosnicPro.i18n.t('lang_claim_low_fat', 'Low fat'),
+            high_fibre: PosnicPro.i18n.t('lang_claim_high_fibre', 'High fibre'),
+            keto_friendly: PosnicPro.i18n.t('lang_claim_keto_friendly', 'Keto friendly'),
+            low_carb: PosnicPro.i18n.t('lang_claim_low_carb', 'Low carb'),
+            diabetic_friendly: PosnicPro.i18n.t('lang_claim_diabetic_friendly', 'Diabetic friendly'),
+            heart_healthy: PosnicPro.i18n.t('lang_claim_heart_healthy', 'Heart healthy'),
+            under_300: PosnicPro.i18n.t('lang_claim_under_300', 'Under 300 kcal'),
+            under_500: PosnicPro.i18n.t('lang_claim_under_500', 'Under 500 kcal'),
+            no_added_sugar: PosnicPro.i18n.t('lang_claim_no_added_sugar', 'No added sugar')
+        };
+    },
+
+    /* The numbers as typed. An empty box stays ABSENT rather than becoming a
+       zero, because zero is a claim - "no sugar" - and an empty box is not. */
+    nutrition: function () {
+        var out = {};
+        $('#item_plate_card [data-nutrient]').each(function () {
+            var raw = String($(this).val() || '').trim();
+            if (raw === '') { return; }
+            var n = Number(raw);
+            if (!isFinite(n) || n < 0) { return; }
+            out[$(this).data('nutrient')] = n;
+        });
+        return out;
+    },
+
+    tags: function () {
+        return $('#item_plate_card .item-food-tag:checked').map(function () {
+            return String(this.value);
+        }).get();
+    },
+
+    marks: function () {
+        return $('#item_plate_card .item-menu-mark:checked').map(function () {
+            return String(this.value);
+        }).get();
+    },
+
+    /* Everything the save payload needs, in one call, so the two save paths
+       cannot drift apart the way they have before. */
+    payload: function () {
+        return {
+            nutrition: PosnicPro.itemPlate.nutrition(),
+            food_tags: PosnicPro.itemPlate.tags(),
+            menu_marks: PosnicPro.itemPlate.marks()
+        };
+    },
+
+    set: function (data) {
+        var plate = data || {};
+        var n = plate.nutrition || {};
+        $('#item_plate_card [data-nutrient]').each(function () {
+            var key = $(this).data('nutrient');
+            /* Absent reads as an empty box, never as 0 - see above. */
+            $(this).val(n[key] === undefined || n[key] === null ? '' : n[key]);
+        });
+
+        var tags = plate.food_tags || [];
+        $('#item_plate_card .item-food-tag').each(function () {
+            this.checked = tags.indexOf(String(this.value)) !== -1;
+        });
+
+        var marks = plate.menu_marks || [];
+        $('#item_plate_card .item-menu-mark').each(function () {
+            this.checked = marks.indexOf(String(this.value)) !== -1;
+        });
+
+        /* A saved dish is the shop's own record, whatever filled it in first.
+           The estimate warning belongs to an unsaved draft only. */
+        PosnicPro.itemPlate.estimated(false);
+        PosnicPro.itemPlate.earned();
+    },
+
+    clear: function () {
+        PosnicPro.itemPlate.set({});
+    },
+
+    estimated: function (on) {
+        $('#item_plate_estimated').toggle(!!on);
+    },
+
+    /*
+     * Redraw the badges this dish currently earns.
+     *
+     * Reads core/dish-facts.js - the same file, byte for byte, that the
+     * server derives with; tests/dish-facts-copy-matches.test.js fails if
+     * they drift. Guarded because a bundle that somehow shipped without it
+     * should leave the card working and the strip quiet, rather than throwing
+     * on every keystroke in a number box.
+     */
+    earned: function () {
+        var $list = $('#item_plate_earned_list');
+        if (!$list.length) { return; }
+
+        var engine = window.PosnicDishFacts;
+        if (!engine || typeof engine.claimsFor !== 'function') { $list.empty(); return; }
+
+        var claims = engine.claimsFor(
+            PosnicPro.itemPlate.nutrition(),
+            PosnicPro.itemPlate.tags()
+        );
+
+        if (!claims.length) {
+            /* Not an error, and the normal state of a dish nobody has
+               measured. Said in words so an empty strip does not read as
+               something that failed to load. */
+            $list.html('<span class="plate-earned-none">' +
+                PosnicPro.i18n.t('lang_plate_earned_empty', 'Nothing yet. Fill in the numbers above and the badges appear here.') +
+                '</span>');
+            return;
+        }
+
+        var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+        var words = PosnicPro.itemPlate.words();
+        $list.html(claims.map(function (key) {
+            return '<span>' + esc(words[key] || key) + '</span>';
+        }).join(''));
+    },
+
+    /*
+     * Ask the assistant to estimate the numbers.
+     *
+     * Owner: "we have ai assistand also to auto fill if user lazy to do."
+     * Eight numbers times three hundred dishes is data entry nobody does, and
+     * a panel that is empty everywhere may as well not exist.
+     *
+     * It writes nothing. The numbers land in the boxes, the warning goes up,
+     * and a person looks at them and presses Save - the same contract the
+     * description button has. The warning matters more here because these
+     * numbers become public badges about food.
+     */
+    ask: function () {
+        var name = $.trim($('#items_name').val() || '');
+        if (!name) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_plate_ai_no_name', 'Enter the dish name first'));
+            return;
+        }
+
+        var $btn = $('#item_plate_ai');
+        var original = $btn.html();
+        $btn.html('<i class="fa fa-spinner fa-spin mr-1"></i>' + PosnicPro.i18n.t('lang_plate_ai_working', 'Estimating...'))
+            .css('pointer-events', 'none');
+
+        PosnicPro.post({
+            url: 'items/aiDishFacts',
+            data: JSON.stringify({
+                name: name,
+                category_name: $.trim($('#items_category option:selected').text() || ''),
+                description: $.trim($('#items_description').val() || ''),
+                diet: $.trim($('#item_diet').val() || '')
+            })
+        }, function (response) {
+            $btn.html(original).css('pointer-events', '');
+            if (!response || response.type !== 'success' || !response.data) {
+                PosnicPro.alert('warning', (response && response.message)
+                    || PosnicPro.i18n.t('lang_plate_ai_failed', 'Could not estimate this dish'));
+                return;
+            }
+
+            {
+                var got = response.data;
+                var n = got.nutrition || {};
+                /* Only over a box the shop has NOT filled in. Somebody who
+                   typed their own figure meant it, and an estimate that
+                   overwrites a measured number is the one outcome here that
+                   would be worse than no button at all. */
+                var filled = 0;
+                $('#item_plate_card [data-nutrient]').each(function () {
+                    var key = $(this).data('nutrient');
+                    if (String($(this).val() || '').trim() !== '') { return; }
+                    if (n[key] === undefined || n[key] === null) { return; }
+                    $(this).val(n[key]);
+                    filled++;
+                });
+
+                (got.food_tags || []).forEach(function (tag) {
+                    var $box = $('#item_plate_card .item-food-tag[value="' + tag + '"]');
+                    if ($box.length && !$box.prop('checked')) { $box.prop('checked', true); filled++; }
+                });
+
+                /* The veg dot, only if the shop has not marked it. It is the
+                   one thing on a menu people look for before the name. */
+                if (got.diet && !String($('#item_diet').val() || '')) {
+                    $('#item_diet').val(got.diet).trigger('change');
+                    filled++;
+                }
+
+                if (!filled) {
+                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_plate_ai_nothing_new', 'Nothing to add: these are already filled in'));
+                    return;
+                }
+
+                PosnicPro.itemPlate.estimated(true);
+                PosnicPro.itemPlate.earned();
+            }
+        }, function (xhr) {
+            $btn.html(original).css('pointer-events', '');
+            var message = PosnicPro.i18n.t('lang_plate_ai_failed', 'Could not estimate this dish');
+            try {
+                var body = JSON.parse((xhr && xhr.responseText) || '{}');
+                if (body && body.message) { message = body.message; }
+            } catch (e) { /* the default sentence is the fallback */ }
+            PosnicPro.alert('warning', message);
+            /* Same rule as the description button: a refusal - no key, AI
+               switched off, over the cap - hides it now and is asked again
+               next time the form opens, because the fix is a walk to
+               settings and a walk straight back here. */
+            if (xhr && xhr.status === 400) {
+                PosnicPro.items._aiAvailable = null;
+                $('#item_plate_ai').hide();
+            }
+        });
+    },
+
+    /*
+     * Whether to offer the estimate button at all.
+     *
+     * Same gate and same rule as the description button: the shop pays its
+     * own AI provider, so a shop with no key must never see a control that
+     * fails when pressed. Only a yes is remembered - the thing that turns a
+     * no into a yes is somebody pasting a key into settings and coming
+     * straight back to this screen.
+     */
+    aiRefresh: function () {
+        var $btn = $('#item_plate_ai');
+        if (!$btn.length) { return; }
+
+        if (PosnicPro.items._aiAvailable === true) { $btn.show(); return; }
+
+        PosnicPro.get('items/aiAvailability', {}, function (r) {
+            var ok = !!(r && r.data && r.data.available);
+            PosnicPro.items._aiAvailable = ok ? true : null;
+            $btn.toggle(ok);
+        }, function () {
+            PosnicPro.items._aiAvailable = null;
+            $btn.hide();
+        });
+    },
+
+    wire: function () {
+        if (PosnicPro.itemPlate._wired) { return; }
+        PosnicPro.itemPlate._wired = true;
+
+        /* Delegated from the document: the card is inside a page template
+           that is torn down and rebuilt on every navigation, so a direct
+           binding would survive exactly one visit. */
+        $(document)
+            .on('input change', '#item_plate_card [data-nutrient]', function () {
+                /* A person editing a number owns it from that moment, so the
+                   estimate warning comes down. */
+                PosnicPro.itemPlate.estimated(false);
+                PosnicPro.itemPlate.earned();
+            })
+            .on('change', '#item_plate_card .item-food-tag', function () {
+                PosnicPro.itemPlate.earned();
+            })
+            .on('click', '#item_plate_ai', function (e) {
+                e.preventDefault();
+                PosnicPro.itemPlate.ask();
+            });
+    }
+};
+
 
 /*
  * Which serving periods a dish is on.
