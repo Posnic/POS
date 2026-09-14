@@ -329,6 +329,17 @@ function renderSale(sale, options = {}) {
     else r.line(sale.billNo || sale.date);
   }
   if (sale.cashier) r.pair('Cashier: ' + sale.cashier, sale.branch || '');
+  /*
+   * Where the order came from, when the shop wants it said.
+   *
+   * Owner: "in the bill also specify." A restaurant taking orders from its own
+   * floor, a QR code and two aggregators has four kinds of money arriving, and
+   * the bill is the copy that gets filed and argued over later.
+   *
+   * Absent prints nothing rather than an empty line, because a shop with one
+   * way of taking orders does not need a row telling it so on every bill.
+   */
+  if (sale.source) r.line('From: ' + sale.source);
   // A walk-in sale has no customer, and a blank name line reads as a fault.
   for (const c of sale.customer || []) r.line(c);
   r.rule();

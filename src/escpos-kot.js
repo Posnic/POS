@@ -54,6 +54,7 @@ function qtyText(value) {
  *   deliverTo    delivery address, when there is one
  *   note         what the customer said about the whole order
  *   items        [{ name, quantity, description }]
+ *   source       where the order came from, already worded; '' prints nothing
  *   cancelled    true when this sheet is a cancellation, so the lines are struck
  * @param {{paperWidth?: string, strikeCancelled?: boolean}} options
  *   paperWidth      '48' for 80mm, '32' for 58mm
@@ -79,6 +80,21 @@ function renderKitchenTicket(ticket = {}, options = {}) {
   if (ticket.dateText) r.centre(String(ticket.dateText));
   if (ticket.dineType) r.centre(String(ticket.dineType), { bold: true });
   if (ticket.saleId) r.centre(String(ticket.saleId));
+
+  /*
+   * Where it came from.
+   *
+   * Owner: "when order sent kitch show one field order source". The log has
+   * said this on screen for a while; a cook holding the paper could not see it,
+   * and on a floor with handsets, a QR code and an aggregator, "who sent this"
+   * is the question a disputed ticket turns on.
+   *
+   * Under the bill number rather than at the top, because the top belongs to
+   * the three things a cook reads first - what kind of sheet, which table, what
+   * to make - and this is the fourth. Bold, because on a spike of tickets it is
+   * what the eye scans for when something is wrong.
+   */
+  if (ticket.source) r.centre('From: ' + String(ticket.source), { bold: true });
 
   /*
    * The table, which used to print at the size of the date sharing a line with
