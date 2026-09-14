@@ -467,7 +467,16 @@ test('a long dish name cannot push a column under the order panel', () => {
    */
   const css = read('assets/order.css');
   assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(css), 'a bare 1fr track is back in order.css');
-  assert.match(css, /\.product-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  /*
+   * The floor was `minmax(0, 1fr)` and is now `minmax(min(100%, 264px), 1fr)`,
+   * because counting columns off the viewport broke the card on a desktop
+   * where this grid sits inside a column. What matters to THIS test is
+   * unchanged and is what is asserted: the track minimum is an explicit
+   * length, never `auto`, so no name can make a track grow past its column.
+   */
+  const gridRule = (css.match(/\.product-grid\s*\{[^}]*\}/) || [''])[0];
+  assert.match(gridRule, /grid-template-columns:\s*repeat\(auto-fill, minmax\(min\(100%, \d+px\), 1fr\)\)/);
+  assert.ok(!/minmax\(\s*auto/.test(gridRule), 'an auto-sized track can grow past its column');
   assert.match(css, /\.product-name\s*\{[^}]*min-width:\s*0/, 'the name has no floor of its own');
   const menu = fs.readFileSync(path.join(__dirname, '..', 'menu', 'index.html'), 'utf8');
   assert.ok(!/grid-template-columns:\s*1fr 1fr/.test(menu), 'a bare 1fr track is back in the menu');

@@ -109,8 +109,13 @@ describe('purgeDemoData', () => {
     return repo;
   };
 
-  const run = () =>
-    repo.purgeDemoData({ branchId: BRANCH, licenseId: LICENSE, user: { name: 'Owner' } });
+  const run = (over = {}) =>
+    repo.purgeDemoData({
+      branchId: BRANCH,
+      licenseId: LICENSE,
+      user: { name: 'Owner' },
+      ...over,
+    });
 
   test('nothing to remove says so, and touches nothing', async () => {
     setup({ items: [] });
@@ -368,6 +373,61 @@ describe('purgeDemoData', () => {
         sales: [{ items: [{ item_id: 'a1' }] }],
       });
       const r = await run();
+      expect(r.removed).toBe(0);
+      expect(r.kept[0].why).toBe('sold or received');
+    });
+  });
+
+  /*
+   * CHOOSING A DIFFERENT TRADE REPLACES THE CATALOGUE.
+   *
+   * Owner, looking at a restaurant menu on the sandbox with an A5 ruled
+   * notebook and a pack of laundry clips still in it: "i installed cafe
+   * restaurant demo data but system may be not deleted the exsiting demo data
+   * from existing data. it need to be wiped first and install restuarent demo
+   * data."
+   *
+   * The purge already runs first on that path. What kept those two was the
+   * "you have edited it" rule, which is a GUESS - updated_date later than
+   * demo_seeded_at - and a good one on the Remove button, where the shop may
+   * genuinely have changed a price. It is a bad one here: the seeder bumps
+   * updated_date on any row it touches in a second pass, and rewriting an
+   * image path after a dataset zip is extracted is enough to do it. Those
+   * rows are the previous PACK's, not the shop's.
+   */
+  describe('replacing one pack with another', () => {
+    const edited = (id, name) =>
+      item(id, name, { updated_date: new Date(SEEDED.getTime() + 60000) });
+
+    test('a sample that only LOOKS edited goes with the rest of its pack', async () => {
+      setup({ items: [edited('a1', 'A5 Ruled Notebook'), item('a2', 'Croissant')] });
+      const r = await run({ replacing: true });
+      expect(r.removed).toBe(2);
+      expect(r.kept).toEqual([]);
+    });
+
+    test('and is still kept when the shop merely asked to REMOVE the samples', async () => {
+      /* The guess stays where it belongs. On the Remove button a changed row
+         may really be the shop's work, and this is the destructive action
+         with no second pack arriving to replace what it took. */
+      setup({ items: [edited('a1', 'A5 Ruled Notebook')] });
+      const r = await run();
+      expect(r.removed).toBe(0);
+      expect(r.kept[0].why).toBe('you have edited it');
+    });
+
+    test('a REAL sale still protects its item, even while replacing', async () => {
+      /*
+       * The line that must not move. Somebody rang this up on the till, so
+       * the sale is real whatever pack the product came from, and deleting
+       * it would leave that sale pointing at nothing. A guess is relaxed
+       * here; a fact is not.
+       */
+      setup({
+        items: [edited('a1', 'A5 Ruled Notebook')],
+        sales: [{ items: [{ item_id: 'a1' }] }],
+      });
+      const r = await run({ replacing: true });
       expect(r.removed).toBe(0);
       expect(r.kept[0].why).toBe('sold or received');
     });

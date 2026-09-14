@@ -286,3 +286,96 @@ test('sorting moved into the sheet, and took nothing dead with it', () => {
   assert.match(HTML, /id="filters-sort"/);
   assert.match(ORDER, /#filters-sort input\[value="menu"\] \+ span/);
 });
+
+test('columns are counted off the grid, never off the viewport', () => {
+  /*
+   * OWNER, with a desktop screenshot: "design broken in desktop... decktop
+   * price is behind the image."
+   *
+   * Two faults, one cause, and both invisible to every test here and to a
+   * phone screenshot.
+   *
+   * `#product-list` carried the `product-grid` class itself. That was fine
+   * when it held cards; once it held SECTIONS it became a two-column grid of
+   * sections on a wide screen, each with a second grid inside it - so a card
+   * got about 200px, and a card is a row of text beside a 96px photo. The
+   * text had 68px and the photo sat on top of the name and the price.
+   *
+   * And the columns were counted off the VIEWPORT - two at 720px, three at
+   * 1100px, two again in the desktop block. That is only ever right when the
+   * grid is as wide as the window, and on a wide screen this one sits in the
+   * middle of a 220px rail and a 340px order panel.
+   *
+   * So: the container is a plain block, and the grid fits as many columns as
+   * will hold a card in the width it actually has.
+   */
+  const HTML = fs.readFileSync(path.join(ROOT, 'order', 'products.html'), 'utf8');
+  assert.ok(
+    !/class="[^"]*product-grid[^"]*"\s+id="product-list"/.test(HTML),
+    'the container must not be a grid: it holds sections, each with its own'
+  );
+  assert.match(HTML, /<div id="product-list"><\/div>/);
+
+  /* A flat search result brings its own grid, so a section and a search are
+     laid out by the same rule one level down. */
+  const flat = ORDER.slice(ORDER.indexOf('async function renderProductCards('));
+  assert.match(flat.slice(0, 900), /'<div class="product-grid">'/);
+
+  /* One rule, and it asks the width of the grid rather than of the window. */
+  assert.match(CSS, /grid-template-columns:\s*repeat\(auto-fill, minmax\(min\(100%, \d+px\), 1fr\)\)/);
+  /* Scoped to .product-grid: other grids on these pages (the kiosk attract
+     screen, for one) are as wide as the window and a fixed count is right
+     for them. It is this grid, inside a column, that must not have one. */
+  const productGridRules = (CSS.match(/\.product-grid\s*\{[^}]*\}/g) || []).join(' ');
+  assert.ok(
+    !/grid-template-columns:\s*repeat\(\d+,/.test(productGridRules),
+    'a fixed column count on .product-grid is what put the photo over the price'
+  );
+});
+
+test('a section has a picture without anybody uploading one', () => {
+  /*
+   * Owner: "menu looks like shit... if possible have category image ( menu ).
+   * show some image as ccategory. how many items inside."
+   *
+   * A category has no image field anywhere in the product, and adding one
+   * would mean an upload a shop does fourteen times before this button is
+   * worth pressing - so it would be empty everywhere, like every other
+   * optional image. The section borrows from the food instead: the first
+   * dish with a photograph, then the first emoji (which dish-icons.js gives
+   * almost every dish from its name), then the section's own initial.
+   *
+   * The point of the ladder is that the LAST rung always works, so no tile
+   * is ever blank and no tile is ever a broken image.
+   */
+  const pick = ORDER.slice(ORDER.indexOf('function sectionPicture('));
+  const body = pick.slice(0, pick.indexOf('\n}\n') + 3);
+
+  assert.match(body, /items\[i\]\.img/, 'a photograph is preferred');
+  assert.match(body, /items\[j\]\.icon/, 'then the emoji');
+  assert.match(body, /charAt\(0\)\.toUpperCase\(\)/, 'and a letter that cannot fail');
+
+  /* Eager, unlike every other image on these pages: a contents sheet that
+     opens half blank and fills in as you scroll is what looked unfinished. */
+  assert.ok(!/loading="lazy"/.test(body), 'the tiles must not lazy-load');
+});
+
+test('a sheet is measured in dvh, so its bottom is reachable on a phone', () => {
+  /*
+   * 100vh is the LARGE viewport - the height the page would have with the
+   * browser's bars hidden - so a sheet sized in vh is taller than what can
+   * actually be seen and its last rows sit under the address bar. Owner:
+   * "not able to scroll."
+   *
+   * vh stays as the line before it, for anything with no dvh.
+   */
+  const sheet = CSS.slice(CSS.indexOf('dialog.sheet {'));
+  const rule = sheet.slice(0, sheet.indexOf('}'));
+  assert.match(rule, /max-height:\s*calc\(100vh - \d+px\)/, 'the fallback is missing');
+  assert.match(rule, /max-height:\s*calc\(100dvh - \d+px\)/, 'the dvh line is missing');
+  assert.ok(
+    rule.indexOf('100vh') < rule.indexOf('100dvh'),
+    'dvh must come second or the fallback wins'
+  );
+  assert.match(rule, /overflow-y:\s*auto/);
+});

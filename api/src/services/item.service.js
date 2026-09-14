@@ -1375,12 +1375,16 @@ class ItemService {
     }
   }
 
-  async purgeDemoData({ branchId, licenseId, user } = {}) {
+  async purgeDemoData({ branchId, licenseId, user, replacing = false } = {}) {
     try {
       if (!branchId || !licenseId) {
         return { status: false, data: null, message: ERROR_MESSAGES.BRANCH_LICENSE_REQUIRED };
       }
-      const r = await this.repository.purgeDemoData({ branchId, licenseId, user });
+      /* `replacing` has to be carried, not defaulted here: a flag this
+         wrapper silently dropped would leave the caller believing it had
+         asked for a replacement and the previous pack still on the menu,
+         with nothing anywhere to say why. */
+      const r = await this.repository.purgeDemoData({ branchId, licenseId, user, replacing });
       return {
         status: r.status,
         data: { removed: r.removed, categoriesRemoved: r.categoriesRemoved, kept: r.kept },

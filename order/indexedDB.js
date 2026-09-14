@@ -1906,10 +1906,13 @@ async function renderProductCards(list) {
     const storedCart = await getCartData();
     const cartByProductId = new Map(storedCart.map(item => [String(item.id), item]));
 
-    $("#product-list").html((list || []).map(function (product) {
+    /* Wrapped in its own grid: the container is a plain block so that a
+       section and a search result are laid out by the same rule, one level
+       down, rather than one of them inheriting a grid from its parent. */
+    $("#product-list").html('<div class="product-grid">' + (list || []).map(function (product) {
         const cartItem = cartByProductId.get(String(product.id ?? ""));
         return cardHtml(product, cartItem ? Number(cartItem.quantity) || 0 : 0);
-    }).join(""));
+    }).join("") + '</div>');
 
     await updateCart(storedCart);
     const loader = document.getElementById('page-loader');
@@ -2221,6 +2224,49 @@ $(document).on("change", "#filters-groups input[type=checkbox]", async function 
  */
 var INDEX_WORTH_IT = 4;
 
+/*
+ * A PICTURE FOR A SECTION, WITHOUT A FIELD FOR ONE.
+ *
+ * Owner: "if possible have category image ( menu ). show some image as
+ * ccategory. how many items inside."
+ *
+ * A category has no image of its own anywhere in the product, and adding one
+ * would mean a new field, a new upload, and a shop photographing fourteen
+ * categories before this button is worth pressing - which means it stays
+ * empty everywhere, like every other optional image.
+ *
+ * So the section borrows from the food. The first dish with a photograph
+ * stands for the section, which is what a person would have chosen anyway;
+ * failing that the first emoji, which utils/dish-icons.js puts on almost
+ * every dish from its name alone; and failing both, a letter. Every section
+ * therefore has something to look at on the day this ships, with nobody
+ * uploading anything.
+ */
+function sectionPicture(section) {
+    var items = section.items || [];
+
+    for (var i = 0; i < items.length; i++) {
+        if (items[i] && items[i].img) {
+            /* Eager, unlike every other image on this page. The sheet is
+               short, the tiles are small, and most of these URLs are already
+               cached from the menu underneath - and a contents page that
+               opens half blank and fills in as you scroll is the thing that
+               made it look unfinished. */
+            return '<img src="' + escapeHtml(getSafeImageUrl(items[i].img)) + '" alt="" decoding="async">';
+        }
+    }
+
+    for (var j = 0; j < items.length; j++) {
+        if (items[j] && items[j].icon) {
+            return '<span class="menu-index-emoji" aria-hidden="true">' + escapeHtml(items[j].icon) + '</span>';
+        }
+    }
+
+    /* The section's own initial. Never empty, never a broken image. */
+    var letter = String(section.name || "?").trim().charAt(0).toUpperCase();
+    return '<span class="menu-index-letter" aria-hidden="true">' + escapeHtml(letter) + '</span>';
+}
+
 function fillMenuIndex(sections) {
     var list = document.getElementById("menu-index-list");
     var button = document.getElementById("menu-index-btn");
@@ -2233,8 +2279,11 @@ function fillMenuIndex(sections) {
     list.innerHTML = worth.map(function (s) {
         var many = s.items.length !== 1;
         return '<button type="button" class="menu-index-row" data-go="' + escapeHtml(String(s.key)) + '">'
+            + '<span class="menu-index-pic">' + sectionPicture(s) + '</span>'
+            + '<span class="menu-index-words">'
             + '<span class="menu-index-name">' + escapeHtml(String(s.name)) + '</span>'
             + '<span class="menu-index-count">' + escapeHtml(t(many ? "{n} items" : "{n} item", { n: s.items.length })) + '</span>'
+            + '</span>'
             + '</button>';
     }).join("");
 }
