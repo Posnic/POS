@@ -102,6 +102,26 @@ class Receipt {
   openDrawer(pin = 0) { return this.raw(ESC, 0x70, pin === 0 ? 0 : 1, 0x19, 0xfa); }
 
   /*
+   * A line with a stroke drawn THROUGH it.
+   *
+   * ESC/POS has no strike-through - bold, underline, reverse video and
+   * character size is the whole list - so the line is drawn as dots. That is
+   * expensive, 1,736 bytes against 49, and it is the only thing that works on
+   * the hardware. See src/escpos-raster-text.js for the three cheaper ideas
+   * that were printed on a real POS-80C and failed on it.
+   *
+   * Only a cancelled dish pays for it, and a cancellation is rare. A new
+   * order, which is nearly every ticket, never comes through here.
+   */
+  strikeLine(s) {
+    const text = ascii(s);
+    if (!text) return this.line('');
+    const { renderLine } = require('./escpos-raster-text');
+    this.parts.push(renderLine(text, { columns: this.width, strike: true }));
+    return this.raw(0x0a);
+  }
+
+  /*
    * Two columns, the second hard against the right edge.
    *
    * This is what an amount needs: whatever the label, the number ends at the
@@ -109,14 +129,16 @@ class Receipt {
    * wrapped label pushes the amount onto a line of its own and the receipt
    * stops being readable at a glance.
    */
-  pair(left, right, { bold = false } = {}) {
+  pair(left, right, { bold = false, strike = false } = {}) {
     const r = ascii(right);
     const room = this.width - r.length - 1;
     const left_ = ascii(left);
     const l = left_.length > room ? left_.slice(0, Math.max(0, room - 1)) + '.' : left_;
     const gap = Math.max(1, this.width - l.length - r.length);
+    const composed = l + ' '.repeat(gap) + r;
     if (bold) this.bold(true);
-    this.line(l + ' '.repeat(gap) + r);
+    if (strike) this.strikeLine(composed);
+    else this.line(composed);
     if (bold) this.bold(false);
     return this;
   }

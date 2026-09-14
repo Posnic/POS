@@ -611,8 +611,17 @@ class KOTManager {
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
             description: it.item_description || it.description || it.note || '',
           })),
+          /* The HTML ticket has struck out cancelled dishes for as long as it
+             has existed; the bytes could not, until strikeLine. Same field
+             feeds both, so the two paths cannot drift. */
+          cancelled: f.isCancelled,
         },
-        { paperWidth: String(columns) }
+        {
+          paperWidth: String(columns),
+          /* Off only for a printer that will not overprint - one shop setting
+             rather than a release. See Receipt.strikeLine. */
+          strikeCancelled: !(this.config && this.config.strikeCancelled === false),
+        }
       );
     } catch (error) {
       console.error('[KOT] could not build the ticket as bytes:', error.message);
@@ -744,7 +753,28 @@ class KOTManager {
      * which is also what a non-thermal printer needs. A printer that REFUSES
      * is not a reason to fall through: that would print the ticket twice.
      */
-    if (this.hardware && typeof this.hardware.sendRawToPrinter === 'function') {
+    /*
+     * A CANCELLATION GOES THE SLOW WAY, ON PURPOSE.
+     *
+     * Owner: "whenever order cancel or item cancel those line item name should
+     * be strick in the middle. it symbolic that we cancelled it", and then,
+     * having seen a rule printed underneath instead: "no no. this is not what
+     * we want. can send as image ?" and "how about make pdf and send ?"
+     *
+     * Right on both counts, and the PDF is already here. ESC/POS cannot draw a
+     * line THROUGH text - there is no command for it, and no way back over a
+     * line the printer has already committed - so the fast path can only ever
+     * put the rule somewhere near the name. The window below renders HTML,
+     * where `.in.cx { text-decoration: line-through }` has drawn it correctly
+     * all along.
+     *
+     * It costs about a second more per ticket. That is the right trade HERE
+     * and nowhere else: a cancellation is rare, it is the ticket a cook must
+     * not misread, and every ordinary ticket still takes the 124ms path.
+     */
+    const isCancellation = printKind === 'cancel';
+
+    if (!isCancellation && this.hardware && typeof this.hardware.sendRawToPrinter === 'function') {
       const rawResults = await this._printRaw(sale, printKind, kotNumber, printerNames);
       if (rawResults) {
         if (!skipLog) {

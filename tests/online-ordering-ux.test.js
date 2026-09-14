@@ -3714,3 +3714,209 @@ test('a browser with no analyser hears everything rather than nothing', async ()
   window.OrderingVoice.stop();
   window.close();
 });
+
+
+/*
+ * A CUSTOMER WHO CAME TO TALK NEVER SEES A KEYBOARD.
+ *
+ * Owner: "have ai talk button seperate, type button seperate. or in own
+ * button show choice talk or message. coz when user try to talk half screen
+ * showing keypad. not good."
+ *
+ * The sheet opened onto a text box and put the cursor in it, which raises the
+ * keyboard over half the screen before the customer has said what they want
+ * to do - and if what they wanted was to talk, the keyboard was in the way of
+ * the only thing they came for.
+ */
+test('the sheet asks talk or type, and focuses nothing until it is told', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+
+  window.OrderingAssistant.open();
+  await new Promise((r) => setTimeout(r, 120));
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, false, 'the sheet did not offer the choice');
+  assert.strictEqual(document.getElementById('assistant-form').hidden, true, 'the text box is up before anybody asked to type');
+  assert.strictEqual(focused, 0, 'the keyboard was raised on a customer who came to talk');
+
+  /* Type: the box, the cursor, the keyboard they asked for. */
+  document.getElementById('assistant-choose-type').click();
+  await new Promise((r) => setTimeout(r, 120));
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true);
+  assert.strictEqual(document.getElementById('assistant-form').hidden, false);
+  assert.strictEqual(focused, 1, 'choosing to type did not put the cursor in the box');
+  window.close();
+});
+
+test('a shop with no voice goes straight to the box, with no choice to make', async () => {
+  const { window, document } = voicePage({ voice: '', reply: { status: 200, body: {} } });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+  window.OrderingAssistant.open();
+  await new Promise((r) => setTimeout(r, 120));
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'a shop that cannot talk offered to talk');
+  assert.strictEqual(document.getElementById('assistant-form').hidden, false);
+  assert.strictEqual(focused, 1);
+  window.close();
+});
+
+/*
+ * THE BUTTON TAKES THE PRESS, AND SAYS SO.
+ *
+ * Owner: "after press proper animation that user pressed and listerning. like
+ * waves ... have some solid and satisfyig feeling over holing."
+ */
+test('holding says listening, moves the waves from the real voice, and is felt', async () => {
+  const page = roomPage();
+  const { window, document } = page;
+  const buzzes = [];
+  window.navigator.vibrate = (ms) => { buzzes.push(ms); return true; };
+  await window.OrderingVoice.start();
+  await settle();
+
+  const hold = document.getElementById('voice-hold');
+  const word = document.getElementById('voice-hold-word');
+  assert.strictEqual(word.textContent, 'Hold to talk');
+  assert.ok(document.getElementById('voice-wave'), 'there are no waves to move');
+
+  hold.dispatchEvent(new window.Event('pointerdown'));
+  assert.strictEqual(word.textContent, 'Listening', 'the button does not say what it is doing');
+  assert.strictEqual(document.getElementById('voice').getAttribute('data-held'), 'yes', 'the panel does not know it is held');
+  assert.deepStrictEqual(buzzes, [12], 'the press is not felt');
+
+  /* The waves follow the level the gate already measures, so they fall
+     silent when the customer stops rather than running on a loop. */
+  const realNow = window.Date.now;
+  window.Date.now = () => realNow() + 3000;
+  try {
+    page.set(0.01);
+    page.step(3);
+    const quiet = Number(document.getElementById('voice').style.getPropertyValue('--voice-in'));
+    page.set(0.6);
+    page.step(2);
+    const loud = Number(document.getElementById('voice').style.getPropertyValue('--voice-in'));
+    assert.ok(loud > quiet, 'the waves ignore the voice: ' + quiet + ' -> ' + loud);
+    assert.ok(loud <= 1, 'the level runs past the top of the bars');
+  } finally {
+    window.Date.now = realNow;
+  }
+
+  hold.dispatchEvent(new window.Event('pointerup'));
+  assert.strictEqual(word.textContent, 'Hold to talk');
+  assert.deepStrictEqual(buzzes, [12, 6], 'letting go is not felt');
+  assert.strictEqual(document.getElementById('voice').style.getPropertyValue('--voice-in'), '0', 'the waves kept moving after the thumb left');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('the fingertip is shown once, and never again after the first hold', async () => {
+  /* Owner: "like finger press and hold first time." A sentence under a button
+     is a sentence nobody reads; the fingertip is the instruction. */
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  const finger = document.getElementById('voice-finger');
+  assert.ok(finger, 'there is no fingertip to show');
+  assert.strictEqual(finger.hidden, false, 'a first-time customer got no hint');
+
+  document.getElementById('voice-hold').dispatchEvent(new window.Event('pointerdown'));
+  assert.strictEqual(finger.hidden, true, 'the hint stayed up while they were holding it');
+  document.getElementById('voice-hold').dispatchEvent(new window.Event('pointerup'));
+
+  /* And it does not come back on the next call. */
+  window.OrderingVoice.showTheHint();
+  assert.strictEqual(finger.hidden, true, 'somebody who has held it once is being taught again');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+test('there is no Stop talking button left anywhere', () => {
+  /* Owner: "stop talking button not required." The sheet closes from its own
+     X, which is where every sheet on this phone closes. A rule or a handler
+     left behind for a button nobody renders is the quietest kind of dead
+     code, so this pins all three files at once. */
+  assert.ok(!/voice-stop/.test(read('products.html')), 'the markup still has it');
+  assert.ok(!/voice-stop/.test(read('assets/assistant/voice.js')), 'the script still binds it');
+  assert.ok(!/voice-stop/.test(read('assets/order.css')), 'the stylesheet still dresses it');
+});
+
+/*
+ * EVERY HANDLER IS BOUND ONCE.
+ *
+ * A document already complete when the file runs is wired immediately, and
+ * then hears a DOMContentLoaded anyway - so every voice handler was bound
+ * twice. Idempotent handlers hid it for a long time; the haptic tap did not,
+ * buzzing twice on one press, which is how it was caught. A second binding on
+ * a send would have been a second order.
+ */
+test('the voice handlers survive a late DOMContentLoaded without doubling', async () => {
+  const page = roomPage();
+  const { window, document } = page;
+  const buzzes = [];
+  window.navigator.vibrate = (ms) => { buzzes.push(ms); return true; };
+  await window.OrderingVoice.start();
+  await settle();
+  /* The event the browser sends after the script already wired itself. */
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+
+  document.getElementById('voice-hold').dispatchEvent(new window.Event('pointerdown'));
+  assert.deepStrictEqual(buzzes, [12], 'the hold button is bound more than once');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+
+/*
+ * A CODE THAT SAID "TALK" HAS ALREADY MADE THE CHOICE.
+ *
+ * open() offers talk-or-type, which is right for somebody who tapped the
+ * spark and has said nothing about how they want to order. It is wrong for
+ * somebody who arrived on ?ai=talk: they chose before the page loaded, and
+ * asking again puts a question between them and the thing they came for -
+ * with the tap-to-talk panel sitting underneath it, so the screen offers the
+ * same thing twice in two different shapes.
+ *
+ * Caught by reading the arrival path after the talk-or-type change, not by
+ * being told about it.
+ */
+test('arriving on a talk code goes straight to the microphone, with nothing to choose', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+  window.history.replaceState({}, '', '/order/ABC/products.html?ai=talk');
+
+  /* The shop arriving is what opens the sheet on a talk code. */
+  window.OrderingAssistant.paintSpark({ detail: window.shop });
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'a customer who already chose was asked again');
+  assert.strictEqual(document.getElementById('voice-start').hidden, false, 'the way into the call was not offered');
+  assert.strictEqual(focused, 0, 'the keyboard was raised on a talk code');
+  window.close();
+});
+
+test('arriving on an ask code goes straight to the box and the keyboard', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+  window.history.replaceState({}, '', '/order/ABC/products.html?ai=ask');
+
+  window.OrderingAssistant.paintSpark({ detail: window.shop });
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'somebody who came to type was asked how they wanted to order');
+  assert.strictEqual(document.getElementById('assistant-form').hidden, false, 'the box they came for is not there');
+  assert.strictEqual(focused, 1, 'the keyboard they asked for was not raised');
+  window.close();
+});

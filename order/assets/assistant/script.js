@@ -108,9 +108,23 @@
     }
     hideHint(true);
     open();
+    /*
+     * A CODE THAT SAID "TALK" HAS ALREADY MADE THE CHOICE.
+     *
+     * open() offers talk-or-type, which is right for somebody who tapped the
+     * spark and has said nothing about how they want to order. It is wrong
+     * for somebody who arrived on ?ai=talk: they chose before the page
+     * loaded, and asking again puts a question between them and the thing
+     * they came for - with the tap-to-talk panel sitting underneath it, so
+     * the screen offers the same thing twice in two different shapes.
+     */
     if (wish === "talk" && current && current.voice && window.OrderingVoice && window.OrderingVoice.standReady) {
+      chooseHow(false);
       window.OrderingVoice.standReady();
+      return;
     }
+    /* "ask" is the other half of the same idea: they came to type. */
+    if (wish === "ask") typeInstead();
   }
 
   /* ------------------------------------------------------- the callout */
@@ -1151,14 +1165,63 @@
 
   /* --------------------------------------------------------- wiring */
 
+  /*
+   * TALK, OR TYPE - ASKED BEFORE EITHER HAPPENS.
+   *
+   * Owner: "have ai talk button seperate, type button seperate. or in own
+   * button show choice talk or message. coz when user try to talk half
+   * screen showing keypad. not good."
+   *
+   * This used to open onto a text box and put the cursor in it, which raises
+   * the keyboard over half the screen before the customer has said what they
+   * want to do - and if what they wanted was to talk, the keyboard was in the
+   * way of the only thing they came for. The microphone sat beside the box as
+   * a small button, which reads as the afterthought rather than the feature.
+   *
+   * So the choice comes first, and the keyboard appears only for somebody who
+   * asked to type. A shop without voice has no choice to make and goes
+   * straight to the box, as before.
+   */
+  function canTalk() {
+    try {
+      var mode = window.OrderingVoice && window.OrderingVoice.voiceMode
+        ? window.OrderingVoice.voiceMode()
+        : "";
+      return !!mode;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function chooseHow(on) {
+    var box = el("assistant-choose");
+    var form = el("assistant-form");
+    var chips = el("assistant-chips");
+    if (box) box.hidden = !on;
+    if (form) form.hidden = !!on;
+    if (chips) chips.hidden = !!on;
+  }
+
+  /** They said type: the box, the cursor, and the keyboard they asked for. */
+  function typeInstead() {
+    chooseHow(false);
+    var input = el("assistant-input");
+    if (input) setTimeout(function () { input.focus(); }, 60);
+  }
+
   function open() {
     var sheet = el("assistant");
     if (!sheet) return;
     greet();
     paintReview();
     if (typeof sheet.showModal === "function" && !sheet.open) sheet.showModal();
-    var input = el("assistant-input");
-    if (input) setTimeout(function () { input.focus(); }, 60);
+    if (canTalk()) {
+      /* NOTHING IS FOCUSED. A focused text box is a keyboard, and a customer
+         who came to talk has not asked for one. */
+      chooseHow(true);
+    } else {
+      typeInstead();
+    }
     scrollLog();
   }
 
@@ -1377,6 +1440,19 @@
         await tellVoice(id);
       });
     }
+    /* The choice, once. Talk hands straight to the line without ever
+       focusing the box; Type asks for the keyboard on purpose. */
+    var pickTalk = el("assistant-choose-talk");
+    if (pickTalk) {
+      pickTalk.addEventListener("click", function () {
+        chooseHow(false);
+        var talk = el("assistant-talk");
+        if (talk) talk.click();
+      });
+    }
+    var pickType = el("assistant-choose-type");
+    if (pickType) pickType.addEventListener("click", typeInstead);
+
     var closeButton = el("assistant-close");
     if (closeButton) closeButton.addEventListener("click", close);
     var form = el("assistant-form");
@@ -1408,5 +1484,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
   else wire();
 
-  window.OrderingAssistant = { send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showPlacedOrder: showPlacedOrder, goesWith: goesWith, refusal: refusal, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
+  window.OrderingAssistant = { chooseHow: chooseHow, typeInstead: typeInstead, send: send, open: open, close: close, paintSpark: paintSpark, apply: apply, bubble: bubble, actionLine: actionLine, typing: typing, paintReview: paintReview, paintOrderList: paintOrderList, placedPanel: placedPanel, placedDone: placedDone, hidePlaced: hidePlaced, showPlacedOrder: showPlacedOrder, goesWith: goesWith, refusal: refusal, showOrderInstead: showOrderInstead, placedLine: placedLine, leave: leave, state: state };
 })();
