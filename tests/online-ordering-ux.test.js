@@ -3869,3 +3869,54 @@ test('the voice handlers survive a late DOMContentLoaded without doubling', asyn
   window.OrderingVoice.stop();
   window.close();
 });
+
+
+/*
+ * A CODE THAT SAID "TALK" HAS ALREADY MADE THE CHOICE.
+ *
+ * open() offers talk-or-type, which is right for somebody who tapped the
+ * spark and has said nothing about how they want to order. It is wrong for
+ * somebody who arrived on ?ai=talk: they chose before the page loaded, and
+ * asking again puts a question between them and the thing they came for -
+ * with the tap-to-talk panel sitting underneath it, so the screen offers the
+ * same thing twice in two different shapes.
+ *
+ * Caught by reading the arrival path after the talk-or-type change, not by
+ * being told about it.
+ */
+test('arriving on a talk code goes straight to the microphone, with nothing to choose', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+  window.history.replaceState({}, '', '/order/ABC/products.html?ai=talk');
+
+  /* The shop arriving is what opens the sheet on a talk code. */
+  window.OrderingAssistant.paintSpark({ detail: window.shop });
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'a customer who already chose was asked again');
+  assert.strictEqual(document.getElementById('voice-start').hidden, false, 'the way into the call was not offered');
+  assert.strictEqual(focused, 0, 'the keyboard was raised on a talk code');
+  window.close();
+});
+
+test('arriving on an ask code goes straight to the box and the keyboard', async () => {
+  const { window, document } = voicePage({
+    voice: 'live',
+    reply: { status: 200, body: { type: 'success', data: { sdp: 'v=0\r\nanswer', model: 'gpt-realtime' } } },
+  });
+  let focused = 0;
+  document.getElementById('assistant-input').focus = () => { focused += 1; };
+  window.history.replaceState({}, '', '/order/ABC/products.html?ai=ask');
+
+  window.OrderingAssistant.paintSpark({ detail: window.shop });
+  await new Promise((r) => setTimeout(r, 120));
+
+  assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'somebody who came to type was asked how they wanted to order');
+  assert.strictEqual(document.getElementById('assistant-form').hidden, false, 'the box they came for is not there');
+  assert.strictEqual(focused, 1, 'the keyboard they asked for was not raised');
+  window.close();
+});
