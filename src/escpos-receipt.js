@@ -91,6 +91,51 @@ class Receipt {
   feed(n = 1) { return this.raw(ESC, 0x64, n); }
 
   /*
+   * A line with a rule printed THROUGH it.
+   *
+   * ESC/POS has no strike-through. It has bold, underline, reverse video and
+   * character size, and that is the whole list - so a cancelled dish either
+   * gets a heading above it saying the whole sheet is a cancellation, which is
+   * what this ticket did, or the line is drawn by hand.
+   *
+   * It is drawn by hand like this. ESC 3 0 sets the line feed to ZERO dots, so
+   * the LF after the text does not advance the paper and whatever prints next
+   * lands on the same row. What prints next is a rule, and ESC 2 puts the
+   * spacing back.
+   *
+   * TWO DETAILS DECIDE WHETHER THIS LOOKS RIGHT.
+   *
+   * The rule is 0xC4 in code page 437, not a hyphen. A hyphen is drawn inside
+   * its own 12-dot cell with space either side, so a row of them comes out
+   * dashed and reads as a dotted line rather than a deletion. 0xC4 is a
+   * box-drawing horizontal that joins edge to edge, and it sits at the vertical
+   * middle of the cell, which is where a strike belongs. The code page is
+   * switched for the rule and switched straight back.
+   *
+   * And it costs 109 bytes against 49 for the same line printed plain. The
+   * other way to get a true strike is to rasterise the whole line with GS v 0,
+   * which is 1,737 bytes, thirty-five times the text, on the one print where
+   * the original complaint was that it was too slow.
+   *
+   * WHERE IT CAN GO WRONG. Zero line feed is a hardware behaviour, not a
+   * guarantee: a printer that advances anyway prints the rule on the NEXT line,
+   * where it reads as a divider. renderKitchenTicket takes
+   * `strikeCancelled: false` for that case, so such a shop is put right from
+   * its own settings rather than from a release.
+   */
+  strikeLine(s) {
+    const text = ascii(s);
+    if (!text) return this.line('');
+    this.raw(ESC, 0x33, 0);                     // line feed: zero dots
+    this.text(text).raw(0x0a);                  // the line, and no advance
+    this.raw(ESC, 0x74, 0x00);                  // code page 437
+    this.parts.push(Buffer.alloc(text.length, 0xc4));
+    this.raw(ESC, 0x74, 0x10);                  // back to WPC1252
+    this.raw(ESC, 0x32);                        // line feed: back to default
+    return this.raw(0x0a);
+  }
+
+  /*
    * Cut the paper, after feeding enough to clear the blade.
    *
    * The cutter sits a couple of centimetres past the print head, so cutting
@@ -109,14 +154,16 @@ class Receipt {
    * wrapped label pushes the amount onto a line of its own and the receipt
    * stops being readable at a glance.
    */
-  pair(left, right, { bold = false } = {}) {
+  pair(left, right, { bold = false, strike = false } = {}) {
     const r = ascii(right);
     const room = this.width - r.length - 1;
     const left_ = ascii(left);
     const l = left_.length > room ? left_.slice(0, Math.max(0, room - 1)) + '.' : left_;
     const gap = Math.max(1, this.width - l.length - r.length);
+    const composed = l + ' '.repeat(gap) + r;
     if (bold) this.bold(true);
-    this.line(l + ' '.repeat(gap) + r);
+    if (strike) this.strikeLine(composed);
+    else this.line(composed);
     if (bold) this.bold(false);
     return this;
   }

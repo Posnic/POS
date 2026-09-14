@@ -611,8 +611,17 @@ class KOTManager {
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
             description: it.item_description || it.description || it.note || '',
           })),
+          /* The HTML ticket has struck out cancelled dishes for as long as it
+             has existed; the bytes could not, until strikeLine. Same field
+             feeds both, so the two paths cannot drift. */
+          cancelled: f.isCancelled,
         },
-        { paperWidth: String(columns) }
+        {
+          paperWidth: String(columns),
+          /* Off only for a printer that will not overprint - one shop setting
+             rather than a release. See Receipt.strikeLine. */
+          strikeCancelled: !(this.config && this.config.strikeCancelled === false),
+        }
       );
     } catch (error) {
       console.error('[KOT] could not build the ticket as bytes:', error.message);
