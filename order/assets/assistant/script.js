@@ -108,9 +108,23 @@
     }
     hideHint(true);
     open();
+    /*
+     * A CODE THAT SAID "TALK" HAS ALREADY MADE THE CHOICE.
+     *
+     * open() offers talk-or-type, which is right for somebody who tapped the
+     * spark and has said nothing about how they want to order. It is wrong
+     * for somebody who arrived on ?ai=talk: they chose before the page
+     * loaded, and asking again puts a question between them and the thing
+     * they came for - with the tap-to-talk panel sitting underneath it, so
+     * the screen offers the same thing twice in two different shapes.
+     */
     if (wish === "talk" && current && current.voice && window.OrderingVoice && window.OrderingVoice.standReady) {
+      chooseHow(false);
       window.OrderingVoice.standReady();
+      return;
     }
+    /* "ask" is the other half of the same idea: they came to type. */
+    if (wish === "ask") typeInstead();
   }
 
   /* ------------------------------------------------------- the callout */
