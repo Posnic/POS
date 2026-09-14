@@ -1598,6 +1598,20 @@ async function renderProductCards(list) {
         const safeProductName = escapeHtml(String(product.name ?? "Unknown"));
         const description = String(product.description || "");
         const price = Number(product.price) || 0;
+        /*
+         * TODAY'S PRICE IS NOT SET YET.
+         *
+         * Whole fish, crab, lobster: the rate comes from the morning's market,
+         * so the shop enters it when it opens and the catalogue holds nothing
+         * until then. Owner: "for menu and order say its just market price...
+         * dont let customer add or menu see the price."
+         *
+         * Zero is that state, and there is nothing to confuse it with - a
+         * kitchen does not sell a dish for nothing. The moment a real price is
+         * entered this is false and the card is ordinary again, with no other
+         * switch to remember.
+         */
+        const marketPriced = !(price > 0);
 
         /*
          * Off its hours: shown, greyed, and told why. Hiding it makes a
@@ -1625,16 +1639,20 @@ async function renderProductCards(list) {
             <div class="product-body">
                 <p class="product-title">${dietMarkHtml(product.diet)}<span class="product-name">${safeProductName}</span></p>
                 ${description ? `<p class="product-desc">${escapeHtml(description)}</p>` : ""}
-                <p class="product-price">${escapeHtml(money(price))}</p>
+                <p class="product-price">${escapeHtml(marketPriced ? t("Market price") : money(price))}</p>
                 ${meta.length ? `<div class="product-meta">${meta.map(m => `<span>${escapeHtml(m)}</span>`).join("")}</div>` : ""}
             </div>
             <div class="product-media">
                 ${media}
+                ${marketPriced ? `
+                <p class="product-ask">${escapeHtml(t("Ask staff for today's price"))}</p>
+                ` : `
                 <div class="cart-controls" aria-label="Quantity">
                     <button type="button" class="btn-decrease" data-id="${safeProductId}" aria-label="One fewer" ${quantity <= 0 ? 'disabled' : ''}>&minus;</button>
                     <span class="product-qty" data-id="${safeProductId}" aria-live="polite">${quantity}</span>
                     <button type="button" class="btn-increase" data-id="${safeProductId}" aria-label="Add one"><span class="add-word">Add</span><span class="add-plus" aria-hidden="true">+</span></button>
                 </div>
+                `}
             </div>
         </div>`;
     }

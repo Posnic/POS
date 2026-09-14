@@ -751,6 +751,25 @@ body.searching .order-search {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * WHERE THE ADD BUTTON WOULD HAVE BEEN, on a dish the shop has not priced yet.
+ *
+ * Owner: "dont let customer add or menu see the price. ask for pricing."
+ * Whole fish and crab are priced from the morning's market, so until the shop
+ * opens and enters today's rate there is no number to charge and no button to
+ * offer. The line stands in for both, and reads as an instruction rather than
+ * as a fault.
+ */
+.product-ask {
+  margin: 0;
+  max-width: 120px;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink-soft, #64748b);
+}
+
 .product-meta {
   display: flex;
   flex-wrap: wrap;
