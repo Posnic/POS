@@ -10,7 +10,7 @@ const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
 const { notifyBillRequested } = require('../helpers/bill-notify');
 const { queuePrintJob } = require('./print-job.repository');
-const { buildBillPayload } = require('../helpers/bill-payload');
+const { buildBillPayload, isDialable } = require('../helpers/bill-payload');
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7524,6 +7524,54 @@ class SalesRepository {
    *   which on this endpoint means a captain handset. Set by the route, never
    *   from the body - the body is written by the device being described.
    */
+  /**
+   * The shop's own walk-in customer, for a guest who gave no details.
+   *
+   * Owner, holding a bill with an invented phone number on it: "until captain
+   * enter guest nuber better keep guest as walk in."
+   *
+   * Every branch has one - the till attaches it to counter sales, and the
+   * installer and the settings screen both keep it healed. An order taken at a
+   * table belongs to exactly the same person: somebody who walked in and did
+   * not leave a number. Until the handset asks for one, that is the honest
+   * answer, and it is better than the two this had before - a blank, which
+   * reads as data lost, or a made-up number, which reads as data.
+   *
+   * Read-only and best effort: a shop whose walk-in record has been deleted
+   * still gets its sale, with the name and no id. A sale must never fail over
+   * who the guest is.
+   *
+   * @param {object} db          the tenant connection
+   * @param {object} branchDoc   the branch this sale belongs to
+   * @returns {Promise<{id: ObjectId|null, name: string}>}
+   */
+  async _walkInCustomer(db, branchDoc) {
+    const name = 'Walk-in Customer';
+    try {
+      const customers = db.collection('customers');
+      const scope = {
+        branch_id: branchDoc._id,
+        ...(branchDoc.license ? { license: branchDoc.license } : {}),
+      };
+
+      if (branchDoc.default_customer) {
+        const pointed = await customers.findOne({
+          _id: new mongoose.Types.ObjectId(String(branchDoc.default_customer)),
+          ...scope,
+        });
+        if (pointed) return { id: pointed._id, name: pointed.name || name };
+      }
+
+      /* The pointer is not always set - older branches, restored data - so the
+         record is found by what it is called, the way settings heals it. */
+      const found = await customers.findOne({ name: { $regex: /walk[- ]?in/i }, ...scope });
+      if (found) return { id: found._id, name: found.name || name };
+    } catch (e) {
+      console.error('walk-in lookup failed, order continues:', e.message);
+    }
+    return { id: null, name };
+  }
+
   async createOnlineOrder(data, { SaleModel, staffOrder = false } = {}) {
     try {
       const db = await BaseModel.getDb();
@@ -7905,6 +7953,24 @@ class SalesRepository {
        */
       const numberOfItems = saleItems.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
+      /*
+       * Did anybody say who this is for?
+       *
+       * A customer on the storefront types a number, and a delivery carries a
+       * name and an address. A waiter at a table has neither, and the handset
+       * used to invent a number so the field was not empty - which printed on
+       * a bill and sits in the phone column of every report.
+       *
+       * A number that cannot be dialled is nobody's: a placeholder is written
+       * as one repeated digit, and no real subscriber number is under 7 digits
+       * or over 15. Judged here the same way the printed bill judges it, so a
+       * sale and its receipt cannot disagree about whether a guest is known.
+       */
+      const saidPhone = isDialable(customerMobile);
+      const saidName = String(customer_name || '').trim().length > 0;
+      const anonymous = !saidPhone && !saidName;
+      const walkIn = anonymous ? await this._walkInCustomer(db, branchDoc) : { id: null, name: '' };
+
       const salesCollection = db.collection('sales');
       const clientRecord = this._clientFacts(client);
       const saleDocument = {
@@ -8012,6 +8078,17 @@ class SalesRepository {
         customer_address: String(customer_address || '')
           .trim()
           .slice(0, 300),
+        /*
+         * WHO THIS IS FOR, when nobody said.
+         *
+         * AFTER the three lines above on purpose: a later key wins in an
+         * object literal, and this must be able to replace the blank name they
+         * write. A guest who gave a name or a number keeps it - `anonymous` is
+         * false and nothing here applies.
+         */
+        ...(anonymous
+          ? { customer_id: walkIn.id, customer_name: walkIn.name, customer_phone: '' }
+          : {}),
         /* "null" is what a page stores when it stores nothing, and it was
            reaching tickets as a note. */
         notes: note && String(note) !== 'null' ? String(note).trim().slice(0, 300) : '',
