@@ -8583,7 +8583,10 @@ class SalesRepository {
           sale.change_requested.items.map((one) => ({
             item_id: one.item_id,
             quantity: one.quantity,
-          }))
+          })),
+          /* A person at the shop is applying this. If it strips the order to
+             nothing - which is a cancellation - they have already been told. */
+          { alreadyKnown: true }
         );
         /* The request is answered either way. A shop that pressed accept and
            met a refusal - the dish went off the menu while the order sat in
@@ -8613,7 +8616,9 @@ class SalesRepository {
             data: { sale_id: String(saleId), cancelled: false },
           };
         }
-        const done = await this.cancelCustomerOrder(sale);
+        /* A person at the shop is deciding this right now, so it is not
+           something the shop needs telling about afterwards. */
+        const done = await this.cancelCustomerOrder(sale, { alreadyKnown: true });
         await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
         if (!done.status) return done;
         return {
@@ -9605,7 +9610,7 @@ class SalesRepository {
    * changes log a waiter's amendment writes, so a screen or a printer that
    * already knows how to show "one biryani cancelled" needs nothing new.
    */
-  async changeCustomerOrderItems(orderDoc, wanted) {
+  async changeCustomerOrderItems(orderDoc, wanted, how = {}) {
     const db = await BaseModel.getDb();
     const salesCollection = db.collection('sales');
     const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
@@ -9673,8 +9678,11 @@ class SalesRepository {
     }
 
     if (!changes.length) return { status: false, message: 'nothing_changed', data: null };
-    /* Every line gone is a cancelled order, not an order of nothing. */
-    if (!kept.length) return this.cancelCustomerOrder(orderDoc);
+    /* Every line gone is a cancelled order, and who asked for that is
+       whoever asked for the change: a customer taking their own order to
+       nothing must still be announced, a shop applying a change request has
+       already been told. */
+    if (!kept.length) return this.cancelCustomerOrder(orderDoc, how);
 
     const totals = this._onlineOrderTotals(kept, orderDoc);
     const at = new Date();
@@ -9930,7 +9938,18 @@ class SalesRepository {
    * needs to see that it existed - and every line goes to the kitchen as a
    * cancellation, the same shape the console writes.
    */
-  async cancelCustomerOrder(orderDoc) {
+  /**
+   * Call an order off.
+   *
+   * @param {object} orderDoc
+   * @param {{alreadyKnown?: boolean}} [how]
+   *   alreadyKnown: somebody at the shop decided this, so it must NOT be
+   *   stamped as something the shop still has to be told about. Accepting a
+   *   customer's cancellation request runs through here, and stamping that
+   *   put the order straight back in the queue asking to be acknowledged -
+   *   a second decision on something a person had just decided.
+   */
+  async cancelCustomerOrder(orderDoc, how = {}) {
     const db = await BaseModel.getDb();
     const salesCollection = db.collection('sales');
     const at = new Date();
@@ -9978,8 +9997,9 @@ class SalesRepository {
            * until a person has seen it. There is nothing here to approve;
            * there is something to KNOW.
            */
-          customer_cancelled_at: new Date(),
-          cancel_seen: false,
+          /* Only where the shop has not been part of it; see the note on
+             this function's `alreadyKnown`. */
+          ...(how.alreadyKnown ? {} : { customer_cancelled_at: new Date(), cancel_seen: false }),
           payment_status: 'Cancelled',
           payment_pending: 0,
           changes: log,
