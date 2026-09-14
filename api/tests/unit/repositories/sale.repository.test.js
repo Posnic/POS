@@ -1462,6 +1462,120 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
       expect(r.message).toBe('Order not found');
     });
+
+    /*
+     * ACCEPTING HAS TO GET THE ORDER OUT OF THE QUEUE.
+     *
+     * Owner, with two orders on the screen and a screenshot of both: "online
+     * order even i accept it not working... nothing happening in develop."
+     *
+     * Nothing was erroring. The order simply came back. An order sits in this
+     * queue for FOUR different reasons (see pendingOnlineOrders) and only one
+     * of them is "waiting to be accepted" - but the card looks the same for
+     * two of them, so the button sends the word for a new order and the
+     * server routed it to the approval state machine. If the state was
+     * already `accepted` the machine correctly said "no change" and reported
+     * success, and whatever had really put the row in the queue was never
+     * cleared. Press it forever; it never leaves.
+     */
+    const queuedBecause = (over) => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockResolvedValue({
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        order_state: 'accepted',
+        sale_process: 'KOT',
+        items: [],
+        ...over,
+      });
+    };
+
+    test('a change request with an EMPTY list still clears when accepted', async () => {
+      /*
+       * The exact shape on his screen. The queue holds an order on
+       * `change_requested.at`; the card decides which buttons to draw on
+       * `change_requested.items.length`, so an empty list reads as an
+       * ordinary new order and sends `accepted` - a word this branch did not
+       * answer to.
+       */
+      queuedBecause({ change_requested: { items: [], at: new Date() } });
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      expect(r.status).toBe(true);
+
+      /* The row no longer matches the clause that put it in the queue... */
+      const cleared = collections.sales.updateOne.mock.calls.find(
+        (c) => c[1].$set && 'change_requested' in c[1].$set
+      );
+      expect(cleared[1].$set.change_requested).toBeNull();
+
+      /* ...and it was ACCEPTED, not cancelled. An empty list handed to
+         changeCustomerOrderItems means "the order is now nothing", so the
+         first version of this fix would have cancelled an order somebody
+         pressed "Accept and print" on. */
+      expect(r.data.cancelled).toBeUndefined();
+    });
+
+    test('a change request is cleared by the refuse button too, whichever word it sends', async () => {
+      queuedBecause({ change_requested: { items: [], at: new Date() } });
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'rejected' });
+
+      /*
+       * What matters is that the row stops matching the clause that queued
+       * it. The state machine may still refuse the state change itself - an
+       * order the kitchen has already started cannot be rejected out from
+       * under it, which is a separate and deliberate rule - but the request
+       * is answered either way, so the card does not come back forever.
+       */
+      const cleared = collections.sales.updateOne.mock.calls.find(
+        (c) => c[1].$set && 'change_requested' in c[1].$set
+      );
+      expect(cleared[1].$set.change_requested).toBeNull();
+      expect(r).toBeDefined();
+    });
+
+    test('a cancellation request clears on the same button', async () => {
+      queuedBecause({ cancel_requested: true });
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'rejected' });
+      expect(r.status).toBe(true);
+      const written = collections.sales.updateOne.mock.calls.at(-1)[1].$set;
+      expect(written.cancel_requested).toBe(false);
+    });
+
+    /*
+     * AND THE ONE THE PROJECTION HID.
+     *
+     * decideOnOrder reads `cancel_seen` and `customer_cancelled_at` to answer
+     * "the customer already called this off, so either button means seen".
+     * Neither field was in its projection, so the read came back without
+     * them, `undefined === false` was false, and that branch could never fire
+     * - an order the customer had cancelled fell through to the state machine
+     * and stuck in the queue exactly like the others.
+     */
+    test('an order the customer already cancelled is acknowledged, not re-decided', async () => {
+      queuedBecause({ cancel_seen: false, customer_cancelled_at: new Date() });
+      const r = await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      expect(r.status).toBe(true);
+      expect(r.data.seen).toBe(true);
+      const written = collections.sales.updateOne.mock.calls.at(-1)[1].$set;
+      expect(written.cancel_seen).toBe(true);
+    });
+
+    test('the read asks for every field the decisions are made on', async () => {
+      /* A field read but not projected is undefined, and a branch that turns
+         on it is dead code that no test of its logic can catch. */
+      held('pending');
+      await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+      const projection = collections.sales.findOne.mock.calls.at(-1)[1].projection;
+      for (const field of [
+        'order_state',
+        'cancel_requested',
+        'change_requested',
+        'cancel_seen',
+        'customer_cancelled_at',
+      ]) {
+        expect(projection[field]).toBe(1);
+      }
+    });
   });
 
   describe('itemExpiryReportPage', () => {

@@ -2651,6 +2651,19 @@ async function checkout(transactionId, paymentStatus = "Upi", options = {}) {
     });
 }
 
+/**
+ * A stored string that actually says something.
+ *
+ * Browser storage keeps strings and nothing else, so `setItem(k, null)` comes
+ * back as "null" and `setItem(k, undefined)` as "undefined" - both truthy,
+ * both useless, and both have shipped as "+91null" on a real order.
+ */
+function notAWord(value) {
+    const text = String(value == null ? "" : value).trim();
+    if (!text || text === "null" || text === "undefined" || text === "NaN") return "";
+    return text;
+}
+
 async function performCheckout(transactionId, paymentStatus = "Upi", options = {}) {
     try {
         // 🔄 Get cart data from IndexedDB
@@ -2696,7 +2709,20 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             console.log("Branch not found.");
             return false;
         }
-        const savedNumber = sessionStorage.getItem("kiosk_mobile_number");
+        /*
+         * "null" IS A STRING, AND IT IS TRUTHY.
+         *
+         * Owner's screenshot of the order queue: a customer row reading
+         * "+91null". sessionStorage only stores strings, so anything that
+         * writes an absent value writes the WORD - and `saved ? '+91' + saved
+         * : ''` then happily builds a phone number out of it. The guard on
+         * that line was already there and could not help.
+         *
+         * Fixed at the READ rather than at each writer: the voice line, the
+         * payment page and whatever comes next all land here, and a reader
+         * that cannot be fooled is one place instead of three.
+         */
+        const savedNumber = notAWord(sessionStorage.getItem("kiosk_mobile_number"));
         const generatedTokenId = generateUniqueToken();
         const orderAttemptId = getOrCreateOrderAttemptId();
 

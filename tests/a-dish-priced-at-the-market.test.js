@@ -99,7 +99,19 @@ for (const [where, waiting] of SURFACES) {
     /* The entire point of the shop updating it when they open: once the
        number is in, nothing on the screen mentions any of this. */
     assert.equal(
-      waiting({ price: 900, daily_price: true, price_set_on: hoursAgo(2) }),
+      /*
+       * Priced TODAY, whatever time the test runs.
+       *
+       * This was `hoursAgo(2)`, which reads as "the shop entered it this morning"
+       * and is yesterday whenever the suite runs within two hours of midnight.
+       * pricedToday compares CALENDAR DAYS, so the fixture has to be an unambiguous
+       * today rather than a small offset from now - it failed at 00:32 on a machine
+       * and in CI on the same code that had passed hours earlier.
+       *
+       * `new Date()` is today by definition, at every hour. The stale case keeps
+       * its 26 hours, which crosses midnight from any starting point.
+       */
+      waiting({ price: 900, daily_price: true, price_set_on: new Date().toISOString() }),
       false
     );
   });

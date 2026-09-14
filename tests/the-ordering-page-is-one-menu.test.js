@@ -379,3 +379,27 @@ test('a sheet is measured in dvh, so its bottom is reachable on a phone', () => 
   );
   assert.match(rule, /overflow-y:\s*auto/);
 });
+
+test('a stored word-null never becomes a phone number', () => {
+  /*
+   * Owner's screenshot of the order queue, on a real order: "+91null".
+   *
+   * Browser storage keeps strings and nothing else, so a writer that stores
+   * an absent value stores the WORD "null" - which is truthy, so the guard
+   * that was already on that line (`saved ? '+91' + saved : ''`) could not
+   * help. Fixed at the read, because the voice line, the payment page and
+   * whatever comes next all arrive through it.
+   */
+  const lifted = ORDER.slice(ORDER.indexOf('function notAWord('));
+  const body = lifted.slice(0, lifted.indexOf('\n}\n') + 3);
+  const notAWord = new Function(body + '; return notAWord;')();
+
+  for (const junk of ['null', 'undefined', 'NaN', '', '   ', null, undefined]) {
+    assert.strictEqual(notAWord(junk), '', `"${junk}" survived as a phone number`);
+  }
+  assert.strictEqual(notAWord('9876543210'), '9876543210', 'a real number was thrown away');
+  assert.strictEqual(notAWord('  9876543210 '), '9876543210');
+
+  /* And the checkout reads through it rather than straight from storage. */
+  assert.match(ORDER, /notAWord\(sessionStorage\.getItem\("kiosk_mobile_number"\)\)/);
+});

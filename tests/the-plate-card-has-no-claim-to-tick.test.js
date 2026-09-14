@@ -176,3 +176,45 @@ test('the assistant never types over a number a person entered', () => {
     'the estimate must skip any box that is already filled in'
   );
 });
+
+test('the "nothing yet" line is not dressed as a badge it just denied', () => {
+  /*
+   * Owner's screenshot: a dish with no nutrition at all showed "Nothing yet.
+   * Fill in the numbers above and the badges appear here." as a GREEN EARNED
+   * BADGE - the exact opposite of what the sentence says.
+   *
+   * `.plate-earned-list span` caught it, because the empty-state line shares
+   * that container and a bare element selector beats the class on it. The
+   * badges carry their own class now.
+   */
+  const CSS = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'style', 'css', 'custom.css'),
+    'utf8'
+  );
+  assert.ok(
+    !/\.plate-earned-list span\s*\{/.test(CSS),
+    'a bare span selector here also paints the empty-state line'
+  );
+  assert.match(CSS, /\.plate-earned-list \.plate-claim\s*\{/);
+  assert.match(ITEMS, /<span class="plate-claim">/);
+});
+
+test('an empty Served at says why it is empty', () => {
+  /*
+   * Owner, typing into it and getting nowhere: "served at not able to fill
+   * anythnig what supposed be there ?"
+   *
+   * The list is the shop's own serving periods, set once in Settings. A shop
+   * that has set none gets an empty select2, which answers "No results
+   * found" - true, useless, and it reads as a search that failed rather than
+   * a list nobody has made. Nothing on the screen said where the list comes
+   * from, so there was no way to work it out from here.
+   */
+  assert.match(ITEMS, /sayIfEmpty: function \(\$sel, count\)/);
+  assert.match(ITEMS, /lang_no_dayparts_yet/);
+
+  /* Disabled when empty: typing into it can never produce anything, and a
+     field that takes input and discards it is worse than one that refuses. */
+  const say = ITEMS.slice(ITEMS.indexOf('sayIfEmpty: function'));
+  assert.match(say.slice(0, 700), /\$sel\.prop\('disabled', !count\)/);
+});

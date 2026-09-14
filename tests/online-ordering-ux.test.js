@@ -280,7 +280,19 @@ test("a dish waiting for today's price says so, and cannot be added", async () =
   /* And the moment the shop enters this morning's number, an ordinary card. */
   const today = page('products.html', { branch: { currency: '₹' } });
   await today.box.rememberShop();
-  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(2) }));
+  /*
+   * Priced TODAY, whatever time the test runs.
+   *
+   * This was `hoursAgo(2)`, which reads as "the shop entered it this morning"
+   * and is yesterday whenever the suite runs within two hours of midnight.
+   * pricedToday compares CALENDAR DAYS, so the fixture has to be an unambiguous
+   * today rather than a small offset from now - it failed at 00:32 on a machine
+   * and in CI on the same code that had passed hours earlier.
+   *
+   * `new Date()` is today by definition, at every hour. The stale case keeps
+   * its 26 hours, which crosses midnight from any starting point.
+   */
+  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: new Date().toISOString() }));
   const priced = today.document.querySelector('.product-card[data-id="f1"]');
   assert.strictEqual(priced.querySelector('.product-price').textContent, '₹900');
   assert.ok(priced.querySelector('.cart-controls'), 'a priced dish cannot be ordered');
@@ -4062,6 +4074,10 @@ function checkoutPage({ cart = [], table = '', checkout: answer = null, kept = [
     'var orderJustPlaced = false;',
     lift(src, 'myOpenOrderHere'),
     lift(src, 'addToMyOpenOrder'),
+    /* performCheckout reads the stored phone through this, so the sandbox
+       needs it or the whole checkout throws a ReferenceError and the test
+       sees a refusal that never happened. */
+    lift(src, 'notAWord'),
     lift(src, 'performCheckout'),
   ].join('\n');
 

@@ -37,6 +37,32 @@ const REPO = fs.readFileSync(
   path.join(ROOT, 'api', 'src', 'repositories', 'sale.repository.js'),
   'utf8'
 );
+/*
+ * The body of one method, ending where the method ends.
+ *
+ * These assertions used to slice a fixed number of characters from the start
+ * of the function - 2500, 3000, 4000, 4500 - which works until somebody adds
+ * a paragraph of comment and the line being asserted on slides past the cut.
+ * That happened: a fix to decideOnOrder's projection carried an explanation
+ * with it and this file failed on code that was more correct than before.
+ * The test should care where the method ENDS, not how long it is.
+ */
+function methodBody(source, name) {
+  const at = source.indexOf(name);
+  assert.ok(at !== -1, name + ' is gone from the repository');
+  /* The next method declared at the same indentation, or the end of the
+     file. No regex here: two attempts at one lost a backslash on the way
+     through a patch script and became a newline inside a literal. */
+  const after = source.slice(at + name.length);
+  const marks = [String.fromCharCode(10) + '  async ', String.fromCharCode(10) + '  get ', String.fromCharCode(10) + '  static '];
+  let cut = -1;
+  for (const mark of marks) {
+    const found = after.indexOf(mark);
+    if (found !== -1 && (cut === -1 || found < cut)) cut = found;
+  }
+  return cut === -1 ? source.slice(at) : source.slice(at, at + name.length + cut);
+}
+
 
 /** The dock in a page, with the shop answering whatever the test says. */
 function dockPage(orders, { onPost } = {}) {
@@ -192,17 +218,17 @@ test('accepting goes through the same door the queue page uses', () => {
 test('a cancellation inside the window is stamped so the shop can be told', () => {
   /* Before this it told the PRINTER and nothing else: notifyKotReady goes
      over the desktop process bus and never reaches a screen. */
-  const at = REPO.indexOf('async cancelCustomerOrder');
-  assert.ok(at !== -1, 'the customer can no longer cancel their own order');
-  const body = REPO.slice(at, at + 4000);
+  const NAME = 'async cancelCustomerOrder';
+  assert.ok(REPO.indexOf(NAME) !== -1, 'the customer can no longer cancel their own order');
+  const body = methodBody(REPO, NAME);
   assert.match(body, /customer_cancelled_at: new Date\(\)/, 'a cancellation leaves no mark for the shop');
   assert.match(body, /cancel_seen: false/, 'nothing says whether anybody has seen it');
 });
 
 test('the queue carries a cancelled order until somebody has seen it', () => {
-  const at = REPO.indexOf('async pendingOnlineOrders');
-  assert.ok(at !== -1, 'the queue is gone');
-  const body = REPO.slice(at, at + 3000);
+  const NAME = 'async pendingOnlineOrders';
+  assert.ok(REPO.indexOf(NAME) !== -1, 'the queue is gone');
+  const body = methodBody(REPO, NAME);
   assert.match(
     body,
     /cancel_seen: false, customer_cancelled_at: \{ \$exists: true \}/,
@@ -215,8 +241,8 @@ test('the queue carries a cancelled order until somebody has seen it', () => {
 test('acknowledging a cancelled order is not dressed up as a decision', () => {
   /* It is already cancelled. Two buttons on it would be two ways to be
      confused; either means "I have seen this", and it leaves the queue. */
-  const at = REPO.indexOf('async decideOnOrder');
-  const body = REPO.slice(at, at + 2500);
+  const NAME = 'async decideOnOrder';
+  const body = methodBody(REPO, NAME);
   assert.match(body, /sale\.cancel_seen === false && sale\.customer_cancelled_at/, 'a seen cancellation is not recognised');
   assert.match(body, /cancel_seen: true/, 'seeing it does not clear it from the queue');
   assert.match(body, /cancel_seen_at: new Date\(\)/, 'nothing records when it was seen');
@@ -369,9 +395,9 @@ test('an order with no phone number carries none, not the text "+91null"', () =>
  * side of the door.
  */
 test('a cancellation the shop itself decided is not put back in the queue', () => {
-  const at = REPO.indexOf('async cancelCustomerOrder');
-  assert.ok(at !== -1, 'the customer can no longer cancel their own order');
-  const body = REPO.slice(at, at + 4500);
+  const NAME = 'async cancelCustomerOrder';
+  assert.ok(REPO.indexOf(NAME) !== -1, 'the customer can no longer cancel their own order');
+  const body = methodBody(REPO, NAME);
   assert.match(body, /async cancelCustomerOrder\(orderDoc, how = \{\}\)/, 'it cannot be told who decided');
   assert.match(
     body,
@@ -403,4 +429,66 @@ test('a customer cancelling their own order is still announced', () => {
     /salesRepository\.cancelCustomerOrder\(order\)(?!, \{)/,
     'the customer path now claims the shop already knows, which silences it again'
   );
+});
+
+/* ------------------------------------------------------- closing it */
+
+test('the dock can be closed without answering anything', async () => {
+  /*
+   * Owner: "some way i want close this request right side if i dont want.
+   * close button. dont show this close."
+   *
+   * Without this the only two controls on the panel both decide a customer's
+   * order, so "I am busy, go away" had to be spelled as a refusal - which
+   * refuses somebody's dinner.
+   */
+  const { document, window } = dockPage([
+    { sale_id: 'a1', sales_id: 'S-1', token_id: 'T1', items: [], total: 100 },
+  ]);
+  window.PosnicRequestDock.show();
+
+  const close = document.getElementById('request-dock-close');
+  assert.ok(close, 'there is no way out of the panel but a decision');
+
+  close.dispatchEvent(new window.Event('click', { bubbles: true }));
+  assert.strictEqual(window.PosnicRequestDock.isOpen(), false, 'close did not close it');
+});
+
+test('and it stays closed when the same requests come round again', async () => {
+  /*
+   * "dont show this close" - closing has to mean something, or the next poll
+   * springs it open and the button is a joke. What is remembered is WHICH
+   * requests were waved away, not simply that it was shut.
+   */
+  const orders = [{ sale_id: 'a1', sales_id: 'S-1', token_id: 'T1', items: [], total: 100 }];
+  const { document, window } = dockPage(orders);
+  window.PosnicRequestDock.show();
+  document
+    .getElementById('request-dock-close')
+    .dispatchEvent(new window.Event('click', { bubbles: true }));
+
+  /* The toast calls show() on every arrival. The same order must not reopen it. */
+  window.PosnicRequestDock.show();
+  assert.strictEqual(window.PosnicRequestDock.isOpen(), false, 'a dismissed request reopened the dock');
+});
+
+test('but a genuinely new order still gets through', async () => {
+  /*
+   * The other half, and the one that matters more: a shop that waves the
+   * panel away and then receives a real order must still be told. Remembering
+   * "closed" rather than "closed THESE" would have silenced the feature.
+   */
+  const orders = [{ sale_id: 'a1', sales_id: 'S-1', token_id: 'T1', items: [], total: 100 }];
+  const { document, window } = dockPage(orders);
+  window.PosnicRequestDock.show();
+  document
+    .getElementById('request-dock-close')
+    .dispatchEvent(new window.Event('click', { bubbles: true }));
+
+  window.PosnicRequestDock.saw([
+    ...orders,
+    { sale_id: 'a2', sales_id: 'S-2', token_id: 'T2', items: [], total: 200 },
+  ]);
+  window.PosnicRequestDock.show();
+  assert.strictEqual(window.PosnicRequestDock.isOpen(), true, 'a new order was swallowed');
 });
