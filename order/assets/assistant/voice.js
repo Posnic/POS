@@ -85,6 +85,24 @@
     if (panel) panel.hidden = !state;
     if (orb) orb.setAttribute("data-state", state || "");
     if (line) line.textContent = text || "";
+    /*
+     * ONE WAY IN, NOT TWO.
+     *
+     * "Tap to talk" and "Hold to talk" were on screen together, one above the
+     * other, with the orb captioned "Tap to talk" as well - the same offer
+     * three times in three shapes, which is what the journey photographs
+     * showed on a code that says talk.
+     *
+     * They are two different moments: tapping OPENS the line, holding SPEAKS
+     * into it. So holding appears when there is a line to hold, and the orb
+     * stops repeating the button underneath it.
+     */
+    var hold = el("voice-hold");
+    var holdSay = el("voice-hold-say");
+    var open = !!state && state !== "ready";
+    if (hold) hold.hidden = !open;
+    if (holdSay) holdSay.hidden = !open;
+    if (line && state === "ready") line.textContent = "";
     if (sheet) sheet.setAttribute("data-voice", state ? "on" : "off");
     var button = el("assistant-talk");
     if (button) button.setAttribute("aria-pressed", state ? "true" : "false");
@@ -2056,10 +2074,13 @@
   async function start() {
     var mode = voiceMode();
     if (!mode) return;
-    var a = assistant();
-    if (a && a.open) a.open();
+    /* MARKED BEFORE THE SHEET OPENS. open() asks whether a call is going so
+       it knows not to offer talk-or-type underneath one; setting this after
+       it meant open() was always told "no" and the chooser surfaced beneath
+       every connecting call. */
     live.active = true;
     live.mode = mode;
+    var a = assistant();
     live.silent = false;
     live.denied = false;
     if (mode === "live") {

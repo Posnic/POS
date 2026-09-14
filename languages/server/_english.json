@@ -1389,6 +1389,9 @@
   "Order updated": [
     "src/repositories/sale.repository.js"
   ],
+  "Order was cancelled by the customer": [
+    "src/repositories/sale.repository.js"
+  ],
   "Outstanding customers": [
     "src/services/credit.service.js"
   ],

@@ -148,6 +148,22 @@
                         </div>
                     </div>
 
+                </section>
+
+                <!--
+                    THE SECTIONS AND THE TOOLS SHARE ONE ROW.
+
+                    Sorting had a row of its own, 70px of the busiest screen in
+                    the product, above the food, for the least-used control on
+                    the page - and "Catalogue order" sat there alone saying
+                    nothing a customer wanted. Filters belong at the END of the
+                    section strip, which is where every menu worth copying puts
+                    them: the chips scroll, the tools stay put.
+                -->
+                <div class="section-row">
+                    <nav class="fixed-categories" aria-label="Menu sections">
+                        <div class="category-scroll-container" id="category-list"></div>
+                    </nav>
                     <div class="order-tools">
                         <button type="button" class="order-tool" id="order-filter-veg" aria-pressed="false">
                             <span class="order-diet" aria-hidden="true"></span>Veg only
@@ -159,11 +175,7 @@
                             <option value="price_desc">Price: high to low</option>
                         </select>
                     </div>
-                </section>
-
-                <nav class="fixed-categories" aria-label="Menu sections">
-                    <div class="category-scroll-container" id="category-list"></div>
-                </nav>
+                </div>
             </div>
         </header>
 

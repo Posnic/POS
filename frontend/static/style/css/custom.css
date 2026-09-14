@@ -7107,3 +7107,188 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   text-align: center;
   vertical-align: middle;
 }
+
+
+/*
+ * THE REQUEST DOCK: what a customer has asked for, where staff already are.
+ *
+ * Owner: "i want handle change reqeust smarlty like facebook chat pop up.
+ * user able see all request properly easily handle."
+ *
+ * Bottom right, above everything, on every screen. A till is on the sale
+ * screen with people in front of it, and a cancellation that needs answering
+ * in the next two minutes cannot live behind a navigation. It is absent
+ * entirely when nothing is waiting: a permanent chrome element that is
+ * usually empty is a thing people learn to stop seeing.
+ *
+ * The colours are the shop's own theme variables where they exist, with
+ * literal fallbacks, because this file loads before theme-variables.css.
+ */
+.request-dock {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147482000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.request-dock[hidden] {
+  display: none !important;
+}
+
+.request-dock-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--theme-text-primary, #16203a);
+  color: var(--theme-card-bg, #fff);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+/* The loudest thing waiting decides the colour: a cancellation somebody has
+   to answer must not look like three new orders. */
+.request-dock[data-worst="cancel"] .request-dock-tab { background: var(--theme-danger-color, #f04438); }
+.request-dock[data-worst="change"] .request-dock-tab { background: var(--theme-warning-color, #f79009); }
+
+.request-dock-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.22);
+  line-height: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.request-dock-panel {
+  width: min(340px, calc(100vw - 36px));
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--theme-border-color, #e5e8ef);
+  border-radius: 14px;
+  background: var(--theme-card-bg, #fff);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+}
+
+.request-dock-panel[hidden] { display: none; }
+
+.request-dock-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.request-dock-card {
+  padding: 11px 12px;
+  border: 1px solid var(--theme-border-color, #e5e8ef);
+  border-left: 3px solid var(--theme-text-muted, #5b6577);
+  border-radius: 10px;
+  background: var(--theme-body-bg, #f2f3f7);
+}
+
+.request-dock-card[data-kind="cancel"] { border-left-color: var(--theme-danger-color, #f04438); }
+.request-dock-card[data-kind="change"] { border-left-color: var(--theme-warning-color, #f79009); }
+.request-dock-card[data-kind="new"] { border-left-color: var(--theme-success-color, #16b364); }
+/* Already off: the loudest mark, because a ticket may be on the pass. */
+.request-dock-card[data-kind="gone"] { border-left-color: var(--theme-danger-color, #f04438); background: var(--theme-body-bg, #f2f3f7); }
+
+.request-dock-what {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.request-dock-kind {
+  font-weight: 700;
+  color: var(--theme-text-primary, #16203a);
+}
+
+/*
+ * HOW LONG AGO, because that is the whole decision.
+ *
+ * "Cancel this?" is a different question at forty seconds and at eleven
+ * minutes - one the kitchen has not started, the other it has plated - and a
+ * bare timestamp makes a person do that arithmetic under pressure.
+ */
+.request-dock-when {
+  flex: 0 0 auto;
+  color: var(--theme-text-muted, #5b6577);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.request-dock-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 3px;
+  color: var(--theme-text-secondary, #3a4459);
+  font-size: 12.5px;
+}
+
+.request-dock-who b { color: var(--theme-text-primary, #16203a); }
+
+.request-dock-diff {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--theme-text-primary, #16203a);
+  font-size: 12.5px;
+}
+
+.request-dock-diff li { margin-bottom: 2px; }
+
+.request-dock-do {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.request-dock-do button {
+  flex: 1 1 0;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-border-color, #e5e8ef);
+  background: var(--theme-card-bg, #fff);
+  color: var(--theme-text-primary, #16203a);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.request-dock-yes {
+  border-color: var(--theme-text-primary, #16203a) !important;
+  background: var(--theme-text-primary, #16203a) !important;
+  color: var(--theme-card-bg, #fff) !important;
+}
+
+.request-dock-do button.is-working {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.request-dock-all {
+  display: block;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--theme-border-color, #e5e8ef);
+  color: var(--theme-text-secondary, #3a4459);
+  font-size: 12.5px;
+  text-align: center;
+}

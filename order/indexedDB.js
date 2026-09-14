@@ -804,6 +804,105 @@ function rememberOrder(entry) {
     }
 }
 
+/*
+ * THE ORDER THIS PHONE ALREADY HAS OPEN AT THIS TABLE, AND HOW TO ADD TO IT.
+ *
+ * A shop allows one open order per table, and is right to: two tickets on one
+ * table is usually somebody picking the wrong table, and the cost of finding
+ * out is a bill split in two at the end of the meal. The refusal even says
+ * what to do instead - "Add to it, or settle it first."
+ *
+ * THE VOICE LINE COULD DO THAT AND A THUMB COULD NOT. Ordering by talking
+ * added to the open order; ordering by tapping hit the refusal, and the only
+ * button on that screen was Retry - which posts the same order to the same
+ * table and fails the same way, forever. Found by walking the journey on a
+ * phone and photographing it: "Checkout failed (404): Table 34 already has an
+ * open order", one dead button, no way out.
+ *
+ * So the door lives HERE, where every path to the kitchen passes, rather than
+ * in the voice line where only one of them does.
+ *
+ * THE PROOF IS THE TOKEN. This adds to an order THIS phone placed and still
+ * holds the token for. Another diner's order at the same table is not ours to
+ * touch, and for them the honest answer is the shop's own refusal - said in
+ * words, with a way back to the menu instead of a button that cannot work.
+ */
+async function myOpenOrderHere() {
+    try {
+        const point = window.KioskServicePoint ? window.KioskServicePoint.read() : null;
+        const table = String((point && point.table) || localStorage.getItem("order_table") || "").trim();
+        if (!table) return null;
+        const shop = await knownBranchId();
+        if (!shop) return null;
+        const mine = typeof rememberedOrders === "function" ? rememberedOrders() : [];
+        for (const row of mine) {
+            if (!row || !row.orderId || !row.token) continue;
+            if (String(row.table || "").trim() !== table) continue;
+            if (String(row.shop || "") !== String(shop)) continue;
+            return row;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Put what is in the basket onto an order already open at this table.
+ *
+ * @returns {Promise<null|{token: string, requested: boolean}>} null when there
+ *          is nothing of ours to add to, and the caller should carry on.
+ */
+async function addToMyOpenOrder(lines) {
+    const row = await myOpenOrderHere();
+    if (!row) return null;
+    const shop = await knownBranchId();
+    const base = `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shop)}/orders/${encodeURIComponent(row.orderId)}`;
+
+    /* What the shop says is on it NOW. The change endpoint takes absolute
+       quantities, so two more of something already there is what is there
+       plus two - and only the shop knows what is there. */
+    let said = null;
+    try {
+        const read = await fetch(`${base}?token=${encodeURIComponent(row.token)}`, {
+            method: "GET",
+            headers: { Accept: "application/json" }
+        });
+        if (!read.ok) return null;
+        const body = await read.json();
+        said = body && body.type === "success" ? body.data : null;
+    } catch (e) {
+        return null;
+    }
+    /* Settled, called off, or refused: that sitting is over and the next
+       order is a new one. */
+    if (!said || said.cancelled || said.paid) return null;
+    if (said.why_not && said.why_not !== "too_late") return null;
+
+    const already = {};
+    (said.items || []).forEach((line) => {
+        already[String(line.item_id || "")] = Number(line.quantity) || 0;
+    });
+    const wanted = (lines || []).map((line) => {
+        const id = String(line.item_id || line.id || "");
+        return { item_id: id, quantity: (already[id] || 0) + (Number(line.item_quantity || line.quantity) || 0) };
+    }).filter((w) => w.item_id);
+    if (!wanted.length) return null;
+
+    try {
+        const sent = await fetch(`${base}/items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ token: row.token, items: wanted })
+        });
+        const answer = await sent.json().catch(() => null);
+        if (!sent.ok || !answer || answer.type !== "success") return null;
+        return { token: String(row.token), requested: (answer.data || {}).requested === true };
+    } catch (e) {
+        return null;
+    }
+}
+
 function forgetOrder(orderId) {
     try {
         const list = rememberedOrders().filter((row) => row && row.orderId !== String(orderId));
@@ -1566,6 +1665,8 @@ async function showCategory(category, element) {
     // ✅ Update heading dynamically
     let categoryName = $(element).text();
     $("#category-heading").text(categoryName);
+    /* The chip above already says this word. See body.one-section. */
+    sayWhetherOneSection(true);
 
     // ✅ Store the last active category in localStorage
     localStorage.setItem("lastActiveCategory", category);
@@ -1755,6 +1856,23 @@ function renderOrderPanel(cartData) {
  * already on the bill. Owner: "keep that category with little highlight that
  * some items we added from that category."
  */
+/*
+ * WHETHER THE HEADING IS SAYING ANYTHING THE CHIPS HAVE NOT.
+ *
+ * With one category chosen it repeated the selected chip word for word, two
+ * rows below it, and cost 60px at the top of the busiest screen in the
+ * product. The stylesheet stands it down on `body.one-section`; this is the
+ * one place that decides. It stays for the whole menu and for search results,
+ * where it is naming something no chip is.
+ */
+function sayWhetherOneSection(on) {
+    try {
+        document.body.classList.toggle("one-section", !!on);
+    } catch (e) {
+        /* no body yet; the next paint sets it */
+    }
+}
+
 function markCategories(cartData) {
     if (typeof products !== "object" || !products) return;
     const byId = new Map((cartData || []).map(line => [String(line.id), Number(line.quantity) || 0]));
@@ -2108,6 +2226,47 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
         } else {
             const errorMessage = String(result.message || "Checkout request was rejected.");
             console.error("Checkout failed:", errorMessage);
+
+            /*
+             * ONE OPEN ORDER PER TABLE, AND A DOOR RATHER THAN A WALL.
+             *
+             * The shop refuses a second ticket on a table that already has
+             * one, and says "Add to it, or settle it first" - but the only
+             * button here was Retry, which posts the same order to the same
+             * table and fails the same way for ever. A customer wanting one
+             * more naan met a loop.
+             *
+             * If this phone holds that order, this IS adding to it, which is
+             * what the refusal asked for. If it does not, the order belongs
+             * to somebody else at the table and is not ours to touch: say so
+             * plainly and offer the menu, because Retry would still be a
+             * button that cannot work.
+             */
+            const clash = /already has an open order|already has \d+ open orders/i.test(errorMessage);
+            if (clash) {
+                const joined = await addToMyOpenOrder(payload);
+                if (joined) {
+                    orderJustPlaced = true;
+                    await saveCartData([]);
+                    await renderCart([]);
+                    orderJustPlaced = false;
+                    clearOrderAttemptId();
+                    hideOrderProcessingScreen();
+                    window.location.href = `thankyou.html?token=${encodeURIComponent(joined.token)}`;
+                    return true;
+                }
+                showAppErrorScreen(
+                    "This table already has an order",
+                    "Someone at this table has already ordered. Ask them to add to it, or speak to the counter.",
+                    async () => {
+                        hideAppErrorScreen();
+                        window.location.href = "products.html";
+                    },
+                    { buttonLabel: "Back to the menu" }
+                );
+                return false;
+            }
+
             showAppErrorScreen(
                 "Order could not be completed",
                 errorMessage,
@@ -2536,6 +2695,9 @@ async function refreshProductView() {
             ? "Results"
             : ($(".category-item.active").first().text() || "Our Menu")
     );
+    /* Searching shows "Results", which no chip is claiming; one chosen
+       section shows the chip's own word two rows under the chip. */
+    sayWhetherOneSection(!searching && $(".category-item.active").length > 0);
 
     await renderProductCards(list);
 

@@ -198,6 +198,24 @@
        longer pattern, because it is the one somebody has to act on. */
     sound(why === 'cancel' ? 'waiting' : 'received');
 
+    /*
+     * AND THE PANEL THAT ANSWERS IT OPENS.
+     *
+     * Owner: "i saw some success message kind of notification about customer.
+     * whats the use of that? how to respond where to check the request is
+     * important." A toast that says a thing happened and then vanishes leaves
+     * nowhere to go and nothing to do, which trains people to dismiss
+     * toasts. The request dock is where it is answered, so it comes up with
+     * the sound rather than waiting to be found.
+     */
+    try {
+      if (window.PosnicRequestDock && typeof PosnicRequestDock.show === 'function') {
+        PosnicRequestDock.show();
+      }
+    } catch (e) {
+      /* no dock on this build; the badge and the queue page still carry it */
+    }
+
     try {
       if (window.PosnicPro && typeof PosnicPro.alert === 'function') {
         /* The heading is jq-toast's ICON, not a label: PosnicPro.alert reads
