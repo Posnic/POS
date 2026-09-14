@@ -141,16 +141,111 @@
         }, { passive: true });
     })();
 
+    /*
+     * THE NUTRITION PANEL, and the badges a card had no room for.
+     *
+     * The card shows at most two badges, because somebody choosing lunch
+     * reads a name and a price. This sheet is the other case: it is open
+     * because a person tapped a dish and asked about it, so everything the
+     * kitchen entered belongs here.
+     *
+     * Per serving, in the order a nutrition label uses. Only what the shop
+     * actually entered - an absent figure is absent, never a zero, because
+     * "0 g sugar" on a dish nobody analysed is a claim the shop never made.
+     */
+    const NUTRIENT_ROWS = [
+        ["kcal", "Calories", ""],
+        ["protein_g", "Protein", "g"],
+        ["carbs_g", "Carbohydrate", "g"],
+        ["fat_g", "Fat", "g"],
+        ["sat_fat_g", "Saturated fat", "g"],
+        ["fibre_g", "Fibre", "g"],
+        ["sugar_g", "Sugar", "g"],
+        ["sodium_mg", "Sodium", "mg"],
+    ];
+
+    /* Everything the kitchen may tick about its own recipe. */
+    const TAG_WORD = {
+        plant_based: "Plant based",
+        eggetarian: "Eggetarian",
+        jain: "Jain",
+        satvik: "Satvik",
+        gluten_free: "Gluten free",
+        dairy_free: "Dairy free",
+        lactose_free: "Lactose free",
+        nut_free: "Nut free",
+        organic: "Organic",
+        no_added_sugar: "No added sugar",
+    };
+
+    /*
+     * Every claim, not the two the card had room for.
+     *
+     * These arrive already decided from the server, where dish-facts.js works
+     * them out from the numbers above. This file holds words, never a rule -
+     * so nothing here can put "Heart healthy" on a dish that did not earn it.
+     */
+    const CLAIM_WORD = {
+        high_protein: "High protein",
+        protein_source: "Source of protein",
+        low_fat: "Low fat",
+        high_fibre: "High fibre",
+        keto_friendly: "Keto friendly",
+        low_carb: "Low carb",
+        diabetic_friendly: "Diabetic friendly",
+        heart_healthy: "Heart healthy",
+        under_300: "Under 300 kcal",
+        under_500: "Under 500 kcal",
+        no_added_sugar: "No added sugar",
+    };
+
+    const MARK_WORD = {
+        signature: "Signature",
+        chefs_pick: "Chef's pick",
+        house_special: "House special",
+        new: "New",
+    };
+
+    function wordsFor(keys, table) {
+        return (Array.isArray(keys) ? keys : [])
+            .map((k) => table[k])
+            .filter(Boolean)
+            .map((w) => t(w));
+    }
+
     function showFacts(item) {
         const rows = [];
+
+        const marks = wordsFor(item.marks, MARK_WORD);
+        if (marks.length) rows.push(["The shop says", marks.join(", ")]);
+
         if (DIET_WORD[item.diet]) rows.push(["Diet", DIET_WORD[item.diet]]);
+
+        /* What the numbers earned. Read before the numbers themselves,
+           because it is the part most people came for. */
+        const claims = wordsFor(item.claims, CLAIM_WORD);
+        if (claims.length) rows.push(["Good for", claims.join(", ")]);
+
+        const tags = wordsFor(item.tags, TAG_WORD);
+        if (tags.length) rows.push(["Made without", tags.join(", ")]);
+
         const served = Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [];
         if (served.length) rows.push(["Served at", served.join(", ")]);
         if (Number(item.prep_minutes) > 0) rows.push(["Takes about", t("{n} minutes", { n: Number(item.prep_minutes) })]);
+
+        /* The numbers last: whoever wants them will read this far, and
+           whoever does not should not have to scroll past them. */
+        const n = (item.nutrition && typeof item.nutrition === "object") ? item.nutrition : {};
+        NUTRIENT_ROWS.forEach(([key, label, unit]) => {
+            const value = Number(n[key]);
+            if (!isFinite(value)) return;
+            rows.push([label, unit ? `${value} ${unit}` : String(value)]);
+        });
+
         if (item.category_name) rows.push(["Category", item.category_name]);
 
         const list = el("dish-facts");
-        list.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join("");
+        list.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(t(k))}</dt><dd>${escapeHtml(v)}</dd>`).join("");
         list.hidden = rows.length === 0;
     }
 

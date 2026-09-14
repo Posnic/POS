@@ -138,3 +138,63 @@ test('calories are shown only when the kitchen entered them', () => {
   const card = ORDER.slice(ORDER.indexOf('function cardHtml('));
   assert.match(card.slice(0, 4000), /if \(kcal > 0\) meta\.push/);
 });
+
+test('the menu button is the contents page, and only when it earns its place', () => {
+  /*
+   * Owner named this: "coz inside there is not menu button. thats actually
+   * good. its grouping the menu and easy to navigate. add it here too."
+   *
+   * A chip strip is fine for five sections and real work for twenty-nine.
+   * The live shop runs Soup, Starters Veg, Salad, Prawn Starters, Squid
+   * Starters, Crab Starters - and a guest who wants dessert is swiping a
+   * chip at a time to find out what the place even has.
+   */
+  const HTML = fs.readFileSync(path.join(ROOT, 'order', 'products.html'), 'utf8');
+  assert.match(HTML, /id="menu-index-btn"/);
+  assert.match(HTML, /<dialog id="menu-index"/);
+
+  /* Hidden for a menu short enough to read without it: a contents page for
+     three headings already on the screen is a control that exists to be
+     ignored, and this screen cannot afford another one. */
+  assert.match(ORDER, /var INDEX_WORTH_IT = \d+;/);
+  assert.match(ORDER, /button\.hidden = worth\.length < INDEX_WORTH_IT/);
+
+  /* It lists what is actually drawn, so a section filtered away by "Veg
+     only" is not offered - an index that jumps to nothing is worse than
+     no index. */
+  const fill = ORDER.slice(ORDER.indexOf('function fillMenuIndex('));
+  assert.match(fill.slice(0, 900), /\.filter\(function \(s\) \{ return \(s\.items \|\| \[\]\)\.length; \}\)/);
+});
+
+test('a row in the index closes the sheet before it jumps', () => {
+  /*
+   * A dialog still open while the page scrolls under it means the guest
+   * watches nothing happen and taps again, landing somewhere else.
+   */
+  const row = ORDER.slice(ORDER.indexOf('$(document).on("click", ".menu-index-row"'));
+  const body = row.slice(0, 400);
+  assert.ok(
+    body.indexOf('closeMenuIndex()') < body.indexOf('showCategory('),
+    'close the sheet first, then jump'
+  );
+});
+
+test('the last section is lit at the bottom, where it can never win the band', () => {
+  /*
+   * The bug this caught, found by tapping the button rather than reading
+   * the code: the trigger line sits under the header and the page runs out
+   * of scroll before the last heading can reach it. Tapping "Desserts"
+   * scrolled correctly to the desserts, filled the screen with them, and
+   * left "Drinks" lit - so a guest who asked for desserts and got desserts
+   * is told they are in Drinks, and concludes the button is broken.
+   */
+  assert.match(ORDER, /function atTheBottom\(/);
+  assert.match(ORDER, /function lightLastSection\(/);
+
+  /* Checked before the observer's own answer, or the observer wins. */
+  const watch = ORDER.slice(ORDER.indexOf('sectionWatcher = new IntersectionObserver('));
+  assert.match(watch.slice(0, 400), /if \(atTheBottom\(\)\) return lightLastSection\(\);/);
+
+  /* And on an ordinary scroll to the end, not only on a jump. */
+  assert.match(ORDER, /addEventListener\("scroll", onScrollEnd/);
+});

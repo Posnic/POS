@@ -1961,6 +1961,7 @@ async function renderWholeMenu(bySection) {
     }).join(""));
 
     watchSections();
+    fillMenuIndex(sections);
 
     await updateCart(storedCart);
     const loader = document.getElementById('page-loader');
@@ -1984,6 +1985,7 @@ function watchSections() {
     if (typeof IntersectionObserver !== "function") return;
 
     sectionWatcher = new IntersectionObserver(function (entries) {
+        if (atTheBottom()) return lightLastSection();
         var top = entries
             .filter(e => e.isIntersecting)
             .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -1992,7 +1994,107 @@ function watchSections() {
     }, { rootMargin: "-88px 0px -70% 0px", threshold: 0 });
 
     document.querySelectorAll(".menu-section").forEach(s => sectionWatcher.observe(s));
+
+    /*
+     * THE LAST SECTION CAN NEVER WIN THE BAND.
+     *
+     * The trigger line sits just under the header, and the page runs out of
+     * scroll before the last heading can reach it. So tapping "Desserts" in
+     * the menu sheet scrolled correctly to the desserts, which filled the
+     * screen - and left "Drinks" lit, because Drinks was the last heading
+     * that got under the line. A guest who asked for desserts, got desserts,
+     * and is told they are in Drinks concludes the button is broken.
+     *
+     * Every scrolling menu meets this and the answer is the same everywhere:
+     * at the bottom of the page you are in the last section, whatever the
+     * observer thinks. Bound once here rather than inside the observer so it
+     * also fires on an ordinary scroll to the end, not only on a jump.
+     */
+    window.removeEventListener("scroll", onScrollEnd);
+    window.addEventListener("scroll", onScrollEnd, { passive: true });
 }
+
+/* Within a few pixels: a phone's momentum scroll rarely lands exactly on
+   the last pixel, and a rule that needs it to would almost never fire. */
+function atTheBottom() {
+    var doc = document.documentElement;
+    var y = window.scrollY || doc.scrollTop || 0;
+    return y + window.innerHeight >= (doc.scrollHeight || 0) - 4;
+}
+
+function lightLastSection() {
+    var all = document.querySelectorAll(".menu-section");
+    if (!all.length) return;
+    lightChip(String(all[all.length - 1].getAttribute("data-section") || ""));
+}
+
+function onScrollEnd() {
+    if (atTheBottom()) lightLastSection();
+}
+
+/*
+ * THE MENU BUTTON: the contents page of the menu.
+ *
+ * Filled from the sections that are actually drawn, so a section filtered
+ * away by "Veg only" is not offered here either - an index that lists a
+ * section and then jumps to nothing is worse than no index.
+ *
+ * Hidden entirely below four sections. A contents page for three headings
+ * that are all on the screen already is a button that exists to be ignored,
+ * and the one thing this page cannot afford is another control.
+ */
+var INDEX_WORTH_IT = 4;
+
+function fillMenuIndex(sections) {
+    var list = document.getElementById("menu-index-list");
+    var button = document.getElementById("menu-index-btn");
+    if (!list || !button) return;
+
+    var worth = (sections || []).filter(function (s) { return (s.items || []).length; });
+    button.hidden = worth.length < INDEX_WORTH_IT;
+    if (button.hidden) return;
+
+    list.innerHTML = worth.map(function (s) {
+        var many = s.items.length !== 1;
+        return '<button type="button" class="menu-index-row" data-go="' + escapeHtml(String(s.key)) + '">'
+            + '<span class="menu-index-name">' + escapeHtml(String(s.name)) + '</span>'
+            + '<span class="menu-index-count">' + escapeHtml(t(many ? "{n} items" : "{n} item", { n: s.items.length })) + '</span>'
+            + '</button>';
+    }).join("");
+}
+
+function openMenuIndex() {
+    var sheet = document.getElementById("menu-index");
+    if (!sheet) return;
+    if (typeof sheet.showModal === "function") sheet.showModal();
+    else sheet.setAttribute("open", "open");
+}
+
+function closeMenuIndex() {
+    var sheet = document.getElementById("menu-index");
+    if (!sheet) return;
+    if (typeof sheet.close === "function") sheet.close();
+    else sheet.removeAttribute("open");
+}
+
+$(document).on("click", "#menu-index-btn", function (e) {
+    e.preventDefault();
+    openMenuIndex();
+});
+
+$(document).on("click", "#menu-index-close", function (e) {
+    e.preventDefault();
+    closeMenuIndex();
+});
+
+/* Close FIRST, then jump. A dialog still open while the page scrolls under
+   it means the guest watches nothing happen and taps again. */
+$(document).on("click", ".menu-index-row", function (e) {
+    e.preventDefault();
+    var key = String($(this).attr("data-go") || "");
+    closeMenuIndex();
+    if (key) showCategory(key, this);
+});
 
 /** One chosen chip, in both lists, and dragged into view in the strip. */
 function lightChip(key) {
@@ -2965,6 +3067,10 @@ async function refreshProductView() {
     if (searching) {
         list = orderViewList(allProducts());
         await renderProductCards(list);
+        /* No sections are drawn, so there is nothing to index and nowhere
+           for a row in it to jump to. */
+        var indexBtn = document.getElementById("menu-index-btn");
+        if (indexBtn) indexBtn.hidden = true;
     } else {
         var sections = Object.keys(products).map(function (key) {
             var items = orderViewList(products[key] || []);

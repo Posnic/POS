@@ -228,6 +228,47 @@
     </footer>
 
     <!--
+        THE MENU BUTTON.
+
+        Owner: "coz inside there is not menu button. thats actually good. its
+        grouping the menu and easy to navigate. add it here too."
+
+        The page is grouped now, which was the larger half of that sentence.
+        This is the other half. A chip strip is fine for five sections and
+        real work for twenty-nine: the one on a live shop runs Soup, Starters
+        Veg, Salad, Prawn Starters, Squid Starters, Crab Starters, and a guest
+        looking for dessert is swiping a strip a chip at a time to find out
+        what the restaurant even has.
+
+        So: every section at once, with its count, one tap to any of them.
+        It is the contents page of the menu, and it is the one control on this
+        screen that answers "what do they serve here" rather than "show me
+        this bit".
+
+        Bottom right, above the bill bar, because it is reached with a thumb
+        while reading - and it is the only floating control on the page, so
+        there is nothing for it to compete with.
+    -->
+    <button type="button" class="menu-index-btn" id="menu-index-btn" aria-haspopup="dialog" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h10"></path>
+        </svg>
+        <span>Menu</span>
+    </button>
+
+    <dialog id="menu-index" class="sheet menu-index" aria-labelledby="menu-index-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <button type="button" id="menu-index-close" class="icon-btn sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+        <div class="sheet-body">
+            <h2 class="sheet-title" id="menu-index-title">Menu sections</h2>
+            <nav class="menu-index-list" id="menu-index-list" aria-label="Menu sections"></nav>
+        </div>
+    </dialog>
+
+    <!--
         THE DISH, OPENED. Same sheet as the menu - every photo in a strip,
         the whole description, what the shop has said about it - and here,
         because this page can, the way to add it.
