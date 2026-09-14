@@ -94,6 +94,16 @@
       "{n} items": "{n} பொருட்கள்",
       "{n} kcal": "{n} கலோரி",
 
+      /* The sort-and-filter sheet. */
+      "Filters": "வடிகட்டிகள்",
+      "Sort and filter": "வரிசைப்படுத்தி வடிகட்டு",
+      "Clear all": "அனைத்தையும் நீக்கு",
+      "Show dishes": "உணவுகளைக் காட்டு",
+      "Show {n} dishes": "{n} உணவுகளைக் காட்டு",
+      "Show 1 dish": "1 உணவைக் காட்டு",
+      "What you can eat": "நீங்கள் உண்பவை",
+      "Good for": "எதற்கு நல்லது",
+
       /* The badges on a dish card. What the SHOP says about its own food
          first, then the health claims the numbers earned - which are worked
          out on the server by utils/dish-facts.js and cannot be typed in. */

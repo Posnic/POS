@@ -773,7 +773,14 @@ test('a shop is searched, not a menu, and is not asked about veg', async () => {
   });
   await shop.box.paintShop();
   assert.strictEqual(shop.document.getElementById('product-search').placeholder, 'Search products');
-  assert.strictEqual(shop.document.querySelector('#order-sort option[value="menu"]').textContent, 'Catalogue order');
+  /* Sorting moved out of the section row and into the sort-and-filter sheet,
+     so the shop's own word for its default order lives on a radio's label
+     now rather than on an <option>. A selector that matches nothing fails
+     silently, and a stationer would quietly go back to reading "Menu order". */
+  assert.strictEqual(
+    shop.document.querySelector('#filters-sort input[value="menu"] + span').textContent,
+    'Catalogue order'
+  );
   assert.strictEqual(shop.document.getElementById('order-filter-veg').hidden, true, 'a stationer is asked about veg');
 
   const kitchen = page('products.html', {

@@ -257,7 +257,11 @@ async function paintShop() {
     if (search) search.placeholder = searchWord;
     const searchLabel = document.querySelector('label[for="product-search"]');
     if (searchLabel) searchLabel.textContent = searchWord;
-    const firstSort = document.querySelector('#order-sort option[value="menu"]');
+    /* Sorting moved from a select in the section row into the filter sheet,
+       so this reads the radio's own label rather than an <option> that no
+       longer exists - a selector that matches nothing fails silently, and a
+       retail shop would have quietly gone back to being told "Menu order". */
+    const firstSort = document.querySelector('#filters-sort input[value="menu"] + span');
     if (firstSort) firstSort.textContent = shop.kind === "retail" ? t("Catalogue order") : t("Menu order");
     const veg = document.getElementById("order-filter-veg");
     if (veg && typeof allProducts === "function") {
@@ -1962,6 +1966,7 @@ async function renderWholeMenu(bySection) {
 
     watchSections();
     fillMenuIndex(sections);
+    fillFilters();
 
     await updateCart(storedCart);
     const loader = document.getElementById('page-loader');
@@ -2031,6 +2036,177 @@ function lightLastSection() {
 function onScrollEnd() {
     if (atTheBottom()) lightLastSection();
 }
+
+/*
+ * FILTERS THAT ONLY OFFER WHAT THIS MENU CAN ANSWER.
+ *
+ * Owner: "very user friend ux and advanced options to choose" and, in the
+ * same breath, "filter options. not too annoying make it very very
+ * professional and neat."
+ *
+ * Those two are usually a trade and here they are not, because the honest
+ * version is also the smaller one: a filter is offered only when at least one
+ * dish on THIS menu carries it, with the count beside it. A shop that has
+ * entered no nutrition sees no health filters and no button at all - not an
+ * empty sheet, and never a filter that can only ever return nothing.
+ *
+ * That also makes the list self-explaining. "Gluten free 4" says both what
+ * the filter does and what it is worth, and a guest who ticks it cannot be
+ * surprised by the result.
+ */
+const FILTER_TAG_WORDS = {
+    plant_based: "Plant based",
+    eggetarian: "Eggetarian",
+    jain: "Jain",
+    satvik: "Satvik",
+    gluten_free: "Gluten free",
+    dairy_free: "Dairy free",
+    lactose_free: "Lactose free",
+    nut_free: "Nut free",
+    organic: "Organic",
+    no_added_sugar: "No added sugar"
+};
+
+const FILTER_CLAIM_WORDS = {
+    high_protein: "High protein",
+    protein_source: "Source of protein",
+    low_fat: "Low fat",
+    high_fibre: "High fibre",
+    keto_friendly: "Keto friendly",
+    low_carb: "Low carb",
+    diabetic_friendly: "Diabetic friendly",
+    heart_healthy: "Heart healthy",
+    under_300: "Under 300 kcal",
+    under_500: "Under 500 kcal",
+    no_added_sugar: "No added sugar"
+};
+
+/** How many dishes on the whole menu carry each key of one field. */
+function countBy(field, allowed) {
+    var counts = Object.create(null);
+    allProducts().forEach(function (p) {
+        var keys = Array.isArray(p[field]) ? p[field] : [];
+        keys.forEach(function (k) {
+            if (allowed[k]) counts[k] = (counts[k] || 0) + 1;
+        });
+    });
+    return counts;
+}
+
+function filterGroupHtml(title, field, allowed, chosen) {
+    var counts = countBy(field, allowed);
+    var keys = Object.keys(allowed).filter(function (k) { return counts[k]; });
+    if (!keys.length) return "";
+
+    return '<section class="filters-group">'
+        + '<h3 class="filters-group-name">' + escapeHtml(t(title)) + '</h3>'
+        + '<div class="filters-pills">'
+        + keys.map(function (k) {
+            var on = chosen.indexOf(k) !== -1;
+            return '<label class="filters-pill"' + (on ? ' data-on="true"' : '') + '>'
+                + '<input type="checkbox" data-field="' + escapeHtml(field) + '" value="' + escapeHtml(k) + '"' + (on ? ' checked' : '') + '>'
+                + '<span>' + escapeHtml(t(allowed[k])) + '</span>'
+                + '<b>' + counts[k] + '</b>'
+                + '</label>';
+        }).join("")
+        + '</div></section>';
+}
+
+function fillFilters() {
+    var groups = document.getElementById("filters-groups");
+    var button = document.getElementById("order-filter-more");
+    if (!groups || !button) return;
+
+    var html = filterGroupHtml("What you can eat", "tags", FILTER_TAG_WORDS, orderView.tags)
+        + filterGroupHtml("Good for", "claims", FILTER_CLAIM_WORDS, orderView.claims);
+
+    /* The button always stands now, because sorting is always worth
+       offering; the filter GROUPS are what appear only when this menu can
+       answer them. A shop that has entered no nutrition gets a sheet with
+       sorting in it and nothing else, which is honest and still useful. */
+    button.hidden = false;
+    groups.innerHTML = html;
+
+    var chosen = orderView.tags.length + orderView.claims.length;
+    var badge = document.getElementById("order-filter-count");
+    if (badge) {
+        badge.hidden = chosen === 0;
+        badge.textContent = String(chosen);
+    }
+    button.setAttribute("aria-pressed", chosen ? "true" : "false");
+}
+
+/* How many dishes the sheet's current ticks would leave, so the button at the
+   bottom says what pressing it does rather than just "Apply". */
+function paintFilterCount() {
+    var apply = document.getElementById("filters-apply");
+    if (!apply) return;
+    var n = orderViewList(allProducts()).length;
+    apply.textContent = n === 1 ? t("Show 1 dish") : t("Show {n} dishes", { n: n });
+    apply.disabled = n === 0;
+}
+
+$(document).on("click", "#order-filter-more", function (e) {
+    e.preventDefault();
+    fillFilters();
+    paintFilterCount();
+    var sheet = document.getElementById("filters");
+    if (!sheet) return;
+    if (typeof sheet.showModal === "function") sheet.showModal();
+    else sheet.setAttribute("open", "open");
+});
+
+function closeFilters() {
+    var sheet = document.getElementById("filters");
+    if (!sheet) return;
+    if (typeof sheet.close === "function") sheet.close();
+    else sheet.removeAttribute("open");
+}
+
+$(document).on("click", "#filters-close, #filters-apply", function (e) {
+    e.preventDefault();
+    closeFilters();
+});
+
+$(document).on("click", "#filters-clear", async function (e) {
+    e.preventDefault();
+    orderView.tags = [];
+    orderView.claims = [];
+    fillFilters();
+    paintFilterCount();
+    await refreshProductView();
+});
+
+/*
+ * A tick narrows the menu straight away, behind the sheet.
+ *
+ * Deliberately not on Apply. The count on the button is the answer to "what
+ * will this do", and the page behind is already that answer - so closing the
+ * sheet is confirmation of something already seen, not a commit step that can
+ * surprise somebody.
+ */
+$(document).on("change", "#filters-groups input[type=checkbox]", async function () {
+    var field = String($(this).data("field") || "");
+    var value = String(this.value || "");
+    if (field !== "tags" && field !== "claims") return;
+
+    var list = orderView[field];
+    var at = list.indexOf(value);
+    if (this.checked && at === -1) list.push(value);
+    if (!this.checked && at !== -1) list.splice(at, 1);
+
+    $(this).closest(".filters-pill").attr("data-on", this.checked ? "true" : null);
+
+    await refreshProductView();
+    paintFilterCount();
+
+    var badge = document.getElementById("order-filter-count");
+    var chosen = orderView.tags.length + orderView.claims.length;
+    if (badge) {
+        badge.hidden = chosen === 0;
+        badge.textContent = String(chosen);
+    }
+});
 
 /*
  * THE MENU BUTTON: the contents page of the menu.
@@ -2876,7 +3052,7 @@ function scoreItem(query, fields) {
 }
 
 /* What the customer has narrowed the catalogue to. */
-var orderView = { query: "", vegOnly: false, sort: "menu" };
+var orderView = { query: "", vegOnly: false, sort: "menu", tags: [], claims: [] };
 
 /*
  * A few things that go with what somebody has already ordered.
@@ -3011,6 +3187,33 @@ function orderViewList(source) {
         });
     }
 
+    /*
+     * WITHIN A GROUP, ANY. ACROSS GROUPS, ALL.
+     *
+     * Somebody who ticks "Gluten free" and "Nut free" needs BOTH to be true
+     * of the same dish - those are things they cannot eat, and a dish that
+     * satisfies one of them is not an answer. The same rule reads correctly
+     * for the health claims, so both groups use it and there is one
+     * behaviour on the sheet rather than two.
+     *
+     * The claims were decided on the server from the shop's own numbers.
+     * Nothing here recomputes one, so a filter cannot disagree with the badge
+     * on the card it just hid.
+     */
+    if (orderView.tags.length) {
+        list = list.filter(function (p) {
+            var has = Array.isArray(p.tags) ? p.tags : [];
+            return orderView.tags.every(function (want) { return has.indexOf(want) !== -1; });
+        });
+    }
+
+    if (orderView.claims.length) {
+        list = list.filter(function (p) {
+            var has = Array.isArray(p.claims) ? p.claims : [];
+            return orderView.claims.every(function (want) { return has.indexOf(want) !== -1; });
+        });
+    }
+
     if (q) {
         list = list
             .map(function (p, i) {
@@ -3102,7 +3305,7 @@ async function refreshProductView() {
         if (host) host.appendChild(counter);
     }
 
-    var narrowed = searching || orderView.vegOnly;
+    var narrowed = searching || orderView.vegOnly || orderView.tags.length > 0 || orderView.claims.length > 0;
     counter.hidden = !narrowed;
     if (narrowed) {
         counter.textContent = list.length === 0
@@ -3136,7 +3339,10 @@ $(document).on("click", "#order-filter-veg", function () {
     refreshProductView();
 });
 
-$(document).on("change", "#order-sort", function () {
-    orderView.sort = String($(this).val() || "menu");
-    refreshProductView();
+$(document).on("change", "#filters-sort input[type=radio]", async function () {
+    orderView.sort = String(this.value || "menu");
+    $("#filters-sort .filters-pill").attr("data-on", null);
+    $(this).closest(".filters-pill").attr("data-on", "true");
+    await refreshProductView();
+    paintFilterCount();
 });

@@ -168,12 +168,25 @@
                         <button type="button" class="order-tool" id="order-filter-veg" aria-pressed="false">
                             <span class="order-diet" aria-hidden="true"></span>Veg only
                         </button>
-                        <select id="order-sort" class="order-sort" aria-label="Sort the menu">
-                            <option value="menu">Menu order</option>
-                            <option value="popular">Most ordered</option>
-                            <option value="price_asc">Price: low to high</option>
-                            <option value="price_desc">Price: high to low</option>
-                        </select>
+                        <!--
+                            Owner: "filter options. not too annoying make it
+                            very very professional and neat."
+
+                            Hidden unless this menu can actually answer
+                            something. A shop that has entered no nutrition
+                            and ticked no dietary tags gets no button, rather
+                            than a button that opens an empty sheet - which is
+                            what "not annoying" means on a screen where most
+                            shops will have filled in nothing.
+                        -->
+                        <button type="button" class="order-tool" id="order-filter-more" aria-haspopup="dialog" hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                                 stroke-linecap="round" aria-hidden="true" class="order-tool-icon">
+                                <path d="M3 6h18M7 12h10M10 18h4"></path>
+                            </svg>
+                            <span>Filters</span>
+                            <span class="order-tool-count" id="order-filter-count" hidden></span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -226,6 +239,56 @@
             </button>
         </div>
     </footer>
+
+    <dialog id="filters" class="sheet filters-sheet" aria-labelledby="filters-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <button type="button" id="filters-close" class="icon-btn sheet-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+        <div class="sheet-body">
+            <h2 class="sheet-title" id="filters-title">Sort and filter</h2>
+
+            <!--
+                SORT LIVES HERE NOW, NOT IN THE SECTION ROW.
+
+                It had a seat beside the sections, and once the Filters button
+                arrived beside it the two together left room for one chip and
+                the first letter of the next - so the strip a customer steers
+                with had been squeezed out by two controls they touch once.
+
+                Sorting and filtering are the same kind of act and the same
+                rarity, so they share one sheet, and the sections get the row
+                back. This is also where every menu worth copying puts them.
+            -->
+            <section class="filters-group">
+                <h3 class="filters-group-name">Sort</h3>
+                <div class="filters-pills" id="filters-sort">
+                    <label class="filters-pill" data-on="true">
+                        <input type="radio" name="order-sort-choice" value="menu" checked>
+                        <span>Menu order</span>
+                    </label>
+                    <label class="filters-pill">
+                        <input type="radio" name="order-sort-choice" value="popular">
+                        <span>Most ordered</span>
+                    </label>
+                    <label class="filters-pill">
+                        <input type="radio" name="order-sort-choice" value="price_asc">
+                        <span>Price: low to high</span>
+                    </label>
+                    <label class="filters-pill">
+                        <input type="radio" name="order-sort-choice" value="price_desc">
+                        <span>Price: high to low</span>
+                    </label>
+                </div>
+            </section>
+
+            <div class="filters-groups" id="filters-groups"></div>
+        </div>
+        <div class="filters-foot">
+            <button type="button" class="filters-clear" id="filters-clear">Clear all</button>
+            <button type="button" class="btn-primary filters-apply" id="filters-apply">Show dishes</button>
+        </div>
+    </dialog>
 
     <!--
         THE MENU BUTTON.

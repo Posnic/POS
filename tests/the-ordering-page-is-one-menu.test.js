@@ -198,3 +198,91 @@ test('the last section is lit at the bottom, where it can never win the band', (
   /* And on an ordinary scroll to the end, not only on a jump. */
   assert.match(ORDER, /addEventListener\("scroll", onScrollEnd/);
 });
+
+/* ------------------------------------------------------------ the filters */
+
+test('a filter is offered only where this menu can answer it', () => {
+  /*
+   * Owner: "very user friend ux and advanced options to choose", and in the
+   * same breath "filter options. not too annoying make it very very
+   * professional and neat."
+   *
+   * Those are usually a trade and here they are not, because the honest
+   * version is also the smaller one. A filter appears only when at least one
+   * dish on THIS menu carries it, with the count beside it - so a shop that
+   * has entered no nutrition sees no health filters at all, rather than a
+   * sheet full of controls that can only ever return nothing.
+   *
+   * The count is what makes the list self-explaining: "Gluten free 4" says
+   * both what the filter does and what it is worth, and a guest who ticks it
+   * cannot be surprised by the result.
+   */
+  assert.match(ORDER, /function countBy\(/);
+
+  const group = ORDER.slice(ORDER.indexOf('function filterGroupHtml('));
+  assert.match(
+    group.slice(0, 1200),
+    /\.filter\(function \(k\) \{ return counts\[k\]; \}\)/,
+    'an option with no dish behind it must not be offered'
+  );
+  assert.match(group.slice(0, 1200), /if \(!keys\.length\) return "";/, 'an empty group draws nothing');
+});
+
+test('within a group any, across groups all', () => {
+  /*
+   * Somebody who ticks "Gluten free" and "Nut free" needs BOTH true of the
+   * same dish: those are things they cannot eat, and a dish satisfying one
+   * of them is not an answer. Getting this backwards is the difference
+   * between a filter and a hazard.
+   */
+  const list = ORDER.slice(ORDER.indexOf('function orderViewList('));
+  const body = list.slice(0, 3000);
+  assert.match(body, /orderView\.tags\.every\(/);
+  assert.match(body, /orderView\.claims\.every\(/);
+});
+
+test('the filter reads the claim, it does not recompute it', () => {
+  /*
+   * The claims were decided on the server from the shop's own numbers. If
+   * this page worked one out for itself it could disagree with the badge on
+   * the card it just hid, and there would be no way to tell which was right.
+   */
+  const list = ORDER.slice(ORDER.indexOf('function orderViewList('));
+  const body = list.slice(0, 3000);
+  assert.match(body, /Array\.isArray\(p\.claims\) \? p\.claims : \[\]/);
+  assert.ok(
+    !/protein_g|sat_fat_g|sodium_mg/.test(body),
+    'the filter must not derive a claim of its own'
+  );
+});
+
+test('a narrowed menu says so on the button', () => {
+  /*
+   * The risk of a filter is forgetting it is on and deciding the kitchen has
+   * run out of food. The count on the button is the standing reminder.
+   */
+  const HTML = fs.readFileSync(path.join(ROOT, 'order', 'products.html'), 'utf8');
+  assert.match(HTML, /id="order-filter-count"/);
+  assert.match(ORDER, /badge\.hidden = chosen === 0;/);
+
+  /* And the result line counts these as a narrowing, not just search. */
+  const refresh = ORDER.slice(ORDER.indexOf('async function refreshProductView('));
+  assert.match(refresh.slice(0, 4000), /orderView\.tags\.length > 0 \|\| orderView\.claims\.length > 0/);
+});
+
+test('sorting moved into the sheet, and took nothing dead with it', () => {
+  /*
+   * Sort had a seat beside the sections. Once the Filters button arrived
+   * beside it the two together left room for one chip and the first letter
+   * of the next - the strip a customer steers with, squeezed out by two
+   * controls they touch once.
+   *
+   * The trap in moving it: the retail wording read '#order-sort option',
+   * which now matches nothing and would fail silently, quietly telling a
+   * stationer "Menu order" forever.
+   */
+  const HTML = fs.readFileSync(path.join(ROOT, 'order', 'products.html'), 'utf8');
+  assert.ok(!/<select id="order-sort"/.test(HTML), 'the sort select is gone from the row');
+  assert.match(HTML, /id="filters-sort"/);
+  assert.match(ORDER, /#filters-sort input\[value="menu"\] \+ span/);
+});
