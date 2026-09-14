@@ -166,6 +166,35 @@
     }
     mark.textContent = String(count);
     mark.setAttribute('aria-label', t('lang_orders_waiting', 'orders waiting'));
+    makeSureTheQueueIsReachable(count);
+  }
+
+  /*
+   * A SHOP WITH ORDERS WAITING HAS SOMEWHERE TO PUT THEM.
+   *
+   * Owner, looking at a queue full of orders: "menu also not got selected."
+   * It was not selected because it was not THERE. The sidebar entry is gated
+   * on PosnicPro.local's online_order_approval being 'manual', and that local
+   * value is written in exactly one place - settings.js, as a side effect of
+   * somebody opening the Settings page. A till that has never been there, or
+   * one signed into freshly, has no value at all: the entry stays hidden
+   * while orders pile up behind it, and the only way to the queue is a URL
+   * nobody knows.
+   *
+   * Anything in this queue is proof the shop holds orders, so the entry is
+   * revealed on the evidence rather than on a cached setting. It is only ever
+   * turned ON here - never off - because an empty queue is not evidence of
+   * anything, and a menu item that comes and goes is worse than one that
+   * stays.
+   */
+  function makeSureTheQueueIsReachable(count) {
+    if (!count) return;
+    try {
+      var entry = document.getElementById('online_orders_menu');
+      if (entry && entry.style.display === 'none') entry.style.display = '';
+    } catch (e) {
+      /* no sidebar on this page; the badge and the dock still carry it */
+    }
   }
 
   /** One sentence about one order, said once. */
