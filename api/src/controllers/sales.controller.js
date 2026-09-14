@@ -6677,7 +6677,23 @@ class SalesController extends BaseController {
   async qrOrder(req, res) {
     try {
       const SaleModel = this.model || Sale;
-      const response = await salesService.createOnlineOrder(req.body, { SaleModel });
+      /*
+       * A SIGNED-IN USER HERE IS A CAPTAIN HANDSET, not a customer.
+       *
+       * This route sits behind protectOrKioskKey: either a signed-in member of
+       * staff, or the shop's own equipment presenting a key. The customer's
+       * storefront posts to /online-ordering/:storeId/orders and is anonymous.
+       *
+       * Without this every order placed by a waiter was recorded - and, once
+       * the source began printing, announced on the kitchen ticket - as having
+       * come from the customer's own phone.
+       *
+       * From the request. A body cannot claim to be staff.
+       */
+      const response = await salesService.createOnlineOrder(req.body, {
+        SaleModel,
+        staffOrder: Boolean(req.user),
+      });
 
       if (response.status === true) {
         return this.success(res, response.data, response.message);
