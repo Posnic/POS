@@ -40,12 +40,34 @@ const CUSTOMER_PAGES = ['products.html', 'cart.html', 'payment.html', 'thankyou.
 function lift(src, name) {
   const m = src.match(new RegExp(`(?:async\\s+)?function\\s+${name}\\s*\\(`));
   assert.ok(m, `indexedDB.js no longer defines ${name}`);
-  let i = src.indexOf('{', m.index);
+
+  /*
+   * PAST THE PARAMETER LIST FIRST.
+   *
+   * This used to count braces from the first `{` after the name, which for
+   * `function f(a, options = {})` is the DEFAULT VALUE: depth went 1 then 0
+   * inside the signature, and the lift returned the signature with no body.
+   * It surfaced as "Unexpected end of input" from a vm two files away, and
+   * had been quietly correct until the first function with an object default
+   * was lifted. So the parens are walked first, and the brace that opens the
+   * body is the one after them.
+   */
+  let i = src.indexOf('(', m.index);
+  let parens = 0;
+  for (; i < src.length; i++) {
+    if (src[i] === '(') parens++;
+    else if (src[i] === ')' && --parens === 0) break;
+  }
+  i = src.indexOf('{', i);
+  const opens = i;
   let depth = 0;
   for (; i < src.length; i++) {
     if (src[i] === '{') depth++;
     else if (src[i] === '}' && --depth === 0) break;
   }
+  /* A lift that hands back only a signature is that failure wearing another
+     hat. Caught here rather than in whatever tries to run it. */
+  assert.ok(i > opens + 1, `${name} was lifted with no body`);
   return src.slice(m.index, i + 1);
 }
 
@@ -90,6 +112,10 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'pop'),
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
+    /* The card asks one shared rule whether today's price is set yet, and the
+       dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
+    lift(src, 'pricedToday'),
+    lift(src, 'waitingForTodaysPrice'),
     lift(src, 'renderProductCards'),
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */
@@ -206,6 +232,53 @@ test('a dish outside its hours is shown, greyed, and says when - with no Add', a
   assert.match(read('assets/order.css'), /\.product-card\[data-available="false"\]\s+\.cart-controls\s*\{[^}]*display:\s*none/);
 });
 
+test("a dish waiting for today's price says so, and cannot be added", async () => {
+  /*
+   * Whole fish, crab, lobster: the rate comes from the morning's market, so
+   * the catalogue holds nothing until the shop opens and enters it. It used to
+   * print as 0.00 - which reads as free - and the page took the order. Two of
+   * them went through a live kitchen worth nothing.
+   *
+   * THE FLAG CONTRACT: priced today it is an ordinary card; priced yesterday
+   * it is not, because yesterday's rate for a pomfret is not today's.
+   */
+  const hoursAgo = (n) => new Date(Date.now() - n * 60 * 60 * 1000).toISOString();
+  const fish = (over) => [{
+    id: 'f1', name: 'Pomfret', description: 'Whole, from this morning',
+    price: 0, diet: 'nonveg', img: '', photos: [], icon: '🐟',
+    available: true, served_in: [], prep_minutes: 0, category_name: 'Seafood',
+    ...over,
+  }];
+
+  const notSet = page('products.html', { branch: { currency: '₹' } });
+  await notSet.box.rememberShop();
+  await notSet.box.renderProductCards(fish({}));
+  const waiting = notSet.document.querySelector('.product-card[data-id="f1"]');
+  assert.strictEqual(waiting.querySelector('.product-price').textContent, 'Market price',
+    'the card printed a number for a dish that has none');
+  assert.ok(!waiting.querySelector('.cart-controls'),
+    'a guest can still add a dish nobody has priced');
+  assert.match(waiting.querySelector('.product-ask').textContent, /Ask staff/,
+    'the button was taken away without saying why');
+
+  const stale = page('products.html', { branch: { currency: '₹' } });
+  await stale.box.rememberShop();
+  await stale.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(26) }));
+  assert.strictEqual(
+    stale.document.querySelector('.product-card[data-id="f1"] .product-price').textContent,
+    'Market price',
+    "yesterday's rate was printed as today's"
+  );
+
+  /* And the moment the shop enters this morning's number, an ordinary card. */
+  const today = page('products.html', { branch: { currency: '₹' } });
+  await today.box.rememberShop();
+  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(2) }));
+  const priced = today.document.querySelector('.product-card[data-id="f1"]');
+  assert.strictEqual(priced.querySelector('.product-price').textContent, '₹900');
+  assert.ok(priced.querySelector('.cart-controls'), 'a priced dish cannot be ordered');
+});
+
 test('a symbol sits against the number; a code keeps its space; nothing stored means rupees', async () => {
   const { box } = page('products.html', { branch: { currency: 'Rs' } });
   await box.rememberShop();
@@ -270,11 +343,28 @@ test('the order page draws each line and the sums, hiding a tax row of nothing',
   assert.strictEqual(rows[0].querySelector('.total-price').textContent, '₹560');
   assert.strictEqual(rows[1].querySelector('.item-icon').textContent, '🥞');
 
-  assert.strictEqual(document.getElementById('bill').hidden, false);
+  /*
+   * THE SUMS ONLY WHERE THERE ARE SUMS.
+   *
+   * This shop charges no tax, so the card had one row - "Total ₹680" - above
+   * a bar already reading "3 items · ₹680": the same number twice, in two
+   * shapes, on a screen the photographs showed to be half empty. It earns
+   * its place the moment there is a breakdown to break down; the bar carries
+   * the total meanwhile. This test used to assert the duplicate.
+   */
+  assert.strictEqual(document.getElementById('bill').hidden, true, 'the bill repeats the bar when there is nothing to break down');
   assert.strictEqual(document.getElementById('bill-tax-row').hidden, true, 'a row reading "Taxes ₹0"');
   assert.ok(document.getElementById('bill').classList.contains('bill-plain'), 'a divider hangs above a total with nothing over it');
-  assert.strictEqual(document.getElementById('bill-total').textContent, '₹680');
+  assert.strictEqual(document.getElementById('bill-total').textContent, '₹680', 'the total is not ready for when there IS a breakdown');
   assert.strictEqual(document.getElementById('summary-display').textContent, '3 items · ₹680');
+  /* And where it is going - which this rig has no service point for, so it
+     says nothing rather than inventing a table. An empty "Going to" on every
+     takeaway is a line people learn to skip. */
+  assert.strictEqual(
+    document.getElementById('going-to').hidden,
+    true,
+    'the basket claims a destination it was never given'
+  );
 });
 
 test('tax that is added on top is shown as its own row', async () => {
@@ -1422,7 +1512,12 @@ test('a code printed for the talk lands the customer in the conversation, ready 
   assert.strictEqual(talk.document.getElementById('assistant').open, true, 'the sheet did not open on landing');
   assert.strictEqual(talk.document.getElementById('voice').hidden, false, 'the voice panel is not up');
   assert.strictEqual(talk.document.getElementById('voice-start').hidden, false, 'no "Tap to talk"');
-  assert.strictEqual(talk.document.getElementById('voice-status').textContent, 'Tap to talk');
+  /* And the orb says NOTHING while the button beneath it says "Tap to talk".
+     This used to assert the caption repeated the button; photographing the
+     journey showed the same offer three times on one screen - the orb, the
+     button, and "Hold to talk" under it. */
+  assert.strictEqual(talk.document.getElementById('voice-status').textContent, '', 'the orb repeats the button underneath it');
+  assert.strictEqual(talk.document.getElementById('voice-hold').hidden, true, 'holding is offered before there is a line to hold');
   assert.strictEqual(talk.window.sessionStorage.getItem('posnic_ai_first'), null, 'the wish is not spent');
   assert.strictEqual(talk.document.getElementById('assistant-hint').hidden, true, 'the callout competes with the open sheet');
 
@@ -3918,5 +4013,204 @@ test('arriving on an ask code goes straight to the box and the keyboard', async 
   assert.strictEqual(document.getElementById('assistant-choose').hidden, true, 'somebody who came to type was asked how they wanted to order');
   assert.strictEqual(document.getElementById('assistant-form').hidden, false, 'the box they came for is not there');
   assert.strictEqual(focused, 1, 'the keyboard they asked for was not raised');
+  window.close();
+});
+
+
+/*
+ * performCheckout, with the shop and the browser stood in for.
+ *
+ * The one path every order takes to the kitchen, and until the journey was
+ * photographed nobody had driven it in a test: the rigs above lift single
+ * helpers out of indexedDB.js, and the thing that actually places an order is
+ * a 200-line function full of browser. So it is lifted whole, with its
+ * dependencies handed in - which is the only way the table-clash door below
+ * can be proven rather than grepped for.
+ */
+function checkoutPage({ cart = [], table = '', checkout: answer = null, kept = [], order = null } = {}) {
+  const calls = { fetch: [] };
+  const errors = [];
+  const buttons = [];
+  const went = { href: 'https://shop.example/order/payment.html' };
+  let basket = JSON.parse(JSON.stringify(cart));
+
+  const src = read('indexedDB.js');
+  const code = [
+    'var orderJustPlaced = false;',
+    lift(src, 'myOpenOrderHere'),
+    lift(src, 'addToMyOpenOrder'),
+    lift(src, 'performCheckout'),
+  ].join('\n');
+
+  /*
+   * In a vm sandbox rather than a jsdom window, because performCheckout ends
+   * by assigning window.location.href and jsdom refuses a cross-document
+   * navigation - and will not let location be replaced either. Here `window`
+   * is an ordinary object, so the navigation is simply recorded. Nothing in
+   * this function touches the DOM; every browser thing it needs is handed in
+   * below, which is also a fair description of what it depends on.
+   */
+  const sandbox = {
+    console,
+    JSON,
+    Number,
+    String,
+    Boolean,
+    Math,
+    Object,
+    Array,
+    Date,
+    Error,
+    encodeURIComponent,
+    setTimeout,
+    window: { location: went, KioskServicePoint: { read: () => ({ table, venue: '', unit: '' }), orderFields: () => ({ table }) } },
+    CONFIG: { API_BASE_URL: '' },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+
+    /* The shop, answering the way it really does. */
+    fetch: async (url, init) => {
+      const at = String(url);
+      const body = init && init.body ? JSON.parse(init.body) : null;
+      calls.fetch.push({ url: at, method: (init && init.method) || 'GET', body });
+      const readOne = at.match(/\/orders\/([^/?]+)\?token=/);
+      if (readOne) {
+        if (!order || order.id !== readOne[1]) return { ok: false, status: 404, json: async () => ({ type: 'error' }) };
+        return { ok: true, status: 200, json: async () => ({ type: 'success', data: order }) };
+      }
+      if (/\/orders\/[^/]+\/items$/.test(at)) {
+        return { ok: true, status: 200, json: async () => ({ type: 'success', data: { ...order, items: body.items } }) };
+      }
+      if (/\/orders$/.test(at)) {
+        const said = answer || { type: 'success', message: 'ok', data: { tokenId: '900', sale_id: 'new1', items: [], total: 0, table_number: table } };
+        return { ok: said.type === 'success', status: said.type === 'success' ? 200 : 404, json: async () => said };
+      }
+      return { ok: false, status: 404, json: async () => ({ type: 'error', message: 'no route' }) };
+    },
+
+    getCartData: async () => JSON.parse(JSON.stringify(basket)),
+    saveCartData: async (rows) => { basket = rows ? JSON.parse(JSON.stringify(rows)) : []; },
+    renderCart: async () => {},
+    knownBranchId: async () => 'AZ100',
+    rememberedOrders: () => JSON.parse(JSON.stringify(kept)),
+    rememberOrder: () => {},
+    fetchAndStoreBranch: async () => true,
+    generateUniqueToken: () => '900',
+    getOrCreateOrderAttemptId: () => 'attempt-1',
+    clearOrderAttemptId: () => {},
+    clientFacts: () => ({ device_id: 'd1' }),
+    hideOrderProcessingScreen: () => {},
+    hideAppErrorScreen: () => {},
+    showAppErrorScreen: (title, message, action, options) => {
+      errors.push(String(title) + ': ' + String(message));
+      buttons.push(String((options && options.buttonLabel) || ''));
+    },
+    readJsonResponse: async (response) => response.json(),
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+  return { box: sandbox, calls, errors, buttons, went, basket: () => basket };
+}
+
+/*
+ * FOUND BY WALKING THE JOURNEY ON A PHONE AND PHOTOGRAPHING IT.
+ *
+ * Owner: "first study the flow and take screenshot of how you done. i am not
+ * satisfied with use jouerny form start to end of order."
+ *
+ * scripts/dev/shoot.cjs drives a real headless browser through the real
+ * sandbox at 390x844 and keeps every frame. Three of those frames are the
+ * tests below. Reading the code had not found any of them.
+ */
+
+/*
+ * THE DEAD END AT THE END OF THE JOURNEY.
+ *
+ * A shop allows one open order per table. Ordering by TALKING added to the
+ * order already open; ordering by TAPPING hit the refusal and was offered
+ * one button - Retry - which posts the same order to the same table and
+ * fails the same way for ever. The photograph reads: "Checkout failed (404):
+ * Table 34 already has an open order. Add to it, or settle it first." with a
+ * single black Retry button and no other way out.
+ */
+test('a second tap-order at the same table adds to the one already open', async () => {
+  const page = checkoutPage({
+    cart: [{ id: 'm1', name: 'Chicken Biryani', price: 320, quantity: 1 }],
+    table: '34',
+    /* The shop refuses a second ticket, exactly as it does live. */
+    checkout: { type: 'error', message: 'Table 34 already has an open order. Add to it, or settle it first.' },
+    kept: [{ orderId: 'o9', token: '042', shop: 'AZ100', table: '34' }],
+    order: { id: 'o9', items: [{ item_id: 'm1', name: 'Chicken Biryani', quantity: 2 }], can_change: true, change_seconds: 60, placed_at: new Date().toISOString() },
+  });
+  const done = await page.box.performCheckout('', 'Cash', {});
+  await settle();
+
+  const added = page.calls.fetch.filter((c) => /\/orders\/o9\/items$/.test(c.url));
+  assert.strictEqual(added.length, 1, 'the refusal was met with a retry instead of the door it asked for');
+  assert.deepStrictEqual(added[0].body.items, [{ item_id: 'm1', quantity: 3 }], 'the quantities were not merged with what the table already had');
+  assert.strictEqual(done, true, 'adding to the open order was reported as a failure');
+  assert.match(page.went.href, /thankyou\.html\?token=042/, 'the customer was not taken to their order');
+});
+
+test('a table holding somebody ELSE order is explained, not retried', async () => {
+  /* Their order is not ours to touch, and Retry would still be a button that
+     cannot work. The honest answer is words and a way back to the menu. */
+  const page = checkoutPage({
+    cart: [{ id: 'm1', name: 'Chicken Biryani', price: 320, quantity: 1 }],
+    table: '34',
+    checkout: { type: 'error', message: 'Table 34 already has an open order. Add to it, or settle it first.' },
+    kept: [],
+  });
+  const done = await page.box.performCheckout('', 'Cash', {});
+  await settle();
+  assert.strictEqual(done, false);
+  assert.deepStrictEqual(page.calls.fetch.filter((c) => /\/items$/.test(c.url)), [], 'it tried to change an order this phone does not hold');
+  assert.match(page.errors.join(' '), /already has an order/i, 'the customer was not told what happened');
+  assert.ok(!/Retry/i.test(page.buttons.join(' ')), 'still offering a retry that cannot work');
+  assert.match(page.buttons.join(' '), /menu/i, 'no way back to the menu');
+});
+
+/*
+ * ONE WAY IN, NOT TWO.
+ *
+ * "Tap to talk" and "Hold to talk" were on screen together, one above the
+ * other, with the orb captioned "Tap to talk" as well - the same offer three
+ * times in three shapes. They are two different moments: tapping OPENS the
+ * line, holding SPEAKS into it.
+ */
+test('the way in and the way to speak are never offered at the same time', async () => {
+  const page = roomPage();
+  const { window, document } = page;
+
+  window.OrderingVoice.standReady();
+  assert.strictEqual(document.getElementById('voice-start').hidden, false, 'no way to open the line');
+  assert.strictEqual(document.getElementById('voice-hold').hidden, true, 'holding is offered before there is a line to hold');
+  assert.strictEqual(document.getElementById('voice-status').textContent, '', 'the orb repeats the button underneath it');
+
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(document.getElementById('voice-hold').hidden, false, 'the line is open and there is no way to speak into it');
+  window.OrderingVoice.stop();
+  window.close();
+});
+
+/*
+ * AND THE CHOOSER DOES NOT SURFACE UNDER A CALL.
+ *
+ * start() opens the sheet on its way to the line, so offering talk-or-type
+ * there put "Talk to order" and "Type instead" UNDER a connecting call:
+ * three controls for one job, which is what the photograph showed.
+ */
+test('starting a call does not reopen the talk-or-type choice beneath it', async () => {
+  const page = roomPage();
+  const { window, document } = page;
+  await window.OrderingVoice.start();
+  await settle();
+  assert.strictEqual(
+    document.getElementById('assistant-choose').hidden,
+    true,
+    'the choice is showing underneath a call that is already connecting'
+  );
+  window.OrderingVoice.stop();
   window.close();
 });

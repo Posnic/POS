@@ -804,6 +804,105 @@ function rememberOrder(entry) {
     }
 }
 
+/*
+ * THE ORDER THIS PHONE ALREADY HAS OPEN AT THIS TABLE, AND HOW TO ADD TO IT.
+ *
+ * A shop allows one open order per table, and is right to: two tickets on one
+ * table is usually somebody picking the wrong table, and the cost of finding
+ * out is a bill split in two at the end of the meal. The refusal even says
+ * what to do instead - "Add to it, or settle it first."
+ *
+ * THE VOICE LINE COULD DO THAT AND A THUMB COULD NOT. Ordering by talking
+ * added to the open order; ordering by tapping hit the refusal, and the only
+ * button on that screen was Retry - which posts the same order to the same
+ * table and fails the same way, forever. Found by walking the journey on a
+ * phone and photographing it: "Checkout failed (404): Table 34 already has an
+ * open order", one dead button, no way out.
+ *
+ * So the door lives HERE, where every path to the kitchen passes, rather than
+ * in the voice line where only one of them does.
+ *
+ * THE PROOF IS THE TOKEN. This adds to an order THIS phone placed and still
+ * holds the token for. Another diner's order at the same table is not ours to
+ * touch, and for them the honest answer is the shop's own refusal - said in
+ * words, with a way back to the menu instead of a button that cannot work.
+ */
+async function myOpenOrderHere() {
+    try {
+        const point = window.KioskServicePoint ? window.KioskServicePoint.read() : null;
+        const table = String((point && point.table) || localStorage.getItem("order_table") || "").trim();
+        if (!table) return null;
+        const shop = await knownBranchId();
+        if (!shop) return null;
+        const mine = typeof rememberedOrders === "function" ? rememberedOrders() : [];
+        for (const row of mine) {
+            if (!row || !row.orderId || !row.token) continue;
+            if (String(row.table || "").trim() !== table) continue;
+            if (String(row.shop || "") !== String(shop)) continue;
+            return row;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Put what is in the basket onto an order already open at this table.
+ *
+ * @returns {Promise<null|{token: string, requested: boolean}>} null when there
+ *          is nothing of ours to add to, and the caller should carry on.
+ */
+async function addToMyOpenOrder(lines) {
+    const row = await myOpenOrderHere();
+    if (!row) return null;
+    const shop = await knownBranchId();
+    const base = `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shop)}/orders/${encodeURIComponent(row.orderId)}`;
+
+    /* What the shop says is on it NOW. The change endpoint takes absolute
+       quantities, so two more of something already there is what is there
+       plus two - and only the shop knows what is there. */
+    let said = null;
+    try {
+        const read = await fetch(`${base}?token=${encodeURIComponent(row.token)}`, {
+            method: "GET",
+            headers: { Accept: "application/json" }
+        });
+        if (!read.ok) return null;
+        const body = await read.json();
+        said = body && body.type === "success" ? body.data : null;
+    } catch (e) {
+        return null;
+    }
+    /* Settled, called off, or refused: that sitting is over and the next
+       order is a new one. */
+    if (!said || said.cancelled || said.paid) return null;
+    if (said.why_not && said.why_not !== "too_late") return null;
+
+    const already = {};
+    (said.items || []).forEach((line) => {
+        already[String(line.item_id || "")] = Number(line.quantity) || 0;
+    });
+    const wanted = (lines || []).map((line) => {
+        const id = String(line.item_id || line.id || "");
+        return { item_id: id, quantity: (already[id] || 0) + (Number(line.item_quantity || line.quantity) || 0) };
+    }).filter((w) => w.item_id);
+    if (!wanted.length) return null;
+
+    try {
+        const sent = await fetch(`${base}/items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ token: row.token, items: wanted })
+        });
+        const answer = await sent.json().catch(() => null);
+        if (!sent.ok || !answer || answer.type !== "success") return null;
+        return { token: String(row.token), requested: (answer.data || {}).requested === true };
+    } catch (e) {
+        return null;
+    }
+}
+
 function forgetOrder(orderId) {
     try {
         const list = rememberedOrders().filter((row) => row && row.orderId !== String(orderId));
@@ -1334,7 +1433,33 @@ async function renderCart(cartData = null) {
         $("#bill-items-row").prop("hidden", totalTax <= 0);
         $("#bill").toggleClass("bill-plain", totalTax <= 0);
         $("#bill-total").text(money(totalPrice));
-        $("#bill").prop("hidden", false);
+        /*
+         * THE SUMS ONLY WHERE THERE ARE SUMS.
+         *
+         * With no tax to show this card was one row - "Total 90" - sitting
+         * above a bar that already said "2 items - 90". The same number
+         * twice, in two shapes, on a screen that was otherwise half empty.
+         * It earns its place the moment there is a breakdown to break down.
+         */
+        $("#bill").prop("hidden", totalTax <= 0);
+
+        /*
+         * WHERE IT IS GOING, at the moment of committing to it.
+         *
+         * The table was on the menu screen and nowhere near the button that
+         * sends the order, so the last thing a customer saw before paying
+         * never told them which table the food was for. On a printed code
+         * that is the one fact they cannot check any other way.
+         */
+        const goingTo = document.getElementById("going-to");
+        if (goingTo) {
+            const where = typeof placeLabel === "function" ? placeLabel() : "";
+            goingTo.hidden = !where;
+            if (where) {
+                goingTo.innerHTML =
+                    escapeHtml(t("Going to")) + " <b>" + escapeHtml(where) + "</b>";
+            }
+        }
 
         $("#summary-display").text(t("{n} " + itemsWord, { n: totalQty }) + " · " + money(totalPrice));
         $("#cart-qty,#mobile-cart-count").text(totalQty);
@@ -1566,11 +1691,63 @@ async function showCategory(category, element) {
     // ✅ Update heading dynamically
     let categoryName = $(element).text();
     $("#category-heading").text(categoryName);
+    /* The chip above already says this word. See body.one-section. */
+    sayWhetherOneSection(true);
 
     // ✅ Store the last active category in localStorage
     localStorage.setItem("lastActiveCategory", category);
 
     await renderProductCards(products[category] || []);
+}
+
+/*
+ * IS THIS DISH WAITING FOR TODAY'S PRICE?
+ *
+ * Whole fish, crab, lobster: the rate comes from the morning's market, so the
+ * shop enters it when it opens and the catalogue holds nothing until then.
+ * Owner: "for menu and order say its just market price... dont let customer
+ * add or menu see the price."
+ *
+ * THE FLAG CONTRACT: daily_price + price_set_on. `daily_price` says the rate
+ * comes from the market; `price_set_on` says when somebody last entered it.
+ * Priced TODAY it is an ordinary dish and this page says nothing special
+ * about it. Priced YESTERDAY it is not - yesterday's rate for a pomfret is
+ * not today's, and a card that prints it has misled a guest before anybody
+ * notices.
+ *
+ * An item with neither field - every shop until the flag ships - falls
+ * through to "has it got a price at all", which is what this did before.
+ *
+ * `open_price` is deliberately NOT read here. It means the price is settled
+ * at the counter, and a guest ordering from this page has no counter to
+ * settle it at; those dishes carry a card price today and are ordered with
+ * it, and taking that away is not this change's business.
+ *
+ * The day is this phone's. The server decides in the SHOP's timezone and
+ * refuses a stale price outright, so the worst a travelling guest meets is a
+ * question they did not need - never a wrong number on a bill.
+ *
+ * Lives at the top level because the card and the dish sheet are two files
+ * drawing the same dish: one rule, or they will eventually disagree and the
+ * sheet will sell what the card refused.
+ */
+function waitingForTodaysPrice(product) {
+    if (!product) return true;
+    if (product.daily_price === true && !pricedToday(product.price_set_on)) return true;
+    return !(Number(product.price) > 0);
+}
+
+/** Was price_set_on today, on this phone's calendar? Unreadable is "no". */
+function pricedToday(setOn) {
+    if (!setOn) return false;
+    const when = new Date(setOn);
+    if (Number.isNaN(when.getTime())) return false;
+    const now = new Date();
+    return (
+        when.getFullYear() === now.getFullYear() &&
+        when.getMonth() === now.getMonth() &&
+        when.getDate() === now.getDate()
+    );
 }
 
 /**
@@ -1598,6 +1775,7 @@ async function renderProductCards(list) {
         const safeProductName = escapeHtml(String(product.name ?? "Unknown"));
         const description = String(product.description || "");
         const price = Number(product.price) || 0;
+        const marketPriced = waitingForTodaysPrice(product);
 
         /*
          * Off its hours: shown, greyed, and told why. Hiding it makes a
@@ -1625,16 +1803,20 @@ async function renderProductCards(list) {
             <div class="product-body">
                 <p class="product-title">${dietMarkHtml(product.diet)}<span class="product-name">${safeProductName}</span></p>
                 ${description ? `<p class="product-desc">${escapeHtml(description)}</p>` : ""}
-                <p class="product-price">${escapeHtml(money(price))}</p>
+                <p class="product-price">${escapeHtml(marketPriced ? t("Market price") : money(price))}</p>
                 ${meta.length ? `<div class="product-meta">${meta.map(m => `<span>${escapeHtml(m)}</span>`).join("")}</div>` : ""}
             </div>
             <div class="product-media">
                 ${media}
+                ${marketPriced ? `
+                <p class="product-ask">${escapeHtml(t("Ask staff for today's price"))}</p>
+                ` : `
                 <div class="cart-controls" aria-label="Quantity">
                     <button type="button" class="btn-decrease" data-id="${safeProductId}" aria-label="One fewer" ${quantity <= 0 ? 'disabled' : ''}>&minus;</button>
                     <span class="product-qty" data-id="${safeProductId}" aria-live="polite">${quantity}</span>
                     <button type="button" class="btn-increase" data-id="${safeProductId}" aria-label="Add one"><span class="add-word">Add</span><span class="add-plus" aria-hidden="true">+</span></button>
                 </div>
+                `}
             </div>
         </div>`;
     }
@@ -1737,6 +1919,23 @@ function renderOrderPanel(cartData) {
  * already on the bill. Owner: "keep that category with little highlight that
  * some items we added from that category."
  */
+/*
+ * WHETHER THE HEADING IS SAYING ANYTHING THE CHIPS HAVE NOT.
+ *
+ * With one category chosen it repeated the selected chip word for word, two
+ * rows below it, and cost 60px at the top of the busiest screen in the
+ * product. The stylesheet stands it down on `body.one-section`; this is the
+ * one place that decides. It stays for the whole menu and for search results,
+ * where it is naming something no chip is.
+ */
+function sayWhetherOneSection(on) {
+    try {
+        document.body.classList.toggle("one-section", !!on);
+    } catch (e) {
+        /* no body yet; the next paint sets it */
+    }
+}
+
 function markCategories(cartData) {
     if (typeof products !== "object" || !products) return;
     const byId = new Map((cartData || []).map(line => [String(line.id), Number(line.quantity) || 0]));
@@ -2090,6 +2289,47 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
         } else {
             const errorMessage = String(result.message || "Checkout request was rejected.");
             console.error("Checkout failed:", errorMessage);
+
+            /*
+             * ONE OPEN ORDER PER TABLE, AND A DOOR RATHER THAN A WALL.
+             *
+             * The shop refuses a second ticket on a table that already has
+             * one, and says "Add to it, or settle it first" - but the only
+             * button here was Retry, which posts the same order to the same
+             * table and fails the same way for ever. A customer wanting one
+             * more naan met a loop.
+             *
+             * If this phone holds that order, this IS adding to it, which is
+             * what the refusal asked for. If it does not, the order belongs
+             * to somebody else at the table and is not ours to touch: say so
+             * plainly and offer the menu, because Retry would still be a
+             * button that cannot work.
+             */
+            const clash = /already has an open order|already has \d+ open orders/i.test(errorMessage);
+            if (clash) {
+                const joined = await addToMyOpenOrder(payload);
+                if (joined) {
+                    orderJustPlaced = true;
+                    await saveCartData([]);
+                    await renderCart([]);
+                    orderJustPlaced = false;
+                    clearOrderAttemptId();
+                    hideOrderProcessingScreen();
+                    window.location.href = `thankyou.html?token=${encodeURIComponent(joined.token)}`;
+                    return true;
+                }
+                showAppErrorScreen(
+                    "This table already has an order",
+                    "Someone at this table has already ordered. Ask them to add to it, or speak to the counter.",
+                    async () => {
+                        hideAppErrorScreen();
+                        window.location.href = "products.html";
+                    },
+                    { buttonLabel: "Back to the menu" }
+                );
+                return false;
+            }
+
             showAppErrorScreen(
                 "Order could not be completed",
                 errorMessage,
@@ -2518,6 +2758,9 @@ async function refreshProductView() {
             ? "Results"
             : ($(".category-item.active").first().text() || "Our Menu")
     );
+    /* Searching shows "Results", which no chip is claiming; one chosen
+       section shows the chip's own word two rows under the chip. */
+    sayWhetherOneSection(!searching && $(".category-item.active").length > 0);
 
     await renderProductCards(list);
 

@@ -59,6 +59,19 @@
         <section class="lines" id="cart-summary"></section>
 
         <!--
+            BACK TO THE MENU, FROM THE BASKET.
+
+            Every cart worth copying has this and this one did not: the only
+            ways out were the back arrow and Continue. It matters most in a
+            restaurant, where people order in rounds - somebody who has just
+            added a biryani and wants a lassi should not have to work out that
+            the arrow at the top is how.
+        -->
+        <a class="add-more" id="add-more" href="products.html">
+            <span aria-hidden="true">+</span> Add more items
+        </a>
+
+        <!--
             WHERE THE FOOD IS GOING, when it is not going to a table here.
 
             Shown only for a hotel room or another partner venue, and only
@@ -86,6 +99,16 @@
             </label>
             <p class="destination-note" id="destination-note" hidden></p>
         </section>
+
+        <!--
+            WHERE IT IS GOING, at the moment of committing to it.
+
+            The table was on the menu screen and nowhere near the button that
+            sends the order, so the last thing a customer saw before paying
+            never told them which table the food was for. On a printed code
+            that is the one fact they cannot check any other way.
+        -->
+        <p class="going-to" id="going-to" hidden></p>
 
         <!-- The sums. Taxes shown only where there are any to show. -->
         <section class="bill" id="bill" hidden aria-label="Bill">

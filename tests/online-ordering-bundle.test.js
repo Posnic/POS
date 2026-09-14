@@ -808,3 +808,67 @@ test('the pairing a shop chose reaches the page that offers it', () => {
   assert.match(js, /goes_with: \$\('#item_goes_with'\)\.val\(\)/, 'the form never sends it');
   assert.match(js, /PosnicPro\.itemGoesWith\.set\(data\.goes_with/, 'the form never reads it back');
 });
+
+/*
+ * THE BASKET, after walking the journey and photographing it.
+ *
+ * Owner: "Finding 5 (basket) what is that ?" - it is the screen between
+ * choosing and paying, and the photograph showed six things wrong on it at
+ * once. These are the ones a test can hold.
+ */
+test('a long item name ellipsises instead of being guillotined', () => {
+  /*
+   * text-overflow acts on the box that holds the TEXT. The name lives in a
+   * span inside a flex row, and the rules were on the ROW - so the row
+   * clipped its child mid-character and no ellipsis was ever drawn: "A5
+   * Ruled Notebook 1 not". That reads as a rendering fault, which is worse
+   * than a truncation, because a truncation at least looks deliberate.
+   */
+  const css = readBundle('assets/order.css');
+  const at = css.indexOf('.item-name {');
+  assert.ok(at !== -1, 'the basket line has no name');
+  const block = css.slice(at, css.indexOf('.item-prices', at));
+  assert.match(block, /\.item-name > span \{[^}]*text-overflow: ellipsis/s, 'the ellipsis is not on the box holding the text');
+  assert.match(block, /\.item-name > span \{[^}]*min-width: 0/s, 'the span cannot be narrower than its words, so it will never ellipsise');
+  const own = block.slice(0, block.indexOf('.item-name > span'));
+  assert.ok(!/text-overflow/.test(own), 'the flex row still claims an ellipsis it cannot draw');
+});
+
+test('the basket offers a way back to the menu', () => {
+  /* Every cart worth copying has this and this one did not: the only ways
+     out were the back arrow and Continue. It matters most in a restaurant,
+     where people order in rounds. */
+  const html = readBundle('cart.html');
+  assert.match(html, /id="add-more"[^>]*href="products\.html"/, 'there is no way back to the menu from the basket');
+  assert.match(readBundle('assets/order.css'), /\.add-more \{/, 'the link is unstyled');
+});
+
+test('the basket says where the food is going', () => {
+  /* The table was on the menu screen and nowhere near the button that sends
+     the order, so the last thing a customer saw before paying never told
+     them which table it was for. On a printed code that is the one fact they
+     cannot check any other way. */
+  assert.match(readBundle('cart.html'), /id="going-to"/, 'the basket never says where it is going');
+  assert.match(readBundle('indexedDB.js'), /getElementById\("going-to"\)/, 'nothing fills it in');
+  assert.match(readBundle('indexedDB.js'), /placeLabel\(\)/, 'it does not read the service point');
+});
+
+test('the sums are shown only where there are sums to show', () => {
+  /* With no tax the card was one row - "Total 90" - above a bar that already
+     said "2 items - 90". The same number twice, in two shapes, on a screen
+     that was otherwise half empty. */
+  assert.match(
+    readBundle('indexedDB.js'),
+    /\$\("#bill"\)\.prop\("hidden", totalTax <= 0\)/,
+    'the bill card repeats the bottom bar when there is no breakdown'
+  );
+});
+
+test('clearing the order is possible, not invited', () => {
+  /* Centred in the empty half of the screen it was the second most prominent
+     thing on the page - and it is the destructive one. */
+  const css = readBundle('assets/order.css');
+  assert.match(css, /\.order-clear \.btn-text \{/, 'the button keeps its own loud size and colour');
+  const block = css.slice(css.indexOf('.order-clear .btn-text {'));
+  assert.match(block.slice(0, 260), /color: var\(--ink-soft\)/, 'clearing the order is still the loudest thing on the screen');
+});

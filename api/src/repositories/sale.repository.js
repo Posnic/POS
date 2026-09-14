@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
+const datePreference = require('../utils/date-preference');
 const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
@@ -8262,6 +8263,14 @@ class SalesRepository {
           { order_state: orderApproval.ORDER_STATE.PENDING },
           { cancel_requested: true, sale_process: 'KOT' },
           { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
+          /*
+           * AND ONE THE CUSTOMER HAS ALREADY CALLED OFF, until somebody has
+           * seen it. Nothing here waits on a decision - it is cancelled - but
+           * a ticket printed and a kitchen may be working on it, so the shop
+           * has to be told rather than left to notice. Cleared by
+           * acknowledging it.
+           */
+          { cancel_seen: false, customer_cancelled_at: { $exists: true } },
         ],
         ...activeTenantFilter(),
       };
@@ -8293,6 +8302,10 @@ class SalesRepository {
             cancel_requested: 1,
             cancel_requested_at: 1,
             change_requested: 1,
+            /* Already off, and not yet seen by anybody here. */
+            customer_cancelled_at: 1,
+            cancel_seen: 1,
+            sale_process: 1,
           },
         })
         .sort({ created_date: 1 })
@@ -8393,6 +8406,27 @@ class SalesRepository {
       );
       if (!sale) {
         return { status: false, message: 'Order not found', data: null };
+      }
+
+      /*
+       * AN ORDER THE CUSTOMER ALREADY CALLED OFF: SEEN, NOT DECIDED.
+       *
+       * It is cancelled. Nothing here is waiting on a yes or a no, and
+       * pretending otherwise would put two meaningless buttons in front of
+       * somebody in a hurry. It sits in the queue only so a person learns
+       * that a ticket they may be cooking has been pulled; either button
+       * means "I have seen this", and it leaves.
+       */
+      if (sale.cancel_seen === false && sale.customer_cancelled_at) {
+        await salesCollection.updateOne(
+          { _id, ...activeTenantFilter() },
+          { $set: { cancel_seen: true, cancel_seen_at: new Date() } }
+        );
+        return {
+          status: true,
+          message: 'Order was cancelled by the customer',
+          data: { sale_id: String(saleId), seen: true, cancelled: true },
+        };
       }
 
       /*
@@ -9058,6 +9092,43 @@ class SalesRepository {
    * once here so neither caller invents wording of its own - or { line }.
    * A refusal is the one with status === false.
    */
+  /**
+   * Was this dish's price set TODAY, where the shop is?
+   *
+   * Part of the daily_price / price_set_on contract. A dish priced from the
+   * morning's market is an ordinary dish once somebody has entered the
+   * morning's number; the question is only ever "is that number from today".
+   *
+   * THE SHOP'S TIMEZONE, never the server's. A till in Chennai and a process
+   * in a data centre disagree about when a day starts, and the hours they
+   * disagree about are the evening - a restaurant's busiest. Getting this
+   * wrong would mean a price entered at 8pm counting as yesterday's, and the
+   * handset asking a waiter for a number that is already on the screen.
+   *
+   * An absent or unreadable date is "not today", which is the safe way round:
+   * the waiter is asked, rather than a stale price being charged quietly.
+   *
+   * @param {*} setOn what price_set_on holds
+   * @param {object} [branch] the branch, for its timezone
+   */
+  _pricedToday(setOn, branch) {
+    if (!setOn) return false;
+    const when = new Date(setOn);
+    if (Number.isNaN(when.getTime())) return false;
+
+    const zone = datePreference.branchTimezone(branch);
+    const day = (d) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
+      } catch (e) {
+        /* An unknown zone must not stop a sale. UTC is wrong by hours, never
+           by a sale: the worst it does is ask for a price already entered. */
+        return d.toISOString().slice(0, 10);
+      }
+    };
+    return day(when) === day(new Date());
+  }
+
   async _priceOnlineLine(item, where) {
     const {
       itemCollection,
@@ -9137,10 +9208,87 @@ class SalesRepository {
      * tax, discount and the inclusive/exclusive arithmetic below all work
      * on the number the customer was actually shown.
      */
-    const sellingPrice = partnerVenues.priceFor(
-      Number(itemDoc.selling_price || 0),
-      servicePoint.venue
-    );
+    /*
+     * A DISH SOLD AT TODAY'S PRICE.
+     *
+     * Owner, after two fish went out at zero on a live table: "zero price
+     * items are actually dyanmic pricing. its based current price. so if you
+     * find that kind of item we need to allow captain to update the price and
+     * give order."
+     *
+     * Whole fish, crab, lobster: the shop cannot put a number on the card
+     * because it does not know one until the morning's market. The catalogue
+     * carries no selling price, the handset showed 0.00, and the order went to
+     * the kitchen worth nothing.
+     *
+     * THE DOOR OPENS ONLY WHERE THERE IS NO PRICE TO OVERRIDE. Every other
+     * line is still priced from the catalogue and the client's number is
+     * ignored, because a caller that can name its own price can buy a biryani
+     * for one rupee - and the handset is a phone in a pocket, not a trusted
+     * machine. An item is dynamic when the shop marked it `open_price`, or
+     * when it simply has no selling price, which is how these are set up
+     * today.
+     *
+     * Refused rather than silently zeroed if the price is missing or absurd:
+     * a line that reaches the kitchen worth nothing is what started this.
+     */
+    const catalogue = Number(itemDoc.selling_price || 0);
+    /*
+     * THE FLAG CONTRACT: daily_price + price_set_on.
+     *
+     * A dish marked `daily_price` is priced from the morning's market, and
+     * `price_set_on` is when somebody last did it. Priced TODAY, it is an
+     * ordinary dish charged at the catalogue rate - that is the entire point
+     * of the shop updating it when they open. Priced yesterday, it is not:
+     * yesterday's rate for a pomfret is not today's, and quietly charging it
+     * would be worse than the zero this started as, because it would look
+     * right.
+     *
+     * `open_price` is different and stays always-ask: the shop is saying the
+     * price is settled at the counter, every time.
+     *
+     * An item with none of these fields - every shop until the flag ships -
+     * falls through to "has it got a price at all", which is exactly what it
+     * did before.
+     */
+    const dynamic =
+      itemDoc.open_price === true ||
+      (itemDoc.daily_price === true && !this._pricedToday(itemDoc.price_set_on, branchDoc)) ||
+      catalogue <= 0;
+    /* Three spellings because three callers already exist: the handset's order
+       payload says `item_price`, a line added to a live order says
+       `unit_price`, and `price` is what anything hand-written reaches for. */
+    const said = [item.unit_price, item.item_price, item.price].find((v) => v != null);
+    const asked = Number(said);
+
+    if (dynamic) {
+      if (!Number.isFinite(asked) || asked <= 0) {
+        return {
+          status: false,
+          data: { state: 'item_needs_price', item: itemDoc.name || '' },
+          /*
+           * Worded for whoever is holding the screen, and two different people
+           * can be: a waiter with the handset, who needs to be told to enter a
+           * price, and a customer on the self-service page, who cannot be
+           * asked one and must be sent to a member of staff. The `state` above
+           * is what an app keys on; this is the sentence a person reads.
+           */
+          message: `${itemDoc.name || 'That dish'} is priced on the day, so it needs today's price. A member of staff can add it.`,
+        };
+      }
+      /* A ceiling, because a fat finger on a phone is the likeliest way a
+         wrong number gets here and ten lakh for a fish should not be quietly
+         accepted. */
+      if (asked > 1000000) {
+        return {
+          status: false,
+          data: { state: 'item_price_too_high', item: itemDoc.name || '' },
+          message: `${asked} looks wrong for ${itemDoc.name || 'that dish'}. Check the price.`,
+        };
+      }
+    }
+
+    const sellingPrice = partnerVenues.priceFor(dynamic ? asked : catalogue, servicePoint.venue);
     const taxRate = Number(itemDoc.tax || 0);
     const discountAmount = Number(itemDoc.discount_amount || 0);
     const discountPercentage = Number(itemDoc.discount_percentage || 0);
@@ -9711,6 +9859,25 @@ class SalesRepository {
       {
         $set: {
           sale_process: 'cancelled',
+          /*
+           * THE SHOP HAS TO LEARN THIS, AND IT NEVER DID.
+           *
+           * Owner: "when i asked cancel, deskto didnt show anthing."
+           *
+           * Inside the window a customer's cancellation simply happens - no
+           * request, nothing to decide - and the only thing told about it
+           * was the PRINTER, over the desktop process bus. Nothing reached a
+           * screen: no badge, no chime, no row in the queue. The order left
+           * the floor silently, and it is the worse of the two cases,
+           * because the ticket printed the moment the order landed and
+           * somebody may already be cooking it.
+           *
+           * So it is stamped, and the queue carries it (pendingOnlineOrders)
+           * until a person has seen it. There is nothing here to approve;
+           * there is something to KNOW.
+           */
+          customer_cancelled_at: new Date(),
+          cancel_seen: false,
           payment_status: 'Cancelled',
           payment_pending: 0,
           changes: log,

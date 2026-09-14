@@ -628,10 +628,108 @@ body.searching .order-search {
   padding-right: 14px;
 }
 
+/*
+ * ONE BASKET COUNTER, NOT THREE.
+ *
+ * Adding a single item produced a badge on the bag, a badge on the category
+ * chip, and "1 item" in the bar along the bottom: three counters for one
+ * fact, and the chip badge was clipped by the chip's own rounded corner into
+ * the bargain. Every ordering app worth copying keeps exactly ONE persistent
+ * basket summary, and here that is the bar - it carries the count, the money
+ * and the way forward. The bag keeps its badge because it is the way BACK to
+ * the basket from pages that have no bar.
+ *
+ * The chip keeps `has-items`, which tints it, because "there is something of
+ * mine in this section" is a different fact from "how many", and is the one
+ * worth having while browsing. The rail on a wide screen keeps its count:
+ * there is room for it there, and it is the only summary that side.
+ */
+.fixed-categories .category-item.has-items::after {
+  content: none;
+}
+
+.fixed-categories .category-item.has-items {
+  padding-right: 14px;
+}
+
 /* --------------------------------------------------------------- sections */
 
+/*
+ * THE SECTIONS AND THE TOOLS SHARE ONE ROW.
+ *
+ * Sorting had a row of its own - 70px above the food, for the least-used
+ * control on the page. The chips take the room they need and scroll; the
+ * tools sit at the end and stay put, which is where a menu keeps its filters.
+ */
+.section-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.section-row .fixed-categories {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.section-row .order-tools {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+/*
+ * NARROW, BECAUSE THE SECTIONS COME FIRST.
+ *
+ * A full-width "Price: low to high" select ate most of the row and squeezed
+ * the chips into a sliver - which swapped one bad row for another. The
+ * sections are what a customer is steering with; sorting is what they reach
+ * for once. The native picker shows the full wording when it opens, so the
+ * closed control only has to be recognisable.
+ */
+.section-row .order-sort {
+  max-width: 116px;
+  text-overflow: ellipsis;
+}
+
+.section-row .order-tool {
+  white-space: nowrap;
+}
+
+/*
+ * THE STRIP NOW ENDS SOMEWHERE.
+ *
+ * The last chip used to bleed off the right edge of the screen mid-word -
+ * "Kitchen & Plasticwar" - which reads as a layout fault rather than as
+ * "there is more this way". A fade would say it, but this bundle does not use
+ * gradients (tests/ pins that), and it does not need one: the tools now sit at
+ * the end of the row, so the chips scroll up to a visible edge instead of off
+ * the screen. A small inset keeps the last one clear of them.
+ */
+.fixed-categories {
+  position: relative;
+}
+
+.section-row .fixed-categories .category-scroll-container {
+  padding-right: 4px;
+}
+
+/*
+ * THE CHIP ALREADY NAMES THE SECTION.
+ *
+ * With one category chosen, this heading repeated the selected chip word for
+ * word two rows below it, and cost 60px at the top of the busiest screen in
+ * the product. It stays for the whole menu, where it genuinely separates
+ * sections, and stands down when a single section is showing.
+ */
 .fixed-heading {
   padding: 18px 0 8px;
+}
+
+body.one-section .fixed-heading {
+  display: none;
 }
 
 .section-heading {
@@ -717,21 +815,36 @@ body.searching .order-search {
 
 .product-title {
   display: flex;
-  align-items: center;
+  /* Top, not centre: a two-line name would otherwise drag the diet mark
+     beside it down level with the second line. */
+  align-items: flex-start;
   gap: 7px;
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
+/*
+ * THE NAME IS THE PRODUCT, AND IT GETS THE ROOM.
+ *
+ * One line with an ellipsis turned "Chicken Biryani 1 handi" into "Chicken
+ * Biryani 1 han..." while the description underneath was given TWO lines in
+ * which to truncate a sentence nobody needed. The card was spending more room
+ * on filler than on the name of the thing being sold.
+ *
+ * Two lines for the name and one for the description is the shape of every
+ * menu worth copying, because a customer scanning a menu is reading NAMES and
+ * reads a description only once a name has caught them.
+ */
 .product-name {
   flex: 1 1 auto;
-  /* A flex item's floor is its content; a one-line name must be allowed to
-     be narrower than its words or nothing above it can shrink either. */
+  /* A flex item's floor is its content; a name must be allowed to be
+     narrower than its words or nothing above it can shrink either. */
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .product-desc {
@@ -739,7 +852,7 @@ body.searching .order-search {
   color: var(--ink-soft);
   font-size: 14px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -749,6 +862,25 @@ body.searching .order-search {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * WHERE THE ADD BUTTON WOULD HAVE BEEN, on a dish the shop has not priced yet.
+ *
+ * Owner: "dont let customer add or menu see the price. ask for pricing."
+ * Whole fish and crab are priced from the morning's market, so until the shop
+ * opens and enters today's rate there is no number to charge and no button to
+ * offer. The line stands in for both, and reads as an instruction rather than
+ * as a fault.
+ */
+.product-ask {
+  margin: 0;
+  max-width: 120px;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink-soft, #64748b);
 }
 
 .product-meta {
@@ -846,6 +978,7 @@ body.searching .order-search {
   position: absolute;
   left: 50%;
   bottom: -14px;
+  max-width: 100%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -888,14 +1021,23 @@ body.searching .order-search {
   display: none;
 }
 
+/*
+ * "Add", not "ADD".
+ *
+ * Uppercase with letter-spacing on an 84px minimum made this the widest thing
+ * in the row - wider than the photograph it sits on, and louder than the dish
+ * it belongs to. The floating pill is the right pattern and stays; it stops
+ * shouting, and is capped so it can never outgrow the image beneath it.
+ */
 .product-card[data-qty="0"] .btn-increase {
   width: auto;
-  min-width: 84px;
-  padding: 0 16px;
+  min-width: 68px;
+  max-width: 100%;
+  padding: 0 14px;
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .product-card:not([data-qty="0"]) .add-word {
@@ -1300,12 +1442,27 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   min-width: 0;
 }
 
+/*
+ * THE NAME ELLIPSISES INSTEAD OF BEING GUILLOTINED.
+ *
+ * text-overflow acts on the box that holds the TEXT, and here the text is in
+ * a span inside a flex row - so the row clipped its child mid-character and
+ * no ellipsis was ever drawn: "A5 Ruled Notebook 1 not". That reads as a
+ * rendering fault, which is worse than a truncation; a truncation at least
+ * looks deliberate. The rules move onto the span, and both boxes are allowed
+ * to be narrower than their words.
+ */
 .item-name {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+.item-name > span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1410,10 +1567,74 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   color: var(--ink-soft);
 }
 
+/*
+ * BACK TO THE MENU, FROM THE BASKET.
+ *
+ * Every cart worth copying has this and this one did not: the only ways out
+ * were the back arrow and Continue. It matters most in a restaurant, where
+ * people order in rounds - somebody who has just added a biryani and wants a
+ * lassi should not have to work out that the arrow at the top is how.
+ */
+.add-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 0 14px;
+  padding: 9px 2px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.add-more span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Where the food is going, said once, right where it is committed to. */
+.going-to {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.going-to b {
+  color: var(--ink);
+}
+
+/*
+ * CLEARING THE ORDER IS POSSIBLE, NOT INVITED.
+ *
+ * Centred in the empty half of the screen it was the second most prominent
+ * thing on the page - and it is the destructive one. It belongs at the foot,
+ * small and quiet, where somebody looking for it will find it and nobody
+ * else will reach for it by accident.
+ */
 .order-clear {
   display: flex;
-  justify-content: center;
-  padding: 12px 0 8px;
+  justify-content: flex-start;
+  padding: 18px 0 8px;
+}
+
+/*
+ * The button itself, not just the row around it: .btn-text sets its own size
+ * and .is-danger its own colour, so quieting the wrapper did nothing and it
+ * stayed the loudest thing on a half-empty screen.
+ */
+.order-clear .btn-text {
+  min-height: 36px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: underline;
 }
 
 /* Where the food is going, for a hotel room or another partner venue. */

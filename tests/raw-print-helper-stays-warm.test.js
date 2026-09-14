@@ -63,9 +63,16 @@ test('it is started at boot, so the first receipt does not pay for it', () => {
   );
 });
 
-test('it gives up rather than hanging, and lets go when the counter is quiet', () => {
+test('it gives up rather than hanging, and stays up rather than sleeping', () => {
   assert.match(SVC, /const JOB_TIMEOUT_MS = 20000;/, 'a wedged spooler would hang the print forever');
-  assert.match(SVC, /const IDLE_SHUTDOWN_MS = 10 \* 60 \* 1000;/, 'a closed shop holds a PowerShell open all night');
+  /*
+   * IT NO LONGER LETS GO WHEN THE COUNTER IS QUIET, which this test used to
+   * require. A ten minute idle shutdown is shorter than a quiet afternoon, so
+   * the first ticket after a lull paid the whole spawn again - see
+   * the-printer-helper-never-sleeps.test.js for the evening that found it.
+   * Owner: "i want always awake. i dont want idel stuff."
+   */
+  assert.ok(!/IDLE_SHUTDOWN_MS/.test(SVC), 'the idle shutdown is back');
   assert.match(SVC, /this\.child\.kill\(\);[\s\S]{0,200}The printer did not answer in time/,
     'a job that never comes back leaves the helper wedged for the next one');
   /* Every reply carries its own id, so a slow job cannot be mistaken for the

@@ -110,31 +110,13 @@ class KOTManager {
    * floor with four handsets, "Ravi" answers the question and an IP address
    * starts another one.
    */
+  /*
+   * Lifted into src/order-source.js, because the bill needs the same words and
+   * the two must not drift. An aggregator is named there too - a ticket that
+   * says "Swiggy" is more use than one that says "Marketplace".
+   */
   _orderSource(sale) {
-    const method = String((sale && sale.sale_method) || '').trim();
-    const channel = String((sale && sale.channel) || '').trim().toLowerCase();
-
-    const WHERE = {
-      tableside: 'Captain app',
-      pos: 'Till',
-      kiosk: 'Kiosk',
-      online: 'Customer phone',
-      phone: 'Phone order',
-      whatsapp: 'WhatsApp',
-      marketplace: 'Marketplace',
-    };
-    const LEGACY = {
-      'Table-Order': 'Captain app',
-      'Self-Order': 'Customer phone',
-      'Live-Order': 'Customer phone',
-      Kiosk: 'Kiosk',
-    };
-
-    /* Unknown is said as unknown. A guess here reads as fact on a screen
-       somebody is using to work out where a missing ticket went. */
-    const where = WHERE[channel] || LEGACY[method] || (method ? method : 'Till');
-    const who = String((sale && (sale.user_name || sale.userName)) || '').trim();
-    return who ? `${where} (${who})` : where;
+    return require('./order-source').orderSource(sale);
   }
 
   _getLocalIp() {
@@ -615,6 +597,14 @@ class KOTManager {
              has existed; the bytes could not, until strikeLine. Same field
              feeds both, so the two paths cannot drift. */
           cancelled: f.isCancelled,
+          /*
+           * Where the order came from, printed. Off only if the shop says so:
+           * a kitchen that has one way of taking orders does not need a line
+           * on every ticket saying which one it was.
+           */
+          source: this.config && this.config.kot_print_source === false
+            ? ''
+            : this._orderSource(sale),
         },
         {
           paperWidth: String(columns),
