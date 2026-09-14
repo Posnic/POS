@@ -266,10 +266,14 @@ describe('schema › indexes', () => {
     expect(hasIt).toBe(true);
   });
 
-  test('total non-default indexes count is 4', () => {
-    // Mongoose adds a default _id index; the model defines 4 more
+  test('every index the model declares is still declared', () => {
+    /* Mongoose adds a default _id index; the model declares the rest. The
+       newest is `updated_date`, which the sync agent both filters and pages
+       on - without it, pushing a busy shop's audit trail is a collection
+       scan per batch. */
     const nonIdIndexes = indexes.filter(([keys]) => !('_id' in keys));
-    expect(nonIdIndexes).toHaveLength(5);
+    expect(nonIdIndexes).toHaveLength(6);
+    expect(indexes.some(([keys]) => keys.updated_date === 1)).toBe(true);
   });
 });
 
