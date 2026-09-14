@@ -17,6 +17,16 @@
  * So the file is copied, byte for byte, the way the ordering pages carry
  * their translation dictionary. tests/dish-facts-copy-matches.test.js fails
  * if the two drift, and names this script.
+ *
+ * RUN THIS AFTER COMMITTING, NOT BEFORE.
+ *
+ * The source is under api/, which the pre-commit hook prettier-formats. The
+ * destination is under frontend/static/script/, which .prettierignore
+ * deliberately excludes - prettier has never formatted that tree and would
+ * rewrite it wholesale. So a copy taken before the hook runs is a copy of the
+ * UNFORMATTED source, and the hook then reformats one side of a pair that is
+ * supposed to be identical. That is not hypothetical: it happened on the
+ * first commit of this file, and the drift test caught it.
  */
 
 const fs = require('node:fs');
