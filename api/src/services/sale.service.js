@@ -3862,9 +3862,11 @@ module.exports = {
   multiKitchenPrintModel: async (branchId) => salesRepository.multiKitchenPrintModel(branchId),
   markKitchenPrintedModel: async (saleIds, printedIndexes) =>
     salesRepository.markKitchenPrintedModel(saleIds, printedIndexes),
-  createOnlineOrder: async (data, { SaleModel } = {}) =>
+  createOnlineOrder: async (data, { SaleModel, staffOrder = false } = {}) =>
     salesRepository.createOnlineOrder(data, {
       SaleModel: getModel(SaleModel),
+      /* Carried through untouched: the route decides it, nothing else may. */
+      staffOrder,
     }),
   /* What the shop owes its hotels and its aggregators over a date range. */
   commissionReport: async (params = {}) => salesRepository.commissionReport(params),
