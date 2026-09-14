@@ -31,6 +31,8 @@
  * and it still goes through the shop's own template.
  */
 
+const { orderSource } = require('../utils/order-source');
+
 /** A number, from a field that may be null, '' or the string 'null'. */
 function num(value) {
   const n = Number(value);
@@ -179,6 +181,23 @@ function buildBillPayload(sale = {}, branch = {}) {
     billNo: String(sale.sales_id || '').trim(),
     date: stamp(sale.date || sale.created_at),
     customer: customerLines(sale),
+
+    /*
+     * Where the order came from, in the same words the kitchen ticket uses.
+     *
+     * The table lives in utils/order-source.js, copied from src/order-source.js
+     * because the API ships outside the asar archive and cannot require it. A
+     * test compares the two, so they cannot drift into printing different words
+     * for the same order.
+     *
+     * Off only if the shop says so, and absent means on: a restaurant that took
+     * the trouble to sell through an aggregator wants to see which one on the
+     * bill it files.
+     */
+    source:
+      branch.bill_print_source === false || branch.bill_print_source === 'false'
+        ? ''
+        : orderSource(sale),
 
     items,
 
