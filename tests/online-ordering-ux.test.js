@@ -343,11 +343,28 @@ test('the order page draws each line and the sums, hiding a tax row of nothing',
   assert.strictEqual(rows[0].querySelector('.total-price').textContent, '₹560');
   assert.strictEqual(rows[1].querySelector('.item-icon').textContent, '🥞');
 
-  assert.strictEqual(document.getElementById('bill').hidden, false);
+  /*
+   * THE SUMS ONLY WHERE THERE ARE SUMS.
+   *
+   * This shop charges no tax, so the card had one row - "Total ₹680" - above
+   * a bar already reading "3 items · ₹680": the same number twice, in two
+   * shapes, on a screen the photographs showed to be half empty. It earns
+   * its place the moment there is a breakdown to break down; the bar carries
+   * the total meanwhile. This test used to assert the duplicate.
+   */
+  assert.strictEqual(document.getElementById('bill').hidden, true, 'the bill repeats the bar when there is nothing to break down');
   assert.strictEqual(document.getElementById('bill-tax-row').hidden, true, 'a row reading "Taxes ₹0"');
   assert.ok(document.getElementById('bill').classList.contains('bill-plain'), 'a divider hangs above a total with nothing over it');
-  assert.strictEqual(document.getElementById('bill-total').textContent, '₹680');
+  assert.strictEqual(document.getElementById('bill-total').textContent, '₹680', 'the total is not ready for when there IS a breakdown');
   assert.strictEqual(document.getElementById('summary-display').textContent, '3 items · ₹680');
+  /* And where it is going - which this rig has no service point for, so it
+     says nothing rather than inventing a table. An empty "Going to" on every
+     takeaway is a line people learn to skip. */
+  assert.strictEqual(
+    document.getElementById('going-to').hidden,
+    true,
+    'the basket claims a destination it was never given'
+  );
 });
 
 test('tax that is added on top is shown as its own row', async () => {
