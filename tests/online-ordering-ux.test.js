@@ -116,6 +116,13 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
        dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
     lift(src, 'pricedToday'),
     lift(src, 'waitingForTodaysPrice'),
+    /* The card markup was pulled out of the render loop so the flat search
+       list and the grouped menu draw the same card. Both renderers call it,
+       so it has to come along or neither can draw. */
+    liftConst(src, 'MARK_WORDS'),
+    liftConst(src, 'CLAIM_WORDS'),
+    lift(src, 'badgesFor'),
+    lift(src, 'cardHtml'),
     lift(src, 'renderProductCards'),
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */

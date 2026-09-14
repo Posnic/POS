@@ -1782,7 +1782,7 @@ function pricedToday(setOn) {
  * ever the ones the numbers earned; they are computed server-side by
  * utils/dish-facts.js and this page cannot invent one.
  */
-var MARK_WORDS = {
+const MARK_WORDS = {
     signature: "Signature",
     chefs_pick: "Chef's pick",
     house_special: "House special",
@@ -1792,7 +1792,7 @@ var MARK_WORDS = {
 /* Only the claims worth a card. The finer ones - source of protein, low fat,
    under 500 kcal - are true and quiet, and belong in the sheet rather than
    competing with a dish name for the same two lines. */
-var CLAIM_WORDS = {
+const CLAIM_WORDS = {
     high_protein: "High protein",
     keto_friendly: "Keto friendly",
     diabetic_friendly: "Diabetic friendly",
