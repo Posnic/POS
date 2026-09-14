@@ -41,9 +41,30 @@ const { spawn } = require('child_process');
 /* Long enough for a real receipt on a slow spooler, and the same ceiling the
    per-job spawn has always used. */
 const JOB_TIMEOUT_MS = 20000;
-/* A helper that has not been asked to print for this long is shut down. A till
-   that is closed for the night should not hold a PowerShell open. */
-const IDLE_SHUTDOWN_MS = 10 * 60 * 1000;
+/*
+ * THE HELPER NEVER SLEEPS.
+ *
+ * It used to shut itself down after ten minutes with nothing to print, to save
+ * holding a PowerShell open on a till that had closed for the night. That is a
+ * real saving and it was the wrong trade, because ten minutes is shorter than a
+ * quiet afternoon: the shop goes half an hour without an order, the helper
+ * stops, and the next ticket - the one somebody is standing and waiting for -
+ * pays the whole spawn and the C# compile again.
+ *
+ * The owner watched it happen and named it before the code was read: "may be
+ * check print process is sleeping. when active its printing". Printing from the
+ * till woke it, and every handset order after that was instant, which is
+ * exactly the shape of an idle shutdown.
+ *
+ * So it stays up for as long as the app does. One PowerShell is a few tens of
+ * megabytes; a kitchen ticket that arrives late is an order that arrives late.
+ *
+ * Staying up is not the same as staying healthy, so the two things below make
+ * "always awake" mean it: a helper that dies is restarted without waiting for
+ * the next ticket to discover it, and a heartbeat proves it can still answer.
+ */
+const RESTART_DELAYS_MS = [250, 500, 1000, 2000, 5000, 10000, 30000];
+const HEARTBEAT_MS = 60 * 1000;
 
 /*
  * The resident script.
@@ -87,6 +108,9 @@ while ($true) {
     try {
         $job = $line | ConvertFrom-Json
         $id = $job.id
+        # A heartbeat. Proving the helper is alive must not cost a receipt, so
+        # a ping is answered without opening the printer at all.
+        if ($job.ping) { [Console]::Out.WriteLine("OK $id"); [Console]::Out.Flush(); continue }
         $bytes = [System.IO.File]::ReadAllBytes($job.file)
         $ptr = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($bytes.Length)
         [System.Runtime.InteropServices.Marshal]::Copy($bytes, 0, $ptr, $bytes.Length)
@@ -100,13 +124,31 @@ while ($true) {
             if ([PosnicRawPrint]::OpenPrinter($job.printer, [ref]$hPrinter, [IntPtr]::Zero)) {
                 $docId = [PosnicRawPrint]::StartDocPrinter($hPrinter, 1, $diPtr)
                 if ($docId -gt 0) {
-                    [PosnicRawPrint]::StartPagePrinter($hPrinter) | Out-Null
+                    # EVERY ONE OF THESE RETURN VALUES IS CHECKED, and the count
+                    # of bytes written is compared against the count sent.
+                    # They were all piped to Out-Null, so a write that failed
+                    # outright still answered OK - the ticket went into the
+                    # day's log as printed and no paper ever came out. That is
+                    # the worst way for a printer to fail, because the one
+                    # place anybody would look says it worked.
+                    $pageOk = [PosnicRawPrint]::StartPagePrinter($hPrinter)
                     $w = 0
-                    [PosnicRawPrint]::WritePrinter($hPrinter, $ptr, $bytes.Length, [ref]$w) | Out-Null
-                    [PosnicRawPrint]::EndPagePrinter($hPrinter) | Out-Null
-                    [PosnicRawPrint]::EndDocPrinter($hPrinter) | Out-Null
+                    $wrote = [PosnicRawPrint]::WritePrinter($hPrinter, $ptr, $bytes.Length, [ref]$w)
+                    $endPageOk = [PosnicRawPrint]::EndPagePrinter($hPrinter)
+                    $endDocOk = [PosnicRawPrint]::EndDocPrinter($hPrinter)
                     [PosnicRawPrint]::ClosePrinter($hPrinter) | Out-Null
-                    [Console]::Out.WriteLine("OK $id")
+                    if (-not $pageOk) {
+                        [Console]::Out.WriteLine("ERR $id The printer refused the page")
+                    } elseif (-not $wrote) {
+                        $code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+                        [Console]::Out.WriteLine("ERR $id The printer refused the data (win32 $code)")
+                    } elseif ($w -ne $bytes.Length) {
+                        [Console]::Out.WriteLine("ERR $id Only $w of $($bytes.Length) bytes reached the printer")
+                    } elseif (-not $endPageOk -or -not $endDocOk) {
+                        [Console]::Out.WriteLine("ERR $id The printer did not close the job")
+                    } else {
+                        [Console]::Out.WriteLine("OK $id")
+                    }
                 } else {
                     [PosnicRawPrint]::ClosePrinter($hPrinter) | Out-Null
                     [Console]::Out.WriteLine("ERR $id StartDocPrinter failed")
@@ -132,14 +174,22 @@ class RawPrintService {
     this.ready = null;
     this.pending = new Map();
     this.nextId = 1;
-    this.idleTimer = null;
     this.unavailable = false;
+    /* Kept so a crash loop backs off instead of spawning PowerShell forever on
+       a machine where it can never work. Reset by the first job that answers. */
+    this.restarts = 0;
+    this.restartTimer = null;
+    this.heartbeatTimer = null;
+    this.stopped = false;
   }
 
   /** Start it before the first sale, so the first receipt does not pay for it. */
   warm() {
     if (process.platform !== 'win32') return Promise.resolve(false);
-    return this._ensure().then(() => true).catch(() => false);
+    this.stopped = false;
+    return this._ensure()
+      .then(() => { this._startHeartbeat(); return true; })
+      .catch(() => false);
   }
 
   _ensure() {
@@ -212,11 +262,22 @@ class RawPrintService {
     if (!waiting) return;
     this.pending.delete(String(id));
     clearTimeout(waiting.timer);
+    /* It answered, so whatever was wrong is over: a later crash should retry
+       quickly rather than inherit the backoff from an old bad spell. */
+    this.restarts = 0;
     if (verb === 'OK') waiting.resolve({ success: true });
     else waiting.resolve({ success: false, error: message || 'The spooler did not confirm the job' });
   }
 
-  /** The helper is gone. Everyone waiting is told, and the next job restarts it. */
+  /**
+   * The helper is gone.
+   *
+   * Everyone waiting is told at once - a print that will never answer must not
+   * hold a sale open - and then it is brought back WITHOUT waiting for the next
+   * ticket to find out. That is the difference between always awake and merely
+   * restarted on demand: the order that arrives in the gap is the one that
+   * would otherwise wait.
+   */
   _down(error) {
     for (const [, waiting] of this.pending) {
       clearTimeout(waiting.timer);
@@ -225,14 +286,49 @@ class RawPrintService {
     this.pending.clear();
     this.child = null;
     this.ready = null;
-    clearTimeout(this.idleTimer);
-    this.idleTimer = null;
+    this._stopHeartbeat();
+    if (!this.stopped) this._scheduleRestart();
   }
 
-  _touchIdle() {
-    clearTimeout(this.idleTimer);
-    this.idleTimer = setTimeout(() => this.stop(), IDLE_SHUTDOWN_MS);
-    if (this.idleTimer.unref) this.idleTimer.unref();
+  /* Backed off, because a machine where PowerShell cannot run at all would
+     otherwise spawn it in a tight loop for as long as the till is on. */
+  _scheduleRestart() {
+    if (this.restartTimer) return;
+    const wait = RESTART_DELAYS_MS[Math.min(this.restarts, RESTART_DELAYS_MS.length - 1)];
+    this.restarts += 1;
+    this.restartTimer = setTimeout(() => {
+      this.restartTimer = null;
+      if (this.stopped) return;
+      this._ensure().catch(() => { /* _down has already queued the next try */ });
+    }, wait);
+    if (this.restartTimer.unref) this.restartTimer.unref();
+  }
+
+  /*
+   * A heartbeat, because a process can be alive and deaf.
+   *
+   * PowerShell can be running with its loop wedged - a driver call that never
+   * returns is the usual way - and from the outside that looks identical to a
+   * helper waiting for work. The ping is answered without opening a printer, so
+   * proving it costs nothing and no paper.
+   */
+  _startHeartbeat() {
+    this._stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.child || this.pending.size) return;   // busy is its own proof
+      this.send({ ping: true }).then((r) => {
+        if (!r.success && !r.unavailable) {
+          console.warn('[RawPrint] the helper stopped answering; restarting it');
+          try { if (this.child) this.child.kill(); } catch (e) { /* already gone */ }
+        }
+      }).catch(() => { /* the restart path handles it */ });
+    }, HEARTBEAT_MS);
+    if (this.heartbeatTimer.unref) this.heartbeatTimer.unref();
+  }
+
+  _stopHeartbeat() {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
   }
 
   /**
@@ -242,7 +338,7 @@ class RawPrintService {
    *   `unavailable` means the helper could not be used at all, and the caller
    *   should fall back rather than treat it as a printer fault.
    */
-  async send({ printer, file, doc }) {
+  async send({ printer, file, doc, ping = false }) {
     if (process.platform !== 'win32') return { success: false, unavailable: true };
     try {
       await this._ensure();
@@ -254,7 +350,9 @@ class RawPrintService {
     }
 
     const id = String(this.nextId++);
-    const payload = JSON.stringify({ id, printer: String(printer), file: String(file), doc: String(doc || 'Posnic Receipt') });
+    const payload = ping
+      ? JSON.stringify({ id, ping: true })
+      : JSON.stringify({ id, printer: String(printer), file: String(file), doc: String(doc || 'Posnic Receipt') });
 
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
@@ -268,7 +366,6 @@ class RawPrintService {
       this.pending.set(id, { resolve, timer });
       try {
         this.child.stdin.write(payload + '\n');
-        this._touchIdle();
       } catch (error) {
         this.pending.delete(id);
         clearTimeout(timer);
@@ -277,9 +374,12 @@ class RawPrintService {
     });
   }
 
+  /** Deliberate shutdown, at quit. Nothing else may stop the helper. */
   stop() {
-    clearTimeout(this.idleTimer);
-    this.idleTimer = null;
+    this.stopped = true;
+    this._stopHeartbeat();
+    if (this.restartTimer) clearTimeout(this.restartTimer);
+    this.restartTimer = null;
     const child = this.child;
     this.child = null;
     this.ready = null;
@@ -292,4 +392,5 @@ class RawPrintService {
 module.exports = new RawPrintService();
 module.exports.RawPrintService = RawPrintService;
 module.exports.JOB_TIMEOUT_MS = JOB_TIMEOUT_MS;
-module.exports.IDLE_SHUTDOWN_MS = IDLE_SHUTDOWN_MS;
+module.exports.HEARTBEAT_MS = HEARTBEAT_MS;
+module.exports.RESTART_DELAYS_MS = RESTART_DELAYS_MS;
