@@ -39,7 +39,12 @@ test('the periods are read from the settings group that holds them', () => {
   const helper = ITEMS.slice(ITEMS.indexOf('PosnicPro.itemDayparts = {'));
   assert.ok(helper.length > 100, 'there is no itemDayparts helper');
   assert.match(helper, /take: function \(rows\)/);
-  assert.match(helper, /\$sel\.html\(\(PosnicPro\.itemDayparts\._options \|\| \[\]\)\.map/,
+  /* The options are hoisted into a local now, because fill() also has to
+     decide whether to say "no serving periods yet" - so this asks that the
+     box is filled FROM them rather than pinning one spelling of it. */
+  assert.match(helper, /var options = PosnicPro\.itemDayparts\._options \|\| \[\];/,
+    'the helper no longer reads the loaded periods');
+  assert.match(helper, /\$sel\.html\(options\.map/,
     'the helper never writes options into the box');
 });
 
