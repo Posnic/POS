@@ -5788,7 +5788,7 @@ PosnicPro.itemPlate = {
         var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
         var words = PosnicPro.itemPlate.words();
         $list.html(claims.map(function (key) {
-            return '<span>' + esc(words[key] || key) + '</span>';
+            return '<span class="plate-claim">' + esc(words[key] || key) + '</span>';
         }).join(''));
     },
 
@@ -5980,10 +5980,46 @@ PosnicPro.itemDayparts = {
         if (!$sel.length) { return; }
         var chosen = $sel.val() || [];
         var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
-        $sel.html((PosnicPro.itemDayparts._options || []).map(function (o) {
+        var options = PosnicPro.itemDayparts._options || [];
+        $sel.html(options.map(function (o) {
             return '<option value="' + esc(o.id) + '">' + esc(o.name) + '</option>';
         }).join(''));
         $sel.val(chosen).trigger('change');
+
+        /*
+         * A SHOP WITH NO SERVING PERIODS SHOULD BE TOLD SO.
+         *
+         * Owner, typing into this box and getting nowhere: "served at not able
+         * to fill anythnig what supposed be there ?"
+         *
+         * The list comes from the shop's own serving periods, set once in
+         * Settings, and a shop that has not set any gets an empty select2 -
+         * which answers "No results found". That is true and useless: it
+         * reads as a search that failed rather than as a list that was never
+         * made, and there is nothing on the screen saying where the list
+         * comes from. He could not have worked it out from here.
+         *
+         * So the box stands down and says what it is for. Disabled on
+         * purpose: typing into it can never produce anything, and a field
+         * that accepts input and discards it is worse than one that does not
+         * accept it.
+         */
+        PosnicPro.itemDayparts.sayIfEmpty($sel, options.length);
+    },
+
+    sayIfEmpty: function ($sel, count) {
+        var id = 'item_dayparts_none';
+        $('#' + id).remove();
+        $sel.prop('disabled', !count).trigger('change.select2');
+        if (count) { return; }
+        $('<small>')
+            .attr('id', id)
+            .addClass('form-text text-muted')
+            .text(PosnicPro.i18n.t(
+                'lang_no_dayparts_yet',
+                'No serving periods yet. Add breakfast, lunch or dinner in Settings, Restaurant, and they will appear here.'
+            ))
+            .insertAfter($sel.next('.select2').length ? $sel.next('.select2') : $sel);
     },
 
     set: function (values) {

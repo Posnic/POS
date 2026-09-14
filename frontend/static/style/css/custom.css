@@ -7517,7 +7517,15 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   gap: 7px;
 }
 
-.plate-earned-list span {
+/*
+ * The badges. Scoped to their own class rather than to a bare `span`.
+ *
+ * `.plate-earned-list span` also caught the "Nothing yet, fill in the numbers
+ * above" line that shares the container, and won on specificity - so a dish
+ * with no nutrition at all displayed that sentence as a green earned badge,
+ * which is the exact opposite of what it says. Owner's screenshot caught it.
+ */
+.plate-earned-list .plate-claim {
   display: inline-flex;
   align-items: center;
   padding: 5px 11px;
