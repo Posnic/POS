@@ -37,7 +37,25 @@ const FROM = path.join(ROOT, 'api', 'src', 'utils', 'dish-facts.js');
 const TO = path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'dish-facts.js');
 
 const source = fs.readFileSync(FROM);
-const already = fs.existsSync(TO) ? fs.readFileSync(TO) : null;
+/*
+ * Read it, rather than ask whether it is there and then read it.
+ *
+ * existsSync followed by readFileSync is two questions about one file with a
+ * gap in between, and the answer to the first can be stale by the time the
+ * second runs. CodeQL calls it js/file-system-race and it is right to: the
+ * gap is small here and the script is a development tool, so nothing bad was
+ * ever going to happen - but the version without the gap is also the shorter
+ * one, and "not absent" is the only thing the check was ever asking.
+ */
+let already = null;
+try {
+  already = fs.readFileSync(TO);
+} catch (e) {
+  /* Anything other than "it is not there yet" is a real problem and is not
+     this script's to swallow: an unreadable destination must not look like a
+     missing one and quietly become a write. */
+  if (e.code !== 'ENOENT') throw e;
+}
 
 if (already && already.equals(source)) {
   console.log('dish-facts.js: already identical');
