@@ -7518,7 +7518,13 @@ class SalesRepository {
     }
   }
 
-  async createOnlineOrder(data, { SaleModel } = {}) {
+  /*
+   * @param {object} opts
+   * @param {boolean} [opts.staffOrder]  a SIGNED-IN member of staff placed this,
+   *   which on this endpoint means a captain handset. Set by the route, never
+   *   from the body - the body is written by the device being described.
+   */
+  async createOnlineOrder(data, { SaleModel, staffOrder = false } = {}) {
     try {
       const db = await BaseModel.getDb();
 
@@ -7954,8 +7960,27 @@ class SalesRepository {
          * answers to "how does this reach them". `sale_method` is still
          * written, in step, by describeSale.
          */
+        /*
+         * WHOSE DEVICE THIS WAS, and it is not always the customer's.
+         *
+         * This said ONLINE for every order that came through here, and two
+         * different devices come through here: a customer's own phone on the
+         * shop's storefront, and a waiter's captain handset. So a waiter's
+         * order was recorded as a customer's, and once the source started
+         * printing on the paper it said so out loud - the owner sent back a
+         * kitchen ticket reading "From: Customer phone" for an order he had
+         * just placed on the handset himself.
+         *
+         * It was invisible until then, which is the point worth keeping: the
+         * field was wrong for as long as it existed and nothing showed it.
+         * Reports by channel, every one of them, were wrong in the same way.
+         *
+         * The route knows. /sales/qrOrder is behind protectOrKioskKey, so a
+         * signed-in user there is staff on a handset; the customer storefront
+         * is anonymous. Read from the request, never from the body.
+         */
         ...salesChannels.describeSale({
-          channel: salesChannels.CHANNEL.ONLINE,
+          channel: staffOrder ? salesChannels.CHANNEL.TABLESIDE : salesChannels.CHANNEL.ONLINE,
           fulfilment,
           sale_method,
         }),

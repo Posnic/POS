@@ -88,6 +88,43 @@ function itemLines(sale) {
     });
 }
 
+/*
+ * The one rate this sale was charged at, or null if there is not exactly one.
+ *
+ * Worked out per line - tax divided by what the tax was charged on - rather
+ * than from the totals, because the totals of a mixed-rate bill divide into a
+ * number that is nobody's rate. Five percent and eighteen percent together
+ * average to something that was never charged on anything, and printing it
+ * would be a tax document stating a rate that did not happen.
+ *
+ * Rounded to two decimals before comparing, so the ordinary rounding inside
+ * each line does not read as two different rates.
+ */
+function gstRate(sale) {
+  const lines = Array.isArray(sale && sale.items) ? sale.items : [];
+  const rates = new Set();
+  for (const line of lines) {
+    if (!line || line.return) continue;
+    const taxOn = num(line.item_tax != null ? line.item_tax : line.tax_amount);
+    if (taxOn <= 0) continue;
+    const qty = num(line.item_quantity != null ? line.item_quantity : line.quantity) || 1;
+    const base = num(line.item_base_price != null ? line.item_base_price : line.unit_price) * qty;
+    if (base <= 0) return null;
+    rates.add(Math.round((taxOn / base) * 10000) / 100);
+    if (rates.size > 1) return null;
+  }
+  if (rates.size !== 1) return null;
+  const only = [...rates][0];
+  /* A rate outside what a GST regime actually charges means the arithmetic
+     found something that is not a rate. Say nothing rather than invent one. */
+  return only > 0 && only <= 50 ? only : null;
+}
+
+/* 2.5 rather than 2.50, and 12 rather than 12.00 - the way a rate is written. */
+function trimRate(value) {
+  return String(Math.round(value * 100) / 100);
+}
+
 /**
  * The tax rows.
  *
@@ -103,9 +140,33 @@ function taxRows(sale, branch) {
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
   if (indian && indian !== 'disable' && indian !== 'false' && indian !== '0') {
     const half = tax / 2;
+    const rate = gstRate(sale);
+    /*
+     * THE RATE, BESIDE THE AMOUNT.
+     *
+     * Owner, holding one of ours next to the bill the shop printed before:
+     * "bill i can see CGST and CSGT. but dont see percentage." The old paper
+     * read `CGST :2.50 % 36.00`, and a GST bill is expected to say the rate it
+     * was charged at - it is the number a customer checks and an accountant
+     * asks for.
+     *
+     * It is DERIVED, not stored. A sale line records the tax as an amount and
+     * never recorded the rate, so storing one now would put the percentage on
+     * new bills and leave every reprint of an older sale without it. Dividing
+     * the tax by what it was charged on gives the same answer for a sale
+     * printed today and one reprinted from last year.
+     *
+     * Half each, because CGST and SGST split the rate as well as the money: a
+     * 5% dish is 2.5 and 2.5, which is exactly what the shop's old bill said.
+     *
+     * Absent when it cannot be worked out - a mixed-rate bill, or one whose
+     * numbers do not divide cleanly. A wrong rate on a tax document is worse
+     * than no rate, and the amount is still right either way.
+     */
+    const shown = rate === null ? '' : ' ' + trimRate(rate / 2) + '%';
     return [
-      { label: 'CGST', amount: half },
-      { label: 'SGST', amount: half },
+      { label: 'CGST' + shown, amount: half },
+      { label: 'SGST' + shown, amount: half },
     ];
   }
   return [{ label: 'Tax', amount: tax }];
@@ -117,12 +178,42 @@ function taxRows(sale, branch) {
  * A walk-in has no name, and a blank "Customer:" line reads as a receipt that
  * failed rather than as a guest nobody asked the name of.
  */
+/*
+ * Is this a telephone number, or a box somebody had to fill in?
+ *
+ * A bill came back with `+910000000000` printed under the customer line, for a
+ * walk-in who had never given a number. Owner: "+9100000 comes from where? if
+ * cstomer is walking customer we show like this? not make sense."
+ *
+ * He is right, and the fix belongs here rather than only at the sender. A
+ * placeholder can arrive from any device that needs the field populated, and a
+ * bill is a document somebody keeps: printing a number nobody can ring is worse
+ * than printing nothing, because it looks like information.
+ *
+ * Judged the way E.164 judges one. A subscriber number is between 7 and 15
+ * digits, so anything outside that cannot be dialled. And a long run of one
+ * repeated digit is how every placeholder in the world is written - 0000000000,
+ * 9999999999 - while a real number does not do it: eight in a row is already
+ * far beyond any real dialling plan's appetite for repetition.
+ *
+ * Deliberately NOT a country-by-country validation. This has to be right for a
+ * shop in Puducherry and a shop anywhere else, and refusing a real customer's
+ * number because it did not match a pattern we guessed at would be the worse
+ * mistake - the test is "could this be dialled", not "is this Indian".
+ */
+function isDialable(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length < 7 || digits.length > 15) return false;
+  if (/(\d)\1{7,}/.test(digits)) return false;
+  return true;
+}
+
 function customerLines(sale) {
   const out = [];
   const name = String((sale && sale.customer_name) || '').trim();
   const phone = String((sale && sale.customer_phone) || '').trim();
   if (name && !/^walk[\s-]?in$/i.test(name)) out.push(name);
-  if (phone) out.push(phone);
+  if (phone && isDialable(phone)) out.push(phone);
   return out;
 }
 
