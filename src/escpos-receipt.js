@@ -180,21 +180,51 @@ class Receipt {
 
     const cells = rows.map((r) => {
       const { value, unit } = split(r.qty);
-      return { name: ascii(r.name), value, unit, amount: ascii(r.amount == null ? '' : r.amount) };
+      return {
+        name: ascii(r.name),
+        /*
+         * OPTIONAL, and absent on every receipt that does not ask for it.
+         *
+         * A tax invoice states what one of a thing costs - it is the number a
+         * customer checks against the menu and an accountant checks against
+         * anything. A settled counter receipt does not need it, so the column
+         * appears only when a row carries a rate and every existing caller is
+         * unchanged.
+         */
+        rate: ascii(r.rate == null ? '' : r.rate),
+        value,
+        unit,
+        amount: ascii(r.amount == null ? '' : r.amount),
+      };
     });
 
     const measured = header
-      ? cells.concat([{ name: ascii(header.name), ...split(header.qty), amount: ascii(header.amount) }])
+      ? cells.concat([
+          {
+            name: ascii(header.name),
+            rate: ascii(header.rate == null ? '' : header.rate),
+            ...split(header.qty),
+            amount: ascii(header.amount),
+          },
+        ])
       : cells;
     const widest = (pick) => measured.reduce((w, c) => Math.max(w, pick(c).length), 0);
 
+    /*
+     * The header word alone must not open the column. A caller can always pass
+     * 'RATE' and still print a receipt with no rates on it; measuring the
+     * header would then reserve five characters of a 48-character line to
+     * print the word RATE over nothing.
+     */
+    const anyRate = cells.some((c) => c.rate);
+    const rateW = anyRate ? widest((c) => c.rate) : 0;
     const qtyW = widest((c) => c.value);
     const unitW = widest((c) => c.unit);
     const amtW = widest((c) => c.amount);
 
     /* One gutter before each column that is actually present. */
-    const gutters = 1 + (unitW ? 1 : 0) + 1;
-    const nameW = this.width - qtyW - unitW - amtW - gutters;
+    const gutters = (rateW ? 1 : 0) + 1 + (unitW ? 1 : 0) + 1;
+    const nameW = this.width - rateW - qtyW - unitW - amtW - gutters;
 
     /*
      * If the numbers leave the name no usable room - a narrow roll, or prices
@@ -207,7 +237,11 @@ class Receipt {
     const nameCol = stacked ? this.width : nameW;
 
     const numbers = (c) => {
-      const parts = [c.value.padStart(qtyW)];
+      /* Rate before quantity, the way a bill is read: this many, at this
+         price, comes to this. */
+      const parts = [];
+      if (rateW) parts.push(c.rate.padStart(rateW));
+      parts.push(c.value.padStart(qtyW));
       if (unitW) parts.push(c.unit.padEnd(unitW));
       parts.push(c.amount.padStart(amtW));
       return parts.join(' ');
@@ -238,7 +272,12 @@ class Receipt {
 
     if (header) {
       this.bold(true);
-      render({ name: ascii(header.name), ...split(header.qty), amount: ascii(header.amount) });
+      render({
+        name: ascii(header.name),
+        rate: ascii(header.rate == null ? '' : header.rate),
+        ...split(header.qty),
+        amount: ascii(header.amount),
+      });
       this.bold(false);
       if (afterHeader) afterHeader(this);
     }
@@ -330,14 +369,14 @@ function renderSale(sale, options = {}) {
   }
   if (sale.cashier) r.pair('Cashier: ' + sale.cashier, sale.branch || '');
   /*
-   * Where the order came from, when the shop wants it said.
+   * Where the order came from, when the shop asks for it.
    *
-   * Owner: "in the bill also specify." A restaurant taking orders from its own
-   * floor, a QR code and two aggregators has four kinds of money arriving, and
-   * the bill is the copy that gets filed and argued over later.
+   * The payload decides: it is a switch that now defaults OFF, because the
+   * owner read one off the roll - "'From' not required in the bill. only kot
+   * fine." The kitchen ticket is built by escpos-kot.js and still prints it
+   * every time, which is where it was always earning its space.
    *
-   * Absent prints nothing rather than an empty line, because a shop with one
-   * way of taking orders does not need a row telling it so on every bill.
+   * Absent prints nothing rather than an empty line.
    */
   if (sale.source) r.line('From: ' + sale.source);
   // A walk-in sale has no customer, and a blank name line reads as a fault.
@@ -350,9 +389,30 @@ function renderSale(sale, options = {}) {
    * header separately is what let "QTY AMOUNT" sit over columns the items did
    * not actually use.
    */
+  /*
+   * RATE is what one of the thing costs, before tax.
+   *
+   * The owner, reading a printed bill: "paneer starter 2 x 240 its wrong. it
+   * supposed to 200. means 200 x 2. then we add tax. its exlusive properly
+   * need to be displayed."
+   *
+   * The line used to print the tax-inclusive amount against the quantity with
+   * no unit price at all, so 2 of a 200 rupee dish read as 480 sitting beside
+   * a subtotal of 400 and the paper contradicted itself. Rate x quantity now
+   * equals the amount, the amount adds up to the subtotal, and the tax is
+   * added underneath where an exclusive tax belongs.
+   *
+   * The column is omitted entirely when the payload carries no rates, so a
+   * counter receipt is unchanged.
+   */
   r.itemTable(
-    (sale.items || []).map((it) => ({ name: it.name, qty: it.qty, amount: money(it.amount) })),
-    { name: 'ITEM', qty: 'QTY', amount: 'AMOUNT' },
+    (sale.items || []).map((it) => ({
+      name: it.name,
+      rate: it.rate,
+      qty: it.qty,
+      amount: money(it.amount),
+    })),
+    { name: 'ITEM', rate: 'RATE', qty: 'QTY', amount: 'AMOUNT' },
     { afterHeader: (rec) => rec.rule() },
   );
 

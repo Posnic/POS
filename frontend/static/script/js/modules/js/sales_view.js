@@ -1470,8 +1470,16 @@ PosnicPro.sales.view = {
                      * Before paying: a GST-registered shop must issue a TAX
                      * INVOICE for the supply, and in a restaurant that is the
                      * document the waiter presents. A shop with no GST issues
-                     * a BILL. Either way it says UNPAID, because it is a demand
-                     * for payment.
+                     * a BILL.
+                     *
+                     * It does NOT say UNPAID. It did, and the owner read one:
+                     * "No need to print 'Unpaid' near Tax Invoice." He is
+                     * right - a bill presented at a table is a demand for
+                     * payment by definition, so stamping it says nothing the
+                     * document does not already say, and stamping a customer's
+                     * copy with a word that looks like an accusation is a poor
+                     * way to ask for money. The heading alone carries it: a
+                     * TAX INVOICE is presented, a RECEIPT follows payment.
                      *
                      * After paying: RECEIPT, carrying the SAME invoice number.
                      * One sale, one number - two differently numbered documents
@@ -1487,11 +1495,6 @@ PosnicPro.sales.view = {
                     $('.print-title').html(
                         '<span style="font-weight:900; letter-spacing:1px;">'
                         + PosnicPro.escapeHtml(docTitle) + '</span>'
-                        + (beforePaying
-                            ? '<div style="font-weight:700; letter-spacing:1px;">'
-                              + PosnicPro.escapeHtml(PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID'))
-                              + '</div>'
-                            : '')
                     );
                     $('.print_date').text(data.created_date);
                     if (PosnicPro.sales.view._isA4()) {
