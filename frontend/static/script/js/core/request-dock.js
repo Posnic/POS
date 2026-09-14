@@ -94,6 +94,33 @@
     return 'new';
   }
 
+/*
+ * WHAT "YES" AND "NO" MEAN TO THE SERVER, WHICH DEPENDS ON THE KIND.
+ *
+ * The dock sent "accept" and "reject" for everything, and for a NEW order the
+ * approval state machine wants the state itself - "accepted" - so it got a
+ * word that is not a state, could not name one, and answered "unknown state".
+ * Owner: "i see some error. why? when click accept it happend."
+ *
+ * The three kinds genuinely mean three different things, and the queue page
+ * (modules/js/online_orders.js) has always known it:
+ *
+ *   a new order          accepted / rejected   the state it moves to
+ *   a cancel request     cancel / keep         the customer's wish, or not
+ *   a change request     accept / keep         make it so, or leave it
+ *
+ * Mirrored here rather than shared because they are in different bundles;
+ * the comment on each side names the other so neither drifts silently.
+ */
+  var VERBS = {
+    new: { accept: 'accepted', reject: 'rejected' },
+    cancel: { accept: 'cancel', reject: 'keep' },
+    change: { accept: 'accept', reject: 'keep' },
+    /* Already off. Either button only marks it seen; decideOnOrder answers
+       that before the state machine is ever reached. */
+    gone: { accept: 'seen', reject: 'seen' },
+  };
+
   var WORDS = {
     gone: ['lang_customer_cancelled', 'Customer cancelled this'],
     cancel: ['lang_cancel_requested', 'Asked to cancel'],
@@ -195,6 +222,8 @@
     var row = button.closest('[data-order]');
     if (!row) return;
     var id = row.getAttribute('data-order');
+    var kind = row.getAttribute('data-kind') || 'new';
+    var verb = (VERBS[kind] || VERBS.new)[button.getAttribute('data-do')] || 'accepted';
     if (busy[id]) return;
     busy[id] = true;
     paint();
@@ -209,10 +238,28 @@
         PosnicPro.post(
           {
             url: 'sales/' + encodeURIComponent(id) + '/approval',
-            data: JSON.stringify({ decision: button.getAttribute('data-do'), reason: '' }),
+            data: JSON.stringify({ decision: verb, reason: '' }),
           },
-          function () { done(); },
-          function () { done(); }
+          /*
+           * A SHOP THAT SAID NO IS QUOTED, NOT SWALLOWED.
+           *
+           * The first cut ignored both answers and simply re-read the queue,
+           * so a refusal looked exactly like a success that had not arrived
+           * yet - which is how "unknown state" went unexplained until it was
+           * seen in a toast on a real till.
+           */
+          function (answer) {
+            if (answer && answer.type !== 'success' && window.PosnicPro && PosnicPro.alert) {
+              PosnicPro.alert('Alert', String(answer.message || 'That did not go through'));
+            }
+            done();
+          },
+          function (answer) {
+            if (window.PosnicPro && PosnicPro.alert) {
+              PosnicPro.alert('Alert', String((answer && answer.message) || 'The shop could not be reached'));
+            }
+            done();
+          }
         );
       });
     } catch (e) {

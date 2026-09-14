@@ -180,7 +180,10 @@ test('accepting goes through the same door the queue page uses', () => {
   document.querySelector('[data-do="accept"]').click();
   assert.strictEqual(posts.length, 1, 'the decision never reached the shop');
   assert.strictEqual(posts[0].url, 'sales/a1/approval', 'the dock invented its own endpoint');
-  assert.strictEqual(posts[0].body.decision, 'accept');
+  /* On a CANCELLATION the primary button means the customer's wish, which is
+     the order off - not a state transition. This assertion used to read
+     'accept' and was wrong in the same way the code was. */
+  assert.strictEqual(posts[0].body.decision, 'cancel');
   window.close();
 });
 
@@ -228,4 +231,125 @@ test('the shell loads the dock, beside the watcher it works with', () => {
     js.includes('static/script/js/core/request-dock.js'),
     'the dock is never loaded, so none of the above happens on a real till'
   );
+});
+
+/*
+ * WHAT "YES" MEANS TO THE SERVER, WHICH DEPENDS ON THE KIND.
+ *
+ * Owner, on a real till: "i see some error. why? when click accept it
+ * happend." The error was "unknown state", and it was this: the dock sent
+ * "accept" for everything, and for a NEW order the approval state machine
+ * wants the state it moves TO - "accepted". It got a word that is not a
+ * state, could not name one, and said so.
+ *
+ * The three kinds genuinely mean three different things, and the queue page
+ * has always known it. These pin the mapping on this side.
+ */
+test('a new order is accepted into a state, not with a verb the machine cannot read', () => {
+  const { document, window, posts } = dockPage([
+    { sale_id: 'n1', sales_id: 'S-GG69-000017', token_id: 'S570', created_date: minutesAgo(2), fulfilment: 'dine_in' },
+  ]);
+  document.getElementById('request-dock-tab').click();
+  assert.strictEqual(document.querySelector('.request-dock-card').getAttribute('data-kind'), 'new');
+
+  document.querySelector('[data-do="accept"]').click();
+  assert.strictEqual(posts[0].body.decision, 'accepted', 'the state machine is handed a word that is not a state');
+  window.close();
+});
+
+test('a new order is refused into a state too', () => {
+  const { document, window, posts } = dockPage([
+    { sale_id: 'n1', sales_id: 'S-1', created_date: minutesAgo(2) },
+  ]);
+  document.getElementById('request-dock-tab').click();
+  document.querySelector('[data-do="reject"]').click();
+  assert.strictEqual(posts[0].body.decision, 'rejected');
+  window.close();
+});
+
+test('a cancel request is answered with the customer wish, or with keeping it', () => {
+  /* On a cancellation the primary button means the customer's wish, which is
+     the order OFF - not a state transition. */
+  const order = { sale_id: 'c1', sales_id: 'S-2', created_date: minutesAgo(6), cancel_requested: true };
+  const yes = dockPage([order]);
+  yes.document.getElementById('request-dock-tab').click();
+  yes.document.querySelector('[data-do="accept"]').click();
+  assert.strictEqual(yes.posts[0].body.decision, 'cancel');
+  yes.window.close();
+
+  const no = dockPage([order]);
+  no.document.getElementById('request-dock-tab').click();
+  no.document.querySelector('[data-do="reject"]').click();
+  assert.strictEqual(no.posts[0].body.decision, 'keep', 'refusing a cancellation must leave the order exactly as it was');
+  no.window.close();
+});
+
+test('a change request is made so, or kept as it was', () => {
+  const order = {
+    sale_id: 'h1', sales_id: 'S-3', created_date: minutesAgo(3),
+    change_requested: { at: new Date().toISOString(), items: [{ name: 'Veg Biryani', was: 7, quantity: 8 }] },
+  };
+  const yes = dockPage([order]);
+  yes.document.getElementById('request-dock-tab').click();
+  yes.document.querySelector('[data-do="accept"]').click();
+  assert.strictEqual(yes.posts[0].body.decision, 'accept');
+  yes.window.close();
+
+  const no = dockPage([order]);
+  no.document.getElementById('request-dock-tab').click();
+  no.document.querySelector('[data-do="reject"]').click();
+  assert.strictEqual(no.posts[0].body.decision, 'keep');
+  no.window.close();
+});
+
+test('a shop that says no is quoted, not swallowed', () => {
+  /* The first cut ignored the answer and simply re-read the queue, so a
+     refusal looked exactly like a success that had not arrived yet - which is
+     how "unknown state" went unexplained until it was seen on a real till. */
+  const said = [];
+  const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://shop.example/dashboard.html', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.PosnicPro = {
+    t: (k, f) => f,
+    get: (o, ok) => ok({ type: 'success', data: [{ sale_id: 'n1', sales_id: 'S-1', created_date: minutesAgo(1) }] }),
+    post: (o, ok) => ok({ type: 'error', message: 'unknown state' }),
+    alert: (kind, text) => said.push(kind + ': ' + text),
+  };
+  window.setInterval = () => 0;
+  window.eval(DOCK);
+  window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  window.document.getElementById('request-dock-tab').click();
+  window.document.querySelector('[data-do="accept"]').click();
+  assert.deepStrictEqual(said, ['Alert: unknown state'], 'the shop refused and nobody was told');
+  window.close();
+});
+
+/*
+ * A SHOP WITH ORDERS WAITING HAS SOMEWHERE TO PUT THEM.
+ *
+ * Owner, looking at a queue full of orders: "menu also not got selected." It
+ * was not selected because it was not THERE: the sidebar entry is gated on a
+ * local setting written in exactly one place - the Settings page - so a till
+ * that has never been there has no value at all, and the entry stays hidden
+ * while orders pile up behind it.
+ */
+test('the sidebar entry appears once there is something in the queue', () => {
+  const watch = fs.readFileSync(
+    path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'online-order-watch.js'),
+    'utf8'
+  );
+  assert.match(watch, /function makeSureTheQueueIsReachable/, 'nothing reveals the queue entry');
+  assert.match(watch, /getElementById\('online_orders_menu'\)/, 'it does not touch the sidebar entry');
+  assert.match(watch, /if \(!count\) return;/, 'an empty queue would hide or show it on a whim');
+  const at = watch.indexOf('function badge(');
+  const body = watch.slice(at, watch.indexOf('\n  }', at));
+  assert.match(body, /makeSureTheQueueIsReachable\(count\)/, 'the count is known here and not used');
+});
+
+test('an order with no phone number carries none, not the text "+91null"', () => {
+  /* Seen on a real approval card: "S-GG69-000017 · Token S570 · +91null".
+     Staff read it as a number and cannot ring it. */
+  const db = fs.readFileSync(path.join(ROOT, 'order', 'indexedDB.js'), 'utf8');
+  assert.match(db, /customerMobile: savedNumber \? '\+91' \+ savedNumber : ''/, 'a missing number is still concatenated into one');
+  assert.ok(!/customerMobile: '\+91' \+ savedNumber,/.test(db), 'the old concatenation is still there');
 });

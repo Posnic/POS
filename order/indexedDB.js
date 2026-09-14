@@ -2201,7 +2201,22 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
                 items: payload,
                 /* What this device is, for the shop's own records. */
                 client: typeof clientFacts === "function" ? clientFacts() : undefined,
-                customerMobile: '+91' + savedNumber,
+                /*
+                 * A NUMBER, OR NOTHING - NEVER "+91null".
+                 *
+                 * The shop asks for a phone number only where it is switched
+                 * on, so most orders have none; string-concatenating an
+                 * absent one put the literal text "+91null" on the approval
+                 * card, where staff read it as a real number and could not
+                 * ring it. Seen on a real queue: "S-GG69-000017 - Token S570
+                 * - +91null".
+                 *
+                 * The country code belongs to a number that exists. No number
+                 * means no field, which every reader of this payload already
+                 * handles - it is how a takeaway with no phone has always
+                 * arrived.
+                 */
+                customerMobile: savedNumber ? '+91' + savedNumber : '',
                 transactionId: transactionId,
                 idempotencyKey: orderAttemptId,
                 tokenId: generatedTokenId,

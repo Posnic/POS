@@ -305,4 +305,11 @@ function buildBillPayload(sale = {}, branch = {}) {
   };
 }
 
-module.exports = { buildBillPayload };
+/*
+ * Exported because the SALE has to make the same judgement the BILL makes.
+ * An order taken with no dialable number is recorded as the shop's walk-in
+ * (see _walkInCustomer in the sale repository); if the two disagreed about
+ * what counts as a number, a sale could be filed under a guest whose receipt
+ * says there was no guest.
+ */
+module.exports = { buildBillPayload, isDialable };
