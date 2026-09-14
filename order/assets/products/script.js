@@ -192,8 +192,13 @@
          * The sheet says so and withholds the button, using the same pair the
          * out-of-hours case already uses - so there is one way this screen
          * says "not now" rather than two.
+         *
+         * THE SAME RULE THE CARD USED, not a second copy of it: a card that
+         * refuses and a sheet one tap later that accepts is worse than either,
+         * because the guest has already been told no once. See
+         * waitingForTodaysPrice in indexedDB.js.
          */
-        const marketPriced = !(Number(item.price) > 0);
+        const marketPriced = waitingForTodaysPrice(item);
         el("dish-price").textContent = marketPriced ? t("Market price") : money(item.price);
 
         /* Off its hours: no pill, and a line saying when instead. */

@@ -146,12 +146,45 @@
    * the card cannot carry one and the catalogue holds nothing until the shop
    * opens and enters it.
    *
-   * Zero is that state. A dish that costs nothing is not a thing a kitchen
-   * sells, so there is no case to confuse this with - and the moment a real
-   * price is entered, this is false and the dish is ordinary everywhere.
+   * THE FLAG CONTRACT: daily_price + price_set_on. `daily_price` says this
+   * dish is priced from the morning's market; `price_set_on` says when
+   * somebody last did it. Priced today it is an ordinary dish and the board
+   * prints the number, which is the whole point of the shop updating it when
+   * it opens. Priced YESTERDAY it is not, and that is the quiet failure the
+   * flag exists to catch: a stale number on a board looks right, and nobody
+   * checks a price that looks right.
+   *
+   * An item carrying neither field - every shop until the flag ships - falls
+   * through to "has it got a price at all", which is what this did before.
    */
   function marketPriced(item) {
-    return !(Number(item && item.price) > 0);
+    if (!item) return true;
+    if (item.daily_price === true && !pricedToday(item.price_set_on))
+      return true;
+    return !(Number(item.price) > 0);
+  }
+
+  /*
+   * Was that price entered today, on this phone's calendar?
+   *
+   * The reader's day, not the shop's. A board is read standing in the shop,
+   * so they are the same day; and the server decides in the SHOP's timezone
+   * and refuses anything stale, so the worst this can do is print the words
+   * where a number would have served - never a stale number where the words
+   * belong.
+   *
+   * An absent or unreadable date is "not today": the safe way round.
+   */
+  function pricedToday(setOn) {
+    if (!setOn) return false;
+    var when = new Date(setOn);
+    if (isNaN(when.getTime())) return false;
+    var now = new Date();
+    return (
+      when.getFullYear() === now.getFullYear() &&
+      when.getMonth() === now.getMonth() &&
+      when.getDate() === now.getDate()
+    );
   }
 
   function money(amount) {

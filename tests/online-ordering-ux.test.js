@@ -90,6 +90,10 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'pop'),
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
+    /* The card asks one shared rule whether today's price is set yet, and the
+       dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
+    lift(src, 'pricedToday'),
+    lift(src, 'waitingForTodaysPrice'),
     lift(src, 'renderProductCards'),
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */
@@ -204,6 +208,53 @@ test('a dish outside its hours is shown, greyed, and says when - with no Add', a
   assert.ok(!card.querySelector('.product-media img'), 'a placeholder image was drawn over the icon');
   /* The pill is removed by CSS, and that rule must exist. */
   assert.match(read('assets/order.css'), /\.product-card\[data-available="false"\]\s+\.cart-controls\s*\{[^}]*display:\s*none/);
+});
+
+test("a dish waiting for today's price says so, and cannot be added", async () => {
+  /*
+   * Whole fish, crab, lobster: the rate comes from the morning's market, so
+   * the catalogue holds nothing until the shop opens and enters it. It used to
+   * print as 0.00 - which reads as free - and the page took the order. Two of
+   * them went through a live kitchen worth nothing.
+   *
+   * THE FLAG CONTRACT: priced today it is an ordinary card; priced yesterday
+   * it is not, because yesterday's rate for a pomfret is not today's.
+   */
+  const hoursAgo = (n) => new Date(Date.now() - n * 60 * 60 * 1000).toISOString();
+  const fish = (over) => [{
+    id: 'f1', name: 'Pomfret', description: 'Whole, from this morning',
+    price: 0, diet: 'nonveg', img: '', photos: [], icon: '🐟',
+    available: true, served_in: [], prep_minutes: 0, category_name: 'Seafood',
+    ...over,
+  }];
+
+  const notSet = page('products.html', { branch: { currency: '₹' } });
+  await notSet.box.rememberShop();
+  await notSet.box.renderProductCards(fish({}));
+  const waiting = notSet.document.querySelector('.product-card[data-id="f1"]');
+  assert.strictEqual(waiting.querySelector('.product-price').textContent, 'Market price',
+    'the card printed a number for a dish that has none');
+  assert.ok(!waiting.querySelector('.cart-controls'),
+    'a guest can still add a dish nobody has priced');
+  assert.match(waiting.querySelector('.product-ask').textContent, /Ask staff/,
+    'the button was taken away without saying why');
+
+  const stale = page('products.html', { branch: { currency: '₹' } });
+  await stale.box.rememberShop();
+  await stale.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(26) }));
+  assert.strictEqual(
+    stale.document.querySelector('.product-card[data-id="f1"] .product-price').textContent,
+    'Market price',
+    "yesterday's rate was printed as today's"
+  );
+
+  /* And the moment the shop enters this morning's number, an ordinary card. */
+  const today = page('products.html', { branch: { currency: '₹' } });
+  await today.box.rememberShop();
+  await today.box.renderProductCards(fish({ price: 900, daily_price: true, price_set_on: hoursAgo(2) }));
+  const priced = today.document.querySelector('.product-card[data-id="f1"]');
+  assert.strictEqual(priced.querySelector('.product-price').textContent, '₹900');
+  assert.ok(priced.querySelector('.cart-controls'), 'a priced dish cannot be ordered');
 });
 
 test('a symbol sits against the number; a code keeps its space; nothing stored means rupees', async () => {
