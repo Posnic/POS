@@ -1665,6 +1665,8 @@ async function showCategory(category, element) {
     // ✅ Update heading dynamically
     let categoryName = $(element).text();
     $("#category-heading").text(categoryName);
+    /* The chip above already says this word. See body.one-section. */
+    sayWhetherOneSection(true);
 
     // ✅ Store the last active category in localStorage
     localStorage.setItem("lastActiveCategory", category);
@@ -1854,6 +1856,23 @@ function renderOrderPanel(cartData) {
  * already on the bill. Owner: "keep that category with little highlight that
  * some items we added from that category."
  */
+/*
+ * WHETHER THE HEADING IS SAYING ANYTHING THE CHIPS HAVE NOT.
+ *
+ * With one category chosen it repeated the selected chip word for word, two
+ * rows below it, and cost 60px at the top of the busiest screen in the
+ * product. The stylesheet stands it down on `body.one-section`; this is the
+ * one place that decides. It stays for the whole menu and for search results,
+ * where it is naming something no chip is.
+ */
+function sayWhetherOneSection(on) {
+    try {
+        document.body.classList.toggle("one-section", !!on);
+    } catch (e) {
+        /* no body yet; the next paint sets it */
+    }
+}
+
 function markCategories(cartData) {
     if (typeof products !== "object" || !products) return;
     const byId = new Map((cartData || []).map(line => [String(line.id), Number(line.quantity) || 0]));
@@ -2676,6 +2695,9 @@ async function refreshProductView() {
             ? "Results"
             : ($(".category-item.active").first().text() || "Our Menu")
     );
+    /* Searching shows "Results", which no chip is claiming; one chosen
+       section shows the chip's own word two rows under the chip. */
+    sayWhetherOneSection(!searching && $(".category-item.active").length > 0);
 
     await renderProductCards(list);
 
