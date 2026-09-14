@@ -353,3 +353,54 @@ test('an order with no phone number carries none, not the text "+91null"', () =>
   assert.match(db, /customerMobile: savedNumber \? '\+91' \+ savedNumber : ''/, 'a missing number is still concatenated into one');
   assert.ok(!/customerMobile: '\+91' \+ savedNumber,/.test(db), 'the old concatenation is still there');
 });
+
+/*
+ * A DECISION SOMEBODY JUST MADE IS NOT A THING TO TELL THEM ABOUT.
+ *
+ * Teaching cancelCustomerOrder to stamp an order as "the shop has not been
+ * told" was right for a customer cancelling inside the window, and wrong for
+ * every other way through it. Accepting a customer's cancellation REQUEST
+ * runs through the same function - so the order came straight back into the
+ * queue asking to be acknowledged, a second decision on something a person
+ * had decided a moment earlier.
+ *
+ * Found by asking who else calls it, after the new paths passed end to end
+ * against the real sandbox. The probe could not see it: it needs the shop's
+ * side of the door.
+ */
+test('a cancellation the shop itself decided is not put back in the queue', () => {
+  const at = REPO.indexOf('async cancelCustomerOrder');
+  assert.ok(at !== -1, 'the customer can no longer cancel their own order');
+  const body = REPO.slice(at, at + 4500);
+  assert.match(body, /async cancelCustomerOrder\(orderDoc, how = \{\}\)/, 'it cannot be told who decided');
+  assert.match(
+    body,
+    /how\.alreadyKnown \? \{\} : \{ customer_cancelled_at: new Date\(\), cancel_seen: false \}/,
+    'it stamps every cancellation, including the ones the shop just made'
+  );
+
+  /*
+   * And every caller says which it is. Both live inside decideOnOrder, which
+   * is long enough that slicing a fixed window past it misses them - so the
+   * whole file is searched, and the count is what is asserted: exactly the
+   * two shop-side callers, no more and no fewer.
+   */
+  const told = REPO.match(/alreadyKnown: true/g) || [];
+  assert.strictEqual(told.length, 2, 'the shop-side callers are not both saying who decided');
+  assert.match(REPO, /cancelCustomerOrder\(sale, \{ alreadyKnown: true \}\)/, 'accepting a cancellation re-queues it');
+
+  /* A change stripped to nothing carries whoever asked for it. */
+  assert.match(REPO, /async changeCustomerOrderItems\(orderDoc, wanted, how = \{\}\)/, 'the change path cannot pass it on');
+  assert.match(REPO, /cancelCustomerOrder\(orderDoc, how\)/, 'a stripped order forgets who asked');
+});
+
+test('a customer cancelling their own order is still announced', () => {
+  /* The whole point of the stamp. The service calls it with no flag, which
+     means "nobody here knows yet" - and must keep meaning that. */
+  const svc = fs.readFileSync(path.join(ROOT, 'api', 'src', 'services', 'customer-order.service.js'), 'utf8');
+  assert.match(
+    svc,
+    /salesRepository\.cancelCustomerOrder\(order\)(?!, \{)/,
+    'the customer path now claims the shop already knows, which silences it again'
+  );
+});
