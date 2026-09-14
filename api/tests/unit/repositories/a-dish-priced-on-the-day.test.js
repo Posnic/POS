@@ -169,6 +169,124 @@ describe('a dish the shop prices on the day', () => {
   });
 });
 
+describe('the daily_price flag', () => {
+  /*
+   * The contract: `daily_price` says this dish is priced from the morning's
+   * market, `price_set_on` says when somebody last did it. The fields are
+   * added by other work; this consumes them, and must keep working before
+   * they exist because a shop is running this today.
+   */
+  const at = (iso) => new Date(iso);
+  const today = () => new Date();
+  const yesterday = () => new Date(Date.now() - 26 * 60 * 60 * 1000);
+
+  test('priced today, it is an ordinary dish at the catalogue rate', async () => {
+    /* The whole point of the shop updating it when they open: once the number
+       is in, nobody is asked anything. */
+    const doc = await anItem({
+      selling_price: 900,
+      daily_price: true,
+      price_set_on: today(),
+    });
+
+    const out = await price(doc, {
+      item_id: String(doc._id),
+      item_quantity: 1,
+      unit_price: 1,
+    });
+
+    expect(out.status).not.toBe(false);
+    expect(out.line.unit_price).toBe(900);
+  });
+
+  test("priced YESTERDAY, yesterday's rate is not charged as today's", async () => {
+    /*
+     * The failure this flag exists to catch, and the quiet one: a stale price
+     * is worse than the zero this started as, because it looks right on the
+     * bill and nobody checks.
+     */
+    const doc = await anItem({
+      selling_price: 900,
+      daily_price: true,
+      price_set_on: yesterday(),
+    });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.status).toBe(false);
+    expect(out.data.state).toBe('item_needs_price');
+  });
+
+  test("priced yesterday, today's price from the waiter is taken", async () => {
+    const doc = await anItem({
+      selling_price: 900,
+      daily_price: true,
+      price_set_on: yesterday(),
+    });
+
+    const out = await price(doc, {
+      item_id: String(doc._id),
+      item_quantity: 1,
+      unit_price: 1100,
+    });
+
+    expect(out.line.unit_price).toBe(1100);
+  });
+
+  test('never priced at all is the same as priced yesterday', async () => {
+    const doc = await anItem({ selling_price: 900, daily_price: true });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.status).toBe(false);
+  });
+
+  test('an unreadable date is treated as not today, not as today', async () => {
+    /* The safe way round: a waiter is asked, rather than a stale number being
+       charged because a field could not be parsed. */
+    const doc = await anItem({
+      selling_price: 900,
+      daily_price: true,
+      price_set_on: 'the day before the fish came in',
+    });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.status).toBe(false);
+  });
+
+  test('an item with neither field behaves exactly as it did before', async () => {
+    /*
+     * Every shop, until the flag ships. This is the line that lets the fix go
+     * out ahead of the schema.
+     */
+    const priced = await anItem({ name: 'Coffee', selling_price: 40 });
+    const notPriced = await anItem({ name: 'Pomfret', selling_price: 0 });
+
+    expect(
+      (await price(priced, { item_id: String(priced._id), item_quantity: 1 })).line.unit_price
+    ).toBe(40);
+    expect(
+      (await price(notPriced, { item_id: String(notPriced._id), item_quantity: 1 })).status
+    ).toBe(false);
+  });
+
+  test('open_price still means ask every time, priced today or not', async () => {
+    /* A different thing: the shop saying the price is settled at the counter,
+       not that it is set once each morning. */
+    const doc = await anItem({
+      selling_price: 900,
+      open_price: true,
+      daily_price: true,
+      price_set_on: today(),
+    });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.status).toBe(false);
+  });
+});
+
 describe('an ordinary dish', () => {
   test('IGNORES a price the client sent', async () => {
     /*
