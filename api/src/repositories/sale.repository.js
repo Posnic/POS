@@ -8262,6 +8262,14 @@ class SalesRepository {
           { order_state: orderApproval.ORDER_STATE.PENDING },
           { cancel_requested: true, sale_process: 'KOT' },
           { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
+          /*
+           * AND ONE THE CUSTOMER HAS ALREADY CALLED OFF, until somebody has
+           * seen it. Nothing here waits on a decision - it is cancelled - but
+           * a ticket printed and a kitchen may be working on it, so the shop
+           * has to be told rather than left to notice. Cleared by
+           * acknowledging it.
+           */
+          { cancel_seen: false, customer_cancelled_at: { $exists: true } },
         ],
         ...activeTenantFilter(),
       };
@@ -8293,6 +8301,10 @@ class SalesRepository {
             cancel_requested: 1,
             cancel_requested_at: 1,
             change_requested: 1,
+            /* Already off, and not yet seen by anybody here. */
+            customer_cancelled_at: 1,
+            cancel_seen: 1,
+            sale_process: 1,
           },
         })
         .sort({ created_date: 1 })
@@ -8393,6 +8405,27 @@ class SalesRepository {
       );
       if (!sale) {
         return { status: false, message: 'Order not found', data: null };
+      }
+
+      /*
+       * AN ORDER THE CUSTOMER ALREADY CALLED OFF: SEEN, NOT DECIDED.
+       *
+       * It is cancelled. Nothing here is waiting on a yes or a no, and
+       * pretending otherwise would put two meaningless buttons in front of
+       * somebody in a hurry. It sits in the queue only so a person learns
+       * that a ticket they may be cooking has been pulled; either button
+       * means "I have seen this", and it leaves.
+       */
+      if (sale.cancel_seen === false && sale.customer_cancelled_at) {
+        await salesCollection.updateOne(
+          { _id, ...activeTenantFilter() },
+          { $set: { cancel_seen: true, cancel_seen_at: new Date() } }
+        );
+        return {
+          status: true,
+          message: 'Order was cancelled by the customer',
+          data: { sale_id: String(saleId), seen: true, cancelled: true },
+        };
       }
 
       /*
@@ -9767,6 +9800,25 @@ class SalesRepository {
       {
         $set: {
           sale_process: 'cancelled',
+          /*
+           * THE SHOP HAS TO LEARN THIS, AND IT NEVER DID.
+           *
+           * Owner: "when i asked cancel, deskto didnt show anthing."
+           *
+           * Inside the window a customer's cancellation simply happens - no
+           * request, nothing to decide - and the only thing told about it
+           * was the PRINTER, over the desktop process bus. Nothing reached a
+           * screen: no badge, no chime, no row in the queue. The order left
+           * the floor silently, and it is the worse of the two cases,
+           * because the ticket printed the moment the order landed and
+           * somebody may already be cooking it.
+           *
+           * So it is stamped, and the queue carries it (pendingOnlineOrders)
+           * until a person has seen it. There is nothing here to approve;
+           * there is something to KNOW.
+           */
+          customer_cancelled_at: new Date(),
+          cancel_seen: false,
           payment_status: 'Cancelled',
           payment_pending: 0,
           changes: log,

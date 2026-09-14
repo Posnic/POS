@@ -125,3 +125,7 @@ docs/journey/
 
 docs/journey-after/
 docs/journey-audit.html
+
+# Scratch patch scripts and commit messages never belong in the tree.
+cmsg.tmp
+*-patch.py

@@ -1285,14 +1285,23 @@ describe('SalesRepository', () => {
       });
     };
 
-    test('it asks for the three things that need a person: undecided orders, and the cancellations and changes customers have asked for', async () => {
+    test('it asks for the four things a person has to see: undecided orders, the cancellations and changes customers asked for, and one they already made', async () => {
       /*
-       * All three are the same job - somebody deciding - so they belong in
-       * one queue. A second screen is a screen nobody opens.
+       * The first three are the same job - somebody deciding - so they belong
+       * in one queue. A second screen is a screen nobody opens.
        *
        * The third arrived when the owner asked why an order past its window
        * offered nothing but Cancel. If a customer may ask for the whole order
        * to be called off, they may ask for two of something to be three.
+       *
+       * THE FOURTH IS NOT A DECISION AT ALL, and that is why it was missing.
+       * A customer who cancels INSIDE the window does not ask for anything -
+       * the order simply goes - and the only thing ever told about it was the
+       * printer, over the desktop process bus. No badge, no chime, no row
+       * anywhere. Owner: "when i asked cancel, deskto didnt show anthing."
+       * It is the worse of the two cases: the ticket printed the moment the
+       * order landed, so somebody may be cooking it. It rides in this queue
+       * until a person has seen it, and then leaves.
        */
       rows([]);
       await salesRepository.pendingOnlineOrders({ branchId: FAKE_BRANCH });
@@ -1301,6 +1310,7 @@ describe('SalesRepository', () => {
         { order_state: 'pending' },
         { cancel_requested: true, sale_process: 'KOT' },
         { 'change_requested.at': { $exists: true }, sale_process: 'KOT' },
+        { cancel_seen: false, customer_cancelled_at: { $exists: true } },
       ]);
     });
 
