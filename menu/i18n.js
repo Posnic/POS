@@ -172,6 +172,9 @@
       "The kitchen is busy. Expect about {n} minutes longer than usual.": "சமையலறை பரபரப்பாக உள்ளது. வழக்கத்தை விட சுமார் {n} நிமிடங்கள் கூடுதலாக ஆகலாம்.",
       "The kitchen is very busy. Expect over an hour longer than usual.": "சமையலறை மிகவும் பரபரப்பாக உள்ளது. வழக்கத்தை விட ஒரு மணி நேரத்திற்கு மேல் ஆகலாம்.",
       "The kitchen is busy right now, so your order may take longer than usual.": "இப்போது சமையலறை பரபரப்பாக உள்ளதால், உங்கள் ஆர்டருக்கு வழக்கத்தை விட நேரம் ஆகலாம்.",
+      /* ---------------------------------------- when it will be ready */
+      "Usually ready by about {when}": "வழக்கமாக {when} மணிக்கு தயாராகிவிடும்",
+      "About {n} minutes once the shop accepts it": "கடை ஏற்றதும் பிறகு சுமார் {n} நிமிடங்கள்",
       "Less spicy, no onion, extra gravy...": "காரம் குறைவாக, வெங்காயம் வேண்டாம், கூடுதல் குழம்பு...",
       "A note for the kitchen": "சமையலறைக்கு ஒரு குறிப்பு",
       "A note for the shop": "கடைக்கு ஒரு குறிப்பு",
