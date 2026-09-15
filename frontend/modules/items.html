@@ -51,6 +51,11 @@
                                      own balance, one call per dish. -->
                                 <a class="dropdown-item restaurant-only" id="item_nutrition_pass_open" href="javascript:void(0)"
                                    onclick="PosnicPro.nutritionPass.open(); return false;"><i class="feather icon-zap mr-2"></i><lang class="lang_fill_in_nutrition">Fill in nutrition</lang></a>
+                                <!-- The other half. Estimating a menu is now
+                                     cheap; publishing it still needed a
+                                     person, one dish at a time. -->
+                                <a class="dropdown-item restaurant-only" id="item_nutrition_review_open" href="javascript:void(0)"
+                                   onclick="PosnicPro.nutritionPass.review(); return false;"><i class="feather icon-check-square mr-2"></i><lang class="lang_check_the_estimates">Check the estimates</lang></a>
                             </div>
                         </div>
                         <span id="items_sort_host"></span>
@@ -540,6 +545,52 @@
     time, so Stop means stop and closing the window means stop. A job on the
     server could do neither.
 -->
+<!--
+    CHECKING WHAT A MACHINE GUESSED, BEFORE ANY OF IT IS PUBLISHED.
+
+    The pass made estimating a whole menu cheap and left confirming it at one
+    dish at a time - which on 272 dishes is the same 272 presses, moved one
+    step along. This is the other half.
+
+    WHAT THE ROWS SHOW IS THE POINT. A shop scanning calorie figures is being
+    asked to check arithmetic it has no way to check. A shop reading "Grilled
+    Chicken - High protein, Heart healthy" is being asked the question it can
+    actually answer: is that sentence true of my food? Those badges are
+    exactly what confirming publishes, so they are what the screen leads with.
+
+    Confirming changes no number. It records that a person stands behind the
+    ones already there, which is the only thing that lets dish-facts publish
+    them. Anything that needs correcting is opened and edited on the item
+    screen, where there is one way for a figure to be typed.
+-->
+<div class="modal fade close_on_esc" id="nutrition_review_modal" tabindex="-1" role="dialog" aria-labelledby="nutrition_review_title">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nutrition_review_title"><lang class="lang_check_the_estimates">Check the estimates</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    <lang class="lang_review_what">These were estimated from the dish name and are on no menu yet. Confirming one publishes the badges shown beside it. Nothing here changes a number: open the dish to correct anything.</lang>
+                </p>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="nutrition_review_category"><lang class="lang_which_dishes">Which dishes</lang></label>
+                        <select class="form-control border-control" id="nutrition_review_category"></select>
+                    </div>
+                </div>
+                <div class="nutrition-review-state" id="nutrition_review_state"></div>
+                <div class="nutrition-review-rows" id="nutrition_review_rows"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                <button type="button" class="btn btn-primary" id="nutrition_review_confirm" disabled><lang class="lang_confirm_checked">Confirm the ticked dishes</lang></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade close_on_esc" id="nutrition_pass_modal" tabindex="-1" role="dialog" aria-labelledby="nutrition_pass_title">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">

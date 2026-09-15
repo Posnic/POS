@@ -3144,5 +3144,13 @@
   "lang_refuse": "Weigeren",
   "lang_requests": "Verzoeken",
   "lang_see_all_orders": "Open de bestelrij",
-  "lang_table": "Tafel"
+  "lang_table": "Tafel",
+  "lang_check_the_estimates": "Schattingen controleren",
+  "lang_confirm_checked": "Aangevinkte gerechten bevestigen",
+  "lang_confirm_n_dishes": "{n} gerechten bevestigen",
+  "lang_could_not_confirm": "Die gerechten konden niet worden bevestigd",
+  "lang_n_estimates_waiting": "{n} gerechten zijn geschat en staan nog op geen enkele kaart.",
+  "lang_no_badges_earned": "geen vermeldingen",
+  "lang_nothing_waiting_to_check": "Hier wacht niets op controle.",
+  "lang_review_what": "Deze zijn geschat op basis van de naam van het gerecht en staan op geen enkele kaart. Een gerecht bevestigen publiceert de vermeldingen ernaast. Hier verandert geen cijfer: open het gerecht om iets te corrigeren."
 }

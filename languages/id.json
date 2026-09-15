@@ -3144,5 +3144,13 @@
   "lang_refuse": "Tolak",
   "lang_requests": "Permintaan",
   "lang_see_all_orders": "Buka antrean pesanan",
-  "lang_table": "Meja"
+  "lang_table": "Meja",
+  "lang_check_the_estimates": "Periksa perkiraan",
+  "lang_confirm_checked": "Konfirmasi hidangan yang dicentang",
+  "lang_confirm_n_dishes": "Konfirmasi {n} hidangan",
+  "lang_could_not_confirm": "Tidak dapat mengonfirmasi hidangan itu",
+  "lang_n_estimates_waiting": "{n} hidangan diperkirakan dan belum ada di menu mana pun.",
+  "lang_no_badges_earned": "tanpa lencana",
+  "lang_nothing_waiting_to_check": "Tidak ada yang menunggu diperiksa di sini.",
+  "lang_review_what": "Ini diperkirakan dari nama hidangan dan belum ada di menu mana pun. Mengonfirmasi satu hidangan akan menampilkan lencana di sebelahnya. Tidak ada angka yang berubah di sini: buka hidangan untuk memperbaiki apa pun."
 }

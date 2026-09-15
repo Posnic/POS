@@ -3144,5 +3144,13 @@
   "lang_refuse": "Rechazar",
   "lang_requests": "Solicitudes",
   "lang_see_all_orders": "Abrir la cola de pedidos",
-  "lang_table": "Mesa"
+  "lang_table": "Mesa",
+  "lang_check_the_estimates": "Revisar las estimaciones",
+  "lang_confirm_checked": "Confirmar los platos marcados",
+  "lang_confirm_n_dishes": "Confirmar {n} platos",
+  "lang_could_not_confirm": "No se pudieron confirmar esos platos",
+  "lang_n_estimates_waiting": "{n} platos se estimaron y no están en ninguna carta todavía.",
+  "lang_no_badges_earned": "sin distintivos",
+  "lang_nothing_waiting_to_check": "Aquí no hay nada que revisar.",
+  "lang_review_what": "Estos se estimaron a partir del nombre del plato y no están en ninguna carta. Confirmar uno publica los distintivos que se muestran a su lado. Aquí no cambia ningún número: abre el plato para corregir algo."
 }

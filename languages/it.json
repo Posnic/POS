@@ -3144,5 +3144,13 @@
   "lang_refuse": "Rifiuta",
   "lang_requests": "Richieste",
   "lang_see_all_orders": "Apri la coda degli ordini",
-  "lang_table": "Tavolo"
+  "lang_table": "Tavolo",
+  "lang_check_the_estimates": "Controlla le stime",
+  "lang_confirm_checked": "Conferma i piatti selezionati",
+  "lang_confirm_n_dishes": "Conferma {n} piatti",
+  "lang_could_not_confirm": "Non è stato possibile confermare quei piatti",
+  "lang_n_estimates_waiting": "{n} piatti sono stati stimati e non sono ancora su nessun menu.",
+  "lang_no_badges_earned": "nessun riconoscimento",
+  "lang_nothing_waiting_to_check": "Qui non c'è nulla da controllare.",
+  "lang_review_what": "Queste stime vengono dal nome del piatto e non sono su nessun menu. Confermare un piatto pubblica i riconoscimenti mostrati accanto. Qui non cambia nessun numero: apri il piatto per correggere qualcosa."
 }
