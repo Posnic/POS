@@ -23,6 +23,7 @@ const orderingAssistant = require('../services/ordering-assistant.service');
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
 const dishIcons = require('../utils/dish-icons');
 const dishFacts = require('../utils/dish-facts');
+const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
 const voiceSettings = require('../utils/voice-settings');
 
 const onlineOrderingDiet = (value) => {
@@ -4773,10 +4774,63 @@ class ItemRepository extends BaseModel {
         console.warn('[storefront] Failed to fetch tableorders:', e.message);
       }
 
+      /*
+       * HOW BUSY THE KITCHEN IS, RIGHT NOW.
+       *
+       * Owner: "when kitchen have many order have so many order we might
+       * notify online order customer deley might expecteed... shop having
+       * total 10 tables. 10 order in the process. then kitchen is full."
+       *
+       * A customer who waits forty minutes without being told blames the
+       * restaurant; one who was told chose to wait. The count is EVERY open
+       * ticket, not only the online ones: a dine-in table blocks the pass
+       * exactly as much as a phone does.
+       *
+       * The same three conditions the bill and the table screen use for
+       * "still open" - a KOT, unpaid, no bill printed. Non-fatal, like the
+       * table list above: a menu that cannot say how busy the kitchen is is
+       * still a menu, and a customer who cannot see the warning is no worse
+       * off than they were last week.
+       */
+      let kitchen = kitchenLoad({});
+      try {
+        if (branchDoc.table_options === true && tableorders.length) {
+          const salesCollection = await this.getCollection('sales');
+          const openFilter = {
+            sale_process: { $regex: 'KOT', $options: 'i' },
+            payment_status: 'Unpaid',
+            bill_printed_at: { $in: [null, undefined] },
+            branch_id: branchDoc._id,
+          };
+          if (branchDoc.license) openFilter.license = branchDoc.license;
+          const open = await salesCollection.countDocuments(openFilter);
+
+          /* The shop's OWN typical dish, taken from the menu this call has
+             already built rather than a constant invented here. A tea stall
+             and a grill house get their own number. */
+          const prepTimes = [];
+          for (const group of results) {
+            for (const item of group.items || []) prepTimes.push(item.prep_minutes);
+          }
+
+          kitchen = kitchenLoad({
+            tableService: true,
+            open,
+            capacity: tableorders.length,
+            round: typicalRound(prepTimes),
+          });
+        }
+      } catch (e) {
+        console.warn('[storefront] could not read the kitchen load:', e.message);
+      }
+
       return {
         status: true,
         message: 'OK',
         data: {
+          /* Busy or not, and by how many minutes when the shop's own prep
+             times can support a figure. See utils/kitchen-load.js. */
+          kitchen,
           /* Who the shop is, as the customer sees it. */
           store: {
             store_id: config?.store_id || '',

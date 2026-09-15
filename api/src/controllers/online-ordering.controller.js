@@ -116,6 +116,13 @@ class OnlineOrderingController {
          the page can draw its checkout without a privileged call. */
       payment: data.payment || {},
       menu: { categories: data.products || [] },
+      /*
+       * How busy the kitchen is. Named HERE as well as in the repository
+       * because this presenter rebuilds the payload field by field, and a
+       * field it does not mention never reaches the page - which is how the
+       * currency once failed to arrive while /menu had it all along.
+       */
+      kitchen: data.kitchen || { busy: false, open: 0, capacity: 0, extra_minutes: 0, over: false },
       tables: data.tableorders || [],
     };
   }

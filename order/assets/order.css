@@ -1989,6 +1989,27 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   color: var(--ink);
 }
 
+/*
+ * HOW BUSY THE KITCHEN IS.
+ *
+ * A sentence, not a gate: it never blocks an order and never takes the
+ * screen. Warn-toned rather than red, because a busy kitchen is good news
+ * about the restaurant and only inconvenient news about the wait - red here
+ * would read as "something is wrong" and lose orders that nobody needed to
+ * lose. Hidden entirely when the kitchen is keeping up, so the day it does
+ * appear it still means something.
+ */
+.kitchen-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-sm);
+}
+
 /* The note on a line of the order, and the way to add one. */
 .item-note {
   margin-top: 4px;

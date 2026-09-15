@@ -138,6 +138,13 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     /* var, not let: a let in a vm context is a lexical binding the test
        cannot reach, and this one has to be settable from outside. */
     'var orderJustPlaced = false;',
+    /* renderCart calls these at the end. Lifted rather than stubbed because
+       everything in renderCart runs inside one try whose catch only logs: a
+       missing function there does not fail loudly, it silently abandons the
+       rest of the render, and the first sign is an unrelated assertion about
+       a note label failing three tests later. */
+    lift(src, 'kitchenNoticeHtml'),
+    lift(src, 'paintKitchenNotice'),
     lift(src, 'renderCart'),
   ].join('\n');
 
