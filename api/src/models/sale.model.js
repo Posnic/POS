@@ -379,6 +379,21 @@ const saleSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    /*
+     * The registered business the invoice is made out to, when that is not the
+     * customer's own name.
+     *
+     * A claimable invoice has to name the entity that holds the GSTIN, and a
+     * customer record is very often a person: "Ramesh Kumar" printed above a
+     * company's GSTIN is a defective invoice that fails at filing time rather
+     * than at the counter. Copied onto the SALE rather than read back from the
+     * customer, because a bill reprinted in March must say what it said in
+     * September even if the company has since been renamed.
+     */
+    customer_company_name: {
+      type: String,
+      trim: true,
+    },
     customer_balance: {
       type: Number,
       default: 0,
@@ -1049,6 +1064,7 @@ class LegacySaleModel {
     customer_country: { type: 'String', select: true },
     customer_gst_type: { type: 'String', select: true },
     customer_gst_number: { type: 'String', select: true },
+    customer_company_name: { type: 'String', select: true },
     payment_pending: { type: 'String', select: true },
     payment_mode: { type: 'String', select: true },
     partial_balance: { type: 'String', select: true },
@@ -2175,6 +2191,7 @@ Sale.kioskOrderModel = async function (data) {
     const country_sort = branchDoc.sortname || 'IN';
     const customer_gst_type = customerDetails?.gst_type || 'consumer';
     const customer_gst_number = customerDetails?.gst_number || '';
+    const customer_company_name = customerDetails?.company_name || '';
     const customer_gst = branchDoc.indian_gst === 'gst_on' ? 'enable' : 'disable';
 
     let customer_id;
@@ -2230,6 +2247,7 @@ Sale.kioskOrderModel = async function (data) {
       country_sort: country_sort,
       customer_gst_type: customer_gst_type,
       customer_gst_number: customer_gst_number,
+      customer_company_name: customer_company_name,
       partial_check: partialCheck,
       partial_balance: partialBalance,
       payment_status: paymentStatus,
