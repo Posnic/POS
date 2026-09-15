@@ -216,3 +216,109 @@ test('the packaged build ships all three files', () => {
     assert.ok(pkg.build.files.includes(f), f + ' would not ship');
   }
 });
+
+/* --------------------------------------- the panel a shop actually operates */
+
+const PANEL = fs.readFileSync(path.join(ROOT, 'src', 'hardware-manager.html'), 'utf8');
+
+/** Lift one `function name(...) {...}` out by brace matching. */
+function lift(source, name) {
+  const from = source.indexOf('function ' + name + '(');
+  assert.notStrictEqual(from, -1, name + ' is gone - renamed, or inlined?');
+  let depth = 0;
+  for (let i = source.indexOf('{', from); i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1;
+    else if (source[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(from, i + 1);
+    }
+  }
+  throw new Error(name + ' never closes');
+}
+
+test('THE PANEL MARKUP IT BUILDS IS VALID, and wires its own handlers', () => {
+  /*
+   * drawScreens writes markup as a string, and a broken quote in that string is
+   * invisible until somebody opens the tab. It has already happened once here:
+   * an escaped quote was eaten by a patch and the whole panel stopped parsing.
+   */
+  // eslint-disable-next-line no-new-func
+  const draw = new Function(
+    lift(PANEL, 'esc') + '\n' +
+      lift(PANEL, 'verdictStyle') + '\n' +
+      lift(PANEL, 'field') + '\n' +
+      lift(PANEL, 'check') + '\n' +
+      lift(PANEL, 'drawScreens') + '\n' +
+      'return function (state, host) {\n' +
+      '  screenState = state; document = { getElementById: function () { return host; } };\n' +
+      '  drawScreens(); return host.innerHTML;\n' +
+      '};'
+  )();
+
+  const host = { innerHTML: '' };
+  const html = draw(
+    {
+      displays: [
+        {
+          id: '77',
+          label: 'Kitchen',
+          widthPx: 1920,
+          heightPx: 1080,
+          primary: false,
+          config: {
+            enabled: true, viewingDistanceM: 5, diagonalInches: 32, targetArcmin: 20,
+            safeAreaPercent: 3, maxItemsPerCard: 3, amberAfterMin: 5, redAfterMin: 10,
+            pageDwellSeconds: 8, showTable: true, showItems: true, showItemNotes: true, showAge: true,
+          },
+          fit: { cards: 1, capHeightMm: 29.1, fontPx: 113, columns: 1, rows: 1, verdict: 'unusable' },
+          advice: [{ text: 'Move the screen to about 1.8 m and this screen shows 8 orders.' }],
+        },
+      ],
+      defaults: {},
+    },
+    host
+  );
+
+  /* Every quote balanced, every handler addressed to this display. */
+  assert.match(html, /fromMeasurement\('77'\)/, 'the measure boxes are not wired');
+  assert.match(html, /saveScreen\('77'\)/);
+  assert.match(html, /previewScreen\('77'\)/);
+  assert.ok(!/\bundefined\b/.test(html), 'the panel printed the word undefined');
+
+  /* And it says the answer in ORDERS, which is the whole point. */
+  assert.match(html, /Not readable/, 'an unusable screen was not called unusable');
+  assert.match(html, /about 1 order on screen/, 'the order count is missing');
+  assert.match(html, /Move the screen to about 1\.8 m/, 'the advice never reached the panel');
+});
+
+test('a measured width and height becomes the diagonal a screen is sold by', () => {
+  /*
+   * Owner, asked for a screen size: "28 inch x 15.5 inch." That is what a tape
+   * measure gives you, and it is not what the field asked for. Somebody typing
+   * 28 into a box labelled inches would be told a smaller screen than they own
+   * and would believe it.
+   */
+  const { diagonalFrom } = require(path.join(ROOT, 'src', 'kitchen-screen-fit.js'));
+  assert.strictEqual(diagonalFrom(28, 15.5), 32, 'the owner screen came out the wrong size');
+  assert.strictEqual(diagonalFrom(0, 10), 0);
+  assert.strictEqual(diagonalFrom('', ''), 0);
+  assert.strictEqual(diagonalFrom(-4, 3), 0);
+
+  /* And the panel offers it, rather than leaving people to do the arithmetic. */
+  assert.match(PANEL, /Or measure the picture/);
+  assert.match(lift(PANEL, 'fromMeasurement'), /Math\.sqrt/);
+});
+
+test("that screen at five metres is reported as unusable, not merely small", () => {
+  /*
+   * The case that prompted all of this. A 32 inch monitor five metres from the
+   * range shows ONE order. Saying "1" is not enough; a shop needs to be told
+   * that is not a kitchen display before it is mounted.
+   */
+  const { fit, diagonalFrom } = require(path.join(ROOT, 'src', 'kitchen-screen-fit.js'));
+  const theirs = { diagonalInches: diagonalFrom(28, 15.5), distanceM: 5 };
+  assert.strictEqual(fit(theirs).cards, 1);
+  assert.strictEqual(fit(theirs).verdict, 'unusable');
+  /* And it works when brought close, which is the cheap fix. */
+  assert.ok(fit({ ...theirs, distanceM: 2 }).cards >= 8);
+});
