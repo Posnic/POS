@@ -38,6 +38,7 @@
          so there is no file to fetch and nothing for the CSP to allow. -->
     <script src="assets/ting.js?v=20260912-design"></script>
     <script src="assets/kiosk-core.js?v=20260912-design"></script>
+    <script src="assets/spice.js?v=20260912-design"></script>
     <script src="indexedDB.js?v=20260912-design"></script>
 </head>
 
@@ -356,6 +357,10 @@
             <h2 class="sheet-title"><span id="dish-diet"></span><span id="dish-title"></span></h2>
             <p id="dish-desc" class="sheet-desc" hidden></p>
             <dl id="dish-facts" class="sheet-facts" hidden></dl>
+            <!-- HOW HOT. Shown only for a dish the kitchen said it can cook to
+                 order, because a customer who asks for mild and gets hot is
+                 worse off than one who never asked. Drawn by assets/spice.js. -->
+            <div class="sheet-spice" id="dish-spice-box" hidden></div>
             <!-- "Less spicy", "no onion": a note the kitchen reads under the
                  dish. Only where there is a kitchen. Kept as it is typed, and
                  carried onto the line the moment the dish is added. -->

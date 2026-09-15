@@ -23,6 +23,10 @@
                 img: product.img,
                 price: product.price,
                 tax_price: product.tax_price,
+                /* Whether this dish takes a spice level. Carried onto the line
+                   so the basket can offer the picker without going back to the
+                   catalogue for a boolean. */
+                spice_choice: product.spice_choice === true,
                 quantity: 0
             };
 

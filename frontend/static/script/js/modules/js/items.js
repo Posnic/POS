@@ -964,6 +964,7 @@ PosnicPro.items = {
             nutrition: PosnicPro.itemPlate.payload().nutrition,
             food_tags: PosnicPro.itemPlate.payload().food_tags,
             menu_marks: PosnicPro.itemPlate.payload().menu_marks,
+            spice_choice: PosnicPro.itemPlate.payload().spice_choice,
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
             open_price: $('#item_open_price').is(':checked'),
@@ -1244,6 +1245,7 @@ PosnicPro.items = {
                     nutrition: PosnicPro.itemPlate.payload().nutrition,
                     food_tags: PosnicPro.itemPlate.payload().food_tags,
                     menu_marks: PosnicPro.itemPlate.payload().menu_marks,
+                    spice_choice: PosnicPro.itemPlate.payload().spice_choice,
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
                     open_price: $('#item_open_price').is(':checked'),
@@ -5711,13 +5713,24 @@ PosnicPro.itemPlate = {
         }).get();
     },
 
+    /*
+     * Whether this dish lets a customer say how hot it is made.
+     *
+     * One tick, and off by default, because the kitchen is the only side that
+     * knows which dishes it can really vary. See api/src/utils/spice-level.js.
+     */
+    spice: function () {
+        return $('#item_spice_choice').is(':checked');
+    },
+
     /* Everything the save payload needs, in one call, so the two save paths
        cannot drift apart the way they have before. */
     payload: function () {
         return {
             nutrition: PosnicPro.itemPlate.nutrition(),
             food_tags: PosnicPro.itemPlate.tags(),
-            menu_marks: PosnicPro.itemPlate.marks()
+            menu_marks: PosnicPro.itemPlate.marks(),
+            spice_choice: PosnicPro.itemPlate.spice()
         };
     },
 
@@ -5739,6 +5752,8 @@ PosnicPro.itemPlate = {
         $('#item_plate_card .item-menu-mark').each(function () {
             this.checked = marks.indexOf(String(this.value)) !== -1;
         });
+
+        $('#item_spice_choice').prop('checked', plate.spice_choice === true);
 
         /* A saved dish is the shop's own record, whatever filled it in first.
            The estimate warning belongs to an unsaved draft only. */

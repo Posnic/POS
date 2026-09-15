@@ -40,6 +40,7 @@ async function withDayparts(shop) {
 
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
+const spiceLevel = require('../utils/spice-level');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
@@ -8034,6 +8035,9 @@ class SalesRepository {
             /* See the note at the cancel flow below: this list is what the
                kitchen ticket is printed from. */
             item_description: String(si.item_description || ''),
+            /* And for the same reason: a level stored on the sale and absent
+               from the change record never reaches the paper. */
+            spice_level: spiceLevel.levelOf(si.spice_level),
           };
         })
         .filter((it) => it.item_id && it.item_quantity > 0);
@@ -8560,6 +8564,13 @@ class SalesRepository {
                on the sale and printed on the ticket, and never shown to the
                person deciding whether to accept the order. */
             note: item.item_description || '',
+            /*
+             * And how hot they asked for it, for the same reason. This is the
+             * screen where an order is refused, and "we cannot make that one
+             * mild" is a reason to refuse it - which nobody can act on if the
+             * request is only visible on the paper in the kitchen.
+             */
+            spice: spiceLevel.levelOf(item.spice_level),
           })),
           total: Number(row.total) || 0,
           delivery_fee: Number(row.delivery_fee) || 0,
@@ -9078,6 +9089,7 @@ class SalesRepository {
             item_name: String(ex.item_name || ''),
             item_quantity: qty,
             item_description: String(ex.item_description || ''),
+            spice_level: spiceLevel.levelOf(ex.spice_level),
             process: 'cancel',
             item_code: String(ex.item_sku || ''),
             unit: String(ex.item_unit || 'qty'),
@@ -9120,8 +9132,10 @@ class SalesRepository {
           quantity: parseFloat(ex.item_quantity || 0),
           name: String(ex.item_name || ''),
           /* Carried so a REMOVED line can still say which one it was. Two of
-             the same dish on one table are told apart by the note. */
+             the same dish on one table are told apart by the note, and by how
+             hot each of them was to be. */
           description: String(ex.item_description || ''),
+          spice_level: spiceLevel.levelOf(ex.spice_level),
           item_code: String(ex.item_sku || ''),
           price: parseFloat(ex.item_price || 0),
           unit: String(ex.item_unit || 'qty'),
@@ -9167,6 +9181,11 @@ class SalesRepository {
               ...(item.item_description != null
                 ? { item_description: String(item.item_description) }
                 : {}),
+              /* A KOT line the catalogue no longer holds still belongs to
+                 somebody who may have changed their mind about the chillies. */
+              ...(item.spice_level != null
+                ? { spice_level: spiceLevel.levelOf(item.spice_level) }
+                : {}),
             };
             incomingProductIds.push(productId);
           }
@@ -9191,6 +9210,16 @@ class SalesRepository {
             /* From the request first: an amendment carries the note the person
                just typed, and the stored copy is the one before it. */
             item_description: String(item.item_note || item.item_description || ''),
+            /*
+             * Same order for the spice level, and the stored line is read
+             * through existingIndex rather than oldItemsData because that map
+             * has had this id deleted from it a few lines above.
+             */
+            spice_level: spiceLevel.levelOf(
+              item.spice_level != null
+                ? item.spice_level
+                : (updatedItems[existingIndex[productId]] || {}).spice_level
+            ),
             process: changeProcess,
             item_code: String(itemDoc.itemid || ''),
             unit: String(itemDoc.item_unit || itemDoc.unit || 'qty'),
@@ -9236,6 +9265,11 @@ class SalesRepository {
           };
           if (item.item_description)
             updatedItems[i].item_description = String(item.item_description);
+          /* The ticket is printed from the change record above; THIS is what
+             the customer sees back on their own order and what a shop counts
+             later, so a change of mind has to land on both. */
+          if (item.spice_level != null)
+            updatedItems[i].spice_level = spiceLevel.levelOf(item.spice_level);
         } else {
           const itemQuantity = qty;
           const sellingPrice = price;
@@ -9287,6 +9321,7 @@ class SalesRepository {
             tax_amount: taxAmount,
             tax_fields: itemDoc.tax_fields || [],
             item_description: String(item.item_description || itemDoc.description || ''),
+            spice_level: spiceLevel.levelOf(item.spice_level),
             track_inventory: itemDoc.track_inventory || false,
             negative_stock: itemDoc.negative_stock || false,
           });
@@ -9302,6 +9337,7 @@ class SalesRepository {
           item_name: String(remItemData.name || ''),
           item_quantity: remQty,
           item_description: String(remItemData.description || ''),
+          spice_level: spiceLevel.levelOf(remItemData.spice_level),
           process: 'cancel',
           item_code: String(remItemData.item_code || ''),
           unit: String(remItemData.unit || 'qty'),
@@ -9688,6 +9724,20 @@ class SalesRepository {
         item_description: String(item.item_note || item.item_description || '')
           .trim()
           .slice(0, 200),
+        /*
+         * HOW HOT, AS A NUMBER AND NOT AS A SENTENCE.
+         *
+         * The obvious build appends "less spicy" to the note above, and it is
+         * wrong twice: a customer reading a Tamil menu writes Tamil, so the
+         * ticket carries prose the kitchen may misread, and prose cannot be
+         * counted afterwards. A level prints identically on every ticket
+         * whatever language the order was placed in, and a shop can learn that
+         * four orders in ten ask for mild.
+         *
+         * levelOf refuses anything that is not 1, 2 or 3, so a device sending
+         * nonsense gets no promise made about somebody's food.
+         */
+        spice_level: spiceLevel.levelOf(item.spice_level),
         // receipt-facing fields
         item_base_price: round(baseUnitPrice),
         item_quantity: qty,
@@ -9821,6 +9871,7 @@ class SalesRepository {
         name: String(line.item_name || line.name || ''),
         quantity: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0),
         note: String(line.item_description || ''),
+        spice: spiceLevel.levelOf(line.spice_level),
         total: Number(line.total != null ? line.total : line.item_total || 0),
       })),
       total: Number(order.total != null ? order.total : order.sales_total || 0),

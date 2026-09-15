@@ -1748,6 +1748,8 @@ class ItemRepository extends BaseModel {
          * Sync replaces whole documents, so all three are written on every
          * save or the next one deletes them.
          */
+        /* Whether a customer may say how hot they want it. */
+        spice_choice: Boolean(data.spice_choice),
         nutrition: dishFacts.cleanNutrition(data.nutrition),
         /* Only the one word means anything; everything else is a person. A
            client that omits it is the item screen, where a person is looking
@@ -3971,6 +3973,7 @@ class ItemRepository extends BaseModel {
             /* What is on the plate and what is in it. The health badges are
                NOT read - they are derived from these below, so a dish can
                never carry a claim its own nutrition contradicts. */
+            spice_choice: 1,
             nutrition: 1,
             nutrition_source: 1,
             food_tags: 1,
@@ -4458,6 +4461,7 @@ class ItemRepository extends BaseModel {
                 prep_minutes: '$prep_minutes',
                 /* What is on the plate and what is in it. Folded into
                    facts and CLAIMS below and do not travel raw. */
+                spice_choice: '$spice_choice',
                 nutrition: '$nutrition',
                 nutrition_source: '$nutrition_source',
                 food_tags: '$food_tags',

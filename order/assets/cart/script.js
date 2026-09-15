@@ -81,6 +81,31 @@ function showDestination() {
     let noteFor = "";
     const el = (id) => document.getElementById(id);
 
+    /*
+     * The same picker the dish sheet draws, from the same module.
+     *
+     * Nothing is written as it is tapped here, unlike on the dish sheet: this
+     * sheet has a Save button and a Cancel beside it, and a control that had
+     * already committed would make Cancel a lie.
+     */
+    /*
+     * Built once, on the first sheet that needs it, and never again.
+     *
+     * Lazily because cart.html loads its scripts in the HEAD: at the moment
+     * this file is parsed the dialog does not exist yet, and mounting into a
+     * null would have failed silently and left a dead picker that took taps
+     * and saved nothing. Once, because the sheet is one element reused for
+     * every dish - remounting per dish leaks a listener a dish.
+     */
+    let spicePicker = null;
+    function picker() {
+        const box = el("note-spice-box");
+        if (!spicePicker && box && window.PosnicSpice) {
+            spicePicker = window.PosnicSpice.mount(box, null);
+        }
+        return spicePicker;
+    }
+
     document.addEventListener("click", async (e) => {
         const btn = e.target && e.target.closest ? e.target.closest(".line-note-btn") : null;
         if (!btn) return;
@@ -90,6 +115,21 @@ function showDestination() {
         const line = (await getCartData()).find((row) => String(row.id) === noteFor);
         if (el("note-for")) el("note-for").textContent = line ? String(line.name || "") : "";
         if (el("note-text")) el("note-text").value = line && line.note ? line.note : "";
+        const spiceBox = el("note-spice-box");
+        if (spiceBox) {
+            spiceBox.hidden = !(line && line.spice_choice === true);
+            const p = picker();
+            if (p) p.set(line ? line.spice : 0);
+            /* Same reason as the dish sheet: "less spicy" as the first
+               example under a spice picker teaches people to type what they
+               could tap. */
+            const field = el("note-text");
+            if (field) {
+                field.placeholder = spiceBox.hidden
+                    ? t("Less spicy, no onion, extra gravy...")
+                    : t("No onion, extra gravy, cut in half...");
+            }
+        }
         if (typeof sheet.showModal === "function") sheet.showModal();
         else sheet.setAttribute("open", "open");
         if (el("note-text")) el("note-text").focus();
@@ -105,6 +145,10 @@ function showDestination() {
     document.addEventListener("click", async (e) => {
         if (!e.target) return;
         if (e.target.id === "note-save") {
+            /* Spice first, note second: both redraw the basket and the note
+               is the one whose redraw should be the last word. */
+            const p = picker();
+            if (p) await setCartItemSpice(noteFor, p.value());
             await setCartItemNote(noteFor, el("note-text") ? el("note-text").value : "");
             close();
         } else if (e.target.id === "note-cancel" || e.target.id === "note-sheet") {
