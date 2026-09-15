@@ -4451,6 +4451,51 @@
                                                             placeholder="Ex :- S (or leave blank)" data-t-placeholder="lang_ex_s_or_leave_blank">
                                                     </div>
                                                 </div>
+                                                <!--
+                                                    WHEN THE BILL NUMBER STARTS AGAIN AT ONE.
+                                                    India, CGST Rule 46(b): an invoice number is unique for a
+                                                    FINANCIAL year and may not exceed sixteen characters. The EU
+                                                    asks only for a sequential number, so this is a choice rather
+                                                    than a constant. Off until a shop picks one: turning it on
+                                                    restarts the series, which is a thing to do on the first day
+                                                    of a year and not on an upgrade. api/src/utils/bill-number.js
+                                                -->
+                                                <div class="row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="bill_number_reset" class="label-text-color">
+                                                            <lang class="lang_bill_number_year">Bill number year</lang>&nbsp;
+                                                            <span data-toggle="tooltip" data-placement="top" title=""
+                                                                data-original-title="Prints the year on every bill number and starts the count again when the year turns over.">
+                                                                <i class="feather icon-help-circle"></i>
+                                                            </span>
+                                                        </label>
+                                                        <select name="bill_number_reset" id="bill_number_reset"
+                                                            class="form-control border-control">
+                                                            <option value=""><lang class="lang_one_run_of_numbers_no_year">One run of numbers, no year</lang></option>
+                                                            <option value="financial"><lang class="lang_start_again_each_financial_year">Start again each financial year</lang></option>
+                                                            <option value="calendar"><lang class="lang_start_again_each_calendar_year">Start again each calendar year</lang></option>
+                                                        </select>
+                                                        <small class="form-text text-muted"><lang class="lang_turning_this_on_starts_the_numbering_again">Turning this on starts the numbering
+                                                            again at one. Best done on the first day of a year.</lang></small>
+                                                    </div>
+                                                    <div class="form-group col-md-6" id="bill_number_fy_start_month_row">
+                                                        <label for="bill_number_fy_start_month" class="label-text-color">
+                                                            <lang class="lang_financial_year_starts_in">Financial year starts in</lang>
+                                                        </label>
+                                                        <!--
+                                                            The months are filled in by settings.js from the
+                                                            browser's own calendar, in the language the page is
+                                                            in. Twelve month names in seventeen packs is a
+                                                            hundred and ninety-nine translations of something
+                                                            every browser already knows, and would be one more
+                                                            list to keep true. See fillFinancialYearMonths.
+                                                        -->
+                                                        <select name="bill_number_fy_start_month" id="bill_number_fy_start_month"
+                                                            class="form-control border-control"></select>
+                                                        <small class="form-text text-muted"><lang class="lang_april_in_india_january_in_much_of_the_eu">April in India, January in much of
+                                                            the EU.</lang></small>
+                                                    </div>
+                                                </div>
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <label for="allow_sale_date_edit" data-toggle="tooltip"

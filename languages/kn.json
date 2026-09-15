@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI ಪರವಾನಗಿ ಸಂಖ್ಯೆ",
   "lang_bill_print_fssai_hint": "ನಿಮ್ಮ GSTIN ಕೆಳಗೆ ಮುದ್ರಿತವಾಗುತ್ತದೆ. ಭಾರತದಲ್ಲಿ ಆಹಾರ ಉದ್ಯಮಗಳು ಇದನ್ನು ತೋರಿಸಬೇಕು.",
   "lang_fssai_number": "FSSAI ಪರವಾನಗಿ ಸಂಖ್ಯೆ",
-  "lang_fssai_number_hint": "ಇದನ್ನು ಮುದ್ರಿಸಲು ಮೇಲಿನ \"FSSAI ಪರವಾನಗಿ ಸಂಖ್ಯೆ\" ಆನ್ ಮಾಡಿ."
+  "lang_fssai_number_hint": "ಇದನ್ನು ಮುದ್ರಿಸಲು ಮೇಲಿನ \"FSSAI ಪರವಾನಗಿ ಸಂಖ್ಯೆ\" ಆನ್ ಮಾಡಿ.",
+  "lang_bill_number_year": "ಬಿಲ್ ಸಂಖ್ಯೆಯಲ್ಲಿ ವರ್ಷ",
+  "lang_one_run_of_numbers_no_year": "ಒಂದೇ ಸಂಖ್ಯೆಗಳ ಸರಣಿ, ವರ್ಷವಿಲ್ಲದೆ",
+  "lang_start_again_each_financial_year": "ಪ್ರತಿ ಆರ್ಥಿಕ ವರ್ಷಕ್ಕೆ ಮತ್ತೆ ಆರಂಭಿಸಿ",
+  "lang_start_again_each_calendar_year": "ಪ್ರತಿ ಕ್ಯಾಲೆಂಡರ್ ವರ್ಷಕ್ಕೆ ಮತ್ತೆ ಆರಂಭಿಸಿ",
+  "lang_turning_this_on_starts_the_numbering_again": "ಇದನ್ನು ಆನ್ ಮಾಡಿದರೆ ಸಂಖ್ಯೆ ಮತ್ತೆ ಒಂದರಿಂದ ಆರಂಭವಾಗುತ್ತದೆ. ವರ್ಷದ ಮೊದಲ ದಿನ ಮಾಡುವುದು ಉತ್ತಮ.",
+  "lang_financial_year_starts_in": "ಆರ್ಥಿಕ ವರ್ಷ ಆರಂಭವಾಗುವುದು",
+  "lang_april_in_india_january_in_much_of_the_eu": "ಭಾರತದಲ್ಲಿ ಏಪ್ರಿಲ್, ಯುರೋಪಿಯನ್ ಒಕ್ಕೂಟದ ಬಹುಪಾಲು ಕಡೆ ಜನವರಿ."
 }

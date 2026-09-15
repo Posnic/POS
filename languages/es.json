@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "Número de licencia FSSAI",
   "lang_bill_print_fssai_hint": "Se imprime bajo su GSTIN. En India se espera que los negocios de alimentos lo muestren.",
   "lang_fssai_number": "Número de licencia FSSAI",
-  "lang_fssai_number_hint": "Active arriba \"Número de licencia FSSAI\" para imprimirlo."
+  "lang_fssai_number_hint": "Active arriba \"Número de licencia FSSAI\" para imprimirlo.",
+  "lang_bill_number_year": "Año en el número de factura",
+  "lang_one_run_of_numbers_no_year": "Una sola serie de números, sin año",
+  "lang_start_again_each_financial_year": "Empezar de nuevo cada año fiscal",
+  "lang_start_again_each_calendar_year": "Empezar de nuevo cada año natural",
+  "lang_turning_this_on_starts_the_numbering_again": "Al activarlo, la numeración vuelve a empezar en uno. Mejor hacerlo el primer día del año.",
+  "lang_financial_year_starts_in": "El año fiscal empieza en",
+  "lang_april_in_india_january_in_much_of_the_eu": "Abril en la India, enero en gran parte de la UE."
 }

@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "Nomor lisensi FSSAI",
   "lang_bill_print_fssai_hint": "Dicetak di bawah GSTIN Anda. Usaha makanan di India diharapkan menampilkannya.",
   "lang_fssai_number": "Nomor lisensi FSSAI",
-  "lang_fssai_number_hint": "Nyalakan \"Nomor lisensi FSSAI\" di atas untuk mencetaknya."
+  "lang_fssai_number_hint": "Nyalakan \"Nomor lisensi FSSAI\" di atas untuk mencetaknya.",
+  "lang_bill_number_year": "Tahun pada nomor nota",
+  "lang_one_run_of_numbers_no_year": "Satu rangkaian nomor, tanpa tahun",
+  "lang_start_again_each_financial_year": "Mulai lagi setiap tahun buku",
+  "lang_start_again_each_calendar_year": "Mulai lagi setiap tahun kalender",
+  "lang_turning_this_on_starts_the_numbering_again": "Menyalakan ini membuat penomoran dimulai lagi dari satu. Sebaiknya dilakukan pada hari pertama tahun.",
+  "lang_financial_year_starts_in": "Tahun buku dimulai pada",
+  "lang_april_in_india_january_in_much_of_the_eu": "April di India, Januari di sebagian besar Uni Eropa."
 }

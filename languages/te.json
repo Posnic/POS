@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI లైసెన్స్ నంబర్",
   "lang_bill_print_fssai_hint": "మీ GSTIN కింద ముద్రితమవుతుంది. భారతదేశంలో ఆహార వ్యాపారాలు దీన్ని చూపాలి.",
   "lang_fssai_number": "FSSAI లైసెన్స్ నంబర్",
-  "lang_fssai_number_hint": "దీన్ని ముద్రించడానికి పైన ఉన్న \"FSSAI లైసెన్స్ నంబర్\" ఆన్ చేయండి."
+  "lang_fssai_number_hint": "దీన్ని ముద్రించడానికి పైన ఉన్న \"FSSAI లైసెన్స్ నంబర్\" ఆన్ చేయండి.",
+  "lang_bill_number_year": "బిల్లు నంబర్‌లో సంవత్సరం",
+  "lang_one_run_of_numbers_no_year": "ఒకే నంబర్ శ్రేణి, సంవత్సరం లేకుండా",
+  "lang_start_again_each_financial_year": "ప్రతి ఆర్థిక సంవత్సరం మళ్లీ మొదలుపెట్టు",
+  "lang_start_again_each_calendar_year": "ప్రతి క్యాలెండర్ సంవత్సరం మళ్లీ మొదలుపెట్టు",
+  "lang_turning_this_on_starts_the_numbering_again": "దీన్ని ఆన్ చేస్తే నంబరింగ్ మళ్లీ ఒకటి నుండి మొదలవుతుంది. సంవత్సరం మొదటి రోజున చేయడం మంచిది.",
+  "lang_financial_year_starts_in": "ఆర్థిక సంవత్సరం మొదలయ్యేది",
+  "lang_april_in_india_january_in_much_of_the_eu": "భారతదేశంలో ఏప్రిల్, యూరోపియన్ యూనియన్‌లో చాలా చోట్ల జనవరి."
 }

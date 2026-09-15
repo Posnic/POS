@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "رقم رخصة FSSAI",
   "lang_bill_print_fssai_hint": "يُطبع أسفل رقم GSTIN. يُتوقع من منشآت الأغذية في الهند إظهاره.",
   "lang_fssai_number": "رقم رخصة FSSAI",
-  "lang_fssai_number_hint": "شغّل \"رقم رخصة FSSAI\" أعلاه لطباعته."
+  "lang_fssai_number_hint": "شغّل \"رقم رخصة FSSAI\" أعلاه لطباعته.",
+  "lang_bill_number_year": "سنة رقم الفاتورة",
+  "lang_one_run_of_numbers_no_year": "تسلسل واحد للأرقام، بدون سنة",
+  "lang_start_again_each_financial_year": "البدء من جديد كل سنة مالية",
+  "lang_start_again_each_calendar_year": "البدء من جديد كل سنة ميلادية",
+  "lang_turning_this_on_starts_the_numbering_again": "تفعيل هذا الخيار يعيد الترقيم إلى واحد. يُفضل القيام به في أول يوم من السنة.",
+  "lang_financial_year_starts_in": "تبدأ السنة المالية في",
+  "lang_april_in_india_january_in_much_of_the_eu": "أبريل في الهند، ويناير في معظم دول الاتحاد الأوروبي."
 }

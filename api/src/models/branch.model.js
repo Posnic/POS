@@ -177,6 +177,30 @@ const branchSchema = new Schema(
     discount_amount: { type: Number },
     discount_percentage: { type: Number },
     sales_prefix: { type: String, default: 'S' },
+    /*
+     * WHEN THE BILL NUMBER STARTS AGAIN AT ONE, and whether the year is
+     * printed on it.
+     *
+     * Owner: "we need year pattern required in the sales bill number example
+     * attached have 26 in the year", and on the answer: "i accept
+     * recommandation and may configurable if people from EU and
+     * international."
+     *
+     * off        what every shop does today: one run, for ever
+     * financial  India, CGST Rule 46(b): unique for a FINANCIAL year
+     * calendar   most of the EU, where the year is the calendar one
+     *
+     * EMPTY BY DEFAULT, which means off. Ninety shops are mid-year with a
+     * running series on their invoices; switching them all over on an upgrade
+     * would change the shape of every bill number overnight and restart the
+     * count in the middle of a year, which is the one thing an auditor reads
+     * a series for. A shop turns it on, ideally on the first of its own year.
+     * See utils/bill-number.js.
+     */
+    bill_number_reset: { type: String, default: '' },
+    /* Which month a financial year begins in, 1-12. India is April; a shop on
+       the calendar year sets `bill_number_reset` to `calendar` instead. */
+    bill_number_fy_start_month: { type: Number, default: 4 },
     receiving_prefix: { type: String, default: 'RID' },
 
     smstype: { type: String },
@@ -312,6 +336,8 @@ class BranchModel {
       roundOff: { type: 'String', select: true },
       sales_mail: { type: 'String', select: true },
       sales_prefix: { type: 'String', select: true },
+      bill_number_reset: { type: 'String', select: true },
+      bill_number_fy_start_month: { type: 'Number', select: true },
       sales_sms: { type: 'String', select: true },
       auto_sms: { type: 'String', select: true },
       server_dateformat: { type: 'String', select: true },
@@ -1070,6 +1096,9 @@ class BranchModel {
         discount_amount: 0,
         discount_percentage: 0.0,
         sales_prefix: 'S',
+        /* Off, which is what every existing shop does. See the schema. */
+        bill_number_reset: '',
+        bill_number_fy_start_month: 4,
         receiving_prefix: 'RID',
         auto_sms: false, // Default to false or from session settings
         sales_sms: false,

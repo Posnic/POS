@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "เลขที่ใบอนุญาต FSSAI",
   "lang_bill_print_fssai_hint": "พิมพ์ใต้ GSTIN ของคุณ ธุรกิจอาหารในอินเดียต้องแสดงเลขนี้",
   "lang_fssai_number": "เลขที่ใบอนุญาต FSSAI",
-  "lang_fssai_number_hint": "เปิด \"เลขที่ใบอนุญาต FSSAI\" ด้านบนเพื่อพิมพ์"
+  "lang_fssai_number_hint": "เปิด \"เลขที่ใบอนุญาต FSSAI\" ด้านบนเพื่อพิมพ์",
+  "lang_bill_number_year": "ปีในเลขที่ใบเสร็จ",
+  "lang_one_run_of_numbers_no_year": "เลขชุดเดียวต่อเนื่อง ไม่มีปี",
+  "lang_start_again_each_financial_year": "เริ่มใหม่ทุกปีบัญชี",
+  "lang_start_again_each_calendar_year": "เริ่มใหม่ทุกปีปฏิทิน",
+  "lang_turning_this_on_starts_the_numbering_again": "เมื่อเปิดใช้ การนับเลขจะเริ่มใหม่ที่หนึ่ง ควรทำในวันแรกของปี",
+  "lang_financial_year_starts_in": "ปีบัญชีเริ่มในเดือน",
+  "lang_april_in_india_january_in_much_of_the_eu": "เดือนเมษายนในอินเดีย เดือนมกราคมในกลุ่มสหภาพยุโรปส่วนใหญ่"
 }

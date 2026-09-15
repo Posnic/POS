@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "Nambari ya leseni ya FSSAI",
   "lang_bill_print_fssai_hint": "Huchapishwa chini ya GSTIN yako. Biashara za chakula India zinatakiwa kuionyesha.",
   "lang_fssai_number": "Nambari ya leseni ya FSSAI",
-  "lang_fssai_number_hint": "Washa \"Nambari ya leseni ya FSSAI\" hapo juu ili kuichapisha."
+  "lang_fssai_number_hint": "Washa \"Nambari ya leseni ya FSSAI\" hapo juu ili kuichapisha.",
+  "lang_bill_number_year": "Mwaka katika namba ya bili",
+  "lang_one_run_of_numbers_no_year": "Mfululizo mmoja wa namba, bila mwaka",
+  "lang_start_again_each_financial_year": "Anza upya kila mwaka wa fedha",
+  "lang_start_again_each_calendar_year": "Anza upya kila mwaka wa kalenda",
+  "lang_turning_this_on_starts_the_numbering_again": "Ukiwasha hii, namba zitaanza upya kutoka moja. Ni bora kufanya hivi siku ya kwanza ya mwaka.",
+  "lang_financial_year_starts_in": "Mwaka wa fedha huanza",
+  "lang_april_in_india_january_in_much_of_the_eu": "Aprili nchini India, Januari katika sehemu kubwa ya Umoja wa Ulaya."
 }
