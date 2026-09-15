@@ -169,6 +169,86 @@ describe('a dish the shop prices on the day', () => {
   });
 });
 
+describe('the trading day, which starts at seven', () => {
+  /*
+   * Owner: "daily price starts in the morning only. means 7am. not midnight
+   * coz up to 1am restaurant might open."
+   *
+   * A calendar day expires a shop's prices in the middle of its service. These
+   * are the hours that actually decide it, with the clock held still so the
+   * suite does not answer differently depending on when it runs - which it did:
+   * a test written as "two hours ago" went red at one in the morning.
+   */
+  const at = (iso) => new Date(iso);
+  let clock;
+
+  const freeze = (iso) => {
+    clock = jest
+      .spyOn(global, 'Date')
+      .mockImplementation((...args) => (args.length ? new RealDate(...args) : new RealDate(iso)));
+    global.Date.now = () => new RealDate(iso).getTime();
+    global.Date.parse = RealDate.parse;
+    global.Date.UTC = RealDate.UTC;
+  };
+
+  const RealDate = Date;
+
+  afterEach(() => {
+    if (clock) clock.mockRestore();
+    clock = null;
+  });
+
+  const priceable = async (setOn) => {
+    const doc = await anItem({ selling_price: 900, daily_price: true, price_set_on: setOn });
+    return price(doc, { item_id: String(doc._id), item_quantity: 1 });
+  };
+
+  test('a price set at eleven is still the price at eleven at night', async () => {
+    freeze('2026-09-14T17:30:00Z'); /* 23:00 IST */
+    const out = await priceable(at('2026-09-14T05:30:00Z')); /* 11:00 IST */
+    expect(out.status).not.toBe(false);
+    expect(out.line.unit_price).toBe(900);
+  });
+
+  test('and still the price at half past midnight, mid service', async () => {
+    /*
+     * THE CASE THIS EXISTS FOR. On a calendar day the shop's own prices expire
+     * here - every fish reads as yesterday's while the kitchen is still
+     * cooking, and the till refuses them until somebody retypes the lot.
+     */
+    freeze('2026-09-14T19:00:00Z'); /* 00:30 IST on the 15th */
+    const out = await priceable(at('2026-09-14T05:30:00Z')); /* 11:00 IST on the 14th */
+    expect(out.status).not.toBe(false);
+    expect(out.line.unit_price).toBe(900);
+  });
+
+  test('at half past six in the morning it is still yesterday, just', async () => {
+    freeze('2026-09-15T01:00:00Z'); /* 06:30 IST */
+    const out = await priceable(at('2026-09-14T05:30:00Z'));
+    expect(out.status).not.toBe(false);
+  });
+
+  test('at seven it is a new day and the price must be set again', async () => {
+    /* The shop is opening. This is the moment the question is useful rather
+       than an interruption. */
+    freeze('2026-09-15T01:35:00Z'); /* 07:05 IST */
+    const out = await priceable(at('2026-09-14T05:30:00Z'));
+    expect(out.status).toBe(false);
+    expect(out.data.state).toBe('item_needs_price');
+  });
+
+  test('a price set after midnight belongs to the day that is still running', async () => {
+    /*
+     * A shop that re-prices at one in the morning, during service. That is the
+     * same trading day it has been serving since the morning, so the price
+     * holds until seven - not for five minutes until an arbitrary boundary.
+     */
+    freeze('2026-09-14T22:00:00Z'); /* 03:30 IST on the 15th */
+    const out = await priceable(at('2026-09-14T19:30:00Z')); /* 01:00 IST on the 15th */
+    expect(out.status).not.toBe(false);
+  });
+});
+
 describe('the daily_price flag', () => {
   /*
    * The contract: `daily_price` says this dish is priced from the morning's

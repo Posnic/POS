@@ -175,16 +175,39 @@
    *
    * An absent or unreadable date is "not today": the safe way round.
    */
+  /*
+   * THE TRADING DAY STARTS AT SEVEN IN THE MORNING, NOT AT MIDNIGHT.
+   *
+   * Owner: "daily price starts in the morning only. means 7am. not midnight
+   * coz up to 1am restaurant might open."
+   *
+   * A restaurant sets its prices when it opens and serves until one. On a
+   * calendar day those prices expire in the middle of service. Shifting the
+   * clock back seven hours before the date is read moves the boundary into the
+   * dead hour: a price entered at 11am is still current at half past midnight,
+   * and goes stale at 7am when the shop is opening anyway.
+   *
+   * The same seven as the till and the other screens. All four ask this
+   * question separately and must answer it the same way.
+   */
+  var DAY_STARTS_AT_HOUR = 7;
+
+  function tradingDay(d) {
+    var shifted = new Date(d.getTime() - DAY_STARTS_AT_HOUR * 60 * 60 * 1000);
+    return (
+      shifted.getFullYear() +
+      "-" +
+      (shifted.getMonth() + 1) +
+      "-" +
+      shifted.getDate()
+    );
+  }
+
   function pricedToday(setOn) {
     if (!setOn) return false;
     var when = new Date(setOn);
     if (isNaN(when.getTime())) return false;
-    var now = new Date();
-    return (
-      when.getFullYear() === now.getFullYear() &&
-      when.getMonth() === now.getMonth() &&
-      when.getDate() === now.getDate()
-    );
+    return tradingDay(when) === tradingDay(new Date());
   }
 
   function money(amount) {
