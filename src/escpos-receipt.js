@@ -192,6 +192,9 @@ class Receipt {
          * unchanged.
          */
         rate: ascii(r.rate == null ? '' : r.rate),
+        /* OPTIONAL, like the rate. A tax invoice in India may need the HSN or
+           SAC code per line; a counter receipt never does. */
+        hsn: ascii(r.hsn == null ? '' : r.hsn),
         value,
         unit,
         amount: ascii(r.amount == null ? '' : r.amount),
@@ -203,6 +206,7 @@ class Receipt {
           {
             name: ascii(header.name),
             rate: ascii(header.rate == null ? '' : header.rate),
+            hsn: ascii(header.hsn == null ? '' : header.hsn),
             ...split(header.qty),
             amount: ascii(header.amount),
           },
@@ -218,13 +222,15 @@ class Receipt {
      */
     const anyRate = cells.some((c) => c.rate);
     const rateW = anyRate ? widest((c) => c.rate) : 0;
+    const anyHsn = cells.some((c) => c.hsn);
+    const hsnW = anyHsn ? widest((c) => c.hsn) : 0;
     const qtyW = widest((c) => c.value);
     const unitW = widest((c) => c.unit);
     const amtW = widest((c) => c.amount);
 
     /* One gutter before each column that is actually present. */
-    const gutters = (rateW ? 1 : 0) + 1 + (unitW ? 1 : 0) + 1;
-    const nameW = this.width - rateW - qtyW - unitW - amtW - gutters;
+    const gutters = (hsnW ? 1 : 0) + (rateW ? 1 : 0) + 1 + (unitW ? 1 : 0) + 1;
+    const nameW = this.width - hsnW - rateW - qtyW - unitW - amtW - gutters;
 
     /*
      * If the numbers leave the name no usable room - a narrow roll, or prices
@@ -240,6 +246,9 @@ class Receipt {
       /* Rate before quantity, the way a bill is read: this many, at this
          price, comes to this. */
       const parts = [];
+      /* Code, then price, then how many - the order the reference invoice uses
+         and the order a line is read in. */
+      if (hsnW) parts.push(c.hsn.padStart(hsnW));
       if (rateW) parts.push(c.rate.padStart(rateW));
       parts.push(c.value.padStart(qtyW));
       if (unitW) parts.push(c.unit.padEnd(unitW));
@@ -275,6 +284,7 @@ class Receipt {
       render({
         name: ascii(header.name),
         rate: ascii(header.rate == null ? '' : header.rate),
+        hsn: ascii(header.hsn == null ? '' : header.hsn),
         ...split(header.qty),
         amount: ascii(header.amount),
       });
@@ -351,6 +361,9 @@ function renderSale(sale, options = {}) {
   if (sale.storePhone) r.centre(sale.storePhone);
   if (sale.storeEmail) r.centre(sale.storeEmail);
   if (sale.gstin) r.centre('GSTIN: ' + sale.gstin);
+  /* A food business in India shows its FSSAI licence on the invoice. Printed
+     under the GSTIN, where the owner's own reference bill puts it. */
+  if (sale.fssai) r.centre('FSSAI: ' + sale.fssai);
   r.rule();
 
   /*
@@ -381,6 +394,13 @@ function renderSale(sale, options = {}) {
   if (sale.source) r.line('From: ' + sale.source);
   // A walk-in sale has no customer, and a blank name line reads as a fault.
   for (const c of sale.customer || []) r.line(c);
+
+  /*
+   * Which service, which table, who took it - in the header, where a bill is
+   * read. Each one is a per-shop switch and the list is empty unless a shop
+   * turned something on, so nothing moves for anybody who has not asked.
+   */
+  for (const row of sale.serviceRows || []) r.pair(row.label, row.value);
   r.rule();
 
   /*
@@ -408,11 +428,12 @@ function renderSale(sale, options = {}) {
   r.itemTable(
     (sale.items || []).map((it) => ({
       name: it.name,
+      hsn: it.hsn,
       rate: it.rate,
       qty: it.qty,
       amount: money(it.amount),
     })),
-    { name: 'ITEM', rate: 'RATE', qty: 'QTY', amount: 'AMOUNT' },
+    { name: 'ITEM', hsn: 'HSN', rate: 'RATE', qty: 'QTY', amount: 'AMOUNT' },
     { afterHeader: (rec) => rec.rule() },
   );
 

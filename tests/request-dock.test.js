@@ -530,3 +530,43 @@ test('every word on the dock can be translated', () => {
     assert.ok(english[key] !== undefined, `${key} is not collected, so no pack can carry it`);
   }
 });
+
+test('a number nobody can ring never reaches the queue', () => {
+  /*
+   * Owner's screenshot of the order queue: a row reading "+91null".
+   *
+   * The customer pages cannot build that any more - the read that made it now
+   * refuses the stored word "null" - but orders taken before that fix still
+   * carry it, and a device we do not control could send one tomorrow. A guard
+   * only at the writer fixes neither.
+   *
+   * The bill already answered this, and answered it well: isDialable asks
+   * "could this be dialled" rather than "is this Indian", so it is right for
+   * a shop in Puducherry and for one anywhere else. The queue simply was not
+   * asking. On this screen it matters more than on a bill, because somebody
+   * may try to ring it.
+   */
+  const { isDialable } = require('../api/src/helpers/bill-payload');
+
+  for (const junk of ['+91null', 'null', 'undefined', '', '   ', '0000000000', '12', null, undefined]) {
+    assert.strictEqual(isDialable(junk), false, `${junk} was offered as a phone number`);
+  }
+  for (const real of ['9876543210', '+919876543210', ' 98765 43210 ']) {
+    assert.strictEqual(isDialable(real), true, `${real} was thrown away`);
+  }
+
+  /* And the queue asks it, rather than passing the stored value straight on. */
+  const REPO = fs.readFileSync(
+    path.join(ROOT, 'api', 'src', 'repositories', 'sale.repository.js'),
+    'utf8'
+  );
+  /* Bounded by where the method ENDS, not by a character count. A 5000-char
+     window was tried and the line sits at 5080; the same brittleness that
+     has already failed twice in this repository on code that was correct. */
+  const queue = methodBody(REPO, 'async pendingOnlineOrders');
+  assert.match(
+    queue,
+    /customer_phone: isDialable\(row\.customer_phone\)/,
+    'the queue passes the stored number through without asking'
+  );
+});

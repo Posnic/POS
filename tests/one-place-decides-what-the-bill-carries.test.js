@@ -42,6 +42,9 @@ const SWITCHES = [
   'bill_print_steward',
   'bill_print_total_qty',
   'bill_print_source',
+  'bill_print_session',
+  'bill_print_hsn',
+  'bill_print_fssai',
 ];
 
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
@@ -80,21 +83,37 @@ test('EVERY SWITCH SURVIVES ALL FIVE LINKS OF THE CHAIN', () => {
 
 const A_TABLE_SALE = {
   sales_id: 'SB1D15-000009',
+  date: new Date(2026, 8, 14, 19, 55),
   table_number: '16',
   dine_type: 'Dine In',
   person_count: 1,
   created_by: 'Sriram',
   channel: 'tableside',
-  items: [{ name: 'Malabar Paratha', item_quantity: 4, item_base_price: 100 }],
+  items: [{ name: 'Malabar Paratha', item_quantity: 4, item_base_price: 100, hsncode: '996332' }],
   sales_sub_total: 400,
   sales_total: 400,
+};
+
+/* What each switch needs on the SHOP before it can print anything. A switch
+   turned on for data the shop has not got must print nothing, which is a
+   different test - this one proves the switch is wired at all. */
+const SHOP_DATA = {
+  bill_print_fssai: { branch_fssai_number: '12415013000025' },
+  bill_print_session: {
+    menu_dayparts: [{ id: 'dinner', name: 'Dinner', hours: [{ from: '19:00', to: '23:30' }] }],
+  },
 };
 
 test('a shop that has never opened this card sees no change at all', () => {
   /* The direction that matters. 90 shops print today; a default of on would put
      six new rows on every one of their bills the morning this deploys. */
-  assert.deepStrictEqual(buildBillPayload(A_TABLE_SALE, {}).extras, []);
-  assert.strictEqual(buildBillPayload(A_TABLE_SALE, {}).source, '');
+  const bill = buildBillPayload(A_TABLE_SALE, {});
+  assert.deepStrictEqual(bill.serviceRows, []);
+  assert.strictEqual(bill.source, '');
+  assert.strictEqual(bill.fssai, '');
+  assert.deepStrictEqual(bill.items.map((i) => i.hsn), ['']);
+  /* extras stays what it always was: rows a shop's own template added. */
+  assert.deepStrictEqual(bill.extras, []);
 });
 
 test('every switch actually changes the bill when it is turned on', () => {
@@ -104,8 +123,12 @@ test('every switch actually changes the bill when it is turned on', () => {
    */
   const dead = [];
   for (const key of SWITCHES) {
-    const bill = buildBillPayload(A_TABLE_SALE, { [key]: true });
-    const changed = bill.extras.length > 0 || bill.source !== '';
+    const bill = buildBillPayload(A_TABLE_SALE, { [key]: true, ...(SHOP_DATA[key] || {}) });
+    const changed =
+      bill.serviceRows.length > 0 ||
+      bill.source !== '' ||
+      bill.fssai !== '' ||
+      bill.items.some((i) => i.hsn);
     if (!changed) dead.push(key);
   }
   assert.deepStrictEqual(dead, [], 'switches that print nothing when on');

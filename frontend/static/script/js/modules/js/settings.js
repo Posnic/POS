@@ -1241,6 +1241,10 @@ if ($wrapper.length) {
                 (data.bill_print_steward === true) ? $('#bill_print_steward').prop("checked", true).attr('checked', 'checked') : $('#bill_print_steward').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.bill_print_total_qty === true) ? $('#bill_print_total_qty').prop("checked", true).attr('checked', 'checked') : $('#bill_print_total_qty').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.bill_print_source === true) ? $('#bill_print_source').prop("checked", true).attr('checked', 'checked') : $('#bill_print_source').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_session === true) ? $('#bill_print_session').prop("checked", true).attr('checked', 'checked') : $('#bill_print_session').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_hsn === true) ? $('#bill_print_hsn').prop("checked", true).attr('checked', 'checked') : $('#bill_print_hsn').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_fssai === true) ? $('#bill_print_fssai').prop("checked", true).attr('checked', 'checked') : $('#bill_print_fssai').prop("checked", false).attr('unchecked', 'unchecked');
+                $('#branch_fssai_number').val(data.branch_fssai_number || '');
                 if (data.country === 'India') {
                     $('.branch-gstin-hide-show').show();
                     $('.hide_indian_gst').show();
@@ -2109,6 +2113,10 @@ if ($wrapper.length) {
                 bill_print_steward: ($('#bill_print_steward').is(":checked")) ? 'true' : 'false',
                 bill_print_total_qty: ($('#bill_print_total_qty').is(":checked")) ? 'true' : 'false',
                 bill_print_source: ($('#bill_print_source').is(":checked")) ? 'true' : 'false',
+                bill_print_session: ($('#bill_print_session').is(":checked")) ? 'true' : 'false',
+                bill_print_hsn: ($('#bill_print_hsn').is(":checked")) ? 'true' : 'false',
+                bill_print_fssai: ($('#bill_print_fssai').is(":checked")) ? 'true' : 'false',
+                branch_fssai_number: $('#branch_fssai_number').val(),
                 keyboard_view: ($('#keyboard_view').is(":checked")) ? 'true' : 'false',
                 whatsapp_receipt: ($('#whatsapp_receipt').is(":checked")) ? 'true' : 'false',
                 balance_view: true,

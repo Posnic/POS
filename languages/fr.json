@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "{n} plats ont été estimés et ne figurent sur aucune carte.",
   "lang_no_badges_earned": "aucune mention",
   "lang_nothing_waiting_to_check": "Rien n'attend d'être vérifié ici.",
-  "lang_review_what": "Ces valeurs ont été estimées d'après le nom du plat et ne figurent sur aucune carte. Confirmer un plat publie les mentions affichées à côté. Aucun chiffre n'est modifié ici : ouvrez le plat pour corriger quoi que ce soit."
+  "lang_review_what": "Ces valeurs ont été estimées d'après le nom du plat et ne figurent sur aucune carte. Confirmer un plat publie les mentions affichées à côté. Aucun chiffre n'est modifié ici : ouvrez le plat pour corriger quoi que ce soit.",
+  "lang_14_digits": "14 chiffres",
+  "lang_bill_print_session": "Service",
+  "lang_bill_print_session_hint": "Déjeuner ou dîner, d'après les horaires de service déjà définis pour la carte.",
+  "lang_bill_print_hsn": "Code HSN / SAC",
+  "lang_bill_print_hsn_hint": "Une colonne à côté de chaque plat. Seules les lignes qui ont un code l'affichent.",
+  "lang_bill_print_fssai": "Numéro de licence FSSAI",
+  "lang_bill_print_fssai_hint": "Imprimé sous votre GSTIN. En Inde, les entreprises alimentaires doivent l'afficher.",
+  "lang_fssai_number": "Numéro de licence FSSAI",
+  "lang_fssai_number_hint": "Activez « Numéro de licence FSSAI » ci-dessus pour l'imprimer."
 }

@@ -93,7 +93,7 @@ function qtyText(value) {
  * the bill. Anything with no name is skipped too - it cannot be read on paper
  * and its amount is already inside the total.
  */
-function itemLines(sale) {
+function itemLines(sale, branch) {
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
   return rows
     .filter((it) => it && !it.return && String(it.name || it.item_name || '').trim())
@@ -128,6 +128,16 @@ function itemLines(sale) {
       );
       return {
         name: String(it.name || it.item_name).trim(),
+        /*
+         * The HSN or SAC code, when the shop asks for it.
+         *
+         * Read off the SALE, not the catalogue: a code corrected next month
+         * must not change what a reprinted invoice says it charged. Empty on
+         * every sale made before the field existed, and the column is dropped
+         * entirely when no line carries one - so switching it on does not add a
+         * blank stripe down a year of old bills.
+         */
+        hsn: wants(branch, 'bill_print_hsn') ? String(it.hsncode || '').trim() : '',
         rate: rate > 0 ? rate.toFixed(2) : '',
         qty: qtyText(qty),
         amount: Math.round(rate * qty * 100) / 100,
@@ -313,6 +323,55 @@ function customerLines(sale) {
   return out;
 }
 
+/*
+ * WHICH SERVICE THIS BILL BELONGS TO: lunch, dinner, breakfast.
+ *
+ * The owner's reference bill prints "Session : Dinner", and a hotel uses it to
+ * settle which service a table belongs to when a shift is handed over.
+ *
+ * Read from the dayparts the shop has ALREADY defined for its menu, rather
+ * than from a new list of times. A shop that has said "Lunch is 12 to 3" once
+ * should not have to say it again in different words for the bill, and two
+ * lists that can disagree is how a bill comes to say Dinner while the kitchen
+ * is serving lunch.
+ *
+ * Absent when the sale falls outside every daypart, or when the shop has
+ * defined none. A guess would be worse than a blank.
+ */
+function sessionName(sale, branch) {
+  const parts = Array.isArray(branch && branch.menu_dayparts) ? branch.menu_dayparts : [];
+  if (!parts.length) return '';
+
+  const when = sale && (sale.date || sale.created_at);
+  const d = when ? new Date(when) : new Date();
+  if (Number.isNaN(d.getTime())) return '';
+  const minutes = d.getHours() * 60 + d.getMinutes();
+
+  for (const part of parts) {
+    const hours = Array.isArray(part && part.hours) ? part.hours : [];
+    for (const span of hours) {
+      const from = toMinutes(span && span.from);
+      const to = toMinutes(span && span.to);
+      if (from == null || to == null) continue;
+      /* A span that ends before it starts crosses midnight - dinner running to
+         one in the morning is a real service, not bad data. */
+      const inside = from <= to ? minutes >= from && minutes < to : minutes >= from || minutes < to;
+      if (inside) return String(part.name || '').trim();
+    }
+  }
+  return '';
+}
+
+/** "19:30" as minutes past midnight, or null if it is not a time. */
+function toMinutes(text) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(text || '').trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
 /**
  * The rows that are neither items nor totals: which table this is, how many
  * people are at it, who took the order, how many dishes in all.
@@ -334,6 +393,7 @@ function extraRows(sale, branch, items) {
     if (text && wants(branch, key)) out.push({ label, value: text });
   };
 
+  add('bill_print_session', 'Session', sessionName(sale, branch));
   add('bill_print_table', 'Table', sale && sale.table_number);
   add('bill_print_dine_type', 'Order type', sale && sale.dine_type);
   /* Covers is a count, so an explicit zero is as absent as a blank: nobody
@@ -368,7 +428,7 @@ function extraRows(sale, branch, items) {
  *                        guest their bill over a cosmetic failure.
  */
 function buildBillPayload(sale = {}, branch = {}) {
-  const items = itemLines(sale);
+  const items = itemLines(sale, branch);
   const subTotal =
     sale.sales_sub_total != null && sale.sales_sub_total !== ''
       ? num(sale.sales_sub_total)
@@ -384,6 +444,17 @@ function buildBillPayload(sale = {}, branch = {}) {
     storePhone: phones.join(' / '),
     storeEmail: String(branch.store_email || '').trim(),
     gstin: String(branch.branch_gstin_number || '').trim(),
+
+    /*
+     * FSSAI licence number.
+     *
+     * A food business in India is expected to show its FSSAI licence on the
+     * invoice, and the owner's own reference bill from a hotel restaurant
+     * prints it under the GSTIN. A switch rather than automatic, because a
+     * shop that is not a food business has no licence to print and a blank
+     * label reads as a fault.
+     */
+    fssai: wants(branch, 'bill_print_fssai') ? String(branch.branch_fssai_number || '').trim() : '',
 
     /* Not "RECEIPT" and not "TAX INVOICE". Nobody has paid yet, and calling it
        either would be a document this shop has not issued. */
@@ -413,10 +484,17 @@ function buildBillPayload(sale = {}, branch = {}) {
     /* No payments row: the whole point of this document is that it has not
        been paid. The counter prints the settled receipt afterwards. */
     /*
-     * Table, order type, covers, steward, total quantity: every one a switch,
-     * every one off unless the shop turned it on. See extraRows.
+     * Session, table, order type, covers, steward, total quantity: every one a
+     * switch, every one off unless the shop turned it on. See extraRows.
+     *
+     * Its OWN field, printed in the header before the dishes, because that is
+     * where a bill is read: the owner's reference invoice puts Session, Table
+     * and Steward beside the bill number at the top, and a waiter carrying it
+     * needs the table before anything else. `extras` stays what it was - rows
+     * a shop's own template added, which belong after the total.
      */
-    extras: extraRows(sale, branch, items),
+    serviceRows: extraRows(sale, branch, items),
+    extras: [],
   };
 }
 

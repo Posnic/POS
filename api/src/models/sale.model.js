@@ -951,6 +951,19 @@ saleSchema.pre('save', async function () {
         supplier_id: src.supplier_id != null ? src.supplier_id : undefined,
         supplier_name: src.supplier_name != null ? src.supplier_name : '',
         item_description: src.item_description != null ? src.item_description : '',
+        /*
+         * The HSN or SAC code this line was billed under.
+         *
+         * Carried onto the SALE rather than looked up from the item when a
+         * bill prints. A code can be corrected on the catalogue next month,
+         * and a tax invoice reprinted afterwards has to say what was charged
+         * at the time - a bill that quietly changes its own tax classification
+         * on reprint is the kind of thing an audit finds.
+         *
+         * Empty for every sale made before this existed, which is why the
+         * column only appears when a line actually carries one.
+         */
+        hsncode: src.hsncode != null ? String(src.hsncode) : '',
         modifiers: Array.isArray(src.modifiers) && src.modifiers.length ? src.modifiers : undefined,
         tax_components:
           Array.isArray(src.tax_components) && src.tax_components.length

@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "تم تقدير {n} طبقًا وهي ليست على أي قائمة بعد.",
   "lang_no_badges_earned": "لا شارات",
   "lang_nothing_waiting_to_check": "لا شيء هنا بانتظار المراجعة.",
-  "lang_review_what": "قُدّرت هذه من أسماء الأطباق وهي ليست على أي قائمة بعد. تأكيد طبق ينشر الشارات المعروضة بجانبه. لا يتغير أي رقم هنا: افتح الطبق لتصحيح أي شيء."
+  "lang_review_what": "قُدّرت هذه من أسماء الأطباق وهي ليست على أي قائمة بعد. تأكيد طبق ينشر الشارات المعروضة بجانبه. لا يتغير أي رقم هنا: افتح الطبق لتصحيح أي شيء.",
+  "lang_14_digits": "14 رقمًا",
+  "lang_bill_print_session": "الوجبة",
+  "lang_bill_print_session_hint": "الغداء أو العشاء، من أوقات التقديم التي ضبطتها للقائمة.",
+  "lang_bill_print_hsn": "رمز HSN / SAC",
+  "lang_bill_print_hsn_hint": "عمود بجانب كل صنف. تظهر الأصناف التي لها رمز فقط.",
+  "lang_bill_print_fssai": "رقم رخصة FSSAI",
+  "lang_bill_print_fssai_hint": "يُطبع أسفل رقم GSTIN. يُتوقع من منشآت الأغذية في الهند إظهاره.",
+  "lang_fssai_number": "رقم رخصة FSSAI",
+  "lang_fssai_number_hint": "شغّل \"رقم رخصة FSSAI\" أعلاه لطباعته."
 }

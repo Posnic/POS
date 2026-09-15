@@ -11,6 +11,33 @@ const { notifyKotReady } = require('../helpers/kot-notify');
 const { notifyBillRequested } = require('../helpers/bill-notify');
 const { queuePrintJob } = require('./print-job.repository');
 const { buildBillPayload, isDialable } = require('../helpers/bill-payload');
+
+/*
+ * The shop, plus the dayparts if the bill is going to name the service.
+ *
+ * Dayparts live in the settings collection, not on the branch, because they
+ * were defined for the menu. The bill reuses them rather than asking a shop to
+ * write out "Lunch is 12 to 3" a second time in different words - two lists
+ * that can disagree is how a bill comes to say Dinner while the kitchen is
+ * serving lunch.
+ *
+ * Only read when the switch is on, so a shop that does not print the session
+ * pays nothing for it. A failure is not fatal: a bill with no session line is
+ * still a bill.
+ */
+async function withDayparts(shop) {
+  const on = shop && (shop.bill_print_session === true || shop.bill_print_session === 'true');
+  if (!on) return shop;
+  try {
+    const settings = await new BaseModel('settings').getCollection('settings');
+    const doc = await settings.findOne({ menu_dayparts: { $exists: true } });
+    return { ...shop, menu_dayparts: (doc && doc.menu_dayparts) || [] };
+  } catch (e) {
+    console.error('Could not read the dayparts for the bill session:', e && e.message);
+    return shop;
+  }
+}
+
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const StockLogsRepository = require('./stock-log.repository');
@@ -7283,7 +7310,7 @@ class SalesRepository {
                * empty item table and a total of 0.00. helpers/bill-payload.js
                * has the full account.
                */
-              payload: buildBillPayload(sale, shop),
+              payload: buildBillPayload(sale, await withDayparts(shop)),
             });
           }
         }
@@ -7366,9 +7393,10 @@ class SalesRepository {
         console.error('Could not read the shop for the bill header:', e && e.message);
       }
 
+      const withParts = await withDayparts(shop);
       const forThePrinter = sales.map((sale) => ({
         _id: sale._id,
-        ...buildBillPayload(sale, shop),
+        ...buildBillPayload(sale, withParts),
       }));
 
       return { status: true, message: 'success', data: forThePrinter };
@@ -8536,7 +8564,22 @@ class SalesRepository {
           total: Number(row.total) || 0,
           delivery_fee: Number(row.delivery_fee) || 0,
           note: row.notes || '',
-          customer_phone: row.customer_phone || '',
+          /*
+           * A NUMBER NOBODY CAN RING IS NOT INFORMATION.
+           *
+           * Owner's screenshot of this queue: a row reading "+91null". The
+           * customer pages cannot write that any more - the read that built
+           * it now refuses the word - but orders taken before that fix still
+           * carry it, and a device we do not control could send one tomorrow.
+           *
+           * The bill already answers this, and answers it the right way:
+           * isDialable asks "could this be dialled" rather than "is this
+           * Indian", so it is right for Puducherry and for anywhere else.
+           * The queue was simply not asking. Printing a number nobody can
+           * ring is worse than printing nothing, because it looks like
+           * information - and on this screen somebody may try to ring it.
+           */
+          customer_phone: isDialable(row.customer_phone) ? String(row.customer_phone) : '',
           customer_name: row.customer_name || '',
           customer_address: row.customer_address || '',
           person_count: Number(row.person_count) || 0,
