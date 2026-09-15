@@ -2,6 +2,7 @@ const { BrowserWindow, app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { kotJobKey, kotFallbackKey } = require('./kot-job-key');
 const os = require('os');
 /* Windows uses SumatraPDF via pdf-to-printer; everything else uses CUPS.
    This used to call pdf-to-printer directly, which is Windows-only, so a
@@ -549,14 +550,19 @@ class KOTManager {
 
         if (printJobs && printJobs.length > 0) {
           for (const job of printJobs) {
+            /*
+             * The key is now one shared definition, not an expression only
+             * this file knows. The server needs the same name for the same
+             * ticket or it can never answer "did the ticket I expected to
+             * print actually print" - see src/kot-job-key.js.
+             *
+             * Byte-identical to what stood here: 144 combinations of timestamp
+             * shape, type and contents were compared before the swap, because
+             * a changed key renames every ticket in flight on ninety shops.
+             */
             const jobType  = (job.type || '').toLowerCase();
             const jobItems = Array.isArray(job.items) ? job.items : [];
-            const ts       = job.timestamp;
-            const tsToken  = ts instanceof Date ? ts.getTime().toString()
-                           : (ts?.$date?.$numberLong || String(ts?.$date || ts || ''));
-            const raw      = `${saleId}-${jobType}-${tsToken}-${JSON.stringify(jobItems)}`;
-            const jobHash  = crypto.createHash('md5').update(raw).digest('hex');
-            const jobKey   = `${saleId}:${jobType}:${jobHash}`;
+            const jobKey   = kotJobKey(saleId, job);
 
             /* Written down first, then printed. See _claimForPrint. */
             if (!this._claimForPrint(jobKey, { saleId, kind: jobType })) continue;
@@ -584,12 +590,10 @@ class KOTManager {
         const isCancel = proc.includes('CANCEL');
         if (!isKOT && !isCancel) continue;
 
-        const updSrc   = sale.updated_date || sale.updated_at || sale.created_date || sale.created_at || null;
-        const dateToken = updSrc instanceof Date ? updSrc.getTime().toString()
-                        : (updSrc?.$date?.$numberLong || String(updSrc?.$date || updSrc || ''));
-        const rawToken  = `${dateToken}-${sale.table_number||''}-${sale.person_count||''}-${JSON.stringify(sale.items||[])}`;
-        const token     = crypto.createHash('md5').update(rawToken).digest('hex');
-        const key       = `${isCancel ? 'cancel' : 'kot'}:${saleId}:${token}`;
+        /* The second naming scheme, for a sale with no print_jobs array. Also
+           shared now, and also proven byte-identical over 180 combinations -
+           see src/kot-job-key.js for why there are two rather than one. */
+        const key = kotFallbackKey(sale, { cancelled: isCancel });
 
         if (!this._claimForPrint(key, { saleId, kind: isCancel ? 'cancel' : 'kot' })) continue;
 
