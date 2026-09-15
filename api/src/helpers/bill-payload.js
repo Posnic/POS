@@ -33,6 +33,29 @@
 
 const { orderSource } = require('../utils/order-source');
 
+/*
+ * WHAT ELSE THE BILL PRINTS, and it is off unless the shop says otherwise.
+ *
+ * The owner sent a hotel restaurant's tax invoice carrying SAC codes, session,
+ * steward, covers, total quantity, KOT numbers, room number, guest name and the
+ * customer's own GST number - and then said what to do with it: "we have those
+ * as optional. no need to incluede... based on settings we can add it. like
+ * toggle or desgn in one place for printing receipt."
+ *
+ * So each one is a switch, and ABSENT MEANS OFF. That direction matters: 90
+ * shops are printing today, and a default of on would put new rows on every
+ * one of their bills the morning this deploys, which is exactly the "new
+ * issues" he asked printing not to bring. A shop that wants the hotel bill
+ * turns them on and gets it; a shop that says nothing keeps the bill it has.
+ *
+ * The settings form posts strings, so a stored 'false' is a real value. Only
+ * an explicit true, in either shape, counts as on.
+ */
+function wants(branch, key) {
+  const v = branch && branch[key];
+  return v === true || v === 'true' || v === 1 || v === '1';
+}
+
 /** A number, from a field that may be null, '' or the string 'null'. */
 function num(value) {
   const n = Number(value);
@@ -75,15 +98,39 @@ function itemLines(sale) {
   return rows
     .filter((it) => it && !it.return && String(it.name || it.item_name || '').trim())
     .map((it) => {
-      const qty = num(it.quantity != null ? it.quantity : it.qty);
-      const amount =
-        it.total != null && it.total !== ''
-          ? num(it.total)
-          : num(it.unit_price != null ? it.unit_price : it.item_price) * qty;
+      /* Three spellings because three writers exist: a priced online line sets
+         both `quantity` and `item_quantity`, the till's own path sets
+         `item_quantity`, and `qty` is what a hand-built row reaches for.
+         Missing one prints a quantity of nothing beside a real price. */
+      const qty = num(
+        it.quantity != null ? it.quantity : it.item_quantity != null ? it.item_quantity : it.qty
+      );
+      /*
+       * THE RATE, AND AN AMOUNT THAT AGREES WITH THE SUBTOTAL.
+       *
+       * The line used to print `it.total`, which for a tax-exclusive item is
+       * the price WITH tax already in it. So a 200 rupee starter times two
+       * printed as 420 while the subtotal underneath said 400, the tax rows
+       * added 20 more, and the bill visibly did not add up. Owner: "paneer
+       * starter 2 x 240 its wrong. it supposed to 200 means 200 x 2 then we add
+       * tax. its exlusive properly need to be displayed".
+       *
+       * On a tax-exclusive invoice the line is what the goods cost and the tax
+       * is stated separately below. Printing the tax-inclusive figure on the
+       * line AND the tax again underneath shows it twice.
+       */
+      const rate = num(
+        it.unit_price != null
+          ? it.unit_price
+          : it.item_base_price != null
+            ? it.item_base_price
+            : it.item_price
+      );
       return {
         name: String(it.name || it.item_name).trim(),
+        rate: rate > 0 ? rate.toFixed(2) : '',
         qty: qtyText(qty),
-        amount,
+        amount: Math.round(rate * qty * 100) / 100,
       };
     });
 }
@@ -218,24 +265,47 @@ function customerLines(sale) {
 }
 
 /**
- * The rows that are neither totals nor items: which table this is, how many
- * people are at it, who took the order.
+ * The rows that are neither items nor totals: which table this is, how many
+ * people are at it, who took the order, how many dishes in all.
  *
- * This is the part a waiter reads to know whose bill they are carrying, so it
- * matters more here than it would on a counter receipt handed straight over.
+ * Every one of them is the restaurant talking to itself, which is why none of
+ * them prints unless a shop asks. A cook needs the table number to send food
+ * anywhere and the kitchen ticket carries all of it regardless; a customer
+ * checking what they owe does not. Owner: "in the bill Table, order type,
+ * covers umber of items not required. KOT fine. not in the bill."
+ *
+ * But a hotel restaurant bills differently - his own reference invoice prints
+ * table, session, steward and covers - so this is a switch per row rather than
+ * a decision taken for every shop at once.
  */
-function extraRows(sale) {
+function extraRows(sale, branch, items) {
   const out = [];
-  const table = String((sale && sale.table_number) || '').trim();
-  const dine = String((sale && sale.dine_type) || '').trim();
-  const covers = sale && sale.person_count;
-  if (table) out.push({ label: 'Table', value: table });
-  if (dine) out.push({ label: 'Order type', value: dine });
-  if (covers != null && String(covers).trim() && num(covers) > 0) {
-    out.push({ label: 'Covers', value: String(covers).trim() });
-  }
-  const waiter = String((sale && (sale.created_by || sale.user_name)) || '').trim();
-  if (waiter) out.push({ label: 'Taken by', value: waiter });
+  const add = (key, label, value) => {
+    const text = String(value == null ? '' : value).trim();
+    if (text && wants(branch, key)) out.push({ label, value: text });
+  };
+
+  add('bill_print_table', 'Table', sale && sale.table_number);
+  add('bill_print_dine_type', 'Order type', sale && sale.dine_type);
+  /* Covers is a count, so an explicit zero is as absent as a blank: nobody
+     eats at a table of nought. */
+  const covers = num(sale && sale.person_count);
+  add('bill_print_covers', 'Covers', covers > 0 ? String(covers) : '');
+  /*
+   * Steward, in the words his reference bill uses. The field is whoever the
+   * sale was recorded against, which in a restaurant is the waiter who took
+   * it.
+   */
+  add('bill_print_steward', 'Steward', sale && (sale.created_by || sale.user_name));
+
+  const qty = (items || []).reduce(
+    (sum, it) => sum + num(String(it.qty == null ? '' : it.qty).split(' ')[0]),
+    0
+  );
+  /* Total quantity is dishes, not lines: 4 parathas and a pulao is 5, which is
+     the number a hotel prints and the number a guest counts. */
+  add('bill_print_total_qty', 'Total Qty', qty > 0 ? String(Math.round(qty * 1000) / 1000) : '');
+
   return out;
 }
 
@@ -274,21 +344,14 @@ function buildBillPayload(sale = {}, branch = {}) {
     customer: customerLines(sale),
 
     /*
-     * Where the order came from, in the same words the kitchen ticket uses.
+     * Where the order came from. OFF by default now, and it used to be on.
      *
-     * The table lives in utils/order-source.js, copied from src/order-source.js
-     * because the API ships outside the asar archive and cannot require it. A
-     * test compares the two, so they cannot drift into printing different words
-     * for the same order.
-     *
-     * Off only if the shop says so, and absent means on: a restaurant that took
-     * the trouble to sell through an aggregator wants to see which one on the
-     * bill it files.
+     * "From: Captain app" settles which device sent an order when something is
+     * disputed, which is a question the kitchen and the shop ask and a customer
+     * never does. Owner, reading one off the roll: "'From' not required in the
+     * bill. only kot fine." The kitchen ticket still prints it unconditionally.
      */
-    source:
-      branch.bill_print_source === false || branch.bill_print_source === 'false'
-        ? ''
-        : orderSource(sale),
+    source: wants(branch, 'bill_print_source') ? orderSource(sale) : '',
 
     items,
 
@@ -300,8 +363,11 @@ function buildBillPayload(sale = {}, branch = {}) {
 
     /* No payments row: the whole point of this document is that it has not
        been paid. The counter prints the settled receipt afterwards. */
-    extras: extraRows(sale),
-    itemCount: items.length,
+    /*
+     * Table, order type, covers, steward, total quantity: every one a switch,
+     * every one off unless the shop turned it on. See extraRows.
+     */
+    extras: extraRows(sale, branch, items),
   };
 }
 

@@ -993,14 +993,34 @@ test('a real sale reaches the paper with its items and its total on it', () => {
   assert.match(paper, /INV-2291/, 'the bill has no number to refer to');
 });
 
-test('the bill says which table it belongs to', () => {
-  /* The waiter carrying it has to know whose it is, and on the floor that is
-     the table number, not the invoice number. */
-  const paper = onPaper(
-    renderSale(buildBillPayload(A_REAL_SALE, THE_SHOP), { paperWidth: '48' })
+test('the bill says which table it belongs to ONLY IF THE SHOP ASKS', () => {
+  /*
+   * This printed on every bill, on the argument that the waiter carrying it
+   * has to know whose it is. The owner, who runs the floors, read one and
+   * disagreed: "in the bill Table, order type, covers umber of items not
+   * required. KOT fine. not in the bill." The waiter pressed print for that
+   * table thirty seconds ago, and the row is on the customer's copy, where it
+   * is the restaurant talking to itself.
+   *
+   * His own hotel reference invoice prints all of it, so it is a switch and
+   * not a deletion.
+   */
+  const off = onPaper(renderSale(buildBillPayload(A_REAL_SALE, THE_SHOP), { paperWidth: '48' }));
+  assert.ok(!/Table\s+T4/.test(off), 'the table came back on every bill');
+  assert.ok(!/Covers\s+3/.test(off), 'the cover count came back on every bill');
+
+  const on = onPaper(
+    renderSale(
+      buildBillPayload(A_REAL_SALE, {
+        ...THE_SHOP,
+        bill_print_table: true,
+        bill_print_covers: true,
+      }),
+      { paperWidth: '48' }
+    )
   );
-  assert.match(paper, /Table\s+T4/, 'nothing on the slip says which table');
-  assert.match(paper, /Covers\s+3/, 'the cover count was dropped');
+  assert.match(on, /Table\s+T4/, 'a shop that switched it on gets no table');
+  assert.match(on, /Covers\s+3/, 'a shop that switched it on gets no cover count');
 });
 
 test('it is a bill, not a receipt and not a tax invoice', () => {
