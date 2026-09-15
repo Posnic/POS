@@ -368,6 +368,7 @@
             <!-- Only a shop running table service has anything to print a KOT
                  for; the dashboard mirrors the setting into preferences. -->
             <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">🖨️ Multi KOT Print</button>
+            <button class="tab" onclick="switchTab('screen')">📺 Kitchen Screen</button>
             <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
             <button class="tab" onclick="switchTab('scanner')">🔎 Barcode Scanner</button>
         </div>
@@ -953,6 +954,44 @@
                 </div>
             </div>
 
+            <!--
+                KITCHEN SCREEN
+
+                Per machine, like the printer, and for the same reason: two
+                tills in one shop have different things plugged into them.
+
+                The important thing this panel does is tell the truth BEFORE a
+                television is bought. Owner: "around 5 meter." At five metres a
+                43 inch screen shows about two orders, which is not a kitchen
+                display - and the only way anybody finds that out otherwise is
+                after paying for the mount.
+            -->
+            <div id="screenTab" class="tab-content">
+                <h2>📺 Kitchen Screen</h2>
+
+                <div class="status" style="background:#e7f1ff;color:#1e3a8a;display:block;">
+                    Run an HDMI cable from this computer to a screen in the kitchen.
+                    Choose it below, say how far away the cook stands, and this will tell you
+                    how many orders will actually be readable on it.
+                </div>
+
+                <div id="screenList" style="margin-top:20px;">
+                    <p style="color:#666;font-size:14px;">Looking for screens...</p>
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <h3 style="margin-top:0;">Why the distance matters more than the size</h3>
+                    <p style="color:#555;font-size:14px;line-height:1.6;margin:0;">
+                        Text has to be a certain size <b>on the eye</b>, so doubling the distance
+                        doubles the letter height, and that costs room across <b>and</b> down.
+                        <b>Double the distance, quarter the orders.</b>
+                        Moving a screen closer is almost always cheaper than buying a bigger one,
+                        and a sharper screen does not help at all: a 4K panel the same size has the
+                        same letter height, just with smoother edges.
+                    </p>
+                </div>
+            </div>
+
             <!-- Mobile Devices Tab -->
             <div id="mobileTab" class="tab-content">
                 <!-- Connection Info Card -->
@@ -1154,12 +1193,18 @@
                 'scanner': 'scannerTab',
                 'cash':    'cashTab',
                 'kot':     'kotTab',
+                'screen':  'screenTab',
                 'mobile':  'mobileTab'
             };
 
             const targetTab = tabMap[tabName];
             if (targetTab) {
                 document.getElementById(targetTab).classList.add('active');
+
+                /* Read the displays when the panel is opened, not at startup:
+                   a screen plugged in after the window opened must appear
+                   without anybody restarting anything. */
+                if (tabName === 'screen' && typeof refreshScreens === 'function') refreshScreens();
 
                 // 'printer' was never a tab name either, so this never ran and
                 // the printer list stayed empty until Reload was pressed.
@@ -3404,6 +3449,223 @@
                 }
             }, 10000);
         });
+
+        /* ==========================================================
+         * KITCHEN SCREEN
+         *
+         * The panel's job is to stop a shop buying the wrong television.
+         * Everything a person changes here re-runs the arithmetic in the main
+         * process and shows the answer in orders, not in pixels - because
+         * "84px" means nothing to a restaurant and "2 orders fit" means
+         * everything.
+         * ========================================================== */
+
+        var screenState = { displays: [], defaults: {} };
+
+        function screensAvailable() {
+            return !!(window.posnicKitchenScreen && window.posnicKitchenScreen.list);
+        }
+
+        async function refreshScreens() {
+            var host = document.getElementById('screenList');
+            if (!host) return;
+            if (!screensAvailable()) {
+                host.innerHTML = '<p style="color:#b45309;font-size:14px;">'
+                    + 'This build cannot list screens. Update the app and reopen Hardware Manager.</p>';
+                return;
+            }
+            try {
+                var res = await window.posnicKitchenScreen.list();
+                screenState.displays = (res && res.displays) || [];
+                screenState.defaults = (res && res.defaults) || {};
+                drawScreens();
+            } catch (e) {
+                host.innerHTML = '<p style="color:#b91c1c;font-size:14px;">Could not read the screens: '
+                    + esc(e && e.message ? e.message : String(e)) + '</p>';
+            }
+        }
+
+        function esc(t) {
+            return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        /* Green when it works, amber when it is tight, red when it does not. The
+           word matters more than the colour: one man in twelve cannot rely on
+           the colour, and this is a kitchen. */
+        function verdictStyle(v) {
+            if (v === 'comfortable') return { bg: '#dcfce7', fg: '#166534', word: 'Comfortable' };
+            if (v === 'tight') return { bg: '#fef3c7', fg: '#92400e', word: 'Tight' };
+            return { bg: '#fee2e2', fg: '#991b1b', word: 'Not readable' };
+        }
+
+        function field(id, label, value, suffix, hint) {
+            return '<label style="display:block;font-size:12px;color:#475569;font-weight:600;margin-bottom:4px;">'
+                + esc(label) + '</label>'
+                + '<div style="display:flex;align-items:center;gap:6px;">'
+                + '<input id="' + id + '" type="number" step="0.1" min="0" value="' + esc(value) + '" '
+                + 'style="width:88px;padding:7px 9px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:14px;">'
+                + '<span style="font-size:13px;color:#64748b;">' + esc(suffix || '') + '</span></div>'
+                + (hint ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + esc(hint) + '</div>' : '');
+        }
+
+        function check(id, label, on, hint) {
+            return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#334155;margin-bottom:7px;cursor:pointer;">'
+                + '<input id="' + id + '" type="checkbox" ' + (on ? 'checked' : '') + ' style="margin-top:2px;">'
+                + '<span>' + esc(label)
+                + (hint ? '<span style="display:block;font-size:11px;color:#94a3b8;">' + esc(hint) + '</span>' : '')
+                + '</span></label>';
+        }
+
+        function drawScreens() {
+            var host = document.getElementById('screenList');
+            if (!screenState.displays.length) {
+                host.innerHTML = '<div class="card"><p style="margin:0;color:#555;font-size:14px;">'
+                    + 'Only one screen found. Plug a screen into this computer with an HDMI cable '
+                    + 'and press Refresh.</p>'
+                    + '<button onclick="refreshScreens()" style="margin-top:12px;padding:8px 16px;border:none;'
+                    + 'border-radius:8px;background:#3b5ac6;color:#fff;font-weight:600;cursor:pointer;">'
+                    + '🔄 Refresh</button></div>';
+                return;
+            }
+
+            host.innerHTML = screenState.displays.map(function (d) {
+                var c = d.config || {};
+                var f = d.fit || {};
+                var v = verdictStyle(f.verdict);
+
+                var advice = (d.advice || []).map(function (a) {
+                    return '<li style="margin-bottom:4px;">' + esc(a.text) + '</li>';
+                }).join('');
+
+                return ''
+                + '<div class="card" style="margin-bottom:18px;' + (d.primary ? 'opacity:.75;' : '') + '">'
+                +   '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+                +     '<span style="font-size:24px;">' + (d.primary ? '🖥️' : '📺') + '</span>'
+                +     '<div>'
+                +       '<div style="font-weight:700;font-size:15px;">' + esc(d.label) + '</div>'
+                +       '<div style="font-size:12px;color:#64748b;">' + d.widthPx + ' &times; ' + d.heightPx
+                +         (d.primary ? ' &middot; this is the till’s own screen' : '') + '</div>'
+                +     '</div>'
+                +     '<label style="margin-left:auto;display:flex;gap:8px;align-items:center;font-size:13px;font-weight:600;cursor:pointer;">'
+                +       '<input type="checkbox" id="use-' + d.id + '" ' + (c.enabled ? 'checked' : '')
+                +         ' onchange="saveScreen(\'' + d.id + '\')"> Use as kitchen screen'
+                +     '</label>'
+                +   '</div>'
+
+                + (d.primary
+                    ? '<div style="margin-top:12px;font-size:13px;color:#92400e;background:#fef3c7;padding:9px 12px;border-radius:8px;">'
+                      + 'This is the screen the till itself is on. Using it would cover the sale screen.</div>'
+                    : '')
+
+                +   '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;">'
+                +     '<div>' + field('dist-' + d.id, 'Cook stands about', c.viewingDistanceM, 'metres away',
+                                       'The single most important number here.') + '</div>'
+                +     '<div>' + field('diag-' + d.id, 'Screen size', c.diagonalInches, 'inches',
+                                       'Measured corner to corner.') + '</div>'
+                +     '<div>' + field('arc-' + d.id, 'Text size target', c.targetArcmin, 'arcmin',
+                                       '20 is glanceable. Raise it for older eyes.') + '</div>'
+                +     '<div>' + field('safe-' + d.id, 'Edge margin', c.safeAreaPercent, '%',
+                                       'Televisions crop the edges.') + '</div>'
+                +   '</div>'
+
+                /* THE ANSWER, in orders. */
+                +   '<div style="margin-top:16px;padding:14px 16px;border-radius:10px;background:' + v.bg + ';color:' + v.fg + ';">'
+                +     '<div style="font-size:15px;font-weight:800;">' + v.word + ' &middot; about '
+                +       (f.cards || 0) + ' order' + (f.cards === 1 ? '' : 's') + ' on screen</div>'
+                +     '<div style="font-size:13px;margin-top:4px;">'
+                +       'Text would be <b>' + (f.capHeightMm || 0) + ' mm</b> tall ('
+                +       (f.fontPx || 0) + 'px), laid out ' + (f.columns || 0) + ' across by '
+                +       (f.rows || 0) + ' down.</div>'
+                +     (advice ? '<ul style="margin:10px 0 0;padding-left:20px;font-size:13px;">' + advice + '</ul>' : '')
+                +   '</div>'
+
+                +   '<details style="margin-top:14px;">'
+                +     '<summary style="cursor:pointer;font-size:13px;font-weight:600;color:#3b5ac6;">What each order card shows</summary>'
+                +     '<div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:12px;">'
+                +       '<div style="min-width:230px;">'
+                +         check('t-' + d.id, 'Table number', c.showTable !== false, 'The thing a cook matches on.')
+                +         check('i-' + d.id, 'Dishes', c.showItems !== false)
+                +         check('n-' + d.id, 'Item notes', c.showItemNotes !== false, '"less spicy". Never dropped to save room.')
+                +         check('a-' + d.id, 'How long it has been waiting', c.showAge !== false)
+                +       '</div>'
+                +       '<div>'
+                +         field('items-' + d.id, 'Dishes per card', c.maxItemsPerCard, 'then "+n more"')
+                +         '<div style="height:10px;"></div>'
+                +         field('amber-' + d.id, 'Turns amber after', c.amberAfterMin, 'min')
+                +       '</div>'
+                +       '<div>'
+                +         field('red-' + d.id, 'Turns red after', c.redAfterMin, 'min')
+                +         '<div style="height:10px;"></div>'
+                +         field('dwell-' + d.id, 'Each page shows for', c.pageDwellSeconds, 'sec',
+                                'Only when there are more orders than fit.')
+                +       '</div>'
+                +     '</div>'
+                +   '</details>'
+
+                +   '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">'
+                +     '<button onclick="saveScreen(\'' + d.id + '\')" '
+                +       'style="padding:9px 18px;border:none;border-radius:8px;background:#3b5ac6;color:#fff;font-weight:600;cursor:pointer;">'
+                +       '💾 Save</button>'
+                +     '<button onclick="previewScreen(\'' + d.id + '\')" '
+                +       'style="padding:9px 18px;border:1.5px solid #3b5ac6;border-radius:8px;background:#fff;color:#3b5ac6;font-weight:600;cursor:pointer;">'
+                +       '👁 Show a test service on this screen</button>'
+                +     '<span style="font-size:12px;color:#64748b;align-self:center;">'
+                +       'Then go and stand where the cook stands. If you cannot read it there, it is too small.</span>'
+                +   '</div>'
+                + '</div>';
+            }).join('');
+        }
+
+        function numOr(id, fallback) {
+            var el = document.getElementById(id);
+            if (!el) return fallback;
+            var n = Number(el.value);
+            return isFinite(n) && n > 0 ? n : fallback;
+        }
+        function onOff(id, fallback) {
+            var el = document.getElementById(id);
+            return el ? !!el.checked : fallback;
+        }
+
+        async function saveScreen(id) {
+            if (!screensAvailable()) return;
+            var patch = {
+                enabled:          onOff('use-' + id, false),
+                viewingDistanceM: numOr('dist-' + id, 2.5),
+                diagonalInches:   numOr('diag-' + id, 43),
+                targetArcmin:     numOr('arc-' + id, 20),
+                safeAreaPercent:  numOr('safe-' + id, 3),
+                showTable:        onOff('t-' + id, true),
+                showItems:        onOff('i-' + id, true),
+                showItemNotes:    onOff('n-' + id, true),
+                showAge:          onOff('a-' + id, true),
+                maxItemsPerCard:  numOr('items-' + id, 3),
+                amberAfterMin:    numOr('amber-' + id, 5),
+                redAfterMin:      numOr('red-' + id, 10),
+                pageDwellSeconds: numOr('dwell-' + id, 8)
+            };
+            try {
+                var res = await window.posnicKitchenScreen.configure(id, patch);
+                if (res && res.displays) {
+                    screenState.displays = res.displays;
+                    drawScreens();
+                }
+            } catch (e) {
+                alert('Could not save that: ' + (e && e.message ? e.message : e));
+            }
+        }
+
+        async function previewScreen(id) {
+            if (!screensAvailable()) return;
+            try {
+                await window.posnicKitchenScreen.preview(id, true);
+            } catch (e) {
+                alert('Could not show the test service: ' + (e && e.message ? e.message : e));
+            }
+        }
+
     </script>
 </body>
 </html>

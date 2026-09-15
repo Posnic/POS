@@ -4539,6 +4539,19 @@ app.whenReady().then(async () => {
   setupHardwareIPC(hardwareManager, kotManager, billManager);
   console.log('Hardware IPC handlers registered');
 
+  /*
+   * Bring back any kitchen screen this machine was told to drive.
+   *
+   * Wrapped, and deliberately after everything that matters. A kitchen screen
+   * is an accessory; the till is the shop, and nothing about a second display
+   * may stop a sale. A shop that has configured none opens none.
+   */
+  try {
+    require('./kitchen-screen').start();
+  } catch (e) {
+    console.warn('[kitchen-screen] did not start:', e && e.message);
+  }
+
   // Start server
   startServer();
 });
@@ -5261,6 +5274,14 @@ app.on('child-process-gone', (_event, details) => {
 
 app.on('before-quit', async event => {
   if (shutdownInProgress) return;
+
+  /* The kitchen screens go first: they own nothing and hold nothing, and a
+     frameless window left on a second display outlives the tray icon. */
+  try {
+    require('./kitchen-screen').closeAll();
+  } catch (e) {
+    /* ignored: never delay a shutdown for a screen */
+  }
 
   event.preventDefault();
   shutdownInProgress = true;

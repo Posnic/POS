@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitchen screen</title>
+<!--
+  THE SCREEN ON THE END OF THE CABLE.
+
+  Read at a distance, by somebody moving, often glancing sideways, through
+  steam, with a knife in hand. Every decision here follows from that:
+
+    - Light text on a dark ground. Kitchens are lit brightly from above, and
+      dark-on-light throws glare straight back at the cook. It also draws less
+      attention in peripheral vision when nothing has changed.
+    - No interaction. Nothing to click, nothing to scroll. A screen a cook has
+      to touch with wet hands is a screen they stop using.
+    - Age is carried by POSITION, SIZE and SHAPE as well as colour. Roughly one
+      man in twelve cannot separate red from green reliably, and this is
+      exactly the audience.
+    - Every size comes from the configuration, not from this stylesheet. The
+      shop says how far away the cook stands and how big the panel is; the
+      arithmetic in kitchen-screen-fit.js says what the font must be. See that
+      file for why doubling the distance quarters what fits.
+-->
+<style>
+  :root {
+    /* Overwritten at run time from the fit calculation. These are only what
+       gets painted in the instant before the configuration is read. */
+    --font: 42px;
+    --line: 53px;
+    --gap: 18px;
+    --safe: 3%;
+
+    --ground: #101114;
+    --card: #1b1d22;
+    --ink: #f4f6f8;
+    --muted: #9aa3ad;
+    --rule: #2c3038;
+
+    /* Age. Deliberately not red/green: amber to red, and each step also
+       changes the border weight and the bar, so hue is never the only signal. */
+    --calm: #4b5563;
+    --warm: #d98324;
+    --late: #e5484d;
+  }
+
+  [data-theme="light"] {
+    --ground: #f7f8fa;
+    --card: #ffffff;
+    --ink: #14171a;
+    --muted: #5b6570;
+    --rule: #dfe3e8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: var(--font);
+    line-height: 1.25;
+    overflow: hidden;
+    /* Nothing here is selectable or draggable. It is a sign, not a document. */
+    user-select: none;
+    cursor: none;
+  }
+
+  /* Televisions crop 2 to 5 percent of every edge, so a card at the edge loses
+     its border and the bottom row loses its last line. */
+  #screen {
+    height: 100%;
+    padding: var(--safe);
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: calc(var(--gap) / 2);
+    border-bottom: 2px solid var(--rule);
+    color: var(--muted);
+    font-size: calc(var(--font) * 0.55);
+  }
+
+  #count { color: var(--ink); font-weight: 700; }
+
+  #board {
+    flex: 1;
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: repeat(var(--columns, 4), 1fr);
+    align-content: start;
+    padding-top: var(--gap);
+    min-height: 0;
+  }
+
+  .ticket {
+    background: var(--card);
+    border-left: calc(var(--font) * 0.18) solid var(--calm);
+    border-radius: calc(var(--font) * 0.12);
+    padding: calc(var(--gap) * 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--gap) * 0.25);
+    overflow: hidden;
+  }
+
+  /* Warm and late also thicken the rule and fill the bar, so the state reads
+     without colour vision. */
+  .ticket.warm { border-left-color: var(--warm); border-left-width: calc(var(--font) * 0.26); }
+  .ticket.late { border-left-color: var(--late); border-left-width: calc(var(--font) * 0.34); }
+  .ticket.grey { opacity: 0.45; }
+
+  .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap); }
+
+  /* The table number is the thing being matched, so it is the biggest thing
+     on the card. A cook finds the ticket by table, not by dish. */
+  .table { font-size: calc(var(--font) * 1.55); font-weight: 800; letter-spacing: -0.01em; }
+
+  .age { font-size: calc(var(--font) * 0.78); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ticket.warm .age { color: var(--warm); font-weight: 700; }
+  .ticket.late .age { color: var(--late); font-weight: 800; }
+
+  .bar { height: calc(var(--font) * 0.14); background: var(--rule); border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--calm); }
+  .ticket.warm .bar > i { background: var(--warm); }
+  .ticket.late .bar > i { background: var(--late); }
+
+  .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); }
+  .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
+  .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
+  .name { flex: 1; overflow-wrap: anywhere; }
+
+  /* A note is the line that costs money when missed. Never dimmed, never
+     dropped when space runs short. */
+  .note {
+    color: var(--warm);
+    font-size: calc(var(--font) * 0.8);
+    font-weight: 700;
+    padding-left: 2.6em;
+  }
+
+  .more { color: var(--muted); font-size: calc(var(--font) * 0.75); }
+
+  .ticket.compact .items, .ticket.compact .bar { display: none; }
+  .ticket.compact .count { font-size: calc(var(--font) * 0.8); color: var(--muted); }
+
+  #empty {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: calc(var(--font) * 0.8);
+    text-align: center;
+  }
+
+  #pager { color: var(--muted); font-size: calc(var(--font) * 0.5); }
+
+  /* The setup banner. Shown only while the screen is being placed, so somebody
+     standing in the kitchen can read the verdict from where the cook stands -
+     which is the only place the question can actually be answered. */
+  #setup {
+    border: 2px dashed var(--rule);
+    border-radius: calc(var(--font) * 0.12);
+    padding: calc(var(--gap) * 0.6);
+    margin-bottom: var(--gap);
+    color: var(--muted);
+    font-size: calc(var(--font) * 0.5);
+  }
+  #setup b { color: var(--ink); }
+  #setup.bad { border-color: var(--late); }
+</style>
+</head>
+<body>
+  <div id="screen">
+    <div id="setup" hidden></div>
+    <header>
+      <span id="title">Kitchen</span>
+      <span><span id="count">0</span> <span id="word">orders</span></span>
+      <span id="pager"></span>
+    </header>
+    <div id="board"></div>
+    <div id="empty" hidden>Nothing cooking.</div>
+  </div>
+
+<script>
+/*
+ * The page reads its own configuration and re-reads it when it changes, so a
+ * shop adjusting the font or the distance sees the effect immediately instead
+ * of being told to restart the till.
+ */
+(function () {
+  'use strict';
+
+  var displayId = new URLSearchParams(location.search).get('display') || '';
+  var config = null;
+  var tickets = [];
+  var page = 0;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------------------------------------------------------------- sizing */
+
+  /*
+   * Every size on the screen comes from here.
+   *
+   * The main process does the optics (kitchen-screen-fit.js) because it knows
+   * the panel's physical size; the page is told the answer. Doing it here from
+   * pixels alone is exactly the mistake that produces a screen nobody can read:
+   * pixels say nothing about how big a letter is on the eye.
+   */
+  function applyFit(fit, cfg) {
+    if (!fit) return;
+    var root = document.documentElement.style;
+    root.setProperty('--font', fit.fontPx + 'px');
+    root.setProperty('--line', fit.lineHeightPx + 'px');
+    root.setProperty('--columns', Math.max(1, fit.columns));
+    root.setProperty('--safe', (cfg && cfg.safeAreaPercent != null ? cfg.safeAreaPercent : 3) + '%');
+    document.documentElement.setAttribute('data-theme', (cfg && cfg.theme) || 'dark');
+  }
+
+  /* ---------------------------------------------------------------- render */
+
+  function minutesSince(iso) {
+    var t = Date.parse(iso);
+    if (!isFinite(t)) return 0;
+    return Math.max(0, Math.floor((Date.now() - t) / 60000));
+  }
+
+  function stateFor(mins, cfg) {
+    if (mins >= (cfg.greyAfterMin || 45)) return 'grey';
+    if (mins >= (cfg.redAfterMin || 10)) return 'late';
+    if (mins >= (cfg.amberAfterMin || 5)) return 'warm';
+    return 'calm';
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function card(ticket, cfg, compact) {
+    var mins = minutesSince(ticket.placedAt);
+    var state = stateFor(mins, cfg);
+    var node = el('div', 'ticket ' + state + (compact ? ' compact' : ''));
+
+    var top = el('div', 'top');
+    if (cfg.showTable !== false) {
+      top.appendChild(el('span', 'table', ticket.table || ticket.orderNumber || '-'));
+    }
+    if (cfg.showAge !== false) {
+      top.appendChild(el('span', 'age', mins + 'm'));
+    }
+    node.appendChild(top);
+
+    if (compact) {
+      var n = (ticket.items || []).reduce(function (s, i) { return s + (Number(i.qty) || 1); }, 0);
+      node.appendChild(el('div', 'count', n + (n === 1 ? ' item' : ' items')));
+      return node;
+    }
+
+    /* The bar repeats the age as a shape, so the state survives a cook who
+       cannot separate the hues. */
+    var bar = el('div', 'bar');
+    var fillPct = Math.min(100, (mins / Math.max(1, cfg.redAfterMin || 10)) * 100);
+    var fill = el('i');
+    fill.style.width = fillPct + '%';
+    bar.appendChild(fill);
+    node.appendChild(bar);
+
+    if (cfg.showItems !== false) {
+      var list = el('div', 'items');
+      var max = Number(cfg.maxItemsPerCard) || 3;
+      (ticket.items || []).slice(0, max).forEach(function (item) {
+        var row = el('div', 'item');
+        row.appendChild(el('span', 'qty', (item.qty || 1) + '×'));
+        row.appendChild(el('span', 'name', item.name || ''));
+        list.appendChild(row);
+        /* NEVER dropped to save space. "less spicy" is the line that costs a
+           plate of food when it is missed. */
+        if (item.note && cfg.showItemNotes !== false) {
+          list.appendChild(el('div', 'note', item.note));
+        }
+      });
+      var rest = (ticket.items || []).length - max;
+      if (rest > 0) list.appendChild(el('div', 'more', '+' + rest + ' more'));
+      node.appendChild(list);
+    }
+
+    return node;
+  }
+
+  function render() {
+    var cfg = config || {};
+    var fitInfo = cfg._fit || {};
+    var board = $('board');
+    board.textContent = '';
+
+    var live = tickets.slice().sort(function (a, b) {
+      return Date.parse(a.placedAt || 0) - Date.parse(b.placedAt || 0);
+    });
+
+    $('count').textContent = live.length;
+    $('word').textContent = live.length === 1 ? 'order' : 'orders';
+    $('empty').hidden = live.length > 0;
+
+    var compact = live.length > (Number(cfg.compactAfter) || 8);
+    var perPage = Math.max(1, (fitInfo.cards || 8) * (compact ? 2 : 1));
+    var pages = Math.max(1, Math.ceil(live.length / perPage));
+    if (page >= pages) page = 0;
+
+    /*
+     * Paging, done so it cannot hide an order.
+     *
+     * The oldest always occupy the first slots and never rotate; only the
+     * overflow pages. And the pager is always visible, so an empty-looking
+     * screen is never mistaken for an empty kitchen.
+     */
+    var shown = pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live;
+    shown.forEach(function (t) { board.appendChild(card(t, cfg, compact)); });
+
+    $('pager').textContent = pages > 1 ? (page + 1) + ' of ' + pages : '';
+  }
+
+  /* ------------------------------------------------------------------ data */
+
+  function setConfig(cfg) {
+    config = cfg || {};
+    applyFit(config._fit, config);
+    $('title').textContent = config.name || 'Kitchen';
+
+    /*
+     * While the screen is being placed, say what it can and cannot do - here,
+     * on the screen itself, where somebody standing at the range can read it.
+     * A verdict shown only on the till is a verdict read in the wrong room.
+     */
+    var setup = $('setup');
+    if (config.setupMode && config._fit) {
+      var f = config._fit;
+      setup.hidden = false;
+      setup.className = f.verdict === 'comfortable' ? '' : 'bad';
+      setup.innerHTML =
+        'Placing this screen. At <b>' + (config.viewingDistanceM || '?') + ' m</b> on a <b>' +
+        (config.diagonalInches || '?') + '&Prime;</b> panel, text is <b>' + f.capHeightMm +
+        ' mm</b> tall and <b>' + f.cards + '</b> order' + (f.cards === 1 ? '' : 's') +
+        ' fit (' + f.verdict + ').<br>If you cannot read the card below from where the cook ' +
+        'stands, the screen is too small or too far.';
+    } else {
+      setup.hidden = true;
+    }
+    render();
+  }
+
+  function setTickets(list) {
+    tickets = Array.isArray(list) ? list : [];
+    render();
+  }
+
+  /* Exposed so the main process can drive the screen, and so a test can. */
+  window.kitchenScreen = { setConfig: setConfig, setTickets: setTickets, render: render };
+
+  if (window.posnicKitchenScreen && window.posnicKitchenScreen.onConfig) {
+    window.posnicKitchenScreen.onConfig(setConfig);
+    window.posnicKitchenScreen.onTickets(setTickets);
+    window.posnicKitchenScreen.ready(displayId);
+  }
+
+  /* The clock moves even when nothing arrives, and a ticket going from amber
+     to red is the whole point of the colour. */
+  setInterval(render, 15000);
+
+  /* Page rotation, only ever reached when there is more than one page. */
+  setInterval(function () {
+    page += 1;
+    render();
+  }, Math.max(4, Number((config || {}).pageDwellSeconds) || 8) * 1000);
+}());
+</script>
+</body>
+</html>
