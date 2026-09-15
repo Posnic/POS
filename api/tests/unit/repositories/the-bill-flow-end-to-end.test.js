@@ -278,7 +278,7 @@ describe('the queue between the floor and the counter', () => {
     await repo.requestBillPrintModel(String(branch), 'T7', 'ravi');
 
     const job = await PrintJob.findOne({ branch_id: branch }).lean();
-    expect(job.payload.items).toEqual([{ name: 'Idli', qty: '2', amount: 60 }]);
+    expect(job.payload.items).toEqual([{ name: 'Idli', rate: '30.00', qty: '2', amount: 60 }]);
     expect(job.payload.total).toBe(60);
     expect(job.payload.billNo).toBe('INV-900');
     expect(job.payload.title).toBe('BILL');

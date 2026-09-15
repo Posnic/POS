@@ -889,6 +889,10 @@ PosnicPro.settings = {
                 $("#sms_retry_period option[value='" + data.sms_retry_period + "']").prop("selected", true);
                 $("#sms_max_retries option[value='" + data.sms_max_retries + "']").prop("selected", true);
                 $("#print_type option[value='" + data.print_type + "']").prop("selected", true);
+                /* One unless the shop said otherwise: a branch saved before
+                   this existed has no value, and must keep printing once. */
+                var bill_copies = Number(data.bill_print_copies) > 0 ? Number(data.bill_print_copies) : 1;
+                $("#bill_print_copies option[value='" + bill_copies + "']").prop("selected", true);
                 let print_size = (typeof (data.print_size) !== "undefined" && data.print_size !== null) ? data.print_size : 'receipt_medium';
                 $("#print_size option[value='" + print_size + "']").prop("selected", true);
                 PosnicPro.local.set('printing_size', print_size);
@@ -2067,6 +2071,7 @@ if ($wrapper.length) {
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),
                 print_type: $('#print_type').val(),
+                bill_print_copies: $('#bill_print_copies').val(),
                 print_size: $('#print_size').val(),
                 print_character: $('#print_character').val(),
                 header_print: contentHeader.html(),

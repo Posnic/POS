@@ -3113,5 +3113,7 @@
   "lang_the_whole_menu": "القائمة كاملة",
   "lang_which_dishes": "أي أطباق",
   "lang_working": "جارٍ العمل...",
-  "lang_run_stopped": "تم الإيقاف."
+  "lang_run_stopped": "تم الإيقاف.",
+  "lang_bill_copies_from_the_floor": "نسخ الفاتورة المطلوبة من الصالة",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "عندما يطلب النادل الفاتورة من الجهاز المحمول، يخرج هذا العدد من طابعة الكاشير - واحدة للضيف وواحدة للمحل إن كنت تحتفظ بنسخة. الإيصالات المأخوذة عند الكاشير لا تتأثر."
 }
