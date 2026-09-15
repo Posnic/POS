@@ -7543,3 +7543,62 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   color: var(--theme-text-muted, #5b6577);
   font-size: 12.5px;
 }
+
+
+/* ------------------------------------------------------------------
+   THE NUTRITION PASS: what it is doing, and to which dish.
+
+   The bar is the loop, so it is the truth. The log under it names the
+   last few dishes rather than all of them - three hundred rows is not
+   something anybody reads, and keeping them pushes the bar off screen,
+   which is the one thing on this modal worth watching.
+   ------------------------------------------------------------------ */
+
+.nutrition-pass-state p {
+  margin-bottom: 6px;
+}
+
+.nutrition-pass-log {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.nutrition-pass-log li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--theme-border-color, #e5e8ef);
+  font-size: 13px;
+}
+
+.nutrition-pass-log li:last-child {
+  border-bottom: 0;
+}
+
+.nutrition-pass-log span {
+  min-width: 0;
+  color: var(--theme-text-primary, #16203a);
+  overflow-wrap: anywhere;
+}
+
+.nutrition-pass-log b {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nutrition-pass-log .is-done b {
+  color: var(--theme-success-color, #16b364);
+}
+
+/* A dish the assistant could not place is not a failure of the run, and
+   a red row for every one of them reads as a broken feature rather than
+   as a handful of dishes to type in by hand. */
+.nutrition-pass-log .is-missed b {
+  color: var(--theme-text-muted, #5b6577);
+}

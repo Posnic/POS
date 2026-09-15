@@ -149,6 +149,45 @@ const buildReturnSignature = (saleObjectId, returnItems = [], payload = {}) => {
     .digest('hex');
 };
 
+/**
+ * How many copies of a floor-requested bill this shop wants.
+ *
+ * A count, not a switch, and read defensively: the settings form posts a
+ * string, a branch saved before this existed has nothing at all, and neither
+ * may turn into NaN copies. One is the answer to every unclear case, because
+ * one is what every shop prints today.
+ *
+ * Capped at three so a number that arrived by some other route cannot spend a
+ * roll of paper on a single table.
+ */
+function billCopies(branch, asked) {
+  /*
+   * THE HANDSET DECIDES, THE SHOP IS THE FALLBACK.
+   *
+   * Owner: "its better two copies from captain itself... if its from desktop
+   * sometimes... then configuration change reequired pos guy wont have
+   * permission. lets keep in app itself."
+   *
+   * He is right about who should hold it. The person who wants a second copy
+   * is the one holding the phone, and making them find somebody with access to
+   * the till's settings page is how a setting stays wrong for a year.
+   *
+   * So a request may name a number and it is honoured. When it does not - an
+   * older handset, a request from anywhere else - the shop's own setting
+   * answers, and that defaults to one. Nothing prints twice by surprise.
+   *
+   * CLAMPED HERE, WHEREVER IT CAME FROM. A phone is not allowed to spend a
+   * roll of paper on one table, and neither is a stray value in a branch
+   * document.
+   */
+  const said = Number(asked);
+  if (Number.isFinite(said) && said >= 1) return Math.min(Math.floor(said), 3);
+
+  const shopSays = Number(branch && branch.bill_print_copies);
+  if (!Number.isFinite(shopSays) || shopSays < 1) return 1;
+  return Math.min(Math.floor(shopSays), 3);
+}
+
 class SalesRepository {
   constructor(defaultModel) {
     this.defaultModel = defaultModel || null;
@@ -451,6 +490,7 @@ class SalesRepository {
           doc.customer_country = customerData.country || doc.customer_country || '';
           doc.customer_gst_type = doc.customer_gst_type || customerData.gst_type || '';
           doc.customer_gst_number = doc.customer_gst_number || customerData.gst_number || '';
+          doc.customer_company_name = doc.customer_company_name || customerData.company_name || '';
           const balanceValue =
             typeof customerData.balance === 'number'
               ? customerData.balance
@@ -7068,7 +7108,8 @@ class SalesRepository {
    * asking twice is somebody wondering where the bill got to, not a second
    * bill.
    */
-  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel } = {}) {
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies } = {}) {
+    const copiesAsked = copies;
     try {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
@@ -7116,6 +7157,30 @@ class SalesRepository {
        * DATABASE - the connection is the tenancy boundary, which is why the
        * floor query has never needed this and why the two are safe to agree.
        */
+      /*
+       * WHICH TICKETS THIS TAP IS ASKING FOR, decided before anything is
+       * written.
+       *
+       * A waiter walking to the counter taps Print bill again, because nothing
+       * has come out yet. That second tap must not put the same bill on the
+       * queue a second time - and it did: the queue below was guarded by how
+       * many tickets are OPEN, not by how many this tap actually marked, so
+       * two taps meant two bills. With copies set to two it would have been
+       * four.
+       *
+       * The intent was always here - the update deliberately skips a ticket
+       * that already carries a timestamp - it simply never reached the queue.
+       * Taking the ids first is what joins the two: whatever was unasked a
+       * moment ago is what gets printed, and a repeat tap has an empty list.
+       */
+      const asking = await Model.find(
+        { ...query, bill_requested_at: { $in: [null, undefined] } },
+        { _id: 1 }
+      )
+        .limit(20)
+        .lean();
+      const askedIds = asking.map((row) => row._id);
+
       const result = await Model.updateMany(
         { ...query, bill_requested_at: { $in: [null, undefined] } },
         {
@@ -7144,7 +7209,7 @@ class SalesRepository {
        * Only when something was actually marked. Announcing a request that
        * changed nothing would wake the printer to find an empty list.
        */
-      if (waiting > 0) {
+      if (askedIds.length > 0) {
         /*
          * ON THE QUEUE, CARRYING WHAT TO PRINT.
          *
@@ -7157,7 +7222,7 @@ class SalesRepository {
          * printer - a table with three rounds has three tickets and the
          * counter wants all three.
          */
-        const open = await Model.find(query).limit(20).lean();
+        const open = await Model.find({ _id: { $in: askedIds } }).lean();
 
         /*
          * THE SHOP'S LETTERHEAD, READ ONCE.
@@ -7182,25 +7247,45 @@ class SalesRepository {
           console.error('Could not read the shop for the bill header:', e && e.message);
         }
 
+        /*
+         * HOW MANY COME OUT OF THE PRINTER.
+         *
+         * Owner: "when captain app send print bill we need to have 2 copies
+         * actually." A restaurant hands one to the guest and keeps one, and
+         * the second used to be a second walk to the printer.
+         *
+         * ONE JOB PER COPY, rather than one job that says "twice". Every till
+         * already on a shop floor drains this queue and prints what it is
+         * handed, so a shop gets its second copy the moment it changes the
+         * setting - with no new version of the desktop app. It is also the
+         * truer shape: each copy succeeds or fails on its own, and a printer
+         * that jams on one leaves a job to retry rather than a job half done.
+         */
+        const copies = billCopies(shop, copiesAsked);
+
         for (const sale of open) {
-          await queuePrintJob({
-            branchId,
-            kind: 'bill',
-            saleId: sale._id,
-            label: `Table ${table}`,
-            /*
-             * BUILT FOR THE PRINTER, not handed over raw.
-             *
-             * This used to pass the sale document itself, with a comment
-             * claiming escpos-receipt rendered from exactly that shape. It does
-             * not. The renderer wants a view model - `items[].name`, `total` -
-             * and the document has `items[].item_name` and `sales_total`, so
-             * every lookup missed and the paper came out with a header, an
-             * empty item table and a total of 0.00. helpers/bill-payload.js
-             * has the full account.
-             */
-            payload: buildBillPayload(sale, shop),
-          });
+          for (let copy = 1; copy <= copies; copy += 1) {
+            await queuePrintJob({
+              branchId,
+              kind: 'bill',
+              saleId: sale._id,
+              /* The counter reads these as they come off: "(2 of 2)" says the
+                 pair belongs to one table rather than two bills for it. */
+              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              /*
+               * BUILT FOR THE PRINTER, not handed over raw.
+               *
+               * This used to pass the sale document itself, with a comment
+               * claiming escpos-receipt rendered from exactly that shape. It does
+               * not. The renderer wants a view model - `items[].name`, `total` -
+               * and the document has `items[].item_name` and `sales_total`, so
+               * every lookup missed and the paper came out with a header, an
+               * empty item table and a total of 0.00. helpers/bill-payload.js
+               * has the full account.
+               */
+              payload: buildBillPayload(sale, shop),
+            });
+          }
         }
 
         notifyBillRequested({
@@ -7918,6 +8003,9 @@ class SalesRepository {
             unit: 'qty',
             price,
             total,
+            /* See the note at the cancel flow below: this list is what the
+               kitchen ticket is printed from. */
+            item_description: String(si.item_description || ''),
           };
         })
         .filter((it) => it.item_id && it.item_quantity > 0);
@@ -8929,10 +9017,24 @@ class SalesRepository {
           const qty = parseFloat(ex.item_quantity || 0);
           if (qty <= 0) continue;
           const price = parseFloat(ex.item_price || 0);
+          /*
+           * THE NOTE TRAVELS WITH THE ITEM.
+           *
+           * A change record is what the kitchen ticket is printed FROM - the poller
+           * builds its print jobs out of `changes[].items`, not out of `sale.items` - and
+           * this list carried seven fields, none of them the note. So "less spicy" was
+           * stored correctly on the sale and never reached the paper.
+           *
+           * Owner: "when item print, item notes not printed. example \"less spicy\" not
+           * printed in the kot. its bad very bad". He is right that it is bad: the note
+           * is the one line on a ticket the kitchen cannot work out for itself, and a
+           * customer who asked for something and did not get it blames the restaurant.
+           */
           changesItems.push({
             item_id: idStr,
             item_name: String(ex.item_name || ''),
             item_quantity: qty,
+            item_description: String(ex.item_description || ''),
             process: 'cancel',
             item_code: String(ex.item_sku || ''),
             unit: String(ex.item_unit || 'qty'),
@@ -8974,6 +9076,9 @@ class SalesRepository {
         oldItemsData[idStr] = {
           quantity: parseFloat(ex.item_quantity || 0),
           name: String(ex.item_name || ''),
+          /* Carried so a REMOVED line can still say which one it was. Two of
+             the same dish on one table are told apart by the note. */
+          description: String(ex.item_description || ''),
           item_code: String(ex.item_sku || ''),
           price: parseFloat(ex.item_price || 0),
           unit: String(ex.item_unit || 'qty'),
@@ -9040,6 +9145,9 @@ class SalesRepository {
             item_id: productId,
             item_name: String(itemDoc.name || item.name || ''),
             item_quantity: changeQty,
+            /* From the request first: an amendment carries the note the person
+               just typed, and the stored copy is the one before it. */
+            item_description: String(item.item_note || item.item_description || ''),
             process: changeProcess,
             item_code: String(itemDoc.itemid || ''),
             unit: String(itemDoc.item_unit || itemDoc.unit || 'qty'),
@@ -9150,6 +9258,7 @@ class SalesRepository {
           item_id: String(remItemId),
           item_name: String(remItemData.name || ''),
           item_quantity: remQty,
+          item_description: String(remItemData.description || ''),
           process: 'cancel',
           item_code: String(remItemData.item_code || ''),
           unit: String(remItemData.unit || 'qty'),
@@ -9303,12 +9412,38 @@ class SalesRepository {
 
     const zone = datePreference.branchTimezone(branch);
     const day = (d) => {
+      /*
+       * THE TRADING DAY STARTS AT SEVEN IN THE MORNING, NOT AT MIDNIGHT.
+       *
+       * Owner: "daily price starts in the morning only. means 7am. not
+       * midnight coz up to 1am restaurant might open."
+       *
+       * A restaurant sets its fish prices when it opens and serves until one.
+       * On a calendar day those prices expire in the middle of service: at
+       * midnight every one of them reads as yesterday's, the handset starts
+       * asking waiters for numbers they were given at eleven that morning, and
+       * the till refuses the dishes until somebody re-enters them - at one in
+       * the morning, during the last push of the night.
+       *
+       * Shifting the clock back seven hours before the date is read moves the
+       * boundary into the dead hour instead. A price entered at 11am on Monday
+       * is still Monday's price at half past midnight; it goes stale at 7am on
+       * Tuesday, when the shop is opening anyway and is about to set the new
+       * day's rates.
+       *
+       * Seven is the owner's number for his own kitchens. If a shop ever opens
+       * earlier than that, this is the one line to make a setting - the four
+       * screens that ask the same question each carry the same constant and
+       * the same note.
+       */
+      const DAY_STARTS_AT_HOUR = 7;
+      const shifted = new Date(d.getTime() - DAY_STARTS_AT_HOUR * 60 * 60 * 1000);
       try {
-        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
+        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(shifted);
       } catch (e) {
         /* An unknown zone must not stop a sale. UTC is wrong by hours, never
            by a sale: the worst it does is ask for a price already entered. */
-        return d.toISOString().slice(0, 10);
+        return shifted.toISOString().slice(0, 10);
       }
     };
     return day(when) === day(new Date());

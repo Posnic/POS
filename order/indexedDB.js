@@ -263,10 +263,31 @@ async function paintShop() {
        retail shop would have quietly gone back to being told "Menu order". */
     const firstSort = document.querySelector('#filters-sort input[value="menu"] + span');
     if (firstSort) firstSort.textContent = shop.kind === "retail" ? t("Catalogue order") : t("Menu order");
+    /*
+     * A FILTER THAT WOULD RETURN NOTHING IS NOT OFFERED.
+     *
+     * Owner: "whenever you show filter, no item in the list then dont show
+     * that filter in menu. example heart healthy food not in our menu then
+     * dont show the filter itself."
+     *
+     * The sort-and-filter sheet was built that way - every option there is
+     * counted first and only offered if a dish carries it. This chip predates
+     * it and was gated on "does ANY dish have a diet mark", which is not the
+     * same question. A steakhouse marks every dish non_veg, so the mark is
+     * present on all of them, the chip appears, and tapping it empties the
+     * menu and says "Nothing on the menu is marked vegetarian."
+     *
+     * The gate now asks exactly what the filter asks. Unmarked is still not
+     * assumed vegetarian - a shop that never filled the field has promised
+     * nothing - which is why this reads the same two values orderViewList
+     * does rather than a looser test that would be easier to get past.
+     */
     const veg = document.getElementById("order-filter-veg");
     if (veg && typeof allProducts === "function") {
         const list = allProducts();
-        if (list.length) veg.hidden = !list.some((p) => p && p.diet);
+        if (list.length) {
+            veg.hidden = !list.some((p) => p && (p.diet === "veg" || p.diet === "vegan"));
+        }
     }
 
     /* "Table 5", from the code that was scanned, beside the shop's name -
@@ -1743,16 +1764,33 @@ function waitingForTodaysPrice(product) {
 }
 
 /** Was price_set_on today, on this phone's calendar? Unreadable is "no". */
+/*
+   * THE TRADING DAY STARTS AT SEVEN IN THE MORNING, NOT AT MIDNIGHT.
+   *
+   * Owner: "daily price starts in the morning only. means 7am. not midnight
+   * coz up to 1am restaurant might open."
+   *
+   * A restaurant sets its prices when it opens and serves until one. On a
+   * calendar day those prices expire in the middle of service. Shifting the
+   * clock back seven hours before the date is read moves the boundary into the
+   * dead hour: a price entered at 11am is still current at half past midnight,
+   * and goes stale at 7am when the shop is opening anyway.
+   *
+   * The same seven as the till and the other screens. All four ask this
+   * question separately and must answer it the same way.
+ */
+const DAY_STARTS_AT_HOUR = 7;
+
+function tradingDay(d) {
+    const shifted = new Date(d.getTime() - DAY_STARTS_AT_HOUR * 60 * 60 * 1000);
+    return `${shifted.getFullYear()}-${shifted.getMonth() + 1}-${shifted.getDate()}`;
+}
+
 function pricedToday(setOn) {
     if (!setOn) return false;
     const when = new Date(setOn);
     if (Number.isNaN(when.getTime())) return false;
-    const now = new Date();
-    return (
-        when.getFullYear() === now.getFullYear() &&
-        when.getMonth() === now.getMonth() &&
-        when.getDate() === now.getDate()
-    );
+    return tradingDay(when) === tradingDay(new Date());
 }
 
 /**

@@ -175,16 +175,39 @@
    *
    * An absent or unreadable date is "not today": the safe way round.
    */
+  /*
+   * THE TRADING DAY STARTS AT SEVEN IN THE MORNING, NOT AT MIDNIGHT.
+   *
+   * Owner: "daily price starts in the morning only. means 7am. not midnight
+   * coz up to 1am restaurant might open."
+   *
+   * A restaurant sets its prices when it opens and serves until one. On a
+   * calendar day those prices expire in the middle of service. Shifting the
+   * clock back seven hours before the date is read moves the boundary into the
+   * dead hour: a price entered at 11am is still current at half past midnight,
+   * and goes stale at 7am when the shop is opening anyway.
+   *
+   * The same seven as the till and the other screens. All four ask this
+   * question separately and must answer it the same way.
+   */
+  var DAY_STARTS_AT_HOUR = 7;
+
+  function tradingDay(d) {
+    var shifted = new Date(d.getTime() - DAY_STARTS_AT_HOUR * 60 * 60 * 1000);
+    return (
+      shifted.getFullYear() +
+      "-" +
+      (shifted.getMonth() + 1) +
+      "-" +
+      shifted.getDate()
+    );
+  }
+
   function pricedToday(setOn) {
     if (!setOn) return false;
     var when = new Date(setOn);
     if (isNaN(when.getTime())) return false;
-    var now = new Date();
-    return (
-      when.getFullYear() === now.getFullYear() &&
-      when.getMonth() === now.getMonth() &&
-      when.getDate() === now.getDate()
-    );
+    return tradingDay(when) === tradingDay(new Date());
   }
 
   function money(amount) {
@@ -628,6 +651,43 @@
       var firstSort = document.querySelector('#sort option[value="menu"]');
       if (firstSort) firstSort.textContent = t("Catalogue order");
       el("filter-veg").hidden = true;
+    }
+
+    /*
+     * AND NEITHER CHIP IS OFFERED IF IT WOULD ANSWER WITH NOTHING.
+     *
+     * Owner: "whenever you show filter, no item in the list then dont show
+     * that filter in menu. example heart healthy food not in our menu then
+     * dont show the filter itself."
+     *
+     * Veg only was shown to every restaurant, so a place that serves no
+     * vegetarian food offered a button whose only possible result is an empty
+     * menu. The gate asks what the filter asks - veg or vegan, with unmarked
+     * never assumed either way.
+     *
+     * Available now is hidden in BOTH directions: nothing available means it
+     * empties the menu, and everything available means it changes nothing at
+     * all. A control that cannot alter what you are looking at is the same
+     * annoyance as one that empties it, and a shop whose dishes are all served
+     * all day should simply never see it.
+     */
+    /* state.flat is built a few lines above and is every dish on the menu,
+       each wrapped as { cat, item }. */
+    var dishes = state.flat.map(function (row) {
+      return row.item;
+    });
+    if (dishes.length) {
+      if (
+        !dishes.some(function (d) {
+          return d.diet === "veg" || d.diet === "vegan";
+        })
+      ) {
+        el("filter-veg").hidden = true;
+      }
+      var open = dishes.filter(function (d) {
+        return d.available !== false;
+      }).length;
+      el("filter-available").hidden = open === 0 || open === dishes.length;
     }
 
     /*

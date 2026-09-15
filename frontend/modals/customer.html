@@ -145,6 +145,26 @@
                                         <input type="text" class="form-control border-control" name="gstin_number"
                                                id="customer_gstin_number" minlength="15" maxlength="15"
                                                placeholder="Enter the GSTIN" data-t-placeholder="lang_enter_the_gstin" autocomplete="off" required>
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_customer_gstin_hint">Printed on their bill so they can
+                                            claim the tax back. Ask for it once and every future bill carries it.</lang>
+                                        </small>
+                                    </div>
+                                    <!-- The name on a claimable invoice has to be the registered business.
+                                         A customer record is often the person who walked in, and their name
+                                         printed above a company's GSTIN is an invoice that fails at filing
+                                         time rather than at the counter. -->
+                                    <div class="form-group col-md-12">
+                                        <label for="customer_company_name">
+                                            <lang class="lang_customer_company_name">Company Name</lang>
+                                        </label>
+                                        <input type="text" class="form-control border-control" name="company_name"
+                                               id="customer_company_name" maxlength="120"
+                                               placeholder="The registered business name" data-t-placeholder="lang_the_registered_business_name" autocomplete="off">
+                                        <small class="form-text text-muted">
+                                            <lang class="lang_customer_company_name_hint">Leave empty if they bill
+                                            under their own name.</lang>
+                                        </small>
                                     </div>
                                 </div>
                             </div>

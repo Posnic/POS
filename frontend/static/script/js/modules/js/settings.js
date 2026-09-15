@@ -889,6 +889,10 @@ PosnicPro.settings = {
                 $("#sms_retry_period option[value='" + data.sms_retry_period + "']").prop("selected", true);
                 $("#sms_max_retries option[value='" + data.sms_max_retries + "']").prop("selected", true);
                 $("#print_type option[value='" + data.print_type + "']").prop("selected", true);
+                /* One unless the shop said otherwise: a branch saved before
+                   this existed has no value, and must keep printing once. */
+                var bill_copies = Number(data.bill_print_copies) > 0 ? Number(data.bill_print_copies) : 1;
+                $("#bill_print_copies option[value='" + bill_copies + "']").prop("selected", true);
                 let print_size = (typeof (data.print_size) !== "undefined" && data.print_size !== null) ? data.print_size : 'receipt_medium';
                 $("#print_size option[value='" + print_size + "']").prop("selected", true);
                 PosnicPro.local.set('printing_size', print_size);
@@ -1222,6 +1226,21 @@ if ($wrapper.length) {
                 (data.print_logoimg === true) ? $('#print_logoimg').prop("checked", true).attr('checked', 'checked') : $('#print_logoimg').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.print_sale_notes === true) ? $('#print_sale_notes').prop("checked", true).attr('checked', 'checked') : $('#print_sale_notes').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.whatsapp_receipt === true) ? $('#whatsapp_receipt').prop("checked", true).attr('checked', 'checked') : $('#whatsapp_receipt').prop("checked", false).attr('unchecked', 'unchecked');
+                /*
+                 * What the bill carries, beyond the dishes and the total.
+                 *
+                 * ABSENT MEANS OFF, and that is deliberate rather than a
+                 * default that happened. A shop that has never seen this card
+                 * keeps the bill it prints today; one that wants the hotel
+                 * bill turns a row on. `=== true` reads a missing setting as
+                 * off, which is the direction that cannot surprise anybody.
+                 */
+                (data.bill_print_table === true) ? $('#bill_print_table').prop("checked", true).attr('checked', 'checked') : $('#bill_print_table').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_dine_type === true) ? $('#bill_print_dine_type').prop("checked", true).attr('checked', 'checked') : $('#bill_print_dine_type').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_covers === true) ? $('#bill_print_covers').prop("checked", true).attr('checked', 'checked') : $('#bill_print_covers').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_steward === true) ? $('#bill_print_steward').prop("checked", true).attr('checked', 'checked') : $('#bill_print_steward').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_total_qty === true) ? $('#bill_print_total_qty').prop("checked", true).attr('checked', 'checked') : $('#bill_print_total_qty').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_source === true) ? $('#bill_print_source').prop("checked", true).attr('checked', 'checked') : $('#bill_print_source').prop("checked", false).attr('unchecked', 'unchecked');
                 if (data.country === 'India') {
                     $('.branch-gstin-hide-show').show();
                     $('.hide_indian_gst').show();
@@ -2067,6 +2086,7 @@ if ($wrapper.length) {
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),
                 print_type: $('#print_type').val(),
+                bill_print_copies: $('#bill_print_copies').val(),
                 print_size: $('#print_size').val(),
                 print_character: $('#print_character').val(),
                 header_print: contentHeader.html(),
@@ -2083,6 +2103,12 @@ if ($wrapper.length) {
                 print_url: ($('#print_url').is(":checked")) ? 'true' : 'false',
                 print_logoimg: ($('#print_logoimg').is(":checked")) ? 'true' : 'false',
                 print_sale_notes: ($('#print_sale_notes').is(":checked")) ? 'true' : 'false',
+                bill_print_table: ($('#bill_print_table').is(":checked")) ? 'true' : 'false',
+                bill_print_dine_type: ($('#bill_print_dine_type').is(":checked")) ? 'true' : 'false',
+                bill_print_covers: ($('#bill_print_covers').is(":checked")) ? 'true' : 'false',
+                bill_print_steward: ($('#bill_print_steward').is(":checked")) ? 'true' : 'false',
+                bill_print_total_qty: ($('#bill_print_total_qty').is(":checked")) ? 'true' : 'false',
+                bill_print_source: ($('#bill_print_source').is(":checked")) ? 'true' : 'false',
                 keyboard_view: ($('#keyboard_view').is(":checked")) ? 'true' : 'false',
                 whatsapp_receipt: ($('#whatsapp_receipt').is(":checked")) ? 'true' : 'false',
                 balance_view: true,

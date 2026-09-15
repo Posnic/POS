@@ -27,6 +27,9 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
+const fs = require('node:fs');
+const path = require('node:path');
+
 const facts = require('../api/src/utils/dish-facts');
 
 /* A dish good enough to earn most claims, so each test can spoil one thing. */
@@ -215,4 +218,73 @@ test('factsFor answers with everything a menu card needs, and nothing invented',
      nothing downstream has to guard before it iterates. */
   const bare = facts.factsFor({});
   assert.deepStrictEqual(bare, { nutrition: {}, tags: [], marks: [], claims: [] });
+});
+
+/* ------------------------------------------------- a guess earns nothing */
+
+test('estimated numbers publish no claims and no calories', () => {
+  /*
+   * Until nutrition could be written in bulk this question could not arise:
+   * the only way numbers reached a dish was a person typing them, or pressing
+   * Estimate and then Save. Either way a person put them there.
+   *
+   * The moment a pass can walk three hundred dishes unattended that stops
+   * being true, and an unchecked guess would start earning "Heart healthy"
+   * and "Diabetic friendly" on a live menu. That is the same harm the owner
+   * ruled out - "only be shown when the recipe/nutrition actually supports
+   * the claim" - arriving by a door that is harder to see than a tick box.
+   */
+  const measured = {
+    nutrition: { kcal: 280, protein_g: 38, carbs_g: 6, sat_fat_g: 2.5, sodium_mg: 420, sugar_g: 2 },
+    food_tags: ['gluten_free'],
+  };
+
+  const kitchen = facts.factsFor(measured);
+  assert.ok(kitchen.claims.includes('high_protein'));
+  assert.ok(kitchen.claims.includes('heart_healthy'));
+  assert.strictEqual(kitchen.nutrition.kcal, 280);
+
+  const guessed = facts.factsFor({ ...measured, nutrition_source: 'estimated' });
+  assert.deepStrictEqual(guessed.claims, [], 'a guess earned a health claim');
+  assert.deepStrictEqual(guessed.nutrition, {}, 'a guessed calorie count reached a customer');
+
+  /* The recipe tags survive: the kitchen ticked those itself and nothing
+     about them was estimated. */
+  assert.deepStrictEqual(guessed.tags, ['gluten_free']);
+});
+
+test('a dish answered before this field existed keeps its badges', () => {
+  /*
+   * Empty means kitchen, deliberately. Every number stored before
+   * nutrition_source existed got there because somebody typed it and pressed
+   * Save, so it IS confirmed - and reading the absence as "unverified" would
+   * silently strip the badges off every dish already done.
+   */
+  const legacy = facts.factsFor({ nutrition: { kcal: 280, protein_g: 38 } });
+  assert.ok(legacy.claims.includes('high_protein'));
+  assert.strictEqual(legacy.nutrition.kcal, 280);
+
+  assert.strictEqual(facts.estimatedOnly({}), false);
+  assert.strictEqual(facts.estimatedOnly({ nutrition_source: '' }), false);
+  assert.strictEqual(facts.estimatedOnly({ nutrition_source: 'kitchen' }), false);
+  assert.strictEqual(facts.estimatedOnly({ nutrition_source: 'estimated' }), true);
+});
+
+test('only the machine can be the one that guessed', () => {
+  /*
+   * The write path decides this word rather than trusting the caller: a
+   * guess filed as the kitchen's would publish itself. Any value that is not
+   * exactly "estimated" means a person.
+   */
+  const REPO = fs.readFileSync(
+    path.join(__dirname, '..', 'api', 'src', 'repositories', 'item.repository.js'),
+    'utf8'
+  );
+  assert.match(
+    REPO,
+    /nutrition_source:\s*\n?\s*String\(data\.nutrition_source \|\| ''\)\.trim\(\) === 'estimated' \? 'estimated' : ''/
+  );
+  /* And the pass's own write sets it flat, never from what it was handed. */
+  const stored = REPO.slice(REPO.indexOf('async storeEstimatedDishFacts('));
+  assert.match(stored.slice(0, 3000), /nutrition_source: 'estimated',/);
 });

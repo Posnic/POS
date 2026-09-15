@@ -47,7 +47,7 @@ const CSS = read('order', 'assets', 'order.css');
  * assertion below that each name is still there: if somebody renames one of
  * these, this file must fail loudly rather than silently test nothing.
  */
-function lift(source, where, names) {
+function lift(source, where, names, consts = {}) {
   const bodies = names.map((name) => {
     const from = source.indexOf(`function ${name}(`);
     assert.ok(from >= 0, `${name} is gone from ${where} - renamed, or inlined?`);
@@ -66,11 +66,54 @@ function lift(source, where, names) {
     assert.ok(end > from, `could not read the whole of ${name} in ${where}`);
     return source.slice(from, end + 1);
   });
-  return new Function(`${bodies.join('\n\n')}\nreturn { ${names.join(', ')} };`)();
+  const given = Object.entries(consts)
+    .map(([name, value]) => `const ${name} = ${JSON.stringify(value)};`)
+    .join('\n');
+  return new Function(
+    `${given}\n${bodies.join('\n\n')}\nreturn { ${names.join(', ')} };`
+  )();
 }
 
-const board = lift(BOARD, 'menu/menu.js', ['marketPriced', 'pricedToday']);
-const page = lift(CARD, 'order/indexedDB.js', ['waitingForTodaysPrice', 'pricedToday']);
+/*
+ * The hour the trading day turns, taken FROM THE SOURCE rather than written
+ * here. A test that hard-coded seven would keep passing if a screen quietly
+ * went back to midnight, which is the failure it exists to catch.
+ */
+function dayStartsAt(source, where) {
+  const said = source.match(/DAY_STARTS_AT_HOUR = (\d+)/);
+  assert.ok(said, `${where} no longer says when its day starts`);
+  return Number(said[1]);
+}
+
+const BOARD_HOUR = dayStartsAt(BOARD, 'the menu board');
+const CARD_HOUR = dayStartsAt(CARD, 'the ordering page');
+
+const board = lift(
+  BOARD,
+  'menu/menu.js',
+  ['marketPriced', 'pricedToday', 'tradingDay'],
+  { DAY_STARTS_AT_HOUR: BOARD_HOUR }
+);
+const page = lift(
+  CARD,
+  'order/indexedDB.js',
+  ['waitingForTodaysPrice', 'pricedToday', 'tradingDay'],
+  { DAY_STARTS_AT_HOUR: CARD_HOUR }
+);
+
+test('every screen turns its day at the same hour, and it is seven', () => {
+  /*
+   * Owner: "daily price starts in the morning only. means 7am. not midnight
+   * coz up to 1am restaurant might open." Four surfaces answer this question
+   * separately; two of them disagreeing means a guest is shown a price the
+   * till then refuses.
+   */
+  assert.strictEqual(BOARD_HOUR, 7);
+  assert.strictEqual(CARD_HOUR, 7);
+
+  const server = read('api', 'src', 'repositories', 'sale.repository.js');
+  assert.match(server, /DAY_STARTS_AT_HOUR = 7/, 'the till turns its day at another hour');
+});
 
 /* Both surfaces answer the same question, so every case below is asked of
    both. A board that says "Market price" over a page that takes the money is
@@ -151,6 +194,77 @@ for (const [where, waiting] of SURFACES) {
      * change's business. The waiter's handset is the surface that asks.
      */
     assert.equal(waiting({ price: 900, open_price: true }), false);
+  });
+}
+
+/* ------------------------------------ the trading day, which starts at seven */
+
+/*
+ * Owner: "daily price starts in the morning only. means 7am. not midnight coz
+ * up to 1am restaurant might open."
+ *
+ * A calendar day expires a shop's prices in the middle of its service. The
+ * clock is held still for these, because a test written as "two hours ago"
+ * already went red once at one in the morning - it was testing the clock, not
+ * the rule.
+ */
+const RealDate = Date;
+
+function atTheTime(iso, run) {
+  const fixed = new RealDate(iso);
+  // eslint-disable-next-line no-global-assign
+  Date = class extends RealDate {
+    constructor(...args) {
+      super(...(args.length ? args : [fixed]));
+    }
+    static now() {
+      return fixed.getTime();
+    }
+  };
+  try {
+    run();
+  } finally {
+    // eslint-disable-next-line no-global-assign
+    Date = RealDate;
+  }
+}
+
+/* Local times, because these screens read the phone's own clock. */
+const MORNING = '2026-09-14T11:00:00';
+const LATE = '2026-09-15T00:30:00';
+const BEFORE_SEVEN = '2026-09-15T06:30:00';
+const AFTER_SEVEN = '2026-09-15T07:05:00';
+
+for (const [where, waiting] of SURFACES) {
+  test(`${where}: a price set this morning still stands at half past midnight`, () => {
+    /*
+     * THE CASE THIS EXISTS FOR. On a calendar day the shop's own prices expire
+     * here, while the kitchen is still cooking.
+     */
+    atTheTime(LATE, () => {
+      assert.equal(
+        waiting({ price: 900, daily_price: true, price_set_on: MORNING }),
+        false
+      );
+    });
+  });
+
+  test(`${where}: and at half past six, just`, () => {
+    atTheTime(BEFORE_SEVEN, () => {
+      assert.equal(
+        waiting({ price: 900, daily_price: true, price_set_on: MORNING }),
+        false
+      );
+    });
+  });
+
+  test(`${where}: at seven it is a new day and the words come back`, () => {
+    atTheTime(AFTER_SEVEN, () => {
+      assert.equal(
+        waiting({ price: 900, daily_price: true, price_set_on: MORNING }),
+        true
+      );
+    });
   });
 }
 

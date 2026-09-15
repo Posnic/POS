@@ -6952,7 +6952,16 @@ class SalesController extends BaseController {
     try {
       const table = req.body.table_number || req.body.tableNumber || '';
       const askedBy = req.body.asked_by || req.body.askedBy || '';
-      const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy);
+      /*
+       * How many copies the handset is asking for. A shop that keeps a copy of
+       * every bill sets it on the phone the floor manager carries, rather than
+       * on a settings page they may not have access to. Clamped underneath,
+       * and the shop's own setting answers when a request says nothing.
+       */
+      const copies = req.body.copies || req.body.bill_copies;
+      const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy, {
+        copies,
+      });
 
       if (response.status !== true) {
         /* Not an error the app should shout about: most often the table has

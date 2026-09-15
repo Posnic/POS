@@ -17,9 +17,15 @@
  *
  * The rule, which is law and not taste: a GST-registered shop issues a TAX
  * INVOICE for the supply, and in a restaurant that is the document presented
- * for payment. A shop with no GST issues a BILL. Either way it says UNPAID,
- * because it is a demand for payment. What follows payment is a RECEIPT,
- * carrying the SAME invoice number - one sale, one number.
+ * for payment. A shop with no GST issues a BILL. What follows payment is a
+ * RECEIPT, carrying the SAME invoice number - one sale, one number.
+ *
+ * THE UNPAID STAMP IS GONE. It was here, on both prints, and the owner read
+ * one off the roll: "No need to print 'Unpaid' near Tax Invoice." A document
+ * presented at a table asking for money is unpaid by definition, so the word
+ * adds nothing the heading does not already say, and a customer's copy stamped
+ * UNPAID reads as an accusation rather than a request. The heading carries the
+ * distinction on its own.
  */
 
 const test = require('node:test');
@@ -50,15 +56,19 @@ test('after paying it is a receipt', () => {
     'the configurable sale title still overrides the document name');
 });
 
-test('the pre-payment print says UNPAID, and the receipt does not', () => {
-  assert.match(titleBlock, /beforePaying[\s\S]{0,200}lang_unpaid_2', 'UNPAID'/,
-    'the bill does not say it is unpaid');
-  const after = titleBlock.slice(titleBlock.indexOf('beforePaying'));
-  assert.match(after, /:\s*''\)/, 'a paid receipt would also be stamped UNPAID');
+test('NEITHER PRINT IS STAMPED UNPAID, on any path', () => {
+  /* Two paths print a bill - the browser view and the main process - and the
+     stamp has to be gone from both or the shop sees it come back depending on
+     who pressed print. */
+  assert.ok(!/lang_unpaid_2/.test(titleBlock), 'the browser bill is still stamped UNPAID');
+  /* THE STRING THE CODE USED TO BUILD, not the word. The file's own comment
+     explains why the stamp went, and a plain text search would fail on the
+     explanation - a mistake this suite has made before. */
+  assert.ok(!BILL.includes("' - UNPAID'"), 'the floor bill is still stamped UNPAID');
 });
 
 test('the bill a waiter carries from the floor names itself too', () => {
-  assert.match(BILL, /title: \(gstin \? 'TAX INVOICE' : 'BILL'\) \+ ' - UNPAID'/,
+  assert.match(BILL, /title: gstin \? 'TAX INVOICE' : 'BILL'/,
     'the floor bill still reaches the roll with no heading');
   /* It reads the GSTIN off the sale, because this runs in the main process
      with no access to the shop settings the screen has. */
@@ -69,10 +79,10 @@ test('the heading actually reaches the paper', () => {
   /* renderSale prints sale.title and nothing else names the document, so a
      title that never arrives is a blank slip - which is what the floor bill
      was. */
-  const bytes = renderSale({ title: 'TAX INVOICE - UNPAID', billNo: 'SB1D9-000032', items: [], total: 0 },
+  const bytes = renderSale({ title: 'TAX INVOICE', billNo: 'SB1D9-000032', items: [], total: 0 },
     { paperWidth: '48' });
   let text = '';
   for (const b of bytes) { if (b === 10) text += '\n'; else if (b >= 32 && b <= 126) text += String.fromCharCode(b); }
-  assert.match(text, /TAX INVOICE - UNPAID/, 'the heading is not printed');
+  assert.match(text, /TAX INVOICE/, 'the heading is not printed');
   assert.match(text, /SB1D9-000032/, 'the invoice number is missing, so the receipt cannot match it');
 });

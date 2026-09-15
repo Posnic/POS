@@ -26,6 +26,19 @@ updates:
     # Mongoose and Express majors change behaviour that money depends on.
     # Those should be deliberate pieces of work, not an overnight pull request.
     ignore:
+      # AND 9.10+, which is a MINOR that broke every database test.
+      #
+      # Mongoose 9.10 moves its bundled mongodb driver from ~7.5 to ~7.6, and
+      # the handshake 7.6 sends is rejected by mongod 8.2 with "Missing
+      # required sub-document 'driver' in the client metadata document" - so
+      # every suite that connects fails to connect at all. It reached develop
+      # in #749 and took the whole API suite down with it.
+      #
+      # Lift this when upstream fixes the handshake: run the api suite against
+      # 9.10 or later, and if it connects, drop the versions line and widen
+      # api/package.json back to a caret.
+      - dependency-name: mongoose
+        versions: [">=9.10"]
       - dependency-name: mongoose
         update-types: [version-update:semver-major]
       - dependency-name: express
