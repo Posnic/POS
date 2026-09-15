@@ -4540,6 +4540,34 @@ app.whenReady().then(async () => {
   console.log('Hardware IPC handlers registered');
 
   /*
+   * KEEP THE MACHINE AWAKE WHILE THE SHOP IS TRADING, and catch up the moment
+   * it wakes.
+   *
+   * Owner: "desktop app system got logged out or screen lock, then also our app
+   * should keep wake." A sleeping till stops printing while the screen still
+   * says Posnic and nothing reports a fault - the waiter's phone says sent and
+   * no paper comes out.
+   *
+   * The drain is registered rather than called on a timer: a till asleep for two
+   * hours wakes with a queue behind it and a thirty second poll that did not
+   * run. Thirty seconds at a pass with no ticket is how a cook reprints by hand,
+   * and that is how a wake-up becomes a duplicate.
+   */
+  try {
+    const power = require('./till-stays-awake');
+    power.start();
+    power.whenWokenUp(() => {
+      /* Every path that collects work, not only the local one: a till that
+         slept through a cloud-relayed bill has to ask for that too. */
+      if (kotManager && typeof kotManager._poll === 'function') kotManager._poll();
+      if (billManager && typeof billManager._poll === 'function') billManager._poll();
+      if (billManager && typeof billManager._pollCloud === 'function') billManager._pollCloud();
+    });
+  } catch (e) {
+    console.warn('[power] did not start:', e && e.message);
+  }
+
+  /*
    * Bring back any kitchen screen this machine was told to drive.
    *
    * Wrapped, and deliberately after everything that matters. A kitchen screen
@@ -5274,6 +5302,14 @@ app.on('child-process-gone', (_event, details) => {
 
 app.on('before-quit', async event => {
   if (shutdownInProgress) return;
+
+  /* Let the machine sleep again. Holding a power block past shutdown is how a
+     till that looks off still refuses to suspend. */
+  try {
+    require('./till-stays-awake').stop();
+  } catch (e) {
+    /* ignored: never delay a shutdown for this */
+  }
 
   /* The kitchen screens go first: they own nothing and hold nothing, and a
      frameless window left on a second display outlives the tray icon. */

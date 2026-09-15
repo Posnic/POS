@@ -740,5 +740,9 @@
   "successfully loaded": "تم التحميل بنجاح",
   "tips must be a non-negative number": "يجب أن تكون الإكراميات رقمًا غير سالب",
   "unsuccessfully": "لم يتم بنجاح",
-  "valid": "صالح"
+  "valid": "صالح",
+  "Could not sweep the print queue": "تعذّر تنظيف قائمة الطباعة",
+  "Could not read what needs attention": "تعذّر قراءة ما يحتاج إلى مراجعة",
+  "Could not answer the print job": "تعذّر تسجيل الإجابة على أمر الطباعة",
+  "Could not read the print queue": "تعذّر قراءة قائمة الطباعة"
 }

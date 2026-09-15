@@ -225,6 +225,8 @@ router.get('/bulkPriceHistory', bindController(itemsController.getBulkPriceUpdat
 // Add/remove stock across many items at once, with a note, audited to stocklogs.
 router.post('/bulkUpdateStock', bindController(itemsController.bulkUpdateStock));
 router.post('/bulkStockPreview', bindController(itemsController.bulkStockPreview));
+router.post('/bulkSpiceChoice', bindController(itemsController.bulkSpiceChoice));
+router.post('/bulkSpiceChoicePreview', bindController(itemsController.bulkSpiceChoicePreview));
 router.get('/bulkStockHistory', bindController(itemsController.getBulkStockUpdates));
 
 // PHP: categoryItemsReportTable() - Category report

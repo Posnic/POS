@@ -740,5 +740,9 @@
   "successfully loaded": "Erfolgreich geladen",
   "tips must be a non-negative number": "tips muss eine nicht negative Zahl sein",
   "unsuccessfully": "Nicht erfolgreich",
-  "valid": "Gültig"
+  "valid": "Gültig",
+  "Could not sweep the print queue": "Die Druckwarteschlange konnte nicht bereinigt werden",
+  "Could not read what needs attention": "Was Aufmerksamkeit braucht, konnte nicht gelesen werden",
+  "Could not answer the print job": "Der Druckauftrag konnte nicht beantwortet werden",
+  "Could not read the print queue": "Die Druckwarteschlange konnte nicht gelesen werden"
 }

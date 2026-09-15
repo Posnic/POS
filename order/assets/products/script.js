@@ -17,6 +17,13 @@
 
     const el = (id) => document.getElementById(id);
 
+    /* Said on the menu as well as at the basket: somebody who learns about a
+       thirty-minute wait only after building a whole order is right to be
+       annoyed about the order in which they were told. */
+    document.addEventListener("posnic:shop", function () {
+        if (typeof paintKitchenNotice === "function") paintKitchenNotice();
+    });
+
     document.addEventListener("DOMContentLoaded", async () => {
         await loadProducts();
         await openDB();

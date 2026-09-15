@@ -46,6 +46,13 @@
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></a>
+                                <!-- Restaurant only. The tick is per dish
+                                     because only the kitchen knows which ones
+                                     it can cook to order, but "per dish" is
+                                     not "one dish at a time": a menu of 272
+                                     is a wall nobody climbs. -->
+                                <a class="dropdown-item restaurant-only" href="javascript:void(0)"
+                                   onclick="PosnicPro.items.openSpiceChoice(); return false;"><i class="feather icon-thermometer mr-2"></i><lang class="lang_spice_choice_tool">Who may choose how hot</lang></a>
                                 <!-- Restaurant only, and hidden again unless
                                      the shop has an AI key: it spends their
                                      own balance, one call per dish. -->
@@ -628,6 +635,71 @@
         </div>
     </div>
 </div>
+
+<!-- Who may choose how hot -->
+<div class="modal fade close_on_esc" id="spice_choice_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-thermometer mr-2"></i><lang class="lang_spice_choice_tool">Who may choose how hot</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
+                </button>
+            </div>
+            <form onsubmit="return PosnicPro.items.submitSpiceChoice();">
+                <div class="modal-body">
+                    <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
+                        <lang class="lang_spice_choice_tool_help">A customer ordering online can tap mild, medium or spicy on the dishes you allow it for, and the level prints on the kitchen ticket. Turn it on for the sections your kitchen cooks to order, then correct the exceptions on the dish itself.</lang>
+                    </p>
+
+                    <div class="form-group">
+                        <label class="f-w-6"><lang class="lang_which_items">Which items</lang></label>
+                        <div>
+                            <label class="mr-4" style="font-weight:normal;">
+                                <input type="radio" name="spice_choice_scope" value="all" checked onclick="PosnicPro.items.toggleSpiceChoiceCategory();"> <lang class="lang_all_items">All items</lang>
+                            </label>
+                            <label style="font-weight:normal;">
+                                <input type="radio" name="spice_choice_scope" value="category" onclick="PosnicPro.items.toggleSpiceChoiceCategory();"> <lang class="lang_one_category">One category</lang>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group spice-choice-category-row" style="display:none;">
+                        <label class="f-w-6"><lang class="lang_newcategory_title">Category</lang></label>
+                        <select class="form-control" id="spice_choice_category" style="width:100%;" aria-label="Category" data-t-aria-label="lang_newcategory_title"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6"><lang class="lang_spice_choice_do_what">Do what</lang></label>
+                        <select class="form-control" id="spice_choice_offer" aria-label="Do what" data-t-aria-label="lang_spice_choice_do_what">
+                            <option value="yes" selected><lang class="lang_spice_choice_offer_yes">Let customers choose how hot</lang></option>
+                            <option value="no"><lang class="lang_spice_choice_offer_no">Stop offering the choice</lang></option>
+                        </select>
+                    </div>
+
+                    <!-- Filled by "Check" - how many dishes would actually change. -->
+                    <div id="spice_choice_check_result" style="display:none; margin-bottom:10px;"></div>
+
+                    <div class="alert alert-warning" style="font-size:12px; padding:8px 12px; margin-bottom:0;">
+                        <lang class="lang_spice_choice_warning">Only offer it where the kitchen can really cook to order. A customer who asks for mild and gets hot is worse off than one who never asked.</lang>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                        <i class="feather icon-x-circle mr-2"></i><lang class="lang_cancel_title">Cancel</lang>
+                    </button>
+                    <button type="button" id="spice_choice_check" class="btn btn-outline-secondary" onclick="PosnicPro.items.checkSpiceChoice();">
+                        <i class="feather icon-search mr-2"></i><lang class="lang_check">Check</lang>
+                    </button>
+                    <button type="submit" id="spice_choice_submit" class="btn btn-outline-primary">
+                        <i class="feather icon-check-circle mr-2"></i><lang class="lang_spice_choice_apply">Update dishes</lang>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end Who may choose how hot -->
 
 <div class="modal fade close_on_esc" id="bulk_stock_modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">

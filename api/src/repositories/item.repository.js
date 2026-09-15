@@ -23,6 +23,7 @@ const orderingAssistant = require('../services/ordering-assistant.service');
 const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
 const dishIcons = require('../utils/dish-icons');
 const dishFacts = require('../utils/dish-facts');
+const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
 const voiceSettings = require('../utils/voice-settings');
 
 const onlineOrderingDiet = (value) => {
@@ -710,6 +711,75 @@ class ItemRepository extends BaseModel {
       return Math.max(0, Math.round((oldV + sign * delta) * 100) / 100);
     };
     return { amount, sign, compute };
+  }
+
+  /*
+   * WHICH DISHES LET A CUSTOMER SAY HOW HOT, ALL AT ONCE.
+   *
+   * The tick is per dish on purpose - a kitchen that batch-cooks its gravy
+   * cannot make one portion mild - but "per dish" and "one dish at a time" are
+   * not the same thing. A restaurant with 272 dishes that has to open every
+   * one of them to tick a box does not turn the feature on; it leaves it off
+   * and the customer goes on typing "less spicy" into a note.
+   *
+   * The unit a kitchen actually thinks in is the SECTION. Curries and biryanis
+   * can be cooked to order; desserts and drinks cannot. So this takes the same
+   * scope the bulk price and bulk stock tools take - everything, or one
+   * category - and the shop corrects the handful of exceptions by hand.
+   *
+   * Nothing here is irreversible: `offer: false` takes it back off, over the
+   * same scope, and a dish that is already right is not written at all.
+   */
+  async previewSpiceChoice({ scope, categoryId, offer } = {}, context = {}) {
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const wanted = offer === true || offer === 'true';
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, { projection: { name: 1, spice_choice: 1 } })
+      .toArray();
+
+    /*
+     * WOULD CHANGE, not "matches". A shop that runs this twice should be told
+     * nothing is left to do, rather than being shown the same number again and
+     * left wondering whether the first run worked.
+     */
+    const changing = items.filter((it) => (it.spice_choice === true) !== wanted);
+    return {
+      status: true,
+      data: {
+        total: items.length,
+        willChange: changing.length,
+        offer: wanted,
+        sample: changing.slice(0, 100).map((it) => ({ name: it.name || '' })),
+      },
+      message: 'Preview ready',
+    };
+  }
+
+  /** Offer the choice, or take it back, across a scope. See above. */
+  async setSpiceChoice({ scope, categoryId, offer } = {}, context = {}) {
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const wanted = offer === true || offer === 'true';
+
+    const collection = await this.getCollection(this.collectionName);
+    /* Only the rows that are wrong: an untouched dish keeps its updated_date,
+       which is what the item list sorts and what a shop reads as "changed". */
+    const result = await collection.updateMany(
+      { ...built.filter, spice_choice: { $ne: wanted } },
+      { $set: { spice_choice: wanted } }
+    );
+
+    const changed = result.modifiedCount || 0;
+    return {
+      status: true,
+      data: { changed, offer: wanted },
+      message: changed
+        ? `${changed} dish(es) updated`
+        : 'Nothing to change: those dishes are already set that way',
+    };
   }
 
   /*
@@ -4773,10 +4843,63 @@ class ItemRepository extends BaseModel {
         console.warn('[storefront] Failed to fetch tableorders:', e.message);
       }
 
+      /*
+       * HOW BUSY THE KITCHEN IS, RIGHT NOW.
+       *
+       * Owner: "when kitchen have many order have so many order we might
+       * notify online order customer deley might expecteed... shop having
+       * total 10 tables. 10 order in the process. then kitchen is full."
+       *
+       * A customer who waits forty minutes without being told blames the
+       * restaurant; one who was told chose to wait. The count is EVERY open
+       * ticket, not only the online ones: a dine-in table blocks the pass
+       * exactly as much as a phone does.
+       *
+       * The same three conditions the bill and the table screen use for
+       * "still open" - a KOT, unpaid, no bill printed. Non-fatal, like the
+       * table list above: a menu that cannot say how busy the kitchen is is
+       * still a menu, and a customer who cannot see the warning is no worse
+       * off than they were last week.
+       */
+      let kitchen = kitchenLoad({});
+      try {
+        if (branchDoc.table_options === true && tableorders.length) {
+          const salesCollection = await this.getCollection('sales');
+          const openFilter = {
+            sale_process: { $regex: 'KOT', $options: 'i' },
+            payment_status: 'Unpaid',
+            bill_printed_at: { $in: [null, undefined] },
+            branch_id: branchDoc._id,
+          };
+          if (branchDoc.license) openFilter.license = branchDoc.license;
+          const open = await salesCollection.countDocuments(openFilter);
+
+          /* The shop's OWN typical dish, taken from the menu this call has
+             already built rather than a constant invented here. A tea stall
+             and a grill house get their own number. */
+          const prepTimes = [];
+          for (const group of results) {
+            for (const item of group.items || []) prepTimes.push(item.prep_minutes);
+          }
+
+          kitchen = kitchenLoad({
+            tableService: true,
+            open,
+            capacity: tableorders.length,
+            round: typicalRound(prepTimes),
+          });
+        }
+      } catch (e) {
+        console.warn('[storefront] could not read the kitchen load:', e.message);
+      }
+
       return {
         status: true,
         message: 'OK',
         data: {
+          /* Busy or not, and by how many minutes when the shop's own prep
+             times can support a figure. See utils/kitchen-load.js. */
+          kitchen,
           /* Who the shop is, as the customer sees it. */
           store: {
             store_id: config?.store_id || '',
