@@ -631,6 +631,43 @@
     }
 
     /*
+     * AND NEITHER CHIP IS OFFERED IF IT WOULD ANSWER WITH NOTHING.
+     *
+     * Owner: "whenever you show filter, no item in the list then dont show
+     * that filter in menu. example heart healthy food not in our menu then
+     * dont show the filter itself."
+     *
+     * Veg only was shown to every restaurant, so a place that serves no
+     * vegetarian food offered a button whose only possible result is an empty
+     * menu. The gate asks what the filter asks - veg or vegan, with unmarked
+     * never assumed either way.
+     *
+     * Available now is hidden in BOTH directions: nothing available means it
+     * empties the menu, and everything available means it changes nothing at
+     * all. A control that cannot alter what you are looking at is the same
+     * annoyance as one that empties it, and a shop whose dishes are all served
+     * all day should simply never see it.
+     */
+    /* state.flat is built a few lines above and is every dish on the menu,
+       each wrapped as { cat, item }. */
+    var dishes = state.flat.map(function (row) {
+      return row.item;
+    });
+    if (dishes.length) {
+      if (
+        !dishes.some(function (d) {
+          return d.diet === "veg" || d.diet === "vegan";
+        })
+      ) {
+        el("filter-veg").hidden = true;
+      }
+      var open = dishes.filter(function (d) {
+        return d.available !== false;
+      }).length;
+      el("filter-available").hidden = open === 0 || open === dishes.length;
+    }
+
+    /*
      * The shop's own words about being closed, paused or menu-only. Shown
      * on a menu too, because someone reading it at 11pm wants to know when
      * the kitchen opens, and that answer is already computed server-side.

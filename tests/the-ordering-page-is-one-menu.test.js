@@ -403,3 +403,45 @@ test('a stored word-null never becomes a phone number', () => {
   /* And the checkout reads through it rather than straight from storage. */
   assert.match(ORDER, /notAWord\(sessionStorage\.getItem\("kiosk_mobile_number"\)\)/);
 });
+
+test('a filter that would answer with nothing is never offered', () => {
+  /*
+   * Owner: "whenever you show filter, no item in the list then dont show that
+   * filter in menu. example heart healthy food not in our menu then dont show
+   * the filter itself."
+   *
+   * The sort-and-filter sheet was built this way - every option is counted
+   * first and only offered if a dish carries it. The VEG CHIP predates it and
+   * asked a different question: "does any dish have a diet mark at all". A
+   * steakhouse marks every dish non_veg, so the mark is present on all of
+   * them, the chip appears, and tapping it empties the menu and says
+   * "Nothing on the menu is marked vegetarian."
+   *
+   * The gate has to ask exactly what the filter asks, or the two can always
+   * disagree.
+   */
+  const gate = ORDER.slice(ORDER.indexOf('const veg = document.getElementById("order-filter-veg")'));
+  const body = gate.slice(0, 500);
+
+  assert.match(body, /p\.diet === "veg" \|\| p\.diet === "vegan"/, 'the gate asks a looser question than the filter');
+
+  /* And it is the same pair orderViewList narrows on, so a dish can never
+     satisfy one and not the other. */
+  const list = ORDER.slice(ORDER.indexOf('function orderViewList('));
+  assert.match(list.slice(0, 1200), /p\.diet === "veg" \|\| p\.diet === "vegan"/);
+});
+
+test('the public menu hides a filter that cannot change what you see', () => {
+  const MENU = fs.readFileSync(path.join(ROOT, 'menu', 'menu.js'), 'utf8');
+
+  /* Veg only: same question as the filter, not "has any diet mark". */
+  assert.match(MENU, /d\.diet === "veg" \|\| d\.diet === "vegan"/);
+
+  /*
+   * Available now is hidden in BOTH directions. Nothing available means it
+   * empties the menu; everything available means it changes nothing at all,
+   * and a control that cannot alter what you are looking at is the same
+   * annoyance as one that empties it.
+   */
+  assert.match(MENU, /el\("filter-available"\)\.hidden = open === 0 \|\| open === dishes\.length;/);
+});
