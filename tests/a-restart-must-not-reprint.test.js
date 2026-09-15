@@ -251,3 +251,56 @@ test('the module is in the packaged build', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   assert.ok(pkg.build.files.includes('src/print-ledger.js'));
 });
+
+/* ------------------------------------- and why there was a backlog to reprint */
+
+/*
+ * Owner: "whenver i start polling, i see all prints are going. i dont know how
+ * 10 or 15 prints going".
+ *
+ * The chain, end to end:
+ *
+ *   1. The server keeps offering a job until `last_printed_change_index`
+ *      advances past it. That index is the durable guard.
+ *   2. It only advances when POST /sales/markKitchenPrinted succeeds.
+ *   3. That call's answer was never looked at. `fetch` does not throw on a 401
+ *      or a 500 - it resolves with ok:false - so the next line logged "Marked N
+ *      order(s) as printed" whatever came back.
+ *   4. Within one run the in-memory set hid it.
+ *   5. On a restart that set is empty, the server is still offering everything
+ *      from today, and the whole day prints again. Ten or fifteen tickets.
+ *
+ * The ledger above stops the reprint. This stops the backlog that fed it, and
+ * makes a failure visible instead of silent.
+ */
+
+test('a failed acknowledgement is not reported as success', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  /* Anchored on the assignment, not on the URL: the first occurrence of
+     "markKitchenPrinted" is inside the template string, which is AFTER the line
+     this test is looking for. The first version of this test sliced past it. */
+  const at = src.indexOf('const marked = await fetch');
+  assert.ok(at > -1, 'the response is still being discarded');
+  const block = src.slice(at, at + 2200);
+  assert.match(block, /if \(marked && marked\.ok\)/, 'nothing checks whether it worked');
+  assert.match(block, /COULD NOT mark/, 'a failure is still silent');
+});
+
+test('the success line is only reached when it succeeded', () => {
+  /* The bug was a success message on an unconditional path. */
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  const at = src.indexOf('Marked ${printedSaleIds.length} order(s) as printed');
+  const guard = src.lastIndexOf('if (marked && marked.ok)', at);
+  assert.ok(guard > -1 && guard < at, 'the success message is not behind the check');
+});
+
+test('the failure says what happens next, not just that it failed', () => {
+  /*
+   * "Could not mark as printed" tells a shopkeeper nothing. The consequence -
+   * they will be offered again, and the ledger is what stops them printing
+   * twice - is the part somebody reading a log at 9pm actually needs.
+   */
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  assert.match(src, /They will be offered again/);
+  assert.match(src, /the print ledger is what stops them printing twice/);
+});
