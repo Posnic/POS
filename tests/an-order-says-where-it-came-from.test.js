@@ -103,25 +103,21 @@ test('an order from a phone that says nothing records nothing, not an empty shel
 
 /* ------------------------------------------- what the phone may not claim */
 
-test("the handset's own door reads the address and the waiter from the request", () => {
-  /*
-   * A phone describes its own hardware. It does not get to name its own
-   * address, and it certainly does not get to name who was holding it - a
-   * body that could set staff_name could put somebody else's name on an
-   * order it placed.
-   */
-  const where = CONTROLLER.indexOf('async qrOrder(');
-  const body = CONTROLLER.slice(where, where + 3000);
-
-  assert.match(body, /ip: clientIp\(req\)/, 'the address is not read from the request');
-  assert.match(body, /user_agent: req\.get\('User-Agent'\)/, 'the user agent is not read');
-  assert.match(body, /staff_name: String\(req\.user\.name/, 'the waiter is not read from the session');
-
-  /* The spread order decides it: the body first, ours after, so ours wins. */
-  const spread = body.indexOf('...(req.body && typeof req.body.client');
-  assert.ok(spread > -1 && spread < body.indexOf('ip: clientIp(req)'),
-    "a body's own ip would overrule the request's");
-});
+/*
+ * The controller's own behaviour is tested by CALLING it, in
+ * api/tests/unit/controllers/an-order-says-where-it-came-from.test.js: a real
+ * handler, a real-shaped request, and an assertion about what reaches the
+ * service - including that a body claiming its own address or another
+ * waiter's name is overruled.
+ *
+ * What was here instead was a regular expression over the controller's source,
+ * checking that `clientIp(req)` appeared in it and that one spread came before
+ * another. That is not a test of behaviour: it passes if the block is
+ * unreachable, it passes if an early return skips it, and it would pass
+ * against a file that never ran. It has been replaced rather than kept
+ * alongside, because two tests of one thing where one of them cannot fail
+ * honestly is worse than one.
+ */
 
 test('the customer never sees any of it', () => {
   /*
