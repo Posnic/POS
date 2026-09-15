@@ -127,13 +127,26 @@ test('no source prints no line, rather than an empty one', () => {
   assert.ok(!lines.some((l) => l.includes('From:')), 'an empty source printed a line anyway');
 });
 
-test('the bill prints it too', () => {
-  const payload = buildBillPayload(
-    { sales_id: 'SB-42', sales_total: 420, items: [{ item_name: 'Fish Curry', item_quantity: 1, item_total: 420 }],
-      channel: 'marketplace', channel_partner: 'swiggy' },
-    { branch_name: 'Azure Sea Foods' }
-  );
-  assert.strictEqual(payload.source, 'Swiggy');
+test('the bill prints it too, WHEN THE SHOP ASKS', () => {
+  /*
+   * This used to print on every bill. The owner read one and said no:
+   * "'From' not required in the bill. only kot fine." So the switch stayed and
+   * its default flipped - a shop selling through two aggregators can still put
+   * the partner on the bill it files, and every other shop stops seeing a line
+   * its customers have no use for.
+   */
+  const sale = {
+    sales_id: 'SB-42',
+    sales_total: 420,
+    items: [{ item_name: 'Fish Curry', item_quantity: 1, item_total: 420 }],
+    channel: 'marketplace',
+    channel_partner: 'swiggy',
+  };
+  const on = buildBillPayload(sale, { branch_name: 'Azure Sea Foods', bill_print_source: true });
+  assert.strictEqual(on.source, 'Swiggy');
+  assert.strictEqual(buildBillPayload(sale, { branch_name: 'Azure Sea Foods' }).source, '',
+    'the bill went back to printing it by default');
+
   const receipt = fs.readFileSync(path.join(ROOT, 'src', 'escpos-receipt.js'), 'utf8');
   assert.match(receipt, /if \(sale\.source\) r\.line\('From: ' \+ sale\.source\);/,
     'the payload carries a source the receipt never prints');
@@ -158,8 +171,17 @@ test('and on the bill', () => {
   assert.strictEqual(offString.source, '');
 });
 
-test('absent means on, because it is what was asked for', () => {
-  assert.strictEqual(buildBillPayload({ sales_id: 'x', channel: 'pos' }, {}).source, 'Till');
+test('ABSENT MEANS OFF on the bill, and still means ON in the kitchen', () => {
+  /*
+   * The two documents want opposite defaults and that is the whole point. A
+   * cook handles an aggregator order differently from a walk-in, so the ticket
+   * says where it came from every time. A customer holding a tax invoice is
+   * reading it to check what they owe.
+   */
+  assert.strictEqual(buildBillPayload({ sales_id: 'x', channel: 'pos' }, {}).source, '');
+  const kot = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  assert.match(kot, /kot_print_source === false/,
+    'the kitchen ticket now needs switching on, which is the wrong way round');
 });
 
 test('both copies are in the packaged build', () => {

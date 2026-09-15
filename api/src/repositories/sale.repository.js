@@ -149,6 +149,23 @@ const buildReturnSignature = (saleObjectId, returnItems = [], payload = {}) => {
     .digest('hex');
 };
 
+/**
+ * How many copies of a floor-requested bill this shop wants.
+ *
+ * A count, not a switch, and read defensively: the settings form posts a
+ * string, a branch saved before this existed has nothing at all, and neither
+ * may turn into NaN copies. One is the answer to every unclear case, because
+ * one is what every shop prints today.
+ *
+ * Capped at three so a number that arrived by some other route cannot spend a
+ * roll of paper on a single table.
+ */
+function billCopies(branch) {
+  const said = Number(branch && branch.bill_print_copies);
+  if (!Number.isFinite(said) || said < 1) return 1;
+  return Math.min(Math.floor(said), 3);
+}
+
 class SalesRepository {
   constructor(defaultModel) {
     this.defaultModel = defaultModel || null;
@@ -7182,25 +7199,45 @@ class SalesRepository {
           console.error('Could not read the shop for the bill header:', e && e.message);
         }
 
+        /*
+         * HOW MANY COME OUT OF THE PRINTER.
+         *
+         * Owner: "when captain app send print bill we need to have 2 copies
+         * actually." A restaurant hands one to the guest and keeps one, and
+         * the second used to be a second walk to the printer.
+         *
+         * ONE JOB PER COPY, rather than one job that says "twice". Every till
+         * already on a shop floor drains this queue and prints what it is
+         * handed, so a shop gets its second copy the moment it changes the
+         * setting - with no new version of the desktop app. It is also the
+         * truer shape: each copy succeeds or fails on its own, and a printer
+         * that jams on one leaves a job to retry rather than a job half done.
+         */
+        const copies = billCopies(shop);
+
         for (const sale of open) {
-          await queuePrintJob({
-            branchId,
-            kind: 'bill',
-            saleId: sale._id,
-            label: `Table ${table}`,
-            /*
-             * BUILT FOR THE PRINTER, not handed over raw.
-             *
-             * This used to pass the sale document itself, with a comment
-             * claiming escpos-receipt rendered from exactly that shape. It does
-             * not. The renderer wants a view model - `items[].name`, `total` -
-             * and the document has `items[].item_name` and `sales_total`, so
-             * every lookup missed and the paper came out with a header, an
-             * empty item table and a total of 0.00. helpers/bill-payload.js
-             * has the full account.
-             */
-            payload: buildBillPayload(sale, shop),
-          });
+          for (let copy = 1; copy <= copies; copy += 1) {
+            await queuePrintJob({
+              branchId,
+              kind: 'bill',
+              saleId: sale._id,
+              /* The counter reads these as they come off: "(2 of 2)" says the
+                 pair belongs to one table rather than two bills for it. */
+              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              /*
+               * BUILT FOR THE PRINTER, not handed over raw.
+               *
+               * This used to pass the sale document itself, with a comment
+               * claiming escpos-receipt rendered from exactly that shape. It does
+               * not. The renderer wants a view model - `items[].name`, `total` -
+               * and the document has `items[].item_name` and `sales_total`, so
+               * every lookup missed and the paper came out with a header, an
+               * empty item table and a total of 0.00. helpers/bill-payload.js
+               * has the full account.
+               */
+              payload: buildBillPayload(sale, shop),
+            });
+          }
         }
 
         notifyBillRequested({
@@ -7918,6 +7955,9 @@ class SalesRepository {
             unit: 'qty',
             price,
             total,
+            /* See the note at the cancel flow below: this list is what the
+               kitchen ticket is printed from. */
+            item_description: String(si.item_description || ''),
           };
         })
         .filter((it) => it.item_id && it.item_quantity > 0);
@@ -8929,10 +8969,24 @@ class SalesRepository {
           const qty = parseFloat(ex.item_quantity || 0);
           if (qty <= 0) continue;
           const price = parseFloat(ex.item_price || 0);
+          /*
+           * THE NOTE TRAVELS WITH THE ITEM.
+           *
+           * A change record is what the kitchen ticket is printed FROM - the poller
+           * builds its print jobs out of `changes[].items`, not out of `sale.items` - and
+           * this list carried seven fields, none of them the note. So "less spicy" was
+           * stored correctly on the sale and never reached the paper.
+           *
+           * Owner: "when item print, item notes not printed. example \"less spicy\" not
+           * printed in the kot. its bad very bad". He is right that it is bad: the note
+           * is the one line on a ticket the kitchen cannot work out for itself, and a
+           * customer who asked for something and did not get it blames the restaurant.
+           */
           changesItems.push({
             item_id: idStr,
             item_name: String(ex.item_name || ''),
             item_quantity: qty,
+            item_description: String(ex.item_description || ''),
             process: 'cancel',
             item_code: String(ex.item_sku || ''),
             unit: String(ex.item_unit || 'qty'),
@@ -8974,6 +9028,9 @@ class SalesRepository {
         oldItemsData[idStr] = {
           quantity: parseFloat(ex.item_quantity || 0),
           name: String(ex.item_name || ''),
+          /* Carried so a REMOVED line can still say which one it was. Two of
+             the same dish on one table are told apart by the note. */
+          description: String(ex.item_description || ''),
           item_code: String(ex.item_sku || ''),
           price: parseFloat(ex.item_price || 0),
           unit: String(ex.item_unit || 'qty'),
@@ -9040,6 +9097,9 @@ class SalesRepository {
             item_id: productId,
             item_name: String(itemDoc.name || item.name || ''),
             item_quantity: changeQty,
+            /* From the request first: an amendment carries the note the person
+               just typed, and the stored copy is the one before it. */
+            item_description: String(item.item_note || item.item_description || ''),
             process: changeProcess,
             item_code: String(itemDoc.itemid || ''),
             unit: String(itemDoc.item_unit || itemDoc.unit || 'qty'),
@@ -9150,6 +9210,7 @@ class SalesRepository {
           item_id: String(remItemId),
           item_name: String(remItemData.name || ''),
           item_quantity: remQty,
+          item_description: String(remItemData.description || ''),
           process: 'cancel',
           item_code: String(remItemData.item_code || ''),
           unit: String(remItemData.unit || 'qty'),

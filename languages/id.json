@@ -3089,5 +3089,7 @@
   "lang_kcal": "kkal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Belum ada periode penyajian. Tambahkan sarapan, makan siang, atau makan malam di Pengaturan, Restoran, dan akan muncul di sini."
+  "lang_no_dayparts_yet": "Belum ada periode penyajian. Tambahkan sarapan, makan siang, atau makan malam di Pengaturan, Restoran, dan akan muncul di sini.",
+  "lang_bill_copies_from_the_floor": "Salinan tagihan yang diminta dari lantai",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Saat pramusaji meminta tagihan di perangkat, sebanyak ini keluar dari printer kasir - satu untuk tamu dan satu untuk toko, jika Anda menyimpan salinan. Struk yang diambil di kasir tidak terpengaruh."
 }

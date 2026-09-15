@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Todavía no hay franjas de servicio. Añade desayuno, comida o cena en Ajustes, Restaurante, y aparecerán aquí."
+  "lang_no_dayparts_yet": "Todavía no hay franjas de servicio. Añade desayuno, comida o cena en Ajustes, Restaurante, y aparecerán aquí.",
+  "lang_bill_copies_from_the_floor": "Copias de una cuenta pedida desde la sala",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Cuando un camarero pide la cuenta en el dispositivo, salen estas copias de la impresora del mostrador: una para el cliente y otra para el local, si guarda copia. Los tickets del mostrador no se ven afectados."
 }
