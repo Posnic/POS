@@ -100,23 +100,46 @@ test('EVERY TICKET KEEPS THE NAME IT HAD, across 180 combinations', () => {
 
 /* --------------------------------------------- the two copies agree */
 
-test('THE SHELL AND THE API COPIES ARE THE SAME FILE', () => {
+test('THE SHELL AND THE API COPIES ANSWER IDENTICALLY', () => {
   /*
-   * The API ships outside the asar archive and cannot require the shell's
-   * modules, so there are two copies on purpose - the same arrangement
-   * order-source.js uses. Two copies that drift would name one ticket two
-   * ways, which is exactly the duplicate this is meant to make detectable.
+   * Behaviour, not bytes - the same guard order-source.js uses for the same
+   * arrangement. The API ships outside the asar archive and cannot require the
+   * shell's modules, so there are two copies on purpose; prettier formats them
+   * differently, and byte identity is therefore impossible to hold and not what
+   * matters anyway.
+   *
+   * What matters is that two copies cannot name one ticket two ways. That is
+   * exactly the duplicate this module exists to make detectable, so it is
+   * checked over every shape rather than asserted once.
    */
-  const a = fs.readFileSync(path.join(ROOT, 'src', 'kot-job-key.js'), 'utf8');
-  const b = fs.readFileSync(path.join(ROOT, 'api', 'src', 'utils', 'kot-job-key.js'), 'utf8');
-  assert.strictEqual(a.replace(/\r\n/g, '\n'), b.replace(/\r\n/g, '\n'), 'the copies have drifted');
-});
-
-test('and they answer identically, not merely look alike', () => {
+  let checked = 0;
   for (const timestamp of STAMPS) {
     for (const type of TYPES) {
-      const job = { type, timestamp, items: [{ n: 'Idli' }] };
-      assert.strictEqual(shell.kotJobKey('SB1', job), api.kotJobKey('SB1', job));
+      for (const items of ITEMS) {
+        const job = { type, timestamp, items };
+        assert.strictEqual(
+          shell.kotJobKey('SB1', job),
+          api.kotJobKey('SB1', job),
+          `the copies name a ticket differently: ${JSON.stringify({ type, timestamp })}`
+        );
+        checked += 1;
+      }
+    }
+  }
+  assert.ok(checked >= 180, `only ${checked} combinations compared`);
+});
+
+test('and the fallback scheme agrees across both copies too', () => {
+  /* The second naming scheme, for a sale with no print_jobs array. Left out of
+     this comparison it could drift alone, and half the tickets would be named
+     two ways while the other half looked fine. */
+  for (const updated_date of STAMPS) {
+    for (const cancelled of [true, false]) {
+      const sale = { _id: 'SB1', updated_date, table_number: '6', person_count: 2, items: [{ n: 'Idli' }] };
+      assert.strictEqual(
+        shell.kotFallbackKey(sale, { cancelled }),
+        api.kotFallbackKey(sale, { cancelled })
+      );
     }
   }
 });
