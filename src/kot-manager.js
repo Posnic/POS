@@ -540,6 +540,8 @@ class KOTManager {
 
       const printedSaleIds = [];
       const printedIndexes = {};
+      /* The names of the tickets this pass actually put on paper. */
+      const printedKeys = [];
 
       for (const sale of sales) {
         // MongoDB driver returns ObjectId instance — use .toString(), not .$oid
@@ -575,6 +577,10 @@ class KOTManager {
                whether to print - a failed ticket is not retried here, and
                changing that is a bigger decision than this change. */
             printLedger.settle(jobKey, _anyPrinted(jobResults), _firstReason(jobResults));
+            /* Named for the server's shadow queue. Only when paper actually
+               came out - reporting a failed ticket as printed would close a
+               row that SHOULD be showing up as a disagreement. */
+            if (_anyPrinted(jobResults)) printedKeys.push(jobKey);
           }
 
           printedSaleIds.push(saleId);
@@ -609,6 +615,7 @@ class KOTManager {
 
         const results = await this.silentPrint(sale, printerNames);
         printLedger.settle(key, _anyPrinted(results), _firstReason(results));
+        if (_anyPrinted(results)) printedKeys.push(key);
         printedSaleIds.push(saleId);
       }
 
@@ -634,7 +641,10 @@ class KOTManager {
         const marked = await fetch(`${apiUrl}/sales/markKitchenPrinted`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'kioskkey': KIOSK_KEY },
-          body:    JSON.stringify({ saleIds: printedSaleIds, printedIndexes })
+          /* printedKeys names the exact tickets, so the server can tell a
+             second ticket for an amended order from a duplicate of the first.
+             Additive: a server that does not read it is unaffected. */
+          body:    JSON.stringify({ saleIds: printedSaleIds, printedIndexes, printedKeys })
         });
         if (marked && marked.ok) {
           console.log(`[KOT] Marked ${printedSaleIds.length} order(s) as printed`);
