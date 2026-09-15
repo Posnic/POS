@@ -206,6 +206,13 @@ class CustomerController extends BaseController {
       gst: gstStatus,
       gst_type: gstType,
       gst_number: gstNumber,
+      /*
+       * The registered business the invoice is made out to, when that is not
+       * the customer's own name. A GSTIN belongs to an entity and the name
+       * above it has to be that entity, or the invoice is not one the customer
+       * can claim against.
+       */
+      company_name: req.body.company_name || '',
       notes: req.body.notes,
       tags: req.body.tags || [],
       balance: req.body.balance || DEFAULTS.BALANCE,

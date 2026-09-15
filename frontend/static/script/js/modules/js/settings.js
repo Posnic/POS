@@ -1226,6 +1226,21 @@ if ($wrapper.length) {
                 (data.print_logoimg === true) ? $('#print_logoimg').prop("checked", true).attr('checked', 'checked') : $('#print_logoimg').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.print_sale_notes === true) ? $('#print_sale_notes').prop("checked", true).attr('checked', 'checked') : $('#print_sale_notes').prop("checked", false).attr('unchecked', 'unchecked');
                 (data.whatsapp_receipt === true) ? $('#whatsapp_receipt').prop("checked", true).attr('checked', 'checked') : $('#whatsapp_receipt').prop("checked", false).attr('unchecked', 'unchecked');
+                /*
+                 * What the bill carries, beyond the dishes and the total.
+                 *
+                 * ABSENT MEANS OFF, and that is deliberate rather than a
+                 * default that happened. A shop that has never seen this card
+                 * keeps the bill it prints today; one that wants the hotel
+                 * bill turns a row on. `=== true` reads a missing setting as
+                 * off, which is the direction that cannot surprise anybody.
+                 */
+                (data.bill_print_table === true) ? $('#bill_print_table').prop("checked", true).attr('checked', 'checked') : $('#bill_print_table').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_dine_type === true) ? $('#bill_print_dine_type').prop("checked", true).attr('checked', 'checked') : $('#bill_print_dine_type').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_covers === true) ? $('#bill_print_covers').prop("checked", true).attr('checked', 'checked') : $('#bill_print_covers').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_steward === true) ? $('#bill_print_steward').prop("checked", true).attr('checked', 'checked') : $('#bill_print_steward').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_total_qty === true) ? $('#bill_print_total_qty').prop("checked", true).attr('checked', 'checked') : $('#bill_print_total_qty').prop("checked", false).attr('unchecked', 'unchecked');
+                (data.bill_print_source === true) ? $('#bill_print_source').prop("checked", true).attr('checked', 'checked') : $('#bill_print_source').prop("checked", false).attr('unchecked', 'unchecked');
                 if (data.country === 'India') {
                     $('.branch-gstin-hide-show').show();
                     $('.hide_indian_gst').show();
@@ -2088,6 +2103,12 @@ if ($wrapper.length) {
                 print_url: ($('#print_url').is(":checked")) ? 'true' : 'false',
                 print_logoimg: ($('#print_logoimg').is(":checked")) ? 'true' : 'false',
                 print_sale_notes: ($('#print_sale_notes').is(":checked")) ? 'true' : 'false',
+                bill_print_table: ($('#bill_print_table').is(":checked")) ? 'true' : 'false',
+                bill_print_dine_type: ($('#bill_print_dine_type').is(":checked")) ? 'true' : 'false',
+                bill_print_covers: ($('#bill_print_covers').is(":checked")) ? 'true' : 'false',
+                bill_print_steward: ($('#bill_print_steward').is(":checked")) ? 'true' : 'false',
+                bill_print_total_qty: ($('#bill_print_total_qty').is(":checked")) ? 'true' : 'false',
+                bill_print_source: ($('#bill_print_source').is(":checked")) ? 'true' : 'false',
                 keyboard_view: ($('#keyboard_view').is(":checked")) ? 'true' : 'false',
                 whatsapp_receipt: ($('#whatsapp_receipt').is(":checked")) ? 'true' : 'false',
                 balance_view: true,

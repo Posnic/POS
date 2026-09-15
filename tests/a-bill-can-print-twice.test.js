@@ -51,6 +51,32 @@ const billCopies = new Function(`${lift(SALES, 'billCopies')}\nreturn billCopies
 
 /* ------------------------------------------------- what the number means */
 
+/* ------------------------------------------- who decides, and who cannot */
+
+test('the handset decides, and the shop is the fallback', () => {
+  /*
+   * Owner: "its better two copies from captain itself... configuration change
+   * reequired pos guy wont have permission. lets keep in app itself."
+   *
+   * The person who wants a second copy is the one holding the phone. A request
+   * that names a number is honoured; one that says nothing gets the shop's own
+   * setting, which is how an older handset keeps working.
+   */
+  assert.strictEqual(billCopies({ bill_print_copies: 1 }, 2), 2);
+  assert.strictEqual(billCopies({ bill_print_copies: 3 }, 1), 1);
+  assert.strictEqual(billCopies({ bill_print_copies: 2 }, undefined), 2);
+  assert.strictEqual(billCopies({}, undefined), 1);
+});
+
+test('a phone cannot spend a roll of paper on one table', () => {
+  /* Clamped wherever the number came from. A handset is not more trusted than
+     a branch document just because it is closer to the guest. */
+  assert.strictEqual(billCopies({}, 40), 3);
+  assert.strictEqual(billCopies({}, 'lots'), 1);
+  assert.strictEqual(billCopies({}, 0), 1);
+  assert.strictEqual(billCopies({}, -2), 1);
+});
+
 test('a shop that has never touched it prints one', () => {
   /*
    * The whole safety of shipping this: ninety shops print bills today and
@@ -122,24 +148,63 @@ test('4. the branch carries it, projects it, and defaults it', () => {
   assert.match(BRANCH, /bill_print_copies: 1,/, 'not in the defaults a new branch is built from');
 });
 
+test('a repeated tap does not queue the bill again', () => {
+  /*
+   * THE THING THAT MADE COPIES DANGEROUS. A waiter walking to the counter taps
+   * Print bill again because nothing has come out yet. The queue used to be
+   * guarded by how many tickets are OPEN rather than how many this tap marked,
+   * so two taps meant two bills - and with copies at two, four.
+   *
+   * The intent was always in the update, which skips a ticket that already
+   * carries a timestamp. Taking the ids FIRST is what joins the two.
+   */
+  assert.match(SALES, /const askedIds = asking\.map\(\(row\) => row\._id\);/,
+    'the tickets this tap marked are not identified');
+  assert.match(SALES, /if \(askedIds\.length > 0\) \{/,
+    'the queue is still guarded by what is open rather than what changed');
+  assert.match(SALES, /Model\.find\(\{ _id: \{ \$in: askedIds \} \}\)/,
+    'the queue still reads every open ticket, including ones already asked for');
+  assert.ok(
+    !/if \(waiting > 0\) \{[\s\S]{0,400}queuePrintJob/.test(SALES),
+    'the open-ticket count still guards the queue'
+  );
+});
+
+test('the count reaches the queue from the request', () => {
+  const CONTROLLER = read('api', 'src', 'controllers', 'sales.controller.js');
+  const SERVICE = read('api', 'src', 'services', 'sale.service.js');
+  assert.match(CONTROLLER, /req\.body\.copies \|\| req\.body\.bill_copies/, 'the route drops it');
+  assert.match(SERVICE, /requestBillPrintModel\(branchId, tableNumber, askedBy, \{[\s\S]{0,120}copies,/,
+    'the service drops it');
+  assert.match(SALES, /const copies = billCopies\(shop, copiesAsked\);/, 'the queue never sees it');
+});
+
 test('5. and something actually reads it', () => {
   /*
    * The link that is easiest to forget, and the one that makes the other four
    * worth having. A loop per copy around the job that carries the bill.
    */
-  assert.match(SALES, /const copies = billCopies\(shop\);/, 'the queue never asks');
+  assert.match(SALES, /const copies = billCopies\(shop, copiesAsked\);/, 'the queue never asks');
   assert.match(SALES, /for \(let copy = 1; copy <= copies; copy \+= 1\)/, 'one job however many copies');
   assert.match(SALES, /copies > 1 \? `Table \$\{table\} \(\$\{copy\} of \$\{copies\}\)`/,
     'two identical labels at the counter, with nothing to say they are a pair');
 });
 
-test('the copies come from the SHOP, not from the handset', () => {
+test('a handset may name the number, but never how the shop is billed for it', () => {
   /*
-   * A phone asking for four copies would be a phone deciding how the shop
-   * spends paper. The count is read from the branch the sale belongs to, and
-   * `shop` is the branch document this code already loaded for the letterhead.
+   * The owner moved this into the app on purpose: the person who wants a
+   * second copy is the one holding the phone, not somebody with access to the
+   * till's settings page.
+   *
+   * What does NOT move is the ceiling. A request is honoured up to three
+   * copies and no further, and the shop document it falls back to is read
+   * here - the branch this sale belongs to, already loaded for the letterhead,
+   * never anything the phone said about which shop it is.
    */
-  const where = SALES.indexOf('const copies = billCopies(shop);');
+  const where = SALES.indexOf('const copies = billCopies(shop, copiesAsked);');
   const before = SALES.slice(Math.max(0, where - 3000), where);
-  assert.match(before, /BranchModel\.findById/, 'the shop is not the branch document');
+  assert.match(before, /BranchModel\.findById/, 'the fallback is not the branch document');
+
+  assert.strictEqual(billCopies({ bill_print_copies: 1 }, 99), 3, 'a phone set the ceiling');
+  assert.strictEqual(billCopies({ bill_print_copies: 99 }, undefined), 3, 'a branch set the ceiling');
 });
