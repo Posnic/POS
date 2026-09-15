@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Nog geen serveertijden. Voeg ontbijt, lunch of diner toe bij Instellingen, Restaurant, dan verschijnen ze hier."
+  "lang_no_dayparts_yet": "Nog geen serveertijden. Voeg ontbijt, lunch of diner toe bij Instellingen, Restaurant, dan verschijnen ze hier.",
+  "lang_bill_copies_from_the_floor": "Kopieën van een in de zaal gevraagde rekening",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Als een medewerker de rekening op het handapparaat vraagt, komen er zoveel uit de kassaprinter - een voor de gast en een voor de zaak, als u een kopie bewaart. Bonnen aan de kassa veranderen niet."
 }
