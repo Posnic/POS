@@ -1,5 +1,9 @@
 // src/services/install.service.js
 const InstallRepository = require('../repositories/install.repository');
+const dishFacts = require('../utils/dish-facts');
+const dishIcons = require('../utils/dish-icons');
+/* The four words a diet mark may be; anything else is "not said". */
+const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
 const {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -1443,11 +1447,56 @@ class InstallService {
              * grid drew tiles for all of them. A later key in the same object
              * literal always wins, and nothing says so at the point it does.
              */
+            /*
+             * A PICTURE FOR A DISH NOBODY PHOTOGRAPHED.
+             *
+             * Demo items have never carried an icon, so every product without
+             * a photograph arrived as a grey placeholder - and most of them
+             * have no photograph: the image manifest covers 57 products
+             * across seven packs, and a restaurant menu has none at all.
+             *
+             * dish-icons was written for exactly this and was never wired to
+             * the seeder. It reads the name - a biryani is rice, a naan is
+             * bread, a filter coffee is a coffee - and returns '' when the
+             * product already has a photograph, because drawing both is
+             * clutter. Free, licence-free, and right 22 times out of 22 on
+             * the restaurant pack.
+             */
+            icon: dishIcons.iconFor({
+              name: product.name,
+              image: product.image,
+              icon: product.icon,
+            }),
             image: product.image || 'item.svg',
             cover_image: product.image || '',
             multi_image: product.image ? [{ name: product.image, cover: 'yes' }] : [],
             sort_order: 1,
             description: product.description || `${product.name} - ${product.unit}`,
+            /*
+             * WHAT MAKES A MENU A MENU, AND NOT A PRICE LIST.
+             *
+             * This literal is a whitelist: a field a pack carries and this
+             * does not NAME is dropped on the way in, with nothing anywhere
+             * to say so. Every other pack is a price list and never noticed;
+             * a restaurant pack is not, and without these six fields the
+             * ordering pages have nothing to filter by, no prep time to show,
+             * no badge to earn and no spice choice to offer - so the demo
+             * demonstrates a list of names, which is what the restaurant
+             * already had on paper.
+             *
+             * Cleaned through the same rules the item form uses, so a pack
+             * cannot smuggle in a claim: cleanTags drops anything not on the
+             * list, and health badges are never stored at all - they are
+             * derived from the numbers at read time, here as everywhere.
+             */
+            diet: DIET_MARKS.includes(String(product.diet || '')) ? String(product.diet) : '',
+            prep_minutes: Number(product.prep_minutes) > 0 ? Number(product.prep_minutes) : 0,
+            /* Only where the kitchen can really cook to order; see
+               utils/spice-level.js for why that is per dish. */
+            spice_choice: product.spice_choice === true,
+            nutrition: dishFacts.cleanNutrition(product.nutrition),
+            food_tags: dishFacts.cleanTags(product.food_tags, dishFacts.FOOD_TAGS),
+            menu_marks: dishFacts.cleanTags(product.menu_marks, dishFacts.MENU_MARKS),
             track_inventory: product.track_inventory !== false,
             ecommerce: false,
             updated_date: now,
