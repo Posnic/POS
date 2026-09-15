@@ -1817,6 +1817,54 @@ class ItemsController extends BaseController {
     }
   }
 
+  /*
+   * Offer the spice choice across a scope, or take it back.
+   *
+   * A write, so it wants item.write - the same gate the bulk price and stock
+   * tools sit behind. See previewSpiceChoice for why a per-dish setting needs
+   * a way to be set in bulk.
+   */
+  async bulkSpiceChoice(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, offer } = req.body || {};
+      const result = await this.service.setSpiceChoice(
+        { scope, categoryId: category_id, offer },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not set the spice choice', 400);
+    } catch (error) {
+      console.error('Error in bulkSpiceChoice:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Dry-run the above: how many dishes it would actually change. */
+  async bulkSpiceChoicePreview(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, offer } = req.body || {};
+      const result = await this.service.previewSpiceChoice(
+        { scope, categoryId: category_id, offer },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not check the dishes', 400);
+    } catch (error) {
+      console.error('Error in bulkSpiceChoicePreview:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async getBulkStockUpdates(req, res) {
     try {
       if (req.user?.access?.item?.read === false) {

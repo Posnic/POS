@@ -2207,6 +2207,111 @@ PosnicPro.items = {
             PosnicPro.alert('error', resp.message || 'Could not adjust stock');
         });
     },
+    /*
+     * WHO MAY CHOOSE HOW HOT, over a whole section.
+     *
+     * The tick lives on the dish because only the kitchen knows which dishes
+     * it can cook to order. But a restaurant with 272 dishes that has to open
+     * every one of them to tick a box does not turn the feature on - it leaves
+     * it off, and the customer goes on typing "less spicy" into a note.
+     *
+     * Same scope and the same check-then-apply as the bulk price and stock
+     * tools next to it, because a shop should not have to learn a third shape
+     * for the same idea.
+     */
+    openSpiceChoice: function () {
+        $('input[name="spice_choice_scope"][value="all"]').prop('checked', true);
+        $('.spice-choice-category-row').hide();
+        $('#spice_choice_offer').val('yes');
+        $('#spice_choice_check_result').hide().empty();
+        $('#spice_choice_submit').prop('disabled', false);
+        PosnicPro.items.loadSpiceChoiceCategories();
+        $('#spice_choice_modal').modal('show');
+    },
+
+    toggleSpiceChoiceCategory: function () {
+        var scope = $('input[name="spice_choice_scope"]:checked').val();
+        (scope === 'category') ? $('.spice-choice-category-row').show() : $('.spice-choice-category-row').hide();
+    },
+
+    loadSpiceChoiceCategories: function () {
+        var sel = $('#spice_choice_category');
+        PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
+            sel.empty();
+            $.map(response.suggestions || [], function (dataItem) {
+                sel.append('<option value="' + dataItem.id + '">' + dataItem.name + '</option>');
+            });
+            sel.select2({ placeholder: PosnicPro.i18n.t('lang_choose_a_category_2', 'Choose a category'), dropdownParent: $('#spice_choice_modal') });
+        });
+    },
+
+    readSpiceChoiceForm: function () {
+        var scope = $('input[name="spice_choice_scope"]:checked').val();
+        var category_id = (scope === 'category') ? $('#spice_choice_category').val() : null;
+        if (scope === 'category' && !category_id) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
+            return null;
+        }
+        return {
+            scope: scope,
+            category_id: category_id,
+            offer: $('#spice_choice_offer').val() === 'yes'
+        };
+    },
+
+    checkSpiceChoice: function () {
+        var form = PosnicPro.items.readSpiceChoiceForm();
+        if (!form) return false;
+        var box = $('#spice_choice_check_result');
+        box.html('<span class="dim"><lang class="lang_checking">Checking...</lang></span>').show();
+        PosnicPro.post({ url: 'items/bulkSpiceChoicePreview', data: JSON.stringify(form) }, function (response) {
+            if (response.type !== 'success') {
+                box.hide();
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            var d = response.data || {};
+            var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+            var names = (d.sample || []).slice(0, 5).map(function (r) {
+                return '<li>' + esc(r.name) + '</li>';
+            }).join('');
+            var more = (d.willChange > 5) ? '<li class="dim">and ' + (d.willChange - 5) + ' more</li>' : '';
+            /*
+             * WOULD CHANGE, not "matches". Run it twice and the second answer
+             * is zero, which is the honest way to say the first one worked.
+             */
+            var head = d.willChange
+                ? '<b>' + d.willChange + '</b> of ' + (d.total || 0) + ' dish(es) would change.'
+                : PosnicPro.i18n.t('lang_spice_choice_nothing', 'Nothing to change: those dishes are already set that way.');
+            var body = names ? '<ul style="margin:4px 0 0; padding-left:18px;">' + names + more + '</ul>' : '';
+            box.attr('class', 'alert alert-info')
+                .css({ 'font-size': '12.5px', 'padding': '8px 12px' })
+                .html(head + body).show();
+        }, function () {
+            box.hide();
+        });
+        return false;
+    },
+
+    submitSpiceChoice: function () {
+        var form = PosnicPro.items.readSpiceChoiceForm();
+        if (!form) return false;
+        $('#spice_choice_submit').prop('disabled', true);
+        PosnicPro.post({ url: 'items/bulkSpiceChoice', data: JSON.stringify(form) }, function (response) {
+            $('#spice_choice_submit').prop('disabled', false);
+            if (response.type === 'success') {
+                $('#spice_choice_modal').modal('hide');
+                PosnicPro.alert('success', response.message);
+                PosnicPro.items.itemsTable();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            $('#spice_choice_submit').prop('disabled', false);
+        });
+        return false;
+    },
+
     openBulkStock: function () {
         $('input[name="bulk_stock_scope"][value="all"]').prop('checked', true);
         $('.bulk-stock-category-row').hide();
