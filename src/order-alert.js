@@ -34,8 +34,16 @@
  * always the person's choice.
  */
 
-const REPEAT_EVERY_MS = 20000;
-const MAX_REPEATS = 15; // five minutes of asking, then it stops nagging
+/*
+ * How often the policy is CONSULTED - not how often a noise is made.
+ *
+ * The old constants were REPEAT_EVERY_MS = 20000 and MAX_REPEATS = 15: twenty
+ * seconds, fifteen times, then silence with the order still unanswered. The
+ * pacing now lives in waiting-order-policy.js, which backs off instead of
+ * stopping, so this only has to be as fast as the shortest step.
+ */
+const TICK_MS = 10 * 1000;
+const policy = require('./waiting-order-policy');
 
 /**
  * A single tone as a WAV buffer, ready for an <audio> element.
@@ -116,9 +124,14 @@ function dataUri(buffer) {
 class OrderAlert {
   constructor({ getWindow } = {}) {
     this._getWindow = typeof getWindow === "function" ? getWindow : () => null;
-    this._pending = new Set();
+    /*
+     * A MAP, not a set: escalation needs to know how long each order has been
+     * waiting and when it was last mentioned. A set could only say "something
+     * is pending", which is all the flat 20s x 15 ever needed.
+     */
+    this._pending = new Map();
     this._repeatTimer = null;
-    this._repeats = 0;
+    this._policy = { onSilence: 'nothing', decideAfterMinutes: 0 };
     this._onAttention = (payload) => this.handle(payload);
 
     try {
@@ -132,7 +145,15 @@ class OrderAlert {
     const alert = payload.alert === "waiting" ? "waiting" : "received";
 
     if (alert === "waiting" && payload.saleId) {
-      this._pending.add(String(payload.saleId));
+      const id = String(payload.saleId);
+      if (!this._pending.has(id)) {
+        this._pending.set(id, {
+          arrivedAt: Date.now(),
+          lastAlertAt: Date.now(),
+          acknowledged: false,
+          source: payload.source || '',
+        });
+      }
       this._startRepeating();
     }
 
@@ -143,6 +164,27 @@ class OrderAlert {
   resolve(saleId) {
     this._pending.delete(String(saleId || ""));
     if (!this._pending.size) this._stopRepeating();
+  }
+
+  /*
+   * "I HAVE SEEN THIS" - which is not "I have accepted it".
+   *
+   * A shop mid-rush needs to stop the noise without deciding the order. The
+   * order stays pending and the shop's declared default still fires on time,
+   * or acknowledging would become a way to park an order for ever.
+   */
+  acknowledge(saleId, by = '') {
+    const row = this._pending.get(String(saleId || ''));
+    if (!row) return false;
+    row.acknowledged = true;
+    row.acknowledgedBy = String(by || '').slice(0, 60);
+    row.acknowledgedAt = Date.now();
+    return true;
+  }
+
+  /** What this shop asked to happen when nobody answers. */
+  setPolicy(policy = {}) {
+    this._policy = { ...this._policy, ...policy };
   }
 
   clear() {
@@ -156,25 +198,72 @@ class OrderAlert {
 
   _startRepeating() {
     if (this._repeatTimer) return;
-    this._repeats = 0;
-    this._repeatTimer = setInterval(() => {
-      this._repeats += 1;
-      /*
-       * It gives up after five minutes. An alarm that never stops is one
-       * somebody mutes at the speaker, and then it is gone for every future
-       * order too - the queue badge is still there, and that is the part that
-       * must not be silenceable.
-       */
-      if (!this._pending.size || this._repeats >= MAX_REPEATS) {
-        this._stopRepeating();
-        return;
-      }
-      this._play("waiting", { repeat: true });
-    }, REPEAT_EVERY_MS);
+    /*
+     * ONE SLOW TICK, and the policy decides what happens on it.
+     *
+     * This used to be a 20 second interval that stopped after fifteen turns -
+     * five minutes of asking and then silence, with the order still unanswered
+     * and the customer still waiting. Backing off is done by the policy now, so
+     * the timer only has to be fast enough for the SHORTEST step.
+     */
+    this._repeatTimer = setInterval(() => this._tick(), TICK_MS);
+    if (typeof this._repeatTimer.unref === "function") this._repeatTimer.unref();
+  }
 
-    /* Do not hold the app open just to nag. */
-    if (typeof this._repeatTimer.unref === "function")
-      this._repeatTimer.unref();
+  /**
+   * Ask the policy about every waiting order, and act on what it says.
+   *
+   * Nothing here decides anything: waiting-order-policy.js does, and it is pure
+   * so the deciding can be tested without a clock.
+   */
+  _tick() {
+    if (!this._pending.size) {
+      this._stopRepeating();
+      return;
+    }
+
+    const now = Date.now();
+    for (const [saleId, row] of this._pending) {
+      let verdict;
+      try {
+        verdict = policy.decide(
+          {
+            waitingMs: now - row.arrivedAt,
+            lastAlertedMs: now - row.lastAlertAt,
+            acknowledged: row.acknowledged,
+            source: row.source,
+          },
+          this._policy
+        );
+      } catch (e) {
+        /* A policy fault must not silence an alarm. Fall back to speaking. */
+        verdict = { alert: !row.acknowledged, reach: 'till', decide: 'nothing' };
+      }
+
+      if (verdict.alert) {
+        row.lastAlertAt = now;
+        this._play("waiting", { repeat: true, saleId, reach: verdict.reach });
+      }
+
+      if (verdict.decide !== 'nothing') {
+        /*
+         * Announced, never performed here. This class makes a noise; deciding
+         * an order is somebody else's job and belongs where the order lives.
+         * A sound module that could cancel a customer's order would be a
+         * surprising place to find that power.
+         */
+        try {
+          process.emit('posnic:order-decided', {
+            saleId,
+            decide: verdict.decide,
+            reason: verdict.reason,
+          });
+        } catch (e) {
+          /* ignored */
+        }
+        this._pending.delete(saleId);
+      }
+    }
   }
 
   _stopRepeating() {
@@ -216,6 +305,5 @@ module.exports = {
   tone,
   sequence,
   dataUri,
-  REPEAT_EVERY_MS,
-  MAX_REPEATS,
+  TICK_MS,
 };
