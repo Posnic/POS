@@ -3133,5 +3133,16 @@
   "lang_customer_gstin_hint": "يُطبع على فاتورتهم ليتمكنوا من استرداد الضريبة. اطلبه مرة واحدة وستحمله كل فاتورة لاحقة.",
   "lang_the_registered_business_name": "الاسم المسجل للشركة",
   "lang_what_the_bill_carries": "ما تحمله الفاتورة",
-  "lang_what_the_bill_carries_hint": "أسطر إضافية على نسخة العميل. جميعها مغلقة افتراضيًا لأن تذكرة المطبخ تحملها بالفعل. شغّل ما تتوقع فواتيرك إظهاره."
+  "lang_what_the_bill_carries_hint": "أسطر إضافية على نسخة العميل. جميعها مغلقة افتراضيًا لأن تذكرة المطبخ تحملها بالفعل. شغّل ما تتوقع فواتيرك إظهاره.",
+  "lang_a_minute_ago": "قبل دقيقة",
+  "lang_accept": "قبول",
+  "lang_an_hour_ago": "قبل ساعة",
+  "lang_close": "إغلاق",
+  "lang_got_it": "فهمت",
+  "lang_just_now": "الآن",
+  "lang_minutes_ago": "دقائق مضت",
+  "lang_refuse": "رفض",
+  "lang_requests": "الطلبات",
+  "lang_see_all_orders": "افتح قائمة الطلبات",
+  "lang_table": "الطاولة"
 }

@@ -3133,5 +3133,16 @@
   "lang_customer_gstin_hint": "Impresso na conta para que possam recuperar o imposto. Peça uma vez e todas as contas seguintes o levarão.",
   "lang_the_registered_business_name": "A razão social da empresa",
   "lang_what_the_bill_carries": "O que a conta leva",
-  "lang_what_the_bill_carries_hint": "Linhas extra na via do cliente. Todas desligadas por padrão, porque a comanda da cozinha já as leva. Ligue as que suas contas devem mostrar."
+  "lang_what_the_bill_carries_hint": "Linhas extra na via do cliente. Todas desligadas por padrão, porque a comanda da cozinha já as leva. Ligue as que suas contas devem mostrar.",
+  "lang_a_minute_ago": "há 1 minuto",
+  "lang_accept": "Aceitar",
+  "lang_an_hour_ago": "há 1 hora",
+  "lang_close": "Fechar",
+  "lang_got_it": "Percebi",
+  "lang_just_now": "agora mesmo",
+  "lang_minutes_ago": "minutos atrás",
+  "lang_refuse": "Recusar",
+  "lang_requests": "Pedidos",
+  "lang_see_all_orders": "Abrir a fila de pedidos",
+  "lang_table": "Mesa"
 }
