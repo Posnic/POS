@@ -618,12 +618,18 @@ class BillManager {
        * headed SALES RECEIPT after paying.
        *
        * A GST-registered shop issues a TAX INVOICE for the supply; a shop
-       * without GST issues a BILL. Both say UNPAID, because this is a demand
+       * without GST issues a BILL. Neither says UNPAID any more: the owner
+       * asked for it off - "No need to print Unpaid near Tax Invoice" - and he
+       * is right that it is noise. A tax invoice is a demand for payment by
+       * definition, the settled receipt is a different document printed after,
+       * and a customer holding this one has not been asked to pay twice. The
+       * word only ever helped somebody sorting a pile of paper, and the bill
+       * number does that better.
        * for payment, and the receipt follows once it is paid.
        */
       const gstin = String((sale && (sale.branch_gstin_number || sale.gstin)) || '').trim();
       const bytes = renderSale(
-        { ...(sale || {}), title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID' },
+        { ...(sale || {}), title: gstin ? 'TAX INVOICE' : 'BILL' },
         {
           paperWidth: String(columnsFor(this.paperSize)),
           /* The drawer is the cashier business and this is not a payment. */
@@ -651,7 +657,7 @@ class BillManager {
         require('./receipt-log').record({
           kind: 'bill',
           saleId: (sale && (sale.billNo || sale.sales_id || sale.invoice_number)) || '',
-          title: (gstin ? 'TAX INVOICE' : 'BILL') + ' - UNPAID',
+          title: gstin ? 'TAX INVOICE' : 'BILL',
           total: sale && (sale.total ?? sale.sales_total),
           source: 'Floor bill',
           ms: Date.now() - startedAt,

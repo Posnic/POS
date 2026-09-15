@@ -3113,5 +3113,7 @@
   "lang_the_whole_menu": "Toute la carte",
   "lang_which_dishes": "Quels plats",
   "lang_working": "En cours...",
-  "lang_run_stopped": "Arrêté."
+  "lang_run_stopped": "Arrêté.",
+  "lang_bill_copies_from_the_floor": "Copies d'une note demandée en salle",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Quand un serveur demande la note sur le terminal, ce nombre sort de l'imprimante du comptoir - une pour le client et une pour la maison, si vous en gardez une. Les tickets pris au comptoir ne changent pas."
 }

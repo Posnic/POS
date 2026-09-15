@@ -3113,5 +3113,7 @@
   "lang_the_whole_menu": "Tutto il menu",
   "lang_which_dishes": "Quali piatti",
   "lang_working": "In corso...",
-  "lang_run_stopped": "Fermato."
+  "lang_run_stopped": "Fermato.",
+  "lang_bill_copies_from_the_floor": "Copie di un conto richiesto in sala",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Quando un cameriere chiede il conto dal palmare, escono queste copie dalla stampante della cassa - una per il cliente e una per il locale, se ne tenete una. Gli scontrini presi alla cassa non cambiano."
 }

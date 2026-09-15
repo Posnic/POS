@@ -123,6 +123,20 @@ const branchSchema = new Schema(
     // Deliberately no default: unset falls back to what print_type implies,
     // so a shop that has never touched it keeps printing as it does today.
     print_width: { type: String },
+    /*
+     * HOW MANY COPIES OF A BILL A WAITER ASKS FOR FROM THE FLOOR.
+     *
+     * Owner: "when captain app send print bill we need to have 2 copies
+     * actually." A restaurant hands one to the guest and keeps one, and until
+     * now the second was a second walk to the printer.
+     *
+     * A number rather than a switch, because two is not the only answer - and
+     * capped where it is read, so a slipped keystroke cannot spend a roll of
+     * paper on one table.
+     *
+     * Default ONE: every shop printing today gets exactly what it gets today.
+     */
+    bill_print_copies: { type: Number, default: 1 },
     print_character: { type: String, default: 'default' },
     header_print: { type: String, default: 'default' },
     footer_print: { type: String },
@@ -253,6 +267,7 @@ class BranchModel {
       print_sale_notes: { type: 'String', select: true },
       receipt_barcode: { type: 'String', select: true },
       print_type: { type: 'String', select: true },
+      bill_print_copies: { type: 'Number', select: true },
       printing_size: { type: 'String', select: true },
       print_width: { type: 'String', select: true },
       print_character: { type: 'String', select: true },
@@ -1039,6 +1054,7 @@ class BranchModel {
         supplier_checkbox: false,
         tax_checkbox: false,
         print_type: 'standard',
+        bill_print_copies: 1,
         printing_size: 'receipt_medium',
         print_character: 'default',
         header_print: 'default',

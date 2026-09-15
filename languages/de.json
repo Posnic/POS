@@ -3113,5 +3113,7 @@
   "lang_the_whole_menu": "Die ganze Karte",
   "lang_which_dishes": "Welche Gerichte",
   "lang_working": "Läuft...",
-  "lang_run_stopped": "Angehalten."
+  "lang_run_stopped": "Angehalten.",
+  "lang_bill_copies_from_the_floor": "Kopien einer im Service angeforderten Rechnung",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Wenn eine Servicekraft die Rechnung am Handgerät anfordert, kommen so viele aus dem Kassendrucker - eine für den Gast und eine für das Haus, falls Sie eine behalten. Belege an der Kasse sind nicht betroffen."
 }

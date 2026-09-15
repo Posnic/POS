@@ -3113,5 +3113,7 @@
   "lang_the_whole_menu": "Seluruh menu",
   "lang_which_dishes": "Hidangan yang mana",
   "lang_working": "Sedang bekerja...",
-  "lang_run_stopped": "Dihentikan."
+  "lang_run_stopped": "Dihentikan.",
+  "lang_bill_copies_from_the_floor": "Salinan tagihan yang diminta dari lantai",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Saat pramusaji meminta tagihan di perangkat, sebanyak ini keluar dari printer kasir - satu untuk tamu dan satu untuk toko, jika Anda menyimpan salinan. Struk yang diambil di kasir tidak terpengaruh."
 }
