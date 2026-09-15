@@ -1148,67 +1148,7 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
 
             categories.forEach(category => {
                 category.items.forEach(item => {
-                    /* Empty when there is no photograph, so the card can draw
-                       the dish's icon instead of a grey placeholder. */
-                    const imageSrc = (!item.img || String(item.img).trim() === "" || item.img === "item.svg") ? "" : String(item.img).trim();
-                    const itemId = typeof item.id === "string"
-                        ? item.id
-                        : (item.id?.$oid || item._id?.$oid || item._id || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
-                    products.push({
-                        id: String(itemId),
-                        name: item.name || "Unknown",
-                        available_quantity: item.available_quantity || 0,
-                        price: parseFloat(item.final_price) || 0,
-                        discount_price: parseFloat(item.discount_price) || 0,
-                        tax_price: parseFloat(item.tax_price) || 0,
-                        img: imageSrc,
-                        /* Kept so the page can filter by diet, sort by what
-                           sells, and search a description - none of which
-                           reached this bundle before, which is why /order had
-                           no search while /menu had one. */
-                        diet: item.diet || "",
-                        description: item.description || "",
-                        prep_minutes: Number(item.prep_minutes) || 0,
-                        ordered_count: Number(item.ordered_count) || 0,
-                        /* Every photo, the drawn icon for a dish with none,
-                           and whether it is on right now - the same three
-                           things the menu shows, so the two pages agree. */
-                        photos: Array.isArray(item.photos) ? item.photos.filter(Boolean) : [],
-                        icon: item.icon || "",
-                        available: item.available !== false,
-                        served_in: Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [],
-                        /*
-                         * WHAT IS ON THE PLATE, AND IT WAS BEING THROWN AWAY.
-                         *
-                         * This loop is the ordering bundle's whole catalogue:
-                         * a field it does not NAME here never reaches the page,
-                         * however correctly the server sent it. The server has
-                         * been sending nutrition, the shop's own marks, the
-                         * "made without" tags and the earned health claims
-                         * since the dish-facts release, and all four stopped
-                         * at this object literal.
-                         *
-                         * So on /order the dish sheet drew no numbers, no
-                         * badges and no marks, and the "Good for" filter group
-                         * had nothing to offer and hid itself - while /menu,
-                         * which reads the same endpoint straight without a
-                         * local store, showed all of it. Nothing failed and
-                         * nothing was logged; the fields simply were not there.
-                         *
-                         * `claims` is computed on the server from the shop's
-                         * own numbers and is never stored on a dish, so
-                         * carrying it here cannot invent a badge - it can only
-                         * deliver one the numbers already earned.
-                         */
-                        nutrition: item.nutrition && typeof item.nutrition === "object" ? item.nutrition : {},
-                        tags: Array.isArray(item.tags) ? item.tags : [],
-                        marks: Array.isArray(item.marks) ? item.marks : [],
-                        claims: Array.isArray(item.claims) ? item.claims : [],
-                        /* Whether the kitchen said it can cook this one to
-                           order. See api/src/utils/spice-level.js. */
-                        spice_choice: item.spice_choice === true,
-                        category_name: category.category_name
-                    });
+                    products.push(catalogueItem(item, category.category_name));
                 });
             });
 
@@ -1820,6 +1760,108 @@ async function showCategory(category, element) {
  * drawing the same dish: one rule, or they will eventually disagree and the
  * sheet will sell what the card refused.
  */
+/*
+ * ONE DISH, AS THE ORDERING PAGES KEEP IT.
+ *
+ * This is a WHITELIST, and that is the whole reason it has a name. A field it
+ * does not mention is dropped in silence however correctly the server sent it:
+ * no error, no log, and no failing test, because tests on a feature read the
+ * source of the feature and not the source of this.
+ *
+ * It has cost two features already. nutrition, tags, marks and claims were
+ * sent for three releases and stopped here, so /order drew no numbers, no
+ * badges and no marks while /menu - which reads the same endpoint without a
+ * local store - drew all of them. daily_price and price_set_on were read by
+ * waitingForTodaysPrice() and never once delivered to it, so a whole fish
+ * priced from the morning's market and last priced YESTERDAY was offered at
+ * yesterday's rate with an ordinary Add button.
+ *
+ * Lifted out of the fetch loop so it can be RUN rather than read: see
+ * tests/the-ordering-catalogue-keeps-what-it-reads.test.js, which drives this
+ * over a real payload and separately refuses any storefront field the bundle
+ * reads and this does not keep.
+ */
+function catalogueItem(item, categoryName) {
+    /* Empty when there is no photograph, so the card can draw
+       the dish's icon instead of a grey placeholder. */
+    const imageSrc = (!item.img || String(item.img).trim() === "" || item.img === "item.svg") ? "" : String(item.img).trim();
+    const itemId = typeof item.id === "string"
+        ? item.id
+        : (item.id?.$oid || item._id?.$oid || item._id || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    return {
+        id: String(itemId),
+        name: item.name || "Unknown",
+        available_quantity: item.available_quantity || 0,
+        price: parseFloat(item.final_price) || 0,
+        discount_price: parseFloat(item.discount_price) || 0,
+        tax_price: parseFloat(item.tax_price) || 0,
+        img: imageSrc,
+        /* Kept so the page can filter by diet, sort by what
+           sells, and search a description - none of which
+           reached this bundle before, which is why /order had
+           no search while /menu had one. */
+        diet: item.diet || "",
+        description: item.description || "",
+        prep_minutes: Number(item.prep_minutes) || 0,
+        ordered_count: Number(item.ordered_count) || 0,
+        /* Every photo, the drawn icon for a dish with none,
+           and whether it is on right now - the same three
+           things the menu shows, so the two pages agree. */
+        photos: Array.isArray(item.photos) ? item.photos.filter(Boolean) : [],
+        icon: item.icon || "",
+        available: item.available !== false,
+        served_in: Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [],
+        /*
+         * WHAT IS ON THE PLATE, AND IT WAS BEING THROWN AWAY.
+         *
+         * This loop is the ordering bundle's whole catalogue:
+         * a field it does not NAME here never reaches the page,
+         * however correctly the server sent it. The server has
+         * been sending nutrition, the shop's own marks, the
+         * "made without" tags and the earned health claims
+         * since the dish-facts release, and all four stopped
+         * at this object literal.
+         *
+         * So on /order the dish sheet drew no numbers, no
+         * badges and no marks, and the "Good for" filter group
+         * had nothing to offer and hid itself - while /menu,
+         * which reads the same endpoint straight without a
+         * local store, showed all of it. Nothing failed and
+         * nothing was logged; the fields simply were not there.
+         *
+         * `claims` is computed on the server from the shop's
+         * own numbers and is never stored on a dish, so
+         * carrying it here cannot invent a badge - it can only
+         * deliver one the numbers already earned.
+         */
+        nutrition: item.nutrition && typeof item.nutrition === "object" ? item.nutrition : {},
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        marks: Array.isArray(item.marks) ? item.marks : [],
+        claims: Array.isArray(item.claims) ? item.claims : [],
+        /* Whether the kitchen said it can cook this one to
+           order. See api/src/utils/spice-level.js. */
+        spice_choice: item.spice_choice === true,
+        /*
+         * PRICED FROM THE MORNING'S MARKET, and the day it was
+         * last done. Both, or neither is any use: the flag says
+         * the rate comes from the market and the date says
+         * whether anybody has entered today's.
+         *
+         * waitingForTodaysPrice() has read these since the
+         * daily-price release and never once received them,
+         * because this literal did not name them. So on /order
+         * a whole fish flagged daily and priced YESTERDAY was
+         * offered at yesterday's rate with an ordinary Add
+         * button, while /menu said "Market price" - the same
+         * asymmetry that hid the dish facts, and this one is
+         * about money.
+         */
+        daily_price: item.daily_price === true,
+        price_set_on: item.price_set_on || "",
+        category_name: categoryName
+    };
+}
+
 function waitingForTodaysPrice(product) {
     if (!product) return true;
     if (product.daily_price === true && !pricedToday(product.price_set_on)) return true;
