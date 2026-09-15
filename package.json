@@ -93,6 +93,7 @@
       "src/print-ledger.js",
       "src/handset-slots.js",
       "src/till-stays-awake.js",
+      "src/kot-job-key.js",
       "src/kitchen-screen.js",
       "src/kitchen-screen-fit.js",
       "src/kitchen-screen.html",
