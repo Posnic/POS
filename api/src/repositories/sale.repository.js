@@ -160,10 +160,32 @@ const buildReturnSignature = (saleObjectId, returnItems = [], payload = {}) => {
  * Capped at three so a number that arrived by some other route cannot spend a
  * roll of paper on a single table.
  */
-function billCopies(branch) {
-  const said = Number(branch && branch.bill_print_copies);
-  if (!Number.isFinite(said) || said < 1) return 1;
-  return Math.min(Math.floor(said), 3);
+function billCopies(branch, asked) {
+  /*
+   * THE HANDSET DECIDES, THE SHOP IS THE FALLBACK.
+   *
+   * Owner: "its better two copies from captain itself... if its from desktop
+   * sometimes... then configuration change reequired pos guy wont have
+   * permission. lets keep in app itself."
+   *
+   * He is right about who should hold it. The person who wants a second copy
+   * is the one holding the phone, and making them find somebody with access to
+   * the till's settings page is how a setting stays wrong for a year.
+   *
+   * So a request may name a number and it is honoured. When it does not - an
+   * older handset, a request from anywhere else - the shop's own setting
+   * answers, and that defaults to one. Nothing prints twice by surprise.
+   *
+   * CLAMPED HERE, WHEREVER IT CAME FROM. A phone is not allowed to spend a
+   * roll of paper on one table, and neither is a stray value in a branch
+   * document.
+   */
+  const said = Number(asked);
+  if (Number.isFinite(said) && said >= 1) return Math.min(Math.floor(said), 3);
+
+  const shopSays = Number(branch && branch.bill_print_copies);
+  if (!Number.isFinite(shopSays) || shopSays < 1) return 1;
+  return Math.min(Math.floor(shopSays), 3);
 }
 
 class SalesRepository {
@@ -7085,7 +7107,8 @@ class SalesRepository {
    * asking twice is somebody wondering where the bill got to, not a second
    * bill.
    */
-  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel } = {}) {
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies } = {}) {
+    const copiesAsked = copies;
     try {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
@@ -7133,6 +7156,30 @@ class SalesRepository {
        * DATABASE - the connection is the tenancy boundary, which is why the
        * floor query has never needed this and why the two are safe to agree.
        */
+      /*
+       * WHICH TICKETS THIS TAP IS ASKING FOR, decided before anything is
+       * written.
+       *
+       * A waiter walking to the counter taps Print bill again, because nothing
+       * has come out yet. That second tap must not put the same bill on the
+       * queue a second time - and it did: the queue below was guarded by how
+       * many tickets are OPEN, not by how many this tap actually marked, so
+       * two taps meant two bills. With copies set to two it would have been
+       * four.
+       *
+       * The intent was always here - the update deliberately skips a ticket
+       * that already carries a timestamp - it simply never reached the queue.
+       * Taking the ids first is what joins the two: whatever was unasked a
+       * moment ago is what gets printed, and a repeat tap has an empty list.
+       */
+      const asking = await Model.find(
+        { ...query, bill_requested_at: { $in: [null, undefined] } },
+        { _id: 1 }
+      )
+        .limit(20)
+        .lean();
+      const askedIds = asking.map((row) => row._id);
+
       const result = await Model.updateMany(
         { ...query, bill_requested_at: { $in: [null, undefined] } },
         {
@@ -7161,7 +7208,7 @@ class SalesRepository {
        * Only when something was actually marked. Announcing a request that
        * changed nothing would wake the printer to find an empty list.
        */
-      if (waiting > 0) {
+      if (askedIds.length > 0) {
         /*
          * ON THE QUEUE, CARRYING WHAT TO PRINT.
          *
@@ -7174,7 +7221,7 @@ class SalesRepository {
          * printer - a table with three rounds has three tickets and the
          * counter wants all three.
          */
-        const open = await Model.find(query).limit(20).lean();
+        const open = await Model.find({ _id: { $in: askedIds } }).lean();
 
         /*
          * THE SHOP'S LETTERHEAD, READ ONCE.
@@ -7213,7 +7260,7 @@ class SalesRepository {
          * truer shape: each copy succeeds or fails on its own, and a printer
          * that jams on one leaves a job to retry rather than a job half done.
          */
-        const copies = billCopies(shop);
+        const copies = billCopies(shop, copiesAsked);
 
         for (const sale of open) {
           for (let copy = 1; copy <= copies; copy += 1) {
