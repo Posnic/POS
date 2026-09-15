@@ -91,6 +91,7 @@
       "src/startup-auth.js",
       "src/receipt-log.js",
       "src/print-ledger.js",
+      "src/till-stays-awake.js",
       "src/kitchen-screen.js",
       "src/kitchen-screen-fit.js",
       "src/kitchen-screen.html",
