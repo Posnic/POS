@@ -304,6 +304,14 @@
       "This receipt is not from an order placed on this phone.": "இந்த ரசீது இந்த போனில் செய்யப்பட்ட ஆர்டருடையது அல்ல.",
       "See the menu": "மெனுவைப் பாருங்கள்",
 
+      /* where the order has got to - the trail on the thank-you page */
+      "The shop has it": "கடையிடம் உள்ளது",
+      "In the kitchen": "சமையலறையில்",
+      "Waiting for the shop to accept it.": "கடை ஏற்கும் வரை காத்திருக்கிறது.",
+      "Waiting for the shop to accept it. Most orders here are accepted in about {minutes} minutes.": "கடை ஏற்கும் வரை காத்திருக்கிறது. இங்கு பெரும்பாலான ஆர்டர்கள் சுமார் {minutes} நிமிடங்களில் ஏற்கப்படுகின்றன.",
+      "Nothing has been charged.": "எந்தத் தொகையும் வசூலிக்கப்படவில்லை.",
+      "Nothing has been charged. Ask at the counter if you would like to know why.": "எந்தத் தொகையும் வசூலிக்கப்படவில்லை. காரணம் தெரிய வேண்டுமானால் கவுண்டரில் கேளுங்கள்.",
+
       /* the assistant */
       "Ask about the menu": "மெனு பற்றிக் கேளுங்கள்",
       "New": "புதிது",

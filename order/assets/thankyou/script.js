@@ -190,14 +190,15 @@ async function renderAndPrint() {
     void printedFlagKey;
 
     /*
-     * The bill appears when the shop says the money is in.
+     * And then the page watches the order.
      *
-     * Asked once as the page opens and again on the way back to it, because
-     * the till is where that changes and nothing tells this page when it
-     * does. A shop that has not been asked, or an order it has never heard
-     * of, simply leaves the button hidden.
+     * Where it has got to, and whether the shop has marked it paid - which is
+     * what puts a bill behind it. Asked as the page opens and again while
+     * somebody is looking at it, because the till is where those change and
+     * nothing tells this page when they do. A shop that cannot be reached, or
+     * an order it has never heard of, simply leaves the page as it is.
      */
-    offerBillWhenPaid(token);
+    watchTheOrder(token);
 }
 
 
@@ -274,51 +275,277 @@ function offerUpi(said, shopPayment, token, orderId) {
     box.hidden = false;
 }
 
-/* Does the shop say this order is paid? If so, the bill is worth having. */
-async function offerBillWhenPaid(token) {
-    const button = document.getElementById("done-bill");
-    if (!button) return;
-    const kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []).find(
-        (row) => row && String(row.token) === String(token)
-    );
-    const orderId = new URLSearchParams(window.location.search).get("order") || (kept && kept.orderId) || "";
-    const shopId = (kept && kept.shop) || (typeof knownBranchId === "function" ? await knownBranchId() : "");
-    if (!orderId || !shopId) return;
-    try {
-        const response = await fetch(
-            `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`,
-            { method: "GET", headers: { Accept: "application/json" } }
-        );
-        if (!response.ok) return;
-        const body = await response.json();
-        if (!body || body.type !== "success" || !body.data) return;
-        /* Unpaid: offer to pay it. Paid: offer the bill. Never both. */
-        if (!body.data.bill_ready) {
-            let payment = {};
-            try {
-                payment = (await getLatestShopPayment(shopId)) || {};
-            } catch (e) {
-                payment = {};
-            }
-            offerUpi(body.data, payment, token, orderId);
-            return;
+/*
+ * WATCHING ONE ORDER, from the phone that placed it.
+ *
+ * Stage 5 of the print roadmap - "the customer knows". The page used to ask
+ * the shop one question, once, as it opened: is this paid yet. Everything
+ * that happens to an order in the twenty minutes after that - a person
+ * accepting it, a ticket coming out of a kitchen printer, the shop refusing
+ * it at 2am - happened behind the customer's back, and the only way to find
+ * out was to walk to the counter and ask.
+ *
+ * WHAT IS DRAWN, and what is deliberately not. The server answers with a
+ * TRAIL: what has already happened, each with the moment it happened. There
+ * is no ladder of greyed-out future steps, because the steps after "in the
+ * kitchen" are not ours to promise - nothing marks an order ready, and a
+ * shop whose kitchen printer is off never reports a ticket at all. A ladder
+ * would draw three rungs and stop on the first, which reads as "stuck" to a
+ * customer whose food is being cooked. See api/src/utils/order-progress.js.
+ *
+ * HOW OFTEN IT ASKS. Insistently for the first two minutes, then slower, and
+ * NOTHING AT ALL while the phone is in a pocket: a screen nobody is looking
+ * at has nothing to redraw, and a full restaurant of phones polling from a
+ * table would be the entire cost of this feature. It asks once more the
+ * moment the customer looks again, which is exactly when the answer matters.
+ *
+ * It stops for good when nothing further can happen - refused, cancelled, or
+ * the money is in - and after half an hour regardless.
+ */
+const ASK_FAST_MS = 15000;
+const ASK_SLOWER_MS = 30000;
+const ASK_SLOW_MS = 60000;
+const ASKS_BEFORE_SLOWER = 8;
+const ASKS_BEFORE_SLOW = 16;
+const MOST_ASKS = 40;
+
+/* The words for each step, in the customer's terms. The server sends keys
+   and times only, so that these can go through the dictionary like every
+   other sentence on the page - see assets/i18n.js. */
+const STEP_WORDS = {
+    placed: "Placed",
+    accepted: "The shop has it",
+    in_the_kitchen: "In the kitchen",
+    refused: "The shop could not take it",
+    cancelled: "Cancelled"
+};
+const STEP_ENDED = ["refused", "cancelled"];
+
+/* Read at most once each: the shop's payment details do not change while a
+   customer waits, and a button wired twice downloads twice. */
+let shopPaymentRead = null;
+let billWired = false;
+
+function askPace(asks) {
+    if (asks < ASKS_BEFORE_SLOWER) return ASK_FAST_MS;
+    if (asks < ASKS_BEFORE_SLOW) return ASK_SLOWER_MS;
+    return ASK_SLOW_MS;
+}
+
+/*
+ * Do this later, and only while somebody is looking.
+ *
+ * A phone locked in a pocket redraws nothing, so asking would spend the
+ * shop's request budget on an answer no one reads. The wait resumes the
+ * instant the screen comes back.
+ */
+function laterWhenLooking(fn, ms) {
+    setTimeout(function () {
+        if (!document.hidden) return fn();
+        const onBack = function () {
+            if (document.hidden) return;
+            document.removeEventListener("visibilitychange", onBack);
+            fn();
+        };
+        document.addEventListener("visibilitychange", onBack);
+    }, ms);
+}
+
+function clockOf(at) {
+    const date = at ? new Date(at) : null;
+    if (!date || isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/* What has happened to this order, as a trail. Nothing about what has not. */
+function drawProgress(said) {
+    const box = document.getElementById("progress");
+    const list = document.getElementById("progress-trail");
+    const next = document.getElementById("progress-next");
+    const progress = said && said.progress;
+    if (!box || !list || !progress || !Array.isArray(progress.trail) || !progress.trail.length) return;
+
+    list.textContent = "";
+    progress.trail.forEach(function (entry) {
+        const word = STEP_WORDS[entry && entry.step];
+        /* A step from a newer server than this page: left out rather than
+           printed raw. Silence reads as nothing new; `in_the_oven` reads as
+           a bug. */
+        if (!word) return;
+        const row = document.createElement("li");
+        const what = document.createElement("span");
+        what.className = "progress-what";
+        what.textContent = t(word);
+        row.appendChild(what);
+        const at = clockOf(entry.at);
+        if (at) {
+            const when = document.createElement("span");
+            when.className = "progress-at";
+            when.textContent = at;
+            row.appendChild(when);
         }
-        button.hidden = false;
-        button.addEventListener("click", async () => {
-            button.disabled = true;
-            try {
-                await generatePdfFromHtmlFile();
-            } catch (error) {
-                console.error("Receipt PDF generation failed:", error);
-                alert(error.message || t("Receipt PDF could not be generated."));
-            } finally {
-                button.disabled = false;
-            }
-        });
-    } catch (error) {
-        /* Offline, or a shop that cannot be reached: no bill offered, which
-           is the same as before this existed. */
+        list.appendChild(row);
+    });
+    if (!list.childElementCount) return;
+
+    const ended = STEP_ENDED.indexOf(progress.step) !== -1;
+    box.classList.toggle("progress-ended", ended);
+    box.hidden = false;
+
+    /*
+     * The only thing named before it happens, and only because the shop has
+     * to answer: an order held for approval moves to accepted or refused,
+     * and nothing else. The minutes are the shop's own recent history, worded
+     * as a description of the past rather than a promise about this order.
+     */
+    if (next) {
+        if (progress.waiting_for === "acceptance") {
+            const minutes = Number(said.typically_accepted_in_minutes) || 0;
+            next.textContent = minutes
+                ? t("Waiting for the shop to accept it. Most orders here are accepted in about {minutes} minutes.", { minutes: minutes })
+                : t("Waiting for the shop to accept it.");
+            next.hidden = false;
+        } else {
+            next.hidden = true;
+        }
     }
+
+    /* One line saying it twice is one line too many. */
+    const placedLine = document.querySelector(".order-time");
+    if (placedLine) placedLine.hidden = true;
+
+    /*
+     * A refusal must not sit under a green tick and the words "Order placed".
+     * Nothing else is rewritten: what the page said about the table or the
+     * counter is still true.
+     */
+    if (ended) {
+        const mark = document.querySelector(".done-mark");
+        if (mark) mark.hidden = true;
+        const title = document.getElementById("done-title");
+        if (title) title.textContent = t(STEP_WORDS[progress.step]);
+        const lead = document.getElementById("done-lead");
+        if (lead) {
+            lead.textContent = progress.step === "refused"
+                ? t("Nothing has been charged. Ask at the counter if you would like to know why.")
+                : t("Nothing has been charged.");
+        }
+        const pay = document.getElementById("pay-upi");
+        if (pay) pay.hidden = true;
+        const owed = document.getElementById("done-pay");
+        if (owed) owed.hidden = true;
+    }
+}
+
+/* Unpaid: offer to pay it. Paid: offer the bill. Never both. */
+async function offerMoneyOrBill(said, token, orderId, shopId) {
+    const button = document.getElementById("done-bill");
+    if (!button || !said) return;
+    if (said.progress && STEP_ENDED.indexOf(said.progress.step) !== -1) return;
+
+    if (!said.bill_ready) {
+        if (shopPaymentRead === null) {
+            try {
+                shopPaymentRead = (await getLatestShopPayment(shopId)) || {};
+            } catch (e) {
+                shopPaymentRead = {};
+            }
+        }
+        offerUpi(said, shopPaymentRead, token, orderId);
+        return;
+    }
+    if (billWired) return;
+    billWired = true;
+    button.hidden = false;
+    button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+            await generatePdfFromHtmlFile();
+        } catch (error) {
+            console.error("Receipt PDF generation failed:", error);
+            alert(error.message || t("Receipt PDF could not be generated."));
+        } finally {
+            button.disabled = false;
+        }
+    });
+}
+
+/*
+ * WHICH ORDER, AND AT WHICH SHOP - and why this is not the obvious two lines.
+ *
+ * It used to read `rememberedOrders()` and `knownBranchId()`, which live in
+ * indexedDB.js. THIS PAGE HAS NEVER LOADED indexedDB.js. Both calls were
+ * written behind `typeof ... === "function"` guards, so neither threw: the
+ * shop id came out empty, the function returned before its first request, and
+ * everything behind it - the bill when the shop marks the order paid, the
+ * offer to pay by UPI - has silently done nothing on this page since the day
+ * it was written. A guard that turns a missing dependency into a quiet
+ * nothing is how a shipped feature runs for months without ever running once.
+ *
+ * Loading indexedDB.js here is not the fix: it starts a timer that re-fetches
+ * the shop's whole menu every ten seconds, which is a lot to ask of a phone
+ * that is only showing a token.
+ *
+ * So this page answers from what it already holds:
+ *   the order   ?order= on the way in from the history page, or the sale id
+ *               on the receipt this phone was handed at checkout
+ *   the shop    posnic_store, which indexedDB.js writes on every menu load,
+ *               so it is there for anybody who reached this page by ordering
+ *
+ * STORE_ADDRESS_KEY in indexedDB.js is the same key; tests/online-ordering-ux
+ * pins the two spellings together, because a rename on one side would put
+ * this page back exactly where it was.
+ */
+const STORE_ADDRESS_KEY = "posnic_store";
+
+function whichOrder() {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("order") || String((receiptData && receiptData.sale_id) || "");
+    let shopId = "";
+    try {
+        shopId = localStorage.getItem(STORE_ADDRESS_KEY) || "";
+    } catch (e) {
+        /* A browser that keeps nothing. The page still shows the token, which
+           is the thing the customer carries to the counter. */
+    }
+    return { orderId: String(orderId || "").trim(), shopId: String(shopId || "").trim() };
+}
+
+async function watchTheOrder(token) {
+    const { orderId, shopId } = whichOrder();
+    if (!orderId || !shopId) return;
+
+    let asks = 0;
+    const askOnce = async function () {
+        let said = null;
+        try {
+            const response = await fetch(
+                `${CONFIG.API_BASE_URL}/online-ordering/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}?token=${encodeURIComponent(token)}`,
+                { method: "GET", headers: { Accept: "application/json" } }
+            );
+            if (response.ok) {
+                const body = await response.json();
+                if (body && body.type === "success" && body.data) said = body.data;
+            }
+        } catch (error) {
+            /* Offline, or a shop that cannot be reached. The page keeps what
+               it is already showing and tries again, which is the whole
+               reason this is a loop rather than one question. */
+        }
+
+        if (said) {
+            drawProgress(said);
+            await offerMoneyOrBill(said, token, orderId, shopId);
+            /* Nothing further can happen to it, so nothing further is asked. */
+            if (said.paid || (said.progress && said.progress.settled)) return;
+        }
+
+        asks += 1;
+        if (asks >= MOST_ASKS) return;
+        laterWhenLooking(askOnce, askPace(asks));
+    };
+
+    askOnce();
 }
 
 async function generatePdfFromHtmlFile() {

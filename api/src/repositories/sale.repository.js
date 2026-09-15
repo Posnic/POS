@@ -40,6 +40,7 @@ async function withDayparts(shop) {
 
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
+const orderProgress = require('../utils/order-progress');
 const spiceLevel = require('../utils/spice-level');
 const readyBy = require('../utils/ready-by');
 const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
@@ -64,6 +65,21 @@ const partnerVenues = require('../utils/partner-venues');
 /* The fallback when channelState has no sentence of its own. It never should,
    but a refusal with an empty message would tell a customer nothing. */
 const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
+
+/*
+ * The shop's own answering speed, remembered for a few minutes.
+ *
+ * Every phone watching an order asks for this on every poll, and the answer
+ * is a property of the SHOP that moves over days. Reading fifty sales per
+ * poll per phone to produce the same number would be the whole cost of this
+ * feature, for nothing.
+ */
+const ACCEPT_HISTORY_DAYS = 14;
+const ACCEPT_HISTORY_ORDERS = 50;
+const ACCEPT_ENOUGH_ORDERS = 5;
+const ACCEPT_OUTLIER_MINUTES = 120;
+const ACCEPT_CACHE_MS = 5 * 60 * 1000;
+const ACCEPT_MINUTES_CACHE = new Map();
 
 const activeTenantFilter = () => ({
   ...(BaseModel.license ? { license: BaseModel.license } : {}),
@@ -9988,6 +10004,16 @@ class SalesRepository {
       bill_ready: paymentStatus === 'Paid' && !cancelled,
       payment_status: paymentStatus,
       payment_mode: String(order.payment_mode || ''),
+      /*
+       * WHERE IT HAS GOT TO, as a trail of what has actually happened.
+       *
+       * Stage 5's whole point, and the reason it lives here rather than in
+       * the service: every door a customer's phone can reach this order
+       * through - the read, the history page's bulk read, a change, a
+       * cancellation - is drawn from this one shape, so none of them can
+       * describe the same order differently. See utils/order-progress.
+       */
+      progress: orderProgress.progressOf(order),
       /* Asked for, and waiting on the shop. */
       cancel_requested: order.cancel_requested === true,
       fulfilment: String(order.fulfilment || ''),
@@ -10006,6 +10032,95 @@ class SalesRepository {
       delivery_fee: Number(order.delivery_fee || 0),
       shop: String(order.branch_name || ''),
     };
+  }
+
+  /**
+   * HOW LONG THIS SHOP USUALLY TAKES TO ANSWER, from its own history.
+   *
+   * Stage 5 asks for "an ETA computed from the shop's own history", and this
+   * is the only ETA the data can honestly produce. There is no cooking time
+   * in here: nothing marks an order ready, so any minutes-until-food figure
+   * would be invented, and an invented ETA is worse than none - it is the
+   * number a customer waits against and then complains about.
+   *
+   * What the data does hold is how long orders sit in the approval queue
+   * before somebody works it, and that is the minute a waiting customer is
+   * actually anxious about: has anyone seen this at all. So the answer is
+   * about acceptance, and the page words it as a description of the past
+   * rather than a promise about this order.
+   *
+   * Null rather than a guess whenever the history is too thin, too old or
+   * unreadable. A shop with four orders behind it gets no figure.
+   */
+  async typicalAcceptMinutes(branchId) {
+    const key = String(branchId || '');
+    if (!key) return null;
+
+    const cached = ACCEPT_MINUTES_CACHE.get(key);
+    if (cached && cached.until > Date.now()) return cached.minutes;
+
+    let minutes = null;
+    try {
+      const db = await BaseModel.getDb();
+      const branchObjectId = mongoose.Types.ObjectId.isValid(key)
+        ? new mongoose.Types.ObjectId(key)
+        : branchId;
+      /*
+       * BOUNDED BY _id, which every collection indexes.
+       *
+       * An ObjectId carries the second it was made, so `_id` above a
+       * fortnight ago is both a date range and an index walk - and the walk
+       * STOPS at the fortnight. Ranging on created_date instead would leave
+       * Mongo sorting a shop's entire sales collection in memory on a
+       * collection with no index for it, which on a busy shop is the kind of
+       * query that takes the rest of the process down with it.
+       *
+       * The minutes are still computed from created_date, which is the field
+       * that means what it says.
+       */
+      const since = Date.now() - ACCEPT_HISTORY_DAYS * 86400000;
+      const rows = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            _id: { $gte: mongoose.Types.ObjectId.createFromTime(Math.floor(since / 1000)) },
+            order_state: 'accepted',
+            order_state_by: { $nin: [null, ''] },
+            order_state_at: { $ne: null },
+            ...activeTenantFilter(),
+          },
+          { projection: { created_date: 1, order_state_at: 1 } }
+        )
+        .sort({ _id: -1 })
+        .limit(ACCEPT_HISTORY_ORDERS)
+        .toArray();
+
+      const waits = rows
+        .map((row) => {
+          const from = new Date(row.created_date).getTime();
+          const to = new Date(row.order_state_at).getTime();
+          return Number.isFinite(from) && Number.isFinite(to) ? (to - from) / 60000 : NaN;
+        })
+        /* An order accepted an hour later is a shop that had gone home, not a
+           shop that is slow. Leaving those in drags the middle of a busy
+           evening out to a number no customer would recognise. */
+        .filter((wait) => Number.isFinite(wait) && wait >= 0 && wait <= ACCEPT_OUTLIER_MINUTES)
+        .sort((a, b) => a - b);
+
+      if (waits.length >= ACCEPT_ENOUGH_ORDERS) {
+        const middle = waits[Math.floor(waits.length / 2)];
+        minutes = Math.max(1, Math.ceil(middle));
+      }
+    } catch (error) {
+      /* A figure nobody can read is simply not shown. It is decoration on a
+         status page, and a status page must not fail over decoration. */
+      console.warn('[order-progress] could not read the accept history:', error && error.message);
+      minutes = null;
+    }
+
+    ACCEPT_MINUTES_CACHE.set(key, { minutes, until: Date.now() + ACCEPT_CACHE_MS });
+    return minutes;
   }
 
   /** One order of this branch's, by its id. Nothing wider: no list, no search. */
