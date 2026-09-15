@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+# THE CHECKS, BEFORE THE CODE LEAVES THIS MACHINE.
+#
+# Owner: "better run all ci stuff inside commit. github bill came around 200
+# usd" and, on scope: "deploy stuff is okay. other check only i said."
+#
+# PRE-PUSH RATHER THAN PRE-COMMIT, on purpose. A commit is how you save your
+# place - twenty of them an hour, half of them on a branch nobody will ever
+# see. Putting a minute of checks in front of each one is how a hook ends up
+# permanently disabled with -n, and then it is protecting nothing. A push is
+# the moment the work leaves, which is the moment worth checking.
+#
+# The fast checks only, about a minute. The suites that need a database, and
+# the scan of every blob ever committed, stay on the pull request where a
+# clean machine runs them - `npm run check -- --all` runs them here too.
+#
+# In a hurry: `git push --no-verify`. That is a deliberate escape hatch, not
+# an oversight; the pull request still runs everything.
+
+npm run check
