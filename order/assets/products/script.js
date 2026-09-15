@@ -261,12 +261,43 @@
        the line when it is added. */
     let pendingNote = "";
 
+    /*
+     * The same, for how hot. Somebody taps two chillies before they tap Add,
+     * and the level has no line to live on yet; holding it here means the
+     * order the two taps happen in does not matter.
+     */
+    let pendingSpice = 0;
+
+    /*
+     * Built once, on the first sheet that needs it, and never again.
+     *
+     * Lazily because cart.html loads its scripts in the HEAD: at the moment
+     * this file is parsed the dialog does not exist yet, and mounting into a
+     * null would have failed silently and left a dead picker that took taps
+     * and saved nothing. Once, because the sheet is one element reused for
+     * every dish - remounting per dish leaks a listener a dish.
+     */
+    let spicePicker = null;
+    function picker() {
+        const box = el("dish-spice-box");
+        if (!spicePicker && box && window.PosnicSpice) {
+            spicePicker = window.PosnicSpice.mount(box, async (level) => {
+                if (!openId) return;
+                const line = (await getCartData()).find((row) => String(row.id) === openId);
+                if (line) await setCartItemSpice(openId, level);
+                else pendingSpice = level;
+            });
+        }
+        return spicePicker;
+    }
+
     async function openDish(id) {
         const item = findProduct(id);
         const sheet = el("dish");
         if (!item || !sheet) return;
         openId = String(id);
         pendingNote = "";
+        pendingSpice = 0;
 
         showPhotos(item);
         el("dish-diet").innerHTML = dietMark(item.diet);
@@ -311,11 +342,36 @@
         const line = (await getCartData()).find((row) => String(row.id) === openId);
         paintSheetQty(line ? line.quantity : 0);
 
+        /*
+         * The chillies, for a dish the kitchen said it can cook to order and
+         * only while the dish can be ordered at all. Off its hours there is
+         * nothing to choose about.
+         */
+        const spiceBox = el("dish-spice-box");
+        if (spiceBox) {
+            spiceBox.hidden = !(item.spice_choice === true && available && !marketPriced);
+            const p = picker();
+            if (p) p.set(line ? line.spice : 0);
+        }
+
         const noteBox = el("dish-note-box");
         if (noteBox) {
             noteBox.hidden = !(shop.notes && available);
             const field = el("dish-note");
-            if (field) field.value = line && line.note ? line.note : "";
+            if (field) {
+                field.value = line && line.note ? line.note : "";
+                /*
+                 * The example changes when there are chillies above it.
+                 * "Less spicy" as the first suggestion under a spice picker
+                 * teaches people to TYPE what they could tap - which puts the
+                 * request back into prose the kitchen has to read, in
+                 * whatever language it was typed in, and is the whole thing
+                 * the picker exists to stop.
+                 */
+                field.placeholder = spiceBox && !spiceBox.hidden
+                    ? t("No onion, extra gravy, cut in half...")
+                    : t("Less spicy, no onion, extra gravy...");
+            }
         }
 
         if (typeof sheet.showModal === "function") sheet.showModal();
@@ -349,6 +405,11 @@
         if (pendingNote && id) {
             await setCartItemNote(id, pendingNote);
             pendingNote = "";
+        }
+        /* And so does a spice level tapped before it. */
+        if (pendingSpice && id) {
+            await setCartItemSpice(id, pendingSpice);
+            pendingSpice = 0;
         }
     });
 

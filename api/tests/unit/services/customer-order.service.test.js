@@ -279,8 +279,10 @@ describe('the order, read back by the phone that placed it', () => {
       can_change: false,
       why_not: 'already_paid',
     });
+    /* `spice` is 0 because nobody chose one: the level is only ever a number
+       the customer tapped, and a dish nobody asked about carries none. */
     expect(out.data.items).toEqual([
-      { item_id: 'm1', name: 'Chicken Biryani', quantity: 2, note: '', total: 660 },
+      { item_id: 'm1', name: 'Chicken Biryani', quantity: 2, note: '', spice: 0, total: 660 },
     ]);
   });
 

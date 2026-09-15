@@ -45,8 +45,38 @@ PosnicPro.onlineorders = {
             return (PosnicPro.local.get('currencySign') || '') + (Number(amount) || 0).toFixed(2);
         };
 
+        /*
+         * HOW HOT THE CUSTOMER ASKED FOR IT.
+         *
+         * On this card because this card is where an order is refused, and
+         * "we cannot make that one mild" is a reason to refuse it. A request
+         * that only appears on the paper in the kitchen reaches the person
+         * who has to cook it and not the person who has to agree to it.
+         *
+         * Spelled out rather than looked up in a table, because the coverage
+         * scanner reads the two-argument form of PosnicPro.i18n.t out of the
+         * source and cannot see through the local `t` above - a lesson this
+         * codebase has already learned twice, most recently on the requests
+         * dock, where eleven words were in no language pack at all.
+         */
+        var spiceWord = function (level) {
+            if (Number(level) === 1) return PosnicPro.i18n.t('lang_spice_mild', 'Mild');
+            if (Number(level) === 2) return PosnicPro.i18n.t('lang_spice_medium', 'Medium');
+            if (Number(level) === 3) return PosnicPro.i18n.t('lang_spice_spicy', 'Spicy');
+            return '';
+        };
+        var spiceLine = function (level) {
+            var word = spiceWord(level);
+            if (!word) return '';
+            var chillies = new Array(Number(level) + 1).join('\uD83C\uDF36\uFE0F');
+            return '<div class="small font-weight-bold">' + chillies + ' ' + safe(word) + '</div>';
+        };
+
         var lines = (order.items || []).map(function (item) {
             return '<li>' + safe(item.quantity) + ' &times; ' + safe(item.name) +
+                /* How hot, above the note: a level is the same three words on
+                   every order and the note is whatever somebody typed. */
+                spiceLine(item.spice) +
                 /* The note on this line, under the dish, the way the kitchen
                    ticket prints it. */
                 (item.note ? '<div class="small text-muted font-italic">' + safe(item.note) + '</div>' : '') +

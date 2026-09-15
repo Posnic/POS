@@ -10,7 +10,7 @@ const os = require('os');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 const { normalizeTargets, pageSizeFor, columnsFor } = require('./printer-targets');
-const { renderKitchenTicket } = require('./escpos-kot');
+const { renderKitchenTicket, spiceLine } = require('./escpos-kot');
 const printLedger = require('./print-ledger');
 
 /*
@@ -680,6 +680,9 @@ class KOTManager {
             name: it.item_name || it.name || it.product_name || it.itemName || '',
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
             description: it.item_description || it.description || it.note || '',
+            /* Carried through so the thermal renderer can print it; see
+               spiceLine in escpos-kot.js. */
+            spice_level: it.spice_level != null ? it.spice_level : it.spice,
           })),
           /* The HTML ticket has struck out cancelled dishes for as long as it
              has existed; the bytes could not, until strikeLine. Same field
@@ -1087,11 +1090,15 @@ class KOTManager {
       const name = it.item_name || it.name || it.product_name || it.itemName || '';
       const qty  = it.item_quantity || it.quantity || it.qty || it.item_qty || 1;
       const desc = it.item_description || it.description || it.desc || '';
+      /* The same line the thermal path prints, from the same function, so the
+         two ways of printing one ticket cannot say different things. */
+      const hot = spiceLine(it.spice_level != null ? it.spice_level : it.spice);
       return `<div class="ir">
         <div class="im">
           <div class="in ${isCancelled ? 'cx' : ''}">${this._esc(String(name))}</div>
           <div class="iq">x${qty}</div>
         </div>
+        ${hot ? `<div class="is">${this._esc(hot)}</div>` : ''}
         ${desc ? `<div class="id">** ${this._esc(String(desc))} **</div>` : ''}
       </div>`;
     }).join('');
@@ -1116,6 +1123,9 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 .in.cx{text-decoration:line-through;}
 .iq{font-weight:700;font-size:14px;min-width:24px;text-align:right;}
 .id{font-size:11px;font-style:italic;font-weight:700;}
+/* How hot, upright and bold rather than italic: it is a setting the cook
+   acts on, not a remark somebody added. */
+.is{font-size:12px;font-weight:800;letter-spacing:0.5px;}
 .nt{font-size:12px;font-weight:700;border:1px dashed #000;padding:3px 4px;margin:4px 0;white-space:pre-wrap;}
 @media print{@page{size:72mm auto;margin:0;}body{width:72mm;margin:0;padding:0;}}
 </style></head><body>

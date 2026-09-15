@@ -34,6 +34,35 @@
  */
 const { Receipt } = require('./escpos-receipt');
 
+/*
+ * HOW HOT, ON THE PAPER.
+ *
+ * The customer taps one, two or three chillies; the ticket says the word and
+ * the count. ASCII, because every character on this path goes through
+ * Receipt.text -> ascii() -> latin1, and an emoji arrives as a question mark
+ * or as nothing at all. The count is not decoration: a cook who does not read
+ * English still reads 2 of 3.
+ *
+ * WHY THIS IS NOT IMPORTED. The same three words live in
+ * api/src/utils/spice-level.js, which is where the server decides them, and
+ * the desktop shell cannot require across into the API package. Rather than a
+ * byte-copy pipeline for eight lines, tests/the-ticket-says-how-hot.test.js
+ * runs BOTH implementations over every level and refuses a commit where they
+ * disagree - so the drift this would otherwise invite fails a build instead of
+ * misreporting somebody's food.
+ */
+const SPICE_WORDS = { 1: 'MILD', 2: 'MEDIUM', 3: 'SPICY' };
+
+/** 'SPICE: MEDIUM (2 of 3)', or '' when nobody asked. */
+function spiceLine(value) {
+  /* A number or the text of one. Number(true) is 1, and a stray boolean must
+     not print MILD on a ticket; see levelOf in api/src/utils/spice-level.js. */
+  if (typeof value !== 'number' && typeof value !== 'string') return '';
+  const n = Number(value);
+  if (!SPICE_WORDS[n]) return '';
+  return 'SPICE: ' + SPICE_WORDS[n] + ' (' + n + ' of 3)';
+}
+
 /** A quantity the way a kitchen reads it: x2, never 2x or "qty 2". */
 function qtyText(value) {
   const n = Number(value);
@@ -134,6 +163,14 @@ function renderKitchenTicket(ticket = {}, options = {}) {
     r.bold(true);
     r.pair(name.toUpperCase(), qty, { bold: true, strike: strikeThem });
     r.bold(false);
+    /*
+     * The level BEFORE the note, and on its own line rather than folded into
+     * it. A level is the same three words on every ticket in every language;
+     * the note is whatever somebody typed. Printing them as one line would
+     * make the reliable half as hard to trust as the unreliable half.
+     */
+    const hot = spiceLine(item && (item.spice_level != null ? item.spice_level : item.spice));
+    if (hot) r.line('   ' + hot);
     const note = String((item && (item.description || item.item_description)) || '').trim();
     if (note) r.line('   ** ' + note + ' **');
   }
@@ -144,4 +181,4 @@ function renderKitchenTicket(ticket = {}, options = {}) {
   return r.build();
 }
 
-module.exports = { renderKitchenTicket };
+module.exports = { renderKitchenTicket, spiceLine };
