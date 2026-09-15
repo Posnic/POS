@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI-licentienummer",
   "lang_bill_print_fssai_hint": "Wordt onder uw GSTIN gedrukt. Voedingsbedrijven in India moeten dit tonen.",
   "lang_fssai_number": "FSSAI-licentienummer",
-  "lang_fssai_number_hint": "Zet hierboven \"FSSAI-licentienummer\" aan om het af te drukken."
+  "lang_fssai_number_hint": "Zet hierboven \"FSSAI-licentienummer\" aan om het af te drukken.",
+  "lang_bill_number_year": "Jaar in het factuurnummer",
+  "lang_one_run_of_numbers_no_year": "Eén doorlopende nummering, zonder jaar",
+  "lang_start_again_each_financial_year": "Elk boekjaar opnieuw beginnen",
+  "lang_start_again_each_calendar_year": "Elk kalenderjaar opnieuw beginnen",
+  "lang_turning_this_on_starts_the_numbering_again": "Als u dit aanzet, begint de nummering weer bij één. Doe dit bij voorkeur op de eerste dag van een jaar.",
+  "lang_financial_year_starts_in": "Boekjaar begint in",
+  "lang_april_in_india_january_in_much_of_the_eu": "April in India, januari in een groot deel van de EU."
 }

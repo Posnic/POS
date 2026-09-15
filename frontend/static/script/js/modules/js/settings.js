@@ -844,6 +844,18 @@ PosnicPro.settings = {
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api || '');
                 $('#sales_prefix').val(data.sales_prefix || 'S');
+                /* WHEN THE BILL NUMBER STARTS AGAIN. Empty is off, which is
+                   what a branch that has never been asked reads as, and what
+                   every shop did before this existed. The month only means
+                   anything for a financial year, so it is hidden otherwise. */
+                $('#bill_number_reset').val(
+                    ['financial', 'calendar'].indexOf(String(data.bill_number_reset || '')) > -1
+                        ? String(data.bill_number_reset)
+                        : ''
+                );
+                PosnicPro.settings.fillFinancialYearMonths();
+                $('#bill_number_fy_start_month').val(String(Number(data.bill_number_fy_start_month) || 4));
+                PosnicPro.settings.showFinancialYearMonth();
                 $('#email_smtp_host').val(data.email_smtp_host || '');
                 $('#email_smtp_port').val(data.email_smtp_port || '');
                 $('#email_smtp_secure').prop('checked', data.email_smtp_secure === true || data.email_smtp_secure === 'true');
@@ -2075,6 +2087,8 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                bill_number_reset: $('#bill_number_reset').val() || '',
+                bill_number_fy_start_month: $('#bill_number_fy_start_month').val() || '4',
                 email_smtp_host: $('#email_smtp_host').val() || '',
                 email_smtp_port: $('#email_smtp_port').val() || '',
                 email_smtp_secure: $('#email_smtp_secure').is(':checked') ? 'true' : 'false',
@@ -6662,6 +6676,52 @@ PosnicPro.settings.markSavedSecrets = function (configured) {
         }
     });
 };
+
+
+/*
+ * The month a financial year starts in only means something to a financial
+ * year.
+ *
+ * A shop on the calendar year that is shown "Financial year starts in April"
+ * has been asked a question that does not apply to it, and the honest answers
+ * to that are to hide it - not to grey it out, which is a control saying "you
+ * may not touch me" about something that is simply not part of this choice.
+ */
+/*
+ * The twelve months, in the language the page is in.
+ *
+ * Every browser ships every month name in every language it supports, so
+ * writing them into seventeen translation packs would be a hundred and
+ * ninety-nine hand-typed strings duplicating something already correct - and
+ * one more list to keep true when a language is added. The year is arbitrary;
+ * only the month names are read.
+ */
+PosnicPro.settings.fillFinancialYearMonths = function () {
+    var select = document.getElementById('bill_number_fy_start_month');
+    if (!select || select.options.length) { return; }
+    var code = (PosnicPro.i18n && PosnicPro.i18n.code && PosnicPro.i18n.code()) || undefined;
+    for (var month = 1; month <= 12; month += 1) {
+        var name;
+        try {
+            name = new Date(2001, month - 1, 1).toLocaleString(code, { month: 'long' });
+        } catch (e) {
+            /* A language code the browser will not take. Its own default
+               still names the months, which beats an empty list. */
+            name = new Date(2001, month - 1, 1).toLocaleString(undefined, { month: 'long' });
+        }
+        select.add(new Option(name, String(month)));
+    }
+};
+
+PosnicPro.settings.showFinancialYearMonth = function () {
+    var row = $('#bill_number_fy_start_month_row');
+    if (!row.length) { return; }
+    row.toggle($('#bill_number_reset').val() === 'financial');
+};
+
+$(document).on('change', '#bill_number_reset', function () {
+    PosnicPro.settings.showFinancialYearMonth();
+});
 
 
 /* Feature search (owner feedback): filter the cards by anything visible on

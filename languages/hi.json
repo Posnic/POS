@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI लाइसेंस नंबर",
   "lang_bill_print_fssai_hint": "आपके GSTIN के नीचे छपता है। भारत में खाद्य व्यवसायों से इसे दिखाने की अपेक्षा है।",
   "lang_fssai_number": "FSSAI लाइसेंस नंबर",
-  "lang_fssai_number_hint": "इसे छापने के लिए ऊपर \"FSSAI लाइसेंस नंबर\" चालू करें।"
+  "lang_fssai_number_hint": "इसे छापने के लिए ऊपर \"FSSAI लाइसेंस नंबर\" चालू करें।",
+  "lang_bill_number_year": "बिल नंबर में साल",
+  "lang_one_run_of_numbers_no_year": "नंबरों की एक ही श्रृंखला, साल के बिना",
+  "lang_start_again_each_financial_year": "हर वित्तीय वर्ष में फिर से शुरू करें",
+  "lang_start_again_each_calendar_year": "हर कैलेंडर वर्ष में फिर से शुरू करें",
+  "lang_turning_this_on_starts_the_numbering_again": "इसे चालू करने पर नंबर फिर से एक से शुरू होंगे। साल के पहले दिन करना सबसे अच्छा है।",
+  "lang_financial_year_starts_in": "वित्तीय वर्ष शुरू होता है",
+  "lang_april_in_india_january_in_much_of_the_eu": "भारत में अप्रैल, यूरोपीय संघ के अधिकांश हिस्सों में जनवरी।"
 }
