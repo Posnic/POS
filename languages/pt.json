@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Ainda não há períodos de serviço. Adicione pequeno-almoço, almoço ou jantar em Definições, Restaurante, e aparecerão aqui."
+  "lang_no_dayparts_yet": "Ainda não há períodos de serviço. Adicione pequeno-almoço, almoço ou jantar em Definições, Restaurante, e aparecerão aqui.",
+  "lang_bill_copies_from_the_floor": "Cópias de uma conta pedida no salão",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Quando um garçom pede a conta no aparelho, saem estas cópias da impressora do balcão - uma para o cliente e uma para a casa, se guardar cópia. Os recibos tirados no balcão não são afetados."
 }

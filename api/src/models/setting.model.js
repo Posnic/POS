@@ -1360,6 +1360,9 @@ class SettingModel extends BaseModel {
         supplier_checkbox: supplierCheckbox,
         tax_checkbox: taxCheckbox,
         print_type: data.print_type,
+        /* A count, not a switch. Read back as a number wherever it is used, so
+           a form that posts "2" does not become the string "2" on the bill. */
+        bill_print_copies: data.bill_print_copies,
         printing_size: data.print_size,
         print_width: data.print_width,
         print_character: data.print_character,
@@ -1488,6 +1491,7 @@ class SettingModel extends BaseModel {
         supplier_checkbox: 'supplier_checkbox',
         tax_checkbox: 'tax_checkbox',
         print_type: 'print_type',
+        bill_print_copies: 'bill_print_copies',
         printing_size: 'print_size',
         print_width: 'print_width',
         print_character: 'print_character',
