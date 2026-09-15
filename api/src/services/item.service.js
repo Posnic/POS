@@ -1330,6 +1330,16 @@ class ItemService {
     return this.repository.previewBulkUpdateStock(params, context);
   }
 
+  /* Which dishes let a customer say how hot, set over a whole section rather
+     than one dish at a time. See previewSpiceChoice in the repository. */
+  async setSpiceChoice(params = {}, context = {}) {
+    return this.repository.setSpiceChoice(params, context);
+  }
+
+  async previewSpiceChoice(params = {}, context = {}) {
+    return this.repository.previewSpiceChoice(params, context);
+  }
+
   async getBulkStockUpdates(opts = {}) {
     return this.repository.getBulkStockUpdates(opts);
   }
