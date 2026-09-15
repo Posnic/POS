@@ -7557,6 +7557,26 @@ class SalesRepository {
         }
       }
 
+      /*
+       * THE QUEUE WATCHES, AND PRINTS NOTHING.
+       *
+       * Step 1 of Stage 2 in the print roadmap: record what the queue believes
+       * should print, let the old path keep printing exactly as it does, and
+       * compare the two. Ninety shops feed their kitchens through this
+       * function, so nothing here may change what comes out of a printer -
+       * rows are written with status `shadow`, which no till ever claims.
+       *
+       * Awaited rather than fired and forgotten, so a slow write shows up as a
+       * slow poll rather than as a promise nobody is holding. Its own failures
+       * are swallowed inside: a bystander must never cost a service.
+       */
+      try {
+        const shadow = require('./kot-shadow.repository');
+        await shadow.recordExpected(processedSales, { branchId: branchObjectId });
+      } catch (e) {
+        console.warn('[kot-shadow] not recorded:', e && e.message);
+      }
+
       return { status: true, message: 'Get unprinted sales successfully', data: processedSales };
     } catch (error) {
       console.error('Error in multiKitchenPrintModel:', error);
@@ -7568,7 +7588,7 @@ class SalesRepository {
     }
   }
 
-  async markKitchenPrintedModel(saleIds, printedIndexes) {
+  async markKitchenPrintedModel(saleIds, printedIndexes, printedKeys = []) {
     try {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
@@ -7615,6 +7635,29 @@ class SalesRepository {
           }
         );
         if (result.modifiedCount > 0) modifiedCount++;
+      }
+
+      /*
+       * Close the watching rows for what the till just reported.
+       *
+       * By ticket name when the till sent them, by sale when it did not - an
+       * older build sends only sale ids, and leaving its rows open for ever
+       * would report the whole estate as failing on the first read.
+       */
+      try {
+        const shadow = require('./kot-shadow.repository');
+        const branchOf = await salesCollection.findOne(
+          { _id: validIds[0] },
+          { projection: { branch_id: 1 } }
+        );
+        if (branchOf && branchOf.branch_id) {
+          await shadow.markShadowPrinted(printedKeys, {
+            branchId: branchOf.branch_id,
+            saleIds: validIds,
+          });
+        }
+      } catch (e) {
+        console.warn('[kot-shadow] not closed:', e && e.message);
       }
 
       return {

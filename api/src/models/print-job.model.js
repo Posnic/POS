@@ -89,7 +89,14 @@ const printJobSchema = new mongoose.Schema(
      */
     status: {
       type: String,
-      enum: ['queued', 'printing', 'needs_attention', 'done', 'failed'],
+      /*
+       * `shadow` is a row the queue wrote to WATCH, never to print. No till
+       * claims it: claimPrintJobs matches `queued` only, and the till asks for
+       * bills. It is a status of its own rather than a flag on `queued` so
+       * that no future widening of that query can sweep a watching row into a
+       * printer.
+       */
+      enum: ['shadow', 'queued', 'printing', 'needs_attention', 'done', 'failed'],
       default: 'queued',
       required: true,
       index: true,
@@ -110,6 +117,20 @@ const printJobSchema = new mongoose.Schema(
        has no sale, and the payload is what gets printed either way. */
     sale_id: { type: mongoose.Schema.Types.ObjectId, default: null },
 
+    /*
+     * WHAT THE TILL CALLS THIS EXACT TICKET.
+     *
+     * The name both sides now agree on - see src/kot-job-key.js. Without it a
+     * row is "a print job for sale X" and the server cannot tell a second
+     * ticket for an amended order from a duplicate of the first.
+     *
+     * Unique where present, so writing the same ticket twice is refused by the
+     * database rather than by whoever remembered to check. Sparse because
+     * every bill job ever queued has none, and partial so the index only
+     * carries rows that have a key at all.
+     */
+    ticket_key: { type: String, trim: true, default: '' },
+
     created_at: { type: Date, default: Date.now, index: true },
   },
   { timestamps: false, strict: true }
@@ -118,6 +139,18 @@ const printJobSchema = new mongoose.Schema(
 /* The query the till makes every few seconds, and the one that decides whether
    this scales past one shop: branch + status + age. */
 printJobSchema.index({ branch_id: 1, status: 1, created_at: 1 });
+
+/*
+ * One row per ticket, enforced by the database.
+ *
+ * A partial index rather than a sparse unique one: every bill job has
+ * ticket_key '' and several of those must coexist, which a plain unique index
+ * would refuse. This covers only the rows that actually name a ticket.
+ */
+printJobSchema.index(
+  { branch_id: 1, ticket_key: 1 },
+  { unique: true, partialFilterExpression: { ticket_key: { $type: 'string', $gt: '' } } }
+);
 
 /* Named explicitly, though this is exactly what mongoose already derives.
    Written down so tests/sync-classification.test.js can see it: a collection
