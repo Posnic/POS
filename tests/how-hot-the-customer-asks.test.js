@@ -192,18 +192,24 @@ test('the ordering catalogue keeps every fact the server sends it', () => {
   const dishFacts = require(path.join(ROOT, 'api', 'src', 'utils', 'dish-facts.js'));
   const src = fs.readFileSync(path.join(ROOT, 'order', 'indexedDB.js'), 'utf8');
 
-  const at = src.indexOf('products.push({');
+  const at = src.indexOf('function catalogueItem(');
   assert.ok(at !== -1, 'the ordering catalogue is not built where this test thinks');
-  const block = src.slice(at, src.indexOf('});', at));
+  let depth = 0;
+  let end = src.indexOf('{', at);
+  for (; end < src.length; end += 1) {
+    if (src[end] === '{') depth += 1;
+    else if (src[end] === '}' && --depth === 0) break;
+  }
+  const block = src.slice(at, end + 1);
 
   for (const field of Object.keys(dishFacts.factsFor({}))) {
     assert.ok(
-      new RegExp('(^|\\s)' + field + ':').test(block),
+      new RegExp('[\\s{]' + field + ':').test(block),
       'the ordering catalogue drops "' + field + '", so the page never sees it'
     );
   }
   /* And the one this change adds, for the same reason. */
-  assert.ok(/(^|\s)spice_choice:/.test(block), 'the catalogue drops spice_choice');
+  assert.ok(/[\s{]spice_choice:/.test(block), 'the catalogue drops spice_choice');
 });
 
 test('a cart line is told whether its dish offers the choice', () => {
