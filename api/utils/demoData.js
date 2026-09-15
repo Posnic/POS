@@ -108,6 +108,309 @@ const cafeDemoData = {
   ],
 };
 
+/*
+ * A RESTAURANT, FOR A RESTAURANT.
+ *
+ * "restaurant" has been answered with the CAFE pack - coffee, smoothies and a
+ * croissant - because that was the closest catalogue that existed. The comment
+ * on DEMO_PACK_BY_TYPE says so in as many words: "Closer than groceries, which
+ * is where it landed before." Closer is not the same as right, and a
+ * restaurant that signs up and is shown a coffee shop has to delete the whole
+ * thing before it can start.
+ *
+ * WHY THE DISHES CARRY MORE THAN A PRICE.
+ *
+ * Every other pack is a price list, because a hardware shop's catalogue IS a
+ * price list. A menu is not. The ordering pages read a dish's diet mark, its
+ * prep time, what is in it, how the shop bills it and whether the kitchen can
+ * cook it to order - and a demo menu carrying none of those demonstrates a
+ * plain list of names, which is precisely what a restaurant already has on
+ * paper and is not why anybody buys this.
+ *
+ * So: veg marks so the veg filter has something to filter; prep times so the
+ * sheet can say "takes about 20 minutes" and the busy-kitchen notice can
+ * quote a figure; a spice choice on the dishes a kitchen really does cook to
+ * order and on none of the others; and nutrition on a handful rather than all,
+ * because that is what a real shop's menu looks like halfway through being
+ * filled in - and because it shows the badges appearing only where the numbers
+ * earn them.
+ *
+ * PRICES ARE ON THE SAME SCALE AS EVERY OTHER PACK. These are installed in
+ * whatever currency the shop trades in, so 4.50 has to read sensibly as
+ * dollars, euros and hundreds of rupees alike. A menu priced 380 would arrive
+ * in a Dublin cafe as a 380 euro biryani.
+ */
+const restaurantDemoData = {
+  categories: [
+    { name: 'Starters', description: 'To begin with' },
+    { name: 'Main Course', description: 'Curries and grills' },
+    { name: 'Breads & Rice', description: 'To go alongside' },
+    { name: 'Desserts', description: 'To finish' },
+    { name: 'Beverages', description: 'Hot and cold drinks' },
+  ],
+  products: [
+    /* Starters. Two of the four can be cooked to order; the fried ones go
+       into the same oil as everything else and cannot. */
+    {
+      name: 'Paneer Tikka',
+      category: 'Starters',
+      price: 5.5,
+      unit: 'plate',
+      stock: 40,
+      description: 'Charred on skewers, with mint chutney',
+      diet: 'veg',
+      prep_minutes: 15,
+      spice_choice: true,
+      nutrition: { kcal: 320, protein_g: 18, fat_g: 22, carbohydrate_g: 9 },
+      menu_marks: ['signature'],
+    },
+    {
+      name: 'Chicken 65',
+      category: 'Starters',
+      price: 6.0,
+      unit: 'plate',
+      stock: 40,
+      description: 'Dry, curry leaves, a squeeze of lime',
+      diet: 'non_veg',
+      prep_minutes: 15,
+      spice_choice: true,
+      nutrition: { kcal: 410, protein_g: 34, fat_g: 24, carbohydrate_g: 14 },
+    },
+    {
+      name: 'Gobi Manchurian',
+      category: 'Starters',
+      price: 4.75,
+      unit: 'plate',
+      stock: 40,
+      description: 'Cauliflower, soy, spring onion',
+      diet: 'veg',
+      prep_minutes: 12,
+    },
+    {
+      name: 'Masala Papad',
+      category: 'Starters',
+      price: 1.5,
+      unit: 'piece',
+      stock: 60,
+      description: 'Onion, tomato, coriander',
+      diet: 'veg',
+      prep_minutes: 3,
+    },
+
+    /* Main course. Gravies are cooked to order here; the dal is batch-made
+       in the morning, which is exactly the dish that must NOT offer a spice
+       choice however much a customer would like one. */
+    {
+      name: 'Butter Chicken',
+      category: 'Main Course',
+      price: 8.5,
+      unit: 'bowl',
+      stock: 30,
+      description: 'Tomato, butter, cream, fenugreek',
+      diet: 'non_veg',
+      prep_minutes: 25,
+      spice_choice: true,
+      nutrition: { kcal: 490, protein_g: 32, fat_g: 34, carbohydrate_g: 12, sodium_mg: 620 },
+      menu_marks: ['chefs_pick'],
+    },
+    {
+      name: 'Paneer Butter Masala',
+      category: 'Main Course',
+      price: 7.5,
+      unit: 'bowl',
+      stock: 30,
+      description: 'Tomato, butter, cream, fenugreek',
+      diet: 'veg',
+      prep_minutes: 20,
+      spice_choice: true,
+    },
+    {
+      name: 'Grilled Fish',
+      category: 'Main Course',
+      price: 9.5,
+      unit: 'plate',
+      stock: 20,
+      description: 'Whole fish, lemon and pepper, off the grill',
+      diet: 'non_veg',
+      prep_minutes: 25,
+      spice_choice: true,
+      /* Lean and high in protein; the badges it earns are worked out from
+         these numbers and never written down anywhere. */
+      nutrition: { kcal: 280, protein_g: 42, fat_g: 9, carbohydrate_g: 2, sodium_mg: 340 },
+      food_tags: ['gluten_free'],
+      menu_marks: ['signature'],
+    },
+    {
+      name: 'Dal Tadka',
+      category: 'Main Course',
+      price: 5.0,
+      unit: 'bowl',
+      stock: 40,
+      /* NO spice choice, deliberately. It is made once in the morning in one
+         pot, and a kitchen cannot make one portion of it mild. */
+      description: 'Yellow lentils, ghee, cumin',
+      diet: 'veg',
+      prep_minutes: 15,
+      nutrition: { kcal: 240, protein_g: 13, fat_g: 8, carbohydrate_g: 30, fibre_g: 9 },
+    },
+    {
+      name: 'Egg Curry',
+      category: 'Main Course',
+      price: 5.5,
+      unit: 'bowl',
+      stock: 30,
+      description: 'Two eggs, onion and tomato gravy',
+      diet: 'egg',
+      prep_minutes: 15,
+      spice_choice: true,
+    },
+    {
+      name: 'Vegetable Korma',
+      category: 'Main Course',
+      price: 6.5,
+      unit: 'bowl',
+      stock: 30,
+      description: 'Mixed vegetables, cashew and coconut',
+      diet: 'veg',
+      prep_minutes: 20,
+      spice_choice: true,
+      food_tags: ['gluten_free'],
+    },
+
+    /* Breads and rice. Baked or boiled to order, and none of them is a dish
+       anybody asks to have made milder. */
+    {
+      name: 'Butter Naan',
+      category: 'Breads & Rice',
+      price: 1.75,
+      unit: 'piece',
+      stock: 80,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 8,
+    },
+    {
+      name: 'Garlic Naan',
+      category: 'Breads & Rice',
+      price: 2.0,
+      unit: 'piece',
+      stock: 80,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 8,
+    },
+    {
+      name: 'Parotta',
+      category: 'Breads & Rice',
+      price: 1.5,
+      unit: 'piece',
+      stock: 80,
+      description: 'Layered and flaky',
+      diet: 'veg',
+      prep_minutes: 10,
+    },
+    {
+      name: 'Steamed Rice',
+      category: 'Breads & Rice',
+      price: 2.5,
+      unit: 'bowl',
+      stock: 60,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 10,
+      food_tags: ['gluten_free'],
+    },
+    {
+      name: 'Chicken Biryani',
+      category: 'Breads & Rice',
+      price: 8.0,
+      unit: 'plate',
+      stock: 25,
+      description: 'Dum cooked, with raita',
+      diet: 'non_veg',
+      prep_minutes: 30,
+      /* Dum cooked in one sealed pot for the whole service. Same reason as
+         the dal: it cannot be varied by the portion. */
+      nutrition: { kcal: 620, protein_g: 30, fat_g: 22, carbohydrate_g: 74 },
+      menu_marks: ['house_special'],
+    },
+
+    /* Desserts and drinks. Nothing here takes a spice level, which is the
+       point: the tick is per dish because most dishes should not have it. */
+    {
+      name: 'Gulab Jamun',
+      category: 'Desserts',
+      price: 2.5,
+      unit: 'plate',
+      stock: 50,
+      description: 'Two pieces, warm',
+      diet: 'veg',
+      prep_minutes: 5,
+    },
+    {
+      name: 'Rasmalai',
+      category: 'Desserts',
+      price: 3.0,
+      unit: 'plate',
+      stock: 40,
+      description: 'Chilled, saffron and pistachio',
+      diet: 'veg',
+      prep_minutes: 5,
+    },
+    {
+      name: 'Ice Cream',
+      category: 'Desserts',
+      price: 2.0,
+      unit: 'scoop',
+      stock: 60,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 2,
+    },
+    {
+      name: 'Masala Chai',
+      category: 'Beverages',
+      price: 1.25,
+      unit: 'cup',
+      stock: 100,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 5,
+    },
+    {
+      name: 'Filter Coffee',
+      category: 'Beverages',
+      price: 1.5,
+      unit: 'cup',
+      stock: 100,
+      description: '',
+      diet: 'veg',
+      prep_minutes: 5,
+    },
+    {
+      name: 'Fresh Lime Soda',
+      category: 'Beverages',
+      price: 2.0,
+      unit: 'glass',
+      stock: 80,
+      description: 'Sweet, salted or both',
+      diet: 'vegan',
+      prep_minutes: 3,
+      food_tags: ['plant_based'],
+    },
+    {
+      name: 'Mineral Water',
+      category: 'Beverages',
+      price: 0.75,
+      unit: 'bottle',
+      stock: 100,
+      description: '',
+      diet: 'vegan',
+      prep_minutes: 0,
+    },
+  ],
+};
+
 const bakeryDemoData = {
   categories: [
     { name: 'Bread', description: 'Fresh baked bread' },
@@ -431,9 +734,16 @@ const DEMO_PACK_BY_TYPE = {
 
   cafe: 'cafe',
   coffee: 'cafe',
-  /* A restaurant sells prepared food and drink, which is what this pack is.
-     Closer than groceries, which is where it landed before. */
-  restaurant: 'cafe',
+  /*
+   * A restaurant gets a restaurant now.
+   *
+   * This pointed at the cafe pack - coffee, smoothies and a croissant -
+   * because that was the closest catalogue that existed, and the note here
+   * said so: "Closer than groceries, which is where it landed before."
+   * Closer is not right. A restaurant that signed up was shown a coffee
+   * shop and had to delete the whole thing before it could start.
+   */
+  restaurant: 'restaurant',
 
   bakery: 'bakery',
 
@@ -456,6 +766,7 @@ const DEMO_PACK_BY_TYPE = {
 
 const DEMO_PACKS = {
   iceCream: iceCreamDemoData,
+  restaurant: restaurantDemoData,
   cafe: cafeDemoData,
   bakery: bakeryDemoData,
   supermarket: supermarketDemoData,
@@ -481,7 +792,11 @@ const DEMO_PACKS = {
  */
 const DEMO_PACK_LABELS = {
   supermarket: 'Supermarket, kirana & grocery',
-  cafe: 'Cafe & restaurant',
+  restaurant: 'Restaurant',
+  /* No longer "Cafe & restaurant": a restaurant has its own pack now, and a
+     chooser offering both under one name would send half of them back to the
+     coffee shop. */
+  cafe: 'Cafe & coffee shop',
   bakery: 'Bakery',
   iceCream: 'Ice cream parlour',
   textile: 'Clothing & textiles',
@@ -607,6 +922,7 @@ module.exports = {
   DEMO_PACK_LABELS,
   attachImages,
   iceCreamDemoData,
+  restaurantDemoData,
   cafeDemoData,
   bakeryDemoData,
   supermarketDemoData,
