@@ -69,11 +69,24 @@ test('the storefront strips the raw fields before sending the derived ones', () 
    * same statement that spreads the rest, or the derived list and the raw
    * list travel together and a page picks one.
    */
-  assert.match(
-    source,
-    /const \{[^}]*nutrition,[^}]*food_tags,[^}]*menu_marks,[^}]*\.\.\.rest \} = item;/,
-    'storefront must destructure the raw facts out of the outgoing item'
-  );
+  /*
+   * Asked by NAME rather than by one spelling of the line. The destructure
+   * grew a fourth field (nutrition_source) and prettier wrapped it across
+   * seven lines, so a regex pinned to `...rest } = item;` on one line failed
+   * on code that was more correct than before. A test should care that the
+   * raw fields leave, not how the line is formatted.
+   */
+  const at = source.indexOf('multi_image,');
+  assert.ok(at !== -1, 'the storefront no longer destructures the outgoing item');
+  const destructure = source.slice(at, source.indexOf('} = item;', at));
+
+  for (const raw of ['nutrition', 'nutrition_source', 'food_tags', 'menu_marks']) {
+    assert.ok(
+      destructure.split(/[\s,]+/).includes(raw),
+      `${raw} still travels raw beside the derived list`
+    );
+  }
+  assert.match(destructure, /\.\.\.rest/, 'nothing is spread on, so nothing is sent');
 });
 
 test('no claim key is anywhere in the tickable lists', () => {
