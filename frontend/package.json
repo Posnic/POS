@@ -28,7 +28,7 @@
     "cross-env": "^10.1.0",
     "gulp": "^5.0.1",
     "gulp-cli": "^3.1.0",
-    "sass": "^1.103.1",
+    "sass": "^1.104.0",
     "terser": "^5.51.2"
   },
   "private": true
