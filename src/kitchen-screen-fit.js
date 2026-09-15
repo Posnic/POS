@@ -100,6 +100,28 @@ function panelMm({ diagonalInches, widthPx, heightPx }) {
 }
 
 /**
+ * The diagonal, from the width and height somebody actually measured.
+ *
+ * Screens are SOLD by the diagonal and MEASURED by the width and height,
+ * because a tape measure across a corner is awkward and a bezel makes it
+ * ambiguous. The owner, asked for a screen size, answered "28 inch x 15.5
+ * inch" - which is the honest answer and not the one the field asked for.
+ *
+ * Accepting both costs one function and removes a whole class of wrong
+ * answers: somebody typing 28 into a box labelled "inches" would have been
+ * told a 28 inch screen fits less than it does, and believed it.
+ *
+ * Units do not matter as long as both are the same - the diagonal comes back
+ * in whatever went in.
+ */
+function diagonalFrom(width, height) {
+  const w = Number(width);
+  const h = Number(height);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return 0;
+  return Math.round(Math.sqrt(w * w + h * h) * 10) / 10;
+}
+
+/**
  * What fits, given a screen and a distance.
  *
  * Everything is returned rather than only the answer, because the setup screen
@@ -236,6 +258,7 @@ function advice(options = {}) {
 module.exports = {
   fit,
   advice,
+  diagonalFrom,
   panelMm,
   verdictFor,
   DEFAULT_TARGET_ARCMIN,
