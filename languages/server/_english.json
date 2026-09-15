@@ -76,7 +76,8 @@
     "src/services/supplier.service.js"
   ],
   "Already answered": [
-    "src/repositories/item.repository.js"
+    "src/repositories/item.repository.js",
+    "src/repositories/print-job.repository.js"
   ],
   "Already applied": [
     "src/services/coupon.service.js"
@@ -395,6 +396,9 @@
   "Could not allow that till": [
     "src/repositories/print-till.repository.js"
   ],
+  "Could not answer the print job": [
+    "src/repositories/print-job.repository.js"
+  ],
   "Could not ask for the bill": [
     "src/repositories/sale.repository.js"
   ],
@@ -452,6 +456,9 @@
   "Could not read the print queue": [
     "src/repositories/print-job.repository.js"
   ],
+  "Could not read what needs attention": [
+    "src/repositories/print-job.repository.js"
+  ],
   "Could not register webhook": [
     "app.js"
   ],
@@ -463,6 +470,9 @@
   ],
   "Could not revoke token": [
     "app.js"
+  ],
+  "Could not sweep the print queue": [
+    "src/repositories/print-job.repository.js"
   ],
   "Coupon redemptions reversed": [
     "src/services/coupon.service.js"

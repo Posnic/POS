@@ -77,9 +77,19 @@ const printJobSchema = new mongoose.Schema(
       default: '',
     },
 
+    /*
+     * needs_attention is the one that matters.
+     *
+     * A claim that expired while held does NOT go back to `queued`, because
+     * "printed but never confirmed" and "never printed" look identical from
+     * here - and retrying is how the same order reaches a kitchen twice. It
+     * waits for a person to say which happened.
+     *
+     * `failed` is kept for rows written before that existed.
+     */
     status: {
       type: String,
-      enum: ['queued', 'printing', 'done', 'failed'],
+      enum: ['queued', 'printing', 'needs_attention', 'done', 'failed'],
       default: 'queued',
       required: true,
       index: true,

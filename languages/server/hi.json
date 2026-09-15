@@ -740,5 +740,9 @@
   "successfully loaded": "सफलतापूर्वक लोड हुआ",
   "tips must be a non-negative number": "टिप ऋणात्मक नहीं हो सकती",
   "unsuccessfully": "नहीं हो सका",
-  "valid": "मान्य"
+  "valid": "मान्य",
+  "Could not sweep the print queue": "प्रिंट कतार साफ़ नहीं हो सकी",
+  "Could not read what needs attention": "जिन पर ध्यान चाहिए, वे पढ़े नहीं जा सके",
+  "Could not answer the print job": "प्रिंट कार्य का उत्तर दर्ज नहीं हो सका",
+  "Could not read the print queue": "प्रिंट कतार पढ़ी नहीं जा सकी"
 }

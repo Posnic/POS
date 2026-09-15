@@ -369,5 +369,9 @@
   "No valid category rows to import": "இறக்குமதி செய்ய சரியான வகை வரிசைகள் எதுவும் இல்லை",
   "No valid expenses to import": "இறக்குமதி செய்ய சரியான செலவுகள் எதுவும் இல்லை",
   "No valid fields provided for update": "புதுப்பிப்பதற்கு சரியான புலங்கள் எதுவும் தரப்படவில்லை",
-  "No valid files uploaded": "சரியான கோப்புகள் எதுவும் பதிவேற்றப்படவில்லை"
+  "No valid files uploaded": "சரியான கோப்புகள் எதுவும் பதிவேற்றப்படவில்லை",
+  "Could not sweep the print queue": "அச்சு வரிசையை சுத்தம் செய்ய முடியவில்லை",
+  "Could not read what needs attention": "கவனம் தேவைப்படுபவற்றைப் படிக்க முடியவில்லை",
+  "Could not answer the print job": "அச்சுப் பணிக்கு பதிலளிக்க முடியவில்லை",
+  "Could not read the print queue": "அச்சு வரிசையைப் படிக்க முடியவில்லை"
 }
