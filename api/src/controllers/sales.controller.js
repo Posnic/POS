@@ -6690,10 +6690,49 @@ class SalesController extends BaseController {
        *
        * From the request. A body cannot claim to be staff.
        */
-      const response = await salesService.createOnlineOrder(req.body, {
-        SaleModel,
-        staffOrder: Boolean(req.user),
-      });
+      /*
+       * WHERE THE ORDER CAME FROM, kept with the order.
+       *
+       * Owner: "every order should have some details. example what mobile,
+       * user agent, ip address, mobile type or user account whatever
+       * infromation app can know do it."
+       *
+       * An order that goes wrong - a duplicate, a wrong table, a price nobody
+       * recognises - is a question about WHICH phone and WHOSE hands, and
+       * until now a table order answered neither. The customer storefront has
+       * collected this since it was built; this door, the one every handset
+       * uses, collected nothing.
+       *
+       * The address and the user agent are read from the REQUEST, never from
+       * the body: a phone describes its own hardware, but it does not get to
+       * name its own address. Anything the body claims about those two is
+       * overruled here, and everything else is whitelisted and cut to length
+       * further down in _clientFacts.
+       *
+       * WHO, as well as what. A handset signs in, so the sale can carry the
+       * name the shop knows them by rather than a device id nobody can look
+       * up. Taken from the session, not from the body, for the same reason.
+       */
+      const client = {
+        ...(req.body && typeof req.body.client === 'object' ? req.body.client : {}),
+        ip: clientIp(req),
+        user_agent: req.get('User-Agent') || '',
+        referrer: req.get('Referer') || '',
+        ...(req.user
+          ? {
+              staff_id: String(req.user._id || req.user.id || ''),
+              staff_name: String(req.user.name || req.user.username || ''),
+            }
+          : {}),
+      };
+
+      const response = await salesService.createOnlineOrder(
+        { ...req.body, client },
+        {
+          SaleModel,
+          staffOrder: Boolean(req.user),
+        }
+      );
 
       if (response.status === true) {
         return this.success(res, response.data, response.message);
