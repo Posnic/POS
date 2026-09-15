@@ -52,6 +52,8 @@
                                      not "one dish at a time": a menu of 272
                                      is a wall nobody climbs. -->
                                 <a class="dropdown-item restaurant-only" href="javascript:void(0)"
+                                   onclick="PosnicPro.items.openPrepMinutes(); return false;"><i class="feather icon-clock mr-2"></i><lang class="lang_prep_tool">How long a section takes</lang></a>
+                                <a class="dropdown-item restaurant-only" href="javascript:void(0)"
                                    onclick="PosnicPro.items.openSpiceChoice(); return false;"><i class="feather icon-thermometer mr-2"></i><lang class="lang_spice_choice_tool">Who may choose how hot</lang></a>
                                 <!-- Restaurant only, and hidden again unless
                                      the shop has an AI key: it spends their
@@ -635,6 +637,74 @@
         </div>
     </div>
 </div>
+
+<!-- How long a section takes -->
+<div class="modal fade close_on_esc" id="prep_minutes_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="feather icon-clock mr-2"></i><lang class="lang_prep_tool">How long a section takes</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
+                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
+                </button>
+            </div>
+            <form onsubmit="return PosnicPro.items.submitPrepMinutes();">
+                <div class="modal-body">
+                    <p class="text-muted" style="font-size:13px; margin-bottom:14px;">
+                        <lang class="lang_prep_tool_help">A customer ordering online sees this on the dish, and it is what tells them the kitchen is running twenty minutes behind rather than just 'busy'. Breads come off the tawa in minutes and a biryani does not, so set it a section at a time.</lang>
+                    </p>
+
+                    <div class="form-group">
+                        <label class="f-w-6"><lang class="lang_which_items">Which items</lang></label>
+                        <div>
+                            <label class="mr-4" style="font-weight:normal;">
+                                <input type="radio" name="prep_minutes_scope" value="all" checked onclick="PosnicPro.items.togglePrepMinutesCategory();"> <lang class="lang_all_items">All items</lang>
+                            </label>
+                            <label style="font-weight:normal;">
+                                <input type="radio" name="prep_minutes_scope" value="category" onclick="PosnicPro.items.togglePrepMinutesCategory();"> <lang class="lang_one_category">One category</lang>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group prep-minutes-category-row" style="display:none;">
+                        <label class="f-w-6"><lang class="lang_newcategory_title">Category</lang></label>
+                        <select class="form-control" id="prep_minutes_category" style="width:100%;" aria-label="Category" data-t-aria-label="lang_newcategory_title"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="f-w-6" for="prep_minutes_value"><lang class="lang_prep_how_long">How long, in minutes</lang></label>
+                        <input type="number" min="0" max="1440" step="1" class="form-control" id="prep_minutes_value" placeholder="20" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-weight:normal;">
+                            <input type="checkbox" id="prep_minutes_only_empty" checked>
+                            <lang class="lang_prep_only_empty">Only dishes that do not say yet</lang>
+                        </label>
+                        <small class="form-text text-muted mt-0">
+                            <lang class="lang_prep_only_empty_help">Leave this ticked to keep the times you have already set by hand. Untick it to rewrite every dish in the scope.</lang>
+                        </small>
+                    </div>
+
+                    <!-- Filled by "Check" - how many dishes would actually change. -->
+                    <div id="prep_minutes_check_result" style="display:none; margin-bottom:10px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
+                        <i class="feather icon-x-circle mr-2"></i><lang class="lang_cancel_title">Cancel</lang>
+                    </button>
+                    <button type="button" id="prep_minutes_check" class="btn btn-outline-secondary" onclick="PosnicPro.items.checkPrepMinutes();">
+                        <i class="feather icon-search mr-2"></i><lang class="lang_check">Check</lang>
+                    </button>
+                    <button type="submit" id="prep_minutes_submit" class="btn btn-outline-primary">
+                        <i class="feather icon-check-circle mr-2"></i><lang class="lang_prep_apply">Set the time</lang>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- end How long a section takes -->
 
 <!-- Who may choose how hot -->
 <div class="modal fade close_on_esc" id="spice_choice_modal" tabindex="-1" role="dialog" aria-hidden="true">

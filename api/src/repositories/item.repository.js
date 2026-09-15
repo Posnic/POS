@@ -714,6 +714,118 @@ class ItemRepository extends BaseModel {
   }
 
   /*
+   * Minutes somebody actually typed, or null.
+   *
+   * A number or the text of one, and nothing else. Number(null) is 0 and
+   * Number('') is 0, so a form that failed to read its box - or an older
+   * client that omits the field - would otherwise arrive as a confident
+   * request to set every dish in the shop to zero minutes, which reads on the
+   * menu as "ready instantly" and feeds the busy-kitchen median a floor of
+   * nothing. Refusing is the only safe reading of a question nobody answered.
+   */
+  _prepMinutesAsked(minutes) {
+    if (typeof minutes !== 'number' && typeof minutes !== 'string') return null;
+    if (String(minutes).trim() === '') return null;
+    const n = Math.round(Number(minutes));
+    if (!Number.isFinite(n) || n < 0 || n > 24 * 60) return null;
+    return n;
+  }
+
+  /*
+   * HOW LONG A SECTION TAKES.
+   *
+   * `prep_minutes` is read by two things that both matter and both go quiet
+   * without it: the dish sheet says "takes about 20 minutes" so a customer can
+   * decide before they order, and the busy-kitchen notice uses the shop's
+   * MEDIAN prep time as its round length - so a menu with no prep times can
+   * tell somebody the kitchen is behind and never by how much.
+   *
+   * Counted on the live production shop the day this was written: 272 dishes,
+   * ZERO with a prep time. Not because the shop disagrees with the idea - the
+   * field is on the item form and always has been - but because entering it
+   * means opening 272 dishes, and nobody does that. A number no one can enter
+   * is a number no one has.
+   *
+   * And a kitchen already thinks in sections: breads come off the tawa in
+   * eight minutes, biryani is thirty, a papad is three. So the scope is the
+   * one the bulk price, stock and spice tools already use.
+   *
+   * ONLY THE EMPTY ONES, BY DEFAULT. A shop that has tuned a handful of dishes
+   * by hand has done the most valuable work on this whole field, and a blanket
+   * write would erase exactly that. Overwriting is available and has to be
+   * asked for.
+   */
+  async previewPrepMinutes({ scope, categoryId, minutes, onlyEmpty } = {}, context = {}) {
+    const wanted = this._prepMinutesAsked(minutes);
+    if (wanted === null) {
+      return { status: false, message: 'Enter how many minutes, from 0 to 1440' };
+    }
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, { projection: { name: 1, prep_minutes: 1 } })
+      .toArray();
+
+    const spare = onlyEmpty !== false;
+    const changing = items.filter((it) => {
+      const had = Number(it.prep_minutes) || 0;
+      if (spare && had > 0) return false;
+      return had !== wanted;
+    });
+
+    return {
+      status: true,
+      data: {
+        total: items.length,
+        willChange: changing.length,
+        /* What a cautious run would leave alone, said out loud: a shop that
+           sees "84 would change, 12 left as they are" learns that its own
+           twelve are safe without having to trust the wording. */
+        keeping: spare ? items.filter((it) => Number(it.prep_minutes) > 0).length : 0,
+        minutes: wanted,
+        sample: changing.slice(0, 100).map((it) => ({
+          name: it.name || '',
+          old_value: Number(it.prep_minutes) || 0,
+          new_value: wanted,
+        })),
+      },
+      message: 'Preview ready',
+    };
+  }
+
+  /** Write it. See previewPrepMinutes for why the default spares what is set. */
+  async setPrepMinutes({ scope, categoryId, minutes, onlyEmpty } = {}, context = {}) {
+    const wanted = this._prepMinutesAsked(minutes);
+    if (wanted === null) {
+      return { status: false, message: 'Enter how many minutes, from 0 to 1440' };
+    }
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+
+    const filter = { ...built.filter, prep_minutes: { $ne: wanted } };
+    /* Absent, zero and null all mean "not said" on this field, and a shop
+       sparing its own numbers means sparing the ones that are really there. */
+    if (onlyEmpty !== false)
+      filter.$and = [
+        { $or: [{ prep_minutes: { $in: [null, 0] } }, { prep_minutes: { $exists: false } }] },
+      ];
+
+    const collection = await this.getCollection(this.collectionName);
+    const result = await collection.updateMany(filter, { $set: { prep_minutes: wanted } });
+
+    const changed = result.modifiedCount || 0;
+    return {
+      status: true,
+      data: { changed, minutes: wanted },
+      message: changed
+        ? `${changed} dish(es) updated`
+        : 'Nothing to change: those dishes already say that',
+    };
+  }
+
+  /*
    * WHICH DISHES LET A CUSTOMER SAY HOW HOT, ALL AT ONCE.
    *
    * The tick is per dish on purpose - a kitchen that batch-cooks its gravy

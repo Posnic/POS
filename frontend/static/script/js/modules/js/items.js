@@ -2208,6 +2208,126 @@ PosnicPro.items = {
         });
     },
     /*
+     * HOW LONG A SECTION TAKES.
+     *
+     * Counted on the live shop the day this was written: 272 dishes, none with
+     * a prep time. The field has been on the item form all along - it is empty
+     * because filling it means opening 272 dishes, and nobody does that.
+     *
+     * Two customer-facing things go quiet without it: the dish sheet cannot
+     * say "takes about 20 minutes", and the busy-kitchen notice has no round
+     * length to multiply, so it tells somebody the kitchen is behind and never
+     * by how much.
+     *
+     * Same scope and the same check-then-apply as the tools beside it.
+     */
+    openPrepMinutes: function () {
+        $('input[name="prep_minutes_scope"][value="all"]').prop('checked', true);
+        $('.prep-minutes-category-row').hide();
+        $('#prep_minutes_value').val('');
+        $('#prep_minutes_only_empty').prop('checked', true);
+        $('#prep_minutes_check_result').hide().empty();
+        $('#prep_minutes_submit').prop('disabled', false);
+        PosnicPro.items.loadPrepMinutesCategories();
+        $('#prep_minutes_modal').modal('show');
+    },
+
+    togglePrepMinutesCategory: function () {
+        var scope = $('input[name="prep_minutes_scope"]:checked').val();
+        (scope === 'category') ? $('.prep-minutes-category-row').show() : $('.prep-minutes-category-row').hide();
+    },
+
+    loadPrepMinutesCategories: function () {
+        var sel = $('#prep_minutes_category');
+        PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
+            sel.empty();
+            $.map(response.suggestions || [], function (dataItem) {
+                sel.append('<option value="' + dataItem.id + '">' + dataItem.name + '</option>');
+            });
+            sel.select2({ placeholder: PosnicPro.i18n.t('lang_choose_a_category_2', 'Choose a category'), dropdownParent: $('#prep_minutes_modal') });
+        });
+    },
+
+    readPrepMinutesForm: function () {
+        var scope = $('input[name="prep_minutes_scope"]:checked').val();
+        var value = $('#prep_minutes_value').val();
+        /*
+         * An empty box is refused HERE rather than sent as nothing. The server
+         * refuses it too, but a blank that travelled would read as "set every
+         * dish to zero minutes", which on the menu means "ready instantly".
+         */
+        if (value === '' || isNaN(value) || Number(value) < 0 || Number(value) > 1440) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_prep_enter_minutes', 'Enter how many minutes, from 0 to 1440.'));
+            return null;
+        }
+        var category_id = (scope === 'category') ? $('#prep_minutes_category').val() : null;
+        if (scope === 'category' && !category_id) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_a_category', 'Choose a category.'));
+            return null;
+        }
+        return {
+            scope: scope,
+            category_id: category_id,
+            minutes: Number(value),
+            only_empty: $('#prep_minutes_only_empty').is(':checked')
+        };
+    },
+
+    checkPrepMinutes: function () {
+        var form = PosnicPro.items.readPrepMinutesForm();
+        if (!form) return false;
+        var box = $('#prep_minutes_check_result');
+        box.html('<span class="dim"><lang class="lang_checking">Checking...</lang></span>').show();
+        PosnicPro.post({ url: 'items/bulkPrepMinutesPreview', data: JSON.stringify(form) }, function (response) {
+            if (response.type !== 'success') {
+                box.hide();
+                PosnicPro.alert(response.type, response.message);
+                return;
+            }
+            var d = response.data || {};
+            var esc = function (v) { return $('<div>').text(v == null ? '' : v).html(); };
+            var rows = (d.sample || []).slice(0, 5).map(function (r) {
+                return '<li>' + esc(r.name) + ': ' + esc(r.old_value) + ' &rarr; <b>' + esc(r.new_value) + '</b></li>';
+            }).join('');
+            var more = (d.willChange > 5) ? '<li class="dim">and ' + (d.willChange - 5) + ' more</li>' : '';
+            var head = d.willChange
+                ? '<b>' + d.willChange + '</b> of ' + (d.total || 0) + ' dish(es) would change.'
+                : PosnicPro.i18n.t('lang_prep_nothing', 'Nothing to change: those dishes already say that.');
+            /* What a cautious run leaves alone, said out loud, so a shop can
+               see its own hand-set times are safe. */
+            var kept = d.keeping
+                ? ' ' + PosnicPro.i18n.t('lang_prep_keeping', 'Times you set by hand are kept.')
+                : '';
+            var body = rows ? '<ul style="margin:4px 0 0; padding-left:18px;">' + rows + more + '</ul>' : '';
+            box.attr('class', 'alert alert-info')
+                .css({ 'font-size': '12.5px', 'padding': '8px 12px' })
+                .html(head + esc(kept) + body).show();
+        }, function () {
+            box.hide();
+        });
+        return false;
+    },
+
+    submitPrepMinutes: function () {
+        var form = PosnicPro.items.readPrepMinutesForm();
+        if (!form) return false;
+        $('#prep_minutes_submit').prop('disabled', true);
+        PosnicPro.post({ url: 'items/bulkPrepMinutes', data: JSON.stringify(form) }, function (response) {
+            $('#prep_minutes_submit').prop('disabled', false);
+            if (response.type === 'success') {
+                $('#prep_minutes_modal').modal('hide');
+                PosnicPro.alert('success', response.message);
+                PosnicPro.items.itemsTable();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+            }
+        }, function () {
+            $('#prep_minutes_submit').prop('disabled', false);
+        });
+        return false;
+    },
+
+    /*
      * WHO MAY CHOOSE HOW HOT, over a whole section.
      *
      * The tick lives on the dish because only the kitchen knows which dishes

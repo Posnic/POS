@@ -1818,6 +1818,54 @@ class ItemsController extends BaseController {
   }
 
   /*
+   * Say how long a whole section takes to cook.
+   *
+   * A write, so it wants item.write - the same gate the other catalogue tools
+   * sit behind. See previewPrepMinutes for why a per-dish number needs a way
+   * to be set in bulk.
+   */
+  async bulkPrepMinutes(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, minutes, only_empty } = req.body || {};
+      const result = await this.service.setPrepMinutes(
+        { scope, categoryId: category_id, minutes, onlyEmpty: only_empty },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not set the prep time', 400);
+    } catch (error) {
+      console.error('Error in bulkPrepMinutes:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /** Dry-run the above: how many dishes it would actually change. */
+  async bulkPrepMinutesPreview(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const ctx = req.itemContext || {};
+      const { scope, category_id, minutes, only_empty } = req.body || {};
+      const result = await this.service.previewPrepMinutes(
+        { scope, categoryId: category_id, minutes, onlyEmpty: only_empty },
+        { branchId: ctx.branchId }
+      );
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not check the dishes', 400);
+    } catch (error) {
+      console.error('Error in bulkPrepMinutesPreview:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  /*
    * Offer the spice choice across a scope, or take it back.
    *
    * A write, so it wants item.write - the same gate the bulk price and stock
