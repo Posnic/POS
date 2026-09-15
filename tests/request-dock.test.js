@@ -141,8 +141,15 @@ test('each card says how long ago the order was placed', () => {
 });
 
 test('a change request is written out as dishes, not as a diff nobody can read', () => {
-  /* Whoever reads this is standing at a till in a hurry: "2 to 3 Chicken
-     Biryani" is a decision at a glance; a JSON patch is not. */
+  /*
+   * Whoever reads this is standing at a till in a hurry: "2 to 3 Chicken
+   * Biryani" is a decision at a glance; a JSON patch is not.
+   *
+   * This order carries no `items`, which is a request made before the queue
+   * started sending the whole order alongside the wish - and one carrying an
+   * ADDITION, which a customer cannot ask for any more. Both still sit in the
+   * database, so the card has to read them, which is what this pins.
+   */
   const { document, window } = dockPage([
     {
       sale_id: 'a1',
@@ -160,7 +167,7 @@ test('a change request is written out as dishes, not as a diff nobody can read',
   ]);
   document.getElementById('request-dock-tab').click();
   const lines = [...document.querySelectorAll('.request-dock-diff li')].map((li) => li.textContent);
-  assert.deepStrictEqual(lines, ['Chicken Biryani: 2 → 3', '+ 1 × Lime Soda', 'Remove Gulab Jamun']);
+  assert.deepStrictEqual(lines, ['Chicken Biryani 2 → 3', '+ 1 × Lime Soda', 'Gulab Jamun removed']);
   assert.strictEqual(document.querySelector('.request-dock-card').getAttribute('data-kind'), 'change');
   window.close();
 });
