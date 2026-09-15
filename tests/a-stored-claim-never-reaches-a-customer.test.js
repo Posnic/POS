@@ -70,20 +70,35 @@ test('the storefront strips the raw fields before sending the derived ones', () 
    * list travel together and a page picks one.
    */
   /*
-   * Whitespace-tolerant between `...rest` and the closing brace, because the
-   * thing being asserted is the DESTRUCTURING, not the formatting.
+   * Asked by NAME, not by one spelling of the line.
    *
-   * The pattern used to require `...rest } = item;` on one line, which was
-   * true when it was written and stopped being true the moment the list grew
-   * long enough for prettier to break it across lines. The code was still
-   * correct; only the regex had gone stale, and it failed on develop looking
-   * exactly like a real leak of stored claims to a customer.
+   * This assertion has now been wrong twice for the same reason. It began as a
+   * regex requiring `...rest } = item;` on a single line, which stopped
+   * matching the moment prettier wrapped the destructure; that was patched by
+   * making the whitespace flexible, which fixed the formatting problem and
+   * left a real one behind. The regex only ever NAMED three of the four raw
+   * fields, so deleting nutrition_source from the destructure passed it.
+   *
+   * That is not a hypothetical. nutrition_source is the flag saying the
+   * figures were ESTIMATED rather than entered by the shop - it is an input to
+   * what may honestly be claimed, and if it travels raw beside the derived
+   * list then the exact thing the comment above warns about has happened: the
+   * two lists travel together and a page picks one.
+   *
+   * Checked by removing that field and watching this go red. A guard for a
+   * list of fields has to read the list.
    */
-  assert.match(
-    source,
-    /const \{[^}]*nutrition,[^}]*food_tags,[^}]*menu_marks,[^}]*\.\.\.rest\s*\}\s*=\s*item;/,
-    'storefront must destructure the raw facts out of the outgoing item'
-  );
+  const at = source.indexOf('multi_image,');
+  assert.ok(at !== -1, 'the storefront no longer destructures the outgoing item');
+  const destructure = source.slice(at, source.indexOf('} = item;', at));
+
+  for (const raw of ['nutrition', 'nutrition_source', 'food_tags', 'menu_marks']) {
+    assert.ok(
+      destructure.split(/[\s,]+/).includes(raw),
+      `${raw} still travels raw beside the derived list`
+    );
+  }
+  assert.match(destructure, /\.\.\.rest/, 'nothing is spread on, so nothing is sent');
 });
 
 test('no claim key is anywhere in the tickable lists', () => {
