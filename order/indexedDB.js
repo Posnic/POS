@@ -120,6 +120,9 @@ async function rememberShop() {
         shop.fulfilment = Array.isArray(branch.fulfilment) ? branch.fulfilment : [];
         shop.payment = branch.kioskPayment && typeof branch.kioskPayment === "object" ? branch.kioskPayment : {};
         shop.charges = branch.charges && typeof branch.charges === "object" ? branch.charges : {};
+        /* Busy or not, and by how many minutes when the shop's own prep times
+           can support a figure. See api/src/utils/kitchen-load.js. */
+        shop.kitchen = branch.kitchen && typeof branch.kitchen === "object" ? branch.kitchen : null;
         /* The address bar says which shop this is, from the row that is
            actually showing. A copied link that names another shop is an
            arrival there instead (assets/shop-address.js). */
@@ -1173,7 +1176,11 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                     : [],
                 /* What each way of travelling costs, and its minimum, so the
                    page can say so before the button rather than after. */
-                charges: result.data.charges && typeof result.data.charges === "object" ? result.data.charges : {}
+                charges: result.data.charges && typeof result.data.charges === "object" ? result.data.charges : {},
+                /* How busy the kitchen was when this menu was fetched. Kept on
+                   the row because every page reads the shop from there, and
+                   refreshed on each load - a warning an hour old is no use. */
+                kitchen: result.data.kitchen && typeof result.data.kitchen === "object" ? result.data.kitchen : null
             }]);
             await rememberShop();
             /* A browser that already had the menu draws the header from the
@@ -1497,6 +1504,17 @@ async function renderCart(cartData = null) {
                 field.value = kept && kept !== "null" && kept !== "undefined" ? kept : "";
             }
         }
+
+        /*
+         * How busy the kitchen is, said again where somebody commits.
+         *
+         * LAST, deliberately. Everything in this function runs inside one try
+         * and the catch only logs, so anything that throws silently abandons
+         * the rest of the render - the lines, the sums, the note label. A
+         * decorative notice must never be able to do that, so it goes after
+         * everything a customer actually needs.
+         */
+        paintKitchenNotice();
 
         const loader = document.getElementById('page-loader');
         if (loader) loader.style.display = 'none';
@@ -1860,6 +1878,45 @@ function catalogueItem(item, categoryName) {
         price_set_on: item.price_set_on || "",
         category_name: categoryName
     };
+}
+
+/*
+ * "THE KITCHEN IS BUSY", SAID BEFORE THE ORDER IS PLACED.
+ *
+ * Owner: "when kitchen have many order have so many order we might notify
+ * online order customer deley might expecteed... shop having total 10 tables.
+ * 10 order in the process. then kitchen is full."
+ *
+ * A customer who waits forty minutes without being told blames the restaurant;
+ * one who was told chose to wait. So this is shown where the choice is still
+ * open - on the menu, and again above the order button - and it never blocks
+ * anything. It is a sentence, not a gate.
+ *
+ * THE NUMBER IS THE POINT. "Delay expected" with no figure is either ignored
+ * or read as "do not order", because the reader has to imagine the wait and
+ * people imagine the worst. The server sends minutes wherever the shop's own
+ * prep times can support them, and this says the weaker true thing when they
+ * cannot - the same rule the health badges follow.
+ */
+function kitchenNoticeHtml(kitchen) {
+    if (!kitchen || kitchen.busy !== true) return "";
+    var minutes = Number(kitchen.extra_minutes) || 0;
+    var words = kitchen.over
+        ? t("The kitchen is very busy. Expect over an hour longer than usual.")
+        : minutes
+            ? t("The kitchen is busy. Expect about {n} minutes longer than usual.", { n: minutes })
+            : t("The kitchen is busy right now, so your order may take longer than usual.");
+    return '<p class="kitchen-notice" role="status">' + escapeHtml(words) + "</p>";
+}
+
+/* Draw it wherever the page has left room for it. Both pages that order food
+   carry the container; a page without one simply shows nothing. */
+function paintKitchenNotice() {
+    var box = document.getElementById("kitchen-notice");
+    if (!box) return;
+    var html = kitchenNoticeHtml(shop.kitchen);
+    box.innerHTML = html;
+    box.hidden = !html;
 }
 
 function waitingForTodaysPrice(product) {
