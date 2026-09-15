@@ -13,7 +13,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { OrderAlert, tone, sequence, dataUri, MAX_REPEATS } = require('../src/order-alert');
+const { OrderAlert, tone, sequence, dataUri, TICK_MS } = require('../src/order-alert');
 
 /** A window that records what it was asked to play. */
 function fakeWindow() {
@@ -148,13 +148,26 @@ test('no window, no crash', () => {
   destroyed.dispose();
 });
 
-test('the alarm gives up rather than becoming background noise', () => {
+test('the alarm BACKS OFF rather than giving up', () => {
   /*
-   * An alarm that never stops is one somebody mutes at the speaker, and then
-   * it is gone for every future order too. It stops after five minutes; the
-   * queue badge stays, and that is the part that must not be silenceable.
+   * This used to assert the opposite, and the reasoning behind it was half
+   * right: "an alarm that never stops is one somebody mutes at the speaker".
+   * True. But it stopped after five minutes with the order still unanswered
+   * and the customer still waiting, and then nothing said so again - which is
+   * how an order sits until closing time.
+   *
+   * The choice was never between nagging for ever and giving up. It is between
+   * the same volume for ever and backing off, which is now
+   * waiting-order-policy.js's job. A slow heartbeat is still a signal.
    */
-  assert.ok(MAX_REPEATS > 0 && MAX_REPEATS <= 30, 'the repeat limit stopped being a limit');
+  const policy = require('../src/waiting-order-policy');
+  const M = 60 * 1000;
+  const late = policy.decide({ waitingMs: 120 * M, lastAlertedMs: 99 * M });
+  assert.strictEqual(late.alert, true, 'the alarm went silent on a waiting order');
+  assert.ok(late.nextInMs >= 10 * M, 'a two-hour-old order is still being nagged');
+
+  /* And the tick only paces the question, not the noise. */
+  assert.ok(TICK_MS > 0 && TICK_MS <= 20000);
 });
 
 test('it listens on the process bus the API emits on', () => {
