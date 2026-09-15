@@ -149,6 +149,23 @@ const buildReturnSignature = (saleObjectId, returnItems = [], payload = {}) => {
     .digest('hex');
 };
 
+/**
+ * How many copies of a floor-requested bill this shop wants.
+ *
+ * A count, not a switch, and read defensively: the settings form posts a
+ * string, a branch saved before this existed has nothing at all, and neither
+ * may turn into NaN copies. One is the answer to every unclear case, because
+ * one is what every shop prints today.
+ *
+ * Capped at three so a number that arrived by some other route cannot spend a
+ * roll of paper on a single table.
+ */
+function billCopies(branch) {
+  const said = Number(branch && branch.bill_print_copies);
+  if (!Number.isFinite(said) || said < 1) return 1;
+  return Math.min(Math.floor(said), 3);
+}
+
 class SalesRepository {
   constructor(defaultModel) {
     this.defaultModel = defaultModel || null;
@@ -7182,25 +7199,45 @@ class SalesRepository {
           console.error('Could not read the shop for the bill header:', e && e.message);
         }
 
+        /*
+         * HOW MANY COME OUT OF THE PRINTER.
+         *
+         * Owner: "when captain app send print bill we need to have 2 copies
+         * actually." A restaurant hands one to the guest and keeps one, and
+         * the second used to be a second walk to the printer.
+         *
+         * ONE JOB PER COPY, rather than one job that says "twice". Every till
+         * already on a shop floor drains this queue and prints what it is
+         * handed, so a shop gets its second copy the moment it changes the
+         * setting - with no new version of the desktop app. It is also the
+         * truer shape: each copy succeeds or fails on its own, and a printer
+         * that jams on one leaves a job to retry rather than a job half done.
+         */
+        const copies = billCopies(shop);
+
         for (const sale of open) {
-          await queuePrintJob({
-            branchId,
-            kind: 'bill',
-            saleId: sale._id,
-            label: `Table ${table}`,
-            /*
-             * BUILT FOR THE PRINTER, not handed over raw.
-             *
-             * This used to pass the sale document itself, with a comment
-             * claiming escpos-receipt rendered from exactly that shape. It does
-             * not. The renderer wants a view model - `items[].name`, `total` -
-             * and the document has `items[].item_name` and `sales_total`, so
-             * every lookup missed and the paper came out with a header, an
-             * empty item table and a total of 0.00. helpers/bill-payload.js
-             * has the full account.
-             */
-            payload: buildBillPayload(sale, shop),
-          });
+          for (let copy = 1; copy <= copies; copy += 1) {
+            await queuePrintJob({
+              branchId,
+              kind: 'bill',
+              saleId: sale._id,
+              /* The counter reads these as they come off: "(2 of 2)" says the
+                 pair belongs to one table rather than two bills for it. */
+              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              /*
+               * BUILT FOR THE PRINTER, not handed over raw.
+               *
+               * This used to pass the sale document itself, with a comment
+               * claiming escpos-receipt rendered from exactly that shape. It does
+               * not. The renderer wants a view model - `items[].name`, `total` -
+               * and the document has `items[].item_name` and `sales_total`, so
+               * every lookup missed and the paper came out with a header, an
+               * empty item table and a total of 0.00. helpers/bill-payload.js
+               * has the full account.
+               */
+              payload: buildBillPayload(sale, shop),
+            });
+          }
         }
 
         notifyBillRequested({

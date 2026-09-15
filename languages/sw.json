@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Bado hakuna vipindi vya kuhudumia. Ongeza kifungua kinywa, chakula cha mchana au cha jioni katika Mipangilio, Mkahawa, navyo vitaonekana hapa."
+  "lang_no_dayparts_yet": "Bado hakuna vipindi vya kuhudumia. Ongeza kifungua kinywa, chakula cha mchana au cha jioni katika Mipangilio, Mkahawa, navyo vitaonekana hapa.",
+  "lang_bill_copies_from_the_floor": "Nakala za bili iliyoombwa kutoka ukumbini",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Mhudumu anapoomba bili kwenye kifaa, nakala hizi hutoka kwenye printa ya kaunta - moja kwa mgeni na moja kwa duka, ikiwa unahifadhi nakala. Risiti zilizochukuliwa kaunta hazibadiliki."
 }

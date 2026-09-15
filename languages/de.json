@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Noch keine Servicezeiten. Legen Sie Frühstück, Mittag- oder Abendessen unter Einstellungen, Restaurant an, dann erscheinen sie hier."
+  "lang_no_dayparts_yet": "Noch keine Servicezeiten. Legen Sie Frühstück, Mittag- oder Abendessen unter Einstellungen, Restaurant an, dann erscheinen sie hier.",
+  "lang_bill_copies_from_the_floor": "Kopien einer im Service angeforderten Rechnung",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Wenn eine Servicekraft die Rechnung am Handgerät anfordert, kommen so viele aus dem Kassendrucker - eine für den Gast und eine für das Haus, falls Sie eine behalten. Belege an der Kasse sind nicht betroffen."
 }

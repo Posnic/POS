@@ -3089,5 +3089,7 @@
   "lang_kcal": "kcal",
   "lang_g": "g",
   "lang_mg": "mg",
-  "lang_no_dayparts_yet": "Aucun service défini pour l'instant. Ajoutez le petit-déjeuner, le déjeuner ou le dîner dans Réglages, Restaurant, et ils apparaîtront ici."
+  "lang_no_dayparts_yet": "Aucun service défini pour l'instant. Ajoutez le petit-déjeuner, le déjeuner ou le dîner dans Réglages, Restaurant, et ils apparaîtront ici.",
+  "lang_bill_copies_from_the_floor": "Copies d'une note demandée en salle",
+  "lang_when_a_waiter_asks_for_the_bill_on_the_handset": "Quand un serveur demande la note sur le terminal, ce nombre sort de l'imprimante du comptoir - une pour le client et une pour la maison, si vous en gardez une. Les tickets pris au comptoir ne changent pas."
 }
