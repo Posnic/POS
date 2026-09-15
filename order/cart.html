@@ -28,6 +28,7 @@
     <script src="assets/service-point.js?v=20260912-design"></script>
     <script src="assets/shop-address.js?v=20260912-design"></script>
     <script src="assets/kiosk-core.js?v=20260912-design"></script>
+    <script src="assets/spice.js?v=20260912-design"></script>
     <script src="indexedDB.js?v=20260912-design"></script>
     <script src="assets/cart/script.js?v=20260912-design"></script>
 </head>
@@ -150,6 +151,9 @@
         <div class="sheet-body">
             <h2 class="sheet-title" id="note-title">Any request for this dish?</h2>
             <p class="sheet-desc" id="note-for"></p>
+            <!-- The same picker as the dish sheet, for a change of mind at the
+                 basket. Hidden for a dish that does not offer the choice. -->
+            <div class="sheet-spice" id="note-spice-box" hidden></div>
             <textarea id="note-text" class="note-field" rows="3" maxlength="200"
                       placeholder="Less spicy, no onion, extra gravy..."></textarea>
             <div class="pay-actions">

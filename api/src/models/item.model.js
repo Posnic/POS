@@ -157,6 +157,17 @@ const itemSchema = new mongoose.Schema(
     nutrition_source: { type: String, trim: true, default: '' },
 
     /*
+     * May a customer say how hot they want this one?
+     *
+     * Off unless the shop turns it on, dish by dish. Not because chillies look
+     * silly on a dessert - because a kitchen that batch-cooks its gravy CANNOT
+     * make one portion mild, and a customer who asked for mild and got hot is
+     * worse off than one who never asked. Only the kitchen knows which dishes
+     * it can really vary. See utils/spice-level.js.
+     */
+    spice_choice: { type: Boolean, default: false },
+
+    /*
      * What is and is not IN the dish: plant based, Jain, gluten free, nut
      * free, organic, no added sugar. See FOOD_TAGS in utils/dish-facts.js.
      *
@@ -277,6 +288,7 @@ class ItemModel {
     prep_minutes: { type: 'Number', select: true },
     nutrition: { type: 'Object', select: true },
     nutrition_source: { type: 'String', select: true },
+    spice_choice: { type: 'Boolean', select: true },
     food_tags: { type: 'Array', select: true },
     menu_marks: { type: 'Array', select: true },
     isAvailable: { type: 'Boolean', select: true },

@@ -1907,6 +1907,88 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   color: var(--ink-soft);
 }
 
+/*
+ * HOW HOT: three buttons, one chilli more on each.
+ *
+ * A radio group rather than a slider. A slider has no resting "I did not
+ * choose" and lands on whatever pixel a thumb hits; these are three targets
+ * a thumb cannot miss and a state that is plainly on or plainly off.
+ *
+ * The chosen one fills with the accent rather than growing a tick: at arm's
+ * length on a phone, a filled box reads before a glyph does. No gradient -
+ * the ordering pages have none.
+ */
+.sheet-spice {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.spice-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.spice-step {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 4px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.spice-step.on {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* The chillies shrink as they multiply, so three of them sit on the same
+   line as one at the narrowest phone width. */
+.spice-chillies {
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.spice-word {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* The way back out. Only shown once a level is set, because an undo for
+   something nobody has done is just a fourth option in disguise. */
+.spice-clear {
+  display: block;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* What was chosen, read back on the line in the basket. */
+.item-spice {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* The note on a line of the order, and the way to add one. */
 .item-note {
   margin-top: 4px;

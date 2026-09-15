@@ -1177,6 +1177,36 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                         icon: item.icon || "",
                         available: item.available !== false,
                         served_in: Array.isArray(item.served_in) ? item.served_in.filter(Boolean) : [],
+                        /*
+                         * WHAT IS ON THE PLATE, AND IT WAS BEING THROWN AWAY.
+                         *
+                         * This loop is the ordering bundle's whole catalogue:
+                         * a field it does not NAME here never reaches the page,
+                         * however correctly the server sent it. The server has
+                         * been sending nutrition, the shop's own marks, the
+                         * "made without" tags and the earned health claims
+                         * since the dish-facts release, and all four stopped
+                         * at this object literal.
+                         *
+                         * So on /order the dish sheet drew no numbers, no
+                         * badges and no marks, and the "Good for" filter group
+                         * had nothing to offer and hid itself - while /menu,
+                         * which reads the same endpoint straight without a
+                         * local store, showed all of it. Nothing failed and
+                         * nothing was logged; the fields simply were not there.
+                         *
+                         * `claims` is computed on the server from the shop's
+                         * own numbers and is never stored on a dish, so
+                         * carrying it here cannot invent a badge - it can only
+                         * deliver one the numbers already earned.
+                         */
+                        nutrition: item.nutrition && typeof item.nutrition === "object" ? item.nutrition : {},
+                        tags: Array.isArray(item.tags) ? item.tags : [],
+                        marks: Array.isArray(item.marks) ? item.marks : [],
+                        claims: Array.isArray(item.claims) ? item.claims : [],
+                        /* Whether the kitchen said it can cook this one to
+                           order. See api/src/utils/spice-level.js. */
+                        spice_choice: item.spice_choice === true,
                         category_name: category.category_name
                     });
                 });
@@ -1314,6 +1344,14 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
                     diet: updatedProduct.diet || "",
                     price: updatedProduct.price,
                     tax_price: updatedProduct.tax_price,
+                    /*
+                     * Whether the dish still OFFERS a spice level comes from
+                     * the catalogue, because the shop may have turned it off
+                     * since this basket was filled. What the customer CHOSE is
+                     * theirs and is not touched here, exactly as their note is
+                     * not: the spread above carries both forward.
+                     */
+                    spice_choice: updatedProduct.spice_choice === true,
                 };
             }
             return null; // Item no longer exists in product list
@@ -1416,6 +1454,13 @@ async function renderCart(cartData = null) {
              * where there is a kitchen to read it; a stationer gets an order
              * note at the foot instead.
              */
+            /*
+             * How hot, on the line it is about. Read-only here; the picker
+             * that changes it is one tap away behind the request button, and
+             * a basket is for checking rather than for fiddling.
+             */
+            const spiceHtml = window.PosnicSpice ? window.PosnicSpice.chip(item.spice) : "";
+
             const note = String(item.note || "").trim();
             const noteHtml = shop.notes
                 ? (note ? `<div class="item-note">${escapeHtml(note)}</div>` : "") +
@@ -1432,6 +1477,7 @@ async function renderCart(cartData = null) {
                                 <span class="unit-price">${escapeHtml(money(price))} each</span>
                                 <span class="total-price">${escapeHtml(money(lineTotal))}</span>
                             </div>
+                            ${spiceHtml}
                             ${noteHtml}
                         </div>
                         <div class="quantity-control" aria-label="Quantity">
@@ -1518,6 +1564,23 @@ async function renderCart(cartData = null) {
     } catch (error) {
         console.error("❌ Error rendering cart:", error);
     }
+}
+
+/**
+ * How hot one line is to be cooked, kept with the line.
+ *
+ * Stored as the number of chillies the customer tapped; 0 is nobody asked,
+ * and 0 is what an unrecognised value becomes. Written the way a note is
+ * written - straight onto the line and saved - so the two cannot get out of
+ * step over which one survives a reload.
+ */
+async function setCartItemSpice(id, level) {
+    const cartData = await getCartData();
+    const line = cartData.find(item => String(item.id) === String(id));
+    if (!line) return;
+    line.spice = window.PosnicSpice ? window.PosnicSpice.levelOf(level) : 0;
+    await saveCartData(cartData);
+    renderCart(cartData);
 }
 
 /** A note on one line of the order, kept with the line. */
@@ -2721,7 +2784,14 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
                 gst: item.tax_price * item.quantity,
                 /* What the customer asked for on this line; printed on the
                    kitchen ticket under the dish. */
-                item_note: String(item.note || "").trim().slice(0, 200)
+                item_note: String(item.note || "").trim().slice(0, 200),
+                /*
+                 * How hot, as a number rather than as a sentence in the note.
+                 * A level prints the same on every ticket whatever language
+                 * the order was placed in, and can be counted afterwards. The
+                 * server refuses anything that is not 1, 2 or 3.
+                 */
+                spice_level: window.PosnicSpice ? window.PosnicSpice.levelOf(item.spice) : 0
             };
         });
 
