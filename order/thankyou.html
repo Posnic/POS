@@ -58,6 +58,19 @@
         <p class="order-time">Placed <span id="orderTime">--</span></p>
 
         <!--
+            WHERE IT HAS GOT TO: what has already happened, each with the
+            moment it happened, and nothing about what has not. There is no
+            row of greyed-out future steps here on purpose - nothing in the
+            product marks an order ready, and a ladder that stops on its
+            first rung reads as "stuck" to somebody whose food is cooking.
+            Filled in by watchTheOrder; see api/src/utils/order-progress.js.
+        -->
+        <section class="progress" id="progress" aria-live="polite" hidden>
+            <ol class="progress-trail" id="progress-trail"></ol>
+            <p class="progress-next" id="progress-next" hidden></p>
+        </section>
+
+        <!--
             PAY NOW, where most customers in India would rather: their own app,
             the shop's address and the amount already in it. Shown only while
             the order is unpaid and only where the shop has given an address.

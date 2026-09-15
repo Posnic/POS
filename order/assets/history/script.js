@@ -29,11 +29,38 @@
         return String((window.CONFIG && window.CONFIG.API_BASE_URL) || "").replace(/\/$/, "");
     }
 
-    /* The words for a state, in the customer's terms rather than the
-       database's: nobody asks whether their dinner is "KOT". */
+    /*
+     * The words for a state, in the customer's terms rather than the
+     * database's: nobody asks whether their dinner is "KOT".
+     *
+     * DRAWN FROM THE TRAIL the server sends, so this page and the thank-you
+     * page cannot describe the same order in two different ways. It used to
+     * say "With the kitchen" for anything the shop had accepted - including
+     * an order whose ticket had never printed, because the printer was off or
+     * the till was not running. That is exactly the claim Stage 5 exists to
+     * stop making: the kitchen has it when a till reports that a ticket came
+     * out of a printer, and not a moment before.
+     */
+    const STEP_WORDS = {
+        placed: "The shop has it",
+        accepted: "The shop has it",
+        in_the_kitchen: "With the kitchen",
+        refused: "The shop could not take it",
+        cancelled: "Cancelled"
+    };
+
     function stateWords(row) {
         if (row.cancelled) return say("Cancelled");
         if (row.paid) return say("Paid");
+        const progress = row.progress;
+        if (progress && progress.step) {
+            if (progress.waiting_for === "acceptance") return say("Waiting for the shop");
+            const word = STEP_WORDS[progress.step];
+            if (word) return say(word);
+        }
+        /* A server older than the trail, or a row this phone remembered
+           before one existed. The old reading, which is never wrong about
+           pending or refused - only about the kitchen. */
         if (row.state === "pending") return say("Waiting for the shop");
         if (row.state === "rejected") return say("The shop could not take it");
         return say("With the kitchen");
