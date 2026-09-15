@@ -3860,8 +3860,8 @@ module.exports = {
       SaleModel: getModel(SaleModel),
     }),
   multiKitchenPrintModel: async (branchId) => salesRepository.multiKitchenPrintModel(branchId),
-  markKitchenPrintedModel: async (saleIds, printedIndexes) =>
-    salesRepository.markKitchenPrintedModel(saleIds, printedIndexes),
+  markKitchenPrintedModel: async (saleIds, printedIndexes, printedKeys) =>
+    salesRepository.markKitchenPrintedModel(saleIds, printedIndexes, printedKeys),
   createOnlineOrder: async (data, { SaleModel, staffOrder = false } = {}) =>
     salesRepository.createOnlineOrder(data, {
       SaleModel: getModel(SaleModel),

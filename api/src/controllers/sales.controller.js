@@ -7147,7 +7147,14 @@ class SalesController extends BaseController {
   async markKitchenPrinted(req, res) {
     try {
       const { saleIds = [], printedIndexes = {} } = req.body;
-      const response = await salesService.markKitchenPrintedModel(saleIds, printedIndexes);
+      /* The names the till used for what it printed. Absent from older builds,
+         which is handled rather than assumed - see kot-shadow.repository. */
+      const printedKeys = Array.isArray(req.body.printedKeys) ? req.body.printedKeys : [];
+      const response = await salesService.markKitchenPrintedModel(
+        saleIds,
+        printedIndexes,
+        printedKeys
+      );
       if (response.status === true) {
         return this.success(res, response.data, response.message);
       } else {
