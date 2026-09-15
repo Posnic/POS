@@ -51,6 +51,10 @@
   var done = 0;
   var failed = 0;
   var skipped = 0;
+  /* Why the run was halted, when something halted it. Kept because finish()
+     runs immediately afterwards and would otherwise paint its summary over
+     the only sentence that says what to do about it. */
+  var halted = '';
 
   function el(id) {
     return document.getElementById(id);
@@ -220,7 +224,7 @@
          */
         if (xhr && xhr.status === 400) {
           stopped = true;
-          say('<p class="text-danger">' + esc(why) + '</p>');
+          halted = why;
         }
         step();
       }
@@ -238,7 +242,17 @@
     if (skipped) parts.push(PosnicPro.i18n.t('lang_n_left_alone', '{n} left alone').replace('{n}', skipped));
     if (failed) parts.push(PosnicPro.i18n.t('lang_n_could_not', '{n} could not be done').replace('{n}', failed));
 
+    /*
+     * THE REASON COMES FIRST, WHEN THERE IS ONE.
+     *
+     * Driving the loop caught this: a refusal set the message and finish()
+     * painted straight over it, so a shop with no AI key was told "Stopped.
+     * 1 could not be done" and never learned why - which is the most likely
+     * reason it stops and the one with an obvious fix. Every test passed,
+     * because they all read the source rather than running it.
+     */
     say(
+      (halted ? '<p class="text-danger">' + esc(halted) + '</p>' : '') +
       '<p><strong>' +
         esc(stopped ? PosnicPro.i18n.t('lang_run_stopped', 'Stopped.') : PosnicPro.i18n.t('lang_finished', 'Finished.')) +
         '</strong> ' +
@@ -259,6 +273,7 @@
     if (running || !todo.length) return;
     running = true;
     stopped = false;
+    halted = '';
     at = 0;
     done = 0;
     failed = 0;
