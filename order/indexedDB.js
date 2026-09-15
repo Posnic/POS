@@ -1207,6 +1207,23 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                         /* Whether the kitchen said it can cook this one to
                            order. See api/src/utils/spice-level.js. */
                         spice_choice: item.spice_choice === true,
+                        /*
+                         * PRICED FROM THE MORNING'S MARKET, and the day it was
+                         * last done. Both, or neither is any use: the flag says
+                         * the rate comes from the market and the date says
+                         * whether anybody has entered today's.
+                         *
+                         * waitingForTodaysPrice() has read these since the
+                         * daily-price release and never once received them,
+                         * because this literal did not name them. So on /order
+                         * a whole fish flagged daily and priced YESTERDAY was
+                         * offered at yesterday's rate with an ordinary Add
+                         * button, while /menu said "Market price" - the same
+                         * asymmetry that hid the dish facts, and this one is
+                         * about money.
+                         */
+                        daily_price: item.daily_price === true,
+                        price_set_on: item.price_set_on || "",
                         category_name: category.category_name
                     });
                 });
