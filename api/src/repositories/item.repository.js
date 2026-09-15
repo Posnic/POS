@@ -714,6 +714,75 @@ class ItemRepository extends BaseModel {
   }
 
   /*
+   * WHICH DISHES LET A CUSTOMER SAY HOW HOT, ALL AT ONCE.
+   *
+   * The tick is per dish on purpose - a kitchen that batch-cooks its gravy
+   * cannot make one portion mild - but "per dish" and "one dish at a time" are
+   * not the same thing. A restaurant with 272 dishes that has to open every
+   * one of them to tick a box does not turn the feature on; it leaves it off
+   * and the customer goes on typing "less spicy" into a note.
+   *
+   * The unit a kitchen actually thinks in is the SECTION. Curries and biryanis
+   * can be cooked to order; desserts and drinks cannot. So this takes the same
+   * scope the bulk price and bulk stock tools take - everything, or one
+   * category - and the shop corrects the handful of exceptions by hand.
+   *
+   * Nothing here is irreversible: `offer: false` takes it back off, over the
+   * same scope, and a dish that is already right is not written at all.
+   */
+  async previewSpiceChoice({ scope, categoryId, offer } = {}, context = {}) {
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const wanted = offer === true || offer === 'true';
+
+    const collection = await this.getCollection(this.collectionName);
+    const items = await collection
+      .find(built.filter, { projection: { name: 1, spice_choice: 1 } })
+      .toArray();
+
+    /*
+     * WOULD CHANGE, not "matches". A shop that runs this twice should be told
+     * nothing is left to do, rather than being shown the same number again and
+     * left wondering whether the first run worked.
+     */
+    const changing = items.filter((it) => (it.spice_choice === true) !== wanted);
+    return {
+      status: true,
+      data: {
+        total: items.length,
+        willChange: changing.length,
+        offer: wanted,
+        sample: changing.slice(0, 100).map((it) => ({ name: it.name || '' })),
+      },
+      message: 'Preview ready',
+    };
+  }
+
+  /** Offer the choice, or take it back, across a scope. See above. */
+  async setSpiceChoice({ scope, categoryId, offer } = {}, context = {}) {
+    const built = this._bulkPriceFilter({ scope, categoryId }, context);
+    if (built.error) return { status: false, message: built.error };
+    const wanted = offer === true || offer === 'true';
+
+    const collection = await this.getCollection(this.collectionName);
+    /* Only the rows that are wrong: an untouched dish keeps its updated_date,
+       which is what the item list sorts and what a shop reads as "changed". */
+    const result = await collection.updateMany(
+      { ...built.filter, spice_choice: { $ne: wanted } },
+      { $set: { spice_choice: wanted } }
+    );
+
+    const changed = result.modifiedCount || 0;
+    return {
+      status: true,
+      data: { changed, offer: wanted },
+      message: changed
+        ? `${changed} dish(es) updated`
+        : 'Nothing to change: those dishes are already set that way',
+    };
+  }
+
+  /*
    * Dry-run a bulk stock change: compute what it would do WITHOUT writing, and
    * report how many items would change, with a small sample. The "check" step
    * so the shop sees the effect before committing.
