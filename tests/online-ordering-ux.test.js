@@ -72,6 +72,13 @@ function lift(src, name) {
 }
 
 /** A const object, by name: `const NAME = { ... };` */
+/** The same, for a plain number - `const NAME = 7;`. */
+function liftNumber(src, name) {
+  const said = src.match(new RegExp(`const ${name} = (\\d+);`));
+  assert.ok(said, `indexedDB.js no longer defines ${name}`);
+  return said[0];
+}
+
 function liftConst(src, name) {
   const at = src.indexOf(`const ${name} = {`);
   assert.ok(at !== -1, `indexedDB.js no longer defines ${name}`);
@@ -113,7 +120,11 @@ function page(html, { cart = [], branch = {}, products = {} } = {}) {
     lift(src, 'renderOrderPanel'),
     lift(src, 'updateCart'),
     /* The card asks one shared rule whether today's price is set yet, and the
-       dish sheet asks the same one. Lifted with it, or the grid cannot draw. */
+       dish sheet asks the same one. Lifted with it, or the grid cannot draw.
+       The trading day turns at seven rather than midnight, so a shop serving
+       until one keeps its own prices - see the constant in indexedDB.js. */
+    liftNumber(src, 'DAY_STARTS_AT_HOUR'),
+    lift(src, 'tradingDay'),
     lift(src, 'pricedToday'),
     lift(src, 'waitingForTodaysPrice'),
     /* The card markup was pulled out of the render loop so the flat search
