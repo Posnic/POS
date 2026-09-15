@@ -118,6 +118,7 @@
   "lang_ai_anthropic": "Anthropic Claude - a sua própria conta",
   "lang_ai_cap": "Limite mensal",
   "lang_ai_cap_hint": "O máximo que isto pode gastar da sua conta num mês. Paramos antes da chamada, não depois. O painel do seu fornecedor é a palavra final sobre a fatura.",
+  "lang_ai_describe_hint": "Redigir uma descrição a partir dos dados do artigo",
   "lang_ai_google": "Google Gemini - a sua própria conta",
   "lang_ai_hint": "Não cobramos nada por isto. Você usa a sua própria conta num fornecedor de IA e paga-lhe diretamente, por isso funciona em todos os planos, incluindo o gratuito, e nós não lhe cobramos nada. A chave é guardada neste servidor, nunca é enviada para um navegador e nunca mais é mostrada depois de guardada.",
   "lang_ai_howto": "Como obter uma chave",
