@@ -368,6 +368,18 @@
         head.appendChild(shop);
         head.appendChild(at);
 
+        /*
+         * When the kitchen usually has it ready. Drawn above the dishes
+         * because it is the one thing somebody opens this page to find out,
+         * and left out entirely when the shop has stated no prep times - see
+         * readyByWords in indexedDB.js.
+         */
+        const ready = document.createElement("p");
+        ready.className = "history-ready";
+        const readyWords = typeof readyByWords === "function" ? readyByWords(said) : "";
+        ready.textContent = readyWords;
+        ready.hidden = !readyWords;
+
         const what = document.createElement("p");
         what.className = "history-what";
         what.textContent = lineWords((said && said.items && said.items.length ? said.items : kept.items) || []);
@@ -404,6 +416,7 @@
         open.setAttribute("aria-expanded", "false");
         open.setAttribute("aria-controls", "details-" + kept.orderId);
         open.appendChild(head);
+        open.appendChild(ready);
         open.appendChild(what);
         open.appendChild(foot);
 
