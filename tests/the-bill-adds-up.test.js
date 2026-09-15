@@ -169,7 +169,7 @@ test('it does not say where the order came from', () => {
 test('it does not carry the table, the order type, the covers or the item count', () => {
   const bill = buildBillPayload(SALE, BRANCH);
   const text = paper({ ...bill, title: 'TAX INVOICE' });
-  assert.deepStrictEqual(bill.extras, [], 'the bill still carries the shop rows');
+  assert.deepStrictEqual(bill.serviceRows, [], 'the bill still carries the shop rows');
   assert.strictEqual(bill.itemCount, undefined);
   for (const gone of [/Table/, /Order type/, /Covers/, /No\. of items/, /Steward/]) {
     assert.ok(!gone.test(text), 'the bill still prints ' + gone);
@@ -198,7 +198,7 @@ test('NONE OF IT IS DELETED - a shop that wants the hotel bill switches it on', 
     bill_print_total_qty: true,
   });
   assert.strictEqual(on.source, 'Captain app');
-  assert.deepStrictEqual(on.extras, [
+  assert.deepStrictEqual(on.serviceRows, [
     { label: 'Table', value: '4' },
     { label: 'Order type', value: 'Dine In' },
     { label: 'Covers', value: '2' },
@@ -217,9 +217,9 @@ test('and the switch is read as the settings form stores it, a string', () => {
   /* 'false' is a real stored value; reading it as a boolean is how a switched
      -off setting silently stays on, which this codebase has been bitten by. */
   const off = buildBillPayload(SALE, { ...BRANCH, bill_print_table: 'false' });
-  assert.deepStrictEqual(off.extras, []);
+  assert.deepStrictEqual(off.serviceRows, []);
   const on = buildBillPayload(SALE, { ...BRANCH, bill_print_table: 'true' });
-  assert.deepStrictEqual(on.extras, [{ label: 'Table', value: '4' }]);
+  assert.deepStrictEqual(on.serviceRows, [{ label: 'Table', value: '4' }]);
 });
 
 test('a switch turned on for something the sale does not have prints nothing', () => {
@@ -229,7 +229,7 @@ test('a switch turned on for something the sale does not have prints nothing', (
     { ...SALE, table_number: '', person_count: 0, created_by: '' },
     { ...BRANCH, bill_print_table: true, bill_print_covers: true, bill_print_steward: true }
   );
-  assert.deepStrictEqual(bill.extras, []);
+  assert.deepStrictEqual(bill.serviceRows, []);
 });
 
 test('BUT THE KITCHEN TICKET KEEPS ALL OF IT', () => {
@@ -269,5 +269,146 @@ test('no line is wider than the paper', () => {
   const text = paper({ ...buildBillPayload(SALE, BRANCH), title: 'TAX INVOICE' });
   for (const line of text.split('\n')) {
     assert.ok(line.length <= 48, 'overflows the roll: ' + JSON.stringify(line));
+  }
+});
+
+/* ------------------------------- the rest of the hotel bill, as configuration */
+
+/*
+ * Owner, sent the remaining fields off his reference invoice: "extra bill field
+ * keep it as configuration."
+ *
+ * Session, HSN/SAC and the FSSAI licence. Off by default like every other row,
+ * and each one absent rather than blank when the shop has not got the data -
+ * a labelled empty line on a tax invoice reads as a fault.
+ *
+ * KOT numbers and Room No are NOT here. Neither exists as data: the server
+ * records no kitchen ticket number and there is no room concept. Printing a
+ * label with nothing behind it would have been the easy half of the job and
+ * the useless one.
+ */
+
+const HOTEL = {
+  branch_name: 'Virundu Restaurant',
+  branch_gstin_number: '33AABCM9561A1ZS',
+  branch_fssai_number: '12415013000025',
+  indian_gst: 'enable',
+  menu_dayparts: [
+    { id: 'lunch', name: 'Lunch', hours: [{ from: '12:00', to: '15:00' }] },
+    { id: 'dinner', name: 'Dinner', hours: [{ from: '19:00', to: '01:00' }] },
+  ],
+};
+
+const AT = (h, m = 0) => ({
+  ...SALE,
+  date: new Date(2026, 8, 14, h, m),
+  items: [{ name: 'Malabar Paratha', item_quantity: 4, item_base_price: 100, hsncode: '996332' }],
+  sales_sub_total: 400,
+  tax: 72,
+  sales_total: 472,
+});
+
+test('THE SESSION COMES FROM THE SERVING TIMES THE SHOP ALREADY SET', () => {
+  /*
+   * Reusing menu_dayparts rather than asking for the times again. Two lists
+   * that can disagree is how a bill comes to say Dinner while the kitchen is
+   * serving lunch.
+   */
+  const on = { ...HOTEL, bill_print_session: true };
+  const rows = (h) => buildBillPayload(AT(h), on).serviceRows;
+  assert.deepStrictEqual(rows(13), [{ label: 'Session', value: 'Lunch' }]);
+  assert.deepStrictEqual(rows(20), [{ label: 'Session', value: 'Dinner' }]);
+});
+
+test('and a service that runs past midnight is still that service', () => {
+  /* Dinner to one in the morning is a real shift, not bad data. A naive
+     from <= now < to would call half of it nothing. */
+  const on = { ...HOTEL, bill_print_session: true };
+  assert.deepStrictEqual(buildBillPayload(AT(0, 30), on).serviceRows, [
+    { label: 'Session', value: 'Dinner' },
+  ]);
+});
+
+test('a sale outside every serving time prints no session, rather than guessing', () => {
+  const on = { ...HOTEL, bill_print_session: true };
+  assert.deepStrictEqual(buildBillPayload(AT(17), on).serviceRows, []);
+  /* And a shop that has defined no serving times at all. */
+  assert.deepStrictEqual(
+    buildBillPayload(AT(20), { bill_print_session: true }).serviceRows,
+    []
+  );
+});
+
+test('THE HSN COLUMN APPEARS ONLY WHERE THERE ARE CODES', () => {
+  const on = { ...HOTEL, bill_print_hsn: true };
+  assert.strictEqual(buildBillPayload(AT(20), on).items[0].hsn, '996332');
+  /* Off by default. */
+  assert.strictEqual(buildBillPayload(AT(20), HOTEL).items[0].hsn, '');
+
+  const text = paper({ ...buildBillPayload(AT(20), on), title: 'TAX INVOICE' });
+  assert.match(text, /ITEM\s+HSN\s+RATE\s+QTY\s+AMOUNT/, 'the column is not headed');
+  assert.match(text, /Malabar Paratha\s+996332\s+100\.00\s+4\s+400\.00/);
+});
+
+test('a sale from before the code was stored prints no empty stripe', () => {
+  /*
+   * Every sale made before hsncode existed has none. Switching the column on
+   * must not draw a blank column down a year of old bills, so it is dropped
+   * when no line carries a code - the same rule the rate column follows.
+   */
+  const old = { ...AT(20), items: [{ name: 'Malabar Paratha', item_quantity: 4, item_base_price: 100 }] };
+  const text = paper({ ...buildBillPayload(old, { ...HOTEL, bill_print_hsn: true }), title: 'TAX INVOICE' });
+  assert.ok(!/HSN/.test(text), 'an empty HSN column was printed anyway');
+  assert.match(text, /ITEM\s+RATE\s+QTY\s+AMOUNT/);
+});
+
+test('the FSSAI licence prints under the GSTIN, where a food invoice carries it', () => {
+  const on = { ...HOTEL, bill_print_fssai: true };
+  assert.strictEqual(buildBillPayload(AT(20), on).fssai, '12415013000025');
+  assert.strictEqual(buildBillPayload(AT(20), HOTEL).fssai, '', 'it printed without being asked');
+
+  const text = paper({ ...buildBillPayload(AT(20), on), title: 'TAX INVOICE' });
+  const gstinAt = text.indexOf('GSTIN: 33AABCM9561A1ZS');
+  const fssaiAt = text.indexOf('FSSAI: 12415013000025');
+  assert.ok(gstinAt > -1 && fssaiAt > gstinAt, 'the licence is not under the GSTIN');
+});
+
+test('a shop with the switch on but no licence prints no label', () => {
+  /* A labelled empty line on a tax invoice reads as a fault. */
+  const bill = buildBillPayload(AT(20), { ...HOTEL, branch_fssai_number: '', bill_print_fssai: true });
+  assert.strictEqual(bill.fssai, '');
+  assert.ok(!/FSSAI/.test(paper({ ...bill, title: 'TAX INVOICE' })));
+});
+
+test('THE SHOP ROWS ARE IN THE HEADER, not stranded after the total', () => {
+  /*
+   * Where a bill is read. The reference invoice puts Session, Table and Steward
+   * beside the bill number at the top, and a waiter carrying it needs the table
+   * before anything else. They were printing after the TOTAL, which is where
+   * template extras belong and these do not.
+   */
+  const bill = buildBillPayload(AT(20), {
+    ...HOTEL, bill_print_session: true, bill_print_table: true, bill_print_steward: true,
+  });
+  const text = paper({ ...bill, title: 'TAX INVOICE' });
+  const sessionAt = text.indexOf('Session');
+  const itemsAt = text.indexOf('ITEM');
+  const totalAt = text.indexOf('TOTAL');
+  assert.ok(sessionAt > -1, 'the session never printed');
+  assert.ok(sessionAt < itemsAt, 'the shop rows print below the dishes');
+  assert.ok(sessionAt < totalAt);
+});
+
+test('none of it reaches a counter receipt that asked for nothing', () => {
+  /* renderSale is shared. A shop that is not a restaurant must see no change. */
+  const text = paper({
+    title: 'RECEIPT',
+    billNo: 'SB1D15-000100',
+    items: [{ name: 'Sona Masoori Rice', qty: '5 kg', amount: 480 }],
+    subTotal: 480,
+    total: 480,
+  });
+  for (const gone of [/HSN/, /FSSAI/, /Session/]) {
+    assert.ok(!gone.test(text), 'a plain receipt grew ' + gone);
   }
 });

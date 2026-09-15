@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "Vyakula {n} vimekadiriwa na bado haviko kwenye menyu yoyote.",
   "lang_no_badges_earned": "hakuna alama",
   "lang_nothing_waiting_to_check": "Hakuna kinachosubiri kukaguliwa hapa.",
-  "lang_review_what": "Hivi vilikadiriwa kutokana na jina la chakula na bado haviko kwenye menyu yoyote. Kuthibitisha kimoja huchapisha alama zilizoonyeshwa kando yake. Hakuna namba inayobadilika hapa: fungua chakula ili kurekebisha chochote."
+  "lang_review_what": "Hivi vilikadiriwa kutokana na jina la chakula na bado haviko kwenye menyu yoyote. Kuthibitisha kimoja huchapisha alama zilizoonyeshwa kando yake. Hakuna namba inayobadilika hapa: fungua chakula ili kurekebisha chochote.",
+  "lang_14_digits": "Tarakimu 14",
+  "lang_bill_print_session": "Kipindi",
+  "lang_bill_print_session_hint": "Chakula cha mchana au usiku, kutoka nyakati za huduma ulizoweka kwa menyu.",
+  "lang_bill_print_hsn": "Msimbo wa HSN / SAC",
+  "lang_bill_print_hsn_hint": "Safu wima kando ya kila chakula. Mistari yenye msimbo pekee ndiyo huonyesha.",
+  "lang_bill_print_fssai": "Nambari ya leseni ya FSSAI",
+  "lang_bill_print_fssai_hint": "Huchapishwa chini ya GSTIN yako. Biashara za chakula India zinatakiwa kuionyesha.",
+  "lang_fssai_number": "Nambari ya leseni ya FSSAI",
+  "lang_fssai_number_hint": "Washa \"Nambari ya leseni ya FSSAI\" hapo juu ili kuichapisha."
 }

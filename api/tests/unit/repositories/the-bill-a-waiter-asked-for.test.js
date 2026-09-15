@@ -195,7 +195,10 @@ describe('the till collecting what it owes the counter', () => {
     /* RATE is the unit price before tax, and it is load-bearing: without it the
        line prints an amount a customer cannot check against the menu, which is
        how 2 x 200 came out as "2 x 240  480.00" under a subtotal of 400. */
-    expect(bill.items).toEqual([{ name: 'Idli', rate: '30.00', qty: '2', amount: 60 }]);
+    /* hsn is empty until a shop switches the HSN column on AND the line was
+       sold after the code started being stored, so the column is dropped and
+       nothing changes on an ordinary bill. */
+    expect(bill.items).toEqual([{ name: 'Idli', hsn: '', rate: '30.00', qty: '2', amount: 60 }]);
     expect(bill.total).toBe(60);
     expect(bill.billNo).toBe('INV-7');
   });

@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "{n} gerechten zijn geschat en staan nog op geen enkele kaart.",
   "lang_no_badges_earned": "geen vermeldingen",
   "lang_nothing_waiting_to_check": "Hier wacht niets op controle.",
-  "lang_review_what": "Deze zijn geschat op basis van de naam van het gerecht en staan op geen enkele kaart. Een gerecht bevestigen publiceert de vermeldingen ernaast. Hier verandert geen cijfer: open het gerecht om iets te corrigeren."
+  "lang_review_what": "Deze zijn geschat op basis van de naam van het gerecht en staan op geen enkele kaart. Een gerecht bevestigen publiceert de vermeldingen ernaast. Hier verandert geen cijfer: open het gerecht om iets te corrigeren.",
+  "lang_14_digits": "14 cijfers",
+  "lang_bill_print_session": "Service",
+  "lang_bill_print_session_hint": "Lunch of diner, uit de servicetijden die u al voor de kaart hebt ingesteld.",
+  "lang_bill_print_hsn": "HSN-/SAC-code",
+  "lang_bill_print_hsn_hint": "Een kolom naast elk gerecht. Alleen regels met een code tonen er een.",
+  "lang_bill_print_fssai": "FSSAI-licentienummer",
+  "lang_bill_print_fssai_hint": "Wordt onder uw GSTIN gedrukt. Voedingsbedrijven in India moeten dit tonen.",
+  "lang_fssai_number": "FSSAI-licentienummer",
+  "lang_fssai_number_hint": "Zet hierboven \"FSSAI-licentienummer\" aan om het af te drukken."
 }
