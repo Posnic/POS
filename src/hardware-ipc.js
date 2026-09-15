@@ -730,6 +730,56 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return { ok: true, result: await handsetVerdict() };
   });
 
+  /*
+   * THE KITCHEN SCREEN.
+   *
+   * Which display, how far away, how big the panel - all per machine, like the
+   * printer, and for the same reason: two tills in one shop have different
+   * things plugged into them. They live beside the printer choice in
+   * preferences.json.
+   */
+  ipcMain.handle('kitchen-screen:list', () => {
+    const screens = require('./kitchen-screen');
+    return { ok: true, displays: screens.displays(), defaults: screens.DEFAULTS };
+  });
+
+  ipcMain.handle('kitchen-screen:configure', (event, displayId, patch = {}) => {
+    const screens = require('./kitchen-screen');
+    const result = screens.configure(displayId, patch);
+    /* Push straight away so a font or distance change is visible on the wall
+       while somebody is still standing in front of it. */
+    if (result.ok) screens.push(displayId);
+    return { ...result, displays: screens.displays() };
+  });
+
+  /*
+   * Put the real thing on the real screen, at the real size, with a sample
+   * service on it.
+   *
+   * The only place "can the cook read this?" can be answered is standing where
+   * the cook stands. A number on the till is a different room.
+   */
+  ipcMain.handle('kitchen-screen:preview', (event, displayId, on = true) => {
+    const screens = require('./kitchen-screen');
+    if (!on) {
+      if (!screens.configFor(displayId).enabled) screens.close(displayId);
+      else screens.push(displayId);
+      return { ok: true };
+    }
+    screens.open(displayId);
+    /* ready fires when the page has loaded; this covers a window already open. */
+    setTimeout(() => screens.push(displayId, { setupMode: true }), 400);
+    return { ok: true };
+  });
+
+  /* The page says it has loaded and asks for its content. */
+  ipcMain.handle('kitchen-screen:ready', (event, displayId) => {
+    const screens = require('./kitchen-screen');
+    const setup = !screens.configFor(displayId).enabled;
+    screens.push(displayId, { setupMode: setup });
+    return { ok: true };
+  });
+
   console.log('Hardware IPC handlers registered');
 }
 
