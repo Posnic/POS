@@ -367,33 +367,48 @@ module.exports = async function startServer(options = {}) {
           const ua = req.headers['user-agent'] || 'Unknown';
           const t = global.mobileTracker;
           if (t) {
-            // Block removed/disconnected devices (skip OPTIONS preflight)
-            if (req.method !== 'OPTIONS' && t.blockedIPs && t.blockedIPs.has(ip)) {
+            /*
+             * WHETHER THIS REQUEST IS SERVED, decided in handset-slots.js.
+             *
+             * Pure and out here because it is the part worth testing, and it
+             * cannot be tested inside an emit override. It also carries the
+             * whole account of why a shop saw "captain app keep disconnected":
+             * slots keyed by IP, never expiring, and the health check being
+             * refused once they filled.
+             */
+            const slots = require('./handset-slots');
+            const verdict = slots.admit({
+              devices: t.devices,
+              blocked: t.blockedIPs,
+              ip,
+              method: req.method,
+              url: req.url,
+              maxDevices: t.maxDevices,
+            });
+
+            if (!verdict.allow) {
               const origin = req.headers['origin'] || '*';
-              res.writeHead(401, {
+              res.writeHead(verdict.code === 'DEVICE_BLOCKED' ? 401 : 403, {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': origin,
                 'Access-Control-Allow-Credentials': 'true',
               });
-              res.end(JSON.stringify({ status: 'error', code: 'DEVICE_BLOCKED', message: 'Your device has been blocked by the administrator. Please contact your admin to restore access.' }));
+              res.end(
+                JSON.stringify({ status: 'error', code: verdict.code, message: verdict.message })
+              );
               return;
             }
-            if (!t.devices[ip] && req.method !== 'OPTIONS') {
-              // Enforce max device limit (OPTIONS preflights are skipped — they must not register devices)
-              const MAX_DEVICES = t.maxDevices || 6;
-              const activeCount = Object.keys(t.devices).length; // blocked devices are evicted from t.devices on block
-              if (activeCount >= MAX_DEVICES) {
-                const origin = req.headers['origin'] || '*';
-                res.writeHead(403, {
-                  'Content-Type': 'application/json',
-                  'Access-Control-Allow-Origin': origin,
-                  'Access-Control-Allow-Credentials': 'true',
-                });
-                res.end(JSON.stringify({ status: 'error', code: 'DEVICE_LIMIT_REACHED', message: 'Maximum device limit reached. Please contact your administrator.' }));
-                return;
-              }
-              t.devices[ip] = { ip, ua, firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString(), requests: 0 };
+
+            if (verdict.register && !t.devices[ip]) {
+              t.devices[ip] = {
+                ip,
+                ua,
+                firstSeen: new Date().toISOString(),
+                lastSeen: new Date().toISOString(),
+                requests: 0,
+              };
             }
+
             if (t.devices[ip]) {
               t.devices[ip].lastSeen = new Date().toISOString();
               t.devices[ip].requests++;

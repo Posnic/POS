@@ -118,6 +118,7 @@
   "lang_ai_anthropic": "Anthropic Claude - Ihr eigenes Konto",
   "lang_ai_cap": "Monatliches Limit",
   "lang_ai_cap_hint": "Der Höchstbetrag, den dies in einem Monat von Ihrem Konto ausgeben darf. Wir stoppen vor dem Aufruf, nicht danach. Das Dashboard Ihres Anbieters ist maßgeblich für die Abrechnung.",
+  "lang_ai_describe_hint": "Eine Beschreibung aus den Angaben des Artikels entwerfen",
   "lang_ai_google": "Google Gemini - Ihr eigenes Konto",
   "lang_ai_hint": "Wir berechnen dafür nichts. Sie bringen Ihr eigenes Konto bei einem KI-Anbieter mit und zahlen direkt an diesen. Es funktioniert daher in jedem Tarif, auch im kostenlosen, und wir stellen Ihnen nichts in Rechnung. Der Schlüssel wird auf diesem Server gespeichert, nie an einen Browser gesendet und nach dem Speichern nie wieder angezeigt.",
   "lang_ai_howto": "So erhalten Sie einen Schlüssel",

@@ -332,6 +332,69 @@ test('placeholder, title and aria-label are translated and restored', () => {
   });
 });
 
+test('a Bootstrap tooltip is translated where a Bootstrap tooltip actually reads', () => {
+  /*
+   * A TRANSLATION THAT SILENTLY DID NOTHING.
+   *
+   * Bootstrap does not show `title`. On init it moves the title into
+   * `data-original-title` and empties the real attribute, and markup that
+   * sets data-original-title itself wins outright. So `data-t-title` on one
+   * of these changed an attribute nothing displays, and the tooltip went on
+   * saying the English in every language - rendering perfectly, which is why
+   * it survived. Same shape as the requests dock, where a local t() helper
+   * hid fourteen words from the coverage scanner.
+   *
+   * Two elements in the interface were in that state: the item form's "Write
+   * it for me" hint and the sale screen's walk-in customer hint.
+   */
+  const dom = page(
+    '<a data-toggle="tooltip" data-original-title="Draft a description from the item\'s own details"'
+      + ' data-t-title="lang_ai_describe_hint">?</a>'
+  );
+  const { PosnicPro } = loadI18n(
+    dom,
+    { lang_ai_describe_hint: 'விளக்கத்தை உருவாக்கவும்' },
+    { language_code: 'ta' }
+  );
+  PosnicPro.i18n.apply();
+
+  const tip = dom.window.document.querySelector('a');
+  assert.equal(
+    tip.getAttribute('data-original-title'),
+    'விளக்கத்தை உருவாக்கவும்',
+    'the attribute the tooltip reads was left in English'
+  );
+  /* `title` is set as well: an element can be hovered before Bootstrap has
+     initialised it, and the browser's own tooltip reads that one. */
+  assert.equal(tip.getAttribute('title'), 'விளக்கத்தை உருவாக்கவும்');
+
+  return PosnicPro.i18n.change('en').then(() => {
+    assert.equal(
+      tip.getAttribute('data-original-title'),
+      "Draft a description from the item's own details",
+      'the English tooltip did not come back'
+    );
+  });
+});
+
+test('the words behind those tooltips are in every pack', () => {
+  /*
+   * The runtime fix is half of it. The coverage tool read the English out of
+   * `title`, which these elements do not carry, so their keys were counted as
+   * used and never given any English to translate - and a pack cannot answer
+   * a key nobody wrote down.
+   */
+  const dir = path.join(__dirname, '..', 'languages');
+  const english = JSON.parse(fs.readFileSync(path.join(dir, '_english.json'), 'utf8'));
+  for (const key of ['lang_ai_describe_hint', 'lang_walk_in_customer_click_to_choose_or_add']) {
+    assert.ok(english[key], key + ' has no English, so no pack can be asked for it');
+    for (const file of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+      const pack = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+      assert.ok(typeof pack[key] === 'string' && pack[key].trim() !== '', file + ' has no ' + key);
+    }
+  }
+});
+
 /* ------------------------------------------- markup that arrives later --- */
 
 test('markup JavaScript draws after load is translated as it lands', async () => {

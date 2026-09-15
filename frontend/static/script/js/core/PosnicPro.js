@@ -4776,6 +4776,26 @@ PosnicPro.i18n = {
                     els[e].setAttribute('data-en-' + attrs[a], els[e].getAttribute(attrs[a]) || '');
                 }
                 els[e].setAttribute(attrs[a], value);
+                /*
+                 * A BOOTSTRAP TOOLTIP DOES NOT READ `title`.
+                 *
+                 * It reads `data-original-title` - it moves `title` there on
+                 * init and empties the real one, and markup that sets
+                 * data-original-title itself wins outright. So translating
+                 * `title` on one of these changed an attribute nothing shows,
+                 * and the tooltip went on saying the English in every
+                 * language: rendering perfectly, which is why nobody noticed.
+                 *
+                 * Same lesson as the requests dock, where a local t() helper
+                 * hid fourteen words from the scanner. A translation that
+                 * silently does nothing looks exactly like one that works.
+                 */
+                if (attrs[a] === 'title' && els[e].hasAttribute('data-original-title')) {
+                    if (!els[e].hasAttribute('data-en-original-title')) {
+                        els[e].setAttribute('data-en-original-title', els[e].getAttribute('data-original-title') || '');
+                    }
+                    els[e].setAttribute('data-original-title', value);
+                }
             }
         }
     },
@@ -4804,6 +4824,11 @@ PosnicPro.i18n = {
             for (var e = 0; e < els.length; e++) {
                 els[e].setAttribute(attrs[a], els[e].getAttribute('data-en-' + attrs[a]));
             }
+        }
+        /* And the tooltips, which apply() had to change separately. */
+        var tips = scope.querySelectorAll('[data-en-original-title]');
+        for (var t = 0; t < tips.length; t++) {
+            tips[t].setAttribute('data-original-title', tips[t].getAttribute('data-en-original-title'));
         }
     },
 

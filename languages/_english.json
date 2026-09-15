@@ -142,6 +142,7 @@
   "lang_ai_cap_hint": "The most this may spend from your account in a month. We stop before the call, not after. Your provider's own dashboard is the final word on the bill.",
   "lang_ai_configured": "AI is set up",
   "lang_ai_describe": "Write it for me",
+  "lang_ai_describe_hint": "Draft a description from the item's own details",
   "lang_ai_edit": "Edit",
   "lang_ai_feature_item_description": "Item descriptions",
   "lang_ai_feature_ordering_assistant": "Ordering assistant, typed",
