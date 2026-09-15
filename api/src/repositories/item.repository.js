@@ -5071,6 +5071,142 @@ class ItemRepository extends BaseModel {
    * storeEstimatedDishFacts - so running the pass twice is cheap the second
    * time rather than a second bill.
    */
+  /*
+   * THE ESTIMATES, WITH WHAT EACH WOULD PUT ON THE MENU.
+   *
+   * The pass made estimating a whole menu cheap and left confirming it at one
+   * dish at a time - which on 272 dishes is the same 272 presses, moved. So
+   * this reads them all back at once, and with each one the CLAIMS its
+   * numbers would earn.
+   *
+   * The claims are the point. A shop scanning a list of calorie figures is
+   * checking arithmetic it has no way to check; a shop reading "Grilled
+   * Chicken - High protein, Heart healthy" is being asked the question it can
+   * actually answer, which is whether that sentence is true of its own food.
+   * Confirming is what publishes them, so it is what the screen must show.
+   *
+   * Derived here rather than stored, exactly as the customer menu derives
+   * them, so what the shop approves is what a customer will see.
+   */
+  async estimatedDishes({ branchId, categoryId } = {}, context = {}) {
+    try {
+      const collection = await this.getCollection(this.collectionName);
+      const branch = branchId || BaseModel.currentBranch;
+      const license = context.licenseId || BaseModel.license;
+
+      const filter = {
+        nutrition_source: 'estimated',
+        del_status: { $nin: [1, '1', true] },
+      };
+      if (branch && ObjectId.isValid(String(branch))) {
+        filter['branch_access.branch_id'] = new ObjectId(String(branch));
+      }
+      if (license && ObjectId.isValid(String(license))) {
+        filter.license = new ObjectId(String(license));
+      }
+      if (categoryId && ObjectId.isValid(String(categoryId))) {
+        filter.category_id = new ObjectId(String(categoryId));
+      }
+
+      const rows = await collection
+        .find(filter, {
+          projection: {
+            _id: 1,
+            name: 1,
+            category_name: 1,
+            diet: 1,
+            nutrition: 1,
+            food_tags: 1,
+            nutrition_estimated_at: 1,
+          },
+        })
+        .sort({ category_name: 1, name: 1 })
+        .limit(1000)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: rows.map((r) => {
+          const nutrition = dishFacts.cleanNutrition(r.nutrition);
+          const tags = dishFacts.cleanTags(r.food_tags, dishFacts.FOOD_TAGS);
+          return {
+            item_id: String(r._id),
+            name: r.name || '',
+            category_name: r.category_name || '',
+            diet: r.diet || '',
+            nutrition,
+            tags,
+            /* What confirming this row would publish. */
+            claims: dishFacts.claimsFor(nutrition, tags),
+            estimated_at: r.nutrition_estimated_at || null,
+          };
+        }),
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.estimatedDishes:', error);
+      return { status: false, message: error.message, data: [] };
+    }
+  }
+
+  /*
+   * A PERSON SAYS YES, AND THE NUMBERS BECOME THE SHOP'S OWN WORD.
+   *
+   * Confirming is clearing `nutrition_source`, which is what the item screen
+   * already does when somebody opens a dish and saves it. This is the same
+   * act for many dishes, and it is the only thing that publishes a badge.
+   *
+   * IT CHANGES NO NUMBER. Not one figure is written here - only who stands
+   * behind the ones already there. A confirm that also edited would be a
+   * second way for values to reach a dish, and the whole feature rests on
+   * there being exactly one.
+   *
+   * Only rows that are CURRENTLY estimated. A dish somebody answered by hand
+   * in the meantime is already the shop's word and must not be re-stamped,
+   * and the filter says so rather than the caller being trusted to have sent
+   * a list that is still accurate.
+   */
+  async confirmEstimatedNutrition(itemIds = [], context = {}) {
+    try {
+      const wanted = (Array.isArray(itemIds) ? itemIds : [])
+        .map((id) => String(id || '').trim())
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
+
+      if (!wanted.length) {
+        return { status: false, message: 'Which dishes?', data: null };
+      }
+
+      const collection = await this.getCollection(this.collectionName);
+      const license = context.licenseId || BaseModel.license;
+
+      const filter = { _id: { $in: wanted }, nutrition_source: 'estimated' };
+      if (license && ObjectId.isValid(String(license))) {
+        filter.license = new ObjectId(String(license));
+      }
+
+      const now = new Date();
+      const result = await collection.updateMany(filter, {
+        $set: {
+          nutrition_source: '',
+          nutrition_confirmed_at: now,
+          nutrition_confirmed_by: BaseModel.loggedUserName || '',
+          updated_date: now,
+        },
+      });
+
+      const confirmed = result.modifiedCount || 0;
+      return {
+        status: true,
+        message: confirmed === 1 ? '1 dish confirmed' : `${confirmed} dishes confirmed`,
+        data: { confirmed, asked: wanted.length },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.confirmEstimatedNutrition:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
   async dishesWantingNutrition({ branchId, categoryId } = {}, context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);

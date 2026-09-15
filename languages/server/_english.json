@@ -2426,6 +2426,9 @@
   "WhatsApp receipt setting saved successfully": [
     "src/models/setting.model.js"
   ],
+  "Which dishes?": [
+    "src/repositories/item.repository.js"
+  ],
   "Wish and quotes retrieved successfully": [
     "src/models/dashboard.model.js"
   ],

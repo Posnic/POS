@@ -165,6 +165,14 @@ router.get('/dishesWantingNutrition', bindController(itemsController.dishesWanti
 // stopped; nothing derived from an estimate is published until a person
 // confirms it. Same gate as the other AI routes.
 router.post('/aiDishFactsFor', bindController(itemsController.aiDishFactsFor));
+// GET /api/items/estimatedDishes - the dishes a machine guessed at, each with
+// the claims its numbers WOULD publish. The claims are what the shop is being
+// asked about; the calorie figures alone are arithmetic nobody can check.
+router.get('/estimatedDishes', bindController(itemsController.estimatedDishes));
+// POST /api/items/confirmNutrition - a person stands behind those numbers.
+// Changes no figure: only who said so, which is the thing that publishes a
+// badge. Same act as opening a dish and saving it, for many dishes at once.
+router.post('/confirmNutrition', bindController(itemsController.confirmNutrition));
 router.get('/aiAvailability', bindController(itemsController.aiAvailability));
 router.get('/aiSpend', bindController(itemsController.aiSpend));
 // GET /api/items/aiVoiceCalls - the last few live voice calls with what was

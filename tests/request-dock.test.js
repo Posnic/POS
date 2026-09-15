@@ -492,3 +492,41 @@ test('but a genuinely new order still gets through', async () => {
   window.PosnicRequestDock.show();
   assert.strictEqual(window.PosnicRequestDock.isOpen(), true, 'a new order was swallowed');
 });
+
+test('every word on the dock can be translated', () => {
+  /*
+   * Eleven of this file's fourteen keys were in NO language pack at all, and
+   * nothing ever failed to say so.
+   *
+   * The coverage scanner collects keys by matching `i18n.t('lang_x', 'X')`.
+   * This file had a bare `t()` helper, so every call was invisible to it: the
+   * keys were never gathered, never translated, and fell back to English in
+   * every language - which renders perfectly. A Tamil shop read this panel in
+   * English for the life of the feature, and the only way to notice was to go
+   * looking.
+   *
+   * The helper is an object called `i18n` now, which the scanner sees and
+   * which still guards: this file paints from a poll and can run before
+   * PosnicPro.i18n is built, and a panel that throws while somebody answers a
+   * cancellation is worse than one that says "Requests" in English.
+   */
+  assert.ok(
+    !/(?<![.\w])t\('lang_/.test(DOCK),
+    'a bare t() call here is invisible to the coverage scanner'
+  );
+  assert.match(DOCK, /var i18n = \{\s*\n\s*t: function \(key, fallback\)/);
+
+  /* Every key it names is in the English map, so the packs can carry it. */
+  const english = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'languages', '_english.json'), 'utf8')
+  );
+  /* Comments stripped first: the note above this helper quotes the scanner's
+     own pattern as an example, and scraping that would ask the packs to carry
+     a key called lang_x. */
+  const code = DOCK.replace(/\/\*[\s\S]*?\*\//g, '');
+  const keys = [...code.matchAll(/i18n\.t\('(lang_[a-z0-9_]+)'/g)].map((m) => m[1]);
+  assert.ok(keys.length >= 10, 'the dock stopped naming its keys');
+  for (const key of [...new Set(keys)]) {
+    assert.ok(english[key] !== undefined, `${key} is not collected, so no pack can carry it`);
+  }
+});

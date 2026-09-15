@@ -9657,10 +9657,19 @@ class SalesRepository {
   }
 
   /*
-   * What we keep about the device an order came from: an address, what the
-   * browser calls itself, and the random id that browser keeps for itself.
-   * Everything is cut to a length, and anything not recognised is dropped, so
-   * a crafted payload cannot turn this into storage of its own.
+   * WHAT WE KEEP ABOUT WHERE AN ORDER CAME FROM.
+   *
+   * An address, what the browser calls itself, the random id that browser
+   * keeps for itself - and, from a handset, the phone's model, the version of
+   * the app, and the name of the waiter signed into it.
+   *
+   * Everything is cut to a length and anything not named here is DROPPED, so a
+   * crafted payload cannot turn a sale into storage of its own. The list is
+   * the point: adding a field is a decision, not something a caller can make
+   * for us.
+   *
+   * Nothing here is shown to a customer - customerOrderView is deliberately
+   * built from a different set of fields, and this is not among them.
    */
   _clientFacts(client) {
     const from = client && typeof client === 'object' ? client : {};
@@ -9692,6 +9701,37 @@ class SalesRepository {
     if (zone) facts.time_zone = zone;
     const referrer = text(from.referrer, 200);
     if (referrer) facts.referrer = referrer;
+
+    /*
+     * WHAT THE HANDSET KNOWS ABOUT ITSELF, and who is holding it.
+     *
+     * Owner: "every order should have some details. example what mobile, user
+     * agent, ip address, mobile type or user account whatever infromation app
+     * can know do it."
+     *
+     * A user agent names a browser engine, which on an Android app is the same
+     * string for every phone in the building. When an order goes wrong the
+     * question is which HANDSET and whose hands, so the app says the model it
+     * reads from the device, the version it is running, and the name of the
+     * waiter signed into it.
+     *
+     * The staff fields are set by the route from the session, never from the
+     * body - a phone may describe its own hardware, but it does not get to
+     * name who was holding it.
+     */
+    const app = text(from.app, 40);
+    if (app) facts.app = app;
+    const appVersion = text(from.app_version, 24);
+    if (appVersion) facts.app_version = appVersion;
+    const model = text(from.device_model, 80);
+    if (model) facts.device_model = model;
+    const network = text(from.network, 24);
+    if (network) facts.network = network;
+    const staffId = text(from.staff_id, 40);
+    if (staffId) facts.staff_id = staffId;
+    const staffName = text(from.staff_name, 80);
+    if (staffName) facts.staff_name = staffName;
+
     facts.at = new Date();
     return Object.keys(facts).length > 1 ? facts : null;
   }

@@ -293,3 +293,31 @@ contextBridge.exposeInMainWorld('electron', {
     }
   }
 });
+
+/*
+ * THE KITCHEN SCREEN, both sides of it.
+ *
+ * Two audiences, one bridge. Hardware Manager asks what displays exist and
+ * writes what the shop chose; the screen on the wall listens for its own
+ * configuration and its tickets. Neither is given anything it does not need -
+ * the screen cannot write settings, and the manager cannot push tickets.
+ */
+contextBridge.exposeInMainWorld('posnicKitchenScreen', {
+  /* Hardware Manager: choosing and placing a screen. */
+  list:      ()                 => ipcRenderer.invoke('kitchen-screen:list'),
+  configure: (displayId, patch) => ipcRenderer.invoke('kitchen-screen:configure', displayId, patch),
+  preview:   (displayId, on)    => ipcRenderer.invoke('kitchen-screen:preview', displayId, on),
+
+  /* The screen on the wall. It only ever receives. */
+  ready:     (displayId)        => ipcRenderer.invoke('kitchen-screen:ready', displayId),
+  onConfig:  (cb) => {
+    const h = (_e, d) => cb(d);
+    ipcRenderer.on('kitchen-screen:config', h);
+    return () => ipcRenderer.removeListener('kitchen-screen:config', h);
+  },
+  onTickets: (cb) => {
+    const h = (_e, d) => cb(d);
+    ipcRenderer.on('kitchen-screen:tickets', h);
+    return () => ipcRenderer.removeListener('kitchen-screen:tickets', h);
+  }
+});

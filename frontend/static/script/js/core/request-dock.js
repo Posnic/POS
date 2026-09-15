@@ -41,16 +41,35 @@
 
   /* The same door online-order-watch.js uses, for the same reason: before the
      dictionary is up, the English is the honest answer. */
-  function t(key, fallback) {
-    try {
-      if (window.PosnicPro && PosnicPro.i18n && typeof PosnicPro.i18n.t === 'function') {
-        return PosnicPro.i18n.t(key, fallback);
+  /*
+   * NAMED `i18n`, AND THAT IS THE WHOLE POINT.
+   *
+   * This was a bare `t()` helper, and it is why eleven of this file's
+   * fourteen keys were in NO language pack at all. The coverage scanner
+   * collects keys by matching `i18n.t('lang_x', 'X')` in these files; a
+   * helper called anything else hides every call from it, so the keys were
+   * never gathered, never translated, and fell back to English in every
+   * language - which renders perfectly, which is why nothing ever failed.
+   * A Tamil shop read this panel in English for the life of the feature.
+   *
+   * The guard is real and stays. This file lives in the dashboard bundle and
+   * paints from a poll, so it can run before PosnicPro.i18n is built; a panel
+   * that throws while somebody is answering a cancellation is worse than one
+   * that says "Requests" in English. Calling the object `i18n` keeps both:
+   * the scanner sees every key, and a missing runtime still falls back.
+   */
+  var i18n = {
+    t: function (key, fallback) {
+      try {
+        if (window.PosnicPro && PosnicPro.i18n && typeof PosnicPro.i18n.t === 'function') {
+          return PosnicPro.i18n.t(key, fallback);
+        }
+      } catch (e) {
+        /* fall through to English */
       }
-    } catch (e) {
-      /* fall through to English */
-    }
-    return fallback;
-  }
+      return fallback;
+    },
+  };
 
   function safe(text) {
     return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
@@ -69,12 +88,12 @@
     var at = new Date(when || 0).getTime();
     if (!at) return '';
     var mins = Math.floor((Date.now() - at) / 60000);
-    if (mins < 1) return t('lang_just_now', 'just now');
-    if (mins === 1) return t('lang_a_minute_ago', '1 minute ago');
-    if (mins < 60) return String(mins) + ' ' + t('lang_minutes_ago', 'minutes ago');
+    if (mins < 1) return i18n.t('lang_just_now', 'just now');
+    if (mins === 1) return i18n.t('lang_a_minute_ago', '1 minute ago');
+    if (mins < 60) return String(mins) + ' ' + i18n.t('lang_minutes_ago', 'minutes ago');
     var hours = Math.floor(mins / 60);
-    if (hours === 1) return t('lang_an_hour_ago', '1 hour ago');
-    return String(hours) + ' ' + t('lang_hours_ago', 'hours ago');
+    if (hours === 1) return i18n.t('lang_an_hour_ago', '1 hour ago');
+    return String(hours) + ' ' + i18n.t('lang_hours_ago', 'hours ago');
   }
 
   /**
@@ -142,7 +161,7 @@
           var was = Number(one.was || 0);
           var now = Number(one.quantity || 0);
           if (!was) return '<li>+ ' + now + ' &times; ' + name + '</li>';
-          if (!now) return '<li>' + t('lang_remove', 'Remove') + ' ' + name + '</li>';
+          if (!now) return '<li>' + i18n.t('lang_remove', 'Remove') + ' ' + name + '</li>';
           return '<li>' + name + ': ' + was + ' &rarr; ' + now + '</li>';
         })
         .join('') +
@@ -157,19 +176,19 @@
     var bill = safe(order.sales_id || '');
     var token = safe(order.token_id || order.token || '');
     var where = order.table_number
-      ? t('lang_table', 'Table') + ' ' + safe(order.table_number)
+      ? i18n.t('lang_table', 'Table') + ' ' + safe(order.table_number)
       : safe(order.fulfilment || '');
     var working = busy[id] ? ' is-working' : '';
 
     return (
       '<li class="request-dock-card" data-kind="' + kind + '" data-order="' + safe(id) + '">' +
       '<div class="request-dock-what">' +
-      '<span class="request-dock-kind">' + t(words[0], words[1]) + '</span>' +
+      '<span class="request-dock-kind">' + i18n.t(words[0], words[1]) + '</span>' +
       '<span class="request-dock-when">' + safe(howLongAgo(order.created_date)) + '</span>' +
       '</div>' +
       '<div class="request-dock-who">' +
       (bill ? '<b>' + bill + '</b>' : '') +
-      (token ? '<span>' + t('lang_token', 'Token') + ' ' + token + '</span>' : '') +
+      (token ? '<span>' + i18n.t('lang_token', 'Token') + ' ' + token + '</span>' : '') +
       (where ? '<span>' + where + '</span>' : '') +
       '</div>' +
       whatChanged(order) +
@@ -178,13 +197,13 @@
       (kind === 'gone'
         ? '<div class="request-dock-do">' +
           '<button type="button" class="request-dock-yes' + working + '" data-do="accept">' +
-          t('lang_got_it', 'Got it') + '</button>' +
+          i18n.t('lang_got_it', 'Got it') + '</button>' +
           '</div>'
         : '<div class="request-dock-do">' +
           '<button type="button" class="request-dock-no' + working + '" data-do="reject">' +
-          t('lang_refuse', 'Refuse') + '</button>' +
+          i18n.t('lang_refuse', 'Refuse') + '</button>' +
           '<button type="button" class="request-dock-yes' + working + '" data-do="accept">' +
-          t('lang_accept', 'Accept') + '</button>' +
+          i18n.t('lang_accept', 'Accept') + '</button>' +
           '</div>') +
       '</li>'
     );
@@ -198,7 +217,7 @@
     dock.hidden = true;
     dock.innerHTML =
       '<button type="button" class="request-dock-tab" id="request-dock-tab" aria-expanded="false">' +
-      '<span class="request-dock-tab-word">' + t('lang_requests', 'Requests') + '</span>' +
+      '<span class="request-dock-tab-word">' + i18n.t('lang_requests', 'Requests') + '</span>' +
       '<span class="request-dock-count" id="request-dock-count">0</span>' +
       '</button>' +
       '<div class="request-dock-panel" id="request-dock-panel" hidden>' +
@@ -215,10 +234,10 @@
        * as a refusal.
        */
       '<button type="button" class="request-dock-close" id="request-dock-close" ' +
-      'aria-label="' + t('lang_close', 'Close') + '">&times;</button>' +
+      'aria-label="' + i18n.t('lang_close', 'Close') + '">&times;</button>' +
       '<ul class="request-dock-list" id="request-dock-list"></ul>' +
       '<a class="request-dock-all" href="#/onlineorders">' +
-      t('lang_see_all_orders', 'Open the order queue') + '</a>' +
+      i18n.t('lang_see_all_orders', 'Open the order queue') + '</a>' +
       '</div>';
     document.body.appendChild(dock);
 
