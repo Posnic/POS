@@ -118,6 +118,7 @@
   "lang_ai_anthropic": "Anthropic Claude - uw eigen account",
   "lang_ai_cap": "Maandlimiet",
   "lang_ai_cap_hint": "Het maximum dat hiermee in een maand van uw account mag worden uitgegeven. Wij stoppen vóór de aanroep, niet erna. Het dashboard van uw aanbieder is doorslaggevend voor de rekening.",
+  "lang_ai_describe_hint": "Een omschrijving opstellen uit de gegevens van het artikel",
   "lang_ai_google": "Google Gemini - uw eigen account",
   "lang_ai_hint": "Wij rekenen hier niets voor. U gebruikt uw eigen account bij een AI-aanbieder en betaalt die rechtstreeks, dus het werkt op elk pakket, ook het gratis pakket, en wij brengen u niets in rekening. De sleutel wordt op deze server bewaard, wordt nooit naar een browser gestuurd en wordt na het opslaan nooit meer getoond.",
   "lang_ai_howto": "Zo krijgt u een sleutel",

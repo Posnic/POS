@@ -119,12 +119,14 @@ function keysUsed() {
        in the same tag, in either order. */
     for (const tag of html.matchAll(/<[a-zA-Z][^>]*>/g)) {
       for (const m of tag[0].matchAll(/data-t-(placeholder|title|aria-label)="([^"]+)"/g)) {
-        /* select2 reads data-placeholder rather than placeholder, so the
-           English for those keys lives there. Looked for second: a tag
-           carrying both means the plain one is what the browser shows. */
+        /* select2 reads data-placeholder rather than placeholder, and a
+           Bootstrap tooltip reads data-original-title, so the English for
+           those keys lives there instead. Looked for after the plain one: a
+           tag carrying both means the plain one is what the browser shows. */
         const en =
           new RegExp('\\s' + m[1] + '="([^"]*)"').exec(tag[0]) ||
-          new RegExp('\\sdata-' + m[1] + '="([^"]*)"').exec(tag[0]);
+          new RegExp('\\sdata-' + m[1] + '="([^"]*)"').exec(tag[0]) ||
+          (m[1] === 'title' ? /\sdata-original-title="([^"]*)"/.exec(tag[0]) : null);
         remember(m[2], en ? en[1] : '', file);
       }
     }

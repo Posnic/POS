@@ -118,6 +118,7 @@
   "lang_ai_anthropic": "Anthropic Claude - akun Anda sendiri",
   "lang_ai_cap": "Batas bulanan",
   "lang_ai_cap_hint": "Jumlah maksimum yang boleh dibelanjakan dari akun Anda dalam sebulan. Kami berhenti sebelum panggilan, bukan sesudahnya. Dasbor penyedia Anda adalah acuan akhir untuk tagihan.",
+  "lang_ai_describe_hint": "Susun deskripsi dari detail barang itu sendiri",
   "lang_ai_google": "Google Gemini - akun Anda sendiri",
   "lang_ai_hint": "Kami tidak memungut biaya untuk ini. Anda memakai akun Anda sendiri pada penyedia AI dan membayar langsung kepada mereka, sehingga ini berfungsi pada semua paket termasuk yang gratis, dan kami tidak menagih apa pun kepada Anda. Kunci disimpan di server ini, tidak pernah dikirim ke peramban, dan tidak pernah ditampilkan lagi setelah disimpan.",
   "lang_ai_howto": "Cara mendapatkan kunci",

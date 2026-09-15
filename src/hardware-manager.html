@@ -1140,17 +1140,22 @@
             OS_PLATFORM === 'darwin' ? 'macOS default'   :
             OS_PLATFORM === 'linux'  ? 'system default'  : 'system default';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const opt = document.getElementById('rpDefaultOption');
-            if (opt) opt.textContent = OS_DEFAULT_LABEL.replace(/^./, (c) => c.toUpperCase()) + ' printer';
-        });
+        /*
+         * There was a listener here relabelling #rpDefaultOption, and that
+         * element is gone - it was the "default printer" entry in the old
+         * single-select dropdown, which the checkbox list replaced. Guarded by
+         * `if (opt)`, so it never threw; it simply stopped doing anything and
+         * nothing said so.
+         *
+         * OS_DEFAULT_LABEL itself stays: the warning below still uses it to
+         * say "a receipt cannot be sent to the Windows default" in the words
+         * of whichever operating system this is.
+         */
 
         // Global variables
         let availablePorts = [];
         let selectedPortPath = null;
         let connectedPortPath = null;
-        let printers = [];
-        let selectedPrinter = null;
 
         // DOM Elements
         const listPortsBtn = document.getElementById('listPortsBtn');
@@ -1206,11 +1211,6 @@
                    without anybody restarting anything. */
                 if (tabName === 'screen' && typeof refreshScreens === 'function') refreshScreens();
 
-                // 'printer' was never a tab name either, so this never ran and
-                // the printer list stayed empty until Reload was pressed.
-                if (tabName === 'receipt' && printers.length === 0) {
-                    refreshPrinters();
-                }
                 if (tabName === 'mobile') {
                     refreshMobileInfo();
                 }
@@ -1333,138 +1333,26 @@
             }
         }
 
-        // ===========================
-        // PRINTER FUNCTIONS
-        // ===========================
-        async function refreshPrinters() {
-            const statusDiv = document.getElementById('printerStatus');
-            const printerList = document.getElementById('printerList');
-            
-            console.log('🖨️ Refreshing printers...');
-            console.log('statusDiv:', statusDiv);
-            console.log('printerList:', printerList);
-            
-            statusDiv.classList.remove('hidden');
-            statusDiv.style.display = 'block';
-            statusDiv.style.background = '#d1ecf1';
-            statusDiv.style.color = '#0c5460';
-            statusDiv.textContent = '🔍 Loading printers...';
-            
-            try {
-                console.log('Calling window.electronAPI.printer.list()...');
-                printers = await window.electronAPI.printer.list();
-                console.log('Printers received:', printers);
-                
-                if (printers.length === 0) {
-                    statusDiv.style.background = '#f8d7da';
-                    statusDiv.style.color = '#721c24';
-                    statusDiv.textContent = '❌ No printers found';
-                    printerList.innerHTML = '';
-                    return;
-                }
-                
-                statusDiv.style.background = '#d4edda';
-                statusDiv.style.color = '#155724';
-                statusDiv.textContent = `✅ Found ${printers.length} printer(s)`;
-                
-                const html = printers.map((p, i) => `
-                    <li class="printer-item ${p.isDefault ? 'default' : ''}" onclick="selectPrinter(${i})">
-                        <div class="printer-name">
-                            ${p.displayName || p.name}
-                            ${p.isDefault ? '<span class="badge default">DEFAULT</span>' : ''}
-                        </div>
-                        <div class="printer-info">${p.name} | ${p.status === 0 ? 'Ready' : 'Not Ready'}</div>
-                    </li>
-                `).join('');
-                
-                console.log('Generated HTML:', html);
-                printerList.innerHTML = html;
-                console.log('✅ Printer list updated');
-            } catch (error) {
-                console.error('❌ Error refreshing printers:', error);
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
-                statusDiv.textContent = `❌ Error: ${error.message}`;
-            }
-        }
-
-        async function selectPrinter(index) {
-            selectedPrinter = printers[index];
-            document.querySelectorAll('.printer-item').forEach((item, i) => {
-                item.classList.toggle('selected', i === index);
-            });
-            document.getElementById('printBtn').disabled = false;
-            
-            // Save to preferences
-            try {
-                await window.electronAPI.printer.setDefault(selectedPrinter.name);
-                console.log('✅ Saved default printer:', selectedPrinter.name);
-            } catch (error) {
-                console.error('❌ Failed to save default printer:', error);
-            }
-            
-            const statusDiv = document.getElementById('printerStatus');
-            statusDiv.style.background = '#d4edda';
-            statusDiv.style.color = '#155724';
-            statusDiv.textContent = `✅ Selected: ${selectedPrinter.displayName || selectedPrinter.name} (Saved as default)`;
-        }
-
-        async function printToSelected() {
-            if (!selectedPrinter) {
-                alert('Please select a printer first');
-                return;
-            }
-            
-            const html = document.getElementById('printContent').value;
-            const copies = parseInt(document.getElementById('copies').value);
-            const statusDiv = document.getElementById('printerStatus');
-            
-            statusDiv.style.background = '#d1ecf1';
-            statusDiv.style.color = '#0c5460';
-            statusDiv.textContent = '🖨️ Printing...';
-            
-            try {
-                const result = await window.electronAPI.printer.print(html, {
-                    printerName: selectedPrinter.name,
-                    copies: copies,
-                    silent: true
-                });
-                
-                statusDiv.style.background = result.success ? '#d4edda' : '#f8d7da';
-                statusDiv.style.color = result.success ? '#155724' : '#721c24';
-                statusDiv.textContent = result.success 
-                    ? `✅ Printed to ${selectedPrinter.displayName}` 
-                    : `❌ ${result.error}`;
-            } catch (error) {
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
-                statusDiv.textContent = `❌ ${error.message}`;
-            }
-        }
-
-        async function printToDefault() {
-            const html = document.getElementById('printContent').value;
-            const copies = parseInt(document.getElementById('copies').value);
-            const statusDiv = document.getElementById('printerStatus');
-            
-            statusDiv.style.background = '#d1ecf1';
-            statusDiv.style.color = '#0c5460';
-            statusDiv.textContent = '🖨️ Printing...';
-            
-            try {
-                const result = await window.electronAPI.printer.print(html, { copies, silent: true });
-                
-                statusDiv.style.background = result.success ? '#d4edda' : '#f8d7da';
-                statusDiv.style.color = result.success ? '#155724' : '#721c24';
-                statusDiv.textContent = result.success 
-                    ? '✅ Printed to default printer' 
-                    : `❌ ${result.error}`;
-            } catch (error) {
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
-                statusDiv.textContent = `❌ ${error.message}`;
-            }
-        }
+        /*
+         * THE SINGLE-PRINTER PICKER IS GONE, and it never worked.
+         *
+         * refreshPrinters, selectPrinter, printToSelected and printToDefault
+         * wrote to #printerStatus, #printerList, #printBtn, #printContent and
+         * #copies. Not one of those elements has ever existed in this file -
+         * `git log --follow -S 'id="printerList"'` finds no commit that added
+         * or removed them, including before the move into src/.
+         *
+         * So every click on the Receipt Printer tab called refreshPrinters,
+         * which did `statusDiv.classList.remove('hidden')` on null OUTSIDE its
+         * own try block and threw, unhandled, into switchTab. And because the
+         * throw came before `printers` was assigned, the `printers.length === 0`
+         * guard never went false: it threw again on every single click.
+         *
+         * What actually chooses printers is rpLoadPrinters and #rpPrinterList
+         * higher up this file - checkboxes, several printers, saved as
+         * `receipt_printers`. That is the multi-select a shop uses and it is
+         * untouched.
+         */
 
         // ===========================
         // INITIALIZATION
