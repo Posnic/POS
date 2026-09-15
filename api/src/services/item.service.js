@@ -1340,6 +1340,15 @@ class ItemService {
     return this.repository.previewSpiceChoice(params, context);
   }
 
+  /* How long a section takes. See previewPrepMinutes in the repository. */
+  async setPrepMinutes(params = {}, context = {}) {
+    return this.repository.setPrepMinutes(params, context);
+  }
+
+  async previewPrepMinutes(params = {}, context = {}) {
+    return this.repository.previewPrepMinutes(params, context);
+  }
+
   async getBulkStockUpdates(opts = {}) {
     return this.repository.getBulkStockUpdates(opts);
   }

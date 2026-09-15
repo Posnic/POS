@@ -649,6 +649,9 @@
   "Enter a valid email address": [
     "app.js"
   ],
+  "Enter how many minutes, from 0 to 1440": [
+    "src/repositories/item.repository.js"
+  ],
   "Enter must correct channel": [
     "src/repositories/item.repository.js"
   ],

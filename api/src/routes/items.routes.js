@@ -227,6 +227,8 @@ router.post('/bulkUpdateStock', bindController(itemsController.bulkUpdateStock))
 router.post('/bulkStockPreview', bindController(itemsController.bulkStockPreview));
 router.post('/bulkSpiceChoice', bindController(itemsController.bulkSpiceChoice));
 router.post('/bulkSpiceChoicePreview', bindController(itemsController.bulkSpiceChoicePreview));
+router.post('/bulkPrepMinutes', bindController(itemsController.bulkPrepMinutes));
+router.post('/bulkPrepMinutesPreview', bindController(itemsController.bulkPrepMinutesPreview));
 router.get('/bulkStockHistory', bindController(itemsController.getBulkStockUpdates));
 
 // PHP: categoryItemsReportTable() - Category report
