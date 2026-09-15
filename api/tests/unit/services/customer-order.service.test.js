@@ -608,3 +608,138 @@ describe('after the order, by kind and in bulk', () => {
     expect(out).toEqual({ status: true, message: 'OK', data: { orders: [] } });
   });
 });
+
+/*
+ * WHERE THE ORDER HAS GOT TO, and how long this shop usually takes to say.
+ *
+ * Stage 5 of the print roadmap. The trail itself is pinned in
+ * tests/unit/utils/order-progress.test.js; what matters here is that every
+ * door a customer's phone can reach an order through carries the same one,
+ * and that the shop's own answering speed is read only when somebody is
+ * actually waiting on it.
+ */
+describe('the customer is told where the order has got to', () => {
+  const held = () =>
+    order({
+      order_state: 'pending',
+      created_date: new Date(Date.now() - 60 * 1000),
+    });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  test('EVERY DOOR CARRIES THE SAME TRAIL, so none of them can disagree', () => {
+    /*
+     * It is built in customerOrderView rather than in this service, which is
+     * what makes a read, a bulk read, a change and a cancellation describe one
+     * order one way. The alternative is four places computing it and a history
+     * page saying "With the kitchen" about an order the thank-you page calls
+     * accepted.
+     */
+    const view = salesRepository.customerOrderView(
+      order({ kitchen_printed_at: new Date('2026-09-16T13:02:00.000Z') })
+    );
+    expect(view.progress.step).toBe('in_the_kitchen');
+    expect(view.progress.trail.map((entry) => entry.step)).toEqual(['placed', 'in_the_kitchen']);
+  });
+
+  test('a held order is told how long this shop usually takes to answer', async () => {
+    shopAllows(30);
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(held());
+    const asked = jest.spyOn(salesRepository, 'typicalAcceptMinutes').mockResolvedValue(4);
+
+    const out = await customerOrder.read(
+      { orderId: ORDER_ID, token: '219' },
+      { branchId: BRANCH, kind: 'restaurant' }
+    );
+    expect(out.data.progress.waiting_for).toBe('acceptance');
+    expect(out.data.typically_accepted_in_minutes).toBe(4);
+    expect(asked).toHaveBeenCalledWith(BRANCH);
+  });
+
+  test('A SHOP ON AUTOMATIC IS NEVER ASKED, because nobody is waiting on it', async () => {
+    /* The query reads fifty sales. Running it for every phone watching an
+       order that was never held would be the whole cost of this feature,
+       spent on a number nothing would draw. */
+    shopAllows(30);
+    jest
+      .spyOn(salesRepository, 'findCustomerOrder')
+      .mockResolvedValue(order({ order_state: 'accepted' }));
+    const asked = jest.spyOn(salesRepository, 'typicalAcceptMinutes').mockResolvedValue(4);
+
+    const out = await customerOrder.read(
+      { orderId: ORDER_ID, token: '219' },
+      { branchId: BRANCH, kind: 'restaurant' }
+    );
+    expect(asked).not.toHaveBeenCalled();
+    expect(out.data.typically_accepted_in_minutes).toBeUndefined();
+  });
+
+  test('a shop with too little history gets no figure rather than a guess', async () => {
+    shopAllows(30);
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(held());
+    jest.spyOn(salesRepository, 'typicalAcceptMinutes').mockResolvedValue(null);
+
+    const out = await customerOrder.read(
+      { orderId: ORDER_ID, token: '219' },
+      { branchId: BRANCH, kind: 'restaurant' }
+    );
+    expect(out.data.typically_accepted_in_minutes).toBeUndefined();
+    expect(out.data.progress.waiting_for).toBe('acceptance');
+  });
+
+  test('AND A HISTORY THAT CANNOT BE READ NEVER COSTS THE CUSTOMER THE PAGE', async () => {
+    /* It is a line under a trail. Failing the whole read over it would take
+       away the thing the customer actually opened the page for. */
+    shopAllows(30);
+    jest.spyOn(salesRepository, 'findCustomerOrder').mockResolvedValue(held());
+    jest
+      .spyOn(salesRepository, 'typicalAcceptMinutes')
+      .mockRejectedValue(new Error('database is gone'));
+
+    const out = await customerOrder.read(
+      { orderId: ORDER_ID, token: '219' },
+      { branchId: BRANCH, kind: 'restaurant' }
+    );
+    expect(out.status).toBe(true);
+    expect(out.data.progress.step).toBe('placed');
+    expect(out.data.typically_accepted_in_minutes).toBeUndefined();
+  });
+
+  test('a page of held orders asks the shop its speed ONCE, not once a row', async () => {
+    /*
+     * The bug this endpoint exists to avoid, wearing a different hat: the
+     * figure is a property of the shop, so reading it per row would put
+     * twenty identical queries behind one page load.
+     */
+    shopAllows(30);
+    const now = new Date(Date.now() - 60 * 1000);
+    const rows = {};
+    const asked = [];
+    for (let i = 0; i < 5; i += 1) {
+      rows['o' + i] = {
+        _id: 'o' + i,
+        token_id: 't',
+        sale_process: 'KOT',
+        order_state: 'pending',
+        created_date: now,
+        items: [],
+        total: 0,
+      };
+      asked.push({ orderId: 'o' + i, token: 't' });
+    }
+    jest
+      .spyOn(salesRepository, 'findCustomerOrder')
+      .mockImplementation(async ({ orderId }) => rows[orderId] || null);
+    const speed = jest.spyOn(salesRepository, 'typicalAcceptMinutes').mockResolvedValue(3);
+
+    const out = await customerOrder.readMany(
+      { orders: asked },
+      { branchId: BRANCH, kind: 'restaurant' }
+    );
+    expect(out.data.orders).toHaveLength(5);
+    expect(speed).toHaveBeenCalledTimes(1);
+    for (const row of out.data.orders) {
+      expect(row.typically_accepted_in_minutes).toBe(3);
+    }
+  });
+});

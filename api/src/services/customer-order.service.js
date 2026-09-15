@@ -150,6 +150,35 @@ async function read(body, context) {
   return { status: true, message: 'OK', data: await viewOf(order, context) };
 }
 
+/**
+ * How long this shop usually takes to answer, when that is what is being
+ * waited on.
+ *
+ * NOT A COOKING TIME, and there is deliberately no way to ask this for one.
+ * Nothing in the product marks an order ready, so minutes-until-food would be
+ * invented - and an invented ETA is worse than none, because it is the number
+ * the customer waits against and then comes to the counter about.
+ *
+ * What a held order's customer is actually anxious about is whether anybody
+ * has seen it, and the shop's own recent queue answers exactly that. Read
+ * only while the order is still waiting: a shop on automatic never holds one,
+ * and should never pay for the query.
+ */
+async function typicallyAcceptedIn(view, context) {
+  if (!view || !view.progress || view.progress.waiting_for !== 'acceptance') return {};
+  const minutes = await minutesOrNull(context);
+  return minutes ? { typically_accepted_in_minutes: minutes } : {};
+}
+
+async function minutesOrNull(context) {
+  try {
+    return await salesRepository.typicalAcceptMinutes(context && context.branchId);
+  } catch (e) {
+    /* Decoration on a status page. It is never worth failing the read. */
+    return null;
+  }
+}
+
 /*
  * THE WHOLE ANSWER, SO THE PHONE NEED NOT ASK TWICE.
  *
@@ -171,8 +200,12 @@ async function read(body, context) {
 async function viewOf(order, context) {
   const seconds = await changeSeconds(context);
   const reason = whyNot(order, Date.now(), seconds);
+  const view = salesRepository.customerOrderView(order);
   return {
-    ...salesRepository.customerOrderView(order),
+    ...view,
+    /* How long this shop usually takes to answer, and ONLY while this order
+       is waiting to be answered. See typicallyAcceptedIn. */
+    ...(await typicallyAcceptedIn(view, context)),
     /* Whether they may still move it, why not, and how long the shop
          leaves it open - so one read answers every question the page has,
          including what to count down. */
@@ -244,6 +277,9 @@ async function readMany(body, context) {
   /* The window is the shop's, not the order's, so it is read once. */
   const seconds = await changeSeconds(context);
   const now = Date.now();
+  /* And so is the answering speed. One read for the whole page, rather than
+     one per row - the reason this endpoint exists at all. */
+  let acceptMinutes;
   const found = [];
   for (const one of asked) {
     const orderId = String((one && one.orderId) || '').trim();
@@ -255,8 +291,19 @@ async function readMany(body, context) {
     });
     if (!order || String(order.token_id || '') !== token) continue;
     const reason = whyNot(order, now, seconds);
+    const view = salesRepository.customerOrderView(order);
+    if (
+      view.progress &&
+      view.progress.waiting_for === 'acceptance' &&
+      acceptMinutes === undefined
+    ) {
+      acceptMinutes = await minutesOrNull(context);
+    }
     found.push({
-      ...salesRepository.customerOrderView(order),
+      ...view,
+      ...(view.progress && view.progress.waiting_for === 'acceptance' && acceptMinutes
+        ? { typically_accepted_in_minutes: acceptMinutes }
+        : {}),
       can_change: reason === '',
       why_not: reason || undefined,
       change_seconds: seconds,
