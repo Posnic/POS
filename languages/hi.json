@@ -3133,5 +3133,16 @@
   "lang_customer_gstin_hint": "उनके बिल पर छपता है ताकि वे टैक्स वापस ले सकें। एक बार पूछ लें, फिर हर बिल पर आएगा।",
   "lang_the_registered_business_name": "पंजीकृत व्यवसाय का नाम",
   "lang_what_the_bill_carries": "बिल पर क्या छपे",
-  "lang_what_the_bill_carries_hint": "ग्राहक की प्रति पर अतिरिक्त पंक्तियाँ। सभी डिफ़ॉल्ट रूप से बंद, क्योंकि रसोई की पर्ची पर ये पहले से हैं। जो आपके बिल पर चाहिए वही चालू करें।"
+  "lang_what_the_bill_carries_hint": "ग्राहक की प्रति पर अतिरिक्त पंक्तियाँ। सभी डिफ़ॉल्ट रूप से बंद, क्योंकि रसोई की पर्ची पर ये पहले से हैं। जो आपके बिल पर चाहिए वही चालू करें।",
+  "lang_a_minute_ago": "1 मिनट पहले",
+  "lang_accept": "स्वीकारें",
+  "lang_an_hour_ago": "1 घंटा पहले",
+  "lang_close": "बंद करें",
+  "lang_got_it": "समझ गया",
+  "lang_just_now": "अभी-अभी",
+  "lang_minutes_ago": "मिनट पहले",
+  "lang_refuse": "अस्वीकारें",
+  "lang_requests": "अनुरोध",
+  "lang_see_all_orders": "ऑर्डर कतार खोलें",
+  "lang_table": "टेबल"
 }

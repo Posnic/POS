@@ -3133,5 +3133,16 @@
   "lang_customer_gstin_hint": "Imprimé sur leur addition pour leur permettre de récupérer la taxe. Demandez-le une fois et toutes les additions suivantes le porteront.",
   "lang_the_registered_business_name": "Le nom légal de l'entreprise",
   "lang_what_the_bill_carries": "Ce que porte l'addition",
-  "lang_what_the_bill_carries_hint": "Lignes supplémentaires sur l'exemplaire client. Toutes désactivées par défaut, car le bon de cuisine les porte déjà. Activez celles que vos additions doivent afficher."
+  "lang_what_the_bill_carries_hint": "Lignes supplémentaires sur l'exemplaire client. Toutes désactivées par défaut, car le bon de cuisine les porte déjà. Activez celles que vos additions doivent afficher.",
+  "lang_a_minute_ago": "il y a 1 minute",
+  "lang_accept": "Accepter",
+  "lang_an_hour_ago": "il y a 1 heure",
+  "lang_close": "Fermer",
+  "lang_got_it": "Compris",
+  "lang_just_now": "à l'instant",
+  "lang_minutes_ago": "minutes",
+  "lang_refuse": "Refuser",
+  "lang_requests": "Demandes",
+  "lang_see_all_orders": "Ouvrir la file des commandes",
+  "lang_table": "Table"
 }

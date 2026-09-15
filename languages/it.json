@@ -3133,5 +3133,16 @@
   "lang_customer_gstin_hint": "Stampato sul loro conto perché possano recuperare l'imposta. Chiedilo una volta e ogni conto successivo lo riporterà.",
   "lang_the_registered_business_name": "La ragione sociale dell'azienda",
   "lang_what_the_bill_carries": "Cosa riporta il conto",
-  "lang_what_the_bill_carries_hint": "Righe aggiuntive sulla copia del cliente. Tutte disattivate per impostazione predefinita, perché la comanda di cucina le riporta già. Attiva quelle che i tuoi conti devono mostrare."
+  "lang_what_the_bill_carries_hint": "Righe aggiuntive sulla copia del cliente. Tutte disattivate per impostazione predefinita, perché la comanda di cucina le riporta già. Attiva quelle che i tuoi conti devono mostrare.",
+  "lang_a_minute_ago": "1 minuto fa",
+  "lang_accept": "Accetta",
+  "lang_an_hour_ago": "1 ora fa",
+  "lang_close": "Chiudi",
+  "lang_got_it": "Capito",
+  "lang_just_now": "proprio ora",
+  "lang_minutes_ago": "minuti fa",
+  "lang_refuse": "Rifiuta",
+  "lang_requests": "Richieste",
+  "lang_see_all_orders": "Apri la coda degli ordini",
+  "lang_table": "Tavolo"
 }
