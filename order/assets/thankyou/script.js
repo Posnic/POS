@@ -470,12 +470,49 @@ async function offerMoneyOrBill(said, token, orderId, shopId) {
     });
 }
 
+/*
+ * WHICH ORDER, AND AT WHICH SHOP - and why this is not the obvious two lines.
+ *
+ * It used to read `rememberedOrders()` and `knownBranchId()`, which live in
+ * indexedDB.js. THIS PAGE HAS NEVER LOADED indexedDB.js. Both calls were
+ * written behind `typeof ... === "function"` guards, so neither threw: the
+ * shop id came out empty, the function returned before its first request, and
+ * everything behind it - the bill when the shop marks the order paid, the
+ * offer to pay by UPI - has silently done nothing on this page since the day
+ * it was written. A guard that turns a missing dependency into a quiet
+ * nothing is how a shipped feature runs for months without ever running once.
+ *
+ * Loading indexedDB.js here is not the fix: it starts a timer that re-fetches
+ * the shop's whole menu every ten seconds, which is a lot to ask of a phone
+ * that is only showing a token.
+ *
+ * So this page answers from what it already holds:
+ *   the order   ?order= on the way in from the history page, or the sale id
+ *               on the receipt this phone was handed at checkout
+ *   the shop    posnic_store, which indexedDB.js writes on every menu load,
+ *               so it is there for anybody who reached this page by ordering
+ *
+ * STORE_ADDRESS_KEY in indexedDB.js is the same key; tests/online-ordering-ux
+ * pins the two spellings together, because a rename on one side would put
+ * this page back exactly where it was.
+ */
+const STORE_ADDRESS_KEY = "posnic_store";
+
+function whichOrder() {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("order") || String((receiptData && receiptData.sale_id) || "");
+    let shopId = "";
+    try {
+        shopId = localStorage.getItem(STORE_ADDRESS_KEY) || "";
+    } catch (e) {
+        /* A browser that keeps nothing. The page still shows the token, which
+           is the thing the customer carries to the counter. */
+    }
+    return { orderId: String(orderId || "").trim(), shopId: String(shopId || "").trim() };
+}
+
 async function watchTheOrder(token) {
-    const kept = (typeof rememberedOrders === "function" ? rememberedOrders() : []).find(
-        (row) => row && String(row.token) === String(token)
-    );
-    const orderId = new URLSearchParams(window.location.search).get("order") || (kept && kept.orderId) || "";
-    const shopId = (kept && kept.shop) || (typeof knownBranchId === "function" ? await knownBranchId() : "");
+    const { orderId, shopId } = whichOrder();
     if (!orderId || !shopId) return;
 
     let asks = 0;
