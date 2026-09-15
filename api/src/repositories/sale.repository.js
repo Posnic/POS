@@ -41,6 +41,8 @@ async function withDayparts(shop) {
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const spiceLevel = require('../utils/spice-level');
+const readyBy = require('../utils/ready-by');
+const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
 const StockLogsRepository = require('./stock-log.repository');
 const { PAYMENT_STATUS } = require('../constants');
 const moment = require('moment-timezone');
@@ -8136,6 +8138,45 @@ class SalesRepository {
 
       const salesCollection = db.collection('sales');
       const clientRecord = this._clientFacts(client);
+      /*
+       * The estimate, from what this shop has actually told us: the slowest
+       * dish on this order, plus what the queue was adding when it arrived.
+       *
+       * Non-fatal on purpose, like every other read in this method that is
+       * not the order itself. An order that saves without an estimate is an
+       * order; one that fails to save because a count timed out is a customer
+       * standing in a hotel room with no dinner.
+       */
+      let readyMinutes = 0;
+      try {
+        let queueMinutes = 0;
+        if (branchDoc.table_options === true) {
+          const tableCount = await (
+            await this.getCollection('tableorder')
+          ).countDocuments(
+            branchDoc.license
+              ? { branch_id: branchObjectId, license: branchDoc.license }
+              : { branch_id: branchObjectId }
+          );
+          const openFilter = {
+            sale_process: { $regex: 'KOT', $options: 'i' },
+            payment_status: 'Unpaid',
+            bill_printed_at: { $in: [null, undefined] },
+            branch_id: branchObjectId,
+          };
+          if (branchDoc.license) openFilter.license = branchDoc.license;
+          queueMinutes = kitchenLoad({
+            tableService: true,
+            open: await salesCollection.countDocuments(openFilter),
+            capacity: tableCount,
+            round: typicalRound(saleItems.map((line) => line.prep_minutes)),
+          }).extra_minutes;
+        }
+        readyMinutes = readyBy.cookingMinutes({ lines: saleItems, queueMinutes });
+      } catch (e) {
+        console.warn('[online order] could not estimate the wait:', e.message);
+      }
+
       const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
@@ -8266,6 +8307,22 @@ class SalesRepository {
         ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
         changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
+        /*
+         * HOW LONG THE KITCHEN SHOULD TAKE, worked out once and kept.
+         *
+         * A customer places an order, gets a token and hears nothing; on every
+         * food app they have used, the next thing they see is a time. Nothing
+         * here knows when food is actually FINISHED - no cook marks a ticket
+         * done - so this is an estimate from the shop's own numbers and is
+         * offered as one: the slowest dish on the order, plus whatever the
+         * queue was when it arrived.
+         *
+         * Frozen at this moment rather than recomputed on every refresh: a
+         * promise that moves while somebody watches it is worse than one that
+         * is a little wrong. 0 means the shop has stated no prep times and the
+         * page says nothing at all. See utils/ready-by.js.
+         */
+        ready_minutes: readyMinutes,
       };
 
       /* A number taken a moment ago is taken again, not handed to the
@@ -9365,6 +9422,9 @@ class SalesRepository {
             tax_fields: itemDoc.tax_fields || [],
             item_description: String(item.item_description || itemDoc.description || ''),
             spice_level: spiceLevel.levelOf(item.spice_level),
+            /* Same reason as the priced line: an added dish keeps the time
+               the kitchen said it took on the day it was added. */
+            prep_minutes: Number(itemDoc.prep_minutes) || 0,
             track_inventory: itemDoc.track_inventory || false,
             negative_stock: itemDoc.negative_stock || false,
           });
@@ -9781,6 +9841,13 @@ class SalesRepository {
          * nonsense gets no promise made about somebody's food.
          */
         spice_level: spiceLevel.levelOf(item.spice_level),
+        /*
+         * How long the kitchen says this dish takes, copied onto the line at
+         * the moment of ordering. On the LINE rather than looked up later
+         * because the shop may retime a section next week, and an order
+         * already placed should keep the estimate it was given.
+         */
+        prep_minutes: Number(itemDoc.prep_minutes) || 0,
         // receipt-facing fields
         item_base_price: round(baseUnitPrice),
         item_quantity: qty,
@@ -9895,6 +9962,22 @@ class SalesRepository {
        */
       bill_no: String(order.sales_id || ''),
       placed_at: order.created_date || order.date || null,
+      /*
+       * When the kitchen usually has this ready, and how long that is.
+       *
+       * Counted from when the kitchen was TOLD, which on a shop that holds
+       * orders for approval is not when the order was placed - counting from
+       * the tap would have the food ready before anybody started it.
+       *
+       * Both sent: the instant for a clock time, the minutes for a page that
+       * would rather say "about 25 minutes". Empty and zero mean the shop has
+       * stated no prep times, and the page then says nothing.
+       */
+      ready_minutes: Number(order.ready_minutes) || 0,
+      ready_by: readyBy.readyBy(
+        order.order_state_at || order.created_date || order.date,
+        order.ready_minutes
+      ),
       /* The three words a customer actually wants: is it off, is it paid,
          has the shop accepted it. */
       state: cancelled ? 'cancelled' : String(order.order_state || 'accepted'),

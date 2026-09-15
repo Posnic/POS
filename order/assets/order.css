@@ -1981,6 +1981,20 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   cursor: pointer;
 }
 
+/*
+ * When the kitchen usually has it ready.
+ *
+ * Above the dishes and in ink rather than a colour: it is the answer somebody
+ * opened this page for, not a warning. Hidden entirely when the shop has
+ * stated no prep times, so the row simply looks the way it always has.
+ */
+.history-ready {
+  margin: 2px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* What was chosen, read back on the line in the basket. */
 .item-spice {
   margin-top: 4px;
