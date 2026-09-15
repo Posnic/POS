@@ -8564,7 +8564,22 @@ class SalesRepository {
           total: Number(row.total) || 0,
           delivery_fee: Number(row.delivery_fee) || 0,
           note: row.notes || '',
-          customer_phone: row.customer_phone || '',
+          /*
+           * A NUMBER NOBODY CAN RING IS NOT INFORMATION.
+           *
+           * Owner's screenshot of this queue: a row reading "+91null". The
+           * customer pages cannot write that any more - the read that built
+           * it now refuses the word - but orders taken before that fix still
+           * carry it, and a device we do not control could send one tomorrow.
+           *
+           * The bill already answers this, and answers it the right way:
+           * isDialable asks "could this be dialled" rather than "is this
+           * Indian", so it is right for Puducherry and for anywhere else.
+           * The queue was simply not asking. Printing a number nobody can
+           * ring is worse than printing nothing, because it looks like
+           * information - and on this screen somebody may try to ring it.
+           */
+          customer_phone: isDialable(row.customer_phone) ? String(row.customer_phone) : '',
           customer_name: row.customer_name || '',
           customer_address: row.customer_address || '',
           person_count: Number(row.person_count) || 0,
