@@ -46,6 +46,11 @@
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></a>
+                                <!-- Restaurant only, and hidden again unless
+                                     the shop has an AI key: it spends their
+                                     own balance, one call per dish. -->
+                                <a class="dropdown-item restaurant-only" id="item_nutrition_pass_open" href="javascript:void(0)"
+                                   onclick="PosnicPro.nutritionPass.open(); return false;"><i class="feather icon-zap mr-2"></i><lang class="lang_fill_in_nutrition">Fill in nutrition</lang></a>
                             </div>
                         </div>
                         <span id="items_sort_host"></span>
@@ -509,6 +514,70 @@
 <!-- end Bulk price update -->
 
 <!-- Bulk stock update -->
+<!--
+    FILLING IN A MENU'S NUTRITION.
+
+    Owner asked for nutrition on every dish and an assistant to fill it in
+    "if user lazy to do". The single-dish button does exactly that, one press
+    at a time - which on a menu of two hundred and seventy-two dishes is two
+    hundred and seventy-two presses, so the panel stays empty everywhere and
+    the whole feature may as well not exist.
+
+    THREE THINGS THIS SCREEN HAS TO BE HONEST ABOUT.
+
+    WHAT IT COSTS. One call to the shop's own AI provider per dish. The count
+    is read before anything runs and stated in the button, because "run this
+    over your menu" with no number in front of it is not a choice anybody can
+    make.
+
+    THAT IT IS A GUESS. Everything it writes is stored as an estimate, and
+    utils/dish-facts.js publishes nothing derived from an estimate - no
+    badges, not even the calorie figure - until a person confirms the dish.
+    A machine guessing its way onto a live menu is the same harm as a tick box
+    for "Heart healthy", arriving by a door that is harder to see.
+
+    THAT IT CAN BE STOPPED. It walks the list from the browser, one dish at a
+    time, so Stop means stop and closing the window means stop. A job on the
+    server could do neither.
+-->
+<div class="modal fade close_on_esc" id="nutrition_pass_modal" tabindex="-1" role="dialog" aria-labelledby="nutrition_pass_title">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nutrition_pass_title"><lang class="lang_fill_in_nutrition">Fill in nutrition</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    <lang class="lang_nutrition_pass_what">The assistant estimates the calories and macros of each dish from its name, and stores them as estimates. Nothing it writes appears on your menu until you confirm the dish.</lang>
+                </p>
+                <p class="text-muted">
+                    <lang class="lang_nutrition_pass_cost">This asks your own AI provider once per dish, so it costs what that provider charges. Dishes you have already filled in by hand are skipped.</lang>
+                </p>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="nutrition_pass_category"><lang class="lang_which_dishes">Which dishes</lang></label>
+                        <select class="form-control border-control" id="nutrition_pass_category"></select>
+                    </div>
+                </div>
+
+                <div class="nutrition-pass-state" id="nutrition_pass_state"></div>
+
+                <div class="progress" id="nutrition_pass_bar_wrap" style="display:none;">
+                    <div class="progress-bar" id="nutrition_pass_bar" role="progressbar" style="width:0%;"></div>
+                </div>
+                <ul class="nutrition-pass-log" id="nutrition_pass_log"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                <button type="button" class="btn btn-danger" id="nutrition_pass_stop" style="display:none;"><lang class="lang_stop">Stop</lang></button>
+                <button type="button" class="btn btn-primary" id="nutrition_pass_go" disabled><lang class="lang_start">Start</lang></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade close_on_esc" id="bulk_stock_modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

@@ -2431,6 +2431,78 @@ class ItemsController extends BaseController {
   }
 
   /**
+   * Which dishes a nutrition pass would touch.
+   *
+   * Read before the pass so the screen can say "this will ask about 214
+   * dishes" rather than starting and hoping. Gated on item.write like the
+   * rest: it is the first step of a thing that spends the shop's money.
+   */
+  async dishesWantingNutrition(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const branchId = this.model?.branchId || req.query?.branch_id || null;
+      const licenseId = this.model?.licenseId || null;
+      if (!branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await this.service.repository.dishesWantingNutrition(
+        { branchId, categoryId: req.query?.category_id || null },
+        { licenseId }
+      );
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, 'OK');
+    } catch (error) {
+      console.error('Error in dishesWantingNutrition:', error);
+      return this.error(res, 'Could not read the menu', 500);
+    }
+  }
+
+  /**
+   * Estimate ONE dish and store it as an estimate.
+   *
+   * One dish per call on purpose. A server-side job over three hundred dishes
+   * is a thing that cannot be watched, cannot be stopped once it is spending,
+   * and has to invent its own progress reporting; a client walking its own
+   * list gets all three for free and stops the moment the screen is closed.
+   *
+   * The stored record says a machine said it, and that is set HERE rather
+   * than taken from the caller - a guess must not be filable as the kitchen's
+   * word. Nothing derived from it reaches a customer until somebody confirms.
+   */
+  async aiDishFactsFor(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const context = {
+        branchId: this.model?.branchId || req.body?.branch_id || null,
+        licenseId: this.model?.licenseId || null,
+      };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+
+      const itemId = String((req.body && req.body.item_id) || '').trim();
+      if (!itemId) return this.error(res, 'Which dish?', 400);
+
+      const drafted = await dishFactsDraft.draft(req.body || {}, context);
+      if (!drafted.status) return this.error(res, drafted.message, 400);
+
+      const stored = await this.service.repository.storeEstimatedDishFacts(
+        itemId,
+        drafted.data,
+        context
+      );
+      if (!stored.status) return this.error(res, stored.message, 400);
+      return this.success(res, { ...stored.data, claims: drafted.data.claims }, stored.message);
+    } catch (error) {
+      console.error('Error in aiDishFactsFor:', error);
+      return this.error(res, 'Could not estimate the nutrition', 500);
+    }
+  }
+
+  /**
    * Should the item screen offer an AI button at all?
    *
    * Answers a boolean and a reason, never a key and never a balance. A shop

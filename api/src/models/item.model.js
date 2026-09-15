@@ -143,6 +143,20 @@ const itemSchema = new mongoose.Schema(
     nutrition: { type: mongoose.Schema.Types.Mixed, default: {} },
 
     /*
+     * WHO SAID SO: '' or 'kitchen' for a person, 'estimated' for a machine.
+     *
+     * Empty means kitchen, deliberately: everything stored before this field
+     * existed was typed into the item screen and saved by somebody, so it is
+     * confirmed, and reading the absence as "unverified" would strip the
+     * badges off every dish already done.
+     *
+     * utils/dish-facts.js publishes NOTHING derived from estimated numbers -
+     * no claims and no calorie figure - until a person confirms them. See the
+     * note on factsFor for why that door has to be shut.
+     */
+    nutrition_source: { type: String, trim: true, default: '' },
+
+    /*
      * What is and is not IN the dish: plant based, Jain, gluten free, nut
      * free, organic, no added sugar. See FOOD_TAGS in utils/dish-facts.js.
      *
@@ -262,6 +276,7 @@ class ItemModel {
     prep_note: { type: 'String', select: true },
     prep_minutes: { type: 'Number', select: true },
     nutrition: { type: 'Object', select: true },
+    nutrition_source: { type: 'String', select: true },
     food_tags: { type: 'Array', select: true },
     menu_marks: { type: 'Array', select: true },
     isAvailable: { type: 'Boolean', select: true },

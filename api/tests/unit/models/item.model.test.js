@@ -789,7 +789,9 @@ describe('Item.LegacyItemModel › class identity', () => {
     // + nutrition/food_tags/menu_marks (what is on the plate - see
     // utils/dish-facts.js; the health CLAIMS are derived from these and are
     // deliberately NOT fields, so a dish can never store one).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(76);
+    // + nutrition_source (who said so: a person, or a machine that guessed;
+    //   dish-facts publishes nothing derived from an estimate).
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(77);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
@@ -810,6 +812,10 @@ describe('Item.LegacyItemModel › class identity', () => {
            turning red - the menu would simply stop showing nutrition and
            nobody would know which change did it. */
         nutrition: expect.any(Object),
+        /* Named because the whole honesty rule turns on it: a read that does
+           not project this cannot tell a measured number from a guess, and
+           would publish both. */
+        nutrition_source: expect.any(Object),
         food_tags: expect.any(Object),
         menu_marks: expect.any(Object),
       })

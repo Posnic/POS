@@ -1749,6 +1749,11 @@ class ItemRepository extends BaseModel {
          * save or the next one deletes them.
          */
         nutrition: dishFacts.cleanNutrition(data.nutrition),
+        /* Only the one word means anything; everything else is a person. A
+           client that omits it is the item screen, where a person is looking
+           at the numbers as they save. */
+        nutrition_source:
+          String(data.nutrition_source || '').trim() === 'estimated' ? 'estimated' : '',
         food_tags: dishFacts.cleanTags(data.food_tags, dishFacts.FOOD_TAGS),
         menu_marks: dishFacts.cleanTags(data.menu_marks, dishFacts.MENU_MARKS),
         isAvailable: Boolean(data.ecommerce),
@@ -3967,6 +3972,7 @@ class ItemRepository extends BaseModel {
                NOT read - they are derived from these below, so a dish can
                never carry a claim its own nutrition contradicts. */
             nutrition: 1,
+            nutrition_source: 1,
             food_tags: 1,
             menu_marks: 1,
           },
@@ -4453,6 +4459,7 @@ class ItemRepository extends BaseModel {
                 /* What is on the plate and what is in it. Folded into
                    facts and CLAIMS below and do not travel raw. */
                 nutrition: '$nutrition',
+                nutrition_source: '$nutrition_source',
                 food_tags: '$food_tags',
                 menu_marks: '$menu_marks',
                 /* Every photo, and the serving periods, so the ordering page
@@ -4645,7 +4652,15 @@ class ItemRepository extends BaseModel {
       for (const group of results) {
         group.items = (group.items || []).map((item) => {
           const timing = onlineOrdering.itemAvailability(item, dayparts, nowDay, nowMinutes);
-          const { multi_image, daypart_ids, nutrition, food_tags, menu_marks, ...rest } = item;
+          const {
+            multi_image,
+            daypart_ids,
+            nutrition,
+            nutrition_source,
+            food_tags,
+            menu_marks,
+            ...rest
+          } = item;
           return {
             ...rest,
             photos: onlineOrdering.photoList({ image: item.img, multi_image }),
@@ -4658,7 +4673,7 @@ class ItemRepository extends BaseModel {
              * earned - there is no second path where a stored claim could
              * slip out beside them.
              */
-            ...dishFacts.factsFor({ nutrition, food_tags, menu_marks }),
+            ...dishFacts.factsFor({ nutrition, nutrition_source, food_tags, menu_marks }),
           };
         });
       }
@@ -5020,6 +5035,160 @@ class ItemRepository extends BaseModel {
     } catch (error) {
       console.error('Error in ItemRepository.updateItemQuantity:', error);
       throw error;
+    }
+  }
+
+  /*
+   * Store what a machine guessed about ONE dish, and say that it guessed.
+   *
+   * A NARROW WRITE ON PURPOSE. The obvious way to do this is to replay the
+   * item form's own upsert, which writes every field on the document - and
+   * anything the caller did not happen to send comes back as a default. That
+   * is survivable when a person is looking at a form; it is not when a loop
+   * is walking three hundred dishes unattended.
+   *
+   * So four fields, by name, and nothing else is touched.
+   *
+   * nutrition_source is set HERE rather than taken from the caller, so a
+   * guess cannot be filed as the kitchen's word by a client that forgot - or
+   * by one that lied. utils/dish-facts.js then publishes nothing derived from
+   * it until a person confirms.
+   *
+   * Only fills what is EMPTY. A shop part-way through doing this by hand must
+   * not have its own figures replaced by a guess, and the pass has to be safe
+   * to run twice.
+   */
+  /*
+   * The dishes a nutrition pass would actually touch.
+   *
+   * Asked for BEFORE the pass runs so the shop is told what it is about to
+   * spend: this costs one call to their own AI provider per dish, and "run
+   * this over your menu" with no number in front of it is not a choice
+   * anybody can make. It is also what lets the screen show progress against
+   * a total rather than a spinner.
+   *
+   * A dish already answered by a person is not in it - see
+   * storeEstimatedDishFacts - so running the pass twice is cheap the second
+   * time rather than a second bill.
+   */
+  async dishesWantingNutrition({ branchId, categoryId } = {}, context = {}) {
+    try {
+      const collection = await this.getCollection(this.collectionName);
+      const branch = branchId || BaseModel.currentBranch;
+      /* BaseModel.license, not .licenseId - the latter does not exist on it,
+         so the filter would simply have no licence clause and the scoping
+         would be gone with nothing to show for it. */
+      const license = context.licenseId || BaseModel.license;
+
+      const filter = {
+        del_status: { $nin: [1, '1', true] },
+        $or: [
+          { nutrition: { $exists: false } },
+          { nutrition: {} },
+          { nutrition_source: 'estimated' },
+        ],
+      };
+      if (branch && ObjectId.isValid(String(branch))) {
+        filter['branch_access.branch_id'] = new ObjectId(String(branch));
+      }
+      if (license && ObjectId.isValid(String(license))) {
+        filter.license = new ObjectId(String(license));
+      }
+      if (categoryId && ObjectId.isValid(String(categoryId))) {
+        filter.category_id = new ObjectId(String(categoryId));
+      }
+
+      const rows = await collection
+        .find(filter, {
+          projection: {
+            _id: 1,
+            name: 1,
+            category_name: 1,
+            description: 1,
+            diet: 1,
+            nutrition_source: 1,
+          },
+        })
+        .sort({ category_name: 1, name: 1 })
+        .limit(1000)
+        .toArray();
+
+      return {
+        status: true,
+        message: 'OK',
+        data: rows.map((r) => ({
+          item_id: String(r._id),
+          name: r.name || '',
+          category_name: r.category_name || '',
+          description: r.description || '',
+          diet: r.diet || '',
+          estimated: String(r.nutrition_source || '') === 'estimated',
+        })),
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.dishesWantingNutrition:', error);
+      return { status: false, message: error.message, data: [] };
+    }
+  }
+
+  async storeEstimatedDishFacts(itemId, facts = {}, context = {}) {
+    try {
+      const collection = await this.getCollection(this.collectionName);
+      const _id = ObjectId.isValid(String(itemId)) ? new ObjectId(String(itemId)) : itemId;
+      /* BaseModel.license, not .licenseId - the latter does not exist on it,
+         so the filter would simply have no licence clause and the scoping
+         would be gone with nothing to show for it. */
+      const license = context.licenseId || BaseModel.license;
+
+      const filter = { _id };
+      if (license)
+        filter.license = ObjectId.isValid(String(license))
+          ? new ObjectId(String(license))
+          : license;
+
+      const before = await collection.findOne(filter, {
+        projection: { nutrition: 1, nutrition_source: 1, food_tags: 1, diet: 1 },
+      });
+      if (!before) return { status: false, message: 'Item not found', data: null };
+
+      /* Somebody has already answered for this dish. Nothing here overrules
+         a person, and a run that skips those is a run that can be repeated. */
+      const already = dishFacts.cleanNutrition(before.nutrition);
+      const confirmed = String(before.nutrition_source || '').trim() !== 'estimated';
+      if (Object.keys(already).length && confirmed) {
+        return { status: true, message: 'Already answered', data: { skipped: true } };
+      }
+
+      const nutrition = dishFacts.cleanNutrition(facts.nutrition);
+      if (!Object.keys(nutrition).length) {
+        return { status: false, message: 'Nothing usable to store', data: null };
+      }
+
+      const set = {
+        nutrition,
+        nutrition_source: 'estimated',
+        nutrition_estimated_at: new Date(),
+        updated_date: new Date(),
+      };
+
+      /* Tags and the veg dot join what the kitchen already ticked rather than
+         replacing it: those are the shop's own statements about its recipe. */
+      const ticked = dishFacts.cleanTags(before.food_tags, dishFacts.FOOD_TAGS);
+      const guessed = dishFacts.cleanTags(facts.food_tags, dishFacts.FOOD_TAGS);
+      const merged = [...new Set([...ticked, ...guessed])];
+      if (merged.length !== ticked.length) set.food_tags = merged;
+
+      if (facts.diet && !String(before.diet || '').trim()) set.diet = String(facts.diet).trim();
+
+      await collection.updateOne(filter, { $set: set });
+      return {
+        status: true,
+        message: 'Stored as an estimate',
+        data: { item_id: String(itemId), nutrition, food_tags: set.food_tags || ticked },
+      };
+    } catch (error) {
+      console.error('Error in ItemRepository.storeEstimatedDishFacts:', error);
+      return { status: false, message: error.message, data: null };
     }
   }
 
