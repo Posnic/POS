@@ -610,6 +610,7 @@ PosnicPro.customers = {
                     $('.indian-gstr').show();
                     $("#customer_gst_type option[value='" + data.gst_type + "']").prop("selected", true);
                     $('#customer_gstin_number').val(data.gst_number);
+                    $('#customer_company_name').val(data.company_name || '');
                     $('.customer-gstr-number').hide();
                     if (data.gst_type !== 'consumer') {
                         $('.customer-gstr-number').show();

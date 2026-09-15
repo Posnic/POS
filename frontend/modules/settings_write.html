@@ -5417,6 +5417,125 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!--
+                                                    WHAT THE BILL CARRIES.
+
+                                                    One place, as the owner asked: "we have those as optional. no
+                                                    need to incluede... based on settings we can add it. like toggle
+                                                    or desgn in one place for printing receipt."
+
+                                                    Every one of these is the restaurant talking to itself, so every
+                                                    one is OFF unless the shop turns it on. The kitchen ticket
+                                                    carries all of them regardless and is not affected by anything
+                                                    on this card - a cook who cannot see the table number cannot
+                                                    send the food anywhere.
+                                                -->
+                                                <hr class="mt-4 mb-3">
+                                                <h6 class="mb-1">
+                                                    <i class="feather icon-file-text mr-2"></i>
+                                                    <lang class="lang_what_the_bill_carries">What the bill carries</lang>
+                                                </h6>
+                                                <p class="text-muted mb-3" style="font-size:12.5px;">
+                                                    <lang class="lang_what_the_bill_carries_hint">Extra rows on the
+                                                    customer's copy. All off by default, because the kitchen ticket
+                                                    already carries them. Turn on whichever your bills are expected
+                                                    to show.</lang>
+                                                </p>
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_table" name="bill_print_table" />
+                                                            <label for="bill_print_table">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_table_title">Table</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_table_hint">Which table the bill belongs to.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_dine_type" name="bill_print_dine_type" />
+                                                            <label for="bill_print_dine_type">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_ordertype_title">Order Type</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_dine_type_hint">Dine in, takeaway or delivery.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_covers" name="bill_print_covers" />
+                                                            <label for="bill_print_covers">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_covers">Covers</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_covers_hint">How many people were at the table.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_steward" name="bill_print_steward" />
+                                                            <label for="bill_print_steward">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_steward">Steward</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_steward_hint">Who took the order.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_total_qty" name="bill_print_total_qty" />
+                                                            <label for="bill_print_total_qty">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_total_qty">Total quantity</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_total_qty_hint">How many dishes in all, not how many lines.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_source" name="bill_print_source" />
+                                                            <label for="bill_print_source">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_source">Where the order came from</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_source_hint">Till, captain app, customer phone, or the aggregator by name.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="alert alert-info mb-0" style="font-size:13px;">
+                                                    <b><lang class="lang_customer_gstin_always_prints">A customer's own GSTIN always prints.</lang></b>
+                                                    <lang class="lang_customer_gstin_always_prints_hint">It needs no
+                                                    switch. A business buying a meal can only reclaim the tax against
+                                                    an invoice carrying its GSTIN, so if a customer has given one it
+                                                    goes on their bill. Add it on the customer, under GST Fields.</lang>
+                                                </div>
                                             </div>
 
                                         </div>

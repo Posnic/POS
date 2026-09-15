@@ -490,6 +490,7 @@ class SalesRepository {
           doc.customer_country = customerData.country || doc.customer_country || '';
           doc.customer_gst_type = doc.customer_gst_type || customerData.gst_type || '';
           doc.customer_gst_number = doc.customer_gst_number || customerData.gst_number || '';
+          doc.customer_company_name = doc.customer_company_name || customerData.company_name || '';
           const balanceValue =
             typeof customerData.balance === 'number'
               ? customerData.balance

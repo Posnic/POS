@@ -69,9 +69,19 @@ test('the storefront strips the raw fields before sending the derived ones', () 
    * same statement that spreads the rest, or the derived list and the raw
    * list travel together and a page picks one.
    */
+  /*
+   * Whitespace-tolerant between `...rest` and the closing brace, because the
+   * thing being asserted is the DESTRUCTURING, not the formatting.
+   *
+   * The pattern used to require `...rest } = item;` on one line, which was
+   * true when it was written and stopped being true the moment the list grew
+   * long enough for prettier to break it across lines. The code was still
+   * correct; only the regex had gone stale, and it failed on develop looking
+   * exactly like a real leak of stored claims to a customer.
+   */
   assert.match(
     source,
-    /const \{[^}]*nutrition,[^}]*food_tags,[^}]*menu_marks,[^}]*\.\.\.rest \} = item;/,
+    /const \{[^}]*nutrition,[^}]*food_tags,[^}]*menu_marks,[^}]*\.\.\.rest\s*\}\s*=\s*item;/,
     'storefront must destructure the raw facts out of the outgoing item'
   );
 });
