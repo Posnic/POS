@@ -1273,6 +1273,9 @@ class SettingModel extends BaseModel {
       billPrint.bill_print_steward = this.toBoolean(data.bill_print_steward);
       billPrint.bill_print_total_qty = this.toBoolean(data.bill_print_total_qty);
       billPrint.bill_print_source = this.toBoolean(data.bill_print_source);
+      billPrint.bill_print_session = this.toBoolean(data.bill_print_session);
+      billPrint.bill_print_hsn = this.toBoolean(data.bill_print_hsn);
+      billPrint.bill_print_fssai = this.toBoolean(data.bill_print_fssai);
       const keyboardView = this.toBoolean(data.keyboard_view);
       const customerCheckbox = this.toBoolean(data.customer_checkbox);
       const supplierCheckbox = this.toBoolean(data.supplier_checkbox);
@@ -1365,6 +1368,10 @@ class SettingModel extends BaseModel {
         bill_print_steward: billPrint.bill_print_steward,
         bill_print_total_qty: billPrint.bill_print_total_qty,
         bill_print_source: billPrint.bill_print_source,
+        bill_print_session: billPrint.bill_print_session,
+        bill_print_hsn: billPrint.bill_print_hsn,
+        bill_print_fssai: billPrint.bill_print_fssai,
+        branch_fssai_number: String(data.branch_fssai_number || '').trim(),
         sales_sms: smsReceipt,
         auto_sms: smsAutoReceipt,
         enable_sms_reminders: enableSmsReminders,
@@ -1502,6 +1509,10 @@ class SettingModel extends BaseModel {
         bill_print_steward: 'bill_print_steward',
         bill_print_total_qty: 'bill_print_total_qty',
         bill_print_source: 'bill_print_source',
+        bill_print_session: 'bill_print_session',
+        bill_print_hsn: 'bill_print_hsn',
+        bill_print_fssai: 'bill_print_fssai',
+        branch_fssai_number: 'branch_fssai_number',
         sales_sms: 'sales_sms',
         auto_sms: 'auto_sms',
         enable_sms_reminders: 'enable_sms_reminders',

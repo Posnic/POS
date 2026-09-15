@@ -105,6 +105,9 @@ const branchSchema = new Schema(
     print_logoimg: { type: Boolean, default: false },
     print_sale_notes: { type: Boolean, default: false },
     receipt_barcode: { type: Boolean, default: false },
+    /* The food licence a shop prints on its invoices. Text, not a switch: the
+       switch decides whether to show it, this is the number itself. */
+    branch_fssai_number: { type: String, trim: true, default: '' },
     /*
      * WHAT THE BILL CARRIES, beyond the dishes and the total.
      *
@@ -123,6 +126,9 @@ const branchSchema = new Schema(
     bill_print_steward: { type: Boolean, default: false },
     bill_print_total_qty: { type: Boolean, default: false },
     bill_print_source: { type: Boolean, default: false },
+    bill_print_session: { type: Boolean, default: false },
+    bill_print_hsn: { type: Boolean, default: false },
+    bill_print_fssai: { type: Boolean, default: false },
     keyboard_view: { type: Boolean, default: false },
     balance_view: { type: Boolean, default: true },
     customer_checkbox: { type: Boolean, default: false },
@@ -290,6 +296,10 @@ class BranchModel {
       bill_print_steward: { type: 'String', select: true },
       bill_print_total_qty: { type: 'String', select: true },
       bill_print_source: { type: 'String', select: true },
+      bill_print_session: { type: 'String', select: true },
+      bill_print_hsn: { type: 'String', select: true },
+      bill_print_fssai: { type: 'String', select: true },
+      branch_fssai_number: { type: 'String', select: true },
       print_type: { type: 'String', select: true },
       bill_print_copies: { type: 'Number', select: true },
       printing_size: { type: 'String', select: true },
@@ -1076,6 +1086,10 @@ class BranchModel {
         bill_print_steward: false,
         bill_print_total_qty: false,
         bill_print_source: false,
+        bill_print_session: false,
+        bill_print_hsn: false,
+        bill_print_fssai: false,
+        branch_fssai_number: '',
         api: [],
         printall: false,
         keyboard_view: false,

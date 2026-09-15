@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "{n} pratos foram estimados e ainda não estão em nenhum menu.",
   "lang_no_badges_earned": "sem selos",
   "lang_nothing_waiting_to_check": "Não há nada à espera de verificação aqui.",
-  "lang_review_what": "Estes foram estimados a partir do nome do prato e não estão em nenhum menu. Confirmar um prato publica os selos mostrados ao lado. Aqui não muda nenhum número: abra o prato para corrigir algo."
+  "lang_review_what": "Estes foram estimados a partir do nome do prato e não estão em nenhum menu. Confirmar um prato publica os selos mostrados ao lado. Aqui não muda nenhum número: abra o prato para corrigir algo.",
+  "lang_14_digits": "14 dígitos",
+  "lang_bill_print_session": "Serviço",
+  "lang_bill_print_session_hint": "Almoço ou jantar, a partir dos horários de serviço já definidos para o cardápio.",
+  "lang_bill_print_hsn": "Código HSN / SAC",
+  "lang_bill_print_hsn_hint": "Uma coluna ao lado de cada prato. Só as linhas que têm código o mostram.",
+  "lang_bill_print_fssai": "Número de licença FSSAI",
+  "lang_bill_print_fssai_hint": "Impresso sob o seu GSTIN. Na Índia, negócios de alimentos devem exibi-lo.",
+  "lang_fssai_number": "Número de licença FSSAI",
+  "lang_fssai_number_hint": "Ative \"Número de licença FSSAI\" acima para imprimi-lo."
 }

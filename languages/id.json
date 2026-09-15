@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "{n} hidangan diperkirakan dan belum ada di menu mana pun.",
   "lang_no_badges_earned": "tanpa lencana",
   "lang_nothing_waiting_to_check": "Tidak ada yang menunggu diperiksa di sini.",
-  "lang_review_what": "Ini diperkirakan dari nama hidangan dan belum ada di menu mana pun. Mengonfirmasi satu hidangan akan menampilkan lencana di sebelahnya. Tidak ada angka yang berubah di sini: buka hidangan untuk memperbaiki apa pun."
+  "lang_review_what": "Ini diperkirakan dari nama hidangan dan belum ada di menu mana pun. Mengonfirmasi satu hidangan akan menampilkan lencana di sebelahnya. Tidak ada angka yang berubah di sini: buka hidangan untuk memperbaiki apa pun.",
+  "lang_14_digits": "14 digit",
+  "lang_bill_print_session": "Sesi",
+  "lang_bill_print_session_hint": "Makan siang atau malam, dari jam sajian yang sudah Anda atur untuk menu.",
+  "lang_bill_print_hsn": "Kode HSN / SAC",
+  "lang_bill_print_hsn_hint": "Satu kolom di samping tiap hidangan. Hanya baris yang punya kode yang menampilkannya.",
+  "lang_bill_print_fssai": "Nomor lisensi FSSAI",
+  "lang_bill_print_fssai_hint": "Dicetak di bawah GSTIN Anda. Usaha makanan di India diharapkan menampilkannya.",
+  "lang_fssai_number": "Nomor lisensi FSSAI",
+  "lang_fssai_number_hint": "Nyalakan \"Nomor lisensi FSSAI\" di atas untuk mencetaknya."
 }

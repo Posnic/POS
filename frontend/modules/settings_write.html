@@ -5516,6 +5516,48 @@
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_session" name="bill_print_session" />
+                                                            <label for="bill_print_session">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_session">Session</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_session_hint">Lunch or dinner, from the serving times you already set for the menu.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_hsn" name="bill_print_hsn" />
+                                                            <label for="bill_print_hsn">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_hsn">HSN / SAC code</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_hsn_hint">A column beside each dish. Only lines that have a code show one.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
+                                                            <input type="checkbox" id="bill_print_fssai" name="bill_print_fssai" />
+                                                            <label for="bill_print_fssai">
+                                                                <span style="font-size:13px;">
+                                                                    <lang class="lang_bill_print_fssai">FSSAI licence number</lang>
+                                                                </span>
+                                                                <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
+                                                                    <lang class="lang_bill_print_fssai_hint">Printed under your GSTIN. Food businesses in India are expected to show it.</lang>
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <div class="wallet-box"
+                                                            style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_source" name="bill_print_source" />
                                                             <label for="bill_print_source">
                                                                 <span style="font-size:13px;">
@@ -5526,6 +5568,21 @@
                                                                 </small>
                                                             </label>
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="branch_fssai_number">
+                                                            <lang class="lang_fssai_number">FSSAI licence number</lang>
+                                                        </label>
+                                                        <input type="text" class="form-control border-control"
+                                                            name="branch_fssai_number" id="branch_fssai_number"
+                                                            maxlength="20" placeholder="14 digits"
+                                                            data-t-placeholder="lang_14_digits" autocomplete="off">
+                                                        <small class="form-text text-muted">
+                                                            <lang class="lang_fssai_number_hint">Switch on "FSSAI licence number" above to print it.</lang>
+                                                        </small>
                                                     </div>
                                                 </div>
 

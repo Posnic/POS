@@ -3152,5 +3152,14 @@
   "lang_n_estimates_waiting": "{n} Gerichte wurden geschätzt und stehen auf keiner Karte.",
   "lang_no_badges_earned": "keine Auszeichnungen",
   "lang_nothing_waiting_to_check": "Hier wartet nichts auf Prüfung.",
-  "lang_review_what": "Diese wurden aus dem Gerichtsnamen geschätzt und stehen auf keiner Karte. Ein bestätigtes Gericht veröffentlicht die daneben gezeigten Auszeichnungen. Hier ändert sich keine Zahl: Öffnen Sie das Gericht, um etwas zu korrigieren."
+  "lang_review_what": "Diese wurden aus dem Gerichtsnamen geschätzt und stehen auf keiner Karte. Ein bestätigtes Gericht veröffentlicht die daneben gezeigten Auszeichnungen. Hier ändert sich keine Zahl: Öffnen Sie das Gericht, um etwas zu korrigieren.",
+  "lang_14_digits": "14 Ziffern",
+  "lang_bill_print_session": "Service",
+  "lang_bill_print_session_hint": "Mittag- oder Abendessen, aus den Servicezeiten, die Sie für die Karte gesetzt haben.",
+  "lang_bill_print_hsn": "HSN-/SAC-Code",
+  "lang_bill_print_hsn_hint": "Eine Spalte neben jedem Gericht. Nur Zeilen mit einem Code zeigen einen.",
+  "lang_bill_print_fssai": "FSSAI-Lizenznummer",
+  "lang_bill_print_fssai_hint": "Wird unter Ihrer GSTIN gedruckt. Lebensmittelbetriebe in Indien müssen sie zeigen.",
+  "lang_fssai_number": "FSSAI-Lizenznummer",
+  "lang_fssai_number_hint": "Schalten Sie oben \"FSSAI-Lizenznummer\" ein, um sie zu drucken."
 }
