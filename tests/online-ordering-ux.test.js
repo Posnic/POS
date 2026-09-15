@@ -2866,6 +2866,108 @@ test('a held order is told what is waited on, and how long this shop usually tak
   assert.match(newShop.document.getElementById('progress-next').textContent, /^Waiting for the shop to accept it\.$/);
 });
 
+test('THE THANK-YOU PAGE ACTUALLY ASKS THE SHOP, which it never once did', async () => {
+  /*
+   * The bug under Stage 5, and it had been there since the bill button was
+   * written. The page resolved the shop through `knownBranchId()` and the
+   * order through `rememberedOrders()`, both of which live in indexedDB.js -
+   * WHICH THIS PAGE DOES NOT LOAD. Both calls were written behind
+   * `typeof ... === "function"` guards, so nothing threw and nothing showed:
+   * the shop id came out empty, the function returned before its first
+   * request, and the bill-when-paid and pay-by-UPI features silently did
+   * nothing here for their whole lives.
+   *
+   * Loading indexedDB.js instead would start a timer that refetches the whole
+   * menu every ten seconds behind a page showing a token.
+   */
+  const html = read('thankyou.html');
+  assert.ok(
+    !/<script src="indexedDB\.js/.test(html),
+    'the token screen now carries the ten-second menu refresh'
+  );
+  const script = read('assets/thankyou/script.js');
+  assert.ok(
+    !/typeof knownBranchId === "function"/.test(script) &&
+      !/typeof rememberedOrders === "function"/.test(script),
+    'the page is guarding on a function it never loads again'
+  );
+
+  /* And the key it reads the shop from is the key indexedDB.js writes. A
+     rename on one side puts this page straight back where it was. */
+  assert.match(script, /const STORE_ADDRESS_KEY = "posnic_store";/);
+  assert.match(read('indexedDB.js'), /const STORE_ADDRESS_KEY = "posnic_store";/);
+
+  /* Now the behaviour: one request, to this shop, for this order. */
+  const dom = new JSDOM(html, { url: 'https://shop.example/order/thankyou.html?token=042&order=o1' });
+  const src = read('assets/thankyou/script.js');
+  const cut = (name) => {
+    const at = src.indexOf('async function ' + name + '(') > -1
+      ? src.indexOf('async function ' + name + '(')
+      : src.indexOf('function ' + name + '(');
+    assert.ok(at > -1, 'thankyou/script.js no longer defines ' + name);
+    return src.slice(at, src.indexOf('\n}\n', at) + 3);
+  };
+  const asked = [];
+  const sandbox = {
+    window: dom.window,
+    document: dom.window.document,
+    URLSearchParams: dom.window.URLSearchParams,
+    localStorage: { getItem: (key) => (key === 'posnic_store' ? 'AZ100' : null) },
+    /* The receipt this phone was handed at checkout, which is the other way
+       onto this page. */
+    receiptData: { sale_id: 'o1' },
+    CONFIG: { API_BASE_URL: 'https://shop.example/api' },
+    String,
+    Number,
+    encodeURIComponent,
+    console,
+    fetch: async (url) => {
+      asked.push(url);
+      return { ok: false };
+    },
+    /* Stubbed: what they do is pinned by the tests above this one. */
+    drawProgress: () => {},
+    offerMoneyOrBill: async () => {},
+    laterWhenLooking: () => {},
+    askPace: () => 0,
+    MOST_ASKS: 40,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(
+    ['const STORE_ADDRESS_KEY = "posnic_store";', cut('whichOrder'), cut('watchTheOrder')].join('\n'),
+    sandbox
+  );
+
+  await sandbox.watchTheOrder('042');
+  assert.strictEqual(asked.length, 1, 'the page asked the shop nothing');
+  assert.strictEqual(
+    asked[0],
+    'https://shop.example/api/online-ordering/AZ100/orders/o1?token=042'
+  );
+
+  /* A phone that kept nothing asks nothing, rather than throwing on a page
+     whose only job is to show a token. */
+  const blind = { ...sandbox, asked: null };
+  blind.localStorage = {
+    getItem: () => {
+      throw new Error('this browser keeps nothing');
+    },
+  };
+  const none = [];
+  blind.fetch = async (url) => {
+    none.push(url);
+    return { ok: false };
+  };
+  vm.createContext(blind);
+  vm.runInContext(
+    ['const STORE_ADDRESS_KEY = "posnic_store";', cut('whichOrder'), cut('watchTheOrder')].join('\n'),
+    blind
+  );
+  await blind.watchTheOrder('042');
+  assert.deepStrictEqual(none, []);
+  dom.window.close();
+});
+
 test('it stops asking when nothing more can happen, and never asks a pocket', () => {
   const script = read('assets/thankyou/script.js');
   /* Refused, cancelled or paid: there is nothing left to redraw. */
