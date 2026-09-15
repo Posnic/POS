@@ -164,3 +164,75 @@ test('the file actually ships', () => {
   const map = fs.readFileSync(path.join(ROOT, 'frontend', 'pages_css_js_map.json'), 'utf8');
   assert.match(map, /static\/script\/js\/core\/nutrition-pass\.js/);
 });
+
+/* --------------------------------------------- and then checking them */
+
+test('confirming is the other half, and it is not 272 presses either', () => {
+  /*
+   * The pass made ESTIMATING a menu cheap and left CONFIRMING it at one dish
+   * at a time - open the item, save it - which on 272 dishes is the same 272
+   * presses, moved one step along. A feature that stops there publishes
+   * nothing, because confirming is the only thing that lets a badge out.
+   */
+  assert.match(REPO, /async estimatedDishes\(/);
+  assert.match(REPO, /async confirmEstimatedNutrition\(/);
+  assert.match(CONTROLLER, /async confirmNutrition\(req, res\)/);
+  assert.match(HTML, /id="nutrition_review_modal"/);
+});
+
+test('confirming changes who said so, and not one number', () => {
+  /*
+   * THE LINE THAT MATTERS ON THIS SCREEN. A confirm that also edited would be
+   * a second way for figures to reach a dish, and the whole feature rests on
+   * there being exactly one - the item form, where a person types them.
+   */
+  const confirm = REPO.slice(REPO.indexOf('async confirmEstimatedNutrition('));
+  const body = confirm.slice(0, confirm.indexOf('\n  async ', 10));
+
+  assert.match(body, /nutrition_source: '',/);
+  assert.match(body, /nutrition_confirmed_at/);
+  assert.ok(
+    !/nutrition:|food_tags:|menu_marks:|diet:/.test(body.replace(/nutrition_\w+/g, '')),
+    'confirming writes a figure, so there are now two ways for one to arrive'
+  );
+});
+
+test('only a dish that is still an estimate can be confirmed', () => {
+  /*
+   * Somebody may have answered a dish by hand between the screen reading the
+   * list and the button being pressed. That answer is already the shop's word
+   * and must not be re-stamped, and the filter says so rather than the page
+   * being trusted to have sent a list that is still true.
+   */
+  const confirm = REPO.slice(REPO.indexOf('async confirmEstimatedNutrition('));
+  const body = confirm.slice(0, confirm.indexOf('\n  async ', 10));
+  assert.match(body, /nutrition_source: 'estimated'/, 'the filter does not check what it is replacing');
+});
+
+test('the screen shows what confirming would publish, not just numbers', () => {
+  /*
+   * A shop scanning calorie figures is being asked to check arithmetic it has
+   * no way to check. A shop reading "Grilled Chicken - High protein, Heart
+   * healthy" is being asked the question it can actually answer. Those badges
+   * are exactly what confirming publishes.
+   *
+   * They are DERIVED on the read, the same way the customer menu derives
+   * them, so what is approved is what a customer will see.
+   */
+  const read = REPO.slice(REPO.indexOf('async estimatedDishes('));
+  const body = read.slice(0, read.indexOf('\n  async ', 10));
+  assert.match(body, /claims: dishFacts\.claimsFor\(nutrition, tags\)/);
+
+  assert.match(PASS, /function reviewRow\(/);
+  assert.match(PASS, /nutrition-review-claim/);
+});
+
+test('both pickers get filled, not just the first one', () => {
+  /*
+   * fillCategories hard-wired the pass's select. A second screen using it
+   * would have filled that one and left its own picker showing nothing but
+   * "The whole menu" - which looks right and silently narrows nothing.
+   */
+  assert.match(PASS, /function fillCategories\(intoId\)/);
+  assert.match(PASS, /fillCategories\('nutrition_review_category'\)/);
+});

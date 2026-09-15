@@ -2431,6 +2431,66 @@ class ItemsController extends BaseController {
   }
 
   /**
+   * The estimates waiting to be confirmed, with what each would publish.
+   */
+  async estimatedDishes(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const branchId = this.model?.branchId || req.query?.branch_id || null;
+      const licenseId = this.model?.licenseId || null;
+      if (!branchId) return this.error(res, 'Branch context is required', 400);
+
+      const result = await this.service.repository.estimatedDishes(
+        { branchId, categoryId: req.query?.category_id || null },
+        { licenseId }
+      );
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, 'OK');
+    } catch (error) {
+      console.error('Error in estimatedDishes:', error);
+      return this.error(res, 'Could not read the estimates', 500);
+    }
+  }
+
+  /**
+   * A person stands behind those numbers, so they may be published.
+   *
+   * Gated on item.write because it is a write - and because publishing a
+   * health claim about food is exactly the decision that should belong to
+   * somebody allowed to edit the catalogue.
+   */
+  async confirmNutrition(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      await this.ensureContext(req);
+      const licenseId = this.model?.licenseId || null;
+
+      const ids = (req.body && req.body.item_ids) || [];
+      if (!Array.isArray(ids) || !ids.length) {
+        return this.error(res, 'Which dishes?', 400);
+      }
+      /* A cap, because this is an updateMany driven by a list from a page.
+         The review screen reads at most a thousand rows, so a request longer
+         than that is not the screen asking. */
+      if (ids.length > 1000) {
+        return this.error(res, 'Too many dishes in one request', 400);
+      }
+
+      const result = await this.service.repository.confirmEstimatedNutrition(ids, { licenseId });
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in confirmNutrition:', error);
+      return this.error(res, 'Could not confirm the nutrition', 500);
+    }
+  }
+
+  /**
    * Which dishes a nutrition pass would touch.
    *
    * Read before the pass so the screen can say "this will ask about 214

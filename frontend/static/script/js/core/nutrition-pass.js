@@ -278,8 +278,12 @@
    * an earlier draft of this invented one, which would have quietly rendered
    * an empty picker on every shop.
    */
-  function fillCategories() {
-    var sel = el('nutrition_pass_category');
+  /* Takes the select's id: two screens use this now, and a version that
+     hard-wired one of them would have filled the pass's picker while the
+     review screen sat with nothing but "The whole menu" - correct-looking
+     and wrong. */
+  function fillCategories(intoId) {
+    var sel = el(intoId || 'nutrition_pass_category');
     if (!sel) return;
     var all = '<option value="">' + esc(PosnicPro.i18n.t('lang_the_whole_menu', 'The whole menu')) + '</option>';
     sel.innerHTML = all;
@@ -293,6 +297,150 @@
           })
           .join('');
     });
+  }
+
+  /* ------------------------------------------------------------------
+   * CHECKING WHAT WAS GUESSED.
+   *
+   * The pass made estimating a menu cheap and left confirming it at one dish
+   * at a time, which on 272 dishes is the same 272 presses moved one step
+   * along. This is the other half, and confirming is the only thing that
+   * publishes a badge.
+   * ------------------------------------------------------------------ */
+
+  var estimates = [];
+
+  function sayReview(html) {
+    var box = el('nutrition_review_state');
+    if (box) box.innerHTML = html;
+  }
+
+  /* The claim words in the shop's language. The customer menu keeps its own
+     dictionary for the same keys; this is the till's side of it. */
+  function claimWord(key) {
+    var words = {
+      high_protein: PosnicPro.i18n.t('lang_claim_high_protein', 'High protein'),
+      protein_source: PosnicPro.i18n.t('lang_claim_protein_source', 'Source of protein'),
+      low_fat: PosnicPro.i18n.t('lang_claim_low_fat', 'Low fat'),
+      high_fibre: PosnicPro.i18n.t('lang_claim_high_fibre', 'High fibre'),
+      keto_friendly: PosnicPro.i18n.t('lang_claim_keto_friendly', 'Keto friendly'),
+      low_carb: PosnicPro.i18n.t('lang_claim_low_carb', 'Low carb'),
+      diabetic_friendly: PosnicPro.i18n.t('lang_claim_diabetic_friendly', 'Diabetic friendly'),
+      heart_healthy: PosnicPro.i18n.t('lang_claim_heart_healthy', 'Heart healthy'),
+      under_300: PosnicPro.i18n.t('lang_claim_under_300', 'Under 300 kcal'),
+      under_500: PosnicPro.i18n.t('lang_claim_under_500', 'Under 500 kcal'),
+      no_added_sugar: PosnicPro.i18n.t('lang_claim_no_added_sugar', 'No added sugar')
+    };
+    return words[key] || key;
+  }
+
+  /*
+   * THE BADGES LEAD, NOT THE NUMBERS.
+   *
+   * A shop scanning calorie figures is being asked to check arithmetic it has
+   * no way to check. A shop reading "Grilled Chicken - High protein, Heart
+   * healthy" is being asked the question it can actually answer: is that
+   * sentence true of my food? Those badges are exactly what confirming
+   * publishes, so they are what the row leads with.
+   */
+  function reviewRow(d) {
+    var n = d.nutrition || {};
+    var kcal = n.kcal ? Math.round(n.kcal) + ' kcal' : '';
+    var macros = ['protein_g', 'carbs_g', 'fat_g']
+      .filter(function (k) { return typeof n[k] === 'number'; })
+      .map(function (k) { return n[k] + 'g'; })
+      .join(' / ');
+
+    var badges = (d.claims || []).map(function (c) {
+      return '<span class="nutrition-review-claim">' + esc(claimWord(c)) + '</span>';
+    }).join('');
+
+    return '<label class="nutrition-review-row">' +
+      '<input type="checkbox" class="nutrition-review-tick" value="' + esc(d.item_id) + '" checked>' +
+      '<span class="nutrition-review-name">' + esc(d.name) +
+        '<small>' + esc(d.category_name) + '</small></span>' +
+      '<span class="nutrition-review-numbers">' + esc(kcal) +
+        (macros ? '<small>' + esc(macros) + '</small>' : '') + '</span>' +
+      '<span class="nutrition-review-claims">' +
+        (badges || '<em class="nutrition-review-none">' +
+          esc(PosnicPro.i18n.t('lang_no_badges_earned', 'no badges')) + '</em>') +
+      '</span>' +
+    '</label>';
+  }
+
+  function paintReviewCount() {
+    var button = el('nutrition_review_confirm');
+    if (!button) return;
+    var ticked = document.querySelectorAll('.nutrition-review-tick:checked').length;
+    button.disabled = ticked === 0;
+    button.textContent = ticked
+      ? PosnicPro.i18n.t('lang_confirm_n_dishes', 'Confirm {n} dishes').replace('{n}', ticked)
+      : PosnicPro.i18n.t('lang_confirm_checked', 'Confirm the ticked dishes');
+  }
+
+  function loadReview(categoryId) {
+    var rows = el('nutrition_review_rows');
+    if (rows) rows.innerHTML = '';
+    sayReview('<p class="text-muted">' +
+      esc(PosnicPro.i18n.t('lang_reading_the_menu', 'Reading the menu...')) + '</p>');
+
+    PosnicPro.get(
+      'items/estimatedDishes',
+      categoryId ? { category_id: categoryId } : {},
+      function (r) {
+        estimates = (r && r.data) || [];
+        if (!estimates.length) {
+          sayReview('<p>' + esc(PosnicPro.i18n.t(
+            'lang_nothing_waiting_to_check',
+            'Nothing is waiting to be checked here.'
+          )) + '</p>');
+          paintReviewCount();
+          return;
+        }
+        sayReview('<p>' + esc(PosnicPro.i18n.t(
+          'lang_n_estimates_waiting',
+          '{n} dishes were estimated and are on no menu yet.'
+        ).replace('{n}', estimates.length)) + '</p>');
+        if (rows) rows.innerHTML = estimates.map(reviewRow).join('');
+        paintReviewCount();
+      },
+      function () {
+        sayReview('<p class="text-danger">' +
+          esc(PosnicPro.i18n.t('lang_could_not_read_menu', 'Could not read the menu.')) + '</p>');
+      }
+    );
+  }
+
+  function confirmTicked() {
+    var ids = [].slice.call(document.querySelectorAll('.nutrition-review-tick:checked'))
+      .map(function (box) { return box.value; });
+    if (!ids.length) return;
+
+    var button = el('nutrition_review_confirm');
+    if (button) button.disabled = true;
+
+    PosnicPro.post(
+      { url: 'items/confirmNutrition', data: JSON.stringify({ item_ids: ids }) },
+      function (response) {
+        if (response && response.type === 'success') {
+          PosnicPro.alert('success', response.message);
+          /* Read back rather than striking the rows out here. A dish somebody
+             answered by hand in the meantime was skipped on the server, and
+             the screen should show what is actually left rather than what
+             this page assumed happened. */
+          loadReview((el('nutrition_review_category') || {}).value || '');
+          return;
+        }
+        if (button) button.disabled = false;
+        PosnicPro.alert('warning', (response && response.message) ||
+          PosnicPro.i18n.t('lang_could_not_confirm', 'Could not confirm those dishes'));
+      },
+      function () {
+        if (button) button.disabled = false;
+        PosnicPro.alert('warning',
+          PosnicPro.i18n.t('lang_could_not_confirm', 'Could not confirm those dishes'));
+      }
+    );
   }
 
   window.PosnicPro = window.PosnicPro || {};
@@ -348,6 +496,12 @@
     },
     look: look,
     start: start,
+    review: function () {
+      if (window.jQuery) jQuery('#nutrition_review_modal').modal('show');
+      fillCategories('nutrition_review_category');
+      loadReview('');
+    },
+    loadReview: loadReview,
     stop: function () {
       stopped = true;
     },
@@ -367,8 +521,19 @@
     });
 
     document.addEventListener('change', function (e) {
-      if (!e.target || e.target.id !== 'nutrition_pass_category') return;
-      look(e.target.value || '');
+      if (!e.target) return;
+      if (e.target.id === 'nutrition_pass_category') return look(e.target.value || '');
+      if (e.target.id === 'nutrition_review_category') return loadReview(e.target.value || '');
+      if (e.target.classList && e.target.classList.contains('nutrition-review-tick')) {
+        paintReviewCount();
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      var go = e.target && e.target.closest ? e.target.closest('#nutrition_review_confirm') : null;
+      if (!go) return;
+      e.preventDefault();
+      confirmTicked();
     });
   });
 })();

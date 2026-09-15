@@ -3144,5 +3144,13 @@
   "lang_refuse": "Kataa",
   "lang_requests": "Maombi",
   "lang_see_all_orders": "Fungua foleni ya maagizo",
-  "lang_table": "Meza"
+  "lang_table": "Meza",
+  "lang_check_the_estimates": "Kagua makadirio",
+  "lang_confirm_checked": "Thibitisha vyakula vilivyotiwa alama",
+  "lang_confirm_n_dishes": "Thibitisha vyakula {n}",
+  "lang_could_not_confirm": "Haikuweza kuthibitisha vyakula hivyo",
+  "lang_n_estimates_waiting": "Vyakula {n} vimekadiriwa na bado haviko kwenye menyu yoyote.",
+  "lang_no_badges_earned": "hakuna alama",
+  "lang_nothing_waiting_to_check": "Hakuna kinachosubiri kukaguliwa hapa.",
+  "lang_review_what": "Hivi vilikadiriwa kutokana na jina la chakula na bado haviko kwenye menyu yoyote. Kuthibitisha kimoja huchapisha alama zilizoonyeshwa kando yake. Hakuna namba inayobadilika hapa: fungua chakula ili kurekebisha chochote."
 }

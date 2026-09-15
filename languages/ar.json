@@ -3144,5 +3144,13 @@
   "lang_refuse": "رفض",
   "lang_requests": "الطلبات",
   "lang_see_all_orders": "افتح قائمة الطلبات",
-  "lang_table": "الطاولة"
+  "lang_table": "الطاولة",
+  "lang_check_the_estimates": "راجع التقديرات",
+  "lang_confirm_checked": "أكّد الأطباق المحددة",
+  "lang_confirm_n_dishes": "أكّد {n} طبقًا",
+  "lang_could_not_confirm": "تعذّر تأكيد تلك الأطباق",
+  "lang_n_estimates_waiting": "تم تقدير {n} طبقًا وهي ليست على أي قائمة بعد.",
+  "lang_no_badges_earned": "لا شارات",
+  "lang_nothing_waiting_to_check": "لا شيء هنا بانتظار المراجعة.",
+  "lang_review_what": "قُدّرت هذه من أسماء الأطباق وهي ليست على أي قائمة بعد. تأكيد طبق ينشر الشارات المعروضة بجانبه. لا يتغير أي رقم هنا: افتح الطبق لتصحيح أي شيء."
 }

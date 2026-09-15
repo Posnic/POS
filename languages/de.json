@@ -3144,5 +3144,13 @@
   "lang_refuse": "Ablehnen",
   "lang_requests": "Anfragen",
   "lang_see_all_orders": "Bestellliste öffnen",
-  "lang_table": "Tisch"
+  "lang_table": "Tisch",
+  "lang_check_the_estimates": "Schätzungen prüfen",
+  "lang_confirm_checked": "Ausgewählte Gerichte bestätigen",
+  "lang_confirm_n_dishes": "{n} Gerichte bestätigen",
+  "lang_could_not_confirm": "Diese Gerichte konnten nicht bestätigt werden",
+  "lang_n_estimates_waiting": "{n} Gerichte wurden geschätzt und stehen auf keiner Karte.",
+  "lang_no_badges_earned": "keine Auszeichnungen",
+  "lang_nothing_waiting_to_check": "Hier wartet nichts auf Prüfung.",
+  "lang_review_what": "Diese wurden aus dem Gerichtsnamen geschätzt und stehen auf keiner Karte. Ein bestätigtes Gericht veröffentlicht die daneben gezeigten Auszeichnungen. Hier ändert sich keine Zahl: Öffnen Sie das Gericht, um etwas zu korrigieren."
 }
