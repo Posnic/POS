@@ -205,7 +205,27 @@ test('THE SERVER ACTUALLY USES THIS, rather than keeping its own copy', () => {
   );
 });
 
-test('it is in the packaged build', () => {
+test('it is in the packaged build, WHERE SERVER.JS CAN ACTUALLY REACH IT', () => {
+  /*
+   * This checked `build.files` alone, and it was green for the entire life of
+   * the bug it was written to prevent.
+   *
+   * `build.files` puts the module inside app.asar, at src/handset-slots.js.
+   * But server.js is NOT in the asar - it is in `extraResources`, flattened to
+   * the resources root - so its `require('./handset-slots')` looks for
+   * resources/handset-slots.js and finds nothing. A shop's till threw
+   * MODULE_NOT_FOUND on every LAN request and answered none of them.
+   *
+   * Both entries are needed and they are not interchangeable. The general form
+   * of the rule, derived from what server.js actually requires rather than
+   * restating a filename, is in tests/what-ships-beside-the-server.test.js.
+   */
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  assert.ok(pkg.build.files.includes('src/handset-slots.js'));
+  assert.ok(pkg.build.files.includes('src/handset-slots.js'), 'not in the asar');
+  assert.ok(
+    (pkg.build.extraResources || []).some(
+      (e) => e && e.from === 'src/handset-slots.js' && e.to === 'handset-slots.js'
+    ),
+    'not beside server.js at the resources root, which is the only place its require can look'
+  );
 });
