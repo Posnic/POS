@@ -85,6 +85,8 @@
       "src/main.js",
       "src/ipc-guard.js",
       "src/order-alert.js",
+    "src/kitchen-call.js",
+    "src/kitchen-announce.js",
       "src/splash.js",
       "src/shutdown-state.js",
       "src/scheduled-task.js",

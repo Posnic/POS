@@ -933,6 +933,29 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       };
 
+      /*
+       * STAMP IT, OR THE TILL NEVER LEARNS.
+       *
+       * These settings live on the branch document, and `branches` is a synced
+       * collection at global scope - "tenant-wide data every device needs". But
+       * the sync gateway only offers a device rows whose updated_date has
+       * moved:
+       *
+       *     { updated_date: { $gt: since.ts } }
+       *     { $expr: { $gt: ['$updated_date', '$_syncMeta.at'] } }
+       *
+       * and this write goes through the NATIVE driver, so the schema's
+       * `timestamps: { updatedAt: 'updated_date' }` never fires. Nothing else
+       * here set it either.
+       *
+       * The result was a shop whose branch document still carried its creation
+       * date ten months later. Every settings change it had ever made was
+       * correct in the cloud, correct on the web, and invisible to its till -
+       * the address on its printed bills, the bill-print switches, all of it.
+       * Nothing reported a failure because nothing had failed; the row was
+       * simply never eligible to travel.
+       */
+      updateData.updated_date = new Date();
       const updateResult = await collection.updateOne(filter, { $set: updateData });
 
       // Check if no document was matched
@@ -1091,6 +1114,29 @@ class SettingModel extends BaseModel {
         _id: this.normalizeId(this.branchId),
         license: this.normalizeId(this.licenseId),
       };
+      /*
+       * STAMP IT, OR THE TILL NEVER LEARNS.
+       *
+       * These settings live on the branch document, and `branches` is a synced
+       * collection at global scope - "tenant-wide data every device needs". But
+       * the sync gateway only offers a device rows whose updated_date has
+       * moved:
+       *
+       *     { updated_date: { $gt: since.ts } }
+       *     { $expr: { $gt: ['$updated_date', '$_syncMeta.at'] } }
+       *
+       * and this write goes through the NATIVE driver, so the schema's
+       * `timestamps: { updatedAt: 'updated_date' }` never fires. Nothing else
+       * here set it either.
+       *
+       * The result was a shop whose branch document still carried its creation
+       * date ten months later. Every settings change it had ever made was
+       * correct in the cloud, correct on the web, and invisible to its till -
+       * the address on its printed bills, the bill-print switches, all of it.
+       * Nothing reported a failure because nothing had failed; the row was
+       * simply never eligible to travel.
+       */
+      updateData.updated_date = new Date();
       const result = await collection.updateOne(filter, { $set: updateData });
       if (result.matchedCount === 0) {
         return {

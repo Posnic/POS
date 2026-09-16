@@ -228,6 +228,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resolve: (saleId) => ipcRenderer.invoke('order-alert:resolve', saleId),
     clear: () => ipcRenderer.invoke('order-alert:clear'),
   },
+
+  /*
+   * A TICKET ARRIVING IN THE KITCHEN.
+   *
+   * Same reason as the alert above: the main process has neither an audio
+   * device nor a speech engine, so it hands over a tone and a sentence and the
+   * page does both. One way only - nothing the page does through this reaches
+   * the machine.
+   */
+  kitchenCall: {
+    on: (handler) => {
+      const h = (_e, payload) => handler(payload);
+      ipcRenderer.on('posnic:kitchen-call', h);
+      return () => ipcRenderer.removeListener('posnic:kitchen-call', h);
+    },
+    /* Whether THIS machine is the one by the pass. Turned on once, there. */
+    isOn: () => ipcRenderer.invoke('kitchen-announce:get'),
+    setOn: (on) => ipcRenderer.invoke('kitchen-announce:set', on === true),
+  },
   mobile: {
     getInfo:       () => ipcRenderer.invoke('mobile:get-info'),
     getDevices:    () => ipcRenderer.invoke('mobile:get-devices'),

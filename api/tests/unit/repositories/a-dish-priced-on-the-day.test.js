@@ -418,3 +418,64 @@ describe('an ordinary dish', () => {
     expect(out.line.total).toBe(997.5);
   });
 });
+
+/*
+ * WHAT THE KITCHEN IS TOLD ABOUT THE MONEY.
+ *
+ * Owner: "lets customer wants to have fish for rs500 so that kitchen will
+ * prepare according to that."
+ *
+ * Five hundred rupees of fish is a particular fish. For a dish priced at the
+ * table the price IS the specification, and the kitchen cannot pick the right
+ * one from the name. For an ordinary dish off the card it is noise: a cook
+ * does not choose a biryani differently because it costs 220, and a ticket
+ * with money on every line is one where the line that matters stops standing
+ * out.
+ *
+ * So the line carries it only where it means something, and the kitchen ticket
+ * prints what it is given. See src/escpos-kot.js.
+ */
+describe('the price the kitchen is told', () => {
+  test('A DISH PRICED AT THE TABLE CARRIES ITS PRICE', async () => {
+    const doc = await anItem({ selling_price: 0 });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1, item_price: 500 });
+
+    expect(out.line.priced_at_table).toBe(500);
+  });
+
+  test('an ordinary dish carries none', async () => {
+    const doc = await anItem({ selling_price: 220 });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 2 });
+
+    expect(out.line.priced_at_table).toBeUndefined();
+  });
+
+  test('a one-off invented at the table carries it too', async () => {
+    /*
+     * A quick sale has a catalogue price - it was just created - so the
+     * dynamic test alone would miss it. Its price was still agreed with a
+     * guest rather than chosen on a card, which is the thing that matters.
+     */
+    const doc = await anItem({ selling_price: 750, item_status: 'instant' });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.line.priced_at_table).toBe(750);
+  });
+
+  test('a dish priced this morning carries none, because the card prices it', async () => {
+    /* daily_price set TODAY is an ordinary dish at the catalogue rate - that
+       is the whole point of the shop updating it when they open. */
+    const doc = await anItem({
+      selling_price: 900,
+      daily_price: true,
+      price_set_on: new Date(),
+    });
+
+    const out = await price(doc, { item_id: String(doc._id), item_quantity: 1 });
+
+    expect(out.line.priced_at_table).toBeUndefined();
+  });
+});

@@ -130,6 +130,9 @@ const MongoDBManager = require('./mongodb-manager');
 const KOTManager = require('./kot-manager');
 const BillManager = require('./bill-manager');
 const { OrderAlert } = require('./order-alert');
+/* Which machine is the one in the kitchen. Per machine, not per shop: only one
+   of them has the speaker. See src/kitchen-announce.js. */
+const kitchenAnnounce = require('./kitchen-announce');
 const SyncAgentManager = require('./sync-agent-manager');
 const { AssetUpdater } = require('./asset-updater');
 
@@ -4161,6 +4164,20 @@ async function awaitPreviousShutdown(previous) {
   return false;
 }
 
+/*
+ * SOUND WITHOUT SOMEBODY TOUCHING THE MACHINE FIRST.
+ *
+ * Chromium refuses to play audio until the page has been interacted with. On a
+ * counter till that is invisible - somebody is clicking it all day. On the
+ * machine at the pass it is the whole problem: it sits untouched for hours,
+ * which is exactly when a ticket needs announcing, and the chime would be
+ * refused with nothing in any log to say why.
+ *
+ * Set before the app is ready, because a command line switch after that is
+ * ignored.
+ */
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 app.whenReady().then(async () => {
   console.log('='.repeat(55));
   /* Named the platform it is actually on. The banner said "Windows" in
@@ -4522,6 +4539,9 @@ app.whenReady().then(async () => {
    * standing there to hear it.
    */
   orderAlert = new OrderAlert({ getWindow: () => mainWindow });
+  /* So the per-machine switch can find userData without importing electron
+     itself, which is what lets it be read in a test. */
+  kitchenAnnounce.useApp(app);
   console.log('OrderAlert initialized');
 
   /*
@@ -4546,6 +4566,11 @@ app.whenReady().then(async () => {
 
   /* Somebody dealt with the queue. The alarm repeats until it is empty, and
      this is how the page says an order stopped waiting. */
+  /* Turned on once, on the machine by the pass. Off everywhere else, so an
+     update never makes a counter till start talking in front of customers. */
+  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.wanted());
+  ipcMain.handle('kitchen-announce:set', (_event, on) => kitchenAnnounce.set(on === true));
+
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {
     if (orderAlert) orderAlert.resolve(saleId);
     return true;
