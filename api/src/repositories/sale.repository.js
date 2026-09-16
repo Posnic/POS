@@ -7682,6 +7682,83 @@ class SalesRepository {
     }
   }
 
+  /**
+   * WHAT THE KITCHEN IS ACTUALLY COOKING, for the screen on the wall.
+   *
+   * A different question from "what should print", and the kitchen screen had
+   * been asking nobody at all: `setTickets` - the only way anything reaches
+   * those screens - was exported and called from nowhere, so a screen opened
+   * on a wall showed an empty list for ever. Setup mode fills itself with
+   * sample tickets, which is the worst possible shape for that bug: it demos
+   * perfectly and does nothing in service.
+   *
+   * WHY NOT FEED IT FROM THE PRINT POLL, which is the obvious idea:
+   *
+   *   - that poll returns only what has NOT printed yet, so a ticket would
+   *     vanish off the wall the instant it came out of the printer, which is
+   *     precisely when the kitchen starts cooking it;
+   *   - and it now claims what it hands out, so a ticket taken by the other
+   *     till would never appear at all.
+   *
+   * A screen shows what is open, whoever printed it, until it is settled.
+   * "Settled" has no marker in this product - nothing says a dish is done -
+   * so the honest boundary is the one that already exists: it leaves the
+   * screen when the table is billed, paid or called off.
+   */
+  async kitchenScreenTickets(branchId, { limit = 40 } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
+        ? new mongoose.Types.ObjectId(String(branchId))
+        : branchId;
+
+      const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+      const rows = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            sale_process: { $regex: 'KOT', $options: 'i' },
+            created_date: { $gte: todayStart },
+            payment_status: { $nin: ['Paid', 'Cancelled'] },
+            ...activeTenantFilter(),
+          },
+          {
+            sort: { created_date: 1 },
+            limit: Math.max(1, Math.min(100, limit)),
+            projection: {
+              sales_id: 1,
+              token_id: 1,
+              table_number: 1,
+              created_date: 1,
+              date: 1,
+              items: 1,
+            },
+          }
+        )
+        .toArray();
+
+      /* The shape the screen draws, and nothing else. A kitchen screen hangs
+         where customers and staff can both see it, so prices, customers and
+         phone numbers have no business travelling to it. */
+      const tickets = rows.map((sale) => ({
+        table: String(sale.table_number || ''),
+        orderNumber: String(sale.sales_id || sale.token_id || ''),
+        placedAt: new Date(sale.created_date || sale.date || Date.now()).toISOString(),
+        items: (Array.isArray(sale.items) ? sale.items : []).map((line) => ({
+          qty: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0) || 1,
+          name: String(line.item_name || line.name || ''),
+          note: String(line.item_description || '').slice(0, 80),
+        })),
+      }));
+
+      return { status: true, message: 'success', data: tickets };
+    } catch (error) {
+      console.error('Error in kitchenScreenTickets:', error);
+      return { status: false, message: 'Could not read the kitchen', data: [] };
+    }
+  }
+
   async markKitchenPrintedModel(saleIds, printedIndexes, printedKeys = []) {
     try {
       const db = await BaseModel.getDb();

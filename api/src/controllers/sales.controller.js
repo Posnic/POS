@@ -6998,6 +6998,30 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * WHAT THE KITCHEN IS COOKING, for the screen on the wall.
+   *
+   * `setTickets` in src/kitchen-screen.js is the only way anything reaches
+   * those screens, and it was called from nowhere - so a screen opened on a
+   * wall showed an empty list for ever, while setup mode filled itself with
+   * samples and looked perfect. This is what feeds it.
+   */
+  async kitchenScreenTickets(req, res) {
+    try {
+      const salesRepository = require('../repositories/sale.repository');
+      const out = await salesRepository.kitchenScreenTickets(req.body.branchId, {
+        limit: Number(req.body.limit) || 40,
+      });
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      return this.success(res, out.data, 'success');
+    } catch (error) {
+      console.error('Error in kitchenScreenTickets:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /**
    * PHP: multiKitchenPrint()
    * Multi-printer KOT polling - returns pending print_jobs per sale

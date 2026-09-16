@@ -1173,3 +1173,7 @@ ${itemsHtml}
 }
 
 module.exports = KOTManager;
+/* The one place that works out where this machine's own API is. Exported so
+   the kitchen screen's feed asks the same question the printer does, rather
+   than keeping a second copy of the answer that can drift from it. */
+module.exports.kotApiUrl = kotApiUrl;

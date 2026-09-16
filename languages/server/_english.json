@@ -455,6 +455,9 @@
   "Could not read the allowed tills": [
     "src/repositories/print-till.repository.js"
   ],
+  "Could not read the kitchen": [
+    "src/repositories/sale.repository.js"
+  ],
   "Could not read the print queue": [
     "src/repositories/print-job.repository.js"
   ],

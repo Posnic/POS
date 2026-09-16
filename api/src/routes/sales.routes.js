@@ -146,6 +146,13 @@ router.post(
 );
 router.post('/fetchLastSale', ensureKioskKey, bindController(salesController.fetchLastSale));
 router.post('/kitchenPrint', ensureKioskKey, bindController(salesController.kitchenPrint));
+/* What the kitchen is cooking, for the screen on the wall. The shop's own
+   equipment, so the same key as the rest of the kitchen routes. */
+router.post(
+  '/kitchenScreenTickets',
+  ensureKioskKey,
+  bindController(salesController.kitchenScreenTickets)
+);
 router.post(
   '/multiKitchenPrint',
   ensureKioskKey,
