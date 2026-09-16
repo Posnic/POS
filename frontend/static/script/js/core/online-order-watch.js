@@ -201,7 +201,15 @@
   function announce(order) {
     var id = String(order.sale_id || order._id || '');
     if (!id) return;
-    var why = order.cancel_requested === true ? 'cancel' : 'new';
+    /*
+     * A CALL IS ITS OWN REASON.
+     *
+     * It has to be: the sentence it says and the sound it makes are both
+     * different from an order's, and it has neither a bill number nor a token
+     * to lead with. Read from `call_id` rather than a flag on the order,
+     * because that is the field only a call has.
+     */
+    var why = order.call_id ? 'waiter' : order.cancel_requested === true ? 'cancel' : 'new';
     if (announced[id] === why) return;
     announced[id] = why;
 
@@ -216,16 +224,36 @@
      */
     var bill = String(order.sales_id || '');
     var token = String(order.token_id || order.token || '');
-    var line =
-      why === 'cancel'
-        ? t('lang_cancel_requested', 'Customer asked to cancel')
-        : t('lang_new_online_order', 'New online order');
-    if (bill) line += ' - ' + bill;
-    if (token) line += (bill ? ' · ' : ' - ') + t('lang_token', 'Token') + ' ' + token;
+    var line;
+    if (why === 'waiter') {
+      /*
+       * THE TABLE IS THE WHOLE MESSAGE.
+       *
+       * A call that does not say where is somebody, somewhere, wanting
+       * something; the number is the only thing that turns it into a job a
+       * person can do. Said as two pieces the packs already carry rather than
+       * as one sentence built here, because a sentence assembled out of
+       * fragments reads as translated in every language it is assembled in.
+       */
+      var where = String(order.table_number || '');
+      line = t('lang_table_is_calling', 'Table is calling');
+      if (where) line += ' - ' + t('lang_table', 'Table') + ' ' + where;
+    } else {
+      line =
+        why === 'cancel'
+          ? t('lang_cancel_requested', 'Customer asked to cancel')
+          : t('lang_new_online_order', 'New online order');
+      if (bill) line += ' - ' + bill;
+      if (token) line += (bill ? ' · ' : ' - ') + t('lang_token', 'Token') + ' ' + token;
+    }
 
-    /* A new order chimes; one the customer wants called off is the louder,
-       longer pattern, because it is the one somebody has to act on. */
-    sound(why === 'cancel' ? 'waiting' : 'received');
+    /*
+     * A new order chimes; anything somebody has to act on is the louder,
+     * longer pattern. A call is the clearest case of that in the product:
+     * there is a person at a table waiting, and the whole point of the button
+     * is that nobody was looking.
+     */
+    sound(why === 'new' ? 'received' : 'waiting');
 
     /*
      * AND THE PANEL THAT ANSWERS IT OPENS.
@@ -251,7 +279,7 @@
            'Alert' and 'Information' and lowercases anything else into a class
            name. It stays English on purpose. The sentence beside it is what
            the person reads, and that IS translated. */
-        PosnicPro.alert(why === 'cancel' ? 'Alert' : 'Information', line);
+        PosnicPro.alert(why !== 'new' ? 'Alert' : 'Information', line);
       }
     } catch (e) {
       /* A toast that fails is a quiet shop, not a lost order: the badge
@@ -270,10 +298,44 @@
         function (response) {
           asking = false;
           var list = (response && response.data) || [];
+
+          /*
+           * THE BADGE COUNTS ORDERS ONLY, on purpose.
+           *
+           * It hangs on the Online orders menu entry and is the way IN to
+           * that page - and that page draws `data`, which has never carried
+           * calls. A number there that included them would send somebody to a
+           * screen the call is not on, which is worse than no number: it
+           * spends the one moment they were willing to go and look.
+           *
+           * The request dock is where a call is answered, and it carries its
+           * own count. This announces the call and opens that.
+           */
           badge(list.length);
 
+          /*
+           * The calls ride in their own key, never mixed into the orders: a
+           * screen that has not been taught the word reads `data` and is
+           * unaffected, where a merged list would have an older one draw a
+           * table's call as a new order.
+           *
+           * Shaped into rows the rest of this file already understands.
+           * `sale_id` carries the CALL's id because that is the key an
+           * announcement is remembered under.
+           */
+          var calls = (response && response.calls) || [];
+          var asRows = (Array.isArray(calls) ? calls : []).map(function (call) {
+            return {
+              sale_id: String(call.call_id || ''),
+              call_id: String(call.call_id || ''),
+              table_number: String(call.table_number || ''),
+              created_date: call.called_at || null,
+              items: [],
+            };
+          });
+
           var alive = Object.create(null);
-          list.forEach(function (order) {
+          (Array.isArray(list) ? list : []).concat(asRows).forEach(function (order) {
             var id = String(order.sale_id || order._id || '');
             if (id) alive[id] = true;
             announce(order);

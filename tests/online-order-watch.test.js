@@ -33,7 +33,7 @@ const WATCH = ['frontend', 'static', 'script', 'js', 'core', 'online-order-watch
  * The real file is evaluated - not a copy of its logic - so a change to it
  * that stops the badge appearing fails here.
  */
-function till({ queue = [], fails = false } = {}) {
+function till({ queue = [], ringing = [], fails = false } = {}) {
   const dom = new JSDOM(
     '<body><ul><li id="online_orders_menu"><a href="#/onlineorders" id="view_onlineorders_page">Online orders</a></li></ul></body>',
     /* pretendToBeVisual, because without it jsdom reports visibilityState
@@ -44,12 +44,14 @@ function till({ queue = [], fails = false } = {}) {
   const { window } = dom;
   const calls = { asked: 0, toasts: [] };
   let answer = queue;
+  /* The calls ride in their own key, the way the server sends them. */
+  let calling = ringing;
   window.PosnicPro = {
     i18n: { t: (key, fallback) => fallback },
     get(_request, ok, no) {
       calls.asked += 1;
       if (fails) return no({});
-      return ok({ type: 'success', data: answer });
+      return ok({ type: 'success', data: answer, calls: calling });
     },
     alert(heading, text) {
       calls.toasts.push([heading, text]);
@@ -65,6 +67,9 @@ function till({ queue = [], fails = false } = {}) {
     calls,
     say: (next) => {
       answer = next;
+    },
+    rings: (next) => {
+      calling = next;
     },
   };
 }
@@ -157,7 +162,10 @@ test('the toast heading stays English, because it is the icon', () => {
    * it from happening again, and this keeps the file honest meanwhile.
    */
   const src = read(...WATCH);
-  assert.match(src, /PosnicPro\.alert\(why === 'cancel' \? 'Alert' : 'Information', line\)/);
+  /* Written Alert-then-Information, in that order, because the auto-tagger's
+     DENY list is keyed on the pair as it is spelled: reversing the two would
+     make the sweep offer to translate the icon again. */
+  assert.match(src, /PosnicPro\.alert\(why !== 'new' \? 'Alert' : 'Information', line\)/);
   assert.ok(!/i18n\.t\('lang_alert'/.test(src), 'the toast icon was translated');
   assert.match(read('tests', 'tools', 'i18n-tag-js.js'), /'Alert\|Information'/);
 
@@ -244,4 +252,154 @@ test('the watcher is loaded by the shell, and the queue on screen refreshes itse
   assert.match(queue, /watch: function \(\)/);
   assert.match(queue, /self\.watch\(\);/, 'load() never starts the refresh');
   assert.match(queue, /clearInterval\(self\._watching\)/, 'the refresh never stops when the page is left');
+});
+
+/* ------------------------------------------------- and a table calling */
+
+/**
+ * A recording oscillator, so a tone can be counted rather than heard.
+ *
+ * Installed AFTER the till is built, because the audio context is made once
+ * on the first sound and then kept - a page that has already announced
+ * something has already made the real one.
+ */
+function listenTo(page) {
+  const notes = [];
+  page.window.AudioContext = function () {
+    this.currentTime = 0;
+    this.state = 'running';
+    this.destination = {};
+    this.createOscillator = () => {
+      notes.push(1);
+      return { frequency: {}, connect() {}, start() {}, stop() {}, set type(v) {} };
+    };
+    this.createGain = () => ({
+      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+      connect() {},
+    });
+  };
+  return notes;
+}
+
+test('a table calling is heard on a web till, which is where nothing heard it', () => {
+  /*
+   * Owner: "he is in table 7 and wants to call waiter or captain... desktop
+   * app and captain mobile apps getting notification."
+   *
+   * The desktop rings, because the API raises the alarm on the process bus
+   * inside the same Electron process. A shop running the browser console has
+   * no such process, and this watcher read only `data` - so the one feature
+   * whose entire value is that somebody NOTICES made no sound, raised no
+   * toast, and did not open the panel that answers it. The call sat in a
+   * corner of a screen nobody was facing, which is the waiter who never turns
+   * round, rebuilt in software.
+   */
+  const floor = till({ queue: [], ringing: [{ call_id: 'c1', table_number: '7' }] });
+  assert.deepStrictEqual(floor.calls.toasts, [['Alert', 'Table is calling - Table 7']]);
+  floor.window.close();
+});
+
+test('a call with no table still says what it can', () => {
+  const floor = till({ queue: [], ringing: [{ call_id: 'c1' }] });
+  assert.deepStrictEqual(floor.calls.toasts, [['Alert', 'Table is calling']]);
+  floor.window.close();
+});
+
+test('a call is said once, and the same table calling again is said again', () => {
+  const floor = till({ queue: [], ringing: [] });
+  floor.rings([{ call_id: 'c1', table_number: '7' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(floor.calls.toasts.length, 1);
+
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(floor.calls.toasts.length, 1, 'the same call was announced twice');
+
+  /* Somebody went, so it leaves the queue. */
+  floor.rings([]);
+  floor.window.PosnicOnlineOrderWatch.look();
+
+  /* And table seven wants something else. A new call, and news again. */
+  floor.rings([{ call_id: 'c2', table_number: '7' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(
+    floor.calls.toasts.length,
+    2,
+    'a second call from the same table was swallowed'
+  );
+  floor.window.close();
+});
+
+test('the call opens the panel that answers it, rather than a toast that vanishes', () => {
+  /*
+   * Owner, about an earlier notification: "whats the use of that? how to
+   * respond where to check the request is important." A message that cannot
+   * be acted on trains people to dismiss messages.
+   */
+  const floor = till({ queue: [], ringing: [] });
+  let opened = 0;
+  floor.window.PosnicRequestDock = {
+    show() {
+      opened += 1;
+    },
+  };
+  floor.rings([{ call_id: 'c1', table_number: '7' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(opened, 1, 'the call was announced with nowhere to go');
+  floor.window.close();
+});
+
+test('a call is the louder pattern, because a person is sitting there waiting', () => {
+  const floor = till({ queue: [], ringing: [] });
+  const notes = listenTo(floor);
+
+  floor.rings([{ call_id: 'c1', table_number: '7' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  const forACall = notes.length;
+  assert.ok(forACall > 0, 'a call made no sound at all');
+
+  notes.length = 0;
+  floor.rings([]);
+  floor.say([{ sale_id: 's1', token_id: '101' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.ok(
+    forACall > notes.length,
+    'a call sounds exactly like an ordinary new order, so it carries no further'
+  );
+  floor.window.close();
+});
+
+test('a call is NOT counted on the Online orders menu, because it is not on that page', () => {
+  /*
+   * The badge hangs on that menu entry and is the way IN to it, and the queue
+   * page draws `data` - it has never carried calls. A number there that
+   * included them would send somebody to a screen the call is not on, which
+   * is worse than no number: it spends the one moment they were willing to go
+   * and look. The request dock is where a call is answered.
+   */
+  const floor = till({ queue: [], ringing: [{ call_id: 'c1', table_number: '7' }] });
+  assert.strictEqual(
+    floor.document.querySelector('.online-orders-badge'),
+    null,
+    'the badge sends somebody to a page the call is not on'
+  );
+
+  /* And a real order still counts, with the call still standing. */
+  floor.say([{ sale_id: 's1', token_id: '101' }]);
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(floor.document.querySelector('.online-orders-badge').textContent, '1');
+
+  /* The queue page it leads to reads `data`, which is why the above is right. */
+  const queue = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'online_orders.js');
+  assert.match(queue, /var list = \(response && response\.data\) \|\| \[\];/);
+  assert.ok(!/response\.calls/.test(queue), 'the queue page now shows calls, so the badge should count them');
+  floor.window.close();
+});
+
+test('a shop whose server says nothing about calls is unaffected', () => {
+  /* An older API answers with `data` alone. Nothing may throw on that. */
+  const floor = till({ queue: [{ sale_id: 's1', token_id: '101' }] });
+  floor.window.PosnicPro.get = (_r, ok) => ok({ type: 'success', data: [] });
+  floor.window.PosnicOnlineOrderWatch.look();
+  assert.strictEqual(floor.document.querySelector('.online-orders-badge'), null);
+  floor.window.close();
 });
