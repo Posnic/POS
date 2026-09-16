@@ -4789,6 +4789,9 @@ class ItemRepository extends BaseModel {
                  */
                 daily_price: '$daily_price',
                 price_set_on: '$price_set_on',
+                /* Which option sets this dish has. Resolved into whole groups
+                   below; the ids themselves never reach a client. */
+                modifier_group_ids: '$modifier_group_ids',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
                 tax: '$tax',
@@ -4924,6 +4927,73 @@ class ItemRepository extends BaseModel {
       for (const group of results) {
         for (const item of group.items || []) {
           item.icon = dishIcons.iconFor({ image: item.img, icon: item.icon, name: item.name });
+        }
+      }
+
+      /*
+       * THE OPTION SETS, WHOLE, NOT AS IDS.
+       *
+       * Extra cheese, half plate, medium spicy: the shop defines them once in
+       * settings and ticks which dishes carry them. The sale model has taken
+       * the answers since V2, with "the price delta already inside the line
+       * price the client sent" - so a client that cannot SEE the options
+       * cannot charge for them, and the handset could not see them at all. A
+       * waiter typed "extra cheese" as a note, the kitchen made it, and the
+       * bill said nothing.
+       *
+       * Sent whole rather than as ids on purpose. A handset keeps its menu and
+       * sells from it on a dead network; ids would mean a second request to a
+       * settings endpoint, and the one time it matters is the time that
+       * request cannot be made.
+       */
+      try {
+        const wanted = new Set();
+        for (const group of results) {
+          for (const item of group.items || []) {
+            for (const id of item.modifier_group_ids || []) wanted.add(String(id));
+          }
+        }
+
+        let byId = new Map();
+        if (wanted.size) {
+          const sets = await this.getCollection('modifier_groups');
+          const docs = await sets.find({ license: branchDoc.license }).toArray();
+          byId = new Map(
+            docs.map((doc) => [
+              String(doc._id),
+              {
+                name: String(doc.name || ''),
+                min: Number(doc.min) || 0,
+                max: Number(doc.max) || 0,
+                options: (doc.options || []).map((option) => ({
+                  name: String(option.name || ''),
+                  price_delta: Number(option.price_delta) || 0,
+                })),
+              },
+            ])
+          );
+        }
+
+        for (const group of results) {
+          for (const item of group.items || []) {
+            const sets = (item.modifier_group_ids || [])
+              .map((id) => byId.get(String(id)))
+              /* A group the shop deleted is gone, not an empty box on a
+                 screen a waiter has to tap past. */
+              .filter((set) => set && set.options.length);
+
+            if (sets.length) item.modifier_groups = sets;
+            delete item.modifier_group_ids;
+          }
+        }
+      } catch (e) {
+        /*
+         * A shop with no option sets, or a read that failed, still sells
+         * food. Losing the extras is a smaller harm than losing the menu.
+         */
+        console.warn('[storefront] could not read option sets:', e.message);
+        for (const group of results) {
+          for (const item of group.items || []) delete item.modifier_group_ids;
         }
       }
 

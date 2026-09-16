@@ -185,3 +185,42 @@ describe('it is mounted where it has to be', () => {
     if (firstRoute > -1) expect(mounted).toBeLessThan(firstRoute);
   });
 });
+
+describe('and the log it writes cannot be written by the caller', () => {
+  /*
+   * CodeQL flagged my own line, and it was right. I truncated the key paths
+   * and called that safe; truncating is not neutralising. A `$` key with a
+   * newline in it forges a SECOND log entry - indented, plausible, and in the
+   * file somebody reads to find out what happened.
+   */
+  test('a newline in a key cannot start a second log line', () => {
+    expect(guard.onOneLine('a\nWARN fake entry', 80)).toBe('a.WARN fake entry');
+  });
+
+  test('control characters go too, because a terminal reads them', () => {
+    expect(guard.onOneLine('a\u0000b\u001bc\r\n', 80)).toBe('a.b.c..');
+  });
+
+  test('it is capped, so one key cannot fill a log', () => {
+    expect(guard.onOneLine('x'.repeat(500), 80)).toHaveLength(80);
+  });
+
+  test('and it survives anything that is not a string', () => {
+    expect(guard.onOneLine(null, 10)).toBe('');
+    expect(guard.onOneLine(undefined, 10)).toBe('');
+    expect(guard.onOneLine(42, 10)).toBe('42');
+  });
+
+  test('the request path and method go through it too', () => {
+    /* They are a URL somebody typed and a verb somebody sent. */
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'src', 'middleware', 'no-mongo-operators.js'),
+      'utf8'
+    );
+    expect(source).toMatch(/onOneLine\(req\.method,/);
+    expect(source).toMatch(/onOneLine\(req\.path,/);
+    expect(source).not.toMatch(/String\(one\)\.slice\(0, 80\)/);
+  });
+});
