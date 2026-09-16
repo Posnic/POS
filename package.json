@@ -20,7 +20,7 @@
     "prebuild:fast": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build:fast": "electron-builder --win --x64 --dir",
     "prebuild:quick": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
-    "build:quick": "cross-env ELECTRON_BUILDER_COMPRESSION_LEVEL=fast electron-builder --win --x64",
+    "build:quick": "electron-builder --win --x64 -c.compression=store",
     "prebuild:portable": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build:portable": "electron-builder --win portable",
     "prebuild:zip": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
@@ -198,6 +198,10 @@
       {
         "from": "src/server.js",
         "to": "server.js"
+      },
+      {
+        "from": "src/handset-slots.js",
+        "to": "handset-slots.js"
       },
       {
         "from": "src/database-health.js",

@@ -5,6 +5,7 @@ const { protect, optionalProtect } = require('../middleware/auth');
 const { ensureKioskKey, protectOrKioskKey } = require('../middleware/kiosk-key');
 const {
   validateCreateItem,
+  validateSoldOut,
   validateUpdateItem,
   ensureValidItemIdParam,
 } = require('../middleware/items.validation');
@@ -83,6 +84,15 @@ router.post(
 
 // Protect all remaining item routes to ensure req.user context is available
 router.use(protect);
+
+/*
+ * A dish that has run out, said by whoever found out first.
+ *
+ * Behind the session rather than the storefront key: taking a dish off the
+ * menu is a shop decision made by a person, even when that person is standing
+ * at a table holding a phone.
+ */
+router.post('/soldOut', validateSoldOut, bindController(itemsController.markSoldOut));
 
 // GET /api/items - Get paginated items (legacy default endpoint)
 /*

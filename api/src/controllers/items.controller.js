@@ -923,6 +923,35 @@ class ItemsController extends BaseController {
    * a shop may keep a line off the public storefront while still selling it
    * from the floor.
    */
+  /*
+   * A WAITER SAYS IT HAS RUN OUT.
+   *
+   * Behind the ordinary session, like every other write here: a person who is
+   * signed in, on a handset the shop gave them. The branch comes from the body
+   * because that is what the handset knows about itself, and the repository
+   * refuses a dish that is not on that branch's menu.
+   */
+  async markSoldOut(req, res) {
+    try {
+      const response = await this.service.markSoldOut({
+        itemId: req.body.item || req.body.item_id,
+        /* Absent means "it has run out". Only an explicit false puts it back,
+           so a body that loses a field cannot quietly restock the kitchen. */
+        off: req.body.off === false ? false : true,
+        branchId: req.body.branch || req.body.branch_id,
+      });
+
+      if (response.status !== true) {
+        return this.error(res, response.message, 404, response.data);
+      }
+
+      return this.success(res, response.data, response.message);
+    } catch (error) {
+      console.error('Error in markSoldOut:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async accessQr(req, res) {
     try {
       const response = await this.service.storefront({

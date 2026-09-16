@@ -1546,6 +1546,84 @@ async function setCartItemSpice(id, level) {
     renderCart(cartData);
 }
 
+/*
+ * THE SAME ORDER AGAIN.
+ *
+ * A regular orders the same thing. Reading their own history, finding five
+ * dishes and tapping each one back in is work the phone can do, and every
+ * ordering app in the world does it.
+ *
+ * AT TODAY'S PRICES, NEVER THE REMEMBERED ONE. The line a customer kept says
+ * what they paid last time. Putting that number back in the basket would quote
+ * a price the shop is not offering today - so the CATALOGUE product is what
+ * goes in the cart, and the remembered line is used only for what it is: which
+ * dish, how many, and how they asked for it.
+ *
+ * AND IT SAYS WHAT IT COULD NOT ADD. A basket that quietly comes back with
+ * three of the five dishes is worse than one that refuses: the customer
+ * checks out believing they ordered what they ordered last week. Anything
+ * missing, sold out, or waiting on a price the shop has not set today is
+ * named back to the caller.
+ *
+ * IT ADDS, IT DOES NOT REPLACE. Whatever is already in the basket was put
+ * there deliberately, a moment ago, by the person tapping this.
+ */
+async function orderAgain(lines) {
+    const catalogue = await getData("products").catch(() => []);
+    const byId = new Map((catalogue || []).map((one) => [String(one.id), one]));
+
+    let cart = await getCartData();
+    const added = [];
+    const gone = [];
+
+    for (const line of Array.isArray(lines) ? lines : []) {
+        const id = String((line && line.item_id) || "");
+        const name = String((line && line.name) || "");
+        const quantity = Math.max(0, Math.round(Number(line && line.quantity) || 0));
+        const product = id ? byId.get(id) : null;
+
+        /*
+         * Four ways a dish does not come back, and all four read the same to
+         * the customer: it is not available now. The reasons differ to us -
+         * taken off the menu, sold out today, or a daily-priced dish the shop
+         * has not priced yet - and none of them may become a silent skip.
+         */
+        if (!id || !quantity || !product || product.available === false || waitingForTodaysPrice(product)) {
+            if (name) gone.push(name);
+            continue;
+        }
+
+        const result = KioskCore.changeCartQuantity(cart, product, id, quantity);
+        cart = result.cart;
+
+        /*
+         * How they asked for it last time, carried back. A note the kitchen
+         * acted on and a spice level somebody chose are part of "the same
+         * again" - leaving them behind makes this a different order that
+         * looks identical on the screen.
+         *
+         * The spice level only where the dish still OFFERS one: a shop that
+         * turned the picker off for a dish has changed its mind, and a level
+         * riding in on an old order would print on a ticket for a choice the
+         * menu no longer makes.
+         */
+        const put = cart.find((one) => String(one.id) === id);
+        if (put) {
+            const note = String((line && line.note) || "").trim();
+            if (note) put.note = note.slice(0, 200);
+            const spice = Number((line && line.spice) || 0);
+            if (product.spice_choice === true && spice > 0) {
+                put.spice = window.PosnicSpice ? window.PosnicSpice.levelOf(spice) : spice;
+            }
+        }
+
+        added.push(name || String(product.name || ""));
+    }
+
+    if (added.length) await saveCartData(cart);
+    return { added, gone, cart };
+}
+
 /** A note on one line of the order, kept with the line. */
 async function setCartItemNote(id, text) {
     const cartData = await getCartData();
@@ -1582,7 +1660,12 @@ async function removeCartItem(id) {
 async function updateCartQuantity(id, change) {
     clearOrderAttemptId();
     const storedProducts = await getData("products");
-    const storedProduct = storedProducts.find(item => String(item.id) === String(id));
+    /* `id` here is the LINE key, which for a dish with extras is not the
+       dish's id. The line says which dish it is; see optionKey. */
+    const currentLines = await getCartData();
+    const forLine = currentLines.find((one) => String(one.id) === String(id));
+    const dishId = forLine ? dishIdOf(forLine) : String(id);
+    const storedProduct = storedProducts.find(item => String(item.id) === dishId);
     const currentCart = await getCartData();
     const result = KioskCore.changeCartQuantity(currentCart, storedProduct, id, change);
     const cartData = result.cart;
@@ -1861,6 +1944,24 @@ function catalogueItem(item, categoryName) {
         tags: Array.isArray(item.tags) ? item.tags : [],
         marks: Array.isArray(item.marks) ? item.marks : [],
         claims: Array.isArray(item.claims) ? item.claims : [],
+        /*
+         * WHAT THE SHOP OFFERS ON TOP, and the fourth field this
+         * literal has had to be taught about.
+         *
+         * The till has priced extras from the shop's own option
+         * documents since the handset got them, and the storefront
+         * sends them to every client. This page named none of them,
+         * so a customer ordering online could not ask for extra
+         * cheese the waiter standing next to them could ring up.
+         *
+         * Sent whole - name, min, max and the options with their
+         * deltas - so the sheet can draw a picker without a second
+         * request. The DELTAS ARE FOR DISPLAY ONLY: what goes back
+         * to the shop is which options were chosen, never what they
+         * cost. A page that could name the price of cheese could
+         * name a discount nobody agreed to.
+         */
+        modifier_groups: Array.isArray(item.modifier_groups) ? item.modifier_groups : [],
         /* Whether the kitchen said it can cook this one to
            order. See api/src/utils/spice-level.js. */
         spice_choice: item.spice_choice === true,
@@ -2655,6 +2756,73 @@ function lightChip(key) {
 //     await updateQuantity(productId, 1);
 // });
 // ✅ Update Quantity and Save to IndexedDB
+/*
+ * A BASKET LINE IS A DISH AND A CHOICE, NOT A DISH.
+ *
+ * Two dosas, one with extra cheese, are two lines. The basket has always been
+ * keyed by the dish's id, so a second dosa found the first line and added to
+ * it - which is right until the two are not the same thing. Picking cheese on
+ * the second would have silently changed the first, and the kitchen would
+ * have made two cheesy dosas for somebody who asked for one.
+ *
+ * So the KEY becomes the dish plus what was chosen, and the dish's real id
+ * rides alongside as `item_id`. Everything that looks a dish up from a line
+ * reads `item_id` first and falls back to `id`, which is what a line written
+ * before this change still carries.
+ *
+ * Sorted before it is joined, so the same two options picked in either order
+ * are one line rather than two.
+ */
+function optionKey(itemId, chosen) {
+    const picked = (Array.isArray(chosen) ? chosen : [])
+        .filter((one) => one && one.group && one.name)
+        .map((one) => String(one.group) + "\u001f" + String(one.name))
+        .sort();
+    return picked.length ? String(itemId) + "\u001e" + picked.join("\u001d") : String(itemId);
+}
+
+/** The dish a basket line is for. `id` alone is a line written before options. */
+function dishIdOf(line) {
+    return String((line && (line.item_id || line.id)) || "");
+}
+
+/** What the chosen extras add to one unit, for the price shown on the page. */
+function extrasFor(chosen) {
+    return (Array.isArray(chosen) ? chosen : []).reduce(
+        (sum, one) => sum + (Number(one && one.price_delta) || 0),
+        0
+    );
+}
+
+/*
+ * Put a dish in the basket with the extras that were chosen for it.
+ *
+ * Goes through KioskCore.changeCartQuantity like every other add, so there is
+ * one rule about what a line looks like - then stamps the three fields that
+ * rule knows nothing about.
+ */
+async function addWithOptions(itemId, chosen, change) {
+    const storedProducts = await getData("products");
+    const product = storedProducts.find((one) => String(one.id) === String(itemId));
+    if (!product) return null;
+
+    const key = optionKey(itemId, chosen);
+    const cart = await getCartData();
+    /* The product under a line key, so a new line carries the dish's name and
+       price while being keyed by the choice. */
+    const result = KioskCore.changeCartQuantity(cart, { ...product, id: key }, key, change);
+    const line = result.cart.find((one) => String(one.id) === key);
+    if (line) {
+        line.item_id = String(itemId);
+        line.chosen = (Array.isArray(chosen) ? chosen : []).filter((one) => one && one.group && one.name);
+        /* The shop prices the extras itself; this is what the page shows. */
+        line.price = (Number(product.price) || 0) + extrasFor(line.chosen);
+    }
+    await saveCartData(result.cart);
+    await updateCart();
+    return line;
+}
+
 async function updateQuantity(id, change) {
     clearOrderAttemptId();
     const storedProducts = await getData("products");
@@ -2988,8 +3156,24 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
         // 🧾 Prepare payload: [{ id, quantity }]
         const payload = cartItems.map(item => {
             return {
-                item_id: item.id,
+                /*
+                 * The DISH, not the line. A line for a dish with extras is
+                 * keyed by the choice, and sending that key would be sending
+                 * the shop an id it has never heard of.
+                 */
+                item_id: dishIdOf(item) || item.id,
                 item_quantity: item.quantity,
+                /*
+                 * What was chosen, by NAME, and never what it costs. The shop
+                 * prices its own extras from its own option documents - see
+                 * _priceModifiers in sale.repository.js - so a page that sent
+                 * a delta would either be ignored or believed, and both are
+                 * worse than not sending one.
+                 */
+                modifiers: (Array.isArray(item.chosen) ? item.chosen : []).map((one) => ({
+                    group: String(one.group || ""),
+                    name: String(one.name || "")
+                })),
                 gst: item.tax_price * item.quantity,
                 /* What the customer asked for on this line; printed on the
                    kitchen ticket under the dish. */
