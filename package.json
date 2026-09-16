@@ -96,6 +96,8 @@
       "src/kot-job-key.js",
       "src/waiting-order-policy.js",
       "src/kitchen-screen.js",
+      "src/kitchen-announce.js",
+      "src/kitchen-call.js",
       "src/kitchen-screen-feed.js",
       "src/kitchen-screen-fit.js",
       "src/kitchen-screen.html",
