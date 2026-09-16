@@ -4934,6 +4934,33 @@ dialog.sheet[open]::backdrop {
   font-weight: 700;
 }
 
+/*
+ * THE SAME AGAIN.
+ *
+ * Under the row rather than inside it: the row itself is already a button
+ * that opens the order, and a button inside a button is neither. Full width,
+ * because on a phone the thumb is the pointer and a small link beside a big
+ * tap target is the one that gets missed.
+ */
+.history-again {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.history-again:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .history-empty,
 .history-note {
   color: var(--ink-soft);

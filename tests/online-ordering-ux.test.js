@@ -4581,3 +4581,228 @@ test('starting a call does not reopen the talk-or-type choice beneath it', async
   window.OrderingVoice.stop();
   window.close();
 });
+
+
+/* ------------------------------------------------- the same order again ---
+ *
+ * A regular orders the same thing. Reading their own history, finding five
+ * dishes and tapping each one back in is work the phone can do.
+ *
+ * The whole risk is in what it does NOT carry back: the price they paid last
+ * time, a dish that has come off the menu, a spice level for a picker the
+ * shop has since switched off. Each of those is a basket that looks right and
+ * is not.
+ */
+
+/** orderAgain, with a fake catalogue, a fake basket and the real cart rule. */
+function liftOrderAgain({ catalogue = [], cart = [] } = {}) {
+  const saved = [];
+  const box = {
+    getData: async () => catalogue,
+    getCartData: async () => cart.map((one) => ({ ...one })),
+    saveCartData: async (next) => {
+      saved.push(next.map((one) => ({ ...one })));
+    },
+    /* The real one, from the bundle: a rule about what a cart line looks like
+       must not have a second implementation in a test. */
+    KioskCore: require(path.join(BUNDLE, 'assets', 'kiosk-core.js')),
+    waitingForTodaysPrice: (product) => {
+      if (!product) return true;
+      if (product.daily_price === true && product.priced_today !== true) return true;
+      return !(Number(product.price) > 0);
+    },
+    window: { PosnicSpice: { levelOf: (n) => Number(n) || 0 } },
+  };
+  // eslint-disable-next-line no-new-func
+  new Function('box', 'with (box) {' + lift(read('indexedDB.js'), 'orderAgain') + '; box.orderAgain = orderAgain; }')(box);
+  return { orderAgain: box.orderAgain, saved };
+}
+
+const dish = (over) => ({ id: 'd1', name: 'Dosa', price: 60, available: true, ...over });
+const ordered = (over) => ({ item_id: 'd1', name: 'Dosa', quantity: 2, ...over });
+
+test('the same order again puts the dishes back', async () => {
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [dish(), dish({ id: 'd2', name: 'Idli', price: 40 })],
+  });
+
+  const result = await orderAgain([ordered(), ordered({ item_id: 'd2', name: 'Idli', quantity: 1 })]);
+
+  assert.deepStrictEqual(result.added, ['Dosa', 'Idli']);
+  assert.deepStrictEqual(result.gone, []);
+  assert.deepStrictEqual(
+    saved[0].map((one) => [one.name, one.quantity]),
+    [['Dosa', 2], ['Idli', 1]]
+  );
+});
+
+test("at TODAY'S price, never the one they paid", async () => {
+  /*
+   * THE ONE THAT MATTERS. The remembered line says what it cost last week.
+   * Putting that number in the basket quotes a price the shop is not
+   * offering, and the customer sees it confirmed at checkout.
+   */
+  const { orderAgain, saved } = liftOrderAgain({ catalogue: [dish({ price: 75 })] });
+
+  await orderAgain([ordered({ price: 60, total: 120 })]);
+
+  assert.strictEqual(saved[0][0].price, 75, 'the basket quoted last week\u2019s price');
+});
+
+test('a dish that is gone is named, not silently skipped', async () => {
+  /*
+   * A basket that quietly comes back with three of five is worse than one
+   * that refuses: they check out believing they ordered what they ordered
+   * last week.
+   */
+  const { orderAgain } = liftOrderAgain({ catalogue: [dish()] });
+
+  const result = await orderAgain([ordered(), ordered({ item_id: 'd9', name: 'Vada' })]);
+
+  assert.deepStrictEqual(result.added, ['Dosa']);
+  assert.deepStrictEqual(result.gone, ['Vada']);
+});
+
+test('so is one that is sold out, and one still waiting on a price', async () => {
+  const { orderAgain } = liftOrderAgain({
+    catalogue: [
+      dish({ id: 'd1', name: 'Dosa', available: false }),
+      dish({ id: 'd2', name: 'Fish', daily_price: true, priced_today: false }),
+      dish({ id: 'd3', name: 'Idli' }),
+    ],
+  });
+
+  const result = await orderAgain([
+    ordered({ item_id: 'd1', name: 'Dosa' }),
+    ordered({ item_id: 'd2', name: 'Fish' }),
+    ordered({ item_id: 'd3', name: 'Idli' }),
+  ]);
+
+  assert.deepStrictEqual(result.added, ['Idli']);
+  assert.deepStrictEqual(result.gone, ['Dosa', 'Fish']);
+});
+
+test('nothing at all saves nothing at all', async () => {
+  /* An empty result must not write an empty cart over what is in the basket. */
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [],
+    cart: [{ id: 'x1', name: 'Tea', price: 10, quantity: 1 }],
+  });
+
+  const result = await orderAgain([ordered()]);
+
+  assert.deepStrictEqual(result.added, []);
+  assert.strictEqual(saved.length, 0, 'it wrote to the basket with nothing to add');
+});
+
+test('it adds to the basket rather than replacing it', async () => {
+  /* Whatever is in there was put there deliberately, a moment ago, by the
+     person tapping this. */
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [dish()],
+    cart: [{ id: 'x1', name: 'Tea', price: 10, quantity: 1 }],
+  });
+
+  await orderAgain([ordered({ quantity: 1 })]);
+
+  assert.deepStrictEqual(
+    saved[0].map((one) => one.name).sort(),
+    ['Dosa', 'Tea']
+  );
+});
+
+test('and it adds to a line that is already there', async () => {
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [dish()],
+    cart: [{ id: 'd1', name: 'Dosa', price: 60, quantity: 1 }],
+  });
+
+  await orderAgain([ordered({ quantity: 2 })]);
+
+  assert.strictEqual(saved[0].length, 1);
+  assert.strictEqual(saved[0][0].quantity, 3);
+});
+
+test('how they asked for it comes back too', async () => {
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [dish({ spice_choice: true })],
+  });
+
+  await orderAgain([ordered({ note: 'no onion', spice: 2 })]);
+
+  assert.strictEqual(saved[0][0].note, 'no onion');
+  assert.strictEqual(saved[0][0].spice, 2);
+});
+
+test('but not a spice level for a picker the shop has switched off', async () => {
+  /*
+   * A shop that stopped offering a choice has changed its mind. A level
+   * riding in on an old order would print on a ticket for a choice the menu
+   * no longer makes.
+   */
+  const { orderAgain, saved } = liftOrderAgain({
+    catalogue: [dish({ spice_choice: false })],
+  });
+
+  await orderAgain([ordered({ spice: 3 })]);
+
+  assert.strictEqual(saved[0][0].spice, undefined);
+});
+
+test('a line with no quantity and a line with no id are both refused', async () => {
+  const { orderAgain } = liftOrderAgain({ catalogue: [dish()] });
+
+  const result = await orderAgain([
+    ordered({ quantity: 0 }),
+    { name: 'Nameless', quantity: 1 },
+  ]);
+
+  assert.deepStrictEqual(result.added, []);
+  assert.deepStrictEqual(result.gone, ['Dosa', 'Nameless']);
+});
+
+/* --------------------------------------------------- the button that calls it */
+
+test('the button is offered only where the shop answered, and only for this shop', () => {
+  /*
+   * The remembered order carries a name and a quantity and NO item id - the
+   * id comes from the shop's own copy. Matching a dish by its name is how a
+   * customer ends up with the wrong one, and an id from another shop's menu
+   * either misses or hits something else entirely.
+   */
+  const source = fs.readFileSync(path.join(BUNDLE, 'assets', 'history', 'script.js'), 'utf8');
+  assert.match(
+    source,
+    /if \(said && !said\.unknown && Array\.isArray\(said\.items\) && said\.items\.length && sameShop\(kept\)\)/
+  );
+  assert.match(source, /function sameShop\(kept\)/);
+  assert.match(source, /return !!here && !!there && here === there;/);
+});
+
+test('a partial basket is said out loud before the page moves', () => {
+  /* The failure mode of this feature is a cheerful hop to a basket holding
+     three of the five dishes. */
+  const source = fs.readFileSync(path.join(BUNDLE, 'assets', 'history', 'script.js'), 'utf8');
+  const press = source.slice(source.indexOf('.history-again'));
+  const alertAt = press.indexOf('Added {count} of {total}');
+  const goAt = press.indexOf('window.location.href = "cart.html"');
+  assert.ok(alertAt > -1, 'it never says what it could not add');
+  assert.ok(goAt > alertAt, 'it walks to the basket before saying what is missing');
+});
+
+test('the four new words are in the Tamil dictionary, and both copies match', () => {
+  const dictionary = read('assets/i18n.js');
+  for (const phrase of [
+    'Order this again',
+    'Adding...',
+    'Nothing from that order is on the menu today.',
+    'Added {count} of {total}. Not on the menu today: {names}',
+  ]) {
+    assert.ok(dictionary.includes('"' + phrase + '"'), phrase + ' has no Tamil');
+  }
+  assert.strictEqual(
+    dictionary,
+    fs.readFileSync(path.join(__dirname, '..', 'menu', 'i18n.js'), 'utf8'),
+    'the two copies of the dictionary have drifted'
+  );
+});
