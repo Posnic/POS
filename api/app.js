@@ -393,6 +393,20 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+/*
+ * A body is data, never a query.
+ *
+ * Both parsers above build real nested objects, so `{"user":{"$ne":null}}`
+ * reaches a handler intact and turns a filter for one row into a filter for
+ * every row. Nothing in this product needs a caller to name a Mongo operator,
+ * so one is removed here rather than guarded for at six hundred call sites.
+ *
+ * Immediately after the parsers and before every route, so nothing downstream
+ * has to remember. See src/middleware/no-mongo-operators.js for why it strips
+ * rather than refuses.
+ */
+app.use(require('./src/middleware/no-mongo-operators'));
+
 // Recover from JSON parse errors caused by the legacy frontend.
 // The legacy jQuery frontend sets contentType:'application/json' but sometimes
 // sends URL-encoded data (e.g. `branch_id=`).  express.json() rejects this with
