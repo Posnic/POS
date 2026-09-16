@@ -254,8 +254,16 @@ PosnicPro.onlineorders = {
              * dealt with. It cannot see this list, so the page is what tells
              * it the queue is clear. Without this, an order accepted on
              * another till leaves this one nagging about nothing.
+             *
+             * AND A STANDING CALL COUNTS AS SOMETHING WAITING, even though
+             * this page does not draw it. A table's call raises the same
+             * alarm, and silence() with no id CLEARS the lot - so a shop with
+             * no orders and one table calling would have the noise stopped by
+             * somebody merely opening this page, with nobody having gone.
+             * A stopped alarm is a promise that it was dealt with.
              */
-            if (!list.length) self.silence();
+            var calling = (response && response.calls) || [];
+            if (!list.length && !calling.length) self.silence();
         }, function () {
             loader.find('.loadingSpinner:first').remove();
             $('#onlineorders_list').html('');

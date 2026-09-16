@@ -388,10 +388,15 @@ test('a call is NOT counted on the Online orders menu, because it is not on that
   floor.window.PosnicOnlineOrderWatch.look();
   assert.strictEqual(floor.document.querySelector('.online-orders-badge').textContent, '1');
 
-  /* The queue page it leads to reads `data`, which is why the above is right. */
+  /* The queue page it leads to DRAWS `data`, which is why the above is right.
+     It reads the calls for one thing only - see the alarm test below. */
   const queue = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'online_orders.js');
   assert.match(queue, /var list = \(response && response\.data\) \|\| \[\];/);
-  assert.ok(!/response\.calls/.test(queue), 'the queue page now shows calls, so the badge should count them');
+  assert.match(
+    queue,
+    /\$\('#onlineorders_list'\)\.html\(list\.map\(self\.card\)\.join\(''\)\)/,
+    'the queue page now draws something other than the orders'
+  );
   floor.window.close();
 });
 
@@ -402,4 +407,21 @@ test('a shop whose server says nothing about calls is unaffected', () => {
   floor.window.PosnicOnlineOrderWatch.look();
   assert.strictEqual(floor.document.querySelector('.online-orders-badge'), null);
   floor.window.close();
+});
+
+test('a standing call keeps the queue page from clearing the alarm', () => {
+  /*
+   * The page tells the main process the queue is clear when it has no orders
+   * to draw, and silence() with no id CLEARS the lot - calls included. So a
+   * shop with nothing pending and one table calling would have the noise
+   * stopped by somebody merely OPENING this page, with nobody having gone to
+   * the table. A stopped alarm is a promise that it was dealt with.
+   */
+  const queue = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'online_orders.js');
+  assert.match(queue, /var calling = \(response && response\.calls\) \|\| \[\];/);
+  assert.match(
+    queue,
+    /if \(!list\.length && !calling\.length\) self\.silence\(\);/,
+    'an empty order list alone still clears the alarm, call or no call'
+  );
 });
