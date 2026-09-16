@@ -485,6 +485,26 @@ function buildBillPayload(sale = {}, branch = {}) {
     /* Beside the subtotal, not in the header - see totalQuantity. */
     totalQty: totalQuantity(branch, items),
 
+    /*
+     * WHAT THE SHOP ASKED TO SAY AT THE BOTTOM.
+     *
+     * `footer_print` is a box on the printing settings screen, a shop types its
+     * own words into it, and the bill printed the generic thank-you instead.
+     * The renderer had supported `sale.footer` all along; nothing ever set it.
+     * One restaurant had "Thanking You / Visit Again" saved and handed over a
+     * bill saying "Thank you, please visit again" every time.
+     *
+     * Trimmed and capped: free text on a document a customer keeps, and a paste
+     * accident should cost a line rather than a roll of paper.
+     */
+    footer: String((branch && branch.footer_print) || '')
+      .trim()
+      .split(String.fromCharCode(10))
+      .slice(0, 4)
+      .map((line) => line.trim().slice(0, 64))
+      .filter(Boolean)
+      .join(String.fromCharCode(10)),
+
     title: 'BILL',
     billNo: String(sale.sales_id || '').trim(),
     date: stamp(sale.date || sale.created_at),
