@@ -25,6 +25,34 @@
         return String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m));
     }
 
+    /*
+     * The shop this page is attached to, remembered once.
+     *
+     * knownBranchId() lives in indexedDB.js and reads the store address the
+     * same way every other page does. Read once on the first paint rather than
+     * per row: it touches IndexedDB, and a list of ten orders would ask ten
+     * times for an answer that cannot change while the page is open.
+     */
+    let hereShop = null;
+
+    async function whereWeAre() {
+        if (hereShop !== null) return hereShop;
+        try {
+            hereShop = typeof knownBranchId === "function" ? String((await knownBranchId()) || "") : "";
+        } catch (e) {
+            hereShop = "";
+        }
+        return hereShop;
+    }
+
+    /** Was this order placed at the shop whose menu this phone is holding? */
+    function sameShop(kept) {
+        const here = String(hereShop || "");
+        const there = String((kept && kept.shop) || "");
+        /* Unknown on either side means no button rather than a wrong one. */
+        return !!here && !!there && here === there;
+    }
+
     function apiBase() {
         return String((window.CONFIG && window.CONFIG.API_BASE_URL) || "").replace(/\/$/, "");
     }
@@ -454,6 +482,29 @@
             item.appendChild(panel);
         }
 
+        /*
+         * THE SAME AGAIN.
+         *
+         * Only where the shop answered, because the remembered line carries a
+         * name and a quantity and no item id - the id comes from the shop's
+         * own copy of the order. Without it there is nothing to look up in
+         * today's menu, and matching a dish by its NAME is how a customer ends
+         * up with the wrong one.
+         *
+         * And only for THIS shop. History can hold orders placed elsewhere,
+         * and an id from another shop's menu means nothing here: it would
+         * either miss, or - far worse - hit a different dish that happens to
+         * share an id.
+         */
+        if (said && !said.unknown && Array.isArray(said.items) && said.items.length && sameShop(kept)) {
+            const again = document.createElement("button");
+            again.type = "button";
+            again.className = "history-again";
+            again.setAttribute("data-order", kept.orderId);
+            again.textContent = say("Order this again");
+            item.appendChild(again);
+        }
+
         /* A bill exists once the shop has taken the money, and not before. */
         if (said && said.bill_ready) {
             const bill = document.createElement("a");
@@ -465,12 +516,79 @@
         return item;
     }
 
+    /*
+     * What the shop said about each order, kept so the button below can reach
+     * it. The item ids only exist in the shop's copy, and `paint` builds its
+     * answers in a local it throws away.
+     */
+    const answered = new Map();
+
+    /*
+     * PRESSING IT.
+     *
+     * The basket is filled by orderAgain() in indexedDB.js, which is the one
+     * place that knows what a cart line looks like. This only decides what to
+     * SAY about the result and where to go next.
+     *
+     * A partial result does not go quietly to the basket. Somebody who ordered
+     * five dishes and gets three, with a cheerful hop to the cart, checks out
+     * believing they ordered what they ordered last week. So the ones that
+     * could not come back are named, and the page waits for them to read it.
+     */
+    document.addEventListener("click", async (event) => {
+        const button = event.target.closest && event.target.closest(".history-again");
+        if (!button) return;
+
+        const orderId = String(button.getAttribute("data-order") || "");
+        const said = answered.get(orderId);
+        if (!said || !Array.isArray(said.items) || !said.items.length) return;
+
+        /* Off the moment it is pressed. Filling a basket touches IndexedDB and
+           a second tap would add everything twice. */
+        if (button.disabled) return;
+        button.disabled = true;
+        const wording = button.textContent;
+        button.textContent = say("Adding...");
+
+        let result = null;
+        try {
+            result = typeof orderAgain === "function" ? await orderAgain(said.items) : null;
+        } catch (e) {
+            result = null;
+        }
+
+        button.disabled = false;
+        button.textContent = wording;
+
+        if (!result || !result.added.length) {
+            /* Nothing came back. Saying so beats sending them to an empty
+               basket to work it out. */
+            window.alert(say("Nothing from that order is on the menu today."));
+            return;
+        }
+
+        if (result.gone.length) {
+            window.alert(
+                say("Added {count} of {total}. Not on the menu today: {names}", {
+                    count: result.added.length,
+                    total: result.added.length + result.gone.length,
+                    names: result.gone.join(", ")
+                })
+            );
+        }
+
+        window.location.href = "cart.html";
+    });
+
     /* Which paint is the current one. A second paint starting while the
        first is still asking the shop used to clear the list under it, and
        the first then tried to replace a row that was no longer there. */
     let painting = 0;
 
     async function paint() {
+        /* Before any row is built: sameShop() is synchronous because the rows
+           are, and this is what fills it in. */
+        await whereWeAre();
         const list = el("history-list");
         const empty = el("history-empty");
         if (!list) return;
@@ -513,6 +631,7 @@
                 drawn.remove();
                 continue;
             }
+            answered.set(String(order.orderId), one);
             if (drawn.parentNode === list) list.replaceChild(row(order, one), drawn);
         }
 

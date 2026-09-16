@@ -1546,6 +1546,84 @@ async function setCartItemSpice(id, level) {
     renderCart(cartData);
 }
 
+/*
+ * THE SAME ORDER AGAIN.
+ *
+ * A regular orders the same thing. Reading their own history, finding five
+ * dishes and tapping each one back in is work the phone can do, and every
+ * ordering app in the world does it.
+ *
+ * AT TODAY'S PRICES, NEVER THE REMEMBERED ONE. The line a customer kept says
+ * what they paid last time. Putting that number back in the basket would quote
+ * a price the shop is not offering today - so the CATALOGUE product is what
+ * goes in the cart, and the remembered line is used only for what it is: which
+ * dish, how many, and how they asked for it.
+ *
+ * AND IT SAYS WHAT IT COULD NOT ADD. A basket that quietly comes back with
+ * three of the five dishes is worse than one that refuses: the customer
+ * checks out believing they ordered what they ordered last week. Anything
+ * missing, sold out, or waiting on a price the shop has not set today is
+ * named back to the caller.
+ *
+ * IT ADDS, IT DOES NOT REPLACE. Whatever is already in the basket was put
+ * there deliberately, a moment ago, by the person tapping this.
+ */
+async function orderAgain(lines) {
+    const catalogue = await getData("products").catch(() => []);
+    const byId = new Map((catalogue || []).map((one) => [String(one.id), one]));
+
+    let cart = await getCartData();
+    const added = [];
+    const gone = [];
+
+    for (const line of Array.isArray(lines) ? lines : []) {
+        const id = String((line && line.item_id) || "");
+        const name = String((line && line.name) || "");
+        const quantity = Math.max(0, Math.round(Number(line && line.quantity) || 0));
+        const product = id ? byId.get(id) : null;
+
+        /*
+         * Four ways a dish does not come back, and all four read the same to
+         * the customer: it is not available now. The reasons differ to us -
+         * taken off the menu, sold out today, or a daily-priced dish the shop
+         * has not priced yet - and none of them may become a silent skip.
+         */
+        if (!id || !quantity || !product || product.available === false || waitingForTodaysPrice(product)) {
+            if (name) gone.push(name);
+            continue;
+        }
+
+        const result = KioskCore.changeCartQuantity(cart, product, id, quantity);
+        cart = result.cart;
+
+        /*
+         * How they asked for it last time, carried back. A note the kitchen
+         * acted on and a spice level somebody chose are part of "the same
+         * again" - leaving them behind makes this a different order that
+         * looks identical on the screen.
+         *
+         * The spice level only where the dish still OFFERS one: a shop that
+         * turned the picker off for a dish has changed its mind, and a level
+         * riding in on an old order would print on a ticket for a choice the
+         * menu no longer makes.
+         */
+        const put = cart.find((one) => String(one.id) === id);
+        if (put) {
+            const note = String((line && line.note) || "").trim();
+            if (note) put.note = note.slice(0, 200);
+            const spice = Number((line && line.spice) || 0);
+            if (product.spice_choice === true && spice > 0) {
+                put.spice = window.PosnicSpice ? window.PosnicSpice.levelOf(spice) : spice;
+            }
+        }
+
+        added.push(name || String(product.name || ""));
+    }
+
+    if (added.length) await saveCartData(cart);
+    return { added, gone, cart };
+}
+
 /** A note on one line of the order, kept with the line. */
 async function setCartItemNote(id, text) {
     const cartData = await getCartData();
