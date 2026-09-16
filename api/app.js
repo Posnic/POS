@@ -393,6 +393,20 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+/*
+ * A body is data, never a query.
+ *
+ * Both parsers above build real nested objects, so `{"user":{"$ne":null}}`
+ * reaches a handler intact and turns a filter for one row into a filter for
+ * every row. Nothing in this product needs a caller to name a Mongo operator,
+ * so one is removed here rather than guarded for at six hundred call sites.
+ *
+ * Immediately after the parsers and before every route, so nothing downstream
+ * has to remember. See src/middleware/no-mongo-operators.js for why it strips
+ * rather than refuses.
+ */
+app.use(require('./src/middleware/no-mongo-operators'));
+
 // Recover from JSON parse errors caused by the legacy frontend.
 // The legacy jQuery frontend sets contentType:'application/json' but sometimes
 // sends URL-encoded data (e.g. `branch_id=`).  express.json() rejects this with
@@ -447,15 +461,51 @@ const sanitize = (obj) => {
 
 // Custom NoSQL injection protection middleware
 app.use((req, res, next) => {
-  // Sanitize query parameters
+  /*
+   * THE QUERY SANITISER, AND WHY THIS IS NOT AN ASSIGNMENT.
+   *
+   * `req.query = sanitize(...)` is what stood here, and on Express 5 it is a
+   * SILENT NO-OP. Express 5 defines `query` as a getter that re-parses the
+   * query string on every access: assigning to it does nothing and throws
+   * nothing, and mutating the object it hands back does nothing either,
+   * because the next read parses the string again.
+   *
+   * So from the day this app moved to Express 5, every `$`-prefixed query
+   * parameter survived this middleware untouched - the one thing it exists to
+   * remove - while the warning it logs never fired and nothing looked wrong.
+   * The body half was never affected: `req.body` is an ordinary property.
+   *
+   * defineProperty replaces the getter outright, which is the only thing
+   * Express 5 honours. Proved by running all three against a real Express app
+   * rather than reasoned about; see the test.
+   */
   if (req.query) {
-    req.query = sanitize({ ...req.query });
+    const cleanQuery = sanitize({ ...req.query });
+    Object.defineProperty(req, 'query', {
+      value: cleanQuery,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
   }
 
-  // Sanitize request body
-  if (req.body && typeof req.body === 'object') {
-    req.body = sanitize({ ...req.body });
-  }
+  /*
+   * THE BODY IS ALREADY CLEAN BY THE TIME THIS RUNS.
+   *
+   * `req.body = sanitize({ ...req.body })` stood here and did the same job as
+   * src/middleware/no-mongo-operators.js, which is mounted immediately after
+   * the parsers and therefore always runs first. Two implementations of one
+   * promise is how the two drift: a rule added to one and not the other reads
+   * as covered and is not.
+   *
+   * The dedicated one is the one kept, because it also removes `__proto__`,
+   * `constructor` and `prototype`, bounds its own walk against a structure
+   * built to be walked, and logs a count and a path rather than a string the
+   * caller chose.
+   *
+   * `sanitize` stays for the QUERY STRING above, which is its own problem and
+   * was not running at all until #811.
+   */
 
   /* The gap the sanitiser above cannot see into: a filter arriving as a JSON
      STRING is one ordinary-looking value to that walk, so its operators
@@ -466,6 +516,23 @@ app.use((req, res, next) => {
 });
 
 // XSS protection middleware
+/*
+ * THIS ONLY WORKS BECAUSE THE MIDDLEWARE ABOVE RAN FIRST.
+ *
+ * Express 5 makes `req.query` a getter that re-parses the query string on
+ * every access, so neither mutating it (as this does) nor assigning to it (as
+ * middleware/validateRequest.js does) has any effect on the real thing - the
+ * next read parses the string again and throws the changes away.
+ *
+ * The NoSQL guard above replaces that getter with a plain, writable property.
+ * From that point on both styles work, which is why this XSS pass and the
+ * per-route validator both started working again when it was fixed, without
+ * either being touched.
+ *
+ * So the order is load bearing: move the guard above below this, or take it
+ * out, and THREE sanitisers stop running in silence. Pinned by
+ * tests/unit/the-query-sanitiser-actually-sanitises.test.js.
+ */
 app.use((req, res, next) => {
   // Sanitize query parameters
   if (req.query) {

@@ -868,10 +868,11 @@ function getDemoDataByType(businessType) {
  *
  * A product without one is a normal, finished state - PosnicPro.autoTile gives
  * it a coloured tile from its own name, which is a real answer on a sale grid.
- * Fifty-five of these products have no photograph because the automated search
+ * Many of these products have no photograph because the automated search
  * returned somebody's brand, a photograph of people, or the wrong object
- * entirely, and those were turned down on sight. A wrong picture is read as
- * fact; an absent one is read as an absent one.
+ * entirely, and those were turned down on sight - the reasons are kept in
+ * scripts/demo-image-rejects.json so a re-run cannot undo the review. A wrong
+ * picture is read as fact; an absent one is read as an absent one.
  *
  * Best-effort on purpose: a missing or unreadable manifest must never stop a
  * shop being created. It costs the pictures, nothing else.
@@ -902,6 +903,7 @@ function attachImages() {
     textile: textileDemoData,
     electrical: electricalDemoData,
     hardware: hardwareDemoData,
+    restaurant: restaurantDemoData,
   };
 
   for (const [name, pack] of Object.entries(packs)) {

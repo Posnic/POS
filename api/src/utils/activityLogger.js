@@ -53,12 +53,43 @@ const activityLogger = {
     limit = 10,
   } = {}) => {
     try {
+      /*
+       * EVERY FILTER VALUE IS CAST BEFORE IT IS A FILTER.
+       *
+       * These arrive from `req.query` on GET /api/activity-logs and went into
+       * the query exactly as they came: `query.user = userId`. An object there
+       * stops being a value and starts being an operator - `{ $ne: null }`
+       * turns "this user's actions" into "everybody else's" - and `branch` and
+       * `license` would still have bounded it to the shop, so it is a
+       * within-shop weakening rather than a tenant break, but it is real.
+       *
+       * The edge guard in app.js does strip `$` keys from query and body, so
+       * this is not currently reachable. That is exactly why it is worth
+       * casting HERE as well: a filter that is only safe because something
+       * upstream is working is a filter that breaks the day that thing is
+       * moved, and this one was moved once already - the query half of that
+       * sanitiser had not run since the Express 5 upgrade.
+       *
+       * COERCED TO TEXT, not validated. A string has always been safe here:
+       * Mongoose casts it to the schema's type and rejects a nonsense one, so
+       * every real caller keeps exactly the behaviour it has today, including
+       * the error it already gets for a malformed id. The only thing that
+       * changes is what an OBJECT does, and an object is the attack.
+       *
+       * Validating instead - turning a bad id into `null` - would have been a
+       * behaviour change dressed as a security fix: it answers "no rows" where
+       * the shop currently gets told its filter is wrong. The existing test
+       * caught that, which is what existing tests are for.
+       */
+      const text = (value) => (typeof value === 'string' ? value : String(value ?? ''));
       const query = {};
 
-      if (userId) query.user = userId;
-      if (action) query.action = action;
-      if (entity) query.entity = entity;
-      if (entityId) query.entityId = entityId;
+      if (userId) query.user = text(userId);
+      if (action) query.action = text(action);
+      if (entity) query.entity = text(entity);
+      /* entityId is Mixed in the schema, so a string is the only shape that
+         can be asked for from outside without becoming a query of its own. */
+      if (entityId) query.entityId = text(entityId);
       if (branch) query.branch = branch;
       if (license) query.license = license;
 

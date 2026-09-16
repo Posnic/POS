@@ -8592,6 +8592,19 @@ PosnicPro.salesChannels = {
             $("#online_order_decide_after_minutes").val(
                 String(Number(values.online_order_decide_after_minutes) || 10)
             );
+            /*
+             * ABSENT IS ON.
+             *
+             * The notice ships on for every restaurant with table service, so
+             * a screen that drew this unticked for a shop that has never saved
+             * would be telling them they had switched something off. Only an
+             * explicit false unticks it, and the STRING 'false' counts - the
+             * group endpoint has carried both shapes for years.
+             */
+            $("#online_kitchen_notice").prop(
+                "checked",
+                values.online_kitchen_notice !== false && values.online_kitchen_notice !== "false"
+            );
             PosnicPro.salesChannels.showSilenceRule();
             $("#online_order_change_seconds").val(
                 PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
@@ -8742,6 +8755,11 @@ PosnicPro.salesChannels = {
         if ($("#online_order_on_silence").length) {
             out.online_order_on_silence = onSilence;
             out.online_order_decide_after_minutes = decideAfter;
+        }
+        /* Same guard again: a screen that never drew the switch must not post
+           a false for it and hide a notice the shop never asked to hide. */
+        if ($("#online_kitchen_notice").length) {
+            out.online_kitchen_notice = $("#online_kitchen_notice").is(":checked");
         }
         return out;
     },

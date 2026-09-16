@@ -45,9 +45,7 @@ async function orderOnTableFour() {
     table_number: '4',
     table_id: String(TABLE_FOUR),
     dine_type: 'Dine-in',
-    items: [
-      { item_id: ITEM, item_name: 'Chicken Biryani', item_quantity: 1, item_price: 220 },
-    ],
+    items: [{ item_id: ITEM, item_name: 'Chicken Biryani', item_quantity: 1, item_price: 220 }],
   });
   return String(_id);
 }

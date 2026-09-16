@@ -3206,5 +3206,7 @@
   "lang_cancel_it_and_tell_the_customer": "අවලංගු කර පාරිභෝගිකයාට දන්වන්න",
   "lang_the_alarm_keeps_asking_either_way": "අවස්ථා දෙකේදීම එලාමය දිගටම අසයි, ක්‍රමයෙන් අඩු වෙමින්.",
   "lang_after_how_long": "කොපමණ වේලාවකට පසුව",
-  "lang_counted_from_when_the_order_arrived": "ඇණවුම ලැබුණු වේලාවේ සිට ගණන් කෙරේ."
+  "lang_counted_from_when_the_order_arrived": "ඇණවුම ලැබුණු වේලාවේ සිට ගණන් කෙරේ.",
+  "lang_tell_customers_the_kitchen_is_busy": "සුපසාදු කාමරය කාර්යබහුල විට ගිවිසුම්කරුවන්ට දැනුම් දෙන්න",
+  "lang_tell_customers_the_kitchen_is_busy_help": "කුසිනියට එකවර කළ හැකි මෙස ගණාවට වඩා මෙස ගණනක ඔර්ඩර ක්‍රියාවලියේ පවතින විට, ඔර්ඩර පිටුවේ පිරිනුම් දැනුම්දීමක් පෙනෙයි. මෙස සේවාව අවශ්‍යයි."
 }
