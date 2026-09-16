@@ -10102,6 +10102,108 @@ class SalesRepository {
     return day(when) === day(new Date());
   }
 
+  /*
+   * WHAT THE EXTRAS COST, DECIDED BY THE SHOP.
+   *
+   * A handset says WHICH options the table asked for. It does not say what
+   * they cost, and if it did it would not be believed: the price of extra
+   * cheese is the shop's to set, and a client that could name a price could
+   * also name a discount nobody agreed to.
+   *
+   * So the names are matched against the groups this dish actually carries,
+   * and the money comes from those documents. An option the shop does not
+   * offer on this dish is refused rather than ignored - a phone asking for it
+   * is either holding a stale menu or asking for something the kitchen will
+   * not make, and both are worth stopping before a ticket prints.
+   *
+   * HOW MANY is left to the screen that asked. Min and max are drawn there,
+   * and a shop that tightens them after a phone cached its menu should not
+   * have that phone's orders refused at the till. Duplicates are folded and a
+   * group's ceiling is honoured where it has one, because charging twice for
+   * one tick is a different kind of wrong.
+   */
+  async _priceModifiers(chosen, itemDoc, branchDoc) {
+    const asked = Array.isArray(chosen) ? chosen.filter((one) => one && one.name) : [];
+    if (!asked.length) return { status: true, delta: 0, lines: [] };
+
+    const refuse = (name) => ({
+      status: false,
+      data: { state: 'item_option_unknown', item: itemDoc.name || '', option: name },
+      message: `${itemDoc.name || 'That dish'} does not come with ${name}.`,
+    });
+
+    const ids = (itemDoc.modifier_group_ids || [])
+      .map((id) => String(id))
+      .filter((id) => ObjectId.isValid(id));
+
+    if (!ids.length) return refuse(asked[0].name);
+
+    const collection = await this.getCollection('modifier_groups');
+    const docs = await collection
+      .find({
+        _id: { $in: ids.map((id) => new ObjectId(id)) },
+        license: branchDoc.license || BaseModel.license,
+      })
+      .toArray();
+
+    /* group name -> option name -> what the shop charges for it. */
+    const offered = new Map();
+    const ceilings = new Map();
+    for (const doc of docs) {
+      const groupName = String(doc.name || '');
+      const options = new Map();
+      for (const option of doc.options || []) {
+        options.set(String(option.name || ''), Number(option.price_delta) || 0);
+      }
+      offered.set(groupName, options);
+      ceilings.set(groupName, Number(doc.max) || 0);
+    }
+
+    /** The group that offers this option, when the client did not say. */
+    const groupOffering = (optionName) => {
+      for (const [groupName, options] of offered) {
+        if (options.has(optionName)) return groupName;
+      }
+      return null;
+    };
+
+    const lines = [];
+    const taken = new Map();
+
+    for (const one of asked) {
+      const wanted = String(one.name);
+
+      /*
+       * A client that names the group is taken at its word about which
+       * question it was answering. One that does not is matched on the option
+       * name alone: refusing an order over a missing label helps nobody, and
+       * the price is the shop's either way.
+       */
+      const groupName =
+        one.group != null && offered.has(String(one.group))
+          ? String(one.group)
+          : groupOffering(wanted);
+
+      if (!groupName || !offered.get(groupName).has(wanted)) return refuse(wanted);
+
+      const already = taken.get(groupName) || [];
+      if (already.includes(wanted)) continue;
+
+      const ceiling = ceilings.get(groupName) || 0;
+      if (ceiling > 0 && already.length >= ceiling) continue;
+
+      taken.set(groupName, already.concat(wanted));
+      lines.push({
+        group: groupName,
+        name: wanted,
+        price_delta: offered.get(groupName).get(wanted),
+      });
+    }
+
+    const delta = lines.reduce((sum, one) => sum + one.price_delta, 0);
+    return { status: true, delta, lines };
+  }
+
   async _priceOnlineLine(item, where) {
     const {
       itemCollection,
@@ -10261,7 +10363,24 @@ class SalesRepository {
       }
     }
 
-    const sellingPrice = partnerVenues.priceFor(dynamic ? asked : catalogue, servicePoint.venue);
+    /*
+     * THE EXTRAS, ADDED BEFORE TAX AND DISCOUNT RATHER THAN AFTER.
+     *
+     * Extra cheese on a pizza is part of the pizza: it is taxed at the
+     * pizza's rate and a percentage discount applies to the whole plate. Adding
+     * it afterwards would tax the dish and not the cheese, which is a quiet
+     * way to file a wrong return.
+     *
+     * The delta comes from the shop's own option documents, never from the
+     * caller. See _priceModifiers.
+     */
+    const extras = await this._priceModifiers(item.modifiers, itemDoc, branchDoc);
+    if (extras.status === false) return extras;
+
+    const sellingPrice = partnerVenues.priceFor(
+      (dynamic ? asked : catalogue) + extras.delta,
+      servicePoint.venue
+    );
     const taxRate = Number(itemDoc.tax || 0);
     const discountAmount = Number(itemDoc.discount_amount || 0);
     const discountPercentage = Number(itemDoc.discount_percentage || 0);
@@ -10285,6 +10404,12 @@ class SalesRepository {
         unit_price: round(baseUnitPrice),
         tax_amount: taxAmt,
         total: itemTotal,
+        /*
+         * What the table actually asked for, kept beside the money it cost.
+         * The kitchen ticket needs it to cook the right thing and the bill
+         * needs it to explain a price that is not the one on the card.
+         */
+        ...(extras.lines.length ? { modifiers: extras.lines } : {}),
         /*
          * THE CUSTOMER'S NOTE, not the catalogue's blurb.
          *
