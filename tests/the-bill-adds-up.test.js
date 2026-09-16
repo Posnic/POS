@@ -203,14 +203,26 @@ test('NONE OF IT IS DELETED - a shop that wants the hotel bill switches it on', 
     { label: 'Order type', value: 'Dine In' },
     { label: 'Covers', value: '2' },
     { label: 'Steward', value: 'Sridhar' },
-    /* Dishes, not lines: 2 paneer and 3 naan is 5, which is what a hotel
-       prints and what a guest counts. */
-    { label: 'Total Qty', value: '5' },
   ]);
+
+  /*
+   * Total Qty is NOT a service row, deliberately. Owner, on a printed bill:
+   * "moving total quantity to bottom". It is a count of what was bought, so it
+   * belongs beside the subtotal where a reader is already adding up, not in the
+   * header with the table number. Still switched by the same toggle, still
+   * dishes rather than lines - 2 paneer and 3 naan is 5.
+   */
+  assert.strictEqual(on.totalQty, '5');
+  assert.ok(
+    !on.serviceRows.some((r) => /Total Qty/i.test(r.label)),
+    'the count is back in the header, where the restaurant looks and the guest does not'
+  );
+
   const text = paper({ ...on, title: 'TAX INVOICE' });
   assert.match(text, /From: Captain app/);
   assert.match(text, /Table\s+4/);
   assert.match(text, /Steward\s+Sridhar/);
+  assert.match(text, /Total Qty\s+5/, 'the count stopped printing anywhere at all');
 });
 
 test('and the switch is read as the settings form stores it, a string', () => {
