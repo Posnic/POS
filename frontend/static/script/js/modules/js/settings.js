@@ -6724,28 +6724,6 @@ $(document).on('change', '#bill_number_reset', function () {
 });
 
 
-/*
- * The minutes only mean something once a shop has chosen what to do, and the
- * whole rule only means something while orders are being HELD.
- *
- * Hidden rather than disabled. A greyed control says "you may not touch me"
- * about something that is simply not part of this choice, and a shop on
- * automatic reading "If nobody answers" has been asked a question about a
- * queue it does not have.
- */
-PosnicPro.settings.showSilenceRule = function () {
-    var holding = $("#online_order_approval").val() === "manual";
-    $("#online_order_silence_row").toggle(holding);
-    $("#online_order_decide_after_row").toggle(
-        holding && ($("#online_order_on_silence").val() || "") !== ""
-    );
-};
-
-$(document).on("change", "#online_order_approval, #online_order_on_silence", function () {
-    PosnicPro.settings.showSilenceRule();
-});
-
-
 /* Feature search (owner feedback): filter the cards by anything visible on
    them - title, description, sub-toggle labels. */
 PosnicPro.settings.filterModuleCards = function (query) {
@@ -8614,7 +8592,7 @@ PosnicPro.salesChannels = {
             $("#online_order_decide_after_minutes").val(
                 String(Number(values.online_order_decide_after_minutes) || 10)
             );
-            PosnicPro.settings.showSilenceRule();
+            PosnicPro.salesChannels.showSilenceRule();
             $("#online_order_change_seconds").val(
                 PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
             );
@@ -8775,6 +8753,30 @@ PosnicPro.salesChannels = {
      * it quietly rewritten to 30 the next time somebody saves this page for
      * an unrelated reason.
      */
+    /*
+     * The minutes only mean something once a shop has chosen what to do, and
+     * the whole rule only means something while orders are being HELD.
+     *
+     * Hidden rather than disabled. A greyed control says "you may not touch
+     * me" about something that is simply not part of this choice, and a shop
+     * on automatic reading "If nobody answers" has been asked a question about
+     * a queue it does not have.
+     *
+     * ON THIS MODULE, not on PosnicPro.settings. It is a control on the
+     * channels screen and `load()` calls it, so reaching across to another
+     * namespace made drawing the whole screen depend on that namespace being
+     * there. It was not, in the harness that lifts this module out - and a
+     * `load()` that throws leaves Delivery Partners and Restaurant blank,
+     * which the next Save would write back over the real rows.
+     */
+    showSilenceRule: function () {
+        var holding = $("#online_order_approval").val() === "manual";
+        $("#online_order_silence_row").toggle(holding);
+        $("#online_order_decide_after_row").toggle(
+            holding && ($("#online_order_on_silence").val() || "") !== ""
+        );
+    },
+
     nearestWindow: function (stored) {
         var offered = [0, 30, 60, 120, 300, 600, 900];
         /* An unset shop is one minute, which is what the server falls back
@@ -9016,6 +9018,13 @@ $(document).on('click', '#add_webshop_partner', function () {
 /* Change a row's kind and it belongs on the other screen. Moving it there is
    the honest answer: leaving an "Own webshop" row sitting under Delivery
    Partners is how a shop ends up believing it saved something it cannot find. */
+/* The silence rule only applies to a queue, and the minutes only to a choice.
+   Bound beside the other channel-screen handlers, and calling the module that
+   owns the control rather than reaching into another namespace. */
+$(document).on('change', '#online_order_approval, #online_order_on_silence', function () {
+    PosnicPro.salesChannels.showSilenceRule();
+});
+
 $(document).on('change', '.partner-channel', function () {
     var $row = $(this).closest('.channel-partner-row');
     var target = $(this).val() === 'ecommerce' ? '#webshop_partner_rows' : '#sales_channel_partner_rows';
