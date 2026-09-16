@@ -190,6 +190,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
    */
   bill: {
     getStatus:     () => ipcRenderer.invoke('bill:get-status'),
+    /* Answering a bill the queue parked for a person: it printed, or print it
+       again. See api/src/repositories/print-job.repository resolveAttention. */
+    answerWaiting: (id, printed) => ipcRenderer.invoke('bill:answer-waiting', id, printed),
     /* This machine's own key, for pasting into the shop so it will accept
        bills from here. See api/src/models/print-till.model.js. */
     getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key'),

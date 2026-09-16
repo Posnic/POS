@@ -7121,6 +7121,71 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * THE BILLS THAT NEVER CAME OUT, and the only screen that can say so.
+   *
+   * A job whose till took it and never reported back, or that failed its
+   * attempts, is moved to `needs_attention` - "where a person decides", as the
+   * queue's own comment puts it. There was no way for a person to decide:
+   * `jobsNeedingAttention` and `resolveAttention` were written, exported, and
+   * reachable from nowhere at all. So a bill a guest was waiting for sat in a
+   * status nobody could read, and the counter's only clue was paper that never
+   * arrived.
+   *
+   * Behind the same door the till already uses, because it is the till's own
+   * Hardware Manager that shows it and the till already holds that key.
+   */
+  async printJobsNeedingAttention(req, res) {
+    try {
+      const { jobsNeedingAttention } = require('../repositories/print-job.repository');
+      const out = await jobsNeedingAttention({
+        branchId: req.body.branchId || req.query.branchId,
+        limit: Number(req.body.limit) || 20,
+      });
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      /* Only what a person needs to decide: what it was, when, and why it is
+         here. Never the payload - that is a whole bill, and this is a list. */
+      const rows = (out.data || []).map((job) => ({
+        id: String(job._id),
+        label: String(job.label || ''),
+        kind: String(job.kind || ''),
+        at: job.created_at || null,
+        attempts: Number(job.attempts) || 0,
+        why: String(job.last_error || ''),
+      }));
+      return this.success(res, rows, 'success');
+    } catch (error) {
+      console.error('Error in printJobsNeedingAttention:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  /**
+   * A person answering "did this print?".
+   *
+   * `printed: true` closes it. Anything else puts it back on the queue, which
+   * is the only kind of retry this design allows: a deliberate one, by
+   * somebody who has looked at the printer and knows what came out of it.
+   */
+  async resolvePrintJob(req, res) {
+    try {
+      const { resolveAttention } = require('../repositories/print-job.repository');
+      const out = await resolveAttention(req.body.id || req.body.jobId, {
+        printed: req.body.printed === true || req.body.printed === 'true',
+        by: req.body.by || '',
+      });
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      return this.success(res, out.data, out.message || 'success');
+    } catch (error) {
+      console.error('Error in resolvePrintJob:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /** What the till still owes the counter, read by the till itself. */
   async pendingBillPrints(req, res) {
     try {
