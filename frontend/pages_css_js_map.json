@@ -125,6 +125,7 @@
             "static/script/js/core/demo-mode.js",
             "static/script/js/core/desktop-nudge.js",
             "static/script/js/core/order-alert.js",
+            "static/script/js/core/kitchen-call.js",
             "static/script/js/core/online-order-watch.js",
             "static/script/js/core/request-dock.js"
         ]
