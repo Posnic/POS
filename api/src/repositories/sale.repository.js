@@ -69,6 +69,17 @@ const partnerVenues = require('../utils/partner-venues');
 const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
 
 /*
+ * How long a till's claim on a kitchen ticket lasts.
+ *
+ * Long enough to cover a poll, a print and a report on a slow printer; short
+ * enough that a till which died mid-print has its work picked up by the other
+ * one before anybody at a pass notices. The cost of being wrong in the short
+ * direction is a duplicate, and in the long direction a delay, so it is set
+ * where a real print comfortably fits.
+ */
+const KOT_CLAIM_MS = 45 * 1000;
+
+/*
  * The shop's own answering speed, remembered for a few minutes.
  *
  * Every phone watching an order asks for this on every poll, and the answer
@@ -7466,7 +7477,26 @@ class SalesRepository {
     }
   }
 
-  async multiKitchenPrintModel(branchId) {
+  /*
+   * ONE TICKET, ONE TILL.
+   *
+   * This hands out the kitchen's work, and it took a branch and nothing else:
+   * no till, no claim, no lease. Two machines polling the same shop were
+   * handed the SAME sales and both printed them. Nobody has seen that because
+   * only one till in a shop is configured with kitchen printers - which is
+   * also exactly why a shop with two tills has no standby: the second one
+   * cannot be given the printers without doubling every ticket.
+   *
+   * A till that says who it is now CLAIMS what it is handed, the same way the
+   * bill queue already does. A claim only ever narrows what a till is offered,
+   * so it cannot cause a missing ticket; a till that dies mid-print has its
+   * claim expire and the other one picks the work up, which is the standby.
+   *
+   * A TILL THAT SENDS NO ID BEHAVES EXACTLY AS BEFORE. Ninety shops are
+   * running builds that do not send one, and this is the path that feeds every
+   * kitchen: it must be a no-op for them until their till updates.
+   */
+  async multiKitchenPrintModel(branchId, { tillId = '' } = {}) {
     try {
       const db = await BaseModel.getDb();
       const branchCollection = db.collection('branches');
@@ -7494,12 +7524,33 @@ class SalesRepository {
       const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
       const todayEnd = new Date(new Date().setHours(0, 0, 0, 0) + 86400000);
 
+      /*
+       * Somebody else's, and recently enough that they are probably still
+       * printing it. Absent for a till that sends no id, which leaves the
+       * query exactly as it was.
+       */
+      const mine = String(tillId || '').trim();
+      const notSomebodyElses = mine
+        ? {
+            $or: [
+              { kot_claimed_at: null },
+              { kot_claimed_at: { $exists: false } },
+              { kot_claimed_at: { $lt: new Date(Date.now() - KOT_CLAIM_MS) } },
+              /* My own claim never blocks me: a till that crashed mid-print
+                 must be able to try again on its very next poll, not in
+                 forty-five seconds. */
+              { kot_claimed_by: mine },
+            ],
+          }
+        : {};
+
       const kotSales = await salesCollection
         .find(
           {
             branch_id: branchObjectId,
             sale_process: { $regex: 'KOT', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...notSomebodyElses,
           },
           { sort: { created_date: 1, _id: 1 }, limit: 50 }
         )
@@ -7511,6 +7562,7 @@ class SalesRepository {
             branch_id: branchObjectId,
             sale_process: { $regex: 'cancelled', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...notSomebodyElses,
           },
           { sort: { created_date: 1 }, limit: 20 }
         )
@@ -7597,6 +7649,28 @@ class SalesRepository {
         console.warn('[kot-shadow] not recorded:', e && e.message);
       }
 
+      /*
+       * And this till has taken them.
+       *
+       * Stamped on exactly what is being HANDED OVER, not on everything the
+       * query read: a sale with no new changes is not being printed by anybody
+       * and claiming it would hide it from the other till for no reason.
+       *
+       * Never fatal. A claim that cannot be written leaves the old behaviour -
+       * two tills might both print - and that is far better than a kitchen
+       * that gets nothing because a bookkeeping write failed.
+       */
+      if (mine && processedSales.length) {
+        try {
+          await salesCollection.updateMany(
+            { _id: { $in: processedSales.map((sale) => sale._id) } },
+            { $set: { kot_claimed_by: mine, kot_claimed_at: new Date() } }
+          );
+        } catch (e) {
+          console.warn('[kot] could not record which till took these:', e && e.message);
+        }
+      }
+
       return { status: true, message: 'Get unprinted sales successfully', data: processedSales };
     } catch (error) {
       console.error('Error in multiKitchenPrintModel:', error);
@@ -7651,6 +7725,11 @@ class SalesRepository {
               kitchen_printed: true,
               kitchen_printed_at: now,
               last_printed_change_index: lastChangeIndex,
+              /* Done with, so the claim goes. Leaving it would keep the sale
+                 hidden from the other till for the rest of the window, which
+                 matters the moment an amendment arrives for the same table. */
+              kot_claimed_by: '',
+              kot_claimed_at: null,
             },
           }
         );
