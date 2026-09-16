@@ -10,9 +10,18 @@
  *   { user: 'amudha' }        the one row
  *   { user: { $ne: null } }   every row
  *
- * Driven through a real express app rather than by calling the middleware
- * with a hand-made req, because half of what is being asserted is WHERE it
- * sits in the stack: after the parsers, before every route.
+ * Driven through an express app rather than by calling the middleware with a
+ * hand-made req, so the parsers are the real ones and what the handler sees is
+ * what a handler would see.
+ *
+ * A CORRECTION, because this file said otherwise. It is a SCAFFOLD, not this
+ * application: it has only the middleware put into it here. When I added this
+ * guard I watched an operator reach the handler in this scaffold and reported
+ * it as the app's behaviour. It was not - api/app.js has had a working body
+ * sanitiser all along, and the body was being stripped twice until the
+ * duplicate was removed. What is asserted below is this middleware's own
+ * behaviour, which is real; where it sits in the REAL chain is asserted
+ * against the real app in one-body-sanitiser-not-two.test.js.
  */
 
 const express = require('express');
@@ -160,6 +169,8 @@ describe('a hostile body cannot cost the server the request', () => {
 });
 
 describe('it is mounted where it has to be', () => {
+  /* Source-level; the running chain is checked in
+     one-body-sanitiser-not-two.test.js against the app itself. */
   test('after the parsers and before every route', () => {
     const fs = require('node:fs');
     const path = require('node:path');
