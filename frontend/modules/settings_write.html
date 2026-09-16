@@ -6065,6 +6065,27 @@
                                                                         </small>
                                                                     </div>
                                                                 </div>
+                                                                <!--
+                                                                    Whether a customer is told the kitchen is busy.
+
+                                                                    Default ON: the notice already shows on every
+                                                                    restaurant running table service, so a control that
+                                                                    started unticked would read as "this shop switched
+                                                                    it off" the first time anybody opened this page.
+                                                                    See api/src/services/settings-groups.js.
+                                                                -->
+                                                                <div class="form-row">
+                                                                    <div class="form-group col-md-10">
+                                                                        <div class="custom-control custom-switch">
+                                                                            <input type="checkbox" class="custom-control-input"
+                                                                                id="online_kitchen_notice" name="online_kitchen_notice" checked>
+                                                                            <label class="custom-control-label" for="online_kitchen_notice"><lang class="lang_tell_customers_the_kitchen_is_busy">Tell customers when the kitchen is busy</lang></label>
+                                                                        </div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_tell_customers_the_kitchen_is_busy_help">A wait warning appears on the ordering page when more tables are mid-order than the kitchen can cook for at once. Needs table service.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                             <div class="card-footer text-right">
                                                                 <button type="submit" class="btn btn-outline-primary">

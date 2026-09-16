@@ -398,6 +398,25 @@ const CHANNELS = [
    */
   'online_order_on_silence',
   'online_order_decide_after_minutes',
+  /*
+   * WHETHER A CUSTOMER IS TOLD THE KITCHEN IS BUSY.
+   *
+   * Owner: "have configuraiton option."
+   *
+   * Absent means ON, and that is the whole point of the default: the notice
+   * already shows on every restaurant that runs table service, so a key that
+   * defaulted off would switch a shipped behaviour off for every shop on the
+   * day it merged. Only an explicit false hides it.
+   *
+   * A shop turning it off is not hiding a problem from customers. Some floors
+   * genuinely run at capacity all evening by design, and a warning that is
+   * always on is a warning nobody reads - worse than none, because it also
+   * teaches them to ignore the one that means something.
+   *
+   * repositories/item.repository.js is what acts on it, and only a branch with
+   * table service and tables can raise the notice at all.
+   */
+  'online_kitchen_notice',
   /* An aggregator rejects on its own timer and counts it against the shop, so
      a decision of ours landing after theirs is worse than none: the order is
      already gone and we have recorded the opposite. 0 means no such window. */
