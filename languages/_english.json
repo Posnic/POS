@@ -2311,6 +2311,7 @@
   "lang_price_stock_title": "Price &amp; Stock",
   "lang_price_title": "Price",
   "lang_price_to_change": "Price to change",
+  "lang_price_today": "Price today",
   "lang_pricelists": "Customer Pricing",
   "lang_pricelists_hint": "A customer category can carry its own prices - a percentage off everything, exact prices per item, or both (exact wins). Applied automatically when a customer of that category is on the sale.",
   "lang_pricelists_new": "New List",
@@ -3068,6 +3069,8 @@
   "lang_taxsystem_resale": "Resale certificate number",
   "lang_taxsystem_title": "Tax System",
   "lang_taxsystem_turnover": "Annual turnover",
+  "lang_tell_customers_the_kitchen_is_busy": "Tell customers when the kitchen is busy",
+  "lang_tell_customers_the_kitchen_is_busy_help": "A wait warning appears on the ordering page when more tables are mid-order than the kitchen can cook for at once. Needs table service.",
   "lang_template": "Template",
   "lang_template_deleted": "Template deleted",
   "lang_template_language": "Template language",
@@ -3406,7 +3409,5 @@
   "lang_your_online_address": "Your online address",
   "lang_your_own_provider_account": "your own provider account",
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
-  "lang_yourselecteddetails_title": "Selected details will be deleted",
-  "lang_tell_customers_the_kitchen_is_busy": "Tell customers when the kitchen is busy",
-  "lang_tell_customers_the_kitchen_is_busy_help": "A wait warning appears on the ordering page when more tables are mid-order than the kitchen can cook for at once. Needs table service."
+  "lang_yourselecteddetails_title": "Selected details will be deleted"
 }
