@@ -286,6 +286,72 @@ async function readMany(body, context) {
  * it simply changes; outside it the kitchen may have started, so the wish is
  * recorded and a person answers it in the queue the shop already works.
  */
+/*
+ * MORE FOOD NEVER NEEDS PERMISSION. LESS FOOD DOES.
+ *
+ * Owner: "if customer add new order no approval required. we can just send. if
+ * any cancel only need approval after few seconds based on settings."
+ *
+ * He is right, and the asymmetry is real rather than a convenience. An extra
+ * naan costs the kitchen a naan it is glad to sell; nothing is wasted, nothing
+ * already cooked is thrown away, and the only thing a person could say is yes.
+ * Holding that in a queue until somebody notices is a customer waiting on a
+ * decision nobody was ever going to make differently.
+ *
+ * Taking something away is the opposite. The biryani may be in the pan. That
+ * is food already paid for in labour and ingredients, and whether it can be
+ * called back is a judgement only somebody standing in the kitchen can make.
+ *
+ * So the window - which used to gate BOTH - now gates only the taking away.
+ * Inside it nothing has started and the order is still the customer's, exactly
+ * as before. Outside it, the additions go straight to the pass and only the
+ * reductions become a request.
+ *
+ * THE TWO HALVES OF ONE REQUEST ARE ANSWERED SEPARATELY, and that is the
+ * point. "Two more naan and drop the biryani" used to wait as a single wish
+ * until somebody looked; now the naan is already being made by the time the
+ * shop reads the question about the biryani.
+ */
+function splitTheWish(wanted, lines) {
+  const onOrder = new Map(
+    (Array.isArray(lines) ? lines : []).map((line) => [
+      String(line.item_id || ''),
+      Math.max(
+        0,
+        Math.round(Number(line.item_quantity != null ? line.item_quantity : line.quantity) || 0)
+      ),
+    ])
+  );
+
+  const more = [];
+  const less = [];
+  for (const one of Array.isArray(wanted) ? wanted : []) {
+    const id = String((one && one.item_id) || '');
+    if (!id) continue;
+    const asked = Math.max(0, Math.round(Number(one.quantity) || 0));
+    const had = onOrder.has(id) ? onOrder.get(id) : 0;
+    if (asked > had) more.push({ ...one, item_id: id, quantity: asked });
+    else if (asked < had) less.push({ ...one, item_id: id, quantity: asked });
+    /* Asked for exactly what is already there: not a wish at all. */
+  }
+
+  /*
+   * What the order becomes once the additions are applied and nothing is
+   * taken away: every line it already has, raised where the customer asked
+   * for more, plus any dish that was not on it before.
+   *
+   * The WHOLE basket, because changeCustomerOrderItems reads the list as the
+   * order the customer wants - a line left out of it is a line removed. A
+   * "just the additions" list would silently cancel everything else, which is
+   * the exact opposite of what was asked for.
+   */
+  const raised = new Map(onOrder);
+  for (const one of more) raised.set(one.item_id, one.quantity);
+  const withMore = [...raised.entries()].map(([item_id, quantity]) => ({ item_id, quantity }));
+
+  return { more, less, withMore };
+}
+
 async function change(body, context) {
   const { order, reason, held } = await heldOrder(body, context);
   const wanted = Array.isArray(body && body.items) ? body.items.slice(0, 40) : [];
@@ -304,16 +370,48 @@ async function change(body, context) {
   if (reason === 'already_billed' || reason === 'already_paid' || reason === 'refused_by_shop') {
     return { status: false, message: reason, data: null };
   }
-  /* A hotel room or a delivery carries somebody else's money in the total,
-     so it is not the customer's alone to move even by asking. */
+  /*
+   * A hotel room or a delivery carries somebody else's money in the total, so
+   * it is not the customer's alone to move even by asking - and that includes
+   * adding to it. The rule below is about the KITCHEN having started; this one
+   * is about a commission somebody else is owed, and the two are not the same
+   * argument.
+   */
   if (reason === 'at_the_counter') return { status: false, message: reason, data: null };
 
-  const asked = await salesRepository.requestCustomerChange(held, wanted, held.items);
+  /*
+   * Past the window: more food goes now, less food is asked about.
+   * See splitTheWish for why those two are not the same question.
+   */
+  const { more, less, withMore } = splitTheWish(wanted, held.items);
+
+  let applied = null;
+  if (more.length) {
+    applied = await salesRepository.changeCustomerOrderItems(held, withMore);
+    if (!applied.status) return applied;
+  }
+
+  if (!less.length) {
+    /* Nothing was taken away, so there is nothing for anybody to decide. */
+    return applied
+      ? withTheWholeOrder(applied, held, context)
+      : { status: false, message: 'nothing_asked', data: null };
+  }
+
+  /*
+   * Asked against the order AS IT NOW STANDS, not as it was when the request
+   * arrived. The additions are already on it, and a queue card that showed
+   * yesterday's quantities beside today's wish would have the shop reading a
+   * before that no longer exists.
+   */
+  const now =
+    applied && applied.data && Array.isArray(applied.data.items) ? applied.data.items : held.items;
+  const asked = await salesRepository.requestCustomerChange(held, less, now);
   if (!asked.status) return asked;
   return {
     status: true,
-    message: 'Change requested',
-    data: { ...asked.data, requested: true, why_not: reason },
+    message: more.length ? 'Added, and the rest requested' : 'Change requested',
+    data: { ...asked.data, requested: true, added: more.length > 0, why_not: reason },
   };
 }
 
