@@ -58,6 +58,29 @@ const REJECTS = (() => {
   return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")) : {};
 })();
 
+/*
+ * Better words to search with, for the products whose NAME is not the name of
+ * the thing on Commons.
+ *
+ * A rejection removes a product from the run; it does not try the next
+ * candidate, and that is deliberate - a coloured tile is a fine answer and a
+ * second guess is rarely better than the first. But some of these failed for a
+ * reason a person can fix in one word rather than one the search can never get
+ * past:
+ *
+ *   "Filter Coffee"  returns coffee FILTERS, the equipment
+ *   "Grilled Fish"   returns raw fish on ice at a market
+ *   "Steamed Rice"   returns a shop counter that happens to sell it
+ *
+ * Every line here was written after looking at what the plain name returned.
+ * Same rule as the rejects: a person decided, and the file is what keeps that
+ * decision through a re-run.
+ */
+const TERMS = (() => {
+  const f = path.join(__dirname, "demo-image-terms.json");
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")) : {};
+})();
+
 const PACKS = {
   iceCream: demo.iceCreamDemoData,
   cafe: demo.cafeDemoData,
@@ -66,6 +89,13 @@ const PACKS = {
   textile: demo.textileDemoData,
   electrical: demo.electricalDemoData,
   hardware: demo.hardwareDemoData,
+  /*
+   * The restaurant dishes, which are the reason this script was reached for
+   * again. Every one of them is a generic dish - "Butter Chicken", "Gulab
+   * Jamun", "Masala Chai" - rather than a branded package, which is exactly
+   * the case Commons is good at and exactly why it can be licensed at all.
+   */
+  restaurant: demo.restaurantDemoData,
 };
 
 /* Wikimedia asks for a real User-Agent that identifies the caller and a way to
@@ -247,7 +277,8 @@ async function main() {
         continue;
       }
 
-      const term = searchTerm(product.name);
+      /* A reviewed phrase where one exists, the product's own name otherwise. */
+      const term = TERMS[key] || searchTerm(product.name);
       let picked = null;
       try {
         const titles = await search(term);
