@@ -224,7 +224,11 @@ async function sweepOnce({ now = Date.now(), Repository } = {}) {
          * wrote the state itself would sooner or later stop printing, or
          * print twice.
          */
-        const done = await repo.decideOnOrder(String(order._id), decision, verdict.reason);
+        const done = await repo.decideOnOrder({
+          saleId: String(order._id),
+          decision,
+          reason: verdict.reason,
+        });
         if (!done || !done.status) continue;
 
         /*

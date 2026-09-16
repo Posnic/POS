@@ -89,9 +89,23 @@ function fakeRepository({ status = true, moves = true } = {}) {
   const calls = [];
   return {
     calls,
-    decideOnOrder: jest.fn(async (saleId, decision, reason) => {
+    /*
+     * ONE ARGUMENT, AN OBJECT - because that is what the real function takes.
+     *
+     * This fake used to take three positional arguments, and the sweep called
+     * it that way, and every test here passed. The REAL decideOnOrder takes
+     * `{ saleId, decision, reason }`, so in production `saleId` was undefined,
+     * the guard answered "Enter must correct order id", and the shop rule the
+     * owner asked for decided precisely nothing.
+     *
+     * A fake that speaks a language the real thing does not is a test that
+     * proves the caller agrees with itself. The contract is now pinned
+     * against the real module below, which is the only thing that can catch
+     * this shape.
+     */
+    decideOnOrder: jest.fn(async ({ saleId, decision, reason } = {}) => {
       calls.push({ saleId, decision, reason });
-      if (status && moves) {
+      if (status && moves && saleId) {
         await db
           .collection('sales')
           .updateOne(
@@ -371,6 +385,51 @@ describe('nothing here may take a shop down', () => {
     expect(second).toBe(first);
     sweeper.stop();
     expect(sweeper.start({ everyMs: 60000 })).not.toBe(first);
+  });
+});
+
+/* ------------------------------------------------- the call itself */
+
+describe('it calls the real door the way the real door is written', () => {
+  test('THE SWEEP HANDS decideOnOrder AN OBJECT, and that is checked against the REAL one', async () => {
+    /*
+     * The bug this file shipped with. The sweep called
+     * `decideOnOrder(saleId, decision, reason)` and the real function takes
+     * `{ saleId, decision, reason }`, so `saleId` was undefined and every
+     * decision was refused at the guard. Nothing looked wrong: the read-back
+     * added for a different reason saw the order had not moved and quietly
+     * moved on, so the shop rule simply never did anything.
+     *
+     * Spied on the REAL module rather than replaced by a fake, because a fake
+     * is exactly what hid it - a fake agrees with whoever wrote it.
+     */
+    const real = require('../../../src/repositories/sale.repository');
+    shopWants({ online_order_on_silence: 'accept', online_order_decide_after_minutes: 10 });
+    const saleId = await held(11);
+
+    const spy = jest.spyOn(real, 'decideOnOrder').mockResolvedValue({ status: true, data: {} });
+    await sweeper.sweepOnce({});
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    const [given, ...extra] = spy.mock.calls[0];
+    expect(extra).toEqual([]);
+    expect(given).toEqual({
+      saleId,
+      decision: 'accepted',
+      reason: expect.any(String),
+    });
+  });
+
+  test('and the real function refuses the way it used to be called', async () => {
+    /*
+     * The other half of the proof: if the old positional call were still
+     * there, this is what it would have produced on every single order, in
+     * silence, for as long as the feature existed.
+     */
+    const real = require('../../../src/repositories/sale.repository');
+    const out = await real.decideOnOrder('6aa5509215e3686c543e5cc3', 'accepted', 'because');
+    expect(out.status).toBe(false);
+    expect(out.message).toMatch(/order id/i);
   });
 });
 
