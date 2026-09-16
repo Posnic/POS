@@ -111,8 +111,32 @@ test('every screen turns its day at the same hour, and it is seven', () => {
   assert.strictEqual(BOARD_HOUR, 7);
   assert.strictEqual(CARD_HOUR, 7);
 
+  /*
+   * THE TILL'S COPY MOVED, AND THAT IS THE POINT.
+   *
+   * This used to read sale.repository.js, because the hour was written out
+   * there. It is in utils/trading-day.js now: the same comment that warned
+   * "four screens each carry the same constant" was about to be proved right
+   * by a fifth copy, for dishes a waiter marks off for the night.
+   *
+   * So the question here is the same and asked in two parts: the rule says
+   * seven, and the till still USES the rule rather than having quietly grown
+   * its own again.
+   */
+  const rule = read('api', 'src', 'utils', 'trading-day.js');
+  assert.match(rule, /DAY_STARTS_AT_HOUR = 7/, 'the till turns its day at another hour');
+
   const server = read('api', 'src', 'repositories', 'sale.repository.js');
-  assert.match(server, /DAY_STARTS_AT_HOUR = 7/, 'the till turns its day at another hour');
+  assert.match(
+    server,
+    /tradingDay\.isToday\(/,
+    'the till has stopped asking the shared rule what day it is'
+  );
+  assert.doesNotMatch(
+    server,
+    /DAY_STARTS_AT_HOUR\s*=/,
+    'the till has grown its own copy of the hour again'
+  );
 });
 
 /* Both surfaces answer the same question, so every case below is asked of

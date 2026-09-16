@@ -101,8 +101,31 @@ const ensureValidItemIdParam = (req, res, next) => {
   return next();
 };
 
+/**
+ * A waiter saying a dish has run out for tonight.
+ *
+ * Small on purpose: which dish, whether it is off or back, and which shop's
+ * menu is being changed. Declaring it here is not only runtime safety - the
+ * API document is generated from these rules, so an endpoint with no
+ * validation is an endpoint nobody reading the docs can call correctly.
+ */
+const validateSoldOut = [
+  body('item')
+    .notEmpty()
+    .withMessage('Which dish has run out?')
+    .isMongoId()
+    .withMessage('Invalid item ID format'),
+
+  /* Absent means "it has run out". Only an explicit false puts it back, so a
+     body that loses a field cannot quietly restock the kitchen. */
+  body('off').optional().isBoolean().withMessage('off must be true or false'),
+
+  body('branch').optional().isMongoId().withMessage('Invalid branch ID format'),
+];
+
 module.exports = {
   validateCreateItem,
+  validateSoldOut,
   validateUpdateItem,
   ensureValidItemIdParam,
 };

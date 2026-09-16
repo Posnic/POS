@@ -6137,6 +6137,54 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/items/soldOut": {
+      "post": {
+        "summary": "markSoldOut",
+        "operationId": "post_items_soldOut",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item": {
+                    "type": "string",
+                    "format": "objectid",
+                    "description": "Which dish has run out?"
+                  },
+                  "branch": {
+                    "type": "string",
+                    "format": "objectid",
+                    "description": "Invalid branch ID format"
+                  }
+                },
+                "required": [
+                  "item"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "/items/icon-suggestion": {
       "get": {
         "summary": "iconSuggestion",

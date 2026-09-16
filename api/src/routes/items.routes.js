@@ -5,6 +5,7 @@ const { protect, optionalProtect } = require('../middleware/auth');
 const { ensureKioskKey, protectOrKioskKey } = require('../middleware/kiosk-key');
 const {
   validateCreateItem,
+  validateSoldOut,
   validateUpdateItem,
   ensureValidItemIdParam,
 } = require('../middleware/items.validation');
@@ -91,7 +92,7 @@ router.use(protect);
  * menu is a shop decision made by a person, even when that person is standing
  * at a table holding a phone.
  */
-router.post('/soldOut', bindController(itemsController.markSoldOut));
+router.post('/soldOut', validateSoldOut, bindController(itemsController.markSoldOut));
 
 // GET /api/items - Get paginated items (legacy default endpoint)
 /*

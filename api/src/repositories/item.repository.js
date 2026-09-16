@@ -4703,10 +4703,7 @@ class ItemRepository extends BaseModel {
      */
     if (branchId && ObjectId.isValid(String(branchId))) {
       const branchObjectId = new ObjectId(String(branchId));
-      selector.$or = [
-        { branch_id: branchObjectId },
-        { 'branch_access.branch_id': branchObjectId },
-      ];
+      selector.$or = [{ branch_id: branchObjectId }, { 'branch_access.branch_id': branchObjectId }];
     }
 
     const item = await collection.findOne(selector);
@@ -4715,9 +4712,7 @@ class ItemRepository extends BaseModel {
     }
 
     const update =
-      off === false
-        ? { $unset: { sold_out_on: '' } }
-        : { $set: { sold_out_on: new Date() } };
+      off === false ? { $unset: { sold_out_on: '' } } : { $set: { sold_out_on: new Date() } };
 
     await collection.updateOne({ _id: item._id }, update);
 
