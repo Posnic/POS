@@ -9425,7 +9425,7 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel } = {}
+    { SaleModel, newTableId } = {}
   ) {
     try {
       const db = await BaseModel.getDb();
@@ -9803,6 +9803,32 @@ class SalesRepository {
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
       if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
+
+      /*
+       * THE TABLE'S ID MOVES WITH ITS NUMBER.
+       *
+       * A waiter moving an order to another table sends both, and only the
+       * number was ever written. The order then read "table 12" while still
+       * pointing at table 4's id, and nothing said so, because the floor is
+       * drawn by number: the screens agreed while the record did not.
+       *
+       * An empty id is allowed through on purpose. A table typed in by hand
+       * has no id, and leaving the old one there would be the same lie.
+       */
+      if (newTableId !== undefined && newTableId !== null) {
+        updateFields.table_id = String(newTableId);
+      } else if (
+        updateFields.table_number !== undefined &&
+        String(updateFields.table_number) !== String(orderDoc?.table_number ?? '')
+      ) {
+        /*
+         * Moved by a caller that does not know table ids - the till's own KOT
+         * screen sends the number alone. Clearing beats keeping a pointer to
+         * the table the order has just left: wrong and visible is recoverable,
+         * wrong and invisible is what this whole fix is about.
+         */
+        updateFields.table_id = '';
+      }
       if (dineType !== null && dineType !== '') updateFields.dine_type = String(dineType);
       if (personCount !== null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);

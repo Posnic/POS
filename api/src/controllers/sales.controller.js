@@ -7372,6 +7372,10 @@ class SalesController extends BaseController {
       const extraDiscount = req.body.extra_discount;
       const discountDescription = req.body.discount_description;
       const newTableNo = req.body.table_number;
+      /* The handset sends this whenever a waiter moves an order to another
+         table. It rides in the options object rather than as an eleventh
+         positional argument, because ten is already too many to count. */
+      const newTableId = req.body.table_id;
       const dineType = req.body.dine_type;
       const personCount = req.body.person_count;
 
@@ -7387,7 +7391,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel }
+        { SaleModel, newTableId }
       );
 
       if (response.status === true) {
