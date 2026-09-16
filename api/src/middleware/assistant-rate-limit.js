@@ -114,7 +114,26 @@ const placedOrderFloodLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+/*
+ * How often one table may call a waiter.
+ *
+ * The rule that matters is in the repository - one open call per table, so a
+ * second tap answers with the first call rather than writing another. This is
+ * the floor under it: a button anybody in the room can reach is a button
+ * anybody can hold down, and six a minute is far more than a person taps and
+ * far fewer than a script sends.
+ */
+const waiterCallLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'waitercall' }),
+  keyGenerator: perClientKey,
+  windowMs: 60 * 1000,
+  limit: 6,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
+  waiterCallLimiter,
   assistantLimiter,
   voiceLimiter,
   voiceTickLimiter,

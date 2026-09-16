@@ -292,6 +292,9 @@
   "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": [
     "src/repositories/item.repository.js"
   ],
+  "Calling": [
+    "src/repositories/sale.repository.js"
+  ],
   "Campaigns": [
     "src/services/campaign.service.js"
   ],
@@ -1367,6 +1370,9 @@
   ],
   "Nothing was said": [
     "src/services/voice-intent.service.js"
+  ],
+  "On the way": [
+    "src/repositories/sale.repository.js"
   ],
   "Online ordering is not available for this shop.": [
     "src/utils/online-ordering.js"
@@ -2504,6 +2510,9 @@
   "action is required": [
     "src/services/authorization.service.js"
   ],
+  "already_calling": [
+    "src/repositories/sale.repository.js"
+  ],
   "branch_id is required": [
     "src/controllers/settings.controller.js"
   ],
@@ -2566,6 +2575,12 @@
   ],
   "no_session": [
     "src/services/voice-meter.js"
+  ],
+  "no_table": [
+    "src/repositories/sale.repository.js"
+  ],
+  "no_table_service": [
+    "src/repositories/sale.repository.js"
   ],
   "not valid": [
     "src/controllers/users.controller.js"

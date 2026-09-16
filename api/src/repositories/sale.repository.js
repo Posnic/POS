@@ -43,6 +43,7 @@ const orderApproval = require('../utils/order-approval');
 const billNumber = require('../utils/bill-number');
 const orderProgress = require('../utils/order-progress');
 const spiceLevel = require('../utils/spice-level');
+const waiterCall = require('../utils/waiter-call');
 const readyBy = require('../utils/ready-by');
 const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
 const StockLogsRepository = require('./stock-log.repository');
@@ -8574,6 +8575,148 @@ class SalesRepository {
     }
   }
 
+  /*
+   * A TABLE ASKING SOMEBODY TO COME OVER.
+   *
+   * Owner: "example he is in table 7 and wants to call waiter or captain...
+   * coz everytime its annoying people see waiters to turn back."
+   *
+   * Its own collection rather than a field on a sale, because a call is not
+   * about an order. A table calls before it has ordered, after it has eaten,
+   * and on an evening when it orders nothing at all - and hanging it off a
+   * sale would mean the one case that matters most, a table nobody has
+   * reached yet, has nothing to hang it on.
+   *
+   * ONE OPEN CALL PER TABLE. A customer who taps three times has asked once
+   * and doubted the button; three cards would be three jobs nobody needs.
+   * Answering the second tap with the first call is the honest reply, and it
+   * is also what they wanted to know: yes, it went.
+   */
+  async callTheWaiter({ branch, table, client } = {}) {
+    const wanted = waiterCall.tableOf(table);
+    if (!wanted) return { status: false, message: 'no_table', data: null };
+
+    const db = await BaseModel.getDb();
+
+    /*
+     * The store ADDRESS from the path, resolved the same way an order from
+     * the same page is. Never a branch id from the body: a caller naming one
+     * shop in the URL and another in the payload leaves two readers to
+     * disagree about which one they meant.
+     */
+    const selector = ObjectId.isValid(String(branch))
+      ? { $or: [{ _id: new ObjectId(String(branch)) }, { 'online_ordering.store_id': branch }] }
+      : { 'online_ordering.store_id': branch };
+    if (BaseModel.license) selector.license = BaseModel.license;
+    const branchDoc = await db.collection('branches').findOne(selector);
+    if (!branchDoc) return { status: false, message: 'not_found', data: null };
+
+    /*
+     * Only where a shop actually runs table service. A takeaway counter has
+     * no waiters walking a floor, and a call there would sit in a queue
+     * nobody is looking at for a person who is not coming.
+     */
+    if (branchDoc.table_options !== true) {
+      return { status: false, message: 'no_table_service', data: null };
+    }
+
+    const calls = db.collection('waitercalls');
+    const branchObjectId = branchDoc._id;
+    const branchId = branchDoc._id;
+
+    const standing = await calls
+      .find({ branch_id: branchObjectId, seen_at: { $in: [null, undefined] } })
+      .limit(50)
+      .toArray();
+    if (waiterCall.alreadyCalling(standing, wanted)) {
+      return { status: true, message: 'already_calling', data: { table: wanted, again: true } };
+    }
+
+    const at = new Date();
+    const record = {
+      branch_id: branchObjectId,
+      table_number: wanted,
+      called_at: at,
+      seen_at: null,
+      /* What the device was, for a shop wondering later where a run of calls
+         came from. Never anything that identifies the person. */
+      client: client && typeof client === 'object' ? client : null,
+    };
+    if (BaseModel.license) record.license = BaseModel.license;
+    const written = await calls.insertOne(record);
+
+    /*
+     * The same alarm an order waiting for approval raises. A call is exactly
+     * that kind of thing: nobody is watching a screen they have no reason to
+     * watch, and a person is sitting at a table waiting.
+     */
+    notifyOrderAttention({
+      branchId: String(branchId || ''),
+      saleId: String(written.insertedId),
+      alert: 'waiting',
+    });
+
+    return { status: true, message: 'Calling', data: { table: wanted, again: false } };
+  }
+
+  /** The calls still wanting somebody, oldest first. See utils/waiter-call.js. */
+  async openWaiterCalls({ branchId } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const branchObjectId = ObjectId.isValid(String(branchId))
+        ? new ObjectId(String(branchId))
+        : branchId;
+      const filter = { branch_id: branchObjectId, seen_at: { $in: [null, undefined] } };
+      if (BaseModel.license) filter.license = BaseModel.license;
+
+      const rows = await db
+        .collection('waitercalls')
+        .find(filter)
+        .sort({ called_at: 1 })
+        .limit(50)
+        .toArray();
+
+      /* The window is applied HERE rather than in the query so one rule about
+         what "open" means lives in one file, and a stale row still gets
+         cleared by the next acknowledgement rather than lingering invisibly. */
+      return rows
+        .filter((row) => waiterCall.stillOpen(row))
+        .map((row) => ({
+          call_id: String(row._id),
+          table_number: String(row.table_number || ''),
+          called_at: row.called_at || null,
+        }));
+    } catch (e) {
+      /* A queue that cannot be read must not take the orders down with it. */
+      console.warn('[waiter calls] could not be read:', e.message);
+      return [];
+    }
+  }
+
+  /**
+   * Somebody is going.
+   *
+   * There is nothing to refuse here - a table wants a person, and the only
+   * answer is that one is coming - so this marks it seen rather than asking
+   * for a decision. Same shape as acknowledging an order the customer already
+   * cancelled: one button, and it says what it does.
+   */
+  async seeWaiterCall({ branchId, callId } = {}) {
+    if (!ObjectId.isValid(String(callId))) {
+      return { status: false, message: 'not_found', data: null };
+    }
+    const db = await BaseModel.getDb();
+    const filter = { _id: new ObjectId(String(callId)) };
+    if (ObjectId.isValid(String(branchId))) filter.branch_id = new ObjectId(String(branchId));
+    if (BaseModel.license) filter.license = BaseModel.license;
+
+    const done = await db.collection('waitercalls').updateOne(filter, {
+      $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
+    });
+    if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
+    return { status: true, message: 'On the way', data: { call_id: String(callId) } };
+  }
+
   /**
    * Orders waiting for somebody to say yes.
    *
@@ -8651,9 +8794,21 @@ class SalesRepository {
         .limit(100)
         .toArray();
 
+      /*
+       * The calls ride along in their own key rather than mixed into `data`.
+       *
+       * A staff screen that has not been taught the word yet reads `data` and
+       * is unaffected; one that has reads `calls`. Merging them into the order
+       * list would have an older handset draw a table's call as a NEW ORDER,
+       * with an accept button that means nothing - a regression shipped to a
+       * client by a change on the server, which is the worst kind.
+       */
+      const calls = await this.openWaiterCalls({ branchId: branch });
+
       return {
         status: true,
         message: 'OK',
+        calls,
         data: rows.map((row) => ({
           sale_id: String(row._id),
           sales_id: row.sales_id || '',

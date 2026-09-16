@@ -3876,6 +3876,10 @@ module.exports = {
     }),
   /* What the shop owes its hotels and its aggregators over a date range. */
   commissionReport: async (params = {}) => salesRepository.commissionReport(params),
+  /* A table asking for somebody to come over. See utils/waiter-call.js for
+     why a call must carry a table and why three taps are one call. */
+  callTheWaiter: async (params = {}) => salesRepository.callTheWaiter(params),
+  seeWaiterCall: async (params = {}) => salesRepository.seeWaiterCall(params),
   /* The approval queue: orders held back from the kitchen, and the decision
      that releases or turns away one of them. */
   pendingOnlineOrders: async (params = {}) => salesRepository.pendingOnlineOrders(params),

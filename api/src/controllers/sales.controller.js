@@ -6628,6 +6628,29 @@ class SalesController extends BaseController {
    * sales list is not where anybody would think to look - this queue is the
    * only place those orders exist on a screen.
    */
+  /*
+   * Somebody is on their way to that table.
+   *
+   * There is nothing to refuse - a table wants a person, and the only answer
+   * is that one is coming - so this marks the call seen rather than asking for
+   * a decision. Same shape as acknowledging an order the customer already
+   * cancelled: one button, and it says what it does.
+   */
+  async seeWaiterCall(req, res) {
+    try {
+      await this.ensureContext(req);
+      const result = await salesService.seeWaiterCall({
+        branchId: this.model.branchId,
+        callId: req.params.id,
+      });
+      if (result && result.status) return this.success(res, result.data, result.message);
+      return this.error(res, result?.message || 'Could not answer the call', 404);
+    } catch (error) {
+      console.error('Error in seeWaiterCall:', error);
+      return this.error(res, error.message, 500);
+    }
+  }
+
   async pendingOnlineOrders(req, res) {
     try {
       const response = await salesService.pendingOnlineOrders({

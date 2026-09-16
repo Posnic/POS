@@ -22,6 +22,8 @@
        annoyed about the order in which they were told. */
     document.addEventListener("posnic:shop", function () {
         if (typeof paintKitchenNotice === "function") paintKitchenNotice();
+        /* And whether this table may call somebody over. */
+        if (typeof paintCallButton === "function") paintCallButton();
     });
 
     document.addEventListener("DOMContentLoaded", async () => {

@@ -104,8 +104,19 @@ class OnlineOrderingController {
            restaurant, which is what the page assumed before it could ask. */
         kind: store.kind === 'retail' ? 'retail' : 'restaurant',
       },
-      /* What this shop offers beyond the list - a note for the kitchen. */
-      features: data.features || { notes: false },
+      /*
+       * What this shop offers beyond the list - a note for the kitchen, and
+       * whether a table may call somebody over.
+       *
+       * `call_waiter` is named HERE as well, because this presenter rebuilds
+       * the payload field by field and a field it does not mention never
+       * reaches the page however correctly the repository sent it.
+       */
+      features: {
+        notes: false,
+        ...(data.features || {}),
+        call_waiter: !!(data.features && data.features.call_waiter) || data.call_waiter === true,
+      },
       channel: data.channel,
       /* Where this customer is sitting, and what a delivery costs them. Both
          echoed back so the page never has to work out a price the server will
@@ -483,6 +494,36 @@ class OnlineOrderingController {
 
   async cancelPlacedOrder(req, res) {
     return this._actOnPlacedOrder(req, res, customerOrder.cancel);
+  }
+
+  /*
+   * A TABLE ASKING FOR SOMEBODY.
+   *
+   * Public like the rest of this controller - a customer scanning a code has
+   * no account - and rate-limited on the route, because a button anybody can
+   * reach is a button anybody can hold down.
+   *
+   * The table comes from the BODY here rather than the path, unlike the shop:
+   * a printed code names a table and the page passes it back, but a guest who
+   * corrected it at checkout should be able to call from where they actually
+   * are. The repository refuses a call with no table at all.
+   */
+  async callWaiter(req, res) {
+    try {
+      const client = {
+        ip: clientIp(req),
+        user_agent: req.get('User-Agent') || '',
+      };
+      const result = await salesService.callTheWaiter({
+        branch: req.params.storeId,
+        table: req.body && req.body.table,
+        client,
+      });
+      return this.respond(res, result);
+    } catch (error) {
+      console.error('Error in online ordering callWaiter:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
   }
 
   async createOrder(req, res) {
