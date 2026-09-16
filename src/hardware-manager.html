@@ -520,6 +520,19 @@
                     <div id="bpRows" style="font-size:14px;color:#2c3e50;"></div>
                     <div id="bpTrouble" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
                                                background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:13px;"></div>
+                    <!--
+                        THE BILLS NOBODY CAN ACCOUNT FOR.
+                        The queue parks a job here when the till that took it went
+                        quiet, or when it failed every attempt: it may be on paper,
+                        it may not, and only somebody standing at the printer knows.
+                        The queue has asked that question since it was written and
+                        there was nowhere at all to answer it.
+                    -->
+                    <div id="bpWaiting" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+                                               background:#fffaeb;border:1px solid #fedf89;color:#93370d;font-size:13px;">
+                        <div style="font-weight:700;margin-bottom:8px;">Waiting for somebody to say what happened</div>
+                        <div id="bpWaitingRows"></div>
+                    </div>
                 </div>
 
                 <div style="text-align:center;margin:26px 0;">
@@ -1694,6 +1707,84 @@
                 } else {
                     trouble.style.display = 'none';
                 }
+            }
+
+            bpDrawWaiting(Array.isArray(s.waiting) ? s.waiting : []);
+        }
+
+        /*
+         * The bills the queue could not account for, and the two answers.
+         *
+         * "It printed" closes it. "Print it again" puts it back on the queue,
+         * which is the only retry this design allows - a deliberate one, by
+         * somebody who has looked at the printer and knows what came out of
+         * it. Guessing on their behalf is how a table gets two bills or none.
+         */
+        function bpDrawWaiting(rows) {
+            const box = document.getElementById('bpWaiting');
+            const body = document.getElementById('bpWaitingRows');
+            if (!box || !body) return;
+            if (!rows.length) {
+                box.style.display = 'none';
+                body.textContent = '';
+                return;
+            }
+
+            body.textContent = '';
+            rows.forEach(function (row) {
+                const line = document.createElement('div');
+                line.style.cssText = 'display:flex;justify-content:space-between;align-items:center;'
+                    + 'gap:12px;padding:8px 0;border-top:1px solid #fedf89;';
+
+                const what = document.createElement('div');
+                const title = document.createElement('div');
+                title.style.fontWeight = '600';
+                title.textContent = row.label || 'A bill';
+                const why = document.createElement('div');
+                why.style.cssText = 'font-size:12px;color:#a15c07;margin-top:2px;';
+                why.textContent = (row.why || 'It did not report back.') + ' ' + bpWhen(row.at) + '.';
+                what.append(title, why);
+
+                const buttons = document.createElement('div');
+                buttons.style.cssText = 'display:flex;gap:8px;flex:none;';
+                [['It printed', true], ['Print it again', false]].forEach(function (pair) {
+                    const button = document.createElement('button');
+                    button.textContent = pair[0];
+                    button.style.cssText = 'border:1px solid #fedf89;background:#fff;color:#93370d;'
+                        + 'padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;';
+                    button.addEventListener('click', function () {
+                        bpAnswerWaiting(button, row.id, pair[1]);
+                    });
+                    buttons.appendChild(button);
+                });
+
+                line.append(what, buttons);
+                body.appendChild(line);
+            });
+            box.style.display = 'block';
+        }
+
+        async function bpAnswerWaiting(button, id, printed) {
+            if (!window.electronAPI || !window.electronAPI.bill || !window.electronAPI.bill.answerWaiting) return;
+            /* Pressed twice is one question asked twice, and the second asks
+               about a job already answered. */
+            const row = button.parentElement;
+            if (row) Array.prototype.forEach.call(row.children, function (b) { b.disabled = true; });
+            let said;
+            try {
+                said = await window.electronAPI.bill.answerWaiting(id, printed);
+            } catch (e) {
+                said = { ok: false, error: (e && e.message) || 'could not reach the shop' };
+            }
+            if (said && said.ok) {
+                bpRefresh();
+                return;
+            }
+            if (row) Array.prototype.forEach.call(row.children, function (b) { b.disabled = false; });
+            const trouble = document.getElementById('bpTrouble');
+            if (trouble) {
+                trouble.textContent = 'Could not answer that: ' + ((said && said.error) || 'unknown');
+                trouble.style.display = 'block';
             }
         }
 
