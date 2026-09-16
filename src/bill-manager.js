@@ -139,6 +139,9 @@ function cloudApiUrl(configured) {
   return cloud ? cloud.replace(/\/+$/, '') : '';
 }
 
+/* How often a till re-reads what is waiting on a person. See _readWaiting. */
+const WAITING_EVERY_MS = 60 * 1000;
+
 class BillManager {
   constructor(hardwareManager, options = {}) {
     this.hardware = hardwareManager;
@@ -196,6 +199,18 @@ class BillManager {
      */
     this.lastPrintError = '';
     this.lastPrintedAt = null;
+    /*
+     * THE BILLS THAT NEVER CAME OUT.
+     *
+     * A job whose till took it and went quiet, or that failed its attempts, is
+     * parked in `needs_attention` for a person to answer. Nothing could show
+     * them: the queue had the question and no screen had the door. Read on the
+     * same pass that claims work, so it costs no extra poll.
+     */
+    this.waiting = [];
+    this.waitingReadAt = null;
+    this._lastBase = '';
+    this._lastKey = '';
   }
 
   getStatus() {
@@ -206,6 +221,11 @@ class BillManager {
       printed: this.printedCount,
       lastPrintedAt: this.lastPrintedAt,
       lastPrintError: this.lastPrintError,
+      /* Bills a person has to answer for, and when that list was last read.
+         The time matters: an empty list from a poll that never ran is not the
+         same as an empty list from one that did. */
+      waiting: this.waiting,
+      waitingReadAt: this.waitingReadAt,
       branchId: this.branchId,
       tillId: this.tillId,
       /* Reported separately because the two doors fail separately: a shop can
@@ -506,11 +526,96 @@ class BillManager {
       await this._finish(base, key, this._idOf(job), printed.ok, printed.error);
     }
 
+    /*
+     * And what is still waiting on a person. Cheap, and on the pass that was
+     * happening anyway, so a shopkeeper sees it without asking.
+     *
+     * The address and key are kept because answering one of these comes from a
+     * BUTTON, not from a poll, and a button has no drain around it to be
+     * handed them by. Whichever door last worked is the right one: it is where
+     * the job came from.
+     */
+    this._lastBase = base;
+    this._lastKey = key;
+    await this._readWaiting(base, key);
+
     const pace = Number.isFinite(told)
       ? Math.max(DRAIN_GAP_MS, Math.min(told, CLOUD_MAX_MS))
       : (jobs.length ? DRAIN_GAP_MS : CLOUD_IDLE_MS);
 
     return { count: jobs.length, pace };
+  }
+
+  /**
+   * The jobs parked for a person, read onto this till's status.
+   *
+   * Never allowed to fail a drain: a till that cannot read this list still
+   * has bills to print, and printing them matters more than counting what
+   * went wrong earlier.
+   */
+  async _readWaiting(base, key) {
+    /*
+     * ONCE A MINUTE AT MOST, not once a drain.
+     *
+     * A drain can run every few hundred milliseconds while a queue is
+     * emptying, and this list only changes when a job goes stale - which takes
+     * minutes - or when one runs out of attempts. Asking on every pass would
+     * double this till's traffic on a shop network to re-read a list that had
+     * not moved, and shop networks here are already the thing under strain.
+     */
+    const since = this.waitingReadAt ? Date.now() - new Date(this.waitingReadAt).getTime() : Infinity;
+    if (since < WAITING_EVERY_MS) return;
+    try {
+      const response = await fetch(`${base}/sales/printJobsNeedingAttention`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          kioskkey: key,
+        },
+        body: JSON.stringify({ branchId: this.branchId }),
+      });
+      if (!response.ok) return;
+      const answer = await response.json();
+      const rows = answer && Array.isArray(answer.data) ? answer.data : [];
+      this.waiting = rows;
+      this.waitingReadAt = new Date().toISOString();
+    } catch (e) {
+      /* An older shop server has no such endpoint, and a till that cannot ask
+         simply shows nothing rather than an error about a list. */
+    }
+  }
+
+  /**
+   * A person at this till answering "did it print?".
+   *
+   * `printed` closes it; anything else puts it back on the queue, which is a
+   * deliberate reprint by somebody who has looked at the printer - the only
+   * retry that cannot be wrong about what already came out.
+   */
+  async answerWaiting(id, printed) {
+    const base = this._lastBase || '';
+    const key = this._lastKey || process.env.KIOSK_API_KEY || '';
+    if (!base || !id) return { ok: false, error: 'this till has not reached the shop yet' };
+    try {
+      const response = await fetch(`${base}/sales/resolvePrintJob`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          kioskkey: key,
+        },
+        body: JSON.stringify({ id: String(id), printed: printed === true, by: this.tillId || '' }),
+      });
+      if (!response.ok) return { ok: false, error: 'the shop refused that (' + response.status + ')' };
+      /* Drop it from the list at once rather than waiting for the next poll:
+         a button that does nothing visible for thirty seconds gets pressed
+         again, and the second press asks about a job already answered. */
+      this.waiting = (this.waiting || []).filter((row) => String(row.id) !== String(id));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: (e && e.message) || 'could not reach the shop' };
+    }
   }
 
   _idOf(sale) {

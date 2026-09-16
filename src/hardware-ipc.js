@@ -664,6 +664,23 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   /*
+   * A PERSON ANSWERING "DID THIS BILL PRINT?".
+   *
+   * The queue parks a job in `needs_attention` when the till that took it went
+   * quiet - it may be on paper, it may not, and only somebody standing at the
+   * printer knows. That question had been asked with nowhere to answer it
+   * since the queue was written.
+   *
+   * `printed` closes it. Anything else puts it back on the queue, which is the
+   * only retry this design allows: a deliberate one, by somebody who has
+   * looked.
+   */
+  ipcMain.handle('bill:answer-waiting', async (_event, id, printed) => {
+    if (!billManager) return { ok: false, error: 'printing is not running on this till' };
+    return billManager.answerWaiting(id, printed === true);
+  });
+
+  /*
    * THIS COMPUTER'S PRINTING KEY, so it can be pasted into the shop.
    *
    * A key of its own, NOT this machine's kiosk key: that one guards every

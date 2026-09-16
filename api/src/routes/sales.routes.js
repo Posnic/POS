@@ -180,11 +180,21 @@ router.post('/markBillPrinted', ensureKioskKey, bindController(salesController.m
  * which is why the queue worked and no cloud shop ever printed. The shop
  * introduces them once in Settings; see middleware/kiosk-key.js.
  *
- * Deliberately only these two. An allowed till may take print jobs and say
- * what happened to them, and nothing else.
+ * An allowed till may take print jobs, say what happened to them, and read
+ * and answer the ones that ended up waiting on a person. Nothing else.
+ *
+ * The last two are how a bill that never came out becomes visible at all:
+ * `needs_attention` is where the queue parks a job whose till went quiet, and
+ * before these there was no door to that status from anywhere.
  */
 router.post('/claimPrintJobs', ensurePrintDevice, bindController(salesController.claimPrintJobs));
 router.post('/finishPrintJob', ensurePrintDevice, bindController(salesController.finishPrintJob));
+router.post(
+  '/printJobsNeedingAttention',
+  ensurePrintDevice,
+  bindController(salesController.printJobsNeedingAttention)
+);
+router.post('/resolvePrintJob', ensurePrintDevice, bindController(salesController.resolvePrintJob));
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,
