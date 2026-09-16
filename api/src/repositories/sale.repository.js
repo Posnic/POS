@@ -10343,6 +10343,10 @@ class SalesRepository {
     const extras = await this._priceModifiers(item.modifiers, itemDoc, branchDoc);
     if (extras.status === false) return extras;
 
+    /* A one-off invented at the table: the shop never chose this price on a
+       card, somebody agreed it with a guest. Same reason as a market price. */
+    const oneOff = String(itemDoc.item_status || '').toLowerCase() === 'instant';
+
     const sellingPrice = partnerVenues.priceFor(
       (dynamic ? asked : catalogue) + extras.delta,
       servicePoint.venue
@@ -10370,6 +10374,26 @@ class SalesRepository {
         unit_price: round(baseUnitPrice),
         tax_amount: taxAmt,
         total: itemTotal,
+        /*
+         * WHAT THE KITCHEN NEEDS TO KNOW ABOUT THE MONEY, and only where it
+         * does.
+         *
+         * Owner: "lets customer wants to have fish for rs500 so that kitchen
+         * will prepare according to that."
+         *
+         * For a whole fish, a crab, or something a waiter typed in at the
+         * table, the PRICE IS THE SPECIFICATION. Five hundred rupees of fish
+         * is a particular fish; the kitchen cannot pick one from the name
+         * alone. For an ordinary dish off the card it is noise - a cook does
+         * not choose a biryani differently because it costs 220 - and a ticket
+         * that prints money on every line is one where the line that matters
+         * stops standing out.
+         *
+         * So it travels only for the two kinds that were priced at the table:
+         * a dish the shop prices on the day, and a one-off somebody invented
+         * for this bill.
+         */
+        ...(dynamic || oneOff ? { priced_at_table: round(finalUnit) } : {}),
         /*
          * What the table actually asked for, kept beside the money it cost.
          * The kitchen ticket needs it to cook the right thing and the bill
