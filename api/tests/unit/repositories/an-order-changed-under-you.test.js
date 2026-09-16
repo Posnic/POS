@@ -115,10 +115,7 @@ describe('a save written against an order that has moved on', () => {
     expect(out.message).toBe('order_changed');
 
     const after = await stored(id);
-    expect(after.items.map((i) => i.item_name).sort()).toEqual([
-      'Butter Naan',
-      'Chicken Biryani',
-    ]);
+    expect(after.items.map((i) => i.item_name).sort()).toEqual(['Butter Naan', 'Chicken Biryani']);
   });
 
   test('says when the order actually changed, so the client can show it', async () => {

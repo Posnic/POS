@@ -9577,9 +9577,7 @@ class SalesRepository {
        */
       if (seenAt) {
         const seen = new Date(seenAt).getTime();
-        const lastChanged = new Date(
-          orderDoc.updated_date || orderDoc.created_date || 0
-        ).getTime();
+        const lastChanged = new Date(orderDoc.updated_date || orderDoc.created_date || 0).getTime();
 
         /* An unreadable timestamp is not a conflict. It is a caller this
            check cannot help, and blocking it would help nobody either. */
