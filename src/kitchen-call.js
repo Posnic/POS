@@ -88,9 +88,15 @@ const quantityOf = (item) =>
   Number((item && (item.item_quantity || item.quantity)) || 0) || 0;
 
 /**
- * What the speaker should say about one ticket.
+ * What the speaker should say about one ticket, ONE LINE AT A TIME.
  *
- * Returns an empty string when there is nothing worth saying, so a caller can
+ * Separate lines rather than one sentence, because the renderer speaks each as
+ * its own utterance and a speech engine leaves a real gap between them. A full
+ * stop inside one sentence is a shorter pause than a kitchen needs: the point
+ * of the gap is that somebody can hold one dish in their head before the next
+ * arrives.
+ *
+ * Returns an empty list when there is nothing worth saying, so a caller can
  * stay quiet rather than announce a ticket with no dishes on it.
  *
  * @param {object} ticket
@@ -98,12 +104,12 @@ const quantityOf = (item) =>
  * @param {Array} ticket.items what is on it
  * @param {boolean} [ticket.changed] an amendment rather than a new order
  */
-function say({ table, items, changed } = {}) {
-  const lines = (Array.isArray(items) ? items : [])
+function lines({ table, items, changed } = {}) {
+  const said = (Array.isArray(items) ? items : [])
     .map((item) => ({ name: spokenName(item), count: quantityOf(item) }))
     .filter((line) => line.name && line.count > 0);
 
-  if (!lines.length) return "";
+  if (!said.length) return [];
 
   const where = String(table == null ? "" : table).trim();
   /*
@@ -115,7 +121,28 @@ function say({ table, items, changed } = {}) {
     ? `${/^\d+$/.test(where) ? `Table ${where}` : where}, ${changed ? "order changed" : "new order"}.`
     : `${changed ? "Order changed" : "New order"}.`;
 
-  const read = lines.slice(0, READ_AT_MOST);
+  /*
+   * HOW MANY PLATES ARE COMING, said before the list.
+   *
+   * Owner: "KOT total items also print and voice read please. so that chef's
+   * can hear well."
+   *
+   * Before rather than after, because a number heard first is a number you can
+   * count against. A chef who knows three plates are coming notices when they
+   * have heard two, which is the whole use of it - after the list it is a fact
+   * nobody can act on.
+   *
+   * PLATES, not lines. One biryani and two naan is three things to cook and
+   * two lines on a ticket, and a kitchen works in plates.
+   */
+  const plates = said.reduce((sum, line) => sum + line.count, 0);
+  const counted = countWord(plates);
+  const howMany =
+    plates === 1
+      ? "One item."
+      : `${counted.charAt(0).toUpperCase()}${counted.slice(1)} items.`;
+
+  const read = said.slice(0, READ_AT_MOST);
   /* Capitalised, because each of these is a sentence once the full stops go
      in, and a log or a test reading "one Chicken Biryani" mid-line looks like
      a bug even where a speech engine does not care. */
@@ -124,12 +151,20 @@ function say({ table, items, changed } = {}) {
     return `${count.charAt(0).toUpperCase()}${count.slice(1)} ${line.name}`;
   });
 
-  const rest = lines.length - read.length;
+  const rest = said.length - read.length;
   if (rest > 0) spoken.push(`And ${countWord(rest)} more`);
 
-  /* Full stops, not commas: a speech engine pauses at one, and a pause between
-     dishes is what makes a list followable in a noisy room. */
-  return `${opening} ${spoken.join(". ")}.`;
+  return [opening, howMany].concat(spoken.map((line) => `${line}.`));
 }
 
-module.exports = { say, countWord, spokenName, READ_AT_MOST };
+/*
+ * The same announcement as one string.
+ *
+ * Kept because a sentence is easier to read in a log and in a test than an
+ * array, and because a caller that cannot queue utterances can still say it.
+ */
+function say(ticket) {
+  return lines(ticket).join(" ");
+}
+
+module.exports = { say, lines, countWord, spokenName, READ_AT_MOST };

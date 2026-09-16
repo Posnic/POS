@@ -331,17 +331,32 @@ class OrderAlert {
  * Quiet when there is nothing worth saying and quiet when no window is open,
  * which is correct: there is nobody there to hear it.
  */
-function announceKitchenTicket(getWindow, ticket) {
-  const words = kitchenCall.say(ticket);
-  if (!words) return false;
+function announceKitchenTicket(getWindow, ticket, wants) {
+  /*
+   * Two switches, honoured HERE rather than in the page.
+   *
+   * A machine set to chime only is sent no words at all: nothing to ignore,
+   * nothing to go wrong in a speech engine, and nothing in the payload that
+   * could be spoken by a later change nobody thought about.
+   */
+  const ting = !wants || wants.ting !== false;
+  const speak = !wants || wants.speak !== false;
+  if (!ting && !speak) return false;
+
+  const said = speak ? kitchenCall.lines(ticket) : [];
+  if (!said.length && !ting) return false;
 
   try {
     const win = typeof getWindow === "function" ? getWindow() : null;
     if (!win || win.isDestroyed()) return false;
 
     win.webContents.send("posnic:kitchen-call", {
-      sound: dataUri(TING()),
-      say: words,
+      sound: ting ? dataUri(TING()) : "",
+      /* One line at a time: the page speaks each as its own utterance, and a
+         speech engine leaves a real gap between them. `say` is the same words
+         joined, for anything that cannot queue. */
+      lines: said,
+      say: said.join(" "),
       table: ticket && ticket.table ? String(ticket.table) : "",
     });
     return true;

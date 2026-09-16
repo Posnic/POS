@@ -4164,6 +4164,20 @@ async function awaitPreviousShutdown(previous) {
   return false;
 }
 
+/*
+ * SOUND WITHOUT SOMEBODY TOUCHING THE MACHINE FIRST.
+ *
+ * Chromium refuses to play audio until the page has been interacted with. On a
+ * counter till that is invisible - somebody is clicking it all day. On the
+ * machine at the pass it is the whole problem: it sits untouched for hours,
+ * which is exactly when a ticket needs announcing, and the chime would be
+ * refused with nothing in any log to say why.
+ *
+ * Set before the app is ready, because a command line switch after that is
+ * ignored.
+ */
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 app.whenReady().then(async () => {
   console.log('='.repeat(55));
   /* Named the platform it is actually on. The banner said "Windows" in
@@ -4554,8 +4568,10 @@ app.whenReady().then(async () => {
      this is how the page says an order stopped waiting. */
   /* Turned on once, on the machine by the pass. Off everywhere else, so an
      update never makes a counter till start talking in front of customers. */
-  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.wanted());
-  ipcMain.handle('kitchen-announce:set', (_event, on) => kitchenAnnounce.set(on === true));
+  /* Two switches: the chime and the reading. A kitchen that knows to look at
+     the printer wants the first and comes to resent the second. */
+  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.settings());
+  ipcMain.handle('kitchen-announce:set', (_event, next) => kitchenAnnounce.set(next));
 
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {
     if (orderAlert) orderAlert.resolve(saleId);

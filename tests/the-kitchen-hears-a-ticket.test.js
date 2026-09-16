@@ -27,6 +27,35 @@ const kitchenCall = require('../src/kitchen-call');
 
 /* ------------------------------------------------------------- the words */
 
+test('IT IS SAID ONE LINE AT A TIME, which is where the pauses come from', () => {
+  /*
+   * Owner: "little pause between line items".
+   *
+   * A full stop inside one sentence is a shorter gap than a kitchen needs. The
+   * renderer speaks each of these as its own utterance, and a speech engine
+   * leaves a real gap between them - long enough to hold one dish in your head
+   * before the next arrives.
+   */
+  const said = kitchenCall.lines({
+    table: '5',
+    items: [
+      { item_name: 'Chicken Biryani', item_quantity: 1 },
+      { item_name: 'Chicken Tikka Masala', item_quantity: 1 },
+    ],
+  });
+
+  assert.deepStrictEqual(said, [
+    'Table 5, new order.',
+    'Two items.',
+    'One Chicken Biryani.',
+    'One Chicken Tikka Masala.',
+  ]);
+});
+
+test('nothing worth saying is an empty list, not a line of nothing', () => {
+  assert.deepStrictEqual(kitchenCall.lines({ table: '5', items: [] }), []);
+});
+
 test('IT SAYS THE TABLE FIRST, then the food', () => {
   /*
    * The table number is the one part nobody can work out from the rest, which
@@ -42,8 +71,51 @@ test('IT SAYS THE TABLE FIRST, then the food', () => {
 
   assert.strictEqual(
     said,
-    'Table 5, new order. One Chicken Biryani. One Chicken Tikka Masala.'
+    'Table 5, new order. Two items. One Chicken Biryani. One Chicken Tikka Masala.'
   );
+});
+
+test('HOW MANY PLATES ARE COMING is said before the list', () => {
+  /*
+   * Owner: "KOT total items also print and voice read please. so that chef's
+   * can hear well."
+   *
+   * Before rather than after, because a number heard first is one you can
+   * count against: a chef told three plates are coming notices when they have
+   * heard two. After the list it is a fact nobody can act on.
+   *
+   * PLATES, not lines. One biryani and two naan is three things to cook and
+   * two lines on the ticket.
+   */
+  const said = kitchenCall.lines({
+    table: '5',
+    items: [
+      { item_name: 'Chicken Biryani', item_quantity: 1 },
+      { item_name: 'Butter Naan', item_quantity: 2 },
+    ],
+  });
+
+  assert.strictEqual(said[1], 'Three items.');
+});
+
+test('one plate is an item, not one items', () => {
+  const said = kitchenCall.lines({
+    table: '2',
+    items: [{ item_name: 'Coffee', item_quantity: 1 }],
+  });
+
+  assert.strictEqual(said[1], 'One item.');
+});
+
+test('the count is the whole ticket even when the list is cut short', () => {
+  /* Six lines are read and the rest summarised, but the count is still what
+     the kitchen has to produce - which is the point of hearing it. */
+  const items = Array.from({ length: 9 }, (_, i) => ({
+    item_name: `Dish ${i + 1}`,
+    item_quantity: 2,
+  }));
+
+  assert.strictEqual(kitchenCall.lines({ table: '9', items })[1], '18 items.');
 });
 
 test('counts are words, because that is how somebody says them', () => {
@@ -75,7 +147,7 @@ test('a ticket with no table still reads the food', () => {
     items: [{ item_name: 'Butter Naan', item_quantity: 1 }],
   });
 
-  assert.strictEqual(said, 'New order. One Butter Naan.');
+  assert.strictEqual(said, 'New order. One item. One Butter Naan.');
 });
 
 test('an amendment says so, because a cook must not start it twice', () => {
@@ -136,10 +208,68 @@ test('a line with no quantity is not announced as an order for none', () => {
     ],
   });
 
-  assert.strictEqual(said, 'Table 5, new order. One Butter Naan.');
+  assert.strictEqual(said, 'Table 5, new order. One item. One Butter Naan.');
 });
 
 /* ------------------------------------------------------------ the switch */
+
+test('THE CHIME AND THE READING ARE SEPARATE SWITCHES', () => {
+  /*
+   * Owner: "ting sound on/off read it on/off seperately?"
+   *
+   * They are different things to a kitchen. The chime says a ticket landed and
+   * costs a second; the reading says what is on it and costs ten. A kitchen
+   * that knows to look at the printer wants the first and will come to resent
+   * the second. One switch would make somebody choose between hearing nothing
+   * and hearing too much, and they would choose nothing.
+   */
+  const where = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-kitchen-'));
+  const before = process.env.POSNIC_USER_DATA;
+  process.env.POSNIC_USER_DATA = where;
+
+  try {
+    delete require.cache[require.resolve('../src/kitchen-announce')];
+    const announce = require('../src/kitchen-announce');
+
+    announce.set({ ting: true });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+    assert.strictEqual(announce.wanted(), true, 'a chime is still a sound');
+
+    announce.set({ speak: true });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+
+    /* Turning one off must not take the other with it. */
+    announce.set({ speak: false });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+  } finally {
+    process.env.POSNIC_USER_DATA = before;
+    fs.rmSync(where, { recursive: true, force: true });
+  }
+});
+
+test('a machine already set up in a kitchen does not fall silent', () => {
+  /*
+   * The single switch this replaced meant both. Somebody who turned it on
+   * yesterday must not lose their announcements because the setting grew a
+   * second half overnight.
+   */
+  const where = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-kitchen-'));
+  const before = process.env.POSNIC_USER_DATA;
+  process.env.POSNIC_USER_DATA = where;
+
+  try {
+    delete require.cache[require.resolve('../src/kitchen-announce')];
+    const announce = require('../src/kitchen-announce');
+
+    fs.mkdirSync(path.dirname(announce.settingsPath()), { recursive: true });
+    fs.writeFileSync(announce.settingsPath(), JSON.stringify({ announce: true }), 'utf8');
+
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+  } finally {
+    process.env.POSNIC_USER_DATA = before;
+    fs.rmSync(where, { recursive: true, force: true });
+  }
+});
 
 test('a machine is SILENT until somebody says otherwise', () => {
   /*
@@ -155,6 +285,7 @@ test('a machine is SILENT until somebody says otherwise', () => {
     const announce = require('../src/kitchen-announce');
 
     assert.strictEqual(announce.wanted(), false);
+    assert.deepStrictEqual(announce.settings(), { ting: false, speak: false });
 
     announce.set(true);
     assert.strictEqual(announce.wanted(), true, 'turned on for this machine');

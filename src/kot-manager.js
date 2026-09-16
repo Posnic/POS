@@ -848,7 +848,8 @@ class KOTManager {
    */
   _announceToKitchen(sale, items, jobType) {
     try {
-      if (!kitchenAnnounce.wanted()) return;
+      const wants = kitchenAnnounce.settings();
+      if (!wants.ting && !wants.speak) return;
 
       orderAlert.announceKitchenTicket(
         () => BrowserWindow.getAllWindows().find((w) => w && !w.isDestroyed()) || null,
@@ -856,7 +857,8 @@ class KOTManager {
           table: String(sale.table_number || sale.tableNo || sale.table || sale.table_no || ''),
           items,
           changed: String(jobType || '').toLowerCase() === 'modified',
-        }
+        },
+        wants
       );
     } catch (e) {
       /* Quiet. This is an announcement, not the ticket. */
