@@ -9006,7 +9006,7 @@ class SalesRepository {
    * prints, so a double-tap on a slow screen cannot produce two tickets - and
    * two tickets for one order is two lots of food.
    */
-  async decideOnOrder({ saleId, decision, reason } = {}) {
+  async decideOnOrder({ saleId, decision, reason, by } = {}) {
     try {
       if (!saleId || !ObjectId.isValid(String(saleId))) {
         return { status: false, message: 'Enter must correct order id', data: null };
@@ -9252,7 +9252,7 @@ class SalesRepository {
         };
       }
 
-      await salesCollection.updateOne(
+      const written = await salesCollection.updateOne(
         { _id, ...activeTenantFilter() },
         {
           $set: {
@@ -9272,6 +9272,42 @@ class SalesRepository {
           branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
           saleId: String(saleId),
           reason: 'approved',
+        });
+      }
+
+      /*
+       * AND THE ALARM STOPS, WHEREVER THE ANSWER CAME FROM.
+       *
+       * An order arriving for approval raises the repeating, escalating alarm
+       * (see helpers/order-attention.js), and the only thing that ever
+       * silenced it from a person's decision was the Online orders PAGE
+       * telling the main process by hand. So an order accepted anywhere else
+       * left the till nagging about an order that had been dealt with:
+       *
+       *   - from the request dock, on any other screen in the till
+       *   - from the captain handset, which never talks to that main process
+       *     at all, and which is exactly what a restaurant answers orders on
+       *
+       * Said from here because this is the one door all three go through, and
+       * the alarm belongs to the order rather than to the screen that
+       * answered it.
+       *
+       * ONLY WHEN THE WRITE MATCHED. This method narrows by whatever tenant
+       * the process was last serving, and reports what it ASKED for rather
+       * than what changed - so on a mismatch it answers success while nothing
+       * moved. Announcing that would stop the alarm for an order still
+       * sitting there, which is the exact failure this whole area exists to
+       * prevent. unanswered-orders.js was reading the order back by hand to
+       * guard against it; matchedCount is the signal it was missing.
+       */
+      if (written && written.matchedCount) {
+        notifyOrderResolved({
+          branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
+          saleId: String(saleId),
+          state: move.state,
+          /* A person unless somebody says otherwise. The shop's own rule says
+             otherwise, and the difference is worth keeping in a log. */
+          by: by ? String(by) : 'person',
         });
       }
 

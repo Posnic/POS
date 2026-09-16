@@ -19,6 +19,8 @@
  * cancelling an order nobody asked to cancel, then failing to act at all.
  */
 
+const fs = require('node:fs');
+const path = require('node:path');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
@@ -89,8 +91,20 @@ function fakeRepository({ status = true, moves = true } = {}) {
   const calls = [];
   return {
     calls,
-    decideOnOrder: jest.fn(async (saleId, decision, reason) => {
-      calls.push({ saleId, decision, reason });
+    /*
+     * THE SAME SHAPE THE REAL ONE TAKES, and that is not a detail.
+     *
+     * This fake used to accept three positional arguments while the real
+     * repository destructures an object, and the sweep called it positionally
+     * - so `saleId` was undefined on every real sweep and the method answered
+     * "Enter must correct order id" before touching the database. The rule
+     * never decided a single order in production, and these tests passed
+     * throughout because they were proving the fake.
+     *
+     * See 'the real method refuses the call this used to make' below.
+     */
+    decideOnOrder: jest.fn(async ({ saleId, decision, reason, by } = {}) => {
+      calls.push({ saleId, decision, reason, by });
       if (status && moves) {
         await db
           .collection('sales')
@@ -201,25 +215,53 @@ describe('and when it has chosen, it fires on its own clock', () => {
     expect(Repository.calls[0].reason).toMatch(/5 minutes/);
   });
 
-  test('AND THE ALARM IS TOLD, so it stops asking about something that is done', async () => {
+  test('AND THE DOOR IS TOLD IT WAS THE RULE, so the alarm can say who answered', async () => {
     /*
      * The other half of the old bug. The till used to silence itself the
-     * moment its policy spoke, before anything happened. Now the noise stops
-     * only after the order has actually moved.
+     * moment its policy spoke, before anything happened. The noise now stops
+     * only after the order has actually moved - and it is stopped by
+     * decideOnOrder, which is the one door a person, this rule and the
+     * handset all go through, rather than by a second announcement from here
+     * that would drift from it.
+     *
+     * So what this sweep is responsible for is saying WHO decided. The proof
+     * that the alarm is actually told lives where the write happens:
+     * tests/unit/repositories/an-order-answered-anywhere-stops-the-alarm.test.js
      */
     shopWants({ online_order_on_silence: 'accept', online_order_decide_after_minutes: 10 });
     const saleId = await held(11);
-    const heard = [];
-    const listener = (payload) => heard.push(payload);
-    process.on('posnic:order-resolved', listener);
-    try {
-      await sweeper.sweepOnce({ Repository: fakeRepository() });
-    } finally {
-      process.off('posnic:order-resolved', listener);
-    }
-    expect(heard).toHaveLength(1);
-    expect(heard[0].saleId).toBe(saleId);
-    expect(heard[0].by).toBe('rule');
+    const Repository = fakeRepository();
+    await sweeper.sweepOnce({ Repository });
+
+    expect(Repository.calls[0].saleId).toBe(saleId);
+    expect(Repository.calls[0].by).toBe('rule');
+  });
+
+  test('the real method refuses the call this used to make', async () => {
+    /*
+     * THE BUG THAT HID BEHIND THE FAKE, pinned so it cannot come back.
+     *
+     * decideOnOrder destructures an object. Called positionally - which is
+     * what this sweep did - `saleId` is undefined and it answers an error
+     * before touching the database, so every sweep was a silent no-op.
+     * Nothing throws, nothing logs, and the fake above was perfectly happy.
+     */
+    const real = require('../../../src/repositories/sale.repository');
+    const positional = await real.decideOnOrder(
+      String(new mongoose.Types.ObjectId()),
+      'rejected',
+      'nobody answered'
+    );
+    expect(positional.status).toBe(false);
+    expect(positional.message).toMatch(/correct order id/i);
+
+    /* And the sweep sends an object, which is what makes it reach the order. */
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'src', 'services', 'unanswered-orders.js'),
+      'utf8'
+    );
+    expect(source).toMatch(/repo\.decideOnOrder\(\{/);
+    expect(source).not.toMatch(/repo\.decideOnOrder\(String\(/);
   });
 
   test('and it is NOT told when the decision was refused', async () => {
@@ -348,9 +390,7 @@ describe('nothing here may take a shop down', () => {
       decideOnOrder: jest
         .fn()
         .mockRejectedValueOnce(new Error('boom'))
-        .mockImplementation((saleId, decision, reason) =>
-          honest.decideOnOrder(saleId, decision, reason)
-        ),
+        .mockImplementation((params) => honest.decideOnOrder(params)),
     };
     const out = await sweeper.sweepOnce({ Repository: exploding });
     expect(exploding.decideOnOrder).toHaveBeenCalledTimes(2);
