@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "Anza upya kila mwaka wa kalenda",
   "lang_turning_this_on_starts_the_numbering_again": "Ukiwasha hii, namba zitaanza upya kutoka moja. Ni bora kufanya hivi siku ya kwanza ya mwaka.",
   "lang_financial_year_starts_in": "Mwaka wa fedha huanza",
-  "lang_april_in_india_january_in_much_of_the_eu": "Aprili nchini India, Januari katika sehemu kubwa ya Umoja wa Ulaya."
+  "lang_april_in_india_january_in_much_of_the_eu": "Aprili nchini India, Januari katika sehemu kubwa ya Umoja wa Ulaya.",
+  "lang_if_nobody_answers": "Kama hakuna anayejibu",
+  "lang_leave_it_waiting": "Iache ikisubiri, endelea kuuliza",
+  "lang_accept_it_and_send_to_the_kitchen": "Ikubali na uipeleke jikoni",
+  "lang_cancel_it_and_tell_the_customer": "Ighairi na umjulishe mteja",
+  "lang_the_alarm_keeps_asking_either_way": "Kengele inaendelea kuuliza katika hali zote mbili, ikipungua taratibu.",
+  "lang_after_how_long": "Baada ya muda gani",
+  "lang_counted_from_when_the_order_arrived": "Huhesabiwa tangu agizo lilipoingia."
 }

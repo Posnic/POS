@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "Ricominciare a ogni anno solare",
   "lang_turning_this_on_starts_the_numbering_again": "Attivandolo, la numerazione riparte da uno. Meglio farlo il primo giorno dell'anno.",
   "lang_financial_year_starts_in": "L'anno fiscale inizia a",
-  "lang_april_in_india_january_in_much_of_the_eu": "Aprile in India, gennaio in gran parte dell'UE."
+  "lang_april_in_india_january_in_much_of_the_eu": "Aprile in India, gennaio in gran parte dell'UE.",
+  "lang_if_nobody_answers": "Se nessuno risponde",
+  "lang_leave_it_waiting": "Lasciarlo in attesa e continuare a segnalare",
+  "lang_accept_it_and_send_to_the_kitchen": "Accettarlo e mandarlo in cucina",
+  "lang_cancel_it_and_tell_the_customer": "Annullarlo e avvisare il cliente",
+  "lang_the_alarm_keeps_asking_either_way": "L'allarme continua in entrambi i casi, diradandosi.",
+  "lang_after_how_long": "Dopo quanto tempo",
+  "lang_counted_from_when_the_order_arrived": "Contato da quando l'ordine è arrivato."
 }

@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "Mulai lagi setiap tahun kalender",
   "lang_turning_this_on_starts_the_numbering_again": "Menyalakan ini membuat penomoran dimulai lagi dari satu. Sebaiknya dilakukan pada hari pertama tahun.",
   "lang_financial_year_starts_in": "Tahun buku dimulai pada",
-  "lang_april_in_india_january_in_much_of_the_eu": "April di India, Januari di sebagian besar Uni Eropa."
+  "lang_april_in_india_january_in_much_of_the_eu": "April di India, Januari di sebagian besar Uni Eropa.",
+  "lang_if_nobody_answers": "Jika tidak ada yang menjawab",
+  "lang_leave_it_waiting": "Biarkan menunggu, tetap ingatkan",
+  "lang_accept_it_and_send_to_the_kitchen": "Terima dan kirim ke dapur",
+  "lang_cancel_it_and_tell_the_customer": "Batalkan dan beri tahu pelanggan",
+  "lang_the_alarm_keeps_asking_either_way": "Alarm tetap mengingatkan dalam kedua hal, makin jarang.",
+  "lang_after_how_long": "Setelah berapa lama",
+  "lang_counted_from_when_the_order_arrived": "Dihitung sejak pesanan masuk."
 }

@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "ഓരോ കലണ്ടർ വർഷവും വീണ്ടും തുടങ്ങുക",
   "lang_turning_this_on_starts_the_numbering_again": "ഇത് ഓണാക്കിയാൽ നമ്പറിടൽ വീണ്ടും ഒന്നിൽ നിന്ന് തുടങ്ങും. വർഷത്തിന്റെ ആദ്യ ദിവസം ചെയ്യുന്നതാണ് നല്ലത്.",
   "lang_financial_year_starts_in": "സാമ്പത്തിക വർഷം തുടങ്ങുന്നത്",
-  "lang_april_in_india_january_in_much_of_the_eu": "ഇന്ത്യയിൽ ഏപ്രിൽ, യൂറോപ്യൻ യൂണിയന്റെ ഭൂരിഭാഗത്തിലും ജനുവരി."
+  "lang_april_in_india_january_in_much_of_the_eu": "ഇന്ത്യയിൽ ഏപ്രിൽ, യൂറോപ്യൻ യൂണിയന്റെ ഭൂരിഭാഗത്തിലും ജനുവരി.",
+  "lang_if_nobody_answers": "ആരും മറുപടി പറഞ്ഞില്ലെങ്കിൽ",
+  "lang_leave_it_waiting": "കാത്തിരിക്കട്ടെ, ചോദിച്ചുകൊണ്ടിരിക്കട്ടെ",
+  "lang_accept_it_and_send_to_the_kitchen": "സ്വീകരിച്ച് അടുക്കളയിലേക്ക് അയയ്ക്കുക",
+  "lang_cancel_it_and_tell_the_customer": "റദ്ദാക്കി ഉപഭോക്താവിനെ അറിയിക്കുക",
+  "lang_the_alarm_keeps_asking_either_way": "രണ്ട് സാഹചര്യത്തിലും അലാറം ചോദിച്ചുകൊണ്ടിരിക്കും, ക്രമേണ കുറഞ്ഞുവരും.",
+  "lang_after_how_long": "എത്ര സമയത്തിന് ശേഷം",
+  "lang_counted_from_when_the_order_arrived": "ഓർഡർ വന്ന സമയം മുതൽ കണക്കാക്കുന്നു."
 }

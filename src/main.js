@@ -4524,6 +4524,26 @@ app.whenReady().then(async () => {
   orderAlert = new OrderAlert({ getWindow: () => mainWindow });
   console.log('OrderAlert initialized');
 
+  /*
+   * AND THE SHOP'S OWN RULE CAN STOP IT TOO.
+   *
+   * "Auto cancel after ten minutes" is an answer, so the alarm has nothing
+   * left to ask about. The API is what carries the rule out - it is where the
+   * order lives, and a shop served from the cloud has no till - and it says so
+   * on the same process bus the arrival came in on.
+   *
+   * Only ever AFTER the order has actually moved. The till used to silence
+   * itself the moment its own policy spoke, with nothing acting on it, and a
+   * stopped alarm is a promise that somebody dealt with it.
+   */
+  try {
+    process.on('posnic:order-resolved', (payload) => {
+      if (orderAlert && payload && payload.saleId) orderAlert.resolve(payload.saleId);
+    });
+  } catch (e) {
+    /* A shop with a noise it stops by hand is where this was before. */
+  }
+
   /* Somebody dealt with the queue. The alarm repeats until it is empty, and
      this is how the page says an order stopped waiting. */
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {

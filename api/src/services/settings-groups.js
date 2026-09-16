@@ -383,6 +383,25 @@ const CHANNELS = [
      kitchen that starts at once and wrong for one that batches. 0 switches
      it off; after it, cancelling becomes a request the shop decides on. */
   'online_order_change_seconds',
+  /*
+   * WHAT HAPPENS WHEN NOBODY ANSWERS AT ALL, and after how long.
+   *
+   * Owner: "let restaurent owner decide that. give option auto cancel or auto
+   * accept. based ont time he defines it. by default dont accpept or reject."
+   *
+   * '' | 'accept' | 'cancel', and a number of minutes. BOTH or neither: a
+   * choice with no time fires immediately and a time with no choice fires
+   * nothing, so either half alone is a half-written rule. Absent means nothing
+   * happens, on purpose - a product that cancels a customer's order because a
+   * shop never opened a settings page has made a decision that was not its to
+   * make. services/unanswered-orders.js is what acts on it.
+   */
+  'online_order_on_silence',
+  'online_order_decide_after_minutes',
+  /* An aggregator rejects on its own timer and counts it against the shop, so
+     a decision of ours landing after theirs is worse than none: the order is
+     already gone and we have recorded the opposite. 0 means no such window. */
+  'online_order_partner_window_minutes',
   /* [{ code, name, unit_label, address, delivery_note, ask_floor,
      price_adjust_percent, commission_percent, enabled }] - hotels, offices and
      anywhere else that is not the shop's own floor. The code is what a printed

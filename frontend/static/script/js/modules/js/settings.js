@@ -6724,6 +6724,28 @@ $(document).on('change', '#bill_number_reset', function () {
 });
 
 
+/*
+ * The minutes only mean something once a shop has chosen what to do, and the
+ * whole rule only means something while orders are being HELD.
+ *
+ * Hidden rather than disabled. A greyed control says "you may not touch me"
+ * about something that is simply not part of this choice, and a shop on
+ * automatic reading "If nobody answers" has been asked a question about a
+ * queue it does not have.
+ */
+PosnicPro.settings.showSilenceRule = function () {
+    var holding = $("#online_order_approval").val() === "manual";
+    $("#online_order_silence_row").toggle(holding);
+    $("#online_order_decide_after_row").toggle(
+        holding && ($("#online_order_on_silence").val() || "") !== ""
+    );
+};
+
+$(document).on("change", "#online_order_approval, #online_order_on_silence", function () {
+    PosnicPro.settings.showSilenceRule();
+});
+
+
 /* Feature search (owner feedback): filter the cards by anything visible on
    them - title, description, sub-toggle labels. */
 PosnicPro.settings.filterModuleCards = function (query) {
@@ -8578,6 +8600,21 @@ PosnicPro.salesChannels = {
              * is shown as the nearest one rather than blanking the box and
              * silently rewriting the shop's choice on the next save.
              */
+            /*
+             * WHAT HAPPENS WHEN NOBODY ANSWERS. Empty is "leave it waiting",
+             * which is what a shop that has never been asked reads as and what
+             * every shop does today. The minutes only mean something once a
+             * choice has been made, so the row is hidden until then.
+             */
+            $("#online_order_on_silence").val(
+                ["accept", "cancel"].indexOf(String(values.online_order_on_silence || "")) > -1
+                    ? String(values.online_order_on_silence)
+                    : ""
+            );
+            $("#online_order_decide_after_minutes").val(
+                String(Number(values.online_order_decide_after_minutes) || 10)
+            );
+            PosnicPro.settings.showSilenceRule();
             $("#online_order_change_seconds").val(
                 PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
             );
@@ -8715,8 +8752,18 @@ PosnicPro.salesChannels = {
          * given, so leaving the key out keeps the stored value safe.
          */
         var window_ = $("#online_order_change_seconds").val();
+        /* Both halves or neither. A time sent with no choice is a rule nobody
+           finished writing, and the server treats it as nothing anyway. */
+        var onSilence = $("#online_order_on_silence").val() || "";
+        var decideAfter = onSilence ? Number($("#online_order_decide_after_minutes").val()) || 0 : 0;
         if (window_ !== undefined && window_ !== null && String(window_) !== '') {
             out.online_order_change_seconds = Number(window_);
+        }
+        /* Same guard, same reason: a screen that never drew this control must
+           not post an empty one and switch a shop's rule off. */
+        if ($("#online_order_on_silence").length) {
+            out.online_order_on_silence = onSilence;
+            out.online_order_decide_after_minutes = decideAfter;
         }
         return out;
     },
