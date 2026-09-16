@@ -7248,7 +7248,12 @@ class SalesController extends BaseController {
 
   async multiKitchenPrint(req, res) {
     try {
-      const response = await salesService.multiKitchenPrintModel(req.body.branchId);
+      /* Which till is asking, so two of them in one shop are never handed the
+         same ticket. Absent on older builds, and absent means exactly the
+         behaviour those builds have always had. */
+      const response = await salesService.multiKitchenPrintModel(req.body.branchId, {
+        tillId: req.body.tillId || '',
+      });
       if (response.status === true) {
         return this.success(res, response.data, response.message);
       } else {

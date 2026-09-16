@@ -72,6 +72,15 @@ class KOTManager {
      * non-thermal printer still needs.
      */
     this.hardware = options.hardware || null;
+    /*
+     * WHICH MACHINE THIS IS.
+     *
+     * The server hands a kitchen ticket to ONE till, and this is how it tells
+     * them apart. The machine's own name, which is what BillManager already
+     * uses for exactly this - two pollers in one shop must not be the same
+     * name, and must be the same name across a restart.
+     */
+    this.tillId = options.tillId || require('os').hostname();
     this.pollingTimer = null;
     this.config = null;
     this.isPolling = false;
@@ -521,7 +530,11 @@ class KOTManager {
       const res  = await fetch(`${apiUrl}/sales/multiKitchenPrint`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'kioskkey': KIOSK_KEY },
-        body:    JSON.stringify({ branchId })
+        /* WHO IS ASKING. Two tills in one shop were handed the same tickets
+           and both printed them; the server now gives each ticket to one of
+           them. The machine's own name, which is what the bill queue already
+           uses for the same purpose. */
+        body:    JSON.stringify({ branchId, tillId: this.tillId })
       });
 
       const data  = await res.json();
