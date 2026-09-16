@@ -172,6 +172,9 @@
       "The kitchen is busy. Expect about {n} minutes longer than usual.": "சமையலறை பரபரப்பாக உள்ளது. வழக்கத்தை விட சுமார் {n} நிமிடங்கள் கூடுதலாக ஆகலாம்.",
       "The kitchen is very busy. Expect over an hour longer than usual.": "சமையலறை மிகவும் பரபரப்பாக உள்ளது. வழக்கத்தை விட ஒரு மணி நேரத்திற்கு மேல் ஆகலாம்.",
       "The kitchen is busy right now, so your order may take longer than usual.": "இப்போது சமையலறை பரபரப்பாக உள்ளதால், உங்கள் ஆர்டருக்கு வழக்கத்தை விட நேரம் ஆகலாம்.",
+      /* ---------------------------------------- when it will be ready */
+      "Usually ready by about {when}": "வழக்கமாக {when} மணிக்கு தயாராகிவிடும்",
+      "About {n} minutes once the shop accepts it": "கடை ஏற்றதும் பிறகு சுமார் {n} நிமிடங்கள்",
       "Less spicy, no onion, extra gravy...": "காரம் குறைவாக, வெங்காயம் வேண்டாம், கூடுதல் குழம்பு...",
       "A note for the kitchen": "சமையலறைக்கு ஒரு குறிப்பு",
       "A note for the shop": "கடைக்கு ஒரு குறிப்பு",
@@ -300,6 +303,14 @@
       "Nothing to show here": "இங்கே காட்ட எதுவும் இல்லை",
       "This receipt is not from an order placed on this phone.": "இந்த ரசீது இந்த போனில் செய்யப்பட்ட ஆர்டருடையது அல்ல.",
       "See the menu": "மெனுவைப் பாருங்கள்",
+
+      /* where the order has got to - the trail on the thank-you page */
+      "The shop has it": "கடையிடம் உள்ளது",
+      "In the kitchen": "சமையலறையில்",
+      "Waiting for the shop to accept it.": "கடை ஏற்கும் வரை காத்திருக்கிறது.",
+      "Waiting for the shop to accept it. Most orders here are accepted in about {minutes} minutes.": "கடை ஏற்கும் வரை காத்திருக்கிறது. இங்கு பெரும்பாலான ஆர்டர்கள் சுமார் {minutes} நிமிடங்களில் ஏற்கப்படுகின்றன.",
+      "Nothing has been charged.": "எந்தத் தொகையும் வசூலிக்கப்படவில்லை.",
+      "Nothing has been charged. Ask at the counter if you would like to know why.": "எந்தத் தொகையும் வசூலிக்கப்படவில்லை. காரணம் தெரிய வேண்டுமானால் கவுண்டரில் கேளுங்கள்.",
 
       /* the assistant */
       "Ask about the menu": "மெனு பற்றிக் கேளுங்கள்",

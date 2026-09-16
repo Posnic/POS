@@ -688,11 +688,18 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     let prefixId = '';
     if (id === '') {
       const prefixValue = context.salesPrefix != null ? context.salesPrefix : 'S';
-      const n = await salesRepository.nextSalesNumberForBranch(branchId, licenseId);
       // Readable scheme (SB1D1-000045) once this till has its branch and its
       // gateway-assigned device code; until then a till-tagged number that is
       // already collision-free. Either way, two tills can never clash.
-      prefixId = await salesRepository.buildDocNumber('S', branchId, n, {
+      //
+      // THE COUNTER AND THE FORMAT TOGETHER, through the one method the
+      // customer's ordering page also uses. Taking the number here and
+      // building it separately is how the two came to disagree about the
+      // year: a shop that numbers by financial year would have had the year
+      // on its online orders and not on its counter bills, sharing one
+      // counter, and the till would have reissued numbers the new year had
+      // already given out. See repositories/sale.repository generateSalesIdForBranch.
+      prefixId = await salesRepository.generateSalesIdForBranch(branchId, {
         fallbackPrefix: prefixValue,
       });
     }
@@ -1196,8 +1203,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         // take the next number and retry rather than fail the sale.
         result = await salesRepository.createSaleUnique(finalSaleData, async () => {
           const pv = context.salesPrefix || 'INV';
-          const nn = await salesRepository.nextSalesNumberForBranch(branchId, licenseId);
-          return salesRepository.buildDocNumber('S', branchId, nn, { fallbackPrefix: pv });
+          return salesRepository.generateSalesIdForBranch(branchId, { fallbackPrefix: pv });
         });
       } catch (error) {
         for (const reservation of stockReservations.values()) {

@@ -371,8 +371,7 @@
     "src/services/category.service.js"
   ],
   "Change requested": [
-    "src/repositories/sale.repository.js",
-    "src/services/customer-order.service.js"
+    "src/repositories/sale.repository.js"
   ],
   "Changes Retrieved": [
     "src/controllers/categories.controller.js",
@@ -573,6 +572,12 @@
     "src/services/customer.service.js"
   ],
   "Data Not Valid": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: bill_number_reset must be off, financial or calendar": [
     "src/controllers/settings.controller.js"
   ],
   "Data Not Valid: receiving_prefix must be 1-6 characters": [

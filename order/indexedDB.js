@@ -1898,6 +1898,42 @@ function catalogueItem(item, categoryName) {
  * prep times can support them, and this says the weaker true thing when they
  * cannot - the same rule the health badges follow.
  */
+/*
+ * "USUALLY READY BY ABOUT QUARTER PAST EIGHT."
+ *
+ * A customer places an order, gets a token number and then hears nothing. On
+ * every food app they have ever used the next thing they see is a time; here
+ * the list said "With the kitchen" and left them to guess, which is when
+ * somebody walks up to the counter to ask - the one interruption an ordering
+ * channel exists to remove.
+ *
+ * SAID AS AN ESTIMATE, BECAUSE THAT IS WHAT IT IS. Nothing in this product
+ * knows when food is actually finished - no cook marks a ticket done - so the
+ * server works it out from the slowest dish on the order and the queue that
+ * was ahead of it, and says nothing at all when the shop has stated no prep
+ * times. "Usually" is doing real work in that sentence and is not padding.
+ *
+ * The clock is the CUSTOMER'S, from an instant the server sent: a guest
+ * ordering from a hotel in another timezone reads their own watch, not the
+ * shop's.
+ */
+function readyByWords(order) {
+    if (!order || order.cancelled === true) return "";
+    var at = order.ready_by ? new Date(order.ready_by) : null;
+    if (!at || isNaN(at.getTime())) return "";
+    /* Past already, and still nothing served: a time that has been and gone
+       is worse than no time, so it stops being shown rather than counting
+       backwards at somebody waiting. */
+    if (at.getTime() < Date.now()) return "";
+    var clock = at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    /* A shop that has not accepted the order yet has not started cooking, so
+       the clock would be a fiction. Say the length instead. */
+    if (order.state === "pending") {
+        return t("About {n} minutes once the shop accepts it", { n: Number(order.ready_minutes) || 0 });
+    }
+    return t("Usually ready by about {when}", { when: clock });
+}
+
 function kitchenNoticeHtml(kitchen) {
     if (!kitchen || kitchen.busy !== true) return "";
     var minutes = Number(kitchen.extra_minutes) || 0;

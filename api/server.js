@@ -100,6 +100,22 @@ const startServer = async () => {
       console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🚀 API Endpoint: http://localhost:${PORT}/api`);
       console.log('🚀 =====================================');
+
+      /*
+       * THE SHOP'S DECLARED DEFAULT, LOOKING FOR ORDERS NOBODY ANSWERED.
+       *
+       * Started here rather than on the till, because a shop served from the
+       * cloud has no till and its held orders would otherwise sit for ever.
+       * Does nothing at all until a shop has actually asked for a rule; see
+       * src/services/unanswered-orders.js.
+       */
+      try {
+        require('./src/services/unanswered-orders').start();
+        console.log('✅ Unanswered-order rule running');
+      } catch (e) {
+        /* A shop still takes orders without it. Never fatal at boot. */
+        console.warn('[unanswered-orders] not started:', e && e.message);
+      }
     });
 
     // Handle unhandled promise rejections

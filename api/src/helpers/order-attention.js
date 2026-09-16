@@ -69,4 +69,47 @@ function notifyOrderAttention(details = {}) {
   }
 }
 
-module.exports = { ATTENTION_EVENT, notifyOrderAttention };
+/*
+ * AND THAT IT NO LONGER DOES.
+ *
+ * The alarm repeats until somebody answers, and until now the only thing that
+ * could stop it was a person pressing something on the page. When the shop's
+ * own rule decides an order - "auto cancel after ten minutes" - the order IS
+ * answered, and an alarm still going is an alarm about nothing.
+ *
+ * The opposite failure is the one that was built in before this existed: the
+ * till dropped the order from its pending list the moment its policy spoke,
+ * without anything acting on it, so the noise stopped while the order sat
+ * there. A stopped alarm is a promise that something happened, so it is only
+ * ever sent AFTER the order has actually moved.
+ */
+const RESOLVED_EVENT = 'posnic:order-resolved';
+
+/**
+ * Announce that an order no longer needs anybody.
+ *
+ * @param {object} details
+ * @param {string} [details.branchId]
+ * @param {string} [details.saleId]
+ * @param {string} [details.state]  what it became: accepted or rejected
+ * @param {string} [details.by]     'rule' when the shop's own default fired
+ */
+function notifyOrderResolved(details = {}) {
+  try {
+    process.emit(RESOLVED_EVENT, {
+      branchId: details.branchId ? String(details.branchId) : '',
+      saleId: details.saleId ? String(details.saleId) : '',
+      state: details.state ? String(details.state) : '',
+      by: details.by ? String(details.by) : '',
+      at: new Date().toISOString(),
+    });
+    return true;
+  } catch (e) {
+    /* A silence that fails to arrive is a shop with a noise it can stop by
+       hand, which is where it was before. */
+    console.warn('[order-attention] could not announce a resolution:', e.message);
+    return false;
+  }
+}
+
+module.exports = { ATTENTION_EVENT, RESOLVED_EVENT, notifyOrderAttention, notifyOrderResolved };

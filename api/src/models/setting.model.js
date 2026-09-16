@@ -1297,6 +1297,32 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        /*
+         * WHEN THE BILL NUMBER STARTS AGAIN AT ONE.
+         *
+         * Only written when the form actually sent it, so a save from an
+         * older screen - or from any of the other forms that post into this
+         * same method - cannot silently switch a shop's numbering off. An
+         * unrecognised value is stored as empty, which is off: a typo must
+         * not restart a shop's invoice series.
+         */
+        ...(data.bill_number_reset !== undefined
+          ? {
+              bill_number_reset: ['financial', 'calendar'].includes(
+                String(data.bill_number_reset || '').trim()
+              )
+                ? String(data.bill_number_reset).trim()
+                : '',
+            }
+          : {}),
+        ...(data.bill_number_fy_start_month !== undefined
+          ? {
+              bill_number_fy_start_month: (() => {
+                const month = Number(data.bill_number_fy_start_month);
+                return Number.isInteger(month) && month >= 1 && month <= 12 ? month : 4;
+              })(),
+            }
+          : {}),
         // Shop's own outgoing mail (owner rule: theirs first, ours as the
         // cloud fallback). Password stored as given - it must be usable.
         ...(data.email_smtp_host !== undefined
@@ -1490,6 +1516,8 @@ class SettingModel extends BaseModel {
         discount_percentage: 'discount_percentage',
         discount_amount: 'discount_amount',
         sales_prefix: 'sales_prefix',
+        bill_number_reset: 'bill_number_reset',
+        bill_number_fy_start_month: 'bill_number_fy_start_month',
         indian_gst: 'indian_gst',
         receiving_prefix: 'receiving_prefix',
         branch_gstin_number: 'branch_gstin_number',

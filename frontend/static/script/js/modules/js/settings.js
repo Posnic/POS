@@ -844,6 +844,18 @@ PosnicPro.settings = {
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api || '');
                 $('#sales_prefix').val(data.sales_prefix || 'S');
+                /* WHEN THE BILL NUMBER STARTS AGAIN. Empty is off, which is
+                   what a branch that has never been asked reads as, and what
+                   every shop did before this existed. The month only means
+                   anything for a financial year, so it is hidden otherwise. */
+                $('#bill_number_reset').val(
+                    ['financial', 'calendar'].indexOf(String(data.bill_number_reset || '')) > -1
+                        ? String(data.bill_number_reset)
+                        : ''
+                );
+                PosnicPro.settings.fillFinancialYearMonths();
+                $('#bill_number_fy_start_month').val(String(Number(data.bill_number_fy_start_month) || 4));
+                PosnicPro.settings.showFinancialYearMonth();
                 $('#email_smtp_host').val(data.email_smtp_host || '');
                 $('#email_smtp_port').val(data.email_smtp_port || '');
                 $('#email_smtp_secure').prop('checked', data.email_smtp_secure === true || data.email_smtp_secure === 'true');
@@ -2075,6 +2087,8 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                bill_number_reset: $('#bill_number_reset').val() || '',
+                bill_number_fy_start_month: $('#bill_number_fy_start_month').val() || '4',
                 email_smtp_host: $('#email_smtp_host').val() || '',
                 email_smtp_port: $('#email_smtp_port').val() || '',
                 email_smtp_secure: $('#email_smtp_secure').is(':checked') ? 'true' : 'false',
@@ -6664,6 +6678,52 @@ PosnicPro.settings.markSavedSecrets = function (configured) {
 };
 
 
+/*
+ * The month a financial year starts in only means something to a financial
+ * year.
+ *
+ * A shop on the calendar year that is shown "Financial year starts in April"
+ * has been asked a question that does not apply to it, and the honest answers
+ * to that are to hide it - not to grey it out, which is a control saying "you
+ * may not touch me" about something that is simply not part of this choice.
+ */
+/*
+ * The twelve months, in the language the page is in.
+ *
+ * Every browser ships every month name in every language it supports, so
+ * writing them into seventeen translation packs would be a hundred and
+ * ninety-nine hand-typed strings duplicating something already correct - and
+ * one more list to keep true when a language is added. The year is arbitrary;
+ * only the month names are read.
+ */
+PosnicPro.settings.fillFinancialYearMonths = function () {
+    var select = document.getElementById('bill_number_fy_start_month');
+    if (!select || select.options.length) { return; }
+    var code = (PosnicPro.i18n && PosnicPro.i18n.code && PosnicPro.i18n.code()) || undefined;
+    for (var month = 1; month <= 12; month += 1) {
+        var name;
+        try {
+            name = new Date(2001, month - 1, 1).toLocaleString(code, { month: 'long' });
+        } catch (e) {
+            /* A language code the browser will not take. Its own default
+               still names the months, which beats an empty list. */
+            name = new Date(2001, month - 1, 1).toLocaleString(undefined, { month: 'long' });
+        }
+        select.add(new Option(name, String(month)));
+    }
+};
+
+PosnicPro.settings.showFinancialYearMonth = function () {
+    var row = $('#bill_number_fy_start_month_row');
+    if (!row.length) { return; }
+    row.toggle($('#bill_number_reset').val() === 'financial');
+};
+
+$(document).on('change', '#bill_number_reset', function () {
+    PosnicPro.settings.showFinancialYearMonth();
+});
+
+
 /* Feature search (owner feedback): filter the cards by anything visible on
    them - title, description, sub-toggle labels. */
 PosnicPro.settings.filterModuleCards = function (query) {
@@ -8518,6 +8578,21 @@ PosnicPro.salesChannels = {
              * is shown as the nearest one rather than blanking the box and
              * silently rewriting the shop's choice on the next save.
              */
+            /*
+             * WHAT HAPPENS WHEN NOBODY ANSWERS. Empty is "leave it waiting",
+             * which is what a shop that has never been asked reads as and what
+             * every shop does today. The minutes only mean something once a
+             * choice has been made, so the row is hidden until then.
+             */
+            $("#online_order_on_silence").val(
+                ["accept", "cancel"].indexOf(String(values.online_order_on_silence || "")) > -1
+                    ? String(values.online_order_on_silence)
+                    : ""
+            );
+            $("#online_order_decide_after_minutes").val(
+                String(Number(values.online_order_decide_after_minutes) || 10)
+            );
+            PosnicPro.salesChannels.showSilenceRule();
             $("#online_order_change_seconds").val(
                 PosnicPro.salesChannels.nearestWindow(values.online_order_change_seconds)
             );
@@ -8655,8 +8730,18 @@ PosnicPro.salesChannels = {
          * given, so leaving the key out keeps the stored value safe.
          */
         var window_ = $("#online_order_change_seconds").val();
+        /* Both halves or neither. A time sent with no choice is a rule nobody
+           finished writing, and the server treats it as nothing anyway. */
+        var onSilence = $("#online_order_on_silence").val() || "";
+        var decideAfter = onSilence ? Number($("#online_order_decide_after_minutes").val()) || 0 : 0;
         if (window_ !== undefined && window_ !== null && String(window_) !== '') {
             out.online_order_change_seconds = Number(window_);
+        }
+        /* Same guard, same reason: a screen that never drew this control must
+           not post an empty one and switch a shop's rule off. */
+        if ($("#online_order_on_silence").length) {
+            out.online_order_on_silence = onSilence;
+            out.online_order_decide_after_minutes = decideAfter;
         }
         return out;
     },
@@ -8668,6 +8753,30 @@ PosnicPro.salesChannels = {
      * it quietly rewritten to 30 the next time somebody saves this page for
      * an unrelated reason.
      */
+    /*
+     * The minutes only mean something once a shop has chosen what to do, and
+     * the whole rule only means something while orders are being HELD.
+     *
+     * Hidden rather than disabled. A greyed control says "you may not touch
+     * me" about something that is simply not part of this choice, and a shop
+     * on automatic reading "If nobody answers" has been asked a question about
+     * a queue it does not have.
+     *
+     * ON THIS MODULE, not on PosnicPro.settings. It is a control on the
+     * channels screen and `load()` calls it, so reaching across to another
+     * namespace made drawing the whole screen depend on that namespace being
+     * there. It was not, in the harness that lifts this module out - and a
+     * `load()` that throws leaves Delivery Partners and Restaurant blank,
+     * which the next Save would write back over the real rows.
+     */
+    showSilenceRule: function () {
+        var holding = $("#online_order_approval").val() === "manual";
+        $("#online_order_silence_row").toggle(holding);
+        $("#online_order_decide_after_row").toggle(
+            holding && ($("#online_order_on_silence").val() || "") !== ""
+        );
+    },
+
     nearestWindow: function (stored) {
         var offered = [0, 30, 60, 120, 300, 600, 900];
         /* An unset shop is one minute, which is what the server falls back
@@ -8909,6 +9018,13 @@ $(document).on('click', '#add_webshop_partner', function () {
 /* Change a row's kind and it belongs on the other screen. Moving it there is
    the honest answer: leaving an "Own webshop" row sitting under Delivery
    Partners is how a shop ends up believing it saved something it cannot find. */
+/* The silence rule only applies to a queue, and the minutes only to a choice.
+   Bound beside the other channel-screen handlers, and calling the module that
+   owns the control rather than reaching into another namespace. */
+$(document).on('change', '#online_order_approval, #online_order_on_silence', function () {
+    PosnicPro.salesChannels.showSilenceRule();
+});
+
 $(document).on('change', '.partner-channel', function () {
     var $row = $(this).closest('.channel-partner-row');
     var target = $(this).val() === 'ecommerce' ? '#webshop_partner_rows' : '#sales_channel_partner_rows';

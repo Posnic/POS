@@ -443,7 +443,10 @@ describe('SalesRepository', () => {
       const r = await salesRepository.generateSalesIdForBranch(FAKE_BRANCH);
       expect(collections.counters.updateOne).toHaveBeenCalledWith(
         expect.objectContaining({ kind: 'sales_id' }),
-        { $setOnInsert: { seq: 42 } },
+        /* Empty: this shop has not asked to number by year. The row carries
+           the period it is counting so a roll-over can be spotted without a
+           second counter, and empty is what every existing row means. */
+        { $setOnInsert: { seq: 42, period_key: '' } },
         { upsert: true }
       );
       expect(r).toBe('S-DEV1-000043');
@@ -512,7 +515,10 @@ describe('SalesRepository', () => {
 
       expect(collections.counters.updateOne).toHaveBeenCalledWith(
         expect.objectContaining({ kind: 'sales_id' }),
-        { $max: { seq: 27 } },
+        /* The period is stamped alongside, or catching up would leave the row
+           claiming a year it is no longer counting and the very next bill
+           would roll over a second time. */
+        { $max: { seq: 27 }, $set: { period_key: '' } },
         { upsert: true }
       );
       expect(id).toBe('S-DEV1-000028');
