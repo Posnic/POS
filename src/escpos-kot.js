@@ -169,6 +169,34 @@ function renderKitchenTicket(ticket = {}, options = {}) {
      * the note is whatever somebody typed. Printing them as one line would
      * make the reliable half as hard to trust as the unreliable half.
      */
+    /*
+     * THE PRICE, WHERE THE PRICE IS THE SPECIFICATION.
+     *
+     * Owner: "lets customer wants to have fish for rs500 so that kitchen will
+     * prepare according to that."
+     *
+     * Five hundred rupees of fish is a particular fish, and the kitchen cannot
+     * pick one from the name alone. Same for anything a waiter typed in at the
+     * table. The till marks only those lines - see priced_at_table - so an
+     * ordinary biryani still prints without money on it. A ticket with a price
+     * on every line is one where the line that matters stops standing out.
+     *
+     * "Rs" rather than the rupee sign: a kitchen printer that lacks the glyph
+     * prints a box or a random character, and a wrong number on a ticket is
+     * worse than a plain one.
+     */
+    const worth = item && item.priced_at_table;
+    if (worth !== undefined && worth !== null && Number(worth) > 0) {
+      const amount = Number(worth);
+      const shown = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
+      /* Bold like the name, because on these lines the amount IS part of what
+         to cook. r.line takes no options - bold is set around it, the way the
+         name line above does it. */
+      r.bold(true);
+      r.line('   Rs ' + shown);
+      r.bold(false);
+    }
+
     const hot = spiceLine(item && (item.spice_level != null ? item.spice_level : item.spice));
     if (hot) r.line('   ' + hot);
     const note = String((item && (item.description || item.item_description)) || '').trim();
