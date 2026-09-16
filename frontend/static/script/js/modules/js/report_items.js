@@ -85,7 +85,17 @@ PosnicPro.itemreport = {
                         if (rowTotal === 0) {
                             $('.reportitem_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportitem_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                            $('.reportitem_norecord')
+                                .empty()
+                                /* .text() on the part that came out of the DOM: a
+                                   date range read back from an attribute is a VALUE,
+                                   and concatenating it into markup is what lets a
+                                   field somebody typed become a tag. */
+                                .append(
+                                    $('<div class="text-center text-dark"></div>').append(
+                                        $('<p></p>').text('No Records on ' + dateRange)
+                                    )
+                                );
                             $('#reportitem_img_hide,.reportitem_norecord').show();
 
                         } else {
@@ -203,7 +213,17 @@ PosnicPro.itemexpiry = {
                             $('#view_expiryitemreport').hide();
 
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.expiryreportitem_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                            $('.expiryreportitem_norecord')
+                                .empty()
+                                /* .text() on the part that came out of the DOM: a
+                                   date range read back from an attribute is a VALUE,
+                                   and concatenating it into markup is what lets a
+                                   field somebody typed become a tag. */
+                                .append(
+                                    $('<div class="text-center text-dark"></div>').append(
+                                        $('<p></p>').text('No Records on ' + dateRange)
+                                    )
+                                );
                             $('#expiryreportitem_img_hide,.expiryreportitem_norecord').show();
                         } else {
                             // Data exists: show both headers/tables and hide the empty state.
@@ -298,7 +318,17 @@ PosnicPro.itemstock = {
                         if (rowTotal === 0) {
                             $('.stockreportitem_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.stockreportitem_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + ' </p></div>');
+                            $('.stockreportitem_norecord')
+                                .empty()
+                                /* .text() on the part that came out of the DOM: a
+                                   date range read back from an attribute is a VALUE,
+                                   and concatenating it into markup is what lets a
+                                   field somebody typed become a tag. */
+                                .append(
+                                    $('<div class="text-center text-dark"></div>').append(
+                                        $('<p></p>').text('No Records on ' + dateRange)
+                                    )
+                                );
                             $('#stockreportitem_img_hide,.stockreportitem_norecord').show();
                         } else {
                             $('.stockreportitem_norecord').empty();

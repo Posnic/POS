@@ -266,7 +266,17 @@ PosnicPro.returnproductreport = {
                         if (rowTotal === 0) {
                             $('.reportresalepro_header').hide();
                             let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
-                            $('.reportreproduct_norecord').empty().append('<div class="text-center text-dark"> <p>No Records on ' + dateRange + '</p></div>');
+                            $('.reportreproduct_norecord')
+                                .empty()
+                                /* .text() on the part that came out of the DOM: a
+                                   date range read back from an attribute is a VALUE,
+                                   and concatenating it into markup is what lets a
+                                   field somebody typed become a tag. */
+                                .append(
+                                    $('<div class="text-center text-dark"></div>').append(
+                                        $('<p></p>').text('No Records on ' + dateRange)
+                                    )
+                                );
                             $('#reportreproduct_img_hide,.reportreproduct_norecord').show();
 
                         } else {
