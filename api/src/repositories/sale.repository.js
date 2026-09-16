@@ -9538,7 +9538,7 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId } = {}
+    { SaleModel, newTableId, seenAt } = {}
   ) {
     try {
       const db = await BaseModel.getDb();
@@ -9553,6 +9553,43 @@ class SalesRepository {
 
       if (!orderDoc) {
         return { status: false, message: 'Order not found', data: [] };
+      }
+
+      /*
+       * A SAVE WRITTEN AGAINST A VIEW THAT HAS MOVED ON.
+       *
+       * The client sends the whole order, and what it does not send is
+       * deleted - that is how a cancelled dish is cancelled, and it is right.
+       * It is also why two handsets are dangerous: waiter A adds a biryani at
+       * 19:00, waiter B saves at 19:01 from a screen opened at 18:58, B's list
+       * has no biryani, and the till removes it. The kitchen has cooked it and
+       * the bill no longer has it. Nobody is told.
+       *
+       * So a caller may say which version of the order it was looking at, and
+       * a save written against an older one is refused rather than applied.
+       * The client reloads, sees what changed, and decides again - which is
+       * the only safe answer, because only a person knows whether the biryani
+       * was meant to go.
+       *
+       * SILENCE STILL MEANS YES. A caller that sends no `seen_at` is treated
+       * exactly as before: handsets in the wild are older than this code, and
+       * refusing their saves would turn a data-loss bug into an outage.
+       */
+      if (seenAt) {
+        const seen = new Date(seenAt).getTime();
+        const lastChanged = new Date(
+          orderDoc.updated_date || orderDoc.created_date || 0
+        ).getTime();
+
+        /* An unreadable timestamp is not a conflict. It is a caller this
+           check cannot help, and blocking it would help nobody either. */
+        if (Number.isFinite(seen) && Number.isFinite(lastChanged) && lastChanged > seen) {
+          return {
+            status: false,
+            message: 'order_changed',
+            data: { updated_date: orderDoc.updated_date || orderDoc.created_date || null },
+          };
+        }
       }
 
       // Get license from order document for proper multi-tenant filtering
