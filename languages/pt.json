@@ -3208,5 +3208,6 @@
   "lang_after_how_long": "Ao fim de quanto tempo",
   "lang_counted_from_when_the_order_arrived": "Contado a partir da chegada do pedido.",
   "lang_tell_customers_the_kitchen_is_busy": "Avisar os clientes quando a cozinha está cheia",
-  "lang_tell_customers_the_kitchen_is_busy_help": "Um aviso de espera aparece na página de pedidos quando há mais mesas em andamento do que a cozinha consegue preparar de uma vez. Requer serviço à mesa."
+  "lang_tell_customers_the_kitchen_is_busy_help": "Um aviso de espera aparece na página de pedidos quando há mais mesas em andamento do que a cozinha consegue preparar de uma vez. Requer serviço à mesa.",
+  "lang_price_today": "Preço de hoje"
 }
