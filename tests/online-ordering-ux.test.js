@@ -2652,22 +2652,332 @@ test('the order is written into this phone\'s list when it is placed, with what 
   assert.match(db, /const DEVICE_KEY = "posnic_device";/);
 });
 
+test('THE HISTORY PAGE NO LONGER SAYS "WITH THE KITCHEN" ABOUT AN ORDER NOBODY PRINTED', async () => {
+  /*
+   * Stage 5, and a claim this page had been making for its whole life. The
+   * row read the state alone, so anything the shop had accepted was "With
+   * the kitchen" - including an order whose ticket never printed because the
+   * printer was off, the till was not running, or the shop prints nothing at
+   * all. The trail the server now sends is the difference, and both customer
+   * screens are drawn from the same one so they cannot disagree about it.
+   */
+  const at = '2026-09-12T10:00:00.000Z';
+  const kept = ['o1', 'o2', 'o3'].map((orderId, i) => ({
+    orderId,
+    token: String(219 + i),
+    shop: 'ABC',
+    shopName: 'Azure',
+    at,
+    items: [],
+  }));
+  const trail = (step, waiting_for = '') => ({
+    step,
+    waiting_for,
+    settled: false,
+    trail: [{ step: 'placed', at }],
+  });
+  const row = (orderId, token, progress) => ({
+    order_id: orderId,
+    token,
+    shop: 'Azure',
+    paid: false,
+    cancelled: false,
+    bill_ready: false,
+    state: 'accepted',
+    items: [],
+    total: 0,
+    progress,
+  });
+  const says = {
+    /* Accepted, and no ticket has printed. */
+    o1: row('o1', '219', trail('accepted')),
+    /* A till reported a print. This one has earned the words. */
+    o2: row('o2', '220', trail('in_the_kitchen')),
+    /* Still held, waiting for a person. */
+    o3: { ...row('o3', '221', trail('placed', 'acceptance')), state: 'pending' },
+  };
+
+  const { window, document } = historyPage({ kept, says });
+  document.dispatchEvent(new window.Event('DOMContentLoaded'));
+  await new Promise((r) => setTimeout(r, 60));
+
+  const said = {};
+  for (const item of document.querySelectorAll('.history-row')) {
+    const open = item.querySelector('[data-order]');
+    said[open.getAttribute('data-order')] = item.querySelector('.history-state').textContent;
+  }
+  assert.deepStrictEqual(said, {
+    o1: 'The shop has it',
+    o2: 'With the kitchen',
+    o3: 'Waiting for the shop',
+  });
+  window.close();
+});
+
 test('the bill is offered only when the shop says the money is in', () => {
   /* Owner: "once payment done from desktop then make bill available to
      download." */
   const script = read('assets/thankyou/script.js');
-  assert.match(script, /async function offerBillWhenPaid\(token\)/);
+  assert.match(script, /async function offerMoneyOrBill\(said, token, orderId, shopId\)/);
   /* One or the other, never both: an unpaid order is offered a way to pay,
      a paid one is offered its bill. */
-  assert.match(script, /if \(!body\.data\.bill_ready\) \{/);
-  assert.match(script, /offerUpi\(body\.data, payment, token, orderId\);/);
+  assert.match(script, /if \(!said\.bill_ready\) \{/);
+  assert.match(script, /offerUpi\(said, shopPaymentRead, token, orderId\);/);
   assert.ok(
     script.indexOf('button.hidden = false') > script.indexOf('bill_ready'),
     'the button is shown before the shop has been asked'
   );
+  /* The page asks repeatedly now, so the two things that must happen once
+     still happen once: the shop's payment details are read once, and the
+     download is wired to the button once. */
+  assert.match(script, /if \(billWired\) return;\s*\n\s*billWired = true;/,
+    'a bill button wired on every poll downloads once per poll');
+  assert.match(script, /if \(shopPaymentRead === null\) \{/,
+    'the storefront is read again on every poll');
   const html = read('thankyou.html');
   assert.match(html, /id="done-bill" hidden/, 'the bill button starts visible');
   assert.match(html, /history\.html'">Your orders/, 'there is no way from the token screen to the list');
+});
+
+/*
+ * WHERE THE ORDER HAS GOT TO - Stage 5 of the print roadmap.
+ *
+ * The page is handed a trail of what has already happened and draws exactly
+ * that. The rule these tests exist for is the roadmap's own: "Do not ship a
+ * stage nothing can move off." Nothing in the product marks an order ready,
+ * so there is no rung for it, and a shop whose kitchen printer never reports
+ * simply has a shorter trail rather than a stuck one.
+ */
+function progressPage(said) {
+  const dom = new JSDOM(read('thankyou.html'), { url: 'https://shop.example/order/thankyou.html?token=042', runScripts: 'outside-only' });
+  const { window } = dom;
+  const src = read('assets/thankyou/script.js');
+  /* The real words and the real endings, so a rename here cannot pass. */
+  const from = src.indexOf('const STEP_WORDS = {');
+  const to = src.indexOf('];', src.indexOf('const STEP_ENDED = ')) + 2;
+  assert.ok(from > -1 && to > from, 'thankyou/script.js no longer names its steps');
+  const cut = (name) => {
+    const at = src.indexOf('function ' + name + '(');
+    assert.ok(at > -1, 'thankyou/script.js no longer defines ' + name);
+    return src.slice(at, src.indexOf('\n}\n', at) + 3);
+  };
+  const sandbox = {
+    window,
+    document: window.document,
+    t: (key, vars) => String(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null ? String(vars[name]) : m)),
+    Number,
+    String,
+    Array,
+    Date,
+    isNaN,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext([src.slice(from, to), cut('clockOf'), cut('drawProgress')].join('\n'), sandbox);
+  sandbox.drawProgress(said);
+  return { window, document: window.document };
+}
+
+const trailWords = (document) =>
+  [...document.querySelectorAll('#progress-trail li .progress-what')].map((el) => el.textContent);
+
+test('THE PAGE DRAWS WHAT HAPPENED, and nothing about what has not', () => {
+  const { document } = progressPage({
+    progress: {
+      step: 'in_the_kitchen',
+      waiting_for: '',
+      settled: false,
+      trail: [
+        { step: 'placed', at: '2026-09-16T13:00:00.000Z' },
+        { step: 'in_the_kitchen', at: '2026-09-16T13:02:00.000Z' },
+      ],
+    },
+  });
+
+  assert.strictEqual(document.getElementById('progress').hidden, false);
+  assert.deepStrictEqual(trailWords(document), ['Placed', 'In the kitchen']);
+  /* Two lines, and no third one drawn grey and waiting. A customer whose
+     food is being cooked must not be shown a rung that never lights. */
+  assert.strictEqual(document.querySelectorAll('#progress-trail li').length, 2);
+  assert.strictEqual(document.querySelectorAll('.progress-at').length, 2);
+  /* And the page stops saying "Placed 7:42" twice. */
+  assert.strictEqual(document.querySelector('.order-time').hidden, true);
+  assert.strictEqual(document.getElementById('progress-next').hidden, true);
+});
+
+test('a step this page has never heard of is left out, not printed raw', () => {
+  /* A server newer than the bundle. `in_the_oven` on a customer's phone
+     reads as a bug; one fewer line reads as nothing new yet. */
+  const { document } = progressPage({
+    progress: {
+      step: 'in_the_oven',
+      waiting_for: '',
+      settled: false,
+      trail: [
+        { step: 'placed', at: '2026-09-16T13:00:00.000Z' },
+        { step: 'in_the_oven', at: '2026-09-16T13:02:00.000Z' },
+      ],
+    },
+  });
+  assert.deepStrictEqual(trailWords(document), ['Placed']);
+});
+
+test('A REFUSAL DOES NOT SIT UNDER A GREEN TICK', () => {
+  /* The page opens saying "Order placed" over a tick. An order the shop
+     turned away at 2am must not still be wearing that. */
+  const { document } = progressPage({
+    total: 660,
+    progress: {
+      step: 'refused',
+      waiting_for: '',
+      settled: true,
+      trail: [
+        { step: 'placed', at: '2026-09-16T13:00:00.000Z' },
+        { step: 'refused', at: '2026-09-16T13:01:00.000Z' },
+      ],
+    },
+  });
+  assert.strictEqual(document.querySelector('.done-mark').hidden, true);
+  assert.strictEqual(document.getElementById('done-title').textContent, 'The shop could not take it');
+  assert.match(document.getElementById('done-lead').textContent, /Nothing has been charged/);
+  /* And it is not asked for money on the way out. */
+  assert.strictEqual(document.getElementById('pay-upi').hidden, true);
+  assert.ok(document.getElementById('progress').className.includes('progress-ended'));
+});
+
+test('a held order is told what is waited on, and how long this shop usually takes', () => {
+  const waiting = {
+    progress: {
+      step: 'placed',
+      waiting_for: 'acceptance',
+      settled: false,
+      trail: [{ step: 'placed', at: '2026-09-16T13:00:00.000Z' }],
+    },
+  };
+
+  const withHistory = progressPage({ ...waiting, typically_accepted_in_minutes: 4 });
+  const said = withHistory.document.getElementById('progress-next');
+  assert.strictEqual(said.hidden, false);
+  assert.match(said.textContent, /Waiting for the shop to accept it\./);
+  assert.match(said.textContent, /about 4 minutes/);
+
+  /* A shop with too little history says the shorter thing rather than
+     inventing a number. */
+  const newShop = progressPage(waiting);
+  assert.match(newShop.document.getElementById('progress-next').textContent, /^Waiting for the shop to accept it\.$/);
+});
+
+test('THE THANK-YOU PAGE ACTUALLY ASKS THE SHOP, which it never once did', async () => {
+  /*
+   * The bug under Stage 5, and it had been there since the bill button was
+   * written. The page resolved the shop through `knownBranchId()` and the
+   * order through `rememberedOrders()`, both of which live in indexedDB.js -
+   * WHICH THIS PAGE DOES NOT LOAD. Both calls were written behind
+   * `typeof ... === "function"` guards, so nothing threw and nothing showed:
+   * the shop id came out empty, the function returned before its first
+   * request, and the bill-when-paid and pay-by-UPI features silently did
+   * nothing here for their whole lives.
+   *
+   * Loading indexedDB.js instead would start a timer that refetches the whole
+   * menu every ten seconds behind a page showing a token.
+   */
+  const html = read('thankyou.html');
+  assert.ok(
+    !/<script src="indexedDB\.js/.test(html),
+    'the token screen now carries the ten-second menu refresh'
+  );
+  const script = read('assets/thankyou/script.js');
+  assert.ok(
+    !/typeof knownBranchId === "function"/.test(script) &&
+      !/typeof rememberedOrders === "function"/.test(script),
+    'the page is guarding on a function it never loads again'
+  );
+
+  /* And the key it reads the shop from is the key indexedDB.js writes. A
+     rename on one side puts this page straight back where it was. */
+  assert.match(script, /const STORE_ADDRESS_KEY = "posnic_store";/);
+  assert.match(read('indexedDB.js'), /const STORE_ADDRESS_KEY = "posnic_store";/);
+
+  /* Now the behaviour: one request, to this shop, for this order. */
+  const dom = new JSDOM(html, { url: 'https://shop.example/order/thankyou.html?token=042&order=o1' });
+  const src = read('assets/thankyou/script.js');
+  const cut = (name) => {
+    const at = src.indexOf('async function ' + name + '(') > -1
+      ? src.indexOf('async function ' + name + '(')
+      : src.indexOf('function ' + name + '(');
+    assert.ok(at > -1, 'thankyou/script.js no longer defines ' + name);
+    return src.slice(at, src.indexOf('\n}\n', at) + 3);
+  };
+  const asked = [];
+  const sandbox = {
+    window: dom.window,
+    document: dom.window.document,
+    URLSearchParams: dom.window.URLSearchParams,
+    localStorage: { getItem: (key) => (key === 'posnic_store' ? 'AZ100' : null) },
+    /* The receipt this phone was handed at checkout, which is the other way
+       onto this page. */
+    receiptData: { sale_id: 'o1' },
+    CONFIG: { API_BASE_URL: 'https://shop.example/api' },
+    String,
+    Number,
+    encodeURIComponent,
+    console,
+    fetch: async (url) => {
+      asked.push(url);
+      return { ok: false };
+    },
+    /* Stubbed: what they do is pinned by the tests above this one. */
+    drawProgress: () => {},
+    offerMoneyOrBill: async () => {},
+    laterWhenLooking: () => {},
+    askPace: () => 0,
+    MOST_ASKS: 40,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(
+    ['const STORE_ADDRESS_KEY = "posnic_store";', cut('whichOrder'), cut('watchTheOrder')].join('\n'),
+    sandbox
+  );
+
+  await sandbox.watchTheOrder('042');
+  assert.strictEqual(asked.length, 1, 'the page asked the shop nothing');
+  assert.strictEqual(
+    asked[0],
+    'https://shop.example/api/online-ordering/AZ100/orders/o1?token=042'
+  );
+
+  /* A phone that kept nothing asks nothing, rather than throwing on a page
+     whose only job is to show a token. */
+  const blind = { ...sandbox, asked: null };
+  blind.localStorage = {
+    getItem: () => {
+      throw new Error('this browser keeps nothing');
+    },
+  };
+  const none = [];
+  blind.fetch = async (url) => {
+    none.push(url);
+    return { ok: false };
+  };
+  vm.createContext(blind);
+  vm.runInContext(
+    ['const STORE_ADDRESS_KEY = "posnic_store";', cut('whichOrder'), cut('watchTheOrder')].join('\n'),
+    blind
+  );
+  await blind.watchTheOrder('042');
+  assert.deepStrictEqual(none, []);
+  dom.window.close();
+});
+
+test('it stops asking when nothing more can happen, and never asks a pocket', () => {
+  const script = read('assets/thankyou/script.js');
+  /* Refused, cancelled or paid: there is nothing left to redraw. */
+  assert.match(script, /if \(said\.paid \|\| \(said\.progress && said\.progress\.settled\)\) return;/);
+  /* A phone face down on a table redraws nothing, so it asks nothing - and
+     asks once the moment somebody looks again. */
+  assert.match(script, /if \(!document\.hidden\) return fn\(\);/);
+  assert.match(script, /document\.addEventListener\("visibilitychange", onBack\);/);
+  /* And it gives up eventually rather than polling a shop all night. */
+  assert.match(script, /if \(asks >= MOST_ASKS\) return;/);
 });
 
 /** The thank-you script's UPI helpers, lifted and run with a fake page. */
