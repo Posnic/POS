@@ -1972,6 +1972,9 @@
   "That card is already assigned to another user": [
     "src/services/authorization.service.js"
   ],
+  "That dish is not on this shop menu": [
+    "src/repositories/item.repository.js"
+  ],
   "That does not look like a UPI id. It should read like name@bank.": [
     "src/models/setting.model.js"
   ],

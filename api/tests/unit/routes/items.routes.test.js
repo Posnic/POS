@@ -45,6 +45,10 @@ jest.mock('../../../src/middleware/auth', () => ({
 jest.mock('../../../src/middleware/items.validation', () => ({
   validateCreateItem: [],
   validateUpdateItem: [],
+  /* A validator the route names and the mock does not provide is `undefined`
+     handed to router.post, which throws "argument handler must be a function"
+     at require time and fails the entire suite before a single test runs. */
+  validateSoldOut: [],
   ensureValidItemIdParam: jest.fn((req, res, next) => next()),
 }));
 
