@@ -4024,18 +4024,88 @@ class ItemRepository extends BaseModel {
    * Three: what fits under a dish on a phone without the suggestion becoming
    * the page.
    */
-  pairingsFor(row, learned) {
+  pairingsFor(row, learned, priceOf = null) {
     const said = Array.isArray(row && row.goes_with) ? row.goes_with : [];
     const out = [];
     for (const id of said) {
       const clean = String(id || '').trim();
+      /* NEVER FILTERED. A shop that took the trouble to pair a dish has
+         overruled everything below on purpose. */
       if (clean && !out.includes(clean)) out.push(clean);
     }
+
+    /*
+     * A SUGGESTION MAY NOT COST MORE THAN WHAT IT IS SUGGESTED UNDER.
+     *
+     * Owner: "chickent briyani link to chicken 65 or mojito or coke. but coke
+     * should not suggest the briyani."
+     *
+     * salesSignals counts every pair in BOTH directions, deliberately - it is
+     * measuring which dishes travel together, and that is a symmetric fact. But
+     * a suggestion is not symmetric. Somebody holding a biryani may well want a
+     * drink; nobody holding a drink is one nudge away from a biryani, and
+     * offering one reads as a shop trying to sell rather than a shop helping.
+     *
+     * Price is the whole rule, and it is the right one because it needs
+     * nothing set up: no categories to maintain, no list of what counts as a
+     * main. A dish that costs less than the anchor is an accompaniment to it,
+     * whatever either of them is called, on a menu nobody has tidied.
+     *
+     * Without a price to compare - an older caller, a row read without the
+     * field - nothing is filtered and this behaves exactly as it did.
+     */
+    const anchor = priceOf ? Number(priceOf(row)) : NaN;
+    const self = String((row && (row._id || row.id)) || '');
     for (const pair of learned || []) {
       const id = String((pair && pair.id) || '');
-      if (id && !out.includes(id)) out.push(id);
+      if (!id || out.includes(id)) continue;
+      /* A dish is not its own accompaniment. salesSignals deduplicates each
+         bill and pairs distinct ids, so it cannot produce this today - but
+         the write path guards it on the explicit half, and a rule that holds
+         only because of what a caller happens to do is one that stops holding
+         when the caller changes. */
+      if (id === self) continue;
+      if (Number.isFinite(anchor) && anchor > 0) {
+        const candidate = Number(priceOf(id));
+        if (Number.isFinite(candidate) && candidate > anchor) continue;
+      }
+      out.push(id);
     }
     return out.slice(0, 3);
+  }
+
+  /**
+   * What each dish costs, for the rule above.
+   *
+   * Built once per read rather than per dish: a menu of three hundred asking
+   * three hundred times is the difference between one pass and ninety
+   * thousand comparisons looking up nothing.
+   *
+   * Takes either a row or an id, because the anchor arrives as a whole dish
+   * and the candidates arrive as ids.
+   */
+  priceLookup(rows = []) {
+    const prices = new Map();
+    for (const row of rows) {
+      const id = String((row && (row._id || row.id)) || '');
+      if (!id) continue;
+      const price = Number(
+        row.selling_price != null ? row.selling_price : row.price != null ? row.price : NaN
+      );
+      if (Number.isFinite(price)) prices.set(id, price);
+    }
+    return (what) => {
+      if (what == null) return NaN;
+      if (typeof what === 'object') {
+        const id = String(what._id || what.id || '');
+        const own = Number(
+          what.selling_price != null ? what.selling_price : what.price != null ? what.price : NaN
+        );
+        return Number.isFinite(own) ? own : prices.has(id) ? prices.get(id) : NaN;
+      }
+      const id = String(what);
+      return prices.has(id) ? prices.get(id) : NaN;
+    };
   }
 
   async salesSignals({ branchId, days = 30, maxSales = 4000 } = {}) {
@@ -4197,6 +4267,9 @@ class ItemRepository extends BaseModel {
          branch's own sales. A new shop gets empty maps and simply shows no
          badges and no suggestions. */
       const signals = await this.salesSignals({ branchId: branchDoc._id });
+      /* What each dish costs, so a learned suggestion never costs more than
+         the dish it is offered under. See pairingsFor. */
+      const priceOf = this.priceLookup(rows);
 
       const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const nowDay = localNow.day();
@@ -4279,7 +4352,7 @@ class ItemRepository extends BaseModel {
           /* The dishes most often on the same bill, best first. Ids only -
              the page already holds every dish and looking them up there beats
              sending three copies of each name down a phone connection. */
-          goes_with: this.pairingsFor(row, signals.related.get(String(row._id))),
+          goes_with: this.pairingsFor(row, signals.related.get(String(row._id)), priceOf),
           /*
            * What is on the plate, what is in it, how the shop bills it, and
            * what may honestly be said about it.
@@ -5026,11 +5099,17 @@ class ItemRepository extends BaseModel {
        * answer rather than a degraded one.
        */
       const ordering = await this.salesSignals({ branchId: branchDoc._id });
+      /* Same rule as the menu: a suggestion never costs more than what it sits
+         under. Built from every dish in every group, because a pairing can
+         cross a category. */
+      const menuPrices = this.priceLookup(
+        results.reduce((all, group) => all.concat(group.items || []), [])
+      );
       for (const group of results) {
         group.items = (group.items || []).map((item) => ({
           ...item,
           ordered_count: ordering.popularity.get(String(item.id)) || 0,
-          goes_with: this.pairingsFor(item, ordering.related.get(String(item.id))),
+          goes_with: this.pairingsFor(item, ordering.related.get(String(item.id)), menuPrices),
         }));
       }
 
