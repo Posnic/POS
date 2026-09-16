@@ -200,6 +200,10 @@
         "to": "server.js"
       },
       {
+        "from": "src/handset-slots.js",
+        "to": "handset-slots.js"
+      },
+      {
         "from": "src/database-health.js",
         "to": "database-health.js"
       },
