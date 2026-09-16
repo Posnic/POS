@@ -7186,6 +7186,37 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * WHAT THE SHADOW QUEUE HAS BEEN SEEING.
+   *
+   * The kitchen still prints through the old path. Beside it, the queue
+   * records what IT believes should print and prints nothing, so the two can
+   * be compared before anything is cut over - the first step of the rollout
+   * rule for this area: "shadow, one shop, widen, remove the old path".
+   *
+   * `disagreements()` could answer that from the day it was written and
+   * NOTHING EVER CALLED IT. The shadow ran, recorded faithfully, and its
+   * answer went into a collection with no door on it, so the cutover it exists
+   * to justify could never be justified. This is the door.
+   *
+   * Read-only, and it prints nothing: every row it counts has a status no till
+   * will ever claim.
+   */
+  async kitchenQueueShadow(req, res) {
+    try {
+      const shadow = require('../repositories/kot-shadow.repository');
+      const days = Math.max(1, Math.min(30, Number(req.body.days) || 7));
+      const out = await shadow.summary({
+        branchId: req.body.branchId,
+        sinceMs: days * 24 * 60 * 60 * 1000,
+      });
+      return this.success(res, { ...out.data, days }, 'success');
+    } catch (error) {
+      console.error('Error in kitchenQueueShadow:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /** What the till still owes the counter, read by the till itself. */
   async pendingBillPrints(req, res) {
     try {

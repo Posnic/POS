@@ -195,6 +195,13 @@ router.post(
   bindController(salesController.printJobsNeedingAttention)
 );
 router.post('/resolvePrintJob', ensurePrintDevice, bindController(salesController.resolvePrintJob));
+/* What the shadow queue has been seeing, read-only. Behind the same guard:
+   it is the till's own Hardware Manager that shows it. */
+router.post(
+  '/kitchenQueueShadow',
+  ensurePrintDevice,
+  bindController(salesController.kitchenQueueShadow)
+);
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,
