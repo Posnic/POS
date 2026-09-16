@@ -675,6 +675,22 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    * only retry this design allows: a deliberate one, by somebody who has
    * looked.
    */
+  /*
+   * WHAT THE SHADOW QUEUE HAS BEEN SEEING.
+   *
+   * The kitchen prints through the old path; beside it the queue records what
+   * IT believes should print and prints nothing, so the two can be compared
+   * before anything is cut over. That comparison had no way out of the
+   * database until now.
+   *
+   * Asked through the bill poller because it already holds the address and
+   * the key for this shop's server, and this is the same conversation.
+   */
+  ipcMain.handle('kot:shadow-summary', async (_event, days) => {
+    if (!billManager) return null;
+    return billManager.shadowSummary(days);
+  });
+
   ipcMain.handle('bill:answer-waiting', async (_event, id, printed) => {
     if (!billManager) return { ok: false, error: 'printing is not running on this till' };
     return billManager.answerWaiting(id, printed === true);

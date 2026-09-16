@@ -56,8 +56,13 @@ test('THERE IS A ROUTE TO IT, which there was not', () => {
      may take jobs, say what happened, and answer the ones left over. */
   const block = ROUTES.slice(ROUTES.indexOf("'/claimPrintJobs'"));
   const upTo = block.slice(0, block.indexOf('markKitchenPrinted'));
+  /* EVERY route in that block, not a fixed number of guards. A count breaks
+     the day a fifth printing route is added and says nothing about whether the
+     new one is guarded - which is the only thing worth asserting. */
+  const routes = (upTo.match(/router\.post\(/g) || []).length;
   const guards = (upTo.match(/ensurePrintDevice/g) || []).length;
-  assert.strictEqual(guards, 4, 'a print route is not behind the till guard');
+  assert.ok(routes >= 4, `only ${routes} printing routes found`);
+  assert.strictEqual(guards, routes, 'a printing route is not behind the till guard');
 });
 
 test('and a controller behind the route', () => {

@@ -657,6 +657,25 @@
                     <div id="kotBannerInfo" style="font-size:13px;margin-top:6px;opacity:.9;"></div>
                 </div>
 
+                <!--
+                    WHAT THE NEW QUEUE HAS BEEN SEEING, while printing nothing.
+
+                    The kitchen still prints through the old path. Beside it a
+                    queue records what IT believes should print, so the two can
+                    be compared before anything is cut over - and that
+                    comparison had no way out of the database until now. This
+                    panel is the evidence the cutover turns on, and until it
+                    shows a week of agreement the cutover should not happen.
+                -->
+                <div id="kotShadowCard" style="display:none;background:#fff;padding:22px 26px;border-radius:16px;
+                                               box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
+                    <div style="font-weight:700;color:#2c3e50;margin-bottom:4px;">🔍 Checking the new kitchen queue</div>
+                    <div style="font-size:12.5px;color:#9ca3af;margin-bottom:14px;">
+                        It watches and prints nothing. Your kitchen is still printing the way it always has.
+                    </div>
+                    <div id="kotShadowBody" style="font-size:14px;color:#2c3e50;"></div>
+                </div>
+
                 <!-- Setup card -->
                 <div id="kotSetupCard" style="background:#fff;padding:26px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
                     <div class="form-group">
@@ -2349,6 +2368,69 @@
                         `Branch: ${s.branchId} | Printers: ${s.printerNames?.join(', ')}`;
                 }
             } catch (e) { /* ignore */ }
+
+            kotDrawShadow();
+        }
+
+        /*
+         * WHAT THE NEW QUEUE HAS BEEN SEEING, while printing nothing.
+         *
+         * The rollout rule for the kitchen is "shadow, one shop, widen, remove
+         * the old path". The shadow has been running and recording, and its
+         * answer lived in a collection with no door on it - so the cutover it
+         * exists to justify could never be justified. This panel is that door.
+         *
+         * Says nothing rather than something vague: a shop with no numbers yet
+         * is not told a made-up percentage, and a server too old to answer
+         * simply leaves the card hidden.
+         */
+        async function kotDrawShadow() {
+            const card = document.getElementById('kotShadowCard');
+            const body = document.getElementById('kotShadowBody');
+            if (!card || !body) return;
+            if (!window.electronAPI || !window.electronAPI.bill || !window.electronAPI.bill.shadowSummary) return;
+
+            let said = null;
+            try {
+                said = await window.electronAPI.bill.shadowSummary(7);
+            } catch (e) {
+                said = null;
+            }
+            if (!said || !Number(said.expected)) {
+                card.style.display = 'none';
+                return;
+            }
+
+            const expected = Number(said.expected) || 0;
+            const printed = Number(said.printed) || 0;
+            const open = Number(said.open) || 0;
+            /* Agreement is what the cutover turns on, so it is the number in
+               the largest type and the only one given as a share. */
+            const agreed = expected ? Math.round((printed / expected) * 100) : 0;
+
+            const good = open === 0;
+            const line = document.createElement('div');
+            line.style.cssText = 'display:flex;align-items:baseline;gap:10px;margin-bottom:8px;';
+            const big = document.createElement('span');
+            big.style.cssText = 'font-size:26px;font-weight:700;color:' + (good ? '#15803d' : '#b45309') + ';';
+            big.textContent = agreed + '%';
+            const what = document.createElement('span');
+            what.style.cssText = 'font-size:13px;color:#6b7280;';
+            what.textContent = 'of ' + expected + ' kitchen tickets over ' + (said.days || 7)
+                + ' days were reported printed';
+            line.append(big, what);
+
+            const detail = document.createElement('div');
+            detail.style.cssText = 'font-size:13px;color:' + (good ? '#15803d' : '#b45309') + ';';
+            detail.textContent = good
+                ? 'Nothing is outstanding. The new queue and the printer have agreed all week.'
+                : open + ' ticket(s) the queue expected were never reported printed. '
+                  + 'That is either a ticket that did not come out, or a till that printed it and '
+                  + 'could not say so - both are worth knowing before the kitchen is moved over.';
+
+            body.textContent = '';
+            body.append(line, detail);
+            card.style.display = 'block';
         }
 
         /*

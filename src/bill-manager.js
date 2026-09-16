@@ -593,6 +593,36 @@ class BillManager {
    * deliberate reprint by somebody who has looked at the printer - the only
    * retry that cannot be wrong about what already came out.
    */
+  /**
+   * What the kitchen's shadow queue has been seeing.
+   *
+   * Asked from a screen, never from a loop: it is three counts and a person
+   * has to be looking at it for the answer to mean anything.
+   */
+  async shadowSummary(days) {
+    const base = this._lastBase || '';
+    const key = this._lastKey || process.env.KIOSK_API_KEY || '';
+    if (!base) return null;
+    try {
+      const response = await fetch(`${base}/sales/kitchenQueueShadow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          kioskkey: key,
+        },
+        body: JSON.stringify({ branchId: this.branchId, days: Number(days) || 7 }),
+      });
+      if (!response.ok) return null;
+      const answer = await response.json();
+      return (answer && answer.data) || null;
+    } catch (e) {
+      /* An older shop server has no such endpoint. The panel then says
+         nothing rather than an error about a measurement. */
+      return null;
+    }
+  }
+
   async answerWaiting(id, printed) {
     const base = this._lastBase || '';
     const key = this._lastKey || process.env.KIOSK_API_KEY || '';
