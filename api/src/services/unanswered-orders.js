@@ -46,7 +46,6 @@ const BaseModel = require('../models/base.model');
 const SettingsRepository = require('../repositories/settings.repository');
 const policy = require('../utils/waiting-order-policy');
 const orderApproval = require('../utils/order-approval');
-const { notifyOrderResolved } = require('../helpers/order-attention');
 
 /* A CLASS, not an instance - and constructing it at module load would build a
    repository before the database exists. Built on first use, and exported so a
@@ -224,7 +223,27 @@ async function sweepOnce({ now = Date.now(), Repository } = {}) {
          * wrote the state itself would sooner or later stop printing, or
          * print twice.
          */
-        const done = await repo.decideOnOrder(String(order._id), decision, verdict.reason);
+        /*
+         * NAMED ARGUMENTS, BECAUSE THAT IS WHAT IT TAKES.
+         *
+         * This was three positional arguments against a signature that
+         * destructures an object, so `saleId` was undefined on every sweep
+         * and the method answered "Enter must correct order id" before it
+         * touched the database. The rule has therefore never decided a single
+         * order in production: an unanswered order was never auto-cancelled,
+         * the customer was never told, and the alarm never stopped.
+         *
+         * The tests did not catch it because they inject a fake Repository
+         * whose decideOnOrder happily takes positional arguments - so they
+         * proved the fake and not the thing. There is now a test that calls
+         * the REAL method with exactly what this line sends.
+         */
+        const done = await repo.decideOnOrder({
+          saleId: String(order._id),
+          decision,
+          reason: verdict.reason,
+          by: 'rule',
+        });
         if (!done || !done.status) continue;
 
         /*
@@ -259,13 +278,15 @@ async function sweepOnce({ now = Date.now(), Repository } = {}) {
         }
 
         out.decided.push({ saleId: String(order._id), decision, reason: verdict.reason });
-        /* And the alarm stops, because now something HAS happened. */
-        notifyOrderResolved({
-          branchId: String(branchDoc._id),
-          saleId: String(order._id),
-          state: decision,
-          by: 'rule',
-        });
+        /*
+         * The alarm is stopped by decideOnOrder itself now, on the same
+         * condition this read-back checks and from the one door every answer
+         * goes through. Announcing it again from here would be a second
+         * implementation of the same promise, and the two would drift.
+         *
+         * The read-back above stays: it is what `out.decided` reports, and a
+         * sweep that says it decided something it did not is its own bug.
+         */
       } catch (e) {
         console.warn('[unanswered-orders] could not decide an order:', e && e.message);
       }
