@@ -17,6 +17,82 @@ if (!module.paths.includes(initialApiPath)) {
   module.paths.unshift(initialApiPath);
 }
 
+/*
+ * WHO ANSWERS A HANDSET WHEN THE THING THAT DECIDES IS MISSING.
+ *
+ * This require used to sit INSIDE the per-request path, and that turned a
+ * missing file into the worst failure this server has. The decision runs
+ * inside an override of server.emit, so a throw there does not become a 500 -
+ * it escapes as an uncaught exception and THE REQUEST IS NEVER ANSWERED. The
+ * handset sits on an open socket until it times out, the till looks perfectly
+ * healthy, and the shop is told the captain app keeps disconnecting. Which is
+ * the same sentence this whole area exists because of.
+ *
+ * It happened. A build reached a shop with server.js asking for
+ * ./handset-slots and the file not beside it, and every LAN request hung while
+ * localhost stayed instant - because the guard below only consults the slots
+ * for non-loopback callers.
+ *
+ * So it is required ONCE, here, where a failure is one line in the log at
+ * startup rather than an invisible hang per request.
+ *
+ * AND IT FAILS OPEN. The cap is there so a shop is not silently serving a
+ * stranger's phone, which is worth having and is not a security boundary - the
+ * API's own authentication is. Weighed against a till that stops answering its
+ * handsets mid-service, an uncapped device list is the smaller harm by a long
+ * way. This module's own history says the same thing: every outage it
+ * documents came from refusing a handset that should have been served.
+ */
+let handsetSlots = null;
+try {
+  handsetSlots = require('./handset-slots');
+} catch (err) {
+  console.error(
+    '[handset] src/handset-slots.js is missing or will not load, so every handset on the ' +
+      'network will be admitted and the device cap is not being applied:',
+    err && err.message
+  );
+}
+
+/* Said once. A till serving a busy floor would otherwise write this line
+   several times a second and bury everything else in the log. */
+let saidSlotsWereBroken = false;
+function slotsAreBroken(err) {
+  if (saidSlotsWereBroken) return;
+  saidSlotsWereBroken = true;
+  console.error(
+    '[handset] the device cap is not being applied, so every handset is being admitted:',
+    (err && err.message) || 'handset-slots did not answer'
+  );
+}
+
+/**
+ * Whether to serve this LAN request. NEVER THROWS, and never returns nothing.
+ *
+ * Lifted out as its own function so the thing that must not throw can actually
+ * be tested - the caller is an emit override, which cannot be.
+ *
+ * @param {object|null} slots  the handset-slots module, or null if it is gone
+ * @param {object} ask  what admit() is asked
+ * @param {function} onBroken  told once when the decision could not be made
+ * @returns {{allow: boolean, code?: string, message?: string, register?: boolean}}
+ */
+function admitHandset(slots, ask, onBroken) {
+  if (!slots || typeof slots.admit !== 'function') {
+    if (onBroken) onBroken(null);
+    return { allow: true, register: true };
+  }
+  try {
+    const verdict = slots.admit(ask);
+    if (verdict && typeof verdict.allow === 'boolean') return verdict;
+    if (onBroken) onBroken(null);
+    return { allow: true, register: true };
+  } catch (err) {
+    if (onBroken) onBroken(err);
+    return { allow: true, register: true };
+  }
+}
+
 module.exports = async function startServer(options = {}) {
   const reportProgress = typeof options.onProgress === 'function'
     ? options.onProgress
@@ -370,21 +446,29 @@ module.exports = async function startServer(options = {}) {
             /*
              * WHETHER THIS REQUEST IS SERVED, decided in handset-slots.js.
              *
-             * Pure and out here because it is the part worth testing, and it
+             * Pure and out there because it is the part worth testing, and it
              * cannot be tested inside an emit override. It also carries the
              * whole account of why a shop saw "captain app keep disconnected":
              * slots keyed by IP, never expiring, and the health check being
              * refused once they filled.
+             *
+             * The module is required at the top of this file, not here. A
+             * require in this position is evaluated per request, and a failure
+             * in this position is never answered at all - see the comment
+             * beside it.
              */
-            const slots = require('./handset-slots');
-            const verdict = slots.admit({
-              devices: t.devices,
-              blocked: t.blockedIPs,
-              ip,
-              method: req.method,
-              url: req.url,
-              maxDevices: t.maxDevices,
-            });
+            const verdict = admitHandset(
+              handsetSlots,
+              {
+                devices: t.devices,
+                blocked: t.blockedIPs,
+                ip,
+                method: req.method,
+                url: req.url,
+                maxDevices: t.maxDevices,
+              },
+              slotsAreBroken
+            );
 
             if (!verdict.allow) {
               const origin = req.headers['origin'] || '*';

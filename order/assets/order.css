@@ -1380,6 +1380,68 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   font-size: 14px;
 }
 
+/*
+ * WHAT THE SHOP OFFERS ON TOP.
+ *
+ * Rows big enough for a thumb, the price hard right so the eye can run down
+ * the column and add up, and the group's name doing the work of a heading
+ * without being one - it is a label for the rows under it, not a section of
+ * the page.
+ */
+.sheet-options {
+  margin: 16px 0 4px;
+}
+
+.option-group + .option-group {
+  margin-top: 16px;
+}
+
+.option-head {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.option-must {
+  margin-left: 8px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  cursor: pointer;
+}
+
+.option-row + .option-row {
+  border-top: 1px solid var(--line);
+}
+
+.option-pick {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.option-name {
+  flex: 1 1 auto;
+  font-size: 15px;
+}
+
+.option-cost {
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .sheet-note {
   margin-top: 14px;
   padding-top: 12px;

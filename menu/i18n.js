@@ -373,6 +373,7 @@
       "Could not reach the shop just now. This is what this phone remembers.": "இப்போது கடையைத் தொடர்பு கொள்ள முடியல. இந்த போன் நினைவில் வெச்சிருக்கறது இதுதான்.",
       "That could not be added. The shop may have started on your order.": "அதைச் சேர்க்க முடியல. கடை உங்கள் ஆர்டரைத் தயார் செய்ய ஆரம்பிச்சிருக்கலாம்.",
       "See the bill": "பில்லைப் பார்க்க",
+      "Required": "கட்டாயம்",
       "Order this again": "இதே மீண்டும் ஆர்டர் செய்ய",
       "Adding...": "சேர்க்கிறது...",
       "Nothing from that order is on the menu today.": "அந்த ஆர்டரில் இருந்த எதுவும் இன்று மெனுவில் இல்லை.",
