@@ -109,6 +109,12 @@ const PREFERENCES = [
   'default_supplier',
   'default_tax',
   'sales_prefix',
+  /* When the bill number starts again at one, and whether the year is printed
+     on it. CGST Rule 46(b) makes the financial year the unit of uniqueness in
+     India; the EU asks only for a sequential number, so it is a choice rather
+     than a constant. See utils/bill-number.js. */
+  'bill_number_reset',
+  'bill_number_fy_start_month',
   'receiving_prefix',
   /* Invoices (INVOICING_MODULE_DESIGN): the document number prefix and the
      credit days a new invoice's due date is counted from. invoice_terms, the

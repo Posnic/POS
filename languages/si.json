@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI බලපත්‍ර අංකය",
   "lang_bill_print_fssai_hint": "ඔබේ GSTIN යටතේ මුද්‍රණය වේ. ඉන්දියාවේ ආහාර ව්‍යාපාර එය පෙන්විය යුතුය.",
   "lang_fssai_number": "FSSAI බලපත්‍ර අංකය",
-  "lang_fssai_number_hint": "එය මුද්‍රණය කිරීමට ඉහත \"FSSAI බලපත්‍ර අංකය\" සක්‍රිය කරන්න."
+  "lang_fssai_number_hint": "එය මුද්‍රණය කිරීමට ඉහත \"FSSAI බලපත්‍ර අංකය\" සක්‍රිය කරන්න.",
+  "lang_bill_number_year": "බිල් අංකයේ වර්ෂය",
+  "lang_one_run_of_numbers_no_year": "අංක එක් පෙළක්, වර්ෂයකින් තොරව",
+  "lang_start_again_each_financial_year": "සෑම මූල්‍ය වර්ෂයකදීම නැවත ආරම්භ කරන්න",
+  "lang_start_again_each_calendar_year": "සෑම දින දර්ශන වර්ෂයකදීම නැවත ආරම්භ කරන්න",
+  "lang_turning_this_on_starts_the_numbering_again": "මෙය සක්‍රීය කළ විට අංකනය නැවත එකෙන් ආරම්භ වේ. වර්ෂයක පළමු දිනයේ කිරීම වඩාත් සුදුසුය.",
+  "lang_financial_year_starts_in": "මූල්‍ය වර්ෂය ආරම්භ වන්නේ",
+  "lang_april_in_india_january_in_much_of_the_eu": "ඉන්දියාවේ අප්‍රේල්, යුරෝපා සංගමයේ බොහෝ රටවල ජනවාරි."
 }

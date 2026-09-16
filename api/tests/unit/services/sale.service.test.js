@@ -37,6 +37,7 @@ jest.mock('../../../src/repositories/sale.repository', () => ({
   createSaleUnique: jest.fn(),
   buildSalesId: jest.fn(),
   buildDocNumber: jest.fn(),
+  generateSalesIdForBranch: jest.fn(),
   deviceTag: jest.fn(),
   getById: jest.fn(),
   save: jest.fn(),
@@ -145,6 +146,18 @@ describe('SalesService', () => {
       async (type, branchId, n, opts) =>
         `${(opts && opts.fallbackPrefix) || 'INV'}-TEST-${String(n).padStart(6, '0')}`
     );
+    /*
+     * The service asks for the WHOLE number now, not for a count it then
+     * formats itself. The counter and the format have to move together: they
+     * are shared with the customer's own ordering page, and a shop numbering
+     * by financial year would otherwise have had the year on one and not the
+     * other while both drew on one counter. The number still comes from the
+     * counter mock, so the assertions below still say what they said.
+     */
+    salesRepository.generateSalesIdForBranch.mockImplementation(async (branchId, opts) => {
+      const n = await salesRepository.nextSalesNumberForBranch(branchId);
+      return `${(opts && opts.fallbackPrefix) || 'INV'}-TEST-${String(n).padStart(6, '0')}`;
+    });
     salesRepository.createSaleUnique.mockImplementation((data) => salesRepository.create(data));
     salesRepository.save.mockResolvedValue({ _id: 'savedId' });
     mockCustomerRepositoryInstance.findById.mockResolvedValue(null);

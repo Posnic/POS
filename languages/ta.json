@@ -3206,5 +3206,12 @@
   "lang_bill_print_fssai": "FSSAI உரிம எண்",
   "lang_bill_print_fssai_hint": "உங்கள் GSTIN-க்கு கீழே அச்சிடப்படும். இந்தியாவில் உணவு நிறுவனங்கள் இதைக் காட்ட வேண்டும்.",
   "lang_fssai_number": "FSSAI உரிம எண்",
-  "lang_fssai_number_hint": "இதை அச்சிட மேலே உள்ள \"FSSAI உரிம எண்\" ஐ இயக்கவும்."
+  "lang_fssai_number_hint": "இதை அச்சிட மேலே உள்ள \"FSSAI உரிம எண்\" ஐ இயக்கவும்.",
+  "lang_bill_number_year": "பில் எண்ணில் ஆண்டு",
+  "lang_one_run_of_numbers_no_year": "ஒரே எண் வரிசை, ஆண்டு இல்லாமல்",
+  "lang_start_again_each_financial_year": "ஒவ்வொரு நிதியாண்டிலும் மீண்டும் தொடங்கு",
+  "lang_start_again_each_calendar_year": "ஒவ்வொரு காலண்டர் ஆண்டிலும் மீண்டும் தொடங்கு",
+  "lang_turning_this_on_starts_the_numbering_again": "இதை இயக்கினால் எண்கள் மீண்டும் ஒன்றிலிருந்து தொடங்கும். ஆண்டின் முதல் நாளில் செய்வது சிறந்தது.",
+  "lang_financial_year_starts_in": "நிதியாண்டு தொடங்கும் மாதம்",
+  "lang_april_in_india_january_in_much_of_the_eu": "இந்தியாவில் ஏப்ரல், ஐரோப்பிய ஒன்றியத்தின் பெரும்பாலான இடங்களில் ஜனவரி."
 }

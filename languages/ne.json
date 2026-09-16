@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI इजाजतपत्र नम्बर",
   "lang_bill_print_fssai_hint": "तपाईंको GSTIN मुनि छापिन्छ। भारतमा खाद्य व्यवसायले यो देखाउनुपर्छ।",
   "lang_fssai_number": "FSSAI इजाजतपत्र नम्बर",
-  "lang_fssai_number_hint": "यो छाप्न माथिको \"FSSAI इजाजतपत्र नम्बर\" खोल्नुहोस्।"
+  "lang_fssai_number_hint": "यो छाप्न माथिको \"FSSAI इजाजतपत्र नम्बर\" खोल्नुहोस्।",
+  "lang_bill_number_year": "बिल नम्बरमा वर्ष",
+  "lang_one_run_of_numbers_no_year": "नम्बरको एउटै शृंखला, वर्षविना",
+  "lang_start_again_each_financial_year": "हरेक आर्थिक वर्ष फेरि सुरु गर्नुहोस्",
+  "lang_start_again_each_calendar_year": "हरेक क्यालेन्डर वर्ष फेरि सुरु गर्नुहोस्",
+  "lang_turning_this_on_starts_the_numbering_again": "यो सुरु गर्दा नम्बर फेरि एकबाट सुरु हुन्छ। वर्षको पहिलो दिन गर्नु उत्तम।",
+  "lang_financial_year_starts_in": "आर्थिक वर्ष सुरु हुन्छ",
+  "lang_april_in_india_january_in_much_of_the_eu": "भारतमा अप्रिल, युरोपेली संघको धेरैजसो ठाउँमा जनवरी।"
 }

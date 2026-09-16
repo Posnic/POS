@@ -3185,5 +3185,12 @@
   "lang_bill_print_fssai": "FSSAI ലൈസൻസ് നമ്പർ",
   "lang_bill_print_fssai_hint": "നിങ്ങളുടെ GSTIN-ന് താഴെ അച്ചടിക്കുന്നു. ഇന്ത്യയിൽ ഭക്ഷ്യസ്ഥാപനങ്ങൾ ഇത് കാണിക്കണം.",
   "lang_fssai_number": "FSSAI ലൈസൻസ് നമ്പർ",
-  "lang_fssai_number_hint": "ഇത് അച്ചടിക്കാൻ മുകളിലെ \"FSSAI ലൈസൻസ് നമ്പർ\" ഓൺ ചെയ്യുക."
+  "lang_fssai_number_hint": "ഇത് അച്ചടിക്കാൻ മുകളിലെ \"FSSAI ലൈസൻസ് നമ്പർ\" ഓൺ ചെയ്യുക.",
+  "lang_bill_number_year": "ബില്ല് നമ്പറിലെ വർഷം",
+  "lang_one_run_of_numbers_no_year": "ഒറ്റ നമ്പർ ശ്രേണി, വർഷമില്ലാതെ",
+  "lang_start_again_each_financial_year": "ഓരോ സാമ്പത്തിക വർഷവും വീണ്ടും തുടങ്ങുക",
+  "lang_start_again_each_calendar_year": "ഓരോ കലണ്ടർ വർഷവും വീണ്ടും തുടങ്ങുക",
+  "lang_turning_this_on_starts_the_numbering_again": "ഇത് ഓണാക്കിയാൽ നമ്പറിടൽ വീണ്ടും ഒന്നിൽ നിന്ന് തുടങ്ങും. വർഷത്തിന്റെ ആദ്യ ദിവസം ചെയ്യുന്നതാണ് നല്ലത്.",
+  "lang_financial_year_starts_in": "സാമ്പത്തിക വർഷം തുടങ്ങുന്നത്",
+  "lang_april_in_india_january_in_much_of_the_eu": "ഇന്ത്യയിൽ ഏപ്രിൽ, യൂറോപ്യൻ യൂണിയന്റെ ഭൂരിഭാഗത്തിലും ജനുവരി."
 }

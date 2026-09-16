@@ -575,6 +575,12 @@
   "Data Not Valid": [
     "src/controllers/settings.controller.js"
   ],
+  "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": [
+    "src/controllers/settings.controller.js"
+  ],
+  "Data Not Valid: bill_number_reset must be off, financial or calendar": [
+    "src/controllers/settings.controller.js"
+  ],
   "Data Not Valid: receiving_prefix must be 1-6 characters": [
     "src/controllers/settings.controller.js"
   ],

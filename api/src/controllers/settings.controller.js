@@ -569,6 +569,36 @@ class SettingController extends BaseController {
           data: null,
         });
       }
+      /*
+       * WHEN THE BILL NUMBER STARTS AGAIN, and it is refused rather than
+       * quietly corrected.
+       *
+       * The model coerces an unrecognised value to off, which is the right
+       * thing for a payload arriving from anywhere. Here, where a person is
+       * looking at a form, a typo that silently switched a shop's numbering
+       * off would be found by an accountant in April rather than by whoever
+       * pressed Save. See utils/bill-number.js.
+       */
+      if (
+        data.bill_number_reset !== undefined &&
+        !['', 'off', 'financial', 'calendar'].includes(String(data.bill_number_reset).trim())
+      ) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Data Not Valid: bill_number_reset must be off, financial or calendar',
+          data: null,
+        });
+      }
+      if (data.bill_number_fy_start_month !== undefined) {
+        const month = Number(data.bill_number_fy_start_month);
+        if (!Number.isInteger(month) || month < 1 || month > 12) {
+          return res.status(400).json({
+            type: 'error',
+            message: 'Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12',
+            data: null,
+          });
+        }
+      }
       if (
         data.receiving_prefix !== undefined &&
         (String(data.receiving_prefix).length < 1 || String(data.receiving_prefix).length > 6)
