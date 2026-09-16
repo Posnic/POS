@@ -237,6 +237,67 @@ describe('what Express 5 actually allows', () => {
   });
 });
 
+/* ------------------------------------------- what else depends on it */
+
+describe('the guard is what makes every later sanitiser work', () => {
+  test('AFTER IT, BOTH MUTATION AND ASSIGNMENT HOLD - and before it, neither does', async () => {
+    /*
+     * Two more middlewares change req.query further down the chain, and each
+     * does it a different way that Express 5 ignores on its own:
+     *
+     *   app.js, XSS pass          delete every key, then Object.assign
+     *   middleware/validateRequest   req.query = sanitizeInput(req.query)
+     *
+     * Both were silently doing nothing for the same reason the NoSQL guard
+     * was. Neither was touched: replacing the getter with a plain writable
+     * property is what made all three start working, which means the ORDER is
+     * load bearing. Move the guard below them, or take it out, and three
+     * sanitisers stop running in silence.
+     */
+    const app = express();
+    app.use((req, res, next) => {
+      /* what the guard now does */
+      const clean = { ...req.query };
+      delete clean.$ne;
+      Object.defineProperty(req, 'query', {
+        value: clean,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+      next();
+    });
+    app.use((req, res, next) => {
+      /* the XSS pass's style: mutation */
+      Object.keys(req.query).forEach((k) => delete req.query[k]);
+      Object.assign(req.query, { xss: 'applied', ok: '2' });
+      next();
+    });
+    app.use((req, res, next) => {
+      /* validateRequest's style: assignment */
+      req.query = { ...req.query, validated: true };
+      next();
+    });
+    app.get('/x', (req, res) => res.json(req.query));
+
+    const said = await call(app, '/x?$ne=1&ok=2');
+    expect(said).toEqual({ xss: 'applied', ok: '2', validated: true });
+  });
+
+  test('and the app really does define it before those two run', () => {
+    /* Line order, because that is the whole dependency. */
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const app = fs.readFileSync(path.join(__dirname, '..', '..', 'app.js'), 'utf8');
+
+    const guard = app.indexOf("Object.defineProperty(req, 'query'");
+    const xss = app.indexOf('sanitizedQuery[key] = filterXSS(value)');
+    expect(guard).toBeGreaterThan(-1);
+    expect(xss).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(xss);
+  });
+});
+
 /* ------------------------------------------------------- and it is really mounted */
 
 test('THE APP USES defineProperty, not an assignment', () => {
