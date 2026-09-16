@@ -3206,5 +3206,7 @@
   "lang_cancel_it_and_tell_the_customer": "रद्द गरी ग्राहकलाई भन्नुहोस्",
   "lang_the_alarm_keeps_asking_either_way": "दुवै अवस्थामा अलार्म सोध्दै रहन्छ, बिस्तारै कम हुँदै।",
   "lang_after_how_long": "कति समयपछि",
-  "lang_counted_from_when_the_order_arrived": "अर्डर आएको समयदेखि गनिन्छ।"
+  "lang_counted_from_when_the_order_arrived": "अर्डर आएको समयदेखि गनिन्छ।",
+  "lang_tell_customers_the_kitchen_is_busy": "भान्सा व्यस्त हुँदा ग्राहकलाई भन्नुहोस्",
+  "lang_tell_customers_the_kitchen_is_busy_help": "भान्साले एकै पटक पकाउन सक्नेभन्दा बढी टेबल चलिरहेको बेला अर्डर पृष्ठमा पर्खाइको सूचना देखिन्छ। टेबल सेवा चाहिन्छ।"
 }

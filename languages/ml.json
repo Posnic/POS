@@ -3206,5 +3206,7 @@
   "lang_cancel_it_and_tell_the_customer": "റദ്ദാക്കി ഉപഭോക്താവിനെ അറിയിക്കുക",
   "lang_the_alarm_keeps_asking_either_way": "രണ്ട് സാഹചര്യത്തിലും അലാറം ചോദിച്ചുകൊണ്ടിരിക്കും, ക്രമേണ കുറഞ്ഞുവരും.",
   "lang_after_how_long": "എത്ര സമയത്തിന് ശേഷം",
-  "lang_counted_from_when_the_order_arrived": "ഓർഡർ വന്ന സമയം മുതൽ കണക്കാക്കുന്നു."
+  "lang_counted_from_when_the_order_arrived": "ഓർഡർ വന്ന സമയം മുതൽ കണക്കാക്കുന്നു.",
+  "lang_tell_customers_the_kitchen_is_busy": "അടുക്കള തിരക്കിലാണെന്ന് ഉപഭോക്താക്കളെ അറിയിക്കുക",
+  "lang_tell_customers_the_kitchen_is_busy_help": "അടുക്കളയ്ക്ക് ഒരുമിച്ച് ചെയ്യാനാകുന്നതിലും കൂടുതൽ മേശകളിൽ ഓർഡർ നടക്കുമ്പോൾ ഓർഡർ പേജിൽ കാത്തിരിപ്പിന്റെ അറിയിപ്പ് കാണിക്കും. ടേബിൾ സർവീസ് വേണം."
 }

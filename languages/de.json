@@ -3206,5 +3206,7 @@
   "lang_cancel_it_and_tell_the_customer": "Stornieren und den Kunden informieren",
   "lang_the_alarm_keeps_asking_either_way": "Der Alarm fragt in beiden Fällen weiter, mit wachsenden Abständen.",
   "lang_after_how_long": "Nach welcher Zeit",
-  "lang_counted_from_when_the_order_arrived": "Gerechnet ab dem Eingang der Bestellung."
+  "lang_counted_from_when_the_order_arrived": "Gerechnet ab dem Eingang der Bestellung.",
+  "lang_tell_customers_the_kitchen_is_busy": "Kunden sagen, wenn die Küche ausgelastet ist",
+  "lang_tell_customers_the_kitchen_is_busy_help": "Auf der Bestellseite erscheint ein Wartehinweis, wenn mehr Tische in Bearbeitung sind, als die Küche gleichzeitig kochen kann. Erfordert Tischservice."
 }

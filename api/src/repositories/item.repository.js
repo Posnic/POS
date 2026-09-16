@@ -4502,6 +4502,43 @@ class ItemRepository extends BaseModel {
   }
 
   /**
+   * Does this shop want customers told when its kitchen is busy?
+   *
+   * Owner: "have configuraiton option."
+   *
+   * ABSENT IS YES, and the default is the point. The notice already shows on
+   * every restaurant that runs table service, so a key that defaulted off
+   * would switch a shipped behaviour off for every shop the day it merged.
+   * Only an explicit false hides it, and the STRING 'false' counts too: a
+   * reader doing `if (value)` treats stored 'false' as on, which is the oldest
+   * settings bug in this product.
+   *
+   * Read through the settings repository like the voice settings and the shop
+   * kind above, so a chain that sets it once does not have to set it per
+   * branch. A read that fails answers YES rather than throwing: a menu that
+   * will not load because a settings lookup failed is far worse than a
+   * customer seeing a warning the shop meant to hide.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async wantsKitchenNotice(branchDoc) {
+    try {
+      const SettingsRepository = require('./settings.repository');
+      const settings = new SettingsRepository();
+      const read = await settings.resolveGroup('channels', {
+        branchId: branchDoc._id,
+        licenseId: branchDoc.license,
+      });
+      const values = (read && read.status && read.data.values) || {};
+      const said = values.online_kitchen_notice;
+      return said !== false && said !== 'false';
+    } catch (e) {
+      console.warn('[storefront] could not read the kitchen notice setting:', e.message);
+      return true;
+    }
+  }
+
+  /**
    * A restaurant, or a shop.
    *
    * The Restaurant module on the Features page - stored as
@@ -4975,7 +5012,11 @@ class ItemRepository extends BaseModel {
        */
       let kitchen = kitchenLoad({});
       try {
-        if (branchDoc.table_options === true && tableorders.length) {
+        if (
+          branchDoc.table_options === true &&
+          tableorders.length &&
+          (await this.wantsKitchenNotice(branchDoc))
+        ) {
           const salesCollection = await this.getCollection('sales');
           const openFilter = {
             sale_process: { $regex: 'KOT', $options: 'i' },
