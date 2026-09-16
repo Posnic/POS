@@ -148,10 +148,43 @@ async function markShadowPrinted(keys = [], { branchId, saleIds = [] } = {}, { M
         { branch_id: asObjectId(branchId), ticket_key: { $in: list }, status: 'shadow' },
         { $set: { status: 'done', printed_at: new Date() } }
       );
-      return {
-        status: true,
-        data: { closed: (res && (res.modifiedCount || res.nModified)) || 0, by: 'key' },
-      };
+      const closed = (res && (res.modifiedCount || res.nModified)) || 0;
+
+      /*
+       * THE OTHER DIRECTION, AND THE EXPENSIVE ONE.
+       *
+       * A ticket the till REPORTED that the queue never expected is the shape
+       * a duplicate has: paper came out of a printer for something nothing
+       * asked for. Until now those keys simply matched no row and were
+       * dropped, so the shadow could only ever see half of what it was built
+       * to see - and it was the cheap half. A missing ticket is loud and costs
+       * a reminder; a duplicate is silent and costs food.
+       *
+       * Counted rather than stored: one number per report is enough to say
+       * whether this happens four times a week or forty, which is the question
+       * nobody could answer.
+       */
+      let unexpected = 0;
+      try {
+        const known = await model
+          .find(
+            { branch_id: asObjectId(branchId), ticket_key: { $in: list } },
+            { projection: { ticket_key: 1 } }
+          )
+          .lean();
+        const seen = new Set((known || []).map((row) => String(row.ticket_key)));
+        unexpected = list.filter((key) => !seen.has(key)).length;
+        if (unexpected) {
+          console.warn(
+            `[kot-shadow] ${unexpected} ticket(s) printed that the queue never expected`
+          );
+        }
+      } catch (e) {
+        /* A count that cannot be taken is not worth a failed report. */
+        unexpected = 0;
+      }
+
+      return { status: true, data: { closed, by: 'key', unexpected } };
     }
 
     /*
@@ -214,4 +247,80 @@ async function disagreements(
   }
 }
 
-module.exports = { recordExpected, markShadowPrinted, disagreements, ticketsOf };
+/**
+ * WHAT THE WEEK OF WATCHING ACTUALLY SAID.
+ *
+ * The rollout rule for this area is "shadow, one shop, widen, remove the old
+ * path", and the shadow stage exists to answer one question before anything is
+ * cut over:
+ *
+ *   does the queue and the old path agree about what should print?
+ *
+ * `disagreements()` has been able to answer it since the day it was written and
+ * NOTHING HAS EVER CALLED IT. The shadow ran, recorded faithfully, and its
+ * answer went into a collection with no door on it - so the cutover it exists
+ * to justify could never be justified.
+ *
+ * Deliberately cheap: three counts over an indexed status, no documents read
+ * back. It is called from a screen a shopkeeper opens, not from a loop.
+ *
+ * @returns {{expected, printed, open, oldest}} over the window
+ *   expected  tickets the queue believed should print
+ *   printed   of those, the ones a till reported
+ *   open      the ones it did not, older than the settling window - the
+ *             disagreements, and the number the cutover turns on
+ */
+async function summary({ branchId, sinceMs = 7 * 24 * 60 * 60 * 1000 } = {}, { Model } = {}) {
+  const model = Model || printJobModel();
+  const empty = { expected: 0, printed: 0, open: 0, oldest: null, since: null };
+  try {
+    if (!branchId) return { status: true, data: empty };
+    const since = new Date(Date.now() - sinceMs);
+    /* The same settling window disagreements() uses, for the same reason: a
+       ticket being printed right now is not a disagreement. */
+    const settled = new Date(Date.now() - 5 * 60 * 1000);
+    const branch = asObjectId(branchId);
+
+    const [expected, printed, open, oldestRow] = await Promise.all([
+      model.countDocuments({ branch_id: branch, kind: 'kot', created_at: { $gte: since } }),
+      model.countDocuments({
+        branch_id: branch,
+        kind: 'kot',
+        status: 'done',
+        created_at: { $gte: since },
+      }),
+      model.countDocuments({
+        branch_id: branch,
+        kind: 'kot',
+        status: 'shadow',
+        created_at: { $gte: since, $lt: settled },
+      }),
+      model
+        .find({
+          branch_id: branch,
+          kind: 'kot',
+          status: 'shadow',
+          created_at: { $gte: since, $lt: settled },
+        })
+        .sort({ created_at: 1 })
+        .limit(1)
+        .lean(),
+    ]);
+
+    return {
+      status: true,
+      data: {
+        expected,
+        printed,
+        open,
+        oldest: (oldestRow && oldestRow[0] && oldestRow[0].created_at) || null,
+        since,
+      },
+    };
+  } catch (error) {
+    console.warn('[kot-shadow] could not summarise:', error && error.message);
+    return { status: true, data: empty };
+  }
+}
+
+module.exports = { recordExpected, markShadowPrinted, disagreements, summary, ticketsOf };

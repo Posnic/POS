@@ -3865,7 +3865,10 @@ module.exports = {
     salesRepository.kitchenPrintModel(branchId, {
       SaleModel: getModel(SaleModel),
     }),
-  multiKitchenPrintModel: async (branchId) => salesRepository.multiKitchenPrintModel(branchId),
+  /* The till's own name travels with the ask, so the repository can hand one
+     ticket to one till. See multiKitchenPrintModel. */
+  multiKitchenPrintModel: async (branchId, options) =>
+    salesRepository.multiKitchenPrintModel(branchId, options),
   markKitchenPrintedModel: async (saleIds, printedIndexes, printedKeys) =>
     salesRepository.markKitchenPrintedModel(saleIds, printedIndexes, printedKeys),
   createOnlineOrder: async (data, { SaleModel, staffOrder = false } = {}) =>
@@ -3903,7 +3906,7 @@ module.exports = {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel } = {}
+    { SaleModel, newTableId } = {}
   ) =>
     salesRepository.updateOrderModel(
       orderId,
@@ -3918,6 +3921,7 @@ module.exports = {
       personCount,
       {
         SaleModel: getModel(SaleModel),
+        newTableId,
       }
     ),
   getFrequentItemsForBranch: async (branchId, limit, { SaleModel } = {}) =>

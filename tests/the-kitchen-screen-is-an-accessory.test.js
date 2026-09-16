@@ -59,8 +59,16 @@ test('startup is wrapped, so a screen fault cannot stop the shop', () => {
 
 test('and shutdown closes them, because a frameless window outlives the tray', () => {
   const main = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
-  const quit = main.slice(main.indexOf("app.on('before-quit'"));
-  assert.match(quit.slice(0, 600), /kitchen-screen'\)\.closeAll\(\)/);
+  /* THE WHOLE HANDLER, not its first six hundred characters. That bound was
+     arbitrary and broke the day a legitimate line was added above the close -
+     which says nothing about whether shutdown still closes the screens, which
+     is the only thing this test is for. Delimited by the next app.on instead,
+     so it still cannot be satisfied by a closeAll somewhere else entirely. */
+  const from = main.indexOf("app.on('before-quit'");
+  const rest = main.slice(from + 20);
+  const next = rest.indexOf("app.on('");
+  const quit = next === -1 ? rest : rest.slice(0, next);
+  assert.match(quit, /kitchen-screen'\)\.closeAll\(\)/);
 });
 
 /* ------------------------------------------------- 2. it never steals focus */

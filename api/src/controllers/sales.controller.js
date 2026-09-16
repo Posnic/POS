@@ -6998,6 +6998,30 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * WHAT THE KITCHEN IS COOKING, for the screen on the wall.
+   *
+   * `setTickets` in src/kitchen-screen.js is the only way anything reaches
+   * those screens, and it was called from nowhere - so a screen opened on a
+   * wall showed an empty list for ever, while setup mode filled itself with
+   * samples and looked perfect. This is what feeds it.
+   */
+  async kitchenScreenTickets(req, res) {
+    try {
+      const salesRepository = require('../repositories/sale.repository');
+      const out = await salesRepository.kitchenScreenTickets(req.body.branchId, {
+        limit: Number(req.body.limit) || 40,
+      });
+      if (out.status !== true) {
+        return this.error(res, out.message || ERROR_MESSAGES.SOMETHING_WENT_WRONG, 400);
+      }
+      return this.success(res, out.data, 'success');
+    } catch (error) {
+      console.error('Error in kitchenScreenTickets:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /**
    * PHP: multiKitchenPrint()
    * Multi-printer KOT polling - returns pending print_jobs per sale
@@ -7186,6 +7210,37 @@ class SalesController extends BaseController {
     }
   }
 
+  /*
+   * WHAT THE SHADOW QUEUE HAS BEEN SEEING.
+   *
+   * The kitchen still prints through the old path. Beside it, the queue
+   * records what IT believes should print and prints nothing, so the two can
+   * be compared before anything is cut over - the first step of the rollout
+   * rule for this area: "shadow, one shop, widen, remove the old path".
+   *
+   * `disagreements()` could answer that from the day it was written and
+   * NOTHING EVER CALLED IT. The shadow ran, recorded faithfully, and its
+   * answer went into a collection with no door on it, so the cutover it exists
+   * to justify could never be justified. This is the door.
+   *
+   * Read-only, and it prints nothing: every row it counts has a status no till
+   * will ever claim.
+   */
+  async kitchenQueueShadow(req, res) {
+    try {
+      const shadow = require('../repositories/kot-shadow.repository');
+      const days = Math.max(1, Math.min(30, Number(req.body.days) || 7));
+      const out = await shadow.summary({
+        branchId: req.body.branchId,
+        sinceMs: days * 24 * 60 * 60 * 1000,
+      });
+      return this.success(res, { ...out.data, days }, 'success');
+    } catch (error) {
+      console.error('Error in kitchenQueueShadow:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   /** What the till still owes the counter, read by the till itself. */
   async pendingBillPrints(req, res) {
     try {
@@ -7217,7 +7272,12 @@ class SalesController extends BaseController {
 
   async multiKitchenPrint(req, res) {
     try {
-      const response = await salesService.multiKitchenPrintModel(req.body.branchId);
+      /* Which till is asking, so two of them in one shop are never handed the
+         same ticket. Absent on older builds, and absent means exactly the
+         behaviour those builds have always had. */
+      const response = await salesService.multiKitchenPrintModel(req.body.branchId, {
+        tillId: req.body.tillId || '',
+      });
       if (response.status === true) {
         return this.success(res, response.data, response.message);
       } else {
@@ -7336,6 +7396,10 @@ class SalesController extends BaseController {
       const extraDiscount = req.body.extra_discount;
       const discountDescription = req.body.discount_description;
       const newTableNo = req.body.table_number;
+      /* The handset sends this whenever a waiter moves an order to another
+         table. It rides in the options object rather than as an eleventh
+         positional argument, because ten is already too many to count. */
+      const newTableId = req.body.table_id;
       const dineType = req.body.dine_type;
       const personCount = req.body.person_count;
 
@@ -7351,7 +7415,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel }
+        { SaleModel, newTableId }
       );
 
       if (response.status === true) {

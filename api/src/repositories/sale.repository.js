@@ -38,7 +38,7 @@ async function withDayparts(shop) {
   }
 }
 
-const { notifyOrderAttention } = require('../helpers/order-attention');
+const { notifyOrderAttention, notifyOrderResolved } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const billNumber = require('../utils/bill-number');
 const orderProgress = require('../utils/order-progress');
@@ -67,6 +67,17 @@ const partnerVenues = require('../utils/partner-venues');
 /* The fallback when channelState has no sentence of its own. It never should,
    but a refusal with an empty message would tell a customer nothing. */
 const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
+
+/*
+ * How long a till's claim on a kitchen ticket lasts.
+ *
+ * Long enough to cover a poll, a print and a report on a slow printer; short
+ * enough that a till which died mid-print has its work picked up by the other
+ * one before anybody at a pass notices. The cost of being wrong in the short
+ * direction is a duplicate, and in the long direction a delay, so it is set
+ * where a real print comfortably fits.
+ */
+const KOT_CLAIM_MS = 45 * 1000;
 
 /*
  * The shop's own answering speed, remembered for a few minutes.
@@ -7466,7 +7477,26 @@ class SalesRepository {
     }
   }
 
-  async multiKitchenPrintModel(branchId) {
+  /*
+   * ONE TICKET, ONE TILL.
+   *
+   * This hands out the kitchen's work, and it took a branch and nothing else:
+   * no till, no claim, no lease. Two machines polling the same shop were
+   * handed the SAME sales and both printed them. Nobody has seen that because
+   * only one till in a shop is configured with kitchen printers - which is
+   * also exactly why a shop with two tills has no standby: the second one
+   * cannot be given the printers without doubling every ticket.
+   *
+   * A till that says who it is now CLAIMS what it is handed, the same way the
+   * bill queue already does. A claim only ever narrows what a till is offered,
+   * so it cannot cause a missing ticket; a till that dies mid-print has its
+   * claim expire and the other one picks the work up, which is the standby.
+   *
+   * A TILL THAT SENDS NO ID BEHAVES EXACTLY AS BEFORE. Ninety shops are
+   * running builds that do not send one, and this is the path that feeds every
+   * kitchen: it must be a no-op for them until their till updates.
+   */
+  async multiKitchenPrintModel(branchId, { tillId = '' } = {}) {
     try {
       const db = await BaseModel.getDb();
       const branchCollection = db.collection('branches');
@@ -7494,12 +7524,33 @@ class SalesRepository {
       const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
       const todayEnd = new Date(new Date().setHours(0, 0, 0, 0) + 86400000);
 
+      /*
+       * Somebody else's, and recently enough that they are probably still
+       * printing it. Absent for a till that sends no id, which leaves the
+       * query exactly as it was.
+       */
+      const mine = String(tillId || '').trim();
+      const notSomebodyElses = mine
+        ? {
+            $or: [
+              { kot_claimed_at: null },
+              { kot_claimed_at: { $exists: false } },
+              { kot_claimed_at: { $lt: new Date(Date.now() - KOT_CLAIM_MS) } },
+              /* My own claim never blocks me: a till that crashed mid-print
+                 must be able to try again on its very next poll, not in
+                 forty-five seconds. */
+              { kot_claimed_by: mine },
+            ],
+          }
+        : {};
+
       const kotSales = await salesCollection
         .find(
           {
             branch_id: branchObjectId,
             sale_process: { $regex: 'KOT', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...notSomebodyElses,
           },
           { sort: { created_date: 1, _id: 1 }, limit: 50 }
         )
@@ -7511,6 +7562,7 @@ class SalesRepository {
             branch_id: branchObjectId,
             sale_process: { $regex: 'cancelled', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...notSomebodyElses,
           },
           { sort: { created_date: 1 }, limit: 20 }
         )
@@ -7597,6 +7649,28 @@ class SalesRepository {
         console.warn('[kot-shadow] not recorded:', e && e.message);
       }
 
+      /*
+       * And this till has taken them.
+       *
+       * Stamped on exactly what is being HANDED OVER, not on everything the
+       * query read: a sale with no new changes is not being printed by anybody
+       * and claiming it would hide it from the other till for no reason.
+       *
+       * Never fatal. A claim that cannot be written leaves the old behaviour -
+       * two tills might both print - and that is far better than a kitchen
+       * that gets nothing because a bookkeeping write failed.
+       */
+      if (mine && processedSales.length) {
+        try {
+          await salesCollection.updateMany(
+            { _id: { $in: processedSales.map((sale) => sale._id) } },
+            { $set: { kot_claimed_by: mine, kot_claimed_at: new Date() } }
+          );
+        } catch (e) {
+          console.warn('[kot] could not record which till took these:', e && e.message);
+        }
+      }
+
       return { status: true, message: 'Get unprinted sales successfully', data: processedSales };
     } catch (error) {
       console.error('Error in multiKitchenPrintModel:', error);
@@ -7605,6 +7679,83 @@ class SalesRepository {
         message: 'Error fetching unprinted sales: ' + error.message,
         data: [],
       };
+    }
+  }
+
+  /**
+   * WHAT THE KITCHEN IS ACTUALLY COOKING, for the screen on the wall.
+   *
+   * A different question from "what should print", and the kitchen screen had
+   * been asking nobody at all: `setTickets` - the only way anything reaches
+   * those screens - was exported and called from nowhere, so a screen opened
+   * on a wall showed an empty list for ever. Setup mode fills itself with
+   * sample tickets, which is the worst possible shape for that bug: it demos
+   * perfectly and does nothing in service.
+   *
+   * WHY NOT FEED IT FROM THE PRINT POLL, which is the obvious idea:
+   *
+   *   - that poll returns only what has NOT printed yet, so a ticket would
+   *     vanish off the wall the instant it came out of the printer, which is
+   *     precisely when the kitchen starts cooking it;
+   *   - and it now claims what it hands out, so a ticket taken by the other
+   *     till would never appear at all.
+   *
+   * A screen shows what is open, whoever printed it, until it is settled.
+   * "Settled" has no marker in this product - nothing says a dish is done -
+   * so the honest boundary is the one that already exists: it leaves the
+   * screen when the table is billed, paid or called off.
+   */
+  async kitchenScreenTickets(branchId, { limit = 40 } = {}) {
+    try {
+      const db = await BaseModel.getDb();
+      const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
+        ? new mongoose.Types.ObjectId(String(branchId))
+        : branchId;
+
+      const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+      const rows = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            sale_process: { $regex: 'KOT', $options: 'i' },
+            created_date: { $gte: todayStart },
+            payment_status: { $nin: ['Paid', 'Cancelled'] },
+            ...activeTenantFilter(),
+          },
+          {
+            sort: { created_date: 1 },
+            limit: Math.max(1, Math.min(100, limit)),
+            projection: {
+              sales_id: 1,
+              token_id: 1,
+              table_number: 1,
+              created_date: 1,
+              date: 1,
+              items: 1,
+            },
+          }
+        )
+        .toArray();
+
+      /* The shape the screen draws, and nothing else. A kitchen screen hangs
+         where customers and staff can both see it, so prices, customers and
+         phone numbers have no business travelling to it. */
+      const tickets = rows.map((sale) => ({
+        table: String(sale.table_number || ''),
+        orderNumber: String(sale.sales_id || sale.token_id || ''),
+        placedAt: new Date(sale.created_date || sale.date || Date.now()).toISOString(),
+        items: (Array.isArray(sale.items) ? sale.items : []).map((line) => ({
+          qty: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0) || 1,
+          name: String(line.item_name || line.name || ''),
+          note: String(line.item_description || '').slice(0, 80),
+        })),
+      }));
+
+      return { status: true, message: 'success', data: tickets };
+    } catch (error) {
+      console.error('Error in kitchenScreenTickets:', error);
+      return { status: false, message: 'Could not read the kitchen', data: [] };
     }
   }
 
@@ -7651,6 +7802,11 @@ class SalesRepository {
               kitchen_printed: true,
               kitchen_printed_at: now,
               last_printed_change_index: lastChangeIndex,
+              /* Done with, so the claim goes. Leaving it would keep the sale
+                 hidden from the other till for the rest of the window, which
+                 matters the moment an amendment arrives for the same table. */
+              kot_claimed_by: '',
+              kot_claimed_at: null,
             },
           }
         );
@@ -8679,13 +8835,36 @@ class SalesRepository {
       /* The window is applied HERE rather than in the query so one rule about
          what "open" means lives in one file, and a stale row still gets
          cleared by the next acknowledgement rather than lingering invisibly. */
-      return rows
-        .filter((row) => waiterCall.stillOpen(row))
-        .map((row) => ({
-          call_id: String(row._id),
-          table_number: String(row.table_number || ''),
-          called_at: row.called_at || null,
-        }));
+      const open = rows.filter((row) => waiterCall.stillOpen(row));
+
+      /*
+       * AND ONE THAT AGED OUT STOPS THE ALARM TOO.
+       *
+       * A call raises the repeating alarm, and that alarm runs until something
+       * says the thing was dealt with. A call nobody ever answered drops out
+       * of the window at twenty minutes and stops being drawn on every screen
+       * - so without this the till goes on escalating about something no
+       * screen can show and nobody can answer. An alarm that cannot be
+       * answered is exactly the kind that teaches people to ignore alarms.
+       *
+       * Said from here because this is what the till and the handset both
+       * poll, so the silence arrives wherever somebody is actually watching.
+       */
+      rows
+        .filter((row) => !waiterCall.stillOpen(row))
+        .forEach((row) => {
+          notifyOrderResolved({
+            branchId: String(branchId || ''),
+            saleId: String(row._id),
+            state: 'unanswered',
+          });
+        });
+
+      return open.map((row) => ({
+        call_id: String(row._id),
+        table_number: String(row.table_number || ''),
+        called_at: row.called_at || null,
+      }));
     } catch (e) {
       /* A queue that cannot be read must not take the orders down with it. */
       console.warn('[waiter calls] could not be read:', e.message);
@@ -8714,6 +8893,27 @@ class SalesRepository {
       $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
     });
     if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    /*
+     * AND THE ALARM STOPS.
+     *
+     * A call raises the same repeating alarm an order waiting for approval
+     * raises, and until now NOTHING could ever stop it: the only thing that
+     * announced a resolution was the sweeper that decides unanswered orders,
+     * and a call does not live in the sales collection. So a table called
+     * once and the desktop till escalated about it for the rest of the day,
+     * long after the waiter had walked over.
+     *
+     * Said from the server rather than from the page that pressed the button,
+     * because the person who answers is usually holding the handset and the
+     * till making the noise never hears from it.
+     */
+    notifyOrderResolved({
+      branchId: String(branchId || ''),
+      saleId: String(callId),
+      state: 'seen',
+    });
+
     return { status: true, message: 'On the way', data: { call_id: String(callId) } };
   }
 
@@ -8883,7 +9083,7 @@ class SalesRepository {
    * prints, so a double-tap on a slow screen cannot produce two tickets - and
    * two tickets for one order is two lots of food.
    */
-  async decideOnOrder({ saleId, decision, reason } = {}) {
+  async decideOnOrder({ saleId, decision, reason, by } = {}) {
     try {
       if (!saleId || !ObjectId.isValid(String(saleId))) {
         return { status: false, message: 'Enter must correct order id', data: null };
@@ -9129,7 +9329,7 @@ class SalesRepository {
         };
       }
 
-      await salesCollection.updateOne(
+      const written = await salesCollection.updateOne(
         { _id, ...activeTenantFilter() },
         {
           $set: {
@@ -9149,6 +9349,42 @@ class SalesRepository {
           branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
           saleId: String(saleId),
           reason: 'approved',
+        });
+      }
+
+      /*
+       * AND THE ALARM STOPS, WHEREVER THE ANSWER CAME FROM.
+       *
+       * An order arriving for approval raises the repeating, escalating alarm
+       * (see helpers/order-attention.js), and the only thing that ever
+       * silenced it from a person's decision was the Online orders PAGE
+       * telling the main process by hand. So an order accepted anywhere else
+       * left the till nagging about an order that had been dealt with:
+       *
+       *   - from the request dock, on any other screen in the till
+       *   - from the captain handset, which never talks to that main process
+       *     at all, and which is exactly what a restaurant answers orders on
+       *
+       * Said from here because this is the one door all three go through, and
+       * the alarm belongs to the order rather than to the screen that
+       * answered it.
+       *
+       * ONLY WHEN THE WRITE MATCHED. This method narrows by whatever tenant
+       * the process was last serving, and reports what it ASKED for rather
+       * than what changed - so on a mismatch it answers success while nothing
+       * moved. Announcing that would stop the alarm for an order still
+       * sitting there, which is the exact failure this whole area exists to
+       * prevent. unanswered-orders.js was reading the order back by hand to
+       * guard against it; matchedCount is the signal it was missing.
+       */
+      if (written && written.matchedCount) {
+        notifyOrderResolved({
+          branchId: String(sale.branch_id || BaseModel.currentBranch || ''),
+          saleId: String(saleId),
+          state: move.state,
+          /* A person unless somebody says otherwise. The shop's own rule says
+             otherwise, and the difference is worth keeping in a log. */
+          by: by ? String(by) : 'person',
         });
       }
 
@@ -9302,7 +9538,7 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel } = {}
+    { SaleModel, newTableId } = {}
   ) {
     try {
       const db = await BaseModel.getDb();
@@ -9680,6 +9916,32 @@ class SalesRepository {
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
       if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
+
+      /*
+       * THE TABLE'S ID MOVES WITH ITS NUMBER.
+       *
+       * A waiter moving an order to another table sends both, and only the
+       * number was ever written. The order then read "table 12" while still
+       * pointing at table 4's id, and nothing said so, because the floor is
+       * drawn by number: the screens agreed while the record did not.
+       *
+       * An empty id is allowed through on purpose. A table typed in by hand
+       * has no id, and leaving the old one there would be the same lie.
+       */
+      if (newTableId !== undefined && newTableId !== null) {
+        updateFields.table_id = String(newTableId);
+      } else if (
+        updateFields.table_number !== undefined &&
+        String(updateFields.table_number) !== String(orderDoc?.table_number ?? '')
+      ) {
+        /*
+         * Moved by a caller that does not know table ids - the till's own KOT
+         * screen sends the number alone. Clearing beats keeping a pointer to
+         * the table the order has just left: wrong and visible is recoverable,
+         * wrong and invisible is what this whole fix is about.
+         */
+        updateFields.table_id = '';
+      }
       if (dineType !== null && dineType !== '') updateFields.dine_type = String(dineType);
       if (personCount !== null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);

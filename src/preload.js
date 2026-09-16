@@ -193,6 +193,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /* Answering a bill the queue parked for a person: it printed, or print it
        again. See api/src/repositories/print-job.repository resolveAttention. */
     answerWaiting: (id, printed) => ipcRenderer.invoke('bill:answer-waiting', id, printed),
+    /* What the kitchen queue has been watching, for the panel that decides
+       whether it is safe to cut the kitchen over to it. */
+    shadowSummary: (days) => ipcRenderer.invoke('kot:shadow-summary', days),
     /* This machine's own key, for pasting into the shop so it will accept
        bills from here. See api/src/models/print-till.model.js. */
     getPrintingKey: () => ipcRenderer.invoke('bill:get-printing-key'),

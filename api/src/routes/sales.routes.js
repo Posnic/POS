@@ -146,6 +146,13 @@ router.post(
 );
 router.post('/fetchLastSale', ensureKioskKey, bindController(salesController.fetchLastSale));
 router.post('/kitchenPrint', ensureKioskKey, bindController(salesController.kitchenPrint));
+/* What the kitchen is cooking, for the screen on the wall. The shop's own
+   equipment, so the same key as the rest of the kitchen routes. */
+router.post(
+  '/kitchenScreenTickets',
+  ensureKioskKey,
+  bindController(salesController.kitchenScreenTickets)
+);
 router.post(
   '/multiKitchenPrint',
   ensureKioskKey,
@@ -195,6 +202,13 @@ router.post(
   bindController(salesController.printJobsNeedingAttention)
 );
 router.post('/resolvePrintJob', ensurePrintDevice, bindController(salesController.resolvePrintJob));
+/* What the shadow queue has been seeing, read-only. Behind the same guard:
+   it is the till's own Hardware Manager that shows it. */
+router.post(
+  '/kitchenQueueShadow',
+  ensurePrintDevice,
+  bindController(salesController.kitchenQueueShadow)
+);
 router.post(
   '/markKitchenPrinted',
   ensureKioskKey,
