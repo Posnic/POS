@@ -129,6 +129,54 @@ class Receipt {
    * wrapped label pushes the amount onto a line of its own and the receipt
    * stops being readable at a glance.
    */
+  /**
+   * The service rows, TWO TO A LINE.
+   *
+   * Owner, reading a printed bill: "Table number, order type, covers, total
+   * quantity all these information can organize better as per international
+   * standards and may be two column".
+   *
+   * He is right. Four facts about the table took four lines and pushed the
+   * items down the paper, and a bill is read at a glance rather than down a
+   * list. Every printed restaurant bill that carries these puts them in a
+   * block.
+   *
+   * ONE TO A LINE ON NARROW PAPER. A 58mm roll is 32 characters; halved, that
+   * is sixteen, and "Order type" plus a value does not fit in sixteen without
+   * becoming "Order ty.". Losing a word to save a line is the wrong trade on
+   * the one document the guest keeps.
+   */
+  serviceGrid(rows) {
+    const list = (rows || []).filter((r) => r && r.label);
+    if (!list.length) return this;
+
+    if (this.width < 44) {
+      for (const row of list) this.pair(row.label, row.value);
+      return this;
+    }
+
+    /* Two characters of gutter, or the left value runs straight into the right
+       label and prints "6AOrder type". */
+    const GUTTER = 2;
+    const half = Math.floor(this.width / 2);
+    const cell = (row, room) => {
+      if (!row) return ' '.repeat(room);
+      const value = ascii(String(row.value == null ? '' : row.value));
+      const space = room - value.length - 1;
+      const label = ascii(String(row.label));
+      const cut = label.length > space ? label.slice(0, Math.max(0, space - 1)) + '.' : label;
+      const gap = Math.max(1, room - cut.length - value.length);
+      return cut + ' '.repeat(gap) + value;
+    };
+
+    for (let i = 0; i < list.length; i += 2) {
+      const left = cell(list[i], half - GUTTER) + ' '.repeat(GUTTER);
+      const right = list[i + 1] ? cell(list[i + 1], this.width - half) : '';
+      this.line((left + right).replace(/\s+$/, ''));
+    }
+    return this;
+  }
+
   pair(left, right, { bold = false, strike = false } = {}) {
     const r = ascii(right);
     const room = this.width - r.length - 1;
@@ -400,7 +448,7 @@ function renderSale(sale, options = {}) {
    * read. Each one is a per-shop switch and the list is empty unless a shop
    * turned something on, so nothing moves for anybody who has not asked.
    */
-  for (const row of sale.serviceRows || []) r.pair(row.label, row.value);
+  r.serviceGrid(sale.serviceRows);
   r.rule();
 
   /*
@@ -438,6 +486,12 @@ function renderSale(sale, options = {}) {
   );
 
   r.rule();
+  /*
+   * How many dishes, immediately above what they came to. It used to sit in the
+   * header beside the table number, which is where a restaurant looks and not
+   * where a guest does - a count belongs with the arithmetic it is part of.
+   */
+  if (sale.totalQty) r.pair('Total Qty', String(sale.totalQty));
   if (sale.subTotal != null) r.pair('Subtotal', money(sale.subTotal));
   for (const t of sale.taxes || []) r.pair(t.label, money(t.amount));
   if (sale.discount) r.pair('Discount', '-' + money(sale.discount));

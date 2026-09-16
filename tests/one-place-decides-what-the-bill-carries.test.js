@@ -124,10 +124,16 @@ test('every switch actually changes the bill when it is turned on', () => {
   const dead = [];
   for (const key of SWITCHES) {
     const bill = buildBillPayload(A_TABLE_SALE, { [key]: true, ...(SHOP_DATA[key] || {}) });
+    /* totalQty is deliberately NOT a serviceRow. It is a count of what was
+       bought, so it prints beside the subtotal rather than in the header with
+       the table number - see bill-payload's totalQuantity and
+       tests/the-bill-reads-like-a-bill. A switch is alive if it changes the
+       bill ANYWHERE, not only in one block. */
     const changed =
       bill.serviceRows.length > 0 ||
       bill.source !== '' ||
       bill.fssai !== '' ||
+      String(bill.totalQty || '') !== '' ||
       bill.items.some((i) => i.hsn);
     if (!changed) dead.push(key);
   }
