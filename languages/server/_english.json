@@ -2600,6 +2600,9 @@
   "nothing_changed": [
     "src/repositories/sale.repository.js"
   ],
+  "order_changed": [
+    "src/repositories/sale.repository.js"
+  ],
   "overview": [
     "src/models/dashboard.model.js"
   ],

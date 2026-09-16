@@ -6436,9 +6436,22 @@ class SalesController extends BaseController {
 
       if (response.status === true) {
         return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404);
       }
+
+      /*
+       * A CONFLICT IS NOT A MISSING ORDER.
+       *
+       * Somebody else saved this order while the caller was looking at it.
+       * The order is there, the caller is welcome, and the request is simply
+       * out of date - which is 409, not 404. The client keys on the status
+       * rather than on the spelling of a message, so this stays true when
+       * somebody rewords it.
+       */
+      if (response.message === 'order_changed') {
+        return this.error(res, response.message, 409);
+      }
+
+      return this.error(res, response.message, 404);
     } catch (error) {
       console.error('Error in salesPaymentClose:', error);
       return this.error(res, error.message, 500);
@@ -7400,6 +7413,9 @@ class SalesController extends BaseController {
          table. It rides in the options object rather than as an eleventh
          positional argument, because ten is already too many to count. */
       const newTableId = req.body.table_id;
+      /* Which version of the order the caller was looking at. Absent from an
+         older handset, which is why nothing here requires it. */
+      const seenAt = req.body.seen_at;
       const dineType = req.body.dine_type;
       const personCount = req.body.person_count;
 
@@ -7415,7 +7431,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId }
+        { SaleModel, newTableId, seenAt }
       );
 
       if (response.status === true) {

@@ -19,8 +19,13 @@ const orderingAssistant = require('../services/ordering-assistant.service');
  * empty rather than passed through: an unknown value renders as no mark at
  * all, and a dish that LOOKS unmarked because of a typo is worse than one that
  * is honestly unmarked - somebody with an allergy reads both the same way.
+ *
+ * The list itself lives in utils/dish-columns, which is the other place that
+ * writes this field. One list: two that agree today disagree after the first
+ * one is edited, and the disagreement shows up as an unmarked dish.
  */
-const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const dishColumns = require('../utils/dish-columns');
+const DIET_MARKS = dishColumns.DIET_MARKS;
 const dishIcons = require('../utils/dish-icons');
 const dishFacts = require('../utils/dish-facts');
 const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
@@ -4019,18 +4024,88 @@ class ItemRepository extends BaseModel {
    * Three: what fits under a dish on a phone without the suggestion becoming
    * the page.
    */
-  pairingsFor(row, learned) {
+  pairingsFor(row, learned, priceOf = null) {
     const said = Array.isArray(row && row.goes_with) ? row.goes_with : [];
     const out = [];
     for (const id of said) {
       const clean = String(id || '').trim();
+      /* NEVER FILTERED. A shop that took the trouble to pair a dish has
+         overruled everything below on purpose. */
       if (clean && !out.includes(clean)) out.push(clean);
     }
+
+    /*
+     * A SUGGESTION MAY NOT COST MORE THAN WHAT IT IS SUGGESTED UNDER.
+     *
+     * Owner: "chickent briyani link to chicken 65 or mojito or coke. but coke
+     * should not suggest the briyani."
+     *
+     * salesSignals counts every pair in BOTH directions, deliberately - it is
+     * measuring which dishes travel together, and that is a symmetric fact. But
+     * a suggestion is not symmetric. Somebody holding a biryani may well want a
+     * drink; nobody holding a drink is one nudge away from a biryani, and
+     * offering one reads as a shop trying to sell rather than a shop helping.
+     *
+     * Price is the whole rule, and it is the right one because it needs
+     * nothing set up: no categories to maintain, no list of what counts as a
+     * main. A dish that costs less than the anchor is an accompaniment to it,
+     * whatever either of them is called, on a menu nobody has tidied.
+     *
+     * Without a price to compare - an older caller, a row read without the
+     * field - nothing is filtered and this behaves exactly as it did.
+     */
+    const anchor = priceOf ? Number(priceOf(row)) : NaN;
+    const self = String((row && (row._id || row.id)) || '');
     for (const pair of learned || []) {
       const id = String((pair && pair.id) || '');
-      if (id && !out.includes(id)) out.push(id);
+      if (!id || out.includes(id)) continue;
+      /* A dish is not its own accompaniment. salesSignals deduplicates each
+         bill and pairs distinct ids, so it cannot produce this today - but
+         the write path guards it on the explicit half, and a rule that holds
+         only because of what a caller happens to do is one that stops holding
+         when the caller changes. */
+      if (id === self) continue;
+      if (Number.isFinite(anchor) && anchor > 0) {
+        const candidate = Number(priceOf(id));
+        if (Number.isFinite(candidate) && candidate > anchor) continue;
+      }
+      out.push(id);
     }
     return out.slice(0, 3);
+  }
+
+  /**
+   * What each dish costs, for the rule above.
+   *
+   * Built once per read rather than per dish: a menu of three hundred asking
+   * three hundred times is the difference between one pass and ninety
+   * thousand comparisons looking up nothing.
+   *
+   * Takes either a row or an id, because the anchor arrives as a whole dish
+   * and the candidates arrive as ids.
+   */
+  priceLookup(rows = []) {
+    const prices = new Map();
+    for (const row of rows) {
+      const id = String((row && (row._id || row.id)) || '');
+      if (!id) continue;
+      const price = Number(
+        row.selling_price != null ? row.selling_price : row.price != null ? row.price : NaN
+      );
+      if (Number.isFinite(price)) prices.set(id, price);
+    }
+    return (what) => {
+      if (what == null) return NaN;
+      if (typeof what === 'object') {
+        const id = String(what._id || what.id || '');
+        const own = Number(
+          what.selling_price != null ? what.selling_price : what.price != null ? what.price : NaN
+        );
+        return Number.isFinite(own) ? own : prices.has(id) ? prices.get(id) : NaN;
+      }
+      const id = String(what);
+      return prices.has(id) ? prices.get(id) : NaN;
+    };
   }
 
   async salesSignals({ branchId, days = 30, maxSales = 4000 } = {}) {
@@ -4192,6 +4267,9 @@ class ItemRepository extends BaseModel {
          branch's own sales. A new shop gets empty maps and simply shows no
          badges and no suggestions. */
       const signals = await this.salesSignals({ branchId: branchDoc._id });
+      /* What each dish costs, so a learned suggestion never costs more than
+         the dish it is offered under. See pairingsFor. */
+      const priceOf = this.priceLookup(rows);
 
       const localNow = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const nowDay = localNow.day();
@@ -4274,7 +4352,7 @@ class ItemRepository extends BaseModel {
           /* The dishes most often on the same bill, best first. Ids only -
              the page already holds every dish and looking them up there beats
              sending three copies of each name down a phone connection. */
-          goes_with: this.pairingsFor(row, signals.related.get(String(row._id))),
+          goes_with: this.pairingsFor(row, signals.related.get(String(row._id)), priceOf),
           /*
            * What is on the plate, what is in it, how the shop bills it, and
            * what may honestly be said about it.
@@ -4716,6 +4794,9 @@ class ItemRepository extends BaseModel {
                  */
                 daily_price: '$daily_price',
                 price_set_on: '$price_set_on',
+                /* Which option sets this dish has. Resolved into whole groups
+                   below; the ids themselves never reach a client. */
+                modifier_group_ids: '$modifier_group_ids',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
                 tax: '$tax',
@@ -4855,6 +4936,73 @@ class ItemRepository extends BaseModel {
       }
 
       /*
+       * THE OPTION SETS, WHOLE, NOT AS IDS.
+       *
+       * Extra cheese, half plate, medium spicy: the shop defines them once in
+       * settings and ticks which dishes carry them. The sale model has taken
+       * the answers since V2, with "the price delta already inside the line
+       * price the client sent" - so a client that cannot SEE the options
+       * cannot charge for them, and the handset could not see them at all. A
+       * waiter typed "extra cheese" as a note, the kitchen made it, and the
+       * bill said nothing.
+       *
+       * Sent whole rather than as ids on purpose. A handset keeps its menu and
+       * sells from it on a dead network; ids would mean a second request to a
+       * settings endpoint, and the one time it matters is the time that
+       * request cannot be made.
+       */
+      try {
+        const wanted = new Set();
+        for (const group of results) {
+          for (const item of group.items || []) {
+            for (const id of item.modifier_group_ids || []) wanted.add(String(id));
+          }
+        }
+
+        let byId = new Map();
+        if (wanted.size) {
+          const sets = await this.getCollection('modifier_groups');
+          const docs = await sets.find({ license: branchDoc.license }).toArray();
+          byId = new Map(
+            docs.map((doc) => [
+              String(doc._id),
+              {
+                name: String(doc.name || ''),
+                min: Number(doc.min) || 0,
+                max: Number(doc.max) || 0,
+                options: (doc.options || []).map((option) => ({
+                  name: String(option.name || ''),
+                  price_delta: Number(option.price_delta) || 0,
+                })),
+              },
+            ])
+          );
+        }
+
+        for (const group of results) {
+          for (const item of group.items || []) {
+            const sets = (item.modifier_group_ids || [])
+              .map((id) => byId.get(String(id)))
+              /* A group the shop deleted is gone, not an empty box on a
+                 screen a waiter has to tap past. */
+              .filter((set) => set && set.options.length);
+
+            if (sets.length) item.modifier_groups = sets;
+            delete item.modifier_group_ids;
+          }
+        }
+      } catch (e) {
+        /*
+         * A shop with no option sets, or a read that failed, still sells
+         * food. Losing the extras is a smaller harm than losing the menu.
+         */
+        console.warn('[storefront] could not read option sets:', e.message);
+        for (const group of results) {
+          for (const item of group.items || []) delete item.modifier_group_ids;
+        }
+      }
+
+      /*
        * The photos, and whether the dish is on RIGHT NOW.
        *
        * Both computed exactly as the public menu computes them, so a customer
@@ -4951,11 +5099,17 @@ class ItemRepository extends BaseModel {
        * answer rather than a degraded one.
        */
       const ordering = await this.salesSignals({ branchId: branchDoc._id });
+      /* Same rule as the menu: a suggestion never costs more than what it sits
+         under. Built from every dish in every group, because a pairing can
+         cross a category. */
+      const menuPrices = this.priceLookup(
+        results.reduce((all, group) => all.concat(group.items || []), [])
+      );
       for (const group of results) {
         group.items = (group.items || []).map((item) => ({
           ...item,
           ordered_count: ordering.popularity.get(String(item.id)) || 0,
-          goes_with: this.pairingsFor(item, ordering.related.get(String(item.id))),
+          goes_with: this.pairingsFor(item, ordering.related.get(String(item.id)), menuPrices),
         }));
       }
 
@@ -6256,6 +6410,15 @@ class ItemRepository extends BaseModel {
       const insertedIds = [];
       const updatedIds = [];
 
+      /* What the file said that could not be used, in the shop's words. A
+         cell that vanishes quietly is how somebody spends an afternoon
+         typing into a column nothing reads. */
+      const importNotes = [];
+      /* Lowercased dish name to the id just written, so that a file can pair
+         its own new dishes with each other. */
+      const writtenByName = new Map();
+      const pairingRequests = [];
+
       for (const items of documentsToInsert) {
         const availableQuantity = items.available_quantity ? Number(items.available_quantity) : 0;
         const barcodeId = (items.barcode_id || '').trim();
@@ -6704,15 +6867,48 @@ class ItemRepository extends BaseModel {
           unit: unitName,
         };
 
+        /*
+         * WHAT THE FILE SAYS ABOUT THE DISH, as opposed to about its price.
+         *
+         * Owner: "you need to fill the details of menu. description and
+         * nutrition, veg or non veg, other all details needs to be filled one
+         * by one."
+         *
+         * `dish.fields` holds ONLY the columns this particular file carries,
+         * which is the whole reason this is a spread and not a list: the
+         * eighteen-column export has none of them, so an ordinary re-import
+         * writes none of them and a description somebody typed survives. See
+         * utils/dish-columns, which also holds the rules - an import may not
+         * write anything the item form would have refused.
+         */
+        const dish = dishColumns.fromRow(items);
+        for (const note of dish.notes) importNotes.push(`${updateData.name}: ${note}`);
+
         const matched = existingByRow.get(items);
+
+        Object.assign(updateData, dish.fields);
+        /* Per nutrient, not per dish: a file with only a calories column
+           leaves the protein figure alone. */
+        const carriedNutrition = dishColumns.mergeNutrition(
+          (matched && matched.nutrition) || {},
+          dish.nutrition
+        );
+        if (carriedNutrition) updateData.nutrition = carriedNutrition;
+
+        let writtenId = null;
         if (matched) {
           /* Update only the columns the CSV carries. Deliberately excluded:
              image/multi_image (the export has no image column, so a CSV can
              never carry one - overwriting them is exactly the bug), the
              created_* provenance, and the behaviour flags (track_inventory,
-             item_status, ecommerce, negative_stock,
-             description) which the CSV does not include and must not be reset
-             to their insert-time defaults. */
+             item_status, ecommerce, negative_stock) which the CSV does not
+             include and must not be reset to their insert-time defaults.
+
+             The dish detail spread in at the end is that same rule read the
+             other way round. It is a spread rather than a list of names
+             because the list is decided by the FILE: a description is
+             rewritten when the file has a description column, and left
+             exactly as it was when it does not. */
           const setFields = {
             name: updateData.name,
             itemid: updateData.itemid,
@@ -6738,12 +6934,15 @@ class ItemRepository extends BaseModel {
             sort_order: updateData.sort_order,
             unit_id: updateData.unit_id,
             unit: updateData.unit,
+            ...dish.fields,
+            ...(carriedNutrition ? { nutrition: carriedNutrition } : {}),
             updated_date: now,
             updated_by: userName,
             updated_by_id: userId,
           };
           await collection.updateOne({ _id: matched._id }, { $set: setFields });
           updatedIds.push(matched._id);
+          writtenId = matched._id;
           // A re-import that changed any tracked field is history like any other.
           await this.logItemChanges(
             { _id: matched._id, name: setFields.name, branch_id: branchObjectId },
@@ -6756,8 +6955,21 @@ class ItemRepository extends BaseModel {
           const itemDocument = { ...insertData, ...updateData };
           const insertOneResult = await collection.insertOne(itemDocument);
           insertedIds.push(insertOneResult.insertedId);
+          writtenId = insertOneResult.insertedId;
+        }
+
+        /* The name another row's pairing may be referring to. */
+        if (updateData.name) writtenByName.set(updateData.name.toLowerCase(), String(writtenId));
+        if (dish.pairings) {
+          pairingRequests.push({ id: writtenId, name: updateData.name, names: dish.pairings });
         }
       }
+
+      await this._resolveImportedPairings(pairingRequests, writtenByName, importNotes, {
+        collection,
+        branchObjectId,
+        licenseObjectId,
+      });
 
       if (insertedIds.length > 0 || updatedIds.length > 0) {
         const touched = await collection
@@ -6769,7 +6981,7 @@ class ItemRepository extends BaseModel {
         return {
           status: true,
           data: touched.map((i) => BaseModel.simplifyFields(i)),
-          message: `Import complete: ${parts.join(', ')}`,
+          message: `Import complete: ${parts.join(', ')}${this._importNotesSuffix(importNotes)}`,
         };
       }
 
@@ -6782,6 +6994,106 @@ class ItemRepository extends BaseModel {
       console.error('Error in ItemRepository.importItems:', error);
       return { status: false, data: null, message: error.message };
     }
+  }
+
+  /**
+   * PAIRINGS ARE WRITTEN LAST, BECAUSE A FILE PAIRS BY NAME.
+   *
+   * Owner: "cross selling also do that. example chickent briyani link to
+   * chicken 65 or mojito or coke."
+   *
+   * Nobody types an ObjectId into a spreadsheet, so a file says "Chicken 65"
+   * and the id is looked up here. It has to run after every row has been
+   * written, or a menu imported in one go could not pair its own dishes with
+   * each other - which is the normal case, since the file IS the menu.
+   *
+   * A name the file itself carries matches whatever the case, because a file
+   * and a menu get typed by different people on different days. A name that is
+   * on the menu but not in the file is looked up once, as an anchored
+   * case-insensitive exact match built through safe-search, so a dish called
+   * "Chicken 65 (Boneless)" is a name and not a pattern.
+   *
+   * A name that is nowhere is REPORTED, never guessed at. The same three rules
+   * the item form applies still apply here - no dish pairs with itself, no
+   * pairing is listed twice, and six is the cap - because an import may not
+   * write what the form would have refused.
+   *
+   * @param {Array} requests  {id, name, names} per row that carried the column
+   * @param {Map} writtenByName  lowercased name to id, for this file's own rows
+   * @param {Array} notes  appended to, in the shop's words
+   */
+  async _resolveImportedPairings(requests, writtenByName, notes, ctx) {
+    if (!Array.isArray(requests) || !requests.length) return;
+    const { collection, branchObjectId, licenseObjectId } = ctx;
+
+    const wanted = [];
+    for (const req of requests) {
+      for (const name of req.names) {
+        const key = String(name).toLowerCase();
+        if (!writtenByName.has(key) && !wanted.includes(name)) wanted.push(name);
+      }
+    }
+
+    /* One query, bounded. A file naming two hundred dishes it did not also
+       carry is not a menu, and a query built from an unbounded list of
+       patterns is a way to hold the database open. */
+    if (wanted.length) {
+      const patterns = wanted
+        .slice(0, 200)
+        .map((name) => new RegExp('^' + searchPattern(name) + '$', 'i'));
+      const found = await collection
+        .find(
+          {
+            name: { $in: patterns },
+            license: licenseObjectId,
+            $or: [{ 'branch_access.branch_id': branchObjectId }, { branch_id: branchObjectId }],
+          },
+          { projection: { name: 1 } }
+        )
+        .toArray();
+      for (const doc of found || []) {
+        const key = String((doc && doc.name) || '').toLowerCase();
+        if (key && !writtenByName.has(key)) writtenByName.set(key, String(doc._id));
+      }
+    }
+
+    for (const req of requests) {
+      const ids = [];
+      for (const name of req.names) {
+        const id = writtenByName.get(String(name).toLowerCase());
+        if (!id) {
+          notes.push(`${req.name}: "${name}" is not a dish here, so it was not paired`);
+          continue;
+        }
+        if (id === String(req.id) || ids.includes(id)) continue;
+        ids.push(id);
+      }
+      await collection.updateOne(
+        { _id: req.id, license: licenseObjectId },
+        { $set: { goes_with: ids.slice(0, 6) } }
+      );
+    }
+  }
+
+  /**
+   * What the import could not use, said at the end of the message it already
+   * shows.
+   *
+   * In the message rather than beside it because the import result is an array
+   * of rows the screen renders as a table, and a second shape reaching a
+   * screen that does not read it is the same as saying nothing. Three, then a
+   * count: a shop that mistyped one column produces one note per row, and a
+   * hundred of them is not a message, it is a wall.
+   *
+   * @param {string[]} notes
+   * @returns {string} a suffix, or the empty string
+   */
+  _importNotesSuffix(notes) {
+    const said = Array.isArray(notes) ? notes.filter(Boolean) : [];
+    if (!said.length) return '';
+    const shown = said.slice(0, 3).join('; ');
+    const rest = said.length - 3;
+    return rest > 0 ? `. ${shown}; and ${rest} more` : `. ${shown}`;
   }
 
   /**
