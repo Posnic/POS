@@ -1,4 +1,6 @@
 "use strict";
+
+const kitchenCall = require("./kitchen-call");
 /*
  * The sound an online order makes.
  *
@@ -107,6 +109,23 @@ const WAITING = () =>
     { frequency: 988, ms: 150, volume: 0.5 },
     { frequency: 740, ms: 150, volume: 0.5 },
     { frequency: 988, ms: 260, volume: 0.5 },
+  ]);
+
+/*
+ * THE TING A KITCHEN HEARS.
+ *
+ * One rising pair, short and bright, and louder than the counter's chime
+ * because it has to cross a room with extraction fans running. Deliberately
+ * not either of the other two: a cook must never have to work out whether that
+ * was their ticket or the counter's online order.
+ *
+ * It ends before the speech starts. A speaker still ringing while it talks
+ * loses the first two words, and the first two words are the table number.
+ */
+const TING = () =>
+  sequence([
+    { frequency: 1568, ms: 90, volume: 0.6 },
+    { frequency: 2093, ms: 150, volume: 0.6 },
   ]);
 
 function dataUri(buffer) {
@@ -302,7 +321,41 @@ class OrderAlert {
   }
 }
 
+/**
+ * Say a ticket out loud in the kitchen.
+ *
+ * The main process cannot speak any more than it can play a sound, so both the
+ * tone and the words go to a window - the only part of the app with an audio
+ * device and a speech engine.
+ *
+ * Quiet when there is nothing worth saying and quiet when no window is open,
+ * which is correct: there is nobody there to hear it.
+ */
+function announceKitchenTicket(getWindow, ticket) {
+  const words = kitchenCall.say(ticket);
+  if (!words) return false;
+
+  try {
+    const win = typeof getWindow === "function" ? getWindow() : null;
+    if (!win || win.isDestroyed()) return false;
+
+    win.webContents.send("posnic:kitchen-call", {
+      sound: dataUri(TING()),
+      say: words,
+      table: ticket && ticket.table ? String(ticket.table) : "",
+    });
+    return true;
+  } catch (e) {
+    /* A closing window, a machine asleep: quiet, never a crash. A kitchen that
+       missed one ticket is a worse evening; a till that fell over is a worse
+       week. */
+    return false;
+  }
+}
+
 module.exports = {
+  announceKitchenTicket,
+  TING,
   OrderAlert,
   tone,
   sequence,

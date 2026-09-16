@@ -130,6 +130,9 @@ const MongoDBManager = require('./mongodb-manager');
 const KOTManager = require('./kot-manager');
 const BillManager = require('./bill-manager');
 const { OrderAlert } = require('./order-alert');
+/* Which machine is the one in the kitchen. Per machine, not per shop: only one
+   of them has the speaker. See src/kitchen-announce.js. */
+const kitchenAnnounce = require('./kitchen-announce');
 const SyncAgentManager = require('./sync-agent-manager');
 const { AssetUpdater } = require('./asset-updater');
 
@@ -4522,6 +4525,9 @@ app.whenReady().then(async () => {
    * standing there to hear it.
    */
   orderAlert = new OrderAlert({ getWindow: () => mainWindow });
+  /* So the per-machine switch can find userData without importing electron
+     itself, which is what lets it be read in a test. */
+  kitchenAnnounce.useApp(app);
   console.log('OrderAlert initialized');
 
   /*
@@ -4546,6 +4552,11 @@ app.whenReady().then(async () => {
 
   /* Somebody dealt with the queue. The alarm repeats until it is empty, and
      this is how the page says an order stopped waiting. */
+  /* Turned on once, on the machine by the pass. Off everywhere else, so an
+     update never makes a counter till start talking in front of customers. */
+  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.wanted());
+  ipcMain.handle('kitchen-announce:set', (_event, on) => kitchenAnnounce.set(on === true));
+
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {
     if (orderAlert) orderAlert.resolve(saleId);
     return true;

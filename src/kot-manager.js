@@ -11,6 +11,8 @@ const os = require('os');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 const { normalizeTargets, pageSizeFor, columnsFor } = require('./printer-targets');
+const orderAlert = require('./order-alert');
+const kitchenAnnounce = require('./kitchen-announce');
 const { renderKitchenTicket, spiceLine } = require('./escpos-kot');
 const printLedger = require('./print-ledger');
 
@@ -582,6 +584,19 @@ class KOTManager {
             /* Written down first, then printed. See _claimForPrint. */
             if (!this._claimForPrint(jobKey, { saleId, kind: jobType })) continue;
 
+            /*
+             * AND THE KITCHEN IS TOLD, out loud.
+             *
+             * Here rather than after printing, on purpose. A printer that has
+             * jammed or run out of paper is exactly when a kitchen most needs
+             * to hear that a table has ordered - the silent failure this is for
+             * is a ticket nobody knows about.
+             *
+             * Behind the same claim that stops a ticket printing twice, so a
+             * poll that sees the same job again does not say it again.
+             */
+            this._announceToKitchen(sale, jobItems, jobType);
+
             const jobResults = await this.silentPrint(
               { ...sale, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems },
               printerNames
@@ -819,6 +834,33 @@ class KOTManager {
         created_date: sale.created_date || null,
       }
     });
+  }
+
+  /*
+   * Say a ticket out loud, where a machine has been told to.
+   *
+   * PER MACHINE, NOT PER SHOP: only the one in the kitchen has the speaker,
+   * and a counter till that started talking is a till somebody mutes - which
+   * mutes the kitchen's own speaker with it.
+   *
+   * Never throws. A kitchen that missed one announcement is a worse evening; a
+   * till that fell over printing is a worse week.
+   */
+  _announceToKitchen(sale, items, jobType) {
+    try {
+      if (!kitchenAnnounce.wanted()) return;
+
+      orderAlert.announceKitchenTicket(
+        () => BrowserWindow.getAllWindows().find((w) => w && !w.isDestroyed()) || null,
+        {
+          table: String(sale.table_number || sale.tableNo || sale.table || sale.table_no || ''),
+          items,
+          changed: String(jobType || '').toLowerCase() === 'modified',
+        }
+      );
+    } catch (e) {
+      /* Quiet. This is an announcement, not the ticket. */
+    }
   }
 
   async silentPrint(sale, printerNames, skipLog = false) {
