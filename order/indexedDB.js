@@ -1660,7 +1660,12 @@ async function removeCartItem(id) {
 async function updateCartQuantity(id, change) {
     clearOrderAttemptId();
     const storedProducts = await getData("products");
-    const storedProduct = storedProducts.find(item => String(item.id) === String(id));
+    /* `id` here is the LINE key, which for a dish with extras is not the
+       dish's id. The line says which dish it is; see optionKey. */
+    const currentLines = await getCartData();
+    const forLine = currentLines.find((one) => String(one.id) === String(id));
+    const dishId = forLine ? dishIdOf(forLine) : String(id);
+    const storedProduct = storedProducts.find(item => String(item.id) === dishId);
     const currentCart = await getCartData();
     const result = KioskCore.changeCartQuantity(currentCart, storedProduct, id, change);
     const cartData = result.cart;
@@ -1939,6 +1944,24 @@ function catalogueItem(item, categoryName) {
         tags: Array.isArray(item.tags) ? item.tags : [],
         marks: Array.isArray(item.marks) ? item.marks : [],
         claims: Array.isArray(item.claims) ? item.claims : [],
+        /*
+         * WHAT THE SHOP OFFERS ON TOP, and the fourth field this
+         * literal has had to be taught about.
+         *
+         * The till has priced extras from the shop's own option
+         * documents since the handset got them, and the storefront
+         * sends them to every client. This page named none of them,
+         * so a customer ordering online could not ask for extra
+         * cheese the waiter standing next to them could ring up.
+         *
+         * Sent whole - name, min, max and the options with their
+         * deltas - so the sheet can draw a picker without a second
+         * request. The DELTAS ARE FOR DISPLAY ONLY: what goes back
+         * to the shop is which options were chosen, never what they
+         * cost. A page that could name the price of cheese could
+         * name a discount nobody agreed to.
+         */
+        modifier_groups: Array.isArray(item.modifier_groups) ? item.modifier_groups : [],
         /* Whether the kitchen said it can cook this one to
            order. See api/src/utils/spice-level.js. */
         spice_choice: item.spice_choice === true,
@@ -2733,6 +2756,73 @@ function lightChip(key) {
 //     await updateQuantity(productId, 1);
 // });
 // ✅ Update Quantity and Save to IndexedDB
+/*
+ * A BASKET LINE IS A DISH AND A CHOICE, NOT A DISH.
+ *
+ * Two dosas, one with extra cheese, are two lines. The basket has always been
+ * keyed by the dish's id, so a second dosa found the first line and added to
+ * it - which is right until the two are not the same thing. Picking cheese on
+ * the second would have silently changed the first, and the kitchen would
+ * have made two cheesy dosas for somebody who asked for one.
+ *
+ * So the KEY becomes the dish plus what was chosen, and the dish's real id
+ * rides alongside as `item_id`. Everything that looks a dish up from a line
+ * reads `item_id` first and falls back to `id`, which is what a line written
+ * before this change still carries.
+ *
+ * Sorted before it is joined, so the same two options picked in either order
+ * are one line rather than two.
+ */
+function optionKey(itemId, chosen) {
+    const picked = (Array.isArray(chosen) ? chosen : [])
+        .filter((one) => one && one.group && one.name)
+        .map((one) => String(one.group) + "\u001f" + String(one.name))
+        .sort();
+    return picked.length ? String(itemId) + "\u001e" + picked.join("\u001d") : String(itemId);
+}
+
+/** The dish a basket line is for. `id` alone is a line written before options. */
+function dishIdOf(line) {
+    return String((line && (line.item_id || line.id)) || "");
+}
+
+/** What the chosen extras add to one unit, for the price shown on the page. */
+function extrasFor(chosen) {
+    return (Array.isArray(chosen) ? chosen : []).reduce(
+        (sum, one) => sum + (Number(one && one.price_delta) || 0),
+        0
+    );
+}
+
+/*
+ * Put a dish in the basket with the extras that were chosen for it.
+ *
+ * Goes through KioskCore.changeCartQuantity like every other add, so there is
+ * one rule about what a line looks like - then stamps the three fields that
+ * rule knows nothing about.
+ */
+async function addWithOptions(itemId, chosen, change) {
+    const storedProducts = await getData("products");
+    const product = storedProducts.find((one) => String(one.id) === String(itemId));
+    if (!product) return null;
+
+    const key = optionKey(itemId, chosen);
+    const cart = await getCartData();
+    /* The product under a line key, so a new line carries the dish's name and
+       price while being keyed by the choice. */
+    const result = KioskCore.changeCartQuantity(cart, { ...product, id: key }, key, change);
+    const line = result.cart.find((one) => String(one.id) === key);
+    if (line) {
+        line.item_id = String(itemId);
+        line.chosen = (Array.isArray(chosen) ? chosen : []).filter((one) => one && one.group && one.name);
+        /* The shop prices the extras itself; this is what the page shows. */
+        line.price = (Number(product.price) || 0) + extrasFor(line.chosen);
+    }
+    await saveCartData(result.cart);
+    await updateCart();
+    return line;
+}
+
 async function updateQuantity(id, change) {
     clearOrderAttemptId();
     const storedProducts = await getData("products");
@@ -3066,8 +3156,24 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
         // 🧾 Prepare payload: [{ id, quantity }]
         const payload = cartItems.map(item => {
             return {
-                item_id: item.id,
+                /*
+                 * The DISH, not the line. A line for a dish with extras is
+                 * keyed by the choice, and sending that key would be sending
+                 * the shop an id it has never heard of.
+                 */
+                item_id: dishIdOf(item) || item.id,
                 item_quantity: item.quantity,
+                /*
+                 * What was chosen, by NAME, and never what it costs. The shop
+                 * prices its own extras from its own option documents - see
+                 * _priceModifiers in sale.repository.js - so a page that sent
+                 * a delta would either be ignored or believed, and both are
+                 * worse than not sending one.
+                 */
+                modifiers: (Array.isArray(item.chosen) ? item.chosen : []).map((one) => ({
+                    group: String(one.group || ""),
+                    name: String(one.name || "")
+                })),
                 gst: item.tax_price * item.quantity,
                 /* What the customer asked for on this line; printed on the
                    kitchen ticket under the dish. */
