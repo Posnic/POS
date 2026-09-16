@@ -489,6 +489,23 @@ app.use((req, res, next) => {
 });
 
 // XSS protection middleware
+/*
+ * THIS ONLY WORKS BECAUSE THE MIDDLEWARE ABOVE RAN FIRST.
+ *
+ * Express 5 makes `req.query` a getter that re-parses the query string on
+ * every access, so neither mutating it (as this does) nor assigning to it (as
+ * middleware/validateRequest.js does) has any effect on the real thing - the
+ * next read parses the string again and throws the changes away.
+ *
+ * The NoSQL guard above replaces that getter with a plain, writable property.
+ * From that point on both styles work, which is why this XSS pass and the
+ * per-route validator both started working again when it was fixed, without
+ * either being touched.
+ *
+ * So the order is load bearing: move the guard above below this, or take it
+ * out, and THREE sanitisers stop running in silence. Pinned by
+ * tests/unit/the-query-sanitiser-actually-sanitises.test.js.
+ */
 app.use((req, res, next) => {
   // Sanitize query parameters
   if (req.query) {
