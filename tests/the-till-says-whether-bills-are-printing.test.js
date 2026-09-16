@@ -60,12 +60,20 @@ async function render(status) {
     bpRows: { innerHTML: '', style: {} },
     bpPrinted: { textContent: '', style: {} },
     bpTrouble: { textContent: '', style: { display: 'none' } },
+    /* The bills waiting on a person, drawn by the same refresh. Its own
+       behaviour is pinned in a-bill-that-never-printed-is-visible.test.js;
+       here it only has to exist, or the refresh throws before it draws a
+       single row and every test in this file fails for the wrong reason. */
+    bpWaiting: { textContent: '', style: { display: 'none' } },
+    bpWaitingRows: { textContent: '', children: [], appendChild() {}, append() {} },
   };
 
   const document = { getElementById: (id) => nodes[id] || null };
   const window = { electronAPI: { bill: { getStatus: async () => status } } };
 
-  const source = `${lift('bpWhen')}\n${lift('bpRow')}\n${lift('bpRefresh')}\nreturn bpRefresh;`;
+  const source =
+    `${lift('bpWhen')}\n${lift('bpRow')}\n${lift('bpDrawWaiting')}\n` +
+    `${lift('bpRefresh')}\nreturn bpRefresh;`;
   // eslint-disable-next-line no-new-func
   const fn = new Function('document', 'window', 'Date', source)(document, window, Date);
   await fn();
@@ -74,6 +82,7 @@ async function render(status) {
     rows: nodes.bpRows.innerHTML,
     printed: nodes.bpPrinted.textContent,
     trouble: nodes.bpTrouble.style.display === 'block' ? nodes.bpTrouble.textContent : '',
+    waiting: nodes.bpWaiting.style.display === 'block',
   };
 }
 

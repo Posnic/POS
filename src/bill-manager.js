@@ -139,6 +139,9 @@ function cloudApiUrl(configured) {
   return cloud ? cloud.replace(/\/+$/, '') : '';
 }
 
+/* How often a till re-reads what is waiting on a person. See _readWaiting. */
+const WAITING_EVERY_MS = 60 * 1000;
+
 class BillManager {
   constructor(hardwareManager, options = {}) {
     this.hardware = hardwareManager;
@@ -551,6 +554,17 @@ class BillManager {
    * went wrong earlier.
    */
   async _readWaiting(base, key) {
+    /*
+     * ONCE A MINUTE AT MOST, not once a drain.
+     *
+     * A drain can run every few hundred milliseconds while a queue is
+     * emptying, and this list only changes when a job goes stale - which takes
+     * minutes - or when one runs out of attempts. Asking on every pass would
+     * double this till's traffic on a shop network to re-read a list that had
+     * not moved, and shop networks here are already the thing under strain.
+     */
+    const since = this.waitingReadAt ? Date.now() - new Date(this.waitingReadAt).getTime() : Infinity;
+    if (since < WAITING_EVERY_MS) return;
     try {
       const response = await fetch(`${base}/sales/printJobsNeedingAttention`, {
         method: 'POST',

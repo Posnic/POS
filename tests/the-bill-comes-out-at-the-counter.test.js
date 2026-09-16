@@ -669,9 +669,17 @@ test('it prints what the job carried, without looking anything up', async () => 
   const paper = Buffer.from(hardware.jobs[0].bytes).toString('latin1');
   assert.match(paper, /Chicken Biryani/, 'the payload never reached the paper');
 
-  const lookups = calls.filter(
-    (c) => !c.url.includes('/claimPrintJobs') && !c.url.includes('/finishPrintJob')
-  );
+  /*
+   * What this forbids is a LOOKUP: going back for the sale, the shop, the
+   * items - anything the job already carried. It is not a ban on the till ever
+   * speaking again.
+   *
+   * Named rather than "everything except claim and finish", because that
+   * shape made the assertion fail the day a status read was added on the same
+   * poll, and a test that has to change whenever an unrelated call appears is
+   * not pinning the thing it says it pins.
+   */
+  const lookups = calls.filter((c) => /\/sales\/(getSale|salePage|getById)|\/items|\/branches/.test(c.url));
   assert.deepEqual(lookups, [], 'it went back to the API for something it was already handed');
 });
 
