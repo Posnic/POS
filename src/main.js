@@ -4600,6 +4600,27 @@ app.whenReady().then(async () => {
     console.warn('[kitchen-screen] did not start:', e && e.message);
   }
 
+  /*
+   * AND SOMETHING TO PUT ON THEM.
+   *
+   * `setTickets` is the only way anything reaches a kitchen screen and it was
+   * called from nowhere, so a screen on a wall showed an empty list for ever
+   * while setup mode filled itself with samples and looked perfect. This is
+   * the feed. It only runs once a branch is known, and a shop with no screen
+   * configured opens none and pays nothing for it.
+   */
+  try {
+    const feed = require('./kitchen-screen-feed');
+    const kotConfig = kotManager ? await kotManager.loadConfig() : null;
+    const branchId = (kotConfig && kotConfig.branchId) || '';
+    if (branchId) {
+      feed.start({ branchId });
+      console.log('Kitchen screen feed started');
+    }
+  } catch (e) {
+    console.warn('[kitchen-screen] nothing to show on it:', e && e.message);
+  }
+
   // Start server
   startServer();
 });
@@ -5334,6 +5355,11 @@ app.on('before-quit', async event => {
   /* The kitchen screens go first: they own nothing and hold nothing, and a
      frameless window left on a second display outlives the tray icon. */
   try {
+    try {
+      require('./kitchen-screen-feed').stop();
+    } catch (e) {
+      /* nothing to stop */
+    }
     require('./kitchen-screen').closeAll();
   } catch (e) {
     /* ignored: never delay a shutdown for a screen */
