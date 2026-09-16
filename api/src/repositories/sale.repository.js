@@ -38,7 +38,7 @@ async function withDayparts(shop) {
   }
 }
 
-const { notifyOrderAttention } = require('../helpers/order-attention');
+const { notifyOrderAttention, notifyOrderResolved } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
 const billNumber = require('../utils/bill-number');
 const orderProgress = require('../utils/order-progress');
@@ -8758,13 +8758,36 @@ class SalesRepository {
       /* The window is applied HERE rather than in the query so one rule about
          what "open" means lives in one file, and a stale row still gets
          cleared by the next acknowledgement rather than lingering invisibly. */
-      return rows
-        .filter((row) => waiterCall.stillOpen(row))
-        .map((row) => ({
-          call_id: String(row._id),
-          table_number: String(row.table_number || ''),
-          called_at: row.called_at || null,
-        }));
+      const open = rows.filter((row) => waiterCall.stillOpen(row));
+
+      /*
+       * AND ONE THAT AGED OUT STOPS THE ALARM TOO.
+       *
+       * A call raises the repeating alarm, and that alarm runs until something
+       * says the thing was dealt with. A call nobody ever answered drops out
+       * of the window at twenty minutes and stops being drawn on every screen
+       * - so without this the till goes on escalating about something no
+       * screen can show and nobody can answer. An alarm that cannot be
+       * answered is exactly the kind that teaches people to ignore alarms.
+       *
+       * Said from here because this is what the till and the handset both
+       * poll, so the silence arrives wherever somebody is actually watching.
+       */
+      rows
+        .filter((row) => !waiterCall.stillOpen(row))
+        .forEach((row) => {
+          notifyOrderResolved({
+            branchId: String(branchId || ''),
+            saleId: String(row._id),
+            state: 'unanswered',
+          });
+        });
+
+      return open.map((row) => ({
+        call_id: String(row._id),
+        table_number: String(row.table_number || ''),
+        called_at: row.called_at || null,
+      }));
     } catch (e) {
       /* A queue that cannot be read must not take the orders down with it. */
       console.warn('[waiter calls] could not be read:', e.message);
@@ -8793,6 +8816,27 @@ class SalesRepository {
       $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
     });
     if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
+
+    /*
+     * AND THE ALARM STOPS.
+     *
+     * A call raises the same repeating alarm an order waiting for approval
+     * raises, and until now NOTHING could ever stop it: the only thing that
+     * announced a resolution was the sweeper that decides unanswered orders,
+     * and a call does not live in the sales collection. So a table called
+     * once and the desktop till escalated about it for the rest of the day,
+     * long after the waiter had walked over.
+     *
+     * Said from the server rather than from the page that pressed the button,
+     * because the person who answers is usually holding the handset and the
+     * till making the noise never hears from it.
+     */
+    notifyOrderResolved({
+      branchId: String(branchId || ''),
+      saleId: String(callId),
+      state: 'seen',
+    });
+
     return { status: true, message: 'On the way', data: { call_id: String(callId) } };
   }
 
