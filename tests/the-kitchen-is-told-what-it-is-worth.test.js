@@ -114,3 +114,40 @@ test('the price comes before the note, not inside it', () => {
   assert.match(ticket, /\*\* Fry it dry \*\*/);
   assert.ok(!/\*\*.*500.*\*\*/.test(ticket), 'the price is not in the note');
 });
+
+/*
+ * HOW MANY PLATES ARE ON THE TICKET.
+ *
+ * Owner: "KOT total items also print and voice read please."
+ *
+ * A cook counts what they have plated against what the ticket asked for, and a
+ * long ticket is exactly where one line gets missed. The number at the foot is
+ * what makes that check possible without re-reading every line.
+ */
+
+test('THE TICKET FOOTS THE PLATE COUNT', () => {
+  const ticket = printed([
+    { item_name: 'Chicken Biryani', item_quantity: 1 },
+    { item_name: 'Butter Naan', item_quantity: 2 },
+  ]);
+
+  assert.match(ticket, /TOTAL ITEMS/);
+  assert.match(ticket, /TOTAL ITEMS\s+3/);
+});
+
+test('plates, not lines, so it matches what the voice says', () => {
+  /* One biryani and two naan is three things to cook and two lines above. The
+     speaker counts it the same way - see src/kitchen-call.js. */
+  const ticket = printed([
+    { item_name: 'A', item_quantity: 4 },
+    { item_name: 'B', item_quantity: 1 },
+  ]);
+
+  assert.match(ticket, /TOTAL ITEMS\s+5/);
+});
+
+test('a ticket with nothing on it foots nothing', () => {
+  const ticket = printed([]);
+
+  assert.ok(!/TOTAL ITEMS/.test(ticket));
+});
