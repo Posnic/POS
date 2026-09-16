@@ -153,26 +153,123 @@
     new: ['lang_new_online_order', 'New order'],
   };
 
-  /* What a customer asked to have changed, written as dish names and
-     quantities - the same sentence the queue page uses, because whoever reads
-     it is standing at a till in a hurry. */
+  /*
+   * THE WHOLE ORDER, BEFORE AND AFTER.
+   *
+   * Owner: "when customer aks for change. cancel then desktop or captain app
+   * clearly can see the changes. what was before and what change customer
+   * wahts? cancel item or cancel order."
+   *
+   * It listed only the lines that MOVED. "Chicken Biryani: 2 to 1" tells you
+   * nothing about whether that is most of the order or a detail of it, and a
+   * person deciding in a hurry has to open the sales screen to find out - by
+   * which time they are no longer deciding in a hurry.
+   *
+   * So every line is drawn, the untouched ones dimmed, with what it was and
+   * what it would become side by side. A line going to nothing says REMOVED
+   * in words rather than "1 to 0", because zero of something is a sentence
+   * nobody reads at a glance.
+   */
   function whatChanged(order) {
     var wants = (order.change_requested && order.change_requested.items) || [];
     if (!wants.length) return '';
+
+    var asked = {};
+    wants.forEach(function (one) {
+      asked[String(one.item_id || one.name || '')] = one;
+    });
+
+    /*
+     * The order as it stands, plus anything asked for that is not on it.
+     * `items` is what the shop currently has; a dish the customer wants that
+     * was never on the order has no line to sit on, so it gets one.
+     */
+    var rows = (order.items || []).map(function (line) {
+      var key = String(line.item_id || line.name || '');
+      var want = asked[key];
+      return {
+        name: line.name || '',
+        was: Number(line.quantity || 0),
+        now: want ? Number(want.quantity || 0) : Number(line.quantity || 0),
+        moved: !!want,
+      };
+    });
+    var seen = {};
+    rows.forEach(function (r) { seen[r.name] = true; });
+    wants.forEach(function (one) {
+      var name = one.name || '';
+      if (!name || seen[name]) return;
+      rows.push({ name: name, was: Number(one.was || 0), now: Number(one.quantity || 0), moved: true });
+    });
+
     return (
       '<ul class="request-dock-diff">' +
-      wants
-        .map(function (one) {
-          var name = safe(one.name || '');
-          var was = Number(one.was || 0);
-          var now = Number(one.quantity || 0);
-          if (!was) return '<li>+ ' + now + ' &times; ' + name + '</li>';
-          if (!now) return '<li>' + i18n.t('lang_remove', 'Remove') + ' ' + name + '</li>';
-          return '<li>' + name + ': ' + was + ' &rarr; ' + now + '</li>';
+      rows
+        .map(function (r) {
+          var name = safe(r.name);
+          if (!r.moved) {
+            /* Untouched, and shown anyway: what is NOT changing is half of
+               what the decision is about. */
+            return '<li class="is-same">' + r.was + ' &times; ' + name + '</li>';
+          }
+          if (!r.now) {
+            return (
+              '<li class="is-gone">' + name + ' <b>' +
+              i18n.t('lang_removed', 'removed') + '</b></li>'
+            );
+          }
+          /*
+           * A dish that was not on the order at all.
+           *
+           * A customer cannot ASK for one any more - more food needs nobody's
+           * permission and goes straight to the pass - but a request made
+           * before that rule shipped is still sitting in the queue, and a
+           * card that rendered it as "0 to 1" would be a worse sentence than
+           * the one it replaced.
+           */
+          if (!r.was) return '<li class="is-moved">+ ' + r.now + ' &times; ' + name + '</li>';
+          return '<li class="is-moved">' + name + ' <b>' + r.was + ' &rarr; ' + r.now + '</b></li>';
         })
         .join('') +
       '</ul>'
     );
+  }
+
+  /*
+   * WHICH QUESTION THIS IS, IN THE WORDS THE ANSWER IS ABOUT.
+   *
+   * "Asked to change" covered a customer dropping one naan and a customer
+   * emptying the order, which are not the same decision. Now that ADDING
+   * never becomes a request - more food needs nobody's permission, see
+   * splitTheWish in customer-order.service.js - every change request is
+   * something being taken away, and the card can say which.
+   */
+  function askedFor(order) {
+    var wants = (order.change_requested && order.change_requested.items) || [];
+    var dropped = wants.filter(function (one) { return !Number(one.quantity || 0); }).length;
+    var onOrder = (order.items || []).length;
+
+    /*
+     * SPELLED OUT, not looked up in a table.
+     *
+     * The coverage scanner collects keys by matching the two-argument form of
+     * i18n.t written out in full. A key reached through a
+     * variable is invisible to it: never gathered, never translated, and
+     * falling back to English in every language - which renders perfectly,
+     * which is why nothing ever fails. This file has already paid that once,
+     * when a local t() helper hid fourteen of its words.
+     */
+    if (order.cancel_requested === true) {
+      return i18n.t('lang_cancel_whole_order', 'Cancel the whole order');
+    }
+    /* Every line gone is a cancellation in all but name, and should read as
+       one: a shop that says yes to this has no order left. */
+    if (dropped && dropped >= onOrder) {
+      return i18n.t('lang_remove_everything', 'Remove everything on the order');
+    }
+    if (dropped === 1) return i18n.t('lang_remove_one_item', 'Remove an item');
+    if (dropped > 1) return i18n.t('lang_remove_items', 'Remove some items');
+    return i18n.t('lang_fewer_asked', 'Asked for fewer');
   }
 
   function card(order) {
@@ -201,9 +298,13 @@
        * fourteen of its words. The older entries in WORDS are in the packs
        * from before that lesson; anything new goes here.
        */
-      (kind === 'waiter'
-        ? i18n.t('lang_table_is_calling', 'Table is calling')
-        : i18n.t(words[0], words[1])) +
+      safe(
+        kind === 'waiter'
+          ? i18n.t('lang_table_is_calling', 'Table is calling')
+          : kind === 'change' || kind === 'cancel'
+            ? askedFor(order)
+            : i18n.t(words[0], words[1])
+      ) +
       '</span>' +
       '<span class="request-dock-when">' + safe(howLongAgo(order.created_date)) + '</span>' +
       '</div>' +

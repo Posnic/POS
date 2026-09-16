@@ -40,6 +40,8 @@ async function withDayparts(shop) {
 
 const { notifyOrderAttention } = require('../helpers/order-attention');
 const orderApproval = require('../utils/order-approval');
+const billNumber = require('../utils/bill-number');
+const orderProgress = require('../utils/order-progress');
 const spiceLevel = require('../utils/spice-level');
 const waiterCall = require('../utils/waiter-call');
 const readyBy = require('../utils/ready-by');
@@ -65,6 +67,21 @@ const partnerVenues = require('../utils/partner-venues');
 /* The fallback when channelState has no sentence of its own. It never should,
    but a refusal with an empty message would tell a customer nothing. */
 const ONLINE_ORDERING_DISABLED = 'Online ordering is not enabled for this branch.';
+
+/*
+ * The shop's own answering speed, remembered for a few minutes.
+ *
+ * Every phone watching an order asks for this on every poll, and the answer
+ * is a property of the SHOP that moves over days. Reading fifty sales per
+ * poll per phone to produce the same number would be the whole cost of this
+ * feature, for nothing.
+ */
+const ACCEPT_HISTORY_DAYS = 14;
+const ACCEPT_HISTORY_ORDERS = 50;
+const ACCEPT_ENOUGH_ORDERS = 5;
+const ACCEPT_OUTLIER_MINUTES = 120;
+const ACCEPT_CACHE_MS = 5 * 60 * 1000;
+const ACCEPT_MINUTES_CACHE = new Map();
 
 const activeTenantFilter = () => ({
   ...(BaseModel.license ? { license: BaseModel.license } : {}),
@@ -10143,6 +10160,16 @@ class SalesRepository {
       bill_ready: paymentStatus === 'Paid' && !cancelled,
       payment_status: paymentStatus,
       payment_mode: String(order.payment_mode || ''),
+      /*
+       * WHERE IT HAS GOT TO, as a trail of what has actually happened.
+       *
+       * Stage 5's whole point, and the reason it lives here rather than in
+       * the service: every door a customer's phone can reach this order
+       * through - the read, the history page's bulk read, a change, a
+       * cancellation - is drawn from this one shape, so none of them can
+       * describe the same order differently. See utils/order-progress.
+       */
+      progress: orderProgress.progressOf(order),
       /* Asked for, and waiting on the shop. */
       cancel_requested: order.cancel_requested === true,
       fulfilment: String(order.fulfilment || ''),
@@ -10161,6 +10188,95 @@ class SalesRepository {
       delivery_fee: Number(order.delivery_fee || 0),
       shop: String(order.branch_name || ''),
     };
+  }
+
+  /**
+   * HOW LONG THIS SHOP USUALLY TAKES TO ANSWER, from its own history.
+   *
+   * Stage 5 asks for "an ETA computed from the shop's own history", and this
+   * is the only ETA the data can honestly produce. There is no cooking time
+   * in here: nothing marks an order ready, so any minutes-until-food figure
+   * would be invented, and an invented ETA is worse than none - it is the
+   * number a customer waits against and then complains about.
+   *
+   * What the data does hold is how long orders sit in the approval queue
+   * before somebody works it, and that is the minute a waiting customer is
+   * actually anxious about: has anyone seen this at all. So the answer is
+   * about acceptance, and the page words it as a description of the past
+   * rather than a promise about this order.
+   *
+   * Null rather than a guess whenever the history is too thin, too old or
+   * unreadable. A shop with four orders behind it gets no figure.
+   */
+  async typicalAcceptMinutes(branchId) {
+    const key = String(branchId || '');
+    if (!key) return null;
+
+    const cached = ACCEPT_MINUTES_CACHE.get(key);
+    if (cached && cached.until > Date.now()) return cached.minutes;
+
+    let minutes = null;
+    try {
+      const db = await BaseModel.getDb();
+      const branchObjectId = mongoose.Types.ObjectId.isValid(key)
+        ? new mongoose.Types.ObjectId(key)
+        : branchId;
+      /*
+       * BOUNDED BY _id, which every collection indexes.
+       *
+       * An ObjectId carries the second it was made, so `_id` above a
+       * fortnight ago is both a date range and an index walk - and the walk
+       * STOPS at the fortnight. Ranging on created_date instead would leave
+       * Mongo sorting a shop's entire sales collection in memory on a
+       * collection with no index for it, which on a busy shop is the kind of
+       * query that takes the rest of the process down with it.
+       *
+       * The minutes are still computed from created_date, which is the field
+       * that means what it says.
+       */
+      const since = Date.now() - ACCEPT_HISTORY_DAYS * 86400000;
+      const rows = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            _id: { $gte: mongoose.Types.ObjectId.createFromTime(Math.floor(since / 1000)) },
+            order_state: 'accepted',
+            order_state_by: { $nin: [null, ''] },
+            order_state_at: { $ne: null },
+            ...activeTenantFilter(),
+          },
+          { projection: { created_date: 1, order_state_at: 1 } }
+        )
+        .sort({ _id: -1 })
+        .limit(ACCEPT_HISTORY_ORDERS)
+        .toArray();
+
+      const waits = rows
+        .map((row) => {
+          const from = new Date(row.created_date).getTime();
+          const to = new Date(row.order_state_at).getTime();
+          return Number.isFinite(from) && Number.isFinite(to) ? (to - from) / 60000 : NaN;
+        })
+        /* An order accepted an hour later is a shop that had gone home, not a
+           shop that is slow. Leaving those in drags the middle of a busy
+           evening out to a number no customer would recognise. */
+        .filter((wait) => Number.isFinite(wait) && wait >= 0 && wait <= ACCEPT_OUTLIER_MINUTES)
+        .sort((a, b) => a - b);
+
+      if (waits.length >= ACCEPT_ENOUGH_ORDERS) {
+        const middle = waits[Math.floor(waits.length / 2)];
+        minutes = Math.max(1, Math.ceil(middle));
+      }
+    } catch (error) {
+      /* A figure nobody can read is simply not shown. It is decoration on a
+         status page, and a status page must not fail over decoration. */
+      console.warn('[order-progress] could not read the accept history:', error && error.message);
+      minutes = null;
+    }
+
+    ACCEPT_MINUTES_CACHE.set(key, { minutes, until: Date.now() + ACCEPT_CACHE_MS });
+    return minutes;
   }
 
   /** One order of this branch's, by its id. Nothing wider: no list, no search. */
@@ -12011,7 +12127,20 @@ class SalesRepository {
     }
   }
 
-  async generateSalesIdForBranch(branchIdRaw, { reseed = false } = {}) {
+  /**
+   * The next bill number for a branch: the counter and the format together.
+   *
+   * THE ONLY DOOR. Both the till and the customer's own ordering page come
+   * through here, and they have to: they share one counter, so a year that
+   * resets on one path and not the other would have the till issuing numbers
+   * the year had already used. sale.service.js used to take the number and
+   * build it itself, which is how the two would have drifted.
+   *
+   * `fallbackPrefix` exists for those callers, which hold the shop's prefix
+   * already and would rather not have this read the branch to find the same
+   * answer twice.
+   */
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false, fallbackPrefix } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
@@ -12035,19 +12164,78 @@ class SalesRepository {
     // shop may want plain numbers - so only a branch that never set the field
     // falls back to the default 'S'.
     const prefixRaw = branchDoc?.sales_prefix ?? branchDoc?.salesPrefix;
-    const prefix = prefixRaw != null ? prefixRaw.toString().trim() : 'S';
+    const prefix =
+      fallbackPrefix !== undefined
+        ? String(fallbackPrefix)
+        : prefixRaw != null
+          ? prefixRaw.toString().trim()
+          : 'S';
     const prefixLength = prefix.length;
 
     void prefixLength;
     void salesCollection;
+    /*
+     * WHICH NUMBERING PERIOD THIS BILL BELONGS TO.
+     *
+     * Empty for every shop that has not asked for one, which is all of them
+     * until somebody turns it on - and an empty period produces exactly the
+     * number this method produced before it existed. See _billPeriod.
+     */
+    const period = this._billPeriod(branchDoc);
+
     /* The branch's own licence first: see nextSalesNumberForBranch. The
        ambient one is a fallback for a branch this process cannot read. */
     const n = await this.nextSalesNumberForBranch(
       branchId,
       (branchDoc && branchDoc.license) || BaseModel.license,
-      { reseed }
+      { reseed, period }
     );
-    return this.buildDocNumber('S', branchId, n, { fallbackPrefix: prefix });
+    return this.buildDocNumber('S', branchId, n, {
+      fallbackPrefix: prefix,
+      period: period.label,
+    });
+  }
+
+  /**
+   * The numbering period a bill made RIGHT NOW falls in, for this branch.
+   *
+   * Owner: "we need year pattern required in the sales bill number example
+   * attached have 26 in the year... you suggest per day increase or year wise
+   * reset better tell me international standards", and on the answer: "i
+   * accept recommandation and may configurable if people from EU and
+   * international."
+   *
+   * IN THE SHOP'S OWN CLOCK, not the server's. A bill rung up at half past
+   * midnight on the first of April in Chennai belongs to the new financial
+   * year; a cloud instance running in UTC would still call it March and put
+   * it in the old one - which is a bill numbered into a year that has closed,
+   * and the kind of thing an auditor finds rather than a test.
+   *
+   * Midday local is used rather than the exact instant so that a daylight
+   * shift of an hour either way cannot move a bill across a year boundary.
+   *
+   * Off unless the shop asked, and off is the shape of every number issued in
+   * this product so far. See utils/bill-number.js for the rule this obeys.
+   */
+  _billPeriod(branchDoc, when = new Date()) {
+    const reset = String((branchDoc && branchDoc.bill_number_reset) || '').trim();
+    if (!billNumber.RESET_MODES.includes(reset) || reset === 'off') {
+      return { key: '', label: '', mode: 'off' };
+    }
+    try {
+      const zone = onlineOrdering.normalizeTimeZone(branchDoc && branchDoc.time_zone);
+      const local = moment(when).tz(zone);
+      const atNoon = new Date(local.year(), local.month(), local.date(), 12, 0, 0);
+      return billNumber.periodFor(atNoon, {
+        reset,
+        financialYearStartMonth: Number(branchDoc && branchDoc.bill_number_fy_start_month) || 4,
+      });
+    } catch (e) {
+      /* A time zone nobody can read must not stop a shop billing. Off is the
+         behaviour every shop had before this existed. */
+      console.warn('[bill-number] could not read the shop clock:', e && e.message);
+      return { key: '', label: '', mode: 'off' };
+    }
   }
 
   /*
@@ -12066,7 +12254,7 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false } = {}) {
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false, period = null } = {}) {
     const db = await BaseModel.getDb();
     const counters = db.collection('counters');
 
@@ -12128,13 +12316,30 @@ class SalesRepository {
     // The bill-number uniqueness backstop, ensured alongside the counter.
     await this._ensureSalesIdIndex(db);
 
+    /*
+     * WHICH PERIOD THE COUNTER IS COUNTING, stored on the row rather than in
+     * the key.
+     *
+     * Keying on it would mean a second row per branch per year, and the
+     * unique index that guards this collection - one_counter_per_scope, on
+     * kind + branch + licence - would refuse it. Changing that index means a
+     * migration on ninety live shops in the path that numbers every bill, to
+     * store a number that fits perfectly well on the row already there.
+     *
+     * Empty when the shop has not asked for a reset, which is how every
+     * existing row already reads once $ifNull has done its work below.
+     */
+    const wantedPeriod = String((period && period.key) || '');
+
     const existing = await counters.findOne(key);
     if (!existing) {
-      const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw);
+      const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw, {
+        periodLabel: (period && period.label) || '',
+      });
       /* With the unique index, one of two concurrent seeders inserts and the
          other's upsert errors; both then increment the same row. */
       await counters
-        .updateOne(key, { $setOnInsert: { seq: seed } }, { upsert: true })
+        .updateOne(key, { $setOnInsert: { seq: seed, period_key: wantedPeriod } }, { upsert: true })
         .catch(() => {});
     }
 
@@ -12148,15 +12353,58 @@ class SalesRepository {
      * ever raises, so a number allocated concurrently cannot be undone by it.
      */
     if (reseed) {
-      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license);
+      const behind = await this.maxIssuedSalesNumber(branchIdRaw, license, {
+        periodLabel: (period && period.label) || '',
+      });
       if (behind > 0) {
-        await counters.updateOne(key, { $max: { seq: behind } }, { upsert: true }).catch(() => {});
+        /*
+         * The period is stamped here too, so catching up cannot leave the row
+         * claiming a year it is no longer counting - which would make the
+         * very next bill roll over a second time and restart at one.
+         */
+        await counters
+          .updateOne(
+            key,
+            { $max: { seq: behind }, $set: { period_key: wantedPeriod } },
+            { upsert: true }
+          )
+          .catch(() => {});
       }
     }
 
+    /*
+     * THE ROLL-OVER, IN ONE ATOMIC STEP.
+     *
+     * A read, a compare and a write would be three, and a year turns over at
+     * midnight in a restaurant that is still serving: two tills billing in
+     * that second would both read the old year, both reset to zero and both
+     * issue number one. One pipeline update is a single atomic operation on
+     * the document, so the second caller sees whatever the first left.
+     *
+     * Same period, or no period at all: add one, exactly as this did before.
+     * A different period: start again at one and stamp the new period on the
+     * row. `$ifNull` is what makes every counter written before this change
+     * read as "no period" rather than as a mismatch - otherwise the first
+     * bill on every shop in the estate would restart at one.
+     *
+     * Needs MongoDB 4.2 for pipeline updates; the product ships 7.0.
+     */
     const res = await counters.findOneAndUpdate(
       key,
-      { $inc: { seq: 1 } },
+      [
+        {
+          $set: {
+            seq: {
+              $cond: [
+                { $eq: [{ $ifNull: ['$period_key', ''] }, wantedPeriod] },
+                { $add: [{ $ifNull: ['$seq', 0] }, 1] },
+                1,
+              ],
+            },
+            period_key: wantedPeriod,
+          },
+        },
+      ],
       { returnDocument: 'after' }
     );
     const doc = res && typeof res.seq === 'number' ? res : res && res.value;
@@ -12218,14 +12466,28 @@ class SalesRepository {
    * kiosk/QR path can never drift apart. Falls back to the old untagged form
    * only if a till code could not be read, which must never fail a sale.
    */
-  async buildSalesId(prefix, n) {
-    const num = String(n).padStart(6, '0');
+  async buildSalesId(prefix, n, { period = '' } = {}) {
     const tag = await this.deviceTag();
     const p = (prefix || '').toString().trim();
+    /*
+     * The one shape utils/bill-number.js cannot express: a prefix glued
+     * straight onto the number with no separator, which is what a till with
+     * no code has always produced. Kept byte for byte while no year is asked
+     * for, because changing the shape of every number on those shops is not
+     * something to do on the way past.
+     */
+    if (!tag && !period) return `${p}${String(n).padStart(6, '0')}`;
     // An empty prefix yields just the tag+number (or a bare number) - no leading
     // dash - so a shop that clears its prefix still gets clean bill numbers.
-    if (tag) return p ? `${p}-${tag}-${num}` : `${tag}-${num}`;
-    return `${p}${num}`;
+    const head = tag ? (p ? `${p}-${tag}` : tag) : p;
+    const built = billNumber.compose({
+      typeLetter: head,
+      period,
+      sequence: n,
+      sequenceWidth: 6,
+    });
+    if (built.warning) console.warn('[bill-number]', built.warning);
+    return built.number;
   }
 
   /*
@@ -12298,16 +12560,46 @@ class SalesRepository {
    * collision-free - so the visible format changes exactly once, cleanly, and
    * a sale never waits on the gateway.
    */
-  async buildDocNumber(typeLetter, branchId, n, { isReturn = false, fallbackPrefix = 'S' } = {}) {
-    const num = String(n).padStart(6, '0');
+  /**
+   * The bill number itself, inside the sixteen characters a tax invoice is
+   * allowed.
+   *
+   * CGST Rule 46(b): a consecutive serial number, not exceeding sixteen
+   * characters, of letters, digits, "-" and "/", unique for a financial year.
+   * The shop's own reference invoice - VR26-27VIR006782 - is exactly sixteen,
+   * because whoever built that ran into the same wall.
+   *
+   * The parts are assembled by utils/bill-number.js, which shortens the
+   * RUNNING NUMBER when something has to give and says so: dropping the year
+   * would break uniqueness for the year, and dropping the till code would let
+   * two tills mint the same number. With no year asked for it produces exactly
+   * what the expression here produced before, which is pinned by test.
+   */
+  async buildDocNumber(
+    typeLetter,
+    branchId,
+    n,
+    { isReturn = false, fallbackPrefix = 'S', period = '' } = {}
+  ) {
     const [branchCode, deviceCode] = await Promise.all([
       this.branchCode(branchId),
       this.deviceCode(),
     ]);
     if (branchCode && deviceCode) {
-      return `${isReturn ? 'R-' : ''}${typeLetter}${branchCode}${deviceCode}-${num}`;
+      const built = billNumber.compose({
+        typeLetter: `${isReturn ? 'R-' : ''}${typeLetter}`,
+        branchCode,
+        deviceCode,
+        period,
+        sequence: n,
+        sequenceWidth: 6,
+      });
+      /* A shop whose codes leave no room is told, once per bill, in words it
+         can act on. Never thrown: an ugly legal number beats no sale. */
+      if (built.warning) console.warn('[bill-number]', built.warning);
+      return built.number;
     }
-    return this.buildSalesId(fallbackPrefix, n);
+    return this.buildSalesId(fallbackPrefix, n, { period });
   }
 
   /*
@@ -12465,7 +12757,7 @@ class SalesRepository {
     }
   }
 
-  async maxIssuedSalesNumber(branchIdRaw, licenseRaw) {
+  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '' } = {}) {
     const db = await BaseModel.getDb();
     const asObjectId = (v) =>
       v instanceof mongoose.Types.ObjectId
@@ -12479,9 +12771,29 @@ class SalesRepository {
       .collection('sales')
       .find(filter, { projection: { sales_id: 1 } })
       .toArray();
+    /*
+     * ONLY THIS YEAR'S NUMBERS, when the shop numbers by year.
+     *
+     * This is what catches a counter up after a number came back taken. On a
+     * shop that resets every year, the highest number it ever issued is in
+     * some earlier year - and $max-ing the new year's counter to it would
+     * jump the series from 4 to 901 on the first collision, which is a gap an
+     * auditor asks about. The label sits in its own dash-delimited segment
+     * immediately before the running number, so it can be matched exactly
+     * rather than searched for.
+     *
+     * No label means no filter, which is every shop that has not turned the
+     * year on and is exactly what this did before.
+     */
+    const inPeriod = periodLabel
+      ? new RegExp(`(^|-)${String(periodLabel).replace(/[^A-Za-z0-9]/g, '')}-\\d+$`)
+      : null;
+
     let max = 0;
     for (const r of rows) {
-      const m = /(\d+)\s*$/.exec(String((r && r.sales_id) || ''));
+      const salesId = String((r && r.sales_id) || '');
+      if (inPeriod && !inPeriod.test(salesId)) continue;
+      const m = /(\d+)\s*$/.exec(salesId);
       if (m) max = Math.max(max, parseInt(m[1], 10));
     }
     return max;

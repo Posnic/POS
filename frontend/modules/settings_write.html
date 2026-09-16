@@ -4451,6 +4451,51 @@
                                                             placeholder="Ex :- S (or leave blank)" data-t-placeholder="lang_ex_s_or_leave_blank">
                                                     </div>
                                                 </div>
+                                                <!--
+                                                    WHEN THE BILL NUMBER STARTS AGAIN AT ONE.
+                                                    India, CGST Rule 46(b): an invoice number is unique for a
+                                                    FINANCIAL year and may not exceed sixteen characters. The EU
+                                                    asks only for a sequential number, so this is a choice rather
+                                                    than a constant. Off until a shop picks one: turning it on
+                                                    restarts the series, which is a thing to do on the first day
+                                                    of a year and not on an upgrade. api/src/utils/bill-number.js
+                                                -->
+                                                <div class="row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="bill_number_reset" class="label-text-color">
+                                                            <lang class="lang_bill_number_year">Bill number year</lang>&nbsp;
+                                                            <span data-toggle="tooltip" data-placement="top" title=""
+                                                                data-original-title="Prints the year on every bill number and starts the count again when the year turns over.">
+                                                                <i class="feather icon-help-circle"></i>
+                                                            </span>
+                                                        </label>
+                                                        <select name="bill_number_reset" id="bill_number_reset"
+                                                            class="form-control border-control">
+                                                            <option value=""><lang class="lang_one_run_of_numbers_no_year">One run of numbers, no year</lang></option>
+                                                            <option value="financial"><lang class="lang_start_again_each_financial_year">Start again each financial year</lang></option>
+                                                            <option value="calendar"><lang class="lang_start_again_each_calendar_year">Start again each calendar year</lang></option>
+                                                        </select>
+                                                        <small class="form-text text-muted"><lang class="lang_turning_this_on_starts_the_numbering_again">Turning this on starts the numbering
+                                                            again at one. Best done on the first day of a year.</lang></small>
+                                                    </div>
+                                                    <div class="form-group col-md-6" id="bill_number_fy_start_month_row">
+                                                        <label for="bill_number_fy_start_month" class="label-text-color">
+                                                            <lang class="lang_financial_year_starts_in">Financial year starts in</lang>
+                                                        </label>
+                                                        <!--
+                                                            The months are filled in by settings.js from the
+                                                            browser's own calendar, in the language the page is
+                                                            in. Twelve month names in seventeen packs is a
+                                                            hundred and ninety-nine translations of something
+                                                            every browser already knows, and would be one more
+                                                            list to keep true. See fillFinancialYearMonths.
+                                                        -->
+                                                        <select name="bill_number_fy_start_month" id="bill_number_fy_start_month"
+                                                            class="form-control border-control"></select>
+                                                        <small class="form-text text-muted"><lang class="lang_april_in_india_january_in_much_of_the_eu">April in India, January in much of
+                                                            the EU.</lang></small>
+                                                    </div>
+                                                </div>
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <label for="allow_sale_date_edit" data-toggle="tooltip"
@@ -5981,6 +6026,42 @@
                                                                         </select>
                                                                         <small class="form-text text-muted">
                                                                             <lang class="lang_change_window_help">Restaurants only. After this, changing becomes a request the till approves.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+                                                                <!--
+                                                                    WHAT HAPPENS WHEN NOBODY ANSWERS AT ALL.
+                                                                    Owner: "let restaurent owner decide that. give option auto
+                                                                    cancel or auto accept. based ont time he defines it. by
+                                                                    default dont accpept or reject." Only meaningful while
+                                                                    orders are held, so the row is hidden on automatic - and
+                                                                    both halves are needed: a choice with no time fires at
+                                                                    once, a time with no choice fires nothing.
+                                                                    api/src/services/unanswered-orders.js
+                                                                -->
+                                                                <div class="form-row" id="online_order_silence_row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_on_silence"><lang class="lang_if_nobody_answers">If nobody answers</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_on_silence">
+                                                                            <option value=""><lang class="lang_leave_it_waiting">Leave it waiting, keep asking</lang></option>
+                                                                            <option value="accept"><lang class="lang_accept_it_and_send_to_the_kitchen">Accept it and send to the kitchen</lang></option>
+                                                                            <option value="cancel"><lang class="lang_cancel_it_and_tell_the_customer">Cancel it and tell the customer</lang></option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_the_alarm_keeps_asking_either_way">The alarm keeps asking either way, backing off as it goes.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                    <div class="form-group col-md-5" id="online_order_decide_after_row">
+                                                                        <label for="online_order_decide_after_minutes"><lang class="lang_after_how_long">After how long</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_decide_after_minutes">
+                                                                            <option value="5">5m</option>
+                                                                            <option value="10" selected>10m</option>
+                                                                            <option value="15">15m</option>
+                                                                            <option value="30">30m</option>
+                                                                            <option value="60">1h</option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_counted_from_when_the_order_arrived">Counted from when the order arrived.</lang>
                                                                         </small>
                                                                     </div>
                                                                 </div>

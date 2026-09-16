@@ -7254,6 +7254,37 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 
 .request-dock-diff li { margin-bottom: 2px; }
 
+/*
+ * THE THREE STATES OF A LINE IN A CHANGE REQUEST.
+ *
+ * Every line of the order is drawn now, not only the ones that moved: what is
+ * NOT changing is half of what the decision is about, and a person reading
+ * "Chicken Biryani: 2 to 1" could not tell whether that was most of the order
+ * or a detail of it without opening the sales screen.
+ *
+ * So the untouched ones step back and the moved ones step forward. Colour
+ * carries meaning only - theme tokens, never a hardcoded hex, because
+ * custom.css loads before theme-variables.css and a literal here would be the
+ * one thing a shop's theme could not change.
+ */
+.request-dock-diff li.is-same {
+  color: var(--theme-text-secondary, #6b7280);
+}
+
+.request-dock-diff li.is-moved b {
+  font-weight: 700;
+}
+
+.request-dock-diff li.is-gone {
+  color: var(--theme-danger, #b91c1c);
+}
+
+.request-dock-diff li.is-gone b {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .request-dock-do {
   display: flex;
   gap: 8px;

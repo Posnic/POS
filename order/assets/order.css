@@ -2378,6 +2378,94 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   font-size: 13px;
 }
 
+/*
+ * THE TRAIL: what has happened to this order, newest last.
+ *
+ * Quieter than the token, which is still the thing the customer carries to
+ * the counter. The dots are a history, not a progress bar - there is no
+ * unreached rung drawn ahead of the last one, because nothing here can
+ * promise the next step. The last dot is the darkest simply because it is
+ * where the order is now.
+ */
+.progress {
+  margin: 20px 0 0;
+  text-align: left;
+}
+
+.progress-trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.progress-trail li {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 0 10px 22px;
+}
+
+.progress-trail li:last-child {
+  padding-bottom: 0;
+}
+
+.progress-trail li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.progress-trail li:last-child::before {
+  background: var(--ink);
+}
+
+/* The thread between one moment and the next. Never drawn past the last
+   dot: the line would point at a step nobody has promised. */
+.progress-trail li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 17px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--line);
+}
+
+.progress-what {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.progress-trail li:last-child .progress-what {
+  color: var(--ink);
+}
+
+.progress-at {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-next {
+  margin: 10px 0 0 22px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* Refused or cancelled. The last dot stops meaning "here" and starts
+   meaning "this is where it ended". */
+.progress-ended .progress-trail li:last-child::before {
+  background: var(--danger);
+}
+
 .button-group {
   display: flex;
   flex-direction: column;

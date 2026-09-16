@@ -150,6 +150,35 @@ async function read(body, context) {
   return { status: true, message: 'OK', data: await viewOf(order, context) };
 }
 
+/**
+ * How long this shop usually takes to answer, when that is what is being
+ * waited on.
+ *
+ * NOT A COOKING TIME, and there is deliberately no way to ask this for one.
+ * Nothing in the product marks an order ready, so minutes-until-food would be
+ * invented - and an invented ETA is worse than none, because it is the number
+ * the customer waits against and then comes to the counter about.
+ *
+ * What a held order's customer is actually anxious about is whether anybody
+ * has seen it, and the shop's own recent queue answers exactly that. Read
+ * only while the order is still waiting: a shop on automatic never holds one,
+ * and should never pay for the query.
+ */
+async function typicallyAcceptedIn(view, context) {
+  if (!view || !view.progress || view.progress.waiting_for !== 'acceptance') return {};
+  const minutes = await minutesOrNull(context);
+  return minutes ? { typically_accepted_in_minutes: minutes } : {};
+}
+
+async function minutesOrNull(context) {
+  try {
+    return await salesRepository.typicalAcceptMinutes(context && context.branchId);
+  } catch (e) {
+    /* Decoration on a status page. It is never worth failing the read. */
+    return null;
+  }
+}
+
 /*
  * THE WHOLE ANSWER, SO THE PHONE NEED NOT ASK TWICE.
  *
@@ -171,8 +200,12 @@ async function read(body, context) {
 async function viewOf(order, context) {
   const seconds = await changeSeconds(context);
   const reason = whyNot(order, Date.now(), seconds);
+  const view = salesRepository.customerOrderView(order);
   return {
-    ...salesRepository.customerOrderView(order),
+    ...view,
+    /* How long this shop usually takes to answer, and ONLY while this order
+       is waiting to be answered. See typicallyAcceptedIn. */
+    ...(await typicallyAcceptedIn(view, context)),
     /* Whether they may still move it, why not, and how long the shop
          leaves it open - so one read answers every question the page has,
          including what to count down. */
@@ -244,6 +277,9 @@ async function readMany(body, context) {
   /* The window is the shop's, not the order's, so it is read once. */
   const seconds = await changeSeconds(context);
   const now = Date.now();
+  /* And so is the answering speed. One read for the whole page, rather than
+     one per row - the reason this endpoint exists at all. */
+  let acceptMinutes;
   const found = [];
   for (const one of asked) {
     const orderId = String((one && one.orderId) || '').trim();
@@ -255,8 +291,19 @@ async function readMany(body, context) {
     });
     if (!order || String(order.token_id || '') !== token) continue;
     const reason = whyNot(order, now, seconds);
+    const view = salesRepository.customerOrderView(order);
+    if (
+      view.progress &&
+      view.progress.waiting_for === 'acceptance' &&
+      acceptMinutes === undefined
+    ) {
+      acceptMinutes = await minutesOrNull(context);
+    }
     found.push({
-      ...salesRepository.customerOrderView(order),
+      ...view,
+      ...(view.progress && view.progress.waiting_for === 'acceptance' && acceptMinutes
+        ? { typically_accepted_in_minutes: acceptMinutes }
+        : {}),
       can_change: reason === '',
       why_not: reason || undefined,
       change_seconds: seconds,
@@ -286,6 +333,72 @@ async function readMany(body, context) {
  * it simply changes; outside it the kitchen may have started, so the wish is
  * recorded and a person answers it in the queue the shop already works.
  */
+/*
+ * MORE FOOD NEVER NEEDS PERMISSION. LESS FOOD DOES.
+ *
+ * Owner: "if customer add new order no approval required. we can just send. if
+ * any cancel only need approval after few seconds based on settings."
+ *
+ * He is right, and the asymmetry is real rather than a convenience. An extra
+ * naan costs the kitchen a naan it is glad to sell; nothing is wasted, nothing
+ * already cooked is thrown away, and the only thing a person could say is yes.
+ * Holding that in a queue until somebody notices is a customer waiting on a
+ * decision nobody was ever going to make differently.
+ *
+ * Taking something away is the opposite. The biryani may be in the pan. That
+ * is food already paid for in labour and ingredients, and whether it can be
+ * called back is a judgement only somebody standing in the kitchen can make.
+ *
+ * So the window - which used to gate BOTH - now gates only the taking away.
+ * Inside it nothing has started and the order is still the customer's, exactly
+ * as before. Outside it, the additions go straight to the pass and only the
+ * reductions become a request.
+ *
+ * THE TWO HALVES OF ONE REQUEST ARE ANSWERED SEPARATELY, and that is the
+ * point. "Two more naan and drop the biryani" used to wait as a single wish
+ * until somebody looked; now the naan is already being made by the time the
+ * shop reads the question about the biryani.
+ */
+function splitTheWish(wanted, lines) {
+  const onOrder = new Map(
+    (Array.isArray(lines) ? lines : []).map((line) => [
+      String(line.item_id || ''),
+      Math.max(
+        0,
+        Math.round(Number(line.item_quantity != null ? line.item_quantity : line.quantity) || 0)
+      ),
+    ])
+  );
+
+  const more = [];
+  const less = [];
+  for (const one of Array.isArray(wanted) ? wanted : []) {
+    const id = String((one && one.item_id) || '');
+    if (!id) continue;
+    const asked = Math.max(0, Math.round(Number(one.quantity) || 0));
+    const had = onOrder.has(id) ? onOrder.get(id) : 0;
+    if (asked > had) more.push({ ...one, item_id: id, quantity: asked });
+    else if (asked < had) less.push({ ...one, item_id: id, quantity: asked });
+    /* Asked for exactly what is already there: not a wish at all. */
+  }
+
+  /*
+   * What the order becomes once the additions are applied and nothing is
+   * taken away: every line it already has, raised where the customer asked
+   * for more, plus any dish that was not on it before.
+   *
+   * The WHOLE basket, because changeCustomerOrderItems reads the list as the
+   * order the customer wants - a line left out of it is a line removed. A
+   * "just the additions" list would silently cancel everything else, which is
+   * the exact opposite of what was asked for.
+   */
+  const raised = new Map(onOrder);
+  for (const one of more) raised.set(one.item_id, one.quantity);
+  const withMore = [...raised.entries()].map(([item_id, quantity]) => ({ item_id, quantity }));
+
+  return { more, less, withMore };
+}
+
 async function change(body, context) {
   const { order, reason, held } = await heldOrder(body, context);
   const wanted = Array.isArray(body && body.items) ? body.items.slice(0, 40) : [];
@@ -304,16 +417,48 @@ async function change(body, context) {
   if (reason === 'already_billed' || reason === 'already_paid' || reason === 'refused_by_shop') {
     return { status: false, message: reason, data: null };
   }
-  /* A hotel room or a delivery carries somebody else's money in the total,
-     so it is not the customer's alone to move even by asking. */
+  /*
+   * A hotel room or a delivery carries somebody else's money in the total, so
+   * it is not the customer's alone to move even by asking - and that includes
+   * adding to it. The rule below is about the KITCHEN having started; this one
+   * is about a commission somebody else is owed, and the two are not the same
+   * argument.
+   */
   if (reason === 'at_the_counter') return { status: false, message: reason, data: null };
 
-  const asked = await salesRepository.requestCustomerChange(held, wanted, held.items);
+  /*
+   * Past the window: more food goes now, less food is asked about.
+   * See splitTheWish for why those two are not the same question.
+   */
+  const { more, less, withMore } = splitTheWish(wanted, held.items);
+
+  let applied = null;
+  if (more.length) {
+    applied = await salesRepository.changeCustomerOrderItems(held, withMore);
+    if (!applied.status) return applied;
+  }
+
+  if (!less.length) {
+    /* Nothing was taken away, so there is nothing for anybody to decide. */
+    return applied
+      ? withTheWholeOrder(applied, held, context)
+      : { status: false, message: 'nothing_asked', data: null };
+  }
+
+  /*
+   * Asked against the order AS IT NOW STANDS, not as it was when the request
+   * arrived. The additions are already on it, and a queue card that showed
+   * yesterday's quantities beside today's wish would have the shop reading a
+   * before that no longer exists.
+   */
+  const now =
+    applied && applied.data && Array.isArray(applied.data.items) ? applied.data.items : held.items;
+  const asked = await salesRepository.requestCustomerChange(held, less, now);
   if (!asked.status) return asked;
   return {
     status: true,
-    message: 'Change requested',
-    data: { ...asked.data, requested: true, why_not: reason },
+    message: more.length ? 'Added, and the rest requested' : 'Change requested',
+    data: { ...asked.data, requested: true, added: more.length > 0, why_not: reason },
   };
 }
 

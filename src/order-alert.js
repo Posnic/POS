@@ -245,24 +245,26 @@ class OrderAlert {
         this._play("waiting", { repeat: true, saleId, reach: verdict.reach });
       }
 
-      if (verdict.decide !== 'nothing') {
-        /*
-         * Announced, never performed here. This class makes a noise; deciding
-         * an order is somebody else's job and belongs where the order lives.
-         * A sound module that could cancel a customer's order would be a
-         * surprising place to find that power.
-         */
-        try {
-          process.emit('posnic:order-decided', {
-            saleId,
-            decide: verdict.decide,
-            reason: verdict.reason,
-          });
-        } catch (e) {
-          /* ignored */
-        }
-        this._pending.delete(saleId);
-      }
+      /*
+       * AND IT DOES NOT DECIDE ANYTHING.
+       *
+       * This used to emit `posnic:order-decided` on the process bus and then
+       * delete the order from the pending map. NOTHING LISTENED to that event.
+       * So the alarm went quiet - which reads as "somebody dealt with it" -
+       * with the order still sitting there unanswered and the customer still
+       * waiting. That is the exact failure this whole area exists to prevent,
+       * and it was built in.
+       *
+       * The rule now fires in the API, where the order lives and where a shop
+       * with no till at all is also served: see
+       * api/src/services/unanswered-orders.js. It announces the result, and
+       * `resolve()` is what stops the noise - after something has actually
+       * happened, never before.
+       *
+       * `verdict.decide` is deliberately read by nobody here. The policy is
+       * one module answering two questions, and this half only ever asks the
+       * first: what noise to make, and how far it should travel.
+       */
     }
   }
 
