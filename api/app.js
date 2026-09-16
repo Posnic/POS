@@ -447,9 +447,32 @@ const sanitize = (obj) => {
 
 // Custom NoSQL injection protection middleware
 app.use((req, res, next) => {
-  // Sanitize query parameters
+  /*
+   * THE QUERY SANITISER, AND WHY THIS IS NOT AN ASSIGNMENT.
+   *
+   * `req.query = sanitize(...)` is what stood here, and on Express 5 it is a
+   * SILENT NO-OP. Express 5 defines `query` as a getter that re-parses the
+   * query string on every access: assigning to it does nothing and throws
+   * nothing, and mutating the object it hands back does nothing either,
+   * because the next read parses the string again.
+   *
+   * So from the day this app moved to Express 5, every `$`-prefixed query
+   * parameter survived this middleware untouched - the one thing it exists to
+   * remove - while the warning it logs never fired and nothing looked wrong.
+   * The body half was never affected: `req.body` is an ordinary property.
+   *
+   * defineProperty replaces the getter outright, which is the only thing
+   * Express 5 honours. Proved by running all three against a real Express app
+   * rather than reasoned about; see the test.
+   */
   if (req.query) {
-    req.query = sanitize({ ...req.query });
+    const cleanQuery = sanitize({ ...req.query });
+    Object.defineProperty(req, 'query', {
+      value: cleanQuery,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
   }
 
   // Sanitize request body
