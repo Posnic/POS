@@ -46,6 +46,7 @@ test('IT IS SAID ONE LINE AT A TIME, which is where the pauses come from', () =>
 
   assert.deepStrictEqual(said, [
     'Table 5, new order.',
+    'Two items.',
     'One Chicken Biryani.',
     'One Chicken Tikka Masala.',
   ]);
@@ -70,8 +71,51 @@ test('IT SAYS THE TABLE FIRST, then the food', () => {
 
   assert.strictEqual(
     said,
-    'Table 5, new order. One Chicken Biryani. One Chicken Tikka Masala.'
+    'Table 5, new order. Two items. One Chicken Biryani. One Chicken Tikka Masala.'
   );
+});
+
+test('HOW MANY PLATES ARE COMING is said before the list', () => {
+  /*
+   * Owner: "KOT total items also print and voice read please. so that chef's
+   * can hear well."
+   *
+   * Before rather than after, because a number heard first is one you can
+   * count against: a chef told three plates are coming notices when they have
+   * heard two. After the list it is a fact nobody can act on.
+   *
+   * PLATES, not lines. One biryani and two naan is three things to cook and
+   * two lines on the ticket.
+   */
+  const said = kitchenCall.lines({
+    table: '5',
+    items: [
+      { item_name: 'Chicken Biryani', item_quantity: 1 },
+      { item_name: 'Butter Naan', item_quantity: 2 },
+    ],
+  });
+
+  assert.strictEqual(said[1], 'Three items.');
+});
+
+test('one plate is an item, not one items', () => {
+  const said = kitchenCall.lines({
+    table: '2',
+    items: [{ item_name: 'Coffee', item_quantity: 1 }],
+  });
+
+  assert.strictEqual(said[1], 'One item.');
+});
+
+test('the count is the whole ticket even when the list is cut short', () => {
+  /* Six lines are read and the rest summarised, but the count is still what
+     the kitchen has to produce - which is the point of hearing it. */
+  const items = Array.from({ length: 9 }, (_, i) => ({
+    item_name: `Dish ${i + 1}`,
+    item_quantity: 2,
+  }));
+
+  assert.strictEqual(kitchenCall.lines({ table: '9', items })[1], '18 items.');
 });
 
 test('counts are words, because that is how somebody says them', () => {
@@ -103,7 +147,7 @@ test('a ticket with no table still reads the food', () => {
     items: [{ item_name: 'Butter Naan', item_quantity: 1 }],
   });
 
-  assert.strictEqual(said, 'New order. One Butter Naan.');
+  assert.strictEqual(said, 'New order. One item. One Butter Naan.');
 });
 
 test('an amendment says so, because a cook must not start it twice', () => {
@@ -164,7 +208,7 @@ test('a line with no quantity is not announced as an order for none', () => {
     ],
   });
 
-  assert.strictEqual(said, 'Table 5, new order. One Butter Naan.');
+  assert.strictEqual(said, 'Table 5, new order. One item. One Butter Naan.');
 });
 
 /* ------------------------------------------------------------ the switch */

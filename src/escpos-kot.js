@@ -204,6 +204,36 @@ function renderKitchenTicket(ticket = {}, options = {}) {
   }
   if (!items.length) r.centre('(no items on this ticket)');
 
+  /*
+   * HOW MANY PLATES ARE ON THIS TICKET.
+   *
+   * Owner: "KOT total items also print and voice read please. so that chef's
+   * can hear well."
+   *
+   * A cook counts what they have plated against what the ticket asked for, and
+   * a long ticket is exactly where one line gets missed. The number at the foot
+   * is what makes that check possible without re-reading every line.
+   *
+   * PLATES, not lines: one biryani and two naan is three things to cook and two
+   * lines above. A kitchen works in plates, and so does the voice that reads
+   * this out - see src/kitchen-call.js, which counts it the same way.
+   */
+  if (items.length) {
+    const plates = items.reduce((sum, item) => {
+      const qty = Number(
+        (item && (item.quantity !== undefined ? item.quantity : item.item_quantity)) || 0
+      );
+      return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
+    }, 0);
+
+    if (plates > 0) {
+      r.rule();
+      r.bold(true);
+      r.pair('TOTAL ITEMS', String(plates), { bold: true });
+      r.bold(false);
+    }
+  }
+
   r.rule();
   r.cut();
   return r.build();

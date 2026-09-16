@@ -121,6 +121,27 @@ function lines({ table, items, changed } = {}) {
     ? `${/^\d+$/.test(where) ? `Table ${where}` : where}, ${changed ? "order changed" : "new order"}.`
     : `${changed ? "Order changed" : "New order"}.`;
 
+  /*
+   * HOW MANY PLATES ARE COMING, said before the list.
+   *
+   * Owner: "KOT total items also print and voice read please. so that chef's
+   * can hear well."
+   *
+   * Before rather than after, because a number heard first is a number you can
+   * count against. A chef who knows three plates are coming notices when they
+   * have heard two, which is the whole use of it - after the list it is a fact
+   * nobody can act on.
+   *
+   * PLATES, not lines. One biryani and two naan is three things to cook and
+   * two lines on a ticket, and a kitchen works in plates.
+   */
+  const plates = said.reduce((sum, line) => sum + line.count, 0);
+  const counted = countWord(plates);
+  const howMany =
+    plates === 1
+      ? "One item."
+      : `${counted.charAt(0).toUpperCase()}${counted.slice(1)} items.`;
+
   const read = said.slice(0, READ_AT_MOST);
   /* Capitalised, because each of these is a sentence once the full stops go
      in, and a log or a test reading "one Chicken Biryani" mid-line looks like
@@ -133,7 +154,7 @@ function lines({ table, items, changed } = {}) {
   const rest = said.length - read.length;
   if (rest > 0) spoken.push(`And ${countWord(rest)} more`);
 
-  return [opening].concat(spoken.map((line) => `${line}.`));
+  return [opening, howMany].concat(spoken.map((line) => `${line}.`));
 }
 
 /*
