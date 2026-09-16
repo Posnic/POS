@@ -107,6 +107,9 @@
    * that a ticket it may be cooking has been pulled.
    */
   function kindOf(order) {
+    /* A table asking for somebody. Its own kind because there is nothing to
+       refuse - the only answer is that a person is coming. */
+    if (order.call_id) return 'waiter';
     if (order.cancel_seen === false && order.customer_cancelled_at) return 'gone';
     if (order.cancel_requested === true) return 'cancel';
     if (order.change_requested && (order.change_requested.items || []).length) return 'change';
@@ -138,10 +141,13 @@
     /* Already off. Either button only marks it seen; decideOnOrder answers
        that before the state machine is ever reached. */
     gone: { accept: 'seen', reject: 'seen' },
+    /* Nothing to decide: acknowledging IS the answer. */
+    waiter: { accept: 'seen', reject: 'seen' },
   };
 
   var WORDS = {
     gone: ['lang_customer_cancelled', 'Customer cancelled this'],
+    waiter: ['lang_table_is_calling', 'Table is calling'],
     cancel: ['lang_cancel_requested', 'Asked to cancel'],
     change: ['lang_change_requested', 'Asked to change'],
     new: ['lang_new_online_order', 'New order'],
@@ -183,7 +189,22 @@
     return (
       '<li class="request-dock-card" data-kind="' + kind + '" data-order="' + safe(id) + '">' +
       '<div class="request-dock-what">' +
-      '<span class="request-dock-kind">' + i18n.t(words[0], words[1]) + '</span>' +
+      '<span class="request-dock-kind">' +
+      /*
+       * SPELLED OUT for the new one, not read from the table above.
+       *
+       * The coverage scanner collects keys by matching the two-argument form
+       * of i18n.t written out in full; a key reached through a variable is
+       * invisible to it - never gathered, never translated, falling back to
+       * English in every language, which renders perfectly and so never
+       * fails. This file has already paid that once, when a local helper hid
+       * fourteen of its words. The older entries in WORDS are in the packs
+       * from before that lesson; anything new goes here.
+       */
+      (kind === 'waiter'
+        ? i18n.t('lang_table_is_calling', 'Table is calling')
+        : i18n.t(words[0], words[1])) +
+      '</span>' +
       '<span class="request-dock-when">' + safe(howLongAgo(order.created_date)) + '</span>' +
       '</div>' +
       '<div class="request-dock-who">' +
@@ -194,7 +215,7 @@
       whatChanged(order) +
       /* Already off: one button, and it says what it does. Two buttons on
          something nobody can decide is two ways to be confused. */
-      (kind === 'gone'
+      (kind === 'gone' || kind === 'waiter'
         ? '<div class="request-dock-do">' +
           '<button type="button" class="request-dock-yes' + working + '" data-do="accept">' +
           i18n.t('lang_got_it', 'Got it') + '</button>' +
@@ -289,7 +310,16 @@
       await new Promise(function (done) {
         PosnicPro.post(
           {
-            url: 'sales/' + encodeURIComponent(id) + '/approval',
+            /*
+             * A call is not an order and has no approval to give: the table
+             * wants a person, and the only answer is that one is coming. So
+             * it is marked SEEN through its own door rather than being run
+             * through a state machine that has no state for it.
+             */
+            url:
+              kind === 'waiter'
+                ? 'sales/waiterCalls/' + encodeURIComponent(id) + '/seen'
+                : 'sales/' + encodeURIComponent(id) + '/approval',
             data: JSON.stringify({ decision: verb, reason: '' }),
           },
           /*
@@ -380,7 +410,30 @@
           /* The endpoint answers with the array itself, the way the queue
              page reads it; anything else is a shop with nothing waiting. */
           var rows = (response && response.data) || [];
-          known = Array.isArray(rows) ? rows : [];
+          /*
+           * The calls ride in their own key, not mixed into the orders.
+           *
+           * Read as a SEPARATE list on purpose: a staff screen that has not
+           * been taught the word draws `data` and is unaffected, where a
+           * merged list would have an older one render a table's call as a
+           * new order with an accept button that means nothing.
+           *
+           * Shaped into rows the rest of this file already understands, so
+           * the card, the count and the dismiss all work without knowing
+           * anything new. `sale_id` carries the CALL's id because that is
+           * what the answer is posted against.
+           */
+          var calls = (response && response.calls) || [];
+          var asRows = (Array.isArray(calls) ? calls : []).map(function (call) {
+            return {
+              sale_id: String(call.call_id || ''),
+              call_id: String(call.call_id || ''),
+              table_number: String(call.table_number || ''),
+              created_date: call.called_at || null,
+              items: [],
+            };
+          });
+          known = (Array.isArray(rows) ? rows : []).concat(asRows);
           /* Forget the ones that have gone. Otherwise a shop that dismissed
              an order, answered it on the queue page, and then received a new
              one carrying a recycled id would never be shown it. */

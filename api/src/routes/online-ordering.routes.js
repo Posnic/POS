@@ -32,6 +32,7 @@ const controller = require('../controllers/online-ordering.controller');
 const { ensureKioskKey } = require('../middleware/kiosk-key');
 const {
   assistantLimiter,
+  waiterCallLimiter,
   voiceLimiter,
   voiceTickLimiter,
   placedOrderLimiter,

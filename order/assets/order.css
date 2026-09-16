@@ -1995,6 +1995,39 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   color: var(--ink);
 }
 
+/*
+ * "COME TO TABLE SEVEN."
+ *
+ * On the first page, where somebody looks when they want something - not
+ * behind a menu, because the whole point is that they are already trying to
+ * catch an eye and failing. Full width and quiet: it is not the thing they
+ * came to do, but it must be findable without hunting.
+ */
+.call-waiter {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* Once it has gone, it says so and stays said for a minute. A button that
+   springs back reads as nothing having happened, which is exactly what would
+   make somebody stand up and go looking anyway. */
+.call-waiter[data-sent="yes"] {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 /* What was chosen, read back on the line in the basket. */
 .item-spice {
   margin-top: 4px;

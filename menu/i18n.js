@@ -175,6 +175,9 @@
       /* ---------------------------------------- when it will be ready */
       "Usually ready by about {when}": "வழக்கமாக {when} மணிக்கு தயாராகிவிடும்",
       "About {n} minutes once the shop accepts it": "கடை ஏற்றதும் பிறகு சுமார் {n} நிமிடங்கள்",
+      /* -------------------------------------------- calling a waiter */
+      "Call waiter": "பணியாளரை கூப்பிடுங்கள்",
+      "Somebody is coming": "ஒருவர் வருகிறார்",
       "Less spicy, no onion, extra gravy...": "காரம் குறைவாக, வெங்காயம் வேண்டாம், கூடுதல் குழம்பு...",
       "A note for the kitchen": "சமையலறைக்கு ஒரு குறிப்பு",
       "A note for the shop": "கடைக்கு ஒரு குறிப்பு",

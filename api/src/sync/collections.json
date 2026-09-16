@@ -12,6 +12,7 @@
   ],
   "synced": {
     "recycle_bin": "branch",
+    "waitercalls": "branch",
     "sales": "branch",
     "stocklogs": "branch",
     "cashregister": "branch",
