@@ -1,5 +1,7 @@
 'use strict';
 
+const { isWalkIn } = require('../utils/walk-in');
+
 /*
  * A SALE, TURNED INTO SOMETHING A PRINTER CAN ACTUALLY PRINT.
  *
@@ -304,6 +306,12 @@ const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
  * customer name stands, which is right for a sole proprietor billing under
  * their own name.
  */
+/*
+ * The placeholder name, asked about in ONE place.
+ *
+ * This used to be a regex written here from memory, and it did not match the
+ * name the sale repository actually writes - see utils/walk-in.js.
+ */
 function customerLines(sale) {
   const out = [];
   const name = String((sale && sale.customer_name) || '').trim();
@@ -313,7 +321,7 @@ function customerLines(sale) {
     .trim()
     .toUpperCase();
 
-  if (name && !/^walk[\s-]?in$/i.test(name)) out.push(name);
+  if (name && !isWalkIn(name)) out.push(name);
   if (phone && isDialable(phone)) out.push(phone);
 
   if (GSTIN.test(gstin)) {
