@@ -28,6 +28,19 @@ jest.mock('express-validator', () => {
     isFloat: jest.fn().mockReturnThis(),
     optional: jest.fn().mockReturnThis(),
     isMongoId: jest.fn().mockReturnThis(),
+    /* Every link the real chain offers. A fake that is missing one does not
+       fail where it is missing - it fails at require time, and takes the whole
+       suite down with "is not a function" and zero tests run. isBoolean
+       arrived with the sold-out validator. */
+    isBoolean: jest.fn().mockReturnThis(),
+    isInt: jest.fn().mockReturnThis(),
+    isString: jest.fn().mockReturnThis(),
+    isIn: jest.fn().mockReturnThis(),
+    toBoolean: jest.fn().mockReturnThis(),
+    toInt: jest.fn().mockReturnThis(),
+    bail: jest.fn().mockReturnThis(),
+    custom: jest.fn().mockReturnThis(),
+    exists: jest.fn().mockReturnThis(),
   });
   return { body: jest.fn(() => chain()), param: jest.fn(() => chain()) };
 });
