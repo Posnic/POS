@@ -19,8 +19,13 @@ const orderingAssistant = require('../services/ordering-assistant.service');
  * empty rather than passed through: an unknown value renders as no mark at
  * all, and a dish that LOOKS unmarked because of a typo is worse than one that
  * is honestly unmarked - somebody with an allergy reads both the same way.
+ *
+ * The list itself lives in utils/dish-columns, which is the other place that
+ * writes this field. One list: two that agree today disagree after the first
+ * one is edited, and the disagreement shows up as an unmarked dish.
  */
-const DIET_MARKS = ['veg', 'non_veg', 'egg', 'vegan'];
+const dishColumns = require('../utils/dish-columns');
+const DIET_MARKS = dishColumns.DIET_MARKS;
 const dishIcons = require('../utils/dish-icons');
 const dishFacts = require('../utils/dish-facts');
 const { kitchenLoad, typicalRound } = require('../utils/kitchen-load');
@@ -4884,9 +4889,7 @@ class ItemRepository extends BaseModel {
         let byId = new Map();
         if (wanted.size) {
           const sets = await this.getCollection('modifier_groups');
-          const docs = await sets
-            .find({ license: branchDoc.license })
-            .toArray();
+          const docs = await sets.find({ license: branchDoc.license }).toArray();
           byId = new Map(
             docs.map((doc) => [
               String(doc._id),
@@ -6328,6 +6331,15 @@ class ItemRepository extends BaseModel {
       const insertedIds = [];
       const updatedIds = [];
 
+      /* What the file said that could not be used, in the shop's words. A
+         cell that vanishes quietly is how somebody spends an afternoon
+         typing into a column nothing reads. */
+      const importNotes = [];
+      /* Lowercased dish name to the id just written, so that a file can pair
+         its own new dishes with each other. */
+      const writtenByName = new Map();
+      const pairingRequests = [];
+
       for (const items of documentsToInsert) {
         const availableQuantity = items.available_quantity ? Number(items.available_quantity) : 0;
         const barcodeId = (items.barcode_id || '').trim();
@@ -6776,15 +6788,48 @@ class ItemRepository extends BaseModel {
           unit: unitName,
         };
 
+        /*
+         * WHAT THE FILE SAYS ABOUT THE DISH, as opposed to about its price.
+         *
+         * Owner: "you need to fill the details of menu. description and
+         * nutrition, veg or non veg, other all details needs to be filled one
+         * by one."
+         *
+         * `dish.fields` holds ONLY the columns this particular file carries,
+         * which is the whole reason this is a spread and not a list: the
+         * eighteen-column export has none of them, so an ordinary re-import
+         * writes none of them and a description somebody typed survives. See
+         * utils/dish-columns, which also holds the rules - an import may not
+         * write anything the item form would have refused.
+         */
+        const dish = dishColumns.fromRow(items);
+        for (const note of dish.notes) importNotes.push(`${updateData.name}: ${note}`);
+
         const matched = existingByRow.get(items);
+
+        Object.assign(updateData, dish.fields);
+        /* Per nutrient, not per dish: a file with only a calories column
+           leaves the protein figure alone. */
+        const carriedNutrition = dishColumns.mergeNutrition(
+          (matched && matched.nutrition) || {},
+          dish.nutrition
+        );
+        if (carriedNutrition) updateData.nutrition = carriedNutrition;
+
+        let writtenId = null;
         if (matched) {
           /* Update only the columns the CSV carries. Deliberately excluded:
              image/multi_image (the export has no image column, so a CSV can
              never carry one - overwriting them is exactly the bug), the
              created_* provenance, and the behaviour flags (track_inventory,
-             item_status, ecommerce, negative_stock,
-             description) which the CSV does not include and must not be reset
-             to their insert-time defaults. */
+             item_status, ecommerce, negative_stock) which the CSV does not
+             include and must not be reset to their insert-time defaults.
+
+             The dish detail spread in at the end is that same rule read the
+             other way round. It is a spread rather than a list of names
+             because the list is decided by the FILE: a description is
+             rewritten when the file has a description column, and left
+             exactly as it was when it does not. */
           const setFields = {
             name: updateData.name,
             itemid: updateData.itemid,
@@ -6810,12 +6855,15 @@ class ItemRepository extends BaseModel {
             sort_order: updateData.sort_order,
             unit_id: updateData.unit_id,
             unit: updateData.unit,
+            ...dish.fields,
+            ...(carriedNutrition ? { nutrition: carriedNutrition } : {}),
             updated_date: now,
             updated_by: userName,
             updated_by_id: userId,
           };
           await collection.updateOne({ _id: matched._id }, { $set: setFields });
           updatedIds.push(matched._id);
+          writtenId = matched._id;
           // A re-import that changed any tracked field is history like any other.
           await this.logItemChanges(
             { _id: matched._id, name: setFields.name, branch_id: branchObjectId },
@@ -6828,8 +6876,21 @@ class ItemRepository extends BaseModel {
           const itemDocument = { ...insertData, ...updateData };
           const insertOneResult = await collection.insertOne(itemDocument);
           insertedIds.push(insertOneResult.insertedId);
+          writtenId = insertOneResult.insertedId;
+        }
+
+        /* The name another row's pairing may be referring to. */
+        if (updateData.name) writtenByName.set(updateData.name.toLowerCase(), String(writtenId));
+        if (dish.pairings) {
+          pairingRequests.push({ id: writtenId, name: updateData.name, names: dish.pairings });
         }
       }
+
+      await this._resolveImportedPairings(pairingRequests, writtenByName, importNotes, {
+        collection,
+        branchObjectId,
+        licenseObjectId,
+      });
 
       if (insertedIds.length > 0 || updatedIds.length > 0) {
         const touched = await collection
@@ -6841,7 +6902,7 @@ class ItemRepository extends BaseModel {
         return {
           status: true,
           data: touched.map((i) => BaseModel.simplifyFields(i)),
-          message: `Import complete: ${parts.join(', ')}`,
+          message: `Import complete: ${parts.join(', ')}${this._importNotesSuffix(importNotes)}`,
         };
       }
 
@@ -6854,6 +6915,106 @@ class ItemRepository extends BaseModel {
       console.error('Error in ItemRepository.importItems:', error);
       return { status: false, data: null, message: error.message };
     }
+  }
+
+  /**
+   * PAIRINGS ARE WRITTEN LAST, BECAUSE A FILE PAIRS BY NAME.
+   *
+   * Owner: "cross selling also do that. example chickent briyani link to
+   * chicken 65 or mojito or coke."
+   *
+   * Nobody types an ObjectId into a spreadsheet, so a file says "Chicken 65"
+   * and the id is looked up here. It has to run after every row has been
+   * written, or a menu imported in one go could not pair its own dishes with
+   * each other - which is the normal case, since the file IS the menu.
+   *
+   * A name the file itself carries matches whatever the case, because a file
+   * and a menu get typed by different people on different days. A name that is
+   * on the menu but not in the file is looked up once, as an anchored
+   * case-insensitive exact match built through safe-search, so a dish called
+   * "Chicken 65 (Boneless)" is a name and not a pattern.
+   *
+   * A name that is nowhere is REPORTED, never guessed at. The same three rules
+   * the item form applies still apply here - no dish pairs with itself, no
+   * pairing is listed twice, and six is the cap - because an import may not
+   * write what the form would have refused.
+   *
+   * @param {Array} requests  {id, name, names} per row that carried the column
+   * @param {Map} writtenByName  lowercased name to id, for this file's own rows
+   * @param {Array} notes  appended to, in the shop's words
+   */
+  async _resolveImportedPairings(requests, writtenByName, notes, ctx) {
+    if (!Array.isArray(requests) || !requests.length) return;
+    const { collection, branchObjectId, licenseObjectId } = ctx;
+
+    const wanted = [];
+    for (const req of requests) {
+      for (const name of req.names) {
+        const key = String(name).toLowerCase();
+        if (!writtenByName.has(key) && !wanted.includes(name)) wanted.push(name);
+      }
+    }
+
+    /* One query, bounded. A file naming two hundred dishes it did not also
+       carry is not a menu, and a query built from an unbounded list of
+       patterns is a way to hold the database open. */
+    if (wanted.length) {
+      const patterns = wanted
+        .slice(0, 200)
+        .map((name) => new RegExp('^' + searchPattern(name) + '$', 'i'));
+      const found = await collection
+        .find(
+          {
+            name: { $in: patterns },
+            license: licenseObjectId,
+            $or: [{ 'branch_access.branch_id': branchObjectId }, { branch_id: branchObjectId }],
+          },
+          { projection: { name: 1 } }
+        )
+        .toArray();
+      for (const doc of found || []) {
+        const key = String((doc && doc.name) || '').toLowerCase();
+        if (key && !writtenByName.has(key)) writtenByName.set(key, String(doc._id));
+      }
+    }
+
+    for (const req of requests) {
+      const ids = [];
+      for (const name of req.names) {
+        const id = writtenByName.get(String(name).toLowerCase());
+        if (!id) {
+          notes.push(`${req.name}: "${name}" is not a dish here, so it was not paired`);
+          continue;
+        }
+        if (id === String(req.id) || ids.includes(id)) continue;
+        ids.push(id);
+      }
+      await collection.updateOne(
+        { _id: req.id, license: licenseObjectId },
+        { $set: { goes_with: ids.slice(0, 6) } }
+      );
+    }
+  }
+
+  /**
+   * What the import could not use, said at the end of the message it already
+   * shows.
+   *
+   * In the message rather than beside it because the import result is an array
+   * of rows the screen renders as a table, and a second shape reaching a
+   * screen that does not read it is the same as saying nothing. Three, then a
+   * count: a shop that mistyped one column produces one note per row, and a
+   * hundred of them is not a message, it is a wall.
+   *
+   * @param {string[]} notes
+   * @returns {string} a suffix, or the empty string
+   */
+  _importNotesSuffix(notes) {
+    const said = Array.isArray(notes) ? notes.filter(Boolean) : [];
+    if (!said.length) return '';
+    const shown = said.slice(0, 3).join('; ');
+    const rest = said.length - 3;
+    return rest > 0 ? `. ${shown}; and ${rest} more` : `. ${shown}`;
   }
 
   /**

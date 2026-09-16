@@ -85,9 +85,7 @@ describe('what the extras cost', () => {
      * The heart of it. The client sends a name; the money comes from the
      * shop's own document, whatever the client claims it costs.
      */
-    const out = await priceFor([
-      { group: 'Extras', name: 'Extra cheese', price_delta: -500 },
-    ]);
+    const out = await priceFor([{ group: 'Extras', name: 'Extra cheese', price_delta: -500 }]);
 
     expect(out.status).toBe(true);
     expect(out.delta).toBe(20);
