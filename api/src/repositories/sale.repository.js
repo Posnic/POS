@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
 const datePreference = require('../utils/date-preference');
+const { WALK_IN_NAME } = require('../utils/walk-in');
 const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
@@ -7879,7 +7880,7 @@ class SalesRepository {
    * @returns {Promise<{id: ObjectId|null, name: string}>}
    */
   async _walkInCustomer(db, branchDoc) {
-    const name = 'Walk-in Customer';
+    const name = WALK_IN_NAME;
     try {
       const customers = db.collection('customers');
       const scope = {
