@@ -6436,9 +6436,22 @@ class SalesController extends BaseController {
 
       if (response.status === true) {
         return this.success(res, response.data, response.message);
-      } else {
-        return this.error(res, response.message, 404);
       }
+
+      /*
+       * A CONFLICT IS NOT A MISSING ORDER.
+       *
+       * Somebody else saved this order while the caller was looking at it.
+       * The order is there, the caller is welcome, and the request is simply
+       * out of date - which is 409, not 404. The client keys on the status
+       * rather than on the spelling of a message, so this stays true when
+       * somebody rewords it.
+       */
+      if (response.message === 'order_changed') {
+        return this.error(res, response.message, 409);
+      }
+
+      return this.error(res, response.message, 404);
     } catch (error) {
       console.error('Error in salesPaymentClose:', error);
       return this.error(res, error.message, 500);
