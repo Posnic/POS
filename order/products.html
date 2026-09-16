@@ -364,6 +364,20 @@
             <h2 class="sheet-title"><span id="dish-diet"></span><span id="dish-title"></span></h2>
             <p id="dish-desc" class="sheet-desc" hidden></p>
             <dl id="dish-facts" class="sheet-facts" hidden></dl>
+            <!--
+                WHAT THE SHOP OFFERS ON TOP.
+
+                Above the chillies and the note, because it changes the price
+                and the other two do not: somebody reading down the sheet
+                should meet the thing that costs money before the thing that
+                does not.
+
+                A group with max 1 draws radios and one with more draws
+                checkboxes, which is the only honest way to show a rule the
+                shop set - a tick that silently refuses to stay ticked is
+                worse than one that visibly replaces another.
+            -->
+            <div class="sheet-options" id="dish-options-box" hidden></div>
             <!-- HOW HOT. Shown only for a dish the kitchen said it can cook to
                  order, because a customer who asks for mild and gets hot is
                  worse off than one who never asked. Drawn by assets/spice.js. -->

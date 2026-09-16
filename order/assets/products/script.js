@@ -44,6 +44,97 @@
 
     /* ------------------------------------------------------------ the pill */
 
+    /*
+     * WHAT THE SHOP OFFERS ON TOP OF THIS DISH.
+     *
+     * The till has charged for extra cheese since the handset learned about
+     * it, and the storefront sends the option sets to every client. This page
+     * drew none of them, so a customer ordering from the table could not ask
+     * for something the waiter standing next to them could ring up.
+     *
+     * The deltas are drawn because a price that appears at checkout without
+     * having been shown is the thing people write bad reviews about. They are
+     * NOT sent back: see addWithOptions in indexedDB.js.
+     */
+    function drawOptions(item, available) {
+        const box = el("dish-options-box");
+        if (!box) return;
+        const groups = Array.isArray(item.modifier_groups) ? item.modifier_groups : [];
+        box.innerHTML = "";
+        box.hidden = !(groups.length && available);
+        if (box.hidden) return;
+
+        groups.forEach((group, index) => {
+            const name = String(group.name || "");
+            const most = Number(group.max) || 0;
+            /* One choice or several. A group the shop capped at one is a
+               choice between things; anything else is a list of extras. */
+            const single = most === 1;
+
+            const block = document.createElement("div");
+            block.className = "option-group";
+            block.setAttribute("data-group", name);
+
+            const head = document.createElement("p");
+            head.className = "option-head";
+            head.textContent = name;
+            /* Say when one is required, because a customer who cannot see the
+               rule meets it as a refusal at checkout. */
+            if (Number(group.min) > 0) {
+                const must = document.createElement("span");
+                must.className = "option-must";
+                must.textContent = t("Required");
+                head.appendChild(must);
+            }
+            block.appendChild(head);
+
+            (group.options || []).forEach((option, spot) => {
+                const row = document.createElement("label");
+                row.className = "option-row";
+
+                const input = document.createElement("input");
+                input.type = single ? "radio" : "checkbox";
+                input.className = "option-pick";
+                input.name = "dish-option-" + index;
+                input.value = String(option.name || "");
+                input.setAttribute("data-group", name);
+                input.setAttribute("data-delta", String(Number(option.price_delta) || 0));
+                if (single && Number(group.min) > 0 && spot === 0) input.checked = true;
+
+                const words = document.createElement("span");
+                words.className = "option-name";
+                words.textContent = String(option.name || "");
+
+                const cost = document.createElement("span");
+                cost.className = "option-cost";
+                const delta = Number(option.price_delta) || 0;
+                /* Nothing shown for an option that costs nothing: "+0" reads
+                   as a charge somebody has to work out is not one. */
+                cost.textContent = delta ? "+" + money(delta) : "";
+
+                row.appendChild(input);
+                row.appendChild(words);
+                row.appendChild(cost);
+                block.appendChild(row);
+            });
+
+            box.appendChild(block);
+        });
+    }
+
+    /** What is ticked right now, in the shape the basket keeps. */
+    function chosenNow() {
+        const box = el("dish-options-box");
+        if (!box || box.hidden) return [];
+        return Array.from(box.querySelectorAll(".option-pick"))
+            .filter((input) => input.checked)
+            .map((input) => ({
+                group: String(input.getAttribute("data-group") || ""),
+                name: String(input.value || ""),
+                price_delta: Number(input.getAttribute("data-delta")) || 0
+            }));
+    }
+
     async function change(id, delta) {
         if (!id) return;
         await updateQuantity(id, delta);
@@ -356,6 +447,8 @@
          * only while the dish can be ordered at all. Off its hours there is
          * nothing to choose about.
          */
+        drawOptions(item, available && !marketPriced);
+
         const spiceBox = el("dish-spice-box");
         if (spiceBox) {
             spiceBox.hidden = !(item.spice_choice === true && available && !marketPriced);
@@ -409,6 +502,31 @@
 
     $(document).on("click", "#dish-more", async () => {
         const id = openId;
+
+        /*
+         * A dish with extras goes in through its own door, because the basket
+         * line for it is keyed by the CHOICE and not by the dish: two dosas,
+         * one with cheese, are two lines. See optionKey in indexedDB.js.
+         *
+         * The note and the spice level below are set against the line, so the
+         * key they are given has to be the same one.
+         */
+        const chosen = chosenNow();
+        if (chosen.length && typeof addWithOptions === "function") {
+            const line = await addWithOptions(id, chosen, 1);
+            bump();
+            const key = line ? String(line.id) : "";
+            if (pendingNote && key) {
+                await setCartItemNote(key, pendingNote);
+                pendingNote = "";
+            }
+            if (pendingSpice && key) {
+                await setCartItemSpice(key, pendingSpice);
+                pendingSpice = 0;
+            }
+            return;
+        }
+
         await change(id, 1);
         /* A note typed before the first Add now has a line to live on. */
         if (pendingNote && id) {

@@ -4406,6 +4406,11 @@ function checkoutPage({ cart = [], table = '', checkout: answer = null, kept = [
        needs it or the whole checkout throws a ReferenceError and the test
        sees a refusal that never happened. */
     lift(src, 'notAWord'),
+    /* And through this, because a basket line for a dish with extras is keyed
+       by the CHOICE: checkout has to ask the line which dish it is for. The
+       same class of miss as notAWord above - a ReferenceError inside the
+       checkout reads from outside as a refusal that never happened. */
+    lift(src, 'dishIdOf'),
     lift(src, 'performCheckout'),
   ].join('\n');
 
@@ -4805,4 +4810,125 @@ test('the four new words are in the Tamil dictionary, and both copies match', ()
     fs.readFileSync(path.join(__dirname, '..', 'menu', 'i18n.js'), 'utf8'),
     'the two copies of the dictionary have drifted'
   );
+});
+
+
+/* -------------------------------------------- the extras, on the customer page
+ *
+ * The till has priced extra cheese from the shop's own option documents since
+ * the handset learned about it, and the storefront sends the sets to every
+ * client. This page named none of them, so a customer ordering from the table
+ * could not ask for something the waiter beside them could ring up.
+ *
+ * The risk is not the picker. It is the BASKET: two dosas, one with cheese,
+ * are two lines, and a basket keyed by the dish would have silently changed
+ * the first when somebody chose cheese on the second.
+ */
+
+function liftOptions() {
+  const box = {};
+  // eslint-disable-next-line no-new-func
+  new Function('box', 'with (box) {' +
+    lift(read('indexedDB.js'), 'optionKey') + ';' +
+    lift(read('indexedDB.js'), 'dishIdOf') + ';' +
+    lift(read('indexedDB.js'), 'extrasFor') + ';' +
+    'box.optionKey = optionKey; box.dishIdOf = dishIdOf; box.extrasFor = extrasFor; }')(box);
+  return box;
+}
+
+test('a dish with no choice keeps its own id as the line key', () => {
+  /* Nothing changes for the overwhelming majority of dishes, which is the
+     point: a basket written before any of this still reads. */
+  const { optionKey } = liftOptions();
+  assert.strictEqual(optionKey('d1', []), 'd1');
+  assert.strictEqual(optionKey('d1', undefined), 'd1');
+});
+
+test('two dosas with different extras are two lines', () => {
+  /* THE ONE THAT MATTERS. Keyed by the dish, choosing cheese on the second
+     would have changed the first, and the kitchen would have made two cheesy
+     dosas for somebody who asked for one. */
+  const { optionKey } = liftOptions();
+  const plain = optionKey('d1', []);
+  const cheesy = optionKey('d1', [{ group: 'Extras', name: 'Extra cheese' }]);
+  assert.notStrictEqual(plain, cheesy);
+});
+
+test('the same two extras picked in either order are one line', () => {
+  const { optionKey } = liftOptions();
+  const a = optionKey('d1', [
+    { group: 'Extras', name: 'Extra cheese' },
+    { group: 'Extras', name: 'Olives' },
+  ]);
+  const b = optionKey('d1', [
+    { group: 'Extras', name: 'Olives' },
+    { group: 'Extras', name: 'Extra cheese' },
+  ]);
+  assert.strictEqual(a, b);
+});
+
+test('a line says which dish it is for, and an old line still answers', () => {
+  const { dishIdOf } = liftOptions();
+  assert.strictEqual(dishIdOf({ id: 'd1\u001eExtras\u001fCheese', item_id: 'd1' }), 'd1');
+  /* Written before any of this existed. */
+  assert.strictEqual(dishIdOf({ id: 'd1' }), 'd1');
+  assert.strictEqual(dishIdOf(null), '');
+});
+
+test('what the extras add is summed for the price on the page', () => {
+  const { extrasFor } = liftOptions();
+  assert.strictEqual(extrasFor([{ price_delta: 20 }, { price_delta: 5 }]), 25);
+  assert.strictEqual(extrasFor([{ price_delta: 0 }]), 0);
+  assert.strictEqual(extrasFor(undefined), 0);
+});
+
+test('the catalogue keeps the option sets the server sends', () => {
+  /* The bundle's whole catalogue is one object literal, and a field it does
+     not NAME never reaches the page however correctly it was sent. This is
+     the fourth time that has cost something. */
+  const source = read('indexedDB.js');
+  assert.match(source, /modifier_groups: Array\.isArray\(item\.modifier_groups\) \? item\.modifier_groups : \[\]/);
+});
+
+test('checkout sends the dish and the choice, and never a price', () => {
+  /*
+   * The shop prices its own extras from its own option documents. A page that
+   * sent a delta would either be ignored - the failure this whole area
+   * already had - or believed, which is worse: a page that can name the price
+   * of cheese can name a discount nobody agreed to.
+   */
+  const source = read('indexedDB.js');
+  const payload = source.slice(source.indexOf('item_id: dishIdOf(item)'), source.indexOf('item_id: dishIdOf(item)') + 900);
+  assert.match(payload, /modifiers: \(Array\.isArray\(item\.chosen\) \? item\.chosen : \[\]\)\.map/);
+  assert.match(payload, /group: String\(one\.group \|\| ""\)/);
+  assert.match(payload, /name: String\(one\.name \|\| ""\)/);
+  assert.ok(!/price_delta/.test(payload), 'the page is sending the shop a price for its own extras');
+});
+
+test('a capped-at-one group is radios, and anything else is ticks', () => {
+  /* A tick that silently refuses to stay ticked is worse than one that
+     visibly replaces another. */
+  const source = fs.readFileSync(path.join(BUNDLE, 'assets', 'products', 'script.js'), 'utf8');
+  assert.match(source, /const single = most === 1;/);
+  assert.match(source, /input\.type = single \? "radio" : "checkbox";/);
+});
+
+test('an option that costs nothing shows no price', () => {
+  /* "+0" reads as a charge somebody has to work out is not one. */
+  const source = fs.readFileSync(path.join(BUNDLE, 'assets', 'products', 'script.js'), 'utf8');
+  assert.match(source, /cost\.textContent = delta \? "\+" \+ money\(delta\) : "";/);
+});
+
+test('the note and the spice land on the line the choice made, not on the dish', () => {
+  /*
+   * They are set against a line id. With extras that id is the CHOICE key, so
+   * handing them the dish's id would write the note onto a line that does not
+   * exist - silently, because setCartItemNote returns when it finds nothing.
+   */
+  const source = fs.readFileSync(path.join(BUNDLE, 'assets', 'products', 'script.js'), 'utf8');
+  const press = source.slice(source.indexOf('#dish-more'));
+  assert.match(press, /const line = await addWithOptions\(id, chosen, 1\);/);
+  assert.match(press, /const key = line \? String\(line\.id\) : "";/);
+  assert.match(press, /setCartItemNote\(key, pendingNote\)/);
+  assert.match(press, /setCartItemSpice\(key, pendingSpice\)/);
 });
