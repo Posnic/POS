@@ -815,6 +815,17 @@ class ItemService {
     }
   }
 
+  /* A waiter saying a dish has run out for tonight. See the repository for
+     why this does not touch stock. */
+  async markSoldOut(params = {}) {
+    try {
+      return await this.repository.markSoldOut(params);
+    } catch (error) {
+      console.error('Error in ItemService.markSoldOut:', error);
+      return { status: false, message: error.message, data: null };
+    }
+  }
+
   async storefront(params = {}) {
     try {
       const result = await this.repository.storefront(params);
