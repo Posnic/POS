@@ -8693,11 +8693,9 @@ class SalesRepository {
     if (ObjectId.isValid(String(branchId))) filter.branch_id = new ObjectId(String(branchId));
     if (BaseModel.license) filter.license = BaseModel.license;
 
-    const done = await db
-      .collection('waitercalls')
-      .updateOne(filter, {
-        $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
-      });
+    const done = await db.collection('waitercalls').updateOne(filter, {
+      $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
+    });
     if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
     return { status: true, message: 'On the way', data: { call_id: String(callId) } };
   }
