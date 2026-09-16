@@ -763,9 +763,10 @@ test('the page with the assistant loads every one of the assistant scripts', () 
  */
 test('a dish is paired by what the shop said first, then by what sells with it', () => {
   const src = fs.readFileSync(path.join(ROOT, 'api', 'src', 'repositories', 'item.repository.js'), 'utf8');
-  const from = src.indexOf('  pairingsFor(row, learned) {');
+  const SIGNATURE = '  pairingsFor(row, learned, priceOf = null) {';
+  const from = src.indexOf(SIGNATURE);
   assert.ok(from !== -1, 'the shop can no longer say what goes with a dish');
-  const body = src.slice(from, src.indexOf('\n  }', from) + 4).replace('pairingsFor(row, learned) {', 'function pairingsFor(row, learned) {');
+  const body = src.slice(from, src.indexOf('\n  }', from) + 4).replace(SIGNATURE.trim(), 'function pairingsFor(row, learned, priceOf = null) {');
   // eslint-disable-next-line no-new-func
   const pairingsFor = new Function(body + '; return pairingsFor;')();
 
@@ -778,6 +779,42 @@ test('a dish is paired by what the shop said first, then by what sells with it',
   assert.deepStrictEqual(pairingsFor({ goes_with: ['coke'] }, undefined), ['coke'], 'a new shop with no sales lost what it typed');
   assert.deepStrictEqual(pairingsFor({ goes_with: ['coke'] }, [{ id: 'coke' }, { id: 'fries' }]), ['coke', 'fries'], 'the same dish was offered twice');
   assert.strictEqual(pairingsFor({ goes_with: ['a', 'b', 'c', 'd', 'e'] }, [{ id: 'f' }]).length, 3, 'the suggestion became a catalogue');
+
+  /*
+   * AND A SUGGESTION NEVER COSTS MORE THAN THE DISH IT SITS UNDER.
+   *
+   * Owner: "coke should not suggest the briyani." The learned half counts every
+   * pair in BOTH directions - correctly, it is measuring which dishes travel
+   * together - so without this a drink recommends the main it was drunk with.
+   *
+   * Pinned here as well as in the API suite because this file is what proves
+   * the customer-facing bundle offers what the shop meant. The price is the
+   * whole rule: cheaper than the anchor is an accompaniment to it, whatever
+   * either of them is called, on a menu nobody has categorised.
+   */
+  const priced = { biryani: 240, mojito: 120, coke: 60 };
+  const priceOf = (what) => priced[typeof what === 'object' ? String((what && what._id) || '') : String(what)];
+
+  assert.deepStrictEqual(
+    pairingsFor({ _id: 'coke' }, [{ id: 'biryani' }, { id: 'mojito' }], priceOf),
+    [],
+    'a coke offered the biryani back'
+  );
+  assert.deepStrictEqual(
+    pairingsFor({ _id: 'biryani' }, [{ id: 'coke' }, { id: 'mojito' }], priceOf),
+    ['coke', 'mojito'],
+    'a biryani stopped offering its drinks'
+  );
+  assert.deepStrictEqual(
+    pairingsFor({ _id: 'coke', goes_with: ['biryani'] }, [], priceOf),
+    ['biryani'],
+    'the shop paired it by hand and was overruled'
+  );
+  assert.deepStrictEqual(
+    pairingsFor({ _id: 'coke' }, [{ id: 'nosuchdish' }], priceOf),
+    ['nosuchdish'],
+    'a dish with no price was read as expensive rather than as not said'
+  );
 });
 
 test('what the shop types as a pairing is normalised, never trusted', () => {
