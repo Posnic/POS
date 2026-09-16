@@ -349,13 +349,13 @@ PosnicPro.gstrNine = {
         PosnicPro.get(params, function (response) {
             if (response.type === 'success') {
                 loader.find(".loadingSpinner:first").remove();
-                $('.from-year').html(dateOne);
-                $('.to-year').html(dateTwo);
+                $('.from-year').text(dateOne);
+                $('.to-year').text(dateTwo);
 
                 $(".legal-name").html(PosnicPro.local.get('branchname'));
                 var currency = PosnicPro.local.get('currencySign');
                 var gstn_number = $('#branch_gstin_number').val();
-                $(".company_gstin").html(gstn_number);
+                $(".company_gstin").text(gstn_number);
 
 
                 var data = response.data;
