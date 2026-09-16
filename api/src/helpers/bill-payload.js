@@ -415,15 +415,31 @@ function extraRows(sale, branch, items) {
    */
   add('bill_print_steward', 'Steward', sale && (sale.created_by || sale.user_name));
 
+  /*
+   * Total quantity is NOT here. It is a count of what was bought, so it belongs
+   * beside the subtotal where a reader is already adding things up, not in the
+   * header with the table number. Every printed bill that carries an item count
+   * puts it there. See totalQty on the payload.
+   */
+
+  return out;
+}
+
+/**
+ * How many dishes, as opposed to how many lines.
+ *
+ * Four parathas and a pulao is five, which is the number a hotel prints and the
+ * number a guest counts.
+ *
+ * @returns {string} the count, or '' when the shop has not asked for it
+ */
+function totalQuantity(branch, items) {
+  if (!wants(branch, 'bill_print_total_qty')) return '';
   const qty = (items || []).reduce(
     (sum, it) => sum + num(String(it.qty == null ? '' : it.qty).split(' ')[0]),
     0
   );
-  /* Total quantity is dishes, not lines: 4 parathas and a pulao is 5, which is
-     the number a hotel prints and the number a guest counts. */
-  add('bill_print_total_qty', 'Total Qty', qty > 0 ? String(Math.round(qty * 1000) / 1000) : '');
-
-  return out;
+  return qty > 0 ? String(Math.round(qty * 1000) / 1000) : '';
 }
 
 /**
@@ -466,6 +482,9 @@ function buildBillPayload(sale = {}, branch = {}) {
 
     /* Not "RECEIPT" and not "TAX INVOICE". Nobody has paid yet, and calling it
        either would be a document this shop has not issued. */
+    /* Beside the subtotal, not in the header - see totalQuantity. */
+    totalQty: totalQuantity(branch, items),
+
     title: 'BILL',
     billNo: String(sale.sales_id || '').trim(),
     date: stamp(sale.date || sale.created_at),
