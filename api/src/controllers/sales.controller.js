@@ -7400,6 +7400,9 @@ class SalesController extends BaseController {
          table. It rides in the options object rather than as an eleventh
          positional argument, because ten is already too many to count. */
       const newTableId = req.body.table_id;
+      /* Which version of the order the caller was looking at. Absent from an
+         older handset, which is why nothing here requires it. */
+      const seenAt = req.body.seen_at;
       const dineType = req.body.dine_type;
       const personCount = req.body.person_count;
 
@@ -7415,7 +7418,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId }
+        { SaleModel, newTableId, seenAt }
       );
 
       if (response.status === true) {
