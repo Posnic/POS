@@ -84,6 +84,15 @@ router.post(
 // Protect all remaining item routes to ensure req.user context is available
 router.use(protect);
 
+/*
+ * A dish that has run out, said by whoever found out first.
+ *
+ * Behind the session rather than the storefront key: taking a dish off the
+ * menu is a shop decision made by a person, even when that person is standing
+ * at a table holding a phone.
+ */
+router.post('/soldOut', bindController(itemsController.markSoldOut));
+
 // GET /api/items - Get paginated items (legacy default endpoint)
 /*
  * The catalogue seen from one channel, and the two ways a shop changes it.

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const BaseModel = require('../models/base.model');
 const datePreference = require('../utils/date-preference');
 const { WALK_IN_NAME } = require('../utils/walk-in');
+const tradingDay = require('../utils/trading-day');
 const demoData = require('../services/demo-data');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const { formatDate } = require('../utils/helpers');
@@ -10058,47 +10059,13 @@ class SalesRepository {
    * @param {object} [branch] the branch, for its timezone
    */
   _pricedToday(setOn, branch) {
-    if (!setOn) return false;
-    const when = new Date(setOn);
-    if (Number.isNaN(when.getTime())) return false;
-
-    const zone = datePreference.branchTimezone(branch);
-    const day = (d) => {
-      /*
-       * THE TRADING DAY STARTS AT SEVEN IN THE MORNING, NOT AT MIDNIGHT.
-       *
-       * Owner: "daily price starts in the morning only. means 7am. not
-       * midnight coz up to 1am restaurant might open."
-       *
-       * A restaurant sets its fish prices when it opens and serves until one.
-       * On a calendar day those prices expire in the middle of service: at
-       * midnight every one of them reads as yesterday's, the handset starts
-       * asking waiters for numbers they were given at eleven that morning, and
-       * the till refuses the dishes until somebody re-enters them - at one in
-       * the morning, during the last push of the night.
-       *
-       * Shifting the clock back seven hours before the date is read moves the
-       * boundary into the dead hour instead. A price entered at 11am on Monday
-       * is still Monday's price at half past midnight; it goes stale at 7am on
-       * Tuesday, when the shop is opening anyway and is about to set the new
-       * day's rates.
-       *
-       * Seven is the owner's number for his own kitchens. If a shop ever opens
-       * earlier than that, this is the one line to make a setting - the four
-       * screens that ask the same question each carry the same constant and
-       * the same note.
-       */
-      const DAY_STARTS_AT_HOUR = 7;
-      const shifted = new Date(d.getTime() - DAY_STARTS_AT_HOUR * 60 * 60 * 1000);
-      try {
-        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(shifted);
-      } catch (e) {
-        /* An unknown zone must not stop a sale. UTC is wrong by hours, never
-           by a sale: the worst it does is ask for a price already entered. */
-        return shifted.toISOString().slice(0, 10);
-      }
-    };
-    return day(when) === day(new Date());
+    /*
+     * The rule lives in utils/trading-day.js now. It was written out here, and
+     * its own comment warned that four screens carried the same constant; a
+     * fifth caller was about to copy it again for dishes marked off for the
+     * night. One copy, so there is one rule.
+     */
+    return tradingDay.isToday(setOn, branch);
   }
 
   /*

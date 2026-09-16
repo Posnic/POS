@@ -1,4 +1,5 @@
 const { searchPattern } = require('../utils/safe-search');
+const tradingDay = require('../utils/trading-day');
 // src/repositories/item.repository.js
 const BaseModel = require('../models/base.model');
 const demoData = require('../services/demo-data');
@@ -4668,6 +4669,65 @@ class ItemRepository extends BaseModel {
    * charge its budget: the address names a branch, and the branch names
    * the context every other feature uses. Null for an address nobody owns.
    */
+  /*
+   * A WAITER SAYS IT HAS RUN OUT.
+   *
+   * The kitchen tells the floor before it tells anybody with a keyboard. Until
+   * now a waiter who heard "no more fish" had to find whoever runs the till,
+   * and in the minutes that took, three more tables ordered it, three more
+   * tickets printed, and three tables were told no after they had chosen.
+   *
+   * NOT BY TOUCHING STOCK. "Sold out" on the menu has always meant
+   * available_quantity <= 0, which is counted inventory the shop buys against.
+   * A waiter zeroing that to warn the floor would be writing a lie into the
+   * purchasing figures to fix a problem that lasts one evening.
+   *
+   * So this is its own flag with its own lifetime: set during service, gone by
+   * the next trading day, which starts at seven in the morning like everything
+   * else here. A kitchen that finds another crate can put it straight back,
+   * because the dish being off is a fact about tonight and somebody on the
+   * floor is the one who knows when it stops being true.
+   */
+  async markSoldOut({ itemId, off, branchId } = {}) {
+    if (!ObjectId.isValid(String(itemId))) {
+      return { status: false, message: 'Enter must correct item id', data: null };
+    }
+
+    const collection = await this.getCollection(this.collectionName);
+    const selector = { _id: new ObjectId(String(itemId)) };
+    if (BaseModel.license) selector.license = BaseModel.license;
+
+    /*
+     * Only a dish this branch actually sells. A handset holds one shop's menu
+     * and has no business marking another shop's fish off, even by accident.
+     */
+    if (branchId && ObjectId.isValid(String(branchId))) {
+      const branchObjectId = new ObjectId(String(branchId));
+      selector.$or = [
+        { branch_id: branchObjectId },
+        { 'branch_access.branch_id': branchObjectId },
+      ];
+    }
+
+    const item = await collection.findOne(selector);
+    if (!item) {
+      return { status: false, message: 'That dish is not on this shop menu', data: null };
+    }
+
+    const update =
+      off === false
+        ? { $unset: { sold_out_on: '' } }
+        : { $set: { sold_out_on: new Date() } };
+
+    await collection.updateOne({ _id: item._id }, update);
+
+    return {
+      status: true,
+      message: off === false ? 'Back on the menu' : 'Marked as run out for today',
+      data: { id: String(item._id), name: item.name || '', sold_out_today: off !== false },
+    };
+  }
+
   async storefrontContext(params = {}) {
     const branchDoc = await this._storefrontBranch(params);
     if (!branchDoc) return null;
@@ -4797,6 +4857,9 @@ class ItemRepository extends BaseModel {
                 /* Which option sets this dish has. Resolved into whole groups
                    below; the ids themselves never reach a client. */
                 modifier_group_ids: '$modifier_group_ids',
+                /* When somebody last said this had run out. Turned into a
+                   yes-or-no for today below, in the shop's own timezone. */
+                sold_out_on: '$sold_out_on',
                 discount_percentage: '$discount_percentage',
                 discount_amount: '$discount_amount',
                 tax: '$tax',
@@ -4932,6 +4995,29 @@ class ItemRepository extends BaseModel {
       for (const group of results) {
         for (const item of group.items || []) {
           item.icon = dishIcons.iconFor({ image: item.img, icon: item.icon, name: item.name });
+        }
+      }
+
+      /*
+       * OFF FOR TONIGHT, NOT OUT OF STOCK.
+       *
+       * "Sold out" on a handset has always meant available_quantity <= 0 -
+       * real inventory, counted. But a kitchen that has run out of fish at
+       * eight o'clock has not changed its stock figures, and a waiter who
+       * zeroed them to warn the floor would be corrupting what the shop buys
+       * against. So this is its own flag, and it expires by itself.
+       *
+       * Answered here rather than sent raw, because the shop's day is the
+       * shop's to decide: the server knows the branch timezone and a handset
+       * knows only the clock in somebody's pocket. Same trading day as the
+       * fish prices - seven in the morning, not midnight - so a dish taken off
+       * during Friday service comes back on Saturday morning rather than at
+       * one a.m. in the middle of the last push.
+       */
+      for (const group of results) {
+        for (const item of group.items || []) {
+          if (tradingDay.isToday(item.sold_out_on, branchDoc)) item.sold_out_today = true;
+          delete item.sold_out_on;
         }
       }
 
