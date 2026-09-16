@@ -243,7 +243,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('posnic:kitchen-call', h);
       return () => ipcRenderer.removeListener('posnic:kitchen-call', h);
     },
-    /* Whether THIS machine is the one by the pass. Turned on once, there. */
+    /*
+     * Whether THIS machine is the one by the pass, and which half it wants.
+     *
+     *   posnic.kitchenCall.get()                    -> { ting, speak }
+     *   posnic.kitchenCall.set({ ting: true })      -> chime only
+     *   posnic.kitchenCall.set({ speak: true })     -> and read it out
+     *   posnic.kitchenCall.setOn(true)              -> both, the short way
+     *
+     * A value left out is left as it was, so turning the reading off does not
+     * silently take the chime with it.
+     */
+    get: () => ipcRenderer.invoke('kitchen-announce:get'),
+    set: (next) => ipcRenderer.invoke('kitchen-announce:set', next),
+    /* Kept: it is what the kitchen machine was told to type. */
     isOn: () => ipcRenderer.invoke('kitchen-announce:get'),
     setOn: (on) => ipcRenderer.invoke('kitchen-announce:set', on === true),
   },

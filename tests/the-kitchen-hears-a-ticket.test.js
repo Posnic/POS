@@ -213,6 +213,64 @@ test('a line with no quantity is not announced as an order for none', () => {
 
 /* ------------------------------------------------------------ the switch */
 
+test('THE CHIME AND THE READING ARE SEPARATE SWITCHES', () => {
+  /*
+   * Owner: "ting sound on/off read it on/off seperately?"
+   *
+   * They are different things to a kitchen. The chime says a ticket landed and
+   * costs a second; the reading says what is on it and costs ten. A kitchen
+   * that knows to look at the printer wants the first and will come to resent
+   * the second. One switch would make somebody choose between hearing nothing
+   * and hearing too much, and they would choose nothing.
+   */
+  const where = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-kitchen-'));
+  const before = process.env.POSNIC_USER_DATA;
+  process.env.POSNIC_USER_DATA = where;
+
+  try {
+    delete require.cache[require.resolve('../src/kitchen-announce')];
+    const announce = require('../src/kitchen-announce');
+
+    announce.set({ ting: true });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+    assert.strictEqual(announce.wanted(), true, 'a chime is still a sound');
+
+    announce.set({ speak: true });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+
+    /* Turning one off must not take the other with it. */
+    announce.set({ speak: false });
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+  } finally {
+    process.env.POSNIC_USER_DATA = before;
+    fs.rmSync(where, { recursive: true, force: true });
+  }
+});
+
+test('a machine already set up in a kitchen does not fall silent', () => {
+  /*
+   * The single switch this replaced meant both. Somebody who turned it on
+   * yesterday must not lose their announcements because the setting grew a
+   * second half overnight.
+   */
+  const where = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-kitchen-'));
+  const before = process.env.POSNIC_USER_DATA;
+  process.env.POSNIC_USER_DATA = where;
+
+  try {
+    delete require.cache[require.resolve('../src/kitchen-announce')];
+    const announce = require('../src/kitchen-announce');
+
+    fs.mkdirSync(path.dirname(announce.settingsPath()), { recursive: true });
+    fs.writeFileSync(announce.settingsPath(), JSON.stringify({ announce: true }), 'utf8');
+
+    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+  } finally {
+    process.env.POSNIC_USER_DATA = before;
+    fs.rmSync(where, { recursive: true, force: true });
+  }
+});
+
 test('a machine is SILENT until somebody says otherwise', () => {
   /*
    * A till that started announcing orders after an update, in a room with
@@ -227,6 +285,7 @@ test('a machine is SILENT until somebody says otherwise', () => {
     const announce = require('../src/kitchen-announce');
 
     assert.strictEqual(announce.wanted(), false);
+    assert.deepStrictEqual(announce.settings(), { ting: false, speak: false });
 
     announce.set(true);
     assert.strictEqual(announce.wanted(), true, 'turned on for this machine');

@@ -4568,8 +4568,10 @@ app.whenReady().then(async () => {
      this is how the page says an order stopped waiting. */
   /* Turned on once, on the machine by the pass. Off everywhere else, so an
      update never makes a counter till start talking in front of customers. */
-  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.wanted());
-  ipcMain.handle('kitchen-announce:set', (_event, on) => kitchenAnnounce.set(on === true));
+  /* Two switches: the chime and the reading. A kitchen that knows to look at
+     the printer wants the first and comes to resent the second. */
+  ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.settings());
+  ipcMain.handle('kitchen-announce:set', (_event, next) => kitchenAnnounce.set(next));
 
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {
     if (orderAlert) orderAlert.resolve(saleId);
