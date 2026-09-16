@@ -256,6 +256,19 @@ test('THE APP USES defineProperty, not an assignment', () => {
 
   expect(app).toMatch(/Object\.defineProperty\(req, 'query', \{/);
   expect(app).not.toMatch(/req\.query = sanitize\(/);
-  /* The body half never needed it and still must not be broken. */
-  expect(app).toMatch(/req\.body = sanitize\(\{ \.\.\.req\.body \}\);/);
+  /*
+   * The body half never needed it and still must not be broken - but it is no
+   * longer this middleware that does it.
+   *
+   * `req.body = sanitize({ ...req.body })` used to sit here and was removed,
+   * because src/middleware/no-mongo-operators.js is mounted immediately after
+   * the parsers and had been stripping the same keys a second time. The
+   * guarantee this line was defending is unchanged and is what is asserted
+   * instead: SOMETHING strips the body, before any route.
+   *
+   * Changed by another session. If the dedicated middleware is ever removed,
+   * this fails, which is the point.
+   */
+  expect(app).toMatch(/require\('\.\/src\/middleware\/no-mongo-operators'\)/);
+  expect(app).not.toMatch(/req\.body = sanitize\(/);
 });

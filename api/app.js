@@ -489,10 +489,23 @@ app.use((req, res, next) => {
     });
   }
 
-  // Sanitize request body
-  if (req.body && typeof req.body === 'object') {
-    req.body = sanitize({ ...req.body });
-  }
+  /*
+   * THE BODY IS ALREADY CLEAN BY THE TIME THIS RUNS.
+   *
+   * `req.body = sanitize({ ...req.body })` stood here and did the same job as
+   * src/middleware/no-mongo-operators.js, which is mounted immediately after
+   * the parsers and therefore always runs first. Two implementations of one
+   * promise is how the two drift: a rule added to one and not the other reads
+   * as covered and is not.
+   *
+   * The dedicated one is the one kept, because it also removes `__proto__`,
+   * `constructor` and `prototype`, bounds its own walk against a structure
+   * built to be walked, and logs a count and a path rather than a string the
+   * caller chose.
+   *
+   * `sanitize` stays for the QUERY STRING above, which is its own problem and
+   * was not running at all until #811.
+   */
 
   /* The gap the sanitiser above cannot see into: a filter arriving as a JSON
      STRING is one ordinary-looking value to that walk, so its operators
