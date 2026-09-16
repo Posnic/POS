@@ -306,6 +306,9 @@ router.post(
  */
 router.get('/pendingOnlineOrders', bindController(salesController.pendingOnlineOrders));
 
+/* A table called; somebody is going. Marked seen rather than decided. */
+router.post('/waiterCalls/:id/seen', bindController(salesController.seeWaiterCall));
+
 /* What the shop owes its hotels and its aggregators. Same date-range and
    branch preparation every other report uses, so a report saved from one
    screen filters the same way as the next. */

@@ -112,6 +112,9 @@ async function rememberShop() {
         /* What kind of shop, which decides the words and the questions. */
         shop.kind = branch.kind === "retail" ? "retail" : "restaurant";
         shop.notes = branch.notes === true;
+        /* Whether a table may call somebody over. See
+           api/src/utils/waiter-call.js for why it needs a table too. */
+        shop.callWaiter = branch.call_waiter === true;
         /* Whether the shop opened its assistant to customers; the spark. */
         shop.assistant = branch.assistant === true;
         shop.assistantGreeting = String(branch.assistant_greeting || "");
@@ -1168,6 +1171,8 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                    and how the food may travel. */
                 kind: storeInfo.kind === "retail" ? "retail" : "restaurant",
                 notes: !!(result.data.features && result.data.features.notes),
+                /* Whether a table may call somebody over. */
+                call_waiter: !!(result.data.features && result.data.features.call_waiter),
                 assistant: !!(result.data.features && result.data.features.assistant),
                 assistant_greeting: String((result.data.features && result.data.features.assistant_greeting) || ""),
                 voice: String((result.data.features && result.data.features.voice) || ""),
@@ -1932,6 +1937,75 @@ function readyByWords(order) {
         return t("About {n} minutes once the shop accepts it", { n: Number(order.ready_minutes) || 0 });
     }
     return t("Usually ready by about {when}", { when: clock });
+}
+
+/*
+ * "COME TO TABLE SEVEN."
+ *
+ * Owner: "i want option for customers call... he should simple button to make
+ * it... coz everytime its annoying people see waiters to turn back."
+ *
+ * The most common failure of table service, and not a staffing problem: a
+ * table needs something, nobody is looking, and the customer spends two
+ * minutes trying to catch an eye. The restaurant never learns it happened.
+ *
+ * ONE TAP, AND ONLY WHERE IT MEANS SOMETHING. The shop has to run tables and
+ * the printed code has to have named one - a call that cannot say WHERE is
+ * worse than no call. No reasons to pick from either: the waiter is walking
+ * over anyway and will find out faster than anybody can choose from a list.
+ *
+ * THE SECOND TAP IS NOT A SECOND CALL. Somebody who taps again has not asked
+ * twice, they have doubted the button - so the server answers with the call
+ * that is already standing, and the page says so rather than pretending to
+ * have sent another.
+ */
+function whichTable() {
+    var point = window.KioskServicePoint ? window.KioskServicePoint.orderFields() : {};
+    return String(point.table || localStorage.getItem("order_table") || "").trim();
+}
+
+function paintCallButton() {
+    var button = document.getElementById("call-waiter");
+    if (!button) return;
+    button.hidden = !(shop.callWaiter === true && whichTable() !== "");
+}
+
+async function callTheWaiter() {
+    var button = document.getElementById("call-waiter");
+    var table = whichTable();
+    if (!button || !table) return;
+    if (button.dataset.sent === "yes") return;
+
+    button.disabled = true;
+    try {
+        const branchId = (await knownBranchId()) || "";
+        const response = await fetch(
+            CONFIG.API_BASE_URL + "/online-ordering/" + encodeURIComponent(branchId) + "/call",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({ table: table })
+            }
+        );
+        const result = await readJsonResponse(response, "Call");
+        if (result.type !== "success") throw new Error(result.message || "");
+        /*
+         * Said in the past tense and left that way for a minute. A button that
+         * springs back to "Call waiter" the instant it is pressed reads as
+         * nothing having happened, which is the one thing that would make
+         * somebody stand up and go looking anyway.
+         */
+        button.dataset.sent = "yes";
+        button.textContent = t("Somebody is coming");
+        setTimeout(function () {
+            button.dataset.sent = "";
+            button.textContent = t("Call waiter");
+            button.disabled = false;
+        }, 60000);
+    } catch (error) {
+        button.disabled = false;
+        console.warn("could not call the waiter:", error && error.message);
+    }
 }
 
 function kitchenNoticeHtml(kitchen) {

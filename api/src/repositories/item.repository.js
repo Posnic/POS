@@ -5072,6 +5072,15 @@ class ItemRepository extends BaseModel {
            */
           table_service: branchDoc.table_options === true,
           /*
+           * May a customer at a table call somebody over?
+           *
+           * The same switch, said again under its own name because the
+           * ordering page reads FEATURES rather than reaching into the
+           * handset's fields - and because a shop may one day want the two
+           * separately without the page having to be changed again.
+           */
+          call_waiter: branchDoc.table_options === true,
+          /*
            * Whether this shop's handsets may listen, and in what language.
            *
            * WHERE THE AUDIO GOES, never which vendor transcribes it and never
