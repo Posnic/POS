@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "Elk kalenderjaar opnieuw beginnen",
   "lang_turning_this_on_starts_the_numbering_again": "Als u dit aanzet, begint de nummering weer bij één. Doe dit bij voorkeur op de eerste dag van een jaar.",
   "lang_financial_year_starts_in": "Boekjaar begint in",
-  "lang_april_in_india_january_in_much_of_the_eu": "April in India, januari in een groot deel van de EU."
+  "lang_april_in_india_january_in_much_of_the_eu": "April in India, januari in een groot deel van de EU.",
+  "lang_if_nobody_answers": "Als niemand reageert",
+  "lang_leave_it_waiting": "Laat hem wachten en blijf waarschuwen",
+  "lang_accept_it_and_send_to_the_kitchen": "Accepteren en naar de keuken sturen",
+  "lang_cancel_it_and_tell_the_customer": "Annuleren en de klant informeren",
+  "lang_the_alarm_keeps_asking_either_way": "Het alarm blijft in beide gevallen vragen, met groter wordende tussenpozen.",
+  "lang_after_how_long": "Na hoeveel tijd",
+  "lang_counted_from_when_the_order_arrived": "Geteld vanaf het moment dat de bestelling binnenkwam."
 }

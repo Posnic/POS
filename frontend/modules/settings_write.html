@@ -6029,6 +6029,42 @@
                                                                         </small>
                                                                     </div>
                                                                 </div>
+                                                                <!--
+                                                                    WHAT HAPPENS WHEN NOBODY ANSWERS AT ALL.
+                                                                    Owner: "let restaurent owner decide that. give option auto
+                                                                    cancel or auto accept. based ont time he defines it. by
+                                                                    default dont accpept or reject." Only meaningful while
+                                                                    orders are held, so the row is hidden on automatic - and
+                                                                    both halves are needed: a choice with no time fires at
+                                                                    once, a time with no choice fires nothing.
+                                                                    api/src/services/unanswered-orders.js
+                                                                -->
+                                                                <div class="form-row" id="online_order_silence_row">
+                                                                    <div class="form-group col-md-5">
+                                                                        <label for="online_order_on_silence"><lang class="lang_if_nobody_answers">If nobody answers</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_on_silence">
+                                                                            <option value=""><lang class="lang_leave_it_waiting">Leave it waiting, keep asking</lang></option>
+                                                                            <option value="accept"><lang class="lang_accept_it_and_send_to_the_kitchen">Accept it and send to the kitchen</lang></option>
+                                                                            <option value="cancel"><lang class="lang_cancel_it_and_tell_the_customer">Cancel it and tell the customer</lang></option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_the_alarm_keeps_asking_either_way">The alarm keeps asking either way, backing off as it goes.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                    <div class="form-group col-md-5" id="online_order_decide_after_row">
+                                                                        <label for="online_order_decide_after_minutes"><lang class="lang_after_how_long">After how long</lang></label>
+                                                                        <select class="form-control border-control" id="online_order_decide_after_minutes">
+                                                                            <option value="5">5m</option>
+                                                                            <option value="10" selected>10m</option>
+                                                                            <option value="15">15m</option>
+                                                                            <option value="30">30m</option>
+                                                                            <option value="60">1h</option>
+                                                                        </select>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_counted_from_when_the_order_arrived">Counted from when the order arrived.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                             <div class="card-footer text-right">
                                                                 <button type="submit" class="btn btn-outline-primary">

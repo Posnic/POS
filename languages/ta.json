@@ -3219,5 +3219,12 @@
   "lang_start_again_each_calendar_year": "ஒவ்வொரு காலண்டர் ஆண்டிலும் மீண்டும் தொடங்கு",
   "lang_turning_this_on_starts_the_numbering_again": "இதை இயக்கினால் எண்கள் மீண்டும் ஒன்றிலிருந்து தொடங்கும். ஆண்டின் முதல் நாளில் செய்வது சிறந்தது.",
   "lang_financial_year_starts_in": "நிதியாண்டு தொடங்கும் மாதம்",
-  "lang_april_in_india_january_in_much_of_the_eu": "இந்தியாவில் ஏப்ரல், ஐரோப்பிய ஒன்றியத்தின் பெரும்பாலான இடங்களில் ஜனவரி."
+  "lang_april_in_india_january_in_much_of_the_eu": "இந்தியாவில் ஏப்ரல், ஐரோப்பிய ஒன்றியத்தின் பெரும்பாலான இடங்களில் ஜனவரி.",
+  "lang_if_nobody_answers": "யாரும் பதில் சொல்லாவிட்டால்",
+  "lang_leave_it_waiting": "காத்திருக்கட்டும், கேட்டுக்கொண்டே இருக்கட்டும்",
+  "lang_accept_it_and_send_to_the_kitchen": "ஏற்றுக்கொண்டு சமையலறைக்கு அனுப்பு",
+  "lang_cancel_it_and_tell_the_customer": "ரத்து செய்து வாடிக்கையாளரிடம் சொல்",
+  "lang_the_alarm_keeps_asking_either_way": "இரண்டு நிலையிலும் அலாரம் கேட்டுக்கொண்டே இருக்கும், மெல்ல மெல்ல குறையும்.",
+  "lang_after_how_long": "எவ்வளவு நேரம் கழித்து",
+  "lang_counted_from_when_the_order_arrived": "ஆர்டர் வந்த நேரத்திலிருந்து கணக்கிடப்படும்."
 }

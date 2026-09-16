@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "ప్రతి క్యాలెండర్ సంవత్సరం మళ్లీ మొదలుపెట్టు",
   "lang_turning_this_on_starts_the_numbering_again": "దీన్ని ఆన్ చేస్తే నంబరింగ్ మళ్లీ ఒకటి నుండి మొదలవుతుంది. సంవత్సరం మొదటి రోజున చేయడం మంచిది.",
   "lang_financial_year_starts_in": "ఆర్థిక సంవత్సరం మొదలయ్యేది",
-  "lang_april_in_india_january_in_much_of_the_eu": "భారతదేశంలో ఏప్రిల్, యూరోపియన్ యూనియన్‌లో చాలా చోట్ల జనవరి."
+  "lang_april_in_india_january_in_much_of_the_eu": "భారతదేశంలో ఏప్రిల్, యూరోపియన్ యూనియన్‌లో చాలా చోట్ల జనవరి.",
+  "lang_if_nobody_answers": "ఎవరూ స్పందించకపోతే",
+  "lang_leave_it_waiting": "వేచి ఉండనివ్వండి, అడుగుతూనే ఉండండి",
+  "lang_accept_it_and_send_to_the_kitchen": "అంగీకరించి వంటగదికి పంపు",
+  "lang_cancel_it_and_tell_the_customer": "రద్దు చేసి వినియోగదారుకు చెప్పు",
+  "lang_the_alarm_keeps_asking_either_way": "రెండు సందర్భాల్లోనూ అలారం అడుగుతూనే ఉంటుంది, క్రమంగా తగ్గుతూ.",
+  "lang_after_how_long": "ఎంత సేపటి తర్వాత",
+  "lang_counted_from_when_the_order_arrived": "ఆర్డర్ వచ్చిన సమయం నుండి లెక్కిస్తారు."
 }

@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "เริ่มใหม่ทุกปีปฏิทิน",
   "lang_turning_this_on_starts_the_numbering_again": "เมื่อเปิดใช้ การนับเลขจะเริ่มใหม่ที่หนึ่ง ควรทำในวันแรกของปี",
   "lang_financial_year_starts_in": "ปีบัญชีเริ่มในเดือน",
-  "lang_april_in_india_january_in_much_of_the_eu": "เดือนเมษายนในอินเดีย เดือนมกราคมในกลุ่มสหภาพยุโรปส่วนใหญ่"
+  "lang_april_in_india_january_in_much_of_the_eu": "เดือนเมษายนในอินเดีย เดือนมกราคมในกลุ่มสหภาพยุโรปส่วนใหญ่",
+  "lang_if_nobody_answers": "ถ้าไม่มีใครตอบ",
+  "lang_leave_it_waiting": "ปล่อยให้รอไว้ และเตือนต่อไป",
+  "lang_accept_it_and_send_to_the_kitchen": "รับออร์เดอร์และส่งเข้าครัว",
+  "lang_cancel_it_and_tell_the_customer": "ยกเลิกและแจ้งลูกค้า",
+  "lang_the_alarm_keeps_asking_either_way": "เสียงเตือนยังดังต่อทั้งสองแบบ โดยค่อย ๆ ห่างขึ้น",
+  "lang_after_how_long": "หลังจากนานเท่าไร",
+  "lang_counted_from_when_the_order_arrived": "นับจากเวลาที่ออร์เดอร์เข้ามา"
 }

@@ -3198,5 +3198,12 @@
   "lang_start_again_each_calendar_year": "ಪ್ರತಿ ಕ್ಯಾಲೆಂಡರ್ ವರ್ಷಕ್ಕೆ ಮತ್ತೆ ಆರಂಭಿಸಿ",
   "lang_turning_this_on_starts_the_numbering_again": "ಇದನ್ನು ಆನ್ ಮಾಡಿದರೆ ಸಂಖ್ಯೆ ಮತ್ತೆ ಒಂದರಿಂದ ಆರಂಭವಾಗುತ್ತದೆ. ವರ್ಷದ ಮೊದಲ ದಿನ ಮಾಡುವುದು ಉತ್ತಮ.",
   "lang_financial_year_starts_in": "ಆರ್ಥಿಕ ವರ್ಷ ಆರಂಭವಾಗುವುದು",
-  "lang_april_in_india_january_in_much_of_the_eu": "ಭಾರತದಲ್ಲಿ ಏಪ್ರಿಲ್, ಯುರೋಪಿಯನ್ ಒಕ್ಕೂಟದ ಬಹುಪಾಲು ಕಡೆ ಜನವರಿ."
+  "lang_april_in_india_january_in_much_of_the_eu": "ಭಾರತದಲ್ಲಿ ಏಪ್ರಿಲ್, ಯುರೋಪಿಯನ್ ಒಕ್ಕೂಟದ ಬಹುಪಾಲು ಕಡೆ ಜನವರಿ.",
+  "lang_if_nobody_answers": "ಯಾರೂ ಉತ್ತರಿಸದಿದ್ದರೆ",
+  "lang_leave_it_waiting": "ಕಾಯುತ್ತಿರಲಿ, ಕೇಳುತ್ತಲೇ ಇರಲಿ",
+  "lang_accept_it_and_send_to_the_kitchen": "ಸ್ವೀಕರಿಸಿ ಅಡುಗೆಮನೆಗೆ ಕಳುಹಿಸಿ",
+  "lang_cancel_it_and_tell_the_customer": "ರದ್ದುಗೊಳಿಸಿ ಗ್ರಾಹಕರಿಗೆ ತಿಳಿಸಿ",
+  "lang_the_alarm_keeps_asking_either_way": "ಎರಡೂ ಸಂದರ್ಭದಲ್ಲಿ ಎಚ್ಚರಿಕೆ ಕೇಳುತ್ತಲೇ ಇರುತ್ತದೆ, ಕ್ರಮೇಣ ಕಡಿಮೆಯಾಗುತ್ತದೆ.",
+  "lang_after_how_long": "ಎಷ್ಟು ಹೊತ್ತಿನ ನಂತರ",
+  "lang_counted_from_when_the_order_arrived": "ಆರ್ಡರ್ ಬಂದ ಸಮಯದಿಂದ ಎಣಿಸಲಾಗುತ್ತದೆ."
 }
