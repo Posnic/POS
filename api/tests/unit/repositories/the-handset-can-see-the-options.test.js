@@ -86,7 +86,9 @@ describe('what the storefront tells a handset about options', () => {
       ])
     );
 
-    col.find.mockImplementation(() => (readFails ? { toArray: () => Promise.reject(new Error('no')) } : chain(sets)));
+    col.find.mockImplementation(() =>
+      readFails ? { toArray: () => Promise.reject(new Error('no')) } : chain(sets)
+    );
 
     const out = await repo.storefront({ channel: 'tableside' });
     expect(out.status).toBe(true);

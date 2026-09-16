@@ -4884,9 +4884,7 @@ class ItemRepository extends BaseModel {
         let byId = new Map();
         if (wanted.size) {
           const sets = await this.getCollection('modifier_groups');
-          const docs = await sets
-            .find({ license: branchDoc.license })
-            .toArray();
+          const docs = await sets.find({ license: branchDoc.license }).toArray();
           byId = new Map(
             docs.map((doc) => [
               String(doc._id),
