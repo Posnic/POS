@@ -27,6 +27,34 @@ const kitchenCall = require('../src/kitchen-call');
 
 /* ------------------------------------------------------------- the words */
 
+test('IT IS SAID ONE LINE AT A TIME, which is where the pauses come from', () => {
+  /*
+   * Owner: "little pause between line items".
+   *
+   * A full stop inside one sentence is a shorter gap than a kitchen needs. The
+   * renderer speaks each of these as its own utterance, and a speech engine
+   * leaves a real gap between them - long enough to hold one dish in your head
+   * before the next arrives.
+   */
+  const said = kitchenCall.lines({
+    table: '5',
+    items: [
+      { item_name: 'Chicken Biryani', item_quantity: 1 },
+      { item_name: 'Chicken Tikka Masala', item_quantity: 1 },
+    ],
+  });
+
+  assert.deepStrictEqual(said, [
+    'Table 5, new order.',
+    'One Chicken Biryani.',
+    'One Chicken Tikka Masala.',
+  ]);
+});
+
+test('nothing worth saying is an empty list, not a line of nothing', () => {
+  assert.deepStrictEqual(kitchenCall.lines({ table: '5', items: [] }), []);
+});
+
 test('IT SAYS THE TABLE FIRST, then the food', () => {
   /*
    * The table number is the one part nobody can work out from the rest, which

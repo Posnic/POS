@@ -332,8 +332,8 @@ class OrderAlert {
  * which is correct: there is nobody there to hear it.
  */
 function announceKitchenTicket(getWindow, ticket) {
-  const words = kitchenCall.say(ticket);
-  if (!words) return false;
+  const said = kitchenCall.lines(ticket);
+  if (!said.length) return false;
 
   try {
     const win = typeof getWindow === "function" ? getWindow() : null;
@@ -341,7 +341,11 @@ function announceKitchenTicket(getWindow, ticket) {
 
     win.webContents.send("posnic:kitchen-call", {
       sound: dataUri(TING()),
-      say: words,
+      /* One line at a time: the page speaks each as its own utterance, and a
+         speech engine leaves a real gap between them. `say` is the same words
+         joined, for anything that cannot queue. */
+      lines: said,
+      say: said.join(" "),
       table: ticket && ticket.table ? String(ticket.table) : "",
     });
     return true;
