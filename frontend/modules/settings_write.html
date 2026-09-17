@@ -4628,88 +4628,6 @@
                                                     </fieldset>
                                                 </div>
 
-                                                <!-- The kitchen's speaker. PER MACHINE, like the switches above
-                                                     and for the same reason: only the machine at the pass has a
-                                                     speaker on it. A shop-wide switch would make the counter till
-                                                     talk in front of customers, somebody would mute the counter,
-                                                     and on most installs that is the same Windows volume the
-                                                     kitchen's speaker is on.
-
-                                                     Two switches, not one. The chime says a ticket landed and
-                                                     costs a second; the reading says what is on it and costs ten.
-                                                     A kitchen that can see its printer wants the first and comes
-                                                     to resent the second.
-
-                                                     The Test button is the point of this whole block. Before it,
-                                                     the only way to learn whether the kitchen would hear anything
-                                                     was to send it a real order. -->
-                                                <div class="row">
-                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
-                                                        <legend class="w-auto px-2"><lang class="lang_kitchen_sound_on_this_device">Kitchen sound on this device</lang></legend>
-                                                        <small class="form-text text-muted mb-2"><lang class="lang_turn_this_on_only_on_the_machine_by_the_pass">Turn this on only on the
-                                                            machine by the pass, the one with the speaker. Saved on this
-                                                            device only, immediately.</lang></small>
-                                                        <div class="row">
-                                                            <div class="form-group col-md-4">
-                                                                <label><lang class="lang_chime_when_a_ticket_arrives">Chime when a ticket arrives</lang></label>
-                                                                <div class="custom-control custom-switch mt-2">
-                                                                    <input type="checkbox" class="custom-control-input kitchen-sound-switch" id="toggleSwitchKitchenTing">
-                                                                    <label class="custom-control-label" for="toggleSwitchKitchenTing"></label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group col-md-4">
-                                                                <label><lang class="lang_read_the_order_out_loud">Read the order out loud</lang></label>
-                                                                <div class="custom-control custom-switch mt-2">
-                                                                    <input type="checkbox" class="custom-control-input kitchen-sound-switch" id="toggleSwitchKitchenSpeak">
-                                                                    <label class="custom-control-label" for="toggleSwitchKitchenSpeak"></label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group col-md-4">
-                                                                <label>&nbsp;</label>
-                                                                <div class="mt-2">
-                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="kitchenSoundTest"><lang class="lang_test_the_sound">Test the sound</lang></button>
-                                                                    <small class="form-text text-muted" id="kitchenSoundTestResult"></small>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <!-- The shop picks, not us. A kitchen with a fryer roaring
-                                                             needs a different bell from a quiet dining room, and a
-                                                             shop in Chennai needs a different voice from one in
-                                                             Dubai. Each picker has its own Play, because nobody can
-                                                             choose a sound from its name. -->
-                                                        <div class="row">
-                                                            <div class="form-group col-md-4">
-                                                                <label for="kitchenArrivalBell"><lang class="lang_bell_when_the_order_arrives">Bell when the order arrives</lang></label>
-                                                                <div class="input-group">
-                                                                    <select class="form-control kitchen-sound-choice" id="kitchenArrivalBell"></select>
-                                                                    <div class="input-group-append">
-                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="arrival"><lang class="lang_play">Play</lang></button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group col-md-4">
-                                                                <label for="kitchenItemBell"><lang class="lang_bell_before_each_item">Bell before each item</lang></label>
-                                                                <div class="input-group">
-                                                                    <select class="form-control kitchen-sound-choice" id="kitchenItemBell"></select>
-                                                                    <div class="input-group-append">
-                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="item"><lang class="lang_play">Play</lang></button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-group col-md-4">
-                                                                <label for="kitchenVoice"><lang class="lang_voice">Voice</lang></label>
-                                                                <div class="input-group">
-                                                                    <select class="form-control kitchen-sound-choice" id="kitchenVoice"></select>
-                                                                    <div class="input-group-append">
-                                                                        <button type="button" class="btn btn-outline-secondary" id="kitchenVoicePlay"><lang class="lang_play">Play</lang></button>
-                                                                    </div>
-                                                                </div>
-                                                                <small class="form-text text-muted"><lang class="lang_the_voices_installed_on_this_machine">The voices installed on this machine. Add a language in Windows settings for more accents.</lang></small>
-                                                            </div>
-                                                        </div>
-                                                    </fieldset>
-                                                </div>
-
                                                 <!-- Owner ask #85. Its own fieldset and its own Save, because it
                                                      writes to a different place from everything around it: the
                                                      ACCOUNT, not this branch. Riding the general form save would
@@ -5403,6 +5321,89 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!-- The kitchen's speaker. PER MACHINE, like the switches above
+                                                     and for the same reason: only the machine at the pass has a
+                                                     speaker on it. A shop-wide switch would make the counter till
+                                                     talk in front of customers, somebody would mute the counter,
+                                                     and on most installs that is the same Windows volume the
+                                                     kitchen's speaker is on.
+
+                                                     Two switches, not one. The chime says a ticket landed and
+                                                     costs a second; the reading says what is on it and costs ten.
+                                                     A kitchen that can see its printer wants the first and comes
+                                                     to resent the second.
+
+                                                     The Test button is the point of this whole block. Before it,
+                                                     the only way to learn whether the kitchen would hear anything
+                                                     was to send it a real order. -->
+                                                <div class="row">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                                                        <legend class="w-auto px-2"><lang class="lang_kitchen_sound_on_this_device">Kitchen sound on this device</lang></legend>
+                                                        <small class="form-text text-muted mb-2"><lang class="lang_turn_this_on_only_on_the_machine_by_the_pass">Turn this on only on the
+                                                            machine by the pass, the one with the speaker. Saved on this
+                                                            device only, immediately.</lang></small>
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label><lang class="lang_chime_when_a_ticket_arrives">Chime when a ticket arrives</lang></label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input kitchen-sound-switch" id="toggleSwitchKitchenTing">
+                                                                    <label class="custom-control-label" for="toggleSwitchKitchenTing"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label><lang class="lang_read_the_order_out_loud">Read the order out loud</lang></label>
+                                                                <div class="custom-control custom-switch mt-2">
+                                                                    <input type="checkbox" class="custom-control-input kitchen-sound-switch" id="toggleSwitchKitchenSpeak">
+                                                                    <label class="custom-control-label" for="toggleSwitchKitchenSpeak"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label>&nbsp;</label>
+                                                                <div class="mt-2">
+                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="kitchenSoundTest"><lang class="lang_test_the_sound">Test the sound</lang></button>
+                                                                    <small class="form-text text-muted" id="kitchenSoundTestResult"></small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!-- The shop picks, not us. A kitchen with a fryer roaring
+                                                             needs a different bell from a quiet dining room, and a
+                                                             shop in Chennai needs a different voice from one in
+                                                             Dubai. Each picker has its own Play, because nobody can
+                                                             choose a sound from its name. -->
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenArrivalBell"><lang class="lang_bell_when_the_order_arrives">Bell when the order arrives</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenArrivalBell"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="arrival"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenItemBell"><lang class="lang_bell_before_each_item">Bell before each item</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenItemBell"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="item"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenVoice"><lang class="lang_voice">Voice</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenVoice"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" id="kitchenVoicePlay"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                                <small class="form-text text-muted"><lang class="lang_the_voices_installed_on_this_machine">The voices installed on this machine. Add a language in Windows settings for more accents.</lang></small>
+                                                            </div>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
                                                         <label for="print_size">
