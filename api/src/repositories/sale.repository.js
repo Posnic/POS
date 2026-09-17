@@ -9865,7 +9865,23 @@ class SalesRepository {
             tax_name: itemDoc.tax_name || '',
             tax_amount: taxAmount,
             tax_fields: itemDoc.tax_fields || [],
-            item_description: String(item.item_description || itemDoc.description || ''),
+            /*
+             * THE NOTE IS THE WAITER'S, NEVER THE MENU'S.
+             *
+             * Owner: "actually we need to show only item name if any
+             * customization note delibertly captain entered. otherwise dont
+             * show any other details. dont confuse captain."
+             *
+             * This fell back to itemDoc.description, so a dish added with no
+             * note arrived carrying its menu copy - "slow cooked with 21
+             * spices" - which then showed on the handset's live ticket and
+             * printed in the kitchen as though a waiter had asked for it.
+             *
+             * A blank note means nothing was asked for, and blank is the
+             * honest thing to store. The menu description belongs to the item
+             * and is one lookup away for anything that genuinely wants it.
+             */
+            item_description: String(item.item_description || ''),
             spice_level: spiceLevel.levelOf(item.spice_level),
             /* Same reason as the priced line: an added dish keeps the time
                the kitchen said it took on the day it was added. */
