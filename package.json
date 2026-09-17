@@ -10,6 +10,7 @@
     "start": "electron .",
     "dev": "node scripts/dev-server.js",
     "test:auth": "node --test tests/startup-auth.test.js",
+    "check:installed": "node scripts/check-installed-app.js",
     "prepare:frontend": "node scripts/prepare-frontend.js",
     "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
     "prepare:api-runtime:force": "node scripts/prepare-api-runtime.js --force",
