@@ -997,6 +997,70 @@
             });
         });
     },
+    /*
+     * A DISH PRICED ON THE DAY IS NOT A DISH PRICED AT NOTHING.
+     *
+     * Owner: "we will not bill with 0 for sure. we need to add with amount
+     * only. its daily price or market price item. needs to be handled
+     * properly."
+     *
+     * The handset already refused one - _priceOnlineLine answers
+     * item_needs_price and will not let an unpriced line through. The TILL had
+     * no such gate. Its sale screen reads the catalogue price into the line,
+     * and a market-price fish has no catalogue price, so it went onto the bill
+     * at zero and nothing said a word.
+     *
+     * ASKED WHEN THE LINE IS ADDED, not refused when the bill is paid. The
+     * waiter is standing at this screen now; the guest is waiting at the till
+     * later. Refusing at payment time would be correct and useless.
+     *
+     * The same rule the server uses, so the two doors agree: the shop marked
+     * it open_price, or it simply has no price. A RETURN is left alone - that
+     * is repricing something already sold, and today's rate is the wrong
+     * question for it.
+     */
+    _needsTodaysPrice: function (params) {
+        if (!params) { return false; }
+        if (params._priceAsked) { return false; }
+        if (PosnicPro.sales.SaleAction === 'return') { return false; }
+        if (params.open_price === true || params.open_price === 'true') { return true; }
+        return !(Number(params.selling_price) > 0);
+    },
+    askTodaysPrice: function (params) {
+        var name = params.item_name || params.name || 'This dish';
+        swal({
+            title: PosnicPro.i18n.t('lang_price_today', 'Price today'),
+            text: name + ' is priced on the day. What is it today?',
+            input: 'text',
+            inputPlaceholder: '0.00',
+            showCancelButton: true,
+            confirmButtonText: PosnicPro.i18n.t('lang_add_to_sale', 'Add to sale')
+        }).then(function (result) {
+            if (result && result.dismiss) { return; }
+            var typed = typeof result === 'string' ? result : (result && result.value) || '';
+            var price = Number($.trim(typed));
+            /* Nothing is not an answer. The line is dropped rather than added
+               at zero, which is the whole point of the gate. */
+            if (!(price > 0)) {
+                PosnicPro.alert('warning', name + ' was not added, because it needs today\'s price.');
+                return;
+            }
+            /* The same ceiling the server applies: a fat finger is the likeliest
+               way a wrong number arrives, and ten lakh for a fish should not be
+               accepted quietly. */
+            if (price > 1000000) {
+                PosnicPro.alert('warning', typed + ' looks wrong for ' + name + '. Check the price.');
+                return;
+            }
+            /* Both fields move together, the same rule the price list and the
+               modifiers follow - inclusive de-grossing and the discount maths
+               downstream read either one. */
+            params._priceAsked = true;
+            params.selling_price = price;
+            params.mrp_price = price;
+            PosnicPro.sales.addSalesLineItems(params);
+        }).catch(function () { /* dismissed */ });
+    },
     addSalesLineItems: function (params) {
         // Recency (owner feedback): every added item feeds the recent list -
         // written here so search, scan, camera, tiles and recents all count.
@@ -1012,6 +1076,11 @@
         if (PosnicPro.sales.SaleAction !== 'return'
             && PosnicPro.sales.searchItem(params.id ? params.id : params.item_id) === false) {
             params = PosnicPro.sales._applyPriceList(params);
+        }
+        // A dish priced on the day is asked for before it can reach the bill.
+        if (PosnicPro.sales._needsTodaysPrice(params)) {
+            PosnicPro.sales.askTodaysPrice(params);
+            return;
         }
         if (!params._modifiersResolved
             && PosnicPro.local.get('table_options') === 'enable'

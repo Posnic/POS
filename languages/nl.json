@@ -3208,5 +3208,6 @@
   "lang_after_how_long": "Na hoeveel tijd",
   "lang_counted_from_when_the_order_arrived": "Geteld vanaf het moment dat de bestelling binnenkwam.",
   "lang_tell_customers_the_kitchen_is_busy": "Vertel klanten wanneer de keuken het druk heeft",
-  "lang_tell_customers_the_kitchen_is_busy_help": "Op de bestelpagina verschijnt een wachtmelding wanneer er meer tafels bezig zijn dan de keuken tegelijk aankan. Vereist tafelbediening."
+  "lang_tell_customers_the_kitchen_is_busy_help": "Op de bestelpagina verschijnt een wachtmelding wanneer er meer tafels bezig zijn dan de keuken tegelijk aankan. Vereist tafelbediening.",
+  "lang_price_today": "Prijs van vandaag"
 }

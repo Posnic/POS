@@ -8796,6 +8796,17 @@ class SalesRepository {
       table_number: wanted,
       called_at: at,
       seen_at: null,
+      /*
+       * THE ROW MUST CARRY ITS DATE OR IT NEVER LEAVES THIS DATABASE.
+       *
+       * This is a native insert, so nothing stamps it. The sync agent finds
+       * work with { updated_date: { $exists: true } } and the gateway sends
+       * a till only rows whose updated_date moved. A call written without one
+       * sits in the cloud for ever, and the person at the table keeps
+       * waving. Same trap as the settings save (#838).
+       */
+      created_date: at,
+      updated_date: at,
       /* What the device was, for a shop wondering later where a run of calls
          came from. Never anything that identifies the person. */
       client: client && typeof client === 'object' ? client : null,
@@ -8892,7 +8903,13 @@ class SalesRepository {
     if (BaseModel.license) filter.license = BaseModel.license;
 
     const done = await db.collection('waitercalls').updateOne(filter, {
-      $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
+      /* updated_date moves too, or the cloud never learns the call was
+         answered and the ordering page keeps saying "already calling". */
+      $set: {
+        seen_at: new Date(),
+        seen_by: BaseModel.loggedUserName || '',
+        updated_date: new Date(),
+      },
     });
     if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
 
@@ -9865,7 +9882,23 @@ class SalesRepository {
             tax_name: itemDoc.tax_name || '',
             tax_amount: taxAmount,
             tax_fields: itemDoc.tax_fields || [],
-            item_description: String(item.item_description || itemDoc.description || ''),
+            /*
+             * THE NOTE IS THE WAITER'S, NEVER THE MENU'S.
+             *
+             * Owner: "actually we need to show only item name if any
+             * customization note delibertly captain entered. otherwise dont
+             * show any other details. dont confuse captain."
+             *
+             * This fell back to itemDoc.description, so a dish added with no
+             * note arrived carrying its menu copy - "slow cooked with 21
+             * spices" - which then showed on the handset's live ticket and
+             * printed in the kitchen as though a waiter had asked for it.
+             *
+             * A blank note means nothing was asked for, and blank is the
+             * honest thing to store. The menu description belongs to the item
+             * and is one lookup away for anything that genuinely wants it.
+             */
+            item_description: String(item.item_description || ''),
             spice_level: spiceLevel.levelOf(item.spice_level),
             /* Same reason as the priced line: an added dish keeps the time
                the kitchen said it took on the day it was added. */

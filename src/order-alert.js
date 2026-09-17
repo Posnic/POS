@@ -71,9 +71,14 @@ function tone({ frequency = 880, ms = 180, volume = 0.35, rate = 22050 } = {}) {
     );
   }
 
+  return Buffer.concat([wavHeader(data.length, rate), data]);
+}
+
+/** The 44 bytes an <audio> element needs in front of raw PCM. */
+function wavHeader(bytes, rate) {
   const header = Buffer.alloc(44);
   header.write("RIFF", 0);
-  header.writeUInt32LE(36 + data.length, 4);
+  header.writeUInt32LE(36 + bytes, 4);
   header.write("WAVE", 8);
   header.write("fmt ", 12);
   header.writeUInt32LE(16, 16);
@@ -84,9 +89,8 @@ function tone({ frequency = 880, ms = 180, volume = 0.35, rate = 22050 } = {}) {
   header.writeUInt16LE(2, 32);
   header.writeUInt16LE(16, 34);
   header.write("data", 36);
-  header.writeUInt32LE(data.length, 40);
-
-  return Buffer.concat([header, data]);
+  header.writeUInt32LE(bytes, 40);
+  return header;
 }
 
 /** Several tones end to end, so an alarm can be more than one note. */
@@ -112,21 +116,181 @@ const WAITING = () =>
   ]);
 
 /*
- * THE TING A KITCHEN HEARS.
+ * A NOTE THAT SOUNDS STRUCK, RATHER THAN A BEEP.
  *
- * One rising pair, short and bright, and louder than the counter's chime
- * because it has to cross a room with extraction fans running. Deliberately
- * not either of the other two: a cook must never have to work out whether that
- * was their ticket or the counter's online order.
+ * Owner, on the tone this replaces: "beep sound is not good. i want like new
+ * order came. make it good. not beep."
+ *
+ * He was right, and the reason is in `tone()` above: a plain sine contains
+ * nothing but its fundamental, and a bare fundamental is the definition of a
+ * beep. Two things make a struck object sound struck, and that tone has
+ * neither of them.
+ *
+ * PARTIALS. A real bar or bell rings at several frequencies at once, well
+ * above the note you think you are hearing, and those are what the ear reads
+ * as wood or as metal. Each is [multiple of the fundamental, how loud, how
+ * fast it dies].
+ *
+ * AN ENVELOPE THAT DECAYS. A struck thing is loudest the instant it is hit and
+ * fades from there. The old tone held full volume throughout and faded at both
+ * ends, which is a tone being switched on and off: an appliance, not an
+ * instrument.
+ *
+ * The 3ms attack is not decoration. A waveform that starts at full height
+ * clicks, and on a cheap till speaker a click sounds like a fault.
+ */
+function struck({ notes = [], rate = 22050, volume = 0.85 } = {}) {
+  const span = notes.reduce((m, n) => Math.max(m, n.atMs + n.ms), 0);
+  const count = Math.ceil((rate * span) / 1000);
+  const mixed = new Float64Array(count);
+
+  for (const note of notes) {
+    const from = Math.floor((note.atMs / 1000) * rate);
+    const len = Math.floor((note.ms / 1000) * rate);
+    for (let i = 0; i < len; i += 1) {
+      const t = i / rate;
+      let value = 0;
+      for (const [multiple, amp, decay] of note.partials) {
+        value +=
+          amp * Math.sin(2 * Math.PI * note.frequency * multiple * t) * Math.exp(-decay * t);
+      }
+      const at = from + i;
+      if (at < count) mixed[at] += value * Math.min(1, t / 0.003);
+    }
+  }
+
+  /* Normalised rather than trusted. Partials add up and overlapping notes add
+     up further; past 1.0 the waveform clips, and clipping is the one thing
+     that genuinely does sound cheap. */
+  let peak = 0;
+  for (const s of mixed) peak = Math.max(peak, Math.abs(s));
+  const gain = peak > 0 ? volume / peak : 1;
+
+  const data = Buffer.alloc(count * 2);
+  for (let i = 0; i < count; i += 1) {
+    data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, mixed[i] * gain)) * 0x7fff), i * 2);
+  }
+
+  return Buffer.concat([wavHeader(data.length, rate), data]);
+}
+
+/* A wooden bar. Its partials sit far above the note and die almost at once,
+   which is what separates wood from metal by ear. */
+const MARIMBA = [
+  [1, 1.0, 6],
+  [4, 0.26, 20],
+  [10, 0.08, 34],
+];
+
+/* A real bell rings at frequencies that are not whole multiples of its note.
+   That inharmonicity IS the character: make these 2, 3, 4 and it stops being
+   a bell and becomes an organ. */
+const BELL_METAL = [
+  [1, 1.0, 2.2],
+  [2.76, 0.5, 3.2],
+  [5.4, 0.22, 5],
+  [8.93, 0.1, 7],
+];
+
+/*
+ * THE BELL WHEN AN ORDER ARRIVES, and the two others a shop can pick instead.
+ *
+ * Owner: "how about user picks the bell sound as choice how you gave me."
+ *
+ * Which is right, and not only as a preference. A kitchen with a fryer roaring
+ * needs something different from a quiet dining room, and neither of them is a
+ * decision that should be made once in this file for every shop. These are the
+ * three that were played to him on a real speaker; the shop picks.
+ *
+ * Heard once per ticket, so it can afford to be the largest sound the app
+ * makes. Deliberately unlike the counter's chime and the waiting alarm: a cook
+ * must never have to work out whether that was their ticket or the counter's.
  *
  * It ends before the speech starts. A speaker still ringing while it talks
  * loses the first two words, and the first two words are the table number.
  */
-const TING = () =>
-  sequence([
-    { frequency: 1568, ms: 90, volume: 0.6 },
-    { frequency: 2093, ms: 150, volume: 0.6 },
-  ]);
+const ARRIVAL_BELLS = {
+  /* A rise reads as "something arrived" in a way a falling or level figure
+     does not. The owner's own pick, and so the default. */
+  rising: () =>
+    struck({
+      notes: [
+        { frequency: 523, atMs: 0, ms: 700, partials: MARIMBA },
+        { frequency: 659, atMs: 110, ms: 700, partials: MARIMBA },
+        { frequency: 784, atMs: 220, ms: 900, partials: MARIMBA },
+      ],
+    }),
+  /* Two notes, warmer and shorter. For a room where three is too much. */
+  marimba: () =>
+    struck({
+      notes: [
+        { frequency: 784, atMs: 0, ms: 900, partials: MARIMBA },
+        { frequency: 1047, atMs: 150, ms: 1000, partials: MARIMBA },
+      ],
+    }),
+  /* One strike with a long shimmer: a counter bell. Carries furthest, which
+     is what a loud kitchen needs. */
+  bell: () =>
+    struck({
+      notes: [{ frequency: 880, atMs: 0, ms: 1800, partials: BELL_METAL }],
+    }),
+};
+
+/*
+ * THE BELL BEFORE EACH DISH.
+ *
+ * Owner: "I want one bell for each line item before read it."
+ *
+ * None of these can be the arrival bell. That one is heard once and has to
+ * announce something; this is heard three or six times in a row and only has
+ * to say "here comes the next one". The arrival bell repeated six times is a
+ * fire drill, so all three are shorter, lower and quieter than any arrival
+ * bell, and all are in the same wooden family: a kitchen should hear the two
+ * as one voice with a loud opening and a quiet punctuation, not as two
+ * unrelated noises competing.
+ */
+const ITEM_BELLS = {
+  /* The owner's pick, and the default. A fifth below the arrival bell. */
+  soft: () =>
+    struck({
+      notes: [{ frequency: 523, atMs: 0, ms: 550, partials: MARIMBA }],
+      volume: 0.5,
+    }),
+  /* Driest and quickest out of the way, which matters most on a long ticket. */
+  tick: () =>
+    struck({
+      notes: [
+        {
+          frequency: 1047,
+          atMs: 0,
+          ms: 300,
+          partials: [
+            [1, 1.0, 22],
+            [3, 0.3, 40],
+          ],
+        },
+      ],
+      volume: 0.45,
+    }),
+  /* The arrival bell in miniature, for a kitchen that wants a clearer cue. */
+  tap: () =>
+    struck({
+      notes: [
+        { frequency: 523, atMs: 0, ms: 400, partials: MARIMBA },
+        { frequency: 659, atMs: 90, ms: 500, partials: MARIMBA },
+      ],
+      volume: 0.5,
+    }),
+};
+
+const ARRIVAL_DEFAULT = 'rising';
+const ITEM_DEFAULT = 'soft';
+
+/** The arrival bell a shop chose, or the one it gets if it never chose. */
+const TING = (which) => (ARRIVAL_BELLS[which] || ARRIVAL_BELLS[ARRIVAL_DEFAULT])();
+
+/** The tap before a dish, likewise. */
+const ITEM_BELL = (which) => (ITEM_BELLS[which] || ITEM_BELLS[ITEM_DEFAULT])();
 
 function dataUri(buffer) {
   return `data:audio/wav;base64,${buffer.toString("base64")}`;
@@ -343,7 +507,8 @@ function announceKitchenTicket(getWindow, ticket, wants) {
   const speak = !wants || wants.speak !== false;
   if (!ting && !speak) return false;
 
-  const said = speak ? kitchenCall.lines(ticket) : [];
+  const parts = speak ? kitchenCall.script(ticket) : { head: [], items: [] };
+  const said = parts.head.concat(parts.items);
   if (!said.length && !ting) return false;
 
   try {
@@ -351,7 +516,32 @@ function announceKitchenTicket(getWindow, ticket, wants) {
     if (!win || win.isDestroyed()) return false;
 
     win.webContents.send("posnic:kitchen-call", {
-      sound: ting ? dataUri(TING()) : "",
+      sound: ting ? dataUri(TING(wants && wants.arrivalBell)) : "",
+      /*
+       * A SECOND, SMALLER BELL, AND WHERE IT GOES.
+       *
+       * Owner: "First bell is we got new order. I want one bell for each line
+       * item before read it."
+       *
+       * `head` is how many of these lines come before the food - the opening
+       * and the plate count. Everything after it is a dish and gets a tap in
+       * front of it. Sent as a number rather than left to the page to work out
+       * by counting sentences, because the page would be guessing and the
+       * guess would break the first time the wording changed.
+       */
+      itemSound: ting ? dataUri(ITEM_BELL(wants && wants.itemBell)) : "",
+      head: parts.head.length,
+      /*
+       * WHOSE VOICE, by name.
+       *
+       * Owner: "different countries might need different voice and accent."
+       *
+       * An empty name means "the best one on this machine", which is what a
+       * shop that never chose gets, and also what a shop gets on a machine
+       * that does not have the voice it picked. It falls back rather than
+       * going silent, and that is the whole reason this travels as a name.
+       */
+      voice: (wants && wants.voice) || "",
       /* One line at a time: the page speaks each as its own utterance, and a
          speech engine leaves a real gap between them. `say` is the same words
          joined, for anything that cannot queue. */
@@ -368,9 +558,29 @@ function announceKitchenTicket(getWindow, ticket, wants) {
   }
 }
 
+/*
+ * What a settings page can offer, and how to hear one.
+ *
+ * The names are the stored value, so this list and the setting cannot drift
+ * apart: a bell that is not here cannot be chosen, and one that is chosen is
+ * always here.
+ */
+const bellChoices = () => ({
+  arrival: Object.keys(ARRIVAL_BELLS),
+  item: Object.keys(ITEM_BELLS),
+});
+
+/** One bell as something an <audio> element can play, for a Play button. */
+const bellSound = (kind, which) =>
+  dataUri(kind === "item" ? ITEM_BELL(which) : TING(which));
+
 module.exports = {
   announceKitchenTicket,
   TING,
+  ITEM_BELL,
+  bellChoices,
+  bellSound,
+  struck,
   OrderAlert,
   tone,
   sequence,

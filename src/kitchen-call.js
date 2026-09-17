@@ -104,12 +104,12 @@ const quantityOf = (item) =>
  * @param {Array} ticket.items what is on it
  * @param {boolean} [ticket.changed] an amendment rather than a new order
  */
-function lines({ table, items, changed } = {}) {
+function script({ table, items, changed } = {}) {
   const said = (Array.isArray(items) ? items : [])
     .map((item) => ({ name: spokenName(item), count: quantityOf(item) }))
     .filter((line) => line.name && line.count > 0);
 
-  if (!said.length) return [];
+  if (!said.length) return { head: [], items: [] };
 
   const where = String(table == null ? "" : table).trim();
   /*
@@ -154,7 +154,32 @@ function lines({ table, items, changed } = {}) {
   const rest = said.length - read.length;
   if (rest > 0) spoken.push(`And ${countWord(rest)} more`);
 
-  return [opening, howMany].concat(spoken.map((line) => `${line}.`));
+  /*
+   * SPLIT, BECAUSE A BELL GOES BETWEEN THEM.
+   *
+   * Owner: "First bell is we got new order. I want one bell for each line item
+   * before read it."
+   *
+   * The opening and the plate count are about the ticket; everything after is
+   * a dish. Only the dishes get their own bell, so the caller has to be able
+   * to tell them apart. Where that line falls is decided here, beside the
+   * words, rather than by a renderer counting sentences and guessing.
+   */
+  return {
+    head: [opening, howMany],
+    items: spoken.map((line) => `${line}.`),
+  };
+}
+
+/**
+ * The same announcement as a flat list, opening first.
+ *
+ * Kept because most callers want the words and not the shape of them, and
+ * because it is what every existing test and log line reads.
+ */
+function lines(ticket) {
+  const said = script(ticket);
+  return said.head.concat(said.items);
 }
 
 /*
@@ -167,4 +192,4 @@ function say(ticket) {
   return lines(ticket).join(" ");
 }
 
-module.exports = { say, lines, countWord, spokenName, READ_AT_MOST };
+module.exports = { say, lines, script, countWord, spokenName, READ_AT_MOST };
