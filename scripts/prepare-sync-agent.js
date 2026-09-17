@@ -25,8 +25,28 @@ if (fs.existsSync(path.join(source, 'src', 'index.js'))) {
     recursive: true,
     filter: (src) => !/[\\/]\.env$/.test(src) && !/[\\/]agent-smoke\.log$/.test(src),
   });
+  /*
+   * NO node_modules IS THE NORMAL CASE, not a mistake, and the old warning
+   * here said the opposite.
+   *
+   * The agent declares bson, dotenv and mongodb, and ships with none of them.
+   * It works because it is spawned from the Electron main process, which
+   * inherits NODE_PATH pointing at the API's own node_modules - see
+   * src/server.js, where that is set up for the in-process API. The agent
+   * needs the same three packages the API already carries, so a second copy
+   * would be dead weight in the installer.
+   *
+   * The old text told whoever saw it to run npm install in the Cloud agent,
+   * which would have made every installer larger to fix nothing. A warning
+   * that fires on every correct build is a warning people learn to scroll
+   * past, and then the real one goes past too.
+   *
+   * Said out loud rather than deleted, because the coupling is invisible from
+   * here and somebody should know it exists. tests/the-sync-agent-finds-its-
+   * modules.test.js pins it.
+   */
   if (!fs.existsSync(path.join(target, 'node_modules'))) {
-    console.warn('[prepare-sync-agent] WARNING: agent copied without node_modules — run npm install in the Cloud agent first');
+    console.log('[prepare-sync-agent] no node_modules, as expected: the agent resolves bson, dotenv and mongodb through NODE_PATH from the API runtime');
   }
   console.log('[prepare-sync-agent] bundled sync agent from', source);
 
