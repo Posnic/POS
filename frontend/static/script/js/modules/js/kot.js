@@ -1998,7 +1998,10 @@ PosnicPro.kot = {
                 var name = esc(it.item_name || '');
                 var qty = it.item_quantity || 0;
 
-                var descRaw = it.item_description || it.description || it.item_desc || '';
+                /* The NOTE only. Falling through to `description` put the
+                   dish's catalogue copy on the paper as if it were an
+                   instruction - see the same fix in sales.js addItem. */
+                var descRaw = it.item_description || '';
                 var desc = esc(descRaw);
                 var descText = desc ? ('** ' + desc + ' **') : '';
 
