@@ -43,7 +43,7 @@ function methodSource(name) {
 }
 
 test('a new call carries created_date and updated_date', () => {
-  const src = methodSource('callWaiter');
+  const src = methodSource('callTheWaiter');
   assert.ok(src.includes('called_at: at,'), 'the call is no longer stamped with when it was made');
   assert.ok(src.includes('created_date: at,'), 'a call has no created_date');
   assert.ok(src.includes('updated_date: at,'), 'a call has no updated_date, so it never leaves the cloud');
