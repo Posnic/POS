@@ -37,7 +37,7 @@ const A_WINDOWS_MACHINE = [
 ];
 
 /** Run the shipped player against a fake engine and report what it said. */
-function readTo(voices, lines) {
+async function readTo(voices, lines) {
   const src = fs.readFileSync(PLAYER, 'utf8');
 
   const spoken = [];
@@ -50,7 +50,12 @@ function readTo(voices, lines) {
       pending: false,
       cancel() {},
       getVoices: () => voices,
-      speak: (u) => spoken.push(u),
+      speak: (u) => {
+        spoken.push(u);
+        /* The player waits for each line to finish before the next bell, so a
+           fake engine that never reports finishing would stall it forever. */
+        if (u.onend) setTimeout(u.onend, 0);
+      },
     },
     SpeechSynthesisUtterance: function (text) { this.text = text; },
     setTimeout: () => {},
@@ -63,23 +68,27 @@ function readTo(voices, lines) {
      under test here is who says the words. */
   handler({ sound: '', lines: lines || ['Table 5, new order.'] });
 
+  /* The sequence runs on promises now: a bell, then a line, then the next
+     bell. Let it drain before reading what was said. */
+  for (let i = 0; i < 40; i += 1) await new Promise((r) => setTimeout(r, 0));
+
   return spoken;
 }
 
-test('A WOMAN READS IT, not whoever Windows happens to list first', () => {
-  const spoken = readTo(A_WINDOWS_MACHINE);
+test('A WOMAN READS IT, not whoever Windows happens to list first', async () => {
+  const spoken = await readTo(A_WINDOWS_MACHINE);
 
   assert.ok(spoken.length, 'nothing was said at all');
   assert.match(spoken[0].voice.name, /Heera/, 'Ravi is still reading the orders');
 });
 
-test('THE ACCENT COMES FIRST, then the voice', () => {
+test('THE ACCENT COMES FIRST, then the voice', async () => {
   /*
    * An Indian woman before a British one. The dish names are the whole point:
    * "kuzhambu" read in an English accent is a word a kitchen has to decode
    * rather than hear.
    */
-  const spoken = readTo([
+  const spoken = await readTo([
     voice('Microsoft Libby - English (United Kingdom)', 'en-GB'),
     voice('Microsoft Ravi - English (India)', 'en-IN'),
   ]);
@@ -87,10 +96,10 @@ test('THE ACCENT COMES FIRST, then the voice', () => {
   assert.match(spoken[0].voice.lang, /en-IN/i, 'a British voice was preferred to an Indian one');
 });
 
-test('a machine with no woman in that language still gets the accent', () => {
+test('a machine with no woman in that language still gets the accent', async () => {
   /* A name not on the list is not a failure. Whatever en-IN exists beats
      English from another country. */
-  const spoken = readTo([
+  const spoken = await readTo([
     voice('Microsoft Zira - English (United States)', 'en-US'),
     voice('Microsoft Ravi - English (India)', 'en-IN'),
   ]);
@@ -98,14 +107,14 @@ test('a machine with no woman in that language still gets the accent', () => {
   assert.match(spoken[0].voice.name, /Ravi/);
 });
 
-test('and a machine with no Indian voice is still read to', () => {
-  const spoken = readTo([voice('Microsoft David - English (United States)', 'en-US')]);
+test('and a machine with no Indian voice is still read to', async () => {
+  const spoken = await readTo([voice('Microsoft David - English (United States)', 'en-US')]);
 
   assert.ok(spoken.length, 'a kitchen was told nothing because the accent was wrong');
   assert.match(spoken[0].voice.name, /David/);
 });
 
-test('IT IS SAID, NOT ANNOUNCED', () => {
+test('IT IS SAID, NOT ANNOUNCED', async () => {
   /*
    * Owner: "more casual than machine voice."
    *
@@ -113,7 +122,7 @@ test('IT IS SAID, NOT ANNOUNCED', () => {
    * to normal on purpose: past about 1.15 a synthesised voice stops sounding
    * relaxed and starts sounding like a cartoon.
    */
-  const spoken = readTo(A_WINDOWS_MACHINE);
+  const spoken = await readTo(A_WINDOWS_MACHINE);
 
   assert.ok(spoken[0].pitch > 1, 'still reading on a flat pitch');
   assert.ok(spoken[0].pitch <= 1.15, 'a cartoon is worse than flat');
@@ -121,8 +130,8 @@ test('IT IS SAID, NOT ANNOUNCED', () => {
   assert.strictEqual(spoken[0].volume, 1);
 });
 
-test('one utterance per line, which is where the pauses come from', () => {
-  const spoken = readTo(A_WINDOWS_MACHINE, [
+test('one utterance per line, which is where the pauses come from', async () => {
+  const spoken = await readTo(A_WINDOWS_MACHINE, [
     'Table 5, new order.', 'Three items.', 'One Chicken Biryani.',
   ]);
 

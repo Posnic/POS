@@ -269,6 +269,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
      * no page to play it, and 'ok' when it was sent.
      */
     test: () => ipcRenderer.invoke('kitchen-announce:test'),
+    /*
+     * The bells a shop can choose between, and one of them as playable audio.
+     *
+     *   posnic.kitchenCall.bells()                  -> { arrival: [...], item: [...] }
+     *   posnic.kitchenCall.preview('item', 'tick')  -> a data: URL
+     *
+     * The names are the stored setting, so a settings page never has to know
+     * how any of them are made.
+     */
+    bells: () => ipcRenderer.invoke('kitchen-announce:bells'),
+    preview: (kind, which) => ipcRenderer.invoke('kitchen-announce:preview', kind, which),
   },
   mobile: {
     getInfo:       () => ipcRenderer.invoke('mobile:get-info'),

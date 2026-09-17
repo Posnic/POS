@@ -63,6 +63,28 @@
   var chosen = null;
   var looked = false;
 
+  /*
+   * THE VOICE A SHOP ASKED FOR, BY NAME.
+   *
+   * Owner: "different countries might need different voice and accent."
+   *
+   * A name rather than a language, because a shop in Chennai and a shop in
+   * Dubai both want English and do not want the same person reading it. If the
+   * named voice is not on this machine - a different till, a reinstall, a
+   * voice pack nobody downloaded yet - this falls through to choosing the best
+   * available rather than going quiet. Silence is the failure that matters.
+   */
+  function named(wanted) {
+    if (!wanted) return null;
+
+    var engine = window.speechSynthesis;
+    var all = engine && typeof engine.getVoices === 'function' ? engine.getVoices() : [];
+    for (var i = 0; i < all.length; i += 1) {
+      if (String(all[i].name) === String(wanted)) return all[i];
+    }
+    return null;
+  }
+
   function voice() {
     if (looked) return chosen;
 
@@ -100,31 +122,69 @@
   }
 
   /*
-   * Said ONE LINE AT A TIME, which is where the pauses come from.
+   * ONE BELL, RUNG TO ITS END.
    *
-   * A full stop inside one sentence is a shorter gap than a kitchen needs. Two
-   * utterances have a real one between them, and the point of that gap is that
-   * somebody can hold one dish in their head before the next arrives.
+   * Resolves however it finishes, including badly. A bell that will not play
+   * must never take the words with it: a kitchen told the order without a
+   * chime is still told, and silence is the failure that matters.
    */
-  function speak(lines) {
-    if (!lines || !lines.length) return;
+  function ring(src) {
+    return new Promise(function (done) {
+      if (!src) return done();
 
-    var engine = window.speechSynthesis;
-    if (!engine || typeof window.SpeechSynthesisUtterance !== 'function') return;
+      var over = false;
+      var finish = function () {
+        if (over) return;
+        over = true;
+        done();
+      };
 
-    try {
-      /*
-       * WHAT IS ALREADY WAITING IS DROPPED. Six courses from a table of six
-       * arrive within seconds; without this the speaker is still working
-       * through the last rush when the next one starts, describing food that
-       * is already on a pass. The newest ticket is the one nobody has seen.
-       */
-      if (engine.speaking || engine.pending) engine.cancel();
+      try {
+        if (!player) player = new Audio();
+        player.src = src;
+        player.volume = 1;
+        player.onended = finish;
+        player.onerror = finish;
 
-      var picked = voice();
+        var attempt = player.play();
+        if (attempt && typeof attempt.catch === 'function') attempt.catch(finish);
 
-      for (var i = 0; i < lines.length; i += 1) {
-        var said = new window.SpeechSynthesisUtterance(lines[i]);
+        /* A belt for the braces: some engines never fire onended on a clip
+           this short, and a sequence that waits forever is worse than one that
+           runs on. Longer than the arrival bell, which is the longer of the
+           two. */
+        window.setTimeout(finish, 1800);
+      } catch (e) {
+        finish();
+      }
+    });
+  }
+
+  /*
+   * ONE LINE, SPOKEN TO ITS END, which is where the pauses come from.
+   *
+   * A full stop inside one sentence is a shorter gap than a kitchen needs.
+   * Separate utterances have a real one between them, and the point of that
+   * gap is that somebody can hold one dish in their head before the next
+   * arrives.
+   */
+  function say(text, wanted) {
+    return new Promise(function (done) {
+      var engine = window.speechSynthesis;
+      if (!text || !engine || typeof window.SpeechSynthesisUtterance !== 'function') {
+        return done();
+      }
+
+      var over = false;
+      var finish = function () {
+        if (over) return;
+        over = true;
+        done();
+      };
+
+      try {
+        var said = new window.SpeechSynthesisUtterance(text);
+        var picked = named(wanted) || voice();
         if (picked) {
           said.voice = picked;
           said.lang = picked.lang;
@@ -135,10 +195,10 @@
            Owner: "more casual than machine voice."
 
            A flat voice at a measured pace is what a machine sounds like. The
-           opening line is the one that has to carry across a kitchen, and the
-           dish names are the ones that have to be right, so neither is rushed
-           - but a little lift off the baseline pitch is the difference between
-           somebody telling you an order and a station calling a flight.
+           opening line has to carry across a kitchen and the dish names have
+           to be right, so neither is rushed, but a little lift off the
+           baseline pitch is the difference between somebody telling you an
+           order and a station calling a flight.
 
            Kept close to normal on purpose. Past about 1.15 a synthesised voice
            stops sounding relaxed and starts sounding like a cartoon, which is
@@ -146,13 +206,31 @@
         said.rate = 1;
         said.pitch = 1.1;
         said.volume = 1;
+        said.onend = finish;
+        said.onerror = finish;
+
         engine.speak(said);
+
+        /* A voice that never reports finishing must not strand the dishes
+           behind it. Longer than any single line of a ticket. */
+        window.setTimeout(finish, 9000);
+      } catch (e) {
+        /* A machine with no voices installed still gets the bells, which is
+           most of the value. Speech is the part that can be missing. */
+        finish();
       }
-    } catch (e) {
-      /* A machine with no voices installed still gets the ting, which is most
-         of the value. Speech is the part that can be missing. */
-    }
+    });
   }
+
+  /*
+   * Which announcement is the current one.
+   *
+   * Six courses from a table of six arrive within seconds. Without this the
+   * speaker would still be working through the last rush when the next one
+   * starts, describing food that is already on a pass. The newest ticket is
+   * the one nobody has seen.
+   */
+  var running = 0;
 
   bridge.on(function (payload) {
     if (!payload) return;
@@ -164,43 +242,57 @@
           ? [payload.say]
           : [];
 
-    if (!payload.sound) {
-      speak(lines);
-      return;
+    /*
+     * WHERE THE FOOD STARTS.
+     *
+     * Owner: "First bell is we got new order. I want one bell for each line
+     * item before read it."
+     *
+     * Everything from `head` onwards is a dish and gets its own tap in front
+     * of it. An older main process sends no `head`, and then nothing is a
+     * dish and nothing gets a tap, which is exactly how it behaved before.
+     */
+    var head = typeof payload.head === 'number' ? payload.head : lines.length;
+
+    var mine = (running += 1);
+
+    try {
+      var engine = window.speechSynthesis;
+      if (engine && (engine.speaking || engine.pending)) engine.cancel();
+    } catch (e) {
+      /* An engine that will not be interrupted is still an engine. */
     }
 
     /*
-     * THE TING FIRST, AND THE WORDS WAIT FOR IT TO END rather than starting on
+     * THE BELL FIRST, AND THE WORDS WAIT FOR IT TO END rather than starting on
      * a timer. A speaker still ringing while it talks loses its first two
      * words, and the first two words are the table number.
      */
-    try {
-      if (!player) player = new Audio();
-      player.src = payload.sound;
-      player.volume = 1;
+    var steps = [
+      function () {
+        return ring(payload.sound);
+      },
+    ];
 
-      var spoken = false;
-      var thenSpeak = function () {
-        if (spoken) return;
-        spoken = true;
-        speak(lines);
-      };
+    lines.forEach(function (line, i) {
+      if (i >= head) {
+        steps.push(function () {
+          return ring(payload.itemSound);
+        });
+      }
+      steps.push(function () {
+        return say(line, payload.voice);
+      });
+    });
 
-      player.onended = thenSpeak;
-      /* A sound that will not play must not take the words with it. A kitchen
-         told the order without a chime is still told; silence is the failure
-         that matters. */
-      player.onerror = thenSpeak;
-
-      var attempt = player.play();
-      if (attempt && typeof attempt.catch === 'function') attempt.catch(thenSpeak);
-
-      /* And a belt for the braces: some engines never fire onended on a clip
-         this short. Six hundred milliseconds is longer than the ting. */
-      window.setTimeout(thenSpeak, 600);
-    } catch (e) {
-      speak(lines);
-    }
+    steps.reduce(function (chain, step) {
+      return chain.then(function () {
+        /* A newer ticket started while this one was still talking. Stop here
+           rather than finish describing food somebody has already plated. */
+        if (mine !== running) return undefined;
+        return step();
+      });
+    }, Promise.resolve());
   });
 
   /*
