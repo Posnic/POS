@@ -12,7 +12,6 @@
   ],
   "synced": {
     "recycle_bin": "branch",
-    "waitercalls": "branch",
     "sales": "branch",
     "stocklogs": "branch",
     "cashregister": "branch",
@@ -54,6 +53,7 @@
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",
+    "waitercalls": "a table's call from the ordering page lands in the cloud; a till with its own database never sees it. This was marked synced on the day the feature shipped, but no lane was ever built in the sync agent or allowed by the sync-gateway, so it synced on paper only until the packaging guard refused the build. To sync it: a lane in the agent, the collection allowed by the gateway, a check that rows carry branch_id and license, and a tombstone on close",
     "quotes": "a quote made on the till does not exist in the cloud, and the reverse",
     "coupons": "a coupon created in the cloud cannot be redeemed on a till",
     "coupon_redemptions": "a redemption on the till is never known to the cloud",
