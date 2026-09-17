@@ -8796,6 +8796,17 @@ class SalesRepository {
       table_number: wanted,
       called_at: at,
       seen_at: null,
+      /*
+       * THE ROW MUST CARRY ITS DATE OR IT NEVER LEAVES THIS DATABASE.
+       *
+       * This is a native insert, so nothing stamps it. The sync agent finds
+       * work with { updated_date: { $exists: true } } and the gateway sends
+       * a till only rows whose updated_date moved. A call written without one
+       * sits in the cloud for ever, and the person at the table keeps
+       * waving. Same trap as the settings save (#838).
+       */
+      created_date: at,
+      updated_date: at,
       /* What the device was, for a shop wondering later where a run of calls
          came from. Never anything that identifies the person. */
       client: client && typeof client === 'object' ? client : null,
@@ -8892,7 +8903,13 @@ class SalesRepository {
     if (BaseModel.license) filter.license = BaseModel.license;
 
     const done = await db.collection('waitercalls').updateOne(filter, {
-      $set: { seen_at: new Date(), seen_by: BaseModel.loggedUserName || '' },
+      /* updated_date moves too, or the cloud never learns the call was
+         answered and the ordering page keeps saying "already calling". */
+      $set: {
+        seen_at: new Date(),
+        seen_by: BaseModel.loggedUserName || '',
+        updated_date: new Date(),
+      },
     });
     if (!done.matchedCount) return { status: false, message: 'not_found', data: null };
 
