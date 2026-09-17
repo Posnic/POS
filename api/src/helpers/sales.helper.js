@@ -1066,7 +1066,17 @@ const formatSaleListEntry = (saleDoc) => {
           return {
             item_id: item.item_id || item.item || item.itemId || '',
             item_name: item.item_name || item.name || item.itemName || '',
-            item_description: item.item_description || item.description || '',
+            /*
+             * The waiter's note and nothing else.
+             *
+             * A sale line has no `description` field - the schema has never
+             * had one - so that fallback could only ever pick up a menu
+             * description from something catalogue-shaped passing through
+             * here, which is the exact thing a kitchen ticket must not carry.
+             * Every other field on this line has a fallback because the same
+             * value genuinely arrives under several names; this one does not.
+             */
+            item_description: item.item_description || '',
             item_price: Number(item.item_price || item.price || item.selling_price || 0) || 0,
             item_quantity: Number(item.item_quantity || item.quantity || item.qty || 0) || 0,
             item_unit: item.item_unit || item.unit || item.unit_name || 'qty',

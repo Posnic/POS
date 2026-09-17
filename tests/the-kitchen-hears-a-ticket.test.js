@@ -25,6 +25,11 @@ const path = require('node:path');
 
 const kitchenCall = require('../src/kitchen-call');
 
+/* The two switches, apart from the bell and voice choices stored beside them.
+   Those are pinned in their own test; what matters here is that turning one
+   switch does not move the other. */
+const switches = (said) => ({ ting: said.ting, speak: said.speak });
+
 /* ------------------------------------------------------------- the words */
 
 test('IT IS SAID ONE LINE AT A TIME, which is where the pauses come from', () => {
@@ -232,15 +237,15 @@ test('THE CHIME AND THE READING ARE SEPARATE SWITCHES', () => {
     const announce = require('../src/kitchen-announce');
 
     announce.set({ ting: true });
-    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+    assert.deepStrictEqual(switches(announce.settings()), { ting: true, speak: false });
     assert.strictEqual(announce.wanted(), true, 'a chime is still a sound');
 
     announce.set({ speak: true });
-    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+    assert.deepStrictEqual(switches(announce.settings()), { ting: true, speak: true });
 
     /* Turning one off must not take the other with it. */
     announce.set({ speak: false });
-    assert.deepStrictEqual(announce.settings(), { ting: true, speak: false });
+    assert.deepStrictEqual(switches(announce.settings()), { ting: true, speak: false });
   } finally {
     process.env.POSNIC_USER_DATA = before;
     fs.rmSync(where, { recursive: true, force: true });
@@ -264,7 +269,7 @@ test('a machine already set up in a kitchen does not fall silent', () => {
     fs.mkdirSync(path.dirname(announce.settingsPath()), { recursive: true });
     fs.writeFileSync(announce.settingsPath(), JSON.stringify({ announce: true }), 'utf8');
 
-    assert.deepStrictEqual(announce.settings(), { ting: true, speak: true });
+    assert.deepStrictEqual(switches(announce.settings()), { ting: true, speak: true });
   } finally {
     process.env.POSNIC_USER_DATA = before;
     fs.rmSync(where, { recursive: true, force: true });
@@ -285,7 +290,7 @@ test('a machine is SILENT until somebody says otherwise', () => {
     const announce = require('../src/kitchen-announce');
 
     assert.strictEqual(announce.wanted(), false);
-    assert.deepStrictEqual(announce.settings(), { ting: false, speak: false });
+    assert.deepStrictEqual(switches(announce.settings()), { ting: false, speak: false });
 
     announce.set(true);
     assert.strictEqual(announce.wanted(), true, 'turned on for this machine');
