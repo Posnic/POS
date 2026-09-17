@@ -111,6 +111,10 @@ function parse(buf, columns = 48) {
           kind: 'raster',
           wBytes,
           h,
+          /* m: 1 and 3 are double width, 2 and 3 double height. A struck line
+             travels at half width and the printer doubles it; a preview that
+             ignores this draws it half as wide as it prints. */
+          scale: buf[i + 3] & 0x03,
           data: buf.slice(start, start + wBytes * h).toString('base64'),
           overlay: overlayNext,
         });

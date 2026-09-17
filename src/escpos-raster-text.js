@@ -65,6 +65,46 @@ const STROKE_DROP = 3;        // dots below the middle of the cell
 
 let _font = null;
 
+/*
+ * WHERE THE INK IS.
+ *
+ * A 24-dot cell leaves room above the cap height and below the baseline that
+ * no printable glyph in the table actually uses. Sending those rows costs the
+ * same as sending letters, and on a cancelled line every row is paid for
+ * twice - once to draw and once over twenty metres of cable to the kitchen.
+ *
+ * Measured rather than assumed, so a re-baked font with a taller face moves
+ * this on its own. The stroke rows are folded in, in case a face ever sat
+ * above them. inkBand is the envelope of the whole table; renderLine uses
+ * lineBand, the rows of the characters actually on the line.
+ */
+function inkBand(f) {
+  let every = '';
+  for (let code = f.first; code <= f.last; code += 1) every += String.fromCharCode(code);
+  return lineBand(f, every);
+}
+
+/** The rows this particular text inks, plus the stroke rows. */
+function lineBand(f, chars) {
+  let top = f.cellH;
+  let bottom = -1;
+  for (let i = 0; i < chars.length; i += 1) {
+    const code = chars.charCodeAt(i);
+    if (code < f.first || code > f.last) continue;
+    const at = (code - f.first) * f.cellH * 2;
+    for (let y = 0; y < f.cellH; y += 1) {
+      if (f.glyphs[at + y * 2] || f.glyphs[at + y * 2 + 1]) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+    }
+  }
+  const strokeTop = Math.floor(f.cellH / 2) + STROKE_DROP;
+  const strokeBottom = Math.min(f.cellH - 1, strokeTop + STROKE_THICKNESS - 1);
+  if (bottom < 0) return { top: strokeTop, bottom: strokeBottom };
+  return { top: Math.min(top, strokeTop), bottom: Math.max(bottom, strokeBottom) };
+}
+
 /** The baked table, read once. */
 function font() {
   if (_font) return _font;
@@ -80,6 +120,7 @@ function font() {
   if (_font.cellW !== CELL_W || _font.cellH !== CELL_H) {
     throw new Error(`escpos-font-a.json is ${_font.cellW}x${_font.cellH}, expected ${CELL_W}x${CELL_H}`);
   }
+  _font.band = inkBand(_font);
   return _font;
 }
 
@@ -114,48 +155,103 @@ function wordCells(text) {
  */
 function renderLine(text, { columns = 48, strike = true, strikeCells } = {}) {
   const f = font();
-  const dots = columns * CELL_W;
-  const wBytes = Math.ceil(dots / 8);
-  const bmp = Buffer.alloc(wBytes * CELL_H, 0);
-  const chars = String(text).slice(0, columns);
 
-  /* Glyphs first. Each one is 12 bits a row in the table, in the same bit
-     order the raster wants, so this is a shift rather than a redraw. */
-  for (let i = 0; i < chars.length; i += 1) {
+  /*
+   * ONLY WHAT IS THERE, ONLY THE ROWS WITH INK, AT HALF WIDTH.
+   *
+   * Owner, with a 20-metre run to the kitchen printer: "i dont want this delay.
+   * i want same as new order." A struck line used to cost 1,736 bytes however
+   * short the dish name - the whole 48-column, 24-row grid, blank cells and
+   * blank rows priced the same as letters. Three cuts, each proven on his
+   * printer and the last one chosen by him off the paper:
+   *
+   *   trailing padding is not sent          a 13-letter dish is 13 cells wide
+   *   rows above and below the ink are not  uppercase inks 18 of 24 rows
+   *   HALF THE COLUMNS are sent and the printer doubles them (GS v 0, m = 1)
+   *
+   * "SUNSET COOLER" went from 1,736 bytes to 198 on the paper he compared,
+   * and to 188 once the rows were measured per line. He printed the
+   * full-width, full-resolution and half-width versions side by side and
+   * picked the half-width one: "B is good. A also fine but not better than b."
+   *
+   * Half width ORs each pair of source columns, so a one-dot stem still
+   * prints rather than vanishing on an odd column. Overprinting was ruled out
+   * first - this firmware enforces a minimum line advance, tested with every
+   * feed value and both feed commands, all of which put the rule underneath.
+   */
+  const chars = String(text).slice(0, columns).trimEnd();
+  const cells = chars.length;
+  if (!cells) return Buffer.alloc(0);
+
+  /*
+   * The band is measured from THIS line's characters, not from the whole
+   * table. The table's envelope is rows 1-23 because an accented capital
+   * reaches row 1; an uppercase dish name inks rows 5-23. Sending the
+   * envelope for every line would cost four blank rows on nearly all of them,
+   * and clipping to the common case would cut the top off "Creme" the day a
+   * shop types it with an accent. So each line pays for exactly its own ink.
+   */
+  const { top, bottom } = lineBand(f, chars);
+  const rows = bottom - top + 1;
+
+  const srcDots = cells * CELL_W;
+  const outDots = Math.ceil(srcDots / 2);
+  const wBytes = Math.ceil(outDots / 8);
+  const bmp = Buffer.alloc(wBytes * rows, 0);
+
+  /* Glyphs first, at half width: output column ox is source columns 2ox and
+     2ox+1, either of which inked. */
+  const srcRow = (i, y) => {
     const code = chars.charCodeAt(i);
-    if (code < f.first || code > f.last) continue;
+    if (code < f.first || code > f.last) return 0;
     const at = (code - f.first) * f.cellH * 2;
-    const left = i * CELL_W;
-    for (let y = 0; y < CELL_H; y += 1) {
-      const row = (f.glyphs[at + y * 2] << 8) | f.glyphs[at + y * 2 + 1];
-      if (!row) continue;
-      for (let x = 0; x < CELL_W; x += 1) {
-        if (!(row & (0x8000 >> x))) continue;
-        const dot = left + x;
-        bmp[y * wBytes + (dot >> 3)] |= 0x80 >> (dot & 7);
-      }
+    return (f.glyphs[at + y * 2] << 8) | f.glyphs[at + y * 2 + 1];
+  };
+  for (let y = 0; y < rows; y += 1) {
+    const sy = y + top;
+    for (let ox = 0; ox < outDots; ox += 1) {
+      const sx = ox * 2;
+      const a = srcRow(Math.floor(sx / CELL_W), sy) & (0x8000 >> (sx % CELL_W));
+      const sx2 = sx + 1;
+      const b =
+        sx2 < srcDots ? srcRow(Math.floor(sx2 / CELL_W), sy) & (0x8000 >> (sx2 % CELL_W)) : 0;
+      if (a || b) bmp[y * wBytes + (ox >> 3)] |= 0x80 >> (ox & 7);
     }
   }
 
   /* Then the stroke, over the top, which is the whole point of the exercise. */
   if (strike) {
-    const cells = Math.min(
-      columns,
+    const strokeCellCount = Math.min(
+      cells,
       strikeCells === undefined ? wordCells(chars) : Math.max(0, strikeCells)
     );
-    const end = cells * CELL_W;
-    const top = Math.floor(CELL_H / 2) + STROKE_DROP;
-    for (let y = top; y < Math.min(CELL_H, top + STROKE_THICKNESS); y += 1) {
-      for (let dot = 0; dot < end; dot += 1) {
-        bmp[y * wBytes + (dot >> 3)] |= 0x80 >> (dot & 7);
+    const endDots = Math.ceil((strokeCellCount * CELL_W) / 2);
+    const strokeTop = Math.floor(CELL_H / 2) + STROKE_DROP;
+    for (let sy = strokeTop; sy < Math.min(CELL_H, strokeTop + STROKE_THICKNESS); sy += 1) {
+      const y = sy - top;
+      if (y < 0 || y >= rows) continue;
+      for (let ox = 0; ox < endDots; ox += 1) {
+        bmp[y * wBytes + (ox >> 3)] |= 0x80 >> (ox & 7);
       }
     }
   }
 
+  /* GS v 0 m xL xH yL yH: m = 1 is double width, so the printer restores the
+     columns this halved. */
   return Buffer.concat([
-    Buffer.from([0x1d, 0x76, 0x30, 0x00, wBytes & 0xff, (wBytes >> 8) & 0xff, CELL_H & 0xff, (CELL_H >> 8) & 0xff]),
+    Buffer.from([0x1d, 0x76, 0x30, 0x01, wBytes & 0xff, (wBytes >> 8) & 0xff, rows & 0xff, (rows >> 8) & 0xff]),
     bmp,
   ]);
 }
 
-module.exports = { renderLine, wordCells, CELL_W, CELL_H, STROKE_THICKNESS, STROKE_DROP };
+/**
+ * The rows that carry ink: of this text when given, of the whole table when
+ * not. What renderLine crops to, for anything that wants to check.
+ */
+function band(text) {
+  const f = font();
+  if (text === undefined) return { ...f.band };
+  return lineBand(f, String(text).trimEnd());
+}
+
+module.exports = { renderLine, wordCells, band, CELL_W, CELL_H, STROKE_THICKNESS, STROKE_DROP };
