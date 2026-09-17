@@ -73,17 +73,31 @@ test('both halves agree on the event name, which nothing else enforces', () => {
   );
 });
 
-test('the sale path emits on both the new order and the amended one', () => {
+test('the sale path emits on the new order, the amended one and the cancelled one', () => {
   /*
    * A table that adds a course needs a fresh ticket as much as a new table
    * does. Missing the update path is how half the orders reach the kitchen.
+   *
+   * THIS TEST USED TO COUNT notifyKotReady CALLS IN THE WHOLE FILE and match
+   * the two reason strings anywhere in it. sale.repository.js is twelve
+   * thousand lines with five notify sites, so it passed for as long as the
+   * cancel flow had none at all: the strings it looked for were in other
+   * methods entirely. A file-wide grep cannot tell a branch that notifies
+   * from a branch that returns first, which is exactly the difference that
+   * kept cancellation tickets waiting on the poller. So each flow is now
+   * checked inside its own stretch of the method.
    */
   const repo = read('api/src/repositories/sale.repository.js');
-  const calls = repo.match(/notifyKotReady\(/g) || [];
-  assert.ok(calls.length >= 2,
-    `expected the created and updated paths to notify, found ${calls.length}`);
   assert.match(repo, /reason: 'created'/);
   assert.match(repo, /reason: 'updated'/);
+
+  const cancelAt = repo.indexOf('// ---------- CANCEL FLOW ----------');
+  const editAt = repo.indexOf('// ---------- EDIT FLOW ----------');
+  assert.ok(cancelAt > 0 && editAt > cancelAt, 'the flow markers have moved; this test is reading nothing');
+  const cancelFlow = repo.slice(cancelAt, editAt);
+  assert.match(cancelFlow, /notifyKotReady\(/,
+    'the cancel flow returns without telling the kitchen; the ticket waits for the fallback poll');
+  assert.match(cancelFlow, /reason: 'cancelled'/);
 });
 
 test('polling stays as a safety net, but stops being the primary path', () => {
