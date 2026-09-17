@@ -105,13 +105,15 @@ class Receipt {
    * A line with a stroke drawn THROUGH it.
    *
    * ESC/POS has no strike-through - bold, underline, reverse video and
-   * character size is the whole list - so the line is drawn as dots. That is
-   * expensive, 1,736 bytes against 49, and it is the only thing that works on
-   * the hardware. See src/escpos-raster-text.js for the three cheaper ideas
-   * that were printed on a real POS-80C and failed on it.
+   * character size is the whole list - so the line is drawn as dots, and it
+   * is the only thing that works on the hardware. See src/escpos-raster-text.js
+   * for the three cheaper ideas that were printed on a real POS-80C and failed
+   * on it, and for the three cuts that took a struck dish from 1,736 bytes to
+   * under 200: only the cells with text, only the rows with ink, half the
+   * columns with the printer doubling them back.
    *
-   * Only a cancelled dish pays for it, and a cancellation is rare. A new
-   * order, which is nearly every ticket, never comes through here.
+   * Only a cancelled dish pays for it. A new order, which is nearly every
+   * ticket, never comes through here.
    */
   strikeLine(s) {
     const text = ascii(s);
@@ -201,7 +203,16 @@ class Receipt {
     const left_ = ascii(left);
     const l = left_.length > room ? left_.slice(0, Math.max(0, room - 1)) + '.' : left_;
     const gap = Math.max(1, this.width - l.length - r.length);
-    const composed = l + ' '.repeat(gap) + r;
+    /*
+     * A struck line is drawn as dots, and dots are paid for by the column -
+     * padding the quantity out to the right edge would raster thirty blank
+     * cells to carry one digit. So a cancelled dish reads "NAME  2" with the
+     * quantity two spaces after the words, and the raster is only as wide as
+     * that. Two spaces exactly: that gap is how the stroke knows where the
+     * words stop (see wordCells), and one would be mistaken for part of a
+     * name like "BARBEQUE - FULL".
+     */
+    const composed = strike ? l + '  ' + r : l + ' '.repeat(gap) + r;
     if (bold) this.bold(true);
     if (strike) this.strikeLine(composed);
     else this.line(composed);
