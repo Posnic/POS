@@ -24,16 +24,17 @@
 
 const { formatSaleListEntry } = require('../../../src/helpers/sales.helper');
 
-const ticket = (item) =>
-  formatSaleListEntry({ _id: 'x', items: [item] }).items[0];
+const ticket = (item) => formatSaleListEntry({ _id: 'x', items: [item] }).items[0];
 
 describe('a kitchen ticket line', () => {
   it('KEEPS A NOTE THE WAITER ACTUALLY TYPED', () => {
-    expect(ticket({
-      item_name: 'Chicken Biryani',
-      item_quantity: 1,
-      item_description: 'no raita, extra onion',
-    }).item_description).toBe('no raita, extra onion');
+    expect(
+      ticket({
+        item_name: 'Chicken Biryani',
+        item_quantity: 1,
+        item_description: 'no raita, extra onion',
+      }).item_description
+    ).toBe('no raita, extra onion');
   });
 
   it('IS BLANK WHEN NOBODY ASKED FOR ANYTHING', () => {
