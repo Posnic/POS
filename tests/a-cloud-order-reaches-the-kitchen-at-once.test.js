@@ -97,19 +97,94 @@ test('pulling anything else stays quiet', () => {
   assert.deepStrictEqual(events, []);
 });
 
-test('a table call pulled from the cloud makes the arrival sound, and prints nothing', () => {
+/* A manager whose API answers with these calls, and everything it says on the bus. */
+async function heardWithCalls(lines, answers) {
+  const events = [];
+  const onKot = (p) => events.push(['kot', p]);
+  const onAttention = (p) => events.push(['attention', p]);
+  const onResolved = (p) => events.push(['resolved', p]);
+  process.on('posnic:kot-created', onKot);
+  process.on('posnic:order-attention', onAttention);
+  process.on('posnic:order-resolved', onResolved);
+  let n = 0;
+  const fetch = async () => {
+    const answer = answers[Math.min(n, answers.length - 1)];
+    n += 1;
+    if (answer === 'down') throw new Error('ECONNREFUSED');
+    return { ok: true, json: async () => ({ status: true, data: answer }) };
+  };
+  const manager = new SyncAgentManager({ app: { getPath: () => ROOT }, fetch });
+  try {
+    for (const line of lines) await manager._announcePulled(line);
+  } finally {
+    process.off('posnic:kot-created', onKot);
+    process.off('posnic:order-attention', onAttention);
+    process.off('posnic:order-resolved', onResolved);
+  }
+  return events;
+}
+
+test('a table call pulled from the cloud rings until somebody answers, and prints nothing', async () => {
   /*
    * "Call waiter" on the ordering page lands in the cloud; the lane brings
-   * it down (Gateway "A call reaches the till", POS #853). Before this the
-   * row reached the request dock silently. It gets the same bell a synced-in
-   * order gets - once - and NOT a kitchen ticket: nobody cooks a call.
+   * it down (Gateway "A call reaches the till", POS #853). A counter-made
+   * call rings until answered because the insert path knows its id; a synced
+   * one never takes that path, so the till reads the open calls itself and
+   * raises the same alarm per id. And NOT a kitchen ticket: nobody cooks a call.
    */
-  const events = heard(['[agent] pulled 1 into waitercalls']);
-  const chimes = events.filter(([kind]) => kind === 'attention');
-  assert.strictEqual(chimes.length, 1, 'a synced-in call made no sound');
-  assert.strictEqual(chimes[0][1].alert, 'received', 'a call the till cannot resolve by id must not ring until answered');
-  assert.strictEqual(chimes[0][1].state, 'waiter', 'the sound does not say it was a call');
+  const events = await heardWithCalls(['[agent] pulled 2 into waitercalls'], [
+    [{ call_id: 'c1', branch_id: 'b1', table_number: '7' }, { call_id: 'c2', branch_id: 'b1', table_number: '3' }],
+  ]);
+  const rings = events.filter(([kind]) => kind === 'attention');
+  assert.deepStrictEqual(rings.map(([, p]) => [p.alert, p.saleId, p.state]), [
+    ['waiting', 'c1', 'waiter'],
+    ['waiting', 'c2', 'waiter'],
+  ]);
+  assert.strictEqual(rings[0][1].branchId, 'b1', 'a device serving one branch must be able to ignore another');
   assert.strictEqual(events.filter(([kind]) => kind === 'kot').length, 0, 'a table call was sent to the kitchen printer');
+});
+
+test('the same open call on the next pull does not start a second alarm', async () => {
+  const same = [{ call_id: 'c1', table_number: '7' }];
+  const events = await heardWithCalls(
+    ['[agent] pulled 1 into waitercalls', '[agent] pulled 1 into waitercalls'],
+    [same, same]
+  );
+  assert.strictEqual(events.filter(([kind]) => kind === 'attention').length, 1);
+});
+
+test('a call answered somewhere else stops ringing here on the next pull', async () => {
+  /* Seen on the cloud dashboard, or on another till: the row's seen_at syncs
+     down, the call leaves the open list, and this till must not go on ringing
+     for a table that has been served. */
+  const events = await heardWithCalls(
+    ['[agent] pulled 1 into waitercalls', '[agent] pulled 1 into waitercalls'],
+    [[{ call_id: 'c1', table_number: '7' }], []]
+  );
+  const resolved = events.filter(([kind]) => kind === 'resolved');
+  assert.deepStrictEqual(resolved.map(([, p]) => p.saleId), ['c1']);
+});
+
+test('if the till cannot read its own calls, the arrival bell sounds once', async () => {
+  /* A shop must hear something; it must never hear an alarm it cannot stop. */
+  const events = await heardWithCalls(['[agent] pulled 1 into waitercalls'], ['down']);
+  const rings = events.filter(([kind]) => kind === 'attention');
+  assert.strictEqual(rings.length, 1);
+  assert.strictEqual(rings[0][1].alert, 'received', 'a call the till cannot identify must not ring until answered');
+  assert.strictEqual(rings[0][1].state, 'waiter');
+  assert.strictEqual(events.filter(([kind]) => kind === 'kot').length, 0);
+});
+
+test('the open calls are read with the installation key, before the session guard', () => {
+  /* The main process has no session. If the route slid behind
+     router.use(protect), every read would 401 and every synced call would
+     fall back to the single bell, and nothing would say so. */
+  const routes = fs.readFileSync(path.join(ROOT, 'api', 'src', 'routes', 'sales.routes.js'), 'utf8');
+  const open = routes.indexOf("'/waiterCalls/open'");
+  const guard = routes.indexOf('router.use(protect);');
+  assert.ok(open > 0 && guard > 0 && open < guard, 'the open-calls route is behind the session guard');
+  assert.ok(SRC.includes("kioskkey: process.env.KIOSK_API_KEY || ''"), 'the till does not send its key');
+  assert.ok(SRC.includes('/api/sales/waiterCalls/open'), 'the till reads a different route from the one registered');
 });
 
 test('a pull of nothing is not an order', () => {

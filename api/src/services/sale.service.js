@@ -3883,6 +3883,7 @@ module.exports = {
      why a call must carry a table and why three taps are one call. */
   callTheWaiter: async (params = {}) => salesRepository.callTheWaiter(params),
   seeWaiterCall: async (params = {}) => salesRepository.seeWaiterCall(params),
+  openWaiterCalls: async (params = {}) => salesRepository.openWaiterCalls(params),
   /* The approval queue: orders held back from the kitchen, and the decision
      that releases or turns away one of them. */
   pendingOnlineOrders: async (params = {}) => salesRepository.pendingOnlineOrders(params),

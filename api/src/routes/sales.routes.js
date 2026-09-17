@@ -106,6 +106,23 @@ router.post(
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));
+/*
+ * The open table calls, for the till's own main process.
+ *
+ * A call that arrived by sync lands in the request dock silently; the sound
+ * a counter-made call raises comes from the insert path, and the agent's pull
+ * line carries a count, not ids. The main process reads this after a pull and
+ * rings each call until "seen" resolves it. Guarded like the floor screen:
+ * a session passes as always, and the anonymous case must hold this
+ * installation's kiosk key. Registered before router.use(protect) because the
+ * main process has no session.
+ */
+router.get(
+  '/waiterCalls/open',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.openWaiterCalls)
+);
 
 /*
  * An order from a waiter's phone - the captain app.
