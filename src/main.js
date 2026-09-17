@@ -5635,7 +5635,17 @@ app.on('activate', () => {
   }
 });
 
-// IPC handler for opening hardware manager from renderer
-ipcMain.on('open-hardware-manager', () => {
-  openHardwareManager();
-});
+/*
+ * The 'open-hardware-manager' channel was here, with a comment saying it was
+ * for opening the window from a renderer. No renderer could send it: preload.js
+ * never exposed it, and context isolation means a page has no ipcRenderer of
+ * its own. It was a door with no handle on the outside.
+ *
+ * Nothing was lost by removing it. The Hardware Manager is reachable from the
+ * application menu, from the settings deep-link target, and from the tray, all
+ * of which call openHardwareManager() directly.
+ *
+ * tests/every-handler-has-a-door.test.js now refuses a handler nothing can
+ * reach, because "it exists but nobody can call it" is how the kitchen switch
+ * and the sold-out endpoint both sat finished and unusable.
+ */
