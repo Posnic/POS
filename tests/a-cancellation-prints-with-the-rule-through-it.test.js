@@ -39,34 +39,44 @@ test('the HTML ticket strikes a cancelled name through', () => {
 
 /* ----------------------------------------- and the right path is taken */
 
-test('a cancellation does not take the ESC/POS path, which cannot strike', () => {
-  const at = KOT.indexOf('const isCancellation =');
-  assert.notStrictEqual(at, -1, 'nothing decides which path a cancellation takes');
-
-  const decision = KOT.slice(at, KOT.indexOf('\n    }', at));
-  assert.match(decision, /!isCancellation && this\.hardware/,
-    'a cancellation still goes to the raw printer, where the rule cannot be drawn');
-});
-
-test('an ordinary ticket still takes the fast path', () => {
+test('EVERY TICKET TAKES THE FAST PATH, cancellations included', () => {
   /*
-   * The whole reason this is a routing rule and not a switch: the window
-   * costs 1,114ms of a 2,080ms order-to-paper time, measured on a real till.
-   * Every new order must keep the 124ms path.
+   * This test used to assert the opposite, and it was right when it was
+   * written. The routing said `!isCancellation && this.hardware`, because
+   * ESC/POS cannot draw a line THROUGH text and only the HTML window could.
+   *
+   * The bytes learned to draw it eleven hours later the same day -
+   * strikeCancelled into the byte builder at 12:46, escpos-raster-text at
+   * 13:16, against an exclusion written at 01:24 - and nobody came back to
+   * flip the switch. Every cancellation since paid for a BrowserWindow it no
+   * longer needed, which is what a shop finally noticed on paper: "new order
+   * print is so so fast. very immediate but cancel order took some time."
+   *
+   * So the assertion is inverted rather than deleted. A future reader who
+   * reintroduces the exclusion should fail here.
    */
-  const at = KOT.indexOf('const isCancellation =');
+  const at = KOT.indexOf('if (this.hardware && typeof this.hardware.sendRawToPrinter');
+  assert.notStrictEqual(at, -1, 'nothing routes a ticket to the raw printer any more');
+
   const decision = KOT.slice(at, KOT.indexOf('\n    }', at));
   assert.match(decision, /_printRaw\(sale, printKind, kotNumber, printerNames\)/,
     'nothing takes the fast path any more');
+
+  assert.ok(
+    !/!isCancellation\s*&&\s*this\.hardware/.test(KOT),
+    'a cancellation is excluded from the fast path again, and the bytes can draw the rule now'
+  );
 });
 
-test('the decision is made from printKind, not from the sale', () => {
+test('and the bytes are told to strike it, or the fast path would print a lie', () => {
   /*
-   * `printKind` is what the caller decided this ticket IS. Reading the sale
-   * instead would mean a whole-order cancellation and a single removed line
-   * take different paths, and the removed line is the commoner of the two.
+   * The whole reason a cancellation could take the slow path safely was that
+   * the slow path struck the name. Taking the fast path without
+   * strikeCancelled would print a cancelled dish that looks live, which is
+   * worse than slow.
    */
-  assert.match(KOT, /const isCancellation = printKind === 'cancel';/);
+  assert.match(KOT, /strikeCancelled:/, 'the byte builder is no longer told to strike');
+  assert.match(KOT, /cancelled: f\.isCancelled/, 'the bytes are not told which line was cancelled');
 });
 
 test('the trade is written down where somebody will undo it', () => {
