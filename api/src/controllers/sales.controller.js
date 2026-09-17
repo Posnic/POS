@@ -6678,6 +6678,25 @@ class SalesController extends BaseController {
     }
   }
 
+  /**
+   * The calls still wanting somebody, for the till asking on its own behalf.
+   *
+   * A call that arrived by sync never took the insert path that raises the
+   * alarm, and the agent's pull line carries a count, not ids. The till reads
+   * this after a pull and rings each call_id until "seen" resolves it. No
+   * branch in the query means every branch this installation serves.
+   */
+  async openWaiterCalls(req, res) {
+    try {
+      const calls = await salesService.openWaiterCalls({
+        branchId: req.query.branch_id || req.query.branchid,
+      });
+      return this.success(res, calls, 'ok');
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /** Accepting or turning away one of them. */
   async decideOnOrder(req, res) {
     try {

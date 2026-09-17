@@ -147,6 +147,24 @@ describe('sales.routes', () => {
     expect(paths).toContain('post /qrOrder');
   });
 
+  test('the till can read the open table calls with its own key', () => {
+    /*
+     * A call that arrived by sync never took the insert path that raises the
+     * alarm. The main process reads this after a pull and rings each call
+     * until "seen" resolves it. It has no session, so the route sits before
+     * router.use(protect) and must still refuse anybody without the key.
+     */
+    const { protectOrKioskKey } = require('../../../src/middleware/sales.validation');
+    const layers = router.stack.filter((l) => l.route || l.name === 'protect');
+    const open = layers.findIndex(
+      (l) => l.route && l.route.path === '/waiterCalls/open' && l.route.methods.get
+    );
+    const protect = layers.findIndex((l) => !l.route && l.name === 'protect');
+    expect(open).toBeGreaterThan(-1);
+    if (protect > -1) expect(open).toBeLessThan(protect);
+    expect(layers[open].route.stack.map((h) => h.handle)).toContain(protectOrKioskKey);
+  });
+
   test('and it is NOT anonymous, which is the one thing that changed', () => {
     const { protectOrKioskKey } = require('../../../src/middleware/sales.validation');
     const layer = router.stack.find(
