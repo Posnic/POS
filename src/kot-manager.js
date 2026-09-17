@@ -924,9 +924,29 @@ class KOTManager {
      * and nowhere else: a cancellation is rare, it is the ticket a cook must
      * not misread, and every ordinary ticket still takes the 124ms path.
      */
-    const isCancellation = printKind === 'cancel';
-
-    if (!isCancellation && this.hardware && typeof this.hardware.sendRawToPrinter === 'function') {
+    /*
+     * A CANCELLATION TAKES THE FAST PATH TOO, NOW THAT THE BYTES CAN DRAW IT.
+     *
+     * This used to read `!isCancellation && ...`, and the comment above
+     * explained why: ESC/POS cannot draw a line THROUGH text, so a cancelled
+     * dish had to go through the hidden window that renders HTML, where
+     * `text-decoration: line-through` has always worked.
+     *
+     * That was true when it was written, at 01:24. By 12:46 the same day the
+     * byte builder was taking a `strikeCancelled` option, and by 13:16
+     * escpos-raster-text was drawing the stroke as dots. The capability landed
+     * eleven hours after the exclusion and nobody came back to flip the
+     * switch, so every cancellation since has paid for a BrowserWindow it no
+     * longer needed.
+     *
+     * Owner, on the paper: "new order print is so so fast. very immediate but
+     * cancel order took some time."
+     *
+     * Measured: the window path costs about a second; the bytes cost 124ms
+     * plus the stroke, which is 5,272 bytes against 208 for a plain ticket and
+     * under half a second even on a slow serial link.
+     */
+    if (this.hardware && typeof this.hardware.sendRawToPrinter === 'function') {
       const rawResults = await this._printRaw(sale, printKind, kotNumber, printerNames);
       if (rawResults) {
         if (!skipLog) {
