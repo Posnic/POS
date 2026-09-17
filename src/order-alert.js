@@ -558,6 +558,44 @@ function announceKitchenTicket(getWindow, ticket, wants) {
   }
 }
 
+/**
+ * THE WINDOW THAT CAN ACTUALLY MAKE THE NOISE.
+ *
+ * The announcement was sent to `getAllWindows().find(w => !w.isDestroyed())` -
+ * the FIRST window, whatever it happens to be. On the machine where this
+ * feature runs that is a gamble: a kitchen machine may have the kitchen
+ * display open, and a support, log or hardware window can be in front of the
+ * dashboard at any moment.
+ *
+ * Only the dashboard carries the player. `src/kitchen-screen.html` has one
+ * inline script and no `kitchenCall` in it at all, so a ticket announced into
+ * that window is announced into nothing - silently, with no error, which is
+ * the exact failure this feature kept having.
+ *
+ * So the window is chosen by what it is showing rather than by where it sits
+ * in a list. The alarm beside this already had it right: main.js hands
+ * OrderAlert `() => mainWindow`.
+ *
+ * Falls back to any open window rather than to none. Before anybody signs in
+ * the only window is the sign-in screen, which has no player either - but a
+ * shop with nobody signed in has nobody in the kitchen either, and silence
+ * then is correct rather than a fault.
+ */
+function speakingWindow(BrowserWindow) {
+  const open = (BrowserWindow.getAllWindows() || []).filter((w) => w && !w.isDestroyed());
+
+  const dashboard = open.find((w) => {
+    try {
+      return /dashboard\.html/i.test(w.webContents.getURL());
+    } catch (e) {
+      /* A window still loading has no URL yet. It is not the one we want. */
+      return false;
+    }
+  });
+
+  return dashboard || open[0] || null;
+}
+
 /*
  * What a settings page can offer, and how to hear one.
  *
@@ -576,6 +614,7 @@ const bellSound = (kind, which) =>
 
 module.exports = {
   announceKitchenTicket,
+  speakingWindow,
   TING,
   ITEM_BELL,
   bellChoices,

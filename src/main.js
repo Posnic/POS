@@ -4608,7 +4608,7 @@ app.whenReady().then(async () => {
     if (!wants.ting && !wants.speak) return { played: false, reason: 'off' };
 
     const played = require('./order-alert').announceKitchenTicket(
-      () => BrowserWindow.getAllWindows().find((w) => w && !w.isDestroyed()) || null,
+      () => require('./order-alert').speakingWindow(BrowserWindow),
       {
         table: '5',
         items: [

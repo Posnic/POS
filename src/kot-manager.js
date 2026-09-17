@@ -852,7 +852,7 @@ class KOTManager {
       if (!wants.ting && !wants.speak) return;
 
       orderAlert.announceKitchenTicket(
-        () => BrowserWindow.getAllWindows().find((w) => w && !w.isDestroyed()) || null,
+        () => orderAlert.speakingWindow(BrowserWindow),
         {
           table: String(sale.table_number || sale.tableNo || sale.table || sale.table_no || ''),
           items,
