@@ -97,6 +97,21 @@ test('pulling anything else stays quiet', () => {
   assert.deepStrictEqual(events, []);
 });
 
+test('a table call pulled from the cloud makes the arrival sound, and prints nothing', () => {
+  /*
+   * "Call waiter" on the ordering page lands in the cloud; the lane brings
+   * it down (Gateway "A call reaches the till", POS #853). Before this the
+   * row reached the request dock silently. It gets the same bell a synced-in
+   * order gets - once - and NOT a kitchen ticket: nobody cooks a call.
+   */
+  const events = heard(['[agent] pulled 1 into waitercalls']);
+  const chimes = events.filter(([kind]) => kind === 'attention');
+  assert.strictEqual(chimes.length, 1, 'a synced-in call made no sound');
+  assert.strictEqual(chimes[0][1].alert, 'received', 'a call the till cannot resolve by id must not ring until answered');
+  assert.strictEqual(chimes[0][1].state, 'waiter', 'the sound does not say it was a call');
+  assert.strictEqual(events.filter(([kind]) => kind === 'kot').length, 0, 'a table call was sent to the kitchen printer');
+});
+
 test('a pull of nothing is not an order', () => {
   assert.deepStrictEqual(heard(['[agent] pulled 0 into sales']), []);
 });
