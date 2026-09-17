@@ -4573,6 +4573,41 @@ app.whenReady().then(async () => {
   ipcMain.handle('kitchen-announce:get', () => kitchenAnnounce.settings());
   ipcMain.handle('kitchen-announce:set', (_event, next) => kitchenAnnounce.set(next));
 
+  /*
+   * A BUTTON THAT PROVES IT.
+   *
+   * Until this existed, the only way to learn whether a kitchen would hear
+   * anything was to send a real order to a real kitchen. Nobody is going to do
+   * that on a shop's opening night, so nobody did, and the feature sat unheard
+   * for its whole life. Both faults in it were found by reading a log, not by
+   * listening.
+   *
+   * It goes down the road a real ticket takes: the same switches, the same
+   * tone, the same sentence, the same window. A test that took a shortcut
+   * would be the thing that passes while the kitchen stays silent.
+   *
+   * It says WHY when nothing happens, because "I pressed it and nothing
+   * happened" is exactly where this feature has spent its life.
+   */
+  ipcMain.handle('kitchen-announce:test', () => {
+    const wants = kitchenAnnounce.settings();
+    if (!wants.ting && !wants.speak) return { played: false, reason: 'off' };
+
+    const played = require('./order-alert').announceKitchenTicket(
+      () => BrowserWindow.getAllWindows().find((w) => w && !w.isDestroyed()) || null,
+      {
+        table: '5',
+        items: [
+          { item_name: 'Chicken Biryani', item_quantity: 1 },
+          { item_name: 'Butter Naan', item_quantity: 2 },
+        ],
+      },
+      wants
+    );
+
+    return { played, reason: played ? 'ok' : 'no-window', ting: wants.ting, speak: wants.speak };
+  });
+
   ipcMain.handle('order-alert:resolve', (_event, saleId) => {
     if (orderAlert) orderAlert.resolve(saleId);
     return true;
