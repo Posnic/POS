@@ -23,10 +23,14 @@ const RESTART_DELAY_MS = 15_000;
 const AGENT_HEALTHY_AFTER_MS = 60_000;
 
 class SyncAgentManager {
-  constructor({ app }) {
+  constructor({ app, fetch: fetchImpl } = {}) {
     this.app = app;
     this.child = null;
     this.stopped = false;
+    /* The table calls this till is ringing for, by call id, so a second pull
+       of the same open call does not start a second alarm. */
+    this._ringingCalls = new Set();
+    this._fetch = fetchImpl || globalThis.fetch;
   }
 
   /*
@@ -352,26 +356,49 @@ class SyncAgentManager {
   }
 
   /*
-   * A TABLE'S CALL THAT ARRIVED BY SYNC MAKES A SOUND.
+   * A TABLE'S CALL THAT ARRIVED BY SYNC RINGS UNTIL SOMEBODY ANSWERS.
    *
    * "Call waiter" on the ordering page writes into the cloud database; the
    * lane that brings it down was built the same night the row learned to
-   * carry its date (Gateway "A call reaches the till", #853). What arrived
-   * then landed in the request dock silently: the dock polls, so the call
-   * showed within a few seconds, but the sound a counter-made call raises
-   * comes from the API's insert path, which a synced row never takes.
+   * carry its date (Gateway "A call reaches the till", #853). A counter-made
+   * call rings until answered, because the API's insert path raises
+   * 'waiting' with the call's id and the dock's "seen" resolves that id. A
+   * synced row never takes that path, and the agent's line says how many
+   * rows landed, not which.
    *
-   * This is the arrival bell, once - the same treatment a synced-in order
-   * gets above. A counter-made call rings until somebody answers, because
-   * the API knows the call's id and the dock's "seen" resolves that id. The
-   * agent's line carries a count, not ids, and the queue endpoint the dock
-   * reads sits behind the session guard, so ringing-until-answered for a
-   * synced call is the next step: a kiosk-keyed read of the open calls, then
-   * 'waiting' with each call_id and 'posnic:order-resolved' when it leaves
-   * the list. Written here so nobody mistakes the bell for the alarm.
+   * So the till asks. After a pull into waitercalls it reads the open calls
+   * from its own API - a kiosk-keyed route, because this process has no
+   * session - and raises the same 'waiting' per call_id the counter would
+   * have. "Seen" at the dock resolves it exactly as before. A call answered
+   * somewhere else (the cloud dashboard, another till) leaves the list on
+   * the next pull and is resolved here, so nothing rings for a table that
+   * has already been served.
+   *
+   * If the read fails, the arrival bell sounds once - the treatment a
+   * synced-in order gets - and the dock still shows the call on its poll. A
+   * shop must hear something; it must never hear an alarm it cannot stop.
    */
   _announceCalls(rows) {
+    return this._ringCalls().catch((e) => {
+      console.warn('[SyncAgent] could not ring for a synced table call:', e.message);
+      return false;
+    });
+  }
+
+  async _ringCalls() {
+    let calls = null;
     try {
+      const port = Number(process.env.PORT) || 5555;
+      const res = await this._fetch(`http://127.0.0.1:${port}/api/sales/waiterCalls/open`, {
+        headers: { Accept: 'application/json', kioskkey: process.env.KIOSK_API_KEY || '' },
+      });
+      const body = res && res.ok ? await res.json() : null;
+      calls = body && Array.isArray(body.data) ? body.data : null;
+    } catch (e) {
+      calls = null;
+    }
+
+    if (!calls) {
       process.emit('posnic:order-attention', {
         branchId: '',
         saleId: '',
@@ -380,13 +407,34 @@ class SyncAgentManager {
         total: 0,
         at: new Date().toISOString(),
       });
-      console.log(`[SyncAgent] ${rows} table call(s) arrived from the cloud - see the request dock`);
+      console.log('[SyncAgent] a table call arrived from the cloud - see the request dock');
       return true;
-    } catch (e) {
-      /* A call that misses the bell is still in the dock on its next poll. */
-      console.warn('[SyncAgent] could not announce a synced table call:', e.message);
-      return false;
     }
+
+    const open = new Set();
+    for (const call of calls) {
+      const id = call && call.call_id ? String(call.call_id) : '';
+      if (!id) continue;
+      open.add(id);
+      if (this._ringingCalls.has(id)) continue;
+      this._ringingCalls.add(id);
+      process.emit('posnic:order-attention', {
+        branchId: call.branch_id ? String(call.branch_id) : '',
+        saleId: id,
+        alert: 'waiting',
+        state: 'waiter',
+        total: 0,
+        source: 'synced',
+        at: new Date().toISOString(),
+      });
+    }
+    for (const id of [...this._ringingCalls]) {
+      if (open.has(id)) continue;
+      this._ringingCalls.delete(id);
+      process.emit('posnic:order-resolved', { saleId: id, state: 'seen' });
+    }
+    console.log(`[SyncAgent] ${open.size} table call(s) waiting - ringing until seen`);
+    return true;
   }
 
   _trackSyncState(line) {

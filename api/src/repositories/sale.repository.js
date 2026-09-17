@@ -8832,10 +8832,18 @@ class SalesRepository {
   async openWaiterCalls({ branchId } = {}) {
     try {
       const db = await BaseModel.getDb();
-      const branchObjectId = ObjectId.isValid(String(branchId))
-        ? new ObjectId(String(branchId))
-        : branchId;
-      const filter = { branch_id: branchObjectId, seen_at: { $in: [null, undefined] } };
+      const filter = { seen_at: { $in: [null, undefined] } };
+      /*
+       * A branch when the caller has one - the queue always does. The till
+       * asking on its own behalf after a sync pull has none and wants every
+       * branch this installation serves; `{ branch_id: undefined }` would have
+       * matched nothing and rung for nobody.
+       */
+      if (branchId !== undefined && branchId !== null && String(branchId) !== '') {
+        filter.branch_id = ObjectId.isValid(String(branchId))
+          ? new ObjectId(String(branchId))
+          : branchId;
+      }
       if (BaseModel.license) filter.license = BaseModel.license;
 
       const rows = await db
@@ -8875,6 +8883,7 @@ class SalesRepository {
 
       return open.map((row) => ({
         call_id: String(row._id),
+        branch_id: String(row.branch_id || ''),
         table_number: String(row.table_number || ''),
         called_at: row.called_at || null,
       }));
