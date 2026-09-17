@@ -29,8 +29,8 @@
  * and that was the end of it; ESC/POS has no such command, so for a while the
  * heading carried the whole meaning - "Item Cancelled" at the top, and every
  * line under it cancelled. A cook reading a spike of tickets sideways does not
- * get that. Receipt.strikeLine draws the rule by hand, in 109 bytes, and the
- * heading stays because two signals are better than one.
+ * get that. Receipt.strikeLine draws the line as dots, only as wide as the
+ * words, and the heading stays because two signals are better than one.
  */
 const { Receipt } = require('./escpos-receipt');
 
@@ -87,13 +87,13 @@ function qtyText(value) {
  *   cancelled    true when this sheet is a cancellation, so the lines are struck
  * @param {{paperWidth?: string, strikeCancelled?: boolean}} options
  *   paperWidth      '48' for 80mm, '32' for 58mm
- *   strikeCancelled false for a printer that will not overprint; see strikeLine
+ *   strikeCancelled false for a printer that cannot take a raster; see strikeLine
  * @returns {Buffer}
  */
 function renderKitchenTicket(ticket = {}, options = {}) {
   const r = new Receipt(String(options.paperWidth) === '32' ? '58' : '80');
   /* Absent means on. A shop only ever sets this to turn it off, and that is
-     for a printer that will not overprint - see Receipt.strikeLine. */
+     for a printer that cannot take a raster - see Receipt.strikeLine. */
   const strikeThem = Boolean(ticket.cancelled) && options.strikeCancelled !== false;
 
   /* What kind of sheet. Double height, because a cook glancing at a spike of

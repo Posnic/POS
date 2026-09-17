@@ -85,6 +85,55 @@ test('THE COUNT PRINTS WITH THE MONEY, NOT WITH THE TABLE', () => {
   assert.strictEqual(subtotalAt - qtyAt, 1, 'something was printed between the count and the subtotal');
 });
 
+test('AND IT LINES UP WITH THE QUANTITIES IT TOTALS', () => {
+  /*
+   * Owner, on a printed bill: "total quantity just make it same alignment of
+   * quantity column. not to the last. i think its better."
+   *
+   * He is right, and the reason is worth keeping. A count printed hard against
+   * the right edge sits under AMOUNT - the one column on a bill where a number
+   * must not be mistaken for money. Under the quantities it is obviously a
+   * count of them.
+   *
+   * Asserted by column index rather than by eye, because a layout that looks
+   * right in one sample and drifts on another is exactly what this table was
+   * rebuilt to stop.
+   */
+  const lines = linesOf({
+    ...SALE,
+    items: [
+      { name: 'Pallipalayam Chicken', rate: '280.00', qty: '1', amount: '280.00' },
+      { name: 'Sunset Cooler', rate: '130.00', qty: '2', amount: '260.00' },
+    ],
+  });
+
+  const itemRow = lines.find((l) => /Sunset Cooler/.test(l));
+  const totalRow = lines.find((l) => /Total Qty/.test(l));
+  assert.ok(itemRow && totalRow, 'the rows this compares are not both printed');
+
+  const itemQtyAt = itemRow.indexOf('2', itemRow.indexOf('130.00'));
+  const totalQtyAt = totalRow.lastIndexOf('5');
+  assert.strictEqual(
+    totalQtyAt,
+    itemQtyAt,
+    'the total sits in a different column from the quantities it adds up:' +
+      String.fromCharCode(10) + itemRow + String.fromCharCode(10) + totalRow
+  );
+
+  /*
+   * And emphatically NOT in the money column. Compared against the subtotal's
+   * own digits rather than against the end of the string: the preview trims
+   * trailing spaces, so "last character" is not "right edge of the paper".
+   */
+  const subtotalRow = lines.find((l) => /Subtotal/.test(l));
+  assert.ok(subtotalRow, 'there is no subtotal to compare against');
+  assert.notStrictEqual(
+    totalQtyAt,
+    subtotalRow.length - 1,
+    'the count is back under the amount column, where it reads as money'
+  );
+});
+
 test('a shop that asked for none of it gets none of it', () => {
   /* Every one of these is a per-shop switch, and the default is off. The block
      must vanish entirely rather than print an empty frame. */

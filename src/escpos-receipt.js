@@ -105,13 +105,15 @@ class Receipt {
    * A line with a stroke drawn THROUGH it.
    *
    * ESC/POS has no strike-through - bold, underline, reverse video and
-   * character size is the whole list - so the line is drawn as dots. That is
-   * expensive, 1,736 bytes against 49, and it is the only thing that works on
-   * the hardware. See src/escpos-raster-text.js for the three cheaper ideas
-   * that were printed on a real POS-80C and failed on it.
+   * character size is the whole list - so the line is drawn as dots, and it
+   * is the only thing that works on the hardware. See src/escpos-raster-text.js
+   * for the three cheaper ideas that were printed on a real POS-80C and failed
+   * on it, and for the three cuts that took a struck dish from 1,736 bytes to
+   * under 200: only the cells with text, only the rows with ink, half the
+   * columns with the printer doubling them back.
    *
-   * Only a cancelled dish pays for it, and a cancellation is rare. A new
-   * order, which is nearly every ticket, never comes through here.
+   * Only a cancelled dish pays for it. A new order, which is nearly every
+   * ticket, never comes through here.
    */
   strikeLine(s) {
     const text = ascii(s);
@@ -177,13 +179,40 @@ class Receipt {
     return this;
   }
 
+  /**
+   * A label and a value, with the value ending at a GIVEN column rather than
+   * at the edge of the paper.
+   *
+   * Falls back to the ordinary right-aligned pair when there is no column to
+   * aim at - a receipt with no item table, or one so narrow the name took a
+   * line of its own - because a total printed somewhere odd is worse than a
+   * total printed where every other total goes.
+   */
+  pairAtColumn(left, right, column) {
+    const r = ascii(right == null ? '' : String(right));
+    const l = ascii(left);
+    if (!column || column <= 0 || column > this.width || column < l.length + r.length + 1) {
+      return this.pair(left, r);
+    }
+    return this.line(l + ' '.repeat(column - l.length - r.length) + r);
+  }
+
   pair(left, right, { bold = false, strike = false } = {}) {
     const r = ascii(right);
     const room = this.width - r.length - 1;
     const left_ = ascii(left);
     const l = left_.length > room ? left_.slice(0, Math.max(0, room - 1)) + '.' : left_;
     const gap = Math.max(1, this.width - l.length - r.length);
-    const composed = l + ' '.repeat(gap) + r;
+    /*
+     * A struck line is drawn as dots, and dots are paid for by the column -
+     * padding the quantity out to the right edge would raster thirty blank
+     * cells to carry one digit. So a cancelled dish reads "NAME  2" with the
+     * quantity two spaces after the words, and the raster is only as wide as
+     * that. Two spaces exactly: that gap is how the stroke knows where the
+     * words stop (see wordCells), and one would be mistaken for part of a
+     * name like "BARBEQUE - FULL".
+     */
+    const composed = strike ? l + '  ' + r : l + ' '.repeat(gap) + r;
     if (bold) this.bold(true);
     if (strike) this.strikeLine(composed);
     else this.line(composed);
@@ -289,6 +318,26 @@ class Receipt {
     const MIN_NAME = 8;
     const stacked = nameW < MIN_NAME;
     const nameCol = stacked ? this.width : nameW;
+
+    /*
+     * WHERE THE QUANTITY COLUMN ENDS, so a total underneath can line up with
+     * the numbers it totals.
+     *
+     * Owner, on a printed bill: "total quantity just make it same alignment of
+     * quantity column. not to the last. i think its better."
+     *
+     * He is right. A count printed hard against the right edge sits under the
+     * AMOUNT column and reads as money at a glance - the one column on a bill
+     * where a number must not be mistaken. Under the quantities it is
+     * obviously a count of them.
+     *
+     * Recorded here because here is the only place the widths are known. Every
+     * other file would be guessing, and a guess would be wrong the first time
+     * a shop sold something by the kilo.
+     */
+    this.qtyColumn = stacked
+      ? 0
+      : nameW + 1 + (hsnW ? hsnW + 1 : 0) + (rateW ? rateW + 1 : 0) + qtyW;
 
     const numbers = (c) => {
       /* Rate before quantity, the way a bill is read: this many, at this
@@ -491,7 +540,7 @@ function renderSale(sale, options = {}) {
    * header beside the table number, which is where a restaurant looks and not
    * where a guest does - a count belongs with the arithmetic it is part of.
    */
-  if (sale.totalQty) r.pair('Total Qty', String(sale.totalQty));
+  if (sale.totalQty) r.pairAtColumn('Total Qty', String(sale.totalQty), r.qtyColumn);
   if (sale.subTotal != null) r.pair('Subtotal', money(sale.subTotal));
   for (const t of sale.taxes || []) r.pair(t.label, money(t.amount));
   if (sale.discount) r.pair('Discount', '-' + money(sale.discount));
