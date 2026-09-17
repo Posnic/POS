@@ -311,7 +311,9 @@ class SyncAgentManager {
     const collection = m[2];
     /* Only what a kitchen or a counter is waiting on. Pulling customers or
        items must not set off a chime in an empty shop. */
-    if (rows <= 0 || collection !== 'sales') return false;
+    if (rows <= 0) return false;
+    if (collection === 'waitercalls') return this._announceCalls(rows);
+    if (collection !== 'sales') return false;
 
     try {
       /*
@@ -345,6 +347,44 @@ class SyncAgentManager {
     } catch (e) {
       /* A ticket that misses this still prints on the poll underneath. */
       console.warn('[SyncAgent] could not announce a synced order:', e.message);
+      return false;
+    }
+  }
+
+  /*
+   * A TABLE'S CALL THAT ARRIVED BY SYNC MAKES A SOUND.
+   *
+   * "Call waiter" on the ordering page writes into the cloud database; the
+   * lane that brings it down was built the same night the row learned to
+   * carry its date (Gateway "A call reaches the till", #853). What arrived
+   * then landed in the request dock silently: the dock polls, so the call
+   * showed within a few seconds, but the sound a counter-made call raises
+   * comes from the API's insert path, which a synced row never takes.
+   *
+   * This is the arrival bell, once - the same treatment a synced-in order
+   * gets above. A counter-made call rings until somebody answers, because
+   * the API knows the call's id and the dock's "seen" resolves that id. The
+   * agent's line carries a count, not ids, and the queue endpoint the dock
+   * reads sits behind the session guard, so ringing-until-answered for a
+   * synced call is the next step: a kiosk-keyed read of the open calls, then
+   * 'waiting' with each call_id and 'posnic:order-resolved' when it leaves
+   * the list. Written here so nobody mistakes the bell for the alarm.
+   */
+  _announceCalls(rows) {
+    try {
+      process.emit('posnic:order-attention', {
+        branchId: '',
+        saleId: '',
+        alert: 'received',
+        state: 'waiter',
+        total: 0,
+        at: new Date().toISOString(),
+      });
+      console.log(`[SyncAgent] ${rows} table call(s) arrived from the cloud - see the request dock`);
+      return true;
+    } catch (e) {
+      /* A call that misses the bell is still in the dock on its next poll. */
+      console.warn('[SyncAgent] could not announce a synced table call:', e.message);
       return false;
     }
   }
