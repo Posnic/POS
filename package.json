@@ -25,7 +25,7 @@
     "build:portable": "electron-builder --win portable",
     "prebuild:zip": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build:zip": "electron-builder --win zip",
-    "publish": "electron-builder --win --x64 --publish always",
+    "publish": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle && electron-builder --win --x64 --publish always",
     "prebuild:linux": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build:linux": "electron-builder --linux --x64",
     "prebuild:mac": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
