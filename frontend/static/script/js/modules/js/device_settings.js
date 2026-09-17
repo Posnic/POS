@@ -88,7 +88,15 @@ $(document).on('change', '.autofocus-switch', function () {
  */
 (function () {
     var bridge = window.posnic && window.posnic.kitchenCall;
-    var block = function () { return $('#toggleSwitchKitchenTing').closest('.row'); };
+    /*
+     * THE WHOLE BLOCK, not the row the switches happen to sit in.
+     *
+     * `.closest('.row')` reached only the switches, so hiding it in a browser
+     * left the legend, the help text and three dead pickers on screen -
+     * exactly the half-a-feature look that made this hard to diagnose in a
+     * shop. A fieldset is the thing a person reads as one idea.
+     */
+    var block = function () { return $('#toggleSwitchKitchenTing').closest('fieldset'); };
 
     if (!bridge || typeof bridge.get !== 'function') {
         $(function () { block().hide(); });
@@ -131,6 +139,24 @@ $(document).on('change', '.autofocus-switch', function () {
      * app choose the best one here, which is also what a machine that lacks
      * the chosen voice falls back to.
      */
+    /*
+     * A WORD, WITHOUT BETTING THE SCREEN ON i18n BEING READY.
+     *
+     * PosnicPro.i18n may not exist yet at DOM ready - the repository has a
+     * test about exactly this - and a throw in here took the switches off the
+     * page. English is always available because it is the argument.
+     */
+    var say = function (key, english) {
+        try {
+            if (window.PosnicPro && PosnicPro.i18n && PosnicPro.i18n.t) {
+                return PosnicPro.i18n.t(key, english);
+            }
+        } catch (e) {
+            /* fall through to the English we were handed */
+        }
+        return english;
+    };
+
     var voices = function () {
         try {
             var engine = window.speechSynthesis;
@@ -145,7 +171,7 @@ $(document).on('change', '.autofocus-switch', function () {
         var select = $('#kitchenVoice');
         select.empty();
         select.append($('<option>').val('').text(
-            PosnicPro.i18n.t('lang_best_on_this_machine', 'Best on this machine')));
+            say('lang_best_on_this_machine', 'Best on this machine')));
         voices().forEach(function (v) {
             select.append($('<option>').val(v.name).text(v.name + ' (' + v.lang + ')'));
         });
@@ -154,19 +180,56 @@ $(document).on('change', '.autofocus-switch', function () {
     };
 
     var show = function (said) {
+        /*
+         * THE SWITCHES FIRST, AND NEVER BEHIND ANYTHING THAT CAN FAIL.
+         *
+         * They are the part that matters and they work on their own. What
+         * follows is convenience.
+         */
         $('#toggleSwitchKitchenTing').prop('checked', !!(said && said.ting));
         $('#toggleSwitchKitchenSpeak').prop('checked', !!(said && said.speak));
-        if (said) {
-            bridge.bells().then(function (names) {
-                fill($('#kitchenArrivalBell'), names.arrival || [], said.arrivalBell);
-                fill($('#kitchenItemBell'), names.item || [], said.itemBell);
-            }).catch(function () { /* older app: the pickers stay empty. */ });
-            fillVoices(said.voice);
+
+        /*
+         * THE PICKERS MUST NOT BE ABLE TO TAKE THE SWITCHES WITH THEM.
+         *
+         * This went wrong in a shop, in the worst shape available: something
+         * in here threw, the failure path hid the row holding the switches AND
+         * the Test button, and left the three empty pickers on screen. So the
+         * feature looked broken and impossible to turn on at the same time,
+         * while the setting underneath was working perfectly.
+         *
+         * A picker that cannot be filled is a picker somebody ignores. A
+         * missing switch is a feature nobody can use.
+         */
+        try {
+            bridge
+                .bells()
+                .then(function (names) {
+                    fill($('#kitchenArrivalBell'), (names && names.arrival) || [], said && said.arrivalBell);
+                    fill($('#kitchenItemBell'), (names && names.item) || [], said && said.itemBell);
+                })
+                .catch(function () {
+                    /* An older app with no bells to offer. The switches stand. */
+                });
+            fillVoices(said && said.voice);
+        } catch (e) {
+            /* Leave the pickers as they are. Nothing here is worth a switch. */
         }
     };
 
     $(function () {
-        bridge.get().then(show).catch(function () { block().hide(); });
+        /*
+         * A FAILURE HERE HIDES NOTHING.
+         *
+         * Hiding is for a browser, where there is no bridge at all and the
+         * controls could not do anything - that is decided once, above. A
+         * setting that would not load is a reason to show the switches
+         * unchecked, not a reason to remove them.
+         */
+        bridge.get().then(show).catch(function () {
+            /* Unknown state. The switches show as off, which is the default
+               anyway, and flipping one writes the truth. */
+        });
 
         /* Voices arrive asynchronously on Windows. Asking once at load usually
            returns an empty list, which would offer a shop nothing to pick. */
@@ -204,7 +267,7 @@ $(document).on('change', '.autofocus-switch', function () {
             if (engine.speaking || engine.pending) engine.cancel();
 
             var said = new window.SpeechSynthesisUtterance(
-                PosnicPro.i18n.t('lang_table_five_new_order_one_chicken_biryani',
+                say('lang_table_five_new_order_one_chicken_biryani',
                     'Table 5, new order. One Chicken Biryani.'));
             var wanted = $('#kitchenVoice').val();
             var all = voices();
@@ -243,27 +306,20 @@ $(document).on('change', '.autofocus-switch', function () {
      */
     $(document).on('click', '#kitchenSoundTest', function () {
         var result = $('#kitchenSoundTestResult');
-        result.text(PosnicPro.i18n.t('lang_playing', 'Playing...'));
+        result.text(say('lang_playing', 'Playing...'));
 
         bridge.test().then(function (said) {
             if (said && said.reason === 'off') {
-                result.text(PosnicPro.i18n.t(
-                    'lang_turn_one_of_these_on_first',
-                    'Turn one of these on first.'));
+                result.text(say('lang_turn_one_of_these_on_first', 'Turn one of these on first.'));
                 return;
             }
             if (!said || !said.played) {
-                result.text(PosnicPro.i18n.t(
-                    'lang_this_machine_could_not_play_it',
-                    'This machine could not play it.'));
+                result.text(say('lang_this_machine_could_not_play_it', 'This machine could not play it.'));
                 return;
             }
-            result.text(PosnicPro.i18n.t(
-                'lang_sent_to_the_speaker_now',
-                'Sent to the speaker. If you heard nothing, check the volume.'));
+            result.text(say('lang_sent_to_the_speaker_now', 'Sent to the speaker. If you heard nothing, check the volume.'));
         }).catch(function () {
-            result.text(PosnicPro.i18n.t(
-                'lang_this_machine_could_not_play_it',
+            result.text(say('lang_this_machine_could_not_play_it',
                 'This machine could not play it.'));
         });
     });
