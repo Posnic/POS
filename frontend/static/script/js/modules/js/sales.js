@@ -1133,11 +1133,31 @@
         var lineItemTaxType = params.tax_type;
         var id = params.id ? params.id : params.item_id;
         var item_name = params.item_name ? params.item_name : params.name;
+        /*
+         * A LINE WITH NO NOTE HAS NO NOTE.
+         *
+         * This fell back to the dish's catalogue description, so every item
+         * added without a note carried the menu's own words in the note field.
+         * They then showed in the KOT cart in italics and printed on the
+         * kitchen ticket, including on a cancellation, as though a customer
+         * had asked for them:
+         *
+         *   CHICKEN BIRYANI 1 HANDI  x1
+         *   ** Chicken Biryani sold as 1 handi, configured for a INR
+         *      Restaurant Demo Dataset POS demo. **
+         *
+         * Owner, twice: "it supposed print only note right? that too in cancel
+         * shit?" and "who asked to add this line item info in the desktop
+         * cart? why?" Nobody did - it has been here since the first import.
+         *
+         * A note on a ticket is an instruction, and a cook assumes somebody
+         * asked for it. The server was taught this on 2026-09-15 ("The kitchen
+         * reads less spicy"); the till kept writing the blurb in, which is why
+         * it came straight back on paper.
+         */
         var item_description = '';
         if (typeof (params.item_description) !== "undefined" && params.item_description !== null) {
             item_description = params.item_description;
-        } else if (typeof (params.description) !== "undefined" && params.description !== null) {
-            item_description = params.description;
         }
         // Normalize any HTML description into plain text so it looks clean in the textarea
         if (item_description && typeof item_description === 'string') {
