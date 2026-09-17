@@ -40,6 +40,26 @@
    * and asking per ticket is how the first announcement of a service comes out
    * in the wrong accent.
    */
+  /*
+   * A WOMAN'S VOICE.
+   *
+   * Owner: "make female voice. more casual than machine voice. indian accent?"
+   *
+   * The Web Speech API does not say which voice is which. There is no gender
+   * on a SpeechSynthesisVoice, so the only way to ask for one is by name, and
+   * this list is the reason the whole selection is written out rather than
+   * being a one-line language match.
+   *
+   * The language match on its own picked Ravi, the male half of the Windows
+   * en-IN pair, purely because he is enumerated first - which is how a wanted
+   * voice and an unwanted one can both be "correct" to a language check.
+   *
+   * A name not on this list is not a failure: it falls through to whatever
+   * that language does offer, which is still better than English from another
+   * country.
+   */
+  var A_WOMAN = /heera|neerja|priya|kavya|aditi|raveena|swara|libby|sonia|hazel|aria|jenny|michelle|susan|zira|female/i;
+
   var chosen = null;
   var looked = false;
 
@@ -54,13 +74,25 @@
 
     var wanted = ['en-in', 'en-gb', 'en-au', 'en'];
     for (var i = 0; i < wanted.length; i += 1) {
+      var tier = [];
       for (var j = 0; j < all.length; j += 1) {
         var lang = String(all[j].lang || '').toLowerCase().replace(/_/g, '-');
-        if (lang.indexOf(wanted[i]) === 0) {
-          chosen = all[j];
+        if (lang.indexOf(wanted[i]) === 0) tier.push(all[j]);
+      }
+      if (!tier.length) continue;
+
+      /* ACCENT FIRST, THEN THE VOICE. An Indian woman before a British one:
+         the dish names are the whole point, and "kuzhambu" read in an English
+         accent is a word a kitchen has to decode rather than hear. */
+      for (var k = 0; k < tier.length; k += 1) {
+        if (A_WOMAN.test(String(tier[k].name || ''))) {
+          chosen = tier[k];
           return chosen;
         }
       }
+
+      chosen = tier[0];
+      return chosen;
     }
 
     chosen = all[0] || null;
@@ -97,10 +129,22 @@
           said.voice = picked;
           said.lang = picked.lang;
         }
-        /* Slightly slower than default. A kitchen is noisy and a dish name
-           heard once has to be right; the seconds cost less than a wrong
-           plate. */
-        said.rate = 0.95;
+        /*
+           SAID, NOT ANNOUNCED.
+
+           Owner: "more casual than machine voice."
+
+           A flat voice at a measured pace is what a machine sounds like. The
+           opening line is the one that has to carry across a kitchen, and the
+           dish names are the ones that have to be right, so neither is rushed
+           - but a little lift off the baseline pitch is the difference between
+           somebody telling you an order and a station calling a flight.
+
+           Kept close to normal on purpose. Past about 1.15 a synthesised voice
+           stops sounding relaxed and starts sounding like a cartoon, which is
+           worse than flat: a kitchen laughs at it twice and then ignores it. */
+        said.rate = 1;
+        said.pitch = 1.1;
         said.volume = 1;
         engine.speak(said);
       }
