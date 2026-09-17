@@ -4672,6 +4672,41 @@
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        <!-- The shop picks, not us. A kitchen with a fryer roaring
+                                                             needs a different bell from a quiet dining room, and a
+                                                             shop in Chennai needs a different voice from one in
+                                                             Dubai. Each picker has its own Play, because nobody can
+                                                             choose a sound from its name. -->
+                                                        <div class="row">
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenArrivalBell"><lang class="lang_bell_when_the_order_arrives">Bell when the order arrives</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenArrivalBell"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="arrival"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenItemBell"><lang class="lang_bell_before_each_item">Bell before each item</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenItemBell"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" data-kitchen-play="item"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group col-md-4">
+                                                                <label for="kitchenVoice"><lang class="lang_voice">Voice</lang></label>
+                                                                <div class="input-group">
+                                                                    <select class="form-control kitchen-sound-choice" id="kitchenVoice"></select>
+                                                                    <div class="input-group-append">
+                                                                        <button type="button" class="btn btn-outline-secondary" id="kitchenVoicePlay"><lang class="lang_play">Play</lang></button>
+                                                                    </div>
+                                                                </div>
+                                                                <small class="form-text text-muted"><lang class="lang_the_voices_installed_on_this_machine">The voices installed on this machine. Add a language in Windows settings for more accents.</lang></small>
+                                                            </div>
+                                                        </div>
                                                     </fieldset>
                                                 </div>
 

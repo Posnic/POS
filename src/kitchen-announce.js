@@ -62,16 +62,45 @@ function settingsPath() {
  * Read fresh each time rather than cached: whoever sets this up will flip a
  * switch and expect the next ticket to obey it, not the next restart.
  */
-function settings() {
-  const off = { ting: false, speak: false };
+/*
+ * WHICH BELL, AND WHOSE VOICE.
+ *
+ * Owner: "how about user picks the bell sound as choice how you gave me" and
+ * "different countries might need different voice and accent".
+ *
+ * Both belong beside the switches rather than in the code that makes the
+ * sound. A kitchen with a fryer roaring needs a different bell from a quiet
+ * dining room, and a shop in Chennai needs a different voice from one in
+ * Dubai. None of that is a decision to make once, in one file, for every shop.
+ *
+ * A voice is stored by NAME, and an empty name means "choose the best one on
+ * this machine" rather than a particular voice. That is what makes the setting
+ * survive a machine that does not have the voice a shop picked: it falls back
+ * instead of going silent, and a downloaded voice pack later just adds another
+ * name to the same list.
+ */
+const DEFAULTS = { ting: false, speak: false, arrivalBell: "rising", itemBell: "soft", voice: "" };
 
+const shape = (said) => ({
+  ting: said.ting === true,
+  speak: said.speak === true,
+  arrivalBell: typeof said.arrivalBell === "string" && said.arrivalBell
+    ? said.arrivalBell
+    : DEFAULTS.arrivalBell,
+  itemBell: typeof said.itemBell === "string" && said.itemBell
+    ? said.itemBell
+    : DEFAULTS.itemBell,
+  voice: typeof said.voice === "string" ? said.voice : DEFAULTS.voice,
+});
+
+function settings() {
   const file = settingsPath();
-  if (!file) return off;
+  if (!file) return Object.assign({}, DEFAULTS);
 
   try {
-    if (!fs.existsSync(file)) return off;
+    if (!fs.existsSync(file)) return Object.assign({}, DEFAULTS);
     const said = JSON.parse(fs.readFileSync(file, "utf8"));
-    if (!said || typeof said !== "object") return off;
+    if (!said || typeof said !== "object") return Object.assign({}, DEFAULTS);
 
     /*
      * The single switch this replaced meant both. A machine already set up in
@@ -79,13 +108,13 @@ function settings() {
      */
     if (said.ting === undefined && said.speak === undefined) {
       const both = said.announce === true;
-      return { ting: both, speak: both };
+      return shape(Object.assign({}, said, { ting: both, speak: both }));
     }
 
-    return { ting: said.ting === true, speak: said.speak === true };
+    return shape(said);
   } catch (e) {
     /* A file somebody edited by hand and broke means OFF, not noise. */
-    return off;
+    return Object.assign({}, DEFAULTS);
   }
 }
 
@@ -106,13 +135,20 @@ function set(next) {
   if (!file) return false;
 
   const now = settings();
-  const wanted =
-    typeof next === "boolean"
-      ? { ting: next, speak: next }
-      : {
-          ting: next && next.ting !== undefined ? next.ting === true : now.ting,
-          speak: next && next.speak !== undefined ? next.speak === true : now.speak,
-        };
+  const asked = typeof next === "boolean" ? { ting: next, speak: next } : next || {};
+
+  /* Merged onto what is already there, so setting one thing never quietly
+     resets another. Somebody turning the reading off must not lose the bell
+     they spent five minutes choosing. */
+  const wanted = shape(
+    Object.assign({}, now, {
+      ting: asked.ting !== undefined ? asked.ting === true : now.ting,
+      speak: asked.speak !== undefined ? asked.speak === true : now.speak,
+      arrivalBell: asked.arrivalBell !== undefined ? asked.arrivalBell : now.arrivalBell,
+      itemBell: asked.itemBell !== undefined ? asked.itemBell : now.itemBell,
+      voice: asked.voice !== undefined ? String(asked.voice || "") : now.voice,
+    })
+  );
 
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });

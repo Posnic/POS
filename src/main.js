@@ -4589,6 +4589,20 @@ app.whenReady().then(async () => {
    * It says WHY when nothing happens, because "I pressed it and nothing
    * happened" is exactly where this feature has spent its life.
    */
+  /*
+   * WHICH BELLS A SHOP CAN PICK FROM, and how to hear one.
+   *
+   * Owner: "how about user picks the bell sound as choice how you gave me."
+   *
+   * The names come from the file that makes the sounds, so the list on the
+   * settings page and the setting it writes cannot drift apart: a bell that is
+   * not offered cannot be chosen, and one that is chosen is always offered.
+   */
+  ipcMain.handle('kitchen-announce:bells', () => require('./order-alert').bellChoices());
+  ipcMain.handle('kitchen-announce:preview', (_event, kind, which) =>
+    require('./order-alert').bellSound(kind, which)
+  );
+
   ipcMain.handle('kitchen-announce:test', () => {
     const wants = kitchenAnnounce.settings();
     if (!wants.ting && !wants.speak) return { played: false, reason: 'off' };
