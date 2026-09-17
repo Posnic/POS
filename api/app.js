@@ -129,6 +129,27 @@ const cspDirectives = {
     'http://localhost:5555',
     'http://127.0.0.1:5555',
   ],
+  /*
+   * EVERY SOUND THIS PRODUCT MAKES IS A data: URL, AND WITHOUT THIS LINE NONE
+   * OF THEM PLAY.
+   *
+   * helmet's defaults do not name media-src, so it fell back to default-src
+   * 'self' and the browser refused every tone the app generates. The tones are
+   * synthesised in the main process and handed to the page as a data: WAV
+   * precisely so that no sound file has to be shipped, found on disk or
+   * fetched - which is the right design for a till that works offline, and
+   * exactly the shape this header blocked.
+   *
+   * It failed silently in the worst possible way: a console warning nobody
+   * reads, in a kitchen where the expected outcome is also silence. The new
+   * order alarm has been mute on this machine since the header was tightened,
+   * and the kitchen announcement could never have been heard whatever else was
+   * fixed.
+   *
+   * data: only, and media only. A data: URL cannot reach the network and
+   * cannot execute; the worst a bad one does is make a noise.
+   */
+  'media-src': ["'self'", 'data:'],
 };
 
 /*
