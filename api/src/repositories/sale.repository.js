@@ -9679,6 +9679,35 @@ class SalesRepository {
           { $set: updateFields }
         );
 
+        /*
+         * AND THE KITCHEN IS TOLD AT ONCE, exactly as a new order tells it.
+         *
+         * A cancellation wrote its change record and returned here, one
+         * branch short of the notify the edit flow below does reach. Nothing
+         * was lost - the poller's thirty second safety net found the ticket -
+         * but the paper waited on a timer. Measured on the owner's counter:
+         * two cancellations at 18:38:57 and 18:39:01, both printed by the
+         * 18:39:24 poll, so 23 and 27 seconds of waiting followed by a 57 ms
+         * print. "when i very first time it took only few seconds to print.
+         * then after than it took almot 30 to 60 seconds."
+         *
+         * Two rounds of work had already made a cancelled ticket cheap to
+         * send: the byte path it was barred from, and a struck line cut from
+         * 1,736 bytes to 188. Neither could show while the ticket was found
+         * by a timer rather than told about. This is the last of that job.
+         *
+         * Gated on a change record existing, because `changes[].items` is
+         * what the poller builds a cancellation ticket out of. A cancellation
+         * with nothing printable must not wake the printer.
+         */
+        if (updateResult.modifiedCount > 0 && changesItems.length > 0) {
+          notifyKotReady({
+            branchId: String(orderDoc?.branch_id || ''),
+            saleId: String(orderId),
+            reason: 'cancelled',
+          });
+        }
+
         return updateResult.modifiedCount > 0
           ? {
               status: true,
