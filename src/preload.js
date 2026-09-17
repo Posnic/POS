@@ -259,6 +259,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /* Kept: it is what the kitchen machine was told to type. */
     isOn: () => ipcRenderer.invoke('kitchen-announce:get'),
     setOn: (on) => ipcRenderer.invoke('kitchen-announce:set', on === true),
+    /*
+     * Make the noise now, so somebody standing by the speaker can say whether
+     * it works, instead of sending a real order to find out.
+     *
+     *   -> { played, reason, ting, speak }
+     *
+     * reason is 'off' when both switches are down, 'no-window' when there is
+     * no page to play it, and 'ok' when it was sent.
+     */
+    test: () => ipcRenderer.invoke('kitchen-announce:test'),
+    /*
+     * The bells a shop can choose between, and one of them as playable audio.
+     *
+     *   posnic.kitchenCall.bells()                  -> { arrival: [...], item: [...] }
+     *   posnic.kitchenCall.preview('item', 'tick')  -> a data: URL
+     *
+     * The names are the stored setting, so a settings page never has to know
+     * how any of them are made.
+     */
+    bells: () => ipcRenderer.invoke('kitchen-announce:bells'),
+    preview: (kind, which) => ipcRenderer.invoke('kitchen-announce:preview', kind, which),
   },
   mobile: {
     getInfo:       () => ipcRenderer.invoke('mobile:get-info'),
