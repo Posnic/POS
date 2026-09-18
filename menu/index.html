@@ -56,6 +56,19 @@
         --egg: #b45309;
         --radius: 12px;
         --pad: 16px;
+
+        /* The same four durations and three curves the ordering page uses.
+           Two pages of one product that disagree about how long a movement
+           takes are two products, and a customer opens both. See
+           order/assets/order.css, which carries the reasoning. */
+        --t-press: 90ms;
+        --t-quick: 160ms;
+        --t-move: 240ms;
+        --t-sheet: 320ms;
+        --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+        --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+        --ease-move: cubic-bezier(0.2, 0, 0, 1);
+        --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
       /*
@@ -107,6 +120,8 @@
 
       html {
         -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
 
       body {
@@ -737,7 +752,7 @@
         height: 6px;
         border-radius: 50%;
         background: var(--line);
-        transition: background 0.15s ease;
+        transition: background var(--t-quick) var(--ease-move);
       }
 
       .sheet-dots span[data-on="true"] {
@@ -1222,11 +1237,11 @@
       .search-mic,
       .search-clear {
         transition:
-          transform 0.12s ease,
-          background-color 0.15s ease,
-          border-color 0.15s ease,
-          color 0.15s ease,
-          box-shadow 0.15s ease;
+          transform var(--t-press) var(--ease-move),
+          background-color var(--t-quick) var(--ease-move),
+          border-color var(--t-quick) var(--ease-move),
+          color var(--t-quick) var(--ease-move),
+          box-shadow var(--t-quick) var(--ease-move);
       }
 
       .dish:active,
@@ -1299,17 +1314,17 @@
 
       @media (prefers-reduced-motion: no-preference) {
         dialog.sheet[open] {
-          animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+          animation: sheet-up var(--t-sheet) var(--ease-enter);
         }
 
         dialog.sheet[open]::backdrop,
         dialog.viewer[open] {
-          animation: fade-in 0.2s ease;
+          animation: fade-in var(--t-quick) var(--ease-enter);
         }
 
         .result,
         .dish {
-          animation: line-in 0.22s ease both;
+          animation: line-in var(--t-quick) var(--ease-enter) both;
         }
       }
 

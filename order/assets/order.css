@@ -52,6 +52,42 @@
   --tap: 44px;
   --bar: 76px;
 
+  /* ------------------------------------------------------------- motion
+   *
+   * FOUR DURATIONS AND THREE CURVES, and nothing else on these pages.
+   *
+   * There were thirteen durations here - 70ms, 90ms, 0.12s, 0.15s, 0.2s,
+   * 0.22s, 0.25s, 0.28s, 0.3s, 0.32s, 0.4s, 0.5s, 0.9s - written in two
+   * notations, and `ease` twenty-five times. Nothing was wrong with any one
+   * of them; together they are why the page feels assembled rather than
+   * made. An app feels native when everything that moves agrees about how
+   * long a movement takes.
+   *
+   * The scale is by DISTANCE, not by importance: a thing that travels
+   * further takes longer, which is the only rule the eye actually reads.
+   *
+   * `ease` is the browser's default and is symmetrical - it accelerates and
+   * decelerates equally, which nothing physical does. It is the single
+   * biggest reason web motion reads as web motion, and it does not appear
+   * below.
+   */
+  --t-press: 90ms;
+  --t-quick: 160ms;
+  --t-move: 240ms;
+  --t-sheet: 320ms;
+
+  /* Arriving: quick off the mark, settling at the end. Things that enter the
+     screen are decelerating onto it. */
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  /* Leaving: slow to release, then gone. Nothing should dawdle on its way
+     out - an exit the eye can follow is an exit that wasted its time. */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  /* Moving between two states it holds at either end. */
+  --ease-move: cubic-bezier(0.2, 0, 0, 1);
+  /* Emphasis, with a little overshoot in the curve. Already the one
+     considered curve on this page; now it has a name. */
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+
   --shadow-1: 0 1px 2px rgba(17, 24, 39, 0.06), 0 1px 3px rgba(17, 24, 39, 0.08);
   --shadow-2: 0 8px 24px rgba(17, 24, 39, 0.14);
 
@@ -72,9 +108,28 @@
   display: none !important;
 }
 
+/*
+ * WHAT MAKES A PAGE FEEL LIKE A PAGE, and it is mostly these two lines.
+ *
+ * A mobile browser draws a grey box over whatever a finger lands on, and
+ * waits about 300ms before it believes a tap was not the start of a
+ * double-tap-to-zoom. Both are correct for a document and wrong for a thing
+ * somebody is operating: the flash belongs to no design, and the wait is felt
+ * as the app being slow rather than the browser being careful.
+ *
+ * The press response below is what replaces the flash, and it is the same one
+ * everywhere - so a chip, a dish and a checkout button all answer a finger the
+ * same way. That consistency is most of what "native" means; the rest is the
+ * timing scale in :root.
+ *
+ * `manipulation` keeps pinch-to-zoom, which is an accessibility feature and
+ * not ours to remove. It only gives up double-tap zoom.
+ */
 html {
   -webkit-text-size-adjust: 100%;
   height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {
@@ -90,6 +145,73 @@ body {
 
 img {
   max-width: 100%;
+}
+
+/*
+ * ONE PRESS, EVERYWHERE.
+ *
+ * Fourteen `:active` rules had grown up separately, so a chip sank and a
+ * card did not, and the two that both sank did it by different amounts over
+ * different times. A finger learns one language on a screen; this is it.
+ *
+ * `scale` on the compositor, so it holds 60fps on the phone this is actually
+ * used on, and 0.97 rather than something more dramatic because the response
+ * has to read as CONTACT rather than as an animation - the eye should barely
+ * notice it and the thumb should feel answered.
+ *
+ * Only on the way down. Coming back up is instant, because a release that
+ * eases is a button that is still busy after the finger has gone.
+ */
+.product-card,
+.category-item,
+.filters-pill,
+.icon-btn,
+.btn-primary,
+.btn-secondary,
+.btn-text,
+.btn-block,
+.checkout-btn,
+.history-again,
+.history-row,
+.option-row,
+.assistant-chip,
+.lang-toggle,
+.call-waiter,
+.sheet-more,
+.sheet-less {
+  transition: transform var(--t-press) var(--ease-move);
+}
+
+.product-card:active,
+.category-item:active,
+.filters-pill:active,
+.icon-btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-text:active,
+.btn-block:active,
+.checkout-btn:active,
+.history-again:active,
+.history-row:active,
+.option-row:active,
+.assistant-chip:active,
+.lang-toggle:active,
+.call-waiter:active,
+.sheet-more:active,
+.sheet-less:active {
+  transform: scale(0.97);
+  transition-duration: 0s;
+}
+
+/* A disabled control does not answer, because answering is a promise. */
+.btn-primary:disabled:active,
+.btn-secondary:disabled:active,
+.btn-block:disabled:active,
+.checkout-btn:disabled:active,
+.sheet-more:disabled:active,
+.sheet-less:disabled:active,
+.history-again:disabled:active {
+  transform: none;
 }
 
 button,
@@ -605,7 +727,7 @@ body.searching .order-search {
   line-height: 14px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  animation: qty-pop 0.28s ease;
+  animation: qty-pop var(--t-move) var(--ease-spring);
 }
 
 .category-item.active.has-items::after {
@@ -1094,7 +1216,7 @@ body.one-section .fixed-heading {
   padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
   background: var(--bg);
   border-top: 1px solid var(--line);
-  transition: transform 0.2s ease;
+  transition: transform var(--t-quick) var(--ease-move);
 }
 
 .cart-footer.is-empty {
@@ -1148,7 +1270,7 @@ body.one-section .fixed-heading {
 }
 
 .cart-footer.bump .floating-cart-total {
-  animation: order-bump 0.25s ease;
+  animation: order-bump var(--t-move) var(--ease-spring);
 }
 
 /* Room for the bar under the last row. */
@@ -2342,8 +2464,8 @@ dialog.sheet:has(.sheet-gallery:not([hidden])) .sheet-handle {
   opacity: 0;
   transform: translate(-50%, 8px);
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity var(--t-quick) var(--ease-enter),
+    transform var(--t-quick) var(--ease-enter);
 }
 
 #popup.show {
@@ -2741,7 +2863,7 @@ html[lang="ta"] .attract-note {
 
 @media (prefers-reduced-motion: no-preference) {
   .assistant-hint:not([hidden]) {
-    animation: hint-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: hint-in var(--t-sheet) var(--ease-spring) both;
   }
 }
 
@@ -2785,7 +2907,7 @@ html[lang="ta"] .attract-note {
 
 @media (prefers-reduced-motion: no-preference) {
   .ask-ai:not([hidden]) {
-    animation: spark-in 0.9s ease 0.3s both;
+    animation: spark-in var(--t-sheet) var(--ease-enter) 0.3s both;
   }
 }
 
@@ -2878,7 +3000,9 @@ dialog.assistant[data-voice="on"] .assistant-chips {
   border-radius: 50%;
   border: 2px solid var(--ink);
   background: var(--surface);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform var(--t-quick) var(--ease-move),
+    background-color var(--t-quick) var(--ease-move);
 }
 
 .voice-orb[data-state="connecting"] {
@@ -3062,7 +3186,7 @@ dialog.assistant[data-voice="on"] .assistant-chips {
 
 @media (prefers-reduced-motion: no-preference) {
   .assistant-msg {
-    animation: line-in 0.22s ease both;
+    animation: line-in var(--t-quick) var(--ease-enter) both;
   }
 }
 
@@ -3891,7 +4015,10 @@ dialog.sheet.assistant .assistant-foot {
   -webkit-touch-callout: none;
   touch-action: none;
   cursor: pointer;
-  transition: transform 90ms ease, background 120ms ease, box-shadow 90ms ease;
+  transition:
+    transform var(--t-press) var(--ease-move),
+    background var(--t-quick) var(--ease-move),
+    box-shadow var(--t-press) var(--ease-move);
 }
 
 /* HELD: it goes dark, it sinks onto the page, and it says what it is doing. */
@@ -3923,7 +4050,24 @@ dialog.sheet.assistant .assistant-foot {
   border-radius: 3px;
   background: currentColor;
   opacity: 0.45;
-  transition: height 70ms linear, opacity 70ms linear;
+  /*
+   * HEIGHT, and deliberately, which is the one place on this page that
+   * animates a layout property.
+   *
+   * These six bars are a voice meter: their height is driven by
+   * --voice-in, set from the microphone level many times a second. scaleY
+   * would keep it on the compositor, but it would also need the bars
+   * re-authored at full height and scaled down about their centre, and a
+   * meter that is smoothed wrongly reads as a microphone that is not
+   * listening. That is a change to make while watching it, not inside a
+   * pass about timing.
+   *
+   * It is cheap in practice: six 5px boxes inside a fixed 34px row, so the
+   * layout it dirties is the row and nothing else.
+   */
+  transition:
+    height var(--t-press) linear,
+    opacity var(--t-press) linear;
 }
 
 /*
@@ -4345,9 +4489,9 @@ body.attract.has-picture .attract-main {
   color: var(--ink);
   box-shadow: var(--shadow-1);
   transition:
-    transform 0.12s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    transform var(--t-press) var(--ease-move),
+    box-shadow var(--t-quick) var(--ease-move),
+    border-color var(--t-quick) var(--ease-move);
 }
 
 .attract-choice:active {
@@ -4428,11 +4572,11 @@ body.attract.has-picture .attract-main {
 .sheet-add button,
 .modal-btn {
   transition:
-    transform 0.12s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    transform var(--t-press) var(--ease-move),
+    background-color var(--t-quick) var(--ease-move),
+    border-color var(--t-quick) var(--ease-move),
+    color var(--t-quick) var(--ease-move),
+    box-shadow var(--t-quick) var(--ease-move);
 }
 
 .btn-primary:active:not(:disabled),
@@ -4517,7 +4661,7 @@ body.attract.has-picture .attract-main {
 .sheet-qty.pop,
 .qty-value.pop,
 .badge.pop {
-  animation: qty-pop 0.28s ease;
+  animation: qty-pop var(--t-move) var(--ease-spring);
 }
 
 @keyframes sheet-up {
@@ -4541,11 +4685,11 @@ body.attract.has-picture .attract-main {
 }
 
 dialog.sheet[open] {
-  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sheet-up var(--t-sheet) var(--ease-enter);
 }
 
 dialog.sheet[open]::backdrop {
-  animation: fade-in 0.2s ease;
+  animation: fade-in var(--t-quick) var(--ease-enter);
 }
 
 @keyframes line-in {
@@ -4562,7 +4706,7 @@ dialog.sheet[open]::backdrop {
 .cart-item,
 .panel-line,
 .product-card {
-  animation: line-in 0.22s ease both;
+  animation: line-in var(--t-quick) var(--ease-enter) both;
 }
 
 /* The tick on the token page draws itself, once. */
@@ -4575,7 +4719,7 @@ dialog.sheet[open]::backdrop {
 .done-mark svg path {
   stroke-dasharray: 30;
   stroke-dashoffset: 30;
-  animation: draw 0.5s ease 0.15s forwards;
+  animation: draw 0.5s var(--ease-move) 0.15s forwards;
 }
 
 @keyframes fade-up {
@@ -4594,7 +4738,7 @@ dialog.sheet[open]::backdrop {
 .token,
 .order-time,
 .done .button-group {
-  animation: fade-up 0.4s ease both;
+  animation: fade-up var(--t-sheet) var(--ease-enter) both;
 }
 
 .done .lead {
