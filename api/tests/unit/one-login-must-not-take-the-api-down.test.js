@@ -29,10 +29,24 @@
 
 const jwt = require('jsonwebtoken');
 
-/** The module, loaded fresh against whatever the environment currently says. */
-function freshAuthUtils() {
+/**
+ * The module, then an environment with nothing set.
+ *
+ * THE ORDER MATTERS, and the first draft of this file had it wrong and passed
+ * against the broken code because of it. Requiring the module pulls in
+ * config.js, which runs dotenv, which reads api/.env and PUTS THE VARIABLES
+ * BACK. Deleting them first and requiring afterwards tests nothing.
+ *
+ * Deleting after the require is sound because these are read per call, which
+ * is the property the fix deliberately keeps.
+ */
+function authUtilsWithNothingSet() {
   jest.resetModules();
-  return require('../../src/controllers/auth-utils.controller');
+  const mod = require('../../src/controllers/auth-utils.controller');
+  delete process.env.JWT_EXPIRES_IN;
+  delete process.env.JWT_COOKIE_EXPIRES_IN;
+  process.env.JWT_SECRET = 'a-test-secret-that-is-long-enough-to-sign-with';
+  return mod;
 }
 
 describe('signing a token without JWT_EXPIRES_IN', () => {
@@ -61,14 +75,14 @@ describe('signing a token without JWT_EXPIRES_IN', () => {
   });
 
   it('does not throw, which is what took the process down', () => {
-    const { signToken } = freshAuthUtils();
+    const { signToken } = authUtilsWithNothingSet();
     expect(() => signToken('6aad3bb7f5e8f7a44457e731')).not.toThrow();
   });
 
   it('and the token it produces actually expires', () => {
     /* A token signed with no expiry at all would not throw either, and would
        be a worse bug than the crash: a session that never ends. */
-    const { signToken } = freshAuthUtils();
+    const { signToken } = authUtilsWithNothingSet();
     const decoded = jwt.decode(signToken('6aad3bb7f5e8f7a44457e731'));
 
     expect(decoded.exp).toBeGreaterThan(decoded.iat);
@@ -77,8 +91,8 @@ describe('signing a token without JWT_EXPIRES_IN', () => {
   });
 
   it('and an environment that DOES set one is still obeyed', () => {
+    const { signToken } = authUtilsWithNothingSet();
     process.env.JWT_EXPIRES_IN = '7d';
-    const { signToken } = freshAuthUtils();
     const decoded = jwt.decode(signToken('6aad3bb7f5e8f7a44457e731'));
     expect((decoded.exp - decoded.iat) / 86400).toBe(7);
   });
@@ -116,15 +130,38 @@ describe('the development environment it was found in', () => {
   });
 });
 
-describe('no one reads the expiry raw any more', () => {
-  it('because each raw read is another login that can kill the API', () => {
+describe('no read of these two is left without a fallback', () => {
+  it('because a bare one is another login that can kill the API', () => {
+    /*
+     * The rule is NOT "never read process.env" - these are still read per
+     * call, deliberately, so that setting one later still takes effect. The
+     * rule is that no read is ever used as the value on its own, because an
+     * unset variable is what jwt.sign threw on.
+     *
+     * Asserted on shape rather than on a form of words: every occurrence must
+     * be followed by an `||`.
+     */
     const fs = require('fs');
     const path = require('path');
     const src = fs.readFileSync(
       path.join(__dirname, '..', '..', 'src', 'controllers', 'auth-utils.controller.js'),
       'utf8'
     );
-    expect(src).not.toContain('process.env.JWT_EXPIRES_IN');
-    expect(src).not.toContain('process.env.JWT_COOKIE_EXPIRES_IN');
+
+    for (const name of ['JWT_EXPIRES_IN', 'JWT_COOKIE_EXPIRES_IN']) {
+      const needle = 'process.env.' + name;
+      let from = 0;
+      let seen = 0;
+      for (;;) {
+        const found = src.indexOf(needle, from);
+        if (found === -1) break;
+        seen += 1;
+        const after = src.slice(found + needle.length, found + needle.length + 60);
+        const line = after.split(String.fromCharCode(10))[0];
+        expect(name + ' read #' + seen + ': ' + line).toContain('||');
+        from = found + needle.length;
+      }
+      expect(seen).toBeGreaterThan(0);
+    }
   });
 });

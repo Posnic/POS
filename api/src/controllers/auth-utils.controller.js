@@ -21,19 +21,28 @@ const { currentSecret } = require('../db/tenant-context');
  *
  * config.js has carried sensible defaults for both all along. Nothing was
  * reading them.
+ *
+ * STILL READ PER CALL, not captured at module load. An existing test sets
+ * the variable after this file is required and expects the next token to
+ * honour it, and it is right to: a value frozen when the module first
+ * loaded is one nothing can change afterwards, which is a worse property
+ * than the one being fixed here. config supplies the fallback, not the
+ * value.
  */
 const config = require('../config/config');
+const expiresIn = () => process.env.JWT_EXPIRES_IN || config.jwt.expiresIn;
+const cookieDays = () => Number(process.env.JWT_COOKIE_EXPIRES_IN || config.jwt.cookieExpiresIn);
 
 const signToken = (id) => {
   return jwt.sign({ id }, currentSecret('JWT_SECRET'), {
-    expiresIn: config.jwt.expiresIn,
+    expiresIn: expiresIn(),
   });
 };
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + cookieDays() * 24 * 60 * 60 * 1000),
   });
 
   // Remove password from output
@@ -226,7 +235,7 @@ const createAndSendToken = async (user, statusCode, res, req) => {
 
   // Set cookie
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + cookieDays() * 24 * 60 * 60 * 1000),
   });
 
   res.cookie('jwt', token, cookieOptions);
