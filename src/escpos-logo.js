@@ -227,13 +227,35 @@ function electronDeps() {
  */
 async function resolvePictures(sale, paperWidth) {
   const out = { ...(sale || {}) };
-  const deps = electronDeps();
+  /*
+   * ELECTRON IS ASKED FOR ONLY WHEN THERE IS SOMETHING TO DECODE.
+   *
+   * This used to be built at the top, unconditionally, and requiring electron
+   * where there is no Electron throws - which took out the whole bill print
+   * rather than just the picture. A bill queued on the floor and printed by a
+   * till never came out, and the test that noticed only runs where there is a
+   * database, so it was green on this machine and red in CI.
+   *
+   * Most bills have no picture to fetch at all, so most of the time this
+   * costs nothing and asks for nothing.
+   */
+  let deps = null;
   for (const [field, dither] of [
     ['logo', true],
     ['footerImage', false],
   ]) {
     const asked = out[field];
     if (!asked || asked.data || !asked.src) continue;
+    if (!deps) {
+      try {
+        deps = electronDeps();
+      } catch (e) {
+        /* No Electron: print the bill without its pictures, which is what a
+           bill has always looked like. */
+        console.warn('[Print] no image decoder here, printing without pictures');
+        return out;
+      }
+    }
     /* eslint-disable-next-line no-await-in-loop -- two at most, and a
        printer is a serial device anyway. */
     out[field] = await rasterFor(asked.src, paperWidth, deps, { dither });
