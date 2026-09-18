@@ -49,9 +49,50 @@ const SUBSTITUTIONS = [
   [/ /g, ' '],
 ];
 
+/*
+ * Characters code page 16 (WPC1252) has and Latin-1 does not.
+ *
+ * The two agree from 0xA0 up and differ over 0x80-0x9F, where CP1252 puts
+ * printable characters that Latin-1 leaves as control codes. The buffer below
+ * is written with `latin1`, which only knows Latin-1, so every one of these
+ * fell outside the range `ascii` keeps and was DELETED from the paper.
+ *
+ * THE EURO SIGN IS THE ONE THAT MATTERS. Reported from a shop in Almenno San
+ * Bartolomeo: nothing printed a euro on an 80mm roll, so a footer reading
+ * "€5 off your next visit" printed "5 off your next visit" - a price, silently
+ * altered. It was invisible while footers were not reaching the roll at all.
+ *
+ * Mapping the character to the byte the code page uses for it is what
+ * selecting the code page was for. The smart quotes and dashes that also live
+ * in this range are folded to ASCII above instead, deliberately: they read the
+ * same and cost nothing if a printer's table is imperfect. A euro sign has no
+ * ASCII to fold to, and dropping it changes what the shop said.
+ */
+const CP1252_ONLY = [
+  ['\u20ac', 0x80], // EURO SIGN
+  ['\u0192', 0x83], // LATIN SMALL LETTER F WITH HOOK
+  ['\u2020', 0x86], // DAGGER
+  ['\u2021', 0x87], // DOUBLE DAGGER
+  ['\u02c6', 0x88], // MODIFIER LETTER CIRCUMFLEX ACCENT
+  ['\u2030', 0x89], // PER MILLE SIGN
+  ['\u0160', 0x8a], // LATIN CAPITAL LETTER S WITH CARON
+  ['\u0152', 0x8c], // LATIN CAPITAL LIGATURE OE
+  ['\u017d', 0x8e], // LATIN CAPITAL LETTER Z WITH CARON
+  ['\u2022', 0x95], // BULLET
+  ['\u02dc', 0x98], // SMALL TILDE
+  ['\u2122', 0x99], // TRADE MARK SIGN
+  ['\u0161', 0x9a], // LATIN SMALL LETTER S WITH CARON
+  ['\u0153', 0x9c], // LATIN SMALL LIGATURE OE
+  ['\u017e', 0x9e], // LATIN SMALL LETTER Z WITH CARON
+  ['\u0178', 0x9f], // LATIN CAPITAL LETTER Y WITH DIAERESIS
+];
+
 function ascii(s) {
   let out = String(s == null ? '' : s);
   for (const [pattern, with_] of SUBSTITUTIONS) out = out.replace(pattern, with_);
+  // To the byte the printer expects, before the range check below sees a
+  // character it would have to throw away.
+  for (const [ch, byte] of CP1252_ONLY) out = out.split(ch).join(String.fromCharCode(byte));
   // Anything still outside the code page would be sent as a truncated byte and
   // print as an unrelated character, which is worse than printing nothing.
   return out.replace(/[^\x20-\xff\n]/g, '');
@@ -580,13 +621,23 @@ function renderSale(sale, options = {}) {
    * The footer is free text - a return policy, an offer, a website - so unlike
    * every other line here its length is unbounded. Wrapping on words keeps it
    * readable; letting the printer wrap it would break mid-word at column 48.
+   *
+   * THE CANNED LINE IS A FALLBACK, NOT A SIGNATURE.
+   *
+   * It used to print underneath whatever the shop had written, which nobody
+   * ever saw: until the extractor learned to read .footer-content the footer
+   * arrived empty every time, so the fallback was the only line there was. An
+   * A4 invoice prints the shop's words and nothing else, and a roll that added
+   * 'Thank you, please visit again' to them would be the till talking over the
+   * shop.
    */
   if (sale.footer) {
     for (const line of String(sale.footer).split('\n')) {
       for (const w of wrap(line, r.width)) r.centre(w);
     }
+  } else if (sale.showThanks !== false) {
+    r.centre('Thank you, please visit again');
   }
-  if (sale.showThanks !== false) r.centre('Thank you, please visit again');
 
   if (options.openDrawer) r.openDrawer(options.drawerPin);
   if (options.cut !== false) r.cut();

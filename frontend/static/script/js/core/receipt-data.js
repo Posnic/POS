@@ -196,9 +196,44 @@
             if (t) customer.push(t);
         });
 
+        /*
+         * WHAT THE SHOP ASKED TO HAVE PRINTED UNDER THE TOTAL.
+         *
+         * Three separate things end up down here, and only the first of them
+         * was ever reaching an ESC/POS receipt:
+         *
+         *   .print-sale-notes  a note somebody typed on THIS sale
+         *   .footer-content    the shop's own Footer Content, from Settings
+         *   the brand URL      a switch on that same settings screen
+         *
+         * `.footer-content` is the slot BOTH stored templates carry, and the
+         * settings load fills it on every page load - so the text is sitting
+         * in the markup this function is handed, and nothing here looked at
+         * it. A shop that typed a footer, saved it, watched it print on A4 and
+         * then found "Thank you, please visit again" on the 80mm roll was
+         * reading the renderer's default, which fires only when this comes
+         * back empty. It came back empty every time.
+         *
+         * The brand URL is a different shape of the same miss: it is not in
+         * this markup at all, because printView appends it AFTER the thermal
+         * branch has already returned. Read from the setting instead, so the
+         * two papers answer to one switch rather than to two code paths.
+         *
+         * Line breaks are kept. `clean` collapses all whitespace, which is
+         * right for an amount and wrong for a four-line address - a shop that
+         * laid its footer out over several lines gets those lines.
+         */
         var footerLines = [];
         var notes = textOf($root.find('.print-sale-notes'));
         if (notes) footerLines.push(notes);
+
+        $root.find('.footer-content').each(function () {
+            String($(this).text() || '').split(String.fromCharCode(10)).forEach(function (line) {
+                var t = clean(line);
+                if (t) footerLines.push(t);
+            });
+        });
+
         // Outermost only: the template nests one .invoice-policy inside
         // another, and both carry the same text.
         $root.find('.invoice-policy').each(function () {
@@ -206,6 +241,13 @@
             var t = clean($(this).text());
             if (t) footerLines.push(t);
         });
+
+        /* The switch is written to local storage as a boolean by one path and
+           as a string by another, so compare the string either becomes. */
+        if (typeof PosnicPro !== 'undefined' && PosnicPro.local
+            && String(PosnicPro.local.get('print_url')) === 'true') {
+            footerLines.push(PosnicPro.BRAND_URL);
+        }
 
         return {
             storeName: textOf($root.find('.print_store_name')),

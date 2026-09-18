@@ -12856,6 +12856,36 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
         (customer ? '<div class="rp-line">Customer: ' + esc(customer) + '</div>' : '') +
         '</div>';
 
+    /*
+     * WHAT THE SHOP WROTE, IN THE PREVIEW TOO.
+     *
+     * This hard-coded "Thank you, visit again" and read nothing, so a shop
+     * with its own Footer Content saw the canned line here, the canned line
+     * on the roll, and its own words only on the A4 sheet - three answers to
+     * one setting, and the reason somebody who had saved a footer could not
+     * find it anywhere but A4.
+     *
+     * It reads .footer-content: the same slot the receipt extractor reads
+     * and the settings load fills, so the preview and the paper cannot
+     * disagree. The canned line stays as a fallback for a shop that has
+     * written nothing. One wrapper element, because .rp-thanks carries the
+     * margin and a div per line would stack it.
+     */
+    var footerLines = [];
+    String($('.footer-content').first().text() || '')
+        .split(String.fromCharCode(10)).forEach(function (line) {
+            var t = $.trim(line);
+            if (t) footerLines.push(t);
+        });
+    if (String(PosnicPro.local.get('print_url')) === 'true') {
+        footerLines.push(PosnicPro.BRAND_URL);
+    }
+    var footerHtml = footerLines.length
+        ? '<div class="rp-thanks">' + footerLines.map(function (line) {
+            return '<div>' + esc(line) + '</div>';
+        }).join('') + '</div>'
+        : '<div class="rp-thanks"><lang class="lang_thank_you_visit_again">Thank you, visit again</lang></div>';
+
     var html;
     if (!isA4) {
         var rows = items.map(function (it) {
@@ -12877,7 +12907,7 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
             (parseFloat(tax) > 0 ? foot('Tax', money(tax)) : '') +
             '<div class="rp-rule"></div>' +
             foot('TOTAL', money(grand), 'rp-grand') +
-            '<div class="rp-thanks"><lang class="lang_thank_you_visit_again">Thank you, visit again</lang></div>' +
+            footerHtml +
             '</div>';
     } else {
         var trs = items.map(function (it) {
@@ -12895,7 +12925,7 @@ PosnicPro.sales.renderTenderReceiptPreview = function () {
             (parseFloat(disc) > 0 ? trow('Discount', '- ' + money(disc)) : '') +
             (parseFloat(tax) > 0 ? trow('Tax', money(tax)) : '') +
             trow('Grand Total', money(grand), 'rp-grand') +
-            '</tbody></table></div>';
+            '</tbody></table>' + footerHtml + '</div>';
     }
     box.html(html);
 };

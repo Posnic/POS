@@ -673,7 +673,7 @@ PosnicPro.registers = {
                 "top": "-1000000px"
             });
             let printUrl = PosnicPro.local.get('print_url');
-            let url = ((printUrl === 'true') ? '<div class="col-md-12 col-sm-12 col-xs-12 text-center" style="margin-top: -30px;">https://www.posnic.com</div>' : '');
+            let url = ((printUrl === 'true') ? '<div class="col-md-12 col-sm-12 col-xs-12 text-center" style="margin-top: -30px;">' + PosnicPro.BRAND_URL + '</div>' : '');
             $("body").append(frame1);
             var frameDoc = frame1[0].contentWindow ? frame1[0].contentWindow : frame1[0].contentDocument.document ? frame1[0].contentDocument.document : frame1[0].contentDocument;
             frameDoc.document.open();
