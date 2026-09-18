@@ -3192,7 +3192,30 @@ PosnicPro = {
          * printer they have been printing to all along.
          */
         var usedTheDefault = false;
-        Promise.resolve(PosnicPro.resolveReceiptPrinter())
+        /*
+         * ASK THE MACHINE WHICH PRINTER, EVERY TIME.
+         *
+         * The Receipt Printer setting lives in preferences, a file the main
+         * process owns, because Hardware Manager is a different origin with a
+         * different localStorage. syncPrinterPreferences mirrors it in - and
+         * ran exactly once, at startup, while its own comment claimed it ran
+         * "again after printing".
+         *
+         * So changing the receipt printer did nothing until the app was
+         * restarted. The till went on addressing bytes to the printer it had
+         * cached at boot, the receipt log recorded a SUCCESS against that old
+         * queue, and the paper came out on the far side of the shop. Owner:
+         * "print bill from desktop not working. thermal printer not taking
+         * bills?" It was printing perfectly, to the printer he had just
+         * stopped using - his log shows three bills landing on "Posnic
+         * Reception" in 54 ms each while he watched the POS-80C.
+         *
+         * One await before the name is resolved. Everything below stays
+         * synchronous, which is what that comment was protecting.
+         */
+        Promise.resolve(PosnicPro.syncPrinterPreferences())
+        .catch(function () { return false; })
+        .then(function () { return PosnicPro.resolveReceiptPrinter(); })
         .then(function (chosen) {
             if (chosen) { return chosen; }
             usedTheDefault = true;
