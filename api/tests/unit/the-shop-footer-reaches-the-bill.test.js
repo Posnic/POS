@@ -132,3 +132,32 @@ describe('what else the renderer reads and nobody sets', () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe('and which money the numbers are in', () => {
+  /*
+   * The till learned to print the symbol by reading it back off the rendered
+   * receipt. A queued bill has no rendered receipt to read, so it comes from
+   * the branch - and without it the two doors onto the same printer disagree
+   * about the same sale: the counter receipt says one thing and the bill the
+   * waiter carries to the table says another.
+   *
+   * Caught by the field test above rather than by a customer, which is what
+   * that test is for.
+   */
+  test('REACHES THE BILL', () => {
+    expect(bill({ currency: '€' }).currency).toBe('€');
+  });
+
+  test('and a shop that has not set one prints bare numbers, as it always has', () => {
+    expect(bill({}).currency).toBe('');
+    expect(bill({ currency: null }).currency).toBe('');
+  });
+
+  test('and it is a short string whatever the database holds', () => {
+    /* A symbol, not a sentence: it is prefixed to every amount on a
+       48-character line, and something long would eat the item column. */
+    expect(bill({ currency: 12 }).currency).toBe('12');
+    expect(bill({ currency: '   Rs.   ' }).currency).toBe('Rs.');
+    expect(bill({ currency: 'x'.repeat(50) }).currency).toHaveLength(4);
+  });
+});
