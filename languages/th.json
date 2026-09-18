@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "ทานที่นี่ เสิร์ฟถึงโต๊ะ",
   "lang_fulfilment_takeaway": "รับที่เคาน์เตอร์",
   "lang_fulfilment_delivery": "จัดส่งตามที่อยู่",
-  "lang_fulfilment_help": "หากไม่เลือกอะไรเลย ลูกค้าจะได้ค่าเริ่มต้นที่เหมาะกับร้านของคุณ ร้านที่ปิดโมดูลร้านอาหารจะไม่เสนอโต๊ะเลย"
+  "lang_fulfilment_help": "หากไม่เลือกอะไรเลย ลูกค้าจะได้ค่าเริ่มต้นที่เหมาะกับร้านของคุณ ร้านที่ปิดโมดูลร้านอาหารจะไม่เสนอโต๊ะเลย",
+  "lang_above_the_picture": "บรรทัดเหนือรูปภาพ",
+  "lang_qr_web_address": "ที่อยู่เว็บของ QR",
+  "lang_or_upload_a_picture": "หรืออัปโหลดรูปภาพ",
+  "lang_footer_picture_file": "ไฟล์รูปภาพส่วนท้าย",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "ตัวอย่าง: สแกน QR ด้านล่างเพื่อไปที่ร้านค้าออนไลน์ของเรา",
+  "lang_ex_https_example_com_shop": "ตัวอย่าง: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "เก็บรูปภาพให้ต่ำกว่า 300 KB - ไฟล์ PNG ขนาดเล็กทำงานได้ดีที่สุด"
 }

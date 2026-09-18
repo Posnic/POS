@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Hier eten, aan tafel gebracht",
   "lang_fulfilment_takeaway": "Afgehaald aan de balie",
   "lang_fulfilment_delivery": "Bezorgd op een adres",
-  "lang_fulfilment_help": "Vink niets aan en klanten krijgen de standaard die past bij uw soort zaak. Een zaak zonder de Restaurant-module biedt nooit een tafel aan, wat er ook is aangevinkt."
+  "lang_fulfilment_help": "Vink niets aan en klanten krijgen de standaard die past bij uw soort zaak. Een zaak zonder de Restaurant-module biedt nooit een tafel aan, wat er ook is aangevinkt.",
+  "lang_above_the_picture": "Regel boven de afbeelding",
+  "lang_qr_web_address": "QR-webadres",
+  "lang_or_upload_a_picture": "Of upload een afbeelding",
+  "lang_footer_picture_file": "Afbeeldingsbestand voor de voettekst",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Bijv.: Scan de QR hieronder voor onze webshop",
+  "lang_ex_https_example_com_shop": "Bijv.: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Houd de afbeelding onder 300 KB - een kleine PNG werkt het best."
 }

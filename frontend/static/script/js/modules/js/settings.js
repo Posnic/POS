@@ -1414,6 +1414,22 @@ if ($wrapper.length) {
                 if (PosnicPro.settings._editorsReady) { $('#footer_print').summernote('code', htmlView); }
                 $('.footer-content').text(htmlView);
 
+                /* Kept locally because the print path reads them at print
+                   time, on a page that may never have opened Settings. */
+                PosnicPro.local.set('footer_image', data.footer_image || '');
+                PosnicPro.local.set('footer_image_caption', data.footer_image_caption || '');
+                PosnicPro.settings._footerImagePicked = false;
+                $('#footer_qr_url').val(data.footer_qr_url || '');
+                $('#footer_image_caption').val(data.footer_image_caption || '');
+                $('#footer_image_value').val(data.footer_image || '');
+                if (data.footer_image) {
+                    $('#footer_image_thumb').attr('src', data.footer_image).show();
+                    $('#footer_image_clear').show();
+                } else {
+                    $('#footer_image_thumb').hide().attr('src', '');
+                    $('#footer_image_clear').hide();
+                }
+
                 $('.print_store_name').text(data.branch_name);
                 $('.print_store_gst').text(data.branch_gstin_number);
                 $('.print_store_address').text(data.printing_address);
@@ -2157,6 +2173,16 @@ if ($wrapper.length) {
                 print_character: $('#print_character').val(),
                 header_print: contentHeader.html(),
                 footer_print: content.html(),
+                /* The address and the line above it go every time; they are
+                   short. An uploaded picture goes ONLY when somebody just
+                   picked a file - it is a data URL, and posting a few
+                   hundred KB on a form that is saved constantly is waste.
+                   The server keeps the stored one when this is absent. */
+                footer_qr_url: $('#footer_qr_url').val() || '',
+                footer_image_caption: $('#footer_image_caption').val() || '',
+                ...(PosnicPro.settings._footerImagePicked
+                    ? { footer_image: $('#footer_image_value').val() || '' }
+                    : {}),
                 stock_log_management: ($('#stock_log_management').is(":checked")) ? 'true' : 'false',
                 stock_management: ($('#stock_management').is(":checked")) ? 'true' : 'false',
                 printall: ($('#printall').is(":checked")) ? 'true' : 'false',
@@ -6827,6 +6853,51 @@ $(document).on('shown.bs.tab', '#v-pills-tab a[data-toggle="pill"]', function ()
 
 /* Authorised signature for quotations: a small image stored with the shop
    settings as a data URL. No image = no signatory line on the quote. */
+/*
+ * A picture the shop chose, read here rather than uploaded.
+ *
+ * Same shape as the quotation signature above: a data URL in a hidden
+ * field, saved with the rest of the form. No upload endpoint, no bucket,
+ * and - the part that matters for printing - no other origin, so the
+ * canvas that rasterises it for a thermal printer can actually read it.
+ */
+$(document).on('change', '#footer_image_file', function () {
+    var f = this.files && this.files[0];
+    if (!f) { return; }
+    if (f.size > 300 * 1024) {
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_picture_under_300_kb_a_small_png_w', 'Keep the picture under 300 KB - a small PNG works best.'));
+        $(this).val('');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        $('#footer_image_value').val(e.target.result);
+        $('#footer_image_thumb').attr('src', e.target.result).show();
+        $('#footer_image_clear').show();
+        /* An uploaded picture and a QR address cannot both print, so
+           picking a file clears the address rather than leaving the shop
+           to wonder which one won. */
+        $('#footer_qr_url').val('');
+        PosnicPro.settings._footerImagePicked = true;
+    };
+    reader.readAsDataURL(f);
+});
+$(document).on('click', '#footer_image_clear', function () {
+    $('#footer_image_value').val('');
+    $('#footer_image_file').val('');
+    $('#footer_qr_url').val('');
+    $('#footer_image_thumb').hide().attr('src', '');
+    $(this).hide();
+    PosnicPro.settings._footerImagePicked = true;
+});
+/* Typing an address is the other way to get a picture, and it replaces an
+   uploaded one - the server makes the code and stores it. */
+$(document).on('input', '#footer_qr_url', function () {
+    if (!$(this).val()) { return; }
+    $('#footer_image_file').val('');
+    PosnicPro.settings._footerImagePicked = false;
+});
+
 $(document).on('change', '#quote_signature_file', function () {
     var f = this.files && this.files[0];
     if (!f) { return; }

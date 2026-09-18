@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Kula hapa, kuletwa mezani",
   "lang_fulfilment_takeaway": "Kuchukuliwa kaunta",
   "lang_fulfilment_delivery": "Kupelekwa kwenye anwani",
-  "lang_fulfilment_help": "Usiweke alama popote na wateja watapata chaguo-msingi linalofaa aina ya duka lako. Duka lisilo na moduli ya Mkahawa halitoi meza kamwe, hata kama imewekwa alama."
+  "lang_fulfilment_help": "Usiweke alama popote na wateja watapata chaguo-msingi linalofaa aina ya duka lako. Duka lisilo na moduli ya Mkahawa halitoi meza kamwe, hata kama imewekwa alama.",
+  "lang_above_the_picture": "Mstari juu ya picha",
+  "lang_qr_web_address": "Anwani ya wavuti ya QR",
+  "lang_or_upload_a_picture": "Au pakia picha",
+  "lang_footer_picture_file": "Faili ya picha ya kijachini",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Mf: Changanua QR hapa chini kwa duka letu la mtandaoni",
+  "lang_ex_https_example_com_shop": "Mf: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Weka picha chini ya KB 300 - PNG ndogo hufanya kazi vizuri zaidi."
 }

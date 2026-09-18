@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Comer aqui, levado à mesa",
   "lang_fulfilment_takeaway": "Retirado no balcão",
   "lang_fulfilment_delivery": "Entregue num endereço",
-  "lang_fulfilment_help": "Não marque nada e os clientes recebem a opção padrão adequada ao seu tipo de loja. Uma loja com o módulo Restaurante desligado nunca oferece mesa, esteja o que estiver marcado."
+  "lang_fulfilment_help": "Não marque nada e os clientes recebem a opção padrão adequada ao seu tipo de loja. Uma loja com o módulo Restaurante desligado nunca oferece mesa, esteja o que estiver marcado.",
+  "lang_above_the_picture": "Linha acima da imagem",
+  "lang_qr_web_address": "Endereço web do QR",
+  "lang_or_upload_a_picture": "Ou carregue uma imagem",
+  "lang_footer_picture_file": "Ficheiro de imagem do rodapé",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Ex.: Leia o QR abaixo para a nossa loja online",
+  "lang_ex_https_example_com_shop": "Ex.: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Mantenha a imagem abaixo de 300 KB - um PNG pequeno funciona melhor."
 }

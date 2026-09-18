@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "यहीं खाने, टेबलमा ल्याइने",
   "lang_fulfilment_takeaway": "काउन्टरबाट लिने",
   "lang_fulfilment_delivery": "ठेगानामा पुर्याउने",
-  "lang_fulfilment_help": "केही नछान्नुहोस् भने ग्राहकले तपाईंको पसलको लागि उपयुक्त डिफ्याउल्ट पाउँछन्। रेस्टुरेन्ट मड्यूल बन्द भए टेबल कहिलेइ दिइँदैन।"
+  "lang_fulfilment_help": "केही नछान्नुहोस् भने ग्राहकले तपाईंको पसलको लागि उपयुक्त डिफ्याउल्ट पाउँछन्। रेस्टुरेन्ट मड्यूल बन्द भए टेबल कहिलेइ दिइँदैन।",
+  "lang_above_the_picture": "तस्बिरमाथिको हरफ",
+  "lang_qr_web_address": "QR वेब ठेगाना",
+  "lang_or_upload_a_picture": "वा तस्बिर अपलोड गर्नुहोस्",
+  "lang_footer_picture_file": "फुटर तस्बिर फाइल",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "उदा: हाम्रो अनलाइन पसलका लागि तलको QR स्क्यान गर्नुहोस्",
+  "lang_ex_https_example_com_shop": "उदा: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "तस्बिर 300 KB भन्दा कम राख्नुहोस् - सानो PNG उत्तम हुन्छ।"
 }
