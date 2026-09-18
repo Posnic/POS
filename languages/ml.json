@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "ഇവിടെ കഴിക്കുക, മേശയിൽ എത്തിക്കും",
   "lang_fulfilment_takeaway": "കൗണ്ടറിൽ നിന്ന് എടുക്കുക",
   "lang_fulfilment_delivery": "വിലാസത്തിൽ എത്തിക്കും",
-  "lang_fulfilment_help": "ഒന്നും ടിക്ക് ചെയ്തില്ലെങ്കിൽ കടയുടെ തരത്തിനു അനുയോജ്യമായ സംവിധാനം ഉപഭോക്താവിന് ലഭിക്കും. റെസ്റ്ററന്റ് മൊഡ്യൂൾ ഓഫ്ഫാണെങ്കിൽ മേശ ഒരിക്കലും ലഭിക്കില്ല."
+  "lang_fulfilment_help": "ഒന്നും ടിക്ക് ചെയ്തില്ലെങ്കിൽ കടയുടെ തരത്തിനു അനുയോജ്യമായ സംവിധാനം ഉപഭോക്താവിന് ലഭിക്കും. റെസ്റ്ററന്റ് മൊഡ്യൂൾ ഓഫ്ഫാണെങ്കിൽ മേശ ഒരിക്കലും ലഭിക്കില്ല.",
+  "lang_above_the_picture": "ചിത്രത്തിന് മുകളിലുള്ള വരി",
+  "lang_qr_web_address": "QR വെബ് വിലാസം",
+  "lang_or_upload_a_picture": "അല്ലെങ്കിൽ ഒരു ചിത്രം അപ്‌ലോഡ് ചെയ്യുക",
+  "lang_footer_picture_file": "ഫൂട്ടർ ചിത്ര ഫയൽ",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "ഉദാ: ഞങ്ങളുടെ ഓൺലൈൻ സ്റ്റോറിനായി താഴെയുള്ള QR സ്കാൻ ചെയ്യുക",
+  "lang_ex_https_example_com_shop": "ഉദാ: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "ചിത്രം 300 KB യിൽ താഴെ നിർത്തുക - ചെറിയ PNG ആണ് ഏറ്റവും നല്ലത്."
 }

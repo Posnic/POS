@@ -186,7 +186,21 @@ var LOGO_MAX_ROWS = 240;
  * thing worth discovering on a shop counter. White padding either side costs
  * a few hundred bytes down a USB cable and is centred everywhere.
  */
-function pack(ctx, dots, w, h, left) {
+/*
+ * A QR CODE MUST NOT BE DITHERED.
+ *
+ * Floyd-Steinberg is right for a logo, which is flat colour with soft
+ * edges, and wrong for anything a machine has to read back. Dithering
+ * spreads the error of every pixel into its neighbours, so an anti-aliased
+ * QR module edge comes out speckled - and a scanner looking for a clean
+ * square finds noise. The shop would blame the printer, or worse, print a
+ * thousand receipts nobody can scan.
+ *
+ * So a picture the shop chose is thresholded: every dot is simply on or
+ * off. That is the correct rendering for a QR, a barcode, line art and
+ * text, which is everything anyone puts under a total.
+ */
+function pack(ctx, dots, w, h, left, dither) {
     var pixels = ctx.getImageData(0, 0, dots, h).data;
 
     /*
@@ -218,6 +232,7 @@ function pack(ctx, dots, w, h, left) {
             if (x < left || x >= left + w) { black = false; }
             if (black) { out[y * bytesPerRow + (x >> 3)] |= 0x80 >> (x & 7); }
 
+            if (!dither) continue;
             var err = old - (black ? 0 : 255);
             if (x + 1 < dots) grey[at + 1] += err * 7 / 16;
             if (y + 1 < h) {
@@ -255,6 +270,67 @@ function pack(ctx, dots, w, h, left) {
  * Only when there is a logo to print. A shop with the switch off still
  * gets nothing, and nothing is fetched on its behalf.
  */
+/**
+ * An <img> that is on screen and decoded, as dots.
+ *
+ * `dither` is the difference between the two things that print: a logo is
+ * a picture and reads better dithered, a QR is data and must be
+ * thresholded or a scanner cannot read it back.
+ */
+function rasterOf(img, dots, maxRows, dither) {
+    /*
+     * Never enlarged. A 120px logo stretched across 576 dots and then
+     * dithered is mud, and a shop looking at it would think the printer
+     * was broken rather than that their file is small. Small and sharp
+     * is the better failure.
+     */
+    var scale = Math.min(dots / img.naturalWidth, maxRows / img.naturalHeight, 1);
+    var w = Math.max(8, Math.round(img.naturalWidth * scale));
+    var h = Math.max(1, Math.round(img.naturalHeight * scale));
+    var left = Math.floor((dots - w) / 2);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = dots;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, dots, h);
+    ctx.drawImage(img, left, 0, w, h);
+
+    return { width: dots, height: h, data: pack(ctx, dots, w, h, left, dither) };
+}
+
+/*
+ * A PICTURE THE SHOP PUT UNDER ITS TOTAL.
+ *
+ * Owner: "instead of saying visit website user can upload qr code image,
+ * asking customer to scan for online store". A printed URL is something a
+ * customer has to type; a QR is something they point a phone at.
+ *
+ * Taller than the logo is allowed - 48mm against 30mm - because a QR that
+ * is too small does not scan, and this one is the point of the receipt
+ * rather than decoration at the top of it.
+ */
+var FOOTER_MAX_ROWS = 384;
+
+PosnicPro.receiptFooterImage = function (paperWidth) {
+    var handOn = null;
+    try {
+        var dots = DOTS[paperWidth] || DOTS['80'];
+        var img = document.querySelector('.print-modal-body .footer-image img');
+        if (!img || !img.getAttribute('src')) return null;
+
+        handOn = { src: img.src || img.getAttribute('src'), dither: false };
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return handOn;
+
+        return rasterOf(img, dots, FOOTER_MAX_ROWS, false) || handOn;
+    } catch (e) {
+        console.warn('[Print] the page cannot read the footer image, passing it on:', e.message);
+        return handOn;
+    }
+};
+
 PosnicPro.receiptLogo = function (paperWidth) {
     var handOn = null;
     try {
@@ -272,27 +348,8 @@ PosnicPro.receiptLogo = function (paperWidth) {
         handOn = { src: img.src || img.getAttribute('src') };
         if (!img.complete || !img.naturalWidth || !img.naturalHeight) return handOn;
 
-        /*
-         * Never enlarged. A 120px logo stretched across 576 dots and then
-         * dithered is mud, and a shop looking at it would think the printer
-         * was broken rather than that their file is small. Small and sharp
-         * is the better failure.
-         */
-        var scale = Math.min(dots / img.naturalWidth, LOGO_MAX_ROWS / img.naturalHeight, 1);
-        var w = Math.max(8, Math.round(img.naturalWidth * scale));
-        var h = Math.max(1, Math.round(img.naturalHeight * scale));
-        var left = Math.floor((dots - w) / 2);
-
-        var canvas = document.createElement('canvas');
-        canvas.width = dots;
-        canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        if (!ctx) return handOn;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, dots, h);
-        ctx.drawImage(img, left, 0, w, h);
-
-        return { width: dots, height: h, data: pack(ctx, dots, w, h, left) };
+        /* A logo is a picture, so it is dithered. */
+        return rasterOf(img, dots, LOGO_MAX_ROWS, true) || handOn;
     } catch (e) {
         /*
          * A tainted canvas lands here, which is the common case and not
@@ -432,6 +489,9 @@ PosnicPro.receiptLogo = function (paperWidth) {
         }
 
         return {
+            /* The line that introduces the picture, if there is a picture.
+               Read from the markup like everything else here. */
+            footerImageCaption: textOf($root.find('.footer-image-caption')),
             currency: currencyOf([total, subTotal, change]),
             storeName: textOf($root.find('.print_store_name')),
             storeAddress: address.join('\n'),

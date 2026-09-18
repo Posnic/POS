@@ -316,3 +316,39 @@ test('THE TWO RASTERISERS AGREE ON THE SAME PICTURE', () => {
     'the page and the main process dither the same picture differently'
   );
 });
+
+/* ------------------------------------------------------------------------- */
+
+test('A BILL WITH NO PICTURES NEVER ASKS FOR AN IMAGE DECODER', async () => {
+  /*
+   * resolvePictures used to build its Electron dependencies at the top,
+   * unconditionally. Requiring electron where there is no Electron throws, and
+   * that throw took out the WHOLE bill print rather than just a picture: a
+   * bill queued on the floor and printed by a till never came out at all.
+   *
+   * It was green here and red in CI, because the test that notices needs a
+   * database and skips on a developer machine. Most bills have no picture, so
+   * most of the time this must cost nothing and ask for nothing.
+   *
+   * This file runs in plain node, which is the point.
+   */
+  const { resolvePictures } = require('../src/escpos-logo');
+  const sale = { storeName: 'S', total: 8, items: [{ name: 'x', amount: 8 }] };
+  const out = await resolvePictures(sale, '48');
+  assert.deepStrictEqual(out, sale, 'a sale with no pictures came back changed');
+});
+
+test('and one WITH a picture degrades to no picture rather than throwing', async () => {
+  /* A bill without its logo is a bill. A bill that failed to print is a
+     customer standing at a table waiting for one. */
+  const { resolvePictures } = require('../src/escpos-logo');
+  let out;
+  await assert.doesNotReject(async () => {
+    out = await resolvePictures(
+      { storeName: 'S', total: 8, footerImage: { src: 'data:image/png;base64,AAAA' } },
+      '48'
+    );
+  }, 'a picture that cannot be decoded must not fail the print');
+  assert.ok(!out.footerImage || !out.footerImage.data, 'it claimed dots it never made');
+  assert.strictEqual(out.storeName, 'S', 'the rest of the sale survived');
+});

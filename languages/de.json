@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Hier essen, an den Tisch gebracht",
   "lang_fulfilment_takeaway": "Am Tresen abgeholt",
   "lang_fulfilment_delivery": "An eine Adresse geliefert",
-  "lang_fulfilment_help": "Nichts ankreuzen: Kunden erhalten die sinnvolle Voreinstellung für Ihre Art von Geschäft. Ein Geschäft ohne Restaurant-Modul bietet nie einen Tisch an, egal was angekreuzt ist."
+  "lang_fulfilment_help": "Nichts ankreuzen: Kunden erhalten die sinnvolle Voreinstellung für Ihre Art von Geschäft. Ein Geschäft ohne Restaurant-Modul bietet nie einen Tisch an, egal was angekreuzt ist.",
+  "lang_above_the_picture": "Zeile über dem Bild",
+  "lang_qr_web_address": "QR-Webadresse",
+  "lang_or_upload_a_picture": "Oder ein Bild hochladen",
+  "lang_footer_picture_file": "Bilddatei für die Fußzeile",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Bsp.: Scannen Sie den QR-Code unten für unseren Online-Shop",
+  "lang_ex_https_example_com_shop": "Bsp.: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Halten Sie das Bild unter 300 KB - ein kleines PNG funktioniert am besten."
 }

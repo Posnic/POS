@@ -763,8 +763,24 @@ class BillManager {
        * for payment, and the receipt follows once it is paid.
        */
       const gstin = String((sale && (sale.branch_gstin_number || sale.gstin)) || '').trim();
+
+      /*
+       * THE PICTURES, TURNED INTO DOTS.
+       *
+       * The payload names them by source - a data URL for the QR a shop
+       * generated, or a path for its logo - because a queued bill is built
+       * on a server with no canvas and no idea what a PNG is. Here there is
+       * Chromium's decoder, so this is where they become dots.
+       *
+       * The bill a waiter carries to the table is exactly where a "scan for
+       * our online store" code earns its space, so it gets the same
+       * treatment as the counter receipt rather than a plainer version.
+       */
+      const { resolvePictures } = require('./escpos-logo');
+      const withPictures = await resolvePictures(sale || {}, String(columnsFor(this.paperSize)));
+
       const bytes = renderSale(
-        { ...(sale || {}), title: gstin ? 'TAX INVOICE' : 'BILL' },
+        { ...withPictures, title: gstin ? 'TAX INVOICE' : 'BILL' },
         {
           paperWidth: String(columnsFor(this.paperSize)),
           /* The drawer is the cashier business and this is not a payment. */
