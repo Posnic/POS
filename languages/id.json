@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Makan di sini, diantar ke meja",
   "lang_fulfilment_takeaway": "Diambil di konter",
   "lang_fulfilment_delivery": "Diantar ke alamat",
-  "lang_fulfilment_help": "Jangan centang apa pun dan pelanggan mendapat pilihan bawaan sesuai jenis toko Anda. Toko tanpa modul Restoran tidak pernah menawarkan meja, apa pun yang dicentang."
+  "lang_fulfilment_help": "Jangan centang apa pun dan pelanggan mendapat pilihan bawaan sesuai jenis toko Anda. Toko tanpa modul Restoran tidak pernah menawarkan meja, apa pun yang dicentang.",
+  "lang_above_the_picture": "Baris di atas gambar",
+  "lang_qr_web_address": "Alamat web QR",
+  "lang_or_upload_a_picture": "Atau unggah gambar",
+  "lang_footer_picture_file": "Berkas gambar footer",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Cth: Pindai QR di bawah untuk toko online kami",
+  "lang_ex_https_example_com_shop": "Cth: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Jaga gambar di bawah 300 KB - PNG kecil paling cocok."
 }

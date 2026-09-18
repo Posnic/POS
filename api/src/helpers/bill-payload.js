@@ -505,6 +505,43 @@ function buildBillPayload(sale = {}, branch = {}) {
       .filter(Boolean)
       .join(String.fromCharCode(10)),
 
+    /*
+     * WHICH MONEY THE NUMBERS ARE IN.
+     *
+     * The till learned to print this by reading it off the rendered receipt;
+     * a queued bill has no rendered receipt to read, so it comes from the
+     * branch. Without it the two doors onto the same printer disagree - the
+     * counter receipt says one thing and the bill the waiter brings to the
+     * table says another, for the same sale.
+     *
+     * Empty for a shop that has not set one, which prints bare numbers, as
+     * it always has.
+     */
+    currency: String((branch && branch.currency) || '')
+      .trim()
+      .slice(0, 4),
+
+    /*
+     * THE PICTURE UNDER THE TOTAL, BY SOURCE RATHER THAN AS DOTS.
+     *
+     * A QR is generated once when the shop sets its address and stored as a
+     * data URL. This is a server with no canvas, so it hands over the source
+     * and the desktop turns it into dots - which is also why the field is a
+     * { src } and not a string: the renderer takes either, and only one of
+     * them can be made here.
+     *
+     * The caption comes with it, because a line saying "scan below" on a bill
+     * with nothing to scan is worse than no line at all.
+     */
+    footerImage: branch && branch.footer_image ? { src: String(branch.footer_image) } : null,
+    footerImageCaption: String((branch && branch.footer_image_caption) || '')
+      .trim()
+      .split(String.fromCharCode(10))
+      .slice(0, 2)
+      .map((line) => line.trim().slice(0, 64))
+      .filter(Boolean)
+      .join(String.fromCharCode(10)),
+
     title: 'BILL',
     billNo: String(sale.sales_id || '').trim(),
     date: stamp(sale.date || sale.created_at),

@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "ఇక్కడే తినండి, టేబుల్కు తెస్తారు",
   "lang_fulfilment_takeaway": "కౌంటర్లో తీసుకోండి",
   "lang_fulfilment_delivery": "చిరునామాకు డెలివరీ",
-  "lang_fulfilment_help": "ఏదీ టిక్ చేయకపోతే కస్టమర్లకు మీ దుకాణానికి సరిపడే డిఫాల్ట్ వస్తుంది. రెస్టారెంట్ మాడ్యూల్ ఆఫ్ ఉంటే టేబుల్ ఎప్పుడూ ఇవ్వబడదు."
+  "lang_fulfilment_help": "ఏదీ టిక్ చేయకపోతే కస్టమర్లకు మీ దుకాణానికి సరిపడే డిఫాల్ట్ వస్తుంది. రెస్టారెంట్ మాడ్యూల్ ఆఫ్ ఉంటే టేబుల్ ఎప్పుడూ ఇవ్వబడదు.",
+  "lang_above_the_picture": "చిత్రం పైన ఉన్న పంక్తి",
+  "lang_qr_web_address": "QR వెబ్ చిరునామా",
+  "lang_or_upload_a_picture": "లేదా చిత్రాన్ని అప్‌లోడ్ చేయండి",
+  "lang_footer_picture_file": "ఫుటర్ చిత్ర ఫైల్",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "ఉదా: మా ఆన్‌లైన్ స్టోర్ కోసం క్రింది QR స్కాన్ చేయండి",
+  "lang_ex_https_example_com_shop": "ఉదా: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "చిత్రాన్ని 300 KB కంటే తక్కువగా ఉంచండి - చిన్న PNG ఉత్తమంగా పనిచేస్తుంది."
 }

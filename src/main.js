@@ -1748,16 +1748,59 @@ ipcMain.handle('desktop:open', (_event, target) => {
        often nothing at all on Linux - which is not a thing a shopkeeper can
        use. openLogViewer keeps a way out to the folder. */
     case 'log': openLogViewer(); break;
+    /*
+     * ABOUT, REACHABLE WITHOUT KNOWING ABOUT THE ALT KEY.
+     *
+     * This window has held the version, the platform and the cloud it
+     * syncs with for as long as it has existed, and it sat behind a menu
+     * bar that is hidden by default. Owner: "i asked which version using.
+     * now way to tell." The window was never the problem; the only route
+     * to it was.
+     */
+    case 'about': openAboutWindow(); break;
     /* The renderer names an intent and this decides the address. Letting a page
        pass its own URL here would turn an allowlist into an open redirect for
        anything that can reach this channel. */
     case 'releases': shell.openExternal('https://github.com/Posnic/POS/releases'); break;
+    /*
+     * WHERE MORE VOICES COME FROM.
+     *
+     * Owner: "voice are as per system. if user can install more show the way
+     * to do."
+     *
+     * The kitchen reads tickets with whatever voices Windows has, and a shop
+     * that wants an Indian English voice has to add the language pack. The
+     * note under the picker said so in words, which is a sentence somebody
+     * reads and then does not know where to go.
+     *
+     * ms-settings:speech opens the page that installs them. It is a Windows
+     * address and nothing else answers it, so the other platforms are sent to
+     * the page that explains their own way; a button that does nothing on Mac
+     * is worse than one that explains.
+     */
+    case 'voices':
+      if (process.platform === 'win32') shell.openExternal('ms-settings:speech');
+      else if (process.platform === 'darwin') shell.openExternal('x-apple.systempreferences:com.apple.preference.universalaccess?TextToSpeech');
+      else shell.openExternal('https://www.posnic.com/help/kitchen-voices');
+      break;
     default: return false;
   }
   return true;
 });
 ipcMain.handle('desktop:capabilities', () => ({
   desktop: true,
+  /*
+   * THE NUMBER A SHOP IS ASKED FOR ON THE TELEPHONE.
+   *
+   * Owner, after a customer reported a printing fault: "i asked which
+   * version using. now way to tell."
+   *
+   * It was here all along and nowhere a shopkeeper could see it: Help >
+   * About holds it, and that menu bar is hidden until somebody presses
+   * Alt. This bridge is already called on every desktop start, so the
+   * page can put the number on screen without a new round trip.
+   */
+  version: app.getVersion(),
   backup: !fs.existsSync(CLOUD_CONFIG_FILE)
 }));
 

@@ -28,6 +28,16 @@ const GS = 0x1d;
 const COLUMNS = { '58': 32, '80': 48 };
 
 /*
+ * The same paper, measured in dots.
+ *
+ * A receipt printer is 203dpi, which is 8 dots per mm, so 72mm of printable
+ * paper at 80mm is 576 dots and 48mm at 58mm is 384. That is also 12 dots
+ * per character, which is where 48 and 32 columns come from - the two tables
+ * are the same measurement written twice, and they have to agree.
+ */
+const DOTS = { '58': 384, '80': 576 };
+
+/*
  * Text a thermal printer can actually render.
  *
  * The printer is set to code page 1252, which has no rupee sign: U+20B9 sent
@@ -40,29 +50,251 @@ const COLUMNS = { '58': 32, '80': 48 };
  * characters where "₹" was one, and pair() has already counted the columns by
  * then, which would push every amount one place off the right margin.
  */
-const SUBSTITUTIONS = [
-  [/[₹₨]/g, 'Rs.'],   // rupee sign, and the older Rs ligature
-  [/[‘’‛]/g, "'"],
-  [/[“”]/g, '"'],
-  [/[–—−]/g, '-'],
-  [/…/g, '...'],
-  [/ /g, ' '],
+/*
+ * A SYMBOL THE PRINTER DOES NOT HAVE, TAUGHT TO IT.
+ *
+ * The font has no euro and `ESC t` does nothing here, so for a while the
+ * receipt spelled it "EUR". A shop in Italy reading its own totals as
+ * "EUR13.00" is correct and looks like a workaround, because it was one.
+ *
+ * But a thermal printer draws dots, and ESC/POS has a command for exactly
+ * this: `ESC &` downloads a bitmap into a character slot and `ESC % 1`
+ * switches the user-defined set on, after which that slot prints the bitmap
+ * as an ordinary character. One column wide, so none of the 48-column
+ * arithmetic below changes - which is the whole reason to do it this way
+ * rather than as a raster image, which would break the line.
+ *
+ * PROVED ON A REAL POS-80C before this shipped, because `ESC t` looked just
+ * as standard on paper and turned out to be ignored. The probe that settled
+ * it is tests/tools/can-this-printer-learn-a-euro.js, and it checks the part
+ * that would be unshippable if it failed: that the printer LEAVES the
+ * user-defined set again afterwards. One that stayed in it would garble
+ * every receipt after this one.
+ *
+ * The slot is a backtick: the one printable ASCII character that never
+ * legitimately appears on a receipt, so borrowing it costs nothing. Any
+ * backtick in a shop's own text is removed before this, so a stray one
+ * cannot turn into a currency symbol.
+ *
+ * A printer that ignores the download prints whatever its ROM has in that
+ * slot instead, which is why `symbolGlyphs: false` exists and spells the
+ * word again.
+ */
+const GLYPH_SLOT = 0x60;
+
+/* 12 dots wide and 24 tall, which is Font A. Drawn as rows because that is
+   how a person checks it; transposed to columns for the printer below. The
+   two bars overhang the C deliberately - at receipt size that overhang is
+   what stops it reading as a C with stripes. */
+const EURO = [
+  '............',
+  '............',
+  '............',
+  '.....######.',
+  '....########',
+  '...###....##',
+  '...##.......',
+  '..###.......',
+  '..###.......',
+  '############',
+  '############',
+  '..###.......',
+  '..###.......',
+  '############',
+  '############',
+  '..###.......',
+  '..###.......',
+  '...##.......',
+  '...###....##',
+  '....########',
+  '.....######.',
+  '............',
+  '............',
+  '............',
 ];
+
+/**
+ * `ESC & y c1 c2 x d...` - y bytes tall, one slot, x columns, then x*y bytes
+ * read top to bottom with the most significant bit at the top.
+ */
+function downloadGlyph(rows, slot) {
+  const bands = rows.length / 8;
+  const width = rows[0].length;
+  const data = [];
+  for (let col = 0; col < width; col++) {
+    for (let band = 0; band < bands; band++) {
+      let byte = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        if (rows[band * 8 + bit][col] === '#') byte |= 0x80 >> bit;
+      }
+      data.push(byte);
+    }
+  }
+  return Buffer.from([ESC, 0x26, bands, slot, slot, width, ...data]);
+}
+
+/*
+ * EVERYTHING THAT REACHES THE PAPER IS ASCII.
+ *
+ * This used to send `ESC t 16` to select WPC1252 and then write bytes above
+ * 0x7E - 0x80 for a euro, 0xE0 for an a-grave - on the strength of a
+ * datasheet. A POS-80C printed "EUR13.00" as "C13.00" with a cedilla, which
+ * is 0x80 in PC437, the page it had never left.
+ *
+ * A probe settled it: eighteen candidate pages selected in turn, each
+ * followed by the same three bytes, and EVERY ROW PRINTED IDENTICALLY. The
+ * printer does not implement `ESC t`. It is not a numbering difference and
+ * not a missing page - the command does nothing.
+ *
+ * That is the common case, not a broken unit. These printers are built to a
+ * price against a spec they implement in part, and there is no way to ask
+ * one what it supports. So nothing above 0x7E is ever sent. An accent lost
+ * is a word a customer can still read; a byte the printer renders from some
+ * other table is a receipt with Greek letters in the shop's address, which
+ * is what "Citta" would have become.
+ *
+ * THE COST IS REAL AND IT IS THE RIGHT TRADE. "Perche" is not "Perche" with
+ * an accent, and a shop in Italy or France or Germany will notice. But it
+ * is their own word, spelled flat, on every printer they might ever buy -
+ * against the alternative, which is correct on the printers that honour a
+ * command and mojibake on the ones that do not, with no way to tell which
+ * they have until a customer complains.
+ */
+const SUBSTITUTIONS = [
+  [/[\u20b9\u20a8]/g, 'Rs.'], // rupee sign, and the older Rs ligature
+  // euro is handled per-receipt: a taught glyph, or the code when it cannot be
+  [/\u00a3/g, 'GBP'],
+  [/\u00a5/g, 'JPY'],
+  [/\u00a2/g, 'c'],
+  [/[\u2018\u2019\u201b\u2032]/g, "'"],
+  [/[\u201c\u201d\u2033]/g, '"'],
+  [/[\u2013\u2014\u2212\u2010\u2011]/g, '-'],
+  [/\u2026/g, '...'],
+  [/[\u00a0\u2007\u202f]/g, ' '],
+  [/\u2022/g, '*'],
+  [/\u2122/g, '(TM)'],
+  [/\u00ae/g, '(R)'],
+  [/\u00a9/g, '(C)'],
+  [/\u2030/g, 'o/oo'],
+  [/[\u2020\u2021]/g, '+'],
+  [/\u00d7/g, 'x'],
+  [/[\u00f7]/g, '/'],
+  [/[\u00bd]/g, '1/2'],
+  [/[\u00bc]/g, '1/4'],
+  [/[\u00be]/g, '3/4'],
+  [/[\u00ab\u2039]/g, '<'],
+  [/[\u00bb\u203a]/g, '>'],
+];
+
+/*
+ * Letters, flattened.
+ *
+ * Every accented letter in Latin-1 and CP1252, and the handful of ligatures
+ * that come with them. Written out rather than produced by NFD-and-strip,
+ * because the cases that matter are the ones normalisation gets wrong: a
+ * German eszett is "ss" and not "s", an ash is "ae", a d-stroke is "d", and
+ * a Nordic o-slash has no decomposition at all.
+ */
+const LETTERS = {
+  '\u00c0': 'A', '\u00c1': 'A', '\u00c2': 'A', '\u00c3': 'A', '\u00c4': 'A', '\u00c5': 'A',
+  '\u00e0': 'a', '\u00e1': 'a', '\u00e2': 'a', '\u00e3': 'a', '\u00e4': 'a', '\u00e5': 'a',
+  '\u00c6': 'AE', '\u00e6': 'ae',
+  '\u00c7': 'C', '\u00e7': 'c',
+  '\u00c8': 'E', '\u00c9': 'E', '\u00ca': 'E', '\u00cb': 'E',
+  '\u00e8': 'e', '\u00e9': 'e', '\u00ea': 'e', '\u00eb': 'e',
+  '\u00cc': 'I', '\u00cd': 'I', '\u00ce': 'I', '\u00cf': 'I',
+  '\u00ec': 'i', '\u00ed': 'i', '\u00ee': 'i', '\u00ef': 'i',
+  '\u00d0': 'D', '\u00f0': 'd',
+  '\u00d1': 'N', '\u00f1': 'n',
+  '\u00d2': 'O', '\u00d3': 'O', '\u00d4': 'O', '\u00d5': 'O', '\u00d6': 'O', '\u00d8': 'O',
+  '\u00f2': 'o', '\u00f3': 'o', '\u00f4': 'o', '\u00f5': 'o', '\u00f6': 'o', '\u00f8': 'o',
+  '\u0152': 'OE', '\u0153': 'oe',
+  '\u00d9': 'U', '\u00da': 'U', '\u00db': 'U', '\u00dc': 'U',
+  '\u00f9': 'u', '\u00fa': 'u', '\u00fb': 'u', '\u00fc': 'u',
+  '\u00dd': 'Y', '\u0178': 'Y', '\u00fd': 'y', '\u00ff': 'y',
+  '\u00de': 'Th', '\u00fe': 'th',
+  '\u00df': 'ss',
+  '\u0160': 'S', '\u0161': 's',
+  '\u017d': 'Z', '\u017e': 'z',
+  '\u0192': 'f',
+  '\u00b5': 'u',
+  '\u00aa': 'a', '\u00ba': 'o',
+  '\u00a1': '!', '\u00bf': '?',
+};
+
+const LETTER_RE = new RegExp('[' + Object.keys(LETTERS).join('') + ']', 'g');
+
+/*
+ * A euro on its way to the paper, in two steps.
+ *
+ * ascii() leaves this mark, which is one character wide however the receipt
+ * ends up printing it, so every column is counted correctly before a byte is
+ * sent. text() turns it into the taught glyph, or into the letters when the
+ * printer cannot be taught.
+ */
+const EURO_MARK = String.fromCharCode(1);
+
+/*
+ * WHAT ascii() LEAVES, and it must be exactly as wide as what prints.
+ *
+ * The mark ONLY when the printer has been taught the glyph, because then it
+ * becomes one character. When it has not, the letters go in here directly.
+ *
+ * Writing a one-character mark and expanding it to three letters in text()
+ * put every amount two columns past the right margin - pair() had already
+ * counted. That is the bug this comment exists to stop somebody putting
+ * back.
+ */
+let euroText = 'EUR';
 
 function ascii(s) {
   let out = String(s == null ? '' : s);
+  /* A backtick somebody typed into their own footer must never come out as
+     a currency symbol, and the borrowed slot is a backtick. */
+  out = out.replace(/`/g, "'");
+  /*
+   * MARKED, not substituted. ascii() runs TWICE on most lines - pair()
+   * calls it to measure the columns and line() calls it again on the
+   * composed string - so a backtick written here would be stripped by the
+   * rule above on the second pass, and the euro would come out as a quote.
+   * That is exactly what the first version of this did.
+   *
+   * The mark is one character wide, which is what the column arithmetic
+   * needs, and becomes bytes in text().
+   */
+  out = out.replace(/\u20ac/g, euroText);
   for (const [pattern, with_] of SUBSTITUTIONS) out = out.replace(pattern, with_);
-  // Anything still outside the code page would be sent as a truncated byte and
-  // print as an unrelated character, which is worse than printing nothing.
-  return out.replace(/[^\x20-\xff\n]/g, '');
+  out = out.replace(LETTER_RE, (c) => LETTERS[c]);
+  /*
+   * Whatever is left that the paper cannot carry. Dropped rather than sent:
+   * a byte above 0x7E is rendered from whichever table the printer happens
+   * to be on, and a wrong character reads as a fault where a missing one
+   * reads as a gap.
+   */
+  return out.replace(/[^\x20-\x7e\n\u0001]/g, '');
 }
 
 class Receipt {
-  constructor(paperWidth = '80') {
-    this.width = COLUMNS[paperWidth] || COLUMNS['80'];
+  constructor(paperWidth = '80', { glyphs = true } = {}) {
+    this.paper = COLUMNS[paperWidth] ? paperWidth : '80';
+    this.width = COLUMNS[this.paper];
     this.parts = [];
     this.raw(ESC, 0x40);             // initialise: clears any state a previous job left
-    this.raw(ESC, 0x74, 0x10);       // code page 16 (WPC1252) so the rupee sign survives
+    /* Still asked for, and nothing depends on the answer: every byte after
+       this is ASCII, which every code page agrees about. It costs three
+       bytes and leaves a printer that DOES honour it on a known page rather
+       than on whatever the last job left behind. */
+    this.raw(ESC, 0x74, 0x10);
+
+    /*
+     * AFTER the initialise above, never before: `ESC @` clears downloaded
+     * characters on most firmware, so teaching the glyph first would teach
+     * it to nothing.
+     */
+    if (glyphs) {
+      this.parts.push(downloadGlyph(EURO, GLYPH_SLOT));
+      this.raw(ESC, 0x25, 1);
+    }
   }
 
   raw(...bytes) { this.parts.push(Buffer.from(bytes)); return this; }
@@ -71,7 +303,11 @@ class Receipt {
    * because they have to count characters; this catches everything else -
    * a bill number, a customer name - that goes straight to the paper.
    */
-  text(s) { this.parts.push(Buffer.from(ascii(s), 'latin1')); return this; }
+  text(s) {
+    const out = ascii(s).split(EURO_MARK).join(String.fromCharCode(GLYPH_SLOT));
+    this.parts.push(Buffer.from(out, 'latin1'));
+    return this;
+  }
 
   /* Alignment: 0 left, 1 centre, 2 right. */
   align(n) { return this.raw(ESC, 0x61, n); }
@@ -89,6 +325,41 @@ class Receipt {
   rule(ch = '-') { return this.line(ch.repeat(this.width)); }
 
   feed(n = 1) { return this.raw(ESC, 0x64, n); }
+
+  /*
+   * A bitmap, as GS v 0.
+   *
+   * `GS v 0 m xL xH yL yH` then the bits: m=0 is normal density, x is the
+   * row length in BYTES (not dots, which is the mistake this command
+   * invites), y is the number of dot rows, and the data that follows is
+   * row-major, MSB first, 1 = black.
+   *
+   * The bitmap arrives already padded to the full paper width with the
+   * logo centred inside it, because ESC a 1 centres text on every printer
+   * and raster images on most of them, and "most" is not a thing worth
+   * discovering on a shop counter.
+   *
+   * A bitmap WIDER than this paper is refused rather than printed. It
+   * happens when one receipt goes to an 80mm and a 58mm printer at once:
+   * the bits were packed for the shop's own paper, and the narrow printer
+   * would render the overflow as garbage rows. A receipt without a logo is
+   * a receipt; a receipt with a shredded one is a fault report.
+   */
+  raster(logo) {
+    if (!logo || !logo.data) return this;
+    const dots = DOTS[this.paper] || DOTS['80'];
+    const width = Number(logo.width) || 0;
+    const height = Number(logo.height) || 0;
+    if (width <= 0 || height <= 0 || width > dots || width % 8 !== 0) return this;
+
+    const bytes = Buffer.from(String(logo.data), 'base64');
+    const perRow = width / 8;
+    if (bytes.length !== perRow * height) return this;
+
+    this.raw(GS, 0x76, 0x30, 0x00, perRow & 0xff, (perRow >> 8) & 0xff, height & 0xff, (height >> 8) & 0xff);
+    this.parts.push(bytes);
+    return this;
+  }
 
   /*
    * Cut the paper, after feeding enough to clear the blade.
@@ -450,9 +721,57 @@ function wrap(text, width) {
  * tax.
  */
 function renderSale(sale, options = {}) {
-  const r = new Receipt(options.paperWidth || '80');
-  const money = (n) => Number(n || 0).toFixed(2);
+  /*
+   * Whether this printer can be taught a symbol its font lacks.
+   *
+   * Set here rather than inside Receipt because ascii() is module-level and
+   * every caller below measures columns with it - the euro is one character
+   * or three, and pair() has counted before a byte is sent.
+   */
+  /*
+   * ONLY WHEN THERE IS A EURO TO PRINT.
+   *
+   * Downloading the glyph costs 43 bytes and, more to the point, puts a
+   * command carrying arbitrary binary onto every receipt - including the
+   * ones from shops that will never see a euro. A reader that does not know
+   * `ESC &` reads its bitmap as text, which is what four existing tests did
+   * the moment this was sent unconditionally. A printer parses it correctly;
+   * spending it on nothing is still waste.
+   *
+   * The logo is excluded from the search because it is 17KB of base64 that
+   * cannot contain a euro and would be scanned on every sale.
+   */
+  const { logo: _logo, ...text } = sale || {};
+  const wantsEuro = JSON.stringify(text).indexOf(String.fromCharCode(0x20ac)) > -1;
+  const glyphs = options.symbolGlyphs !== false && wantsEuro;
+  euroText = glyphs ? EURO_MARK : 'EUR';
+  const r = new Receipt(options.paperWidth || '80', { glyphs });
+  /*
+   * Amounts carry the symbol the receipt was already showing.
+   *
+   * They used not to, on this path only: `num` keeps the digits and drops
+   * the rest, so an A4 sheet read "\u20ac 8.00" and the roll read "8.00".
+   * In a shop where the money is obvious that reads as terse; in a country
+   * where it is not, it reads as missing.
+   *
+   * No space after it, because a column is a column. The symbol goes
+   * through `ascii` with everything else, so a rupee becomes "Rs." BEFORE
+   * `pair` and `itemTable` measure - which is the whole reason those two
+   * substitute in characters rather than in bytes. A wider amount column
+   * narrows the item name column, which wraps; it cannot overflow the line.
+   */
+  const symbol = sale.currency ? String(sale.currency) : '';
+  const money = (n) => symbol + Number(n || 0).toFixed(2);
 
+  /*
+   * The logo goes above the name, where a letterhead goes.
+   *
+   * Prepared in the page rather than here: the main process has no canvas,
+   * no image decoder and no idea what a PNG is, and the page that is about
+   * to print has the logo on screen already decoded. See
+   * PosnicPro.receiptLogo in receipt-data.js.
+   */
+  if (sale.logo) r.raster(sale.logo);
   if (sale.storeName) r.centre(sale.storeName, { bold: true, size: 1 });
   if (sale.storeAddress) String(sale.storeAddress).split('\n').forEach((l) => r.centre(l));
   if (sale.storePhone) r.centre(sale.storePhone);
@@ -580,13 +899,58 @@ function renderSale(sale, options = {}) {
    * The footer is free text - a return policy, an offer, a website - so unlike
    * every other line here its length is unbounded. Wrapping on words keeps it
    * readable; letting the printer wrap it would break mid-word at column 48.
+   *
+   * THE CANNED LINE IS A FALLBACK, NOT A SIGNATURE.
+   *
+   * It used to print underneath whatever the shop had written, which nobody
+   * ever saw: until the extractor learned to read .footer-content the footer
+   * arrived empty every time, so the fallback was the only line there was. An
+   * A4 invoice prints the shop's words and nothing else, and a roll that added
+   * 'Thank you, please visit again' to them would be the till talking over the
+   * shop.
    */
   if (sale.footer) {
     for (const line of String(sale.footer).split('\n')) {
       for (const w of wrap(line, r.width)) r.centre(w);
     }
+  } else if (sale.showThanks !== false) {
+    r.centre('Thank you, please visit again');
   }
-  if (sale.showThanks !== false) r.centre('Thank you, please visit again');
+
+  /* Back to the ROM set. A printer left in the user-defined one would render
+     the borrowed slot as a euro on every job that followed, including other
+     software's. */
+  if (glyphs) r.raw(ESC, 0x25, 0);
+
+  /*
+   * A PICTURE UNDER THE TOTAL, AND A LINE INTRODUCING IT.
+   *
+   * Owner: "instead of saying visit website user can upload qr code image,
+   * asking customer to scan for online store" - and then "still need text
+   * we provide option".
+   *
+   * The caption comes FIRST because it is an instruction: "Please scan
+   * below QR for our online store" printed underneath the thing it is
+   * telling you to scan has told you nothing. It is a separate field from
+   * the footer text so that a shop which clears the picture does not leave
+   * a sentence pointing at nothing.
+   *
+   * After everything else on purpose. A customer folds a receipt to the
+   * bottom to scan it, and a QR in the middle of the totals is one they
+   * have to flatten the paper to reach.
+   */
+  if (sale.footerImage) {
+    /* A line of air first. Without it the caption reads as one more line of
+       the shop footer above it - on real paper the QR block and the footer
+       ran together into six lines of small print. */
+    r.feed(1);
+    if (sale.footerImageCaption) {
+      for (const line of String(sale.footerImageCaption).split(String.fromCharCode(10))) {
+        for (const w of wrap(line, r.width)) r.centre(w);
+      }
+    }
+    r.raster(sale.footerImage);
+  }
 
   if (options.openDrawer) r.openDrawer(options.drawerPin);
   if (options.cut !== false) r.cut();

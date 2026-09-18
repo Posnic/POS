@@ -153,6 +153,245 @@
         return m ? parseFloat(m[0]) : null;
     }
 
+/*
+ * ------------------------------------------------------------- THE LOGO
+ *
+ * A thermal printer has no notion of an image file. It lays down dots, and
+ * the only way to put a logo on a roll is to hand it a bitmap: one bit per
+ * dot, packed eight to a byte, as a GS v 0 raster command.
+ *
+ * So this is where the logo has to be prepared, not in the renderer. The
+ * main process has no canvas, no image decoder and no idea what a PNG is;
+ * the page that is about to print has all three, and already has the logo
+ * on screen, decoded, in the print modal. Reported from a shop in Italy who
+ * had Print Logo enabled and no logo on their roll - there was no code to
+ * put one there.
+ *
+ * Dots, not pixels. A receipt printer is 203dpi, which is 8 dots per mm, so
+ * the printable width is 576 dots at 80mm (72mm of paper) and 384 at 58mm
+ * (48mm). Those are the same numbers as PosnicPro.PAPER.content, and the
+ * same 12 dots per character that makes 48 and 32 columns.
+ */
+var DOTS = { '58': 384, '80': 576 };
+
+/* About 30mm of roll. A logo taller than that is a poster, and the shop
+   paid for the paper it is printed on. */
+var LOGO_MAX_ROWS = 240;
+
+/**
+ * One bit per dot, MSB first, 1 = black, padded out to the full paper width.
+ *
+ * CENTRED IN THE BITMAP RATHER THAN BY THE PRINTER. `ESC a 1` centres text
+ * on every printer and raster images on most of them, and "most" is not a
+ * thing worth discovering on a shop counter. White padding either side costs
+ * a few hundred bytes down a USB cable and is centred everywhere.
+ */
+/*
+ * A QR CODE MUST NOT BE DITHERED.
+ *
+ * Floyd-Steinberg is right for a logo, which is flat colour with soft
+ * edges, and wrong for anything a machine has to read back. Dithering
+ * spreads the error of every pixel into its neighbours, so an anti-aliased
+ * QR module edge comes out speckled - and a scanner looking for a clean
+ * square finds noise. The shop would blame the printer, or worse, print a
+ * thousand receipts nobody can scan.
+ *
+ * So a picture the shop chose is thresholded: every dot is simply on or
+ * off. That is the correct rendering for a QR, a barcode, line art and
+ * text, which is everything anyone puts under a total.
+ */
+function pack(ctx, dots, w, h, left, dither) {
+    var pixels = ctx.getImageData(0, 0, dots, h).data;
+
+    /*
+     * Floyd-Steinberg, because a threshold is not good enough here.
+     * A logo is mostly flat colour with anti-aliased edges, and a hard cut
+     * at 50% turns every gradient into a blob and every soft edge into a
+     * staircase. Spreading the error is what makes a photograph or a
+     * gradient read as itself in one bit.
+     */
+    var grey = new Float32Array(dots * h);
+    for (var i = 0; i < dots * h; i++) {
+        var o = i * 4;
+        var a = pixels[o + 3] / 255;
+        /* Over white: a transparent logo must not come out as a black box. */
+        var r = pixels[o] * a + 255 * (1 - a);
+        var g = pixels[o + 1] * a + 255 * (1 - a);
+        var b = pixels[o + 2] * a + 255 * (1 - a);
+        grey[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+
+    var bytesPerRow = dots / 8;
+    var out = new Uint8Array(bytesPerRow * h);
+    for (var y = 0; y < h; y++) {
+        for (var x = 0; x < dots; x++) {
+            var at = y * dots + x;
+            var old = grey[at];
+            var black = old < 128;
+            /* Outside the logo is paper, and paper is never dithered. */
+            if (x < left || x >= left + w) { black = false; }
+            if (black) { out[y * bytesPerRow + (x >> 3)] |= 0x80 >> (x & 7); }
+
+            if (!dither) continue;
+            var err = old - (black ? 0 : 255);
+            if (x + 1 < dots) grey[at + 1] += err * 7 / 16;
+            if (y + 1 < h) {
+                if (x > 0) grey[at + dots - 1] += err * 3 / 16;
+                grey[at + dots] += err * 5 / 16;
+                if (x + 1 < dots) grey[at + dots + 1] += err * 1 / 16;
+            }
+        }
+    }
+
+    var binary = "";
+    for (var k = 0; k < out.length; k++) binary += String.fromCharCode(out[k]);
+    return window.btoa(binary);
+}
+
+/**
+ * The shop's logo as a raster, or null when there is not one to print.
+ *
+ * Read from the LIVE modal rather than from the HTML string receiptData is
+ * given: an <img> in a detached div has not loaded yet, and drawing one is a
+ * blank rectangle. The modal is on screen with the logo already decoded.
+ */
+/*
+ * WHEN THE PAGE IS NOT ALLOWED TO LOOK.
+ *
+ * A canvas holding an image from another origin is TAINTED, and
+ * getImageData throws rather than returning pixels. A shop whose logo
+ * lives somewhere other than the dashboard - an S3 bucket, a CDN - hits
+ * that, and so does a browser with no canvas at all.
+ *
+ * Those cases hand the SOURCE on instead of giving up. The main process
+ * has no origin and no canvas, only a decoder, so the picture this page
+ * was refused is simply a file there. See src/escpos-logo.js.
+ *
+ * Only when there is a logo to print. A shop with the switch off still
+ * gets nothing, and nothing is fetched on its behalf.
+ */
+/**
+ * An <img> that is on screen and decoded, as dots.
+ *
+ * `dither` is the difference between the two things that print: a logo is
+ * a picture and reads better dithered, a QR is data and must be
+ * thresholded or a scanner cannot read it back.
+ */
+function rasterOf(img, dots, maxRows, dither) {
+    /*
+     * Never enlarged. A 120px logo stretched across 576 dots and then
+     * dithered is mud, and a shop looking at it would think the printer
+     * was broken rather than that their file is small. Small and sharp
+     * is the better failure.
+     */
+    var scale = Math.min(dots / img.naturalWidth, maxRows / img.naturalHeight, 1);
+    var w = Math.max(8, Math.round(img.naturalWidth * scale));
+    var h = Math.max(1, Math.round(img.naturalHeight * scale));
+    var left = Math.floor((dots - w) / 2);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = dots;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, dots, h);
+    ctx.drawImage(img, left, 0, w, h);
+
+    return { width: dots, height: h, data: pack(ctx, dots, w, h, left, dither) };
+}
+
+/*
+ * A PICTURE THE SHOP PUT UNDER ITS TOTAL.
+ *
+ * Owner: "instead of saying visit website user can upload qr code image,
+ * asking customer to scan for online store". A printed URL is something a
+ * customer has to type; a QR is something they point a phone at.
+ *
+ * Taller than the logo is allowed - 48mm against 30mm - because a QR that
+ * is too small does not scan, and this one is the point of the receipt
+ * rather than decoration at the top of it.
+ */
+var FOOTER_MAX_ROWS = 384;
+
+PosnicPro.receiptFooterImage = function (paperWidth) {
+    var handOn = null;
+    try {
+        var dots = DOTS[paperWidth] || DOTS['80'];
+        var img = document.querySelector('.print-modal-body .footer-image img');
+        if (!img || !img.getAttribute('src')) return null;
+
+        handOn = { src: img.src || img.getAttribute('src'), dither: false };
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return handOn;
+
+        return rasterOf(img, dots, FOOTER_MAX_ROWS, false) || handOn;
+    } catch (e) {
+        console.warn('[Print] the page cannot read the footer image, passing it on:', e.message);
+        return handOn;
+    }
+};
+
+PosnicPro.receiptLogo = function (paperWidth) {
+    var handOn = null;
+    try {
+        var dots = DOTS[paperWidth] || DOTS['80'];
+        var holder = document.querySelector('.print-modal-body .branch_image');
+        if (!holder) return null;
+        /* Print Logo off sets this to none, and on sets it to block. */
+        if (holder.style.display === 'none') return null;
+
+        var img = holder.querySelector('img');
+        if (!img || !img.getAttribute('src')) return null;
+
+        /* `src` is the resolved absolute URL; the attribute is whatever
+           was typed. The main process needs the resolved one. */
+        handOn = { src: img.src || img.getAttribute('src') };
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return handOn;
+
+        /* A logo is a picture, so it is dithered. */
+        return rasterOf(img, dots, LOGO_MAX_ROWS, true) || handOn;
+    } catch (e) {
+        /*
+         * A tainted canvas lands here, which is the common case and not
+         * an error: the main process can read what this page cannot, so
+         * the source is handed on rather than the logo dropped.
+         */
+        console.warn('[Print] the page cannot read this logo, passing it on:', e.message);
+        return handOn;
+    }
+};
+
+    /**
+     * The symbol this receipt is already showing.
+     *
+     * Read off the rendered total rather than out of a setting, like
+     * everything else in this file. The template is filled as
+     * `currency + " " + amount`, so the answer is in the markup that was
+     * about to be printed, and a shop that changed its currency changed it
+     * in one place.
+     *
+     * It matters because `num` keeps the digits and throws the rest away:
+     * an A4 sheet read "\u20ac 8.00" while the roll read "8.00", on every
+     * line, for a shop in Italy. A receipt that does not say which money it
+     * counted is a worse receipt in every country that is not the one the
+     * reader assumes.
+     *
+     * Only the total lines are asked. A quantity is a number with no
+     * symbol, and reading one would answer "no currency" with confidence.
+     */
+    function currencyOf(candidates) {
+        for (var i = 0; i < candidates.length; i++) {
+            if (!candidates[i]) continue;
+            var raw = clean(candidates[i].value);
+            var at = raw.search(/\d/);
+            if (at < 1) continue;
+            /* Whatever sits in front of the number that is not a minus. */
+            var symbol = raw.slice(0, at).replace(/[-\s]/g, '');
+            if (symbol) return symbol;
+        }
+        return '';
+    }
+
     PosnicPro.receiptData = function (html) {
         var $root = dropHidden($('<div></div>').html(html));
 
@@ -196,9 +435,44 @@
             if (t) customer.push(t);
         });
 
+        /*
+         * WHAT THE SHOP ASKED TO HAVE PRINTED UNDER THE TOTAL.
+         *
+         * Three separate things end up down here, and only the first of them
+         * was ever reaching an ESC/POS receipt:
+         *
+         *   .print-sale-notes  a note somebody typed on THIS sale
+         *   .footer-content    the shop's own Footer Content, from Settings
+         *   the brand URL      a switch on that same settings screen
+         *
+         * `.footer-content` is the slot BOTH stored templates carry, and the
+         * settings load fills it on every page load - so the text is sitting
+         * in the markup this function is handed, and nothing here looked at
+         * it. A shop that typed a footer, saved it, watched it print on A4 and
+         * then found "Thank you, please visit again" on the 80mm roll was
+         * reading the renderer's default, which fires only when this comes
+         * back empty. It came back empty every time.
+         *
+         * The brand URL is a different shape of the same miss: it is not in
+         * this markup at all, because printView appends it AFTER the thermal
+         * branch has already returned. Read from the setting instead, so the
+         * two papers answer to one switch rather than to two code paths.
+         *
+         * Line breaks are kept. `clean` collapses all whitespace, which is
+         * right for an amount and wrong for a four-line address - a shop that
+         * laid its footer out over several lines gets those lines.
+         */
         var footerLines = [];
         var notes = textOf($root.find('.print-sale-notes'));
         if (notes) footerLines.push(notes);
+
+        $root.find('.footer-content').each(function () {
+            String($(this).text() || '').split(String.fromCharCode(10)).forEach(function (line) {
+                var t = clean(line);
+                if (t) footerLines.push(t);
+            });
+        });
+
         // Outermost only: the template nests one .invoice-policy inside
         // another, and both carry the same text.
         $root.find('.invoice-policy').each(function () {
@@ -207,7 +481,18 @@
             if (t) footerLines.push(t);
         });
 
+        /* The switch is written to local storage as a boolean by one path and
+           as a string by another, so compare the string either becomes. */
+        if (typeof PosnicPro !== 'undefined' && PosnicPro.local
+            && String(PosnicPro.local.get('print_url')) === 'true') {
+            footerLines.push(PosnicPro.BRAND_URL);
+        }
+
         return {
+            /* The line that introduces the picture, if there is a picture.
+               Read from the markup like everything else here. */
+            footerImageCaption: textOf($root.find('.footer-image-caption')),
+            currency: currencyOf([total, subTotal, change]),
             storeName: textOf($root.find('.print_store_name')),
             storeAddress: address.join('\n'),
             storePhone: [phone, altPhone].filter(Boolean).join(' / '),

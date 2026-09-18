@@ -1190,6 +1190,27 @@ class SettingModel extends BaseModel {
 
   async updateCommonSettings(data = {}) {
     try {
+      /*
+       * THE QR, MADE ONCE.
+       *
+       * Before anything else, because the result goes into `data` and the
+       * write below reads it like any other field. It needs the branch as
+       * it stands to know whether the address changed - a settings page is
+       * saved for fifty unrelated reasons and re-encoding every time would
+       * be work nobody asked for.
+       */
+      const { resolveFooterImage } = require('../helpers/footer-qr');
+      if (data.footer_qr_url !== undefined || data.footer_image !== undefined) {
+        const branches = await this.getCollection('branches');
+        const now = await branches.findOne(
+          { _id: this.normalizeId(this.branchId) },
+          { projection: { footer_qr_url: 1, footer_image: 1 } }
+        );
+        const made = await resolveFooterImage(data, now || {});
+        if (made) Object.assign(data, made);
+        else delete data.footer_image;
+      }
+
       // Ensure context is set (branchId, licenseId, user required for updates)
       if (!this.branchId || !this.licenseId || !this.user?._id) {
         throw new Error('Branch context is required (branchId, licenseId, user._id)');
@@ -1413,6 +1434,41 @@ class SettingModel extends BaseModel {
               quote_default_terms: String(data.quote_default_terms || '')
                 .trim()
                 .slice(0, 1500),
+            }
+          : {}),
+        ...(data.footer_image !== undefined
+          ? {
+              /*
+               * The QR, or whatever the shop put under its total. Capped at
+               * the same 400KB as the signature: it is a data URL living in
+               * the branch document, and a phone photograph dropped in here
+               * would be megabytes on every settings read.
+               *
+               * An empty string removes it, which is how the clear button
+               * works - there is no separate switch, because an image that
+               * is there is one the shop wants printed.
+               */
+              footer_image: String(data.footer_image || '').slice(0, 400000),
+            }
+          : {}),
+        ...(data.footer_qr_url !== undefined
+          ? {
+              footer_qr_url: String(data.footer_qr_url || '')
+                .trim()
+                .slice(0, 2000),
+            }
+          : {}),
+        ...(data.footer_image_caption !== undefined
+          ? {
+              /* Two lines at 48 characters is what fits above a QR before
+                 the receipt starts looking like a leaflet. */
+              footer_image_caption: String(data.footer_image_caption || '')
+                .trim()
+                .split(String.fromCharCode(10))
+                .slice(0, 2)
+                .map((line) => line.trim().slice(0, 64))
+                .filter(Boolean)
+                .join(String.fromCharCode(10)),
             }
           : {}),
         ...(data.quote_default_signature !== undefined

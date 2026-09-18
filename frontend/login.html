@@ -208,6 +208,21 @@
                                             <select id="language_select" class="form-control form-control-sm d-inline-block w-auto"
                                                 aria-label="Language" data-t-aria-label="lang_language" style="display:none"></select>
                                         </div>
+
+                                        <!--
+                                            The version, before anybody has signed in.
+
+                                            This is the one screen a shop can always reach - a till that
+                                            will not let somebody in is still showing this page - so the
+                                            number that support asks for first belongs here as well as
+                                            inside. Filled by version-badge.js and empty until then: on
+                                            the desktop it reads the installed shell, and in a browser it
+                                            falls back to the build hash of this page, which is still
+                                            enough to tell two of them apart.
+                                        -->
+                                        <div class="text-center mt-2">
+                                            <small id="posnic_version_login" class="text-muted" style="font-size:11.5px;letter-spacing:.02em;"></small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

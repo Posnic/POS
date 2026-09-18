@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "මෙහි කන්න, මේසයට ගෙන එනවා",
   "lang_fulfilment_takeaway": "කවුන්ටරයෙන් ලබා ගනී",
   "lang_fulfilment_delivery": "ලිපිනයකට ගෙනෙනවා",
-  "lang_fulfilment_help": "කිසිවක් සලකුණු නොකරන්න, ඔබේ වියාපාර වර්ගයට සුදුසු පෙරවිය ගනුදෙනුවන්ට ලෙබේ. රෙස්ටොරන්ට් මොඩිවලය ගියවිට මේසයක් කිසිවිටෙක ලබා නොදෙයි."
+  "lang_fulfilment_help": "කිසිවක් සලකුණු නොකරන්න, ඔබේ වියාපාර වර්ගයට සුදුසු පෙරවිය ගනුදෙනුවන්ට ලෙබේ. රෙස්ටොරන්ට් මොඩිවලය ගියවිට මේසයක් කිසිවිටෙක ලබා නොදෙයි.",
+  "lang_above_the_picture": "පින්තූරයට ඉහළ පේළිය",
+  "lang_qr_web_address": "QR වෙබ් ලිපිනය",
+  "lang_or_upload_a_picture": "නැතහොත් පින්තූරයක් උඩුගත කරන්න",
+  "lang_footer_picture_file": "පාද පින්තූර ගොනුව",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "උදා: අපගේ ඔන්ලයින් සාප්පුව සඳහා පහත QR ස්කෑන් කරන්න",
+  "lang_ex_https_example_com_shop": "උදා: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "පින්තූරය 300 KB ට අඩුවෙන් තබන්න - කුඩා PNG එකක් හොඳම වේ."
 }

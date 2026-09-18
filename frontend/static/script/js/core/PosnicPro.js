@@ -116,6 +116,16 @@ if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
 }
 
 PosnicPro = {
+    /*
+     * The address printed when a shop turns "Print URL" on.
+     *
+     * One spelling, because there are four print paths that can put it on
+     * paper - silent A4, silent thermal, the browser's print frame, and the
+     * register report - and a receipt extractor that has to decide whether to
+     * add it. Four literals is four places to keep in step, and the thermal
+     * path had already fallen out of step without anyone noticing.
+     */
+    BRAND_URL: 'https://www.posnic.com',
     config: [],
     modules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales', 'registers'],
     record_url: null,
@@ -3126,6 +3136,25 @@ PosnicPro = {
                 $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
                 return;
             }
+            /*
+             * THE FLOOR STAYS ON THE FLOOR.
+             *
+             * Owner: "if i click print bill then i need success message
+             * bill printed and show same page".
+             *
+             * A table is #/kot/6, so the reset below took it to #/kot -
+             * which is the same screen with nothing selected. The waiter
+             * pressed Print Bill, the paper came out, and the order they
+             * were looking at vanished from the right of the screen.
+             * They then had to find the table again to take the money.
+             *
+             * Printing a bill is not the end of that table: the money
+             * comes next, on the same panel. Settling is what clears it,
+             * and refreshKOTData does that when it happens.
+             */
+            if (parts[0] === 'kot') {
+                return;
+            }
             /* A document address (#/purchaseorders/<id>, #/suppliers/<id>)
                is exactly where the reader wants to remain - resetting the
                hash here CLOSED the open document after every print. The
@@ -3180,6 +3209,23 @@ PosnicPro = {
             console.warn('[Print] no items found in the receipt; falling back to HTML');
             return false;
         }
+
+        /*
+         * The logo, as dots.
+         *
+         * Not part of receiptData because it is not read out of the HTML
+         * string: an <img> in a detached div has not loaded, and drawing one
+         * is a blank rectangle. receiptLogo reads the LIVE modal, where the
+         * logo is on screen and decoded, and returns null for every reason a
+         * logo might not be printable - the setting is off, there is no image,
+         * the canvas is tainted. A receipt prints either way.
+         */
+        sale.logo = PosnicPro.receiptLogo ? PosnicPro.receiptLogo(width) : null;
+        /* The QR, or whatever the shop put under its total. Thresholded
+           rather than dithered - see receiptFooterImage. */
+        sale.footerImage = PosnicPro.receiptFooterImage
+            ? PosnicPro.receiptFooterImage(width)
+            : null;
 
         /*
          * Raw printing needs a printer by name.
@@ -3285,6 +3331,25 @@ PosnicPro = {
                 } catch (e) {
                     console.warn('[Print] ignoring unreadable printer list:', e.message);
                 }
+                /*
+                 * WHETHER THIS PRINTER CAN BE TAUGHT A SYMBOL.
+                 *
+                 * A euro is not in the font and `ESC t` does nothing on the
+                 * printers this runs on, so the receipt downloads the glyph
+                 * with `ESC &` and prints it from a borrowed slot. That is
+                 * core ESC/POS and works on the hardware it was tested on,
+                 * but so did the code page, which turned out to be ignored.
+                 *
+                 * So it is a switch, stored per machine like the printer
+                 * name is, because it describes the box on the counter
+                 * rather than the shop. Off spells the currency instead,
+                 * which is never wrong and never pretty.
+                 *
+                 * tests/tools/can-this-printer-learn-a-euro.js prints the
+                 * strip that answers it for a given printer.
+                 */
+                opts.symbolGlyphs = PosnicPro.local.get('receipt_symbol_glyphs') !== 'false';
+
                 if (cfg && cfg.autoOpenOnSale) {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;
@@ -3403,7 +3468,7 @@ PosnicPro = {
             html += '<img style="display:inline-block;" src="' + image + '">';
             }
             if (printUrl === 'true') {
-            html += '<div style="margin-top:4px;">https://www.posnic.com</div>';
+            html += '<div style="margin-top:4px;">' + PosnicPro.BRAND_URL + '</div>';
             }
             html += '</div></div>';
             html += '</body></html>';
@@ -3457,7 +3522,7 @@ PosnicPro = {
             "top": "-1000000px"
         });
         let printUrlConfig = PosnicPro.local.get('print_url');
-        let url = ((printUrlConfig === 'true') ? '<div style="text-align:center;">https://www.posnic.com</div>' : '');
+        let url = ((printUrlConfig === 'true') ? '<div style="text-align:center;">' + PosnicPro.BRAND_URL + '</div>' : '');
         $("body").append(frame1);
         var frameDoc = frame1[0].contentWindow ? frame1[0].contentWindow : frame1[0].contentDocument.document ? frame1[0].contentDocument.document : frame1[0].contentDocument;
         frameDoc.document.open();
@@ -3479,7 +3544,7 @@ PosnicPro = {
             frameDoc.document.write('<img style="display:inline-block;" src="' + image + '">');
         }
         if (printUrlConfig === 'true') {
-            frameDoc.document.write('<div style="margin-top:4px;">https://www.posnic.com</div>');
+            frameDoc.document.write('<div style="margin-top:4px;">' + PosnicPro.BRAND_URL + '</div>');
         }
         frameDoc.document.write('</div></div>');
 

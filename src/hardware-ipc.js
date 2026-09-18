@@ -251,13 +251,94 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         options.paperWidth
       );
 
+      /*
+       * A LOGO THE PAGE WAS NOT ALLOWED TO READ.
+       *
+       * receipt-data.js prepares the logo in the page, where the image is
+       * already decoded and it costs nothing. When the canvas is tainted -
+       * a logo served from another origin without CORS headers - it hands
+       * over `{ src }` instead of dots, because a page can never read those
+       * pixels however it asks.
+       *
+       * Here there is no origin and no canvas, only Chromium's decoder, so
+       * the picture the page was refused is simply a file. Resolved once per
+       * paper width rather than per target: two 80mm printers want the same
+       * bitmap, and fetching it twice is a second round trip for nothing.
+       */
+      const madeAlready = new Map();
+
+      /**
+       * One picture, for one paper width.
+       *
+       * `which` is the field on the sale: the logo at the top, or whatever
+       * the shop put under the total. They differ in one way that matters -
+       * a logo is a picture and is dithered, a QR is data and must be
+       * thresholded or a scanner cannot read it back.
+       */
+      async function pictureDots(which, paperWidth, dither) {
+        const asked = sale && sale[which];
+        if (!asked || asked.data || !asked.src) return asked || null;
+
+        const key = which + ":" + paperWidth;
+        if (madeAlready.has(key)) return madeAlready.get(key);
+
+        const { rasterFor } = require('./escpos-logo');
+        const { nativeImage, net } = require('electron');
+        const raster = await rasterFor(asked.src, paperWidth, {
+          decode: (buf) => nativeImage.createFromBuffer(buf),
+          readFile: (file) => require('fs').readFileSync(file),
+          get: (url, limits) =>
+            new Promise((done) => {
+              /* Never rejects: a logo is decoration and a receipt is not. */
+              let finished = false;
+              const settle = (v) => {
+                if (!finished) { finished = true; done(v); }
+              };
+              const timer = setTimeout(() => settle(null), limits.timeout);
+              try {
+                const req = net.request(url);
+                const chunks = [];
+                let size = 0;
+                req.on('response', (res) => {
+                  res.on('data', (c) => {
+                    size += c.length;
+                    if (size > limits.limit) { req.abort(); settle(null); return; }
+                    chunks.push(c);
+                  });
+                  res.on('end', () => { clearTimeout(timer); settle(Buffer.concat(chunks)); });
+                  res.on('error', () => { clearTimeout(timer); settle(null); });
+                });
+                req.on('error', () => { clearTimeout(timer); settle(null); });
+                req.end();
+              } catch (e) {
+                clearTimeout(timer);
+                settle(null);
+              }
+            }),
+        }, { dither });
+        if (!raster) {
+          console.warn('[Print] the ' + which + ' could not be read here either, printing without it');
+        }
+        madeAlready.set(key, raster);
+        return raster;
+      }
+
       const results = [];
       for (const target of targets) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
            32, so the same bytes cannot serve both. Getting this wrong wraps the
            total onto its own line, which looks like a rounding bug on paper. */
-        const bytes = renderSale(sale || {}, {
-          paperWidth: String(columnsFor(target.pageSize)),
+        const paperWidth = String(columnsFor(target.pageSize));
+        /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
+           per paper width, and the loop is serial anyway. */
+        const logo = await pictureDots('logo', paperWidth, true);
+        /* eslint-disable-next-line no-await-in-loop -- cached per width. */
+        const footerImage = await pictureDots('footerImage', paperWidth, false);
+        const bytes = renderSale({ ...(sale || {}), logo, footerImage }, {
+          paperWidth,
+          /* A printer that cannot be taught a glyph spells the currency
+             instead. Per machine, like the printer name. */
+          symbolGlyphs: options.symbolGlyphs !== false,
           /* The drawer opens once, on the first sheet. Pulsing it per copy
              would have it kick three times for a three-copy receipt. */
           openDrawer: !!options.openDrawer && results.length === 0,

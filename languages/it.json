@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Mangiare qui, portato al tavolo",
   "lang_fulfilment_takeaway": "Ritirato al banco",
   "lang_fulfilment_delivery": "Consegnato a un indirizzo",
-  "lang_fulfilment_help": "Non spuntare nulla e i clienti vedranno l’impostazione predefinita adatta al tuo tipo di attività. Un negozio senza il modulo Ristorante non offre mai un tavolo, qualunque cosa sia spuntata."
+  "lang_fulfilment_help": "Non spuntare nulla e i clienti vedranno l’impostazione predefinita adatta al tuo tipo di attività. Un negozio senza il modulo Ristorante non offre mai un tavolo, qualunque cosa sia spuntata.",
+  "lang_above_the_picture": "Riga sopra l’immagine",
+  "lang_qr_web_address": "Indirizzo web del QR",
+  "lang_or_upload_a_picture": "Oppure carica un’immagine",
+  "lang_footer_picture_file": "File immagine del piè di pagina",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Es.: Scansiona il QR qui sotto per il nostro negozio online",
+  "lang_ex_https_example_com_shop": "Es.: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Mantieni l’immagine sotto i 300 KB: un piccolo PNG funziona meglio."
 }
