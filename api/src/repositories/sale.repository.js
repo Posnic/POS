@@ -7750,7 +7750,10 @@ class SalesRepository {
         items: (Array.isArray(sale.items) ? sale.items : []).map((line) => ({
           qty: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0) || 1,
           name: String(line.item_name || line.name || ''),
-          note: String(line.item_description || '').slice(0, 80),
+          /* The note a waiter typed. A screen hangs where customers and
+             staff can both see it, and the catalogue sentence belongs on a
+             menu, not above a fryer. */
+          note: String(line.item_note || line.item_description || '').slice(0, 80),
         })),
       }));
 
@@ -9659,7 +9662,10 @@ class SalesRepository {
             item_id: idStr,
             item_name: String(ex.item_name || ''),
             item_quantity: qty,
-            item_description: String(ex.item_description || ''),
+            /* The typed note if the line has one. A cancellation ticket is
+               read by the same cook as the order, so it follows the same rule:
+               the waiter's words, never the menu's. */
+            item_description: String(ex.item_note || ex.item_description || ''),
             spice_level: spiceLevel.levelOf(ex.spice_level),
             process: 'cancel',
             item_code: String(ex.item_sku || ''),
