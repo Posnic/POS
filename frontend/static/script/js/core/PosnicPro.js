@@ -3326,6 +3326,25 @@ PosnicPro = {
                 } catch (e) {
                     console.warn('[Print] ignoring unreadable printer list:', e.message);
                 }
+                /*
+                 * WHETHER THIS PRINTER CAN BE TAUGHT A SYMBOL.
+                 *
+                 * A euro is not in the font and `ESC t` does nothing on the
+                 * printers this runs on, so the receipt downloads the glyph
+                 * with `ESC &` and prints it from a borrowed slot. That is
+                 * core ESC/POS and works on the hardware it was tested on,
+                 * but so did the code page, which turned out to be ignored.
+                 *
+                 * So it is a switch, stored per machine like the printer
+                 * name is, because it describes the box on the counter
+                 * rather than the shop. Off spells the currency instead,
+                 * which is never wrong and never pretty.
+                 *
+                 * tests/tools/can-this-printer-learn-a-euro.js prints the
+                 * strip that answers it for a given printer.
+                 */
+                opts.symbolGlyphs = PosnicPro.local.get('receipt_symbol_glyphs') !== 'false';
+
                 if (cfg && cfg.autoOpenOnSale) {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;

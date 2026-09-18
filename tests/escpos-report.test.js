@@ -23,6 +23,24 @@ function decode(buf) {
       const c = buf[i + 1];
       if (c === 0x40) { i += 2; continue; }
       if (c === 0x61 || c === 0x45 || c === 0x74) { i += 3; continue; }
+      /*
+       * ESC & y c1 c2 x d... - a downloaded character, and the only variable
+       * length command on a receipt. Its bitmap is arbitrary bytes, so a
+       * decoder that skips two and carries on reads the glyph as text and
+       * reports lines far wider than the paper. That is what happened here
+       * the first time the euro glyph was sent.
+       */
+      if (c === 0x26) {
+        const bands = buf[i + 2];
+        const from = buf[i + 3];
+        const to = buf[i + 4];
+        let at = i + 5;
+        for (let ch = from; ch <= to; ch += 1) at += 1 + buf[at] * bands;
+        i = at;
+        continue;
+      }
+      /* ESC % n - which character set is in use. */
+      if (c === 0x25) { i += 3; continue; }
       if (c === 0x64) { lines.push(line); line = ''; i += 3; continue; }
       if (c === 0x70) { i += 5; continue; }
       i += 2; continue;

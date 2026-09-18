@@ -324,6 +324,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         const logo = await logoDots(paperWidth);
         const bytes = renderSale({ ...(sale || {}), logo }, {
           paperWidth,
+          /* A printer that cannot be taught a glyph spells the currency
+             instead. Per machine, like the printer name. */
+          symbolGlyphs: options.symbolGlyphs !== false,
           /* The drawer opens once, on the first sheet. Pulsing it per copy
              would have it kick three times for a three-copy receipt. */
           openDrawer: !!options.openDrawer && results.length === 0,

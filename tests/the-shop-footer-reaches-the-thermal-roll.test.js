@@ -149,6 +149,48 @@ test('the brand URL follows its switch, on the roll as on the sheet', () => {
  * Control codes are consumed by their own length so a stray 0x0a inside a
  * command cannot be mistaken for a line break.
  */
+/** Only the bytes a printer would render as characters. */
+function textBytes(buf) {
+  const out = [];
+  let i = 0;
+  while (i < buf.length) {
+    const b = buf[i];
+    if (b === 0x1b) {
+      const c = buf[i + 1];
+      if (c === 0x40) { i += 2; continue; }
+      if (c === 0x61 || c === 0x45 || c === 0x74 || c === 0x64 || c === 0x25) { i += 3; continue; }
+      if (c === 0x70) { i += 5; continue; }
+      if (c === 0x26) {
+        const bands = buf[i + 2];
+        const from = buf[i + 3];
+        const to = buf[i + 4];
+        let at = i + 5;
+        for (let ch = from; ch <= to; ch += 1) at += 1 + buf[at] * bands;
+        i = at;
+        continue;
+      }
+      i += 2;
+      continue;
+    }
+    if (b === 0x1d) {
+      const c = buf[i + 1];
+      if (c === 0x21) { i += 3; continue; }
+      if (c === 0x56) { i += 4; continue; }
+      if (c === 0x76 && buf[i + 2] === 0x30) {
+        const perRow = buf[i + 4] + buf[i + 5] * 256;
+        const rows = buf[i + 6] + buf[i + 7] * 256;
+        i += 8 + perRow * rows;
+        continue;
+      }
+      i += 2;
+      continue;
+    }
+    out.push(b);
+    i += 1;
+  }
+  return out;
+}
+
 function paper(buf) {
   const ESC = 0x1b;
   const GS = 0x1d;
@@ -161,6 +203,24 @@ function paper(buf) {
       const c = buf[i + 1];
       if (c === 0x40) { i += 2; continue; }
       if (c === 0x61 || c === 0x45 || c === 0x74) { i += 3; continue; }
+      /*
+       * ESC & y c1 c2 x d... - a downloaded character, and the only variable
+       * length command on a receipt. Its bitmap is arbitrary bytes, so a
+       * decoder that skips two and carries on reads the glyph as text and
+       * reports lines far wider than the paper. That is what happened here
+       * the first time the euro glyph was sent.
+       */
+      if (c === 0x26) {
+        const bands = buf[i + 2];
+        const from = buf[i + 3];
+        const to = buf[i + 4];
+        let at = i + 5;
+        for (let ch = from; ch <= to; ch += 1) at += 1 + buf[at] * bands;
+        i = at;
+        continue;
+      }
+      /* ESC % n - which character set is in use. */
+      if (c === 0x25) { i += 3; continue; }
       if (c === 0x64) { lines.push(line); line = ''; i += 3; continue; }
       if (c === 0x70) { i += 5; continue; }
       i += 2;
@@ -306,7 +366,9 @@ test('NOTHING ABOVE 0x7E EVER REACHES THE PAPER', () => {
     { cut: true }
   );
 
-  const high = [...out].filter((b, i) => b > 0x7e && b !== 0x0a);
+  /* Everything except the downloaded glyph, which is a bitmap and is
+     allowed to be any bytes at all - the decoder skips it by length. */
+  const high = textBytes(out).filter((b) => b > 0x7e && b !== 0x0a);
   assert.deepStrictEqual(
     high,
     [],
@@ -314,17 +376,74 @@ test('NOTHING ABOVE 0x7E EVER REACHES THE PAPER', () => {
   );
 });
 
-test('a euro is spelled, because no printer can be relied on to draw one', () => {
+test('THE PRINTER IS TAUGHT THE SYMBOL ITS FONT DOES NOT HAVE', () => {
+  /*
+   * `ESC &` downloads a bitmap into a character slot and `ESC % 1` switches
+   * the user-defined set on, after which that slot prints as an ordinary
+   * character - one column wide, so none of the column arithmetic changes.
+   *
+   * Proved on a real POS-80C before it shipped, because `ESC t` looked just
+   * as standard and turned out to be ignored.
+   */
   const out = renderSale(
     { storeName: 'S', currency: '\u20ac', subTotal: 13, total: 13 },
     { cut: true }
   );
+
+  assert.ok(out.indexOf(Buffer.from([0x1b, 0x26])) > -1, 'no glyph was downloaded');
+  assert.ok(
+    out.indexOf(Buffer.from([0x1b, 0x25, 1])) > -1,
+    'the user-defined set was never switched on'
+  );
+
   const lines = paper(out).filter((l) => l.includes('13.00'));
   assert.ok(lines.length > 0, 'nothing printed');
   for (const line of lines) {
-    assert.ok(line.includes('EUR13.00'), 'the euro did not become EUR: ' + JSON.stringify(line));
-    assert.ok(line.length <= 48, 'a line ran past the paper: ' + line.length);
+    assert.ok(
+      line.includes(String.fromCharCode(0x60) + '13.00'),
+      'the amount does not carry the taught slot: ' + JSON.stringify(line)
+    );
+    assert.strictEqual(line.length, 48, 'the symbol is not one column wide');
   }
+});
+
+test('AND IT PUTS THE PRINTER BACK, or every later receipt is garbled', () => {
+  /*
+   * The one thing that would make this unshippable. A printer left in the
+   * user-defined set renders the borrowed slot as a currency symbol on every
+   * job that follows, including other software's.
+   */
+  const out = renderSale({ storeName: 'S', currency: '\u20ac', total: 1 }, { cut: true });
+  const on = out.indexOf(Buffer.from([0x1b, 0x25, 1]));
+  const off = out.indexOf(Buffer.from([0x1b, 0x25, 0]));
+  assert.ok(off > on, 'the receipt never leaves the user-defined character set');
+});
+
+test('a printer that cannot be taught spells it instead, at the same width', () => {
+  /* `ESC &` is core ESC/POS and this hardware honours it - and so did the
+     code page, on paper. The switch is why that mistake is survivable. */
+  const out = renderSale(
+    { storeName: 'S', currency: '\u20ac', subTotal: 13, total: 13 },
+    { cut: true, symbolGlyphs: false }
+  );
+  assert.strictEqual(out.indexOf(Buffer.from([0x1b, 0x26])), -1, 'it taught anyway');
+
+  const lines = paper(out).filter((l) => l.includes('13.00'));
+  for (const line of lines) {
+    assert.ok(line.includes('EUR13.00'), 'the euro did not become EUR: ' + JSON.stringify(line));
+    assert.strictEqual(
+      line.length,
+      48,
+      'three letters where one column was counted: ' + JSON.stringify(line)
+    );
+  }
+});
+
+test('and a receipt with no euro spends nothing on the glyph', () => {
+  /* 43 bytes and a binary command on every receipt from every shop that
+     will never see a euro. */
+  const out = renderSale({ storeName: 'S', currency: 'Rs.', total: 1 }, { cut: true });
+  assert.strictEqual(out.indexOf(Buffer.from([0x1b, 0x26])), -1, 'taught for nothing');
 });
 
 test('and an accent is flattened rather than guessed at', () => {
@@ -610,7 +729,10 @@ test('the receipt says which money it counted', () => {
   const out = renderSale(sale, { cut: true });
   const line = paper(out).find((l) => l.startsWith('Subtotal'));
   assert.ok(line, 'no subtotal line to check');
-  assert.ok(line.includes('EUR8.00'), 'the amount lost its currency: ' + JSON.stringify(line));
+  assert.ok(
+    line.includes(String.fromCharCode(0x60) + '8.00'),
+    'the amount lost its currency: ' + JSON.stringify(line)
+  );
 });
 
 test('and a receipt that never showed one still does not', () => {
