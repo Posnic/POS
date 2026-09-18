@@ -9123,9 +9123,16 @@ class SalesRepository {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
       const _id = new ObjectId(String(saleId));
+      /* The tenant is server context, not a query supplied by the customer.
+         Keep it literal when this raw Mongo collection is used so an object
+         can never turn into an operator. */
+      const tenantFilter = {
+        ...(BaseModel.license ? { license: { $eq: BaseModel.license } } : {}),
+        ...(BaseModel.currentBranch ? { branch_id: { $eq: BaseModel.currentBranch } } : {}),
+      };
 
       const sale = await salesCollection.findOne(
-        { _id, ...activeTenantFilter() },
+        { _id: { $eq: _id }, ...tenantFilter },
         {
           projection: {
             order_state: 1,
@@ -9182,7 +9189,7 @@ class SalesRepository {
        */
       if (sale.cancel_seen === false && sale.customer_cancelled_at) {
         await salesCollection.updateOne(
-          { _id, ...activeTenantFilter() },
+          { _id: { $eq: _id }, ...tenantFilter },
           { $set: { cancel_seen: true, cancel_seen_at: new Date() } }
         );
         return {
@@ -9257,7 +9264,7 @@ class SalesRepository {
       ) {
         const answeredAt = new Date();
         await salesCollection.updateOne(
-          { _id, ...activeTenantFilter() },
+          { _id: { $eq: _id }, ...tenantFilter },
           {
             $set: {
               change_requested: null,
@@ -9287,7 +9294,7 @@ class SalesRepository {
           updated_date: answeredAt,
         };
         if (decision !== 'accept' && decision !== 'accepted') {
-          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          await salesCollection.updateOne({ _id: { $eq: _id }, ...tenantFilter }, { $set: said });
           return {
             status: true,
             message: 'The order stands',
@@ -9307,7 +9314,7 @@ class SalesRepository {
         /* The request is answered either way. A shop that pressed accept and
            met a refusal - the dish went off the menu while the order sat in
            the queue - must not be asked the same question again forever. */
-        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        await salesCollection.updateOne({ _id: { $eq: _id }, ...tenantFilter }, { $set: said });
         if (!done.status) return done;
         return {
           status: true,
@@ -9332,7 +9339,7 @@ class SalesRepository {
         /* `rejected` means "no, do not cancel it" - the order stands. The
            screen's own wording ("Keep the order") is the truth of it. */
         if (decision === 'keep' || decision === 'rejected') {
-          await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+          await salesCollection.updateOne({ _id: { $eq: _id }, ...tenantFilter }, { $set: said });
           return {
             status: true,
             message: 'The order stands',
@@ -9342,7 +9349,7 @@ class SalesRepository {
         /* A person at the shop is deciding this right now, so it is not
            something the shop needs telling about afterwards. */
         const done = await this.cancelCustomerOrder(sale, { alreadyKnown: true });
-        await salesCollection.updateOne({ _id, ...activeTenantFilter() }, { $set: said });
+        await salesCollection.updateOne({ _id: { $eq: _id }, ...tenantFilter }, { $set: said });
         if (!done.status) return done;
         return {
           status: true,
@@ -9361,7 +9368,7 @@ class SalesRepository {
       }
 
       const written = await salesCollection.updateOne(
-        { _id, ...activeTenantFilter() },
+        { _id: { $eq: _id }, ...tenantFilter },
         {
           $set: {
             order_state: move.state,
