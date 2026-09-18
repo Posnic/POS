@@ -2248,6 +2248,9 @@
   "Too many changes in a minute. Please wait a moment and try again.": [
     "src/middleware/assistant-rate-limit.js"
   ],
+  "Too many handset management requests. Please wait a few minutes and try again.": [
+    "src/middleware/auth-rate-limit.js"
+  ],
   "Too many invoice requests. Please wait a few minutes and try again.": [
     "src/middleware/auth-rate-limit.js"
   ],
