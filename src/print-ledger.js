@@ -140,6 +140,15 @@ function setDir(dir) {
  * again. The hash is what makes a duplicate detectable afterwards as well as
  * preventable at the time.
  */
+/*
+ * How many times a ticket we WATCHED fail may be tried again.
+ *
+ * Three, and then it stops. A printer that is switched off stays
+ * switched off, and a ticket that retries for ever is a poll that never
+ * finishes and a queue that never drains.
+ */
+const MAX_ATTEMPTS = 3;
+
 function keyFor(parts) {
   return crypto.createHash('sha1').update(JSON.stringify(parts)).digest('hex');
 }
@@ -165,6 +174,7 @@ function claim(key, about = {}) {
     day: _today(),
     at: new Date().toISOString(),
     state: 'attempted',
+    attempts: 1,
     sale: String(about.saleId || ''),
     kind: String(about.kind || ''),
   };
@@ -188,6 +198,62 @@ function settle(key, outcome, detail = '') {
 }
 
 /**
+ * May a ticket that we WATCHED fail be tried again?
+ *
+ * The distinction this turns on, and the reason it is safe:
+ *
+ *   attempted, never settled   the till died between the record and the
+ *                              paper. Nobody knows whether a ticket came
+ *                              out. Trying again could duplicate it, so
+ *                              it is left alone - that is the trade the
+ *                              owner asked for and it is unchanged.
+ *
+ *   settled as failed          the printer ANSWERED, and the answer was
+ *                              no: offline, out of paper, queue refused,
+ *                              did not answer in time. There is no paper
+ *                              to duplicate. Not retrying this is how a
+ *                              cancellation disappears for good because a
+ *                              printer was asleep for ten seconds.
+ *
+ * Returns false for a ticket this has never seen, so a first print falls
+ * through to claim() exactly as before.
+ *
+ * @returns {boolean} true when the caller may print it again.
+ */
+function retry(key) {
+  if (!_dir || !key) return false;
+  const store = _load();
+  const entry = store.entries[String(key)];
+  if (!entry) return false;
+  if (entry.state !== 'failed') return false;
+  const attempts = Number(entry.attempts || 1);
+  if (attempts >= MAX_ATTEMPTS) return false;
+  entry.attempts = attempts + 1;
+  entry.state = 'attempted';
+  entry.at = new Date().toISOString();
+  delete entry.settledAt;
+  _save();
+  return true;
+}
+
+/**
+ * Is this ticket finished with, one way or the other?
+ *
+ * True when it printed, when it has used up its tries, or when its
+ * outcome is unknown and must stay that way. The caller uses this to
+ * decide whether the SERVER should be told the sale is done: a ticket
+ * with a try left has to be offered again, or the retry above never
+ * happens.
+ */
+function spent(key) {
+  if (!_dir || !key) return true;
+  const entry = _load().entries[String(key)];
+  if (!entry) return true;
+  if (entry.state !== 'failed') return true;
+  return Number(entry.attempts || 1) >= MAX_ATTEMPTS;
+}
+
+/**
  * The measurement, which this area has never had.
  *
  * `attempted` that never settled is the interesting number: it means the till
@@ -207,4 +273,16 @@ function summary(day = _today()) {
   return out;
 }
 
-module.exports = { setDir, keyFor, attempted, claim, settle, summary, KEEP_DAYS, MAX_ENTRIES };
+module.exports = {
+  setDir,
+  keyFor,
+  attempted,
+  claim,
+  retry,
+  spent,
+  settle,
+  summary,
+  KEEP_DAYS,
+  MAX_ENTRIES,
+  MAX_ATTEMPTS,
+};

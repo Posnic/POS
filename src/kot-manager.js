@@ -112,6 +112,10 @@ class KOTManager {
      * order is worse than printing it a little late, so the safety net stays.
      */
     this._kotNudgeTimer = null;
+    /* One pass at a time, and a note that another was asked for while
+       this one was busy. See _poll. */
+    this._passRunning = false;
+    this._pollAgain = false;
     this._onKotCreated = (payload) => this._onKotEvent(payload);
     try { process.on('posnic:kot-created', this._onKotCreated); } catch (e) { /* never fatal */ }
 
@@ -407,6 +411,35 @@ class KOTManager {
    * or any earlier one. False means DO NOT PRINT.
    */
   _claimForPrint(key, about) {
+    /*
+     * A FAILURE WE WATCHED IS NOT THE SAME AS A CRASH.
+     *
+     * Owner: "sometime cancel not getting printed."
+     *
+     * This is how. The record above is written before the paper, so a
+     * till that dies does not reprint - right, and unchanged. But the
+     * same record also closed the door on a ticket whose printer simply
+     * ANSWERED NO: switched off, out of paper, or ten seconds late
+     * waking up. That is a different thing. Nothing came out, we know
+     * nothing came out, and there is no paper to duplicate - and yet the
+     * ticket was never offered again by anything, anywhere. One sleepy
+     * printer and a cancellation is gone for good, silently, which on a
+     * cancellation means a kitchen carries on cooking.
+     *
+     * The comment in the constructor has claimed for months that the
+     * poll underneath "recovers a ticket that failed to print". It could
+     * not: this line refused it and markKitchenPrinted had already told
+     * the server the sale was done. A belief written down, tested by
+     * nobody, doing nothing.
+     *
+     * retry() is false for a ticket the ledger has never seen, so a
+     * first print falls straight through to the claim below.
+     */
+    if (printLedger.retry(key)) {
+      this.printedJobs.add(key);
+      console.warn(`[KOT] did not print last time, trying again: ${about.saleId || key}`);
+      return true;
+    }
     if (this.printedJobs.has(key)) return false;
     /* The durable half. A false here is a duplicate that would have printed
        before this existed, so it is worth saying out loud rather than passing
@@ -498,6 +531,8 @@ class KOTManager {
       clearTimeout(this._kotNudgeTimer);
       this._kotNudgeTimer = null;
     }
+    /* A note left by a nudge must not outlive the polling it was for. */
+    this._pollAgain = false;
     this.isPolling = false;
     console.log('[KOT] Polling stopped');
   }
@@ -514,8 +549,70 @@ class KOTManager {
 
   // ─── Poll loop ────────────────────────────────────────────────────────────
 
+  /*
+   * ONE PASS AT A TIME, AND THE NEXT ONE ON TIME.
+   *
+   * Owner: "or printing after few minutes."
+   *
+   * Two faults, both about the clock.
+   *
+   * The next poll was scheduled at the END of this one, so the gap was
+   * thirty seconds PLUS however long the printing took. A printer that
+   * is off answers in twenty seconds (raw-print-service JOB_TIMEOUT_MS)
+   * and the helper is then killed and restarted, which costs up to eight
+   * more on the next ticket. Three tickets against a sleeping printer is
+   * a minute and a half before the poll after it even begins, and every
+   * ticket raised in the meantime waits behind it. That is the few
+   * minutes, and it compounds exactly when things are already going
+   * wrong.
+   *
+   * And the nudge could start a second pass on top of a running one:
+   * _onKotEvent clears the scheduled timer, but a pass that is mid-print
+   * has no timer to clear, so the guard guarded nothing. Both passes then
+   * asked the server for the same tickets - the server lets a till past
+   * its OWN claim on purpose - and raced through the same printer queue.
+   * Nothing printed twice, because the ledger holds that line, but the
+   * work was doubled at the worst possible moment.
+   *
+   * So a pass in flight takes a note instead, and the note is honoured
+   * the moment the pass ends.
+   */
   async _poll() {
     if (!this.isPolling || !this.config) return;
+    if (this._passRunning) { this._pollAgain = true; return; }
+    this._passRunning = true;
+    const passStartedAt = Date.now();
+    try {
+      await this._pollOnce();
+    } finally {
+      this._passRunning = false;
+      this._scheduleNextPoll(passStartedAt);
+    }
+  }
+
+  /*
+   * Measured from when this pass STARTED, not from when it finished, so
+   * a slow pass eats into the gap rather than being added to it. A floor
+   * of a second, because a pass that took longer than the interval must
+   * not turn into a tight loop against a printer that is already
+   * struggling.
+   */
+  _scheduleNextPoll(startedAt) {
+    if (this.pollingTimer) { clearTimeout(this.pollingTimer); this.pollingTimer = null; }
+    if (!this.isPolling) return;
+    if (this._pollAgain) {
+      this._pollAgain = false;
+      this.pollingTimer = setTimeout(() => this._poll(), 250);
+      return;
+    }
+    const elapsed = Date.now() - (startedAt || Date.now());
+    this.pollingTimer = setTimeout(
+      () => this._poll(),
+      Math.max(1000, KOT_FALLBACK_POLL_MS - elapsed)
+    );
+  }
+
+  async _pollOnce() {
 
     // Resolved per poll rather than captured when polling started, so a
     // restart that lands on a different port keeps working.
@@ -546,10 +643,7 @@ class KOTManager {
       console.log(`[KOT] API status=${data?.status} message="${data?.message}" sales=${Array.isArray(data?.data) ? data.data.length : 'null'}`);
 
       const sales = Array.isArray(data?.data) ? data.data : [];
-      if (sales.length === 0) {
-        this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
-        return;
-      }
+      if (sales.length === 0) return;
 
       console.log(`[KOT] ${sales.length} pending order(s) to print`);
 
@@ -566,6 +660,8 @@ class KOTManager {
         const printJobs = Array.isArray(sale?.print_jobs) ? sale.print_jobs : null;
 
         if (printJobs && printJobs.length > 0) {
+          /* Set when a ticket on this sale failed with a try left. */
+          let stillOwed = false;
           for (const job of printJobs) {
             /*
              * The key is now one shared definition, not an expression only
@@ -604,16 +700,35 @@ class KOTManager {
             /* Recorded for measurement only. Nothing reads this to decide
                whether to print - a failed ticket is not retried here, and
                changing that is a bigger decision than this change. */
-            printLedger.settle(jobKey, _anyPrinted(jobResults), _firstReason(jobResults));
+            const cameOut = _anyPrinted(jobResults);
+            printLedger.settle(jobKey, cameOut, _firstReason(jobResults));
             /* Named for the server's shadow queue. Only when paper actually
                came out - reporting a failed ticket as printed would close a
                row that SHOULD be showing up as a disagreement. */
-            if (_anyPrinted(jobResults)) printedKeys.push(jobKey);
+            if (cameOut) printedKeys.push(jobKey);
+            else if (!printLedger.spent(jobKey)) stillOwed = true;
           }
 
-          printedSaleIds.push(saleId);
-          if (sale.new_last_printed_change_index !== undefined) {
-            printedIndexes[saleId] = sale.new_last_printed_change_index;
+          /*
+           * AND THE SERVER IS ONLY TOLD WHEN IT IS TRUE.
+           *
+           * This advanced last_printed_change_index whatever happened -
+           * every ticket refused, the printer off at the wall, and the
+           * sale was still reported as printed and never offered again.
+           * Between that and the ledger refusing a second attempt, a
+           * failed cancellation had two locks on it and no key.
+           *
+           * `stillOwed` means a ticket on this sale failed and has a try
+           * left. Leaving the sale unreported is what brings it back on
+           * the next poll, which is the only way the retry above ever
+           * happens. Once the tries are spent the sale is reported as
+           * before, or the queue would offer it for ever.
+           */
+          if (!stillOwed) {
+            printedSaleIds.push(saleId);
+            if (sale.new_last_printed_change_index !== undefined) {
+              printedIndexes[saleId] = sale.new_last_printed_change_index;
+            }
           }
           continue;
         }
@@ -642,9 +757,12 @@ class KOTManager {
         }
 
         const results = await this.silentPrint(sale, printerNames);
-        printLedger.settle(key, _anyPrinted(results), _firstReason(results));
-        if (_anyPrinted(results)) printedKeys.push(key);
-        printedSaleIds.push(saleId);
+        const cameOut = _anyPrinted(results);
+        printLedger.settle(key, cameOut, _firstReason(results));
+        if (cameOut) printedKeys.push(key);
+        /* Same rule as the jobs path above: a ticket with a try left keeps
+           the sale in the queue, because that is what brings it back. */
+        if (cameOut || printLedger.spent(key)) printedSaleIds.push(saleId);
       }
 
       if (printedSaleIds.length > 0) {
@@ -690,8 +808,6 @@ class KOTManager {
       console.error('[KOT] Poll error:', err.message);
       this.lastPollStatus = 'error: ' + err.message;
     }
-
-    this.pollingTimer = setTimeout(() => this._poll(), KOT_FALLBACK_POLL_MS);
   }
 
   // ─── Silent print ─────────────────────────────────────────────────────────
