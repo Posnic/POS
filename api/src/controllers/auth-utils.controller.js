@@ -5,17 +5,35 @@ const { authCookieOptions } = require('../utils/auth-cookie');
 /* Per request. A signing key read once at module load is the process's key,
    and in a process serving several shops that is some other customer's. */
 const { currentSecret } = require('../db/tenant-context');
+/*
+ * HOW LONG A TOKEN LASTS, WITH A DEFAULT.
+ *
+ * These three lines used to read process.env directly, and every one of
+ * them breaks on an environment that has not set the value - which is the
+ * environment `npm run dev` produces, because dev-server.js generates the
+ * four secrets the API refuses to start without and not these.
+ *
+ * It was not a degraded login. jwt.sign THROWS on an undefined expiresIn,
+ * the throw reached the unhandled-rejection handler, and the handler shuts
+ * the process down: one login and the whole API was gone. The cookie lines
+ * fail more quietly, as `undefined * 86400000` is NaN and the expiry is an
+ * Invalid Date.
+ *
+ * config.js has carried sensible defaults for both all along. Nothing was
+ * reading them.
+ */
+const config = require('../config/config');
 
 const signToken = (id) => {
   return jwt.sign({ id }, currentSecret('JWT_SECRET'), {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: config.jwt.expiresIn,
   });
 };
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
   });
 
   // Remove password from output
@@ -208,7 +226,7 @@ const createAndSendToken = async (user, statusCode, res, req) => {
 
   // Set cookie
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + config.jwt.cookieExpiresIn * 24 * 60 * 60 * 1000),
   });
 
   res.cookie('jwt', token, cookieOptions);

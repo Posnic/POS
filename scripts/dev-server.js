@@ -72,6 +72,12 @@ function ensureSecrets() {
     '# the desktop app generates its own per install. Safe to delete; it will be',
     '# made again, though doing so signs out any local session.',
     `JWT_SECRET=${crypto.randomBytes(48).toString('hex')}`,
+    /* Not secrets, and not optional either: the API used to read these
+       straight off process.env and a login with neither set threw inside
+       jwt.sign, which took the whole process down. They have defaults now,
+       and a development environment should still be explicit. */
+    'JWT_EXPIRES_IN=90d',
+    'JWT_COOKIE_EXPIRES_IN=90',
     `SESSION_SECRET=${crypto.randomBytes(48).toString('hex')}`,
     `ENCRYPTION_KEY=${crypto.randomBytes(16).toString('hex')}`,
     `ENCRYPTION_IV=${crypto.randomBytes(8).toString('hex')}`,
