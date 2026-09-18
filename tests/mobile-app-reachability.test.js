@@ -148,11 +148,36 @@ test('the kiosk mobile login hands back a credential and a shop key', () => {
    * So the fourth argument to signLegacyToken is read out of the source, and
    * expiresIn must report that same identifier.
    */
-  const signedWith = handler.match(/signLegacyToken\([^)]*?,\s*[^,)]*,\s*([A-Za-z_$][\w$]*)\s*\)/);
-  assert.ok(signedWith, 'the token is signed without a lifetime, so nothing can be reported');
-  assert.match(handler, new RegExp('expiresIn: ' + signedWith[1] + '\\b'),
-    'the client is told an expiry that is not the one the token carries: signed with '
-      + signedWith[1]);
+  /*
+   * NAMED IN ONE PLACE, THEN USED TWICE - however the call is spelled.
+   *
+   * The lifetime is read out of `const <name> = handsetLifetimeSeconds()`
+   * rather than out of the argument list, and the call is then asked whether
+   * it CONTAINS that name. The previous version matched by POSITION and
+   * required the call to end immediately after the fourth argument, so it
+   * failed the day anybody added a fifth - and this test has already gone red
+   * twice for changes that improved the code it guards. That is a veto on the
+   * controller dressed up as a test, and it nearly stopped a device claim
+   * being added to the token.
+   *
+   * What has to hold is unchanged: one source for the number, and the phone
+   * told the same one its token carries.
+   */
+  const lifetime = handler.match(/const (\w+) = handsetLifetimeSeconds\(\)/);
+  assert.ok(lifetime, 'the handset lifetime is no longer read from one place');
+  const named = lifetime[1];
+
+  const call = handler.match(/signLegacyToken\([^)]*\)/);
+  assert.ok(call, 'the handset token is no longer signed here');
+  assert.ok(
+    call[0].includes(named),
+    'the token is signed with a lifetime other than the one the phone is told: ' + named
+  );
+  assert.ok(
+    handler.includes('expiresIn: ' + named),
+    'the phone is told an expiry that is not the one its token carries: signed with ' + named
+  );
+
   assert.match(handler, /shopKey,/,
     'without a shop key the app cannot tell that a LAN server holds the same shop');
   assert.doesNotMatch(handler, /license: *recordsFiltered\.license/,
