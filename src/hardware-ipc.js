@@ -216,6 +216,20 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    * columns or it does not, and that is decidable before anything reaches the
    * paper.
    */
+  // Render the same bytes for the tender preview without contacting a printer,
+  // opening the drawer, or recording a print job.
+  ipcMain.handle('printer:preview-receipt', async (_event, sale, options = {}) => {
+    const { renderSale, COLUMNS } = require('./escpos-receipt');
+    const { parse } = require('./escpos-preview');
+    const { resolvePictures } = require('./escpos-logo');
+    const paperWidth = options.paperWidth === '58' ? '58' : '80';
+    const prepared = await resolvePictures(sale, paperWidth);
+    return parse(renderSale(prepared, {
+      paperWidth,
+      symbolGlyphs: options.symbolGlyphs !== false,
+    }), COLUMNS[paperWidth]);
+  });
+
   ipcMain.handle('printer:print-receipt', async (event, sale, options = {}) => {
     /*
      * Every receipt is written down, printed or not.
@@ -315,7 +329,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
                 settle(null);
               }
             }),
-        }, { dither });
+        }, { dither, maxRows: which === 'footerImage' ? 384 : 240 });
         if (!raster) {
           console.warn('[Print] the ' + which + ' could not be read here either, printing without it');
         }

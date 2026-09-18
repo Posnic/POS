@@ -1703,7 +1703,10 @@ PosnicPro = {
     },
     /*For display item name last characters sholud be dot*/
     textOverflowPrintEllipsis: function (text, count, insertDots) {
-        return text.slice(0, count) + (((text.length > count) && insertDots) ? "..." : text);
+        text = String(text == null ? '' : text);
+        var limit = parseInt(count, 10);
+        if (!limit || limit < 0 || text.length <= limit) { return text; }
+        return text.slice(0, limit) + (insertDots ? '...' : '');
     },
     exportTableData: function (selectedTableRow, table) {
         // "Select all N" mode: export the whole filtered set, not the ticked
@@ -2994,8 +2997,8 @@ PosnicPro = {
     },
 
     /* The @page rule and the width the receipt body is held to. */
-    paperCss: function () {
-        var paper = PosnicPro.PAPER[PosnicPro.resolvePaperWidth()] || PosnicPro.PAPER['80'];
+    paperCss: function (width) {
+        var paper = PosnicPro.PAPER[width || PosnicPro.resolvePaperWidth()] || PosnicPro.PAPER['80'];
 
         if (paper.content === 'auto') {
             return '@page { size: ' + paper.css + '; margin: 8mm; }';
@@ -4348,8 +4351,9 @@ PosnicPro = {
         return arr.filter((item,
             index) => arr.indexOf(item) === index);
     },
-    toggleVisibility: function (key, className) {
-        (PosnicPro.local.get(key) === 'on') ? $(className).show() : $(className).hide();
+    toggleVisibility: function (key, className, root) {
+        var target = root ? root.find(className) : $(className);
+        (PosnicPro.local.get(key) === 'on') ? target.show() : target.hide();
     },
     importTableHeader: function (table) {
         var headersMap = {
