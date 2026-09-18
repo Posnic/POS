@@ -587,25 +587,36 @@ PosnicPro.kot = {
                                 <h6 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
                                     <span><i class="feather icon-plus-circle" style="font-size: 14px;"></i> Add new item</span>
                                     <!--
-                                        No keyboard needed. A waiter holding a
-                                        tablet taps Browse and picks from the
-                                        dishes this shop sells most; the search
-                                        beside it is for the long tail.
+                                        No keyboard needed, and no guessing.
+                                        Menu opens the categories a waiter
+                                        already has in their head; the box
+                                        beside it takes a typed name or a
+                                        scanner's barcode.
                                     -->
-                                    <button type="button" class="btn btn-sm btn-outline-secondary kot-quick-pick-toggle"
-                                            data-sale-id="${kot._id}" title="Pick from the usual dishes" data-t-title="lang_pick_from_the_usual_dishes"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary kot-menu-toggle"
+                                            data-sale-id="${kot._id}" title="Pick from the menu" data-t-title="lang_pick_from_the_menu"
                                             style="min-height: 38px; padding: 4px 12px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                                        <i class="feather icon-grid" style="font-size: 15px;"></i> Browse
+                                        <i class="feather icon-grid" style="font-size: 15px;"></i> Menu
                                     </button>
                                 </h6>
                                 <div class="kot-search-product-wrapper" data-sale-id="${kot._id}" style="position: relative;">
                                     <input type="text" 
                                            class="form-control kot-product-search" 
                                            data-sale-id="${kot._id}"
-                                           placeholder="Search product to add..." data-t-placeholder="lang_search_product_to_add"
+                                           placeholder="Scan barcode or search item..." data-t-placeholder="lang_scan_barcode_or_search_item"
                                            autocomplete="off"
                                            style="border: 2px solid #dee2e6; border-radius: 6px; padding: 8px 12px; font-size: 14px;">
-                                    <div class="kot-quick-picks" data-sale-id="${kot._id}" style="display: none;"></div>
+                                    <style>
+                                      /* Tiles a finger can hit. 64px is the low end of what a
+                                         thumb finds reliably; the name wraps rather than being
+                                         cut, because half a dish name is a wrong dish. */
+                                      .kot-menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 4px 2px 12px; }
+                                      .kot-menu-tile { min-height: 64px; padding: 10px 12px; border: 2px solid #dee2e6; border-radius: 10px; background: #fff; text-align: left; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+                                      .kot-menu-tile:hover { border-color: #0d6efd; background: #f8f9ff; }
+                                      .kot-menu-tile-name { font-size: 14px; font-weight: 600; color: #333; overflow-wrap: anywhere; }
+                                      .kot-menu-tile-price { font-size: 12px; font-weight: 600; color: #28a745; }
+                                    </style>
+                                    <div class="kot-menu-pick" data-sale-id="${kot._id}" style="display: none;"></div>
                                     <div class="kot-search-results" data-sale-id="${kot._id}" style="display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 200px; overflow-y: auto; width: 100%; margin-top: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
                                 </div>
                             </div>
@@ -810,15 +821,42 @@ PosnicPro.kot = {
             }, 300);
         });
 
-        /* Browse opens and closes on its own button, and a tile adds its dish.
-           Delegated for the same reason the search is: this panel is redrawn
-           every time a table is opened. */
-        $(document).off('click', '.kot-quick-pick-toggle').on('click', '.kot-quick-pick-toggle', function () {
-            PosnicPro.kot.quickPicks($(this).data('sale-id'));
+        /*
+         * THE MENU, A CATEGORY, AND A TILE. Delegated for the same reason the
+         * search is: this panel is redrawn every time a table is opened.
+         */
+        $(document).off('click', '.kot-menu-toggle').on('click', '.kot-menu-toggle', function () {
+            PosnicPro.kot.menuPick($(this).data('sale-id'));
         });
-        $(document).off('click', '.kot-quick-pick').on('click', '.kot-quick-pick', function () {
+        $(document).off('click', '.kot-menu-category').on('click', '.kot-menu-category', function () {
             var $b = $(this);
-            PosnicPro.kot.addQuickPick($b.data('sale-id'), $b.data('item-id'), $b.data('item-name'));
+            PosnicPro.kot.menuCategory($b.data('sale-id'), $b.data('category-id'), $b.data('category-name'));
+        });
+        $(document).off('click', '.kot-menu-back').on('click', '.kot-menu-back', function () {
+            PosnicPro.kot.menuPick($(this).data('sale-id'), true);
+        });
+        $(document).off('click', '.kot-menu-item').on('click', '.kot-menu-item', function () {
+            var $b = $(this);
+            PosnicPro.kot.addFromMenu($b.data('sale-id'), $b.data('item-id'));
+        });
+
+        /*
+         * A SCANNER TYPES, THEN PRESSES ENTER.
+         *
+         * That return is the whole difference between a scan and somebody
+         * typing, so Enter asks the barcode-only search first and adds a single
+         * hit straight away, leaving the box empty and focused because a
+         * scanner's next action is another scan. A typed name finds nothing as
+         * a barcode and falls through to the ordinary search, rather than
+         * appearing to do nothing.
+         */
+        $(document).off('keydown', '.kot-product-search').on('keydown', '.kot-product-search', function (e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            e.preventDefault();
+            var $input = $(this);
+            var term = $input.val().trim();
+            if (!term) return;
+            PosnicPro.kot.scanBarcode($input.data('sale-id'), term, $input);
         });
 
         // Handle clicking outside to close search results
@@ -937,102 +975,148 @@ PosnicPro.kot = {
     },
 
     /*
-     * THE DISHES THIS SHOP ACTUALLY SELLS, AS BUTTONS.
+     * ADDING A DISH WORKS LIKE THE SALE SCREEN.
      *
-     * Adding a course to a table meant typing at least two letters and then
-     * hitting a 13px row in a dropdown. Owner: "add new item like
-     * typeahead... coz its not touch friendly. so make it proper. touch
-     * friendly can do stuff without type. near some 4 box icon to show the
-     * items left side normal sales flow."
+     * What was here was a 13px dropdown you had to type two letters into, and
+     * a "Browse" button that showed the branch's most-ordered dishes. Owner:
+     * "browse not good. VERY BAD. implement something good for add item. how
+     * normal flow selecting item and search or barcode read."
      *
-     * A waiter holding a tablet at a table is not going to type. Browse opens
-     * this: the branch's most-ordered dishes as tiles big enough for a thumb,
-     * no keyboard at all. The search stays for the long tail, because a shop
-     * with three hundred dishes cannot be tapped through.
+     * Fair. A waiter at a table has the menu in their head rather than a search
+     * term, and a counter has a scanner. The sale screen has worked this way
+     * for years - categories, then dishes, as tiles you tap - so this is that,
+     * in the panel where a table is amended.
      *
-     * Most-ordered rather than alphabetical on purpose - a restaurant's top
-     * twenty dishes are most of its covers, so the tap somebody wants is
-     * nearly always on the first screen.
+     * Three ways in, so nobody is forced through the one that does not suit:
+     *
+     *   Menu      categories, then that category's dishes, as tiles
+     *   typing    two letters search name, SKU and barcode
+     *   a scan    the gun types and presses Enter; the dish is added at once
+     *
+     * All three land through addProductToEditMode, priced by _priceOf, so a
+     * dish costs the same however it was chosen.
      */
-    quickPicks: function (saleId) {
-        var $wrap = $('.kot-quick-picks[data-sale-id="' + saleId + '"]');
+    menuPick: function (saleId, keepOpen) {
+        var $wrap = $('.kot-menu-pick[data-sale-id="' + saleId + '"]');
         if (!$wrap.length) return;
-        if ($wrap.is(':visible')) { $wrap.slideUp(120); return; }
+        if ($wrap.is(':visible') && !keepOpen) { $wrap.slideUp(120); return; }
 
-        var branchId = PosnicPro.local.get('branch_id') || '';
-        $wrap.html('<div style="padding:14px;color:#6c757d;font-size:14px;"><lang class="lang_loading_the_usual_dishes">Loading the usual dishes...</lang></div>').slideDown(120);
-
-        PosnicPro.post({
-            url: 'sales/getFrequentItems',
-            data: JSON.stringify({ branch_id: branchId, limit: 24 })
-        }, function (response) {
+        $wrap.html(PosnicPro.kot._menuNote('Loading the menu...')).slideDown(120);
+        PosnicPro.get('categories/getCategoriesWithValidItems', function (response) {
             var rows = (response && response.data) || [];
             if (!rows.length) {
-                /* A shop that has sold nothing has no "usual". Say so, rather
-                   than showing an empty box that reads as broken. */
-                $wrap.html('<div style="padding:14px;color:#6c757d;font-size:14px;">'
-                    + '<lang class="lang_nothing_has_been_ordered_here_yet">Nothing has been ordered here yet - use the search above.</lang></div>');
+                $wrap.html(PosnicPro.kot._menuNote('No categories yet - use the box above.'));
                 return;
             }
-            var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px 2px;">';
-            rows.forEach(function (r) {
-                var id = String(r.item_id || '');
-                var name = String(r.name || '');
+            var html = '<div style="font-size:12px;color:#6c757d;margin:10px 2px 6px;"><lang class="lang_pick_a_category">Pick a category</lang></div>'
+                + '<div class="kot-menu-grid">';
+            rows.forEach(function (c) {
+                var id = String(c._id || c.id || c.category_id || '');
+                var name = String(c.category_name || c.name || '');
                 if (!id || !name) return;
-                html += '<button type="button" class="kot-quick-pick"'
-                    + ' data-sale-id="' + saleId + '" data-item-id="' + PosnicPro.kot._escape(id) + '"'
-                    + ' data-item-name="' + PosnicPro.kot._escape(name) + '"'
-                    /* 64px so a finger can hit it, and the name wraps rather
-                       than being cut - half a dish name is a wrong dish. */
-                    + ' style="min-height:64px;padding:10px 12px;border:2px solid #dee2e6;border-radius:10px;'
-                    + 'background:#fff;text-align:left;cursor:pointer;font-size:14px;font-weight:600;color:#333;'
-                    + 'display:flex;flex-direction:column;justify-content:center;gap:4px;">'
-                    + '<span style="overflow-wrap:anywhere;">' + PosnicPro.kot._escape(name) + '</span>'
-                    + '<span style="font-size:12px;color:#28a745;font-weight:600;">'
-                    + '₹' + (parseFloat(r.price || 0) || 0).toFixed(2) + '</span>'
+                html += '<button type="button" class="kot-menu-category kot-menu-tile"'
+                    + ' data-sale-id="' + saleId + '" data-category-id="' + PosnicPro.kot._escape(id) + '"'
+                    + ' data-category-name="' + PosnicPro.kot._escape(name) + '">'
+                    + '<span class="kot-menu-tile-name">' + PosnicPro.kot._escape(name) + '</span>'
                     + '</button>';
             });
             $wrap.html(html + '</div>');
         }, function () {
-            $wrap.html('<div style="padding:14px;color:#dc3545;font-size:14px;">'
-                + '<lang class="lang_could_not_read_the_usual_dishes">Could not read the usual dishes. The search above still works.</lang></div>');
+            $wrap.html(PosnicPro.kot._menuNote('Could not read the menu. The box above still works.'));
         });
     },
 
-    /*
-     * A tapped tile is added through the same door a typed one is.
-     *
-     * The tile knows the dish and what it last sold for, which is not what it
-     * costs today: a price change, a discount or a tax change all live on the
-     * item. So the item is read back and priced through _priceOf exactly as
-     * the search does, and only then added. One round trip, to be certain the
-     * customer is charged the current price.
-     */
-    addQuickPick: function (saleId, itemId, itemName) {
-        PosnicPro.get({
-            url: 'items/getOnlineItemsAjaxList',
-            data: 'query=' + encodeURIComponent(itemName) + '&type=normal'
-        }, function (response) {
-            var list = (response && response.suggestions) || [];
-            var hit = null;
-            for (var i = 0; i < list.length; i += 1) {
-                var d = list[i].data || list[i];
-                var thisId = d.item_id || d.id || (d._id ? d._id.$oid : '');
-                if (String(thisId) === String(itemId)) { hit = d; break; }
-            }
-            if (!hit) {
-                PosnicPro.alert('error', PosnicPro.i18n.t(
-                    'lang_that_dish_is_no_longer_on_the_menu',
-                    'That dish is no longer on the menu. Search for it to check.'
-                ));
+    /** One category's dishes, as tiles. */
+    menuCategory: function (saleId, categoryId, categoryName) {
+        var $wrap = $('.kot-menu-pick[data-sale-id="' + saleId + '"]');
+        if (!$wrap.length) return;
+        $wrap.html(PosnicPro.kot._menuNote('Loading ' + categoryName + '...'));
+
+        PosnicPro.get('items/category/' + encodeURIComponent(categoryId), function (response) {
+            var rows = (response && response.data) || [];
+            var head = '<div style="display:flex;align-items:center;gap:8px;margin:10px 2px 6px;">'
+                + '<button type="button" class="kot-menu-back btn btn-sm btn-outline-secondary"'
+                + ' data-sale-id="' + saleId + '" style="min-height:34px;padding:2px 10px;font-size:12px;">'
+                + '&larr; Categories</button>'
+                + '<span style="font-size:12px;color:#6c757d;">' + PosnicPro.kot._escape(categoryName) + '</span>'
+                + '</div>';
+            if (!rows.length) {
+                $wrap.html(head + PosnicPro.kot._menuNote('Nothing in this category.'));
                 return;
             }
-            var priced = PosnicPro.kot._priceOf(hit);
-            PosnicPro.kot.addProductToEditMode(
-                saleId, itemId, hit.item_name || itemName, priced.priceDisplay, priced.basePrice
-            );
+            /* Held for the tap: the tile carries an id, and the dish is priced
+               from the row already read rather than fetched a second time. */
+            PosnicPro.kot._menuItems = PosnicPro.kot._menuItems || {};
+            var html = head + '<div class="kot-menu-grid">';
+            rows.forEach(function (it) {
+                var id = String(it._id || it.item_id || it.id || '');
+                var name = String(it.item_name || it.name || '');
+                if (!id || !name) return;
+                PosnicPro.kot._menuItems[id] = it;
+                var priced = PosnicPro.kot._priceOf(it);
+                html += '<button type="button" class="kot-menu-item kot-menu-tile"'
+                    + ' data-sale-id="' + saleId + '" data-item-id="' + PosnicPro.kot._escape(id) + '">'
+                    + '<span class="kot-menu-tile-name">' + PosnicPro.kot._escape(name) + '</span>'
+                    + '<span class="kot-menu-tile-price">\u20b9' + priced.priceDisplay + '</span>'
+                    + '</button>';
+            });
+            $wrap.html(html + '</div>');
+        }, function () {
+            $wrap.html(PosnicPro.kot._menuNote('Could not read that category.'));
         });
     },
+
+    /** A tapped tile, priced from the row its grid was built from. */
+    addFromMenu: function (saleId, itemId) {
+        var it = (PosnicPro.kot._menuItems || {})[String(itemId)];
+        if (!it) {
+            PosnicPro.alert('error', PosnicPro.i18n.t(
+                'lang_that_dish_is_no_longer_on_the_menu',
+                'That dish is no longer on the menu. Search for it to check.'));
+            return;
+        }
+        var priced = PosnicPro.kot._priceOf(it);
+        PosnicPro.kot.addProductToEditMode(
+            saleId, String(it._id || it.item_id || itemId),
+            String(it.item_name || it.name || ''), priced.priceDisplay, priced.basePrice
+        );
+    },
+
+    /*
+     * A SCAN: the barcode fields first, then an ordinary search.
+     *
+     * type=barcode asks only the barcode fields, so a number that also appears
+     * inside a dish name cannot add the wrong thing. Exactly one hit is added
+     * at once; anything else is shown as a search rather than guessed at.
+     */
+    scanBarcode: function (saleId, term, $input) {
+        var asSearch = function () {
+            PosnicPro.kot.searchProducts(term, saleId,
+                $('.kot-search-results[data-sale-id="' + saleId + '"]'));
+        };
+        PosnicPro.get({
+            url: 'items/getOnlineItemsAjaxList',
+            data: 'query=' + encodeURIComponent(term) + '&type=barcode'
+        }, function (response) {
+            var list = (response && response.suggestions) || [];
+            if (list.length !== 1) { asSearch(); return; }
+            var d = list[0].data || list[0];
+            var priced = PosnicPro.kot._priceOf(d);
+            PosnicPro.kot.addProductToEditMode(
+                saleId, String(d.item_id || d.id || ''),
+                String(d.item_name || ''), priced.priceDisplay, priced.basePrice
+            );
+            if ($input) { $input.val('').trigger('focus'); }
+            $('.kot-search-results[data-sale-id="' + saleId + '"]').hide().empty();
+        }, asSearch);
+    },
+
+    /** A line of explanation inside the picker. */
+    _menuNote: function (text) {
+        return '<div style="padding:14px;color:#6c757d;font-size:14px;">'
+            + PosnicPro.kot._escape(text) + '</div>';
+    },
+
 
     searchProducts: function(query, saleId, $results) {
         var params = {
@@ -1070,10 +1154,13 @@ PosnicPro.kot = {
                     // Store item name in data attribute as backup to prevent special character issues
                     html += '<div class="kot-search-result-item" data-item-id="' + itemId + '" data-sale-id="' + saleId + '" ' +
                             'data-item-name="' + itemName.replace(/"/g, '&quot;') + '" data-item-price="' + priceDisplay + '" data-base-price="' + basePrice + '" ' +
-                            'style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;" ' +
+                            /* Was 8px padding and 13px type - a row you had to aim at.
+                               Sized like the menu tiles beside it so the same finger
+                               works on both. */
+                            'style="min-height: 52px; padding: 12px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 10px;" ' +
                             'onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' +
-                            '<div style="font-weight: 600; font-size: 13px; color: #333; flex: 1;">' + itemName + '</div>' +
-                            '<div style="text-align: right;"><div style="font-size: 12px; color: #28a745; font-weight: 600;">₹' + priceDisplay + '</div></div>' +
+                            '<div style="font-weight: 600; font-size: 14px; color: #333; flex: 1; overflow-wrap: anywhere;">' + itemName + '</div>' +
+                            '<div style="font-size: 13px; color: #28a745; font-weight: 600; white-space: nowrap;">₹' + priceDisplay + '</div>' +
                             '</div>';
                 });
 

@@ -106,6 +106,16 @@ router.post(
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));
+
+/*
+ * A waiter's own day, for the sales screen on the handset.
+ *
+ * optionalProtect then protectOrKioskKey, like the other calls a phone makes:
+ * a real session passes, a handset's bearer token passes, and an anonymous
+ * caller is refused. The figures are scoped to whoever the token names, in the
+ * controller, never to anything in the body.
+ */
+router.post('/myDay', optionalProtect, protectOrKioskKey, bindController(salesController.myDay));
 /*
  * The open table calls, for the till's own main process.
  *

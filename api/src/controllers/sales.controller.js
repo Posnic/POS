@@ -7376,6 +7376,75 @@ class SalesController extends BaseController {
    * PHP: getOrderHistory()
    * Get order history for table orders
    */
+  /**
+   * WHAT THIS WAITER HAS SOLD TODAY.
+   *
+   * Owner: "total sales today current user done or some dashboard you can
+   * give. but no on the first page. seperate page."
+   *
+   * WHOSE FIGURES THESE ARE IS NOT A FIELD IN THE BODY. It is read off the
+   * token, so a handset cannot ask for the manager's day by typing a
+   * different id, and nothing has to trust a phone about it. The only things
+   * the caller chooses are which branch and which day.
+   *
+   * A day is the phone's day, not the server's: a waiter finishing at one in
+   * the morning is still working Tuesday, and the phone is the thing standing
+   * in the shop. It is bounded to a date string so a bad one reads as today
+   * rather than as an error in the middle of service.
+   */
+  async myDay(req, res) {
+    try {
+      const who = req.user && (req.user._id || req.user.id);
+      if (!who) {
+        return this.error(res, 'Sign in to see your own sales', 401);
+      }
+
+      const branchId = req.body.branch_id || '';
+      /*
+       * SHAPED RIGHT IS NOT THE SAME AS REAL. "2026-13-45" passes the pattern
+       * and makes an Invalid Date, which then formats as NaN-NaN-NaN and puts
+       * that on a waiter's screen. Both are checked.
+       */
+      const asked = String(req.body.day || '').slice(0, 10);
+      let day = new Date();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(asked)) {
+        const tried = new Date(asked + 'T00:00:00');
+        if (!Number.isNaN(tried.getTime())) day = tried;
+      }
+
+      const SaleModel = this.model || Sale;
+      const said = await salesService.myDayModel(branchId, String(who), day, { SaleModel });
+
+      /*
+       * THE DAY IS SAID BACK IN LOCAL PARTS, not through toISOString.
+       *
+       * toISOString converts to UTC, so midnight on the 17th in a shop running
+       * at +05:30 comes back as the 16th, and every waiter's day would read as
+       * yesterday's. A test caught this before it was ever seen; the shops
+       * this runs in are all east of UTC.
+       */
+      const stamp = [
+        day.getFullYear(),
+        String(day.getMonth() + 1).padStart(2, '0'),
+        String(day.getDate()).padStart(2, '0'),
+      ].join('-');
+
+      return this.success(
+        res,
+        {
+          ...said,
+          user_name: req.user.username || req.user.email || req.user.name || '',
+          day: stamp,
+        },
+        said.orders ? 'Your day' : 'Nothing sold yet today',
+        200
+      );
+    } catch (error) {
+      console.error('Error in SalesController.myDay:', error);
+      return this.error(res, 'Could not read your sales', 500);
+    }
+  }
+
   async getOrderHistory(req, res) {
     try {
       const branchId = req.body.branch_id;

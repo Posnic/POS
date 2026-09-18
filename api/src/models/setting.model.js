@@ -1620,6 +1620,23 @@ class SettingModel extends BaseModel {
         }
       }
 
+      /*
+       * THE WATERMARK, OR THE TILL NEVER HEARS ABOUT IT.
+       *
+       * The sync gateway sends a device only rows whose `updated_date` has
+       * moved past what that device last saw. This is a native-driver
+       * updateOne, so the Mongoose `timestamps: { updatedAt: 'updated_date' }`
+       * hook does not run and nothing stamps it. The branch record changes,
+       * the screen says Saved, and the row is invisible to sync for ever.
+       *
+       * Fixed once already for the two writes above (#838). These two were
+       * missed in the same file, which is why the owner could turn the
+       * restaurant module on, save it, and find the server had never heard:
+       * "restuaruent module is enabled and saved. its not sync with server
+       * why ?"
+       */
+      updateFields.updated_date = new Date();
+
       // Update branch collection (matches PHP $set logic line 389-434)
       await branchCollection.updateOne(
         { _id: this.normalizeId(this.branchId), license: this.normalizeId(this.licenseId) },
@@ -1715,6 +1732,23 @@ class SettingModel extends BaseModel {
       if (!Object.keys(updateFields).length) {
         return { status: true, data: null, message: 'success' };
       }
+      /*
+       * THE WATERMARK, OR THE TILL NEVER HEARS ABOUT IT.
+       *
+       * The sync gateway sends a device only rows whose `updated_date` has
+       * moved past what that device last saw. This is a native-driver
+       * updateOne, so the Mongoose `timestamps: { updatedAt: 'updated_date' }`
+       * hook does not run and nothing stamps it. The branch record changes,
+       * the screen says Saved, and the row is invisible to sync for ever.
+       *
+       * Fixed once already for the two writes above (#838). These two were
+       * missed in the same file, which is why the owner could turn the
+       * restaurant module on, save it, and find the server had never heard:
+       * "restuaruent module is enabled and saved. its not sync with server
+       * why ?"
+       */
+      updateFields.updated_date = new Date();
+
       const r = await branchCollection.updateOne(
         { _id: this.normalizeId(targetBranchId), license: this.normalizeId(this.licenseId) },
         { $set: updateFields }

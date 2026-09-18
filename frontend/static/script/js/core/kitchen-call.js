@@ -16,7 +16,26 @@
 (function () {
   'use strict';
 
-  var bridge = window.posnic && window.posnic.kitchenCall;
+  /*
+   * THE NAME THE PRELOAD ACTUALLY EXPOSES.
+   *
+   * This read `window.posnic.kitchenCall` and there has never been a
+   * `window.posnic`. The preload puts this bridge on `electronAPI`, beside
+   * orderAlert, which every other consumer in the app reads correctly - and
+   * its own comments document it as `posnic.kitchenCall`, which is where the
+   * wrong name came from.
+   *
+   * So this returned on the first line of every till that ever ran it. The
+   * feature was complete, tested, shipped and unreachable: the main process
+   * composed the announcement and sent it to a page that had stopped
+   * listening before it began. The only noise anybody heard was the order
+   * alert, which reads the right global.
+   *
+   * `posnic` is still accepted, because if it is ever exposed under that name
+   * this must not break a second time.
+   */
+  var api = window.electronAPI || window.posnic;
+  var bridge = api && api.kitchenCall;
   if (!bridge || typeof bridge.on !== 'function') return;
 
   /*
