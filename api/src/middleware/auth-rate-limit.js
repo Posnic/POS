@@ -128,4 +128,30 @@ const invoiceLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { loginLimiter, passwordResetLimiter, registerLimiter, invoiceLimiter };
+/*
+ * Handset administration reads and writes the tenant database. It is an
+ * occasional manager task rather than a high-volume till operation, so a
+ * separate per-shop, per-client budget prevents one authenticated client from
+ * turning the handset register into a database flood without making a normal
+ * device-recovery workflow wait.
+ */
+const handsetLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'handset' }),
+  keyGenerator: perShopKey,
+  windowMs: 15 * 60 * 1000,
+  limit: 120,
+  message: {
+    status: false,
+    message: 'Too many handset management requests. Please wait a few minutes and try again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = {
+  loginLimiter,
+  passwordResetLimiter,
+  registerLimiter,
+  invoiceLimiter,
+  handsetLimiter,
+};

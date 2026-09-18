@@ -24,12 +24,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const { protect } = require('../middleware/auth');
+const { handsetLimiter } = require('../middleware/auth-rate-limit');
 const { currentConnection } = require('../db/tenant-context');
 const handsets = require('../utils/handsets');
 
 const router = express.Router();
 
-router.use(protect);
+router.use(protect, handsetLimiter);
 
 const db = () => currentConnection(mongoose.connection).db;
 
