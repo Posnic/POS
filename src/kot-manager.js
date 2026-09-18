@@ -853,12 +853,30 @@ class KOTManager {
       const wants = kitchenAnnounce.settings();
       if (!wants.ting && !wants.speak) return;
 
+      const kind = String(jobType || '').toLowerCase();
+
+      /*
+       * WHOLE ORDER, OR SOME OF IT.
+       *
+       * The cancel ticket carries the lines coming off. If that is every line
+       * the sale has, the table is being cleared and the kitchen should hear
+       * "order cancelled"; otherwise two dishes are coming off a ticket the
+       * pass is already working on, which is a different instruction.
+       *
+       * Counted off the sale rather than a flag, because no flag says this:
+       * the server builds a cancel job out of whichever items were struck.
+       */
+      const onTheSale = Array.isArray(sale.items) ? sale.items.length : 0;
+      const whole = kind === 'cancel' && onTheSale > 0 && items.length >= onTheSale;
+
       orderAlert.announceKitchenTicket(
         () => orderAlert.speakingWindow(BrowserWindow),
         {
           table: String(sale.table_number || sale.tableNo || sale.table || sale.table_no || ''),
           items,
-          changed: String(jobType || '').toLowerCase() === 'modified',
+          changed: kind === 'modified',
+          cancelled: kind === 'cancel',
+          whole,
         },
         wants
       );

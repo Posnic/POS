@@ -1762,6 +1762,27 @@ ipcMain.handle('desktop:open', (_event, target) => {
        pass its own URL here would turn an allowlist into an open redirect for
        anything that can reach this channel. */
     case 'releases': shell.openExternal('https://github.com/Posnic/POS/releases'); break;
+    /*
+     * WHERE MORE VOICES COME FROM.
+     *
+     * Owner: "voice are as per system. if user can install more show the way
+     * to do."
+     *
+     * The kitchen reads tickets with whatever voices Windows has, and a shop
+     * that wants an Indian English voice has to add the language pack. The
+     * note under the picker said so in words, which is a sentence somebody
+     * reads and then does not know where to go.
+     *
+     * ms-settings:speech opens the page that installs them. It is a Windows
+     * address and nothing else answers it, so the other platforms are sent to
+     * the page that explains their own way; a button that does nothing on Mac
+     * is worse than one that explains.
+     */
+    case 'voices':
+      if (process.platform === 'win32') shell.openExternal('ms-settings:speech');
+      else if (process.platform === 'darwin') shell.openExternal('x-apple.systempreferences:com.apple.preference.universalaccess?TextToSpeech');
+      else shell.openExternal('https://www.posnic.com/help/kitchen-voices');
+      break;
     default: return false;
   }
   return true;
