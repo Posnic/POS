@@ -58,6 +58,21 @@
   --danger-bg: #fef2f2;
   --warn-bg: #fffbeb;
 
+  /*
+   * TWO NAMES THAT WERE NEVER DECLARED.
+   *
+   * Nine rules ask for `var(--paper, #fff)` or `var(--paper-2, #faf8f3)`, and
+   * neither token existed - so every one of them has been using its fallback,
+   * silently and correctly, for as long as they have been there.
+   *
+   * It stopped being harmless the moment this page got a dark theme: a
+   * fallback is a literal, a literal cannot follow a theme, and those nine
+   * rules would have stayed white on a black page. Declared here so they
+   * follow the rest.
+   */
+  --paper: #ffffff;
+  --paper-2: #faf8f3;
+
   --radius: 12px;
   --radius-sm: 8px;
   --pad: 16px;
@@ -106,6 +121,66 @@
   --font:
     system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     sans-serif;
+}
+
+/*
+ * THE SAME PAGE AFTER DARK.
+ *
+ * The menu page has had this since it was built - "a menu read across a
+ * dinner table in the evening is the common case, and a white page at full
+ * brightness is the thing people put face down" - and the ordering page,
+ * which is the one somebody spends longer on, did not. The two halves of one
+ * product disagreed about whether it was night.
+ *
+ * TOKENS ONLY. Every colour on this page already comes from the block above,
+ * so the whole theme is that block said again. Nothing below this point in
+ * the file needs to know, and a rule that reaches for a literal colour will
+ * quietly stay light - which is what the contrast test is for.
+ *
+ * MEASURED, NOT CHOSEN BY EYE. Every one of these clears 4.5:1 against the
+ * darkest surface it can sit on, checked by
+ * tests/the-menu-can-be-read.test.js rather than by looking. The greens and
+ * reds are lifted rather than reused: #0e8038 is a fine green on white and
+ * 2.2:1 on this background, which is unreadable.
+ *
+ * The accent inverts, so the primary button becomes a pale block with dark
+ * text rather than a black block that vanishes into the page.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f19;
+    --surface: #111827;
+    --raised: #1a2234;
+    --ink: #f3f4f6;
+    --ink-soft: #9ca3af;
+    --line: #263041;
+    --line-strong: #364155;
+    --accent: #f3f4f6;
+    --on-accent: #111827;
+
+    --veg: #34d27b;
+    --non-veg: #f87171;
+    --egg: #fbbf24;
+    --ok: #34d27b;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    /* Tints, not washes: a light-mode #fef2f2 becomes a dark red-tinted
+       surface rather than a pale panel burning a hole in the page. */
+    /* The two that were living on their fallbacks; see the light block. */
+    --paper: #111827;
+    --paper-2: #1a2234;
+
+    --danger-bg: #2a1416;
+    --warn-bg: #2a2110;
+
+    /*
+     * Deeper and softer. A shadow on a dark ground is nearly invisible, so
+     * the lift comes from --surface and --raised being lighter than --bg;
+     * these stay only to keep an edge under a sheet.
+     */
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
 }
 
 /* ------------------------------------------------------------------ base */
