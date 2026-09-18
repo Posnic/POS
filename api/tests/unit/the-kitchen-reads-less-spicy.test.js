@@ -71,7 +71,19 @@ test('a cancelled line carries it too', () => {
    * ticket says WHICH dish to stop, and a kitchen with two of the same dish on
    * one table tells them apart by the note.
    */
-  expect(REPO).toMatch(/item_description: String\(ex\.item_description \|\| ''\)/);
+  /*
+   * This pinned the exact old line, `String(ex.item_description || '')`, so it
+   * failed when the cancel flow was made STRICTER: it now prefers the note
+   * somebody typed, for the same reason the amendment below does. What has to
+   * hold is that a cancellation carries a note at all, and never reaches for
+   * the catalogue sentence - a cook was getting "Chicken Biryani sold as 1
+   * handi, configured for a INR Restaurant Demo Dataset POS demo" on paper.
+   * The rule is asserted now, not its wording.
+   */
+  expect(REPO).toMatch(
+    /item_description: String\(ex\.item_note \|\| ex\.item_description \|\| ''\)/
+  );
+  expect(REPO).not.toMatch(/item_description: String\(ex\.description/);
 });
 
 test('an amendment prefers the note just typed over the stored one', () => {
@@ -107,10 +119,23 @@ test('the ticket builder still prints it, which was never the broken part', () =
   );
   expect(kot).toMatch(/r\.line\(' {3}\*\* ' \+ note \+ ' \*\*'\)/);
 
+  /*
+   * escpos-kot.js reads `item.description` and that is correct: by the time a
+   * ticket payload reaches the renderer, `description` IS the note, because
+   * the builder below put it there. The shape is documented at the top of
+   * that file.
+   *
+   * The BUILDER is the half that had to change. It read the sale line's own
+   * `description` - the catalogue sentence - whenever a line had no note, and
+   * that is what printed marketing copy at a cook. It prefers the typed note
+   * now and never reads the catalogue, which is asserted rather than pinned
+   * word for word.
+   */
   const manager = fs.readFileSync(path.join(ROOT, '..', 'src', 'kot-manager.js'), 'utf8');
   expect(manager).toMatch(
-    /description: it\.item_description \|\| it\.description \|\| it\.note \|\| ''/
+    /description: it\.item_note \|\| it\.item_description \|\| it\.note \|\| ''/
   );
+  expect(manager).not.toMatch(/description: it\.item_description \|\| it\.description/);
 });
 
 test('the reason is written where the next person will look', () => {

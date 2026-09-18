@@ -533,6 +533,55 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
     });
 
+    test('settling an open table records the payment instead of erasing it', async () => {
+      /*
+       * Owner, twice: "when payment done table not cleared from active order
+       * ( KOT page )" and "after taking payment its not going rom screen."
+       *
+       * It was never the screen. getTablesWithActiveOrders asks for
+       * sale_process 'KOT' AND payment_status 'Unpaid', so a table leaves the
+       * floor by being PAID. The Table-Order override in processSale ran on
+       * every write, including the one the till sends to settle the bill, and
+       * put the sale back to Unpaid with paid_amount 0 and the whole total
+       * outstanding. The table could never clear, and the payment was thrown
+       * away on the way in - which is the worse half.
+       *
+       * The override still has to exist: a captain order arrives with
+       * `payment_status: "cash"` and a QR order with "Upi", both METHODS, and
+       * reading those as a status let a bill close before anybody paid. The
+       * Add-mode test pins that a NEW table order is Unpaid whatever method
+       * is on it. The line is drawn at an EXISTING order being given a status
+       * this service derived from a real payment.
+       */
+      const openOnTheFloor = {
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'SB1D2-000032',
+        sale_method: 'Table-Order',
+        sale_process: 'KOT',
+        payment_status: 'Unpaid',
+        table_number: 'T2',
+      };
+      salesRepository.getById.mockResolvedValue(openOnTheFloor);
+
+      await salesService.processSale(
+        makeSaleData({ sale_method: 'Table-Order', payment_status: 'Paid' }),
+        SALE_ID,
+        'Edit',
+        makeContext()
+      );
+
+      expect(openOnTheFloor.set).toHaveBeenCalled();
+      const saved = Object.assign({}, ...openOnTheFloor.set.mock.calls.map((c) => c[0] || {}));
+      expect(saved.payment_status).toBe('Paid');
+      /* Nothing outstanding. Before the fix this was the whole bill again,
+         because the override rewrote it from the total every time. */
+      expect(Number(saved.payment_pending)).toBe(0);
+      /* Still a table order in history; the STATUS is what clears the floor. */
+      expect(saved.sale_process).toBe('KOT');
+    });
+
     test('updates register entry for edit mode', async () => {
       const fakeSaleDoc = { items: [], changes: [], set: jest.fn(), sales_id: 'INV000001' };
       salesRepository.getById.mockResolvedValue(fakeSaleDoc);

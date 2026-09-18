@@ -3192,7 +3192,33 @@ PosnicPro = {
          * printer they have been printing to all along.
          */
         var usedTheDefault = false;
-        Promise.resolve(PosnicPro.resolveReceiptPrinter())
+        /* Named in the confirmation below, which runs outside the callback that
+           builds the options, so it is captured here rather than read there. */
+        var printedTo = '';
+        /*
+         * ASK THE MACHINE WHICH PRINTER, EVERY TIME.
+         *
+         * The Receipt Printer setting lives in preferences, a file the main
+         * process owns, because Hardware Manager is a different origin with a
+         * different localStorage. syncPrinterPreferences mirrors it in - and
+         * ran exactly once, at startup, while its own comment claimed it ran
+         * "again after printing".
+         *
+         * So changing the receipt printer did nothing until the app was
+         * restarted. The till went on addressing bytes to the printer it had
+         * cached at boot, the receipt log recorded a SUCCESS against that old
+         * queue, and the paper came out on the far side of the shop. Owner:
+         * "print bill from desktop not working. thermal printer not taking
+         * bills?" It was printing perfectly, to the printer he had just
+         * stopped using - his log shows three bills landing on "Posnic
+         * Reception" in 54 ms each while he watched the POS-80C.
+         *
+         * One await before the name is resolved. Everything below stays
+         * synchronous, which is what that comment was protecting.
+         */
+        Promise.resolve(PosnicPro.syncPrinterPreferences())
+        .catch(function () { return false; })
+        .then(function () { return PosnicPro.resolveReceiptPrinter(); })
         .then(function (chosen) {
             if (chosen) { return chosen; }
             usedTheDefault = true;
@@ -3263,12 +3289,47 @@ PosnicPro = {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;
                 }
+                printedTo = opts.printerName || '';
                 return window.electronAPI.printer.printReceipt(sale, opts);
             });
         })
         .then(function (result) {
             if (result && result.success) {
                 PosnicPro.afterPrint();
+                /*
+                 * SAY THAT IT PRINTED, AND WHERE.
+                 *
+                 * A failure was announced and a success said nothing, so the
+                 * only way to know a bill had come out was to walk to the
+                 * printer. Owner: "when sales done (auto print) or user click
+                 * print sale bill (if print done show success. hardware level
+                 * confirmation also good.)"
+                 *
+                 * This IS the hardware answer, not a hopeful one: the main
+                 * process writes the bytes to each queue and reports back per
+                 * printer, and `printed` counts the ones that took them. The
+                 * printer is named because a till can have several, and a bill
+                 * landing on the wrong one is exactly the fault that cost an
+                 * evening - it looked like nothing printed at all.
+                 *
+                 * A partial success is a warning, not a tick: one copy out of
+                 * two is not what somebody asked for, and the failures say
+                 * which.
+                 */
+                var where = (result.failures && result.failures.length)
+                    ? null
+                    : printedTo;
+                if (result.failures && result.failures.length) {
+                    PosnicPro.alert('warning', PosnicPro.i18n.t(
+                        'lang_printed_on_some_printers',
+                        'Printed on ' + result.printed + ' of ' + result.attempted + ' printers. '
+                        + result.failures.map(function (f) { return f.printer + ': ' + f.error; }).join('; ')
+                    ));
+                } else {
+                    PosnicPro.alert('success', where
+                        ? PosnicPro.i18n.t('lang_sent_to_printer', 'Sent to printer') + ': ' + where
+                        : PosnicPro.i18n.t('lang_receipt_printed_ok', 'Receipt printed'));
+                }
             } else {
                 PosnicPro.alert('error', (result && result.error) ? result.error : 'Print failed');
             }
@@ -4952,8 +5013,7 @@ $(document).ready(function () {
         kotEnabled: kotEnabled,
         table_options: PosnicPro.local.get('table_options'),
         newSaleLi: $newSaleLi.length,
-        kotMenu: $('#kot_menu').length,
-        itemMasterMenu: $('#item_master_menu').length
+        kotMenu: $('#kot_menu').length
     });
     
     if (kotEnabled) {
@@ -4961,12 +5021,10 @@ $(document).ready(function () {
         $newSaleLi.hide();
         $('#image_sidebar_newsale').hide();
         $('#kot_menu').show();
-        $('#item_master_menu').show();
     } else {
         console.log('KOT is DISABLED - showing New Sale menu');
         $newSaleLi.show();
         $('#kot_menu').hide();
-        $('#item_master_menu').hide();
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
@@ -5618,6 +5676,27 @@ PosnicPro.INFOBAR_LIST_ADDS = {
     customers: 1, suppliers: 1, users: 1, expenses: 1,
     categories: 1, customercategory: 1, variants: 1
 };
+/*
+ * ESCAPE CLOSES AN OPEN SIDE PANEL.
+ *
+ * These panels are not Bootstrap modals - they are their own slide-out
+ * markup - so the `close_on_esc` class every real modal carries does nothing
+ * for them, and the only way out was to find the small Close button. That
+ * became load-bearing the moment the payment panel stopped closing itself
+ * after Save. Owner: "if user wants, then he can close or press esc."
+ *
+ * Bound on the document rather than on a panel, because a panel is opened by
+ * adding a class to markup that is always present, so there is no open event
+ * to hook. It delegates to the same Close control the button uses, so
+ * whatever cleanup that does keeps happening in exactly one place.
+ */
+$(document).on('keydown.infobarEscape', function (e) {
+    if (e.key !== 'Escape' && e.keyCode !== 27) return;
+    var $open = $('.infobar-settings-sidebar.sidebarshow, .infobar-settings-sidebar.sidebarview');
+    if (!$open.length) return;
+    $open.last().find('.infobar-settings-close').first().trigger('click');
+});
+
 $(".infobar-settings-close").on("click", function (e) {
     var category = 'sales/categories/new';
     if (currentHash === category) {
