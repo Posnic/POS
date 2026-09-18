@@ -1217,7 +1217,6 @@ if ($wrapper.length) {
                     $kotReportLi.show();
                     $newSaleLi.hide();
                     $('#image_sidebar_newsale').hide();
-                    $('#item_master_menu').show();
                     PosnicPro.applyKotVisibility(true);
                 } else {
                     $('#table_options').prop("checked", false).attr('unchecked', 'unchecked');
@@ -1228,7 +1227,6 @@ if ($wrapper.length) {
                     $kotHistoryLi.hide();
                     $kotReportLi.hide();
                     $newSaleLi.show();
-                    $('#item_master_menu').hide();
                 }
 
                 (data.stock_management === true) ? $('#stock_management').prop("checked", true).attr('checked', 'checked') : $('#stock_management').removeAttr('checked');
@@ -2251,7 +2249,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                         .closest('li').toggle(kotOn);
                     $('#view_touchsales_page').closest('li').toggle(!kotOn);
                     if (kotOn) { $('#image_sidebar_newsale').hide(); }
-                    $('#kot_menu,#item_master_menu').toggle(kotOn);
+                    $('#kot_menu').toggle(kotOn);
                 }
 
                 /* Rebuilding the on-screen keyboard is visible work; a save
@@ -3503,19 +3501,24 @@ PosnicPro.payment = {
                 if (response.type === 'success') {
                     PosnicPro.payment.paymentTable();
                     PosnicPro.payment.paymentClearForm();
-                    
-                    // Check if tender sidebar is open (sales page context)
-                    var isTenderOpen = $('#infobar-settings-sidebar-tender-details').hasClass('sidebarview');
-                    
-                    if (isTenderOpen) {
-                        // Close only the payment modal, keep tender sidebar open
-                        $('#infobar-settings-sidebar-payment').removeClass('sidebarshow');
-                        $('.infobar-settings-sidebar-overlay').hide();
-                    } else {
-                        // Close the settings sidebar (settings page context)
-                        $(".infobar-settings-close").trigger("click");
-                    }
-                    
+
+                    /*
+                     * STAY OPEN, READY FOR THE NEXT ONE.
+                     *
+                     * A shop setting up its payment methods enters several in
+                     * a row - Cash, UPI, Card, Zomato - and the panel closed
+                     * itself after each one, so every entry cost a reopen.
+                     * Owner: "also dont close after save. lets ready to
+                     * insert new. if user wants, then he can close or press
+                     * esc."
+                     *
+                     * The form is already cleared above, so the cursor goes
+                     * back to the name box and typing continues. Closing is
+                     * the Close button or Escape, both of which the person
+                     * chooses - see the Escape handler in PosnicPro.js.
+                     */
+                    $('#payment_value').val('').trigger('focus');
+
                     loader.find(".loadingSpinner:first").remove();
                 }
                 PosnicPro.alert(response.type, response.message);

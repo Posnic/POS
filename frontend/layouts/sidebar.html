@@ -60,6 +60,32 @@
                                         class="img-fluid" alt="dashboard" loading="lazy" decoding="async">
                                     <lang class="lang_dashboard_title">Dashboard</lang>
                                 </a></li>
+                            <!--
+                                THE FLOOR COMES FIRST, under Dashboard.
+                                Owner: "move KOT below dashboard m menu and
+                                above invoices menu." On a restaurant till the
+                                tables screen is the one somebody opens every
+                                few minutes; it was sitting below Sales
+                                History, four entries down.
+
+                                Online orders travels with it on purpose:
+                                orders held back from the kitchen waiting for
+                                somebody to accept them are the same job at an
+                                earlier moment - the decision that produces
+                                the ticket.
+                            -->
+                            <li id="kot_menu" style="display:none;">
+                                <a href="#/kot" id="view_kot_page">
+                                    <img src="static/images/svg-icon/tables.svg" class="img-fluid" alt="KOT" loading="lazy" decoding="async">
+                                    <lang class="lang_kot_title">KOT - Kitchen Order</lang>
+                                </a>
+                            </li>
+                            <li id="online_orders_menu" style="display:none;">
+                                <a href="#/onlineorders" id="view_onlineorders_page">
+                                    <img src="static/images/svg-icon/shopping-online.svg" class="img-fluid" alt="Online orders" loading="lazy" decoding="async">
+                                    <lang class="lang_online_orders_title">Online orders</lang>
+                                </a>
+                            </li>
                             <li>
                                 <a data-module="sales" data-access="write" href="#/sales/new" id="view_touchsales_page">
                                     <img src="static/images/svg-icon/bag.svg" class="img-fluid" alt="New Sale" loading="lazy" decoding="async">
@@ -88,30 +114,14 @@
                                     <lang class="lang_salehistory_title">Sales History</lang>
                                 </a>
                             </li>
-                            <li id="kot_menu" style="display:none;">
-                                <a href="#/kot" id="view_kot_page">
-                                    <img src="static/images/svg-icon/tables.svg" class="img-fluid" alt="KOT" loading="lazy" decoding="async">
-                                    <lang class="lang_kot_title">KOT</lang>
-                                </a>
-                            </li>
                             <!--
-                                Orders held back from the kitchen, waiting for
-                                somebody to accept them. Beside KOT because it
-                                is the same job at an earlier moment: this is
-                                the decision that produces the ticket.
+                                ITEM LIST USED TO SIT HERE, and it was the same
+                                page as Inventory > Items - same route, two
+                                entries. Owner: "Item List i dont know why its
+                                here. its supposed to under inventory." It is
+                                already there, so this one is simply gone
+                                rather than moved into a duplicate.
                             -->
-                            <li id="online_orders_menu" style="display:none;">
-                                <a href="#/onlineorders" id="view_onlineorders_page">
-                                    <img src="static/images/svg-icon/shopping-online.svg" class="img-fluid" alt="Online orders" loading="lazy" decoding="async">
-                                    <lang class="lang_online_orders_title">Online orders</lang>
-                                </a>
-                            </li>
-                            <li id="item_master_menu" style="display:none;">
-                                <a data-module="item" data-access="write" href="#/items" id="view_item_master_page">
-                                    <img src="static/images/svg-icon/items.svg" class="img-fluid" alt="Item List" loading="lazy" decoding="async">
-                                    <lang class="lang_item_master_title">Item List</lang>
-                                </a>
-                            </li>
 
                             <div class="col-lg-12 text-center margin_image_t dashboard_img_menu"
                                 id="image_sidebar_dashboard" style="display:none;">

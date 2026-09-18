@@ -4975,8 +4975,7 @@ $(document).ready(function () {
         kotEnabled: kotEnabled,
         table_options: PosnicPro.local.get('table_options'),
         newSaleLi: $newSaleLi.length,
-        kotMenu: $('#kot_menu').length,
-        itemMasterMenu: $('#item_master_menu').length
+        kotMenu: $('#kot_menu').length
     });
     
     if (kotEnabled) {
@@ -4984,12 +4983,10 @@ $(document).ready(function () {
         $newSaleLi.hide();
         $('#image_sidebar_newsale').hide();
         $('#kot_menu').show();
-        $('#item_master_menu').show();
     } else {
         console.log('KOT is DISABLED - showing New Sale menu');
         $newSaleLi.show();
         $('#kot_menu').hide();
-        $('#item_master_menu').hide();
     }
 
     PosnicPro.applyKotVisibility(kotEnabled);
@@ -5641,6 +5638,27 @@ PosnicPro.INFOBAR_LIST_ADDS = {
     customers: 1, suppliers: 1, users: 1, expenses: 1,
     categories: 1, customercategory: 1, variants: 1
 };
+/*
+ * ESCAPE CLOSES AN OPEN SIDE PANEL.
+ *
+ * These panels are not Bootstrap modals - they are their own slide-out
+ * markup - so the `close_on_esc` class every real modal carries does nothing
+ * for them, and the only way out was to find the small Close button. That
+ * became load-bearing the moment the payment panel stopped closing itself
+ * after Save. Owner: "if user wants, then he can close or press esc."
+ *
+ * Bound on the document rather than on a panel, because a panel is opened by
+ * adding a class to markup that is always present, so there is no open event
+ * to hook. It delegates to the same Close control the button uses, so
+ * whatever cleanup that does keeps happening in exactly one place.
+ */
+$(document).on('keydown.infobarEscape', function (e) {
+    if (e.key !== 'Escape' && e.keyCode !== 27) return;
+    var $open = $('.infobar-settings-sidebar.sidebarshow, .infobar-settings-sidebar.sidebarview');
+    if (!$open.length) return;
+    $open.last().find('.infobar-settings-close').first().trigger('click');
+});
+
 $(".infobar-settings-close").on("click", function (e) {
     var category = 'sales/categories/new';
     if (currentHash === category) {
