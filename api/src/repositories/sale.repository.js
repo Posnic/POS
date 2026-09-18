@@ -7535,6 +7535,53 @@ class SalesRepository {
        * printing it. Absent for a till that sends no id, which leaves the
        * query exactly as it was.
        */
+      /*
+       * WHAT IS ACTUALLY UNPRINTED, rather than the newest few of the day.
+       *
+       * Owner: "cancel not pritingin." From his own till's log:
+       *
+       *   [KOT] sale event -> printing now (cancelled)
+       *   [KOT] API ... message="Get unprinted sales successfully" sales=0
+       *
+       * and from its database: 25 cancelled sales that day against a query
+       * that took the OLDEST 20. Everything cancelled after the twentieth was
+       * outside the window, so the server answered "nothing to print" and the
+       * kitchen never heard about a single one of them. The last cancellation
+       * that printed was 13:02; every one from 13:17 on printed nothing.
+       *
+       * The limits were meant as a safety valve against a huge day and were
+       * doing something else entirely: silently dropping work. A shop that
+       * cancels twenty orders stopped printing cancellations for the rest of
+       * the day, and nothing said so anywhere.
+       *
+       * So the QUERY asks the question the loop below asks: are there changes
+       * past the last printed one. The limits stay, and now they bound a set
+       * that is genuinely outstanding rather than slicing the day.
+       *
+       * Read defensively: last_printed_change_index is -1 on a sale that has
+       * never printed, and some older documents carry it as a string.
+       */
+      const hasUnprintedChanges = {
+        $expr: {
+          $gt: [
+            { $size: { $ifNull: ['$changes', []] } },
+            {
+              $add: [
+                {
+                  $convert: {
+                    input: { $ifNull: ['$last_printed_change_index', -1] },
+                    to: 'int',
+                    onError: -1,
+                    onNull: -1,
+                  },
+                },
+                1,
+              ],
+            },
+          ],
+        },
+      };
+
       const mine = String(tillId || '').trim();
       const notSomebodyElses = mine
         ? {
@@ -7556,6 +7603,7 @@ class SalesRepository {
             branch_id: branchObjectId,
             sale_process: { $regex: 'KOT', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
           { sort: { created_date: 1, _id: 1 }, limit: 50 }
@@ -7568,6 +7616,7 @@ class SalesRepository {
             branch_id: branchObjectId,
             sale_process: { $regex: 'cancelled', $options: 'i' },
             created_date: { $gte: todayStart, $lt: todayEnd },
+            ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
           { sort: { created_date: 1 }, limit: 20 }
