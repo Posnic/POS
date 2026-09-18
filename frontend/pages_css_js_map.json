@@ -88,6 +88,7 @@
             "static/script/js/plugins/toolbar/jquery.toolbar.js",
             "static/script/js/modules/js/dashboard.js",
             "static/script/js/modules/js/roles.js",
+            "static/script/js/modules/js/handsets.js",
             "static/script/js/modules/js/registers.js",
             "static/script/js/modules/js/expenses.js",
             "static/script/js/core/dish-facts.js",
