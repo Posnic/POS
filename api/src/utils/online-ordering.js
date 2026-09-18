@@ -76,14 +76,37 @@ const { FULFILMENT, FULFILMENT_VALUES } = require('./sales-channels');
    trade this channel was built for; anything else is one tick away. */
 const DEFAULT_FULFILMENT = Object.freeze([FULFILMENT.DINE_IN, FULFILMENT.TAKEAWAY]);
 
+/*
+ * WHAT A SHOP OFFERS BEFORE ANYBODY HAS SAID.
+ *
+ * Owner: "table restriction and restaurant oriented stuff only when
+ * restaurant enabled. otherwise treat that as normal retail shop."
+ *
+ * There was one default for every shop - dine in and takeaway - so a hardware
+ * shop that had never opened the settings page was telling customers it had
+ * tables. The customer's page filtered it out afterwards, which worked and
+ * meant the payload itself was saying something untrue.
+ *
+ * DELIVERY IS IN NEITHER DEFAULT, deliberately. A shop that has not said it
+ * delivers must not be offered to a customer as delivering: that takes an
+ * order nobody can fulfil, and the customer finds out when nothing arrives.
+ * Missing an option is a smaller harm than promising one. Delivery is a
+ * choice a shop makes, and until there is a screen to make it, silence means
+ * no.
+ */
+function defaultFulfilment(kind) {
+  if (kind === 'retail') return [FULFILMENT.PICKUP];
+  return [...DEFAULT_FULFILMENT];
+}
+
 /**
  * The fulfilment types a shop offers, in a fixed order and without duplicates.
  *
  * An unknown value is dropped rather than passed through: it would reach the
  * customer's page as a button that collects the wrong fields, or none.
  */
-function normalizeFulfilment(list) {
-  if (!Array.isArray(list)) return [...DEFAULT_FULFILMENT];
+function normalizeFulfilment(list, kind) {
+  if (!Array.isArray(list)) return defaultFulfilment(kind);
   const chosen = new Set(
     list
       .map((v) =>
@@ -98,7 +121,14 @@ function normalizeFulfilment(list) {
   const out = FULFILMENT_VALUES.filter((v) => chosen.has(v));
   /* A shop that offers nothing could take no orders at all, which is what the
      menu mode is for and is never what an empty list meant. */
-  return out.length ? out : [...DEFAULT_FULFILMENT];
+  /*
+   * A retail shop never offers a table, whatever a stored list says. Cleaned
+   * HERE rather than on the page, so the payload a customer's phone receives
+   * is already true - a page that has to filter the server's answer is a page
+   * that can forget to.
+   */
+  const forKind = kind === 'retail' ? out.filter((v) => v !== FULFILMENT.DINE_IN) : out;
+  return forKind.length ? forKind : defaultFulfilment(kind);
 }
 
 /*
@@ -474,7 +504,12 @@ function channelState(config, options = {}) {
   const timeZone = normalizeTimeZone(options.timeZone);
   const mode = normalizeMode(entry && entry.mode);
   const hours = normalizeHours(entry && entry.hours);
-  const fulfilment = normalizeFulfilment(entry && entry.fulfilment);
+  /* 'restaurant' or 'retail'. Absent reads as a restaurant, which is what
+     every caller meant before this argument existed. */
+  const kind = String(options.kind || '')
+    .trim()
+    .toLowerCase();
+  const fulfilment = normalizeFulfilment(entry && entry.fulfilment, kind);
 
   const base = {
     mode,

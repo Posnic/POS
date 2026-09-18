@@ -3209,5 +3209,10 @@
   "lang_counted_from_when_the_order_arrived": "ಆರ್ಡರ್ ಬಂದ ಸಮಯದಿಂದ ಎಣಿಸಲಾಗುತ್ತದೆ.",
   "lang_tell_customers_the_kitchen_is_busy": "ಅಡುಗೆಮನೆ ನಿರತವಾಗಿದ್ದಾಗ ಗಾಹಕರಿಗೆ ತಿಳಿಸಿ",
   "lang_tell_customers_the_kitchen_is_busy_help": "ಅಡುಗೆಮನೆ ಒಂದೇ ಸಮಯಕ್ಕೆ ಮಾಡಿಸಬಲ್ಲಷ್ಟು ಟೇಬಲ್‌ಗಿಂತ ಹೆಚ್ಚು ಟೇಬಲ್‌ಗಳು ನಡೆಯುತ್ತಿದ್ದರೆ, ಆರ್ಡರ್ ಪುಟದಲ್ಲಿ ಕಾಯುವ ಸೂಚನೆ ಕಾಣಿಸುತ್ತದೆ. ಟೇಬಲ್ ಸೇವೆ ಅಗತ್ಯ.",
-  "lang_price_today": "ಇಂದಿನ ಬೆಲೆ"
+  "lang_price_today": "ಇಂದಿನ ಬೆಲೆ",
+  "lang_how_the_food_travels": "ಆಹಾರ ಹೇಗೆ ತಲುಪುತ್ತದೆ",
+  "lang_fulfilment_dine_in": "ಇಲ್ಲೇ ತಿನ್ನಿ, ಟೇಬಲ್ಗೆ ತರಲಾಗುತ್ತದೆ",
+  "lang_fulfilment_takeaway": "ಕೌಂಟರ್‌ನಲ್ಲಿ ಪಡೆಯಿರಿ",
+  "lang_fulfilment_delivery": "ವಿಳಾಸಕ್ಕೆ ಬಟ್ವಾಡೆ",
+  "lang_fulfilment_help": "ಯಾವುದನ್ನೂ ಗುರುತಿಸದಿದ್ದರೆ, ಗ್ರಾಹಕರಿಗೆ ನಿಮ್ಮ ಅಂಗಡಿಯ ಬಗೆಗೆ ಸರಿಯಾದ ಆಯ್ಕೆ ಸಿಗುತ್ತದೆ. ರೆಸ್ಟೋರೆಂಟ್ ಮಾಡ್ಯೂಲ್ ಆಫ್ ಇದ್ದರೆ ಟೇಬಲ್ ಎಂದಿಗೂ ಸಿಗುವುದಿಲ್ಲ."
 }

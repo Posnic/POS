@@ -654,6 +654,9 @@
   "Email settings updated successfully": [
     "src/models/setting.model.js"
   ],
+  "Enter a code": [
+    "src/controllers/online-ordering.controller.js"
+  ],
   "Enter a phone number to test": [
     "src/services/messaging.service.js"
   ],
@@ -1971,6 +1974,9 @@
   ],
   "That card is already assigned to another user": [
     "src/services/authorization.service.js"
+  ],
+  "That code cannot be used here.": [
+    "src/controllers/online-ordering.controller.js"
   ],
   "That dish is not on this shop menu": [
     "src/repositories/item.repository.js"

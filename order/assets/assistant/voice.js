@@ -1351,8 +1351,28 @@
   /* Speech has gaps in it. Closing the moment a word ends would cut the
      customer off mid-sentence, so the gate stays open through the pause. */
   var GAP = 700;
+  /*
+   * How long a line waits for somebody to say something before it hangs up.
+   *
+   * Long enough to read a menu, think, and come back - that is the whole
+   * point of the thing being hands-free - and short enough that a phone left
+   * face down does not bill for an evening. Ninety seconds of silence from
+   * somebody who opened a voice line is somebody who has stopped using it.
+   */
+  var GIVE_UP_AFTER = 90000;
 
-  var room = { ctx: null, node: null, data: null, frame: 0, floor: 0, seen: [], until: 0, since: 0 };
+  var room = {
+    ctx: null,
+    node: null,
+    data: null,
+    frame: 0,
+    floor: 0,
+    seen: [],
+    until: 0,
+    since: 0,
+    /* When somebody last spoke INTO the phone, for the idle hang-up. */
+    lastNear: 0,
+  };
   /* The smoothed level the waves are drawn at; see look(). */
   var shown = 0;
 
@@ -1370,6 +1390,9 @@
       from.connect(room.node);
       room.data = new Uint8Array(room.node.fftSize);
       room.since = Date.now();
+      /* A fresh line starts its patience now. Without this a second call
+         inherits the first one's last word and hangs up on the spot. */
+      room.lastNear = room.since;
       room.seen = [];
       room.floor = 0;
       look();
@@ -1439,11 +1462,41 @@
     var panel = el("voice");
     if (panel && panel.style) panel.style.setProperty("--voice-in", shown.toFixed(3));
 
-    if (level >= enough) room.until = now + GAP;
+    if (level >= enough) {
+      room.until = now + GAP;
+      /* Somebody is talking to the phone, so the line is earning its keep. */
+      room.lastNear = now;
+    }
     var near = now < room.until;
     if (near !== mic.near) {
       mic.near = near;
       decideMic();
+    }
+
+    /*
+     * A LINE NOBODY IS TALKING TO IS A LINE THAT SHOULD NOT BE OPEN.
+     *
+     * Owner: "live conversations are charged so much."
+     *
+     * A realtime line bills for the time it is held, not only for what is
+     * said into it. Until now the only thing that closed one was an order
+     * going through or the customer pressing the button again - so a phone
+     * put face down on a table, or a customer who wandered off mid-sentence,
+     * kept a paid connection open until the tab was closed. Nobody ever sees
+     * that happen; it arrives at the end of the month.
+     *
+     * Measured on NEAR speech rather than on any sound, so a busy restaurant
+     * cannot hold the line open on the room's behalf - which is the same
+     * distinction the gate above exists to make, used for the other purpose.
+     *
+     * The assistant talking counts as activity too: it is mid-sentence, and
+     * hanging up on an answer somebody asked for would be worse than the bill.
+     */
+    if (!room.lastNear) room.lastNear = now;
+    var quietFor = now - room.lastNear;
+    if (quietFor > GIVE_UP_AFTER && !mic.speaking && !live.hangingUp) {
+      if (window.VoiceDebug) window.VoiceDebug.did("line", "closed, nobody speaking");
+      stop();
     }
   }
 
@@ -1667,8 +1720,27 @@
    *                      speaker. Without it the line hears itself, decides
    *                      somebody spoke, and answers - which is how a
    *                      conversation talks itself in circles.
-   *   autoGainControl    a customer half a metre from the phone in a loud
-   *                      room, brought up to a level the far end can use.
+   *   autoGainControl    OFF, and this is the one that had to change.
+   *
+   * WHY AGC HAD TO GO.
+   *
+   * Owner: "second outside talk is the problem while do live conversation."
+   *
+   * This page already decides who is talking by DISTANCE: the customer is at
+   * arm's length and the next table is three metres away, and sound falls off
+   * fast enough that the near one is many times louder. That ratio is what
+   * `NEAR_ENOUGH` measures and it is a good discriminator - people cannot be
+   * told apart by a microphone, but near and far can.
+   *
+   * Automatic gain control exists to destroy exactly that ratio. It quietens
+   * the loud and lifts the quiet until everything arrives at one level, so
+   * the table behind gets amplified up toward the threshold that was meant to
+   * exclude them. The feature was fighting its own gate.
+   *
+   * The cost is real and worth naming: a softly spoken customer in a loud
+   * room now arrives quieter at the far end. That is the right trade. A line
+   * that mishears a quiet customer asks them to repeat; a line that hears the
+   * next table answers a question nobody asked, on the shop's money.
    *
    * ASKED FOR, NOT DEMANDED. These are plain values rather than `{ exact: }`,
    * so a device that cannot do one of them gives what it can instead of
@@ -1683,7 +1755,7 @@
     audio: {
       noiseSuppression: true,
       echoCancellation: true,
-      autoGainControl: true,
+      autoGainControl: false,
       channelCount: 1,
       sampleRate: 16000,
     },

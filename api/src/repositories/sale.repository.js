@@ -41,6 +41,10 @@ async function withDayparts(shop) {
 }
 
 const { notifyOrderAttention, notifyOrderResolved } = require('../helpers/order-attention');
+/* The one definition of what a code is worth. The till, the handset and the
+   customer's page all price a coupon through this. */
+const CouponService = require('../services/coupon.service');
+const coupons = new CouponService();
 const orderApproval = require('../utils/order-approval');
 const billNumber = require('../utils/bill-number');
 const orderProgress = require('../utils/order-progress');
@@ -7925,6 +7929,10 @@ class SalesRepository {
         note,
         kiosk_discount_amount,
         kiosk_discount_description,
+        /* A coupon code the customer typed. The CODE, never a discount: the
+           shop prices its own offers, and a page that could name the value of
+           a coupon could name one nobody published. */
+        coupon_code,
         kiosk_table_no,
         kiosk_table_id,
         dine_type,
@@ -8129,9 +8137,29 @@ class SalesRepository {
        * and is untouched, which is what makes a limit of 1 usable rather than
        * infuriating.
        */
+      /*
+       * AND ONLY WHERE THERE ARE TABLES.
+       *
+       * Owner: "table restriction and restaurant oriented stuff only when
+       * restaurant enabled. otherwise treat that as normal retail shop."
+       *
+       * This asked whether a table NUMBER had arrived and never whether the
+       * shop runs table service. A retail counter has no tables, but a
+       * printed code can still carry a segment - a venue, a unit, a code
+       * reused from a floor plan somebody abandoned - and the moment one did,
+       * a hardware shop was refusing a customer's order with "Table 5 already
+       * has an open order".
+       *
+       * The switch is the branch's own, read the way every other reader here
+       * reads it: `table_options` is declared Boolean on the branch document,
+       * so `=== true` is the honest comparison for this source. The tolerant
+       * string reading in item.repository.js is for SETTINGS values, which are
+       * a different shape from a different writer.
+       */
+      const runsTableService = branchDoc.table_options === true;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
-      if (openTableLimit > 0 && wantsTable) {
+      if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
           sale_process: 'KOT',
@@ -8205,8 +8233,49 @@ class SalesRepository {
           message: `Orders for this start at ${charge.minimum}.`,
         };
       }
+      /*
+       * THE COUPON, PRICED HERE AND NOWHERE ELSE.
+       *
+       * The customer's page sends the code it was given. What it is worth is
+       * worked out from the shop's own coupon document, by the same service
+       * the till uses - there is one definition of what a code is worth, and
+       * this is a third door onto it rather than a third copy.
+       *
+       * AFTER the minimum-order check on purpose. A minimum is a rule about
+       * what a shop is willing to send out, and a coupon must not be a way
+       * around it: `charge` is computed on the food BEFORE any coupon, so a
+       * 200 minimum still means 200 of food.
+       *
+       * AN UNKNOWN CODE REFUSES THE ORDER rather than quietly dropping the
+       * discount. Somebody who typed a code, saw a price and pressed pay must
+       * not be charged more than the number they agreed to. Silently ignoring
+       * it is the one outcome nobody would forgive.
+       */
+      let couponDiscount = 0;
+      let couponUsed = null;
+      const wantedCoupon = String(coupon_code || '').trim();
+      if (wantedCoupon) {
+        const said = await coupons.validate(wantedCoupon, {
+          billTotal: foodTotal,
+          branchId: branchObjectId,
+        });
+        if (!said || said.valid !== true || !said.data) {
+          return {
+            status: false,
+            data: { state: 'coupon_refused', code: wantedCoupon },
+            message: (said && said.message) || 'That code cannot be used on this order.',
+          };
+        }
+        couponDiscount = round(Number(said.data.discount) || 0);
+        couponUsed = said.data;
+      }
+
       const deliveryFee = round(charge.fee);
-      const finalTotal = round(foodTotal + deliveryFee);
+      /* Never below zero, and never against the delivery fee: a coupon is an
+         offer on the food, and a shop that ends up paying somebody to collect
+         an order has been given a rule it did not write. */
+      const afterCoupon = Math.max(0, round(foodTotal - couponDiscount));
+      const finalTotal = round(afterCoupon + deliveryFee);
 
       /*
        * What the venue is owed, worked out once and stored on the order.
@@ -8449,8 +8518,16 @@ class SalesRepository {
         sales_total: finalTotal,
         sales_sub_total: subtotal,
         tax: totalTax,
-        discount: round(itemDiscountTotal + discountAmt),
+        discount: round(itemDiscountTotal + discountAmt + couponDiscount),
         extra_discount: discountAmt,
+        /*
+         * What the coupon took off, and which coupon. Stored rather than
+         * recomputed: the offer can be edited or withdrawn tomorrow, and a
+         * bill has to keep saying what this customer was actually charged.
+         */
+        coupon_code: couponUsed ? String(couponUsed.code || '') : '',
+        coupon_id: couponUsed ? couponUsed.couponId : null,
+        coupon_discount: couponDiscount,
         extra_discount_type: 'price',
         discount_description: kiosk_discount_description || '',
         customer_phone: customerMobile || '',
@@ -8540,6 +8617,32 @@ class SalesRepository {
       salesId = saleDocument.sales_id;
 
       const insertedId = insertResult.insertedId.toString();
+
+      /*
+       * THE REDEMPTION IS RECORDED AFTER THE ORDER EXISTS, never before.
+       *
+       * A coupon with a usage limit is a promise to everybody who has not used
+       * it yet. Counting it against an order that then failed to save would
+       * spend somebody else's turn on nothing, and the count is the only thing
+       * standing between "first fifty customers" and the fifty-first.
+       *
+       * `apply` is idempotent per sale, so a retry cannot count one twice, and
+       * a failure here is deliberately not fatal: the customer's order is
+       * placed and the shop's own record of the redemption is worth less than
+       * the order. It is logged so a shop can find it.
+       */
+      if (couponUsed && couponDiscount > 0) {
+        try {
+          await coupons.apply(couponUsed.code, {
+            saleId: insertedId,
+            billTotal: foodTotal,
+            discount: couponDiscount,
+            reference: salesId,
+          });
+        } catch (e) {
+          console.warn('[online order] the coupon was given but not recorded:', e.message);
+        }
+      }
 
       /*
        * The kitchen is told only if this shop lets orders through on their own.

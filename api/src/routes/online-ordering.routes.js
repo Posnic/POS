@@ -131,6 +131,19 @@ router.post('/:storeId/voice/:session/tick', voiceTickLimiter, bind(controller.v
 /* Every order this phone is holding, in ONE request. The history page used
    to ask per order and ran itself into the limiter below; see
    services/customer-order.service.js readMany. */
+/*
+ * Whether a coupon code is real, before somebody commits to an order.
+ *
+ * Behind the same limiter the placed-order routes use: it is open to the
+ * internet and answers questions about a shop's offers, so a caller who wants
+ * to walk the alphabet is slowed to the same pace as one refreshing an order.
+ */
+router.post(
+  '/:storeId/coupon',
+  placedOrderFloodLimiter,
+  placedOrderLimiter,
+  bind(controller.previewCoupon)
+);
 router.post(
   '/:storeId/orders/lookup',
   placedOrderFloodLimiter,

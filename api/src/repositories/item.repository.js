@@ -4446,6 +4446,8 @@ class ItemRepository extends BaseModel {
              orders can offer that link from here. */
           channel: onlineOrdering.channelState(config, {
             timeZone: branchDoc.time_zone,
+            /* So a shop with no tables is never described as offering one. */
+            kind: branchDoc.table_options === true ? 'restaurant' : 'retail',
           }),
           /* Who is reading, where they are sitting, and whether these prices
              are the house's. Null venue means the shop's own floor. */
@@ -5329,6 +5331,8 @@ class ItemRepository extends BaseModel {
            */
           channel: onlineOrdering.channelState(config, {
             timeZone: branchDoc.time_zone,
+            /* So a shop with no tables is never described as offering one. */
+            kind: branchDoc.table_options === true ? 'restaurant' : 'retail',
           }),
           products: results,
           tableorders,
