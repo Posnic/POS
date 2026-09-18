@@ -246,10 +246,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /*
      * Whether THIS machine is the one by the pass, and which half it wants.
      *
-     *   posnic.kitchenCall.get()                    -> { ting, speak }
-     *   posnic.kitchenCall.set({ ting: true })      -> chime only
-     *   posnic.kitchenCall.set({ speak: true })     -> and read it out
-     *   posnic.kitchenCall.setOn(true)              -> both, the short way
+     *   electronAPI.kitchenCall.get()                    -> { ting, speak }
+     *   electronAPI.kitchenCall.set({ ting: true })      -> chime only
+     *   electronAPI.kitchenCall.set({ speak: true })     -> and read it out
+     *   electronAPI.kitchenCall.setOn(true)              -> both, the short way
      *
      * A value left out is left as it was, so turning the reading off does not
      * silently take the chime with it.
@@ -272,8 +272,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /*
      * The bells a shop can choose between, and one of them as playable audio.
      *
-     *   posnic.kitchenCall.bells()                  -> { arrival: [...], item: [...] }
-     *   posnic.kitchenCall.preview('item', 'tick')  -> a data: URL
+     *   electronAPI.kitchenCall.bells()                  -> { arrival: [...], item: [...] }
+     *   electronAPI.kitchenCall.preview('item', 'tick')  -> a data: URL
      *
      * The names are the stored setting, so a settings page never has to know
      * how any of them are made.
