@@ -62,16 +62,24 @@ test('a guess is stored as a guess, and the server is what decides that', () => 
   );
 });
 
-test('and a guess publishes nothing until a person confirms it', () => {
+test('and a guess claims nothing, though it now shows its numbers', () => {
+  /*
+   * Changed 2026-09-18 on the owner's instruction, looking at 267 dishes
+   * whose estimates no customer could see: "no need to worry about correct
+   * value. later we can update. now i want all values."
+   *
+   * The numbers go out flagged as estimates. The BADGES still wait for a
+   * person, because a badge is an assertion and cannot be labelled a guess in
+   * any way somebody reads carefully. See
+   * tests/a-claim-needs-the-numbers-behind-it.test.js for the whole argument.
+   */
   const measured = { kcal: 280, protein_g: 38, carbs_g: 6, sat_fat_g: 2, sodium_mg: 300, sugar_g: 2 };
+  const guessed = facts.factsFor({ nutrition: measured, nutrition_source: 'estimated' });
 
   assert.ok(facts.factsFor({ nutrition: measured }).claims.length > 0);
-  assert.deepStrictEqual(facts.factsFor({ nutrition: measured, nutrition_source: 'estimated' }).claims, []);
-  assert.deepStrictEqual(
-    facts.factsFor({ nutrition: measured, nutrition_source: 'estimated' }).nutrition,
-    {},
-    'a guessed calorie count is still a claim, and reached a customer'
-  );
+  assert.deepStrictEqual(guessed.claims, [], 'a guess earned a health claim');
+  assert.strictEqual(guessed.nutrition.kcal, 280, 'the numbers are being withheld again');
+  assert.strictEqual(guessed.nutrition_estimated, true, 'a guess went out unflagged');
 });
 
 test('nothing overrules a person, and the pass can be run twice', () => {

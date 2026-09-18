@@ -584,8 +584,19 @@ PosnicPro.kot = {
                             
                             <!-- ✅ Add new item section - hidden by default, shown when Modify clicked -->
                             <div class="kot-add-item-section" data-sale-id="${kot._id}" style="display: none; margin-top: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #dee2e6;">
-                                <h6 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px;">
-                                    <i class="feather icon-plus-circle" style="font-size: 14px;"></i> Add new item
+                                <h6 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                    <span><i class="feather icon-plus-circle" style="font-size: 14px;"></i> Add new item</span>
+                                    <!--
+                                        No keyboard needed. A waiter holding a
+                                        tablet taps Browse and picks from the
+                                        dishes this shop sells most; the search
+                                        beside it is for the long tail.
+                                    -->
+                                    <button type="button" class="btn btn-sm btn-outline-secondary kot-quick-pick-toggle"
+                                            data-sale-id="${kot._id}" title="Pick from the usual dishes" data-t-title="lang_pick_from_the_usual_dishes"
+                                            style="min-height: 38px; padding: 4px 12px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="feather icon-grid" style="font-size: 15px;"></i> Browse
+                                    </button>
                                 </h6>
                                 <div class="kot-search-product-wrapper" data-sale-id="${kot._id}" style="position: relative;">
                                     <input type="text" 
@@ -594,6 +605,7 @@ PosnicPro.kot = {
                                            placeholder="Search product to add..." data-t-placeholder="lang_search_product_to_add"
                                            autocomplete="off"
                                            style="border: 2px solid #dee2e6; border-radius: 6px; padding: 8px 12px; font-size: 14px;">
+                                    <div class="kot-quick-picks" data-sale-id="${kot._id}" style="display: none;"></div>
                                     <div class="kot-search-results" data-sale-id="${kot._id}" style="display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 200px; overflow-y: auto; width: 100%; margin-top: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
                                 </div>
                             </div>
@@ -830,6 +842,17 @@ PosnicPro.kot = {
             }, 300);
         });
 
+        /* Browse opens and closes on its own button, and a tile adds its dish.
+           Delegated for the same reason the search is: this panel is redrawn
+           every time a table is opened. */
+        $(document).off('click', '.kot-quick-pick-toggle').on('click', '.kot-quick-pick-toggle', function () {
+            PosnicPro.kot.quickPicks($(this).data('sale-id'));
+        });
+        $(document).off('click', '.kot-quick-pick').on('click', '.kot-quick-pick', function () {
+            var $b = $(this);
+            PosnicPro.kot.addQuickPick($b.data('sale-id'), $b.data('item-id'), $b.data('item-name'));
+        });
+
         // Handle clicking outside to close search results
         $(document).off('click.kotsearch').on('click.kotsearch', function(e) {
             if (!$(e.target).closest('.kot-search-product-wrapper').length) {
@@ -840,6 +863,166 @@ PosnicPro.kot = {
 
     // Store searched products to avoid issues with special characters in inline handlers
     searchedProducts: {},
+
+    /*
+     * WHAT A LINE COSTS, for the two ways of adding one.
+     *
+     * This arithmetic lived inside the search's result loop, so the tap grid
+     * below had no way to add a dish without guessing at it. Two prices for
+     * one dish is the kind of difference nobody notices until a customer is
+     * charged differently on two days.
+     *
+     * Lifted unchanged, including the order the four discount-and-tax cases
+     * are tested in. NOTE: two further copies of the same sum are still in
+     * this file, in the view and add-from-view paths. They are left alone
+     * rather than refactored blind; folding them in is worth its own change.
+     */
+    _priceOf: function (data) {
+        var sellingPrice = parseFloat(data.selling_price || 0);
+        var discountAmount = parseFloat(data.discount_amount || 0);
+        var discountPercentage = parseFloat(data.discount_percentage || 0);
+        var tax = parseFloat(data.tax || 0);
+        var taxType = data.tax_type || 'inclusive';
+        var finalPrice = 0;
+
+        var taxPrice = (sellingPrice * tax) / (100 + tax);
+        var inclusive_price = sellingPrice - taxPrice;
+        var discountValue = 0;
+        var taxValue = 0;
+
+        if (discountAmount > 0 && tax > 0) {
+            discountValue = (taxType === 'exclusive') ? sellingPrice - discountAmount : inclusive_price - discountAmount;
+            finalPrice = discountValue + (tax / 100) * discountValue;
+        } else if (discountPercentage > 0 && tax > 0) {
+            if (taxType === 'exclusive') {
+                discountValue = (sellingPrice * (discountPercentage / 100));
+                taxValue = sellingPrice - discountValue;
+            } else {
+                discountValue = (inclusive_price * (discountPercentage / 100));
+                taxValue = inclusive_price - discountValue;
+            }
+            finalPrice = taxValue + (tax / 100) * taxValue;
+        } else if (discountAmount > 0) {
+            finalPrice = sellingPrice - discountAmount;
+        } else if (discountPercentage > 0) {
+            finalPrice = sellingPrice - (sellingPrice * (discountPercentage / 100));
+        } else if (tax > 0) {
+            if (taxType === 'exclusive') {
+                finalPrice = sellingPrice + (sellingPrice * tax / 100);
+            } else {
+                finalPrice = inclusive_price + (inclusive_price / 100) * tax;
+            }
+        } else {
+            finalPrice = sellingPrice;
+        }
+
+        return { priceDisplay: finalPrice.toFixed(2), basePrice: sellingPrice.toFixed(2) };
+    },
+
+    /** Text into markup, because a dish name is somebody's typing. */
+    _escape: function (text) {
+        return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    },
+
+    /*
+     * THE DISHES THIS SHOP ACTUALLY SELLS, AS BUTTONS.
+     *
+     * Adding a course to a table meant typing at least two letters and then
+     * hitting a 13px row in a dropdown. Owner: "add new item like
+     * typeahead... coz its not touch friendly. so make it proper. touch
+     * friendly can do stuff without type. near some 4 box icon to show the
+     * items left side normal sales flow."
+     *
+     * A waiter holding a tablet at a table is not going to type. Browse opens
+     * this: the branch's most-ordered dishes as tiles big enough for a thumb,
+     * no keyboard at all. The search stays for the long tail, because a shop
+     * with three hundred dishes cannot be tapped through.
+     *
+     * Most-ordered rather than alphabetical on purpose - a restaurant's top
+     * twenty dishes are most of its covers, so the tap somebody wants is
+     * nearly always on the first screen.
+     */
+    quickPicks: function (saleId) {
+        var $wrap = $('.kot-quick-picks[data-sale-id="' + saleId + '"]');
+        if (!$wrap.length) return;
+        if ($wrap.is(':visible')) { $wrap.slideUp(120); return; }
+
+        var branchId = PosnicPro.local.get('branch_id') || '';
+        $wrap.html('<div style="padding:14px;color:#6c757d;font-size:14px;"><lang class="lang_loading_the_usual_dishes">Loading the usual dishes...</lang></div>').slideDown(120);
+
+        PosnicPro.post({
+            url: 'sales/getFrequentItems',
+            data: JSON.stringify({ branch_id: branchId, limit: 24 })
+        }, function (response) {
+            var rows = (response && response.data) || [];
+            if (!rows.length) {
+                /* A shop that has sold nothing has no "usual". Say so, rather
+                   than showing an empty box that reads as broken. */
+                $wrap.html('<div style="padding:14px;color:#6c757d;font-size:14px;">'
+                    + '<lang class="lang_nothing_has_been_ordered_here_yet">Nothing has been ordered here yet - use the search above.</lang></div>');
+                return;
+            }
+            var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px 2px;">';
+            rows.forEach(function (r) {
+                var id = String(r.item_id || '');
+                var name = String(r.name || '');
+                if (!id || !name) return;
+                html += '<button type="button" class="kot-quick-pick"'
+                    + ' data-sale-id="' + saleId + '" data-item-id="' + PosnicPro.kot._escape(id) + '"'
+                    + ' data-item-name="' + PosnicPro.kot._escape(name) + '"'
+                    /* 64px so a finger can hit it, and the name wraps rather
+                       than being cut - half a dish name is a wrong dish. */
+                    + ' style="min-height:64px;padding:10px 12px;border:2px solid #dee2e6;border-radius:10px;'
+                    + 'background:#fff;text-align:left;cursor:pointer;font-size:14px;font-weight:600;color:#333;'
+                    + 'display:flex;flex-direction:column;justify-content:center;gap:4px;">'
+                    + '<span style="overflow-wrap:anywhere;">' + PosnicPro.kot._escape(name) + '</span>'
+                    + '<span style="font-size:12px;color:#28a745;font-weight:600;">'
+                    + '₹' + (parseFloat(r.price || 0) || 0).toFixed(2) + '</span>'
+                    + '</button>';
+            });
+            $wrap.html(html + '</div>');
+        }, function () {
+            $wrap.html('<div style="padding:14px;color:#dc3545;font-size:14px;">'
+                + '<lang class="lang_could_not_read_the_usual_dishes">Could not read the usual dishes. The search above still works.</lang></div>');
+        });
+    },
+
+    /*
+     * A tapped tile is added through the same door a typed one is.
+     *
+     * The tile knows the dish and what it last sold for, which is not what it
+     * costs today: a price change, a discount or a tax change all live on the
+     * item. So the item is read back and priced through _priceOf exactly as
+     * the search does, and only then added. One round trip, to be certain the
+     * customer is charged the current price.
+     */
+    addQuickPick: function (saleId, itemId, itemName) {
+        PosnicPro.get({
+            url: 'items/getOnlineItemsAjaxList',
+            data: 'query=' + encodeURIComponent(itemName) + '&type=normal'
+        }, function (response) {
+            var list = (response && response.suggestions) || [];
+            var hit = null;
+            for (var i = 0; i < list.length; i += 1) {
+                var d = list[i].data || list[i];
+                var thisId = d.item_id || d.id || (d._id ? d._id.$oid : '');
+                if (String(thisId) === String(itemId)) { hit = d; break; }
+            }
+            if (!hit) {
+                PosnicPro.alert('error', PosnicPro.i18n.t(
+                    'lang_that_dish_is_no_longer_on_the_menu',
+                    'That dish is no longer on the menu. Search for it to check.'
+                ));
+                return;
+            }
+            var priced = PosnicPro.kot._priceOf(hit);
+            PosnicPro.kot.addProductToEditMode(
+                saleId, itemId, hit.item_name || itemName, priced.priceDisplay, priced.basePrice
+            );
+        });
+    },
 
     searchProducts: function(query, saleId, $results) {
         var params = {
@@ -855,47 +1038,15 @@ PosnicPro.kot = {
                     var itemId = data.item_id || data.id || (data._id ? data._id.$oid : '');
                     var itemName = data.item_name || item.value || '';
                     
-                    // Calculate final price with discounts and taxes
-                    var sellingPrice = parseFloat(data.selling_price || 0);
-                    var discountAmount = parseFloat(data.discount_amount || 0);
-                    var discountPercentage = parseFloat(data.discount_percentage || 0);
-                    var tax = parseFloat(data.tax || 0);
-                    var taxType = data.tax_type || 'inclusive';
-                    var finalPrice = 0;
-                    
-                    var taxPrice = (sellingPrice * tax) / (100 + tax);
-                    var inclusive_price = sellingPrice - taxPrice;
-                    
-                    if (discountAmount > 0 && tax > 0) {
-                        var discountValue = (taxType === 'exclusive') ? sellingPrice - discountAmount : inclusive_price - discountAmount;
-                        finalPrice = discountValue + (tax / 100) * discountValue;
-                    } else if (discountPercentage > 0 && tax > 0) {
-                        var discountValue = 0;
-                        var taxValue = 0;
-                        if (taxType === 'exclusive') {
-                            discountValue = (sellingPrice * (discountPercentage / 100));
-                            taxValue = sellingPrice - discountValue;
-                        } else {
-                            discountValue = (inclusive_price * (discountPercentage / 100));
-                            taxValue = inclusive_price - discountValue;
-                        }
-                        finalPrice = taxValue + (tax / 100) * taxValue;
-                    } else if (discountAmount > 0) {
-                        finalPrice = sellingPrice - discountAmount;
-                    } else if (discountPercentage > 0) {
-                        finalPrice = sellingPrice - (sellingPrice * (discountPercentage / 100));
-                    } else if (tax > 0) {
-                        if (taxType === 'exclusive') {
-                            finalPrice = sellingPrice + (sellingPrice * tax / 100);
-                        } else {
-                            finalPrice = inclusive_price + (inclusive_price / 100) * tax;
-                        }
-                    } else {
-                        finalPrice = sellingPrice;
-                    }
-                    
-                    var priceDisplay = finalPrice.toFixed(2);
-                    var basePrice = sellingPrice.toFixed(2);
+                    /* Priced through _priceOf so the Browse grid below cannot
+                       reach a different number for the same dish. NOTE: two
+                       more copies of this arithmetic live in this file (the
+                       view and the add-from-view paths); they are left alone
+                       here rather than refactored blind, and are worth
+                       folding in next. */
+                    var priced = PosnicPro.kot._priceOf(data);
+                    var priceDisplay = priced.priceDisplay;
+                    var basePrice = priced.basePrice;
 
                     // Store product data for retrieval by ID
                     PosnicPro.kot.searchedProducts[itemId] = {
@@ -1998,7 +2149,10 @@ PosnicPro.kot = {
                 var name = esc(it.item_name || '');
                 var qty = it.item_quantity || 0;
 
-                var descRaw = it.item_description || it.description || it.item_desc || '';
+                /* The NOTE only. Falling through to `description` put the
+                   dish's catalogue copy on the paper as if it were an
+                   instruction - see the same fix in sales.js addItem. */
+                var descRaw = it.item_description || '';
                 var desc = esc(descRaw);
                 var descText = desc ? ('** ' + desc + ' **') : '';
 

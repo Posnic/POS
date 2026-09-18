@@ -1469,6 +1469,17 @@ describe('SalesRepository', () => {
       expect(r.message).toBe('Order not found');
     });
 
+    test('an order decision treats its id and tenant as literal values', async () => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockResolvedValue(null);
+      await salesRepository.decideOnOrder({ saleId: FAKE_ID, decision: 'accepted' });
+
+      const filter = collections.sales.findOne.mock.calls.at(-1)[0];
+      expect(filter._id.$eq.toString()).toBe(FAKE_ID);
+      expect(filter.license).toEqual({ $eq: FAKE_LICENSE });
+      expect(filter.branch_id).toEqual({ $eq: FAKE_BRANCH });
+    });
+
     /*
      * ACCEPTING HAS TO GET THE ORDER OUT OF THE QUEUE.
      *

@@ -721,7 +721,9 @@ class KOTManager {
           items: f.items.map((it) => ({
             name: it.item_name || it.name || it.product_name || it.itemName || '',
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
-            description: it.item_description || it.description || it.note || '',
+            /* The note a waiter typed. `description` is the catalogue
+               sentence and must never reach a cook - see escpos-kot.js. */
+            description: it.item_note || it.item_description || it.note || '',
             /* Carried through so the thermal renderer can print it; see
                spiceLine in escpos-kot.js. */
             spice_level: it.spice_level != null ? it.spice_level : it.spice,
@@ -1180,7 +1182,8 @@ class KOTManager {
     const itemsHtml = items.map(it => {
       const name = it.item_name || it.name || it.product_name || it.itemName || '';
       const qty  = it.item_quantity || it.quantity || it.qty || it.item_qty || 1;
-      const desc = it.item_description || it.description || it.desc || '';
+      /* The note only; the catalogue sentence is not an instruction. */
+      const desc = it.item_note || it.item_description || it.desc || '';
       /* The same line the thermal path prints, from the same function, so the
          two ways of printing one ticket cannot say different things. */
       const hot = spiceLine(it.spice_level != null ? it.spice_level : it.spice);

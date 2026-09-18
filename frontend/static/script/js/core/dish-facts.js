@@ -317,9 +317,38 @@
     const marks = cleanTags(item && item.menu_marks, MENU_MARKS);
 
     if (estimatedOnly(item)) {
-      return { nutrition: {}, tags, marks, claims: claimsFor({}, tags) };
+      /*
+       * THE NUMBERS GO OUT. THE BADGES DO NOT.
+       *
+       * Owner, 2026-09-18, on 267 dishes whose estimates nobody could see:
+       * "no need to worry about correct value. later we can update. now i
+       * want all values."
+       *
+       * So a guessed calorie count now reaches the customer, carrying a flag
+       * that says what it is. A number a menu calls an estimate is not a
+       * false claim; it is a number with its provenance attached, and a
+       * customer can weigh it.
+       *
+       * A CLAIM IS NOT A VALUE, and those still wait. "Heart healthy" and
+       * "Diabetic friendly" cannot be labelled as guesses in any way somebody
+       * reads carefully - a badge is an assertion, and the owner's earlier
+       * ruling was that one may "only be shown when the recipe/nutrition
+       * actually supports the claim". A machine's guess about a dish name
+       * supports nothing. So claims are still computed from the TAGS the
+       * kitchen ticked itself and never from estimated numbers.
+       *
+       * The two halves of his instruction do not conflict once values and
+       * assertions are separated, which is the whole of this branch.
+       */
+      return { nutrition, nutrition_estimated: true, tags, marks, claims: claimsFor({}, tags) };
     }
-    return { nutrition, tags, marks, claims: claimsFor(nutrition, tags) };
+    return {
+      nutrition,
+      nutrition_estimated: false,
+      tags,
+      marks,
+      claims: claimsFor(nutrition, tags),
+    };
   }
 
   const api = {

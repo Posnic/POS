@@ -369,6 +369,7 @@
                  for; the dashboard mirrors the setting into preferences. -->
             <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">🖨️ Multi KOT Print</button>
             <button class="tab" onclick="switchTab('screen')">📺 Kitchen Screen</button>
+            <button class="tab" onclick="switchTab('sound')">🔔 Kitchen Sound</button>
             <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
             <button class="tab" onclick="switchTab('scanner')">🔎 Barcode Scanner</button>
         </div>
@@ -1024,6 +1025,96 @@
                 </div>
             </div>
 
+            <!--
+                THE KITCHEN'S SPEAKER, beside the kitchen's screen.
+
+                This lived on the settings page twice, first under Sale and
+                then under Print, and it was wrong both times. Owner: "this is
+                about kitchen play right? not restaurant module?"
+
+                It is a device on this computer, like the cash drawer, the
+                weighing scale and the kitchen screen. The person setting it up
+                is standing at the machine by the pass with a speaker in their
+                hand, and this is the window they are already in.
+
+                PER MACHINE, and that is the whole reason it is here rather
+                than in shop settings: only the machine at the pass has a
+                speaker. A shop-wide switch would make the counter talk in
+                front of customers, somebody would mute the counter, and on
+                most installs that is the same Windows volume the kitchen's
+                speaker is on.
+            -->
+            <div id="soundTab" class="tab-content">
+                <h2>🔔 Kitchen Sound</h2>
+
+                <div class="status" style="background:#e7f1ff;color:#1e3a8a;display:block;">
+                    Turn this on only on the machine by the pass, the one with the speaker.
+                    It rings when a ticket arrives and reads the order out, so a cook with
+                    their hands full hears it without looking at anything.
+                    Saved on this computer only.
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <h3 style="margin-top:0;">What it does when a ticket arrives</h3>
+
+                    <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
+                        <input type="checkbox" id="kitchenTing" style="width:18px;height:18px;">
+                        <span><b>Ring a bell</b><br>
+                            <span style="color:#666;font-size:13px;">Says a ticket landed. Costs a second.</span>
+                        </span>
+                    </label>
+
+                    <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
+                        <input type="checkbox" id="kitchenSpeak" style="width:18px;height:18px;">
+                        <span><b>Read the order out</b><br>
+                            <span style="color:#666;font-size:13px;">Table, how many plates, then each dish. Costs about ten seconds.</span>
+                        </span>
+                    </label>
+
+                    <p style="color:#666;font-size:13px;margin:6px 0 0;">
+                        A kitchen that can see its printer usually wants the bell only.
+                        One across the room wants both.
+                    </p>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="margin-top:0;">Which sounds</h3>
+
+                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
+                        <label style="width:190px;">Bell when the order arrives</label>
+                        <select id="kitchenArrivalBell" style="flex:1;padding:8px;"></select>
+                        <button type="button" class="btn" data-kitchen-play="arrival">Play</button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
+                        <label style="width:190px;">Bell before each dish</label>
+                        <select id="kitchenItemBell" style="flex:1;padding:8px;"></select>
+                        <button type="button" class="btn" data-kitchen-play="item">Play</button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
+                        <label style="width:190px;">Voice</label>
+                        <select id="kitchenVoice" style="flex:1;padding:8px;"></select>
+                        <button type="button" class="btn" id="kitchenVoicePlay">Play</button>
+                    </div>
+
+                    <p style="color:#666;font-size:13px;margin:6px 0 0;">
+                        The voices installed on this computer. Add a language in Windows
+                        settings for more accents.
+                    </p>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <h3 style="margin-top:0;">Hear the whole thing</h3>
+                    <p style="color:#555;font-size:14px;margin:0 0 12px;">
+                        Plays a real ticket through the speaker on this computer, exactly as a
+                        kitchen would hear it. Nothing is ordered and nothing is printed.
+                    </p>
+                    <button type="button" class="btn btn-primary" id="kitchenSoundTest">Test the sound</button>
+                    <span id="kitchenSoundTestResult" style="margin-left:12px;color:#555;font-size:14px;"></span>
+                </div>
+            </div>
+
             <!-- Mobile Devices Tab -->
             <div id="mobileTab" class="tab-content">
                 <!-- Connection Info Card -->
@@ -1231,6 +1322,7 @@
                 'cash':    'cashTab',
                 'kot':     'kotTab',
                 'screen':  'screenTab',
+                'sound':   'soundTab',
                 'mobile':  'mobileTab'
             };
 
@@ -2011,8 +2103,57 @@
                 await rpPref().set('receipt_printer', targets[0].name || 'default');
                 await rpPref().set('print_width', targets[0].pageSize || '80mm');
                 rpUpdateSummary();
-                rpShowStatus('Saved. ' + _describeTargets(targets)
-                    + ' The till picks this up on its next receipt.', 'success');
+
+                /*
+                 * SAY WHETHER THE PRINTER IS ACTUALLY THERE, not just that a
+                 * setting was written.
+                 *
+                 * "Saved" only ever proved this window could write a file.
+                 * Owner: "we need show confirmation its done. its failed or
+                 * really done. hardware level also good." A shop that picks a
+                 * printer which is switched off, unplugged or renamed learns
+                 * nothing here and finds out with a customer waiting.
+                 *
+                 * So the machine is asked again, fresh, and the answer is
+                 * about the queue rather than about us: gone from the list at
+                 * all is an error, present but not reporting ready is a
+                 * warning, and only a printer Windows calls ready gets a tick.
+                 * No paper is spent - Test print is still there for that, and
+                 * it is the only thing that proves the whole path.
+                 */
+                var said = 'Saved. ' + _describeTargets(targets)
+                    + ' The till picks this up on its next receipt.';
+                try {
+                    var live = await window.electronAPI.printer.list();
+                    var byName = {};
+                    (live || []).forEach(function (p) {
+                        byName[String(p.name || '').toLowerCase()] = p;
+                    });
+                    var missing = [];
+                    var notReady = [];
+                    targets.forEach(function (t) {
+                        var found = byName[String(t.name || '').toLowerCase()];
+                        if (!found) { missing.push(t.name); return; }
+                        if (Number(found.status || 0) !== 0) notReady.push(t.name);
+                    });
+                    if (missing.length) {
+                        rpShowStatus(said + ' But this machine has no printer called '
+                            + missing.join(', ') + ' - check it is switched on and still has that name.',
+                            'error');
+                    } else if (notReady.length) {
+                        rpShowStatus(said + ' Windows does not report ' + notReady.join(', ')
+                            + ' as ready - it may be offline or out of paper. Run Test print to be sure.',
+                            'warn');
+                    } else {
+                        rpShowStatus(said + ' This machine can see '
+                            + targets.map(function (t) { return t.name; }).join(', ')
+                            + ' and Windows reports it ready.', 'success');
+                    }
+                } catch (e) {
+                    /* The save is what was asked for and it worked; a failed
+                       readback must not read as a failed save. */
+                    rpShowStatus(said + ' (Could not re-check the printer list: ' + e.message + ')', 'success');
+                }
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }
@@ -3769,6 +3910,198 @@
                 alert('Could not show the test service: ' + (e && e.message ? e.message : e));
             }
         }
+
+
+        /* ------------------------------------------------ kitchen sound */
+
+        /*
+         * THE SPEAKER ON THIS COMPUTER.
+         *
+         * Per machine, which is the whole reason it is in this window rather
+         * than in shop settings: only the machine at the pass has a speaker on
+         * it. A shop-wide switch would make the counter talk in front of
+         * customers, somebody would mute the counter, and on most installs
+         * that is the same Windows volume the kitchen's speaker is on.
+         *
+         * THE SWITCHES COME FIRST AND NOTHING MAY HIDE THEM. That is not a
+         * style choice. On the settings page this replaces, filling the voice
+         * picker threw, the failure path hid the row holding the switches and
+         * the Test button, and left three empty pickers on screen. The feature
+         * looked broken and impossible to turn on at the same time, while the
+         * setting underneath was working perfectly.
+         */
+        (function () {
+            var bridge = window.posnic && window.posnic.kitchenCall;
+            if (!bridge || typeof bridge.get !== 'function') {
+                var tabButton = document.querySelector('[onclick*="switchTab(\'sound\')"]');
+                if (tabButton) tabButton.style.display = 'none';
+                return;
+            }
+
+            /* The stored value is a short name the sound owns; what a person
+               reads is here. A name this list has not heard of still appears,
+               spelled as it came, so a bell added later shows up rather than
+               vanishing. */
+            var BELL_LABEL = {
+                rising: 'Three notes rising',
+                marimba: 'Marimba pair',
+                bell: 'Service bell',
+                soft: 'Soft marimba',
+                tick: 'Short tick',
+                tap: 'Two note tap'
+            };
+
+            var at = function (id) { return document.getElementById(id); };
+
+            var fill = function (select, names, chosen) {
+                select.innerHTML = '';
+                names.forEach(function (name) {
+                    var option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = BELL_LABEL[name] || name;
+                    select.appendChild(option);
+                });
+                if (chosen) select.value = chosen;
+                if (!select.value && names.length) select.value = names[0];
+            };
+
+            var englishVoices = function () {
+                try {
+                    var engine = window.speechSynthesis;
+                    var all = engine && engine.getVoices ? engine.getVoices() : [];
+                    return all.filter(function (v) { return /^en/i.test(String(v.lang || '')); });
+                } catch (e) {
+                    return [];
+                }
+            };
+
+            var fillVoices = function (chosen) {
+                var select = at('kitchenVoice');
+                if (!select) return;
+                select.innerHTML = '';
+                var best = document.createElement('option');
+                best.value = '';
+                best.textContent = 'Best on this computer';
+                select.appendChild(best);
+                englishVoices().forEach(function (v) {
+                    var option = document.createElement('option');
+                    option.value = v.name;
+                    option.textContent = v.name + ' (' + v.lang + ')';
+                    select.appendChild(option);
+                });
+                select.value = chosen || '';
+            };
+
+            var save = function () {
+                bridge.set({
+                    ting: at('kitchenTing').checked,
+                    speak: at('kitchenSpeak').checked,
+                    arrivalBell: at('kitchenArrivalBell').value,
+                    itemBell: at('kitchenItemBell').value,
+                    voice: at('kitchenVoice').value || ''
+                });
+                at('kitchenSoundTestResult').textContent = '';
+            };
+
+            bridge.get().then(function (said) {
+                /* The switches, before anything that can fail. */
+                at('kitchenTing').checked = !!(said && said.ting);
+                at('kitchenSpeak').checked = !!(said && said.speak);
+
+                try {
+                    bridge.bells().then(function (names) {
+                        fill(at('kitchenArrivalBell'), (names && names.arrival) || [], said && said.arrivalBell);
+                        fill(at('kitchenItemBell'), (names && names.item) || [], said && said.itemBell);
+                    }).catch(function () { /* the switches stand */ });
+                    fillVoices(said && said.voice);
+                } catch (e) {
+                    /* Leave the pickers. Nothing here is worth a switch. */
+                }
+            }).catch(function () {
+                /* Unknown state shows the switches off, which is the default
+                   anyway, and flipping one writes the truth. */
+            });
+
+            /* Voices arrive asynchronously on Windows; asking once at load
+               usually returns an empty list. */
+            try {
+                if (window.speechSynthesis && 'onvoiceschanged' in window.speechSynthesis) {
+                    window.speechSynthesis.onvoiceschanged = function () {
+                        fillVoices(at('kitchenVoice') ? at('kitchenVoice').value : '');
+                    };
+                }
+            } catch (e) { /* nothing to do */ }
+
+            ['kitchenTing', 'kitchenSpeak', 'kitchenArrivalBell', 'kitchenItemBell', 'kitchenVoice']
+                .forEach(function (id) {
+                    var el = at(id);
+                    if (el) el.addEventListener('change', save);
+                });
+
+            /* One player, reused: a new Audio() per press leaves the old ones
+               alive until they are collected. */
+            var preview = null;
+            var hear = function (src) {
+                try {
+                    if (!preview) preview = new Audio();
+                    preview.src = src;
+                    preview.volume = 1;
+                    var a = preview.play();
+                    if (a && a.catch) a.catch(function () {});
+                } catch (e) { /* nothing to do */ }
+            };
+
+            document.querySelectorAll('[data-kitchen-play]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var kind = button.getAttribute('data-kitchen-play');
+                    var which = kind === 'item' ? at('kitchenItemBell').value : at('kitchenArrivalBell').value;
+                    bridge.preview(kind, which).then(hear).catch(function () {});
+                });
+            });
+
+            var voicePlay = at('kitchenVoicePlay');
+            if (voicePlay) {
+                voicePlay.addEventListener('click', function () {
+                    try {
+                        var engine = window.speechSynthesis;
+                        if (!engine || typeof window.SpeechSynthesisUtterance !== 'function') return;
+                        if (engine.speaking || engine.pending) engine.cancel();
+
+                        var said = new window.SpeechSynthesisUtterance('Table 5, new order. One Chicken Biryani.');
+                        var wanted = at('kitchenVoice').value;
+                        englishVoices().forEach(function (v) {
+                            if (v.name === wanted) { said.voice = v; said.lang = v.lang; }
+                        });
+                        said.rate = 1;
+                        said.pitch = 1.1;
+                        engine.speak(said);
+                    } catch (e) { /* nothing to do */ }
+                });
+            }
+
+            /*
+             * Says WHY when nothing happens. "I pressed it and nothing
+             * happened" is where this feature spent its whole life.
+             */
+            var test = at('kitchenSoundTest');
+            if (test) {
+                test.addEventListener('click', function () {
+                    var result = at('kitchenSoundTestResult');
+                    result.textContent = 'Playing...';
+                    bridge.test().then(function (said) {
+                        if (said && said.reason === 'off') {
+                            result.textContent = 'Turn one of these on first.';
+                        } else if (!said || !said.played) {
+                            result.textContent = 'This computer could not play it.';
+                        } else {
+                            result.textContent = 'Sent to the speaker. If you heard nothing, check the volume.';
+                        }
+                    }).catch(function () {
+                        result.textContent = 'This computer could not play it.';
+                    });
+                });
+            }
+        })();
 
     </script>
 </body>

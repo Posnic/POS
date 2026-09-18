@@ -854,15 +854,52 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     let saleProcess = process;
     const saleMethod = data.sale_method || existingSale?.sale_method || 'Live-Order';
 
-    // PHP Line 9956-9960: Table-Order automatically becomes KOT with Unpaid status
+    /*
+     * A TABLE ORDER IS UNPAID UNTIL SOMEBODY SETTLES IT - AND THEN IT IS PAID.
+     *
+     * A table order must read Unpaid however it arrives: the captain app sends
+     * `payment_status: "cash"` and the QR page sends "Upi", both of which are
+     * METHODS, and taking them for a status meant a bill could be closed
+     * before anybody handed over money. That is why this override exists and
+     * it stays.
+     *
+     * But it ran on EVERY write, including the one that takes the payment. The
+     * till settles the bill with a PUT to the sale, processSale derives
+     * 'Paid' from it a few lines above, and then this put the sale straight
+     * back to Unpaid with paid_amount 0 and the whole total outstanding. Two
+     * things followed, and the owner reported both:
+     *
+     *   "after payment table not cleared from active order ( KOT page )" -
+     *   getTablesWithActiveOrders looks for sale_process KOT AND
+     *   payment_status Unpaid, so a settled table stayed on the floor for
+     *   ever. No amount of refreshing would clear it, because the money had
+     *   been erased on the way in.
+     *
+     *   And the payment itself was discarded, which is the worse half.
+     *
+     * So the override no longer touches a write that is SETTLING the bill. A
+     * status of Paid or Partialy Paid here is one this service derived from a
+     * real payment on the payload, never a method name a handset sent.
+     * sale_process stays KOT either way: it is still a table order, and
+     * history and the reports that read it are unaffected.
+     */
+    /*
+     * An EXISTING order only. A table order being taken for the first time
+     * carries payment_mode 'Cash' from the till's own defaults long before
+     * anybody has paid, so a create is always Unpaid - which is what the
+     * override was written for and what its test pins.
+     */
+    const settlingTheBill =
+      Boolean(existingSale) && (paymentStatus === 'Paid' || paymentStatus === 'Partialy Paid');
     if (saleMethod === 'Table-Order') {
       saleProcess = 'KOT';
       wasKotProceeded = true;
-      // Override payment status for Table-Order
-      paymentStatus = 'Unpaid';
-      paymentPending = finalSaleTotAmount;
-      paidAmount = 0;
-      balance = finalSaleTotAmount;
+      if (!settlingTheBill) {
+        paymentStatus = 'Unpaid';
+        paymentPending = finalSaleTotAmount;
+        paidAmount = 0;
+        balance = finalSaleTotAmount;
+      }
     } else if (data.sale_process === 'KOT') {
       saleProcess = 'KOT';
     } else if (existingSale && existingSale.sale_process === 'KOT' && !data.sale_process) {

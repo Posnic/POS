@@ -326,6 +326,25 @@
     var shown = pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live;
     shown.forEach(function (t) { board.appendChild(card(t, cfg, compact)); });
 
+    /*
+     * A QUIET KITCHEN GETS WIDE CARDS.
+     *
+     * The grid was a fixed number of columns however many orders were on it,
+     * so one order sat in a quarter-width card: "Chicken Tikka 1 plate"
+     * wrapped onto three lines, and the card clips what it cannot fit, so the
+     * third dish disappeared off the bottom. The owner photographed exactly
+     * that - a single ticket, its own items cut off, on an otherwise empty
+     * screen.
+     *
+     * The fit gives the MOST columns this screen can carry at a readable
+     * size; it is a ceiling, not a quota. With fewer orders than that, the
+     * cards spread into the room they already have and the names fit on one
+     * line. The moment the kitchen fills up the ceiling applies again and
+     * nothing about the busy case changes.
+     */
+    var ceiling = Math.max(1, (cfg._fit && cfg._fit.columns) || 4);
+    board.style.setProperty('--columns', String(Math.max(1, Math.min(ceiling, shown.length))));
+
     $('pager').textContent = pages > 1 ? (page + 1) + ' of ' + pages : '';
   }
 

@@ -1133,11 +1133,31 @@
         var lineItemTaxType = params.tax_type;
         var id = params.id ? params.id : params.item_id;
         var item_name = params.item_name ? params.item_name : params.name;
+        /*
+         * A LINE WITH NO NOTE HAS NO NOTE.
+         *
+         * This fell back to the dish's catalogue description, so every item
+         * added without a note carried the menu's own words in the note field.
+         * They then showed in the KOT cart in italics and printed on the
+         * kitchen ticket, including on a cancellation, as though a customer
+         * had asked for them:
+         *
+         *   CHICKEN BIRYANI 1 HANDI  x1
+         *   ** Chicken Biryani sold as 1 handi, configured for a INR
+         *      Restaurant Demo Dataset POS demo. **
+         *
+         * Owner, twice: "it supposed print only note right? that too in cancel
+         * shit?" and "who asked to add this line item info in the desktop
+         * cart? why?" Nobody did - it has been here since the first import.
+         *
+         * A note on a ticket is an instruction, and a cook assumes somebody
+         * asked for it. The server was taught this on 2026-09-15 ("The kitchen
+         * reads less spicy"); the till kept writing the blurb in, which is why
+         * it came straight back on paper.
+         */
         var item_description = '';
         if (typeof (params.item_description) !== "undefined" && params.item_description !== null) {
             item_description = params.item_description;
-        } else if (typeof (params.description) !== "undefined" && params.description !== null) {
-            item_description = params.description;
         }
         // Normalize any HTML description into plain text so it looks clean in the textarea
         if (item_description && typeof item_description === 'string') {
@@ -2436,16 +2456,42 @@
     showMultiPaymentMode: function () {
         $("#payment_id").empty();
         let sales_payment_mode = PosnicPro.sales.EditRecentSaleParams.payment_mode;
-        // ✅ Use sale_new_tot for new sales, EditRecentSaleParams.sales_total for edits
-        let sales_total = PosnicPro.sales.EditRecentSaleParams.sales_total || parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
+        /*
+         * WHAT THE BILL SAYS IS WHAT THERE IS TO PAY.
+         *
+         * Owner: "take payment cand cash new payment metho sometime it shows
+         * only total without tax. needs to be fixed." Sometimes, not always,
+         * which is the shape of a race rather than of arithmetic.
+         *
+         * Two figures are in play. `sale_new_tot` is the grand total this
+         * screen has just worked out - items, discount, tax, round-off, the
+         * number printed on the bill. `EditRecentSaleParams.sales_total` is
+         * whatever was stored on the sale when it was last written, which for
+         * an order taken on a handset or a QR page was computed elsewhere and
+         * may predate a tax change or an edit.
+         *
+         * The stored one was preferred, and the correction below only fired
+         * when the computed total was ABOVE ZERO. So when the tender opened
+         * before this screen had finished adding up - the order is fetched,
+         * the rows are drawn, the totals follow - the computed total was 0,
+         * the correction was skipped, and the stale stored figure stood. A
+         * customer was shown a total with no tax in it.
+         *
+         * So the computed total wins whenever there is one, and the stored
+         * figure is the fallback for the moment before this screen has run,
+         * rather than the other way round. The reconciliation stays for the
+         * case it was written for: items edited after the amounts were last
+         * saved, where the payment map has to be rebuilt to match.
+         */
+        const currentTotal = parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
+        const storedTotal = parseFloat(PosnicPro.sales.EditRecentSaleParams.sales_total || 0) || 0;
+        let sales_total = currentTotal || storedTotal || 0;
         let multi_payment = PosnicPro.sales.EditRecentSaleParams.multi_payment || {};
 
         // If the current calculated total differs from the stored sales_total
         // (e.g. user edited products before opening payment), reset the
         // multipayment map so it matches the new total and avoids stale
         // values from the previous amount.
-        const currentTotal = parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
-        const storedTotal = parseFloat(PosnicPro.sales.EditRecentSaleParams.sales_total || 0) || 0;
         const totalsDiffer = currentTotal > 0 && Math.abs(currentTotal - storedTotal) > 0.01;
 
         if (totalsDiffer) {

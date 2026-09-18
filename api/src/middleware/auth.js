@@ -96,13 +96,13 @@ const signToken = (id) => {
 /* Lives in its own dependency-free file so the number in the token and the
    number a client is told cannot drift apart, and so it is testable without
    installing the API. */
-const { jwtLifetimeSeconds } = require('../utils/token-lifetime');
+const { jwtLifetimeSeconds, handsetLifetimeSeconds } = require('../utils/token-lifetime');
 
 // Legacy-style JWT including encrypted session_id in the payload.
 // This mirrors the PHP design where JWT carries an encrypted session id
 // for fast session restoration, while still keeping the 'id' field
 // so existing Node verification continues to work.
-const signLegacyToken = (user, req, branchId) => {
+const signLegacyToken = (user, req, branchId, expiresIn) => {
   const userId = user._id?.toString?.() || user.id || user._id;
   const sessionId = req.sessionID || req.session?.id;
   const encryptedSessionId = encryptSessionId(sessionId);
@@ -122,8 +122,20 @@ const signLegacyToken = (user, req, branchId) => {
       : req.session?.selectedBranchId || req.session?.branch_id || '',
   };
 
+  /*
+   * A caller may ask for a different lifetime, and exactly one does.
+   *
+   * A till is a fixed machine behind a counter and a day is right for it. A
+   * handset is carried by a part-time waiter who does not know the shop's
+   * password, so a daily expiry means finding a manager at the start of every
+   * service, for every phone. See handsetLifetimeSeconds in
+   * utils/token-lifetime.js for why a longer one is safe there and not here.
+   *
+   * Left as the default rather than a required argument, so every existing
+   * caller keeps the lifetime it already had.
+   */
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: expiresIn || process.env.JWT_EXPIRES_IN || '24h',
   });
 };
 
@@ -514,6 +526,7 @@ module.exports = {
   signToken,
   signLegacyToken,
   jwtLifetimeSeconds,
+  handsetLifetimeSeconds,
   createSendToken,
   auth,
   protect,
