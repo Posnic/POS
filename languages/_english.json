@@ -3416,5 +3416,10 @@
   "lang_your_online_address": "Your online address",
   "lang_your_own_provider_account": "your own provider account",
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
-  "lang_yourselecteddetails_title": "Selected details will be deleted"
+  "lang_yourselecteddetails_title": "Selected details will be deleted",
+  "lang_how_the_food_travels": "How the food travels",
+  "lang_fulfilment_dine_in": "Eat here, brought to the table",
+  "lang_fulfilment_takeaway": "Collected at the counter",
+  "lang_fulfilment_delivery": "Delivered to an address",
+  "lang_fulfilment_help": "Tick nothing and customers get the sensible default for your kind of shop. A shop with the Restaurant module off never offers a table, whatever is ticked."
 }
