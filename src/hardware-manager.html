@@ -1098,9 +1098,23 @@
                         <button type="button" class="btn" id="kitchenVoicePlay">Play</button>
                     </div>
 
+                    <!--
+                        Owner: "if user can install more show the way to do."
+                        A note saying more exist is a note somebody reads and
+                        then does not know where to go. The button goes there.
+                    -->
                     <p style="color:#666;font-size:13px;margin:6px 0 0;">
-                        The voices installed on this computer. Add a language in Windows
-                        settings for more accents.
+                        These are the voices installed on this computer. Windows ships
+                        more, including Indian English, and they appear in this list
+                        once they are installed.
+                    </p>
+                    <button type="button" class="btn" id="kitchenVoiceGet" style="margin-top:8px;">
+                        Get more voices
+                    </button>
+                    <p style="color:#666;font-size:12px;margin:6px 0 0;">
+                        Opens Windows speech settings. Choose <b>Add voices</b>, pick a
+                        language, then come back and press Play. A voice that has just
+                        been installed shows up after the app is restarted.
                     </p>
                 </div>
 
@@ -3956,6 +3970,22 @@
             };
 
             var at = function (id) { return document.getElementById(id); };
+
+            /*
+             * The renderer names an intent; main decides the address. A page
+             * passing its own URL would turn an allowlist into an open
+             * redirect for anything that can reach that channel.
+             */
+            var getVoices = at('kitchenVoiceGet');
+            if (getVoices) {
+                getVoices.addEventListener('click', function () {
+                    try {
+                        window.electronAPI.desktop.open('voices');
+                    } catch (e) {
+                        /* No bridge is no button; the list still works. */
+                    }
+                });
+            }
 
             var fill = function (select, names, chosen) {
                 select.innerHTML = '';

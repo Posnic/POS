@@ -103,8 +103,10 @@ const quantityOf = (item) =>
  * @param {string|number} ticket.table where it is for
  * @param {Array} ticket.items what is on it
  * @param {boolean} [ticket.changed] an amendment rather than a new order
+ * @param {boolean} [ticket.cancelled] dishes coming OFF, not on
+ * @param {boolean} [ticket.whole] the whole order is going, not some of it
  */
-function script({ table, items, changed } = {}) {
+function script({ table, items, changed, cancelled, whole } = {}) {
   const said = (Array.isArray(items) ? items : [])
     .map((item) => ({ name: spokenName(item), count: quantityOf(item) }))
     .filter((line) => line.name && line.count > 0);
@@ -117,9 +119,34 @@ function script({ table, items, changed } = {}) {
    * neither invented when the ticket does not say. A speaker announcing
    * "Table undefined" is worse than one that just reads the food.
    */
+  /*
+   * A CANCELLATION IS NOT AN ORDER, AND IT USED TO BE READ AS ONE.
+   *
+   * Owner, hearing it: "one mistake for cancelled order it reads as new order.
+   * item cancelled or order cancelled clearly need to do."
+   *
+   * The till writes three kinds of ticket - new, modified and cancel - and the
+   * announcer only asked whether it was modified. Everything else opened with
+   * "new order", so a table cancelling two biryanis was read to the kitchen as
+   * a table ordering two biryanis, and somebody cooked them.
+   *
+   * The whole order going and two dishes coming off it are different sentences
+   * because they are different jobs: one clears a table, the other changes
+   * what is already on the pass.
+   */
+  const what = cancelled
+    ? whole
+      ? "order cancelled"
+      : said.length === 1
+        ? "item cancelled"
+        : "items cancelled"
+    : changed
+      ? "order changed"
+      : "new order";
+
   const opening = where
-    ? `${/^\d+$/.test(where) ? `Table ${where}` : where}, ${changed ? "order changed" : "new order"}.`
-    : `${changed ? "Order changed" : "New order"}.`;
+    ? `${/^\d+$/.test(where) ? `Table ${where}` : where}, ${what}.`
+    : `${what.charAt(0).toUpperCase()}${what.slice(1)}.`;
 
   /*
    * HOW MANY PLATES ARE COMING, said before the list.
@@ -137,8 +164,11 @@ function script({ table, items, changed } = {}) {
    */
   const plates = said.reduce((sum, line) => sum + line.count, 0);
   const counted = countWord(plates);
-  const howMany =
-    plates === 1
+  const howMany = cancelled
+    ? plates === 1
+      ? "One item off."
+      : `${counted.charAt(0).toUpperCase()}${counted.slice(1)} items off.`
+    : plates === 1
       ? "One item."
       : `${counted.charAt(0).toUpperCase()}${counted.slice(1)} items.`;
 
@@ -148,6 +178,14 @@ function script({ table, items, changed } = {}) {
      a bug even where a speech engine does not care. */
   const spoken = read.map((line) => {
     const count = countWord(line.count);
+    /*
+     * EVERY CANCELLED LINE SAYS SO, not only the opening.
+     *
+     * A cook who walks up half way through hears one dish and a number, and
+     * nothing else. "Cancel two naan" cannot be misheard as an order for two
+     * naan; "two naan" after an opening they missed can.
+     */
+    if (cancelled) return `Cancel ${count} ${line.name}`;
     return `${count.charAt(0).toUpperCase()}${count.slice(1)} ${line.name}`;
   });
 
