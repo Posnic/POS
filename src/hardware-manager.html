@@ -2103,8 +2103,57 @@
                 await rpPref().set('receipt_printer', targets[0].name || 'default');
                 await rpPref().set('print_width', targets[0].pageSize || '80mm');
                 rpUpdateSummary();
-                rpShowStatus('Saved. ' + _describeTargets(targets)
-                    + ' The till picks this up on its next receipt.', 'success');
+
+                /*
+                 * SAY WHETHER THE PRINTER IS ACTUALLY THERE, not just that a
+                 * setting was written.
+                 *
+                 * "Saved" only ever proved this window could write a file.
+                 * Owner: "we need show confirmation its done. its failed or
+                 * really done. hardware level also good." A shop that picks a
+                 * printer which is switched off, unplugged or renamed learns
+                 * nothing here and finds out with a customer waiting.
+                 *
+                 * So the machine is asked again, fresh, and the answer is
+                 * about the queue rather than about us: gone from the list at
+                 * all is an error, present but not reporting ready is a
+                 * warning, and only a printer Windows calls ready gets a tick.
+                 * No paper is spent - Test print is still there for that, and
+                 * it is the only thing that proves the whole path.
+                 */
+                var said = 'Saved. ' + _describeTargets(targets)
+                    + ' The till picks this up on its next receipt.';
+                try {
+                    var live = await window.electronAPI.printer.list();
+                    var byName = {};
+                    (live || []).forEach(function (p) {
+                        byName[String(p.name || '').toLowerCase()] = p;
+                    });
+                    var missing = [];
+                    var notReady = [];
+                    targets.forEach(function (t) {
+                        var found = byName[String(t.name || '').toLowerCase()];
+                        if (!found) { missing.push(t.name); return; }
+                        if (Number(found.status || 0) !== 0) notReady.push(t.name);
+                    });
+                    if (missing.length) {
+                        rpShowStatus(said + ' But this machine has no printer called '
+                            + missing.join(', ') + ' - check it is switched on and still has that name.',
+                            'error');
+                    } else if (notReady.length) {
+                        rpShowStatus(said + ' Windows does not report ' + notReady.join(', ')
+                            + ' as ready - it may be offline or out of paper. Run Test print to be sure.',
+                            'warn');
+                    } else {
+                        rpShowStatus(said + ' This machine can see '
+                            + targets.map(function (t) { return t.name; }).join(', ')
+                            + ' and Windows reports it ready.', 'success');
+                    }
+                } catch (e) {
+                    /* The save is what was asked for and it worked; a failed
+                       readback must not read as a failed save. */
+                    rpShowStatus(said + ' (Could not re-check the printer list: ' + e.message + ')', 'success');
+                }
             } catch (e) {
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }
