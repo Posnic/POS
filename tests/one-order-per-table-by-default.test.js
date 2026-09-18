@@ -125,8 +125,26 @@ test('the server refuses a second order on a full table, and says what to do', (
 
 test('no limit means no query at all', () => {
   /* A shop that turned the limit off must not pay for a count on every order.
-     `openTableLimit > 0` guards the whole block, not just the comparison. */
-  assert.match(SALE_REPO, /if \(openTableLimit > 0 && wantsTable\) \{/);
+     `openTableLimit > 0` guards the whole block, not just the comparison.
+
+     Written to allow further conditions in the same `if`, because there is now
+     one - a shop that does not run table service has no table rules at all -
+     and the thing being asserted is that the limit gates the BLOCK, not the
+     exact words it is spelled with. */
+  assert.match(SALE_REPO, /if \([^)]*openTableLimit > 0 && wantsTable\) \{/);
+});
+
+test('and a shop with no tables never reaches the query either', () => {
+  /*
+   * Owner: "table restriction and restaurant oriented stuff only when
+   * restaurant enabled. otherwise treat that as normal retail shop."
+   *
+   * This asked whether a table NUMBER had arrived and never whether the shop
+   * runs table service, so a retail counter whose printed code carried a
+   * segment refused a customer with "Table 5 already has an open order".
+   */
+  assert.match(SALE_REPO, /const runsTableService = branchDoc\.table_options === true;/);
+  assert.match(SALE_REPO, /if \(runsTableService && openTableLimit > 0 && wantsTable\) \{/);
 });
 
 test('a takeaway is not a table', () => {

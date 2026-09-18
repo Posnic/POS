@@ -8129,9 +8129,29 @@ class SalesRepository {
        * and is untouched, which is what makes a limit of 1 usable rather than
        * infuriating.
        */
+      /*
+       * AND ONLY WHERE THERE ARE TABLES.
+       *
+       * Owner: "table restriction and restaurant oriented stuff only when
+       * restaurant enabled. otherwise treat that as normal retail shop."
+       *
+       * This asked whether a table NUMBER had arrived and never whether the
+       * shop runs table service. A retail counter has no tables, but a
+       * printed code can still carry a segment - a venue, a unit, a code
+       * reused from a floor plan somebody abandoned - and the moment one did,
+       * a hardware shop was refusing a customer's order with "Table 5 already
+       * has an open order".
+       *
+       * The switch is the branch's own, read the way every other reader here
+       * reads it: `table_options` is declared Boolean on the branch document,
+       * so `=== true` is the honest comparison for this source. The tolerant
+       * string reading in item.repository.js is for SETTINGS values, which are
+       * a different shape from a different writer.
+       */
+      const runsTableService = branchDoc.table_options === true;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
-      if (openTableLimit > 0 && wantsTable) {
+      if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
           sale_process: 'KOT',
