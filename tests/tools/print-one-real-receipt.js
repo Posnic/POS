@@ -34,6 +34,9 @@ const argOf = (name, fallback) => {
 };
 const DRY = argv.includes('--dry-run');
 const PRINTER = argOf('printer', 'POS-80C');
+/* The roll this printer holds. 80mm is 48 columns and 576 dots, 58mm is 32
+   and 384, and the pictures are rasterised for whichever it is. */
+const PAPER = argOf('paper', '');
 
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
 
@@ -44,7 +47,7 @@ const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
  * classes sales_view.js fills, and the extractor reading them back is the
  * extractor the till uses.
  */
-function pageScript(receiptData, template, branch, logoUrl) {
+function pageScript(receiptData, template, branch, logoUrl, paper) {
   return `(async () => {
     const branch = ${JSON.stringify(branch)};
     window.PosnicPro = {
@@ -119,8 +122,8 @@ function pageScript(receiptData, template, branch, logoUrl) {
 
     const sale = window.PosnicPro.receiptData($('.print-modal-body').html());
     sale.total = 13;
-    sale.logo = window.PosnicPro.receiptLogo('80');
-    sale.footerImage = window.PosnicPro.receiptFooterImage('80');
+    sale.logo = window.PosnicPro.receiptLogo(${JSON.stringify(paper)});
+    sale.footerImage = window.PosnicPro.receiptFooterImage(${JSON.stringify(paper)});
     return sale;
   })()`;
 }
@@ -139,7 +142,8 @@ app.whenReady().then(async () => {
 
   console.log('\nONE RECEIPT, ON REAL PAPER\n');
   console.log('  shop     : ' + branch.branch_name);
-  console.log('  paper    : ' + (branch.print_width || '80') + 'mm, ' + branch.print_type);
+  const paper = PAPER || String(branch.print_width || '80');
+  console.log('  paper    : ' + paper + 'mm, ' + branch.print_type + (PAPER ? '  (overridden)' : ''));
   console.log('  currency : ' + branch.currency);
   console.log('  logo     : ' + branch.print_logoimg + '   brand URL: ' + branch.print_url);
 
@@ -162,7 +166,8 @@ app.whenReady().then(async () => {
         read('frontend', 'static', 'script', 'js', 'core', 'receipt-data.js'),
         read('api', 'src', 'json', 'print_standard_html.txt'),
         branch,
-        '/static/images/default/store.png'
+        '/static/images/default/store.png',
+        paper
       )
     );
   } catch (e) {
@@ -187,7 +192,7 @@ app.whenReady().then(async () => {
   /* ------------------------------------------------------------- the real bytes */
   const { renderSale } = require(path.join(ROOT, 'src', 'escpos-receipt'));
   const bytes = renderSale(sale, {
-    paperWidth: String(branch.print_width || '80'),
+    paperWidth: paper,
     cut: true,
   });
   console.log('\n  ' + bytes.length + ' bytes of ESC/POS');
