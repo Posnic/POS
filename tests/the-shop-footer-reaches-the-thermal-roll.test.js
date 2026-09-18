@@ -52,6 +52,26 @@ const NL = String.fromCharCode(10);
    footer is laid out, and a single collapsed line would hide a real bug. */
 const SHOP_FOOTER = ['No exchange without this bill.', 'Open 7am - 11pm, all days'].join(NL);
 
+/*
+ * The brand URL prints as its OWN LINE, and that is what these assert.
+ *
+ * They used to ask whether the footer CONTAINED "posnic.com", which CodeQL
+ * flags as js/incomplete-url-substring-sanitization and is right to: a
+ * substring test on a URL is the shape of an auth bypass, because
+ * "evil-posnic.com.attacker.net" contains it too. Nothing here is deciding
+ * whether to trust a host - but a rule cannot know that, and the fix is
+ * better testing rather than an exemption.
+ *
+ * An exact line is the stronger claim anyway. "the footer mentions posnic
+ * somewhere" would pass on a shop whose own footer said it; "one of these
+ * lines IS the brand URL" is the thing the switch actually controls.
+ */
+const BRAND_LINE = 'https://www.posnic.com';
+const lineIs = (text, wanted) =>
+  String(text === null || text === undefined ? '' : text)
+    .split(NL)
+    .some((line) => line.trim() === wanted);
+
 /**
  * A till, mid-print.
  *
@@ -129,14 +149,14 @@ test('the brand URL follows its switch, on the roll as on the sheet', () => {
   const off = till({ printUrl: false });
   const saleOff = off.win.PosnicPro.receiptData(off.jq('.print-modal-body').html());
   assert.ok(
-    !saleOff.footer.includes('posnic.com'),
+    !lineIs(saleOff.footer, BRAND_LINE),
     'the brand URL printed with the switch off: ' + JSON.stringify(saleOff.footer)
   );
 
   const on = till({ printUrl: true });
   const saleOn = on.win.PosnicPro.receiptData(on.jq('.print-modal-body').html());
   assert.ok(
-    saleOn.footer.includes('https://www.posnic.com'),
+    lineIs(saleOn.footer, BRAND_LINE),
     'the brand URL did not reach the roll with the switch on: ' + JSON.stringify(saleOn.footer)
   );
 });
@@ -260,7 +280,7 @@ test('what comes off the printer says what the shop wrote, and not the canned li
     'the roll lost the second footer line:' + NL + out.join(NL)
   );
   assert.ok(
-    out.includes('https://www.posnic.com'),
+    out.some((line) => line === BRAND_LINE),
     'the roll does not carry the brand URL:' + NL + out.join(NL)
   );
   assert.ok(
