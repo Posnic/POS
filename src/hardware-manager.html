@@ -3931,7 +3931,11 @@
          * setting underneath was working perfectly.
          */
         (function () {
-            var bridge = window.posnic && window.posnic.kitchenCall;
+            /* electronAPI is the global the preload exposes; `posnic` never
+               existed, so this tab hid itself on every machine that ever
+               opened it. See core/kitchen-call.js for the whole story. */
+            var api = window.electronAPI || window.posnic;
+            var bridge = api && api.kitchenCall;
             if (!bridge || typeof bridge.get !== 'function') {
                 var tabButton = document.querySelector('[onclick*="switchTab(\'sound\')"]');
                 if (tabButton) tabButton.style.display = 'none';
