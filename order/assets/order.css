@@ -37,10 +37,22 @@
   --accent: #111827;
   --on-accent: #ffffff;
 
-  --veg: #0f8a3d;
+  /*
+   * WCAG AA, MEASURED RATHER THAN EYEballed.
+   *
+   * These two were #0f8a3d, which is 4.45:1 on white - just under the 4.5:1
+   * that AA asks for body text, and `--ok` is used as a text colour in three
+   * places. A ratio that close is not a judgement call: it either clears the
+   * line or it does not, and a customer reading a menu in daylight on a cheap
+   * screen is exactly who the line is drawn for.
+   *
+   * #0e8038 is 5.04:1 and is the same green to look at. The veg marker moves
+   * with it so the two do not drift into different greens.
+   */
+  --veg: #0e8038;
   --non-veg: #b91c1c;
   --egg: #b45309;
-  --ok: #0f8a3d;
+  --ok: #0e8038;
   --warn: #b45309;
   --danger: #b91c1c;
   --danger-bg: #fef2f2;

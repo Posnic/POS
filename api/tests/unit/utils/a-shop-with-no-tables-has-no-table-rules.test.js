@@ -114,3 +114,71 @@ describe('the table limit asks whether there are tables', () => {
     expect(passes).toHaveLength(2);
   });
 });
+
+/* ------------------------------------- and now a shop can say which it does */
+
+describe('a shop says how its food travels', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const ROOT = path.join(__dirname, '..', '..', '..', '..');
+  const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
+
+  test('the form carries a box for each way', () => {
+    /* Until this existed every shop ran on one default forever: a shop that
+       delivered could not offer it, and a counter that did not was being
+       described as having tables. */
+    const html = read('frontend', 'modules', 'settings_write.html');
+    for (const id of ['fulfilment_dine_in', 'fulfilment_takeaway', 'fulfilment_delivery']) {
+      expect(html).toContain('id="' + id + '"');
+      expect(html).toContain('name="' + id + '"');
+    }
+  });
+
+  test('the screen saves the ticks, and only when the boxes are there', () => {
+    /* A form that never drew them must not post an empty list and wipe what a
+       shop chose. */
+    const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js');
+    expect(js).toMatch(/if \(\$\('\.fulfilment-box'\)\.length\) \{/);
+    expect(js).toMatch(/out\.fulfilment = \$\('\.fulfilment-box:checked'\)/);
+  });
+
+  test('and reads them back, unticked for a shop never asked', () => {
+    /*
+     * A default drawn as a tick reads as a decision somebody made, and the
+     * next person to look has no way to tell the two apart.
+     */
+    const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js');
+    expect(js).toMatch(
+      /var travels = Array\.isArray\(data\.fulfilment\) \? data\.fulfilment : \[\]/
+    );
+  });
+
+  test('the table box is hidden for a shop with the Restaurant module off', () => {
+    /* Ticking it there would do nothing - the server strips dine_in from a
+       retail shop whatever the document says - and a control that cannot take
+       effect is worse than no control. */
+    const js = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js');
+    expect(js).toMatch(/\$\('#fulfilment_dine_in_row'\)\.toggle\(runsTables\)/);
+    /* Read tolerantly: the console caches this as the string 'enable'. */
+    expect(js).toMatch(/'true', 'enable', 'enabled', '1', 'on', 'yes'/);
+  });
+
+  test('every pack carries the five new words', () => {
+    const packs = fs
+      .readdirSync(path.join(ROOT, 'languages'))
+      .filter((n) => n.endsWith('.json') && !n.startsWith('_'));
+    expect(packs.length).toBeGreaterThanOrEqual(17);
+    for (const pack of packs) {
+      const words = JSON.parse(read('languages', pack));
+      for (const key of [
+        'lang_how_the_food_travels',
+        'lang_fulfilment_dine_in',
+        'lang_fulfilment_takeaway',
+        'lang_fulfilment_delivery',
+        'lang_fulfilment_help',
+      ]) {
+        expect(words[key]).toBeTruthy();
+      }
+    }
+  });
+});

@@ -3209,5 +3209,10 @@
   "lang_counted_from_when_the_order_arrived": "Gerechnet ab dem Eingang der Bestellung.",
   "lang_tell_customers_the_kitchen_is_busy": "Kunden sagen, wenn die Küche ausgelastet ist",
   "lang_tell_customers_the_kitchen_is_busy_help": "Auf der Bestellseite erscheint ein Wartehinweis, wenn mehr Tische in Bearbeitung sind, als die Küche gleichzeitig kochen kann. Erfordert Tischservice.",
-  "lang_price_today": "Heutiger Preis"
+  "lang_price_today": "Heutiger Preis",
+  "lang_how_the_food_travels": "Wie das Essen ankommt",
+  "lang_fulfilment_dine_in": "Hier essen, an den Tisch gebracht",
+  "lang_fulfilment_takeaway": "Am Tresen abgeholt",
+  "lang_fulfilment_delivery": "An eine Adresse geliefert",
+  "lang_fulfilment_help": "Nichts ankreuzen: Kunden erhalten die sinnvolle Voreinstellung für Ihre Art von Geschäft. Ein Geschäft ohne Restaurant-Modul bietet nie einen Tisch an, egal was angekreuzt ist."
 }
