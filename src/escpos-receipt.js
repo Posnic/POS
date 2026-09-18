@@ -28,6 +28,16 @@ const GS = 0x1d;
 const COLUMNS = { '58': 32, '80': 48 };
 
 /*
+ * The same paper, measured in dots.
+ *
+ * A receipt printer is 203dpi, which is 8 dots per mm, so 72mm of printable
+ * paper at 80mm is 576 dots and 48mm at 58mm is 384. That is also 12 dots
+ * per character, which is where 48 and 32 columns come from - the two tables
+ * are the same measurement written twice, and they have to agree.
+ */
+const DOTS = { '58': 384, '80': 576 };
+
+/*
  * Text a thermal printer can actually render.
  *
  * The printer is set to code page 1252, which has no rupee sign: U+20B9 sent
@@ -100,7 +110,8 @@ function ascii(s) {
 
 class Receipt {
   constructor(paperWidth = '80') {
-    this.width = COLUMNS[paperWidth] || COLUMNS['80'];
+    this.paper = COLUMNS[paperWidth] ? paperWidth : '80';
+    this.width = COLUMNS[this.paper];
     this.parts = [];
     this.raw(ESC, 0x40);             // initialise: clears any state a previous job left
     this.raw(ESC, 0x74, 0x10);       // code page 16 (WPC1252) so the rupee sign survives
@@ -130,6 +141,41 @@ class Receipt {
   rule(ch = '-') { return this.line(ch.repeat(this.width)); }
 
   feed(n = 1) { return this.raw(ESC, 0x64, n); }
+
+  /*
+   * A bitmap, as GS v 0.
+   *
+   * `GS v 0 m xL xH yL yH` then the bits: m=0 is normal density, x is the
+   * row length in BYTES (not dots, which is the mistake this command
+   * invites), y is the number of dot rows, and the data that follows is
+   * row-major, MSB first, 1 = black.
+   *
+   * The bitmap arrives already padded to the full paper width with the
+   * logo centred inside it, because ESC a 1 centres text on every printer
+   * and raster images on most of them, and "most" is not a thing worth
+   * discovering on a shop counter.
+   *
+   * A bitmap WIDER than this paper is refused rather than printed. It
+   * happens when one receipt goes to an 80mm and a 58mm printer at once:
+   * the bits were packed for the shop's own paper, and the narrow printer
+   * would render the overflow as garbage rows. A receipt without a logo is
+   * a receipt; a receipt with a shredded one is a fault report.
+   */
+  raster(logo) {
+    if (!logo || !logo.data) return this;
+    const dots = DOTS[this.paper] || DOTS['80'];
+    const width = Number(logo.width) || 0;
+    const height = Number(logo.height) || 0;
+    if (width <= 0 || height <= 0 || width > dots || width % 8 !== 0) return this;
+
+    const bytes = Buffer.from(String(logo.data), 'base64');
+    const perRow = width / 8;
+    if (bytes.length !== perRow * height) return this;
+
+    this.raw(GS, 0x76, 0x30, 0x00, perRow & 0xff, (perRow >> 8) & 0xff, height & 0xff, (height >> 8) & 0xff);
+    this.parts.push(bytes);
+    return this;
+  }
 
   /*
    * Cut the paper, after feeding enough to clear the blade.
@@ -492,8 +538,32 @@ function wrap(text, width) {
  */
 function renderSale(sale, options = {}) {
   const r = new Receipt(options.paperWidth || '80');
-  const money = (n) => Number(n || 0).toFixed(2);
+  /*
+   * Amounts carry the symbol the receipt was already showing.
+   *
+   * They used not to, on this path only: `num` keeps the digits and drops
+   * the rest, so an A4 sheet read "\u20ac 8.00" and the roll read "8.00".
+   * In a shop where the money is obvious that reads as terse; in a country
+   * where it is not, it reads as missing.
+   *
+   * No space after it, because a column is a column. The symbol goes
+   * through `ascii` with everything else, so a rupee becomes "Rs." BEFORE
+   * `pair` and `itemTable` measure - which is the whole reason those two
+   * substitute in characters rather than in bytes. A wider amount column
+   * narrows the item name column, which wraps; it cannot overflow the line.
+   */
+  const symbol = sale.currency ? String(sale.currency) : '';
+  const money = (n) => symbol + Number(n || 0).toFixed(2);
 
+  /*
+   * The logo goes above the name, where a letterhead goes.
+   *
+   * Prepared in the page rather than here: the main process has no canvas,
+   * no image decoder and no idea what a PNG is, and the page that is about
+   * to print has the logo on screen already decoded. See
+   * PosnicPro.receiptLogo in receipt-data.js.
+   */
+  if (sale.logo) r.raster(sale.logo);
   if (sale.storeName) r.centre(sale.storeName, { bold: true, size: 1 });
   if (sale.storeAddress) String(sale.storeAddress).split('\n').forEach((l) => r.centre(l));
   if (sale.storePhone) r.centre(sale.storePhone);

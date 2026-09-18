@@ -3211,6 +3211,18 @@ PosnicPro = {
         }
 
         /*
+         * The logo, as dots.
+         *
+         * Not part of receiptData because it is not read out of the HTML
+         * string: an <img> in a detached div has not loaded, and drawing one
+         * is a blank rectangle. receiptLogo reads the LIVE modal, where the
+         * logo is on screen and decoded, and returns null for every reason a
+         * logo might not be printable - the setting is off, there is no image,
+         * the canvas is tainted. A receipt prints either way.
+         */
+        sale.logo = PosnicPro.receiptLogo ? PosnicPro.receiptLogo(width) : null;
+
+        /*
          * Raw printing needs a printer by name.
          *
          * The page path could pass nothing and let Windows use its default,
