@@ -240,7 +240,23 @@ function pack(ctx, dots, w, h, left) {
  * given: an <img> in a detached div has not loaded yet, and drawing one is a
  * blank rectangle. The modal is on screen with the logo already decoded.
  */
+/*
+ * WHEN THE PAGE IS NOT ALLOWED TO LOOK.
+ *
+ * A canvas holding an image from another origin is TAINTED, and
+ * getImageData throws rather than returning pixels. A shop whose logo
+ * lives somewhere other than the dashboard - an S3 bucket, a CDN - hits
+ * that, and so does a browser with no canvas at all.
+ *
+ * Those cases hand the SOURCE on instead of giving up. The main process
+ * has no origin and no canvas, only a decoder, so the picture this page
+ * was refused is simply a file there. See src/escpos-logo.js.
+ *
+ * Only when there is a logo to print. A shop with the switch off still
+ * gets nothing, and nothing is fetched on its behalf.
+ */
 PosnicPro.receiptLogo = function (paperWidth) {
+    var handOn = null;
     try {
         var dots = DOTS[paperWidth] || DOTS['80'];
         var holder = document.querySelector('.print-modal-body .branch_image');
@@ -250,7 +266,11 @@ PosnicPro.receiptLogo = function (paperWidth) {
 
         var img = holder.querySelector('img');
         if (!img || !img.getAttribute('src')) return null;
-        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return null;
+
+        /* `src` is the resolved absolute URL; the attribute is whatever
+           was typed. The main process needs the resolved one. */
+        handOn = { src: img.src || img.getAttribute('src') };
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return handOn;
 
         /*
          * Never enlarged. A 120px logo stretched across 576 dots and then
@@ -267,7 +287,7 @@ PosnicPro.receiptLogo = function (paperWidth) {
         canvas.width = dots;
         canvas.height = h;
         var ctx = canvas.getContext('2d');
-        if (!ctx) return null;
+        if (!ctx) return handOn;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, dots, h);
         ctx.drawImage(img, left, 0, w, h);
@@ -275,12 +295,12 @@ PosnicPro.receiptLogo = function (paperWidth) {
         return { width: dots, height: h, data: pack(ctx, dots, w, h, left) };
     } catch (e) {
         /*
-         * A logo is decoration and a receipt is not. A tainted canvas, a
-         * cross-origin image, a browser without getImageData: print the
-         * sale.
+         * A tainted canvas lands here, which is the common case and not
+         * an error: the main process can read what this page cannot, so
+         * the source is handed on rather than the logo dropped.
          */
-        console.warn('[Print] could not prepare the logo, printing without it:', e.message);
-        return null;
+        console.warn('[Print] the page cannot read this logo, passing it on:', e.message);
+        return handOn;
     }
 };
 

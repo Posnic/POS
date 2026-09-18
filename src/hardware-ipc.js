@@ -251,13 +251,79 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         options.paperWidth
       );
 
+      /*
+       * A LOGO THE PAGE WAS NOT ALLOWED TO READ.
+       *
+       * receipt-data.js prepares the logo in the page, where the image is
+       * already decoded and it costs nothing. When the canvas is tainted -
+       * a logo served from another origin without CORS headers - it hands
+       * over `{ src }` instead of dots, because a page can never read those
+       * pixels however it asks.
+       *
+       * Here there is no origin and no canvas, only Chromium's decoder, so
+       * the picture the page was refused is simply a file. Resolved once per
+       * paper width rather than per target: two 80mm printers want the same
+       * bitmap, and fetching it twice is a second round trip for nothing.
+       */
+      const logoFor = new Map();
+      async function logoDots(paperWidth) {
+        if (!sale || !sale.logo || sale.logo.data || !sale.logo.src) {
+          return sale ? sale.logo : null;
+        }
+        if (logoFor.has(paperWidth)) return logoFor.get(paperWidth);
+
+        const { rasterFor } = require('./escpos-logo');
+        const { nativeImage, net } = require('electron');
+        const raster = await rasterFor(sale.logo.src, paperWidth, {
+          decode: (buf) => nativeImage.createFromBuffer(buf),
+          readFile: (file) => require('fs').readFileSync(file),
+          get: (url, limits) =>
+            new Promise((done) => {
+              /* Never rejects: a logo is decoration and a receipt is not. */
+              let finished = false;
+              const settle = (v) => {
+                if (!finished) { finished = true; done(v); }
+              };
+              const timer = setTimeout(() => settle(null), limits.timeout);
+              try {
+                const req = net.request(url);
+                const chunks = [];
+                let size = 0;
+                req.on('response', (res) => {
+                  res.on('data', (c) => {
+                    size += c.length;
+                    if (size > limits.limit) { req.abort(); settle(null); return; }
+                    chunks.push(c);
+                  });
+                  res.on('end', () => { clearTimeout(timer); settle(Buffer.concat(chunks)); });
+                  res.on('error', () => { clearTimeout(timer); settle(null); });
+                });
+                req.on('error', () => { clearTimeout(timer); settle(null); });
+                req.end();
+              } catch (e) {
+                clearTimeout(timer);
+                settle(null);
+              }
+            }),
+        });
+        if (!raster) {
+          console.warn('[Print] the logo could not be read here either, printing without it');
+        }
+        logoFor.set(paperWidth, raster);
+        return raster;
+      }
+
       const results = [];
       for (const target of targets) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
            32, so the same bytes cannot serve both. Getting this wrong wraps the
            total onto its own line, which looks like a rounding bug on paper. */
-        const bytes = renderSale(sale || {}, {
-          paperWidth: String(columnsFor(target.pageSize)),
+        const paperWidth = String(columnsFor(target.pageSize));
+        /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
+           per paper width, and the loop is serial anyway. */
+        const logo = await logoDots(paperWidth);
+        const bytes = renderSale({ ...(sale || {}), logo }, {
+          paperWidth,
           /* The drawer opens once, on the first sheet. Pulsing it per copy
              would have it kick three times for a three-copy receipt. */
           openDrawer: !!options.openDrawer && results.length === 0,
