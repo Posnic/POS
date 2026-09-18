@@ -4932,3 +4932,71 @@ test('the note and the spice land on the line the choice made, not on the dish',
   assert.match(press, /setCartItemNote\(key, pendingNote\)/);
   assert.match(press, /setCartItemSpice\(key, pendingSpice\)/);
 });
+
+/* --------------------------------- the line hears the customer, not the room
+ *
+ * Owner: "live conversations are charged so much. second outside talk is the
+ * problem while do live conversation. but press and talk not good ux."
+ *
+ * Both complaints have the same root. The page already decides who is
+ * speaking by DISTANCE - the customer is at arm's length, the next table is
+ * three metres away, and sound falls off fast enough that the ratio is a good
+ * discriminator. People cannot be told apart by a microphone; near and far
+ * can.
+ *
+ * Automatic gain control exists to destroy exactly that ratio, and it was on.
+ * So the gate that makes hands-free possible was being fought by the
+ * microphone settings, which is why press-and-talk felt like the only thing
+ * that worked.
+ */
+
+const VOICE = () => read('assets/assistant/voice.js');
+
+test('the microphone does not flatten the difference between near and far', () => {
+  const js = VOICE();
+  assert.match(js, /autoGainControl: false/, 'gain control is lifting the next table toward the gate');
+  /* The two that genuinely help are kept: steady room noise, and the
+     assistant's own voice coming back through the speaker. */
+  assert.match(js, /noiseSuppression: true/);
+  assert.match(js, /echoCancellation: true/);
+});
+
+test('near is still measured as a RATIO, so a quiet cafe and a loud one both work', () => {
+  const js = VOICE();
+  assert.match(js, /var NEAR_ENOUGH = \d+;/, 'the distance gate is gone');
+  assert.match(js, /var QUIETEST = [\d.]+;/, 'a silent room makes every whisper count as near');
+});
+
+test('a line nobody is talking to hangs itself up', () => {
+  /*
+   * A realtime line bills for the time it is held, not only for what is said
+   * into it. The only thing that closed one was an order going through or the
+   * customer pressing the button again, so a phone put face down kept a paid
+   * connection open until the tab was closed. Nobody sees that happen; it
+   * arrives at the end of the month.
+   */
+  const js = VOICE();
+  assert.match(js, /var GIVE_UP_AFTER = \d+;/, 'there is no idle hang-up');
+  assert.match(js, /quietFor > GIVE_UP_AFTER/, 'the idle timer is not acted on');
+});
+
+test('and it counts NEAR speech, not any sound in the room', () => {
+  /* Otherwise a busy restaurant holds the line open on the room's behalf,
+     which is the bill this exists to stop. */
+  const js = VOICE();
+  assert.match(js, /room\.lastNear = now;/);
+  const gate = js.slice(js.indexOf('if (level >= enough) {'), js.indexOf('var near = now < room.until'));
+  assert.match(gate, /room\.lastNear/, 'the idle clock is reset by something other than near speech');
+});
+
+test('the assistant talking counts as activity, so it is never cut off mid-answer', () => {
+  const js = VOICE();
+  assert.match(js, /quietFor > GIVE_UP_AFTER && !mic\.speaking && !live\.hangingUp/);
+});
+
+test('a second call starts its patience fresh', () => {
+  /* Without this the next line inherits the last word of the previous one and
+     hangs up on the spot. */
+  const js = VOICE();
+  assert.match(js, /room\.lastNear = room\.since;/);
+});
