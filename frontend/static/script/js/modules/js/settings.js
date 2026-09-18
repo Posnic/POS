@@ -1751,6 +1751,33 @@ if ($wrapper.length) {
             $('#kiosk_hours_enable').prop('checked', !!hours);
             self.renderGrid(hours);
             self.renderPause(data.paused_until || '');
+
+            /*
+             * HOW THE FOOD TRAVELS, as this shop last saved it.
+             *
+             * An absent list is a shop that has never been asked, and it is
+             * drawn unticked rather than pre-filled with the default. A
+             * default shown as a choice reads as a decision somebody made,
+             * and the next person to look would have no way to tell the two
+             * apart. The help text under it says what nothing ticked means.
+             */
+            var travels = Array.isArray(data.fulfilment) ? data.fulfilment : [];
+            $('.fulfilment-box').each(function () {
+                $(this).prop('checked', travels.indexOf(String($(this).val())) > -1);
+            });
+
+            /*
+             * The table is hidden for a shop with the Restaurant module off,
+             * because ticking it there would do nothing: the server strips
+             * dine_in from a retail shop's list whatever the document says,
+             * and a control that cannot take effect is worse than no control.
+             */
+            var restaurant = String(PosnicPro.local.get('table_options') || '')
+                .trim()
+                .toLowerCase();
+            var runsTables = ['true', 'enable', 'enabled', '1', 'on', 'yes'].indexOf(restaurant) > -1;
+            $('#fulfilment_dine_in_row').toggle(runsTables);
+
             self.syncMode();
         },
 
@@ -1772,6 +1799,26 @@ if ($wrapper.length) {
                 mode: mode,
                 paused_until: $('#kiosk_paused_until').val() || null
             };
+
+            /*
+             * HOW THE FOOD TRAVELS.
+             *
+             * Only when the boxes are on screen: a form that never drew them
+             * must not post an empty list and wipe what a shop chose. The
+             * group endpoint rule, applied to this form.
+             *
+             * An empty tick list is sent as an empty array on purpose, which
+             * the server reads as "no answer" and falls back to the default
+             * for the shop's kind. That is the difference between a shop that
+             * has chosen nothing and one that has chosen nothing YET, and the
+             * server is the only place that knows which kind of shop it is.
+             */
+            if ($('.fulfilment-box').length) {
+                out.fulfilment = $('.fulfilment-box:checked')
+                    .map(function () { return String($(this).val() || ''); })
+                    .get()
+                    .filter(Boolean);
+            }
 
             if (mode === 'menu' || !$('#kiosk_hours_enable').is(':checked')) {
                 out.hours = null;

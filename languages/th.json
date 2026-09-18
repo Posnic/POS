@@ -3209,5 +3209,10 @@
   "lang_counted_from_when_the_order_arrived": "นับจากเวลาที่ออร์เดอร์เข้ามา",
   "lang_tell_customers_the_kitchen_is_busy": "บอกลูกค้าเมื่อครัวไม่ว่าง",
   "lang_tell_customers_the_kitchen_is_busy_help": "หน้าสั่งอาหารจะแสดงคำเตือนการรอเมื่อมีโต๊ะที่กำลังทำมากกว่าที่ครัวทำได้พร้อมกัน ต้องเปิดใช้บริการโต๊ะ",
-  "lang_price_today": "ราคาวันนี้"
+  "lang_price_today": "ราคาวันนี้",
+  "lang_how_the_food_travels": "อาหารมาถึงอย่างไร",
+  "lang_fulfilment_dine_in": "ทานที่นี่ เสิร์ฟถึงโต๊ะ",
+  "lang_fulfilment_takeaway": "รับที่เคาน์เตอร์",
+  "lang_fulfilment_delivery": "จัดส่งตามที่อยู่",
+  "lang_fulfilment_help": "หากไม่เลือกอะไรเลย ลูกค้าจะได้ค่าเริ่มต้นที่เหมาะกับร้านของคุณ ร้านที่ปิดโมดูลร้านอาหารจะไม่เสนอโต๊ะเลย"
 }

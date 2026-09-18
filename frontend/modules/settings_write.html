@@ -5876,6 +5876,39 @@
                                                                     </div>
                                                                 </div>
 
+                                                                <!--
+                                                                    HOW THE FOOD TRAVELS.
+
+                                                                    Until now there was no way to say. Every shop ran on one
+                                                                    default - dine in and takeaway - so a shop that delivered
+                                                                    could not offer it and a counter that did not was being
+                                                                    described as having tables.
+
+                                                                    The list a customer sees is filtered by the shop's kind:
+                                                                    a retail shop is never offered a table, whatever is
+                                                                    ticked here. See api/src/utils/online-ordering.js.
+                                                                -->
+                                                                <div class="form-row kiosk-ordering-only">
+                                                                    <div class="form-group col-12">
+                                                                        <label><lang class="lang_how_the_food_travels">How the food travels</lang></label>
+                                                                        <div class="custom-control custom-checkbox" id="fulfilment_dine_in_row">
+                                                                            <input type="checkbox" class="custom-control-input fulfilment-box" id="fulfilment_dine_in" name="fulfilment_dine_in" value="dine_in">
+                                                                            <label class="custom-control-label" for="fulfilment_dine_in"><lang class="lang_fulfilment_dine_in">Eat here, brought to the table</lang></label>
+                                                                        </div>
+                                                                        <div class="custom-control custom-checkbox">
+                                                                            <input type="checkbox" class="custom-control-input fulfilment-box" id="fulfilment_takeaway" name="fulfilment_takeaway" value="takeaway">
+                                                                            <label class="custom-control-label" for="fulfilment_takeaway"><lang class="lang_fulfilment_takeaway">Collected at the counter</lang></label>
+                                                                        </div>
+                                                                        <div class="custom-control custom-checkbox">
+                                                                            <input type="checkbox" class="custom-control-input fulfilment-box" id="fulfilment_delivery" name="fulfilment_delivery" value="delivery">
+                                                                            <label class="custom-control-label" for="fulfilment_delivery"><lang class="lang_fulfilment_delivery">Delivered to an address</lang></label>
+                                                                        </div>
+                                                                        <small class="form-text text-muted">
+                                                                            <lang class="lang_fulfilment_help">Tick nothing and customers get the sensible default for your kind of shop. A shop with the Restaurant module off never offers a table, whatever is ticked.</lang>
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+
                                                                 <div class="form-row kiosk-ordering-only">
                                                                     <div class="form-group col-12">
                                                                         <div class="custom-control custom-checkbox mb-2">
