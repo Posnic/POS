@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const BaseController = require('../controllers/base.controller');
 const { protect, optionalProtect } = require('../middleware/auth');
+const pkg = require('../../package.json');
 
 const baseController = new BaseController();
 const bindController = (handler) => handler.bind(baseController);
@@ -32,6 +33,16 @@ router.get('/health', optionalProtect, (req, res) => {
 
   if (req.user) {
     Object.assign(health, {
+      /*
+       * Which build is answering this till.
+       *
+       * A cloud shop has no installer to read a number off, so this is
+       * the only version it can be asked for. It sits inside the
+       * signed-in half deliberately: the reasoning above about not
+       * handing an unauthenticated caller a shopping list applies to the
+       * build number as much as to the Node version.
+       */
+      version: pkg.version,
       memory: process.memoryUsage(),
       node: process.version,
       platform: process.platform,

@@ -1748,6 +1748,16 @@ ipcMain.handle('desktop:open', (_event, target) => {
        often nothing at all on Linux - which is not a thing a shopkeeper can
        use. openLogViewer keeps a way out to the folder. */
     case 'log': openLogViewer(); break;
+    /*
+     * ABOUT, REACHABLE WITHOUT KNOWING ABOUT THE ALT KEY.
+     *
+     * This window has held the version, the platform and the cloud it
+     * syncs with for as long as it has existed, and it sat behind a menu
+     * bar that is hidden by default. Owner: "i asked which version using.
+     * now way to tell." The window was never the problem; the only route
+     * to it was.
+     */
+    case 'about': openAboutWindow(); break;
     /* The renderer names an intent and this decides the address. Letting a page
        pass its own URL here would turn an allowlist into an open redirect for
        anything that can reach this channel. */
@@ -1758,6 +1768,18 @@ ipcMain.handle('desktop:open', (_event, target) => {
 });
 ipcMain.handle('desktop:capabilities', () => ({
   desktop: true,
+  /*
+   * THE NUMBER A SHOP IS ASKED FOR ON THE TELEPHONE.
+   *
+   * Owner, after a customer reported a printing fault: "i asked which
+   * version using. now way to tell."
+   *
+   * It was here all along and nowhere a shopkeeper could see it: Help >
+   * About holds it, and that menu bar is hidden until somebody presses
+   * Alt. This bridge is already called on every desktop start, so the
+   * page can put the number on screen without a new round trip.
+   */
+  version: app.getVersion(),
   backup: !fs.existsSync(CLOUD_CONFIG_FILE)
 }));
 
