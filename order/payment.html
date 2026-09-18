@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <!-- The browser chrome follows the page, so a dark phone does not
+         frame a dark page in a white bar. -->
+    <meta name="theme-color" content="#0b0f19" media="(prefers-color-scheme: dark)">
     <!--
         WHERE EVERY RELATIVE PATH ON THIS PAGE POINTS.
         A printed code can be three segments deep - /order/AZ100/venue/RC/123

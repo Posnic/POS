@@ -129,6 +129,63 @@ test('and every one on the menu page, in both themes', () => {
   }
 });
 
+test('the ordering page clears AA after dark too', () => {
+  /*
+   * Added when /order got a dark theme. The greens and reds are LIFTED rather
+   * than reused: #0e8038 is a fine green on white and 2.2:1 on a dark ground,
+   * which is unreadable. Measured against the darkest surface each colour can
+   * sit on, not just the page background.
+   */
+  const css = fs.readFileSync(path.join(ROOT, 'order', 'assets', 'order.css'), 'utf8');
+  const darkAt = css.indexOf('prefers-color-scheme: dark');
+  assert.ok(darkAt > -1, 'the ordering page lost its dark theme');
+  const rootAt = css.indexOf(':root', darkAt);
+  const palette = tokens(css.slice(rootAt, css.indexOf('}', rootAt)));
+
+  const grounds = [palette['--bg'], palette['--surface'], palette['--raised']].filter(Boolean);
+  assert.ok(grounds.length === 3, 'the dark theme does not declare all three grounds');
+
+  for (const name of TEXT_COLOURS) {
+    if (!palette[name]) continue;
+    for (const ground of grounds) {
+      const ratio = contrast(palette[name], ground);
+      assert.ok(
+        ratio >= 4.5,
+        'dark ' + name + ' is ' + palette[name] + ' on ' + ground + ', ' + ratio.toFixed(2) + ':1, under AA'
+      );
+    }
+  }
+});
+
+test('no colour on the ordering page is left living on a fallback', () => {
+  /*
+   * `var(--paper, #fff)` works perfectly until the page has two themes. A
+   * fallback is a literal, a literal cannot follow a theme, and nine rules
+   * would have stayed white on a black page. Both names are declared now.
+   *
+   * --voice-in is exempt and is not a colour: it is a number the microphone
+   * meter sets from script, and 0 is the right answer before it does.
+   */
+  const css = fs.readFileSync(path.join(ROOT, 'order', 'assets', 'order.css'), 'utf8');
+  const declared = new Set();
+  css.replace(/--([a-z0-9-]+)\s*:/g, (whole, name) => {
+    declared.add('--' + name);
+    return whole;
+  });
+  const onFallback = [...css.matchAll(/var\((--[a-z0-9-]+)\s*,/g)]
+    .map((m) => m[1])
+    .filter((token) => !declared.has(token) && token !== '--voice-in');
+
+  assert.deepStrictEqual([...new Set(onFallback)], [], 'these would stay light in dark mode');
+});
+
+test('the browser chrome follows the page into the dark', () => {
+  /* Otherwise a dark phone frames a dark page in a white bar. */
+  const html = fs.readFileSync(path.join(ROOT, 'order', 'products.html'), 'utf8');
+  assert.match(html, /theme-color" content="#ffffff" media="\(prefers-color-scheme: light\)"/);
+  assert.match(html, /theme-color" content="#0b0f19" media="\(prefers-color-scheme: dark\)"/);
+});
+
 test('the two pages agree on the colours they share', () => {
   /* Two pages of one product disagreeing about what "veg" looks like is two
      products, and a customer opens both. */
