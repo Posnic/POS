@@ -367,7 +367,36 @@ class Receipt {
    * The cutter sits a couple of centimetres past the print head, so cutting
    * without feeding first takes the last lines of the receipt with it.
    */
-  cut() { return this.feed(4).raw(GS, 0x56, 0x42, 0x00); }
+  /*
+   * CUT, WITHOUT PAYING FOR THE FEED TWICE.
+   *
+   * `GS V 66 n` feeds to the cutting position and then cuts. It does the
+   * travelling itself - the last printed line is at the print head, the
+   * blade is about 25mm further on, and the command moves the paper that
+   * 25mm before firing.
+   *
+   * This used to feed FOUR LINES first, which is 15mm of roll on every
+   * receipt of every shop, spent on nothing.
+   *
+   * HOW THAT WAS SETTLED WITHOUT GUESSING. Not from the spec, which has
+   * been wrong about this printer twice: it ignores `ESC t` and it ignores
+   * reverse feed, both of which the datasheet promises. It was settled from
+   * receipts already printed. If the cut did NOT feed, the blade would be
+   * 25mm ahead of the head with only 15mm fed, so it would slice ten
+   * millimetres ABOVE the last line and every receipt would lose the bottom
+   * of its QR onto the next one. Printed receipts are whole. So it feeds.
+   *
+   * ONE line is kept rather than none, and that is not caution - it is the
+   * bottom margin. Feeding nothing means the blade lands on the last row of
+   * pixels, and a receipt cut through the descenders of its own last line
+   * looks like the printer ran out of paper.
+   *
+   * The inch ABOVE the logo is not this and cannot be fixed: it is the same
+   * 25mm on the other side of the cut, sitting between the cut edge and the
+   * head, and this printer ignores the reverse feed that could reclaim it.
+   * See tests/tools/can-this-printer-go-backwards.js.
+   */
+  cut() { return this.feed(1).raw(GS, 0x56, 0x42, 0x00); }
 
   /* Open a drawer wired to the printer, which is how most tills are set up. */
   openDrawer(pin = 0) { return this.raw(ESC, 0x70, pin === 0 ? 0 : 1, 0x19, 0xfa); }
