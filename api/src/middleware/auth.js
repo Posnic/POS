@@ -5,7 +5,7 @@ const { AppError } = require('../utils/appError');
 // UnauthorizedError was thrown on the failure path of protect() without being
 // imported, so an invalid token produced a ReferenceError instead of a 401.
 const { UnauthorizedError } = require('./errorHandler');
-const { currentSecret } = require('../db/tenant-context');
+const { currentSecret, currentConnection } = require('../db/tenant-context');
 const httpStatus = require('http-status');
 const tokenService = require('../services/token.service');
 require('../config/tokens');
@@ -15,6 +15,7 @@ const config = require('../config/config');
 const { attachTenantContext, TenantContextError } = require('../utils/tenant-context');
 const { runWithRequestContext } = require('../utils/request-context');
 const { authCookieOptions } = require('../utils/auth-cookie');
+const handsets = require('../utils/handsets');
 
 const continueWithTenant = async (req, res, next, currentUser) => {
   req.user = currentUser;
@@ -22,6 +23,41 @@ const continueWithTenant = async (req, res, next, currentUser) => {
   res.locals.user = currentUser;
   try {
     await attachTenantContext(req, currentUser);
+
+    /*
+     * A PHONE THE SHOP HAS STOPPED GETS NOTHING, AND IS TOLD WHY.
+     *
+     * Here rather than at the three places a token is decoded, because
+     * this is the first moment the tenant is known and therefore the
+     * first moment there is a shop to ask. Every authenticated route
+     * passes through it.
+     *
+     * Only a token that NAMES a phone can be stopped this way, so a till,
+     * a browser and an older handset are all untouched: `handsetDevice`
+     * is set from the token's own claim, which only the handset sign-in
+     * puts there.
+     *
+     * 403 and a code, not 401: the credential is perfectly good and
+     * signing in again with it would change nothing. The phone has been
+     * turned off, which is a different sentence and a different thing for
+     * the app to say.
+     */
+    if (req.handsetDevice) {
+      const mongoose = require('mongoose');
+      const stopped = await handsets.revoked(
+        currentConnection(mongoose.connection).db,
+        req.handsetDevice
+      );
+      if (stopped) {
+        return res.status(403).json({
+          error: {
+            code: 'DEVICE_REVOKED',
+            message: 'The shop has turned this phone off. Sign in again to use it.',
+          },
+        });
+      }
+    }
+
     const tenant = req.tenantContext || {};
     return runWithRequestContext(
       {
@@ -123,6 +159,20 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
   };
 
   /*
+   * WHICH PHONE THIS TOKEN WAS ISSUED TO, when it was issued to one.
+   *
+   * Owner: "map device to cloud account." A shop that can see its
+   * handsets has to be able to stop one, and stopping one is only
+   * meaningful if the credential itself says which phone is presenting
+   * it. A header would not: a header is whatever the caller types.
+   *
+   * Read off the request rather than taken as an argument so that every
+   * existing caller keeps the token it already had, down to the claims.
+   * The handset sign-in is the only thing that sets it.
+   */
+  if (req && req.handsetDevice) payload.device_id = String(req.handsetDevice);
+
+  /*
    * A caller may ask for a different lifetime, and exactly one does.
    *
    * A till is a fixed machine behind a counter and a day is right for it. A
@@ -173,6 +223,7 @@ const auth = async (req, res, next) => {
 
     // Verify token
     const decoded = await promisify(jwt.verify)(token, getJwtSecret());
+    if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
 
     // Check if user still exists
     const currentUser = await findUserByIdentifier(decoded.id);
@@ -341,6 +392,7 @@ const protect = async (req, res, next) => {
     let decoded;
     try {
       decoded = await promisify(jwt.verify)(token, getJwtSecret());
+      if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
     } catch (err) {
       if (err.name === 'JsonWebTokenError') {
         dropDeadCookie(req, res, token);
@@ -457,6 +509,7 @@ const optionalProtect = async (req, res, next) => {
     if (token) {
       try {
         const decoded = await promisify(jwt.verify)(token, getJwtSecret());
+        if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
         const currentUser = await findUserByIdentifier(decoded.id);
         if (currentUser && !currentUser.changedPasswordAfter(decoded.iat)) {
           // Restore session from JWT (same as protect does)
