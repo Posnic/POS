@@ -505,6 +505,22 @@ function buildBillPayload(sale = {}, branch = {}) {
       .filter(Boolean)
       .join(String.fromCharCode(10)),
 
+    /*
+     * WHICH MONEY THE NUMBERS ARE IN.
+     *
+     * The till learned to print this by reading it off the rendered receipt;
+     * a queued bill has no rendered receipt to read, so it comes from the
+     * branch. Without it the two doors onto the same printer disagree - the
+     * counter receipt says one thing and the bill the waiter brings to the
+     * table says another, for the same sale.
+     *
+     * Empty for a shop that has not set one, which prints bare numbers, as
+     * it always has.
+     */
+    currency: String((branch && branch.currency) || '')
+      .trim()
+      .slice(0, 4),
+
     title: 'BILL',
     billNo: String(sale.sales_id || '').trim(),
     date: stamp(sale.date || sale.created_at),

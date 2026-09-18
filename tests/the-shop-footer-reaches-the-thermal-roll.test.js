@@ -320,3 +320,227 @@ test('Italian accents were never at risk, and still are not', () => {
     'an accented letter was mangled: ' + JSON.stringify(said)
   );
 });
+
+/* ===================================================================== THE LOGO
+ *
+ * Same shop, same report: "Print Logo: enabled" and no logo on the roll. There
+ * was no code to put one there - escpos-receipt.js had no image path at all.
+ *
+ * A thermal printer has no notion of an image file. It lays down dots, so a
+ * logo has to arrive as a bitmap: one bit per dot, packed eight to a byte, as
+ * GS v 0. The preparation happens in the PAGE, because the main process has no
+ * canvas and no image decoder, and the page already has the logo on screen
+ * decoded in the print modal.
+ *
+ * jsdom has no canvas, so the pixels are faked and everything else is real:
+ * the real receiptLogo, the real Floyd-Steinberg, the real bit packing, the
+ * real GS v 0 encoder, and the header decoded back out of the byte stream.
+ */
+
+const GS_RASTER = Buffer.from([0x1d, 0x76, 0x30]);
+
+/** A canvas that holds the rectangle it was asked to draw, and nothing else. */
+function fakeCanvas(win, { logoIsBlack = true } = {}) {
+  const realCreate = win.document.createElement.bind(win.document);
+  win.document.createElement = function (tag) {
+    if (String(tag).toLowerCase() !== 'canvas') return realCreate(tag);
+    const canvas = { width: 0, height: 0 };
+    canvas.getContext = () => ({
+      fillStyle: '',
+      fillRect() {},
+      drawImage(img, left, top, w, h) {
+        canvas._drawn = { left, top, w, h };
+      },
+      getImageData(x, y, w, h) {
+        const data = new Uint8ClampedArray(w * h * 4);
+        const d = canvas._drawn || { left: 0, w: 0 };
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            const o = (py * w + px) * 4;
+            const inside = px >= d.left && px < d.left + d.w;
+            /* White paper outside, the logo's own colour inside. */
+            const v = inside && logoIsBlack ? 0 : 255;
+            data[o] = data[o + 1] = data[o + 2] = v;
+            data[o + 3] = 255;
+          }
+        }
+        return { data, width: w, height: h };
+      },
+    });
+    return canvas;
+  };
+  return win;
+}
+
+/** The modal, with Print Logo on and a decoded image in it. */
+function withLogo(win, { natural = [300, 120], shown = true } = {}) {
+  const holder = win.document.querySelector('.print-modal-body .branch_image');
+  assert.ok(holder, 'the template no longer carries a .branch_image block');
+  holder.style.display = shown ? 'block' : 'none';
+
+  const img = holder.querySelector('img');
+  assert.ok(img, 'the template no longer carries a logo <img>');
+  img.setAttribute('src', 'static/images/default/store.png');
+  /* jsdom never loads it, so say what a loaded image would say. */
+  Object.defineProperty(img, 'complete', { value: true, configurable: true });
+  Object.defineProperty(img, 'naturalWidth', { value: natural[0], configurable: true });
+  Object.defineProperty(img, 'naturalHeight', { value: natural[1], configurable: true });
+  return img;
+}
+
+test('the shop logo becomes dots, and reaches the printer as GS v 0', () => {
+  const { win } = till({ printUrl: false });
+  fakeCanvas(win);
+  withLogo(win);
+
+  const logo = win.PosnicPro.receiptLogo('80');
+  assert.ok(logo, 'no raster was produced for a shop with Print Logo on');
+  assert.strictEqual(logo.width, 576, '80mm is 576 dots at 203dpi');
+  assert.strictEqual(logo.height, 120, 'a 300x120 logo fits without being scaled');
+
+  const bytes = Buffer.from(logo.data, 'base64');
+  assert.strictEqual(bytes.length, (576 / 8) * 120, 'the bitmap is not the size it claims');
+
+  const out = renderSale({ storeName: 'S', total: 8, logo }, { cut: true });
+  const at = out.indexOf(GS_RASTER);
+  assert.ok(at > -1, 'the logo never reached the byte stream');
+
+  /* GS v 0 m xL xH yL yH: x is the row length in BYTES, y is dot rows. */
+  assert.strictEqual(out[at + 3], 0x00, 'density should be normal');
+  assert.strictEqual(out[at + 4] + out[at + 5] * 256, 72, 'row length should be 72 bytes');
+  assert.strictEqual(out[at + 6] + out[at + 7] * 256, 120, 'height should be 120 dot rows');
+  assert.ok(out.length - at - 8 >= 72 * 120, 'the payload is shorter than the header promises');
+});
+
+test('and it is centred in the bitmap, not left to the printer', () => {
+  /* ESC a 1 centres text everywhere and raster images on most printers, and
+     "most" is not a thing to discover on a shop counter. */
+  const { win } = till({ printUrl: false });
+  fakeCanvas(win);
+  withLogo(win, { natural: [288, 40] });
+
+  const logo = win.PosnicPro.receiptLogo('80');
+  const bytes = Buffer.from(logo.data, 'base64');
+  const perRow = 72;
+
+  /* A 288-dot logo on 576 dots leaves 144 dots of paper either side. */
+  const firstRow = bytes.slice(0, perRow);
+  const leftEdge = firstRow.slice(0, 144 / 8);
+  const rightEdge = firstRow.slice(perRow - 144 / 8);
+  assert.ok(leftEdge.every((b) => b === 0), 'ink in the left margin');
+  assert.ok(rightEdge.every((b) => b === 0), 'ink in the right margin');
+  assert.ok(
+    firstRow.slice(144 / 8, perRow - 144 / 8).some((b) => b !== 0),
+    'the logo itself is blank'
+  );
+});
+
+test('a logo taller than the paper is worth is scaled down, never up', () => {
+  const { win } = till({ printUrl: false });
+  fakeCanvas(win);
+  withLogo(win, { natural: [2000, 1600] });
+
+  const big = win.PosnicPro.receiptLogo('80');
+  assert.ok(big.height <= 240, 'a logo ran past 30mm of roll: ' + big.height + ' dot rows');
+
+  /* And a small one stays small: enlarged then dithered is mud, and a shop
+     would read that as a broken printer rather than as a small file. */
+  const second = till({ printUrl: false });
+  fakeCanvas(second.win);
+  withLogo(second.win, { natural: [64, 64] });
+  const small = second.win.PosnicPro.receiptLogo('80');
+  assert.strictEqual(small.height, 64, 'a small logo was enlarged');
+});
+
+test('Print Logo off means no logo, and no bytes spent on one', () => {
+  const { win } = till({ printUrl: false });
+  fakeCanvas(win);
+  withLogo(win, { shown: false });
+
+  assert.strictEqual(win.PosnicPro.receiptLogo('80'), null, 'the logo printed with the switch off');
+
+  const out = renderSale({ storeName: 'S', total: 8 }, { cut: true });
+  assert.strictEqual(out.indexOf(GS_RASTER), -1, 'a raster command with nothing to raster');
+});
+
+test('a bitmap wider than the paper is refused rather than shredded', () => {
+  /*
+   * One receipt can go to an 80mm and a 58mm printer at once. The bits were
+   * packed for the shop's own paper, and a narrow printer would render the
+   * overflow as garbage rows - a receipt without a logo is a receipt, one with
+   * a shredded logo is a fault report.
+   */
+  const wide = { width: 576, height: 8, data: Buffer.alloc(72 * 8, 0xff).toString('base64') };
+  const narrow = renderSale({ storeName: 'S', total: 1, logo: wide }, { paperWidth: '58', cut: true });
+  assert.strictEqual(narrow.indexOf(GS_RASTER), -1, '576 dots were sent to a 384-dot printer');
+
+  const right = renderSale({ storeName: 'S', total: 1, logo: wide }, { paperWidth: '80', cut: true });
+  assert.ok(right.indexOf(GS_RASTER) > -1, 'the same bitmap was refused by its own paper');
+});
+
+test('a logo that cannot be prepared never stops a sale printing', () => {
+  const { win } = till({ printUrl: false });
+  withLogo(win);
+  /* No canvas at all, which is what a locked-down or ancient browser gives. */
+  win.document.createElement = () => ({ getContext: () => null });
+
+  assert.strictEqual(win.PosnicPro.receiptLogo('80'), null, 'a missing canvas should not throw');
+});
+
+/* ================================================================ THE CURRENCY
+ *
+ * num() keeps the digits and drops the rest, so the roll printed "8.00" where
+ * the A4 sheet printed a euro and 8.00. The symbol is read back off the
+ * rendered total, like everything else in that file.
+ */
+
+test('the receipt says which money it counted', () => {
+  const { jq, win } = till({ printUrl: false });
+  jq('.print-subtotal').html('€&nbsp;<span class="number">8.00</span>');
+
+  const sale = win.PosnicPro.receiptData(jq('.print-modal-body').html());
+  assert.strictEqual(sale.currency, '€', 'the symbol was not read off the total');
+
+  const out = renderSale(sale, { cut: true });
+  const at = out.indexOf(Buffer.from('Subtotal', 'latin1'));
+  assert.ok(at > -1, 'no subtotal line to check');
+  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 48));
+  assert.ok(said.includes('€8.00'), 'the amount lost its currency: ' + JSON.stringify(said));
+});
+
+test('and a receipt that never showed one still does not', () => {
+  /* Most shops are in one country and the symbol is noise on a 48-column
+     line. Whatever the template shows is what prints, and nothing invents. */
+  const { jq, win } = till({ printUrl: false });
+  const sale = win.PosnicPro.receiptData(jq('.print-modal-body').html());
+  assert.strictEqual(sale.currency, '', 'a symbol appeared from nowhere');
+});
+
+test('a quantity is not a currency', () => {
+  /* "Total Qty 1.00" is a number with no symbol, and reading one would answer
+     "no currency" with confidence while the totals were saying euro. */
+  const { jq, win } = till({ printUrl: false });
+  jq('.total-noof-item').html('<span class="number">1.00</span>');
+  jq('.print-subtotal').html('€&nbsp;<span class="number">8.00</span>');
+
+  const sale = win.PosnicPro.receiptData(jq('.print-modal-body').html());
+  assert.strictEqual(sale.currency, '€', 'a quantity answered for the currency');
+});
+
+test('a rupee still becomes Rs. before the columns are measured', () => {
+  /*
+   * The whole reason substitutions happen in characters rather than bytes:
+   * "Rs." is three characters where the sign was one, and a column measured
+   * before the swap puts every amount one place off the right margin.
+   */
+  const out = renderSale(
+    { storeName: 'S', subTotal: 800, total: 800, currency: '₹' },
+    { cut: true }
+  );
+  const lines = paper(out).filter((l) => l.includes('800.00'));
+  assert.ok(lines.length > 0, 'nothing printed');
+  for (const line of lines) {
+    assert.ok(line.includes('Rs.800.00'), 'the rupee did not become Rs.: ' + JSON.stringify(line));
+    assert.ok(line.length <= 48, 'a line ran past the paper: ' + line.length + ' columns');
+  }
+});
