@@ -109,6 +109,40 @@ jobs:
       - name: Install
         run: npm ci
 
+      # The v1.6.2 tag locks 26.15.3. New macOS runners reject its use of the
+      # certificate import password to unlock a randomly-passworded keychain.
+      # Apply the upstream three-line fix without changing the tagged app:
+      # https://github.com/electron-userland/electron-builder/pull/10172
+      # Keep this in the workflow so workflow_dispatch can recover older tags.
+      - name: Correct the legacy macOS keychain password
+        if: matrix.name == 'macOS' && env.HAVE_MAC_CERT == 'true'
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const file = require.resolve('app-builder-lib/out/codeSign/macCodeSign.js');
+          let source = fs.readFileSync(file, 'utf8');
+          const changes = [
+            ['return await importCerts(keychainFile, certPaths, cscPasswords);',
+             'return await importCerts(keychainFile, certPaths, cscPasswords, keychainPassword);'],
+            ['async function importCerts(keychainFile, paths, keyPasswords) {',
+             'async function importCerts(keychainFile, paths, keyPasswords, keychainPassword) {'],
+            ['"-s", "-k", password, keychainFile',
+             '"-s", "-k", keychainPassword, keychainFile'],
+          ];
+          if (changes.every(([, fixed]) => source.includes(fixed))) {
+            console.log('The keychain password correction is already present.');
+          } else {
+            for (const [before, after] of changes) {
+              if (source.split(before).length !== 2) {
+                throw new Error('macOS signing implementation changed; review the keychain workaround.');
+              }
+              source = source.replace(before, after);
+            }
+            fs.writeFileSync(file, source);
+            console.log('Corrected the temporary keychain password passed to security.');
+          }
+          NODE
+
       # The frontend is a separate package with its own lockfile, and gulp lives
       # only in its node_modules. prepare:bundle below runs that gulp build, so
       # without this the release build fails on a runner and works on every
