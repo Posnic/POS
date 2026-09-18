@@ -692,44 +692,12 @@ PosnicPro.kot = {
                 
                 items.forEach(function(item) {
                     var itemId = item.item_id || '';
+                    /* One sum, in _priceFrom. This path keeps its own inputs:
+                       item_price as a fallback and an untyped tax read as
+                       exclusive - see the note on _priceFrom. */
                     var sellingPrice = parseFloat(item.selling_price || item.item_price || 0);
                     var tax = parseFloat(item.tax || 0);
-                    var taxType = item.tax_type || 'exclusive';
-                    var discountAmount = parseFloat(item.discount_amount || 0);
-                    var discountPercentage = parseFloat(item.discount_percentage || 0);
-                    var finalPrice = 0;
-                    
-                    // Calculate final price with discounts and taxes
-                    var taxPrice = (sellingPrice * tax) / (100 + tax);
-                    var inclusive_price = sellingPrice - taxPrice;
-                    
-                    if (discountAmount > 0 && tax > 0) {
-                        var discountValue = (taxType === 'exclusive') ? sellingPrice - discountAmount : inclusive_price - discountAmount;
-                        finalPrice = discountValue + (tax / 100) * discountValue;
-                    } else if (discountPercentage > 0 && tax > 0) {
-                        var discountValue = 0;
-                        var taxValue = 0;
-                        if (taxType === 'exclusive') {
-                            discountValue = (sellingPrice * (discountPercentage / 100));
-                            taxValue = sellingPrice - discountValue;
-                        } else {
-                            discountValue = (inclusive_price * (discountPercentage / 100));
-                            taxValue = inclusive_price - discountValue;
-                        }
-                        finalPrice = taxValue + (tax / 100) * taxValue;
-                    } else if (discountAmount > 0) {
-                        finalPrice = sellingPrice - discountAmount;
-                    } else if (discountPercentage > 0) {
-                        finalPrice = sellingPrice - (sellingPrice * (discountPercentage / 100));
-                    } else if (tax > 0) {
-                        if (taxType === 'exclusive') {
-                            finalPrice = sellingPrice + (sellingPrice * tax / 100);
-                        } else {
-                            finalPrice = inclusive_price + (inclusive_price / 100) * tax;
-                        }
-                    } else {
-                        finalPrice = sellingPrice;
-                    }
+                    var finalPrice = PosnicPro.kot._priceOfOrderLine(item);
                     
                     console.log('Item:', item.item_name, '- Selling Price:', sellingPrice, '- Tax:', tax, '- Final Price:', finalPrice);
                     
@@ -877,14 +845,24 @@ PosnicPro.kot = {
      * this file, in the view and add-from-view paths. They are left alone
      * rather than refactored blind; folding them in is worth its own change.
      */
-    _priceOf: function (data) {
-        var sellingPrice = parseFloat(data.selling_price || 0);
-        var discountAmount = parseFloat(data.discount_amount || 0);
-        var discountPercentage = parseFloat(data.discount_percentage || 0);
-        var tax = parseFloat(data.tax || 0);
-        var taxType = data.tax_type || 'inclusive';
+    /*
+     * THE SUM ITSELF, in one place, over values somebody else resolved.
+     *
+     * There were THREE copies of this in this file and they had drifted, which
+     * is the whole reason it is worth moving. The search read `selling_price`
+     * and treated an untyped tax as INCLUSIVE; the two paths that re-read an
+     * order read `selling_price || item_price` and treated it as EXCLUSIVE. On
+     * an item carrying tax with no tax_type, those two return different money
+     * for the same dish.
+     *
+     * So the arithmetic is shared and THE DIFFERENCES ARE KEPT, passed in by
+     * each caller. Folding the defaults together would quietly reprice every
+     * untyped item on one screen or the other, and that is a decision about
+     * money for the owner to make on purpose - not a tidy-up to slip into a
+     * refactor.
+     */
+    _priceFrom: function (sellingPrice, tax, taxType, discountAmount, discountPercentage) {
         var finalPrice = 0;
-
         var taxPrice = (sellingPrice * tax) / (100 + tax);
         var inclusive_price = sellingPrice - taxPrice;
         var discountValue = 0;
@@ -915,9 +893,41 @@ PosnicPro.kot = {
         } else {
             finalPrice = sellingPrice;
         }
+        return finalPrice;
+    },
 
+    /*
+     * What a CATALOGUE row costs - the search results and the Browse grid.
+     * Reads `selling_price`, and an untyped tax is inclusive, which is what
+     * this path has always done.
+     */
+    _priceOf: function (data) {
+        var sellingPrice = parseFloat(data.selling_price || 0);
+        var finalPrice = PosnicPro.kot._priceFrom(
+            sellingPrice,
+            parseFloat(data.tax || 0),
+            data.tax_type || 'inclusive',
+            parseFloat(data.discount_amount || 0),
+            parseFloat(data.discount_percentage || 0)
+        );
         return { priceDisplay: finalPrice.toFixed(2), basePrice: sellingPrice.toFixed(2) };
     },
+
+    /*
+     * What an ORDER LINE costs - the two paths that re-read an order already
+     * sitting on a table. They fall back to `item_price` for a line saved
+     * before a catalogue price existed, and an untyped tax is exclusive.
+     */
+    _priceOfOrderLine: function (item) {
+        return PosnicPro.kot._priceFrom(
+            parseFloat(item.selling_price || item.item_price || 0),
+            parseFloat(item.tax || 0),
+            item.tax_type || 'exclusive',
+            parseFloat(item.discount_amount || 0),
+            parseFloat(item.discount_percentage || 0)
+        );
+    },
+
 
     /** Text into markup, because a dish name is somebody's typing. */
     _escape: function (text) {
@@ -1205,42 +1215,10 @@ PosnicPro.kot = {
                             var item = existingItemIds[itemId];
                             
                             // Calculate final price with discounts and taxes
-                            var sellingPrice = parseFloat(item.selling_price || item.item_price || 0);
-                            var tax = parseFloat(item.tax || 0);
-                            var taxType = item.tax_type || 'exclusive';
-                            var discountAmount = parseFloat(item.discount_amount || 0);
-                            var discountPercentage = parseFloat(item.discount_percentage || 0);
-                            
-                            var taxPrice = (sellingPrice * tax) / (100 + tax);
-                            var inclusive_price = sellingPrice - taxPrice;
-                            
-                            if (discountAmount > 0 && tax > 0) {
-                                var discountValue = (taxType === 'exclusive') ? sellingPrice - discountAmount : inclusive_price - discountAmount;
-                                finalPrice = discountValue + (tax / 100) * discountValue;
-                            } else if (discountPercentage > 0 && tax > 0) {
-                                var discountValue = 0;
-                                var taxValue = 0;
-                                if (taxType === 'exclusive') {
-                                    discountValue = (sellingPrice * (discountPercentage / 100));
-                                    taxValue = sellingPrice - discountValue;
-                                } else {
-                                    discountValue = (inclusive_price * (discountPercentage / 100));
-                                    taxValue = inclusive_price - discountValue;
-                                }
-                                finalPrice = taxValue + (tax / 100) * taxValue;
-                            } else if (discountAmount > 0) {
-                                finalPrice = sellingPrice - discountAmount;
-                            } else if (discountPercentage > 0) {
-                                finalPrice = sellingPrice - (sellingPrice * (discountPercentage / 100));
-                            } else if (tax > 0) {
-                                if (taxType === 'exclusive') {
-                                    finalPrice = sellingPrice + (sellingPrice * tax / 100);
-                                } else {
-                                    finalPrice = inclusive_price + (inclusive_price / 100) * tax;
-                                }
-                            } else {
-                                finalPrice = sellingPrice;
-                            }
+                            /* One sum, in _priceFrom. This path keeps its own inputs:
+                               item_price as a fallback and an untyped tax read as
+                               exclusive - see the note on _priceFrom. */
+                            finalPrice = PosnicPro.kot._priceOfOrderLine(item);
                             
                             console.log('Existing Item - Final Price:', finalPrice, '- Qty:', qty);
                         } else {
