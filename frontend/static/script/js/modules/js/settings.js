@@ -118,6 +118,9 @@ PosnicPro.settings = {
         $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
+        /* A list has to be fetched every time it is opened: a phone that
+           signed in a minute ago belongs on it. */
+        if (key === 'handsets' && PosnicPro.handsets) { PosnicPro.handsets.load(); }
         if (key === 'ai') { PosnicPro.settings.ai.load(); }
     },
     /*
