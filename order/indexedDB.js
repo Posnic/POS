@@ -1941,6 +1941,11 @@ function catalogueItem(item, categoryName) {
          * deliver one the numbers already earned.
          */
         nutrition: item.nutrition && typeof item.nutrition === "object" ? item.nutrition : {},
+        /* Whether a person confirmed those numbers or a machine guessed them
+           from the dish name. The sheet says so beside them; without this
+           field it could not, and a guess would read as a measurement. The
+           fifth thing this literal has had to be taught to keep. */
+        nutrition_estimated: item.nutrition_estimated === true,
         tags: Array.isArray(item.tags) ? item.tags : [],
         marks: Array.isArray(item.marks) ? item.marks : [],
         claims: Array.isArray(item.claims) ? item.claims : [],

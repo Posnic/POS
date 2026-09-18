@@ -336,11 +336,26 @@
         /* The numbers last: whoever wants them will read this far, and
            whoever does not should not have to scroll past them. */
         const n = (item.nutrition && typeof item.nutrition === "object") ? item.nutrition : {};
+        let numbers = 0;
         NUTRIENT_ROWS.forEach(([key, label, unit]) => {
             const value = Number(n[key]);
             if (!isFinite(value)) return;
+            numbers += 1;
             rows.push([label, unit ? `${value} ${unit}` : String(value)]);
         });
+        /*
+         * WHO SAID SO, said once and under the numbers rather than on each.
+         *
+         * The shop asked for every value to be shown before anybody had
+         * checked them, which is a reasonable trade - an approximate calorie
+         * count is more use to somebody counting than a blank. It stops being
+         * reasonable the moment a guess is read as a measurement, so the page
+         * says which it is. One line, because six rows each carrying "est."
+         * is noise that stops being read.
+         */
+        if (numbers && item.nutrition_estimated === true) {
+            rows.push(["How we know", t("Estimated, not measured")]);
+        }
 
         if (item.category_name) rows.push(["Category", item.category_name]);
 
