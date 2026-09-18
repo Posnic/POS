@@ -113,10 +113,46 @@ test('the kiosk mobile login hands back a credential and a shop key', () => {
 
   assert.match(handler, /token: jwtToken/,
     'the app has no credential to present to the routes behind protectOrKioskKey');
-  assert.match(handler, /signLegacyToken\(recordsFiltered, req\)/,
+  /*
+   * The RULE, not the call's exact spelling.
+   *
+   * This pinned `signLegacyToken(recordsFiltered, req)` as a literal, and so
+   * went red the moment a handset token was given its own lifetime:
+   *
+   *     signLegacyToken(recordsFiltered, req, undefined, handsetSeconds)
+   *
+   * Nothing about that weakened the credential - it is still signed from the
+   * user who signed in - but develop carried a failing suite for it, which is
+   * how a red test stops meaning anything. What has to hold is that the user
+   * and the request are what the token is signed FROM; how long it then lasts
+   * is a separate decision, and adding arguments must not fail this.
+   */
+  assert.match(handler, /signLegacyToken\(\s*recordsFiltered\s*,\s*req/,
     'the token must name the user who signed in, not a shared device key');
-  assert.match(handler, /expiresIn: jwtLifetimeSeconds\(\)/,
-    'a client that has to guess its own expiry refreshes far too often, or too late');
+  /*
+   * The client is told the SAME lifetime the token was signed with.
+   *
+   * This pinned `expiresIn: jwtLifetimeSeconds()` as a literal, and went red
+   * when a handset was given its own, longer lifetime:
+   *
+   *     const handsetSeconds = handsetLifetimeSeconds();
+   *     signLegacyToken(recordsFiltered, req, undefined, handsetSeconds);
+   *     expiresIn: handsetSeconds,
+   *
+   * Which is better than what it replaced, and the test failed it anyway. The
+   * property worth holding is not WHICH clock the lifetime comes from - a
+   * handset on a floor all day should not expire like a till - but that the
+   * number reported is the number the token carries. A client told a
+   * different figure refreshes too often or, worse, too late.
+   *
+   * So the fourth argument to signLegacyToken is read out of the source, and
+   * expiresIn must report that same identifier.
+   */
+  const signedWith = handler.match(/signLegacyToken\([^)]*?,\s*[^,)]*,\s*([A-Za-z_$][\w$]*)\s*\)/);
+  assert.ok(signedWith, 'the token is signed without a lifetime, so nothing can be reported');
+  assert.match(handler, new RegExp('expiresIn: ' + signedWith[1] + '\\b'),
+    'the client is told an expiry that is not the one the token carries: signed with '
+      + signedWith[1]);
   assert.match(handler, /shopKey,/,
     'without a shop key the app cannot tell that a LAN server holds the same shop');
   assert.doesNotMatch(handler, /license: *recordsFiltered\.license/,
