@@ -2456,16 +2456,42 @@
     showMultiPaymentMode: function () {
         $("#payment_id").empty();
         let sales_payment_mode = PosnicPro.sales.EditRecentSaleParams.payment_mode;
-        // ✅ Use sale_new_tot for new sales, EditRecentSaleParams.sales_total for edits
-        let sales_total = PosnicPro.sales.EditRecentSaleParams.sales_total || parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
+        /*
+         * WHAT THE BILL SAYS IS WHAT THERE IS TO PAY.
+         *
+         * Owner: "take payment cand cash new payment metho sometime it shows
+         * only total without tax. needs to be fixed." Sometimes, not always,
+         * which is the shape of a race rather than of arithmetic.
+         *
+         * Two figures are in play. `sale_new_tot` is the grand total this
+         * screen has just worked out - items, discount, tax, round-off, the
+         * number printed on the bill. `EditRecentSaleParams.sales_total` is
+         * whatever was stored on the sale when it was last written, which for
+         * an order taken on a handset or a QR page was computed elsewhere and
+         * may predate a tax change or an edit.
+         *
+         * The stored one was preferred, and the correction below only fired
+         * when the computed total was ABOVE ZERO. So when the tender opened
+         * before this screen had finished adding up - the order is fetched,
+         * the rows are drawn, the totals follow - the computed total was 0,
+         * the correction was skipped, and the stale stored figure stood. A
+         * customer was shown a total with no tax in it.
+         *
+         * So the computed total wins whenever there is one, and the stored
+         * figure is the fallback for the moment before this screen has run,
+         * rather than the other way round. The reconciliation stays for the
+         * case it was written for: items edited after the amounts were last
+         * saved, where the payment map has to be rebuilt to match.
+         */
+        const currentTotal = parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
+        const storedTotal = parseFloat(PosnicPro.sales.EditRecentSaleParams.sales_total || 0) || 0;
+        let sales_total = currentTotal || storedTotal || 0;
         let multi_payment = PosnicPro.sales.EditRecentSaleParams.multi_payment || {};
 
         // If the current calculated total differs from the stored sales_total
         // (e.g. user edited products before opening payment), reset the
         // multipayment map so it matches the new total and avoids stale
         // values from the previous amount.
-        const currentTotal = parseFloat(PosnicPro.sales.extraDiscount.sale_new_tot) || 0;
-        const storedTotal = parseFloat(PosnicPro.sales.EditRecentSaleParams.sales_total || 0) || 0;
         const totalsDiffer = currentTotal > 0 && Math.abs(currentTotal - storedTotal) > 0.01;
 
         if (totalsDiffer) {
