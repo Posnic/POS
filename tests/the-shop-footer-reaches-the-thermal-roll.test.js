@@ -269,3 +269,54 @@ test('the preview reads the same slot the paper does', () => {
     'the preview still appends the canned line unconditionally'
   );
 });
+
+/* ------------------------------------------- what the shop said, in its own
+ *                                                        letters and symbols
+ *
+ * Follow-up from the same shop, which is in Italy. Their A4 sheet reads
+ * "€ 8.00" and their roll read "8.00". Two different things caused that, and
+ * only one of them is a bug:
+ *
+ *   - `ascii()` DELETED every euro sign from any text it was given, because
+ *     the buffer is written as latin1 and U+20AC is not in Latin-1. A footer
+ *     reading "€5 off" printed "5 off": a price, silently altered. That is
+ *     the bug, and it was unreachable while footers never printed at all.
+ *
+ *   - amounts carry no currency symbol on this path at all: `num()` keeps the
+ *     digits and `money()` is toFixed(2). That is a layout decision about a
+ *     48-character line, not a defect, and it is not changed here.
+ */
+
+test('a euro sign the shop typed survives to the paper', () => {
+  const out = renderSale({ storeName: 'S', total: 8, footer: 'Sconto di €5 sul prossimo acquisto' }, { cut: true });
+  const at = out.indexOf(Buffer.from('Sconto', 'latin1'));
+  assert.ok(at > -1, 'the footer did not reach the paper at all');
+
+  /* Decoded through the code page the receipt selects for itself, which is
+     the only reading that matches what the printer will do with the bytes. */
+  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 36));
+  assert.ok(
+    said.startsWith('Sconto di €5'),
+    'the euro sign was dropped on the way to the printer: ' + JSON.stringify(said)
+  );
+});
+
+test('and the code page it is sent in is the one the receipt asked for', () => {
+  /* ESC t 16 selects WPC1252. The euro lives at 0x80 there and nowhere in
+     Latin-1, so sending 0x80 is only correct because of that line. */
+  const out = renderSale({ storeName: 'S', total: 1 }, { cut: true });
+  const selects = Buffer.from([0x1b, 0x74, 0x10]);
+  assert.ok(out.indexOf(selects) > -1, 'the receipt stopped selecting code page 16');
+});
+
+test('Italian accents were never at risk, and still are not', () => {
+  /* They sit above 0xA0, where CP1252 and Latin-1 agree, so this is a guard
+     rather than a fix - it is the half of the report that was already fine. */
+  const out = renderSale({ storeName: 'S', total: 1, footer: 'Perché no? Città e più' }, { cut: true });
+  const at = out.indexOf(Buffer.from('Perch', 'latin1'));
+  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 24));
+  assert.ok(
+    said.startsWith('Perché no? Città e più'),
+    'an accented letter was mangled: ' + JSON.stringify(said)
+  );
+});
