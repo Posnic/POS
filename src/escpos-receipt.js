@@ -50,62 +50,108 @@ const DOTS = { '58': 384, '80': 576 };
  * characters where "₹" was one, and pair() has already counted the columns by
  * then, which would push every amount one place off the right margin.
  */
+/*
+ * EVERYTHING THAT REACHES THE PAPER IS ASCII.
+ *
+ * This used to send `ESC t 16` to select WPC1252 and then write bytes above
+ * 0x7E - 0x80 for a euro, 0xE0 for an a-grave - on the strength of a
+ * datasheet. A POS-80C printed "EUR13.00" as "C13.00" with a cedilla, which
+ * is 0x80 in PC437, the page it had never left.
+ *
+ * A probe settled it: eighteen candidate pages selected in turn, each
+ * followed by the same three bytes, and EVERY ROW PRINTED IDENTICALLY. The
+ * printer does not implement `ESC t`. It is not a numbering difference and
+ * not a missing page - the command does nothing.
+ *
+ * That is the common case, not a broken unit. These printers are built to a
+ * price against a spec they implement in part, and there is no way to ask
+ * one what it supports. So nothing above 0x7E is ever sent. An accent lost
+ * is a word a customer can still read; a byte the printer renders from some
+ * other table is a receipt with Greek letters in the shop's address, which
+ * is what "Citta" would have become.
+ *
+ * THE COST IS REAL AND IT IS THE RIGHT TRADE. "Perche" is not "Perche" with
+ * an accent, and a shop in Italy or France or Germany will notice. But it
+ * is their own word, spelled flat, on every printer they might ever buy -
+ * against the alternative, which is correct on the printers that honour a
+ * command and mojibake on the ones that do not, with no way to tell which
+ * they have until a customer complains.
+ */
 const SUBSTITUTIONS = [
-  [/[₹₨]/g, 'Rs.'],   // rupee sign, and the older Rs ligature
-  [/[‘’‛]/g, "'"],
-  [/[“”]/g, '"'],
-  [/[–—−]/g, '-'],
-  [/…/g, '...'],
-  [/ /g, ' '],
+  [/[\u20b9\u20a8]/g, 'Rs.'], // rupee sign, and the older Rs ligature
+  [/\u20ac/g, 'EUR'], // euro: no ASCII symbol exists, so the code does
+  [/\u00a3/g, 'GBP'],
+  [/\u00a5/g, 'JPY'],
+  [/\u00a2/g, 'c'],
+  [/[\u2018\u2019\u201b\u2032]/g, "'"],
+  [/[\u201c\u201d\u2033]/g, '"'],
+  [/[\u2013\u2014\u2212\u2010\u2011]/g, '-'],
+  [/\u2026/g, '...'],
+  [/[\u00a0\u2007\u202f]/g, ' '],
+  [/\u2022/g, '*'],
+  [/\u2122/g, '(TM)'],
+  [/\u00ae/g, '(R)'],
+  [/\u00a9/g, '(C)'],
+  [/\u2030/g, 'o/oo'],
+  [/[\u2020\u2021]/g, '+'],
+  [/\u00d7/g, 'x'],
+  [/[\u00f7]/g, '/'],
+  [/[\u00bd]/g, '1/2'],
+  [/[\u00bc]/g, '1/4'],
+  [/[\u00be]/g, '3/4'],
+  [/[\u00ab\u2039]/g, '<'],
+  [/[\u00bb\u203a]/g, '>'],
 ];
 
 /*
- * Characters code page 16 (WPC1252) has and Latin-1 does not.
+ * Letters, flattened.
  *
- * The two agree from 0xA0 up and differ over 0x80-0x9F, where CP1252 puts
- * printable characters that Latin-1 leaves as control codes. The buffer below
- * is written with `latin1`, which only knows Latin-1, so every one of these
- * fell outside the range `ascii` keeps and was DELETED from the paper.
- *
- * THE EURO SIGN IS THE ONE THAT MATTERS. Reported from a shop in Almenno San
- * Bartolomeo: nothing printed a euro on an 80mm roll, so a footer reading
- * "€5 off your next visit" printed "5 off your next visit" - a price, silently
- * altered. It was invisible while footers were not reaching the roll at all.
- *
- * Mapping the character to the byte the code page uses for it is what
- * selecting the code page was for. The smart quotes and dashes that also live
- * in this range are folded to ASCII above instead, deliberately: they read the
- * same and cost nothing if a printer's table is imperfect. A euro sign has no
- * ASCII to fold to, and dropping it changes what the shop said.
+ * Every accented letter in Latin-1 and CP1252, and the handful of ligatures
+ * that come with them. Written out rather than produced by NFD-and-strip,
+ * because the cases that matter are the ones normalisation gets wrong: a
+ * German eszett is "ss" and not "s", an ash is "ae", a d-stroke is "d", and
+ * a Nordic o-slash has no decomposition at all.
  */
-const CP1252_ONLY = [
-  ['\u20ac', 0x80], // EURO SIGN
-  ['\u0192', 0x83], // LATIN SMALL LETTER F WITH HOOK
-  ['\u2020', 0x86], // DAGGER
-  ['\u2021', 0x87], // DOUBLE DAGGER
-  ['\u02c6', 0x88], // MODIFIER LETTER CIRCUMFLEX ACCENT
-  ['\u2030', 0x89], // PER MILLE SIGN
-  ['\u0160', 0x8a], // LATIN CAPITAL LETTER S WITH CARON
-  ['\u0152', 0x8c], // LATIN CAPITAL LIGATURE OE
-  ['\u017d', 0x8e], // LATIN CAPITAL LETTER Z WITH CARON
-  ['\u2022', 0x95], // BULLET
-  ['\u02dc', 0x98], // SMALL TILDE
-  ['\u2122', 0x99], // TRADE MARK SIGN
-  ['\u0161', 0x9a], // LATIN SMALL LETTER S WITH CARON
-  ['\u0153', 0x9c], // LATIN SMALL LIGATURE OE
-  ['\u017e', 0x9e], // LATIN SMALL LETTER Z WITH CARON
-  ['\u0178', 0x9f], // LATIN CAPITAL LETTER Y WITH DIAERESIS
-];
+const LETTERS = {
+  '\u00c0': 'A', '\u00c1': 'A', '\u00c2': 'A', '\u00c3': 'A', '\u00c4': 'A', '\u00c5': 'A',
+  '\u00e0': 'a', '\u00e1': 'a', '\u00e2': 'a', '\u00e3': 'a', '\u00e4': 'a', '\u00e5': 'a',
+  '\u00c6': 'AE', '\u00e6': 'ae',
+  '\u00c7': 'C', '\u00e7': 'c',
+  '\u00c8': 'E', '\u00c9': 'E', '\u00ca': 'E', '\u00cb': 'E',
+  '\u00e8': 'e', '\u00e9': 'e', '\u00ea': 'e', '\u00eb': 'e',
+  '\u00cc': 'I', '\u00cd': 'I', '\u00ce': 'I', '\u00cf': 'I',
+  '\u00ec': 'i', '\u00ed': 'i', '\u00ee': 'i', '\u00ef': 'i',
+  '\u00d0': 'D', '\u00f0': 'd',
+  '\u00d1': 'N', '\u00f1': 'n',
+  '\u00d2': 'O', '\u00d3': 'O', '\u00d4': 'O', '\u00d5': 'O', '\u00d6': 'O', '\u00d8': 'O',
+  '\u00f2': 'o', '\u00f3': 'o', '\u00f4': 'o', '\u00f5': 'o', '\u00f6': 'o', '\u00f8': 'o',
+  '\u0152': 'OE', '\u0153': 'oe',
+  '\u00d9': 'U', '\u00da': 'U', '\u00db': 'U', '\u00dc': 'U',
+  '\u00f9': 'u', '\u00fa': 'u', '\u00fb': 'u', '\u00fc': 'u',
+  '\u00dd': 'Y', '\u0178': 'Y', '\u00fd': 'y', '\u00ff': 'y',
+  '\u00de': 'Th', '\u00fe': 'th',
+  '\u00df': 'ss',
+  '\u0160': 'S', '\u0161': 's',
+  '\u017d': 'Z', '\u017e': 'z',
+  '\u0192': 'f',
+  '\u00b5': 'u',
+  '\u00aa': 'a', '\u00ba': 'o',
+  '\u00a1': '!', '\u00bf': '?',
+};
+
+const LETTER_RE = new RegExp('[' + Object.keys(LETTERS).join('') + ']', 'g');
 
 function ascii(s) {
   let out = String(s == null ? '' : s);
   for (const [pattern, with_] of SUBSTITUTIONS) out = out.replace(pattern, with_);
-  // To the byte the printer expects, before the range check below sees a
-  // character it would have to throw away.
-  for (const [ch, byte] of CP1252_ONLY) out = out.split(ch).join(String.fromCharCode(byte));
-  // Anything still outside the code page would be sent as a truncated byte and
-  // print as an unrelated character, which is worse than printing nothing.
-  return out.replace(/[^\x20-\xff\n]/g, '');
+  out = out.replace(LETTER_RE, (c) => LETTERS[c]);
+  /*
+   * Whatever is left that the paper cannot carry. Dropped rather than sent:
+   * a byte above 0x7E is rendered from whichever table the printer happens
+   * to be on, and a wrong character reads as a fault where a missing one
+   * reads as a gap.
+   */
+  return out.replace(/[^\x20-\x7e\n]/g, '');
 }
 
 class Receipt {
@@ -114,7 +160,11 @@ class Receipt {
     this.width = COLUMNS[this.paper];
     this.parts = [];
     this.raw(ESC, 0x40);             // initialise: clears any state a previous job left
-    this.raw(ESC, 0x74, 0x10);       // code page 16 (WPC1252) so the rupee sign survives
+    /* Still asked for, and nothing depends on the answer: every byte after
+       this is ASCII, which every code page agrees about. It costs three
+       bytes and leaves a printer that DOES honour it on a known page rather
+       than on whatever the last job left behind. */
+    this.raw(ESC, 0x74, 0x10);
   }
 
   raw(...bytes) { this.parts.push(Buffer.from(bytes)); return this; }

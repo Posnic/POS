@@ -273,51 +273,102 @@ test('the preview reads the same slot the paper does', () => {
 /* ------------------------------------------- what the shop said, in its own
  *                                                        letters and symbols
  *
- * Follow-up from the same shop, which is in Italy. Their A4 sheet reads
- * "€ 8.00" and their roll read "8.00". Two different things caused that, and
- * only one of them is a bug:
+ * Follow-up from the same shop, which is in Italy. Their A4 sheet reads a
+ * euro and 8.00, their roll read 8.00, and two different things caused it.
  *
- *   - `ascii()` DELETED every euro sign from any text it was given, because
- *     the buffer is written as latin1 and U+20AC is not in Latin-1. A footer
- *     reading "€5 off" printed "5 off": a price, silently altered. That is
- *     the bug, and it was unreachable while footers never printed at all.
+ * THE FIRST ATTEMPT AT THIS WAS WRONG, and a photograph of real paper is
+ * what showed it. The renderer selects code page 16 (WPC1252) with `ESC t`
+ * and used to write byte 0x80 for a euro on the strength of that. A POS-80C
+ * printed a C with a cedilla, which is 0x80 in PC437 - the page it had never
+ * left. A probe of eighteen candidate pages came back with EVERY ROW
+ * IDENTICAL: the printer does not implement the command at all.
  *
- *   - amounts carry no currency symbol on this path at all: `num()` keeps the
- *     digits and `money()` is toFixed(2). That is a layout decision about a
- *     48-character line, not a defect, and it is not changed here.
+ * So the receipt no longer sends anything above 0x7E, and these tests assert
+ * that rather than asserting a code page. The euro is spelled, the accents
+ * are flattened, and both are readable on a printer that honours nothing.
  */
 
-test('a euro sign the shop typed survives to the paper', () => {
-  const out = renderSale({ storeName: 'S', total: 8, footer: 'Sconto di €5 sul prossimo acquisto' }, { cut: true });
-  const at = out.indexOf(Buffer.from('Sconto', 'latin1'));
-  assert.ok(at > -1, 'the footer did not reach the paper at all');
+test('NOTHING ABOVE 0x7E EVER REACHES THE PAPER', () => {
+  /*
+   * The whole rule, in one assertion. A byte above 0x7E is rendered from
+   * whichever table the printer happens to be on, and there is no way to ask
+   * one which that is.
+   */
+  const out = renderSale(
+    {
+      storeName: 'Caff\u00e8 Citt\u00e0 \u20ac',
+      currency: '\u20ac',
+      subTotal: 8,
+      total: 8,
+      customer: ['Gr\u00fc\u00dfe, na\u00efve'],
+      footer: 'Perch\u00e9 no? \u2018Su\u00e8\u00f1o\u2019 \u2014 100\u20ac',
+    },
+    { cut: true }
+  );
 
-  /* Decoded through the code page the receipt selects for itself, which is
-     the only reading that matches what the printer will do with the bytes. */
-  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 36));
-  assert.ok(
-    said.startsWith('Sconto di €5'),
-    'the euro sign was dropped on the way to the printer: ' + JSON.stringify(said)
+  const high = [...out].filter((b, i) => b > 0x7e && b !== 0x0a);
+  assert.deepStrictEqual(
+    high,
+    [],
+    'these bytes print from a table nobody chose: ' + JSON.stringify(high)
   );
 });
 
-test('and the code page it is sent in is the one the receipt asked for', () => {
-  /* ESC t 16 selects WPC1252. The euro lives at 0x80 there and nowhere in
-     Latin-1, so sending 0x80 is only correct because of that line. */
-  const out = renderSale({ storeName: 'S', total: 1 }, { cut: true });
-  const selects = Buffer.from([0x1b, 0x74, 0x10]);
-  assert.ok(out.indexOf(selects) > -1, 'the receipt stopped selecting code page 16');
+test('a euro is spelled, because no printer can be relied on to draw one', () => {
+  const out = renderSale(
+    { storeName: 'S', currency: '\u20ac', subTotal: 13, total: 13 },
+    { cut: true }
+  );
+  const lines = paper(out).filter((l) => l.includes('13.00'));
+  assert.ok(lines.length > 0, 'nothing printed');
+  for (const line of lines) {
+    assert.ok(line.includes('EUR13.00'), 'the euro did not become EUR: ' + JSON.stringify(line));
+    assert.ok(line.length <= 48, 'a line ran past the paper: ' + line.length);
+  }
 });
 
-test('Italian accents were never at risk, and still are not', () => {
-  /* They sit above 0xA0, where CP1252 and Latin-1 agree, so this is a guard
-     rather than a fix - it is the half of the report that was already fine. */
-  const out = renderSale({ storeName: 'S', total: 1, footer: 'Perché no? Città e più' }, { cut: true });
-  const at = out.indexOf(Buffer.from('Perch', 'latin1'));
-  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 24));
+test('and an accent is flattened rather than guessed at', () => {
+  /*
+   * This test used to assert the opposite - that accents "were never at
+   * risk" because they sit above 0xA0 where CP1252 and Latin-1 agree. They
+   * do agree, and it did not matter: the printer was on PC437, where 0xE0 is
+   * a lower-case alpha. "Citta" would have printed with a Greek letter in it.
+   *
+   * Losing the accent is the cost, and it is the right one. It is still the
+   * shop\u0027s own word, and it is the same word on every printer.
+   */
+  const out = renderSale(
+    { storeName: 'S', total: 1, footer: 'Perch\u00e9 no? Citt\u00e0 e pi\u00f9' },
+    { cut: true }
+  );
+  assert.ok(paper(out).includes('Perche no? Citta e piu'), paper(out).join(NL));
+});
+
+test('the letters that are not one-for-one keep their sound', () => {
+  /* The cases a strip-the-diacritic pass gets wrong. */
+  const pairs = [
+    ['Gr\u00fc\u00dfe', 'Grusse'],
+    ['\u00c6sop', 'AEsop'],
+    ['\u0152uvre', 'OEuvre'],
+    ['Malm\u00f6 S\u00f8ren', 'Malmo Soren'],
+    ['\u00bfQu\u00e9?', '?Que?'],
+  ];
+  for (const [was, want] of pairs) {
+    const out = renderSale({ storeName: 'S', total: 1, footer: was }, { cut: true });
+    assert.ok(
+      paper(out).includes(want),
+      JSON.stringify(was) + ' should print as ' + JSON.stringify(want) + ': ' + paper(out).join(NL)
+    );
+  }
+});
+
+test('the page is still selected, and nothing depends on the answer', () => {
+  /* Three bytes that leave a printer which DOES honour it on a known page
+     rather than on whatever the last job left behind. */
+  const out = renderSale({ storeName: 'S', total: 1 }, { cut: true });
   assert.ok(
-    said.startsWith('Perché no? Città e più'),
-    'an accented letter was mangled: ' + JSON.stringify(said)
+    out.indexOf(Buffer.from([0x1b, 0x74, 0x10])) > -1,
+    'the receipt stopped putting the printer on a known page'
   );
 });
 
@@ -478,13 +529,66 @@ test('a bitmap wider than the paper is refused rather than shredded', () => {
   assert.ok(right.indexOf(GS_RASTER) > -1, 'the same bitmap was refused by its own paper');
 });
 
-test('a logo that cannot be prepared never stops a sale printing', () => {
+test('a logo the page cannot read is handed on, not dropped', () => {
+  /*
+   * A canvas holding an image from another origin is TAINTED and getImageData
+   * throws, however the page asks - so a shop whose logo lives on an S3 bucket
+   * or a CDN could never have one rasterised here. The main process has no
+   * origin and no canvas, only a decoder, so it passes the SOURCE on rather
+   * than giving up. See src/escpos-logo.js.
+   */
   const { win } = till({ printUrl: false });
   withLogo(win);
-  /* No canvas at all, which is what a locked-down or ancient browser gives. */
+  /* No canvas at all, which is what a locked-down browser gives, and the same
+     branch a tainted one takes. */
   win.document.createElement = () => ({ getContext: () => null });
 
-  assert.strictEqual(win.PosnicPro.receiptLogo('80'), null, 'a missing canvas should not throw');
+  const said = win.PosnicPro.receiptLogo('80');
+  assert.ok(said, 'the logo was dropped instead of handed on');
+  assert.ok(said.src, 'nothing was handed on for the main process to fetch');
+  assert.strictEqual(said.data, undefined, 'it claimed to carry dots it never made');
+});
+
+test('a tainted canvas is handed on too, and does not throw', () => {
+  const { win } = till({ printUrl: false });
+  fakeCanvas(win);
+  withLogo(win);
+  /* Exactly what Chromium does on a cross-origin image. */
+  const create = win.document.createElement;
+  win.document.createElement = function (tag) {
+    const made = create.call(win.document, tag);
+    if (String(tag).toLowerCase() === 'canvas') {
+      const real = made.getContext;
+      made.getContext = function () {
+        const ctx = real.call(made);
+        ctx.getImageData = () => {
+          const e = new Error('The canvas has been tainted by cross-origin data.');
+          e.name = 'SecurityError';
+          throw e;
+        };
+        return ctx;
+      };
+    }
+    return made;
+  };
+
+  let said;
+  assert.doesNotThrow(() => {
+    said = win.PosnicPro.receiptLogo('80');
+  }, 'a tainted canvas must not throw out of the print path');
+  assert.ok(said && said.src, 'a tainted canvas dropped the logo instead of handing it on');
+  assert.strictEqual(said.data, undefined);
+});
+
+test('and the renderer prints the sale rather than a half a logo', () => {
+  /* `{ src }` carries no dots. The renderer must ignore it completely rather
+     than emit a GS v 0 with nothing behind it, which is a jammed printer. */
+  const out = renderSale(
+    { storeName: 'S', total: 8, logo: { src: 'https://example.com/logo.png' } },
+    { cut: true }
+  );
+  assert.strictEqual(out.indexOf(GS_RASTER), -1, 'a raster command with no raster');
+  assert.ok(paper(out).some((l) => l.includes('TOTAL')), 'the sale did not print');
 });
 
 /* ================================================================ THE CURRENCY
@@ -501,11 +605,12 @@ test('the receipt says which money it counted', () => {
   const sale = win.PosnicPro.receiptData(jq('.print-modal-body').html());
   assert.strictEqual(sale.currency, '€', 'the symbol was not read off the total');
 
+  /* Spelled, not drawn: see NOTHING ABOVE 0x7E above. The symbol is read off
+     the markup as a symbol and becomes letters at the paper. */
   const out = renderSale(sale, { cut: true });
-  const at = out.indexOf(Buffer.from('Subtotal', 'latin1'));
-  assert.ok(at > -1, 'no subtotal line to check');
-  const said = new TextDecoder('windows-1252').decode(out.slice(at, at + 48));
-  assert.ok(said.includes('€8.00'), 'the amount lost its currency: ' + JSON.stringify(said));
+  const line = paper(out).find((l) => l.startsWith('Subtotal'));
+  assert.ok(line, 'no subtotal line to check');
+  assert.ok(line.includes('EUR8.00'), 'the amount lost its currency: ' + JSON.stringify(line));
 });
 
 test('and a receipt that never showed one still does not', () => {
