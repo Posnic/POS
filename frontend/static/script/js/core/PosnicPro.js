@@ -116,6 +116,16 @@ if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
 }
 
 PosnicPro = {
+    /*
+     * The address printed when a shop turns "Print URL" on.
+     *
+     * One spelling, because there are four print paths that can put it on
+     * paper - silent A4, silent thermal, the browser's print frame, and the
+     * register report - and a receipt extractor that has to decide whether to
+     * add it. Four literals is four places to keep in step, and the thermal
+     * path had already fallen out of step without anyone noticing.
+     */
+    BRAND_URL: 'https://www.posnic.com',
     config: [],
     modules: ['customers', 'suppliers', 'categories', 'items', 'users', 'branches', 'expenses', 'receivings', 'sales', 'registers'],
     record_url: null,
@@ -3403,7 +3413,7 @@ PosnicPro = {
             html += '<img style="display:inline-block;" src="' + image + '">';
             }
             if (printUrl === 'true') {
-            html += '<div style="margin-top:4px;">https://www.posnic.com</div>';
+            html += '<div style="margin-top:4px;">' + PosnicPro.BRAND_URL + '</div>';
             }
             html += '</div></div>';
             html += '</body></html>';
@@ -3457,7 +3467,7 @@ PosnicPro = {
             "top": "-1000000px"
         });
         let printUrlConfig = PosnicPro.local.get('print_url');
-        let url = ((printUrlConfig === 'true') ? '<div style="text-align:center;">https://www.posnic.com</div>' : '');
+        let url = ((printUrlConfig === 'true') ? '<div style="text-align:center;">' + PosnicPro.BRAND_URL + '</div>' : '');
         $("body").append(frame1);
         var frameDoc = frame1[0].contentWindow ? frame1[0].contentWindow : frame1[0].contentDocument.document ? frame1[0].contentDocument.document : frame1[0].contentDocument;
         frameDoc.document.open();
@@ -3479,7 +3489,7 @@ PosnicPro = {
             frameDoc.document.write('<img style="display:inline-block;" src="' + image + '">');
         }
         if (printUrlConfig === 'true') {
-            frameDoc.document.write('<div style="margin-top:4px;">https://www.posnic.com</div>');
+            frameDoc.document.write('<div style="margin-top:4px;">' + PosnicPro.BRAND_URL + '</div>');
         }
         frameDoc.document.write('</div></div>');
 

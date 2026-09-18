@@ -580,13 +580,23 @@ function renderSale(sale, options = {}) {
    * The footer is free text - a return policy, an offer, a website - so unlike
    * every other line here its length is unbounded. Wrapping on words keeps it
    * readable; letting the printer wrap it would break mid-word at column 48.
+   *
+   * THE CANNED LINE IS A FALLBACK, NOT A SIGNATURE.
+   *
+   * It used to print underneath whatever the shop had written, which nobody
+   * ever saw: until the extractor learned to read .footer-content the footer
+   * arrived empty every time, so the fallback was the only line there was. An
+   * A4 invoice prints the shop's words and nothing else, and a roll that added
+   * 'Thank you, please visit again' to them would be the till talking over the
+   * shop.
    */
   if (sale.footer) {
     for (const line of String(sale.footer).split('\n')) {
       for (const w of wrap(line, r.width)) r.centre(w);
     }
+  } else if (sale.showThanks !== false) {
+    r.centre('Thank you, please visit again');
   }
-  if (sale.showThanks !== false) r.centre('Thank you, please visit again');
 
   if (options.openDrawer) r.openDrawer(options.drawerPin);
   if (options.cut !== false) r.cut();
