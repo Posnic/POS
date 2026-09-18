@@ -77,7 +77,7 @@ for (const layout of ['80', '58', 'a4']) {
         assert.match(result.find('.print-total').text(), /1,520\.00/);
         assert.match(result.text(), /Delivery/);
         assert.match(result.text(), /Handle with care/);
-        assert.match(result.text(), /https:\/\/www\.posnic\.com/);
+        assert.equal(result.find('.receipt-brand-url').text(), 'https://www.posnic.com');
         assert.equal(result.find('.print-title').text(), 'BILL');
         assert.equal(result.find('.print_view_id')[0].style.display, 'none');
         assert.equal($('.print-modal-body').html(), before, 'Print modal was mutated');
@@ -103,6 +103,27 @@ test('custom template order and styles survive; disabled logo and customer stay 
     assert.equal(result.find('.hide_customer_details')[0].style.display, 'none');
     dom.window.close();
 });
+
+for (const layout of ['80', 'a4']) {
+    test(layout + ' receipt treats customer details, item names and notes as literal text', () => {
+        const { dom, $, branch, data, preview } = till();
+        const text = '<b>Customer & shop</b>';
+        Object.assign(data, { customer_name: text, customer_phone: text, customer_email: text,
+            customer_address: text, sales_description: text + '\nSecond line' });
+        data.items[0].item_name = '<b>Gift & Wrap</b>';
+        const result = $('<div>').html(preview.documentFor(branch, data, layout));
+        for (const field of ['name', 'phone', 'email', 'address']) {
+            assert.equal(result.find('.print-' + field).text(), text);
+            assert.equal(result.find('.print-' + field + ' b').length, 0);
+        }
+        assert.equal(result.find('.print-sale-notes').text(), text + '\nSecond line');
+        assert.equal(result.find('.print-sale-notes b').length, 0);
+        const item = result.find(layout === 'a4' ? '.article' : '.invoice-content-heading').first();
+        assert.equal(item.text(), '<b>Gift & Wrap</b>');
+        assert.equal(item.find('b').length, 0);
+        dom.window.close();
+    });
+}
 
 test('cart reads numeric amounts, fractional quantities and product names without edit controls', () => {
     const { dom, win, $, branch, preview } = till();
@@ -157,7 +178,7 @@ test('desktop preview decodes actual receipt bytes, including logo, QR and euro 
     assert.equal(raw.billNo, '', 'Unsaved sale has a fake receipt number');
     assert.equal(raw.total, 1520);
     assert.equal(raw.title, 'BILL', 'Customer section replaced the document title');
-    assert.ok(raw.footer.split('\n').includes('https://www.posnic.com'));
+    assert.equal(raw.footer.split('\n').at(-1), 'https://www.posnic.com');
     // Already-rasterised one-byte images exercise the actual byte parser.
     raw.logo = { width: 8, height: 1, data: 'gA==' };
     raw.footerImage = { width: 8, height: 1, data: '/w==' };

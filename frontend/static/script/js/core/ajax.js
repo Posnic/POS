@@ -87,7 +87,8 @@ PosnicPro.request = function (params, callback, failure = null) {
             xhrFields: {
                 withCredentials: true
             },
-            contentType: 'application/json',
+            contentType: params.contentType !== undefined ? params.contentType : 'application/json',
+            processData: params.processData !== undefined ? params.processData : true,
             data: data
         });
 

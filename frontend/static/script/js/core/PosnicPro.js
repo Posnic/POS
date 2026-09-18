@@ -391,38 +391,14 @@ PosnicPro = {
     },
     /* Common request for all outgoing server calls */
     requestImage: function (method, params, data, type, callback) {
-        let url = API_URL + params;
-        // JWT Token support for Electron cross-origin requests
-        var headers = {};
-        if (navigator.userAgent.indexOf('Electron') !== -1) {
-            const token = localStorage.getItem('posnic_jwt_token');
-            if (token) {
-                headers['Authorization'] = 'Bearer ' + token;
-                console.log('✅ JWT added to PosnicPro.requestImage:', url.substring(0, 50) + '...');
-            } else {
-                console.log('❌ No JWT for PosnicPro.requestImage:', url.substring(0, 50) + '...');
-            }
-        }
-        let request = $.ajax({
-            url: url,
+        // Keep multipart uploads on the same authentication and CSRF path as saves.
+        return PosnicPro.request({
+            url: params,
             method: method,
             data: data,
-            headers: headers,
-            xhrFields: {
-                withCredentials: true
-            },
             processData: type,
             contentType: type
-        });
-
-        request.done(function (data) {
-            callback(data);
-        });
-
-        request.fail(function (jqXHR, textStatus) {
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_request_faild', 'Request Faild!!.'));
-            return false;
-        });
+        }, callback);
     },
     setResponseData: function (fieldArray) {
         $.each(fieldArray, function (index, value) {

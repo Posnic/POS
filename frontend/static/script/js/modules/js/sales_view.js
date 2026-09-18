@@ -1016,7 +1016,7 @@ PosnicPro.sales.view = {
             }
             if (response.type === 'success') {
                 var data = response.data;
-                PosnicPro.record_id = $(id).data('id');
+                PosnicPro.record_id = id;
                 PosnicPro.sales.view.renderSaleDocument(data, name, isKotHistoryPrint);
 
                 var contents = $(".print-modal-body").html();
@@ -1373,10 +1373,10 @@ PosnicPro.sales.view = {
                 if (data.customer_print === true || (_isInvoice && _hasCustomer)) {
                     $('.hide_customer_details').show();
                     $('.print-custom-title').html(_isInvoice ? PosnicPro.i18n.t('lang_bill_to_2', 'Bill To') : PosnicPro.i18n.t('lang_pending_customer_detail', 'Customer Details'));
-                    $('.print-name').html(data.customer_name);
-                    $('.print-phone').html(data.customer_phone);
-                    $('.print-email').html(data.customer_email);
-                    $('.print-address').html(data.customer_address);
+                    $('.print-name').text(data.customer_name || '');
+                    $('.print-phone').text(data.customer_phone || '');
+                    $('.print-email').text(data.customer_email || '');
+                    $('.print-address').text(data.customer_address || '');
                 }
 
 
@@ -1441,7 +1441,7 @@ PosnicPro.sales.view = {
                 let sales_description = data.sales_description;
                 if (data.print_sale_notes === true && $.trim(sales_description).length !== 0) {
                     $('.print-sale-notes-hide').show();
-                    $('.print-sale-notes').html(sales_description);
+                    $('.print-sale-notes').text(sales_description).css('white-space', 'pre-line');
                 } else {
                     $('.print-sale-notes-hide').hide();
                 }
@@ -1616,7 +1616,7 @@ PosnicPro.sales.view = {
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
                             let hsn = (data.items[i].tax_fields.length === 0 && data.items[i].tax > 0) ? data.items[i].tax_name : '--';
-                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
+                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
@@ -1714,7 +1714,7 @@ PosnicPro.sales.view = {
                             taxCgstText.push(tax / 2 + '% &nbsp;');
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
-                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
+                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</div></div></div>' +
                                 '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
                                 '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * data.items[i].item_quantity + '</span></div></div></div>';
 
