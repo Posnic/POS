@@ -3933,6 +3933,10 @@ module.exports = {
     salesRepository.getOrderHistoryModel(branchId, limit, page, status, userId, {
       SaleModel: getModel(SaleModel),
     }),
+  myDayModel: async (branchId, userId, day, { SaleModel } = {}) =>
+    salesRepository.myDayModel(branchId, userId, day, {
+      SaleModel: getModel(SaleModel),
+    }),
   updateOrderModel: async (
     orderId,
     items,

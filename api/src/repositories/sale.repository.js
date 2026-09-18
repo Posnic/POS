@@ -9587,6 +9587,108 @@ class SalesRepository {
     }
   }
 
+  /**
+   * ONE WAITER'S OWN DAY.
+   *
+   * Owner: "total sales today current user done or some dashboard you can
+   * give. but no on the first page. seperate page. sales history of own and
+   * table wise seperate."
+   *
+   * Not getOrderHistory with a filter. That call takes a userId today and
+   * ignores it, and it must keep ignoring it: the floor needs every table's
+   * orders whoever took them, because any waiter can pick up any table. This
+   * is a different question - what have I sold today - and it gets its own
+   * door.
+   *
+   * WHOSE DAY IS DECIDED BY THE CALLER, not by the request body. The
+   * controller passes the id off the token, so a handset cannot ask for
+   * somebody else's figures by typing a different number.
+   *
+   * A sale names its waiter in two places depending on how old it is:
+   * `user_id` on the sale, and `created_by_id` on rows written by the till's
+   * own flow. Both are asked, because a shop's history is older than either
+   * of them.
+   *
+   * Cancelled sales are left out of the money and counted separately: a day
+   * that reads higher because somebody cancelled four orders is a day nobody
+   * can trust.
+   */
+  async myDayModel(branchId, userId, day, { SaleModel } = {}) {
+    try {
+      const { ObjectId } = require('mongodb');
+      const Model = this.getModel(SaleModel);
+
+      if (!userId) return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+
+      const who = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+      const from = new Date(day);
+      from.setHours(0, 0, 0, 0);
+      const to = new Date(from);
+      to.setDate(to.getDate() + 1);
+
+      const query = {
+        $or: [{ user_id: who }, { created_by_id: who }],
+        $and: [
+          {
+            $or: [{ created_date: { $gte: from, $lt: to } }, { date: { $gte: from, $lt: to } }],
+          },
+        ],
+      };
+      if (branchId) {
+        query.branch_id = ObjectId.isValid(branchId) ? new ObjectId(branchId) : branchId;
+      }
+      if (BaseModel.license) query.license = BaseModel.license;
+
+      const docs = await Model.find(query).sort({ created_date: -1, date: -1 }).limit(300).lean();
+
+      const tables = new Map();
+      let total = 0;
+      let orders = 0;
+      let cancelled = 0;
+
+      for (const doc of docs) {
+        const process = String(doc.sale_process || '').toLowerCase();
+        if (process === 'cancel' || process === 'cancelled') {
+          cancelled += 1;
+          continue;
+        }
+
+        const amount = Number(doc.sales_total || doc.total || 0) || 0;
+        total += amount;
+        orders += 1;
+
+        /* A takeaway has no table and still has money in it, so it is a row
+           of its own rather than something to drop. */
+        const table = String(doc.table_number || '').trim() || 'No table';
+        const held = tables.get(table) || { table, total: 0, orders: 0 };
+        held.total += amount;
+        held.orders += 1;
+        tables.set(table, held);
+      }
+
+      const recent = docs.slice(0, 20).map((doc) => ({
+        order_id: doc.token_id || doc.sales_id || String(doc._id).slice(-6),
+        table_number: doc.table_number || '',
+        total_amount: Number(doc.sales_total || doc.total || 0) || 0,
+        created_at: doc.created_date || doc.date,
+        cancelled: ['cancel', 'cancelled'].includes(String(doc.sale_process || '').toLowerCase()),
+      }));
+
+      return {
+        total,
+        orders,
+        cancelled,
+        /* Biggest table first: the question behind this screen is usually
+           "which table have I put the most through". */
+        tables: [...tables.values()].sort((a, b) => b.total - a.total),
+        recent,
+      };
+    } catch (error) {
+      console.error('myDayModel failed:', error);
+      return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+    }
+  }
+
   async getOrderHistoryModel(branchId, limit, page, status, userId, { SaleModel } = {}) {
     try {
       const { ObjectId } = require('mongodb');
