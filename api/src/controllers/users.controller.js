@@ -6,7 +6,12 @@ const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
-const { createSendToken, signLegacyToken, jwtLifetimeSeconds } = require('../middleware/auth');
+const {
+  createSendToken,
+  signLegacyToken,
+  jwtLifetimeSeconds,
+  handsetLifetimeSeconds,
+} = require('../middleware/auth');
 const httpStatus = require('http-status');
 const { AppError } = require('../utils/appError');
 const { ObjectId } = require('mongodb');
@@ -2794,7 +2799,23 @@ class UsersController extends BaseController {
          * this user, and every handler still applies that user's own branch
          * access and permissions.
          */
-        const jwtToken = signLegacyToken(recordsFiltered, req);
+        /*
+         * A HANDSET STAYS SIGNED IN LONGER THAN A TILL.
+         *
+         * Owner: "username password not saved already. everytime i need to
+         * enter."
+         *
+         * The app was not forgetting. It kept the credential perfectly and the
+         * credential expired, every 24 hours, which means somebody who knows
+         * the shop password has to be found and brought over at the start of
+         * every service, for every phone, by a part-time waiter who does not
+         * know it. A support call a day per shop, produced by a number.
+         *
+         * Signed and reported from one place, so what the token says and what
+         * the phone is told cannot drift.
+         */
+        const handsetSeconds = handsetLifetimeSeconds();
+        const jwtToken = signLegacyToken(recordsFiltered, req, undefined, handsetSeconds);
 
         /*
          * Which shop this is, in a form that is the same on the till and in
@@ -2832,7 +2853,7 @@ class UsersController extends BaseController {
         return res.status(200).json({
           tokenType: 'Bearer',
           token: jwtToken,
-          expiresIn: jwtLifetimeSeconds(),
+          expiresIn: handsetSeconds,
           shopKey,
           user: {
             id: String(recordsFiltered._id),

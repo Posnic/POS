@@ -36,4 +36,47 @@ function parseLifetime(value) {
   return Number(match[1]) * UNITS[(match[2] || 's').toLowerCase()];
 }
 
-module.exports = { jwtLifetimeSeconds, DEFAULT_LIFETIME: DEFAULT };
+/*
+ * HOW LONG A HANDSET STAYS SIGNED IN, which is a different question.
+ *
+ * Owner: "username password not saved already. everytime i need to enter."
+ *
+ * He was not describing a bug in the app's memory. The handset keeps its
+ * credential perfectly well; it expired. A till token lasting a day is right,
+ * because a till is a fixed machine somebody signs into at the start of a
+ * shift and it sits behind a counter.
+ *
+ * A HANDSET IS NOT THAT. It is carried by a part-time waiter who is handed it
+ * at the start of a shift and does not know the shop's password, and a
+ * credential that dies every 24 hours means somebody with the password has to
+ * be found and brought over, at the start of every service, for every phone.
+ * That is a support call a day per shop, for ever, produced by a number.
+ *
+ * WHAT MAKES A LONGER ONE SAFE HERE. A lost phone is cut off by freeing its
+ * handset slot on the till - see src/handset-slots.js - which the till already
+ * enforces and answers 403 to. That is a revocation a manager can actually
+ * perform, which a token expiry is not: expiry does not protect the phone
+ * today, it only inconveniences the shop tomorrow.
+ *
+ * Still a setting, so a shop that wants the old behaviour sets
+ * HANDSET_JWT_EXPIRES_IN=24h and gets it.
+ */
+const HANDSET_DEFAULT = '30d';
+
+/**
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {number} seconds
+ */
+function handsetLifetimeSeconds(env = process.env) {
+  const raw = String(env.HANDSET_JWT_EXPIRES_IN || HANDSET_DEFAULT).trim();
+  const match = raw.match(/^(\d+)\s*([smhd])?$/i);
+  if (!match) return parseLifetime(HANDSET_DEFAULT);
+  return Number(match[1]) * UNITS[(match[2] || 's').toLowerCase()];
+}
+
+module.exports = {
+  jwtLifetimeSeconds,
+  handsetLifetimeSeconds,
+  DEFAULT_LIFETIME: DEFAULT,
+  HANDSET_DEFAULT_LIFETIME: HANDSET_DEFAULT,
+};
