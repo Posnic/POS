@@ -104,6 +104,17 @@ test('custom template order and styles survive; disabled logo and customer stay 
     dom.window.close();
 });
 
+test('a saved QR removal wins over the image still held in the browser cache', () => {
+    const { dom, win, $, branch, data, preview } = till();
+    const get = win.PosnicPro.local.get;
+    win.PosnicPro.local.get = (key) => key === 'footer_image' ? qr : get(key);
+    data.footer_image = '';
+    const result = $('<div>').html(preview.documentFor(branch, data, '80'));
+    assert.equal(result.find('.receipt-footer-image').length, 0);
+    assert.equal(preview.rawData(result.html()).footerImage, undefined);
+    dom.window.close();
+});
+
 for (const layout of ['80', 'a4']) {
     test(layout + ' receipt treats customer details, item names and notes as literal text', () => {
         const { dom, $, branch, data, preview } = till();
