@@ -223,25 +223,65 @@ test('it is written down BEFORE the paper, in both print paths', () => {
   assert.ok(saleClaim > -1 && saleClaim < salePrint, 'the sale path prints before it records');
 });
 
-test('nothing here retries a failed print', () => {
+test('a retry is allowed ONLY for a failure somebody watched happen', () => {
   /*
-   * The instinct on a failed print is to try again, and that instinct is what
-   * prints twice: "failed" and "succeeded but the reply was lost" are
-   * indistinguishable from the till. Retrying is Stage 2 and a real decision.
+   * This test used to forbid retrying at all, and it was right to, for as
+   * long as the ledger could not tell the two cases apart:
+   *
+   *   "it failed" and "it printed and the reply was lost" look identical
+   *   from the till, and retrying the second one prints twice.
+   *
+   * They are not identical any more. A ticket SETTLED as failed is one
+   * where the printer answered no - offline, out of paper, refused, did
+   * not answer in time - and no paper came out. A ticket ATTEMPTED and
+   * never settled is the till dying mid-print, where nobody knows.
+   *
+   * So the rule is now narrow, and this pins the narrowness rather than
+   * the old blanket ban: the watched failure comes back, the unknown one
+   * never does. Owner: "sometime cancel not getting printed."
    */
-  /*
-   * Checked as a MECHANISM, not as a word. The file's own comments say "does
-   * not retry", and a text search cannot tell a promise from a breach - the
-   * first version of this test failed on the promise.
-   */
-  assert.deepStrictEqual(
-    Object.keys(ledger).filter((k) => /retry|again|resend|reprint/i.test(k)),
-    [],
-    'the ledger has grown a retry in its API'
-  );
+  ledger.setDir(fresh());
+
+  const watched = ledger.keyFor({ sale: 'R-1' });
+  ledger.claim(watched, { saleId: 'R-1' });
+  ledger.settle(watched, false, 'The printer is offline');
+  assert.strictEqual(ledger.retry(watched), true,
+    'a ticket we know produced no paper is never offered again');
+
+  const unknown = ledger.keyFor({ sale: 'R-2' });
+  ledger.claim(unknown, { saleId: 'R-2' });          // and then the till died
+  assert.strictEqual(ledger.retry(unknown), false,
+    'a ticket that may already be on paper would print a second time');
+
+  const printed = ledger.keyFor({ sale: 'R-3' });
+  ledger.claim(printed, { saleId: 'R-3' });
+  ledger.settle(printed, true);
+  assert.strictEqual(ledger.retry(printed), false, 'a printed ticket printed again');
+
+  assert.strictEqual(ledger.retry(ledger.keyFor({ sale: 'never-seen' })), false,
+    'a ticket the ledger has never seen is not a retry');
+});
+
+test('and it gives up, so a printer left switched off is not a loop', () => {
+  ledger.setDir(fresh());
+  const key = ledger.keyFor({ sale: 'R-4' });
+  ledger.claim(key, { saleId: 'R-4' });
+
+  let tries = 0;
+  for (let i = 0; i < 20; i += 1) {
+    ledger.settle(key, false, 'The printer is offline');
+    if (!ledger.retry(key)) break;
+    tries += 1;
+  }
+  assert.strictEqual(tries, ledger.MAX_ATTEMPTS - 1,
+    'the number of attempts is not bounded by MAX_ATTEMPTS');
+  assert.strictEqual(ledger.spent(key), true,
+    'a ticket with no tries left is not reported as finished, so the queue keeps it for ever');
+});
+
+test('the ledger still decides nothing on a timer, and the print path reads no summary', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src', 'print-ledger.js'), 'utf8');
   assert.ok(!/setTimeout|setInterval/.test(src), 'the ledger has grown a timer');
-  /* And the print path never reads an outcome back to decide anything. */
   const kot = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
   assert.ok(!/printLedger\.summary/.test(kot),
     'the print path has started reading outcomes to make a decision');
