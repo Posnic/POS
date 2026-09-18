@@ -179,15 +179,13 @@ async function remember(db, { device, user, ip } = {}) {
      */
     const held = await db.collection(COLLECTION).findOne({ device_id: deviceId });
     if (held && held.revoked) {
-      await db
-        .collection(COLLECTION)
-        .updateOne(
-          { device_id: deviceId },
-          {
-            $set: { revoked: false, returned_at: seen },
-            $unset: { revoked_at: '', revoked_by: '' },
-          }
-        );
+      await db.collection(COLLECTION).updateOne(
+        { device_id: deviceId },
+        {
+          $set: { revoked: false, returned_at: seen },
+          $unset: { revoked_at: '', revoked_by: '' },
+        }
+      );
     }
 
     forget(deviceId);

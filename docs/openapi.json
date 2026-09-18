@@ -98,6 +98,10 @@
       "description": "Mounted at /expenses"
     },
     {
+      "name": "Handsets",
+      "description": "Mounted at /handsets"
+    },
+    {
       "name": "Install",
       "description": "Mounted at /install"
     },
@@ -5464,6 +5468,97 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/handsets": {
+      "get": {
+        "summary": "rows",
+        "operationId": "get_handsets",
+        "tags": [
+          "Handsets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/handsets/{deviceId}/revoke": {
+      "post": {
+        "summary": "data",
+        "operationId": "post_handsets_deviceId_revoke",
+        "tags": [
+          "Handsets"
+        ],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/handsets/{deviceId}/allow": {
+      "post": {
+        "summary": "data",
+        "operationId": "post_handsets_deviceId_allow",
+        "tags": [
+          "Handsets"
+        ],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/install/add": {
