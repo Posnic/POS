@@ -3126,6 +3126,25 @@ PosnicPro = {
                 $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
                 return;
             }
+            /*
+             * THE FLOOR STAYS ON THE FLOOR.
+             *
+             * Owner: "if i click print bill then i need success message
+             * bill printed and show same page".
+             *
+             * A table is #/kot/6, so the reset below took it to #/kot -
+             * which is the same screen with nothing selected. The waiter
+             * pressed Print Bill, the paper came out, and the order they
+             * were looking at vanished from the right of the screen.
+             * They then had to find the table again to take the money.
+             *
+             * Printing a bill is not the end of that table: the money
+             * comes next, on the same panel. Settling is what clears it,
+             * and refreshKOTData does that when it happens.
+             */
+            if (parts[0] === 'kot') {
+                return;
+            }
             /* A document address (#/purchaseorders/<id>, #/suppliers/<id>)
                is exactly where the reader wants to remain - resetting the
                hash here CLOSED the open document after every print. The

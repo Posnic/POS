@@ -308,31 +308,67 @@ PosnicPro.kot = {
         PosnicPro.kot.loadTableDetails(tableNumber);
     },
 
+    /*
+     * BACK TO A CLEAN FLOOR, WITHOUT LEAVING IT.
+     *
+     * Owner, after settling a bill: "if i click take payment and payment
+     * is over then remove that table from screen and also clear from that
+     * able" - and, about the screen jumping: "it mean page refreshed and
+     * selected table not selected more".
+     *
+     * What was here bounced the whole app through #/dashboard and back to
+     * #/kot "to force change detection": the dashboard was built, thrown
+     * away and the KOT screen rebuilt from nothing, twice a settlement.
+     * On a slow till that is a visible flash of the wrong page.
+     *
+     * There is nothing to force. Both halves of this screen are filled by
+     * a request, so asking again IS the refresh. The selection is dropped,
+     * the panel goes back to its prompt straight away, and the grid is
+     * re-read - a settled ticket is no longer in getTablesWithActiveOrders,
+     * so the table leaves the screen on its own, which is the whole of
+     * "remove that table". The address is put back to #/kot without waking
+     * the router, so a stale #/kot/6 cannot re-select a table that has
+     * just been paid for and gone.
+     */
     refreshKOTData: function () {
-        console.log('=== refreshKOTData called ===');
-
-        // Clear table selection after KOT actions
         PosnicPro.kot.currentTableNumber = null;
         PosnicPro.kot.currentTableId = null;
+        PosnicPro.kot.selectedTable = null;
 
-        // Wait for backend to process the action before navigating
-        setTimeout(function () {
-            // Always navigate to kot page without table selection
-            var targetHash = 'kot';
-            console.log('Navigating to #/' + targetHash);
+        /* One line, because the i18n scanner reads the <lang> element out of
+           the source: splitting the tag from its words hides the phrase. */
+        var emptyStateHtml = '<div class="text-center" style="padding: 100px 20px; color: #6c757d;"><i class="feather icon-arrow-left" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i><p style="font-size: 16px; margin: 0;"><lang class="lang_select_a_table_from_the_left_to_view_kot_d">Select a table from the left to view KOT details</lang></p></div>';
 
-            // If already on target hash, go to temp hash first to force change detection
-            var currentHash = window.location.hash.replace('#/', '').replace('#', '');
-            if (currentHash === targetHash) {
-                console.log('Already on target hash, forcing reload via temp hash');
-                window.location.hash = '#/dashboard';
-                setTimeout(function () {
-                    window.location.hash = '#/' + targetHash;
-                }, 50);
+        /* Not on the KOT screen (settled from KOT History, say): go to it
+           and let the page build itself with no table selected. */
+        if (!$('#kot').is(':visible')) {
+            if (typeof hasher !== 'undefined') {
+                hasher.setHash('kot');
             } else {
-                window.location.hash = '#/' + targetHash;
+                window.location.hash = '#/kot';
             }
-        }, 800);
+            return;
+        }
+
+        if (typeof hasher !== 'undefined' && hasher.getHash() !== 'kot') {
+            hasher.changed.active = false;
+            hasher.setHash('kot');
+            hasher.changed.active = true;
+        }
+
+        $('#kot_table_details').html(emptyStateHtml);
+        $('.kot-table-box').css({
+            'background': 'white',
+            'transform': 'scale(1)',
+            'box-shadow': 'none'
+        });
+
+        /* A short breath before re-reading, because some of the callers
+           here (cancel, update) trigger work that finishes just after the
+           response they were waiting on. */
+        setTimeout(function () {
+            PosnicPro.kot.loadTables();
+        }, 400);
     },
 
     loadTableDetails: function (tableNumber) {
@@ -343,8 +379,30 @@ PosnicPro.kot = {
         var loadingHtml = '<div class="text-center" style="padding: 60px 20px;"><div class="loadingSpinner"></div><p class="text-muted mt-3"><lang class="lang_loading_table_details">Loading table details...</lang></p></div>';
         detailsPanel.html(loadingHtml);
 
+        /*
+         * ONLY WHAT IS STILL OPEN.
+         *
+         * Owner: "when table clicked its howing old order".
+         *
+         * The grid on the left is drawn by getTablesWithActiveOrders,
+         * which matches branch + sale_process KOT + payment_status
+         * 'Unpaid'. This panel asked for the same table WITHOUT the
+         * payment clause, so the two disagreed: a table stayed on screen
+         * because one ticket on it was open, and tapping it listed every
+         * KOT that table has ever had, settled ones included, each with a
+         * live Take Payment button beside it.
+         *
+         * The literal 'Unpaid' is the word the sale carries - the same
+         * one the floor query uses. Matching it exactly is deliberate:
+         * what the grid will not show, this must not show either.
+         *
+         * The two copies of this query further down the file take the
+         * same clause. Nothing calls them today, and that is exactly how
+         * one of them would come back wrong.
+         */
         var filters = {
-            sale_process: 'KOT'
+            sale_process: 'KOT',
+            payment_status: 'Unpaid'
         };
         
         if (tableNumber === 'TA') {
@@ -1659,7 +1717,8 @@ PosnicPro.kot = {
 
     loadTableKOTs: function (table, callback) {
         var filters = {
-            sale_process: 'KOT'
+            sale_process: 'KOT',
+            payment_status: 'Unpaid'
         };
         
         if (table.tableorder_value === 'TA') {
@@ -1731,7 +1790,8 @@ PosnicPro.kot = {
         $('#table_kot_modal').modal('show');
 
         var filters = {
-            sale_process: 'KOT'
+            sale_process: 'KOT',
+            payment_status: 'Unpaid'
         };
         
         if (tableNumber === 'TA') {
