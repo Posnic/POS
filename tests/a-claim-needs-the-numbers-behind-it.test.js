@@ -217,22 +217,35 @@ test('factsFor answers with everything a menu card needs, and nothing invented',
   /* An item the shop never touched answers with four empties, not nulls, so
      nothing downstream has to guard before it iterates. */
   const bare = facts.factsFor({});
-  assert.deepStrictEqual(bare, { nutrition: {}, tags: [], marks: [], claims: [] });
+  assert.deepStrictEqual(bare, {
+    nutrition: {},
+    nutrition_estimated: false,
+    tags: [],
+    marks: [],
+    claims: [],
+  });
 });
 
 /* ------------------------------------------------- a guess earns nothing */
 
-test('estimated numbers publish no claims and no calories', () => {
+test('estimated numbers publish no claims, and say they are estimates', () => {
   /*
-   * Until nutrition could be written in bulk this question could not arise:
-   * the only way numbers reached a dish was a person typing them, or pressing
-   * Estimate and then Save. Either way a person put them there.
+   * TWO INSTRUCTIONS, AND THEY DO NOT CONFLICT ONCE VALUES AND ASSERTIONS ARE
+   * SEPARATED.
    *
-   * The moment a pass can walk three hundred dishes unattended that stops
-   * being true, and an unchecked guess would start earning "Heart healthy"
-   * and "Diabetic friendly" on a live menu. That is the same harm the owner
-   * ruled out - "only be shown when the recipe/nutrition actually supports
-   * the claim" - arriving by a door that is harder to see than a tick box.
+   * The owner's first ruling was that a badge may "only be shown when the
+   * recipe/nutrition actually supports the claim". His second, 2026-09-18,
+   * looking at 267 dishes whose estimates no customer could see: "no need to
+   * worry about correct value. later we can update. now i want all values."
+   *
+   * So the NUMBERS go out, flagged as estimates. A number a menu calls an
+   * estimate is not a false claim; it is a number with its provenance
+   * attached, and a customer can weigh it.
+   *
+   * The BADGES do not. "Heart healthy" and "Diabetic friendly" cannot be
+   * labelled as guesses in any way somebody reads carefully - a badge is an
+   * assertion, and a machine's guess about a dish name supports nothing. They
+   * still come from the tags the kitchen ticked itself.
    */
   const measured = {
     nutrition: { kcal: 280, protein_g: 38, carbs_g: 6, sat_fat_g: 2.5, sodium_mg: 420, sugar_g: 2 },
@@ -245,8 +258,12 @@ test('estimated numbers publish no claims and no calories', () => {
   assert.strictEqual(kitchen.nutrition.kcal, 280);
 
   const guessed = facts.factsFor({ ...measured, nutrition_source: 'estimated' });
+  /* THE HALF THAT DID NOT CHANGE, and it is the half that matters. */
   assert.deepStrictEqual(guessed.claims, [], 'a guess earned a health claim');
-  assert.deepStrictEqual(guessed.nutrition, {}, 'a guessed calorie count reached a customer');
+  /* And the half the owner changed: the numbers reach the customer now. */
+  assert.strictEqual(guessed.nutrition.kcal, 280, 'the numbers are still being withheld');
+  assert.strictEqual(guessed.nutrition_estimated, true, 'a guess went out unflagged');
+  assert.strictEqual(kitchen.nutrition_estimated, false, 'a confirmed number was flagged as a guess');
 
   /* The recipe tags survive: the kitchen ticked those itself and nothing
      about them was estimated. */
@@ -287,4 +304,61 @@ test('only the machine can be the one that guessed', () => {
   /* And the pass's own write sets it flat, never from what it was handed. */
   const stored = REPO.slice(REPO.indexOf('async storeEstimatedDishFacts('));
   assert.match(stored.slice(0, 3000), /nutrition_source: 'estimated',/);
+});
+
+/* ------------------------------- and the customer is told which it is --- */
+
+test('the ordering catalogue keeps the flag, or a guess reads as a measurement', () => {
+  /*
+   * The bundle's catalogue is one object literal and a field it does not NAME
+   * never reaches the page. That has cost something five times now. Without
+   * this one the numbers would arrive and the sentence that says what they are
+   * would not, which is worse than not sending them at all.
+   */
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const bundle = fs.readFileSync(path.join(__dirname, '..', 'order', 'indexedDB.js'), 'utf8');
+  assert.match(bundle, /nutrition_estimated: item\.nutrition_estimated === true/);
+});
+
+test('the dish sheet says it once, and only when there are numbers to say it about', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const sheet = fs.readFileSync(
+    path.join(__dirname, '..', 'order', 'assets', 'products', 'script.js'),
+    'utf8'
+  );
+  /* Guarded on `numbers`, so a dish with nothing entered does not carry a
+     note about the provenance of nothing. */
+  assert.match(sheet, /if \(numbers && item\.nutrition_estimated === true\)/);
+  assert.match(sheet, /t\("Estimated, not measured"\)/);
+});
+
+test('both copies of the customer dictionary carry the words', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const order = fs.readFileSync(path.join(root, 'order', 'assets', 'i18n.js'), 'utf8');
+  for (const phrase of ['How we know', 'Estimated, not measured']) {
+    assert.ok(order.includes('"' + phrase + '"'), phrase + ' has no Tamil');
+  }
+  assert.strictEqual(
+    order,
+    fs.readFileSync(path.join(root, 'menu', 'i18n.js'), 'utf8'),
+    'the two copies of the dictionary have drifted'
+  );
+});
+
+test('the server and the desktop read the same rule from the same file', () => {
+  /* dish-facts.js is byte-identical in two places on purpose: the till's live
+     preview and the customer's menu must not disagree about what a guess
+     earns. */
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  assert.strictEqual(
+    fs.readFileSync(path.join(root, 'api', 'src', 'utils', 'dish-facts.js'), 'utf8'),
+    fs.readFileSync(path.join(root, 'frontend', 'static', 'script', 'js', 'core', 'dish-facts.js'), 'utf8'),
+    'the two copies of the dish-facts rule have drifted'
+  );
 });
