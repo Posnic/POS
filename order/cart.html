@@ -114,6 +114,31 @@
         -->
         <p class="going-to" id="going-to" hidden></p>
 
+        <!--
+            A CODE THE SHOP PRINTED SOMEWHERE.
+
+            Above the sums, because it changes them. Collapsed to a link until
+            somebody wants it: a promo box sitting open on every order teaches
+            people they are missing a discount, and most of them are not.
+
+            The page says whether a code is real and what it offers. What it is
+            WORTH is decided by the shop when the order is placed, and an order
+            carrying a code the shop will not honour is refused rather than
+            quietly charged at full price.
+        -->
+        <section class="promo" id="promo" hidden>
+            <button type="button" class="promo-open" id="promo-open">Have a code?</button>
+            <div class="promo-box" id="promo-box" hidden>
+                <label class="field-label" for="promo-code">Discount code</label>
+                <div class="promo-row">
+                    <input type="text" id="promo-code" class="promo-field" maxlength="40"
+                           autocapitalize="characters" autocomplete="off" spellcheck="false">
+                    <button type="button" class="promo-apply" id="promo-apply">Apply</button>
+                </div>
+                <p class="promo-said" id="promo-said" hidden></p>
+            </div>
+        </section>
+
         <!-- The sums. Taxes shown only where there are any to show. -->
         <section class="bill" id="bill" hidden aria-label="Bill">
             <div class="bill-row" id="bill-items-row"><span>Items</span><span id="bill-items"></span></div>

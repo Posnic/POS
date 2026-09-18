@@ -488,6 +488,57 @@ class OnlineOrderingController {
     }
   }
 
+  /*
+   * IS THIS CODE REAL, AND WHAT DOES IT OFFER?
+   *
+   * Anonymous, because a customer at a table has no account and never will.
+   * So it answers the least it can: whether the shop has a live coupon by
+   * that name, and the TERMS - percent or amount, the minimum spend, the cap.
+   *
+   * IT NEVER RETURNS A MONEY FIGURE FOR THIS BASKET. Working one out here
+   * would mean pricing every line a second time, off the order path, and two
+   * places that price a basket are two places that will one day disagree. The
+   * exact discount is computed once, by the shop, when the order is placed -
+   * and an order carrying a code the shop will not honour is REFUSED rather
+   * than quietly charged at full price.
+   *
+   * A wrong code gets the same shaped answer as an expired one on purpose:
+   * this endpoint is open to the internet, and a difference between "no such
+   * code" and "that one has run out" is a way to read a shop's coupon list
+   * one guess at a time.
+   */
+  async previewCoupon(req, res) {
+    try {
+      const storeId = String(req.params.storeId || '');
+      const context = await itemService.storefrontContext({ storeId });
+      if (!context) {
+        return res
+          .status(404)
+          .json({ type: 'error', message: 'No shop at this address', data: null });
+      }
+
+      const code = String((req.body && req.body.code) || '')
+        .trim()
+        .slice(0, 40);
+      if (!code) {
+        return res.status(400).json({ type: 'error', message: 'Enter a code', data: null });
+      }
+
+      const offer = await customerOrder.couponTerms(code, context);
+      if (!offer) {
+        return res.status(200).json({
+          type: 'error',
+          message: 'That code cannot be used here.',
+          data: null,
+        });
+      }
+      return res.status(200).json({ type: 'success', message: 'OK', data: offer });
+    } catch (error) {
+      console.error('Error previewing a coupon:', error);
+      return res.status(500).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
   async changePlacedOrder(req, res) {
     return this._actOnPlacedOrder(req, res, customerOrder.change);
   }

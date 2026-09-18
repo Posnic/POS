@@ -5184,6 +5184,83 @@ dialog.sheet[open]::backdrop {
   display: block;
 }
 
+/*
+ * A CODE THE SHOP PRINTED SOMEWHERE.
+ *
+ * Collapsed to a link until somebody wants it. A promo box sitting open on
+ * every order teaches people they are missing a discount, and most of them
+ * are not - which turns a pleasant surprise into a small tax on everybody
+ * else's checkout.
+ */
+.promo {
+  margin: 16px 0 8px;
+}
+
+.promo-open {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.promo-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.promo-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  /* Uppercase as it is typed, because a printed code is uppercase and a
+     customer should not have to wonder whether the case matters. */
+  text-transform: uppercase;
+}
+
+.promo-apply {
+  flex: 0 0 auto;
+  padding: 12px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.promo-apply:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.promo-said {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+/* Colour AND wording, never colour alone: about one man in twelve cannot
+   tell these two apart, and "cannot be used" reads the same to everybody. */
+.promo-said.is-good {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.promo-said.is-bad {
+  color: var(--danger);
+}
+
 /* ----------------------------------------------------------- paying by UPI
  *
  * One button, and under it the apps by name for anybody whose phone does not

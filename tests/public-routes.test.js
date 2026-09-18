@@ -103,6 +103,20 @@ const ALLOWED_ANONYMOUS = {
        line past it. Nothing to read, nothing to write but the shop's own
        meter; its own limit per client. See services/voice-meter.js. */
     '/:storeId/voice/:session/tick',
+    /*
+     * Whether a discount code is real, and what it offers.
+     *
+     * Anonymous because a customer at a table has no account and never will.
+     * It answers the LEAST it can: the terms of a live coupon - percent or
+     * amount, minimum spend, cap - and never a money figure for a basket,
+     * which would mean pricing one off the order path.
+     *
+     * A code that does not exist and one that has run out get the same shaped
+     * refusal, so the door cannot be used to read a shop's coupon list one
+     * guess at a time, and it sits behind the same flood limiter as the
+     * placed-order routes.
+     */
+    '/:storeId/coupon',
     /* The customer's own order, held by its id and its token. */
     '/:storeId/orders/:orderId',
     /* Several of them at once, each still proved by its OWN id and token -
