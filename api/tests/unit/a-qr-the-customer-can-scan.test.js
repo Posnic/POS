@@ -19,6 +19,13 @@
 
 const { resolveFooterImage, QR_SIZE, OPTIONS } = require('../../src/helpers/footer-qr');
 
+/*
+ * Encoding a QR is real CPU work, and this suite runs 405 files in parallel.
+ * At the 5s default one of these went red under load and green on its own,
+ * which is the worst kind of test: nobody trusts the next failure either.
+ */
+jest.setTimeout(30000);
+
 const URL_A = 'https://campoalpinialmenno.it/merch.html';
 const URL_B = 'https://example.com/shop';
 
