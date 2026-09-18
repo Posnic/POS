@@ -3192,6 +3192,9 @@ PosnicPro = {
          * printer they have been printing to all along.
          */
         var usedTheDefault = false;
+        /* Named in the confirmation below, which runs outside the callback that
+           builds the options, so it is captured here rather than read there. */
+        var printedTo = '';
         /*
          * ASK THE MACHINE WHICH PRINTER, EVERY TIME.
          *
@@ -3286,12 +3289,47 @@ PosnicPro = {
                     opts.openDrawer = true;
                     opts.drawerPin = (cfg.pin != null) ? cfg.pin : 0;
                 }
+                printedTo = opts.printerName || '';
                 return window.electronAPI.printer.printReceipt(sale, opts);
             });
         })
         .then(function (result) {
             if (result && result.success) {
                 PosnicPro.afterPrint();
+                /*
+                 * SAY THAT IT PRINTED, AND WHERE.
+                 *
+                 * A failure was announced and a success said nothing, so the
+                 * only way to know a bill had come out was to walk to the
+                 * printer. Owner: "when sales done (auto print) or user click
+                 * print sale bill (if print done show success. hardware level
+                 * confirmation also good.)"
+                 *
+                 * This IS the hardware answer, not a hopeful one: the main
+                 * process writes the bytes to each queue and reports back per
+                 * printer, and `printed` counts the ones that took them. The
+                 * printer is named because a till can have several, and a bill
+                 * landing on the wrong one is exactly the fault that cost an
+                 * evening - it looked like nothing printed at all.
+                 *
+                 * A partial success is a warning, not a tick: one copy out of
+                 * two is not what somebody asked for, and the failures say
+                 * which.
+                 */
+                var where = (result.failures && result.failures.length)
+                    ? null
+                    : printedTo;
+                if (result.failures && result.failures.length) {
+                    PosnicPro.alert('warning', PosnicPro.i18n.t(
+                        'lang_printed_on_some_printers',
+                        'Printed on ' + result.printed + ' of ' + result.attempted + ' printers. '
+                        + result.failures.map(function (f) { return f.printer + ': ' + f.error; }).join('; ')
+                    ));
+                } else {
+                    PosnicPro.alert('success', where
+                        ? PosnicPro.i18n.t('lang_sent_to_printer', 'Sent to printer') + ': ' + where
+                        : PosnicPro.i18n.t('lang_receipt_printed_ok', 'Receipt printed'));
+                }
             } else {
                 PosnicPro.alert('error', (result && result.error) ? result.error : 'Print failed');
             }
