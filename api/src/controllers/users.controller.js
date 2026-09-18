@@ -1,6 +1,7 @@
 const { redact } = require('../utils/redact');
 const { clientIp } = require('../utils/client-ip');
 const { currentConnection } = require('../db/tenant-context');
+const { remember: rememberHandset } = require('../utils/handsets');
 const { searchPattern } = require('../utils/safe-search');
 const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
@@ -2814,6 +2815,23 @@ class UsersController extends BaseController {
          * Signed and reported from one place, so what the token says and what
          * the phone is told cannot drift.
          */
+        /*
+         * THE PHONE, WRITTEN DOWN AGAINST THIS ACCOUNT.
+         *
+         * Owner: "map device to cloud account." Until now a phone said
+         * what it was on every order and nowhere else, so a shop had a
+         * record of what a phone had DONE and no record of the phone.
+         *
+         * It returns the id it stored, or nothing at all when the app did
+         * not say - an older handset, or storage it cannot read. Nothing
+         * below depends on it, so that app signs in exactly as it did.
+         */
+        req.handsetDevice = await rememberHandset(db, {
+          device: req.body && req.body.device,
+          user: recordsFiltered,
+          ip,
+        });
+
         const handsetSeconds = handsetLifetimeSeconds();
         const jwtToken = signLegacyToken(recordsFiltered, req, undefined, handsetSeconds);
 

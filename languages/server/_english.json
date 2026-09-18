@@ -1185,6 +1185,9 @@
   "No files uploaded": [
     "src/models/setting.model.js"
   ],
+  "No handset with that id has signed in to this shop": [
+    "src/routes/handsets.routes.js"
+  ],
   "No invoice on this sale": [
     "src/services/invoice-sync.js"
   ],
@@ -1996,6 +1999,12 @@
   "That key does not belong to an API user.": [
     "src/middleware/api-key.js"
   ],
+  "That phone is turned off. Signing in on it again will let it back.": [
+    "src/routes/handsets.routes.js"
+  ],
+  "That phone may be used again": [
+    "src/routes/handsets.routes.js"
+  ],
   "That picture could not be read": [
     "src/services/ai.service.js"
   ],
@@ -2055,6 +2064,9 @@
   ],
   "The sample data is already here - switch Demo Data on to see it.": [
     "src/services/install.service.js"
+  ],
+  "The shop has turned this phone off. Sign in again to use it.": [
+    "src/middleware/auth.js"
   ],
   "The user belonging to this token no longer exists.": [
     "src/controllers/auth.controller.js"
@@ -2483,6 +2495,9 @@
   ],
   "You do not have access to the selected branch": [
     "src/services/user.service.js"
+  ],
+  "You do not have permission to manage this shop's handsets": [
+    "src/routes/handsets.routes.js"
   ],
   "You do not have permission to view active orders": [
     "src/controllers/sales.controller.js"
