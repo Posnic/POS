@@ -3158,6 +3158,21 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
             return false;
         }
 
+        /*
+         * The discount code this basket is carrying, if any.
+         *
+         * The CODE and nothing else. What it is worth is decided by the shop
+         * from its own coupon document, and an order carrying one the shop
+         * will not honour is refused rather than charged at full price - so
+         * nobody can be charged more than the number they agreed to.
+         */
+        let couponCode = "";
+        try {
+            couponCode = String(localStorage.getItem("posnic.promo-code") || "").trim();
+        } catch (e) {
+            /* A browser that keeps nothing orders without a code. */
+        }
+
         // 🧾 Prepare payload: [{ id, quantity }]
         const payload = cartItems.map(item => {
             return {
@@ -3269,6 +3284,8 @@ async function performCheckout(transactionId, paymentStatus = "Upi", options = {
                 order: orderType,
                 fulfilment: fulfilment,
                 table: table,
+                /* The code, never a discount. See the comment where it is read. */
+                coupon_code: couponCode,
                 customer_name: customerName,
                 customer_address: customerAddress,
                 note: note,

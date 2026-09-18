@@ -495,6 +495,59 @@ async function cancel(body, context) {
   };
 }
 
+/*
+ * WHAT A CODE OFFERS, WITHOUT SAYING WHAT IT IS WORTH TODAY.
+ *
+ * The customer's page needs enough to show "10% off, orders over 500" before
+ * somebody commits. It does not need, and must not be given, a money figure
+ * for their basket: that would mean pricing every line a second time off the
+ * order path, and two places that price a basket are two places that will one
+ * day disagree about what a customer owes.
+ *
+ * The real discount is worked out once, by createOnlineOrder, from the shop's
+ * own coupon document - and an order carrying a code the shop will not honour
+ * is refused rather than quietly charged at full price.
+ *
+ * ONE SHAPE OF REFUSAL. A code that does not exist and one that has run out
+ * both answer null. This endpoint is open to the internet, and a difference
+ * between the two is a way to read a shop's coupon list one guess at a time.
+ */
+async function couponTerms(code, context = {}) {
+  try {
+    const wanted = String(code || '').trim();
+    if (!wanted) return null;
+
+    const CouponService = require('./coupon.service');
+    const service = new CouponService();
+    const coupon = await service.getByCode(wanted);
+    if (!coupon || coupon.active !== true) return null;
+
+    /* A coupon scoped to another branch is not this shop's to offer. One with
+       no branch is licence-wide, which is how most are written. */
+    const mine = !coupon.branch_id || String(coupon.branch_id) === String(context.branchId || '');
+    if (!mine) return null;
+
+    const now = new Date();
+    if (coupon.starts_at && new Date(coupon.starts_at) > now) return null;
+    if (coupon.expires_at && new Date(coupon.expires_at) < now) return null;
+
+    return {
+      code: String(coupon.code || ''),
+      type: String(coupon.type || ''),
+      value: Number(coupon.value) || 0,
+      /* What the basket has to reach before it applies, so the page can say so
+         rather than letting somebody find out at checkout. */
+      min_bill: Number(coupon.min_bill) || 0,
+      max_discount: Number(coupon.max_discount) || 0,
+      description: String(coupon.description || ''),
+    };
+  } catch (e) {
+    /* A coupon lookup that fails must not stop somebody ordering. */
+    console.warn('[coupon] could not read the terms:', e.message);
+    return null;
+  }
+}
+
 module.exports = {
   /* The seam a test stands in for, as ordering-assistant.service does. */
   _settings,
@@ -506,6 +559,7 @@ module.exports = {
   heldOrder,
   whyNot,
   changeSeconds,
+  couponTerms,
   DEFAULT_CHANGE_SECONDS,
   MAX_CHANGE_SECONDS,
 };

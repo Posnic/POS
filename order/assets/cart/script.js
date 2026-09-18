@@ -7,6 +7,7 @@ $(document).ready(async function () {
     let cartData = await getCartData();
     renderCart(cartData);
     showDestination();
+    paintPromo();
 });
 
 /*
@@ -23,6 +24,143 @@ $(document).ready(async function () {
  * the wrong room, with nothing anywhere showing that the link and the guest
  * disagreed.
  */
+/* ----------------------------------------------------------- a discount code
+ *
+ * The page asks the shop whether a code is real and what it offers. It never
+ * works out what the code is WORTH: that is decided once, by the shop, when
+ * the order is placed - and an order carrying a code the shop will not honour
+ * is refused rather than quietly charged at full price.
+ *
+ * So the worst this field can do is show somebody the terms of an offer they
+ * then get. It cannot show them a total they do not get.
+ */
+
+/** The code this basket is carrying, kept where checkout can find it. */
+const PROMO_KEY = "posnic.promo-code";
+
+function promoCode() {
+    try {
+        return String(localStorage.getItem(PROMO_KEY) || "").trim();
+    } catch (e) {
+        /* A browser that keeps nothing simply orders without a code. */
+        return "";
+    }
+}
+
+function keepPromo(code) {
+    try {
+        if (code) localStorage.setItem(PROMO_KEY, String(code));
+        else localStorage.removeItem(PROMO_KEY);
+    } catch (e) {
+        /* Nothing to do, and nothing worth stopping an order for. */
+    }
+}
+
+/** What an offer says, in the customer's language. */
+function offerWords(offer, money) {
+    const value = Number(offer.value) || 0;
+    const off = String(offer.type || "") === "percent"
+        ? t("{n}% off", { n: value })
+        : t("{amount} off", { amount: money(value) });
+
+    if (Number(offer.min_bill) > 0) {
+        return t("{off} on orders over {min}", { off: off, min: money(Number(offer.min_bill)) });
+    }
+    return off;
+}
+
+async function applyPromo() {
+    const field = document.getElementById("promo-code");
+    const said = document.getElementById("promo-said");
+    const button = document.getElementById("promo-apply");
+    if (!field || !said) return;
+
+    const code = String(field.value || "").trim().toUpperCase();
+    field.value = code;
+
+    if (!code) {
+        keepPromo("");
+        said.hidden = true;
+        return;
+    }
+
+    if (button) button.disabled = true;
+    said.hidden = false;
+    said.className = "promo-said";
+    said.textContent = t("Checking...");
+
+    let offer = null;
+    try {
+        const base = String((window.CONFIG && window.CONFIG.API_BASE_URL) || "").replace(/\/$/, "");
+        const shop = await knownBranchId();
+        const answer = await fetch(base + "/online-ordering/" + encodeURIComponent(shop) + "/coupon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ code: code })
+        });
+        const body = await answer.json();
+        offer = body && body.type === "success" ? body.data : null;
+    } catch (e) {
+        /* Unreachable is not the same as refused, and the customer should be
+           told which one happened rather than that their code is bad. */
+        if (button) button.disabled = false;
+        said.className = "promo-said is-bad";
+        said.textContent = t("Could not reach the shop just now.");
+        return;
+    }
+
+    if (button) button.disabled = false;
+
+    if (!offer) {
+        keepPromo("");
+        said.className = "promo-said is-bad";
+        said.textContent = t("That code cannot be used here.");
+        return;
+    }
+
+    keepPromo(offer.code || code);
+    said.className = "promo-said is-good";
+    said.textContent = offerWords(offer, typeof money === "function" ? money : String);
+}
+
+$(document).on("click", "#promo-open", function () {
+    const box = document.getElementById("promo-box");
+    const open = document.getElementById("promo-open");
+    if (!box) return;
+    box.hidden = false;
+    if (open) open.hidden = true;
+    const field = document.getElementById("promo-code");
+    if (field) field.focus();
+});
+
+$(document).on("click", "#promo-apply", applyPromo);
+
+$(document).on("keydown", "#promo-code", function (event) {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    applyPromo();
+});
+
+/*
+ * A code typed on a previous visit is shown again, because a basket that
+ * quietly forgets one is a customer who pays full price without noticing.
+ */
+function paintPromo() {
+    const section = document.getElementById("promo");
+    if (!section) return;
+    section.hidden = false;
+
+    const kept = promoCode();
+    if (!kept) return;
+
+    const box = document.getElementById("promo-box");
+    const open = document.getElementById("promo-open");
+    const field = document.getElementById("promo-code");
+    if (box) box.hidden = false;
+    if (open) open.hidden = true;
+    if (field) field.value = kept;
+}
+
 function showDestination() {
     if (!window.KioskServicePoint) return;
 
