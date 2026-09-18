@@ -7,7 +7,7 @@ a reproducible failure, security issue, or shop-blocking problem is reported.
 
 Last reviewed: 2026-09-02
 
-Current public release baseline: [v1.6.1](https://github.com/Posnic/POS/releases/tag/v1.6.1)
+Current public release baseline: [v1.6.2](https://github.com/Posnic/POS/releases/tag/v1.6.2)
 
 ## Status vocabulary
 
