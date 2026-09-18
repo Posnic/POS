@@ -85,7 +85,7 @@ test('public app entry pages expose canonical POS metadata', () => {
   assert.equal(softwareSchema.url, 'https://www.posnic.com/');
   assert.equal(softwareSchema.codeRepository, 'https://github.com/Posnic/POS');
   assert.equal(softwareSchema.applicationCategory, 'BusinessApplication');
-  assert.equal(softwareSchema.softwareVersion, '1.6.1');
+  assert.equal(softwareSchema.softwareVersion, '1.6.2');
   assert.deepEqual(softwareSchema.keywords, POSNIC_SEO_KEYWORDS);
 });
 

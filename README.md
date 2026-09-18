@@ -133,14 +133,14 @@ guide](https://posnic.github.io/offline-vs-online-pos.html).
 
 Download the package for your platform from
 **[the latest release](https://github.com/Posnic/POS/releases/latest)**, run it,
-and follow the wizard. Current v1.6.1 packages include MongoDB Community Server
+and follow the wizard. Current v1.6.2 packages include MongoDB Community Server
 under its separate SSPL-1.0 licence, so no separate database install is needed
 for the bundled setup. See [third-party notices](THIRD-PARTY-NOTICES.md).
 
 Verify your download against `SHA256SUMS.txt`. For releases that provide an
 artifact-bound SBOM and provenance, follow the [release verification guide](docs/VERIFY_RELEASE.md).
 
-> Current v1.6.1 Windows installers are signed and timestamped, and macOS
+> Current v1.6.2 Windows installers are signed and timestamped, and macOS
 > packages are signed and notarized. If the operating system reports an unknown
 > publisher, stop and verify the package against the official release before
 > running it. **Linux**: make the `.AppImage` executable, or install the `.deb`.
