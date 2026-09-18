@@ -922,6 +922,36 @@ function renderSale(sale, options = {}) {
      software's. */
   if (glyphs) r.raw(ESC, 0x25, 0);
 
+  /*
+   * A PICTURE UNDER THE TOTAL, AND A LINE INTRODUCING IT.
+   *
+   * Owner: "instead of saying visit website user can upload qr code image,
+   * asking customer to scan for online store" - and then "still need text
+   * we provide option".
+   *
+   * The caption comes FIRST because it is an instruction: "Please scan
+   * below QR for our online store" printed underneath the thing it is
+   * telling you to scan has told you nothing. It is a separate field from
+   * the footer text so that a shop which clears the picture does not leave
+   * a sentence pointing at nothing.
+   *
+   * After everything else on purpose. A customer folds a receipt to the
+   * bottom to scan it, and a QR in the middle of the totals is one they
+   * have to flatten the paper to reach.
+   */
+  if (sale.footerImage) {
+    /* A line of air first. Without it the caption reads as one more line of
+       the shop footer above it - on real paper the QR block and the footer
+       ran together into six lines of small print. */
+    r.feed(1);
+    if (sale.footerImageCaption) {
+      for (const line of String(sale.footerImageCaption).split(String.fromCharCode(10))) {
+        for (const w of wrap(line, r.width)) r.centre(w);
+      }
+    }
+    r.raster(sale.footerImage);
+  }
+
   if (options.openDrawer) r.openDrawer(options.drawerPin);
   if (options.cut !== false) r.cut();
 

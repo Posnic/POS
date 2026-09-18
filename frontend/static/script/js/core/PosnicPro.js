@@ -3221,6 +3221,11 @@ PosnicPro = {
          * the canvas is tainted. A receipt prints either way.
          */
         sale.logo = PosnicPro.receiptLogo ? PosnicPro.receiptLogo(width) : null;
+        /* The QR, or whatever the shop put under its total. Thresholded
+           rather than dithered - see receiptFooterImage. */
+        sale.footerImage = PosnicPro.receiptFooterImage
+            ? PosnicPro.receiptFooterImage(width)
+            : null;
 
         /*
          * Raw printing needs a printer by name.

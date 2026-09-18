@@ -5423,6 +5423,50 @@
                                                         </textarea>
                                                     </div>
                                                 </div>
+                                                <!--
+                                                    A PICTURE UNDER THE TOTAL.
+
+                                                    A printed web address is something a customer has to
+                                                    type; a QR is something they point a phone at. So the
+                                                    shop gives an address and the server makes the code -
+                                                    once, and again only when the address changes.
+
+                                                    Uploading a picture instead is for a shop that has had
+                                                    one designed. One or the other: keeping both would mean
+                                                    deciding which prints, and that has no good answer.
+                                                -->
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="footer_image_caption"><lang class="lang_above_the_picture">Line above the picture</lang></label>
+                                                        <input type="text" class="form-control border-control"
+                                                            id="footer_image_caption" name="footer_image_caption"
+                                                            maxlength="128"
+                                                            placeholder="Ex: Please scan below QR for our online store"
+                                                            data-t-placeholder="lang_ex_please_scan_below_qr_for_our_online_sto">
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <label for="footer_qr_url"><lang class="lang_qr_web_address">QR web address</lang></label>
+                                                        <input type="url" class="form-control border-control"
+                                                            id="footer_qr_url" name="footer_qr_url" maxlength="2000"
+                                                            placeholder="Ex: https://example.com/shop"
+                                                            data-t-placeholder="lang_ex_https_example_com_shop">
+                                                    </div>
+                                                </div>
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-6">
+                                                        <label for="footer_image_file"><lang class="lang_or_upload_a_picture">Or upload a picture</lang></label>
+                                                        <input type="file" accept="image/*" class="form-control-file"
+                                                            id="footer_image_file" style="font-size:12px;"
+                                                            aria-label="Footer picture file" data-t-aria-label="lang_footer_picture_file">
+                                                        <input type="hidden" id="footer_image_value" name="footer_image">
+                                                    </div>
+                                                    <div class="form-group col-md-6">
+                                                        <img id="footer_image_thumb" alt="" style="display:none; max-height:110px; max-width:110px; border:1px solid #d0d7de; padding:4px; background:#fff;">
+                                                        <button type="button" id="footer_image_clear" class="btn btn-link" style="display:none; padding-left:8px;">
+                                                            <lang class="lang_remove">Remove</lang>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
                                                         <div class="wallet-box"

@@ -3229,5 +3229,12 @@
   "lang_your_cash_details_are_empty": "आपके नकद विवरण खाली हैं",
   "lang_your_choice": "आपकी पसंद",
   "lang_your_own_provider_account": "आपका अपना प्रदाता खाता",
-  "lang_yourselecteddetails_title": "चुने गए विवरण हटा दिए जाएंगे"
+  "lang_yourselecteddetails_title": "चुने गए विवरण हटा दिए जाएंगे",
+  "lang_above_the_picture": "चित्र के ऊपर की पंक्ति",
+  "lang_qr_web_address": "QR वेब पता",
+  "lang_or_upload_a_picture": "या चित्र अपलोड करें",
+  "lang_footer_picture_file": "फ़ुटर चित्र फ़ाइल",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "उदा.: हमारी ऑनलाइन दुकान के लिए नीचे का QR स्कैन करें",
+  "lang_ex_https_example_com_shop": "उदा.: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "चित्र 300 KB से कम रखें - एक छोटा PNG सबसे अच्छा रहता है।"
 }

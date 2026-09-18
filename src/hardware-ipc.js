@@ -265,16 +265,26 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
        * paper width rather than per target: two 80mm printers want the same
        * bitmap, and fetching it twice is a second round trip for nothing.
        */
-      const logoFor = new Map();
-      async function logoDots(paperWidth) {
-        if (!sale || !sale.logo || sale.logo.data || !sale.logo.src) {
-          return sale ? sale.logo : null;
-        }
-        if (logoFor.has(paperWidth)) return logoFor.get(paperWidth);
+      const madeAlready = new Map();
+
+      /**
+       * One picture, for one paper width.
+       *
+       * `which` is the field on the sale: the logo at the top, or whatever
+       * the shop put under the total. They differ in one way that matters -
+       * a logo is a picture and is dithered, a QR is data and must be
+       * thresholded or a scanner cannot read it back.
+       */
+      async function pictureDots(which, paperWidth, dither) {
+        const asked = sale && sale[which];
+        if (!asked || asked.data || !asked.src) return asked || null;
+
+        const key = which + ":" + paperWidth;
+        if (madeAlready.has(key)) return madeAlready.get(key);
 
         const { rasterFor } = require('./escpos-logo');
         const { nativeImage, net } = require('electron');
-        const raster = await rasterFor(sale.logo.src, paperWidth, {
+        const raster = await rasterFor(asked.src, paperWidth, {
           decode: (buf) => nativeImage.createFromBuffer(buf),
           readFile: (file) => require('fs').readFileSync(file),
           get: (url, limits) =>
@@ -305,11 +315,11 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
                 settle(null);
               }
             }),
-        });
+        }, { dither });
         if (!raster) {
-          console.warn('[Print] the logo could not be read here either, printing without it');
+          console.warn('[Print] the ' + which + ' could not be read here either, printing without it');
         }
-        logoFor.set(paperWidth, raster);
+        madeAlready.set(key, raster);
         return raster;
       }
 
@@ -321,8 +331,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         const paperWidth = String(columnsFor(target.pageSize));
         /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
            per paper width, and the loop is serial anyway. */
-        const logo = await logoDots(paperWidth);
-        const bytes = renderSale({ ...(sale || {}), logo }, {
+        const logo = await pictureDots('logo', paperWidth, true);
+        /* eslint-disable-next-line no-await-in-loop -- cached per width. */
+        const footerImage = await pictureDots('footerImage', paperWidth, false);
+        const bytes = renderSale({ ...(sale || {}), logo, footerImage }, {
           paperWidth,
           /* A printer that cannot be taught a glyph spells the currency
              instead. Per machine, like the printer name. */

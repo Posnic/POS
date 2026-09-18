@@ -164,6 +164,26 @@ const branchSchema = new Schema(
     print_character: { type: String, default: 'default' },
     header_print: { type: String, default: 'default' },
     footer_print: { type: String },
+    /*
+     * A PICTURE UNDER THE TOTAL, as a data URL.
+     *
+     * Owner: "instead of saying visit website user can upload qr code
+     * image, asking customer to scan for online store".
+     *
+     * A data URL rather than a file or a bucket link, the same as the
+     * quotation signature: the receipt is rasterised in a page, and an
+     * image from another origin taints the canvas so its pixels can never
+     * be read. A data URL has no origin and cannot.
+     */
+    footer_image: { type: String },
+    /* The address the picture was made from, kept so it is only remade
+       when it changes rather than on every settings save. Empty when the
+       shop uploaded its own picture instead. */
+    footer_qr_url: { type: String },
+    /* What to say above it - "Scan for our online store". Its own field
+       rather than part of footer_print, because it belongs WITH the
+       picture: no picture, nothing to introduce. */
+    footer_image_caption: { type: String },
     regular_body_print: { type: String },
     thermal_body_print: { type: String },
     print_controls: { type: Object },

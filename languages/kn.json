@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "ಇಲ್ಲೇ ತಿನ್ನಿ, ಟೇಬಲ್ಗೆ ತರಲಾಗುತ್ತದೆ",
   "lang_fulfilment_takeaway": "ಕೌಂಟರ್‌ನಲ್ಲಿ ಪಡೆಯಿರಿ",
   "lang_fulfilment_delivery": "ವಿಳಾಸಕ್ಕೆ ಬಟ್ವಾಡೆ",
-  "lang_fulfilment_help": "ಯಾವುದನ್ನೂ ಗುರುತಿಸದಿದ್ದರೆ, ಗ್ರಾಹಕರಿಗೆ ನಿಮ್ಮ ಅಂಗಡಿಯ ಬಗೆಗೆ ಸರಿಯಾದ ಆಯ್ಕೆ ಸಿಗುತ್ತದೆ. ರೆಸ್ಟೋರೆಂಟ್ ಮಾಡ್ಯೂಲ್ ಆಫ್ ಇದ್ದರೆ ಟೇಬಲ್ ಎಂದಿಗೂ ಸಿಗುವುದಿಲ್ಲ."
+  "lang_fulfilment_help": "ಯಾವುದನ್ನೂ ಗುರುತಿಸದಿದ್ದರೆ, ಗ್ರಾಹಕರಿಗೆ ನಿಮ್ಮ ಅಂಗಡಿಯ ಬಗೆಗೆ ಸರಿಯಾದ ಆಯ್ಕೆ ಸಿಗುತ್ತದೆ. ರೆಸ್ಟೋರೆಂಟ್ ಮಾಡ್ಯೂಲ್ ಆಫ್ ಇದ್ದರೆ ಟೇಬಲ್ ಎಂದಿಗೂ ಸಿಗುವುದಿಲ್ಲ.",
+  "lang_above_the_picture": "ಚಿತ್ರದ ಮೇಲಿನ ಸಾಲು",
+  "lang_qr_web_address": "QR ವೆಬ್ ವಿಳಾಸ",
+  "lang_or_upload_a_picture": "ಅಥವಾ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+  "lang_footer_picture_file": "ಅಡಿಟಿಪ್ಪಣಿ ಚಿತ್ರ ಕಡತ",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "ಉದಾ: ನಮ್ಮ ಆನ್‌ಲೈನ್ ಅಂಗಡಿಗೆ ಕೆಳಗಿನ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+  "lang_ex_https_example_com_shop": "ಉದಾ: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "ಚಿತ್ರವನ್ನು 300 KB ಗಿಂತ ಕಡಿಮೆ ಇರಿಸಿ - ಸಣ್ಣ PNG ಉತ್ತಮವಾಗಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ."
 }

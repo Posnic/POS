@@ -1452,6 +1452,34 @@ PosnicPro.sales.view = {
                 $('#tax_print_hide tbody').children("tr").remove();
                 $('.print-invoice-table-content').html('');
                 $('.hide-receiving-print').show();
+
+                /*
+                 * THE PICTURE UNDER THE TOTAL, ADDED HERE.
+                 *
+                 * Not in the stored templates, for the same reason as the
+                 * A4 invoice extras below: every shop already holds its own
+                 * copy of that template, so editing the seed file would
+                 * reach new shops only and this is for the ones that exist.
+                 *
+                 * Swept first so a reprint cannot stack two of them.
+                 */
+                $('.receipt-footer-image').remove();
+                var _fimg = PosnicPro.local.get('footer_image') || '';
+                var _fcap = PosnicPro.local.get('footer_image_caption') || '';
+                if (_fimg && name === 'sale') {
+                    var _capHtml = _fcap
+                        ? '<div class="footer-image-caption">'
+                            + $('<i>').text(_fcap).html() + '</div>'
+                        : '';
+                    $printContainer.append(
+                        '<div class="receipt-footer-image" style="text-align:center; margin-top:10px;">'
+                        + _capHtml
+                        + '<div class="footer-image"><img loading="lazy" decoding="async" alt="" '
+                        + 'style="max-width:60%; display:inline-block;" src="'
+                        + $('<i>').text(_fimg).html() + '">'
+                        + '</div></div>'
+                    );
+                }
                 var itemPrintTaxDetails = [];
                 if (name === 'sale') {
                     /*

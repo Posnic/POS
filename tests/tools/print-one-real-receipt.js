@@ -91,6 +91,25 @@ function pageScript(receiptData, template, branch, logoUrl) {
     $('.print-subtotal').html(branch.currency + '&nbsp;<span class="number">13.00</span>');
     $('.total-noof-item').html('<span class="number">3.00</span>');
 
+    /* sales_view.js appends this for every shop, because the stored templates
+       predate it. */
+    if (branch.footer_image) {
+      const cap = branch.footer_image_caption
+        ? '<div class="footer-image-caption">' + branch.footer_image_caption + '</div>'
+        : '';
+      $('.print-modal-body').append(
+        '<div class="receipt-footer-image" style="text-align:center;">' + cap +
+          '<div class="footer-image"><img alt="" src="' + branch.footer_image + '"></div></div>'
+      );
+    }
+
+    const pictures = Array.from(document.querySelectorAll('.branch_image img, .footer-image img'));
+    await Promise.all(pictures.map((p) => new Promise((ok) => {
+      if (p.complete && p.naturalWidth) return ok();
+      p.onload = ok;
+      p.onerror = ok;
+    })));
+
     const img = document.querySelector('.branch_image img');
     await new Promise((ok) => {
       if (img.complete && img.naturalWidth) return ok();
@@ -101,6 +120,7 @@ function pageScript(receiptData, template, branch, logoUrl) {
     const sale = window.PosnicPro.receiptData($('.print-modal-body').html());
     sale.total = 13;
     sale.logo = window.PosnicPro.receiptLogo('80');
+    sale.footerImage = window.PosnicPro.receiptFooterImage('80');
     return sale;
   })()`;
 }
@@ -156,6 +176,10 @@ app.whenReady().then(async () => {
   console.log('    currency : ' + JSON.stringify(sale.currency));
   console.log('    items    : ' + sale.items.length);
   console.log('    footer   : ' + JSON.stringify(sale.footer));
+  console.log('    caption  : ' + JSON.stringify(sale.footerImageCaption));
+  console.log('    QR       : ' + (sale.footerImage && sale.footerImage.data
+    ? sale.footerImage.width + ' x ' + sale.footerImage.height + ' dots'
+    : JSON.stringify(sale.footerImage)));
   console.log('    logo     : ' + (sale.logo && sale.logo.data
     ? sale.logo.width + ' x ' + sale.logo.height + ' dots'
     : JSON.stringify(sale.logo)));

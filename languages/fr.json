@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "Manger sur place, apporté à table",
   "lang_fulfilment_takeaway": "Récupéré au comptoir",
   "lang_fulfilment_delivery": "Livré à une adresse",
-  "lang_fulfilment_help": "Ne rien cocher : les clients obtiennent l’option par défaut adaptée à votre type de commerce. Un commerce sans le module Restaurant ne propose jamais de table, quoi qu’il soit coché."
+  "lang_fulfilment_help": "Ne rien cocher : les clients obtiennent l’option par défaut adaptée à votre type de commerce. Un commerce sans le module Restaurant ne propose jamais de table, quoi qu’il soit coché.",
+  "lang_above_the_picture": "Ligne au-dessus de l’image",
+  "lang_qr_web_address": "Adresse web du QR",
+  "lang_or_upload_a_picture": "Ou importer une image",
+  "lang_footer_picture_file": "Fichier image du pied de page",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "Ex. : Scannez le QR ci-dessous pour notre boutique en ligne",
+  "lang_ex_https_example_com_shop": "Ex. : https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "Gardez l’image sous 300 Ko - un petit PNG fonctionne le mieux."
 }

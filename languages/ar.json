@@ -3214,5 +3214,12 @@
   "lang_fulfilment_dine_in": "تناول هنا، يُقدّم على الطاولة",
   "lang_fulfilment_takeaway": "الاستلام من الكاونتر",
   "lang_fulfilment_delivery": "التوصيل إلى عنوان",
-  "lang_fulfilment_help": "إذا لم تحدد شيئًا، يحصل العملاء على الإعداد المناسب لنوع متجرك. المتجر الذي لا يعمل بوحدة المطعم لا يقدم طاولات أبدًا."
+  "lang_fulfilment_help": "إذا لم تحدد شيئًا، يحصل العملاء على الإعداد المناسب لنوع متجرك. المتجر الذي لا يعمل بوحدة المطعم لا يقدم طاولات أبدًا.",
+  "lang_above_the_picture": "سطر فوق الصورة",
+  "lang_qr_web_address": "عنوان الويب لرمز QR",
+  "lang_or_upload_a_picture": "أو ارفع صورة",
+  "lang_footer_picture_file": "ملف صورة التذييل",
+  "lang_ex_please_scan_below_qr_for_our_online_sto": "مثال: امسح رمز QR أدناه لزيارة متجرنا الإلكتروني",
+  "lang_ex_https_example_com_shop": "مثال: https://example.com/shop",
+  "lang_keep_the_picture_under_300_kb_a_small_png_w": "اجعل الصورة أقل من 300 كيلوبايت - صورة PNG صغيرة هي الأفضل."
 }
