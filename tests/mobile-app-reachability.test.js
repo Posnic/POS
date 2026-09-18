@@ -113,10 +113,45 @@ test('the kiosk mobile login hands back a credential and a shop key', () => {
 
   assert.match(handler, /token: jwtToken/,
     'the app has no credential to present to the routes behind protectOrKioskKey');
-  assert.match(handler, /signLegacyToken\(recordsFiltered, req\)/,
-    'the token must name the user who signed in, not a shared device key');
-  assert.match(handler, /expiresIn: jwtLifetimeSeconds\(\)/,
-    'a client that has to guess its own expiry refreshes far too often, or too late');
+  /*
+   * THE USER IS THE FIRST ARGUMENT, and the rest of the call is not this
+   * test's business.
+   *
+   * This read `signLegacyToken(recordsFiltered, req)` exactly, and broke the
+   * day a handset-specific lifetime was added as a fourth argument. Nothing
+   * it protects had changed: the token still names the user who signed in,
+   * which is the whole point of the assertion. A test that fails on a spelling
+   * costs somebody an afternoon proving the code is fine.
+   */
+  assert.match(
+    handler,
+    /signLegacyToken\(recordsFiltered, req[,)]/,
+    'the token must name the user who signed in, not a shared device key'
+  );
+
+  /*
+   * SIGNED AND REPORTED FROM ONE PLACE, which is the invariant rather than
+   * the name of the function that supplies it. The handset is told exactly
+   * the lifetime its token was signed with, so the two cannot drift - a phone
+   * that has to guess its own expiry refreshes far too often, or too late.
+   */
+  const lifetime = handler.match(/const (\w+) = handsetLifetimeSeconds\(\)/);
+  assert.ok(lifetime, 'the handset lifetime is no longer read from one place');
+  const named = lifetime[1];
+
+  /* Read out of the call rather than matched with a regex built from a
+     variable: the name is data, and building a pattern out of data is how a
+     test starts asserting something nobody wrote. */
+  const call = handler.match(/signLegacyToken\([^)]*\)/);
+  assert.ok(call, 'the handset token is no longer signed here');
+  assert.ok(
+    call[0].includes(named),
+    'the token is signed with a lifetime other than the one the phone is told'
+  );
+  assert.ok(
+    handler.includes('expiresIn: ' + named),
+    'the phone is told a lifetime other than the one its token carries'
+  );
   assert.match(handler, /shopKey,/,
     'without a shop key the app cannot tell that a LAN server holds the same shop');
   assert.doesNotMatch(handler, /license: *recordsFiltered\.license/,
