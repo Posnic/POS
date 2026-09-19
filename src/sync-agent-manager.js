@@ -27,6 +27,7 @@ class SyncAgentManager {
     this.app = app;
     this.child = null;
     this.stopped = false;
+    this._generation = 0;
     /* The table calls this till is ringing for, by call id, so a second pull
        of the same open call does not start a second alarm. */
     this._ringingCalls = new Set();
@@ -84,7 +85,10 @@ class SyncAgentManager {
     if (!engine) return;
     try {
       const { reconcileWithInstaller, extractZip, loadTree } = require('./asset-channel');
-      reconcileWithInstaller(engine, this.app.getVersion(), (m) => console.log(m));
+      // An open-source installer has no baseline agent to replace a download.
+      if (fs.existsSync(path.join(engine.baseline, 'src', 'index.js'))) {
+        reconcileWithInstaller(engine, this.app.getVersion(), (m) => console.log(m));
+      }
 
       const sevenZip = path.join(
         this.app.isPackaged ? process.resourcesPath : __dirname,
@@ -120,6 +124,19 @@ class SyncAgentManager {
   }
 
   async start() {
+    if (this.child) return true;
+    if (this._starting) return this._starting;
+    const generation = this._generation;
+    const pending = this._start(generation);
+    this._starting = pending;
+    try {
+      return await pending;
+    } finally {
+      if (this._starting === pending) this._starting = null;
+    }
+  }
+
+  async _start(generation) {
     // Once per app run: adopt what the agent downloaded last time. Restarts
     // after a crash skip this - the point of the health gate below is that a
     // crashing UPDATED agent burns its boot attempts and the engine reverts.
@@ -128,16 +145,25 @@ class SyncAgentManager {
       await this._applyDownloadedUpdates();
     }
 
-    const agentDir = this._findAgent();
-    if (!agentDir) {
-      console.log('[SyncAgent] no agent installed - cloud sync disabled');
-      return false;
-    }
     const cfg = this._loadConfig();
     if (!cfg) {
       console.log('[SyncAgent] no activation config - cloud sync disabled');
       return false;
     }
+    let agentDir = this._findAgent();
+    if (!agentDir) {
+      const { installAgent } = require('./agent-bootstrap');
+      const resourcesRoot = this.app.isPackaged ? process.resourcesPath : __dirname;
+      console.log('[SyncAgent] installing verified cloud sync component');
+      await installAgent({
+        config: cfg,
+        engine: this._updatesEngine(),
+        sevenZip: path.join(resourcesRoot, 'tools', process.platform === 'win32' ? '7za.exe' : '7za'),
+        fetch: this._fetch,
+      });
+      agentDir = this._findAgent();
+    }
+    if (!agentDir || this.stopped || generation !== this._generation) return false;
 
     /*
      * Health accounting for a DOWNLOADED agent only: each spawn from the
@@ -153,7 +179,7 @@ class SyncAgentManager {
         const boot = engine.beginBoot();
         if (boot && boot.reverted) {
           console.warn('[SyncAgent] updated agent kept dying - reverted to the installed copy');
-          return this.start();
+          return this._findAgent() ? this._start(generation) : false;
         }
       } catch (e) { /* health accounting must never stop the agent */ }
     }
@@ -268,7 +294,14 @@ class SyncAgentManager {
         RESTART_DELAY_MS
       );
     });
-    return true;
+    return new Promise((resolve, reject) => {
+      this.child.once('spawn', () => resolve(true));
+      this.child.once('error', (error) => {
+        this.child = null;
+        clearTimeout(this._healthTimer);
+        reject(error);
+      });
+    });
   }
 
   _notify(title, body) {
@@ -454,6 +487,8 @@ class SyncAgentManager {
 
   stop() {
     this.stopped = true;
+    this._generation++;
+    this._starting = null;
     clearTimeout(this._restartTimer);
     clearTimeout(this._healthTimer);
     if (this.child) {

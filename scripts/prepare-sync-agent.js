@@ -87,5 +87,5 @@ if (fs.existsSync(path.join(source, 'src', 'index.js'))) {
     path.join(target, '.placeholder'),
     'Sync agent not bundled in this build (open-source build).\n'
   );
-  console.log('[prepare-sync-agent] no agent found — open-source build without cloud sync');
+  console.log('[prepare-sync-agent] public build: a signed sync component is installed after cloud activation');
 }

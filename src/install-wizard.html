@@ -1756,36 +1756,15 @@ const form = document.getElementById('installForm');
         });
         document.getElementById('chooseCloudBtn').addEventListener('click', () => showSection('stepCloud'));
         document.getElementById('pairBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('pairBtn');
-            const errorBox = document.getElementById('cloudError');
-            const progress = document.getElementById('cloudProgress');
-            const progressText = document.getElementById('cloudProgressText');
             const code = document.getElementById('pairCode').value.trim();
-            errorBox.style.display = 'none';
             if (!code) {
-                errorBox.textContent = 'Enter the pairing code.';
-                errorBox.style.display = 'block';
+                document.getElementById('cloudError').textContent = 'Enter the pairing code.';
+                document.getElementById('cloudError').style.display = 'block';
                 return;
             }
-            btn.disabled = true;
-            progress.style.display = 'block';
-            progressText.textContent = 'Pairing this till…';
-            const r = await window.electronAPI.cloud.pair({
-                serverUrl: document.getElementById('cloudServer').value.trim(),
-                code,
-            });
-            if (!r || !r.ok) {
-                btn.disabled = false;
-                progress.style.display = 'none';
-                errorBox.textContent = (r && r.error) || 'Could not pair this till.';
-                errorBox.style.display = 'block';
-                return;
-            }
-            /* Paired. From here it is the same path an activated till takes:
-               the reply carried the token and where this shop syncs. */
-            progressText.textContent = 'Paired. Downloading your shop…';
-            if (window.electronAPI.cloud.onPaired) window.electronAPI.cloud.onPaired(r);
-            document.getElementById('cloudConnectBtn').click();
+            await runCloudSetup(() => window.electronAPI.cloud.pair({
+                serverUrl: document.getElementById('cloudServer').value.trim(), code,
+            }));
         });
 
         document.getElementById('cloudBackBtn').addEventListener('click', () => showSection('step0'));
@@ -1942,43 +1921,61 @@ const form = document.getElementById('installForm');
                 return;
             }
 
-            // Going back mid-download would leave the machine half activated
-            // and half populated, with no way to tell which. Once the download
-            // starts there is nothing safe to go back to, so both buttons wait
-            // until it either finishes or fails.
-            const backBtn = document.getElementById('cloudBackBtn');
-            btn.disabled = true;
-            backBtn.disabled = true;
-            progress.style.display = 'block';
-            progressText.textContent = 'Connecting to your cloud account…';
-
-            const result = await window.electronAPI.cloud.activate({
-                serverUrl, email, password,
-                /* Only after signing up: wait while the server finishes building
-                   the shop. Nothing to wait for on an ordinary sign-in. */
-                waitForShopMs: justSignedUp ? 300000 : 0,
-            });
+            await runCloudSetup(() => window.electronAPI.cloud.activate({
+                serverUrl, email, password, waitForShopMs: justSignedUp ? 300000 : 0,
+            }));
             justSignedUp = false;
-            if (!result.ok) {
-                btn.disabled = false;
-                backBtn.disabled = false;   // nothing was started, so going back is safe again
+        });
+
+        let resumeCloudDownload = false;
+        async function runCloudSetup(connect) {
+            const btn = document.getElementById('cloudConnectBtn');
+            const backBtn = document.getElementById('cloudBackBtn');
+            const pairBtn = document.getElementById('pairBtn');
+            const errorBox = document.getElementById('cloudError');
+            const progress = document.getElementById('cloudProgress');
+            const progressText = document.getElementById('cloudProgressText');
+            if (btn.disabled) return;
+            btn.disabled = backBtn.disabled = pairBtn.disabled = true;
+            errorBox.style.display = 'none';
+            progress.style.display = 'block';
+            progressText.textContent = 'Connecting and preparing cloud sync…';
+            let poll;
+            function failed(message) {
+                clearTimeout(poll);
+                btn.disabled = backBtn.disabled = pairBtn.disabled = false;
                 progress.style.display = 'none';
-                errorBox.textContent = result.error || 'Activation failed. Please try again.';
+                errorBox.textContent = message;
                 errorBox.style.display = 'block';
+            }
+            try {
+                const result = await (resumeCloudDownload ? window.electronAPI.cloud.resume() : connect());
+                resumeCloudDownload = !!(result && (result.ok || result.canResume));
+                if (!result || !result.ok) {
+                    failed((result && result.error) || 'Cloud setup failed. Please retry.');
+                    return;
+                }
+            } catch (error) {
+                failed('Cloud setup could not start. Please retry.');
                 return;
             }
 
             progressText.textContent = 'Connected. Downloading your data from the cloud…';
             const startedAt = Date.now();
-            const poll = setInterval(async () => {
+            const checkDownload = async () => {
+              try {
                 const status = await window.electronAPI.cloud.status();
                 const sync = status && status.sync;
                 if (sync && sync.initialSyncComplete) {
-                    clearInterval(poll);
+                    clearTimeout(poll);
                     // Guard: an empty cloud account (no store yet) must not
                     // dead-end at an impossible login screen.
                     const data = await window.electronAPI.cloud.checkData();
-                    if (data.ok && data.users === 0) {
+                    if (!data.ok) {
+                        failed('Could not verify the downloaded shop data. Please retry.');
+                        return;
+                    }
+                    if (data.users === 0) {
                         progress.style.display = 'none';
                         btn.disabled = false;
                         errorBox.style.color = '#475569';
@@ -2011,15 +2008,22 @@ const form = document.getElementById('installForm');
                 } else if (sync && sync.last_batch) {
                     progressText.textContent = 'Downloading your data… (' + ((sync.last_batch.pulled || 0) + (sync.last_realtime?.pulled || 0)) + ' records so far)';
                 }
-                if (Date.now() - startedAt > 10 * 60_000) {
-                    clearInterval(poll);
-                    progressText.textContent = 'This is taking longer than expected. The download continues in the background, you can open the app and log in once it finishes.';
-                    // We have stopped watching, so the wizard must not stay
-                    // locked with nothing left to press.
-                    backBtn.disabled = false;
+                if (!sync && Date.now() - startedAt > 60_000) {
+                    failed('Cloud sync is not responding. Your downloaded data is saved. Please retry.');
+                    return;
                 }
-            }, 2000);
-        });
+                if (Date.now() - startedAt > 10 * 60_000) {
+                    failed('The download is taking longer than expected. Your downloaded data is saved. Check your connection and retry.');
+                    return;
+                }
+              } catch (error) {
+                failed('Could not check the download. Your downloaded data is saved. Please retry.');
+                return;
+              }
+              poll = setTimeout(checkDownload, 2000);
+            };
+            poll = setTimeout(checkDownload, 2000);
+        }
 
         async function initApiBase() {
             try {
