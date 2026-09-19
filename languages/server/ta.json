@@ -373,5 +373,6 @@
   "Could not sweep the print queue": "அச்சு வரிசையை சுத்தம் செய்ய முடியவில்லை",
   "Could not read what needs attention": "கவனம் தேவைப்படுபவற்றைப் படிக்க முடியவில்லை",
   "Could not answer the print job": "அச்சுப் பணிக்கு பதிலளிக்க முடியவில்லை",
-  "Could not read the print queue": "அச்சு வரிசையைப் படிக்க முடியவில்லை"
+  "Could not read the print queue": "அச்சு வரிசையைப் படிக்க முடியவில்லை",
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": "இந்தச் சாதனத்தில் பணப் பதிவேட்டு அமர்வைத் தொடர வேண்டும். பணப் பதிவேட்டைத் திறந்து, தொடரவும் என்பதைத் தேர்ந்தெடுக்கவும்."
 }

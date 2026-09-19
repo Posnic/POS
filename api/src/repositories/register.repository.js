@@ -35,7 +35,11 @@ class RegisterRepository {
       return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED + holder };
     }
     if (document.lock_device_id && document.lock_device_id !== String(deviceId || 'unknown')) {
-      return { status: false, message: ERROR_MESSAGES.REGISTER_SESSION_LOCKED + holder };
+      return {
+        status: false,
+        message:
+          'This register needs to be resumed on this device. Open Cash Register and choose Resume.',
+      };
     }
 
     if (!document.lock_device_id) {

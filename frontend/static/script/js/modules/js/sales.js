@@ -6917,11 +6917,9 @@ PosnicPro.sales.setSaleDefaults = function () {
     var registerModuleOn = !!(PosnicPro.shiftWidget
         && PosnicPro.shiftWidget._setting('cash_register_enable', true));
     var branchHasNoRegisters = PosnicPro.local.get('branch_has_no_registers');
-    var registerStatus = PosnicPro.local.get('userRegisterStatus');
-    var registerId = PosnicPro.local.get('register_id');
-
-    // If branch has registers but no register is open, check database and show modal if needed
-    if (registerModuleOn && branchHasNoRegisters !== 'true' && (registerStatus !== 'Open' || !registerId)) {
+    // Local 'Open' state can outlive a restart or a resume on another till.
+    // Verify ownership before checkout; never silently take over a device lock.
+    if (registerModuleOn && branchHasNoRegisters !== 'true') {
         var branchId = PosnicPro.local.get('branch_id_set');
         var params = {
             url: 'branches/userRegisterBranchSelect',
@@ -6929,30 +6927,12 @@ PosnicPro.sales.setSaleDefaults = function () {
         };
         
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.local.get('branch_id_set') !== branchId) { return; }
             if (response.type === 'success') {
-                if (response.data.open_register && response.data.open_register.register_status === 'Opened') {
-                    // Load existing open register
-                    PosnicPro.local.set('cash_register_id', response.data.open_register.cash_register_id);
-                    PosnicPro.local.set('register_id', response.data.open_register.register_id);
-                    PosnicPro.local.set('register_name', response.data.open_register.register_name);
-                    PosnicPro.local.set('userRegisterStatus', 'Open');
-                    
-                    db.currentregister.put({
-                        id: '1', 
-                        register_id: response.data.open_register.register_id, 
-                        register_name: response.data.open_register.register_name, 
-                        register_status: 'open'
-                    });
-                    
-                    PosnicPro.alert('success', 'Register loaded: ' + response.data.open_register.register_name);
+                if (PosnicPro.users.restoreRegisterSession(response.data)) {
+                    // This device already holds the open session.
                 } else if (response.data.register_data && response.data.register_data.length > 0) {
-                    // Show register selection modal
-                    var registerOption = '';
-                    for (var i = 0; i < response.data.register_data.length; i++) {
-                        var row = response.data.register_data[i];
-                        registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
-                    }
-                    $('.choose_register_model').html(registerOption);
+                    PosnicPro.users.fillRegisterSelect($('.choose_register_model'), response.data.register_data);
                     $('#salesRegisterModal').modal('show');
                     
                     PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_register_before_creating_a_sale', 'Select a register before creating a sale.'));

@@ -5293,7 +5293,7 @@ function startServer() {
         // but not actionable day to day. Once the shop has dismissed a given
         // set of findings, stay quiet unless something new appears. Errors are
         // never silenced.
-        const fingerprint = crypto.createHash('sha1')
+        const fingerprint = health.findingFingerprint || crypto.createHash('sha1')
           .update(lines.slice().sort().join('|')).digest('hex');
         const dismissed = health.errors.length ? [] : (readHealthDismissals() || []);
         if (!dismissed.includes(fingerprint)) {

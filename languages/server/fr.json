@@ -744,5 +744,6 @@
   "Could not sweep the print queue": "La file d'impression n'a pas pu être nettoyée",
   "Could not read what needs attention": "Impossible de lire ce qui demande une vérification",
   "Could not answer the print job": "Impossible de répondre au travail d'impression",
-  "Could not read the print queue": "La file d'impression n'a pas pu être lue"
+  "Could not read the print queue": "La file d'impression n'a pas pu être lue",
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": "La session de cette caisse doit être reprise sur cet appareil. Ouvrez Caisse et choisissez Reprendre."
 }
