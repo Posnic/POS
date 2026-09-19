@@ -94,7 +94,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPaperSizes: () => ipcRenderer.invoke('printer:get-paper-sizes'),
     setDefault: (name) => ipcRenderer.invoke('printer:set-default', name),
     print:      (htmlContent, options) => ipcRenderer.invoke('printer:print', htmlContent, options),
-    printPdf:   (bytes) => ipcRenderer.invoke('printer:print-pdf', bytes),
+    printPdf:   (bytes, kind) => ipcRenderer.invoke('printer:print-pdf', bytes, kind),
+    getDocumentSettings: () => ipcRenderer.invoke('printer:get-document-settings'),
+    saveDocumentSettings: (settings) => ipcRenderer.invoke('printer:save-document-settings', settings),
     // Receipts go as ESC/POS on the desktop: no page, no scaling, no driver
     // rendering. The browser keeps using print() above.
     printReceipt: (sale, options) => ipcRenderer.invoke('printer:print-receipt', sale, options),

@@ -158,6 +158,49 @@ function isKitchenPrinter(name) {
   return kotPrinterNames().some((n) => n.toLowerCase() === wanted);
 }
 
+function documentPrintSettings(prefs = all()) {
+  const parse = (value, fallback) => {
+    try { return (typeof value === 'string' ? JSON.parse(value) : value) || fallback; }
+    catch (_) { return fallback; }
+  };
+  const documents = parse(prefs.document_print_profiles, {});
+  const { normalizeTargets } = require('./printer-targets');
+  const sheet = (input) => {
+    const value = input && typeof input === 'object' ? input : {};
+    return {
+      printerName: String(value.printerName || ''),
+      paperSize: ['a4', 'a5', 'letter'].includes(value.paperSize) ? value.paperSize : 'a4',
+      copies: Math.min(20, Math.max(1, parseInt(value.copies, 10) || 1)),
+    };
+  };
+  return {
+    sales: normalizeTargets({ printers: parse(prefs.receipt_printers, []),
+      printerName: prefs.receipt_printer || 'default', pageSize: prefs.print_width || '80mm' })
+      .map((target) => ({ ...target, name: target.name || 'default' })),
+    invoice: sheet(documents.invoice), quotation: sheet(documents.quotation),
+  };
+}
+
+function validateDocumentPrintSettings(value) {
+  const { PAPER_SIZES } = require('./printer-targets');
+  const copies = (n) => Number.isInteger(n) && n >= 1 && n <= 20;
+  const name = (v) => typeof v === 'string' && v.length <= 256 && !/[\r\n\0]/.test(v);
+  if (!value || !Array.isArray(value.sales) || !value.sales.length || value.sales.length > 10) throw new Error('Choose at least one sales printer (up to 10).');
+  const seen = new Set();
+  for (const target of value.sales) {
+    if (!target || !name(target.name) || !target.name.trim() || !PAPER_SIZES[target.pageSize] || !copies(target.copies)) throw new Error('Invalid sales printer settings.');
+    const key = target.name.trim().toLowerCase();
+    if (seen.has(key)) throw new Error('Choose each sales printer once. Use Copies for additional copies.');
+    seen.add(key);
+  }
+  for (const kind of ['invoice', 'quotation']) {
+    const target = value[kind];
+    if (!target || !name(target.printerName) || !['a4', 'a5', 'letter'].includes(target.paperSize) || !copies(target.copies)) throw new Error('Invalid ' + kind + ' print settings.');
+  }
+  return documentPrintSettings({ receipt_printers: value.sales,
+    document_print_profiles: { invoice: value.invoice, quotation: value.quotation } });
+}
+
 module.exports = {
   all,
   get,
@@ -166,4 +209,6 @@ module.exports = {
   isKitchenPrinter,
   cloudPrintRelay,
   prefsPath,
+  documentPrintSettings,
+  validateDocumentPrintSettings,
 };

@@ -1422,6 +1422,7 @@ if ($wrapper.length) {
                     footer_image_caption: data.footer_image_caption
                 });
                 if (PosnicPro.receiptDesignerEditor) PosnicPro.receiptDesignerEditor.load(data);
+                if (PosnicPro.printSettings) PosnicPro.printSettings.mount(data);
                 if (PosnicPro.kotPrint) PosnicPro.kotPrint.loadSettings();
 
                 $('.print_store_name').text(data.branch_name);
@@ -2506,6 +2507,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
         $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
         $('#v-pills-invoices-tab').toggle(on('invoices_enable'));
+        if (PosnicPro.printSettings) PosnicPro.printSettings.features(s);
         $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));

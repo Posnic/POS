@@ -66,7 +66,7 @@ async function printPdfFile(file, { printer, copies = 1 } = {}) {
 /* PDFs made by the invoice, quotation and report screens already have a page
    layout. Print those bytes with a printer chooser instead of turning them
    into a receipt or asking Electron to open a blocked browser popup. */
-async function printPdfDocument(bytes, { parent } = {}) {
+async function printPdfDocument(bytes, { parent, printerName = '', paperSize = 'a4', copies = 1 } = {}) {
   const fs = require('fs');
   const path = require('path');
   const { randomUUID } = require('crypto');
@@ -84,7 +84,8 @@ async function printPdfDocument(bytes, { parent } = {}) {
     fs.writeFileSync(file, pdf, { flag: 'wx', mode: 0o600 });
     if (process.platform === 'win32') {
       const { print } = require('pdf-to-printer');
-      await print(file, { printDialog: true, scale: 'noscale' });
+      await print(file, { printDialog: !printerName, printer: printerName === 'default' ? undefined : printerName || undefined,
+        paperSize: paperSize === 'letter' ? 'letter' : paperSize.toUpperCase(), copies, scale: 'noscale' });
       // The native chooser can be cancelled; returning means it closed, not
       // that paper was confirmed. The frontend must not announce "printed".
       return { success: true };
@@ -108,7 +109,8 @@ async function printPdfDocument(bytes, { parent } = {}) {
       win.loadFile(file).then(() => {
         if (win.isDestroyed()) return;
         win.show();
-        win.webContents.print({ silent: false, printBackground: true }, (success, reason) => {
+        win.webContents.print({ silent: !!printerName, deviceName: printerName === 'default' ? '' : printerName,
+          pageSize: paperSize === 'letter' ? 'Letter' : paperSize.toUpperCase(), copies, printBackground: true }, (success, reason) => {
           finish(success ? { success: true } : /cancel/i.test(reason || '')
             ? { cancelled: true } : { success: false, error: reason || 'Printing failed' });
         });

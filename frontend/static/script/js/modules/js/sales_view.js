@@ -1024,9 +1024,8 @@ PosnicPro.sales.view = {
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
 
-                if (name === 'sale' && data.receipt_designs && PosnicPro.receiptDesigner && !/Return/.test(data.sale_process || '')) {
-                    var designFormat = PosnicPro.receiptDesigner.formatFor(data, PosnicPro.sales.view._layoutOverride);
-                    PosnicPro.printView(PosnicPro.receiptDesigner.render(data, designFormat, !!isKotHistoryPrint), '');
+                if (name === 'sale' && PosnicPro.receiptDesigner && !/Return/.test(data.sale_process || '')) {
+                    PosnicPro.receiptDesigner.printSale(data, PosnicPro.sales.view._layoutOverride, !!isKotHistoryPrint);
                 } else {
                     PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
                 }

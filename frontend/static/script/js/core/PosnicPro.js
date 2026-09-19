@@ -878,11 +878,11 @@ PosnicPro = {
     /* Generated PDFs need a desktop print dialog, not window.open(blob:),
        which the Electron shell deliberately refuses. Keep the PDF itself so
        invoices, quotes and reports retain their pagination and typography. */
-    printPdfDocument: function (doc, filename, popupMessage) {
+    printPdfDocument: function (doc, filename, popupMessage, kind) {
         var printer = window.electronAPI && window.electronAPI.printer;
         var desktop = !!window.electronAPI || /Electron/i.test(navigator.userAgent);
-        var failed = function () {
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_pdf_print_failed', 'Could not open printing. Download the PDF and try printing it again.'));
+        var failed = function (error) {
+            PosnicPro.alert('error', error && error.message || PosnicPro.i18n.t('lang_pdf_print_failed', 'Could not open printing. Download the PDF and try printing it again.'));
         };
         if (desktop) {
             if (!printer || typeof printer.printPdf !== 'function') {
@@ -892,9 +892,9 @@ PosnicPro = {
                 return Promise.resolve();
             }
             return Promise.resolve().then(function () {
-                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')));
+                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind);
             }).then(function (result) {
-                if (!result || (!result.success && !result.cancelled)) { failed(); }
+                if (!result || (!result.success && !result.cancelled)) { failed(result && result.error ? new Error(result.error) : null); }
             }).catch(failed);
         }
         if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }

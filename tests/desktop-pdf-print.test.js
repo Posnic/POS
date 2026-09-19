@@ -164,6 +164,24 @@ test('native printing failures clean up the temporary PDF and return an error', 
   assert.deepEqual(fs.readdirSync(d.dir), []);
 });
 
+test('saved document settings select the Windows printer, paper and copies without a chooser', async (t) => {
+  const d = desktop(t, 'win32');
+  assert.equal((await d.print(pdf, { printerName: 'Invoice Office', paperSize: 'a5', copies: 3 })).success, true);
+  assert.equal(d.native[0].settings.printer, 'Invoice Office');
+  assert.equal(d.native[0].settings.paperSize, 'A5');
+  assert.equal(d.native[0].settings.copies, 3);
+  assert.equal(d.native[0].settings.printDialog, false);
+});
+
+test('saved document settings select the macOS/Linux printer and sheet size', async (t) => {
+  const d = desktop(t, 'linux');
+  await d.print(pdf, { printerName: 'Quotes', paperSize: 'letter', copies: 2 });
+  assert.equal(d.windows[0].settings.deviceName, 'Quotes');
+  assert.equal(d.windows[0].settings.pageSize, 'Letter');
+  assert.equal(d.windows[0].settings.copies, 2);
+  assert.equal(d.windows[0].settings.silent, true);
+});
+
 for (const platform of ['darwin', 'linux']) {
   test(platform + ' uses a sandboxed PDF window and a non-silent print dialog', async (t) => {
     const d = desktop(t, platform);
@@ -192,7 +210,7 @@ test('PDF window cancellation and loading errors close the window and clean up',
 });
 
 test('the PDF bridge is registered through guarded IPC and shipped in the desktop package', () => {
-  assert.match(read('src/preload.js'), /printPdf:\s*\(bytes\) => ipcRenderer.invoke\('printer:print-pdf', bytes\)/);
+  assert.match(read('src/preload.js'), /printPdf:\s*\(bytes, kind\) => ipcRenderer.invoke\('printer:print-pdf', bytes, kind\)/);
   const ipc = read('src/hardware-ipc.js');
   assert.match(ipc, /ipcMain = require\('\.\/ipc-guard'\).guard\(rawIpcMain\)/);
   assert.match(ipc, /ipcMain.handle\('printer:print-pdf'[\s\S]*?require\('\.\/print-pdf'\).printPdfDocument\(bytes/);
