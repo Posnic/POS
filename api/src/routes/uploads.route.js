@@ -24,6 +24,7 @@ const express = require('express');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 const store = require('../utils/image-store');
 
@@ -38,6 +39,8 @@ const TYPE_FOR = {
   jpeg: 'image/jpeg',
   png: 'image/png',
   webp: 'image/webp',
+  gif: 'image/gif',
+  bmp: 'image/bmp',
 };
 
 function contentTypeFor(key) {
@@ -63,9 +66,12 @@ async function fetchFromOrigin(key) {
       if (!process.env.AWS_S3_BUCKET) return null;
 
       const { GetObjectCommand } = require('@aws-sdk/client-s3');
+      // The multi-image uploader stores item_images/<file> locally but uses
+      // the filename alone as its S3 key. Other paths retain their namespace.
+      const originKey = /^item_images\/[^/]+$/.test(key) ? path.posix.basename(key) : key;
       const res = await s3
         .getS3Client()
-        .send(new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET, Key: key }));
+        .send(new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET, Key: originKey }));
 
       const chunks = [];
       for await (const c of res.Body) chunks.push(c);
@@ -74,7 +80,23 @@ async function fetchFromOrigin(key) {
       /* Cache it, but do not fail the request if the disk will not take it -
          a full or read-only disk should still serve the image it just got. */
       try {
-        await store.saveLocal(key, buffer);
+        if (store.isValidKey(key)) {
+          await store.saveLocal(key, buffer);
+        } else {
+          // The route validates every legacy path before it gets here.
+          // Publish a complete file, never a partly downloaded image.
+          const dest = path.join(store.UPLOAD_DIR, key);
+          if (!fs.existsSync(dest)) {
+            await fsp.mkdir(path.dirname(dest), { recursive: true });
+            const temporary = dest + '.' + randomUUID() + '.part';
+            try {
+              await fsp.writeFile(temporary, buffer, { flag: 'wx' });
+              await fsp.rename(temporary, dest);
+            } finally {
+              await fsp.unlink(temporary).catch(() => {});
+            }
+          }
+        }
       } catch (e) {
         /* nothing - the bytes below are what the caller actually needs */
       }
@@ -126,7 +148,7 @@ router.get(/^\/(.+)$/, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.set('Content-Type', contentTypeFor(key));
-    res.set('Cache-Control', CACHE); // only now, when the bytes are real
+    res.set('Cache-Control', legacy ? 'public, max-age=3600' : CACHE);
     return stream;
   };
 
@@ -137,10 +159,7 @@ router.get(/^\/(.+)$/, async (req, res) => {
       .pipe(hit(res));
   }
 
-  /* An old flat file has no S3 counterpart to fall back to - it only ever
-     existed on the machine that received the upload. */
-  if (legacy) return miss(res);
-
+  // Legacy uploads have S3 copies too; local storage is only the first choice.
   const buffer = await fetchFromOrigin(key);
   if (!buffer) return miss(res);
   hit(res);
