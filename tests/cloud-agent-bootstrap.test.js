@@ -6,6 +6,8 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const vm = require('vm');
+const { Readable } = require('stream');
+const { validateActivation } = require('../src/cloud-activation');
 const { AssetUpdater } = require('../src/asset-updater');
 const { installAgent } = require('../src/agent-bootstrap');
 const Manager = require('../src/sync-agent-manager');
@@ -25,7 +27,7 @@ function fixture(t) {
       requests.push({ url, options });
       return url.endsWith('/bundle') ? new Response('zip') : Response.json({ version: '1.6.4', manifest });
     },
-    extract: async (_zip, dest) => { fs.mkdirSync(path.join(dest, 'src')); fs.writeFileSync(path.join(dest, 'src/index.js'), contents); },
+    open: async () => ({ files: [{ path: 'src/index.js', type: 'File', uncompressedSize: contents.length, stream: () => Readable.from([contents]) }] }),
   };
   return { root, engine, manifest, opts, requests };
 }
@@ -45,7 +47,7 @@ test('a public installer installs a signed component after activation', async (t
 test('unsigned code is refused before downloading or extracting it', async (t) => {
   const { opts, manifest, requests, engine } = fixture(t);
   manifest.signature = 'invalid';
-  opts.extract = () => assert.fail('must not extract');
+  opts.open = () => assert.fail('must not extract');
   await assert.rejects(installAgent(opts), /could not be verified/);
   assert.equal(requests.length, 1);
   assert.equal(engine.activeVersion(), null);
@@ -53,10 +55,10 @@ test('unsigned code is refused before downloading or extracting it', async (t) =
 
 test('corrupt bundle contents never become active and temporary files are removed', async (t) => {
   const { opts, root, engine } = fixture(t);
-  opts.extract = async (_zip, dest) => { fs.mkdirSync(path.join(dest, 'src')); fs.writeFileSync(path.join(dest, 'src/index.js'), 'corrupt'); };
+  opts.open = async () => ({ files: [{ path: 'src/index.js', type: 'File', uncompressedSize: 7, stream: () => Readable.from([Buffer.from('corrupt')]) }] });
   await assert.rejects(installAgent(opts), /failed verification/);
   assert.equal(engine.activeVersion(), null);
-  assert.equal(fs.readdirSync(root).some((name) => name.startsWith('bootstrap-')), false);
+  assert.deepEqual(fs.readdirSync(root), [], 'no unverified bytes reach disk');
 });
 
 test('unavailable feed fails with a retryable error instead of claiming a download started', async (t) => {
@@ -86,11 +88,11 @@ function connection(start) {
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
   const helper = main.slice(main.indexOf('async function connectCloudDevice('), main.indexOf("ipcMain.handle('cloud:resume'"));
   const manager = { stop() {}, start };
-  const sandbox = { fs: { existsSync: () => false, writeFileSync() {} }, path, app: { getPath: () => 'test' },
+  const sandbox = { fs: { existsSync: () => false, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
     process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
     createMenu() {}, tray: null, refreshBrand: async () => {}, refreshLimits: async () => {}, };
   vm.runInNewContext(helper, sandbox);
-  return sandbox.connectCloudDevice({ deviceToken: 'test', deviceId: 'device' }, 'https://cloud.example');
+  return sandbox.connectCloudDevice({ deviceToken: 'a'.repeat(64), deviceId: 'device' }, 'https://cloud.example');
 }
 
 test('activation awaits startup and refuses async false', async () => {
@@ -137,3 +139,66 @@ for (const type of ['false', 'rejection', 'status failure', 'no status']) {
     assert.equal(harness.document.getElementById('cloudError').style.display, 'block');
   });
 }
+
+// A small real ZIP (stored entries) exercises the production in-memory parser.
+function zip(entries) {
+  const locals = [], central = [];
+  let offset = 0;
+  for (const [name, data] of entries) {
+    const filename = Buffer.from(name), bytes = Buffer.from(data);
+    let crc = 0xffffffff;
+    for (const byte of bytes) { crc ^= byte; for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0); }
+    crc = (crc ^ 0xffffffff) >>> 0;
+    const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50); local.writeUInt16LE(20, 4);
+    local.writeUInt32LE(crc, 14); local.writeUInt32LE(bytes.length, 18); local.writeUInt32LE(bytes.length, 22); local.writeUInt16LE(filename.length, 26);
+    locals.push(local, filename, bytes);
+    const header = Buffer.alloc(46); header.writeUInt32LE(0x02014b50); header.writeUInt16LE(20, 4); header.writeUInt16LE(20, 6);
+    header.writeUInt32LE(crc, 16); header.writeUInt32LE(bytes.length, 20); header.writeUInt32LE(bytes.length, 24); header.writeUInt16LE(filename.length, 28); header.writeUInt32LE(offset, 42);
+    central.push(header, filename); offset += local.length + filename.length + bytes.length;
+  }
+  const index = Buffer.concat(central), end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50); end.writeUInt16LE(entries.length, 8); end.writeUInt16LE(entries.length, 10); end.writeUInt32LE(index.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, index, end]);
+}
+
+for (const scenario of ['valid', 'unexpected path', 'duplicate', 'tampered', 'missing']) {
+  test(`real ZIP: ${scenario} contents are verified before any disk write`, async (t) => {
+    const { opts, engine, root, manifest } = fixture(t);
+    const entries = [['src/index.js', scenario === 'tampered' ? 'tampered' : 'verified component']];
+    if (scenario === 'unexpected path') entries.push(['../escape.js', 'untrusted']);
+    if (scenario === 'duplicate') entries.push(entries[0]);
+    if (scenario === 'missing') entries.length = 0;
+    const archive = zip(entries);
+    delete opts.open;
+    opts.fetch = async (url) => url.endsWith('/bundle') ? new Response(archive) : Response.json({ version: manifest.version, manifest });
+    if (scenario === 'valid') assert.equal(await installAgent(opts), '1.6.4');
+    else {
+      await assert.rejects(installAgent(opts), /unexpected|repeated|verification|incomplete/);
+      assert.equal(engine.activeVersion(), null);
+      assert.deepEqual(fs.readdirSync(root), []);
+    }
+  });
+}
+
+test('a ZIP cannot evade the expansion limit by lying about its size', async (t) => {
+  const { opts, root } = fixture(t);
+  const megabyte = Buffer.alloc(1024 * 1024);
+  opts.open = async () => ({ files: [{ path: 'src/index.js', type: 'File', uncompressedSize: 1,
+    stream: () => Readable.from(Array(65).fill(megabyte)) }] });
+  await assert.rejects(installAgent(opts), /too large/);
+  assert.deepEqual(fs.readdirSync(root), []);
+});
+
+const { cloudServerUrl } = require('../src/cloud-activation');
+test('activation accepts the gateway protocol and persists only defined fields', () => {
+  const result = validateActivation({ deviceToken: 'a'.repeat(64), deviceId: 'till-1234', syncUrl: 'https://gateway.example/', ignored: 'untrusted' }, 'https://other.example');
+  assert.deepEqual(result, { deviceToken: 'a'.repeat(64), deviceId: 'till-1234', gatewayUrl: 'https://gateway.example' });
+});
+for (const url of ['http://remote.example', 'file:///etc/passwd', 'https://user:password@example.com', 'https://example.com?token=x', 'https://example.com/#script', 'not-a-url']) {
+  test(`activation refuses unsafe server address ${url}`, () => assert.throws(() => cloudServerUrl(url)));
+}
+for (const reply of [null, { deviceToken: {}, deviceId: 'device' }, { deviceToken: 'a'.repeat(64), deviceId: '../file' }, { deviceToken: 'a'.repeat(10000), deviceId: 'device' }]) {
+  test('malformed activation cannot become saved configuration', () => assert.throws(() => validateActivation(reply, 'https://cloud.example')));
+}
+
+test('loopback development servers remain available', () => assert.equal(cloudServerUrl('http://127.0.0.1:8080/'), 'http://127.0.0.1:8080'));

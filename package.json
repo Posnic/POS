@@ -110,6 +110,7 @@
       "src/asset-channel.js",
       "src/agent-update-apply.js",
       "src/agent-bootstrap.js",
+      "src/cloud-activation.js",
       "src/connector-runtime.js",
       "src/window-chrome.js",
       "src/window-theme.js",
@@ -597,7 +598,8 @@
     "electron-updater": "^6.8.9",
     "mongodb": "7.6.0",
     "pdf-to-printer": "^5.8.1",
-    "serialport": "^13.0.0"
+    "serialport": "^13.0.0",
+    "unzipper": "0.12.5"
   },
   "overrides": {
     "sharp": "$sharp",
