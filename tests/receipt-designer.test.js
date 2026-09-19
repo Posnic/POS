@@ -111,3 +111,19 @@ test('desktop printing refreshes the selected printer and never guesses the kitc
     assert.match(error, /Choose a receipt printer/);
     dom.window.close();
 });
+
+test('a QR preview completing during save does not report an unsaved edit', async () => {
+    const { dom, w, $, branch } = setup();
+    let previewDone, saveDone, payload;
+    w.PosnicPro.post = (_req, done) => { previewDone = done; };
+    w.PosnicPro.put = (req, done) => { payload = JSON.parse(req.data); saveDone = done; };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('.rd-block-card').last().find('[data-action="select"]').trigger('click');
+    $('#rd-block-text').val('Updated QR').trigger('input');
+    $('[data-action="save"]').trigger('click');
+    await new Promise(resolve => setTimeout(resolve, 400));
+    previewDone({ type: 'success', data: { src: pixel } });
+    saveDone({ type: 'success', data: { receipt_designs: payload.receipt_designs } });
+    assert.equal($('.rd-status').text(), 'All designs saved');
+    dom.window.close();
+});

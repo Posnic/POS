@@ -9,7 +9,14 @@
     function layout() { return design.layouts[format]; }
     function visible(b) { return b.type !== 'field' || restaurant() || schema.restaurant.indexOf(b.field) === -1; }
     function title(b) { return t(b.type === 'field' ? schema.fields[b.field] : names[b.type]); }
-    function dirty() { return JSON.stringify(design) !== saved; }
+    function editableState(value) {
+        var state = engine.copy(value);
+        Object.keys(state.layouts).forEach(function (f) {
+            state.layouts[f].blocks.forEach(function (b) { if (b.type === 'qr') delete b.src; });
+        });
+        return JSON.stringify(state);
+    }
+    function dirty() { return editableState(design) !== saved; }
     function status(text, error) { box.find('.rd-status').text(text).toggleClass('rd-error', !!error); }
     function checkpoint() { undo.push(engine.copy(design)); if (undo.length > 30) undo.shift(); }
     function changed() { status(t('Unsaved changes')); box.find('[data-action="undo"]').prop('disabled', !undo.length); schedulePreview(); }
@@ -138,16 +145,16 @@
         var payload;
         try { payload = schema.normalize(design); } catch (error) { status(error.message, true); return; }
         saving = true; box.find('[data-action="save"]').prop('disabled', true); status(t('Saving designs…'));
-        var sent = JSON.stringify(design);
+        var sent = editableState(design);
         PosnicPro.put({ url: 'setting/updateCommonSettings', data: JSON.stringify({ receipt_designs: payload,
             print_type: schema.formats[payload.defaultFormat].height ? 'a4' : 'standard',
             printall: $('#printall').is(':checked') ? 'true' : 'false', bill_print_copies: $('#bill_print_copies').val(),
             branch_fssai_number: $('#branch_fssai_number').val() || '' }) }, function (res) {
             saving = false; box.find('[data-action="save"]').prop('disabled', false);
             if (res.type !== 'success' || !res.data.receipt_designs) { status(res.message || t('Could not save designs.'), true); return; }
-            if (JSON.stringify(design) === sent) {
-                design = res.data.receipt_designs; saved = JSON.stringify(design); undo = []; renderEditor(); status(t('All designs saved'));
-            } else { saved = JSON.stringify(res.data.receipt_designs); status(t('Saved. You have newer unsaved changes.')); }
+            if (editableState(design) === sent) {
+                design = res.data.receipt_designs; saved = editableState(design); undo = []; renderEditor(); status(t('All designs saved'));
+            } else { saved = editableState(res.data.receipt_designs); status(t('Saved. You have newer unsaved changes.')); }
             branch.receipt_designs = res.data.receipt_designs;
             var type = schema.formats[res.data.receipt_designs.defaultFormat].height ? 'a4' : 'standard';
             $('#print_type').val(type); PosnicPro.local.set('print_type', type);
@@ -163,7 +170,7 @@
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) { controls[id] = $('#' + id).closest('.form-group').detach(); });
         if (observer) observer.disconnect();
         design = data.receipt_designs ? engine.copy(data.receipt_designs) : engine.defaults(data);
-        saved = JSON.stringify(design); format = design.defaultFormat; selected = null; undo = [];
+        saved = editableState(design); format = design.defaultFormat; selected = null; undo = [];
         box.html('<div class="rd-topbar"><div><h3>' + esc(t('Receipt designer')) + '</h3><p>' + esc(t('Create a distinct layout for every paper format.')) + '</p></div><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-primary" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
             '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '">' + Object.keys(schema.formats).map(function (f) { return '<button type="button" data-format="' + f + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '"></i>' + esc(t(schema.formats[f].name)) + '<small>' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '</small></button>'; }).join('') + '</div>' +
             '<div class="rd-toolbar"><label for="rd-default-format">' + esc(t('Default receipt format')) + '</label><select id="rd-default-format">' + Object.keys(schema.formats).map(function (f) { return '<option value="' + f + '">' + esc(t(schema.formats[f].name)) + '</option>'; }).join('') + '</select><span class="rd-toolbar-help">' + esc(t('Editing a design does not change the default.')) + '</span></div>' +
