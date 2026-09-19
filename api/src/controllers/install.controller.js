@@ -22,6 +22,7 @@ class InstallController extends BaseController {
    */
   async add(req, res) {
     try {
+      res.set('Cache-Control', 'no-store');
       console.log('🎯 Controller received req.body:', {
         register_demo: req.body.register_demo,
         businessType: req.body.businessType,

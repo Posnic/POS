@@ -305,6 +305,8 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
     passwordChangedAt: Date,
+    authVersion: { type: Number, default: 0 },
+    localRecovery: { type: mongoose.Schema.Types.Mixed, select: false },
     lastLogin: Date,
     loginAttempts: {
       type: Number,
@@ -551,7 +553,7 @@ userSchema.pre(/^find/, function () {
 
 // Instance method to check if password is correct
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return require('../utils/password-match').passwordMatches(candidatePassword, userPassword);
 };
 
 // Instance method to check if password was changed after token was issued
@@ -592,7 +594,7 @@ userSchema.statics.findByCredentials = async function (email, password) {
     throw new Error('Unable to login');
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await require('../utils/password-match').passwordMatches(password, user.password);
 
   if (!isMatch) {
     user.failedLoginAttempts += 1;

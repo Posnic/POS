@@ -4326,6 +4326,19 @@ class SettingModel extends BaseModel {
    */
   async getForgotUserDetails(email, req = null) {
     try {
+      // Installation-wide, before looking up an account, so this error does
+      // not disclose whether the submitted email exists.
+      if (
+        require('../utils/recovery-codes').enabled() &&
+        !(process.env.BREVO_API_KEY || process.env.SENDINBLUE_KEY)
+      ) {
+        return {
+          status: false,
+          data: null,
+          message:
+            'Email recovery is unavailable on this installation. Use an offline recovery code, or ask your administrator for help.',
+        };
+      }
       const usersCollection = await this.getCollection('users');
       /*
        * String(), because this value came from a request body and Mongo reads

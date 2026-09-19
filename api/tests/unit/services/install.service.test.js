@@ -310,7 +310,7 @@ describe('InstallService', () => {
     }
 
     // ── success ─────────────────────────────────────────────────────────────
-    test('returns {status:true, data:"", message:ACCOUNT_CREATED} on success', async () => {
+    test('returns one-time recovery codes for the local owner on success', async () => {
       spyAllPrivateMethods(service);
       repo.findExistingUser.mockResolvedValue(null);
 
@@ -318,9 +318,29 @@ describe('InstallService', () => {
 
       expect(result).toEqual({
         status: true,
-        data: '',
+        data: { recoveryAccount: 'admin@example.com', recoveryCodes: expect.any(Array) },
         message: SUCCESS_MESSAGES.ACCOUNT_CREATED,
       });
+      const batch = service._createUser.mock.calls[0][5];
+      expect(result.data.recoveryCodes).toHaveLength(8);
+      expect(batch.record.hashes).toEqual(
+        result.data.recoveryCodes.map(require('../../../src/utils/recovery-codes').digest)
+      );
+      expect(batch.record).not.toHaveProperty('codes');
+    });
+
+    test('does not issue local recovery codes for Cloud provisioning', async () => {
+      spyAllPrivateMethods(service);
+      const recovery = require('../../../src/utils/recovery-codes');
+      const gate = jest.spyOn(recovery, 'enabled').mockReturnValue(false);
+      try {
+        const result = await service.processInstallation(validInstallData());
+        expect(result.status).toBe(true);
+        expect(result.data).toBe('');
+        expect(service._createUser.mock.calls[0][5]).toBeNull();
+      } finally {
+        gate.mockRestore();
+      }
     });
 
     test('does not seed products when register_demo is false', async () => {
@@ -682,6 +702,21 @@ describe('InstallService', () => {
 
       const [userData] = repo.insertUser.mock.calls[0];
       expect(userData.usertype).toBe('super_admin');
+    });
+
+    test('persists only recovery digests in the installed owner document', async () => {
+      const recovery = require('../../../src/utils/recovery-codes').createBatch(now);
+      await service._createUser(
+        validInstallData(),
+        licenseId,
+        'secret_key',
+        now,
+        oneYearLater,
+        recovery
+      );
+      const [userData] = repo.insertUser.mock.calls[0];
+      expect(userData.localRecovery).toEqual(recovery.record);
+      expect(JSON.stringify(userData)).not.toContain(recovery.codes[0]);
     });
 
     test('returns value from repository.insertUser', async () => {

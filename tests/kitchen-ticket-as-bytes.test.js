@@ -169,8 +169,33 @@ test('counter printing uses only configured kitchen targets and labels copies', 
   });
   assert.equal(result.success, true);
   assert.deepEqual(sent.map(s => s.name), ['Kitchen']);
-  assert.match(readable(sent[0].bytes), /KOT COPY/);
+  assert.match(readable(sent[0].bytes), /DUPLICATE KOT/);
   assert.match(readable(sent[0].bytes), /Do not\s+prepare again/i);
+});
+
+test('reprinting a logged ticket labels every printer copy and keeps its KOT number', async () => {
+  const sent = [];
+  const kot = new KOTManager({ hardware: {
+    sendRawToPrinter: async (name, bytes) => { sent.push({ name, bytes }); return { success: true }; },
+  } });
+  kot.config = { printerNames: ['Kitchen', 'Pass'], printers: [
+    { name: 'Kitchen', copies: 2, pageSize: '80mm' },
+    { name: 'Pass', copies: 1, pageSize: '58mm' },
+  ] };
+  kot.getDailyKotNumber = () => { throw new Error('a reprint must not allocate a new number'); };
+  await kot.reprint({ printKind: 'edit', kotNumber: 42,
+    _saleData: { sales_id: 'K-42', table_number: '5', sale_process: 'KOT' },
+    items: [{ item_name: 'Tea', item_quantity: 2 }],
+  });
+  assert.deepEqual(sent.map(s => s.name), ['Kitchen', 'Kitchen', 'Pass']);
+  for (const { bytes } of sent) {
+    const paper = readable(bytes);
+    assert.match(paper, /DUPLICATE KOT/);
+    assert.match(paper, /Do not\s+prepare again/);
+    assert.match(paper, /Original: Additional Order/);
+    assert.match(paper, /#42/);
+    assert.match(paper, /TABLE 5/);
+  }
 });
 
 test('counter printing reports unavailable only without kitchen targets', async () => {

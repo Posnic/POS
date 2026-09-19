@@ -166,8 +166,11 @@
                                                 <input type="email" class="form-control border-control" id="email" name="email" placeholder="Enter email here" data-t-placeholder="lang_enter_email_here" required>
                                             </div>                          
                                             <button type="submit" class="btn btn-success btn-lg btn-block font-18"><lang class="lang_foget_mail">Reset Password</lang></button>
+                                            <p id="offline_recovery_email_help" class="mt-3" hidden><lang class="lang_email_unavailable_use_the_recovery_codes_y">Email unavailable? Use the recovery codes you saved when setting up this shop.</lang></p>
                                             <p class="mb-0 mt-3"><lang class="lang_remeber_password">Already have a POSNIC account? </lang><a id="Loginslide" href="#"><lang class="lang_login_title">Log in </lang></a></p>
                                         </form>
+
+                                        <p id="offline_recovery_login" class="text-center mt-3" hidden><button type="button" class="btn btn-link" id="offline_recovery_open"><lang class="lang_recover_with_an_offline_code">Recover with an offline code</lang></button></p>
 
 
                                         <form id="registerselect_form" style="display:none;"> 

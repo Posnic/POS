@@ -362,6 +362,8 @@ class KOTManager {
     const sale = {
       ...(logEntry._saleData || {}),
       _printKind: logEntry.printKind,
+      _isReprint: true,
+      _kotNumber: logEntry.kotNumber,
       items:      logEntry.items || []
     };
     return await this.silentPrint(sale, printerNames, true);
@@ -854,7 +856,9 @@ class KOTManager {
       if (!f) return null;
       return renderKitchenTicket(
         {
-          title: f.title,
+          title: f.duplicate ? 'DUPLICATE KOT' : f.title,
+          duplicate: f.duplicate,
+          originalTitle: f.duplicate && printKind !== 'copy' ? f.title : '',
           number: kotNumber,
           dateText: f.dateText,
           tableNo: f.tableNo,
@@ -977,6 +981,7 @@ class KOTManager {
         table_number: sale.table_number || '',
         person_count: sale.person_count || '',
         dine_type:    sale.dine_type || sale.order_type || '',
+        sale_process: sale.sale_process || '',
         updated_date: sale.updated_date || null,
         created_date: sale.created_date || null,
       }
@@ -1056,7 +1061,9 @@ class KOTManager {
     const printKind  = (sale._printKind || '').toLowerCase();
     const saleDispId = sale.sales_id || sale.sid || sale.sale_id || '';
     const saleDbId   = sale._id?.toString ? sale._id.toString() : String(sale._id || '');
-    const kotNumber  = this.getDailyKotNumber(printKind, saleDispId || saleDbId);
+    const kotNumber  = sale._isReprint && Number.isInteger(sale._kotNumber) && sale._kotNumber > 0
+      ? sale._kotNumber
+      : this.getDailyKotNumber(printKind, saleDispId || saleDbId);
 
     /*
      * BYTES FIRST, if there is a printer to send them to.
@@ -1287,7 +1294,8 @@ class KOTManager {
       ? (cancelledWholeOrder
           ? 'Order Cancelled'
           : (cancelledLines > 1 ? 'Items Cancelled' : 'Item Cancelled'))
-      : (printKind === 'copy' ? 'KOT COPY - Do not prepare again' : printKind === 'edit' ? 'Additional Order' : 'New Order');
+      : (printKind === 'copy' ? 'DUPLICATE KOT' : printKind === 'edit' ? 'Additional Order' : 'New Order');
+    const duplicate = printKind === 'copy' || sale._isReprint === true;
 
     const dateText    = this._fmtDate(sale.updated_date || sale.updated_at || sale.created_date || sale.created_at || '');
     const tableNo     = sale.table_number || sale.tableNo || sale.table || sale.table_no || '';
@@ -1323,6 +1331,7 @@ class KOTManager {
 
     return {
       title,
+      duplicate,
       dateText,
       tableNo,
       personCount,
@@ -1338,7 +1347,7 @@ class KOTManager {
 
   _buildKOTHtml(sale, printKind, kotNumber) {
     const {
-      title, dateText, tableNo, personCount, dineType, placeLine,
+      title, duplicate, dateText, tableNo, personCount, dineType, placeLine,
       orderNote, deliverTo, saleIdDisplay, items, isCancelled,
     } = this._ticketFields(sale, printKind, kotNumber);
 
@@ -1386,7 +1395,9 @@ body{padding:6px;width:72mm;box-sizing:border-box;}
 .nt{font-size:12px;font-weight:700;border:1px dashed #000;padding:3px 4px;margin:4px 0;white-space:pre-wrap;}
 @media print{@page{size:72mm auto;margin:0;}body{width:72mm;margin:0;padding:0;}}
 </style></head><body>
-<div class="c"><div class="lt">${this._esc(title)}</div></div>
+<div class="c"><div class="lt">${this._esc(duplicate ? 'DUPLICATE KOT' : title)}</div></div>
+${duplicate ? '<div class="ml">Do not prepare again</div>' : ''}
+${duplicate && printKind !== 'copy' ? `<div class="ml">Original: ${this._esc(title)}</div>` : ''}
 <div class="kn">#${kotNumber}</div>
 <div class="ml">${this._esc(dateText)}</div>
 ${dineType    ? `<div class="ml">${this._esc(dineType)}</div>` : ''}

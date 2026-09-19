@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const authVersion = require('../utils/auth-version');
 const { AppError } = require('../utils/appError');
 const { Email } = require('../utils/email');
 const { createAndSendToken } = require('./auth-utils.controller');
@@ -103,7 +104,10 @@ exports.protect = async (req, res, next) => {
     }
 
     // 4) Check if user changed password after the token was issued
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
+    if (
+      !authVersion.current(currentUser, decoded) ||
+      currentUser.changedPasswordAfter(decoded.iat)
+    ) {
       return next(new AppError('User recently changed password! Please log in again.', 401));
     }
 
@@ -448,7 +452,10 @@ exports.verifyToken = async (req, res, next) => {
     }
 
     // Check if user changed password after the token was issued
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
+    if (
+      !authVersion.current(currentUser, decoded) ||
+      currentUser.changedPasswordAfter(decoded.iat)
+    ) {
       return res.status(401).json({
         status: 'error',
         message: 'User recently changed password! Please log in again.',

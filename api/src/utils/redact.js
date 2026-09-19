@@ -22,7 +22,7 @@
  */
 
 const SECRET_KEY =
-  /pass(word|wd)?$|^pwd$|secret|token|apikey|api_key|authorization|cookie|credential|otp|pin$|hash$|salt$/i;
+  /pass(word|wd)?$|^pwd$|secret|token|apikey|api_key|authorization|cookie|credential|recovery|otp|pin$|hash$|salt$/i;
 
 const REDACTED = '[REDACTED]';
 

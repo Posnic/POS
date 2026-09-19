@@ -152,7 +152,11 @@ function loadDriver(name) {
   const hash = bcrypt.hashSync(encoded, 12);
   const at = new Date();
 
-  await users.updateOne({ _id: user._id }, { $set: { password: hash, updated_date: at } });
+  await users.updateOne({ _id: user._id }, {
+    $set: { password: hash, updated_date: at, passwordChangedAt: at, userkey: require('crypto').randomBytes(32).toString('hex') },
+    $inc: { authVersion: 1 },
+    $unset: { localRecovery: '', passwordResetToken: '', passwordResetExpires: '', expire_date: '' },
+  });
 
   /* In the shop's own log. Somebody with a keyboard on this machine changed a
      password, and the business is entitled to know. */

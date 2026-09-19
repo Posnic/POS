@@ -6,7 +6,6 @@ const { AppError } = require('../utils/appError');
 // imported, so an invalid token produced a ReferenceError instead of a 401.
 const { UnauthorizedError } = require('./errorHandler');
 const { currentSecret, currentConnection } = require('../db/tenant-context');
-const httpStatus = require('http-status');
 const tokenService = require('../services/token.service');
 require('../config/tokens');
 const { findUserByIdentifier } = require('../utils/findUserByIdentifier');
@@ -16,6 +15,7 @@ const { attachTenantContext, TenantContextError } = require('../utils/tenant-con
 const { runWithRequestContext } = require('../utils/request-context');
 const { authCookieOptions } = require('../utils/auth-cookie');
 const handsets = require('../utils/handsets');
+const authVersion = require('../utils/auth-version');
 
 const continueWithTenant = async (req, res, next, currentUser) => {
   req.user = currentUser;
@@ -123,8 +123,8 @@ const encryptSessionId = (sessionId) => {
 };
 
 // Create and sign basic JWT token (id-only payload used by modern routes)
-const signToken = (id) => {
-  return jwt.sign({ id }, getJwtSecret(), {
+const signToken = (id, version = 0) => {
+  return jwt.sign({ id, ...(version ? { authVersion: version } : {}) }, getJwtSecret(), {
     expiresIn: process.env.JWT_EXPIRES_IN || '24h',
   });
 };
@@ -139,6 +139,7 @@ const { jwtLifetimeSeconds, handsetLifetimeSeconds } = require('../utils/token-l
 // for fast session restoration, while still keeping the 'id' field
 // so existing Node verification continues to work.
 const signLegacyToken = (user, req, branchId, expiresIn) => {
+  authVersion.stampSession(req, user);
   const userId = user._id?.toString?.() || user.id || user._id;
   const sessionId = req.sessionID || req.session?.id;
   const encryptedSessionId = encryptSessionId(sessionId);
@@ -146,6 +147,7 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
   const payload = {
     // Node-side fields
     id: userId,
+    ...(authVersion.version(user) ? { authVersion: authVersion.version(user) } : {}),
     // PHP-style fields for parity
     user_id: userId,
     username: user.username || user.name || user.email || '',
@@ -191,7 +193,8 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
 
 // Create and send token, set cookie
 const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
+  const token = signToken(user._id, authVersion.version(user));
+  authVersion.stampSession(res.req, user);
   const cookieOptions = authCookieOptions({
     expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
   });
@@ -218,7 +221,7 @@ const auth = async (req, res, next) => {
     const token = getTokenFromRequest(req);
 
     if (!token) {
-      return next(new AppError('Please authenticate', httpStatus.UNAUTHORIZED));
+      return next(new AppError('Please authenticate', 401));
     }
 
     // Verify token
@@ -228,16 +231,15 @@ const auth = async (req, res, next) => {
     // Check if user still exists
     const currentUser = await findUserByIdentifier(decoded.id);
     if (!currentUser) {
-      return next(
-        new AppError('The user belonging to this token no longer exists', httpStatus.UNAUTHORIZED)
-      );
+      return next(new AppError('The user belonging to this token no longer exists', 401));
     }
 
     // Check if user changed password after the token was issued
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
-      return next(
-        new AppError('User recently changed password! Please log in again', httpStatus.UNAUTHORIZED)
-      );
+    if (
+      !authVersion.current(currentUser, decoded) ||
+      currentUser.changedPasswordAfter(decoded.iat)
+    ) {
+      return next(new AppError('User recently changed password! Please log in again', 401));
     }
 
     // GRANT ACCESS TO PROTECTED ROUTE
@@ -369,7 +371,7 @@ const protect = async (req, res, next) => {
     if (req.session && req.session.userId) {
       try {
         const currentUser = await findUserByIdentifier(req.session.userId);
-        if (currentUser) {
+        if (currentUser && authVersion.current(currentUser, req.session)) {
           return continueWithTenant(req, res, next, currentUser);
         }
         // If session userId is invalid, fall through to JWT-based restore
@@ -423,7 +425,10 @@ const protect = async (req, res, next) => {
     }
 
     // 5) Check if user changed password after the token was issued (JWT-only check)
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
+    if (
+      !authVersion.current(currentUser, decoded) ||
+      currentUser.changedPasswordAfter(decoded.iat)
+    ) {
       return res.status(401).json({
         status: 'error',
         message: 'Your password was recently changed. Please log in again.',
@@ -433,6 +438,7 @@ const protect = async (req, res, next) => {
     // 6) Restore session from JWT like PHP's JwtHelper does
     if (req.session) {
       req.session.userId = currentUser.id || currentUser._id?.toString();
+      authVersion.stampSession(req, currentUser);
       // Restore branch_id from JWT if session doesn't have it (PHP: $_SESSION['PosnicPro']['settings']['_id'])
       if (!req.session.branch_id && decoded.branch_id) {
         req.session.branch_id = decoded.branch_id;
@@ -463,7 +469,10 @@ const isLoggedIn = async (req, res, next) => {
       }
 
       // 3) Check if user changed password after the token was issued
-      if (currentUser.changedPasswordAfter(decoded.iat)) {
+      if (
+        !authVersion.current(currentUser, decoded) ||
+        currentUser.changedPasswordAfter(decoded.iat)
+      ) {
         return next();
       }
 
@@ -496,7 +505,7 @@ const optionalProtect = async (req, res, next) => {
     if (req.session && req.session.userId) {
       try {
         const currentUser = await findUserByIdentifier(req.session.userId);
-        if (currentUser) {
+        if (currentUser && authVersion.current(currentUser, req.session)) {
           return continueWithTenant(req, res, next, currentUser);
         }
       } catch (_) {
@@ -511,10 +520,15 @@ const optionalProtect = async (req, res, next) => {
         const decoded = await promisify(jwt.verify)(token, getJwtSecret());
         if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
         const currentUser = await findUserByIdentifier(decoded.id);
-        if (currentUser && !currentUser.changedPasswordAfter(decoded.iat)) {
+        if (
+          currentUser &&
+          authVersion.current(currentUser, decoded) &&
+          !currentUser.changedPasswordAfter(decoded.iat)
+        ) {
           // Restore session from JWT (same as protect does)
           if (req.session) {
             req.session.userId = currentUser.id || currentUser._id?.toString();
+            authVersion.stampSession(req, currentUser);
           }
           return continueWithTenant(req, res, next, currentUser);
         }

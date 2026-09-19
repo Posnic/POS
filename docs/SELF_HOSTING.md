@@ -217,10 +217,15 @@ configure — only the reverse proxy that terminates TLS.
 
 ## If you are locked out
 
-Nobody can reset your password for you. There is no console for a server you
-own, our reset email does not know where your shop lives, and support cannot
-reach a machine on your network. That is the trade you made for holding your
-own data, and it is fine as long as there is a way back in.
+For Community installations, first use **Recover with an offline code** on
+the sign-in page. The owner saves these codes during setup, or generates them
+from **Profile → Account recovery** while signed in. Recovery needs only your
+local server, without email or internet. See [Offline account recovery](COMMUNITY_RECOVERY.md).
+
+If nobody can sign in and no codes are available, the server administrator can
+use the command below for an installation run from this repository. It requires
+access to that server's database credentials; it is not a remote reset service
+or a command for the packaged desktop app.
 
 Run this **on the server itself**:
 
@@ -248,6 +253,9 @@ Three things worth knowing:
   account that ran it. You can see it happened.
 - It only opens the database this installation already uses. There is no flag
   to point it somewhere else.
+
+The command revokes the account's previous sessions, sign-in tokens, email reset
+links and offline recovery codes. After signing in, generate and save new codes.
 
 This is not a back door. Anybody who can run it can already read your database
 directly — they are sitting on your server. What it does is make recovery

@@ -32,7 +32,7 @@
     }
     function render(sale, width) {
         var titles = { new: PosnicPro.i18n.t('lang_kot_print_new', 'New Order'), modified: PosnicPro.i18n.t('lang_kot_print_additional', 'Additional Order'),
-            cancel: PosnicPro.i18n.t('lang_kot_print_cancelled', 'Cancelled Items'), copy: PosnicPro.i18n.t('lang_kot_print_copy', 'KOT COPY - Do not prepare again') };
+            cancel: PosnicPro.i18n.t('lang_kot_print_cancelled', 'Cancelled Items'), copy: PosnicPro.i18n.t('lang_kot_print_copy', 'DUPLICATE KOT - Do not prepare again') };
         return '<!doctype html><html><head><meta charset="utf-8"><title>KOT</title><style>' +
             '@page{size:auto;margin:0}html,body{margin:0;padding:0;background:white;color:black}' +
             'body{font:12px/1.3 monospace;width:' + (width === '58' ? 48 : 72) + 'mm}' +

@@ -655,6 +655,9 @@
   "Email is required": [
     "src/controllers/users.controller.js"
   ],
+  "Email recovery is unavailable on this installation. Use an offline recovery code, or ask your administrator for help.": [
+    "src/models/setting.model.js"
+  ],
   "Email settings updated successfully": [
     "src/models/setting.model.js"
   ],
@@ -1387,6 +1390,9 @@
   "Nothing was said": [
     "src/services/voice-intent.service.js"
   ],
+  "Offline recovery is unavailable here.": [
+    "src/routes/recovery.routes.js"
+  ],
   "On the way": [
     "src/repositories/sale.repository.js"
   ],
@@ -1464,6 +1470,9 @@
   "Password reset key is required": [
     "src/controllers/users.controller.js"
   ],
+  "Password reset. Sign in with your new password. This recovery code can no longer be used.": [
+    "src/services/recovery.service.js"
+  ],
   "Password successfully updated": [
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
@@ -1532,6 +1541,9 @@
   ],
   "Please provide a valid email address": [
     "src/models/user.model.js"
+  ],
+  "Please sign in again.": [
+    "src/routes/auth-utils.routes.js"
   ],
   "Posnic API v2 root": [
     "app.js"
@@ -2275,6 +2287,9 @@
   ],
   "Too many questions in a minute. Please wait a moment and ask again.": [
     "src/middleware/assistant-rate-limit.js"
+  ],
+  "Too many recovery attempts. Please wait fifteen minutes and try again.": [
+    "src/middleware/auth-rate-limit.js"
   ],
   "Too many requests from this IP, please try again after 15 minutes": [
     "src/middleware/security.js"
