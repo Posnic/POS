@@ -97,12 +97,12 @@ test('FSSAI prints from current branch details on all formats and an explicit fi
     sale.table_options = 'enable'; sale.branch_fssai_number = ' 12345678901234 ';
     for (const format of Object.keys(contract.formats)) {
         const render = () => $('<div>').html(engine.render(sale, format, false));
-        assert.match(render().find('.rd-store').text(), /FSSAI licence number: 12345678901234/);
+        assert.match(render().find('.rd-store').text(), /FSSAI: 12345678901234/);
         const field = engine.block('field', { field: 'fssai' });
         design.layouts[format].blocks.push(field);
         const output = render();
         assert.doesNotMatch(output.find('.rd-store').text(), /12345678901234/);
-        assert.equal(output.find('.rd-field-fssai').text(), 'FSSAI licence number: 12345678901234');
+        assert.equal(output.find('.rd-field-fssai').text(), 'FSSAI: 12345678901234');
         assert.equal(output.find('[data-block-id]').last().attr('data-block-id'), field.id);
         sale.branch_fssai_number = '   ';
         assert.equal(render().find('.rd-field-fssai').length, 0);
